@@ -62,8 +62,13 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
 
 ### Firebase project (live): darsi-f0685
 - The web config is in `apps/web/.env.local` (gitignored) and the project in `.firebaserc`. The Firebase CLI is logged in as the user's personal account.
-- Blaze plan: on. Firestore `(default)`: created in europe-west1 with delete protection, still on the default closed rules until the first deploy.
-- Waiting on the user: Storage "Get started" and enabling the Email/Password and Google sign-in providers in the console, then a go-ahead to `firebase deploy` (see docs/FIREBASE.md).
+- Blaze plan: on. Email/Password and Google sign-in: enabled by the user.
+- Deployed 2026-10-25:
+  - **Hosting** https://darsi-f0685.web.app; the live site was smoke-tested as a guest and the service worker activates.
+  - **Firestore** `(default)` in europe-west1 with delete protection, plus our rules and indexes.
+  - **All 10 Cloud Functions** in europe-west1. The first deploy of `onProgressWrite` hit the known Eventarc permission delay and went through on retry. Artifact Registry cleanup is set to 1 day.
+- Not deployed: **Storage rules**. The default bucket doesn't exist yet because the console's Storage "Get started" was never finished. Until it is, project evidence uploads fail. After the user finishes it, run `npx firebase deploy --only storage`.
+- Next for the user: sign up on the live site, then `npm run superadmin -- <email>` with a service-account key (docs/FIREBASE.md §4).
 - The emulators need JDK 21: firebase-tools 15.33 refuses this machine's JDK 17. `functions/` has its own lockfile: `npm ci --prefix functions && npm run build --prefix functions`.
 - Git: the repo is github.com/sherifalaafawzy/darsi. Commit with the repo-local personal identity (Sherif Alaa Fawzy <sherifalaafawzy@gmail.com>), never the global work identity.
 
