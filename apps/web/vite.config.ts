@@ -38,7 +38,7 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,webmanifest,woff2,json}"],
         // Lesson content is tiny and precached; kits are cached when a unit is downloaded. Staff-only and first-visit
         // chunks (and exceljs, ~930 KB) are not precached, so a learner's install stays small; "darsi-chunks" caches them on first use.
-        globIgnores: ["kits/**", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin}-*.{js,css}"],
+        globIgnores: ["kits/**", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin,firebase}-*.{js,css}"],
         navigateFallback: "/index.html",
         runtimeCaching: [
           // Hashed file names never change content, so cache-first is safe; old versions age out.
@@ -53,5 +53,21 @@ export default defineConfig({
     }),
   ],
   server: { port: 5173, host: true },
-  build: { target: "es2020", sourcemap: true },
+  build: {
+    target: "es2020",
+    sourcemap: true,
+    rolldownOptions: {
+      output: {
+        // The Firebase SDK in named chunks that load only at sign-in (src/fb.ts); globIgnores keeps them out of the
+        // precache, so guests never download them. Functions + Storage are separate: only admins and uploads need them.
+        codeSplitting: {
+          groups: [
+            // Core first, so shared internals (@firebase/app, util, component…) land here and not in the extra chunk.
+            { name: "firebase", test: /node_modules[\\/](?:@firebase[\\/](?!functions|storage)|firebase[\\/](?!functions|storage)|re2js[\\/]|idb[\\/])/, priority: 2 },
+            { name: "firebase-extra", test: /node_modules[\\/](?:@firebase|firebase)[\\/](?:functions|storage)[\\/]/, priority: 1 },
+          ],
+        },
+      },
+    },
+  },
 });

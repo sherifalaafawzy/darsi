@@ -12,6 +12,8 @@ const h = vi.hoisted(() => ({
 }));
 vi.mock("../src/platform", () => ({ storage: { get: async () => h.stored, set: async () => {}, remove: async () => {} } }));
 vi.mock("../src/firebase", () => ({ db: {}, firebaseReady: true }));
+// Deterministic regardless of the machine's .env files (CI has no .env.local).
+vi.mock("../src/firebase-config", () => ({ firebaseReady: true, firebaseConfig: { apiKey: "test-key" }, useEmulators: false, functionsRegion: "europe-west1" }));
 vi.mock("../src/content/load", () => ({
   loadCatalog: async () => ({ version: 1, units: [{ id: "ai-1", available: true }] }),
   loadUnit: async () => ({ id: "ai-1", track: "ai", lessons: [{ id: "ai-1-1", competencies: ["AI-T1"] }, { id: "ai-1-2" }] }),

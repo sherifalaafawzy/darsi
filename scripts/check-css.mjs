@@ -23,7 +23,7 @@ const DS_CSS = path.join(ROOT, "packages/design-system/dist/styles.css");
 /** Which stylesheet owns which classes. Add a class here when you add it to a screen. */
 export const OWNERS = {
   base: { own: ["panel", "tiles", "tile", "ok", "err", "err-text", "row-gap", "form-grid", "span2", "file-pick", "avatar", "sm", "person-link", "pill", "pill-warn", "wide", "table-tools", "table-wrap", "data-table", "num", "no-print", "cap-code", "cap-label"] },
-  layout: { own: ["app-shell", "app-main", "app-float", "nav-rail", "rail-brand", "rail-item", "is-active", "rail-sep", "nav-bottom"] },
+  layout: { own: ["app-shell", "app-main", "app-float", "nav-rail", "rail-brand", "rail-item", "is-active", "rail-sep", "rail-signout", "nav-bottom"] },
   admin: { own: ["admin-cols", "code-row", "cov-row", "cov-bar", "req", "req-facts"] },
   person: { own: ["person", "person-head", "person-stats", "person-cols", "cap-groups", "cap-group", "cap-row", "cap-meter", "cap-word", "course", "course-head", "done", "submission", "sub-text", "badge-ok", "status"], prefix: ["is-", "status-"] },
   people: { own: ["add-rows", "add-row", "map-grid", "map-row", "row-err", "slips", "slip"] },

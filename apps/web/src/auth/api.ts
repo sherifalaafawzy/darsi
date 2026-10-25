@@ -1,4 +1,4 @@
-import { call } from "../firebase";
+import { call } from "../fb";
 import type { Role } from "./types";
 
 export interface MemberInput { name: string; email?: string; username?: string; role?: Role; group?: string; teacherEmail?: string; lang?: string }

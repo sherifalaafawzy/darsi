@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { onAuthStateChanged, signOut as fbSignOut, type User } from "firebase/auth";
-import { doc, onSnapshot, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
-import { auth, db, firebaseReady } from "../firebase";
+import type { User } from "firebase/auth";
+import { firebaseReady } from "../firebase-config";
+import { loadFirebase, storedSession } from "../fb";
 import type { Profile, Role } from "./types";
 
 interface AuthState {
@@ -11,36 +11,52 @@ interface AuthState {
   role: Role;
   orgId: string | null;
   loading: boolean;
+  /**
+   * The uid of a session saved on this device whose SDK could not load yet (offline, chunk not cached). Learning
+   * carries on in that account's local store; it reconnects when the phone is back online.
+   */
+  offlineUid: string | null;
+  /** Loads the Firebase SDK and starts listening for sign-in. Account screens call it; it is a no-op once started. */
+  ensureFirebase: () => Promise<void>;
   refreshClaims: () => Promise<void>;
   updateProfile: (patch: Partial<Profile>) => Promise<void>;
   signOut: () => Promise<void>;
   configured: boolean;
 }
 const Ctx = createContext<AuthState | null>(null);
+const LEARNER = { role: "learner" as Role, orgId: null as string | null };
 
+/**
+ * Firebase is loaded only when needed: at startup if a session is saved on this device, otherwise when an account
+ * screen opens. Guests and first-time visitors never download or parse the SDK.
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [claims, setClaims] = useState<{ role: Role; orgId: string | null }>({ role: "learner", orgId: null });
+  const [claims, setClaims] = useState<{ role: Role; orgId: string | null }>(LEARNER);
   const [loading, setLoading] = useState(firebaseReady);
+  const [offlineUid, setOfflineUid] = useState<string | null>(null);
   const claimsRef = useRef(claims);
   claimsRef.current = claims;
+  const started = useRef<Promise<void> | null>(null);
+  const stop = useRef<() => void>(() => {});
 
   const readClaims = useCallback(async (u: User, force = false) => {
     const r = await u.getIdTokenResult(force);
     setClaims({ role: (r.claims.role as Role) ?? "learner", orgId: (r.claims.orgId as string) ?? null });
   }, []);
 
-  useEffect(() => {
-    if (!firebaseReady) return;
+  /** Load the SDK once and subscribe to auth state. Resolves when the subscription is in place. */
+  const start = useCallback((): Promise<void> => (started.current ??= (async () => {
+    const [fb, { onAuthStateChanged }, fs] = await Promise.all([loadFirebase(), import("firebase/auth"), import("firebase/firestore")]);
     let unsubProfile = () => {};
-    const unsub = onAuthStateChanged(auth, async (u) => {
+    const unsubAuth = onAuthStateChanged(fb.auth, async (u) => {
       unsubProfile();
-      if (!u) { setUser(null); setProfile(null); setClaims({ role: "learner", orgId: null }); setLoading(false); return; }
+      if (!u) { setUser(null); setProfile(null); setClaims(LEARNER); setLoading(false); return; }
       // Claims first, so routing never sees a signed-in admin with the default "learner" role.
       await readClaims(u).catch(() => {});
-      setUser(u);
-      unsubProfile = onSnapshot(doc(db, "users", u.uid), (snap) => {
+      setUser(u); setOfflineUid(null);
+      unsubProfile = fs.onSnapshot(fs.doc(fb.db, "users", u.uid), (snap) => {
         if (snap.exists()) {
           const p = { uid: u.uid, ...(snap.data() as Omit<Profile, "uid">) };
           setProfile(p);
@@ -49,24 +65,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else setProfile(null);
         setLoading(false);
       }, () => setLoading(false));
-      updateDoc(doc(db, "users", u.uid), { lastActive: new Date().toISOString() }).catch(() => {});
+      fs.updateDoc(fs.doc(fb.db, "users", u.uid), { lastActive: new Date().toISOString() }).catch(() => {});
     });
-    return () => { unsub(); unsubProfile(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    stop.current = () => { unsubAuth(); unsubProfile(); };
+  })().catch((e) => { started.current = null; throw e; })), [readClaims]);
+
+  useEffect(() => {
+    if (!firebaseReady) return;
+    let live = true, session: string | null = null;
+    const retry = () => { if (session && !started.current) start().catch(() => {}); };
+    (async () => {
+      const s = await storedSession();
+      if (!live) return;
+      if (!s) { setLoading(false); return; } // guest or signed out: no SDK at all
+      session = s.uid;
+      try { await start(); }
+      catch { if (live) { setOfflineUid(s.uid); setLoading(false); } } // offline before the SDK chunk was cached
+    })();
+    window.addEventListener("online", retry);
+    return () => { live = false; window.removeEventListener("online", retry); stop.current(); };
+  }, [start]);
 
   const updateProfile = useCallback(async (patch: Partial<Profile>) => {
     if (!user) return;
+    const [{ db }, { doc, setDoc }] = await Promise.all([loadFirebase(), import("firebase/firestore")]);
     await setDoc(doc(db, "users", user.uid), patch, { merge: true });
   }, [user]);
 
   const value = useMemo<AuthState>(() => ({
-    user, profile, role: claims.role, orgId: claims.orgId, loading,
+    user, profile, role: claims.role, orgId: claims.orgId, loading, offlineUid,
+    ensureFirebase: start,
     refreshClaims: async () => { if (user) await readClaims(user, true); },
     updateProfile,
-    signOut: () => fbSignOut(auth),
+    signOut: async () => { const [{ auth }, { signOut }] = await Promise.all([loadFirebase(), import("firebase/auth")]); await signOut(auth); },
     configured: firebaseReady,
-  }), [user, profile, claims, loading, readClaims, updateProfile]);
+  }), [user, profile, claims, loading, offlineUid, start, readClaims, updateProfile]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
@@ -78,5 +111,6 @@ export function useAuth() {
 
 /** Creates the users/{uid} profile for a self-registered learner (fields allowed by the security rules). */
 export async function createLearnerProfile(uid: string, data: { name: string; email: string; lang: string }) {
+  const [{ db }, { doc, serverTimestamp, setDoc }] = await Promise.all([loadFirebase(), import("firebase/firestore")]);
   await setDoc(doc(db, "users", uid), { name: data.name, email: data.email, lang: data.lang, role: "learner", orgId: null, createdAt: serverTimestamp(), lastActive: new Date().toISOString() });
 }

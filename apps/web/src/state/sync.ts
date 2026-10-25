@@ -5,8 +5,8 @@
  * what changed is written. Writes made offline wait in Firestore's local queue and go out when the phone reconnects.
  */
 import { useEffect, useReducer, useRef } from "react";
-import { collection, doc, getDocs, setDoc } from "firebase/firestore";
-import { db, firebaseReady } from "../firebase";
+import { firebaseReady } from "../firebase-config";
+import { loadFirebase } from "../fb";
 import { loadCatalog, loadUnit } from "../content/load";
 import type { Track } from "../content/types";
 import { useStore, type AppState, type LessonResult, type RemoteNote } from "./store";
@@ -85,6 +85,8 @@ export function useCloudSync(uid?: string) {
     let live = true;
     remote.current = { progress: {}, notes: {}, synced: false }; since.current = Date.now(); sent.current.clear();
     const pull = async () => {
+      // Signed-in only, so the SDK is already loading; nothing here reaches a guest's startup bundle.
+      const [{ db }, { collection, getDocs }] = await Promise.all([loadFirebase(), import("firebase/firestore")]);
       const [p, n] = await Promise.all([getDocs(collection(db, "users", uid!, "progress")), getDocs(collection(db, "users", uid!, "notes"))]);
       if (!live) return;
       remote.current = { progress: remoteProgress(raw(p)), notes: remoteNotes(raw(n)), synced: remote.current.synced || (!p.metadata.fromCache && !n.metadata.fromCache) };
@@ -107,6 +109,7 @@ export function useCloudSync(uid?: string) {
     ps.forEach((id) => sent.current.add(`p:${id}@${progress[id].completedAt}`));
     ns.forEach((id) => sent.current.add(`n:${id}@${notesAt[id] ?? 0}`));
     (async () => {
+      const [{ db }, { doc, setDoc }] = await Promise.all([loadFirebase(), import("firebase/firestore")]);
       const meta: Record<string, Meta> = ps.some((id) => !progress[id].unitId) ? await lessonIndex().catch(() => ({})) : {};
       for (const id of ps) {
         setDoc(doc(db, "users", uid!, "progress", id), progressDoc(id, progress[id], meta[id])).catch(warn);

@@ -1,17 +1,22 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import {
-  createUserWithEmailAndPassword, GoogleAuthProvider, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, updatePassword, updateProfile as fbUpdateProfile,
-} from "firebase/auth";
 import { Button, Mark, TextField } from "@darsi/design-system";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "../firebase";
+import { loadFirebase } from "../fb";
 import { useI18n } from "../i18n";
 import { useStore } from "../state/store";
 import { api, loginToEmail } from "./api";
 import { createLearnerProfile, useAuth } from "./AuthProvider";
 
+/** The SDK pieces these screens use, loaded on demand: the form shows at once, the SDK arrives while people type. */
+const authSdk = async () => {
+  const [fb, a] = await Promise.all([loadFirebase(), import("firebase/auth")]);
+  return { ...a, auth: fb.auth, db: fb.db };
+};
+
 function Shell({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
+  const { ensureFirebase, configured } = useAuth();
+  // Opening an account screen is the moment to fetch the SDK and start listening for sign-in.
+  useEffect(() => { if (configured) ensureFirebase().catch(() => {}); }, [configured, ensureFirebase]);
   return (
     <main className="auth-shell">
       <div className="auth-card">
@@ -27,7 +32,7 @@ const errText = (code: string, t: ReturnType<typeof useI18n>["t"]) =>
   code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found") ? t("auth.errCreds")
   : code.includes("email-already-in-use") ? t("auth.errExists")
   : code.includes("weak-password") ? t("auth.errWeak")
-  : code.includes("network") ? t("auth.errNetwork")
+  : code.includes("network") || code.includes("fetch") ? t("auth.errNetwork") // "fetch": the SDK itself couldn't download
   : code.includes("too-many-requests") ? t("auth.errTooMany")
   : t("auth.errGeneric");
 
@@ -38,7 +43,7 @@ export function SignIn() {
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setBusy(true); setErr("");
-    try { await signInWithEmailAndPassword(auth, loginToEmail(login), pw); nav("/learn", { replace: true }); }
+    try { const { auth, signInWithEmailAndPassword } = await authSdk(); await signInWithEmailAndPassword(auth, loginToEmail(login), pw); nav("/learn", { replace: true }); }
     catch (x) { setErr(errText(String((x as { code?: string }).code ?? x), t)); } finally { setBusy(false); }
   };
   return (
@@ -66,6 +71,7 @@ export function SignUp() {
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setBusy(true); setErr("");
     try {
+      const { auth, createUserWithEmailAndPassword, updateProfile: fbUpdateProfile } = await authSdk();
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), pw);
       await fbUpdateProfile(cred.user, { displayName: name.trim() });
       await createLearnerProfile(cred.user.uid, { name: name.trim(), email: email.trim().toLowerCase(), lang });
@@ -116,12 +122,18 @@ export function NotConfigured() {
 function GoogleButton({ next = "/learn" }: { next?: string }) {
   const { t, lang } = useI18n();
   const nav = useNavigate();
+  const { ensureFirebase } = useAuth();
   const [busy, setBusy] = useState(false);
+  // Browsers only allow the sign-in popup straight from the tap, so wait until the SDK is here before enabling it.
+  const [ready, setReady] = useState(false);
+  useEffect(() => { let live = true; ensureFirebase().then(() => live && setReady(true)).catch(() => {}); return () => { live = false; }; }, [ensureFirebase]);
   return (
-    <Button block variant="secondary" loading={busy} onClick={async () => {
+    <Button block variant="secondary" loading={busy || !ready} onClick={async () => {
       setBusy(true);
       try {
+        const { auth, db, signInWithPopup, GoogleAuthProvider } = await authSdk();
         const cred = await signInWithPopup(auth, new GoogleAuthProvider());
+        const { doc, getDoc } = await import("firebase/firestore");
         if (!(await getDoc(doc(db, "users", cred.user.uid))).exists()) await createLearnerProfile(cred.user.uid, { name: cred.user.displayName ?? "", email: (cred.user.email ?? "").toLowerCase(), lang });
         nav(next, { replace: true });
       } catch { /* closed popup */ } finally { setBusy(false); }
@@ -135,7 +147,7 @@ export function Forgot() {
   return (
     <Shell title={t("auth.forgotTitle")} sub={t("auth.forgotSub")}>
       {sent ? <p className="notice ok">{t("auth.forgotSent")}</p> : (
-        <form className="stack" onSubmit={async (e) => { e.preventDefault(); setBusy(true); try { await sendPasswordResetEmail(auth, email.trim()); } catch { /* do not reveal */ } setSent(true); setBusy(false); }}>
+        <form className="stack" onSubmit={async (e) => { e.preventDefault(); setBusy(true); try { const { auth, sendPasswordResetEmail } = await authSdk(); await sendPasswordResetEmail(auth, email.trim()); } catch { /* do not reveal */ } setSent(true); setBusy(false); }}>
           <TextField label={t("auth.email")} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <Button type="submit" block loading={busy}>{t("auth.sendLink")}</Button>
           <p className="muted small">{t("auth.forgotUsername")}</p>
@@ -156,7 +168,7 @@ export function SetPassword() {
     if (pw.length < 8) return setErr(t("auth.errWeak"));
     if (pw !== pw2) return setErr(t("auth.errMatch"));
     setBusy(true);
-    try { await updatePassword(user!, pw); await api.passwordChanged({}); }
+    try { const { updatePassword } = await import("firebase/auth"); await updatePassword(user!, pw); await api.passwordChanged({}); }
     catch (x) { setErr(errText(String((x as { code?: string }).code ?? x), t)); } finally { setBusy(false); }
   };
   return (

@@ -24,7 +24,7 @@ Done: the design system; the PWA MVP (lessons engine with all question types, AI
 
 `tsc` and `npm run build` pass. Unit tests: `tests/engine.test.ts`, `tests/screens.test.tsx` (staff screens with the data hooks and callables mocked), `tests/sync.test.tsx`. `npm run lint:css` checks every stylesheet against the brand and old-phone rules.
 
-Build for low-resource phones (the user asked for it; see the brand book). No live listeners or polling; one-shot reads, and writes only on change. Keep the install small: staff screens, the landing page and exceljs are lazy chunks that `vite.config.ts` leaves out of the precache. Keep re-renders few. Functions and Storage SDKs load on first use (`firebase.ts`). The Firestore offline cache is capped at 10 MB. Project photos are shrunk on the phone to ≤1280 px JPEG before upload (`ProjectView.shrinkImage`).
+Build for low-resource phones (the user asked for it; see the brand book). No live listeners or polling; one-shot reads, and writes only on change. Keep the install small: staff screens, the landing page and exceljs are lazy chunks that `vite.config.ts` leaves out of the precache. Keep re-renders few. **Guests never load Firebase.** Startup code reaches it only through `src/fb.ts` (`loadFirebase()`, `call()`, `storedSession()`). Never statically import `firebase/*` or `./firebase` on the guest path; staff screens are lazy chunks and may. The e2e test "guests never download the Firebase SDK" guards this. The SDK is in named chunks (`firebase`, `firebase-extra`) kept out of the precache. The install is ~850 KB and the main chunk ~133 KB gzipped. The Firestore offline cache is capped at 10 MB. Project photos are shrunk on the phone to ≤1280 px JPEG before upload (`ProjectView.shrinkImage`).
 
 ### Next steps, in order
 1. Done: `src/admin/SuperAdmin.tsx` (/super), `src/admin/Teach.tsx` (/teach, /teach/:uid via `TeachPerson`), `src/org/OrgScreen.tsx` (/org). Pass names into `t()` through `isolate()` from `i18n` (the plain-text `<bdi>`).
@@ -77,5 +77,4 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
 - Git: the repo is github.com/sherifalaafawzy/darsi. Commit with the repo-local personal identity (Sherif Alaa Fawzy <sherifalaafawzy@gmail.com>), never the global work identity.
 
 ### Known issues (not fixed yet)
-- Firebase (Firestore + Auth) is about two-thirds of the main JS chunk (~318 KB gzipped), and guests parse it without needing it. Loading Firebase only at sign-in would cut first-load JS a lot on old phones; it needs AuthProvider, data hooks and sync to load lazily.
 - All fonts are precached (~230 KB); the brand book says to precache only the scripts for the teacher's language.

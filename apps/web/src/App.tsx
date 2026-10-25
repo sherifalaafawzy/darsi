@@ -57,7 +57,7 @@ const homeFor = (role: Role) => (role === "orgAdmin" ? "/admin" : role === "supe
 
 function Routed() {
   const { state, ready, dispatch } = useStore();
-  const { user, profile, role, configured } = useAuth();
+  const { user, profile, role, configured, offlineUid } = useAuth();
   const { t } = useI18n();
   useEffect(() => {
     applyLocale(state.lang, state.theme);
@@ -70,7 +70,7 @@ function Routed() {
   if (!ready) return <Loading />;
   if (user && profile?.mustChangePassword) return <SetPassword />;
   // Guests: chose "Continue without an account", or used Darsi on this device before accounts existed.
-  const inApp = Boolean(user) || Boolean(state.guest) || state.onboarded;
+  const inApp = Boolean(user) || Boolean(offlineUid) || Boolean(state.guest) || state.onboarded;
   const account = (screen: ReactElement) => (user ? <SignedIn /> : configured ? screen : <NotConfigured />);
 
   return (
@@ -124,10 +124,11 @@ function WithI18n() {
 
 /** One local store per person on this device; a just-created account takes over the guest's progress. */
 function Scoped() {
-  const { user, loading } = useAuth();
+  const { user, loading, offlineUid } = useAuth();
   if (loading) return <Loading />;
   const created = user?.metadata.creationTime ? Date.parse(user.metadata.creationTime) : 0;
-  const scope = user?.uid ?? "guest";
+  // offlineUid: signed in on this device but offline before the SDK was cached; keep learning in their own store.
+  const scope = user?.uid ?? offlineUid ?? "guest";
   return <StoreProvider key={scope} scope={scope} adoptGuest={Date.now() - created < 10 * 60e3}><WithI18n /></StoreProvider>;
 }
 

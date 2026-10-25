@@ -36,7 +36,7 @@ export function Layout() {
   const { t, lang } = useI18n();
   const nav = useNavigate();
   const { pathname } = useLocation();
-  const { user, role } = useAuth();
+  const { user, role, signOut } = useAuth();
   const { state, dispatch } = useStore();
   const online = useOnline();
   const update = usePwaUpdate();
@@ -57,6 +57,8 @@ export function Layout() {
         <Link to="/learn" className="rail-brand" aria-label="Darsi"><Mark size={36} /><span>{lang === "ar" ? "درسي" : "Darsi"}</span></Link>
         {TABS.map(railItem)}
         {extra.length > 0 && <><hr className="rail-sep" />{extra.map(railItem)}</>}
+        {/* On phones Sign out is at the top of Me; on wide screens it is always here. */}
+        {user && <button type="button" className="rail-item rail-signout" onClick={() => { void signOut(); }}><Icon name="close" size={24} /><span>{t("me.signOut")}</span></button>}
       </nav>
       <div className="app-main">
         {!online && <ConnectionStatus state="offline" floating>{t("pwa.offline")}</ConnectionStatus>}

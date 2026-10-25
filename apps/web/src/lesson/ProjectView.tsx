@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { Button, Icon, QuestionHeader } from "@darsi/design-system";
-import { db, storage } from "../firebase";
+import { loadFirebase } from "../fb";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n";
 import type { ProjectStep } from "../content/types";
@@ -40,12 +39,13 @@ export function ProjectView({ step, lessonId, unitId, onReady }: { step: Project
     try {
       let fileUrl: string | null = null, fileName: string | null = null;
       if (file) {
-        const [{ getDownloadURL, ref, uploadBytes }, s, body] = await Promise.all([import("firebase/storage"), storage(), shrinkImage(file)]);
+        const [{ getDownloadURL, ref, uploadBytes }, s, body] = await Promise.all([import("firebase/storage"), loadFirebase().then((fb) => fb.storage()), shrinkImage(file)]);
         const safe = file.name.replace(/[^\w.-]/g, "_"), jpeg = body !== file;
         const r = ref(s, `submissions/${orgId ?? "none"}/${user.uid}/${lessonId}-${Date.now()}-${jpeg ? safe.replace(/\.\w+$/, "") + ".jpg" : safe}`);
         await uploadBytes(r, body, { contentType: jpeg ? "image/jpeg" : file.type });
         fileUrl = await getDownloadURL(r); fileName = file.name;
       }
+      const [{ db }, { addDoc, collection, serverTimestamp }] = await Promise.all([loadFirebase(), import("firebase/firestore")]);
       await addDoc(collection(db, "users", user.uid, "submissions"), { lessonId, unitId, stepId: step.id, orgId: orgId ?? null, text, fileUrl, fileName, status: "submitted", createdAt: serverTimestamp() });
       setState("sent");
     } catch { setState("error"); }

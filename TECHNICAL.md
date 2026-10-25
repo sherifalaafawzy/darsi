@@ -51,7 +51,9 @@ darsi/
 │  ├─ scripts/build-kits.mjs     generates the kits from the content
 │  ├─ src/
 │  │  ├─ App.tsx                 providers, routes, role guards, lazy staff chunks
-│  │  ├─ firebase.ts             Firebase init; Functions and Storage load on first use
+│  │  ├─ firebase-config.ts      Firebase settings from env (no SDK; safe on the startup path)
+│  │  ├─ fb.ts                   the only way startup code reaches Firebase: loadFirebase(), call(), storedSession()
+│  │  ├─ firebase.ts             the SDK (Auth, Firestore; Functions and Storage on first use); loaded via fb.ts
 │  │  ├─ auth/                   AuthProvider (user + custom claims), sign-in screens, callable API
 │  │  ├─ state/                  local store (IndexedDB) and cloud sync
 │  │  ├─ screens/                learner screens: Home, Lesson, Kit, Downloads, Lab, Me, Onboarding
@@ -104,6 +106,12 @@ AuthProvider            Firebase user + custom claims {role, orgId}; claims are 
          └─ Routed      routes, guards, useCloudSync(uid)
 ```
 
+- **Firebase loads only when needed.** At startup, `storedSession()` (`fb.ts`) reads Firebase Auth's own persisted session from IndexedDB (or localStorage) without the SDK:
+  - **A session is stored:** AuthProvider loads the SDK at once and subscribes to auth state.
+  - **None is stored (a guest or new visitor):** nothing loads.
+  - **The account screens** call `ensureFirebase()` when they open: the form shows immediately and the SDK arrives while people type. The Google button waits for it, because browsers only allow the sign-in popup straight from a tap.
+  - **The SDK can't load** (offline, and its chunk isn't cached yet): AuthProvider sets `offlineUid` from the stored session. That person keeps learning in their own local store and reconnects on the next `online` event.
+  - **The rule for new code:** never import `firebase/*` or `./firebase` statically on the guest path. Go through `loadFirebase()`, or keep the module in a lazy chunk. The e2e test "guests never download the Firebase SDK" guards this.
 - **One local store per person on the device.** The keys are `darsi:state:<uid>` for accounts and `darsi:state` for guests.
   - An account used on this device for the first time starts from the guest's settings.
   - An account created in the last 10 minutes takes over the guest's learning, so "your progress stays on this device until you create an account" holds true.
@@ -135,8 +143,8 @@ The service worker (Workbox `generateSW`) installs when a person enters the app.
 
 | What | Strategy |
 |---|---|
-| App shell, learner screens, fonts, icons, lesson JSON | **Precached** (~1.5 MB) |
-| Staff chunks, landing page, exceljs, and their CSS | **Not precached**; `darsi-chunks` caches them cache-first on first use (hashed file names) |
+| App shell, learner screens, fonts, icons, lesson JSON | **Precached** (~850 KB) |
+| The Firebase SDK (`firebase-*`), staff chunks, landing page, exceljs, and their CSS | **Not precached**; `darsi-chunks` caches them cache-first on first use (hashed file names) |
 | `/content/*` | Stale-while-revalidate (`darsi-content`) |
 | `/kits/*` | Cache-first (`darsi-kits`), filled per unit when the teacher taps Download |
 | `/media/*` | Cache-first with range requests (`darsi-media`) |
@@ -274,8 +282,9 @@ The Firebase Emulator Suite needs **JDK 21+**. Rules tests with `@firebase/rules
 
 | Measure | Now | Target (brand book) |
 |---|---|---|
-| Precache on install | ~1.5 MB | ≤ 2 MB including fonts |
-| Main JS chunk | ~318 KB gzipped (about two-thirds Firebase) | Smaller: see the roadmap |
+| Precache on install | ~850 KB | ≤ 2 MB including fonts |
+| Main JS chunk | ~133 KB gzipped (no Firebase) | |
+| Firebase SDK, signed-in only | ~210 KB gzipped (`firebase`), plus ~14 KB (`firebase-extra`: Functions + Storage) for admins and uploads | |
 | Main CSS | ~11 KB gzipped | |
 | One lesson | ~19 KB of JSON (both languages); kits and media download on demand | ≤ 300 KB |
 
@@ -283,7 +292,6 @@ Measure with `npx vite build` in `apps/web` and read the chunk table and the `pr
 
 ## Known gaps and roadmap
 
-- **Firebase loads for guests too.** Loading the Auth and Firestore SDKs only once someone signs in would cut first-load JavaScript substantially on old phones.
 - **Fonts:** both scripts are precached (Arabic 131 KB, Latin 106 KB); precaching only the teacher's language would save 105–130 KB per install.
 - **Videos:** the narrated video pipeline (Playwright slide renders, TTS in each language, ffmpeg, VTT captions) is designed but not built. Lessons use transcripts until then.
 - **Security review:** a static review of the rules, functions and client, plus rules unit tests and a scan of the deployed site, is planned before wider rollout.

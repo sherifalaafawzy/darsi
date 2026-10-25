@@ -21,6 +21,24 @@ test("onboarding → home shows the AI unit", async ({ page }) => {
   await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
 });
 
+const firebaseChunks = (page: Page) => page.evaluate(() => performance.getEntriesByType("resource").map((e) => e.name).filter((n) => /\/assets\/firebase-/.test(n)));
+
+test("guests never download the Firebase SDK", async ({ page }) => {
+  await onboard(page);
+  await expect(page.getByRole("heading", { name: "AI basics for teachers" })).toBeVisible();
+  await page.getByRole("button", { name: "Start" }).first().click();
+  await expect(page.getByRole("button", { name: "Transcript" })).toBeVisible();
+  expect(await firebaseChunks(page)).toEqual([]);
+});
+
+test("the sign-in screen loads Firebase on demand", async ({ page }) => {
+  await page.goto("/signin");
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  // The Google button waits for the SDK (a sign-in popup must open straight from the tap).
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
+  expect((await firebaseChunks(page)).length).toBeGreaterThan(0);
+});
+
 test("Arabic switches the whole app to RTL", async ({ page }) => {
   await onboard(page, "العربية");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");

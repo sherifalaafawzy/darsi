@@ -61,8 +61,14 @@ export function Me() {
 function Account() {
   const { t } = useI18n();
   const nav = useNavigate();
-  const { user, profile, role, configured, signOut } = useAuth();
+  const { user, profile, role, configured, signOut, offlineUid } = useAuth();
   if (!configured) return null;
+  if (!user && offlineUid) return (
+    <section className="panel stack" aria-labelledby="acct-h">
+      <h2 id="acct-h" className="section-title">{t("me.account")}</h2>
+      <p className="muted">{t("me.offlineAccount")}</p>
+    </section>
+  );
   if (!user) return (
     <section className="panel stack" aria-labelledby="acct-h">
       <h2 id="acct-h" className="section-title">{t("me.account")}</h2>
