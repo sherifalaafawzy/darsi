@@ -67,7 +67,7 @@ darsi/
 │  └─ capacitor.config.ts
 ├─ packages/design-system/       @darsi/design-system (tokens.json → CSS/TS, components, logos, fonts)
 ├─ functions/                    Cloud Functions (own package and lockfile)
-├─ firebase/                     firestore.rules, storage.rules, firestore.indexes.json
+├─ firebase/                     firestore.rules, storage.rules, storage-locked.rules, firestore.indexes.json
 ├─ scripts/                      set-superadmin.mjs, check-css.mjs
 ├─ docs/                         FIREBASE, CONTENT, NATIVE, design-system PDF
 └─ firebase.json, .firebaserc    hosting (headers, SPA rewrite), emulators, deploy targets
@@ -157,7 +157,11 @@ The service worker (Workbox `generateSW`) installs when a person enters the app.
 
 ## Backend: Firebase
 
-Project **`darsi-f0685`**. Firestore and Cloud Functions are in **europe-west1**; the Storage bucket `darsi-f0685.firebasestorage.app` is in **us-west1**. Hosting is at https://darsi-f0685.web.app.
+Project **`darsi-f0685`**. Firestore, Cloud Functions and the Storage bucket the app uses (`darsi-f0685`) are all in **europe-west1**. Hosting is at https://darsi-f0685.web.app.
+
+Firebase's original default bucket, `darsi-f0685.firebasestorage.app`, was created in us-west1, and a bucket's location can't change. So it is locked with deny-all rules (`firebase/storage-locked.rules`), and the app points at the europe-west1 bucket through `VITE_FIREBASE_STORAGE_BUCKET`. `firebase.json` deploys Storage rules per bucket through deploy targets defined in `.firebaserc`:
+- `main` → `darsi-f0685`;
+- `legacy-us` → the locked bucket.
 
 ### Data model (Firestore)
 
@@ -191,7 +195,7 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 - **`orgs`:** readable by members, the requester and platform admins. Created only through `requestOrg`.
 - **`inviteCodes`:** no client access at all.
 
-**Storage** (`firebase/storage.rules`):
+**Storage** (`firebase/storage.rules` on `darsi-f0685`; the old US bucket denies everything):
 - `media/` and `kits/` are publicly readable and never writable from the client.
 - `submissions/{orgId|none}/{uid}/{file}` is created only by its owner: under 10 MB, images, PDF, mp4 or audio. It can be read by the owner, a platform admin, or that organization's admins and teachers.
 
@@ -283,6 +287,5 @@ Measure with `npx vite build` in `apps/web` and read the chunk table and the `pr
 - **Fonts:** both scripts are precached (Arabic 131 KB, Latin 106 KB); precaching only the teacher's language would save 105–130 KB per install.
 - **Videos:** the narrated video pipeline (Playwright slide renders, TTS in each language, ffmpeg, VTT captions) is designed but not built. Lessons use transcripts until then.
 - **Security review:** a static review of the rules, functions and client, plus rules unit tests and a scan of the deployed site, is planned before wider rollout.
-- **Storage region:** the bucket is in us-west1, and a bucket's location can't change. If a partner requires regional data residency, add a europe-west1 bucket for submissions.
 - **Content and languages:** the IoT and cyber-security units; French, Swahili, Urdu and Hausa.
 - **Native apps:** Android and iOS through Capacitor (see docs/NATIVE.md), with an opt-in weekly reminder.
