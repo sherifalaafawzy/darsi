@@ -24,7 +24,8 @@ service cloud.firestore {
         && request.resource.data.get('orgId', null) == null
         && request.resource.data.keys().hasOnly(['name', 'email', 'username', 'lang', 'role', 'orgId', 'createdAt', 'lastActive', 'prefs', 'teach', 'tracks', 'weeklyLessons', 'levels', 'mustChangePassword'])
         && request.resource.data.name is string && request.resource.data.name.size() <= 120;
-      // A person edits their own profile but never their role, organization, teacher or computed summary.
+      // A person edits their own profile but never their role, organization, teacher, computed summary or
+      // notification settings (`notify`: the registerDevice/updateNotifyPrefs functions write it).
       allow update: if signedIn() && request.auth.uid == uid
         && onlyChanges(['name', 'lang', 'lastActive', 'prefs', 'teach', 'tracks', 'weeklyLessons', 'levels', 'mustChangePassword'])
         && (!('mustChangePassword' in request.resource.data) || request.resource.data.mustChangePassword == false || resource.data.get('mustChangePassword', false) == true);
@@ -53,7 +54,13 @@ service cloud.firestore {
       match /notes/{lessonId} {
         allow read, write: if signedIn() && request.auth.uid == uid;
       }
+
+      // Push tokens, one per device. Only Cloud Functions (registerDevice, unregisterDevice, the senders) touch them.
+      match /devices/{deviceId} { allow read, write: if false; }
     }
+
+    // Announcements sent from /super: written by the sendBroadcast function, read by platform admins.
+    match /broadcasts/{id} { allow read: if isSuper(); allow write: if false; }
 
     match /orgs/{orgId} {
       allow read: if inOrg(orgId) || isSuper() || (signedIn() && resource.data.createdBy == request.auth.uid);
@@ -64,6 +71,8 @@ service cloud.firestore {
 
     // Invite codes and audit logs are handled only by Cloud Functions.
     match /inviteCodes/{code} { allow read, write: if false; }
+    // Which account a push token belongs to now (shared phones): registerDevice and unregisterDevice only.
+    match /pushTokens/{deviceId} { allow read, write: if false; }
     match /audit/{id} { allow read: if isSuper(); allow write: if false; }
   }
 }

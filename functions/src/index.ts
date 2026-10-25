@@ -3,26 +3,21 @@
  * All role and organization changes happen here, with the Admin SDK, so that clients can never grant themselves access.
  * Roles are stored twice: as Auth custom claims (used by security rules) and on users/{uid} (used by the UI).
  */
-import { initializeApp } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
-import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
-import { setGlobalOptions } from "firebase-functions/v2";
+import { logger } from "firebase-functions/v2";
+import { audit, auth, caller, db, str, type Role } from "./admin.js";
+import { alertOrgRequest } from "./notify.js";
+import { recentWeeks } from "./nudge.js";
 import { generateCode, generatePassword, isValidEmail, isValidUsername, suggestUsername, usernameToEmail } from "./passwords.js";
 
-initializeApp();
-setGlobalOptions({ region: "europe-west1", maxInstances: 20 });
-const db = getFirestore();
-const auth = getAuth();
+export type { Role } from "./admin.js";
+/** Push notifications: device registration, announcements, review and staff alerts, daily nudges. */
+export * from "./notify.js";
 
-export type Role = "learner" | "student" | "teacher" | "orgAdmin" | "superadmin";
 const MEMBER_ROLES: Role[] = ["student", "teacher", "orgAdmin"];
 
-function caller(req: CallableRequest) {
-  if (!req.auth) throw new HttpsError("unauthenticated", "Sign in first.");
-  return { uid: req.auth.uid, role: (req.auth.token.role as Role | undefined) ?? "learner", orgId: req.auth.token.orgId as string | undefined };
-}
 function requireOrgAdmin(req: CallableRequest, orgId: string) {
   const c = caller(req);
   if (c.role === "superadmin") return c;
@@ -33,10 +28,6 @@ async function setRole(uid: string, role: Role, orgId: string | null, extra: Rec
   await auth.setCustomUserClaims(uid, orgId ? { role, orgId } : { role });
   await db.doc(`users/${uid}`).set({ role, orgId, ...extra, claimsUpdatedAt: FieldValue.serverTimestamp() }, { merge: true });
 }
-async function audit(action: string, by: string, data: Record<string, unknown>) {
-  await db.collection("audit").add({ action, by, ...data, at: FieldValue.serverTimestamp() });
-}
-const str = (v: unknown, max = 200) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
 /* ---------- Organizations ---------- */
 
@@ -54,6 +45,8 @@ export const requestOrg = onCall(async (req) => {
     status: "pending", createdBy: c.uid, createdAt: FieldValue.serverTimestamp(), memberCount: 0,
   });
   await audit("requestOrg", c.uid, { orgId: ref.id });
+  // Platform admins hear about it; a failed alert never fails the request.
+  await alertOrgRequest(ref.id, name).catch((e) => logger.warn("staffOrgRequest not sent", { orgId: ref.id, error: String(e) }));
   return { orgId: ref.id, status: "pending" };
 });
 
@@ -207,21 +200,28 @@ export const passwordChanged = onCall(async (req) => {
 
 /* ---------- Learning summary (what admins and teachers see) ---------- */
 
-/** Recompute users/{uid}.summary whenever a lesson result is written: lessons, XP, competencies, last activity. */
+/**
+ * Recompute users/{uid}.summary whenever a lesson result is written: lessons, XP, competencies, last activity,
+ * plus lessons per ISO week (UTC, the last 12 weeks) and lastLessonAt, which the daily nudges read.
+ */
 export const onProgressWrite = onDocumentWritten("users/{uid}/progress/{lessonId}", async (event) => {
   const uid = event.params.uid;
   const snap = await db.collection(`users/${uid}/progress`).get();
   const competencies: Record<string, number> = {};
   const units: Record<string, number> = {};
+  const completed: string[] = [];
   let xp = 0, accSum = 0, last = "";
   for (const d of snap.docs) {
     const p = d.data();
     xp += Number(p.xp) || 0; accSum += Number(p.accuracy) || 0;
-    if (p.completedAt > last) last = p.completedAt;
+    if (typeof p.completedAt === "string") { completed.push(p.completedAt); if (p.completedAt > last) last = p.completedAt; }
     if (p.unitId) units[p.unitId] = (units[p.unitId] ?? 0) + 1;
     for (const code of (p.competencies as string[] | undefined) ?? []) competencies[code] = (competencies[code] ?? 0) + 1;
   }
-  await db.doc(`users/${uid}`).set({
-    summary: { lessonsDone: snap.size, xp, avgAccuracy: snap.size ? accSum / snap.size : 0, lastActive: last || null, competencies, units },
-  }, { merge: true });
+  const summary = {
+    lessonsDone: snap.size, xp, avgAccuracy: snap.size ? accSum / snap.size : 0, lastActive: last || null, competencies, units,
+    weeks: recentWeeks(completed), lastLessonAt: last || null,
+  };
+  // mergeFields replaces each summary field whole, so weeks older than 12 are dropped instead of merged back in.
+  await db.doc(`users/${uid}`).set({ summary }, { mergeFields: Object.keys(summary).map((k) => `summary.${k}`) });
 });

@@ -7,6 +7,7 @@ import type { Role } from "./auth/types";
 import { I18nProvider, useI18n } from "./i18n";
 import { StoreProvider, useStore } from "./state/store";
 import { useCloudSync } from "./state/sync";
+import { usePushRefresh } from "./notify/usePushRefresh";
 import { Layout } from "./components/Layout";
 import { Home } from "./screens/Home";
 import { LessonScreen } from "./screens/LessonScreen";
@@ -66,6 +67,7 @@ function Routed() {
   // Certificates use the local name; start it from the account name.
   useEffect(() => { if (ready && profile?.name && !state.name) dispatch({ type: "set", patch: { name: profile.name } }); }, [ready, profile?.name, state.name, dispatch]);
   useCloudSync(user?.uid);
+  usePushRefresh(); // signed in and opted in on this phone only; guests never load messaging
 
   if (!ready) return <Loading />;
   if (user && profile?.mustChangePassword) return <SetPassword />;
@@ -90,11 +92,12 @@ function Routed() {
             <Route path="downloads" element={<Downloads />} />
             <Route path="lab" element={<Lab />} />
             <Route path="kit" element={<Kit />} />
-            <Route path="me" element={<Me />} />
           </Route>
         </Route>
-        {/* Staff screens skip onboarding: an admin may never take a lesson on this device. */}
+        {/* Staff screens skip onboarding: an admin may never take a lesson on this device. Me does too: it holds the
+            account section and Sign out, which a staff member on a phone (no nav rail) must always be able to reach. */}
         <Route element={<Layout />}>
+          <Route path="me" element={<Me />} />
           <Route path="org" element={<OrgScreen />} />
           <Route element={<Allow roles={["orgAdmin"]} />}>
             <Route path="admin" element={<AdminHome />} />

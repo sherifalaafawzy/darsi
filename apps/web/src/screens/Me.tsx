@@ -4,6 +4,7 @@ import { AppBar, Button, CertificateCard, Icon, LanguagePicker, PlacementResult,
 import { useAuth } from "../auth/AuthProvider";
 import { displayLogin } from "../auth/api";
 import { accountLinks } from "../components/Layout";
+import { NotificationsPanel } from "../notify/NotificationsPanel";
 import { isolate, LANGUAGES, useI18n } from "../i18n";
 import { useStore } from "../state/store";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
@@ -33,8 +34,8 @@ export function Me() {
         <section>
           <Switch label={t("me.sunlight")} description={t("me.sunlightD")} checked={state.theme === "sunlight"} onChange={(on) => set({ theme: on ? "sunlight" : "light" })} />
           <Switch label={t("me.dataSaver")} description={t("me.dataSaverD")} checked={state.dataSaver} onChange={(on) => set({ dataSaver: on })} />
-          <Switch label={t("me.reminder")} description={t("me.reminderD")} checked={state.reminder} onChange={(on) => set({ reminder: on })} />
         </section>
+        <NotificationsPanel />
         <TextField label={t("me.name")} hint={t("me.nameHint")} value={state.name} onChange={(e) => set({ name: e.target.value })} autoComplete="name" />
         <PlacementResult title={t("me.levels")} levels={tracks.map((tr) => ({ track: tr, trackLabel: t(`track.${tr}`), level: state.levels[tr] ?? 1, of: 4, label: t("place.level", { n: state.levels[tr] ?? 1 }) }))} />
         <section id="certificates" className="stack"><h2 className="section-title">{t("me.certs")}</h2>
@@ -91,6 +92,7 @@ function Account() {
       </div>
       <div className="row-gap">
         {accountLinks(role, true).map((l) => <Button key={l.path} variant="secondary" icon={l.icon} onClick={() => nav(l.path)}>{t(l.key)}</Button>)}
+        {/* signOut first stops this phone getting the account's notifications (AuthProvider), as every Sign out button does. */}
         <Button variant="ghost" icon="close" onClick={() => { void signOut(); }}>{t("me.signOut")}</Button>
       </div>
     </section>

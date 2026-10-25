@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { User } from "firebase/auth";
 import { firebaseReady } from "../firebase-config";
 import { loadFirebase, storedSession } from "../fb";
+import { pushSignOut } from "../notify/push";
 import type { Profile, Role } from "./types";
 
 interface AuthState {
@@ -98,7 +99,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ensureFirebase: start,
     refreshClaims: async () => { if (user) await readClaims(user, true); },
     updateProfile,
-    signOut: async () => { const [{ auth }, { signOut }] = await Promise.all([loadFirebase(), import("firebase/auth")]); await signOut(auth); },
+    // Every Sign out button (Me, the nav rail, the set-password screen) comes here. This phone stops getting the
+    // account's notifications first, while the session can still call unregisterDevice: on a shared phone the next
+    // person must not see them. pushSignOut is capped at a few seconds, so signing out never hangs offline.
+    signOut: async () => {
+      if (user) await pushSignOut(user.uid);
+      const [{ auth }, { signOut }] = await Promise.all([loadFirebase(), import("firebase/auth")]);
+      await signOut(auth);
+    },
     configured: firebaseReady,
   }), [user, profile, claims, loading, offlineUid, start, readClaims, updateProfile]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

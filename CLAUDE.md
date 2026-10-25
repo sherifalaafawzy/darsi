@@ -59,6 +59,13 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
    - Done: the e2e suite takes the guest path from the landing page, covers the transcript path, the video fallback and the project step ("do it in class" for guests). All 12 tests (desktop and phone) passed on 2026-10-25.
    - Still to do: unit tests for `admin/importer.ts`; rules tests with @firebase/rules-unit-testing against the emulators (needs JDK 21); e2e for the auth screens.
    - `npm run e2e` runs `npm run build` first. Playwright 1.64 wants chromium build 1248; set `CHROMIUM_PATH` to an installed `chrome.exe` if it isn't downloaded.
+10. Done (2026-10-26): push notifications. TECHNICAL.md "Push notifications" and docs/FIREBASE.md §6 have the details.
+    - **Server:** `functions/src/notify.ts` (callables and triggers); `nudge.ts` (pure `pickNudge`, unit-tested); `messages.ts` (en/ar wording, encouraging, no guilt); `admin.ts` (the shared Admin SDK instance and helpers).
+    - **Client:** `apps/web/src/notify/` (`push.ts`, `NotificationsPanel` in Me, `usePushRefresh`), the composer in `/super`, and `public/push-sw.js`, imported by the Workbox service worker.
+    - **The user's choices:** daily, Duolingo-like nudges, at most one per person per local day at their chosen hour, opt-in per phone. Triggers: weekly goal (only within reach), streak, comeback at 7 and 21 days then stop, project reviewed, and staff alerts.
+    - **Broadcasts:** from `/super`, in en and ar; the audience is everyone, an org or a role. Sent via FCM topics, logged in `broadcasts`.
+    - **Never on the guest path:** messaging is in the lazy `firebase-extra` chunk. Every sign-out first unregisters this phone (`pushSignOut`). Me is outside the onboarding gate so Sign out is always reachable.
+    - **Key:** the VAPID public key is in `apps/web/.env.local` as `VITE_FIREBASE_VAPID_KEY`, verified as a valid P-256 point. It's read at build time, so any machine that builds Hosting needs it.
 9. Not started: the security review. The user asked for static scanning of the rules, functions and client, plus a pentest of the deployed URL with `H:\htdocs\pentest-lab` (allowlist-gated; add only darsi-f0685 hosts). It is deferred until the code is finished.
 
 ### Firebase project (live): darsi-f0685

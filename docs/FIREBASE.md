@@ -4,7 +4,8 @@ Darsi runs on the Firebase project **`darsi-f0685`** in region **`europe-west1`*
 - Hosting (the PWA);
 - Authentication (email/password, Google, and username logins mapped to `<username>@users.darsi.app`);
 - Cloud Firestore and Cloud Storage;
-- Cloud Functions (2nd gen, Node 22).
+- Cloud Functions (2nd gen, Node 22), with Cloud Scheduler for the hourly reminder run;
+- Cloud Messaging (web push; see [6. Push notifications](#6-push-notifications)).
 
 ## 1. One-time setup in the Firebase console
 
@@ -35,8 +36,8 @@ npx firebase deploy --only firestore:rules,firestore:indexes,storage,functions,h
 `firebase.json` runs the builds for you: Hosting's predeploy runs `npm run build` (design system + web), and Functions' predeploy runs `npm run build` in `functions/`.
 
 On the **first** functions deploy:
-- the CLI asks to enable Cloud Functions, Cloud Build, Artifact Registry, Cloud Run and Eventarc; say yes;
-- if `onProgressWrite` (the Firestore trigger) fails with an Eventarc permission error, wait a few minutes and deploy again: Google needs time to provision the service agent.
+- the CLI asks to enable Cloud Functions, Cloud Build, Artifact Registry, Cloud Run, Eventarc and Cloud Scheduler (for `dailyNudges`); say yes;
+- if `onProgressWrite` or another Firestore trigger fails with an Eventarc permission error, wait a few minutes and deploy again: Google needs time to provision the service agent.
 
 Firestore builds the composite indexes in `firebase/firestore.indexes.json` after deploy. The console shows "Building", and admin lists stay empty until the build finishes.
 
@@ -60,6 +61,52 @@ The app picks up the role by itself: it refreshes claims when `users/{uid}` chan
 - Request an organization from `/org?request=1`, approve it at `/super`, then join it with an invite code from a second account.
 - In an org admin account: add two people, download the credentials, print the login slips.
 - On a cheap Android phone: install the PWA, go offline, and confirm a downloaded unit still opens.
+- Notifications: see the checks at the end of [6. Push notifications](#6-push-notifications).
+
+## 6. Push notifications
+
+Darsi sends web push through Firebase Cloud Messaging (FCM):
+- **learning reminders**: opt-in, at most one a day, at the hour the person picks;
+- **project feedback** for learners and **staff alerts** (a project to review, a new organization request);
+- **announcements** that platform admins send from `/super`.
+
+Nothing is sent to a device until its owner turns notifications on in **Me**, and each category can be switched off there. Guests never load the messaging SDK. How it works is in [TECHNICAL.md](../TECHNICAL.md#push-notifications).
+
+### Set up once
+
+1. **Web Push key (VAPID).** Firebase console → Project settings → **Cloud Messaging** → *Web Push certificates* → **Generate key pair**. Copy the key pair's public key into `apps/web/.env.local`:
+   ```
+   VITE_FIREBASE_VAPID_KEY=B...
+   ```
+   - The key is public, not a secret, but Vite reads it at build time: rebuild and redeploy Hosting after setting or changing it.
+   - Until it is set, Me says notifications aren't set up yet and the app never loads the messaging SDK.
+   - On the same page, **Firebase Cloud Messaging API (V1)** should say *Enabled* (the default for new projects). The legacy API isn't used.
+2. **Cloud Scheduler** is enabled by the first functions deploy that includes `dailyNudges` (say yes when the CLI asks). The CLI creates one job for it (Google Cloud console → Cloud Scheduler) that runs at the top of every hour (`0 * * * *`, UTC). Cloud Scheduler's free tier covers 3 jobs per billing account.
+3. **Deploy** the rules, functions and app together: `npx firebase deploy --only firestore:rules,functions,hosting`. The new rules keep device tokens (`users/{uid}/devices`) away from every client, and let only platform admins read `broadcasts`.
+
+### Phones and browsers
+
+- **Android:** Chrome, Edge, Samsung Internet and Firefox, in a tab or the installed app.
+- **iPhone and iPad:** web push works only in the installed app, on **iOS/iPadOS 16.4 or later**. In Safari: Share → **Add to Home Screen**, then open Darsi from the home screen and turn notifications on in Me. In a Safari tab, Me explains this instead of showing the switch.
+- **Blocked permission:** a browser never asks twice. People allow it again in the site settings (Chrome: the icon next to the address → Permissions → Notifications → Allow); Me tells them how.
+- **The Android and iOS apps (Capacitor)** don't register the web service worker, so web push doesn't run in them. Native push is not built yet.
+
+### Send an announcement
+
+1. Sign in as a platform admin and open `/super`.
+2. Under **Send an announcement**, write a title (up to 60 characters) and a message (up to 180) in **both** English and Arabic. Each device gets its own language.
+3. Choose the audience: everyone, one active organization, or one role (teachers, students or org admins). Choose the screen the notification opens: Learn, AI lab, Classroom kit or Organization.
+4. Tap **Send** and confirm. The notice shows the result for each language. **Recent announcements** lists the last 20; each send is also stored in `broadcasts` and written to `audit`.
+
+It reaches every device where the person has notifications on and **Announcements** switched on. A phone that is offline gets it when it reconnects, if that is within 24 hours. An announcement can't be recalled, so try it on a test organization first.
+
+### Check it works
+
+FCM isn't part of the Emulator Suite, and `npm run dev` runs without a service worker. Test against the real project with `npm run build` and `npm run preview` (http://localhost:4173 counts as a secure origin), or on the deployed site:
+- Sign in, turn notifications on in Me, and allow the prompt. `users/{uid}/devices/…` and `users/{uid}.notify` appear in Firestore.
+- Send an announcement to a test organization you belong to. It arrives in your language, and tapping it opens the chosen screen.
+- Pick the next reminder time on the list (07:00, 12:00, 16:00, 18:00 or 20:00) and wait for it. One reminder arrives in that hour, and none if you finish a lesson first that day.
+- Turn notifications off in Me. The device disappears from Firestore.
 
 ## Local development with the emulators
 
@@ -81,3 +128,4 @@ npm run dev                          # the web app talks to the emulators (.env.
 | Data | Firestore | Rules in `firebase/firestore.rules`. Learner progress syncs with one read per sign-in, with no live listeners. |
 | Files | Storage | Project evidence (≤ 10 MB, images/PDF/mp4/audio). Media and kits are public read. |
 | Roles, orgs, accounts | Cloud Functions | `europe-west1`, max 20 instances. Every role change is written to `audit`. |
+| Notifications | Cloud Functions + FCM | Device tokens in `users/{uid}/devices`; `dailyNudges` runs hourly on Cloud Scheduler; announcements are logged in `broadcasts`. The service worker's push handlers are `apps/web/public/push-sw.js`. |

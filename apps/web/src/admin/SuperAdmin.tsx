@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
-import { AppBar, Button, EmptyState } from "@darsi/design-system";
+import { AppBar, Button, EmptyState, TextField } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
-import { api, displayLogin } from "../auth/api";
+import { api, displayLogin, type BroadcastAudience, type PushLang } from "../auth/api";
 import type { Org } from "../auth/types";
-import { isolate, LANGUAGES, useI18n } from "../i18n";
-import { useOrgsByStatus, usePerson } from "./data";
+import { isolate, LANGUAGES, useI18n, type MessageKey } from "../i18n";
+import { useBroadcasts, useOrgsByStatus, usePerson, type Broadcast } from "./data";
 import "../styles/admin.css";
 
 /** Display helpers for an organization: localized type, "city، country" and a locale date. */
@@ -18,7 +18,7 @@ export function useOrgText() {
   };
 }
 
-/** Platform admin: review organization requests and see the active organizations. */
+/** Platform admin: send announcements, review organization requests and see the active organizations. */
 export function SuperAdmin() {
   const { t, num } = useI18n();
   const { role } = useAuth();
@@ -26,6 +26,7 @@ export function SuperAdmin() {
   const isSuper = role === "superadmin";
   const { data: pending = [], error: pendingErr } = useOrgsByStatus("pending", isSuper);
   const { data: active = [], error: activeErr } = useOrgsByStatus("active", isSuper);
+  const sent = useBroadcasts(isSuper);
   const [msg, setMsg] = useState("");
   const [q, setQ] = useState("");
   const rows = useMemo(() => {
@@ -44,6 +45,9 @@ export function SuperAdmin() {
           <div className="tile"><span>{t("sup.active")}</span><strong>{num(active.length)}</strong></div>
           <div className="tile"><span>{t("adm.members")}</span><strong>{num(active.reduce((a, o) => a + (o.memberCount ?? 0), 0))}</strong></div>
         </section>
+
+        <Announce orgs={active} onSent={sent.reload} />
+        <RecentAnnouncements list={sent.data} error={sent.error} orgs={active} />
 
         <section className="panel stack">
           <h3>{t("sup.pending")}</h3>
@@ -123,5 +127,143 @@ function OrgRequest({ org, onDone }: { org: Org; onDone: (msg: string) => void }
       )}
       {err && <p className="notice err" role="alert">{err}</p>}
     </article>
+  );
+}
+
+const MAX = { title: 60, body: 180 } as const;
+const BLANK = { title: { en: "", ar: "" }, body: { en: "", ar: "" } };
+type Kind = keyof typeof MAX;
+type AudienceType = BroadcastAudience["type"];
+type AudienceRole = Extract<BroadcastAudience, { type: "role" }>["role"];
+const ROLES: { role: AudienceRole; key: MessageKey }[] = [{ role: "teacher", key: "bc.teachers" }, { role: "student", key: "bc.students" }, { role: "orgAdmin", key: "bc.orgAdmins" }];
+const LINKS: { path: string; key: MessageKey }[] = [{ path: "/learn", key: "nav.learn" }, { path: "/lab", key: "nav.lab" }, { path: "/kit", key: "bc.linkKit" }, { path: "/org", key: "nav.org" }];
+const LABEL: Record<Kind, Record<PushLang, MessageKey>> = { title: { en: "bc.titleEn", ar: "bc.titleAr" }, body: { en: "bc.bodyEn", ar: "bc.bodyAr" } };
+
+/** Who an announcement goes to, for the confirm dialog and the recent list. */
+function useAudienceText(orgs: Org[]) {
+  const { t } = useI18n();
+  return (a?: { type: string; orgId?: string; role?: string }) => {
+    if (a?.type === "org") return orgs.find((o) => o.id === a.orgId)?.name ?? a.orgId ?? "—";
+    if (a?.type === "role") { const r = ROLES.find((x) => x.role === a.role); return r ? t(r.key) : a.role ?? "—"; }
+    return t("bc.all");
+  };
+}
+
+/**
+ * The composer: English and Arabic text (each phone gets its owner's language), an audience and the screen a tap opens.
+ * Only people who left Announcements on receive it; sendBroadcast logs every send in broadcasts/.
+ */
+function Announce({ orgs, onSent }: { orgs: Org[]; onSent: () => void }) {
+  const { t } = useI18n();
+  const audienceText = useAudienceText(orgs);
+  const [text, setText] = useState(BLANK);
+  const [aud, setAud] = useState<AudienceType>("all");
+  const [orgId, setOrgId] = useState("");
+  const [role, setRole] = useState<AudienceRole>("teacher");
+  const [link, setLink] = useState("/learn");
+  const [tried, setTried] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+  const problem = (k: Kind, l: PushLang) => { const n = text[k][l].trim().length; return n === 0 ? t("bc.required") : n > MAX[k] ? t("bc.tooLong", { max: MAX[k] }) : undefined; };
+  const noOrg = aud === "org" && !orgs.some((o) => o.id === orgId);
+  const valid = !noOrg && (["title", "body"] as const).every((k) => !problem(k, "en") && !problem(k, "ar"));
+  const audience = (): BroadcastAudience => (aud === "org" ? { type: "org", orgId } : aud === "role" ? { type: "role", role } : { type: "all" });
+
+  const send = async () => {
+    setTried(true); setResult(null);
+    if (!valid || !confirm(t("bc.confirm", { audience: isolate(audienceText(audience())) }))) return;
+    setBusy(true);
+    try {
+      const trim = (o: Record<PushLang, string>) => ({ en: o.en.trim(), ar: o.ar.trim() });
+      const { results } = await api.sendBroadcast({ title: trim(text.title), body: trim(text.body), link, audience: audience() });
+      const failed = (["en", "ar"] as const).filter((l) => !results?.[l]);
+      if (failed.length === 2) setResult({ ok: false, text: t("bc.failed") });
+      else {
+        setResult(failed.length ? { ok: false, text: t("bc.sentPartial", { lang: t(failed[0] === "en" ? "bc.langEn" : "bc.langAr") }) } : { ok: true, text: t("bc.sent") });
+        setText(BLANK); setTried(false); onSent();
+      }
+    } catch (e) { setResult({ ok: false, text: (e as Error).message || t("bc.failed") }); }
+    finally { setBusy(false); }
+  };
+
+  const field = (k: Kind, l: PushLang) => {
+    const id = `bc-${k}-${l}`, value = text[k][l], error = tried ? problem(k, l) : undefined, count = t("bc.count", { n: value.length, max: MAX[k] });
+    const props = { dir: l === "ar" ? "rtl" as const : "ltr" as const, lang: l, maxLength: MAX[k], value, onChange: (e: { target: { value: string } }) => setText((x) => ({ ...x, [k]: { ...x[k], [l]: e.target.value } })) };
+    if (k === "title") return <TextField key={id} label={t(LABEL[k][l])} hint={count} error={error} {...props} />;
+    return (
+      <div key={id} className={error ? "dr-field has-error" : "dr-field"}>
+        <label htmlFor={id} className="dr-field-label">{t(LABEL[k][l])}</label>
+        <textarea id={id} className="dr-field-input" rows={3} aria-invalid={error ? true : undefined} aria-describedby={`${id}-hint`} {...props} />
+        <span id={`${id}-hint`} className="dr-field-hint">{error ?? count}</span>
+      </div>
+    );
+  };
+
+  return (
+    <section className="panel stack" aria-labelledby="bc-h">
+      <h3 id="bc-h">{t("bc.title")}</h3>
+      <p className="muted small">{t("bc.intro")}</p>
+      <div className="form-grid">{field("title", "en")}{field("title", "ar")}{field("body", "en")}{field("body", "ar")}</div>
+      <div className="form-grid">
+        <div className="dr-field">
+          <label htmlFor="bc-aud" className="dr-field-label">{t("bc.audience")}</label>
+          <select id="bc-aud" className="dr-field-input" value={aud} onChange={(e) => setAud(e.target.value as AudienceType)}>
+            <option value="all">{t("bc.all")}</option><option value="org">{t("bc.org")}</option><option value="role">{t("bc.role")}</option>
+          </select>
+        </div>
+        {aud === "org" && (
+          <div className={tried && noOrg ? "dr-field has-error" : "dr-field"}>
+            <label htmlFor="bc-org" className="dr-field-label">{t("bc.pickOrg")}</label>
+            <select id="bc-org" className="dr-field-input" value={orgId} onChange={(e) => setOrgId(e.target.value)} aria-invalid={tried && noOrg ? true : undefined}>
+              <option value="">{t("bc.chooseOrg")}</option>
+              {orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+            {tried && noOrg && <span className="dr-field-hint">{t("bc.chooseOrg")}</span>}
+          </div>
+        )}
+        {aud === "role" && (
+          <div className="dr-field">
+            <label htmlFor="bc-role" className="dr-field-label">{t("bc.pickRole")}</label>
+            <select id="bc-role" className="dr-field-input" value={role} onChange={(e) => setRole(e.target.value as AudienceRole)}>
+              {ROLES.map((r) => <option key={r.role} value={r.role}>{t(r.key)}</option>)}
+            </select>
+          </div>
+        )}
+        <div className="dr-field">
+          <label htmlFor="bc-link" className="dr-field-label">{t("bc.link")}</label>
+          <select id="bc-link" className="dr-field-input" value={link} onChange={(e) => setLink(e.target.value)}>
+            {LINKS.map((l) => <option key={l.path} value={l.path}>{`${t(l.key)} (${isolate(l.path)})`}</option>)}
+          </select>
+        </div>
+      </div>
+      <Button icon="share" loading={busy} onClick={() => { void send(); }}>{t("bc.send")}</Button>
+      {result && <p className={result.ok ? "notice ok" : "notice err"} role={result.ok ? "status" : "alert"}>{result.text}</p>}
+    </section>
+  );
+}
+
+/** The last 20 sends, newest first: title (in the screen's language), audience and date. */
+function RecentAnnouncements({ list, error, orgs }: { list?: Broadcast[]; error?: Error; orgs: Org[] }) {
+  const { t, lang } = useI18n();
+  const ot = useOrgText();
+  const audienceText = useAudienceText(orgs);
+  return (
+    <section className="panel stack" aria-labelledby="bc-recent-h">
+      <h3 id="bc-recent-h">{t("bc.recent")}</h3>
+      {error ? <p className="muted small">{error.message}</p> : !list ? <div className="loading" aria-busy="true" /> : list.length === 0 ? <p className="muted">{t("bc.none")}</p> : (
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead><tr><th>{t("bc.colTitle")}</th><th>{t("bc.colAudience")}</th><th>{t("bc.colDate")}</th></tr></thead>
+            <tbody>{list.map((b) => (
+              <tr key={b.id}>
+                <td data-label={t("bc.colTitle")}><strong><bdi>{b.title?.[lang as PushLang] || b.title?.en || "—"}</bdi></strong></td>
+                <td data-label={t("bc.colAudience")}><bdi>{audienceText(b.audience)}</bdi></td>
+                <td data-label={t("bc.colDate")}>{ot.date(b.sentAt)}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }

@@ -15,3 +15,5 @@ export const firebaseConfig = {
 export const firebaseReady = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 export const useEmulators = env.VITE_USE_EMULATORS === "true";
 export const functionsRegion = env.VITE_FUNCTIONS_REGION || "europe-west1";
+/** Web Push certificate (public key) for FCM; empty = notifications not set up yet, and the app says so. */
+export const vapidKey: string = env.VITE_FIREBASE_VAPID_KEY ?? "";

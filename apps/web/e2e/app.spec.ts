@@ -28,7 +28,18 @@ test("guests never download the Firebase SDK", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "AI basics for teachers" })).toBeVisible();
   await page.getByRole("button", { name: "Start" }).first().click();
   await expect(page.getByRole("button", { name: "Transcript" })).toBeVisible();
+  // Me holds the notifications panel: for a guest it explains accounts and still loads no Firebase.
+  await page.goto("/me");
+  await expect(page.getByText("Create an account or sign in to get friendly reminders")).toBeVisible();
   expect(await firebaseChunks(page)).toEqual([]);
+});
+
+test("Me opens without onboarding (account and sign-out always reachable on a phone)", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Continue without an account/ }).click();
+  await expect(page.getByRole("heading", { name: "Choose your language" })).toBeVisible();
+  await page.goto("/me");
+  await expect(page.getByRole("heading", { name: "Account" })).toBeVisible();
 });
 
 test("the sign-in screen loads Firebase on demand", async ({ page }) => {

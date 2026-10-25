@@ -1,6 +1,12 @@
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+
+// The push handlers (public/push-sw.js, ~3 KB, no imports) run inside Workbox's sw.js through importScripts. The content
+// hash in the URL changes sw.js whenever they change, so browsers install the update and never reuse a stale HTTP-cached copy.
+const pushSw = `push-sw.js?v=${createHash("sha256").update(readFileSync(new URL("./public/push-sw.js", import.meta.url))).digest("hex").slice(0, 10)}`;
 
 export default defineConfig({
   plugins: [
@@ -34,11 +40,15 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Web push: the `push` and `notificationclick` handlers. The browser stores imported scripts with the worker,
+        // so push-sw.js is not precached as well.
+        importScripts: [pushSw],
         // App shell, fonts (all scripts, ~230 KB), icons and lesson JSON are precached; kits and media are cached on demand.
         globPatterns: ["**/*.{js,css,html,svg,png,webmanifest,woff2,json}"],
         // Lesson content is tiny and precached; kits are cached when a unit is downloaded. Staff-only and first-visit
         // chunks (and exceljs, ~930 KB) are not precached, so a learner's install stays small; "darsi-chunks" caches them on first use.
-        globIgnores: ["kits/**", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin,firebase}-*.{js,css}"],
+        // firebase-* covers firebase-extra (Functions, Storage, Messaging) too.
+        globIgnores: ["kits/**", "push-sw.js", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin,firebase}-*.{js,css}"],
         navigateFallback: "/index.html",
         runtimeCaching: [
           // Hashed file names never change content, so cache-first is safe; old versions age out.
@@ -59,12 +69,14 @@ export default defineConfig({
     rolldownOptions: {
       output: {
         // The Firebase SDK in named chunks that load only at sign-in (src/fb.ts); globIgnores keeps them out of the
-        // precache, so guests never download them. Functions + Storage are separate: only admins and uploads need them.
+        // precache, so guests never download them. Functions, Storage and Messaging (+ Installations, which only
+        // Messaging uses) are separate: only admin actions, uploads and turning notifications on need them, so signing in
+        // never downloads them.
         codeSplitting: {
           groups: [
-            // Core first, so shared internals (@firebase/app, util, component…) land here and not in the extra chunk.
-            { name: "firebase", test: /node_modules[\\/](?:@firebase[\\/](?!functions|storage)|firebase[\\/](?!functions|storage)|re2js[\\/]|idb[\\/])/, priority: 2 },
-            { name: "firebase-extra", test: /node_modules[\\/](?:@firebase|firebase)[\\/](?:functions|storage)[\\/]/, priority: 1 },
+            // Core first, so shared internals (@firebase/app, util, component, idb…) land here and not in the extra chunk.
+            { name: "firebase", test: /node_modules[\\/](?:@firebase[\\/](?!functions|storage|messaging|installations)|firebase[\\/](?!functions|storage|messaging|installations)|re2js[\\/]|idb[\\/])/, priority: 2 },
+            { name: "firebase-extra", test: /node_modules[\\/](?:@firebase|firebase)[\\/](?:functions|storage|messaging|installations)[\\/]/, priority: 1 },
           ],
         },
       },

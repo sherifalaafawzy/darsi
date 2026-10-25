@@ -9,6 +9,7 @@ This document explains how Darsi is built. For what Darsi is and why it exists, 
 - [App architecture](#app-architecture)
 - [Offline and caching](#offline-and-caching)
 - [Cloud sync](#cloud-sync)
+- [Push notifications](#push-notifications)
 - [Backend: Firebase](#backend-firebase)
 - [Content, lessons and kits](#content-lessons-and-kits)
 - [Languages and right-to-left](#languages-and-right-to-left)
@@ -48,6 +49,7 @@ darsi/
 ├─ apps/web/                     the PWA
 │  ├─ public/content/            lesson content as JSON (en + ar): the single source for the app and the kits
 │  ├─ public/kits/               generated classroom kits (PDF + PPTX), committed
+│  ├─ public/push-sw.js          the service worker's push and notification-click handlers (imported into sw.js)
 │  ├─ scripts/build-kits.mjs     generates the kits from the content
 │  ├─ src/
 │  │  ├─ App.tsx                 providers, routes, role guards, lazy staff chunks
@@ -59,6 +61,7 @@ darsi/
 │  │  ├─ screens/                learner screens: Home, Lesson, Kit, Downloads, Lab, Me, Onboarding
 │  │  ├─ lesson/                 lesson engine, step views, project submission, read-aloud
 │  │  ├─ admin/                  org dashboard, people, import, person page, teacher and platform admin
+│  │  ├─ notify/                 push notifications: push.ts (token, permission, register) and the panel in Me
 │  │  ├─ org/                    join or register an organization
 │  │  ├─ landing/                public home page
 │  │  ├─ content/                content types, loader, competency frameworks
@@ -127,7 +130,7 @@ AuthProvider            Firebase user + custom claims {role, orgId}; claims are 
 | `/org` | signed in | Join with an invite code, or request a new organization (`?request=1`) |
 | `/admin`, `/admin/people/:uid`, `/admin/add`, `/admin/import` | `orgAdmin` | Organization dashboard, person page, add people, Excel/CSV import |
 | `/teach`, `/teach/:uid` | `teacher`, `orgAdmin` | The teacher's assigned students |
-| `/super` | `superadmin` | Approve or reject organization requests |
+| `/super` | `superadmin` | Send announcements; approve or reject organization requests |
 
 Roles are `learner` (independent), `student`, `teacher`, `orgAdmin` and `superadmin`. They live in **Auth custom claims**, which only Cloud Functions set, and are mirrored to `users/{uid}` for the UI. When `users/{uid}` changes role or organization, AuthProvider refreshes the token so the security rules see the new claims.
 
@@ -144,7 +147,8 @@ The service worker (Workbox `generateSW`) installs when a person enters the app.
 | What | Strategy |
 |---|---|
 | App shell, learner screens, fonts, icons, lesson JSON | **Precached** (~850 KB) |
-| The Firebase SDK (`firebase-*`), staff chunks, landing page, exceljs, and their CSS | **Not precached**; `darsi-chunks` caches them cache-first on first use (hashed file names) |
+| The Firebase SDK (`firebase-*`, including `firebase-extra`: Functions, Storage, Messaging), staff chunks, landing page, exceljs, and their CSS | **Not precached**; `darsi-chunks` caches them cache-first on first use (hashed file names) |
+| `push-sw.js` (push handlers, ~3 KB) | **Imported** into `sw.js` with `importScripts`, so the browser stores it with the worker; not precached. Its URL carries a content hash (`?v=…`), so changing it changes `sw.js` and triggers the normal update prompt |
 | `/content/*` | Stale-while-revalidate (`darsi-content`) |
 | `/kits/*` | Cache-first (`darsi-kits`), filled per unit when the teacher taps Download |
 | `/media/*` | Cache-first with range requests (`darsi-media`) |
@@ -163,6 +167,60 @@ The service worker (Workbox `generateSW`) installs when a person enters the app.
 - **Writes** (`toPush`): only entries the cloud lacks or has an older copy of. Until a read has reached the server, only work finished in this session is written, so a stale phone can never overwrite newer work from another device. Firestore's offline queue carries writes made without a signal.
 - **Uploads:** project photos are scaled to at most 1280 px and re-encoded as JPEG on the phone before upload (`ProjectView.shrinkImage`). PDFs and anything the browser can't decode go up unchanged.
 
+## Push notifications
+
+Opt-in web push through Firebase Cloud Messaging (FCM). The tone follows the brand rule "Encourage, never punish": no guilt, no threats about losing a streak, no emoji. Setup, browser support and how to send an announcement are in [docs/FIREBASE.md](docs/FIREBASE.md#6-push-notifications).
+
+### Turning it on, per device
+
+The panel in Me (`src/notify/NotificationsPanel.tsx`) is shown to signed-in people only. Guests never touch messaging.
+
+1. **`pushSupport()`** (`src/notify/push.ts`) picks what the panel shows:
+   - `unconfigured`: the build has no `VITE_FIREBASE_VAPID_KEY`;
+   - `unsupported`: no service worker, `PushManager` or `Notification`;
+   - `ios-install`: an iPhone or iPad in a Safari tab (web push needs Add to Home Screen, iOS 16.4+);
+   - a permission the person denied: how to allow it in the browser's site settings.
+2. **`enablePush(prefs)`:**
+   1. `Notification.requestPermission()`;
+   2. `getToken()` with the VAPID key and the app's own Workbox service worker registration (there is no `firebase-messaging-sw.js`);
+   3. the `registerDevice` callable, with the language, the IANA time zone, the reminder hour, the categories and the weekly goal;
+   4. `darsi:push` in localStorage remembers `{ token, on: true, uid }` (the uid keeps a shared phone from refreshing one account's token into another's).
+3. **`registerDevice`** stores `users/{uid}/devices/{id}` (`id` = the first 40 hex characters of sha256(token)), sets `users/{uid}.notify`, and subscribes the token to its FCM topics while Announcements are on: `all`, `lang-<en|ar>`, `role-<role>`, and `org-<orgId>` in an organization.
+4. **On each app start**, `usePushRefresh()` calls `registerDevice` again if `darsi:push.on` and permission is still granted. Tokens can rotate, and this also refreshes `lastSeen`. Changing a preference calls `updateNotifyPrefs`; turning it off calls `unregisterDevice` and deletes the token. Signing out (any Sign out button: `AuthProvider.signOut`) does the same first, so on a shared phone the next person never sees the previous account's notifications; `registerDevice` also moves a token to whoever registers it last (`pushTokens/{deviceId}` records the owner).
+5. **Topics follow the person.** When their role, organization or language changes, `onUserTopicsChanged` re-subscribes all their devices.
+
+### What is sent
+
+Each category can be switched off in Me (`notify.cats`).
+
+| Category | Trigger | Who gets it |
+|---|---|---|
+| Learning reminders (`reminders`) | `dailyNudges`, at the top of every UTC hour (`0 * * * *`): people whose reminder hour (`notify.hourUtc`) is now. `pickNudge` (`functions/src/nudge.ts`) sends at most one a day (see below) | the person |
+| Project feedback (`reviews`) | `onSubmissionUpdated`: a submission goes from `submitted` to `approved` or `revise` | the person who submitted it |
+| Staff alerts (`staff`) | `onSubmissionCreated`: a project is submitted. `requestOrg`: a new organization request | the assigned teacher, or else the org admins; platform admins for requests |
+| Announcements (`news`) | `sendBroadcast` from `/super` | everyone, one organization or one role, through topics |
+
+**`pickNudge(input, now)`** is pure and unit-tested. "Today" is the person's local day in their time zone. The rules apply in order:
+1. Nothing if a reminder was already sent today, or if they finished a lesson today.
+2. After 7 days without a lesson: one "we saved your place" message. After 21 days: one last message, then silence until they come back.
+3. On Saturday or Sunday (UTC), with lessons left for the weekly goal: how many are left.
+4. With a streak of 2+ weeks (the app's `streakWeeks` rule) and this week's goal not met yet: the streak.
+5. Otherwise, one of three daily messages, rotating by day.
+
+`dailyNudges` also fixes daylight-saving drift: if the person's local hour no longer matches, it rewrites `hourUtc` and waits for the right hour.
+
+### The message and the service worker
+
+- **Payload:** data-only web push with `TTL: 86400` (an offline phone gets it within a day) and `Urgency: normal`. The data is `{ title, body, link, tag, lang, dir }`, in the device's own language.
+  - The wording lives in `functions/src/messages.ts`. Names are wrapped in Unicode isolates, and numbers use the language's numerals.
+  - Announcements go out once per language, to a topic condition such as `'lang-ar' in topics && 'org-<id>' in topics`.
+  - Personal messages use `sendEachForMulticast` on the person's devices, grouped by language. Tokens that FCM reports as unregistered or invalid are deleted on the spot.
+- **`public/push-sw.js`:** plain JavaScript with no imports and no SDK, loaded into Workbox's `sw.js` (`workbox.importScripts` in `vite.config.ts`).
+  - `push`: reads `payload.data` and calls `showNotification` with the Darsi icon, the monochrome badge, `lang` and `dir`.
+  - Tags: a new reminder replaces the previous one (`darsi-nudge`); reviews, staff alerts and announcements each have their own tag.
+  - `notificationclick`: focuses an open Darsi window and navigates it to the link, or opens a new window. Only paths inside the app are followed; anything else opens `/learn`.
+- **Data and battery:** the messaging SDK sits in the lazy `firebase-extra` chunk, so signing in alone never downloads it. It loads when someone turns notifications on, or when the app refreshes an enabled token at start. A push is a few hundred bytes. There are no listeners and no polling.
+
 ## Backend: Firebase
 
 Project **`darsi-f0685`**. Firestore, Cloud Functions and the Storage bucket the app uses (`darsi-f0685`) are all in **europe-west1**. Hosting is at https://darsi-f0685.web.app.
@@ -176,16 +234,26 @@ Firebase's original default bucket, `darsi-f0685.firebasestorage.app`, was creat
 ```
 users/{uid}                 name, email, username, role, orgId, group, teacherId, lang, teach, tracks,
 │                           weeklyLessons, levels, mustChangePassword, active, lastActive, createdAt,
-│                           summary {lessonsDone, xp, avgAccuracy, lastActive, competencies, units}   ← written by onProgressWrite
+│                           summary {lessonsDone, xp, avgAccuracy, lastActive, competencies, units,
+│                                    weeks {"2026-W43": n, … the last 12 ISO weeks, UTC}, lastLessonAt}   ← written by onProgressWrite
+│                           notify {on, hourLocal 0–23, hourUtc 0–23, tz (IANA), cats {reminders, reviews, staff, news},
+│                                   weeklyGoal 1–14, lastAutoAt?, comeback7At?, comeback21At?}         ← notification functions only
 ├─ progress/{lessonId}      lessonId, unitId, track, accuracy (0–1), xp (int 0–100), seconds, completedAt (ISO), competencies[]
 ├─ notes/{lessonId}         text, updatedAt (ms)
-└─ submissions/{id}         lessonId, unitId, stepId, orgId, text, fileUrl, fileName,
-                            status (submitted | approved | revise), feedback, score, reviewedBy, reviewedAt, createdAt
+├─ submissions/{id}         lessonId, unitId, stepId, orgId, text, fileUrl, fileName,
+│                           status (submitted | approved | revise), feedback, score, reviewedBy, reviewedAt, createdAt
+└─ devices/{deviceId}       token, lang (en | ar), platform ("web"), createdAt, lastSeen, topics[]   ← Cloud Functions only
+                            deviceId = the first 40 hex characters of sha256(token)
+pushTokens/{deviceId}       uid (the account the token belongs to now), at   ← Cloud Functions only
 orgs/{orgId}                name, type, country, city, size, contact, reason, status (pending | active | rejected),
                             createdBy, inviteCodes {teacher, student}, memberCount, reviewNote, createdAt, reviewedAt
 inviteCodes/{code}          orgId, role                      ← Cloud Functions only
+broadcasts/{id}             title {en, ar}, body {en, ar}, link, audience {type: all | org | role, orgId?, role?},
+                            sentBy, sentAt, results {en, ar} (FCM message id, or null on error)   ← sendBroadcast; platform admins read
 audit/{id}                  action, by, …, at                ← Cloud Functions write; platform admins read
 ```
+
+`notify.hourUtc` is the UTC hour that equals `hourLocal` in `tz` today. `registerDevice` and `updateNotifyPrefs` recompute it, and `dailyNudges` rewrites it when daylight saving moves it. The notification queries are equality-only (`notify.on` + `notify.hourUtc`; `orgId` + `role`), so they need no composite index.
 
 Username logins (for people without email) map to `<username>@users.darsi.app`. The mapping lives in two places, `apps/web/src/auth/api.ts` and `functions/src/passwords.ts`, which must stay in sync.
 
@@ -195,12 +263,14 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 - **`users/{uid}`:**
   - *Read:* the person, a platform admin, their organization's admins, and their assigned teacher.
   - *Self-registration:* only as an independent `learner`, with a fixed list of fields.
-  - *Self-edits:* never role, organization, teacher or summary.
+  - *Self-edits:* never role, organization, teacher, summary or `notify` (the notification settings go through the callables).
   - *Org admins:* may change only group, teacher, active flag and name.
 - **`progress`:** written only by its owner. Only the listed keys are accepted, `accuracy` must be 0–1, and `xp` must be an integer 0–100. Nobody can delete it.
 - **`submissions`:** created by the owner with status `submitted`. Reviewed by the assigned teacher, the org admin or a platform admin, who can change only status, score, feedback and reviewer fields.
 - **`notes`:** the owner only.
+- **`devices`** (push tokens) and **`pushTokens`** (their owners): no client access at all, not even the owner's.
 - **`orgs`:** readable by members, the requester and platform admins. Created only through `requestOrg`.
+- **`broadcasts`:** readable by platform admins; written only by `sendBroadcast`.
 - **`inviteCodes`:** no client access at all.
 
 **Storage** (`firebase/storage.rules` on `darsi-f0685`):
@@ -211,7 +281,7 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 
 | Function | Type | What it does |
 |---|---|---|
-| `requestOrg` | callable | A signed-in person asks to register an organization (one pending request at a time) |
+| `requestOrg` | callable | A signed-in person asks to register an organization (one pending request at a time). Platform admins get a staff alert; a failed alert never fails the request |
 | `reviewOrg` | callable | Platform admin approves (creates invite codes; the requester becomes its admin) or rejects with a note |
 | `joinOrg` | callable | Join an active organization with a teacher or student invite code |
 | `regenerateInviteCode` | callable | Org admin replaces a code; the old one stops working |
@@ -220,9 +290,17 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 | `resetMemberPassword` | callable | New random password; the person must choose their own at next sign-in |
 | `removeMember` | callable | Back to an independent learner; their learning record stays with them |
 | `passwordChanged` | callable | Clears the first-sign-in flag after the person picks a password |
-| `onProgressWrite` | Firestore trigger | Recomputes `users/{uid}.summary` (lessons, XP, accuracy, competencies, units, last activity) |
+| `onProgressWrite` | Firestore trigger | Recomputes `users/{uid}.summary` (lessons, XP, accuracy, competencies, units, last activity, lessons per ISO week for the last 12 weeks, `lastLessonAt`) |
+| `registerDevice` | callable | Stores or refreshes this device's push token, sets `notify` (on, reminder hour, time zone, categories, weekly goal) and subscribes the token to its topics |
+| `unregisterDevice` | callable | Unsubscribes and deletes the device; with no devices left, `notify.on` becomes false |
+| `updateNotifyPrefs` | callable | Changes the reminder hour, time zone, categories or weekly goal, and re-applies topics on every device (the Announcements switch) |
+| `sendBroadcast` | callable | Platform admin only: an announcement in English and Arabic to everyone, one organization or one role. One FCM send per language; logged in `broadcasts` and `audit` |
+| `onSubmissionCreated` | Firestore trigger | A project was submitted: a staff alert to the assigned teacher, or else the organization's admins |
+| `onSubmissionUpdated` | Firestore trigger | A review moved a submission to `approved` or `revise`: the person who submitted it is told |
+| `onUserTopicsChanged` | Firestore trigger | Role, organization or language changed: re-subscribes every device's topics |
+| `dailyNudges` | scheduled, hourly (Cloud Scheduler) | Sends at most one learning reminder per person per local day, at the hour they chose (see [Push notifications](#push-notifications)) |
 
-Every role or organization change goes through these functions, which set the claims and write an `audit` entry. Clients can never grant themselves access.
+Every role or organization change goes through these functions, which set the claims and write an `audit` entry. Clients can never grant themselves access. `functions/src/admin.ts` initializes the Admin SDK once and sets the region and instance cap for every function.
 
 ## Content, lessons and kits
 
@@ -270,9 +348,9 @@ Every role or organization change goes through these functions, which set the cl
 
 | Suite | Where | What |
 |---|---|---|
-| Unit (web) | `apps/web/tests/` | Lesson engine and content integrity; the staff screens rendered with mocked data hooks and callables; cloud-sync merge and push rules, plus the sync hook with Firestore mocked |
+| Unit (web) | `apps/web/tests/` | Lesson engine and content integrity; the staff screens rendered with mocked data hooks and callables; cloud-sync merge and push rules, plus the sync hook with Firestore mocked; the notifications panel's states and the announcement composer (`notify.test.tsx`) |
 | Unit (design system) | `packages/design-system` | Component and token tests |
-| Unit (functions) | `functions/test/` | Generated passwords (character classes, no look-alikes), invite-code format, usernames from any script |
+| Unit (functions) | `functions/test/` | Generated passwords (character classes, no look-alikes), invite-code format, usernames from any script; `pickNudge` rules across time zones and daylight saving; every message in both languages, with no "·" in Arabic |
 | End-to-end | `apps/web/e2e/` | Desktop Chrome and Pixel 7: guest onboarding, the Arabic RTL switch, a full lesson through to the kit download, the video fallback, the AI lab, offline after the first visit |
 | CSS lint | `scripts/check-css.mjs` | Brand, RTL and old-WebView rules |
 
@@ -284,7 +362,8 @@ The Firebase Emulator Suite needs **JDK 21+**. Rules tests with `@firebase/rules
 |---|---|---|
 | Precache on install | ~850 KB | ≤ 2 MB including fonts |
 | Main JS chunk | ~133 KB gzipped (no Firebase) | |
-| Firebase SDK, signed-in only | ~210 KB gzipped (`firebase`), plus ~14 KB (`firebase-extra`: Functions + Storage) for admins and uploads | |
+| Firebase SDK, signed-in only | ~210 KB gzipped (`firebase`), plus ~21 KB (`firebase-extra`: Functions, Storage, Messaging + Installations) for admin actions, uploads and notifications | |
+| Push handlers in the service worker | ~1.4 KB gzipped (`push-sw.js`, no SDK) | |
 | Main CSS | ~11 KB gzipped | |
 | One lesson | ~19 KB of JSON (both languages); kits and media download on demand | ≤ 300 KB |
 
@@ -296,4 +375,4 @@ Measure with `npx vite build` in `apps/web` and read the chunk table and the `pr
 - **Videos:** the narrated video pipeline (Playwright slide renders, TTS in each language, ffmpeg, VTT captions) is designed but not built. Lessons use transcripts until then.
 - **Security review:** a static review of the rules, functions and client, plus rules unit tests and a scan of the deployed site, is planned before wider rollout.
 - **Content and languages:** the IoT and cyber-security units; French, Swahili, Urdu and Hausa.
-- **Native apps:** Android and iOS through Capacitor (see docs/NATIVE.md), with an opt-in weekly reminder.
+- **Native apps:** Android and iOS through Capacitor (see docs/NATIVE.md). The native shells don't register the web service worker, so they need native push (FCM through a Capacitor plugin) for reminders.

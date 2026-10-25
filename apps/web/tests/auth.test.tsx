@@ -7,12 +7,14 @@ const h = vi.hoisted(() => ({
   storedSession: vi.fn(),
   loadFirebase: vi.fn(),
   authCallback: null as null | ((u: unknown) => void),
+  calls: [] as string[],
 }));
 vi.mock("../src/firebase-config", () => ({ firebaseReady: true, firebaseConfig: { apiKey: "test-key" }, useEmulators: false, functionsRegion: "europe-west1" }));
 vi.mock("../src/fb", () => ({ storedSession: h.storedSession, loadFirebase: h.loadFirebase }));
+vi.mock("../src/notify/push", () => ({ pushSignOut: vi.fn(async (uid: string) => { h.calls.push(`pushSignOut:${uid}`); }) }));
 vi.mock("firebase/auth", () => ({
   onAuthStateChanged: (_auth: unknown, cb: (u: unknown) => void) => { h.authCallback = cb; return () => {}; },
-  signOut: vi.fn(async () => {}),
+  signOut: vi.fn(async () => { h.calls.push("signOut"); }),
 }));
 vi.mock("firebase/firestore", () => ({
   doc: (_db: unknown, ...p: string[]) => p.join("/"),
@@ -26,7 +28,7 @@ let auth: ReturnType<typeof useAuth>;
 function Probe() { auth = useAuth(); return null; }
 const user = (uid: string) => ({ uid, getIdTokenResult: async () => ({ claims: { role: "teacher", orgId: "o1" } }) });
 
-beforeEach(() => { h.storedSession.mockReset(); h.loadFirebase.mockReset(); h.authCallback = null; });
+beforeEach(() => { h.storedSession.mockReset(); h.loadFirebase.mockReset(); h.authCallback = null; h.calls = []; });
 
 it("a guest never loads the Firebase SDK", async () => {
   h.storedSession.mockResolvedValue(null);
@@ -92,4 +94,15 @@ it("an account screen loads the SDK on demand, once", async () => {
   await act(async () => { await auth.ensureFirebase(); });
   expect(h.loadFirebase).toHaveBeenCalledTimes(1);
   expect(h.authCallback).not.toBeNull(); // listening for the sign-in that follows
+});
+
+it("signing out first stops this phone getting the account's notifications, for every Sign out button", async () => {
+  h.storedSession.mockResolvedValue({ uid: "u1", email: "a@b.org", createdAt: 1 });
+  h.loadFirebase.mockResolvedValue({ auth: {}, db: {} });
+  render(<AuthProvider><Probe /></AuthProvider>);
+  await waitFor(() => expect(h.authCallback).not.toBeNull());
+  await act(async () => { h.authCallback!(user("u1")); });
+  await waitFor(() => expect(auth.user?.uid).toBe("u1"));
+  await act(async () => { await auth.signOut(); });
+  expect(h.calls).toEqual(["pushSignOut:u1", "signOut"]); // unregisterDevice needs the session, so it runs before signOut
 });
