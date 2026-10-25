@@ -13,8 +13,8 @@ Darsi runs on the Firebase project **`darsi-f0685`** in region **`europe-west1`*
    - Under *Settings → Authorized domains*, add your custom domain if you use one. `darsi-f0685.web.app` and `.firebaseapp.com` are there by default.
 3. **Firestore Database → Create database** in production mode. Location: `europe-west1`, next to the functions, or `eur3` for multi-region. **The location can never be changed.**
 4. **Storage → Get started**, and put the bucket in the same region as Firestore. The app stores files in **`darsi-f0685` (europe-west1)**.
-   - The original default bucket `darsi-f0685.firebasestorage.app` landed in us-west1 and can't be moved, so it stays empty and locked (`firebase/storage-locked.rules`).
-   - `.firebaserc` maps the deploy targets `main` → `darsi-f0685` and `legacy-us` → the locked bucket. `firebase deploy --only storage` updates both.
+   - The original default bucket `darsi-f0685.firebasestorage.app` landed in us-west1, and a bucket can't be moved. It was never used and was deleted on 2026-10-25 (`gcloud storage buckets delete`, which refuses a bucket that isn't empty).
+   - `.firebaserc` maps the deploy target `main` → `darsi-f0685`, so `firebase deploy --only storage` puts `firebase/storage.rules` there. Keep the target: without one, the CLI aims at the project's default bucket, which no longer exists.
    - `VITE_FIREBASE_STORAGE_BUCKET=darsi-f0685` in `apps/web/.env.local` points the app at the right bucket.
 
 ## 2. Local configuration (already done in this repo)

@@ -69,7 +69,7 @@ darsi/
 │  └─ capacitor.config.ts
 ├─ packages/design-system/       @darsi/design-system (tokens.json → CSS/TS, components, logos, fonts)
 ├─ functions/                    Cloud Functions (own package and lockfile)
-├─ firebase/                     firestore.rules, storage.rules, storage-locked.rules, firestore.indexes.json
+├─ firebase/                     firestore.rules, storage.rules, firestore.indexes.json
 ├─ scripts/                      set-superadmin.mjs, check-css.mjs
 ├─ docs/                         FIREBASE, CONTENT, NATIVE, design-system PDF
 └─ firebase.json, .firebaserc    hosting (headers, SPA rewrite), emulators, deploy targets
@@ -167,9 +167,9 @@ The service worker (Workbox `generateSW`) installs when a person enters the app.
 
 Project **`darsi-f0685`**. Firestore, Cloud Functions and the Storage bucket the app uses (`darsi-f0685`) are all in **europe-west1**. Hosting is at https://darsi-f0685.web.app.
 
-Firebase's original default bucket, `darsi-f0685.firebasestorage.app`, was created in us-west1, and a bucket's location can't change. So it is locked with deny-all rules (`firebase/storage-locked.rules`), and the app points at the europe-west1 bucket through `VITE_FIREBASE_STORAGE_BUCKET`. `firebase.json` deploys Storage rules per bucket through deploy targets defined in `.firebaserc`:
-- `main` → `darsi-f0685`;
-- `legacy-us` → the locked bucket.
+Firebase's original default bucket, `darsi-f0685.firebasestorage.app`, was created in us-west1, and a bucket's location can't change. The app points at the europe-west1 bucket through `VITE_FIREBASE_STORAGE_BUCKET`, and the US bucket was never used and was deleted on 2026-10-25.
+
+`firebase.json` deploys the Storage rules through the deploy target `main`. `.firebaserc` maps it to `darsi-f0685`, and to `demo-darsi.appspot.com` for the emulators. Keep the target: without one, `firebase deploy --only storage` aims at the project's default bucket, which no longer exists.
 
 ### Data model (Firestore)
 
@@ -203,7 +203,7 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 - **`orgs`:** readable by members, the requester and platform admins. Created only through `requestOrg`.
 - **`inviteCodes`:** no client access at all.
 
-**Storage** (`firebase/storage.rules` on `darsi-f0685`; the old US bucket denies everything):
+**Storage** (`firebase/storage.rules` on `darsi-f0685`):
 - `media/` and `kits/` are publicly readable and never writable from the client.
 - `submissions/{orgId|none}/{uid}/{file}` is created only by its owner: under 10 MB, images, PDF, mp4 or audio. It can be read by the owner, a platform admin, or that organization's admins and teachers.
 
