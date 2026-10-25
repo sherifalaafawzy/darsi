@@ -1,0 +1,74 @@
+/* Person area: the person detail page for admins and teachers (admin/PersonDetail.tsx). */
+.person > * { min-width: 0; }
+
+/* Head: avatar + name block, then stats (full width on phones, at the end when there is room). */
+.person-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+.person-head .avatar { flex: none; inline-size: 64px; block-size: 64px; font-size: 28px; line-height: 1; }
+.person-head .avatar + div { flex: 1 1 0; min-width: 0; display: grid; gap: var(--space-1); }
+.person-head p[dir="ltr"] { overflow-wrap: anywhere; }
+/* LTR logins and the English framework names line up with the Arabic text around them. */
+[dir="rtl"] .person-head p[dir="ltr"] { text-align: end; }
+
+/* Stat tiles: the same look as .tile (base.css). */
+.person-stats { flex: 1 1 100%; min-width: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.person-stats > div { min-width: 0; display: grid; gap: var(--space-1); align-content: start; padding: var(--space-3) var(--space-4); background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+.person-stats dt { font: var(--text-label); color: var(--ink-muted); }
+.person-stats dd { margin: 0; font: 800 28px/34px var(--font-display); overflow-wrap: anywhere; }
+
+.person-cols { display: grid; gap: var(--space-6); align-items: start; }
+.person-cols > * { min-width: 0; }
+
+/* Capability profile */
+.cap-groups { display: grid; gap: var(--space-4); }
+.cap-group { display: grid; }
+.cap-group h4 { margin: 0 0 var(--space-1); font: 700 18px/24px var(--font-display); }
+.cap-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--space-1) var(--space-2); padding-block: var(--space-2); }
+.cap-row + .cap-row { border-block-start: 2px solid var(--line); }
+.cap-row > * { min-width: 0; }
+.cap-row .cap-code, .cap-row .cap-meter { justify-self: start; }
+.cap-meter { display: inline-flex; align-items: center; gap: var(--space-1); }
+.cap-meter i { display: inline-block; box-sizing: border-box; inline-size: 18px; block-size: 8px; border-radius: var(--radius-pill); background: var(--surface-sunk); border: 2px solid var(--line); }
+.cap-meter i.on { background: var(--ink); border-color: var(--ink); }
+.cap-word { font: var(--text-label); }
+
+/* Finished courses and project evidence: cards nested in a panel (radius-md, no shadow). */
+.course, .submission { display: grid; gap: var(--space-3); padding: var(--space-4); background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-md); }
+.course-head, .submission header { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.course-head strong, .submission header strong { flex: 1 1 auto; min-width: 0; font: 700 18px/24px var(--font-display); overflow-wrap: anywhere; }
+.course ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.course li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); color: var(--ink-muted); }
+.course li > span:first-of-type { flex: 1 1 10em; min-width: 0; overflow-wrap: anywhere; }
+.course li .small { margin-inline-start: auto; }
+.course li.done { color: var(--ink); }
+.course li.done .dr-icon, .badge-ok .dr-icon { color: var(--correct); }
+
+.submission { border-inline-start: 4px solid var(--line-strong); }
+.submission.is-submitted { border-inline-start-color: var(--sunbird); }
+.submission.is-approved { border-inline-start-color: var(--correct); }
+.submission.is-revise { border-inline-start-color: var(--wrong); }
+.submission > a { justify-self: start; display: inline-flex; align-items: center; gap: var(--space-2); min-block-size: var(--tap-min); padding-inline: var(--space-1); border-radius: var(--radius-sm); color: var(--kola-deep); font-weight: 700; overflow-wrap: anywhere; }
+.submission > a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.sub-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Status pills: same shape as .pill (base.css). */
+.status, .badge-ok { display: inline-flex; align-items: center; gap: var(--space-1); padding: 2px var(--space-2); border-radius: var(--radius-pill); background: var(--surface-sunk); color: var(--ink); font: var(--text-label); }
+.badge-ok, .status-approved { background: var(--correct-soft); }
+.status-submitted { background: var(--sunbird-soft); }
+.status-revise { background: var(--wrong-soft); }
+
+@media (min-width: 600px) {
+  .person-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  /* Full-width profile: one line per competency. */
+  .cap-row { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+  .cap-word { min-inline-size: 6em; }
+}
+
+@media (min-width: 900px) {
+  /* Stats sit at the end of the head when they fit; otherwise they wrap to a full-width row. */
+  .person-head .avatar + div { flex: 999 1 16em; }
+  .person-stats { flex: 1 1 auto; }
+  .person-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Half-width column: back to two lines per competency. */
+  .cap-row { grid-template-columns: auto minmax(0, 1fr); }
+  .cap-word { min-inline-size: 0; }
+}

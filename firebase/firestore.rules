@@ -1,0 +1,69 @@
+rules_version = '2';
+// Darsi — Firestore security rules.
+// Roles live in Auth custom claims set only by Cloud Functions: role ∈ {learner, student, teacher, orgAdmin, superadmin}, orgId.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function claims() { return request.auth.token; }
+    function isSuper() { return signedIn() && claims().role == 'superadmin'; }
+    function inOrg(orgId) { return signedIn() && orgId != null && claims().orgId == orgId; }
+    function isOrgAdmin(orgId) { return inOrg(orgId) && claims().role == 'orgAdmin'; }
+    function isTeacherOf(data) { return signedIn() && claims().role == 'teacher' && inOrg(data.orgId) && data.get('teacherId', null) == request.auth.uid; }
+    function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+
+    // Staff who may see a person's learning record.
+    function canSee(uid, data) {
+      return (signedIn() && request.auth.uid == uid) || isSuper() || isOrgAdmin(data.get('orgId', null)) || isTeacherOf(data);
+    }
+
+    match /users/{uid} {
+      allow read: if canSee(uid, resource.data);
+      // Self-registration: an individual learner with no organization.
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.role == 'learner'
+        && request.resource.data.get('orgId', null) == null
+        && request.resource.data.keys().hasOnly(['name', 'email', 'username', 'lang', 'role', 'orgId', 'createdAt', 'lastActive', 'prefs', 'teach', 'tracks', 'weeklyLessons', 'levels', 'mustChangePassword'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 120;
+      // A person edits their own profile but never their role, organization, teacher or computed summary.
+      allow update: if signedIn() && request.auth.uid == uid
+        && onlyChanges(['name', 'lang', 'lastActive', 'prefs', 'teach', 'tracks', 'weeklyLessons', 'levels', 'mustChangePassword'])
+        && (!('mustChangePassword' in request.resource.data) || request.resource.data.mustChangePassword == false || resource.data.get('mustChangePassword', false) == true);
+      // Org admins organise their people (class/group, assigned teacher, active flag).
+      allow update: if isOrgAdmin(resource.data.get('orgId', null)) && onlyChanges(['group', 'teacherId', 'active', 'name']);
+      allow update, delete: if isSuper();
+
+      match /progress/{lessonId} {
+        allow read: if canSee(uid, get(/databases/$(database)/documents/users/$(uid)).data);
+        allow create, update: if signedIn() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['lessonId', 'unitId', 'track', 'accuracy', 'xp', 'seconds', 'completedAt', 'competencies', 'attempts'])
+          && request.resource.data.accuracy is number && request.resource.data.accuracy >= 0 && request.resource.data.accuracy <= 1
+          && request.resource.data.xp is int && request.resource.data.xp >= 0 && request.resource.data.xp <= 100;
+        allow delete: if false;
+      }
+
+      match /submissions/{subId} {
+        allow read: if canSee(uid, get(/databases/$(database)/documents/users/$(uid)).data);
+        allow create: if signedIn() && request.auth.uid == uid && request.resource.data.status == 'submitted'
+          && request.resource.data.text is string && request.resource.data.text.size() <= 20000;
+        // Teachers and org admins review: status, score and feedback only.
+        allow update: if (isTeacherOf(get(/databases/$(database)/documents/users/$(uid)).data) || isOrgAdmin(resource.data.orgId) || isSuper())
+          && onlyChanges(['status', 'score', 'feedback', 'reviewedBy', 'reviewedAt']);
+      }
+
+      match /notes/{lessonId} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
+    }
+
+    match /orgs/{orgId} {
+      allow read: if inOrg(orgId) || isSuper() || (signedIn() && resource.data.createdBy == request.auth.uid);
+      allow update: if isOrgAdmin(orgId) && onlyChanges(['name', 'settings', 'country', 'city']);
+      allow update, delete: if isSuper();
+      allow create: if false; // requests go through the requestOrg Cloud Function
+    }
+
+    // Invite codes and audit logs are handled only by Cloud Functions.
+    match /inviteCodes/{code} { allow read, write: if false; }
+    match /audit/{id} { allow read: if isSuper(); allow write: if false; }
+  }
+}

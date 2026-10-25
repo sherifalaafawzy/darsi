@@ -1,0 +1,46 @@
+/* Layout: the app frame. Nav rail on wide screens, the design-system BottomNav on phones. */
+
+/* Phones first: one column; the floating BottomNav is fixed to the bottom, so content clears it. */
+.app-shell { --rail-w: 240px; box-sizing: border-box; min-block-size: 100vh; min-block-size: 100dvh;
+  padding-block-end: calc(var(--bottomnav-h) + env(safe-area-inset-bottom) + var(--space-6)); }
+.app-main { min-inline-size: 0; }
+.nav-rail { display: none; }
+/* The wrapper only hosts the design-system BottomNav (.dr-bottomnav.dr-floating-bottom, fixed); it takes no space. */
+.nav-bottom { display: block; }
+
+/* Update toast and install prompt float above the bottom nav. */
+.app-float { position: fixed; inset-inline: 0; inset-block-end: calc(var(--bottomnav-h) + env(safe-area-inset-bottom) + var(--space-2));
+  z-index: var(--z-toast); display: grid; gap: var(--space-2); justify-items: center; padding-inline: var(--space-3); pointer-events: none; }
+.app-float > * { pointer-events: auto; box-sizing: border-box; inline-size: 100%; max-inline-size: var(--content-max); }
+
+/* Rail pieces (visible only at >= 900px). */
+.rail-brand { display: flex; align-items: center; gap: var(--space-2); min-block-size: var(--tap-min); margin-block-end: var(--space-4);
+  padding-inline: var(--space-2); border-radius: var(--radius-md); color: var(--ink); text-decoration: none;
+  font-family: var(--font-display); font-size: 22px; line-height: 28px; font-weight: 700; }
+.rail-item { display: flex; align-items: center; gap: var(--space-3); min-block-size: var(--tap-min); box-sizing: border-box;
+  padding-block: var(--space-2); padding-inline: var(--space-3); border-radius: var(--radius-md); border-inline-start: 4px solid transparent;
+  color: var(--ink); text-decoration: none; font-size: 16px; line-height: 22px; font-weight: 700; }
+.rail-item > span { min-inline-size: 0; overflow-wrap: anywhere; }
+.rail-item:hover { background: var(--surface-sunk); }
+.rail-item.is-active { background: var(--kola-soft); border-inline-start-color: var(--kola); }
+.rail-brand:focus-visible, .rail-item:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+/* An <hr>: zero the UA margins (auto inline margins would shrink it to nothing in the flex column). */
+.rail-sep { flex: none; block-size: 0; margin: var(--space-2) 0; border: 0; border-block-start: 2px solid var(--line); }
+
+/* Desktop: rail column + content column; the bottom nav goes away. */
+@media (min-width: 900px) {
+  /* The bottom padding moves to .app-main so the sticky rail's grid area reaches the bottom of the page. */
+  .app-shell { display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr); padding-block-end: 0; }
+  .app-main { padding-block-end: var(--space-6); }
+  .nav-rail { display: flex; flex-direction: column; gap: var(--space-1); position: sticky; inset-block-start: 0; align-self: start;
+    box-sizing: border-box; block-size: 100vh; block-size: 100dvh; overflow-y: auto; overscroll-behavior: contain;
+    padding: var(--space-4) var(--space-3); background: var(--surface); border-inline-end: 2px solid var(--line); }
+  .nav-bottom { display: none; }
+  .app-float { inset-block-end: var(--space-4); inset-inline-start: var(--rail-w); }
+}
+
+@media print {
+  .nav-rail, .nav-bottom, .app-float, .app-main > .dr-conn, .app-main > .dr-appbar { display: none; }
+  .app-shell { display: block; min-block-size: 0; padding: 0; }
+  .app-main { padding: 0; }
+}

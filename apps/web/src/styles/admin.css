@@ -1,0 +1,49 @@
+/* Admin area: org dashboard columns, invite codes, capability coverage, platform-admin request cards. */
+
+.admin-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+
+/* One invite code. Phones: label line, then the code, then the buttons (wrapping). Buttons get 48px from .panel .dr-btn-sm. */
+.code-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding-block: var(--space-3); }
+.code-row + .code-row { border-block-start: 2px solid var(--line); }
+.code-row > span { flex: 1 0 100%; min-inline-size: 0; font-weight: 600; }
+.code-row code { direction: ltr; unicode-bidi: isolate; font: 700 20px/28px ui-monospace, Menlo, Consolas, monospace; color: var(--ink);
+  background: var(--surface-sunk); border: 2px dashed var(--line-strong); border-radius: var(--radius-md); padding-block: var(--space-2); padding-inline: var(--space-3); overflow-wrap: anywhere; }
+
+/* One competency. Phones: chip + label, then bar + percent. */
+.cov-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "code label label" "bar bar pct"; align-items: center; gap: var(--space-2) var(--space-3); padding-block: var(--space-2); }
+.cov-row + .cov-row { border-block-start: 2px solid var(--line); }
+.cov-row .cap-code { grid-area: code; }
+.cov-row .cap-label { grid-area: label; }
+.cov-row .cov-bar { grid-area: bar; }
+.cov-row > .small { grid-area: pct; min-inline-size: 4ch; text-align: end; font-variant-numeric: tabular-nums; }
+
+/* Coverage track (same height as the design system's progress track); the inline-size of <i> is set inline and fills from inline-start. */
+.cov-bar { display: block; min-inline-size: 0; block-size: 12px; border-radius: var(--radius-pill); background: var(--surface-sunk); border: 2px solid var(--line); overflow: hidden; }
+.cov-bar i { display: block; block-size: 100%; max-inline-size: 100%; background: var(--kola); }
+
+/* One pending organization request: a card nested in a panel (radius-md, no shadow, like .course and .submission). */
+.req { display: grid; gap: var(--space-3); min-inline-size: 0; background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-md); padding: var(--space-4); }
+.req > header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+.req > header strong { min-inline-size: 0; font: 700 18px/24px var(--font-display); overflow-wrap: anywhere; }
+
+.req-facts { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); margin: 0; }
+.req-facts > div { min-inline-size: 0; }
+.req-facts dt { font: var(--text-label); line-height: inherit; color: var(--ink-muted); }
+.req-facts dd { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
+.req-facts dd small { font-size: 14px; color: var(--ink-muted); }
+
+@media (min-width: 600px) {
+  .code-row { flex-wrap: nowrap; }
+  .code-row > span { flex: 1 1 auto; }
+  .code-row code, .code-row .dr-btn { flex: none; }
+  .cov-row { grid-template-columns: auto minmax(0, 1fr) 30% auto; grid-template-areas: "code label bar pct"; }
+  .req-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 900px) {
+  .admin-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Two columns beside the rail leave each panel ~250-420px wide: codes and competencies go back to two lines. */
+  .admin-cols .code-row { flex-wrap: wrap; }
+  .admin-cols .code-row > span { flex: 1 0 100%; }
+  .admin-cols .cov-row { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "code label label" "bar bar pct"; }
+}

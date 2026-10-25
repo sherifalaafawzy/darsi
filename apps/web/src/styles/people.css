@@ -1,0 +1,56 @@
+/* People: add people one by one, Excel import (column mapping, preview), printable login slips. */
+
+/* Add people: one card per person on phones, one row per person on desktop. */
+.add-rows { display: grid; gap: var(--space-3); }
+.add-row { display: grid; gap: var(--space-2); padding: var(--space-3); background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-md); }
+.add-row > * { min-width: 0; }
+.add-row .dr-btn { justify-self: end; }
+
+/* Fields here sit outside .form-grid: the same field look as base.css (.dr-field-input). Focus ring: base.css (.screen select…). */
+.add-row input, .add-row select, .map-row select {
+  box-sizing: border-box; inline-size: 100%; min-width: 0; min-block-size: var(--tap-min); margin: 0;
+  padding: var(--space-2) var(--space-3); background: var(--surface); color: var(--ink);
+  border: 2px solid var(--line-strong); border-radius: var(--radius-sm); font: var(--text-body);
+}
+.add-row input::placeholder { color: var(--ink-muted); opacity: 1; }
+
+/* Column mapping: field name over its column picker on phones. */
+.map-grid { display: grid; gap: var(--space-3); }
+.map-row { display: grid; gap: var(--space-1); align-items: center; min-width: 0; }
+.map-row > span { min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+
+/* Preview row with problems: the status cell carries the words, the tint marks the row. */
+.row-err { background: var(--wrong-soft); color: var(--ink); }
+
+/* Login slips: an on-screen preview of what prints. */
+.slips { display: grid; gap: var(--space-3); }
+.slips:empty { display: none; }
+.slip { display: grid; gap: var(--space-1); align-content: start; min-width: 0; padding: var(--space-3); background: var(--surface); color: var(--ink);
+  border: 2px dashed var(--line-strong); border-radius: var(--radius-md); overflow-wrap: anywhere; }
+.slip > * { min-width: 0; }
+.slip strong { font-family: var(--font-display); font-size: 18px; }
+.slip code { direction: ltr; unicode-bidi: isolate; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 18px; font-weight: 700; }
+
+@media (min-width: 600px) {
+  .add-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .add-row .dr-btn { grid-column: 1 / -1; }
+  .map-row { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: var(--space-1) var(--space-3); }
+  .slips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 900px) {
+  .add-row { grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) minmax(0, 2fr) minmax(0, 2fr) var(--tap-min); align-items: center; padding: 0; background: none; border: 0; border-radius: 0; }
+  .add-row .dr-btn { grid-column: auto; }
+  .map-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-6); }
+}
+
+/* Print: A4, two slips per row, each with its own dashed cut line. base.css hides .no-print and the panel frame; layout.css hides the app chrome. */
+@media print {
+  @page { size: A4; margin: 15mm; }
+  .slips { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4mm; }
+  .slip { padding: 4mm; background: none; color: var(--ink); border: 1.5pt dashed var(--ink); border-radius: 0;
+    font-size: 12pt; break-inside: avoid; page-break-inside: avoid; }
+  .slip strong { font-size: 13pt; }
+  .slip code { font-size: 13pt; }
+  .slip .small { font-size: 11pt; color: var(--ink); }
+}
