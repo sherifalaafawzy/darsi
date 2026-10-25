@@ -52,7 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let unsubProfile = () => {};
     const unsubAuth = onAuthStateChanged(fb.auth, async (u) => {
       unsubProfile();
-      if (!u) { setUser(null); setProfile(null); setClaims(LEARNER); setLoading(false); return; }
+      // Also clears offlineUid: a session that ended while the phone was offline (expired, revoked) makes this a guest.
+      if (!u) { setUser(null); setProfile(null); setClaims(LEARNER); setOfflineUid(null); setLoading(false); return; }
       // Claims first, so routing never sees a signed-in admin with the default "learner" role.
       await readClaims(u).catch(() => {});
       setUser(u); setOfflineUid(null);

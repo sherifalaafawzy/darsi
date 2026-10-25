@@ -67,6 +67,21 @@ it("offline before the SDK was cached: learning continues in the stored account'
   expect(auth.offlineUid).toBeNull();
 });
 
+it("a stored session that ended while offline becomes a guest once the SDK reconnects", async () => {
+  h.storedSession.mockResolvedValue({ uid: "u1", email: null, createdAt: null });
+  h.loadFirebase.mockRejectedValue(new TypeError("Failed to fetch dynamically imported module"));
+  render(<AuthProvider><Probe /></AuthProvider>);
+  await waitFor(() => expect(auth.offlineUid).toBe("u1"));
+
+  h.loadFirebase.mockResolvedValue({ auth: {}, db: {} });
+  await act(async () => { window.dispatchEvent(new Event("online")); });
+  await waitFor(() => expect(h.authCallback).not.toBeNull());
+  await act(async () => { h.authCallback!(null); }); // the token was revoked (e.g. an admin reset the password)
+  expect(auth.offlineUid).toBeNull();
+  expect(auth.user).toBeNull();
+  expect(auth.loading).toBe(false);
+});
+
 it("an account screen loads the SDK on demand, once", async () => {
   h.storedSession.mockResolvedValue(null);
   h.loadFirebase.mockResolvedValue({ auth: {}, db: {} });
