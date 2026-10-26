@@ -43,8 +43,9 @@ export default defineConfig({
         // Web push: the `push` and `notificationclick` handlers. The browser stores imported scripts with the worker,
         // so push-sw.js is not precached as well.
         importScripts: [pushSw],
-        // App shell, fonts (all scripts, ~230 KB), icons and lesson JSON are precached; kits and media are cached on demand.
-        globPatterns: ["**/*.{js,css,html,svg,png,webmanifest,woff2,json}"],
+        // App shell, icons and lesson JSON are precached; kits and media are cached on demand. Fonts are not (every script
+        // is ~240 KB): "darsi-fonts" below holds the faces pages use, and platform/fonts.ts fills it for the page language.
+        globPatterns: ["**/*.{js,css,html,svg,png,webmanifest,json}"],
         // Lesson content is tiny and precached; kits are cached when a unit is downloaded. Staff-only and first-visit
         // chunks (and exceljs, ~930 KB) are not precached, so a learner's install stays small; "darsi-chunks" caches them on first use.
         // firebase-* covers firebase-extra (Functions, Storage, Messaging) too.
@@ -53,7 +54,10 @@ export default defineConfig({
         runtimeCaching: [
           // Hashed file names never change content, so cache-first is safe; old versions age out.
           { urlPattern: ({ url }) => url.pathname.startsWith("/assets/") && /\.(js|css)$/.test(url.pathname), handler: "CacheFirst", options: { cacheName: "darsi-chunks", expiration: { maxEntries: 40, maxAgeSeconds: 60 * 864e2 } } },
-          { urlPattern: ({ url }) => url.pathname.endsWith(".woff2"), handler: "CacheFirst", options: { cacheName: "darsi-fonts", expiration: { maxEntries: 20 } } },
+          // ignoreVary: the page itself stores fonts here (platform/fonts.ts), and a CSS font request differs from its fetch()
+          // in headers a server may Vary on (Origin); font files are hashed and immutable, so any copy is the right one.
+          // Only real fonts are cached: Hosting answers a font path that no longer exists with index.html and a 200.
+          { urlPattern: ({ url }) => url.pathname.endsWith(".woff2"), handler: "CacheFirst", options: { cacheName: "darsi-fonts", matchOptions: { ignoreVary: true }, cacheableResponse: { statuses: [200], headers: { "content-type": "font/woff2" } }, expiration: { maxEntries: 20 } } },
           { urlPattern: ({ url }) => url.pathname.startsWith("/content/"), handler: "StaleWhileRevalidate", options: { cacheName: "darsi-content" } },
           { urlPattern: ({ url }) => url.pathname.startsWith("/kits/"), handler: "CacheFirst", options: { cacheName: "darsi-kits", expiration: { maxEntries: 200 } } },
           { urlPattern: ({ url }) => url.pathname.startsWith("/media/"), handler: "CacheFirst", options: { cacheName: "darsi-media", rangeRequests: true, expiration: { maxEntries: 60 } } },

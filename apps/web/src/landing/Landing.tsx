@@ -23,7 +23,7 @@ export function Landing() {
           <a href="#how">{L(C.nav.approach)}</a><a href="#tracks">{L(C.nav.tracks)}</a><a href="#orgs">{L(C.nav.orgs)}</a><a href="#standards">{L(C.nav.standards)}</a><a href="#faq">{L(C.nav.faq)}</a>
         </nav>
         <div className="lp-actions">
-          <button type="button" className="lp-lang" onClick={() => dispatch({ type: "set", patch: { lang: otherLang } })} lang={otherLang}>{otherLang === "ar" ? "العربية" : "English"}</button>
+          <button type="button" className="lp-lang dr-other-script" onClick={() => dispatch({ type: "set", patch: { lang: otherLang } })} lang={otherLang}>{otherLang === "ar" ? "العربية" : "English"}</button>
           <Button size="sm" variant="ghost" onClick={() => nav("/signin")}>{L(C.nav.signIn)}</Button>
           <Button size="sm" onClick={() => nav("/signup")}>{L(C.nav.start)}</Button>
         </div>
@@ -115,7 +115,8 @@ export function Landing() {
       </section>
 
       <footer className="lp-footer">
-        <p>{L(C.footer)}</p>
+        {/* The other script's brand name in the phone's own font: an English page never downloads the Arabic web fonts. */}
+        <p>{lang === "ar" ? "درسي (Darsi)" : <>Darsi (<span className="dr-other-script" lang="ar">درسي</span>)</>} — {L(C.footer)}</p>
         <details><summary>{lang === "ar" ? "المصادر" : "Sources"}</summary><ul>{C.sources.map((s) => <li key={s.url}><a href={s.url} target="_blank" rel="noreferrer noopener" dir="ltr">{s.label}</a></li>)}</ul></details>
       </footer>
     </div>

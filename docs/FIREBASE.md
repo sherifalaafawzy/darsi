@@ -125,7 +125,7 @@ npm run dev                          # the web app talks to the emulators (.env.
 
 | Piece | Where | Notes |
 |---|---|---|
-| Web app | Hosting | Precaches the learner app shell (~850 KB). The Firebase SDK loads only for signed-in people; staff screens and exceljs load only when used. |
+| Web app | Hosting | Precaches the learner app shell (~640 KB), plus the fonts for the teacher's language. The Firebase SDK loads only for signed-in people; staff screens and exceljs load only when used. |
 | Data | Firestore | Rules in `firebase/firestore.rules`. Learner progress syncs with one read per sign-in, with no live listeners. |
 | Files | Storage | Project evidence (≤ 10 MB, images/PDF/mp4/audio). Media and kits are public read. |
 | Roles, orgs, accounts | Cloud Functions | `europe-west1`, max 20 instances. Every role change is written to `audit`. |

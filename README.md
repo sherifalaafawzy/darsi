@@ -66,7 +66,7 @@ An organization can register on Darsi. Once approved, its admins get:
 
 | | |
 |---|---|
-| **Install size** | About 850 KB, including fonts. Guests never download the account and sync code (Firebase); it loads only when someone signs in. Admin tools and the spreadsheet importer load only for the people who use them. |
+| **Install size** | About 715 KB for an English teacher and 845 KB for an Arabic one, fonts included: each phone keeps only the fonts for its own language. Guests never download the account and sync code (Firebase); it loads only when someone signs in. Admin tools and the spreadsheet importer load only for the people who use them. |
 | **Data** | Progress syncs with one small read per sign-in; photos are shrunk on the phone (often from 3 MB to around 250 KB) before upload. |
 | **Old phones** | Styles work on older Android WebViews, every tap target is at least 48 px, and **Sunlight mode** gives high contrast for outdoor classrooms. |
 | **No account needed** | Teachers can start learning straight away as guests. When they create an account later, their progress comes with them. |

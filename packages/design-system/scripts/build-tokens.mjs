@@ -14,9 +14,15 @@ const resolve = (tok, th, depth = 0) => {
 const cssVal = (tok, th) => { const v = raw(tok, th); return v.startsWith("{") ? `var(--${v.slice(1, -1)})` : v; };
 const other = ["spacing", "radius", "size", "zIndex"].filter((k) => t[k]);
 const L = [`/* ${t.name} — generated from tokens.json. Do not edit by hand: run \`npm run tokens\`. */`];
+// unicode-range is the font file's subset: the Google Fonts ranges they were cut with, plus the accents and "⁴" the Latin
+// files also carry (Latin is always loaded, so they never cost a download). The Arabic subset leaves out U+2010/2011 and
+// U+204F: Latin's range claims them but its files lack them, so a pasted hyphen would fetch Arabic on an English page.
+// Without unicode-range the browser downloads
+// every face in a stack to learn what it covers: one "→" or Arabic word on an English page would fetch the Arabic fonts.
 for (const f of t.type.fonts) {
   const file = f.file.replace(/^fonts\//, "");
-  L.push(`@font-face { font-family: "${f.family}"; src: url("./fonts/${file}") format("woff2"); font-weight: ${f.weight}; font-style: normal; font-display: swap; }`);
+  const range = t.type.subsets?.[f.subset];
+  L.push(`@font-face { font-family: "${f.family}"; src: url("./fonts/${file}") format("woff2"); font-weight: ${f.weight}; font-style: normal; font-display: swap;${range ? ` unicode-range: ${range};` : ""} }`);
 }
 themes.forEach((th, i) => {
   L.push(`${i === 0 ? `:root, [data-theme="${th}"]` : `[data-theme="${th}"]`} {`);

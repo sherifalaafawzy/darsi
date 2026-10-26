@@ -116,13 +116,71 @@ test("AI lab tools respond", async ({ page }) => {
   await expect(page.getByText("Example answer")).toBeVisible();
 });
 
-test("works offline after the first visit", async ({ page, context, browserName }) => {
-  test.skip(browserName !== "chromium");
+// Fonts are not precached: each language keeps its own faces in "darsi-fonts" (platform/fonts.ts). Arabic needs Latin too.
+const FONTS = {
+  en: { families: ["Noto Sans", "Baloo 2"], files: ["baloo-2-latin-700-normal", "baloo-2-latin-800-normal", "noto-sans-latin-wght-normal"] },
+  ar: {
+    families: ["Noto Sans", "Baloo 2", "Noto Sans Arabic", "Baloo Bhaijaan 2"],
+    files: ["baloo-2-latin-700-normal", "baloo-2-latin-800-normal", "baloo-bhaijaan-2-arabic-700-normal", "baloo-bhaijaan-2-arabic-800-normal", "noto-sans-arabic-arabic-wght-normal", "noto-sans-latin-wght-normal"],
+  },
+};
+/** Font files (without Vite's 8-character hash) in the fonts cache or in Workbox's precache. */
+const cachedFonts = (page: Page, which: "darsi-fonts" | "precache") => page.evaluate(async (which) => {
+  const names = (await caches.keys()).filter((k) => (which === "precache" ? k.includes("precache") : k === which));
+  const urls = (await Promise.all(names.map(async (n) => (await (await caches.open(n)).keys()).map((r) => r.url)))).flat();
+  return urls.filter((u) => u.endsWith(".woff2")).map((u) => u.split("/").pop()!.replace(/-[\w-]{8}\.woff2$/, "")).sort();
+}, which);
+
+for (const [lang, label, heading, offline] of [
+  ["en", "English", "AI basics for teachers", "You’re offline"],
+  ["ar", "العربية", "أساسيات الذكاء الاصطناعي للمعلمين", "أنت غير متصل"],
+] as const) {
+  test(`works offline after the first visit, with its own fonts (${lang})`, async ({ page, context, browserName }) => {
+    test.skip(browserName !== "chromium");
+    await onboard(page, label);
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    expect(await cachedFonts(page, "precache")).toEqual([]);
+    await expect.poll(() => cachedFonts(page, "darsi-fonts")).toEqual(FONTS[lang].files);
+    // Again from an empty cache, with the page already in its language when it loads (onboarding started in English).
+    await page.evaluate(() => caches.delete("darsi-fonts"));
+    await page.reload();
+    await expect.poll(() => cachedFonts(page, "darsi-fonts")).toEqual(FONTS[lang].files);
+    // A font path that no longer exists gets index.html with a 200 (Hosting and vite preview alike): never cache it as a font.
+    expect(await page.evaluate(() => fetch("/assets/gone-ABCDEFGH.woff2").then((r) => r.headers.get("content-type")))).toContain("text/html");
+    expect(await cachedFonts(page, "darsi-fonts")).toEqual(FONTS[lang].files);
+    await context.setOffline(true);
+    await page.reload();
+    await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+    await expect(page.getByText(offline)).toBeVisible();
+    // Offline, every face of this language still loads (from the cache), and no other font was cached along the way.
+    const loaded = await page.evaluate(async (families) => {
+      const faces: FontFace[] = [];
+      document.fonts.forEach((f) => { if (families.includes(f.family.replace(/["']/g, ""))) faces.push(f); });
+      return Promise.all(faces.map((f) => f.load().then(() => "ok", () => `${f.family} ${f.weight} failed`)));
+    }, [...FONTS[lang].families]);
+    expect(loaded).toEqual(FONTS[lang].files.map(() => "ok"));
+    expect(await cachedFonts(page, "darsi-fonts")).toEqual(FONTS[lang].files);
+  });
+}
+
+test("an English page never downloads the Arabic or extended-Latin fonts", async ({ page }) => {
+  // The landing page and the language picker show "العربية"; Me shows the picker again and "درسي" in its footer.
   await onboard(page);
-  await page.evaluate(() => navigator.serviceWorker.ready);
-  await page.reload();
-  await context.setOffline(true);
-  await page.reload();
-  await expect(page.getByRole("heading", { name: "AI basics for teachers" })).toBeVisible();
-  await expect(page.getByText("You’re offline")).toBeVisible();
+  await page.getByRole("link", { name: "Me" }).first().click();
+  await expect(page.getByRole("heading", { name: "Account" })).toBeVisible();
+  // Punctuation pasted into English lessons that the Latin files lack (U+2010/2011 hyphens, U+204F), plus invisible
+  // direction and joining marks: none of them may pull in an Arabic face. Both stacks, every weight in use.
+  await page.evaluate(async () => {
+    for (const [family, weight] of [["var(--font-sans)", "400"], ["var(--font-display)", "700"], ["var(--font-display)", "800"]]) {
+      const p = document.createElement("p");
+      Object.assign(p.style, { fontFamily: family, fontWeight: weight });
+      p.textContent = "AI\u2011powered, self\u2010paced \u204F Mona\u200E and\u200C\u200D tools";
+      document.body.appendChild(p);
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  });
+  await page.evaluate(() => document.fonts.ready);
+  const fonts = await page.evaluate(() => performance.getEntriesByType("resource").map((e) => e.name).filter((n) => n.endsWith(".woff2")).map((n) => n.split("/").pop()));
+  expect(fonts.length).toBeGreaterThan(0);
+  expect(fonts.filter((f) => /arabic|latin-ext/.test(f!))).toEqual([]);
 });

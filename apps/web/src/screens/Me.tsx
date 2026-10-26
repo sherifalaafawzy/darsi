@@ -49,7 +49,7 @@ export function Me() {
         </section>
         {install.canInstall && <Button block variant="secondary" icon="install" onClick={install.install}>{t("me.install")}</Button>}
         <Button block variant="ghost" onClick={() => { if (confirm(t("me.reset") + "?")) dispatch({ type: "reset" }); }}>{t("me.reset")}</Button>
-        <p className="muted small center">{["Darsi", "درسي", "v0.1.0"].join(t("common.sep"))}</p>
+        <p className="muted small center">Darsi{t("common.sep")}<span className="dr-other-script" lang="ar">درسي</span>{t("common.sep")}v0.1.0</p>
       </main>
     </>
   );

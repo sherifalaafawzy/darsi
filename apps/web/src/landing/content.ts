@@ -93,7 +93,7 @@ export const landing = {
     ],
   },
   cta: { title: t("Start with one lesson today.", "ابدأ بدرس واحد اليوم."), body: t("Ten minutes, your phone, your language.", "عشر دقائق، هاتفك، لغتك.") },
-  footer: t("Darsi (درسي) — technology training for teachers. Kits are free to copy for your school.", "درسي (Darsi) — تدريب تقني للمعلمين. يُسمح بنسخ الحقائب لمدرستك مجانًا."),
+  footer: t("technology training for teachers. Kits are free to copy for your school.", "تدريب تقني للمعلمين. يُسمح بنسخ الحقائب لمدرستك مجانًا."), // after "Darsi (درسي) — " (Landing.tsx)
   sources: [
     { label: "UNESCO (2024), Global report on teachers — via UN News", url: "https://news.un.org/en/node/1147067" },
     { label: "ITU (2025), Facts and Figures 2025", url: "https://www.itu.int/en/mediacentre/Pages/PR-2025-11-17-Facts-and-Figures.aspx" },

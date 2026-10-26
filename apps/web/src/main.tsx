@@ -8,5 +8,7 @@ import "./styles/layout.css";
 import "./styles/auth.css";
 import "./styles/lesson.css";
 import { App } from "./App";
+import { keepPageFonts } from "./platform/fonts";
 
 createRoot(document.getElementById("root")!).render(<StrictMode><App /></StrictMode>);
+keepPageFonts();

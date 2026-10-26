@@ -146,7 +146,8 @@ The service worker (Workbox `generateSW`) installs when a person enters the app.
 
 | What | Strategy |
 |---|---|
-| App shell, learner screens, fonts, icons, lesson JSON | **Precached** (~850 KB) |
+| App shell, learner screens, icons, lesson JSON | **Precached** (~640 KB) |
+| Fonts | **Not precached.** Every face has a `unicode-range` (`tokens.json` `type.subsets`), so a page downloads only the scripts it shows. `darsi-fonts` keeps them: cache-first, `ignoreVary`, and only `font/woff2` responses, because Hosting answers a missing path with `index.html`. `platform/fonts.ts` fills it with the page language's faces after load, on every language change and on reconnect: Latin (~76 KB) for English, plus Arabic (~131 KB) for Arabic. Arabic words on a page in another language, such as the language picker or the Arabic brand name, use the phone's own font (`.dr-lang-native`, `.dr-other-script`), so English pages never download Arabic fonts |
 | The Firebase SDK (`firebase-*`, including `firebase-extra`: Functions, Storage, Messaging), staff chunks, landing page, exceljs, and their CSS | **Not precached**; `darsi-chunks` caches them cache-first on first use (hashed file names) |
 | `push-sw.js` (push handlers, ~3 KB) | **Imported** into `sw.js` with `importScripts`, so the browser stores it with the worker; not precached. Its URL carries a content hash (`?v=…`), so changing it changes `sw.js` and triggers the normal update prompt |
 | `/content/*` | Stale-while-revalidate (`darsi-content`) |
@@ -360,7 +361,8 @@ The Firebase Emulator Suite needs **JDK 21+**. Rules tests with `@firebase/rules
 
 | Measure | Now | Target (brand book) |
 |---|---|---|
-| Precache on install | ~850 KB | ≤ 2 MB including fonts |
+| Precache on install | ~640 KB | ≤ 2 MB including fonts |
+| Fonts, kept per language | ~76 KB (English) or ~207 KB (Arabic, which needs Latin too); every script was precached before (~237 KB) | |
 | Main JS chunk | ~133 KB gzipped (no Firebase) | |
 | Firebase SDK, signed-in only | ~210 KB gzipped (`firebase`), plus ~21 KB (`firebase-extra`: Functions, Storage, Messaging + Installations) for admin actions, uploads and notifications | |
 | Push handlers in the service worker | ~1.4 KB gzipped (`push-sw.js`, no SDK) | |
@@ -371,7 +373,6 @@ Measure with `npx vite build` in `apps/web` and read the chunk table and the `pr
 
 ## Known gaps and roadmap
 
-- **Fonts:** both scripts are precached (Arabic 131 KB, Latin 106 KB); precaching only the teacher's language would save 105–130 KB per install.
 - **Videos:** the narrated video pipeline (Playwright slide renders, TTS in each language, ffmpeg, VTT captions) is designed but not built. Lessons use transcripts until then.
 - **Security review:** a static review of the rules, functions and client, plus rules unit tests and a scan of the deployed site, is planned before wider rollout.
 - **Content and languages:** the IoT and cyber-security units; French, Swahili, Urdu and Hausa.

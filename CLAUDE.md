@@ -14,6 +14,7 @@ Darsi is a serious upskilling PWA for school and university teachers (and their 
 - Use npm 11 (`npx -y npm@11.13.0 install` if npm 10 crashes with "edgesOut").
 - Pin dependency versions that are at least two weeks old.
 - Arabic text: never use "·" as a separator (it reads as Arabic zero). Use "،" or the i18n key `common.sep`.
+- Arabic words on a page in another language (a language's own name, the Arabic brand name) get `lang="ar"` and `className="dr-other-script"`, so they use the phone's font and English pages never download the Arabic web fonts. The e2e test "an English page never downloads the Arabic or extended-Latin fonts" guards this.
 - The app is light theme only. Do not add dark mode.
 - Custom claims {role, orgId} are set only by Cloud Functions. Roles: learner, student, teacher, orgAdmin, superadmin.
 - Username logins map to `<username>@users.darsi.app` (in `auth/api.ts` and `functions/src/passwords.ts`; keep the two in sync).
@@ -24,7 +25,7 @@ Done: the design system; the PWA MVP (lessons engine with all question types, AI
 
 `tsc` and `npm run build` pass. Unit tests: `tests/engine.test.ts`, `tests/screens.test.tsx` (staff screens with the data hooks and callables mocked), `tests/sync.test.tsx`. `npm run lint:css` checks every stylesheet against the brand and old-phone rules.
 
-Build for low-resource phones (the user asked for it; see the brand book). No live listeners or polling; one-shot reads, and writes only on change. Keep the install small: staff screens, the landing page and exceljs are lazy chunks that `vite.config.ts` leaves out of the precache. Keep re-renders few. **Guests never load Firebase.** Startup code reaches it only through `src/fb.ts` (`loadFirebase()`, `call()`, `storedSession()`). Never statically import `firebase/*` or `./firebase` on the guest path; staff screens are lazy chunks and may. The e2e test "guests never download the Firebase SDK" guards this. The SDK is in named chunks (`firebase`, `firebase-extra`) kept out of the precache. The install is ~850 KB and the main chunk ~133 KB gzipped. The Firestore offline cache is capped at 10 MB. Project photos are shrunk on the phone to ≤1280 px JPEG before upload (`ProjectView.shrinkImage`).
+Build for low-resource phones (the user asked for it; see the brand book). No live listeners or polling; one-shot reads, and writes only on change. Keep the install small: staff screens, the landing page and exceljs are lazy chunks that `vite.config.ts` leaves out of the precache. Keep re-renders few. **Guests never load Firebase.** Startup code reaches it only through `src/fb.ts` (`loadFirebase()`, `call()`, `storedSession()`). Never statically import `firebase/*` or `./firebase` on the guest path; staff screens are lazy chunks and may. The e2e test "guests never download the Firebase SDK" guards this. The SDK is in named chunks (`firebase`, `firebase-extra`) kept out of the precache. The precache is ~640 KB and the main chunk ~133 KB gzipped. Fonts are not precached: each phone keeps only its language's fonts in `darsi-fonts` (`platform/fonts.ts`; Latin ~76 KB, plus Arabic ~131 KB for Arabic), and every `@font-face` has a `unicode-range`. The Firestore offline cache is capped at 10 MB. Project photos are shrunk on the phone to ≤1280 px JPEG before upload (`ProjectView.shrinkImage`).
 
 ### Next steps, in order
 1. Done: `src/admin/SuperAdmin.tsx` (/super), `src/admin/Teach.tsx` (/teach, /teach/:uid via `TeachPerson`), `src/org/OrgScreen.tsx` (/org). Pass names into `t()` through `isolate()` from `i18n` (the plain-text `<bdi>`).
@@ -92,4 +93,4 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
 - Git: the repo is github.com/sherifalaafawzy/darsi. Commit with the repo-local personal identity (Sherif Alaa Fawzy <sherifalaafawzy@gmail.com>), never the global work identity.
 
 ### Known issues (not fixed yet)
-- All fonts are precached (~230 KB); the brand book says to precache only the scripts for the teacher's language.
+- None open. Fonts were the last one: since 2026-10-26 only the teacher's language is kept on the phone.
