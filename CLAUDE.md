@@ -46,7 +46,7 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
 5. Done: `components/Layout.tsx` has the nav rail at ≥900px (learner tabs, then `accountLinks(role)`) and the design-system BottomNav with five learner tabs below 900px. On phones the staff links live in Me.
    - Admins land on their dashboard: `homeFor(role)` in App.tsx. AuthProvider reads the claims before it publishes the user.
    - CSS is one file per area in `src/styles/`, one owner per class; `OWNERS` in `scripts/check-css.mjs` lists them.
-   - `base`, `layout`, `auth` and `lesson` are global (main.tsx). `admin`, `person`, `people` and `landing` load with their lazy chunks.
+   - `base`, `layout`, `auth` and `lesson` are global (main.tsx). `admin`, `person`, `people` and `landing` load with their lazy chunks. `labs` (the catalogue) is global; `lab-kit` (everything inside the lab apps) is imported by `labs/kit/LabShell` and loads with the first lab.
    - Breakpoints are 600px and 900px only. Logical properties only, tokens only, hard shadows only.
 6. Deferred by the user (2026-10-25). Video pipeline (`apps/web/scripts/build-videos.mjs`):
    - Render slide states with Playwright, revealing bullets progressively.
@@ -67,6 +67,12 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - **Broadcasts:** from `/super`, in en and ar; the audience is everyone, an org or a role. Sent via FCM topics, logged in `broadcasts`.
     - **Never on the guest path:** messaging is in the lazy `firebase-extra` chunk. Every sign-out first unregisters this phone (`pushSignOut`). Me is outside the onboarding gate so Sign out is always reachable.
     - **Key:** the VAPID public key is in `apps/web/.env.local` as `VITE_FIREBASE_VAPID_KEY`, verified as a valid P-256 point. It's read at build time, so any machine that builds Hosting needs it.
+12. Done (2026-10-26; committed, not deployed): **Labs** replaces the AI lab. `/labs` is a catalogue of 48 apps on 13 shelves (AI, IoT, cyber), with "The AI ladder" (20 steps, neuron → LLMs → decision models). Everything computes on the phone. TECHNICAL.md "Labs" has the design and the full list.
+    - **Add an app** by adding a folder `apps/web/src/labs/apps/<id>/` with `meta.ts`, `index.tsx` (en/ar strings via `useS`) and a pure `model.ts`, plus model tests in `tests/labs/`. No shared file changes; `tests/labs/catalog.test.ts` checks the meta.
+    - **Use the kit** (`labs/kit/`): `LabShell`, controls, `Plot`, `PixelGrid`, `Formula`, `useLoop`, `nn`, `vectors`, `plural`. Pace anything people watch by time, not frames. Loops start only on Run and stop by themselves.
+    - **Bidi:** every number and operator in a maths line gets its own `<bdi>` (`Formula`); Latin-only strings such as phone numbers need `dir="ltr"`; counted Arabic words use `usePlural`.
+    - **Lessons:** a `lab` step's `tool` is any app id; `/lab` redirects to `/labs`.
+    - **Checked:** `tests/labs` (96 with notify), `lint:css`, Labs type-check, the full e2e suite (26/26 against a private build, with `CHROMIUM_PATH` set to the installed 1243 build), and every app in the browser in Arabic at 375 px.
 9. Not started: the security review. The user asked for static scanning of the rules, functions and client, plus a pentest of the deployed URL with `H:\htdocs\pentest-lab` (allowlist-gated; add only darsi-f0685 hosts). It is deferred until the code is finished.
 
 ### Firebase project (live): darsi-f0685

@@ -14,7 +14,7 @@ import { LessonScreen } from "./screens/LessonScreen";
 import { Onboarding } from "./screens/Onboarding";
 import { Kit } from "./screens/Kit";
 import { Downloads } from "./screens/Downloads";
-import { Lab } from "./screens/Lab";
+import { LabApp, Labs } from "./screens/Labs";
 import { Me } from "./screens/Me";
 
 // Loaded on demand: learners never download or parse the landing page (after their first visit) or any staff screen.
@@ -90,7 +90,10 @@ function Routed() {
           <Route element={<Layout />}>
             <Route path="learn" element={<Home />} />
             <Route path="downloads" element={<Downloads />} />
-            <Route path="lab" element={<Lab />} />
+            <Route path="labs" element={<Labs />} />
+            <Route path="labs/:id" element={<LabApp />} />
+            {/* Old links (notifications already sent, bookmarks) still open Labs. */}
+            <Route path="lab" element={<Navigate to="/labs" replace />} />
             <Route path="kit" element={<Kit />} />
           </Route>
         </Route>

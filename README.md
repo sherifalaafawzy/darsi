@@ -42,7 +42,7 @@ It has two syllables, is easy to say in English, French, Portuguese or Hindi, an
 - **Five-minute lessons.** Each one follows the same shape: watch a short video (or read the transcript to save data), practise with mixed questions, get feedback that explains *why*, reflect, and finish with "Try it in class tomorrow".
 - **Three tracks**, each in four levels: **AI**, **IoT** (sensors and connected devices) and **cyber security**. The competencies map to the UNESCO AI Competency Frameworks for teachers and for students, to the EU's DigComp 2.2, and to Darsi's own IoT strand. A nine-question placement check suggests where to start.
 - **A classroom kit for every lesson.** Slides (PDF and editable PowerPoint), a lesson plan and a pupil worksheet in the teacher's language. They are printable in black and white, include activities that need no devices or electricity, and are free to copy for your school.
-- **An AI lab.** Hands-on tools that make chatbots understandable: build a better prompt, see how text becomes tokens, watch next-word probabilities change, train a tiny classifier and see bias appear, fact-check an AI answer. It all works offline, with reviewed examples, so no learner ever sees unreviewed AI output.
+- **Labs.** 48 hands-on apps across all three tracks, each a few minutes long. Teach one neuron, then train whole networks, see how a computer reads pictures and text, follow an LLM writing word by word, and build decision trees and a robot that learns by reward. Wire logic gates and LED circuits, log sensor data, and plan a farm's mesh network. Crack a Caesar cipher, sign in with real one-time codes and spot scam messages. Everything really computes on the phone, works offline, and uses reviewed examples, so no learner ever sees unreviewed AI output. Any lab can also be a step in a lesson.
 - **Real projects.** Each lesson can end with a task for the teacher's own classroom, which a colleague or trainer can review.
 - **Progress that encourages.** Streaks count *teaching weeks*, not days; missing a week pauses the streak and never resets it. Teachers earn certificates per track and level, which they can show their school leaders.
 
@@ -73,7 +73,7 @@ An organization can register on Darsi. Once approved, its admins get:
 
 ## Where we are
 
-**Live now:** the full learning experience in English and Arabic, the first AI unit, the AI lab, classroom kits, offline downloads, accounts, organizations, and the admin and teacher dashboards.
+**Live now:** the full learning experience in English and Arabic, the first AI unit, Labs, classroom kits, offline downloads, accounts, organizations, and the admin and teacher dashboards.
 
 **Next:**
 - narrated lesson videos in each language;

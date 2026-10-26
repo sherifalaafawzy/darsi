@@ -26,6 +26,8 @@ export interface AppState {
   /** ISO week ("2026-W43") → lessons completed that week. Streaks count teaching weeks, not days. */
   weeks: Record<string, number>;
   installDismissedAt?: number;
+  /** Labs the learner has finished on this device (the tick on a Labs card). */
+  labsDone?: Record<string, true>;
   /** Chose "Continue without an account" (only meaningful in the guest store). */
   guest?: boolean;
 }
@@ -57,6 +59,7 @@ export type Action =
   | { type: "saveNote"; id: string; text: string }
   | { type: "mergeRemote"; progress?: Record<string, LessonResult>; notes?: Record<string, RemoteNote> }
   | { type: "download"; unit: string; on: boolean }
+  | { type: "labDone"; id: string }
   | { type: "reset" };
 
 /**
@@ -95,6 +98,7 @@ function reducer(s: AppState, a: Action): AppState {
     case "saveNote": return { ...s, notes: { ...s.notes, [a.id]: a.text }, notesAt: { ...s.notesAt, [a.id]: Date.now() } };
     case "mergeRemote": return mergeRemote(s, a.progress, a.notes);
     case "download": { const d = { ...s.downloads }; if (a.on) d[a.unit] = "done"; else delete d[a.unit]; return { ...s, downloads: d }; }
+    case "labDone": return s.labsDone?.[a.id] ? s : { ...s, labsDone: { ...s.labsDone, [a.id]: true } };
     case "reset": return { ...initialState, lang: s.lang, theme: s.theme };
   }
 }

@@ -1,8 +1,27 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+
+/** labs/apps/<id>/index.tsx → its own chunk "lab-<id>-<hash>.js" (src/labs/loader.tsx), cached when opened. */
+const LAB_ENTRY = /labs[\\/]apps[\\/]([\w-]+)[\\/]index\.tsx$/;
+/**
+ * labs-manifest.json: the download size of every lab, so "Save all labs for offline" can show MB before downloading
+ * (brand book). It is tiny and precached; the lab chunks themselves are not.
+ */
+const labsManifest = (): Plugin => ({
+  name: "darsi-labs-manifest",
+  apply: "build",
+  generateBundle(_, bundle) {
+    const labs: Record<string, number> = {};
+    for (const f of Object.values(bundle)) {
+      const id = f.type === "chunk" && f.facadeModuleId ? LAB_ENTRY.exec(f.facadeModuleId)?.[1] : undefined;
+      if (id && f.type === "chunk") labs[id] = Buffer.byteLength(f.code);
+    }
+    this.emitFile({ type: "asset", fileName: "labs-manifest.json", source: JSON.stringify({ total: Object.values(labs).reduce((a, b) => a + b, 0), labs }) });
+  },
+});
 
 // The push handlers (public/push-sw.js, ~3 KB, no imports) run inside Workbox's sw.js through importScripts. The content
 // hash in the URL changes sw.js whenever they change, so browsers install the update and never reuse a stale HTTP-cached copy.
@@ -11,6 +30,7 @@ const pushSw = `push-sw.js?v=${createHash("sha256").update(readFileSync(new URL(
 export default defineConfig({
   plugins: [
     react(),
+    labsManifest(),
     VitePWA({
       registerType: "prompt", // new versions wait for the teacher to tap Reload (UpdateToast)
       injectRegister: false,
@@ -49,9 +69,13 @@ export default defineConfig({
         // Lesson content is tiny and precached; kits are cached when a unit is downloaded. Staff-only and first-visit
         // chunks (and exceljs, ~930 KB) are not precached, so a learner's install stays small; "darsi-chunks" caches them on first use.
         // firebase-* covers firebase-extra (Functions, Storage, Messaging) too.
-        globIgnores: ["kits/**", "push-sw.js", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin,firebase}-*.{js,css}"],
+        globIgnores: ["kits/**", "push-sw.js", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin,firebase}-*.{js,css}",
+          // Each lab app (~5–20 KB) is cached when first opened, or all at once with "Save all labs for offline".
+          "**/lab-*.js"],
         navigateFallback: "/index.html",
         runtimeCaching: [
+          // Lab apps have their own cache, so 48 of them never push other chunks out of "darsi-chunks" (40 entries).
+          { urlPattern: ({ url }) => url.pathname.startsWith("/assets/lab-") && url.pathname.endsWith(".js"), handler: "CacheFirst", options: { cacheName: "darsi-labs", expiration: { maxEntries: 150, maxAgeSeconds: 120 * 864e2 } } },
           // Hashed file names never change content, so cache-first is safe; old versions age out.
           { urlPattern: ({ url }) => url.pathname.startsWith("/assets/") && /\.(js|css)$/.test(url.pathname), handler: "CacheFirst", options: { cacheName: "darsi-chunks", expiration: { maxEntries: 40, maxAgeSeconds: 60 * 864e2 } } },
           // ignoreVary: the page itself stores fonts here (platform/fonts.ts), and a CSS font request differs from its fetch()
@@ -72,6 +96,7 @@ export default defineConfig({
     sourcemap: true,
     rolldownOptions: {
       output: {
+        chunkFileNames: (chunk) => { const id = chunk.facadeModuleId ? LAB_ENTRY.exec(chunk.facadeModuleId)?.[1] : undefined; return id ? `assets/lab-${id}-[hash].js` : "assets/[name]-[hash].js"; },
         // The Firebase SDK in named chunks that load only at sign-in (src/fb.ts); globIgnores keeps them out of the
         // precache, so guests never download them. Functions, Storage and Messaging (+ Installations, which only
         // Messaging uses) are separate: only admin actions, uploads and turning notifications on need them, so signing in

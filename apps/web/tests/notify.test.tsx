@@ -326,13 +326,13 @@ describe("SuperAdmin announcements", () => {
     fill();
     type("Who gets it", "role");
     type("Role", "student");
-    type("Opens when tapped", "/lab");
+    type("Opens when tapped", "/labs");
     send();
     expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("Students"));
     await waitFor(() => expect(m.api.sendBroadcast).toHaveBeenCalledWith({
       title: { en: "Exam week tips", ar: "نصائح أسبوع الامتحانات" },
       body: { en: "Five short lessons to help your class revise.", ar: "خمسة دروس قصيرة تساعد صفّك على المراجعة." },
-      link: "/lab",
+      link: "/labs",
       audience: { type: "role", role: "student" },
     }));
     expect(await screen.findByRole("status")).toHaveProperty("textContent", "Announcement sent.");

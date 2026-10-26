@@ -1,0 +1,95 @@
+import { useEffect, useMemo, useState } from "react";
+import { useI18n } from "../../../i18n";
+import { LabShell } from "../../kit/LabShell";
+import { Segmented, Slider } from "../../kit/controls";
+import { useS } from "../../kit/strings";
+import type { LabProps } from "../../types";
+import { ALPHABET, counts, crack, FREQ, shift, type Lang } from "./model";
+
+const TEXT = {
+  en: { short: "meet me at the school gate at noon", long: "the students learn to read and write at school and they also learn how to protect their accounts and their passwords from people who try to trick them on the internet every day" },
+  ar: { short: "نلتقي عند باب المدرسة ظهرا", long: "العلم نور والجهل ظلام. يتعلم الطلاب في المدرسة القراءة والكتابة والحساب، ويتعلمون أيضا كيف يحمون حساباتهم وكلمات المرور الخاصة بهم من المحتالين على الانترنت." },
+};
+const S = {
+  en: {
+    intro: "Julius Caesar hid messages by moving every letter a few places along the alphabet. Try it, then crack a secret message the way codebreakers do: by counting letters.",
+    mode: "Do", hide: "Hide a message", crack: "Crack a message", message: "Message", key: "Key: move each letter by", secret: "Secret message",
+    map: "Each letter becomes the one below it", unknown: "This message was hidden with a key you don't know:",
+    freq: "Letter counts in the secret message (bars) and in normal English (dots)", tries: "Every possible key, most language-like first",
+    found: (k: string) => `Cracked: the key was ${k}.`, shortNote: "Counting works on long messages; a short one may fool it.",
+    takeaway: "A cipher with only 25 keys is no secret: a computer tries them all in a blink, and letter counts give it away even by hand. Modern encryption has more keys than there are atoms on Earth, and hides letter patterns completely.",
+  },
+  ar: {
+    intro: "أخفى يوليوس قيصر رسائله بتحريك كل حرف بضعة مواضع في الأبجدية. جرّب ذلك، ثم اكسر رسالة سرية كما يفعل محلّلو الشيفرات: بعدّ الحروف.",
+    mode: "المهمة", hide: "أخفِ رسالة", crack: "اكسر رسالة", message: "الرسالة", key: "المفتاح: حرّك كل حرف بمقدار", secret: "الرسالة السرية",
+    map: "يصبح كل حرف الحرفَ الذي تحته", unknown: "أُخفيت هذه الرسالة بمفتاح لا تعرفه:",
+    freq: "عدد الحروف في الرسالة السرية (أعمدة) وفي العربية المعتادة (نقاط)", tries: "كل المفاتيح الممكنة، الأقرب إلى اللغة أولًا",
+    found: (k: string) => `كُسرت: المفتاح كان ${k}.`, shortNote: "ينجح العدّ مع الرسائل الطويلة، أما القصيرة فقد تخدعه.",
+    takeaway: "الشيفرة التي لها ٢٧ مفتاحًا فقط ليست سرًا: يجرّبها الحاسوب كلها في لمحة، وعدد الحروف يفضحها حتى باليد. أما التشفير الحديث فمفاتيحه أكثر من ذرات الأرض، ويخفي أنماط الحروف تمامًا.",
+  },
+};
+
+export default function Caesar({ meta, onDone }: LabProps) {
+  const s = useS(S);
+  const { lang, num } = useI18n();
+  const L: Lang = lang === "ar" ? "ar" : "en";
+  const abc = ALPHABET[L], n = abc.length;
+  const [mode, setMode] = useState<"hide" | "crack">("hide");
+  const [msg, setMsg] = useState(TEXT[L].short);
+  const [k, setK] = useState(3);
+  const [secretKey] = useState(() => 5 + Math.floor(Math.random() * (n - 10)));
+  const [cracked, setCracked] = useState(false);
+  useEffect(() => { setMsg(TEXT[L].short); setCracked(false); }, [L]);
+  useEffect(() => { if (cracked) onDone?.(); }, [cracked]); // eslint-disable-line react-hooks/exhaustive-deps
+  const cipher = useMemo(() => shift(TEXT[L].long, secretKey, L), [L, secretKey]);
+  const tries = useMemo(() => crack(cipher, L), [cipher, L]);
+  const c = counts(cipher, L), total = c.reduce((a, b) => a + b, 0) || 1, fsum = FREQ[L].reduce((a, b) => a + b, 0);
+  const top = Math.max(...c.map((x) => x / total), ...FREQ[L].map((f) => f / fsum));
+
+  return (
+    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+      <Segmented label={s.mode} value={mode} options={[["hide", s.hide], ["crack", s.crack]]} onChange={setMode} />
+      {mode === "hide" ? (
+        <div className="stack">
+          <label className="dr-field-label" htmlFor="lb-caesar-msg">{s.message}</label>
+          <input id="lb-caesar-msg" className="dr-field-input" dir="auto" value={msg} onChange={(e) => setMsg(e.target.value)} />
+          <Slider label={s.key} value={k} min={1} max={n - 1} onChange={setK} format={(v) => num(v)} />
+          <span className="lb-note">{s.map}</span>
+          <div className="lb-scroll">
+            <table className="lb-table lb-alpha"><tbody>
+              <tr>{abc.map((ch) => <td key={ch}>{ch}</td>)}</tr>
+              <tr>{abc.map((ch, i) => <td key={ch}>{abc[(i + k) % n]}</td>)}</tr>
+            </tbody></table>
+          </div>
+          <span className="dr-field-label">{s.secret}</span>
+          <p className="lb-llm-text">{shift(msg, k, L)}</p>
+        </div>
+      ) : (
+        <div className="stack">
+          <span className="lb-note">{s.unknown}</span>
+          <p className="lb-llm-text">{cipher}</p>
+          <span className="dr-field-label">{s.freq}</span>
+          <div className="lb-freq" role="img" aria-label={s.freq}>
+            {abc.map((ch, i) => (
+              <span key={ch} className="lb-freq-col">
+                <span className="lb-freq-bar" style={{ blockSize: `${((c[i] / total) / top) * 100}%` }} />
+                <span className="lb-freq-dot" style={{ insetBlockEnd: `calc(${((FREQ[L][i] / fsum) / top) * 100}% - 4px)` }} />
+                <small>{ch}</small>
+              </span>
+            ))}
+          </div>
+          <span className="dr-field-label">{s.tries}</span>
+          <ol className="lb-tries">
+            {(cracked ? tries.slice(0, 5) : [...tries].sort((a, b) => a.k - b.k).slice(1, 4)).map((t, i) => (
+              <li key={t.k} className={i === 0 && cracked ? "is-on" : undefined}>
+                <span className="lb-tries-k">{num(t.k)}</span><span dir="auto">{t.plain.slice(0, 48)}…</span>
+              </li>
+            ))}
+          </ol>
+          {cracked ? <p className="lb-verdict" aria-live="polite">{s.found(num(tries[0].k))}</p> : <button type="button" className="lb-reply" onClick={() => setCracked(true)}>{s.crack}</button>}
+          <p className="lb-note">{s.shortNote}</p>
+        </div>
+      )}
+    </LabShell>
+  );
+}

@@ -30,6 +30,8 @@ export const OWNERS = {
   auth: { own: ["auth-shell", "auth-card", "auth-brand", "auth-links"] },
   landing: { own: ["landing", "lp-actions", "lp-band", "lp-brand", "lp-checks", "lp-cta", "lp-ctas", "lp-faq", "lp-feature", "lp-float-card", "lp-footer", "lp-grid2", "lp-grid3", "lp-h2-sm", "lp-hero", "lp-hero-art", "lp-hero-text", "lp-kicker", "lp-lang", "lp-lead", "lp-levels", "lp-links", "lp-nav", "lp-note", "lp-phone", "lp-phone-body", "lp-phone-top", "lp-proof", "lp-section", "lp-split", "lp-stat", "lp-stats", "lp-std", "lp-step-n", "lp-steps", "lp-track", "lp-tracks", "lp-why"], prefix: ["lp-track-"] },
   lesson: { own: ["reading", "key-terms", "project-card", "onb"] },
+  labs: { own: ["lb-labs", "lb-cards", "lb-card", "lb-ladder", "lb-rung", "lb-chips", "lb-chip", "lb-next"], prefix: ["lb-"] },
+  "lab-kit": { own: ["lb-shell", "lb-head", "lb-slider", "lb-range", "lb-seg", "lb-plot", "lb-pixels", "lb-bars", "lb-bar"], prefix: ["lb-"] },
 };
 
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "));

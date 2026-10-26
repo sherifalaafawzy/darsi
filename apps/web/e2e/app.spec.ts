@@ -108,12 +108,50 @@ test("a video that cannot load falls back to the transcript instead of blocking 
   await expect(page.getByRole("radio", { name: "False" })).toBeVisible();
 });
 
-test("AI lab tools respond", async ({ page }) => {
+test("Labs: cards open labs that respond", async ({ page }) => {
   await onboard(page);
-  await page.getByRole("link", { name: "AI lab" }).click();
+  await page.getByRole("link", { name: "Labs" }).first().click();
+  await expect(page.getByRole("heading", { name: "The AI ladder" })).toBeVisible();
+  await page.getByRole("link", { name: /Build a better prompt/ }).first().click();
   await expect(page.getByRole("heading", { name: "Build a better prompt" })).toBeVisible();
   await page.getByRole("button", { name: "Ask the AI" }).click();
   await expect(page.getByText("Example answer")).toBeVisible();
+});
+
+test("Labs: the network playground really trains, then pauses", async ({ page }) => {
+  await onboard(page);
+  // Navigate inside the app: a full reload straight after onboarding can beat the store's (async) save.
+  await page.getByRole("link", { name: "Labs" }).first().click();
+  await page.getByRole("link", { name: /Network playground/ }).first().click();
+  const round = page.locator(".lb-stats div").filter({ hasText: "Round" }).locator("dd");
+  await page.getByRole("button", { name: "One step" }).click();
+  await expect(round).toHaveText("1");
+  await page.getByRole("button", { name: "Train" }).click();
+  await expect.poll(async () => Number(await round.textContent())).toBeGreaterThan(20);
+  await page.getByRole("button", { name: "Pause" }).click();
+  const stopped = await round.textContent();
+  await page.waitForTimeout(500);
+  await expect(round).toHaveText(stopped ?? "");
+});
+
+test("Labs: labs are not in the install, and \"Save all labs\" makes them work offline", async ({ page, context, browserName }) => {
+  test.skip(browserName !== "chromium");
+  await onboard(page);
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  const labChunks = (cache: string) => page.evaluate(async (cache) => {
+    const names = (await caches.keys()).filter((k) => (cache === "precache" ? k.includes("precache") : k === cache));
+    return (await Promise.all(names.map(async (n) => (await (await caches.open(n)).keys()).map((r) => r.url)))).flat().filter((u) => /\/assets\/lab-[\w-]+\.js$/.test(u)).length;
+  }, cache);
+  expect(await labChunks("precache")).toBe(0);
+  await page.goto("/labs");
+  await page.getByRole("button", { name: /Save all labs for offline \([\d.]+ MB\)/ }).click();
+  await expect(page.getByText("All labs are saved on this phone")).toBeVisible();
+  expect(await labChunks("darsi-labs")).toBeGreaterThanOrEqual(8);
+  await context.setOffline(true);
+  await page.goto("/labs/minilm");
+  await expect(page.getByRole("heading", { name: "Build a tiny language model" })).toBeVisible();
+  await page.getByRole("button", { name: "Write a sentence" }).click();
+  await expect(page.getByText(/copied from the training text|not in the training text/)).toBeVisible();
 });
 
 // Fonts are not precached: each language keeps its own faces in "darsi-fonts" (platform/fonts.ts). Arabic needs Latin too.

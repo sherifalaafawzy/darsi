@@ -96,7 +96,7 @@ Nothing is sent to a device until its owner turns notifications on in **Me**, an
 
 1. Sign in as a platform admin and open `/super`.
 2. Under **Send an announcement**, write a title (up to 60 characters) and a message (up to 180) in **both** English and Arabic. Each device gets its own language.
-3. Choose the audience: everyone, one active organization, or one role (teachers, students or org admins). Choose the screen the notification opens: Learn, AI lab, Classroom kit or Organization.
+3. Choose the audience: everyone, one active organization, or one role (teachers, students or org admins). Choose the screen the notification opens: Learn, Labs, Classroom kit or Organization.
 4. Tap **Send** and confirm. The notice shows the result for each language. **Recent announcements** lists the last 20; each send is also stored in `broadcasts` and written to `audit`.
 
 It reaches every device where the person has notifications on and **Announcements** switched on. A phone that is offline gets it when it reconnects, if that is within 24 hours. An announcement can't be recalled, so try it on a test organization first.

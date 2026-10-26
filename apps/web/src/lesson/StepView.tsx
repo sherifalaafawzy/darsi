@@ -5,7 +5,7 @@ import {
 import { pickList, type Step, type VideoStep, type ChoiceStep, type TrueFalseStep } from "../content/types";
 import { useI18n, type MessageKey } from "../i18n";
 import { Art } from "../components/Art";
-import { LabTool } from "../lab/presets";
+import { LabEmbed } from "../labs/loader";
 import { ProjectView } from "./ProjectView";
 import { grade, shuffled, type Answer } from "./engine";
 
@@ -26,7 +26,7 @@ export interface StepViewProps {
 }
 
 export function StepView(p: StepViewProps) {
-  const { t, L, lang, num } = useI18n();
+  const { t, L, lang } = useI18n();
   const s = p.step;
   const keys = KEY_LABELS[lang] ?? KEY_LABELS.en;
   const res = p.result === null ? undefined : p.result ? "correct" : "wrong";
@@ -67,7 +67,7 @@ export function StepView(p: StepViewProps) {
     case "reflect":
       return <Reflect key={seed} {...p} />;
     case "lab":
-      return <LabStepView key={seed} {...p} lang={lang} num={num} />;
+      return <LabStepView key={seed} {...p} />;
     case "video":
       return <VideoStepView key={seed} step={s} onReady={() => p.onUngradedReady(true)} />;
     case "read":
@@ -175,11 +175,12 @@ function Reflect(p: StepViewProps) {
     action={<Button size="sm" variant="secondary" icon="check" disabled={!text.trim()} onClick={() => { p.onNote?.(text); setSaved(true); }}>{saved ? t("common.saved") : t("common.save")}</Button>} />;
 }
 
-function LabStepView(p: StepViewProps & { lang: string; num: (n: number) => string }) {
+/** Any Labs app as a lesson's "Try it" step (loaded on demand); trying it is optional, so Continue is ready at once. */
+function LabStepView(p: StepViewProps) {
   const { t, L } = useI18n();
   const s = p.step as Extract<Step, { type: "lab" }>;
   useEffect(() => { p.onUngradedReady(true); }, []);
-  return <div className="stack"><QuestionHeader type="reflect" icon="ai" typeLabel={t("q.lab")} prompt={L(s.prompt)} /><LabTool tool={s.tool} lang={p.lang} num={p.num} /></div>;
+  return <div className="stack"><QuestionHeader type="reflect" icon="ai" typeLabel={t("q.lab")} prompt={L(s.prompt)} /><LabEmbed id={s.tool} embedded /></div>;
 }
 
 /**

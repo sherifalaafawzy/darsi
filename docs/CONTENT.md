@@ -5,6 +5,7 @@ Units live in `apps/web/public/content/units/<id>.json` and are listed in `catal
 - Every learner-facing string is `{ "en": "…", "ar": "…" }`. English is the fallback.
 - Arabic: Modern Standard Arabic, friendly; use "،" or ":" as separators — never "·".
 - Step types: `video`, `choice`, `multi`, `truefalse`, `image`, `match`, `order`, `fill`, `type`, `hotspot`, `scenario`, `reflect`, `lab`.
+- A `lab` step's `tool` is any Labs app id, the name of its folder in `apps/web/src/labs/apps/` (for example `neuron`, `playground`, `rag`, `twofactor`); the course editor's lab picker lists them all.
 - Mix at least three question types per lesson; never two of the same in a row; every graded step has an `explain` that says *why*.
 - `order.steps` and `match.pairs` are written in the correct order — the app shuffles them.
 - Each lesson needs `tryTomorrow`, 6 `slides` (title, bullets, bullets, activity, questions, exit) and a `kit` list.

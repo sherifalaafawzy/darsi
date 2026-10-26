@@ -58,7 +58,8 @@ darsi/
 │  │  ├─ firebase.ts             the SDK (Auth, Firestore; Functions and Storage on first use); loaded via fb.ts
 │  │  ├─ auth/                   AuthProvider (user + custom claims), sign-in screens, callable API
 │  │  ├─ state/                  local store (IndexedDB) and cloud sync
-│  │  ├─ screens/                learner screens: Home, Lesson, Kit, Downloads, Lab, Me, Onboarding
+│  │  ├─ screens/                learner screens: Home, Lesson, Kit, Downloads, Labs, Me, Onboarding
+│  │  ├─ labs/                   Labs: catalogue, loader, kit (shared lab parts) and apps/<id>/ (one folder per lab)
 │  │  ├─ lesson/                 lesson engine, step views, project submission, read-aloud
 │  │  ├─ admin/                  org dashboard, people, import, person page, teacher and platform admin
 │  │  ├─ notify/                 push notifications: push.ts (token, permission, register) and the panel in Me
@@ -126,7 +127,7 @@ AuthProvider            Firebase user + custom claims {role, orgId}; claims are 
 |---|---|---|
 | `/` | everyone | Landing page for new visitors; otherwise redirects to the role's home |
 | `/signin`, `/signup`, `/forgot` | signed out | A "not configured" notice when the build has no Firebase config |
-| `/learn`, `/lesson/:unit/:lesson`, `/downloads`, `/lab`, `/kit`, `/me` | signed in or guest | Behind the onboarding gate (language, school level, tracks, weekly goal, placement) |
+| `/learn`, `/lesson/:unit/:lesson`, `/downloads`, `/labs`, `/labs/:id`, `/kit`, `/me` | signed in or guest | Behind the onboarding gate (language, school level, tracks, weekly goal, placement). `/lab` (the old AI lab, linked from sent notifications) redirects to `/labs` |
 | `/org` | signed in | Join with an invite code, or request a new organization (`?request=1`) |
 | `/admin`, `/admin/people/:uid`, `/admin/add`, `/admin/import` | `orgAdmin` | Organization dashboard, person page, add people, Excel/CSV import |
 | `/teach`, `/teach/:uid` | `teacher`, `orgAdmin` | The teacher's assigned students |
@@ -138,7 +139,7 @@ After sign-in, `homeFor(role)` sends org admins to `/admin` and platform admins 
 
 ### Layout
 
-At 900 px and wider, a nav rail shows the five learner tabs plus the role's staff links. On phones, the design system's bottom nav keeps five tabs (Learn, Downloads, AI lab, Kit, Me), and the staff links live in Me's account section. Staff screens and the landing page are **lazy chunks** (`React.lazy`), so a learner's phone never downloads or parses them.
+At 900 px and wider, a nav rail shows the five learner tabs plus the role's staff links. On phones, the design system's bottom nav keeps five tabs (Learn, Downloads, Labs, Kit, Me), and the staff links live in Me's account section. Staff screens and the landing page are **lazy chunks** (`React.lazy`), so a learner's phone never downloads or parses them.
 
 ## Offline and caching
 
@@ -149,6 +150,7 @@ The service worker (Workbox `generateSW`) installs when a person enters the app.
 | App shell, learner screens, icons, lesson JSON | **Precached** (~640 KB) |
 | Fonts | **Not precached.** Every face has a `unicode-range` (`tokens.json` `type.subsets`), so a page downloads only the scripts it shows. `darsi-fonts` keeps them: cache-first, `ignoreVary`, and only `font/woff2` responses, because Hosting answers a missing path with `index.html`. `platform/fonts.ts` fills it with the page language's faces after load, on every language change and on reconnect: Latin (~76 KB) for English, plus Arabic (~131 KB) for Arabic. Arabic words on a page in another language, such as the language picker or the Arabic brand name, use the phone's own font (`.dr-lang-native`, `.dr-other-script`), so English pages never download Arabic fonts |
 | The Firebase SDK (`firebase-*`, including `firebase-extra`: Functions, Storage, Messaging), staff chunks, landing page, exceljs, and their CSS | **Not precached**; `darsi-chunks` caches them cache-first on first use (hashed file names) |
+| Lab apps (`lab-<id>-[hash].js`, 48 chunks, ~320 KB in all) | **Not precached**; `darsi-labs` caches each cache-first when it is first opened, and "Save all labs" on the Labs screen fetches them all (its size comes from `labs-manifest.json`, written at build time). The labs kit (shared chunks such as `LabShell`, `Plot`, `controls`) and its stylesheet are small and precached. See [Labs](#labs) |
 | `push-sw.js` (push handlers, ~3 KB) | **Imported** into `sw.js` with `importScripts`, so the browser stores it with the worker; not precached. Its URL carries a content hash (`?v=…`), so changing it changes `sw.js` and triggers the normal update prompt |
 | `/content/*` | Stale-while-revalidate (`darsi-content`) |
 | `/kits/*` | Cache-first (`darsi-kits`), filled per unit when the teacher taps Download |
@@ -306,7 +308,7 @@ Every role or organization change goes through these functions, which set the cl
 ## Content, lessons and kits
 
 - **Content is data.** Units are JSON in `apps/web/public/content/units/`, listed in `catalog.json` and typed by `src/content/types.ts`. Every learner-facing string is `{ "en": …, "ar": … }`, with English as the fallback. Today `ai-1` is live; `iot-1` and `cyber-1` are marked "coming soon".
-- **Lesson shape:** video (with a checkpoint question) → reading with key terms → mixed questions (some lessons add an AI-lab step) → classroom project → reflection → "Try it in class tomorrow".
+- **Lesson shape:** video (with a checkpoint question) → reading with key terms → mixed questions (some lessons add a `lab` step that embeds any Labs app) → classroom project → reflection → "Try it in class tomorrow".
 - **Step types:** `video`, `read`, `choice`, `multi`, `truefalse`, `image`, `match`, `order`, `fill`, `type`, `hotspot`, `scenario`, `lab`, `project`, `reflect`.
 - **Engine** (`src/lesson/engine.ts`): pure, unit-tested grading. Answers that ignore case and Arabic diacritics are accepted. A wrong answer comes back once at the end of the lesson. XP is `10 + round(accuracy × 20)`.
 - **Placement:** nine questions (`placement.json`) suggest a level per track, and the teacher can change it any time.
@@ -317,6 +319,25 @@ Every role or organization change goes through these functions, which set the cl
   - `lesson-plan-<lang>.pdf`: an A4 lesson plan and pupil worksheet built from the lesson's questions.
 
   The files are committed to `public/kits/`, so builds don't need Chromium. Regenerate them after editing content.
+
+## Labs
+
+Labs (`/labs`) is a catalogue of 48 hands-on apps on 13 shelves across the three tracks. Everything is computed on the phone, with no AI libraries and no network: tiny neural networks really train, the TOTP codes are real (RFC 6238 via WebCrypto), SHA-256 and RSA are real. "The AI ladder" orders 20 of them from one neuron to LLMs and decision models.
+
+| Track | Shelves (category ids) and apps |
+|---|---|
+| AI | Neurons and learning (`ai-learning`): neuron, activation, perceptron, gradient. Neural networks (`ai-networks`): playground, backprop, overfit. Computer vision (`ai-vision`): pixels, convolution, shapes. Language and LLMs (`ai-language`): tokens, embeddings, nextword, minilm, attention, llm, rag. Decisions and agents (`ai-decisions`): classifier, tree, knn, kmeans, rl, threshold, decision. Using AI well (`ai-use`): prompt, bias, factcheck |
+| IoT | Sensors and data: sensor, adc, datalog. Electronics and logic: circuit, logic, binary. Automation and networks: rules, battery, mesh |
+| Cyber | Passwords and accounts: password, twofactor, breach. Threats and scams: phishing, malware, social. Cryptography: caesar, hash, publickey. Privacy and networks: wifi, permissions, footprint |
+
+- **One folder per app:** `src/labs/apps/<id>/` holds `meta.ts` (`LabMeta`: id, category, level 1–3, minutes, order on its shelf, optional `ladder` position, en/ar title and summary), `index.tsx` (the component, with its own en/ar strings via `useS`) and usually a pure `model.ts` that the tests exercise. Apps are discovered with `import.meta.glob`, so adding one touches no shared file.
+- **Catalogue and loading:** `labs/catalog.ts` (eager metas, `LADDER`, `nextLab`) and `labs/categories.ts` are safe anywhere. `labs/loader.tsx` (lazy app imports, `LabEmbed`, `LabBoundary`, `saveAllLabs`) is imported only by startup modules (the Labs screens and `StepView`), never by a lab chunk.
+- **The kit** (`labs/kit/`): `LabShell` (frame, track colour, intro, takeaway, Reset), `controls` (Slider, Segmented, RunBar, Stats), `Plot` (SVG chart: lines, dots, heatmap, separate `xFmt`/`yFmt`, `spreadLabels` for crowded labels), `PixelGrid` (drawing grid that fills gaps in quick strokes), `Formula` (a left-to-right maths line), `useLoop`, `nn` (dense network with backprop), `vectors` (PPMI, cosine, PCA), `text` (en/ar matching), `plural` (`usePlural`, Intl plural rules), `rng`, `math`, `raster`, `strings` (`useS`, shared `KIT` words).
+- **Battery-safe animation:** `useLoop` runs only after the learner presses Run, a few milliseconds per animation frame, and stops by itself (converged, step cap, page hidden, lab closed). Anything paced for people to watch (the LLM writing, k-means steps, the robot walking) uses time, not frame counts, so it runs at the same speed on a 60 Hz phone and a throttled tab. The two-step sign-in clock ticks once a second only while visible.
+- **Lessons and the editor:** a lesson's `lab` step takes any app id (the validator checks the id's shape only; the editor flags ids it doesn't know). The lab picker lists the catalogue as "Shelf: Title". Finishing an app marks it done in the local store (`labsDone`).
+- **Bundle:** each app is its own chunk `lab-<id>-[hash].js`, kept out of the precache (see [Offline and caching](#offline-and-caching)). App styles are in `styles/lab-kit.css`, imported by `LabShell`, so they load with the first lab; `styles/labs.css` holds only the catalogue. Lab chunks import the design system and i18n, which splits the startup bundle into four small files (entry, `dist`, `preload-helper`, `rolldown-runtime`); the total size is unchanged, and this was accepted.
+- **Right to left:** charts, grids, circuits and maths stay left to right, like a textbook. Arabic-Indic digits separated by spaces or operators reorder inside a left-to-right line, so every number and operator gets its own `<bdi>` (use `Formula`). An isolate with no letters (a phone number) falls back to right to left: give Latin-only strings `dir="ltr"`. Counted Arabic words use `usePlural` (one, two, 3–10, 11–99, 100+).
+- **Content rules:** made-up people, schools and companies only; links use the reserved `.example` domain; nothing typed into a lab leaves the phone.
 
 ## Languages and right-to-left
 
@@ -335,7 +356,8 @@ Every role or organization change goes through these functions, which set the cl
   There are two themes: the default light theme and **Sunlight**, a high-contrast theme for outdoor use. There is deliberately no dark mode. Reduced motion is handled globally.
 - **App styles** live in `apps/web/src/styles/`, one file per area, and every class has exactly one owning file (`OWNERS` in `scripts/check-css.mjs`):
   - `base` (panels, tables, forms, pills), `layout` (rail, bottom nav), `auth` and `lesson` load globally;
-  - `admin`, `person`, `people` and `landing` load with their lazy chunks.
+  - `admin`, `person`, `people` and `landing` load with their lazy chunks;
+  - `labs` (the catalogue) loads globally, and `lab-kit` (everything inside the lab apps, `lb-` classes) loads with the first lab.
 - **`npm run lint:css`** enforces:
   - logical properties only (RTL);
   - design-token colours only, and every `var(--…)` must exist;
@@ -352,7 +374,8 @@ Every role or organization change goes through these functions, which set the cl
 | Unit (web) | `apps/web/tests/` | Lesson engine and content integrity; the staff screens rendered with mocked data hooks and callables; cloud-sync merge and push rules, plus the sync hook with Firestore mocked; the notifications panel's states and the announcement composer (`notify.test.tsx`) |
 | Unit (design system) | `packages/design-system` | Component and token tests |
 | Unit (functions) | `functions/test/` | Generated passwords (character classes, no look-alikes), invite-code format, usernames from any script; `pickNudge` rules across time zones and daylight saving; every message in both languages, with no "·" in Arabic |
-| End-to-end | `apps/web/e2e/` | Desktop Chrome and Pixel 7: guest onboarding, the Arabic RTL switch, a full lesson through to the kit download, the video fallback, the AI lab, offline after the first visit |
+| Unit (Labs) | `apps/web/tests/labs/` | The kit (network gradients against numeric ones, softmax, plots); the catalogue (every folder's meta is valid, ids unique, en+ar text, ladder positions); render tests of the Labs screen and `LabEmbed`; and every app's model, in `models.test.ts` and `b1`–`b4.test.ts` (for example: the perceptron converges but never on XOR, ID3 picks the textbook split, Q-learning finds the 10-step route, TOTP matches the RFC 6238 vectors, SHA-256 and RSA round trips in English and Arabic) |
+| End-to-end | `apps/web/e2e/` | Desktop Chrome and Pixel 7: guest onboarding, the Arabic RTL switch, a full lesson through to the kit download, the video fallback, Labs (cards open apps, the playground trains then pauses, labs aren't precached and "Save all labs" works offline), offline after the first visit |
 | CSS lint | `scripts/check-css.mjs` | Brand, RTL and old-WebView rules |
 
 The Firebase Emulator Suite needs **JDK 21+**. Rules tests with `@firebase/rules-unit-testing` are planned and need it too.
@@ -361,12 +384,13 @@ The Firebase Emulator Suite needs **JDK 21+**. Rules tests with `@firebase/rules
 
 | Measure | Now | Target (brand book) |
 |---|---|---|
-| Precache on install | ~640 KB | ≤ 2 MB including fonts |
+| Precache on install | ~726 KB (measured 2026-10-26, with Labs) | ≤ 2 MB including fonts |
 | Fonts, kept per language | ~76 KB (English) or ~207 KB (Arabic, which needs Latin too); every script was precached before (~237 KB) | |
-| Main JS chunk | ~133 KB gzipped (no Firebase) | |
+| Startup JS | ~152 KB gzipped in four files (entry ~147 KB; no Firebase) | |
 | Firebase SDK, signed-in only | ~210 KB gzipped (`firebase`), plus ~21 KB (`firebase-extra`: Functions, Storage, Messaging + Installations) for admin actions, uploads and notifications | |
 | Push handlers in the service worker | ~1.4 KB gzipped (`push-sw.js`, no SDK) | |
-| Main CSS | ~11 KB gzipped | |
+| Labs | 48 app chunks, ~320 KB in all (~5–9 KB each), not precached; the kit's shared chunks and ~5 KB gzipped CSS are precached | |
+| Main CSS | ~12.5 KB gzipped | |
 | One lesson | ~19 KB of JSON (both languages); kits and media download on demand | ≤ 300 KB |
 
 Measure with `npx vite build` in `apps/web` and read the chunk table and the `precache` line.

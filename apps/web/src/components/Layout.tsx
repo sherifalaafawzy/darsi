@@ -11,7 +11,7 @@ interface NavItem { path: string; icon: IconName; key: MessageKey }
 const TABS: NavItem[] = [
   { path: "/learn", icon: "learn", key: "nav.learn" },
   { path: "/downloads", icon: "offline", key: "nav.downloads" },
-  { path: "/lab", icon: "ai", key: "nav.lab" },
+  { path: "/labs", icon: "ai", key: "nav.lab" },
   { path: "/kit", icon: "award", key: "nav.kit" },
   { path: "/me", icon: "profile", key: "nav.me" },
 ];

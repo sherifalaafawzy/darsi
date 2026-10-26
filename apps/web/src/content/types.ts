@@ -33,7 +33,8 @@ export interface VideoStep extends Base {
   chapters?: { at: number; label: LocalText }[];
   checkpoint?: { at: number; question: ChoiceStep | TrueFalseStep };
 }
-export type LabTool = "prompt" | "tokens" | "nextword" | "classifier" | "factcheck";
+/** A Labs app id (apps/web/src/labs/apps/<id>), e.g. "prompt", "neuron", "playground". */
+export type LabTool = string;
 export interface LabStep extends Base { type: "lab"; tool: LabTool }
 /** A short reading: the concepts behind the lesson, with key terms. Paragraphs separated by blank lines. */
 export interface ReadStep extends Base { type: "read"; title: LocalText; body: LocalText; keyTerms?: { term: LocalText; def: LocalText }[] }

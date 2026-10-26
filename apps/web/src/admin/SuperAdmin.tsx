@@ -136,7 +136,7 @@ type Kind = keyof typeof MAX;
 type AudienceType = BroadcastAudience["type"];
 type AudienceRole = Extract<BroadcastAudience, { type: "role" }>["role"];
 const ROLES: { role: AudienceRole; key: MessageKey }[] = [{ role: "teacher", key: "bc.teachers" }, { role: "student", key: "bc.students" }, { role: "orgAdmin", key: "bc.orgAdmins" }];
-const LINKS: { path: string; key: MessageKey }[] = [{ path: "/learn", key: "nav.learn" }, { path: "/lab", key: "nav.lab" }, { path: "/kit", key: "bc.linkKit" }, { path: "/org", key: "nav.org" }];
+const LINKS: { path: string; key: MessageKey }[] = [{ path: "/learn", key: "nav.learn" }, { path: "/labs", key: "nav.lab" }, { path: "/kit", key: "bc.linkKit" }, { path: "/org", key: "nav.org" }];
 const LABEL: Record<Kind, Record<PushLang, MessageKey>> = { title: { en: "bc.titleEn", ar: "bc.titleAr" }, body: { en: "bc.bodyEn", ar: "bc.bodyAr" } };
 
 /** Who an announcement goes to, for the confirm dialog and the recent list. */
