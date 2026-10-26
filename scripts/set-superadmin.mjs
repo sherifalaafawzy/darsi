@@ -12,11 +12,13 @@
  * Credentials (real project): Application Default Credentials, either
  *   - a service-account key: Firebase console → Project settings → Service accounts → Generate new private key,
  *     then set GOOGLE_APPLICATION_CREDENTIALS to the downloaded file (keep it out of the repo), or
- *   - `gcloud auth application-default login` with an account that can manage the project.
+ *   - `gcloud auth application-default login` with an account that can manage the project (the script bills the
+ *     Auth API's quota to the project itself, so no `set-quota-project` step is needed).
+ * A GOOGLE_APPLICATION_CREDENTIALS that is set always wins over the gcloud login, so it must point at a real file.
  * The person picks up the new role automatically (the app refreshes claims when users/{uid} changes).
  */
 import { createRequire } from "node:module";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const args = process.argv.slice(2);
 const email = args.find((a) => !a.startsWith("--"))?.trim().toLowerCase();
@@ -31,6 +33,19 @@ const projectId = args.find((a) => a.startsWith("--project="))?.split("=")[1]
 if (emulator) {
   process.env.FIREBASE_AUTH_EMULATOR_HOST ??= "127.0.0.1:9099";
   process.env.FIRESTORE_EMULATOR_HOST ??= "127.0.0.1:8080";
+} else {
+  // A gcloud login (user credentials) is refused by the Auth API without a quota project; use this project.
+  process.env.GOOGLE_CLOUD_QUOTA_PROJECT ||= projectId;
+  // cmd.exe keeps the quotes in `set VAR="C:\path"`, and a missing key file would otherwise read as "no credentials".
+  const key = process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim().replace(/^"(.*)"$/, "$1");
+  if (key && !existsSync(key)) {
+    console.error(`GOOGLE_APPLICATION_CREDENTIALS points to ${key}, but there is no file there.
+Save the service-account key at that path, or clear the variable to use your gcloud login instead:
+  cmd:        set GOOGLE_APPLICATION_CREDENTIALS=
+  PowerShell: Remove-Item Env:GOOGLE_APPLICATION_CREDENTIALS`);
+    process.exit(1);
+  }
+  if (key) process.env.GOOGLE_APPLICATION_CREDENTIALS = key;
 }
 
 // firebase-admin is installed with the Cloud Functions (npm ci --prefix functions).
@@ -64,8 +79,10 @@ try {
   console.log(`${email} (${user.uid}) is now ${revoke ? "an independent learner" : "a platform admin"} in ${projectId}${emulator ? " (emulator)" : ""}.`);
 } catch (e) {
   const code = e?.errorInfo?.code ?? e?.code ?? "";
+  // firebase-admin cuts Google's own error text short; the full reason is in the HTTP response.
+  const msg = String(e?.errorInfo?.httpResponse?.data?.error?.message ?? e?.message ?? e);
   if (code === "auth/user-not-found") console.error(`No account for ${email} in ${projectId}. Sign up in the app first.`);
-  else if (/credential|default credentials/i.test(String(e?.message))) console.error("No credentials. Set GOOGLE_APPLICATION_CREDENTIALS to a service-account key, or run `gcloud auth application-default login`.");
-  else console.error(e?.message ?? e);
+  else if (/credential/i.test(msg)) console.error(`${msg}\nSet GOOGLE_APPLICATION_CREDENTIALS to a service-account key, or run \`gcloud auth application-default login\`.`);
+  else console.error(msg);
   process.exit(1);
 }

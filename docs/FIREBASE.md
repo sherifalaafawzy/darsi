@@ -49,7 +49,8 @@ Roles live in Auth custom claims, which only the Admin SDK can set.
 2. Get credentials for the Admin SDK, either way:
    - **Service-account key:** Firebase console → Project settings → Service accounts → Generate new private key. Save it **outside the repo**, then
      `set GOOGLE_APPLICATION_CREDENTIALS=C:\keys\darsi-f0685.json` (PowerShell: `$env:GOOGLE_APPLICATION_CREDENTIALS="C:\keys\darsi-f0685.json"`).
-   - **gcloud:** `gcloud auth application-default login` with an account that owns the project.
+   - **gcloud:** `gcloud auth application-default login` with an account that owns the project. The script bills the Auth API's quota to the project itself, so ignore gcloud's "Cannot find a quota project" warning.
+     A `GOOGLE_APPLICATION_CREDENTIALS` that is set always wins over this login, so clear it first (`set GOOGLE_APPLICATION_CREDENTIALS=`; PowerShell: `Remove-Item Env:GOOGLE_APPLICATION_CREDENTIALS`).
 3. Run: `npm run superadmin -- you@example.com`. Use `--revoke` to undo and `--emulator` for the local Emulator Suite.
 
 The app picks up the role by itself: it refreshes claims when `users/{uid}` changes. You land on `/super` to approve organizations. An approved organization's requester becomes its admin and gets teacher and student invite codes.
