@@ -2,11 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { CATEGORIES } from "../../src/labs/categories";
 import { LAB_METAS, LADDER, labMeta, nextLab } from "../../src/labs/catalog";
+import { LAB_ID } from "../../src/content/validate";
 import ai1 from "../../public/content/units/ai-1.json";
 
 const APPS = path.join(__dirname, "../../src/labs/apps");
-// The shape a lesson's `lab` step accepts as `tool` (LAB_ID in the course editor's validator).
-const LAB_ID = /^[a-z][a-z0-9-]{1,39}$/;
 
 describe("Labs catalogue", () => {
   it("has one valid card per app folder, with the folder's name as id", () => {

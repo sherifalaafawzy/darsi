@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   FillBlank, HotspotImage, ImageChoice, MatchPairs, OrderSteps, QuestionHeader, QuizOption, Reflection, ScenarioCard, TextField, TrueFalse, VideoPlayer, Button,
 } from "@darsi/design-system";
-import { pickList, type Step, type VideoStep, type ChoiceStep, type TrueFalseStep } from "../content/types";
+import { pickList, videoSrc, type Step, type VideoStep, type ChoiceStep, type TrueFalseStep } from "../content/types";
 import { useI18n, type MessageKey } from "../i18n";
 import { Art } from "../components/Art";
 import { LabEmbed } from "../labs/loader";
@@ -23,6 +23,8 @@ export interface StepViewProps {
   attempt: number;
   lessonId: string;
   unitId: string;
+  /** Course editor preview: a project can't be submitted. */
+  preview?: boolean;
 }
 
 export function StepView(p: StepViewProps) {
@@ -73,7 +75,7 @@ export function StepView(p: StepViewProps) {
     case "read":
       return <ReadView key={seed} step={s} onReady={p.onUngradedReady} />;
     case "project":
-      return <ProjectView key={seed} step={s} lessonId={p.lessonId} unitId={p.unitId} onReady={p.onUngradedReady} />;
+      return <ProjectView key={seed} step={s} lessonId={p.lessonId} unitId={p.unitId} onReady={p.onUngradedReady} preview={p.preview} />;
   }
 }
 
@@ -191,12 +193,13 @@ function LabStepView(p: StepViewProps) {
 function VideoStepView({ step, onReady }: { step: VideoStep; onReady: () => void }) {
   const { t, L, lang, num } = useI18n();
   const [failed, setFailed] = useState(false);
-  const playable = !!step.src && !failed;
+  const src = videoSrc(step, lang);
+  const playable = !!src && !failed;
   const [checkpointOpen, setCheckpointOpen] = useState(false);
   const [cpDone, setCpDone] = useState(false);
   const [cpResult, setCpResult] = useState<boolean | null>(null);
   const [cpAnswer, setCpAnswer] = useState<Answer | null>(null);
-  const [showTranscript, setShowTranscript] = useState(!step.src);
+  const [showTranscript, setShowTranscript] = useState(!src);
   const reading = !playable || showTranscript;
   useEffect(() => { if (!step.checkpoint) onReady(); }, []);
   const cp = step.checkpoint?.question;
@@ -228,7 +231,7 @@ function VideoStepView({ step, onReady }: { step: VideoStep; onReady: () => void
     <div className="stack">
       <QuestionHeader type="video" typeLabel={t("lesson.video")} prompt={L(step.title)} />
       <VideoPlayer
-        poster={poster} src={playable ? step.src!.replace("{lang}", lang) : undefined} duration={step.duration} title={L(step.title)}
+        poster={poster} src={playable ? src! : undefined} duration={step.duration} title={L(step.title)}
         meta={[fmt(step.duration), "240p", `${num(step.sizeMB, { maximumFractionDigits: 1 })} MB`].join(t("common.sep"))}
         chapters={step.chapters?.map((c) => ({ at: c.at, label: L(c.label) }))} questionsAt={step.checkpoint ? [step.checkpoint.at] : []}
         tracks={step.captions?.[lang] ? <track kind="captions" srcLang={lang} src={step.captions[lang]} default /> : undefined}

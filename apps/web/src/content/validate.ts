@@ -1,0 +1,291 @@
+/**
+ * Unit validator for the course editor and the publishUnit Cloud Function (functions/src/shared/ holds a generated copy:
+ * edit this file, then run `npm run build --prefix functions`). Pure and dependency-free.
+ *
+ * Errors are what crashes a lesson or leaves it stuck (see lesson/engine.ts and lesson/StepView.tsx); publishing
+ * refuses them. Warnings (missing Arabic, unknown competency codes, no slides) are shown but don't block.
+ * Input is `unknown` on purpose: drafts come from pasted JSON and Firestore, so nothing here trusts the shape.
+ */
+import type { Unit } from "./types";
+
+export type IssueCode =
+  | "required" | "minItems" | "duplicateId" | "badId" | "lessonIdPrefix" | "badValue" | "range"
+  | "answerNotInOptions" | "answersNotInOptions" | "fillBlanks" | "fillAnswers" | "fillBank"
+  | "badUrl" | "checkpoint" | "tooLarge" | "missingAr" | "unknownCompetency" | "noSlides";
+
+/** Where an issue is: indexes into the unit (for "Lesson 2 › Step 4") and the field inside it. */
+export interface IssueAt { lesson?: number; step?: number; slide?: number; kit?: number; field: string }
+export interface Issue { at: IssueAt; code: IssueCode; level: "error" | "warning"; params?: Record<string, string | number> }
+
+/** A track id ("ai", "iot", "cyber", or one added in /super/tracks). */
+export const TRACK_ID = /^[a-z][a-z0-9-]{1,23}$/;
+/** The colour families a track can use: must match TRACK_TONES in the design system (a web test checks it). */
+export const TRACK_TONE_IDS = ["sunbird", "lagoon", "hibiscus", "leaf", "lilac", "clay", "sky", "slate"] as const;
+/** The most levels a track can have (also MAX_LEVELS in tracks.ts). */
+const LEVELS_CAP = 12;
+export const STEP_TYPES = ["video", "read", "choice", "multi", "truefalse", "image", "match", "order", "fill", "type", "hotspot", "scenario", "lab", "project", "reflect"] as const;
+export const ARTS = ["sensor", "lamp", "phone", "plant", "chat", "calculator"] as const;
+/** A Labs app id. The catalogue itself lives in the web app (labs/catalog.ts); the editor also checks the id exists there. */
+export const LAB_ID = /^[a-z][a-z0-9-]{1,39}$/;
+export const SLIDE_LAYOUTS = ["title", "bullets", "activity", "questions", "exit"] as const;
+export const KIT_KINDS = ["slides", "lesson-plan", "worksheet", "video"] as const;
+export const KIT_FORMATS = ["pdf", "pptx", "mp4"] as const;
+/** Firestore keeps a draft in one document (1 MiB); the brand book's budget is 300 KB per lesson. */
+export const MAX_UNIT_BYTES = 600_000;
+export const MAX_LESSON_BYTES = 300_000;
+export const UNIT_ID = /^[a-z0-9][a-z0-9-]{1,39}$/;
+export const STEP_ID = /^[A-Za-z0-9_-]{1,40}$/;
+
+type Obj = Record<string, unknown>;
+const isObj = (v: unknown): v is Obj => typeof v === "object" && v !== null && !Array.isArray(v);
+const isStr = (v: unknown): v is string => typeof v === "string";
+const filled = (v: unknown): v is string => typeof v === "string" && v.trim().length > 0;
+const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+export const byteSize = (v: unknown) => new TextEncoder().encode(JSON.stringify(v) ?? "").length;
+/** Media and kit links: app paths, or https (uploads are Storage download URLs). Never javascript:, data: or http:. */
+export const okUrl = (v: unknown) => isStr(v) && (/^\/(media|kits)\/[^\s]*$/.test(v) || /^https:\/\/[^\s]+$/.test(v));
+
+export interface ValidateOptions {
+  /** Known competency codes (the editor passes competencies.ts); unknown ones become warnings. Omit to skip the check. */
+  competencies?: ReadonlySet<string>;
+  /**
+   * The tracks platform admins set up: id → number of levels (levelsByTrack in tracks.ts). The unit's track must be one
+   * of them and its level must fit. Omit it and any well-formed track id with a level from 1 to 12 passes.
+   */
+  tracks?: ReadonlyMap<string, number>;
+}
+
+export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[] {
+  const issues: Issue[] = [];
+  let ctx: Omit<IssueAt, "field"> = {};
+  const add = (field: string, code: IssueCode, params?: Issue["params"], level: Issue["level"] = "error") => issues.push({ at: { ...ctx, field }, code, level, params });
+
+  /** LocalText: English is required (the fallback for every language); missing Arabic is a warning. */
+  const text = (o: Obj, key: string, required = true) => {
+    const v = o[key];
+    if (v === undefined && !required) return;
+    if (!isObj(v) || !filled(v.en)) { if (required || v !== undefined) add(`${key}.en`, "required"); return; }
+    if (!filled(v.ar)) add(`${key}.ar`, "missingAr", undefined, "warning");
+    for (const [lang, s] of Object.entries(v)) if (!isStr(s)) add(`${key}.${lang}`, "badValue");
+  };
+  /** LocalList: English needs at least `min` non-empty items. */
+  const list = (o: Obj, key: string, min = 1, required = true) => {
+    const v = o[key];
+    if (v === undefined && !required) return;
+    if (!isObj(v) || arr(v.en).filter(filled).length < min) { add(`${key}.en`, min > 1 ? "minItems" : "required", { n: min }); return; }
+    if (!isObj(v) || !Array.isArray(v.ar) || !v.ar.some(filled)) add(`${key}.ar`, "missingAr", undefined, "warning");
+    for (const [lang, items] of Object.entries(v)) if (!Array.isArray(items) || !items.every(isStr)) add(`${key}.${lang}`, "badValue");
+  };
+  const oneOf = (o: Obj, key: string, allowed: readonly string[]) => { if (!allowed.includes(o[key] as string)) add(key, "badValue", { value: String(o[key] ?? "") }); };
+  const ids = (items: unknown[], field: string, pattern = STEP_ID) => {
+    const seen = new Set<string>();
+    items.forEach((it, i) => {
+      const id = isObj(it) ? it.id : undefined;
+      if (!isStr(id) || !pattern.test(id)) add(`${field}.${i}.id`, "badId", { value: String(id ?? "") });
+      else if (seen.has(id)) add(`${field}.${i}.id`, "duplicateId", { value: id });
+      else seen.add(id);
+    });
+    return seen;
+  };
+  const minItems = (items: unknown[], field: string, n: number) => { if (items.length < n) { add(field, "minItems", { n }); return false; } return true; };
+
+  /** Choice-like options: ≥2, unique ids, text (or label for images). */
+  const options = (s: Obj, labelKey: "text" | "label") => {
+    const opts = arr(s.options);
+    minItems(opts, "options", 2);
+    opts.forEach((o, i) => { if (!isObj(o)) return add(`options.${i}`, "badValue"); text(o, labelKey); if (labelKey === "label") oneOf(o, "art", ARTS); });
+    return ids(opts, "options");
+  };
+
+  const step = (s: unknown, field = "") => {
+    const f = (k: string) => (field ? `${field}.${k}` : k);
+    if (!isObj(s)) return add(f("type"), "badValue");
+    if (!STEP_TYPES.includes(s.type as typeof STEP_TYPES[number])) return add(f("type"), "badValue", { value: String(s.type ?? "") });
+    text(s, "prompt");
+    text(s, "explain", false);
+    switch (s.type) {
+      case "choice": { const ok = options(s, "text"); if (!ok.has(s.answer as string)) add("answer", "answerNotInOptions"); break; }
+      case "image": { const ok = options(s, "label"); if (!ok.has(s.answer as string)) add("answer", "answerNotInOptions"); break; }
+      case "multi": {
+        const ok = options(s, "text"); const answers = arr(s.answers);
+        if (!answers.length) add("answers", "required");
+        else if (answers.some((a) => !ok.has(a as string)) || new Set(answers).size !== answers.length) add("answers", "answersNotInOptions");
+        break;
+      }
+      case "truefalse": if (typeof s.answer !== "boolean") add("answer", "required"); break;
+      case "match": { const pairs = arr(s.pairs); minItems(pairs, "pairs", 2); pairs.forEach((p, i) => { if (!isObj(p)) return add(`pairs.${i}`, "badValue"); text(p, "left"); text(p, "right"); }); break; }
+      case "order": { const items = arr(s.steps); minItems(items, "steps", 2); items.forEach((it, i) => { if (!isObj(it) || !filled(it.en)) add(`steps.${i}.en`, "required"); else if (!filled(it.ar)) add(`steps.${i}.ar`, "missingAr", undefined, "warning"); }); break; }
+      case "fill": fill(s); break;
+      case "type": list(s, "accept"); text(s, "placeholder", false); break;
+      case "hotspot": {
+        const mock = s.mock;
+        if (!isObj(mock)) add("mock", "required"); else { if (!isStr(mock.from)) add("mock.from", "required"); text(mock, "body"); text(mock, "link"); }
+        const spots = arr(s.spots); minItems(spots, "spots", 1); ids(spots, "spots");
+        spots.forEach((sp, i) => {
+          if (!isObj(sp)) return add(`spots.${i}`, "badValue");
+          text(sp, "label");
+          for (const k of ["x", "y", "w", "h"]) if (!isNum(sp[k]) || (sp[k] as number) < 0 || (sp[k] as number) > 100) add(`spots.${i}.${k}`, "range", { min: 0, max: 100 });
+          if (isNum(sp.x) && isNum(sp.w) && sp.x + sp.w > 100) add(`spots.${i}.w`, "range", { min: 0, max: 100 - sp.x });
+          if (isNum(sp.y) && isNum(sp.h) && sp.y + sp.h > 100) add(`spots.${i}.h`, "range", { min: 0, max: 100 - sp.y });
+        });
+        break;
+      }
+      case "scenario": {
+        text(s, "who"); text(s, "initial"); text(s, "situation");
+        const choices = arr(s.choices); minItems(choices, "choices", 1); ids(choices, "choices");
+        choices.forEach((c, i) => { if (!isObj(c)) return add(`choices.${i}`, "badValue"); text(c, "label"); text(c, "consequence"); if (c.tone !== "good" && c.tone !== "consider") add(`choices.${i}.tone`, "badValue"); });
+        break;
+      }
+      case "reflect": text(s, "placeholder", false); break;
+      case "video": video(s); break;
+      case "lab": if (typeof s.tool !== "string" || !LAB_ID.test(s.tool)) add("tool", "badValue", { value: String(s.tool ?? "") }); break;
+      case "read": {
+        text(s, "title"); text(s, "body");
+        arr(s.keyTerms).forEach((k, i) => { if (!isObj(k)) return add(`keyTerms.${i}`, "badValue"); text(k, "term"); text(k, "def"); });
+        break;
+      }
+      case "project": {
+        text(s, "task"); text(s, "deliverable");
+        const rubric = arr(s.rubric); minItems(rubric, "rubric", 1);
+        rubric.forEach((r, i) => { if (!isObj(r)) add(`rubric.${i}`, "badValue"); else text(r, "criterion"); });
+        break;
+      }
+    }
+  };
+
+  /** Fill the gaps, per language: blanks 0..n-1 with no gaps, n answers, a bank of unique words holding every answer. */
+  const fill = (s: Obj) => {
+    const sentence = s.sentence, bank = s.bank, answers = s.answers;
+    if (!isObj(sentence) || !Array.isArray(sentence.en)) return add("sentence.en", "required");
+    if (!Array.isArray(sentence.ar)) add("sentence.ar", "missingAr", undefined, "warning");
+    for (const [lang, parts] of Object.entries(sentence)) {
+      if (!Array.isArray(parts)) { add(`sentence.${lang}`, "badValue"); continue; }
+      const blanks = parts.filter((p) => isObj(p)).map((p) => (p as Obj).blank);
+      const n = blanks.length;
+      const sorted = [...blanks].sort((a, b) => Number(a) - Number(b));
+      if (!n || parts.some((p) => !isStr(p) && !isObj(p)) || sorted.some((b, i) => b !== i)) { add(`sentence.${lang}`, "fillBlanks"); continue; }
+      const ans = isObj(answers) ? arr(answers[lang]) : [];
+      if (ans.length !== n || !ans.every(filled)) { add(`answers.${lang}`, "fillAnswers", { n }); continue; }
+      // Each bank chip can be used once (FillBlank disables it), so two blanks can't share an answer.
+      if (new Set(ans).size !== ans.length) { add(`answers.${lang}`, "fillBank"); continue; }
+      const words = isObj(bank) ? arr(bank[lang]) : [];
+      if (!words.every(filled) || new Set(words).size !== words.length || ans.some((a) => !words.includes(a))) add(`bank.${lang}`, "fillBank");
+    }
+  };
+
+  const video = (s: Obj) => {
+    text(s, "title"); text(s, "transcript");
+    if (!isNum(s.duration) || s.duration <= 0) add("duration", "range", { min: 1, max: 3600 });
+    if (!isNum(s.sizeMB) || s.sizeMB < 0) add("sizeMB", "range", { min: 0, max: 60 });
+    if (s.src !== null && s.src !== undefined && !okUrl(s.src)) add("src", "badUrl");
+    for (const key of ["sources", "captions"] as const) {
+      if (s[key] === undefined) continue;
+      if (!isObj(s[key])) { add(key, "badValue"); continue; }
+      for (const [lang, url] of Object.entries(s[key] as Obj)) if (!okUrl(url)) add(`${key}.${lang}`, "badUrl");
+    }
+    arr(s.chapters).forEach((c, i) => {
+      if (!isObj(c)) return add(`chapters.${i}`, "badValue");
+      text(c, "label");
+      if (!isNum(c.at) || c.at < 0 || (isNum(s.duration) && c.at >= s.duration)) add(`chapters.${i}.at`, "range", { min: 0, max: isNum(s.duration) ? s.duration - 1 : 0 });
+    });
+    if (s.checkpoint !== undefined) {
+      const cp = s.checkpoint;
+      if (!isObj(cp) || !isObj(cp.question) || (cp.question.type !== "choice" && cp.question.type !== "truefalse")) return add("checkpoint", "checkpoint");
+      if (!isNum(cp.at) || cp.at < 0 || (isNum(s.duration) && cp.at >= s.duration)) add("checkpoint.at", "range", { min: 0, max: isNum(s.duration) ? s.duration - 1 : 0 });
+      const before = issues.length;
+      step(cp.question, "checkpoint.question");
+      // Field paths inside the checkpoint question are relative to it; prefix the ones step() added.
+      for (const it of issues.slice(before)) if (!it.at.field.startsWith("checkpoint.")) it.at.field = `checkpoint.question.${it.at.field}`;
+    }
+  };
+
+  const lesson = (l: unknown, unitId: string) => {
+    if (!isObj(l)) return add("", "badValue");
+    if (byteSize(l) > MAX_LESSON_BYTES) add("", "tooLarge", { max: Math.round(MAX_LESSON_BYTES / 1000) });
+    text(l, "title"); text(l, "tryTomorrow");
+    if (!isNum(l.minutes) || !Number.isInteger(l.minutes) || l.minutes < 1 || l.minutes > 60) add("minutes", "range", { min: 1, max: 60 });
+    const steps = arr(l.steps); minItems(steps, "steps", 1); ids(steps, "steps");
+    const outer = ctx;
+    steps.forEach((s, i) => { ctx = { ...outer, step: i }; step(s); });
+    ctx = outer;
+    const slides = arr(l.slides);
+    if (!slides.length) add("slides", "noSlides", undefined, "warning");
+    slides.forEach((sl, i) => {
+      ctx = { ...outer, slide: i };
+      if (!isObj(sl)) { add("", "badValue"); return; }
+      oneOf(sl, "layout", SLIDE_LAYOUTS); text(sl, "title");
+      list(sl, "bullets", 1, false); text(sl, "note", false); text(sl, "narration", false);
+    });
+    ctx = outer;
+    arr(l.kit).forEach((k, i) => {
+      ctx = { ...outer, kit: i };
+      if (!isObj(k)) { add("", "badValue"); return; }
+      oneOf(k, "kind", KIT_KINDS); text(k, "title");
+      if (!isNum(k.pages) || k.pages < 0) add("pages", "range", { min: 0, max: 200 });
+      const formats = arr(k.formats);
+      if (!formats.length || formats.some((f) => !KIT_FORMATS.includes(f as typeof KIT_FORMATS[number]))) add("formats", "badValue");
+      if (isObj(k.urls)) {
+        for (const [lang, byFmt] of Object.entries(k.urls)) {
+          if (!isObj(byFmt)) { add(`urls.${lang}`, "badValue"); continue; }
+          for (const [fmt, url] of Object.entries(byFmt)) if (!okUrl(url)) add(`urls.${lang}.${fmt}`, "badUrl");
+        }
+        for (const fmt of formats) if (!Object.values(k.urls).some((m) => isObj(m) && okUrl(m[fmt as string]))) add(`urls.${String(fmt)}`, "required");
+      } else if (k.path !== undefined) { if (!isStr(k.path) || !okUrl(k.path.replace("{lang}", "en") + ".x")) add("path", "badUrl"); }
+      else if (!isStr(k.base) || !/^[A-Za-z0-9_./-]{1,120}$/.test(k.base) || k.base.includes("..")) add("base", "badUrl");
+    });
+    ctx = outer;
+    const comps = l.competencies;
+    if (comps !== undefined) {
+      if (!Array.isArray(comps) || !comps.every(isStr)) add("competencies", "badValue");
+      else if (opts.competencies) for (const c of comps) if (!opts.competencies.has(c)) add("competencies", "unknownCompetency", { value: c }, "warning");
+    }
+    if (isStr(l.id) && !l.id.startsWith(`${unitId}-`)) add("id", "lessonIdPrefix", { prefix: `${unitId}-` });
+  };
+
+  if (!isObj(input)) { add("", "badValue"); return issues; }
+  const u = input;
+  if (!isStr(u.id) || !UNIT_ID.test(u.id)) add("id", "badId", { value: String(u.id ?? "") });
+  const maxLevel = opts.tracks ? opts.tracks.get(String(u.track)) : LEVELS_CAP;
+  if (!isStr(u.track) || !TRACK_ID.test(u.track) || maxLevel === undefined) add("track", "badValue", { value: String(u.track ?? "") });
+  else if (!isNum(u.level) || !Number.isInteger(u.level) || u.level < 1 || u.level > maxLevel) add("level", "range", { min: 1, max: maxLevel });
+  text(u, "title"); text(u, "summary");
+  if (byteSize(u) > MAX_UNIT_BYTES) add("", "tooLarge", { max: Math.round(MAX_UNIT_BYTES / 1000) });
+  const lessons = arr(u.lessons);
+  minItems(lessons, "lessons", 1);
+  ids(lessons, "lessons", /^[a-z0-9][a-z0-9-]{1,59}$/);
+  lessons.forEach((l, i) => { ctx = { lesson: i }; lesson(l, isStr(u.id) ? u.id : ""); });
+  return issues;
+}
+
+export const errorsOf = (issues: Issue[]) => issues.filter((i) => i.level === "error");
+/** Narrowing helper once validateUnit found no errors. */
+export const isValidUnit = (input: unknown, opts?: ValidateOptions): input is Unit => errorsOf(validateUnit(input, opts)).length === 0;
+
+/**
+ * The tracks list a platform admin saves (/super/tracks → saveSettings). Errors only; `at.field` is "tracks.<i>.<key>".
+ * Built-in tracks must all be there (tracks.ts BUILTIN_TRACKS); their colour and icon are restored by mergeTracks.
+ */
+export function validateTracks(input: unknown, builtInIds: readonly string[]): Issue[] {
+  const issues: Issue[] = [];
+  const add = (field: string, code: IssueCode, params?: Issue["params"]) => issues.push({ at: { field }, code, level: "error", params });
+  const list = arr(input);
+  if (!Array.isArray(input) || !list.length) { add("tracks", "minItems", { n: 1 }); return issues; }
+  const seen = new Set<string>();
+  list.forEach((t, i) => {
+    const f = (k: string) => `tracks.${i}.${k}`;
+    if (!isObj(t)) return add(f(""), "badValue");
+    if (!isStr(t.id) || !TRACK_ID.test(t.id)) add(f("id"), "badId", { value: String(t.id ?? "") });
+    else if (seen.has(t.id)) add(f("id"), "duplicateId", { value: t.id });
+    else seen.add(t.id);
+    if (!isObj(t.name) || !filled(t.name.en)) add(f("name.en"), "required");
+    if (t.summary !== undefined && !isObj(t.summary)) add(f("summary"), "badValue");
+    if (!TRACK_TONE_IDS.includes(t.tone as typeof TRACK_TONE_IDS[number])) add(f("tone"), "badValue", { value: String(t.tone ?? "") });
+    if (!isStr(t.icon) || !/^[a-z][a-z0-9-]{0,29}$/.test(t.icon)) add(f("icon"), "badValue", { value: String(t.icon ?? "") });
+    if (!isNum(t.levels) || !Number.isInteger(t.levels) || t.levels < 1 || t.levels > LEVELS_CAP) add(f("levels"), "range", { min: 1, max: LEVELS_CAP });
+    if (t.levelNames !== undefined && (!Array.isArray(t.levelNames) || t.levelNames.length > LEVELS_CAP || !t.levelNames.every((n) => isObj(n) && isStr(n.en)))) add(f("levelNames"), "badValue");
+    if (!isNum(t.order)) add(f("order"), "badValue");
+  });
+  for (const id of builtInIds) if (!seen.has(id)) add("tracks", "required", { value: id });
+  return issues;
+}

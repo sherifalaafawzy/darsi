@@ -16,6 +16,38 @@ service cloud.firestore {
       return (signedIn() && request.auth.uid == uid) || isSuper() || isOrgAdmin(data.get('orgId', null)) || isTeacherOf(data);
     }
 
+    // Course editor (TECHNICAL.md "Authored content"). `owner` is "public" (platform admins publish for everyone) or an
+    // orgId (that org's admins publish for its members). Drafts are edited here. Publishing, unpublishing and deleting a
+    // published unit go through Cloud Functions, which alone write `published` and the Storage files learners read.
+    // Every save bumps `rev` by one, so two editors can't silently overwrite each other.
+    function canEdit(owner) { return isSuper() || (owner is string && owner != 'public' && isOrgAdmin(owner)); }
+    function nextRev() { return request.resource.data.rev is int && request.resource.data.rev == resource.data.rev + 1; }
+    // Org units get generated ids ("u" + 8), so they can never shadow a built-in or public unit.
+    function idFits(owner, unitId) { return owner == 'public' || unitId.matches('u[a-z0-9]{8}'); }
+
+    match /units/{unitId} {
+      allow read: if canEdit(resource.data.owner);
+      allow create: if canEdit(request.resource.data.owner) && idFits(request.resource.data.owner, unitId)
+        && request.resource.data.keys().hasOnly(['owner', 'title', 'track', 'level', 'lessonCount', 'lessons', 'rev', 'updatedAt', 'updatedBy', 'published'])
+        && request.resource.data.rev == 1 && request.resource.data.get('published', null) == null
+        && request.resource.data.updatedBy == request.auth.uid;
+      // `lessons` is a small summary ({id, title} per lesson) so the unit list can show lesson titles without the drafts.
+      allow update: if canEdit(resource.data.owner) && nextRev()
+        && onlyChanges(['title', 'track', 'level', 'lessonCount', 'lessons', 'rev', 'updatedAt', 'updatedBy'])
+        && request.resource.data.updatedBy == request.auth.uid;
+      allow delete: if canEdit(resource.data.owner) && resource.data.get('published', null) == null;
+    }
+    match /unitDrafts/{unitId} {
+      allow read: if canEdit(resource.data.owner);
+      allow create: if canEdit(request.resource.data.owner) && idFits(request.resource.data.owner, unitId)
+        && request.resource.data.keys().hasOnly(['owner', 'rev', 'unit'])
+        && request.resource.data.rev == 1 && request.resource.data.unit.id == unitId;
+      allow update: if canEdit(resource.data.owner) && nextRev()
+        && onlyChanges(['rev', 'unit']) && request.resource.data.unit.id == unitId;
+      allow delete: if canEdit(resource.data.owner)
+        && (!exists(/databases/$(database)/documents/units/$(unitId)) || get(/databases/$(database)/documents/units/$(unitId)).data.get('published', null) == null);
+    }
+
     match /users/{uid} {
       allow read: if canSee(uid, resource.data);
       // Self-registration: an individual learner with no organization.
@@ -61,6 +93,10 @@ service cloud.firestore {
 
     // Announcements sent from /super: written by the sendBroadcast function, read by platform admins.
     match /broadcasts/{id} { allow read: if isSuper(); allow write: if false; }
+
+    // Platform settings (tracks): platform admins read them in /super/tracks; only saveSettings writes them. Everyone
+    // else reads the published copy, content/settings.json in Storage.
+    match /config/{doc} { allow read: if isSuper(); allow write: if false; }
 
     match /orgs/{orgId} {
       allow read: if inOrg(orgId) || isSuper() || (signedIn() && resource.data.createdBy == request.auth.uid);

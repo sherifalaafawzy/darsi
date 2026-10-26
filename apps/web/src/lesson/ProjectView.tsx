@@ -26,7 +26,7 @@ async function shrinkImage(file: File, max = 1280): Promise<Blob> {
 }
 
 /** A real classroom task. Evidence (text + optional photo/PDF) goes to Firestore/Storage for teacher review. */
-export function ProjectView({ step, lessonId, unitId, onReady }: { step: ProjectStep; lessonId: string; unitId: string; onReady: (r: boolean) => void }) {
+export function ProjectView({ step, lessonId, unitId, onReady, preview }: { step: ProjectStep; lessonId: string; unitId: string; onReady: (r: boolean) => void; preview?: boolean }) {
   const { t, L } = useI18n();
   const { user, orgId } = useAuth();
   const [text, setText] = useState("");
@@ -65,7 +65,7 @@ export function ProjectView({ step, lessonId, unitId, onReady }: { step: Project
           <input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
         {state === "error" && <p className="notice err">{t("project.error")}</p>}
         <div className="row-gap">
-          <Button icon="check" disabled={!text.trim() || state === "sending" || !user} loading={state === "sending"} onClick={submit}>{t("project.submit")}</Button>
+          <Button icon="check" disabled={!text.trim() || state === "sending" || !user || preview} loading={state === "sending"} onClick={submit}>{t("project.submit")}</Button>
           <Button variant="ghost" onClick={() => setState("later")}>{t("project.later")}</Button>
         </div>
         {!user && <p className="muted small">{t("project.guest")}</p>}

@@ -63,6 +63,7 @@ The app picks up the role by itself: it refreshes claims when `users/{uid}` chan
 - In an org admin account: add two people, download the credentials, print the login slips.
 - On a cheap Android phone: install the PWA, go offline, and confirm a downloaded unit still opens.
 - Notifications: see the checks at the end of [6. Push notifications](#6-push-notifications).
+- Course editor: see the checks at the end of [7. Course editor](#7-course-editor).
 
 ## 6. Push notifications
 
@@ -109,15 +110,47 @@ FCM isn't part of the Emulator Suite, and `npm run dev` runs without a service w
 - Pick the next reminder time on the list (07:00, 12:00, 16:00, 18:00 or 20:00) and wait for it. One reminder arrives in that hour, and none if you finish a lesson first that day.
 - Turn notifications off in Me. The device disappears from Firestore.
 
+## 7. Course editor
+
+Platform admins publish units for everyone at `/super/content`; org admins publish units for their own members at `/admin/content`. Drafts live in Firestore. Publishing (the `publishUnit` function) writes the unit as a versioned JSON file to Storage, under `content/` (public) or `orgs/{orgId}/` (members only), plus a `catalog.json` the app merges with the built-in units. How it works is in [TECHNICAL.md](../TECHNICAL.md#authored-content).
+
+### Set up once
+
+1. **Deploy** the new rules, index, functions and app:
+   ```bash
+   npx firebase deploy --only firestore:rules,firestore:indexes,storage,functions,hosting
+   ```
+   The `units (owner, updatedAt)` index must finish building (Firestore console → Indexes) before the editor's list loads.
+2. **Bucket CORS.** Browsers read published units straight from Storage (guests with a plain `fetch`, members through the SDK), which Storage allows only for the origins in `firebase/storage.cors.json`:
+   ```bash
+   gcloud storage buckets update gs://darsi-f0685 --cors-file=firebase/storage.cors.json --account=sherifalaafawzy@gmail.com
+   gcloud storage buckets describe gs://darsi-f0685 --format="default(cors_config)" --account=sherifalaafawzy@gmail.com
+   ```
+   - The list holds the Hosting domains, the local dev and preview ports, and the Capacitor origins. Add a custom domain there when you get one.
+   - Uploads from the editor don't need it; reading does. Without it, Home simply doesn't show published units.
+
+### Check it works
+
+- As a platform admin, open **Lesson editor**, create a unit, fill in a lesson with one question, **Save draft**, then **Publish**. The checks panel must say "No errors" first.
+- In a private window, without signing in: **Continue without an account**. The new unit is on Home, its lesson plays, and DevTools → Network shows no `firebase-*` file.
+- As an org admin: publish a unit. A student of that organization sees it; an independent learner doesn't.
+- Publish again: Storage holds `v2.json` and `v1.json`, and the catalog points at `v2`. **Unpublish** removes it from Home.
+
 ## Local development with the emulators
 
-The Emulator Suite needs **JDK 21+**; firebase-tools 15 refuses older Java. Install a JDK 21, then:
+The Emulator Suite needs **JDK 21+**; firebase-tools 15 refuses older Java. Install a JDK 21 (a portable Temurin 21 JRE zip works: point `JAVA_HOME` and `PATH` at it for the one shell), then:
 
 ```bash
 npm run build --prefix functions
 npx firebase emulators:start --project demo-darsi --only auth,firestore,functions,storage
 npm run dev                          # the web app talks to the emulators (.env.development)
 ```
+
+- **"Firestore Emulator has exited with code: 1"** and `Unable to establish loopback connection` in `firestore-debug.log`: Java 16+ opens its loopback pipe through a Unix-domain socket in the temp folder, which fails on this machine (a user folder with spaces). Point it at a short folder with no spaces:
+  ```bash
+  JAVA_TOOL_OPTIONS="-Djdk.net.unixdomain.tmpdir=C:\Users\Public" npx firebase emulators:start --project demo-darsi --only auth,firestore,functions,storage
+  ```
+- `npm run superadmin -- you@example.com --emulator` gives a local account the platform-admin role.
 
 `.claude/launch.json` has the same `web` and `emulators` entries for Claude Code's preview.
 
@@ -127,6 +160,7 @@ npm run dev                          # the web app talks to the emulators (.env.
 |---|---|---|
 | Web app | Hosting | Precaches the learner app shell (~640 KB), plus the fonts for the teacher's language. The Firebase SDK loads only for signed-in people; staff screens and exceljs load only when used. |
 | Data | Firestore | Rules in `firebase/firestore.rules`. Learner progress syncs with one read per sign-in, with no live listeners. |
-| Files | Storage | Project evidence (≤ 10 MB, images/PDF/mp4/audio). Media and kits are public read. |
+| Files | Storage | Project evidence (≤ 10 MB, images/PDF/mp4/audio). Media and kits are public read. Published units: `content/` is public, `orgs/{orgId}/` is for that org's members; the editor uploads videos (≤ 60 MB), captions and kit files there. Readable by browsers once the bucket CORS is applied (§7). |
+| Course editor | Cloud Functions | `publishUnit`, `unpublishUnit` and `deleteUnit` write what learners read; drafts are in Firestore `units` and `unitDrafts`. |
 | Roles, orgs, accounts | Cloud Functions | `europe-west1`, max 20 instances. Every role change is written to `audit`. |
 | Notifications | Cloud Functions + FCM | Device tokens in `users/{uid}/devices`; `dailyNudges` runs hourly on Cloud Scheduler; announcements are logged in `broadcasts`. The service worker's push handlers are `apps/web/public/push-sw.js`. |

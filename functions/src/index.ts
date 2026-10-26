@@ -15,6 +15,10 @@ import { generateCode, generatePassword, isValidEmail, isValidUsername, suggestU
 export type { Role } from "./admin.js";
 /** Push notifications: device registration, announcements, review and staff alerts, daily nudges. */
 export * from "./notify.js";
+/** Course editor: publish, unpublish and delete authored units. */
+export * from "./content.js";
+/** Platform settings: the tracks (and later the languages) that every unit and screen uses. */
+export { saveSettings } from "./settings.js";
 
 const MEMBER_ROLES: Role[] = ["student", "teacher", "orgAdmin"];
 

@@ -27,6 +27,8 @@ export function accountLinks(role: Role, signedIn: boolean): NavItem[] {
   if (role === "teacher" || role === "orgAdmin") links.push({ path: "/teach", icon: "chat", key: "nav.teach" });
   if (role === "superadmin") links.push({ path: "/super", icon: "language", key: "nav.super" });
   else links.push({ path: "/org", icon: "home", key: "nav.org" });
+  // The course editor: platform admins publish for everyone, org admins for their own members.
+  if (role === "superadmin" || role === "orgAdmin") links.push({ path: role === "superadmin" ? "/super/content" : "/admin/content", icon: "edit", key: "nav.content" });
   return links;
 }
 
@@ -45,7 +47,10 @@ export function Layout() {
   const snoozed = state.installDismissedAt && Date.now() - state.installDismissedAt < 14 * 864e5;
   const showInstall = completed && !snoozed && install.canInstall;
   const extra = accountLinks(role, Boolean(user));
-  const active = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
+  // The longest matching link wins, so /admin/content lights up the editor, not Admin as well.
+  const hits = [...TABS, ...extra].map((i) => i.path).filter((p) => pathname === p || pathname.startsWith(`${p}/`));
+  const best = hits.sort((a, b) => b.length - a.length)[0];
+  const active = (path: string) => path === best;
   const railItem = (item: NavItem) => (
     <Link key={item.path} to={item.path} className={active(item.path) ? "rail-item is-active" : "rail-item"} aria-current={active(item.path) ? "page" : undefined}>
       <Icon name={item.icon} size={24} /><span>{t(item.key)}</span>

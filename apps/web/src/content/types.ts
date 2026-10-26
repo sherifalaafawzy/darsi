@@ -6,7 +6,27 @@
 export type Lang = "en" | "ar";
 export type LocalText = { en: string } & Partial<Record<string, string>>;
 export type LocalList = { en: string[] } & Partial<Record<string, string[]>>;
-export type Track = "ai" | "iot" | "cyber";
+/** A track id. "ai", "iot" and "cyber" are built in (content/tracks.ts); platform admins add more in /super/tracks. */
+export type Track = string;
+
+/** A track as platform admins set it up, published for everyone in content/settings.json (functions/src/settings.ts). */
+export interface TrackDef {
+  id: Track;
+  name: LocalText;
+  summary?: LocalText;
+  /** A design-system icon name and colour family (TRACK_TONE_IDS in validate.ts). */
+  icon: string;
+  tone: string;
+  /** How many levels it has (1 to MAX_LEVELS), with an optional name per level ("Starter", …). */
+  levels: number;
+  levelNames?: LocalText[];
+  order: number;
+  /** Hidden tracks keep their units and progress but aren't offered in onboarding or the editor. */
+  hidden?: boolean;
+  builtIn?: boolean;
+}
+/** content/settings.json: what platform admins set up for everyone. `version` changes on every save. */
+export interface Settings { version: number; tracks: TrackDef[] }
 
 interface Base { id: string; prompt: LocalText; explain?: LocalText }
 export interface ChoiceStep extends Base { type: "choice"; options: { id: string; text: LocalText }[]; answer: string }
@@ -26,6 +46,8 @@ export interface VideoStep extends Base {
   title: LocalText;
   /** "{lang}" is replaced by the teacher's language. Null until produced — the player then shows the poster and the transcript. */
   src: string | null;
+  /** Uploaded videos (course editor): one URL per language, used instead of `src`. See videoSrc(). */
+  sources?: Partial<Record<string, string>>;
   captions?: Partial<Record<string, string>>;
   duration: number;
   sizeMB: number;
@@ -50,10 +72,18 @@ export type KitKind = "slides" | "lesson-plan" | "worksheet" | "video";
 export interface KitFile {
   kind: KitKind; title: LocalText; pages: number;
   /** Path under /kits without "-<lang>.<ext>" … */ base?: string;
-  /** … or a full path with "{lang}" and no extension (used for /media videos). */ path?: string;
-  formats: ("pdf" | "pptx" | "mp4")[];
+  /** … or a full path with "{lang}" and no extension (used for /media videos) … */ path?: string;
+  /** … or uploaded files (course editor): language → format → URL. */ urls?: Partial<Record<string, Partial<Record<KitFormat, string>>>>;
+  formats: KitFormat[];
 }
-export const kitUrl = (f: KitFile, lang: string, fmt: string) => (f.path ? `${f.path.replace("{lang}", lang)}.${fmt}` : `/kits/${f.base}-${lang}.${fmt}`);
+export type KitFormat = "pdf" | "pptx" | "mp4";
+/** Uploaded kits fall back to English, then to any language that has the format. */
+export const kitUrl = (f: KitFile, lang: string, fmt: KitFormat) =>
+  f.urls ? (f.urls[lang]?.[fmt] ?? f.urls.en?.[fmt] ?? Object.values(f.urls).find((m) => m?.[fmt])?.[fmt] ?? "")
+  : f.path ? `${f.path.replace("{lang}", lang)}.${fmt}` : `/kits/${f.base}-${lang}.${fmt}`;
+/** The video for a language: an uploaded source (falling back to English), else the `src` template, else null (transcript). */
+export const videoSrc = (s: VideoStep, lang: string): string | null =>
+  s.sources?.[lang] ?? s.sources?.en ?? (s.src ? s.src.replace("{lang}", lang) : null);
 
 export interface Lesson {
   id: string;
@@ -67,7 +97,11 @@ export interface Lesson {
   competencies?: string[];
 }
 export interface Unit { id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: Lesson[] }
-export interface CatalogEntry { id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: number; sizeMB: number; available: boolean }
+export interface CatalogEntry {
+  id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: number; sizeMB: number; available: boolean;
+  /** Authored units (course editor): Storage path of the published JSON, its version, and who sees it ("public" or an orgId). */
+  src?: string; version?: number; owner?: string;
+}
 export interface Catalog { version: number; units: CatalogEntry[] }
 export interface Placement { questions: Array<(ChoiceStep | TrueFalseStep) & { track: Track }> }
 

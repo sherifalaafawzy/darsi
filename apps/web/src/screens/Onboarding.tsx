@@ -1,20 +1,27 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, ChoiceCard, LanguagePicker, Mark, OnboardingStep, PlacementResult, QuestionHeader, QuizOption, TrueFalse, LessonTopBar } from "@darsi/design-system";
+import { Button, ChoiceCard, LanguagePicker, Mark, OnboardingStep, PlacementResult, QuestionHeader, QuizOption, TrueFalse, LessonTopBar, type IconName } from "@darsi/design-system";
 import { LANGUAGES, useI18n } from "../i18n";
 import { useStore, type AppState } from "../state/store";
 import { loadPlacement, useAsync } from "../content/load";
 import type { Track } from "../content/types";
+import { useTracks } from "../content/settings";
 import { grade, shuffled, type Answer } from "../lesson/engine";
 
 type Phase = "language" | "where" | "tracks" | "time" | "offer" | "quiz" | "result";
-const TRACKS: Track[] = ["ai", "iot", "cyber"];
+/**
+ * A placement level from a share of right answers: all wrong → 1, all right → the track's top level, evenly between.
+ * (Tracks without placement questions start at level 1.)
+ */
+export const placementLevel = (correct: number, asked: number, levels: number) =>
+  asked ? 1 + Math.floor((correct / asked) * (levels - 1) + 1e-9) : 1;
 
 export function Onboarding() {
   const nav = useNavigate();
   const { t } = useI18n();
   const { state, dispatch } = useStore();
   const [phase, setPhase] = useState<Phase>("language");
+  const tracks = useTracks();
   const [levels, setLevels] = useState<Partial<Record<Track, number>>>({});
   const set = (patch: Partial<AppState>) => dispatch({ type: "set", patch });
   const finish = (lv: Partial<Record<Track, number>>) => { set({ onboarded: true, levels: lv }); nav("/learn", { replace: true }); };
@@ -41,7 +48,7 @@ export function Onboarding() {
   if (phase === "tracks") return (
     <main className="screen narrow">
       <OnboardingStep step={2} total={4} title={t("onb.tracks")} body={t("onb.tracksBody")} primary={cont("time", !state.tracks.length)}>
-        {TRACKS.map((tr) => <ChoiceCard key={tr} icon={tr} multi title={t(`track.${tr}`)} selected={state.tracks.includes(tr)}
+        {tracks.visible.map(({ id: tr, icon }) => <ChoiceCard key={tr} icon={icon as IconName} multi title={tracks.name(tr)} selected={state.tracks.includes(tr)}
           onClick={() => set({ tracks: state.tracks.includes(tr) ? state.tracks.filter((x) => x !== tr) : [...state.tracks, tr] })} />)}
       </OnboardingStep>
     </main>
@@ -58,14 +65,14 @@ export function Onboarding() {
     <main className="screen narrow">
       <OnboardingStep step={4} total={4} title={t("onb.placement")} body={t("onb.placementBody")} art={<Mark size={72} />}
         primary={<Button block iconEnd="next" onClick={() => setPhase("quiz")}>{t("onb.startCheck")}</Button>}
-        secondary={<Button block variant="ghost" onClick={() => finish({ ai: 1, iot: 1, cyber: 1 })}>{t("onb.skipCheck")}</Button>} />
+        secondary={<Button block variant="ghost" onClick={() => finish({})}>{t("onb.skipCheck")}</Button>} />
     </main>
   );
   if (phase === "quiz") return <PlacementQuiz onDone={(lv) => { setLevels(lv); setPhase("result"); }} />;
   return (
     <main className="screen narrow">
       <PlacementResult title={t("place.title")} summary={t("place.summary")}
-        levels={TRACKS.filter((tr) => !state.tracks.length || state.tracks.includes(tr)).map((tr) => ({ track: tr, trackLabel: t(`track.${tr}`), level: levels[tr] ?? 1, of: 4, label: t("place.level", { n: levels[tr] ?? 1 }) }))}
+        levels={tracks.visible.filter(({ id }) => !state.tracks.length || state.tracks.includes(id)).map(({ id: tr, levels: of }) => ({ track: tr, trackLabel: tracks.name(tr), level: levels[tr] ?? 1, of, label: tracks.levelName(tr, levels[tr] ?? 1) }))}
         actions={<Button block iconEnd="next" onClick={() => finish(levels)}>{t("place.go")}</Button>} />
     </main>
   );
@@ -73,6 +80,7 @@ export function Onboarding() {
 
 function PlacementQuiz({ onDone }: { onDone: (levels: Partial<Record<Track, number>>) => void }) {
   const { t, L, lang } = useI18n();
+  const tracks = useTracks();
   const { data } = useAsync(loadPlacement, []);
   const [i, setI] = useState(0);
   const [answer, setAnswer] = useState<Answer | null>(null);
@@ -85,11 +93,11 @@ function PlacementQuiz({ onDone }: { onDone: (levels: Partial<Record<Track, numb
     const s = { ...score, [q.track]: [c + (correct ? 1 : 0), n + 1] as [number, number] };
     setScore(s); setAnswer(null);
     if (i + 1 < qs.length) setI(i + 1);
-    else onDone(Object.fromEntries(Object.entries(s).map(([tr, [cc, nn]]) => [tr, 1 + Math.floor((cc / nn) * 2.99)])));
+    else onDone(Object.fromEntries(Object.entries(s).map(([tr, [cc, nn]]) => [tr, placementLevel(cc, nn, tracks.of(tr).levels)])));
   };
   return (
     <div className="lesson">
-      <div className="lesson-top"><LessonTopBar value={(i / qs.length) * 100} track={q.track} onClose={() => onDone({ ai: 1, iot: 1, cyber: 1 })} closeLabel={t("common.close")} /></div>
+      <div className="lesson-top"><LessonTopBar value={(i / qs.length) * 100} track={q.track} onClose={() => onDone({})} closeLabel={t("common.close")} /></div>
       <main className="screen narrow lesson-body">
         <div className="stack">
           <QuestionHeader type={q.type} typeLabel={t("place.q", { n: i + 1, total: qs.length })} prompt={L(q.prompt)} />

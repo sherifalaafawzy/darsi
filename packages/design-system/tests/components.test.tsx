@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { Button, QuizOption, MatchPairs, OrderSteps, FillBlank, TrueFalse, LanguagePicker, Switch, DarsiRoot, UnitPath, VideoPlayer, FactCheck, TrainClassifier } from "../src";
+import { Button, QuizOption, MatchPairs, OrderSteps, FillBlank, TrueFalse, LanguagePicker, Switch, DarsiRoot, UnitPath, VideoPlayer, FactCheck, TrainClassifier,
+  TrackChip, TrackStylesProvider, ProgressBar, PlacementResult, TRACK_TONES, ICON_NAMES } from "../src";
+import paths from "../src/icons/paths.json";
 import { approximateTokens, withTemperature, classify } from "../src/components/lab";
 import { dirFor, formatNumber } from "../src/locale";
 
@@ -13,6 +15,36 @@ describe("locale", () => {
     const { container } = render(<DarsiRoot lang="ar" theme="sunlight"><span>x</span></DarsiRoot>);
     const root = container.firstElementChild!;
     expect(root.getAttribute("dir")).toBe("rtl"); expect(root.getAttribute("data-theme")).toBe("sunlight");
+  });
+});
+
+describe("track styles", () => {
+  it("built-in tracks keep their colour and icon", () => {
+    const { container } = render(<TrackChip track="iot">IoT</TrackChip>);
+    const chip = container.firstElementChild!;
+    expect(chip.className).toContain("dr-tr-lagoon");
+    expect(chip.querySelector("path")?.getAttribute("d")).toBe(paths.iot[0]);
+  });
+  it("an added track gets the colour and icon the provider gives it", () => {
+    const { container } = render(<TrackStylesProvider styles={{ data: { tone: "leaf", icon: "chart" } }}>
+      <TrackChip track="data">Data science</TrackChip><ProgressBar track="data" value={40} ariaLabel="p" /><UnitPath track="data" nodes={[{ label: "1", state: "current" }]} />
+    </TrackStylesProvider>);
+    expect(container.querySelectorAll(".dr-tr-leaf")).toHaveLength(3);
+    expect(screen.getByText("Data science")).toBeTruthy();
+  });
+  it("an unknown track falls back to a neutral colour and shows its id", () => {
+    const { container } = render(<TrackChip track="robotics" />);
+    expect(container.firstElementChild!.className).toContain("dr-tr-slate");
+    expect(screen.getByText("robotics")).toBeTruthy();
+  });
+  it("placement shows as many level segments as the track has", () => {
+    const { container } = render(<PlacementResult title="t" levels={[{ track: "ai", level: 2, of: 6, label: "Level 2" }]} />);
+    expect(container.querySelectorAll(".dr-place-meter i")).toHaveLength(6);
+    expect(container.querySelectorAll(".dr-place-meter i.on")).toHaveLength(2);
+  });
+  it("offers a tone for every track colour token", () => {
+    expect(TRACK_TONES).toEqual(["sunbird", "lagoon", "hibiscus", "leaf", "lilac", "clay", "sky", "slate"]);
+    for (const n of ["book", "code", "chart", "flask", "globe", "heart", "leaf", "palette", "undo", "redo"]) expect(ICON_NAMES).toContain(n);
   });
 });
 

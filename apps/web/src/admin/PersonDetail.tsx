@@ -10,6 +10,7 @@ import { LANGUAGES, useI18n } from "../i18n";
 import { COMPETENCIES, competency, strength } from "../content/competencies";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
 import type { Unit } from "../content/types";
+import { useTracks } from "../content/settings";
 import { daysSince, useMembers, usePerson, useProgress, useSubmissions, type Submission } from "./data";
 import "../styles/person.css";
 
@@ -54,6 +55,7 @@ export function PersonDetail({ back = "/admin" }: { back?: string }) {
   const { uid = "" } = useParams();
   const nav = useNavigate();
   const { t, L, num, lang } = useI18n();
+  const tracks = useTracks();
   const dateFmt = new Intl.DateTimeFormat(LANGUAGES.find((l) => l.code === lang)?.numerals ?? lang, { dateStyle: "medium" });
   const { role: myRole, orgId } = useAuth();
   const { data: person, error } = usePerson(uid);
@@ -102,7 +104,7 @@ export function PersonDetail({ back = "/admin" }: { back?: string }) {
               if (!done.length) return null;
               return (
                 <div key={u.id} className="course">
-                  <div className="course-head"><TrackChip track={u.track}>{t(`track.${u.track}`)}</TrackChip><strong>{L(u.title)}</strong>{done.length === u.lessons.length && <span className="badge-ok"><Icon name="award" size={16} />{t("p.unitDone")}</span>}</div>
+                  <div className="course-head"><TrackChip track={u.track}>{tracks.name(u.track)}</TrackChip><strong>{L(u.title)}</strong>{done.length === u.lessons.length && <span className="badge-ok"><Icon name="award" size={16} />{t("p.unitDone")}</span>}</div>
                   <ul>{u.lessons.map((l) => { const p = progress.find((x) => x.lessonId === l.id); return (
                     <li key={l.id} className={p ? "done" : ""}><Icon name={p ? "check" : "lock"} size={16} /><span>{L(l.title)}</span>
                       {p && <span className="muted small">{[num(p.accuracy, { style: "percent" }), dateFmt.format(new Date(p.completedAt))].join(t("common.sep"))}</span>}</li>); })}</ul>

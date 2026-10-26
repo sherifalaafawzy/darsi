@@ -8,7 +8,8 @@ import { NotificationsPanel } from "../notify/NotificationsPanel";
 import { isolate, LANGUAGES, useI18n } from "../i18n";
 import { useStore } from "../state/store";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
-import type { Track, Unit } from "../content/types";
+import type { Unit } from "../content/types";
+import { useTracks } from "../content/settings";
 import { share } from "../platform";
 import { useInstall } from "../pwa";
 
@@ -22,8 +23,10 @@ export function Me() {
   useEffect(() => { if (catalog) Promise.all(catalog.units.filter((u) => u.available).map((u) => loadUnit(u.id))).then(setUnits).catch(() => {}); }, [catalog]);
   useEffect(() => { if (location.hash === "#certificates") document.getElementById("certificates")?.scrollIntoView(); }, [units]);
   const done = units.filter((u) => u.lessons.every((l) => state.progress[l.id]));
-  const dateFmt = new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-GB", { dateStyle: "medium" });
-  const tracks: Track[] = ["ai", "iot", "cyber"];
+  const dateFmt = new Intl.DateTimeFormat(LANGUAGES.find((l) => l.code === lang)?.numerals ?? lang, { dateStyle: "medium" });
+  const tracks = useTracks();
+  // The learner's own tracks, or every track on offer if they haven't chosen.
+  const mine = tracks.visible.filter((x) => !state.tracks.length || state.tracks.includes(x.id));
   return (
     <>
       <AppBar title={t("me.title")} />
@@ -37,13 +40,13 @@ export function Me() {
         </section>
         <NotificationsPanel />
         <TextField label={t("me.name")} hint={t("me.nameHint")} value={state.name} onChange={(e) => set({ name: e.target.value })} autoComplete="name" />
-        <PlacementResult title={t("me.levels")} levels={tracks.map((tr) => ({ track: tr, trackLabel: t(`track.${tr}`), level: state.levels[tr] ?? 1, of: 4, label: t("place.level", { n: state.levels[tr] ?? 1 }) }))} />
+        <PlacementResult title={t("me.levels")} levels={mine.map(({ id: tr, levels: of }) => ({ track: tr, trackLabel: tracks.name(tr), level: Math.min(state.levels[tr] ?? 1, of), of, label: tracks.levelName(tr, Math.min(state.levels[tr] ?? 1, of)) }))} />
         <section id="certificates" className="stack"><h2 className="section-title">{t("me.certs")}</h2>
           {done.length === 0 && <p className="muted">{t("me.noCerts")}</p>}
           {done.map((u) => {
             const last = u.lessons.map((l) => state.progress[l.id]?.completedAt).sort().pop()!;
             const code = `DRS-${u.id.toUpperCase()}-${(state.name || "T").length.toString(36).toUpperCase()}${new Date(last).getTime().toString(36).slice(-4).toUpperCase()}`;
-            return <CertificateCard key={u.id} track={u.track} kicker={t("cert.kicker")} trackLabel={t(`track.${u.track}`)} name={state.name || "—"} title={L(u.title)} date={dateFmt.format(new Date(last))} code={code}
+            return <CertificateCard key={u.id} track={u.track} kicker={t("cert.kicker")} trackLabel={tracks.name(u.track)} name={state.name || "—"} title={L(u.title)} date={dateFmt.format(new Date(last))} code={code}
               action={<Button size="sm" variant="secondary" icon="share" onClick={() => share({ title: `${t("cert.kicker")}: ${L(u.title)}`, text: `${state.name} — ${code}` })}>{t("kit.share")}</Button>} />;
           })}
         </section>

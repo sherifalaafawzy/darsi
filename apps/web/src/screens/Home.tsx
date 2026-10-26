@@ -3,6 +3,7 @@ import { AppBar, Button, EmptyState, Icon, LessonCard, ProgressBar, StreakCounte
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
 import type { CatalogEntry } from "../content/types";
 import { useI18n } from "../i18n";
+import { useTracks } from "../content/settings";
 import { isoWeek, streakWeeks, useStore } from "../state/store";
 
 export function Home() {
@@ -11,7 +12,10 @@ export function Home() {
   const { data: catalog, error, retry } = useAsync(loadCatalog, []);
   const weeks = streakWeeks(state);
   const doneThisWeek = state.weeks[isoWeek()] ?? 0;
-  const units = (catalog?.units ?? []).slice().sort((a, b) => Number(b.available) - Number(a.available) || Number(state.tracks.includes(b.track)) - Number(state.tracks.includes(a.track)));
+  const tracks = useTracks();
+  // Units of hidden tracks stay out. Ready units first, then the learner's own tracks, then the order platform admins set, then level.
+  const units = (catalog?.units ?? []).filter((u) => !tracks.of(u.track).hidden).sort((a, b) => Number(b.available) - Number(a.available) || Number(state.tracks.includes(b.track)) - Number(state.tracks.includes(a.track))
+    || tracks.order(a.track) - tracks.order(b.track) || a.level - b.level);
   return (
     <>
       <AppBar title={t("home.title")} actions={<StreakCounter compact count={num(weeks)} label={t("home.streak")} />} />
@@ -27,6 +31,7 @@ export function Home() {
 }
 
 function UnitBlock({ entry }: { entry: CatalogEntry }) {
+  const tracks = useTracks();
   const nav = useNavigate();
   const { t, L } = useI18n();
   const { state } = useStore();
@@ -37,11 +42,11 @@ function UnitBlock({ entry }: { entry: CatalogEntry }) {
   const go = (id: string) => nav(`/lesson/${unit.id}/${id}`);
   return (
     <section className="unit" aria-labelledby={`u-${unit.id}`}>
-      <div className="unit-head"><TrackChip track={unit.track} solid>{t(`track.${unit.track}`)}</TrackChip>{state.downloads[unit.id] && <span className="offline-badge"><Icon name="offline" size={16} />{t("home.offline")}</span>}</div>
+      <div className="unit-head"><TrackChip track={unit.track} solid>{tracks.name(unit.track)}</TrackChip>{state.downloads[unit.id] && <span className="offline-badge"><Icon name="offline" size={16} />{t("home.offline")}</span>}</div>
       <h2 className="unit-title" id={`u-${unit.id}`}>{L(unit.title)}</h2>
       <p className="muted">{L(unit.summary)}</p>
       {next ? (
-        <LessonCard track={unit.track} title={L(next.title)} meta={`${t("common.lessonN", { n: nextIdx + 1 })}${t("common.sep")}${t("common.minutes", { n: next.minutes })}`} offline={!!state.downloads[unit.id]} offlineLabel={t("home.offline")} trackLabel={t(`track.${unit.track}`)}
+        <LessonCard track={unit.track} title={L(next.title)} meta={`${t("common.lessonN", { n: nextIdx + 1 })}${t("common.sep")}${t("common.minutes", { n: next.minutes })}`} offline={!!state.downloads[unit.id]} offlineLabel={t("home.offline")} trackLabel={tracks.name(unit.track)}
           action={<Button size="sm" iconEnd="next" onClick={() => go(next.id)}>{nextIdx === 0 ? t("common.start") : t("home.continue")}</Button>} />
       ) : (
         <Button block variant="secondary" icon="award" onClick={() => nav("/kit")}>{t("home.allDone")}</Button>
@@ -55,10 +60,11 @@ function UnitBlock({ entry }: { entry: CatalogEntry }) {
 }
 
 function LockedUnit({ entry }: { entry: CatalogEntry }) {
+  const tracks = useTracks();
   const { t, L } = useI18n();
   return (
     <section className="unit locked" aria-label={L(entry.title)}>
-      <div className="unit-head"><TrackChip track={entry.track}>{t(`track.${entry.track}`)}</TrackChip><span className="soon"><Icon name="lock" size={16} />{t("common.comingSoon")}</span></div>
+      <div className="unit-head"><TrackChip track={entry.track}>{tracks.name(entry.track)}</TrackChip><span className="soon"><Icon name="lock" size={16} />{t("common.comingSoon")}</span></div>
       <h2 className="unit-title">{L(entry.title)}</h2>
       <p className="muted">{L(entry.summary)}</p>
     </section>

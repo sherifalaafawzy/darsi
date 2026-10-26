@@ -10,9 +10,17 @@ export const LANGUAGES = [
 ];
 const MESSAGES: Record<string, Record<string, string>> = { en, ar };
 
+/**
+ * Strings only a lazy chunk needs (the course editor's cms.*) are added when that chunk loads, so learners never
+ * download them. Their keys are still type-checked: MessageKey includes them through a type-only import.
+ */
+export function addMessages(more: Record<string, Record<string, string>>) {
+  for (const [lang, dict] of Object.entries(more)) MESSAGES[lang] = { ...MESSAGES[lang], ...dict };
+}
+
 /** Unicode isolate, the plain-text <bdi>: for names passed into t() so a Latin name can't reorder an Arabic sentence (or the reverse). */
 export const isolate = (s: string) => `⁨${s}⁩`;
-export type MessageKey = keyof typeof en;
+export type MessageKey = keyof typeof en | keyof typeof import("../cms/strings/en.json");
 
 interface I18n {
   lang: string;
@@ -29,7 +37,7 @@ export function I18nProvider({ lang, children }: { lang: string; children: React
   const meta = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
   const num = useCallback((n: number, opts?: Intl.NumberFormatOptions) => new Intl.NumberFormat(meta.numerals, opts).format(n), [meta.numerals]);
   const t = useCallback((key: MessageKey, vars?: Record<string, string | number>) => {
-    const s = MESSAGES[meta.code]?.[key] ?? en[key] ?? key;
+    const s = MESSAGES[meta.code]?.[key] ?? MESSAGES.en[key] ?? key;
     return vars ? s.replace(/\{(\w+)\}/g, (_, k) => { const v = vars[k]; return typeof v === "number" ? num(v) : String(v ?? ""); }) : s;
   }, [meta.code, num]);
   const L = useCallback((text: LocalText | undefined) => pick(text, meta.code), [meta.code]);

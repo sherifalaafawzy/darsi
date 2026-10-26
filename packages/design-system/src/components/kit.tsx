@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
-import { Button, Icon, TrackChip, cx, type IconName, type Track } from "./primitives";
+import { Button, Icon, TrackChip, cx, trackClass, useTrackStyles, type IconName, type Track } from "./primitives";
 
 export type ResourceKind = "lesson-plan" | "worksheet" | "poster" | "slides" | "answer-key" | "certificate";
 const KIND_ICON: Record<ResourceKind, IconName> = { "lesson-plan": "file", worksheet: "edit", poster: "image", slides: "video", "answer-key": "check", certificate: "award" };
 
 /** CSS-drawn A4 thumbnail — no image download. */
 export function PagePreview({ track = "ai", kind = "worksheet" }: { track?: Track; kind?: ResourceKind }) {
+  const style = useTrackStyles()(track);
   return (
-    <span className={cx("dr-page", `dr-page-${track}`, `dr-page-${kind}`)} aria-hidden>
+    <span className={cx("dr-page", trackClass(style), `dr-page-${kind}`)} aria-hidden>
       <i className="dr-page-band" /><i className="dr-page-h" /><i className="dr-page-l" /><i className="dr-page-l s" /><i className="dr-page-box" /><i className="dr-page-l" /><i className="dr-page-l s" />
     </span>
   );
@@ -68,15 +69,16 @@ export function OnboardingStep({ step, total, title, body, art, primary, seconda
 export interface PlacementLevel { track: Track; trackLabel?: string; level: number; of?: number; label: string; }
 export interface PlacementResultProps { title: string; summary?: string; levels: PlacementLevel[]; actions?: ReactNode; }
 export function PlacementResult({ title, summary, levels, actions }: PlacementResultProps) {
+  const styleOf = useTrackStyles();
   return (
     <section className="dr-place">
       <h2 className="dr-onb-title">{title}</h2>
       {summary && <p className="dr-onb-body">{summary}</p>}
       <ul className="dr-place-list">
         {levels.map((l) => (
-          <li key={l.track} className="dr-place-row">
+          <li key={l.track} className={cx("dr-place-row", trackClass(styleOf(l.track)))}>
             <TrackChip track={l.track} solid>{l.trackLabel}</TrackChip>
-            <span className="dr-place-meter" role="img" aria-label={l.label}>{Array.from({ length: l.of ?? 4 }, (_, i) => <i key={i} className={i < l.level ? `on dr-place-${l.track}` : ""} />)}</span>
+            <span className="dr-place-meter" role="img" aria-label={l.label}>{Array.from({ length: l.of ?? 4 }, (_, i) => <i key={i} className={i < l.level ? "on" : ""} />)}</span>
             <span className="dr-place-label">{l.label}</span>
           </li>
         ))}

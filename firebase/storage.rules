@@ -4,6 +4,29 @@ service firebase.storage {
     // Lesson media and kits are public (they are also served by Hosting).
     match /media/{path=**} { allow read: if true; allow write: if false; }
     match /kits/{path=**} { allow read: if true; allow write: if false; }
+
+    // Course editor (TECHNICAL.md "Authored content"). The published unit JSON and catalog.json files are written only by
+    // Cloud Functions (Admin SDK). Editors upload media: lesson videos, captions and kit files, within these limits.
+    function isSuper() { return request.auth != null && request.auth.token.role == 'superadmin'; }
+    function inOrgS(orgId) { return request.auth != null && request.auth.token.orgId == orgId; }
+    function mediaOk() {
+      return (request.resource.contentType == 'video/mp4' && request.resource.size <= 60 * 1024 * 1024)
+        || (request.resource.contentType.matches('text/vtt.*') && request.resource.size <= 512 * 1024)
+        || (request.resource.contentType.matches('application/pdf|application/vnd[.]openxmlformats-officedocument[.]presentationml[.]presentation')
+            && request.resource.size <= 20 * 1024 * 1024);
+    }
+    // Public units: anyone reads them, guests included (they fetch without the Firebase SDK).
+    match /content/{path=**} { allow read: if true; }
+    match /content/media/{unitId}/{file} {
+      allow create, update: if isSuper() && mediaOk();
+      allow delete: if isSuper();
+    }
+    // Org units: only that org's members (and platform admins) read them; its admins upload media.
+    match /orgs/{orgId}/{path=**} { allow read: if inOrgS(orgId) || isSuper(); }
+    match /orgs/{orgId}/media/{unitId}/{file} {
+      allow create, update: if (isSuper() || (inOrgS(orgId) && request.auth.token.role == 'orgAdmin')) && mediaOk();
+      allow delete: if isSuper() || (inOrgS(orgId) && request.auth.token.role == 'orgAdmin');
+    }
     // Project evidence: submissions/{orgId|"none"}/{uid}/{file}
     match /submissions/{orgId}/{uid}/{file} {
       allow read: if request.auth != null && (request.auth.uid == uid

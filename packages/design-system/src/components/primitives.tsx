@@ -1,13 +1,37 @@
-import { useId, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { createContext, useContext, useId, type ButtonHTMLAttributes, type ReactNode } from "react";
 import paths from "../icons/paths.json";
 
-export type Track = "ai" | "iot" | "cyber";
+/** A track id. "ai", "iot" and "cyber" are built in; platform admins can add more (see TrackStylesProvider). */
+export type Track = string;
 export type Tone = "kola" | "lagoon" | "sunbird" | "hibiscus";
 export type IconName = keyof typeof paths;
+export const ICON_NAMES = Object.keys(paths) as IconName[];
 
 export const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(" ");
-export const TRACK_NAMES: Record<Track, string> = { ai: "AI", iot: "IoT", cyber: "Cyber security" };
-const MIRROR: Partial<Record<IconName, true>> = { back: true, next: true };
+/** English names of the built-in tracks, the last fallback when no name is passed. */
+export const TRACK_NAMES: Record<string, string> = { ai: "AI", iot: "IoT", cyber: "Cyber security" };
+
+/** The colour families a track can use (tokens.json): the three built-in tracks', then five for tracks added later. */
+export const TRACK_TONES = ["sunbird", "lagoon", "hibiscus", "leaf", "lilac", "clay", "sky", "slate"] as const;
+export type TrackTone = (typeof TRACK_TONES)[number];
+export interface TrackStyle { tone: TrackTone; icon: IconName }
+export const BUILTIN_TRACK_STYLES: Record<string, TrackStyle> = {
+  ai: { tone: "sunbird", icon: "ai" }, iot: { tone: "lagoon", icon: "iot" }, cyber: { tone: "hibiscus", icon: "cyber" },
+};
+const UNKNOWN_TRACK: TrackStyle = { tone: "slate", icon: "learn" };
+const TrackStyles = createContext<Record<string, TrackStyle>>(BUILTIN_TRACK_STYLES);
+/** Gives every track-aware component each track's colour and icon. Without it, only the built-in tracks are known. */
+export function TrackStylesProvider({ styles, children }: { styles: Record<string, TrackStyle>; children: ReactNode }) {
+  return <TrackStyles.Provider value={styles}>{children}</TrackStyles.Provider>;
+}
+/** Resolves a track id to its style; an unknown id gets a neutral slate colour and the "learn" icon. */
+export function useTrackStyles(): (track?: Track) => TrackStyle {
+  const styles = useContext(TrackStyles);
+  return (track) => (track ? styles[track] ?? BUILTIN_TRACK_STYLES[track] : undefined) ?? UNKNOWN_TRACK;
+}
+/** The classes that set a track's --tr, --tr-soft and --tr-ink (components.css). */
+export const trackClass = (style: TrackStyle) => `dr-tr dr-tr-${style.tone}`;
+const MIRROR: Partial<Record<IconName, true>> = { back: true, next: true, undo: true, redo: true };
 
 export interface IconProps {
   name: IconName;
@@ -16,7 +40,7 @@ export interface IconProps {
   label?: string;
   className?: string;
 }
-/** Darsi icon set: 24px grid, 2px round strokes, currentColor. `back`/`next` mirror in RTL. */
+/** Darsi icon set: 24px grid, 2px round strokes, currentColor. `back`/`next` and `undo`/`redo` mirror in RTL. */
 export function Icon({ name, size = 24, label, className }: IconProps) {
   return (
     <svg
@@ -73,10 +97,11 @@ export function Button({ variant = "primary", size = "md", block, icon, iconEnd,
 export interface TrackChipProps { track: Track; solid?: boolean; children?: ReactNode; }
 /** Track label — icon + word, never colour alone. */
 export function TrackChip({ track, solid, children }: TrackChipProps) {
+  const style = useTrackStyles()(track);
   return (
-    <span className={cx("dr-chip", `dr-chip-${track}`, solid && "dr-chip-solid")}>
-      <Icon name={track} size={18} />
-      <span>{children ?? TRACK_NAMES[track]}</span>
+    <span className={cx("dr-chip", trackClass(style), solid && "dr-chip-solid")}>
+      <Icon name={style.icon} size={18} />
+      <span>{children ?? TRACK_NAMES[track] ?? track}</span>
     </span>
   );
 }
@@ -85,8 +110,9 @@ export interface ProgressBarProps { value: number; label?: string; valueText?: s
 /** Fills from inline-start, so it runs right-to-left in RTL automatically. */
 export function ProgressBar({ value, label, valueText, ariaLabel, track = "kola", thick }: ProgressBarProps) {
   const v = Math.max(0, Math.min(100, value || 0));
+  const style = useTrackStyles()(track);
   return (
-    <div className={cx("dr-progress", `dr-progress-${track}`, thick && "dr-progress-thick")}>
+    <div className={cx("dr-progress", track !== "kola" && trackClass(style), thick && "dr-progress-thick")}>
       {label && <div className="dr-progress-head"><span>{label}</span><span>{valueText ?? `${v}%`}</span></div>}
       <div className="dr-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={v} aria-valuetext={valueText} aria-label={label ?? ariaLabel}>
         <div className="dr-progress-fill" style={{ inlineSize: `${v}%` }} />

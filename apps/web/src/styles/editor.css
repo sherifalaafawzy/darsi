@@ -1,0 +1,154 @@
+/* Course editor (platform and org admins; loads with the cms chunk). Forms reuse the design system's .dr-field styles. */
+
+/* The editor page leaves room for its sticky action bar. */
+.ed { padding-block-end: var(--space-8); }
+.ed-h4 { margin: 0; font: var(--text-heading); }
+/* Long option text (competency names) must never make a form wider than a phone. */
+.ed .dr-field-input { min-inline-size: 0; max-inline-size: 100%; }
+.ed .stack > *, .ed .stack-sm > *, .ed .stack-lg > * { min-inline-size: 0; }
+
+/* An English/Arabic pair of fields: side by side when there is room for both (the form column, not the screen, decides:
+   the outline takes part of wide screens), stacked otherwise. */
+.ed-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-3); min-inline-size: 0; }
+.ed-pair > .dr-field, .ed-pair > .stack, .ed-pair > .ed-upload { min-inline-size: 0; }
+.ed-lang { margin-inline-start: var(--space-2); padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--surface-sunk); color: var(--ink-muted); font: var(--text-caption); }
+.ed-json { font: 14px/20px ui-monospace, Menlo, Consolas, monospace; }
+.ed-grid4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+
+/* Repeating things (options, pairs, slides, kit files): small cards with move/remove tools. */
+.ed-items { display: grid; gap: var(--space-3); min-inline-size: 0; }
+.ed-item, .ed-lesson, .ed-track { display: grid; gap: var(--space-3); min-inline-size: 0; padding: var(--space-3); background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-md); }
+.ed-lesson, .ed-track { border-color: var(--line-strong); }
+.ed-lesson-body { padding-block-start: var(--space-2); border-block-start: 2px solid var(--line); }
+.ed-items > .dr-btn { justify-self: start; }
+.ed-item-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-inline-size: 0; }
+.ed-item-head > strong { min-inline-size: 0; overflow-wrap: anywhere; }
+.ed-tools { display: flex; flex: none; gap: var(--space-1); }
+
+/* Opens a lesson or a step: the whole title row is the button. */
+.ed-toggle { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-inline-size: 0; min-block-size: var(--tap-min);
+  padding: var(--space-1) var(--space-2); background: none; border: 0; border-radius: var(--radius-sm); color: var(--ink); font: var(--text-body); text-align: start; cursor: pointer; }
+.ed-toggle:hover { background: var(--surface-sunk); }
+.ed-toggle:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ed-toggle > span { min-inline-size: 0; overflow-wrap: anywhere; }
+.ed-badge { display: inline-flex; align-items: center; justify-content: center; min-inline-size: 24px; padding: 0 var(--space-1); border-radius: var(--radius-pill); background: var(--wrong); color: var(--ink-inverse); font: var(--text-label); }
+
+/* Draft / published / changes not published, with words, never colour alone. */
+.ed-status { display: inline-flex; align-items: center; padding: 2px var(--space-2); border-radius: var(--radius-pill); border: 2px solid var(--line-strong); background: var(--surface-sunk); color: var(--ink); font: var(--text-label); white-space: nowrap; }
+.ed-status.is-live { background: var(--correct-soft); border-color: var(--correct); }
+.ed-status.is-changed { background: var(--sunbird-soft); border-color: var(--sunbird-ink); }
+.ed-status.is-draft { background: var(--surface-sunk); }
+
+/* An uploaded file: label, current file, pick/replace, progress. */
+.ed-upload { display: grid; gap: var(--space-2); min-inline-size: 0; padding: var(--space-3); border: 2px dashed var(--line); border-radius: var(--radius-md); }
+.ed-file { overflow-wrap: anywhere; color: var(--ink); font-weight: 700; }
+.ed-progress { display: grid; gap: var(--space-2); }
+
+/* Checks: each issue opens the place it points at. */
+.ed-issues { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ed-issue { display: grid; gap: var(--space-1); inline-size: 100%; min-block-size: var(--tap-min); padding: var(--space-2) var(--space-3); background: var(--surface);
+  border: 2px solid var(--line); border-inline-start-width: 4px; border-radius: var(--radius-sm); color: var(--ink); font: var(--text-body); text-align: start; cursor: pointer; }
+.ed-issue.is-error { border-inline-start-color: var(--wrong); }
+.ed-issue.is-warning { border-inline-start-color: var(--sunbird-ink); }
+.ed-issue:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ed-where { color: var(--ink-muted); font: var(--text-label); overflow-wrap: anywhere; }
+.ed-where code { font: 13px/18px ui-monospace, Menlo, Consolas, monospace; }
+
+/* Save / publish, always in reach: above the floating bottom nav on phones, at the bottom of the screen on wide ones. */
+.ed-bar { position: sticky; inset-block-end: calc(var(--bottomnav-h) + env(safe-area-inset-bottom)); z-index: var(--z-banner);
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); box-sizing: border-box; max-inline-size: 1200px; margin-inline: auto;
+  padding: var(--space-3) var(--space-4); background: var(--surface); border-block-start: 2px solid var(--line-strong); }
+
+/* Unit list: filters, then one group per track (in the platform's order) of unit cards. */
+.ed-filters { display: grid; gap: var(--space-3); }
+.ed-filter { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.ed-filter > .dr-field-label { flex-basis: 100%; }
+.ed-chip { min-block-size: 40px; padding: var(--space-1) var(--space-3); background: var(--surface); border: 2px solid var(--line-strong); border-radius: var(--radius-pill); color: var(--ink); font: var(--text-label); cursor: pointer; }
+.ed-chip.is-on { background: var(--ink); border-color: var(--ink); color: var(--ink-inverse); }
+.ed-group { display: grid; gap: var(--space-3); }
+.ed-group-h { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0; font: var(--text-heading); }
+.ed-units { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.ed-unit { display: grid; gap: var(--space-2); min-inline-size: 0; padding: var(--space-4); background: var(--surface); border: 2px solid var(--line-strong); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+.ed-unit > p { margin: 0; }
+.ed-unit-title { min-inline-size: 0; color: var(--ink); font: var(--text-heading); overflow-wrap: anywhere; }
+.ed-unit-lessons { margin: 0; padding-inline-start: var(--space-6); font: var(--text-caption); color: var(--ink); }
+
+/* Track and level pickers: the track's own colour on its card; levels as one row of round buttons. */
+.ed-trackpick { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-2); }
+.ed-trackpick .dr-tr .dr-choice-icon { background: var(--tr-soft); color: var(--tr-ink); }
+.ed-trackpick .dr-tr .dr-choice.is-selected .dr-choice-icon { background: var(--tr); color: var(--ink); }
+.ed-seg { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.ed-seg-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-inline-size: var(--tap-min); min-block-size: var(--tap-min); padding: var(--space-1) var(--space-3);
+  background: var(--surface); border: 2px solid var(--line-strong); border-radius: var(--radius-pill); color: var(--ink); font: var(--text-body); cursor: pointer; }
+.ed-seg-btn.is-on { background: var(--kola); border-color: var(--ink); color: var(--on-kola); }
+
+/* Unit editor: the outline beside the form from 900px; on phones one at a time, the outline first. */
+.ed-split { display: grid; gap: var(--space-4); align-items: start; }
+.ed-split.is-detail .ed-outline, .ed-split.is-outline .ed-detail { display: none; }
+.ed-outline { display: grid; gap: var(--space-2); align-content: start; min-inline-size: 0; padding: var(--space-3); background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-lg); }
+.ed-outline > .dr-btn { justify-self: start; }
+.ed-outline-h { margin: var(--space-2) 0 0; color: var(--ink-muted); font: var(--text-label); }
+.ed-tree { display: grid; margin: 0; padding: 0; list-style: none; min-inline-size: 0; }
+.ed-tree > li { min-inline-size: 0; }
+.ed-tree-sub { margin-inline-start: var(--space-3); padding-inline-start: var(--space-2); border-inline-start: 2px solid var(--line); }
+.ed-node { display: flex; align-items: center; gap: var(--space-2); inline-size: 100%; min-inline-size: 0; min-block-size: var(--tap-min); padding: var(--space-1) var(--space-2); background: none;
+  border: 2px solid transparent; border-radius: var(--radius-sm); color: var(--ink); font: var(--text-body); text-align: start; cursor: pointer; }
+.ed-node > span:not(.ed-badge):not(.cap-code) { flex: 1 1 auto; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ed-node > .dr-icon { flex: none; }
+.ed-node:hover { background: var(--surface-sunk); }
+.ed-node.is-on { background: var(--kola-soft); border-color: var(--ink); }
+/* "+" between items: a thin row with a quiet plus (always shown: touch screens have no hover). */
+.ed-insert { display: flex; align-items: center; justify-content: center; inline-size: 100%; block-size: 24px; padding: 0; background: none; border: 0; border-radius: var(--radius-sm);
+  color: var(--ink-muted); font: var(--text-label); cursor: pointer; }
+.ed-insert:hover, .ed-insert:focus-visible { background: var(--surface-sunk); color: var(--ink); }
+.ed-node:focus-visible, .ed-insert:focus-visible, .ed-type:focus-visible, .ed-seg-btn:focus-visible, .ed-chip:focus-visible, .ed-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ed-detail { display: grid; gap: var(--space-3); min-inline-size: 0; }
+.ed-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-inline-size: 0; }
+.ed-crumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); min-inline-size: 0; margin: 0; padding: 0; list-style: none; }
+.ed-crumbs li { display: flex; align-items: center; gap: var(--space-1); min-inline-size: 0; color: var(--ink-muted); font: var(--text-label); }
+.ed-crumbs li > button { padding: var(--space-1); background: none; border: 0; border-radius: var(--radius-sm); color: var(--ink); font: var(--text-label); text-align: start; text-decoration: underline; overflow-wrap: anywhere; cursor: pointer; }
+.ed-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.ed-types { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-2); }
+.ed-type { display: grid; gap: var(--space-1); min-block-size: var(--tap-min); padding: var(--space-3); background: var(--surface); border: 2px solid var(--line-strong); border-radius: var(--radius-md);
+  color: var(--ink); font: var(--text-body); text-align: start; cursor: pointer; }
+.ed-type:hover { border-color: var(--ink); background: var(--surface-sunk); }
+.ed-type > span { color: var(--ink-muted); font: var(--text-caption); }
+.ed-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.ed-confirm > span { flex: 1 1 16rem; min-inline-size: 0; }
+.ed-link { padding: 0; background: none; border: 0; font: var(--text-label); text-align: start; text-decoration: underline; cursor: pointer; }
+
+/* Tracks page (/super/tracks): one card per track; colour swatches and icons are radio buttons. */
+.ed-tracks { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.ed-fieldset { display: grid; gap: var(--space-2); min-inline-size: 0; margin: 0; padding: 0; border: 0; }
+.ed-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-2); }
+.ed-swatch, .ed-icon { min-block-size: var(--tap-min); background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-md); color: var(--ink); cursor: pointer; }
+.ed-swatch { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-2); font: var(--text-body); text-align: start; }
+.ed-swatch-dot { display: grid; place-items: center; flex: none; inline-size: 28px; block-size: 28px; border-radius: 50%; border: 2px solid var(--ink); background: var(--tr); color: var(--ink); }
+.ed-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: var(--space-2); }
+.ed-icon { display: grid; place-items: center; padding: var(--space-1); }
+.ed-swatch.is-on, .ed-icon.is-on { border-color: var(--ink); background: var(--tr-soft); color: var(--tr-ink); }
+.ed-swatch:focus-visible, .ed-icon:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ed-stepper { display: flex; align-items: center; gap: var(--space-3); }
+.ed-stepper-n { min-inline-size: 3ch; font: var(--text-heading); text-align: center; }
+.ed-more { display: grid; gap: var(--space-3); }
+.ed-more > summary { padding-block: var(--space-2); color: var(--ink); font: var(--text-label); cursor: pointer; }
+.ed-bar > .notice { flex-basis: 100%; margin: 0; }
+.ed-bar > .notice ul { margin: var(--space-1) 0 0; padding-inline-start: var(--space-4); }
+
+/* Preview: the lesson as learners see it, over the editor. */
+.ed-preview { position: fixed; inset: 0; z-index: var(--z-sheet); overflow-y: auto; overscroll-behavior: contain; background: var(--paper); }
+.ed-preview-bar { position: sticky; inset-block-start: 0; z-index: var(--z-appbar); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2);
+  padding: var(--space-2) var(--space-4); background: var(--surface); border-block-end: 2px solid var(--line-strong); }
+.ed-preview-body { min-block-size: 100%; }
+
+@media (min-width: 600px) {
+  .ed-grid4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (min-width: 900px) {
+  .ed-bar { inset-block-end: 0; }
+  .ed-split { grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); }
+  .ed-split.is-detail .ed-outline, .ed-split.is-outline .ed-detail { display: grid; }
+  .ed-outline { position: sticky; inset-block-start: var(--space-3); max-block-size: calc(100vh - 120px); overflow-y: auto; }
+  .ed-crumbs .ed-to-outline { display: none; }
+}

@@ -1,17 +1,16 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Button, Icon, LessonCard, Mark, ProgressBar, QuizOption, TrackChip, QuestionHeader, StreakCounter } from "@darsi/design-system";
+import { Button, Icon, LessonCard, Mark, ProgressBar, QuizOption, TrackChip, QuestionHeader, StreakCounter, trackClass, useTrackStyles } from "@darsi/design-system";
 import { landing as C } from "./content";
 import { useStore } from "../state/store";
 import { useI18n } from "../i18n";
 import "../styles/landing.css";
-
-const TRACK_ICON = { ai: "ai", iot: "iot", cyber: "cyber" } as const;
 
 /** Public home page: what Darsi is, how it works, who it is for, standards, FAQ. */
 export function Landing() {
   const nav = useNavigate();
   const { lang, t } = useI18n();
   const { dispatch } = useStore();
+  const styleOf = useTrackStyles();
   const guest = () => { dispatch({ type: "set", patch: { guest: true } }); nav("/learn"); };
   const L = (x: { en: string; ar: string }) => x[lang as "en" | "ar"] ?? x.en;
   const otherLang = lang === "ar" ? "en" : "ar";
@@ -71,9 +70,9 @@ export function Landing() {
         <h2 id="tracks-h">{L(C.tracks.title)}</h2>
         <p className="lp-levels">{L(C.tracks.levels)}</p>
         <div className="lp-tracks">{C.tracks.items.map((tr) => (
-          <article key={tr.track} className={`lp-track lp-track-${tr.track}`}>
+          <article key={tr.track} className={`lp-track ${trackClass(styleOf(tr.track))}`}>
             <TrackChip track={tr.track} solid>{L(tr.title)}</TrackChip>
-            <ul>{tr.points.map((p, i) => <li key={i}><Icon name={TRACK_ICON[tr.track]} size={18} />{L(p)}</li>)}</ul>
+            <ul>{tr.points.map((p, i) => <li key={i}><Icon name={styleOf(tr.track).icon} size={18} />{L(p)}</li>)}</ul>
           </article>
         ))}</div>
         <p className="lp-note">{L(C.tracks.note)}</p>

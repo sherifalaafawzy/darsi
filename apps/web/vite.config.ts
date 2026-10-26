@@ -69,7 +69,7 @@ export default defineConfig({
         // Lesson content is tiny and precached; kits are cached when a unit is downloaded. Staff-only and first-visit
         // chunks (and exceljs, ~930 KB) are not precached, so a learner's install stays small; "darsi-chunks" caches them on first use.
         // firebase-* covers firebase-extra (Functions, Storage, Messaging) too.
-        globIgnores: ["kits/**", "push-sw.js", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin,firebase}-*.{js,css}",
+        globIgnores: ["kits/**", "push-sw.js", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin,firebase,Cms,competencies}-*.{js,css}",
           // Each lab app (~5–20 KB) is cached when first opened, or all at once with "Save all labs for offline".
           "**/lab-*.js"],
         navigateFallback: "/index.html",
@@ -85,6 +85,10 @@ export default defineConfig({
           { urlPattern: ({ url }) => url.pathname.startsWith("/content/"), handler: "StaleWhileRevalidate", options: { cacheName: "darsi-content" } },
           { urlPattern: ({ url }) => url.pathname.startsWith("/kits/"), handler: "CacheFirst", options: { cacheName: "darsi-kits", expiration: { maxEntries: 200 } } },
           { urlPattern: ({ url }) => url.pathname.startsWith("/media/"), handler: "CacheFirst", options: { cacheName: "darsi-media", rangeRequests: true, expiration: { maxEntries: 60 } } },
+          // Videos, captions and kits uploaded in the course editor (Cloud Storage): served from darsi-media once the unit is
+          // downloaded (platform cacheUrls). Streaming without a download is never stored: those responses are opaque
+          // (status 0), and only 200s are cached. Authored unit JSON is handled by content/load.ts, not here.
+          { urlPattern: ({ url }) => url.hostname === "firebasestorage.googleapis.com" && !url.pathname.endsWith(".json"), handler: "CacheFirst", options: { cacheName: "darsi-media", rangeRequests: true, cacheableResponse: { statuses: [200] }, expiration: { maxEntries: 60 } } },
         ],
       },
       devOptions: { enabled: false },

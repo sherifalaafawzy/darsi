@@ -21,11 +21,13 @@ Darsi is a serious upskilling PWA for school and university teachers (and their 
 - Commit to git only when the user asks.
 
 ## Status at handoff (2026-10-25)
-Done: the design system; the PWA MVP (lessons engine with all question types, AI lab, PDF/PPTX kits, offline downloads); Firebase config, rules and functions; auth screens and provider; the home page component (`src/landing`); admin data hooks; Excel/CSV importer logic; PersonDetail (capabilities, finished courses, project review, admin actions); AdminHome; AddPeople and ImportPeople (`src/admin/AddPeople.tsx`); SuperAdmin, Teach and OrgScreen; `App.tsx` routing; cloud sync; Kit and Me; the responsive layout and all screen CSS; `scripts/set-superadmin.mjs`; `docs/FIREBASE.md` (steps 1–5 below, parts of 7 and 8).
+Done: the design system; the PWA MVP (lessons engine with all question types, AI lab, PDF/PPTX kits, offline downloads); Firebase config, rules and functions; auth screens and provider; the home page component (`src/landing`); admin data hooks; Excel/CSV importer logic; PersonDetail (capabilities, finished courses, project review, admin actions); AdminHome; AddPeople and ImportPeople (`src/admin/AddPeople.tsx`); SuperAdmin, Teach and OrgScreen; `App.tsx` routing; cloud sync; Kit and Me; the responsive layout and all screen CSS; `scripts/set-superadmin.mjs`; `docs/FIREBASE.md` (steps 1–5 below, parts of 7 and 8); the course editor (step 11).
 
-`tsc` and `npm run build` pass. Unit tests: `tests/engine.test.ts`, `tests/screens.test.tsx` (staff screens with the data hooks and callables mocked), `tests/sync.test.tsx`. `npm run lint:css` checks every stylesheet against the brand and old-phone rules.
+`tsc` and `npm run build` pass. Unit tests: `tests/engine.test.ts`, `tests/screens.test.tsx` (staff screens with the data hooks and callables mocked), `tests/sync.test.tsx`, and for the course editor `tests/validate.test.ts`, `tests/content.test.ts`, `tests/cms.test.tsx`. `npm run lint:css` checks every stylesheet against the brand and old-phone rules.
 
 Build for low-resource phones (the user asked for it; see the brand book). No live listeners or polling; one-shot reads, and writes only on change. Keep the install small: staff screens, the landing page and exceljs are lazy chunks that `vite.config.ts` leaves out of the precache. Keep re-renders few. **Guests never load Firebase.** Startup code reaches it only through `src/fb.ts` (`loadFirebase()`, `call()`, `storedSession()`). Never statically import `firebase/*` or `./firebase` on the guest path; staff screens are lazy chunks and may. The e2e test "guests never download the Firebase SDK" guards this. The SDK is in named chunks (`firebase`, `firebase-extra`) kept out of the precache. The precache is ~640 KB and the main chunk ~133 KB gzipped. Fonts are not precached: each phone keeps only its language's fonts in `darsi-fonts` (`platform/fonts.ts`; Latin ~76 KB, plus Arabic ~131 KB for Arabic), and every `@font-face` has a `unicode-range`. The Firestore offline cache is capped at 10 MB. Project photos are shrunk on the phone to ≤1280 px JPEG before upload (`ProjectView.shrinkImage`).
+
+**Keep the startup bundle in one file.** A module shared between startup code and lazy chunks (`content/load.ts`, the lesson player, …) must not import the Firebase SDK, or anything that lazy-loads it, **not even with a dynamic `import()`**. If it does, Rolldown splits the startup bundle into several files (7 instead of 2 when measured). Pass such things in from App instead (`setOrgReader`, `<UnitEditor Player={LessonPlayer} />`). Never add a manual `codeSplitting` group for app code: groups capture their dependencies recursively (a `src/cms` group once moved React and the design system into the editor chunk and loaded it at startup). To check, build into a separate `--outDir` and confirm the entry chunk only imports `rolldown-runtime`. Other sessions build into `apps/web/dist`. Exception, accepted: since Labs, lab chunks import the design system and i18n, so startup is four small files (entry, `dist`, `preload-helper`, `rolldown-runtime`) with the same total size. Don't let it grow past that. TECHNICAL.md "Authored content" has the details.
 
 ### Next steps, in order
 1. Done: `src/admin/SuperAdmin.tsx` (/super), `src/admin/Teach.tsx` (/teach, /teach/:uid via `TeachPerson`), `src/org/OrgScreen.tsx` (/org). Pass names into `t()` through `isolate()` from `i18n` (the plain-text `<bdi>`).
@@ -67,12 +69,44 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - **Broadcasts:** from `/super`, in en and ar; the audience is everyone, an org or a role. Sent via FCM topics, logged in `broadcasts`.
     - **Never on the guest path:** messaging is in the lazy `firebase-extra` chunk. Every sign-out first unregisters this phone (`pushSignOut`). Me is outside the onboarding gate so Sign out is always reachable.
     - **Key:** the VAPID public key is in `apps/web/.env.local` as `VITE_FIREBASE_VAPID_KEY`, verified as a valid P-256 point. It's read at build time, so any machine that builds Hosting needs it.
-12. Done (2026-10-26; committed, not deployed): **Labs** replaces the AI lab. `/labs` is a catalogue of 48 apps on 13 shelves (AI, IoT, cyber), with "The AI ladder" (20 steps, neuron → LLMs → decision models). Everything computes on the phone. TECHNICAL.md "Labs" has the design and the full list.
+11. Done and deployed (2026-10-26): the course editor. Platform admins publish units for everyone, guests included (`/super/content`); org admins publish units for their own members (`/admin/content`). It edits every step type, slides, competencies and uploads (an MP4 and VTT per language, plus kit PDF/PPTX). TECHNICAL.md "Authored content" has the design.
+    - **Data:** drafts in `units/{id}` + `unitDrafts/{id}` (owner "public" or orgId; every save bumps `rev`). Only the functions (`functions/src/content.ts`: publishUnit, unpublishUnit, deleteUnit) write what learners read: versioned `…/units/{id}/v{n}.json` and `catalog.json` in Storage under `content/` or `orgs/{orgId}/`.
+    - **One validator** (`apps/web/src/content/validate.ts`) for the editor and the functions. `npm run build --prefix functions` copies it into `functions/src/shared/` (committed; a test fails if it drifts).
+    - **Client:** `content/load.ts` merges the built-in, public and org catalogs. Guests fetch public units with plain `fetch` (no SDK). Org units are read through the SDK reader that App registers with `setOrgReader`. Catalogs are network-first and unit files cache-first, in `darsi-content`. Signing out deletes cached org files.
+    - **Editor:** the lazy `Cms` chunk (`src/cms/`, entry `Cms.tsx`), not precached; its strings are `cms/strings/*.json`, registered with `addMessages`.
+    - **Verified 2026-10-26:**
+      - Against the emulators: 42/42 backend checks (scratch script).
+      - In the browser on the emulators:
+        - A platform admin created and published a unit in the Arabic UI.
+        - A guest saw it on Home, played the lesson and downloaded it.
+        - The guest never loaded the Firebase SDK.
+      - `npm test` (web 111, design system 19), functions 68, `tsc`, `lint:css`, and the e2e suite (22/22, against a private build).
+      - Startup JS is still 2 files: ~138 KB gzipped, against ~136 KB before.
+    - **Live** since 2026-10-26; see "Firebase project" below. Not yet done live: publishing a unit. That needs a platform-admin sign-in, so it's the user's check (docs/FIREBASE.md §7 "Check it works").
+12. Done and deployed (2026-10-26; commit deb9250): **Labs** replaces the AI lab. `/labs` is a catalogue of 48 apps on 13 shelves (AI, IoT, cyber), with "The AI ladder" (20 steps, neuron → LLMs → decision models). Everything computes on the phone. TECHNICAL.md "Labs" has the design and the full list.
     - **Add an app** by adding a folder `apps/web/src/labs/apps/<id>/` with `meta.ts`, `index.tsx` (en/ar strings via `useS`) and a pure `model.ts`, plus model tests in `tests/labs/`. No shared file changes; `tests/labs/catalog.test.ts` checks the meta.
     - **Use the kit** (`labs/kit/`): `LabShell`, controls, `Plot`, `PixelGrid`, `Formula`, `useLoop`, `nn`, `vectors`, `plural`. Pace anything people watch by time, not frames. Loops start only on Run and stop by themselves.
     - **Bidi:** every number and operator in a maths line gets its own `<bdi>` (`Formula`); Latin-only strings such as phone numbers need `dir="ltr"`; counted Arabic words use `usePlural`.
     - **Lessons:** a `lab` step's `tool` is any app id; `/lab` redirects to `/labs`.
     - **Checked:** `tests/labs` (96 with notify), `lint:css`, Labs type-check, the full e2e suite (26/26 against a private build, with `CHROMIUM_PATH` set to the installed 1243 build), and every app in the browser in Arabic at 375 px.
+13. Stage 1 done and deployed (2026-10-26, with the user's go-ahead; committed together with the course editor): **tracks, levels and easier lesson editing.** The user asked for friendlier editing of lessons, and for adding tracks and levels. TECHNICAL.md "Tracks and levels" and "Authored content" have the design.
+    - **Tracks:** platform admins manage them at `/super/tracks` (linked from the lesson editor): name and description per language, icon, one of 8 brand colours, 1–12 levels with optional names, order, hidden.
+      - Built-ins `ai`, `iot` and `cyber` can't be removed or recoloured.
+      - Saved by the `saveSettings` callable to `config/settings`, and published as `content/settings.json` for phones.
+      - It refuses changes that would strand a unit.
+      - In the app: `useTracks()` (`content/settings.tsx`); never hard-code track ids or 4 levels again.
+    - **Design system:** 5 new track colour families (leaf, lilac, clay, sky, slate; contrast-checked), tone classes `dr-tr dr-tr-<tone>`, `TrackStylesProvider`, and 10 new icons (8 subjects, plus undo and redo).
+    - **Editor:**
+      - The list is grouped by track, with filters, search and lesson titles; units can be duplicated and deleted from it.
+      - The unit editor has an outline beside the form (drill-down with a breadcrumb on phones), "+" to insert lessons and steps anywhere, and a step-type chooser.
+      - Lessons and steps can be duplicated; a lesson can be copied to another unit.
+      - Undo and redo cover the last 50 changes (Ctrl+Z / Ctrl+Y). Confirmations are inline, with no browser dialogs.
+      - Track cards and level buttons replace the selects.
+    - **Also fixed:** placement can now reach a track's top level (it never reached level 4).
+    - **Checked:** web 203 tests, design system 24, functions 81, `tsc`, `lint:css`, contrast (148 pairs), e2e 26/26 against a private build, 24/24 tracks checks against the emulators (plus the earlier 42; one needs an empty emulator), and the browser on the emulators.
+      - The browser walk-through, in Arabic at 1024 px and English at 375 px: added "Data science" (6 levels) on the Tracks page, put a level-5 unit in it and published it. Onboarding offered the track, and Home and Me showed it in its colour.
+    - **Startup:** 4 files since Labs (`dist` = `@capacitor/core`, and `preload-helper`), against 2 before. Builds without Labs stay at 2, so the split came with Labs, not this work. It's the accepted exception in the startup note above: don't let it grow.
+    - **Next, stage 2 (languages),** after the user has tried stage 1 on the emulators: a Languages page (translate the ~460 UI strings, import and export spreadsheets), `publishLanguage`, language packs loaded at run time, editor fields for any language, and the fallbacks. The plan is the second section of `C:\Users\Sherif Alaa Fawzy\.claude\plans\velvet-mapping-key.md`.
 9. Not started: the security review. The user asked for static scanning of the rules, functions and client, plus a pentest of the deployed URL with `H:\htdocs\pentest-lab` (allowlist-gated; add only darsi-f0685 hosts). It is deferred until the code is finished.
 
 ### Firebase project (live): darsi-f0685
@@ -90,12 +124,36 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
   - Checked live: anonymous reads and writes of `broadcasts`, `pushTokens` and `users/*/devices` return 403, and the push callables return 401.
   - Smoke-tested as a guest: the update toast works, Me shows Notifications with no Firebase download, and /signin loads the SDK.
   - Not yet verified: a real notification on a real phone.
+- Deployed 2026-10-26 (course editor, uncommitted at the time, from a frozen snapshot of the tree that held no Labs edits): Firestore rules and indexes, Storage rules, **all 21 Cloud Functions** (`publishUnit`, `unpublishUnit` and `deleteUnit` are new) and Hosting (`index-COk9WegP.js`). The tree also held the per-language fonts work, which shipped too.
+  - Bucket CORS applied with `firebase/storage.cors.json` (there was none before). `firebasestorage.googleapis.com` itself answers `Access-Control-Allow-Origin: *`.
+  - The `units (owner, updatedAt)` index, which the editor's list needs, is READY.
+  - Checked live without an account:
+    - `content/catalog.json` is 404 until something is published; org files and every Storage upload return 403.
+    - `units` and `unitDrafts` return 403.
+    - The three editor callables return UNAUTHENTICATED.
+  - Checked in a browser as a guest:
+    - The update toast delivered the new version.
+    - The app asked Storage for the public catalog (a readable 404), downloaded no Firebase chunk, and fell back to the built-in units.
+    - `/super/content` and `/admin/content` redirect to `/learn` without loading the editor chunk.
+- Deployed 2026-10-26 (Labs, commit deb9250, plus stage 1 of tracks and levels, uncommitted, from a frozen snapshot of the whole tree): Firestore rules and indexes, Storage rules (unchanged, skipped), **all 22 Cloud Functions** (`saveSettings` is new) and Hosting (`index-C4p8Jwrh.js`).
+  - The snapshot passed `tsc`, web 203, design system 24, functions 81, `lint:css`, contrast (148 pairs) and e2e 26/26 against its own build. Startup: 4 files, 152 KB gzipped.
+  - Checked live without an account:
+    - `saveSettings`, `publishUnit` and `deleteUnit` return UNAUTHENTICATED.
+    - `config/settings`, `units` and `unitDrafts` return 403, as does writing `config/settings`. Uploading `content/settings.json` returns 403.
+    - `content/settings.json` is a readable 404 until a platform admin first saves on `/super/tracks`; the app uses the built-in tracks until then.
+    - `content/catalog.json` exists and is empty (`{"version":1,"units":[]}`, last written 09:17 UTC), so a unit was published and unpublished live.
+  - Checked in a browser as a guest:
+    - The update toast delivered the new version, and the nav says Labs.
+    - No Firebase chunk downloaded; `settings.json` and the catalogs were read with plain requests.
+    - The Labs catalogue lists every shelf with "Save all labs for offline (0.3 MB)", and the playground trained and stopped by itself.
+    - `/lab` redirects to `/labs`; `/super/tracks` redirects to `/learn` without loading the editor chunk.
+  - Not yet checked live: the Tracks page and the new editor, which need a platform-admin sign-in.
 - **Storage**: the app uses the bucket **`darsi-f0685` in europe-west1**, set by `VITE_FIREBASE_STORAGE_BUCKET` in `.env.local`. It is deploy target `main` with `firebase/storage.rules`.
   - The original default bucket `darsi-f0685.firebasestorage.app` (us-west1, never used) was deleted on 2026-10-25 and now returns 404 `NoSuchBucket`. Keep the `main` target: without one, `firebase deploy --only storage` aims at the project's default bucket, which no longer exists.
   - Checked live on 2026-10-25: media/kits are public, and submissions return 403 to anonymous requests.
   - The live site was redeployed with the EU bucket compiled in.
 - Next for the user: sign up on the live site, then `npm run superadmin -- <email>` with a service-account key (docs/FIREBASE.md §4).
-- The emulators need JDK 21: firebase-tools 15.33 refuses this machine's JDK 17. `functions/` has its own lockfile: `npm ci --prefix functions && npm run build --prefix functions`.
+- The emulators need JDK 21: firebase-tools 15.33 refuses this machine's JDK 17. On this machine Java's loopback pipe also fails in a temp path with spaces, so set `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:\Users\Public` (docs/FIREBASE.md "Local development with the emulators"). `functions/` has its own lockfile: `npm ci --prefix functions && npm run build --prefix functions`.
 - Git: the repo is github.com/sherifalaafawzy/darsi. Commit with the repo-local personal identity (Sherif Alaa Fawzy <sherifalaafawzy@gmail.com>), never the global work identity.
 
 ### Known issues (not fixed yet)

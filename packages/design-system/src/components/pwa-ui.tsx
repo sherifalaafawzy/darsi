@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Button, Icon, Mark, ProgressBar, cx, type Track } from "./primitives";
+import { Button, Icon, Mark, ProgressBar, cx, trackClass, useTrackStyles, type Track } from "./primitives";
 
 export interface ConnectionStatusProps { state: "offline" | "syncing" | "synced"; children: ReactNode; action?: ReactNode; floating?: boolean; }
 /** Tells the truth about the network. Offline is calm, not an error. */
@@ -45,12 +45,13 @@ export interface DownloadRowProps {
 }
 /** A downloadable unit — always show the size before downloading. */
 export function DownloadRow({ track = "ai", title, meta, state = "idle", progress = 0, onDownload, onCancel, downloadLabel = "Download", cancelLabel = "Cancel", doneLabel = "Saved", retryLabel = "Retry", errorText = "Download stopped — check your connection" }: DownloadRowProps) {
+  const style = useTrackStyles()(track);
   const right = state === "done" ? <span className="dr-dl-done"><Icon name="check" size={20} />{doneLabel}</span>
     : state === "downloading" ? <Button size="sm" variant="ghost" onClick={onCancel}>{cancelLabel}</Button>
     : <Button size="sm" variant="secondary" icon={state === "error" ? "sync" : "offline"} onClick={onDownload}>{state === "error" ? retryLabel : downloadLabel}</Button>;
   return (
     <div className={cx("dr-dl", `is-${state}`)}>
-      <span className={cx("dr-dl-icon", `dr-chip-${track}`)}><Icon name={track} /></span>
+      <span className={cx("dr-dl-icon", trackClass(style))}><Icon name={style.icon} /></span>
       <div className="dr-dl-main">
         <strong>{title}</strong>
         <span className="dr-dl-meta">{state === "error" ? errorText : meta}</span>

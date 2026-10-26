@@ -58,7 +58,9 @@ export async function share(data: { title: string; text?: string; url?: string }
 
 /** Store a list of URLs for offline use. Works in browsers and in the native WebView (Cache Storage). */
 /** Cache names must match the service worker's runtime caches (vite.config.ts) so offline requests are served. */
-export const cacheNameFor = (url: string) => (url.startsWith("/kits/") ? "darsi-kits" : url.startsWith("/content/") ? "darsi-content" : "darsi-media");
+export const cacheNameFor = (url: string) => (url.startsWith("/kits/") ? "darsi-kits" : url.startsWith("/content/") || isStorageJson(url) ? "darsi-content" : "darsi-media");
+/** Authored unit JSON in Cloud Storage (content/load.ts keeps it in darsi-content); uploaded videos and kits go to darsi-media. */
+const isStorageJson = (url: string) => /\/v0\/b\/[^/]+\/o\/[^?]+\.json(\?|$)/.test(url);
 
 export async function cacheUrls(urls: string[], onProgress?: (done: number, total: number) => void, signal?: AbortSignal): Promise<void> {
   let done = 0;
@@ -71,7 +73,8 @@ export async function cacheUrls(urls: string[], onProgress?: (done: number, tota
   }
 }
 export async function removeCached(urls: string[]) {
-  await Promise.all(urls.filter((u) => !u.startsWith("/content/")).map(async (u) => (await caches.open(cacheNameFor(u))).delete(u)));
+  // Lesson JSON stays (it is tiny and lists the unit); kits and media go.
+  await Promise.all(urls.filter((u) => cacheNameFor(u) !== "darsi-content").map(async (u) => (await caches.open(cacheNameFor(u))).delete(u)));
 }
 
 /** Rough connection type for the Data saver rule. */

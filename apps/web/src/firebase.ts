@@ -45,3 +45,9 @@ export const call = <Req, Res>(name: string) => async (data: Req): Promise<Res> 
   const [{ httpsCallable }, f] = await Promise.all([import("firebase/functions"), functions()]);
   return (await httpsCallable<Req, Res>(f, name)(data)).data;
 };
+
+/** A JSON file from Storage, read with the member's credentials (org-only course content: content/load.ts). */
+export async function storageJSON(path: string): Promise<unknown> {
+  const [{ getBytes, ref }, s] = await Promise.all([import("firebase/storage"), storage()]);
+  return JSON.parse(new TextDecoder().decode(await getBytes(ref(s, path))));
+}

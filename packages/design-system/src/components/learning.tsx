@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import { Button, Icon, Mark, ProgressBar, TrackChip, cx, type Track } from "./primitives";
+import { Button, Icon, Mark, ProgressBar, TrackChip, cx, trackClass, useTrackStyles, type Track } from "./primitives";
 
 export interface LessonCardProps { track: Track; title: string; meta?: string; progress?: number; offline?: boolean; offlineLabel?: string; trackLabel?: string; action?: ReactNode; }
 export function LessonCard({ track, title, meta, progress, offline, offlineLabel = "Offline ready", trackLabel, action }: LessonCardProps) {
   return (
-    <article className={cx("dr-card", `dr-card-${track}`)}>
+    <article className="dr-card">
       <div className="dr-card-top">
         <TrackChip track={track}>{trackLabel}</TrackChip>
         {offline && <span className="dr-card-offline"><Icon name="offline" size={18} />{offlineLabel}</span>}
@@ -46,11 +46,12 @@ export interface UnitPathProps { nodes: PathNode[]; track?: Track | "kola"; labe
 const OFFSETS = [0, 1, 2, 1, 0, -1, -2, -1];
 /** Winding lesson map; the zigzag uses logical offsets so it mirrors in RTL. */
 export function UnitPath({ nodes, track = "kola", label }: UnitPathProps) {
+  const style = useTrackStyles()(track);
   return (
-    <ol className={cx("dr-path", `dr-path-${track}`)} aria-label={label}>
+    <ol className={cx("dr-path", track !== "kola" && trackClass(style))} aria-label={label}>
       {nodes.map((n, i) => {
         const state = n.state ?? "locked";
-        let icon: Parameters<typeof Icon>[0]["name"] = state === "done" ? "check" : state === "locked" ? "lock" : n.checkpoint ? "award" : track !== "kola" ? track : "next";
+        let icon: Parameters<typeof Icon>[0]["name"] = state === "done" ? "check" : state === "locked" ? "lock" : n.checkpoint ? "award" : track !== "kola" ? style.icon : "next";
         if (state === "locked" && !n.checkpoint) icon = "lock";
         return (
           <li key={i} className={cx("dr-path-step", `is-${state}`, n.checkpoint && "is-checkpoint")} style={{ ["--dr-off" as string]: OFFSETS[i % OFFSETS.length] }}>
@@ -69,13 +70,14 @@ export function UnitPath({ nodes, track = "kola", label }: UnitPathProps) {
 export interface Stat { label: string; value: string; tone?: Track | "kola"; }
 export interface LessonCompleteProps { title: string; subtitle?: string; stats?: Stat[]; tryTomorrow?: string; tryLabel?: string; actions?: ReactNode; }
 export function LessonComplete({ title, subtitle, stats = [], tryTomorrow, tryLabel = "Try it in class tomorrow", actions }: LessonCompleteProps) {
+  const styleOf = useTrackStyles();
   return (
     <section className="dr-complete">
       <div className="dr-complete-burst" aria-hidden><Mark size={72} /></div>
       <h2 className="dr-complete-title">{title}</h2>
       {subtitle && <p className="dr-complete-sub">{subtitle}</p>}
       <dl className="dr-complete-stats">
-        {stats.map((s, i) => <div key={i} className={`dr-stat dr-stat-${s.tone ?? "kola"}`}><dt>{s.label}</dt><dd>{s.value}</dd></div>)}
+        {stats.map((s, i) => <div key={i} className={cx("dr-stat", !s.tone || s.tone === "kola" ? "dr-stat-kola" : trackClass(styleOf(s.tone)))}><dt>{s.label}</dt><dd>{s.value}</dd></div>)}
       </dl>
       {tryTomorrow && <div className="dr-complete-try"><strong>{tryLabel}</strong><p>{tryTomorrow}</p></div>}
       <div className="dr-complete-actions">{actions}</div>
@@ -85,8 +87,9 @@ export function LessonComplete({ title, subtitle, stats = [], tryTomorrow, tryLa
 
 export interface CertificateCardProps { track: Track; name: string; title: string; date: string; code: string; kicker?: string; trackLabel?: string; action?: ReactNode; }
 export function CertificateCard({ track, name, title, date, code, kicker = "Certificate of completion", trackLabel, action }: CertificateCardProps) {
+  const style = useTrackStyles()(track);
   return (
-    <article className={cx("dr-cert", `dr-cert-${track}`)}>
+    <article className={cx("dr-cert", trackClass(style))}>
       <div className="dr-cert-band" aria-hidden />
       <div className="dr-cert-body">
         <div className="dr-cert-top"><Mark size={36} /><TrackChip track={track} solid>{trackLabel}</TrackChip></div>

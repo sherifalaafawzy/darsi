@@ -62,10 +62,11 @@ darsi/
 │  │  ├─ labs/                   Labs: catalogue, loader, kit (shared lab parts) and apps/<id>/ (one folder per lab)
 │  │  ├─ lesson/                 lesson engine, step views, project submission, read-aloud
 │  │  ├─ admin/                  org dashboard, people, import, person page, teacher and platform admin
+│  │  ├─ cms/                    course editor (lazy "Cms" chunk): unit list, editor, step forms, uploads, its own strings
 │  │  ├─ notify/                 push notifications: push.ts (token, permission, register) and the panel in Me
 │  │  ├─ org/                    join or register an organization
 │  │  ├─ landing/                public home page
-│  │  ├─ content/                content types, loader, competency frameworks
+│  │  ├─ content/                content types, loader (built-in + published units), validator, competency frameworks
 │  │  ├─ i18n/                   UI strings (en.json, ar.json) and the provider
 │  │  ├─ styles/                 one stylesheet per screen area (see Design system and CSS)
 │  │  └─ platform/               the only web/native-aware code: storage, file save, share
@@ -106,8 +107,9 @@ Run from the repository root. Node 22 is recommended and npm 11 is expected (`np
 AuthProvider            Firebase user + custom claims {role, orgId}; claims are read before the user is published
 └─ StoreProvider        local state, keyed by uid (or "guest"); switching accounts remounts everything below
    └─ I18nProvider      language from the store
-      └─ BrowserRouter
-         └─ Routed      routes, guards, useCloudSync(uid)
+      └─ SettingsProvider   the tracks platform admins set up (built-ins first, then content/settings.json)
+         └─ BrowserRouter
+            └─ Routed   routes, guards, useCloudSync(uid)
 ```
 
 - **Firebase loads only when needed.** At startup, `storedSession()` (`fb.ts`) reads Firebase Auth's own persisted session from IndexedDB (or localStorage) without the SDK:
@@ -132,6 +134,9 @@ AuthProvider            Firebase user + custom claims {role, orgId}; claims are 
 | `/admin`, `/admin/people/:uid`, `/admin/add`, `/admin/import` | `orgAdmin` | Organization dashboard, person page, add people, Excel/CSV import |
 | `/teach`, `/teach/:uid` | `teacher`, `orgAdmin` | The teacher's assigned students |
 | `/super` | `superadmin` | Send announcements; approve or reject organization requests |
+| `/super/content`, `/super/content/:unitId` | `superadmin` | Course editor: units published for everyone (see [Authored content](#authored-content)) |
+| `/admin/content`, `/admin/content/:unitId` | `orgAdmin` | Course editor: units published for this organization's members only |
+| `/super/tracks` | `superadmin` | Tracks and levels for every unit (see [Tracks and levels](#tracks-and-levels)) |
 
 Roles are `learner` (independent), `student`, `teacher`, `orgAdmin` and `superadmin`. They live in **Auth custom claims**, which only Cloud Functions set, and are mirrored to `users/{uid}` for the UI. When `users/{uid}` changes role or organization, AuthProvider refreshes the token so the security rules see the new claims.
 
@@ -155,6 +160,8 @@ The service worker (Workbox `generateSW`) installs when a person enters the app.
 | `/content/*` | Stale-while-revalidate (`darsi-content`) |
 | `/kits/*` | Cache-first (`darsi-kits`), filled per unit when the teacher taps Download |
 | `/media/*` | Cache-first with range requests (`darsi-media`) |
+| Authored units (Cloud Storage `…/catalog.json`, `…/units/{id}/v{n}.json`) | Kept by `content/load.ts` itself in `darsi-content`, not by a service-worker rule: catalogs network-first with the last copy as the offline fallback; unit files cache-first (a version's path never changes). See [Authored content](#authored-content) |
+| Uploaded media (Cloud Storage videos, captions, kit files) | Cache-first with range requests (`darsi-media`) once a unit is downloaded; only `200` responses are kept, so streaming without a download (opaque responses) is never stored |
 | Firestore data | The SDK's persistent IndexedDB cache, capped at **10 MB** (the default is 40 MB) |
 
 - **Updates** use prompt mode: a "Reload" toast appears on app screens, never in the middle of a lesson.
@@ -251,6 +258,11 @@ pushTokens/{deviceId}       uid (the account the token belongs to now), at   ←
 orgs/{orgId}                name, type, country, city, size, contact, reason, status (pending | active | rejected),
                             createdBy, inviteCodes {teacher, student}, memberCount, reviewNote, createdAt, reviewedAt
 inviteCodes/{code}          orgId, role                      ← Cloud Functions only
+units/{unitId}              owner ("public" | orgId), title {en, ar}, track, level, lessonCount, lessons [{id, title}],
+                            rev (int, +1 per save), updatedAt, updatedBy,
+                            published {version, rev, at, by, entry (its catalog.json entry)} | null   ← published: functions only
+unitDrafts/{unitId}         owner, rev, unit (the whole draft Unit, ≤ 600 KB)   ← the course editor; lists never read it
+config/settings             tracks [TrackDef], rev, updatedAt, updatedBy   ← saveSettings only; platform admins read
 broadcasts/{id}             title {en, ar}, body {en, ar}, link, audience {type: all | org | role, orgId?, role?},
                             sentBy, sentAt, results {en, ar} (FCM message id, or null on error)   ← sendBroadcast; platform admins read
 audit/{id}                  action, by, …, at                ← Cloud Functions write; platform admins read
@@ -275,10 +287,18 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 - **`orgs`:** readable by members, the requester and platform admins. Created only through `requestOrg`.
 - **`broadcasts`:** readable by platform admins; written only by `sendBroadcast`.
 - **`inviteCodes`:** no client access at all.
+- **`units` and `unitDrafts`** (course editor): `canEdit(owner)` is a platform admin, or that organization's admin for an org `owner`.
+  - *Create:* `idFits`: org units need a generated id (`u` + 8 characters, `[a-z0-9]`), so they can never shadow a built-in or public unit; `rev` starts at 1 and `published` must be null.
+  - *Update:* `nextRev`: every save sets `rev` to exactly the stored `rev + 1`, so a second editor with a stale copy is refused instead of silently overwriting; `owner` and `published` can't change.
+  - *Delete:* only while unpublished; `deleteUnit` handles published units.
+  - Students and teachers never read drafts; learners get published units from Storage.
+- **`config/{doc}`** (platform settings): platform admins read; nobody writes from a client (`saveSettings` does). Everyone else reads the published copy, `content/settings.json`.
 
 **Storage** (`firebase/storage.rules` on `darsi-f0685`):
 - `media/` and `kits/` are publicly readable and never writable from the client.
 - `submissions/{orgId|none}/{uid}/{file}` is created only by its owner: under 10 MB, images, PDF, mp4 or audio. It can be read by the owner, a platform admin, or that organization's admins and teachers.
+- `content/**` (public authored units) is readable by anyone, guests included. `orgs/{orgId}/**` is readable only by that organization's members and platform admins.
+- Media uploads go to `content/media/{unitId}/` (platform admins) and `orgs/{orgId}/media/{unitId}/` (that org's admins, platform admins): MP4 ≤ 60 MB, VTT ≤ 512 KB, PDF or PPTX ≤ 20 MB. No client ever writes the unit JSON or `catalog.json`; the functions do.
 
 ### Cloud Functions (europe-west1)
 
@@ -302,12 +322,16 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 | `onSubmissionUpdated` | Firestore trigger | A review moved a submission to `approved` or `revise`: the person who submitted it is told |
 | `onUserTopicsChanged` | Firestore trigger | Role, organization or language changed: re-subscribes every device's topics |
 | `dailyNudges` | scheduled, hourly (Cloud Scheduler) | Sends at most one learning reminder per person per local day, at the hour they chose (see [Push notifications](#push-notifications)) |
+| `publishUnit` | callable | Course editor: validates the saved draft (the same validator as the editor, with the saved tracks and their levels), writes `…/units/{id}/v{n+1}.json`, rebuilds that owner's `catalog.json` in the saved track order, keeps the previous version and deletes older ones |
+| `unpublishUnit` | callable | Takes a unit away from learners: catalog entry and JSON versions go, uploaded media stay |
+| `deleteUnit` | callable | Deletes a unit everywhere: catalog entry, JSON versions, media and both Firestore documents. Media that another draft of the same owner links to (a duplicated unit or a copied lesson) stay |
+| `saveSettings` | callable | Platform admin only: saves the tracks list (see [Tracks and levels](#tracks-and-levels)) to `config/settings` and publishes `content/settings.json` |
 
 Every role or organization change goes through these functions, which set the claims and write an `audit` entry. Clients can never grant themselves access. `functions/src/admin.ts` initializes the Admin SDK once and sets the region and instance cap for every function.
 
 ## Content, lessons and kits
 
-- **Content is data.** Units are JSON in `apps/web/public/content/units/`, listed in `catalog.json` and typed by `src/content/types.ts`. Every learner-facing string is `{ "en": …, "ar": … }`, with English as the fallback. Today `ai-1` is live; `iot-1` and `cyber-1` are marked "coming soon".
+- **Content is data.** Units are JSON in `apps/web/public/content/units/`, listed in `catalog.json` and typed by `src/content/types.ts`. Every learner-facing string is `{ "en": …, "ar": … }`, with English as the fallback. Today `ai-1` is live; `iot-1` and `cyber-1` are marked "coming soon". Units made in the course editor are published to Cloud Storage and merged into the same catalog (see [Authored content](#authored-content)).
 - **Lesson shape:** video (with a checkpoint question) → reading with key terms → mixed questions (some lessons add a `lab` step that embeds any Labs app) → classroom project → reflection → "Try it in class tomorrow".
 - **Step types:** `video`, `read`, `choice`, `multi`, `truefalse`, `image`, `match`, `order`, `fill`, `type`, `hotspot`, `scenario`, `lab`, `project`, `reflect`.
 - **Engine** (`src/lesson/engine.ts`): pure, unit-tested grading. Answers that ignore case and Arabic diacritics are accepted. A wrong answer comes back once at the end of the lesson. XP is `10 + round(accuracy × 20)`.
@@ -338,6 +362,106 @@ Labs (`/labs`) is a catalogue of 48 hands-on apps on 13 shelves across the three
 - **Bundle:** each app is its own chunk `lab-<id>-[hash].js`, kept out of the precache (see [Offline and caching](#offline-and-caching)). App styles are in `styles/lab-kit.css`, imported by `LabShell`, so they load with the first lab; `styles/labs.css` holds only the catalogue. Lab chunks import the design system and i18n, which splits the startup bundle into four small files (entry, `dist`, `preload-helper`, `rolldown-runtime`); the total size is unchanged, and this was accepted.
 - **Right to left:** charts, grids, circuits and maths stay left to right, like a textbook. Arabic-Indic digits separated by spaces or operators reorder inside a left-to-right line, so every number and operator gets its own `<bdi>` (use `Formula`). An isolate with no letters (a phone number) falls back to right to left: give Latin-only strings `dir="ltr"`. Counted Arabic words use `usePlural` (one, two, 3–10, 11–99, 100+).
 - **Content rules:** made-up people, schools and companies only; links use the reserved `.example` domain; nothing typed into a lab leaves the phone.
+
+## Authored content
+
+The course editor lets **platform admins publish units for everyone** (guests included) and **org admins publish units for their own organization's members**. It edits full units: every step type, slides, competencies and uploaded media (an MP4 and VTT captions per language, plus kit PDF/PPTX files). Built-in units stay in `public/content/` and still work offline on first launch.
+
+**Flow.** Drafts live in Firestore (`units/{id}` holds the light record lists read; `unitDrafts/{id}` holds the content), saved explicitly with "Save draft" (no autosave timer). "Publish" saves, then calls `publishUnit`. Only the functions write what learners read.
+
+**Ids.**
+- New units: `u` + 8 random characters (`[a-z0-9]`). Org units must use this form (`idFits` in the rules, `idAllowed` in `functions/src/catalog.ts`).
+- A platform admin may import a unit JSON that keeps a built-in id, such as `ai-1.json`. Once published, that copy **replaces the built-in unit** for learners; the bundled copy stays as the offline fallback.
+- Lesson ids are `<unitId>-` + 4 random characters and are never reused. Progress, notes and kit anchors are keyed by lesson id, so deleting a lesson and adding another can't hand someone's old progress to the new one.
+- Step ids (`choice1`, `video2`, …) only need to be unique within a lesson.
+
+**Validation** (`apps/web/src/content/validate.ts`): pure, dependency-free, and takes `unknown`, so pasted JSON can't crash it.
+- **Errors** block publishing. They are everything that would crash a lesson or leave it stuck: an answer missing from the options, fill-in blanks that aren't numbered 0…n-1 or whose answers aren't each once in the word bank, hotspots outside the stage, unsafe media links (only `https:`, `/media/` and `/kits/`), duplicate ids, a lesson over 300 KB or a unit over 600 KB.
+- **Warnings** don't block: missing Arabic, unknown competency codes, no slides.
+- **Track and level:** with the `tracks` option (track id → number of levels), the track must be one platform admins set up and the level must be one it has. Without it, any well-formed id (`[a-z][a-z0-9-]{1,23}`) and levels 1–12 pass. The editor and `publishUnit` both pass the saved tracks.
+- `functions/scripts/copy-shared.mjs` (npm `prebuild` in `functions/`) copies `validate.ts`, `types.ts` and `tracks.ts` into `functions/src/shared/`. The copies are committed, and a functions test fails if they drift from the web source.
+
+**Storage layout** (`functions/src/catalog.ts`, pure and unit-tested):
+
+```
+content/settings.json                  the tracks: { version, tracks: TrackDef[] }, max-age=60 (saveSettings)
+content/catalog.json                   public units: { version, units: CatalogEntry[] }, max-age=60
+content/units/{id}/v{n}.json           one file per published version, immutable (the current and previous version are kept)
+content/media/{id}/…                   uploaded videos, captions and kit files
+orgs/{orgId}/catalog.json              the same for one organization, readable by its members only
+orgs/{orgId}/units/{id}/v{n}.json
+orgs/{orgId}/media/{id}/…
+```
+
+Each catalog entry carries `src` (the JSON's Storage path), `version`, `owner` and `sizeMB` (the JSON plus one language's videos). Media links in a lesson are Storage download URLs, so `<video src>` plays without headers. For org media they are bearer links: anyone given the link can open the file. Uploaded files get a unique suffix, so replacing a file never breaks the link inside an already-published version.
+
+**Loading** (`apps/web/src/content/load.ts`):
+- `loadCatalog()` merges three catalogs:
+  1. the bundled `/content/catalog.json`;
+  2. the public catalog, fetched with **plain `fetch`** from the Storage REST URL, so guests never load the SDK;
+  3. for org members, the org catalog.
+- `mergeCatalog`: a public entry may replace a built-in one; an org entry never replaces anything. A failure (offline, 404 before anything is published) falls back to whatever loaded.
+- **Caching.** Catalogs are network-first with the last copy as the offline fallback. Unit files are cache-first by their versioned path. Both live in `darsi-content`, managed here rather than by a service-worker rule (a stale-while-revalidate rule would serve old catalogs and store everything twice).
+- **Org files** go through the SDK (`storageJSON()` in `firebase.ts`). App hands load.ts the reader with `setOrgReader` (see "The bundle rule" below).
+- **Scope.** App calls `configureContent({ orgId, signedIn })` on every render. A change re-reads the catalog. Signing out deletes every cached org file (shared phones): a `darsi:orgFiles` flag in localStorage says whether there are any.
+- **Downloads:** `unitAssetUrls(unit, lang, entry)` leaves an authored unit's JSON out (loadUnit already cached it), and adds its uploaded kit files, video and captions. `cacheNameFor` routes Storage JSON to `darsi-content` and other Storage files to `darsi-media`.
+- `videoSrc(step, lang)` and `kitUrl(file, lang, fmt)` in `content/types.ts` resolve uploaded files (`sources[lang]`, `urls[lang][fmt]`, falling back to English, then to any language) and the older `{lang}` templates.
+
+**The editor UI** (`apps/web/src/cms/`) is one lazy chunk, `Cms` (entry `cms/Cms.tsx`), left out of the precache with its CSS (`styles/editor.css`).
+- **Strings:** the editor's ~320 strings live in `cms/strings/{en,ar}.json` and are registered with `addMessages()` when the chunk loads, so learners never download them. Their keys are still type-checked: `MessageKey` includes them through a type-only import.
+- **Screens and forms:**
+  - `ContentList`: one-shot list, grouped by track (in the platform's order), then level and title. Filters for track, level and status, and a search over unit and lesson titles. The lesson titles come from the `lessons` summary on `units/{id}`; units saved before it existed show it after their next save. Each card has Open, Duplicate (a new draft with new unit and lesson ids, "(copy)" added to the title) and Delete (asks inline first). New unit (track cards and level buttons) and Import JSON.
+  - `UnitEditor`: an **outline** (unit details, lessons, the open lesson's steps, slides and kit, checks) beside the **form** for whatever is picked. Side by side from 900px; below that, the outline first and then the form, with a breadcrumb and an "Outline" button. Lessons and steps are picked by id, so moving or undoing keeps the selection.
+    - "+" rows between lessons and between steps insert one right there. A new step starts from a chooser of every step type, each with a line on what it is for.
+    - A lesson can be duplicated (new lesson id, "(copy)"), moved, deleted, or copied into another unit of the same owner (`copyLessonTo`: appended to that unit's draft under a new id, as a normal save of it). A step can be duplicated (new step id), moved or deleted.
+    - **Undo and redo** (`cms/history.ts`): the last 50 changes, with buttons and Ctrl+Z / Ctrl+Y (Ctrl+Shift+Z). Typing in one item within a second counts as one change. Deleting a lesson or step happens at once and shows "Deleted" with Undo; deleting or unpublishing the unit, and leaving with unsaved changes, ask inline (no browser dialogs).
+    - Unit actions (duplicate, export, unpublish, delete) are under the unit details; the bar keeps undo, redo, save, publish and a link to the checks.
+  - `pickers.tsx`: the track picker (cards with each track's icon and colour, hidden tracks marked, an unknown track shown as such) and the level picker (one button per level of the chosen track, with its name when it has one). Changing the track keeps the level if the new track has it, or takes its top level.
+  - `TracksPage`: see [Tracks and levels](#tracks-and-levels).
+  - `fields.tsx`: English/Arabic field pairs, lists and uploads. Pairs sit side by side only when the form column has room for both (`auto-fit`), since the outline takes part of wide screens.
+  - `steps.tsx`: one form per step type. Fill-the-gaps is written as `A sensor turns [heat] into a [number].`
+- **Preview** plays the unsaved lesson with `LessonPlayer`'s `preview` mode: nothing is recorded, synced or submitted. It has an EN/AR switch.
+- **Concurrency:** saves bump `rev`. A save refused because someone else saved first says so ("Export JSON, reload and bring your changes back in").
+
+**The bundle rule (learned the hard way).** A module shared between the startup bundle and lazy chunks (`content/load.ts`, the lesson player…) must not import the Firebase SDK or anything that lazy-loads it, **not even dynamically**. Otherwise Rolldown splits the startup bundle into several files: 7 instead of 2 when this was measured, with more requests on a first visit. That is why:
+- App passes the org reader in (`setOrgReader`);
+- App passes the lesson player in (`<UnitEditor Player={LessonPlayer} />`) instead of the editor importing it;
+- the editor has a single lazy entry module (`cms/Cms.tsx`).
+
+Manual `codeSplitting` groups capture their dependencies recursively (a `src/cms` group once pulled React, the router and the design system into the editor chunk and loaded it at startup), so never add one for app code. To check, build into a separate folder and follow the entry chunk's static imports: they should stay at `index` + `rolldown-runtime`. Measured on 2026-10-26 with the Labs apps in the tree, the entry also imports `dist` (`@capacitor/core`, 7.8 KB) and `preload-helper`: 4 files, 152 KB gzipped. Builds without Labs stay at 2 files, so the split came in with Labs. It is accepted for now: the total size is the same, and it must not grow past these four.
+
+## Tracks and levels
+
+Every unit belongs to one **track** (AI, IoT, Cyber security, or one a platform admin added) and one **level** of that track. Platform admins manage the tracks at `/super/tracks`; every unit uses the same list, org units included.
+
+**Model** (`content/types.ts`, `content/tracks.ts`): `TrackDef { id, name, summary?, icon, tone, levels (1–12), levelNames?, order, hidden? }`.
+- `ai`, `iot` and `cyber` are **built in** (`BUILTIN_TRACKS`). They can be renamed, hidden or given more levels, but never removed or recoloured: Labs, placement and the shipped units use them. `mergeTracks()` applies that rule wherever a saved list is read (the app, the editor and the functions).
+- `tone` is one of 8 brand colour families. `sunbird`, `lagoon` and `hibiscus` belong to the built-ins; `leaf`, `lilac`, `clay`, `sky` and `slate` were added for new tracks. Each has a solid, `-soft` and `-ink` token in both themes, and `check-contrast.mjs` checks them (ink on solid and on soft, `-ink` on soft, surface and paper). `icon` is any design-system icon; the Tracks page offers 18 subject icons.
+
+**Where it lives.** `config/settings` in Firestore is the source of truth, and `saveSettings` alone writes it.
+- `saveSettings` is for platform admins only. It validates the list (`validateTracks`: ids, names, colours, icons, 1–12 levels, built-ins present).
+- It refuses a save from an older `rev` (`aborted`), so two admins can't overwrite each other.
+- It refuses changes that would strand a unit (`failed-precondition`, with `conflicts`): removing a track that any unit uses, or lowering a track's levels below a level in use. Drafts and org units count (`trackConflicts` in `functions/src/trackRules.ts`).
+- It then writes `content/settings.json` (public, `max-age=60`).
+
+**In the app** (`content/settings.tsx`):
+- `SettingsProvider` sits inside `I18nProvider`. It starts from the built-in tracks, so nothing waits or flashes, and switches to `content/settings.json` when it arrives. The file is read once per app start by `loadSettings()` with a plain `fetch` (network-first, last copy offline, like the catalogs), so guests never load the SDK.
+- It also gives the design system each track's tone and icon (`TrackStylesProvider`).
+- `useTracks()` returns `all`, `visible` (not hidden), `of(id)`, `name(id)`, `levelName(id, n)` and `order(id)`. A track nobody set up (deleted, or content from elsewhere) shows neutrally under its id, in slate with the `learn` icon.
+- **Design system:** a track's colours come from `dr-tr dr-tr-<tone>`, which sets `--tr`, `--tr-soft` and `--tr-ink`. Chips, progress bars, the unit path, certificates, placement results, page previews and download rows read those variables. Components still take a `track` id and resolve it through the provider (`useTrackStyles`, `trackClass`).
+- **Where tracks show up:**
+  - **Onboarding** offers the visible tracks. Placement spreads each score over all of a track's levels (`placementLevel`: all right reaches the top level). A track with no placement questions starts at level 1.
+  - **Home** leaves out units of hidden tracks, then sorts ready units first, the learner's tracks next, then by track order and level.
+  - **Me** shows "My levels" out of each track's own number of levels, with level names when set.
+- **Order:** `publishUnit` writes catalogs in the saved track order (`buildCatalog(entries, order)`; unknown tracks last).
+
+**The Tracks page** (`cms/TracksPage.tsx`, in the `Cms` chunk). It reads `config/settings`, plus every unit's track and level, once.
+- One card per track, in order, with up and down buttons. Each card has the name and description per language, the colour (labelled swatches, saying which track already uses a colour) and the icon. Built-ins keep theirs.
+- Levels have a stepper (1–12) that can't go below the highest level units use, and optional level names. A "Hide from learners" switch hides a track.
+- Delete is offered only for an added track that no unit uses.
+- New tracks get an id suggested from the English name (`slugOf`), editable until the first save.
+- "Save tracks" sends the whole list. Refusals are explained: someone saved meanwhile, or which units still use what changed.
+- After a save, the provider switches to the new list at once (`apply`).
 
 ## Languages and right-to-left
 
@@ -373,12 +497,13 @@ Labs (`/labs`) is a catalogue of 48 hands-on apps on 13 shelves across the three
 |---|---|---|
 | Unit (web) | `apps/web/tests/` | Lesson engine and content integrity; the staff screens rendered with mocked data hooks and callables; cloud-sync merge and push rules, plus the sync hook with Firestore mocked; the notifications panel's states and the announcement composer (`notify.test.tsx`) |
 | Unit (design system) | `packages/design-system` | Component and token tests |
-| Unit (functions) | `functions/test/` | Generated passwords (character classes, no look-alikes), invite-code format, usernames from any script; `pickNudge` rules across time zones and daylight saving; every message in both languages, with no "·" in Arabic |
+| Unit (functions) | `functions/test/` | Generated passwords (character classes, no look-alikes), invite-code format, usernames from any script; `pickNudge` rules across time zones and daylight saving; every message in both languages, with no "·" in Arabic; the course editor's Storage layout, permission matrix and catalog, and that the shared validator copies match the web source; tracks (`mergeTracks`, `validateTracks`, units against a tracks list, `trackConflicts`, media kept for other drafts, catalog order) |
+| Unit (course editor) | `apps/web/tests/validate.test.ts`, `content.test.ts`, `cms.test.tsx`, `tracks.test.tsx` | The validator (ai-1 passes with no issues; one broken copy per error rule; track and level against the saved tracks); catalog merge, offline fallbacks, cache-first units and the sign-out purge; the editor screens (list grouping, filters and search, duplicate and delete, new unit with the track and level pickers, org import with fresh ids, publish blocked by errors, save conflict, inserting a step between two, duplicating a lesson, delete then Undo, Ctrl+Z and Ctrl+Y, copying a lesson to another unit, leaving with unsaved changes, preview, en/ar string parity); the Tracks page (add with a suggested id, levels and delete guarded by units in use, refused saves explained); `mergeTracks`, `useTracks`, the design-system colours from settings, `placementLevel` and the undo history |
 | Unit (Labs) | `apps/web/tests/labs/` | The kit (network gradients against numeric ones, softmax, plots); the catalogue (every folder's meta is valid, ids unique, en+ar text, ladder positions); render tests of the Labs screen and `LabEmbed`; and every app's model, in `models.test.ts` and `b1`–`b4.test.ts` (for example: the perceptron converges but never on XOR, ID3 picks the textbook split, Q-learning finds the 10-step route, TOTP matches the RFC 6238 vectors, SHA-256 and RSA round trips in English and Arabic) |
 | End-to-end | `apps/web/e2e/` | Desktop Chrome and Pixel 7: guest onboarding, the Arabic RTL switch, a full lesson through to the kit download, the video fallback, Labs (cards open apps, the playground trains then pauses, labs aren't precached and "Save all labs" works offline), offline after the first visit |
 | CSS lint | `scripts/check-css.mjs` | Brand, RTL and old-WebView rules |
 
-The Firebase Emulator Suite needs **JDK 21+**. Rules tests with `@firebase/rules-unit-testing` are planned and need it too.
+The Firebase Emulator Suite needs **JDK 21+** (on this Windows machine also `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:\Users\Public`; see docs/FIREBASE.md). The course editor's backend was checked end to end against the emulators on 2026-10-26: 42 checks covering the rules, publish, versions, org-only reads, media upload limits, unpublish and delete. Tracks and levels add 24 more: who may save, the public settings file, stale saves, validation, a level-5 unit in an added track, refusals that would strand units, and removal once no unit uses a track. Rules tests with `@firebase/rules-unit-testing` are planned.
 
 ## Performance budget
 
@@ -389,6 +514,7 @@ The Firebase Emulator Suite needs **JDK 21+**. Rules tests with `@firebase/rules
 | Startup JS | ~152 KB gzipped in four files (entry ~147 KB; no Firebase) | |
 | Firebase SDK, signed-in only | ~210 KB gzipped (`firebase`), plus ~21 KB (`firebase-extra`: Functions, Storage, Messaging + Installations) for admin actions, uploads and notifications | |
 | Push handlers in the service worker | ~1.4 KB gzipped (`push-sw.js`, no SDK) | |
+| Course editor, staff only | ~22 KB gzipped JS (`Cms`, with its strings) + ~1 KB CSS, not precached | |
 | Labs | 48 app chunks, ~320 KB in all (~5–9 KB each), not precached; the kit's shared chunks and ~5 KB gzipped CSS are precached | |
 | Main CSS | ~12.5 KB gzipped | |
 | One lesson | ~19 KB of JSON (both languages); kits and media download on demand | ≤ 300 KB |

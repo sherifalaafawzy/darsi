@@ -7,10 +7,13 @@ import type { Role } from "./auth/types";
 import { I18nProvider, useI18n } from "./i18n";
 import { StoreProvider, useStore } from "./state/store";
 import { useCloudSync } from "./state/sync";
+import { configureContent, setOrgReader } from "./content/load";
+import { SettingsProvider } from "./content/settings";
+import { loadFirebase } from "./fb";
 import { usePushRefresh } from "./notify/usePushRefresh";
 import { Layout } from "./components/Layout";
 import { Home } from "./screens/Home";
-import { LessonScreen } from "./screens/LessonScreen";
+import { LessonPlayer, LessonScreen } from "./screens/LessonScreen";
 import { Onboarding } from "./screens/Onboarding";
 import { Kit } from "./screens/Kit";
 import { Downloads } from "./screens/Downloads";
@@ -28,6 +31,13 @@ const ImportPeople = lazy(() => import("./admin/AddPeople").then((m) => ({ defau
 const Teach = lazy(() => import("./admin/Teach").then((m) => ({ default: m.Teach })));
 const TeachPerson = lazy(() => import("./admin/Teach").then((m) => ({ default: m.TeachPerson })));
 const SuperAdmin = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.SuperAdmin })));
+// Course editor (platform and org admins): one "Cms" chunk, also kept out of the precache. It gets the lesson player
+// (for its preview) as a prop: importing it there would pull the player's lazy SDK loads into a shared chunk and
+// split the startup bundle. Org-only units are read through the SDK, which only signed-in members load.
+const ContentList = lazy(() => import("./cms/Cms").then((m) => ({ default: m.ContentList })));
+const UnitEditor = lazy(() => import("./cms/Cms").then((m) => ({ default: m.UnitEditor })));
+const TracksPage = lazy(() => import("./cms/Cms").then((m) => ({ default: m.TracksPage })));
+setOrgReader((path) => loadFirebase().then((fb) => fb.storageJSON(path)));
 
 const Loading = () => <div className="loading" aria-busy="true" />;
 
@@ -58,8 +68,10 @@ const homeFor = (role: Role) => (role === "orgAdmin" ? "/admin" : role === "supe
 
 function Routed() {
   const { state, ready, dispatch } = useStore();
-  const { user, profile, role, configured, offlineUid } = useAuth();
+  const { user, profile, role, orgId, configured, offlineUid } = useAuth();
   const { t } = useI18n();
+  // Before any screen asks for the catalog: org members also see their org's published units.
+  configureContent({ orgId: user ? orgId : null, signedIn: Boolean(user || offlineUid) });
   useEffect(() => {
     applyLocale(state.lang, state.theme);
     document.title = state.lang === "ar" ? "درسي — Darsi" : "Darsi — درسي";
@@ -107,6 +119,8 @@ function Routed() {
             <Route path="admin/people/:uid" element={<PersonDetail />} />
             <Route path="admin/add" element={<AddPeople />} />
             <Route path="admin/import" element={<ImportPeople />} />
+            <Route path="admin/content" element={<ContentList />} />
+            <Route path="admin/content/:unitId" element={<UnitEditor Player={LessonPlayer} />} />
           </Route>
           <Route element={<Allow roles={["teacher", "orgAdmin"]} />}>
             <Route path="teach" element={<Teach />} />
@@ -114,6 +128,9 @@ function Routed() {
           </Route>
           <Route element={<Allow roles={["superadmin"]} />}>
             <Route path="super" element={<SuperAdmin />} />
+            <Route path="super/content" element={<ContentList />} />
+            <Route path="super/content/:unitId" element={<UnitEditor Player={LessonPlayer} />} />
+            <Route path="super/tracks" element={<TracksPage />} />
           </Route>
           <Route path="*" element={<main className="screen"><EmptyState title={t("err.notFound")} /></main>} />
         </Route>
@@ -125,7 +142,7 @@ function Routed() {
 
 function WithI18n() {
   const { state } = useStore();
-  return <I18nProvider lang={state.lang}><BrowserRouter><Routed /></BrowserRouter></I18nProvider>;
+  return <I18nProvider lang={state.lang}><SettingsProvider><BrowserRouter><Routed /></BrowserRouter></SettingsProvider></I18nProvider>;
 }
 
 /** One local store per person on this device; a just-created account takes over the guest's progress. */
