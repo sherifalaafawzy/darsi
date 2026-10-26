@@ -76,6 +76,13 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
   - **Hosting** https://darsi-f0685.web.app; the live site was smoke-tested as a guest and the service worker activates.
   - **Firestore** `(default)` in europe-west1 with delete protection, plus our rules and indexes.
   - **All 10 Cloud Functions** in europe-west1. The first deploy of `onProgressWrite` hit the known Eventarc permission delay and went through on retry. Artifact Registry cleanup is set to 1 day.
+- Deployed 2026-10-26 (push notifications, commit 5de8b4d): the Firestore rules, **all 18 Cloud Functions** and Hosting.
+  - Cloud Scheduler is enabled, with the job `firebase-schedule-dailyNudges-europe-west1` (`0 * * * *` UTC). A manual run returned 200 and logged `seen 0, sent 0, failed 0`.
+  - The FCM APIs (`fcm`, `fcmregistrations`) are on.
+  - The live `sw.js` imports `push-sw.js`; no Firebase chunk is precached.
+  - Checked live: anonymous reads and writes of `broadcasts`, `pushTokens` and `users/*/devices` return 403, and the push callables return 401.
+  - Smoke-tested as a guest: the update toast works, Me shows Notifications with no Firebase download, and /signin loads the SDK.
+  - Not yet verified: a real notification on a real phone.
 - **Storage**: the app uses the bucket **`darsi-f0685` in europe-west1**, set by `VITE_FIREBASE_STORAGE_BUCKET` in `.env.local`. It is deploy target `main` with `firebase/storage.rules`.
   - The original default bucket `darsi-f0685.firebasestorage.app` (us-west1, never used) was deleted on 2026-10-25 and now returns 404 `NoSuchBucket`. Keep the `main` target: without one, `firebase deploy --only storage` aims at the project's default bucket, which no longer exists.
   - Checked live on 2026-10-25: media/kits are public, and submissions return 403 to anonymous requests.
