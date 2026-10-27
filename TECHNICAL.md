@@ -238,7 +238,7 @@ Each category can be switched off in Me (`notify.cats`).
 
 ## Backend: Firebase
 
-Project **`darsi-f0685`**. Firestore, Cloud Functions and the Storage bucket the app uses (`darsi-f0685`) are all in **europe-west1**. Hosting is at https://darsi-f0685.web.app.
+Project **`darsi-f0685`**. Firestore, Cloud Functions and the Storage bucket the app uses (`darsi-f0685`) are all in **europe-west1**. Hosting serves the public address **https://darsiai.org** (a custom domain; www.darsiai.org redirects to it). The site's own address, https://darsi-f0685.web.app, still works but is never linked.
 
 Firebase's original default bucket, `darsi-f0685.firebasestorage.app`, was created in us-west1, and a bucket's location can't change. The app points at the europe-west1 bucket through `VITE_FIREBASE_STORAGE_BUCKET`, and the US bucket was never used and was deleted on 2026-10-25.
 

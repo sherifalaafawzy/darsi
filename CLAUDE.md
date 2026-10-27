@@ -149,7 +149,7 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
 - gcloud's active account is the user's work account; never use it here. The personal account is signed in but not active, so pass `--account=sherifalaafawzy@gmail.com` to every gcloud command for this project.
 - Blaze plan: on. Email/Password and Google sign-in: enabled by the user.
 - Deployed 2026-10-25:
-  - **Hosting** https://darsi-f0685.web.app; the live site was smoke-tested as a guest and the service worker activates.
+  - **Hosting** https://darsi-f0685.web.app; the live site was smoke-tested as a guest and the service worker activates. Since 2026-10-27 its public address is **https://darsiai.org** (custom domain on this Hosting site, DNS at Cloudflare; www.darsiai.org redirects to it). Link to darsiai.org, never to the web.app address.
   - **Firestore** `(default)` in europe-west1 with delete protection, plus our rules and indexes.
   - **All 10 Cloud Functions** in europe-west1. The first deploy of `onProgressWrite` hit the known Eventarc permission delay and went through on retry. Artifact Registry cleanup is set to 1 day.
 - Deployed 2026-10-26 (push notifications, commit 5de8b4d): the Firestore rules, **all 18 Cloud Functions** and Hosting.

@@ -11,7 +11,7 @@ Darsi runs on the Firebase project **`darsi-f0685`** in region **`europe-west1`*
 
 1. **Blaze (pay-as-you-go) plan.** Cloud Functions (2nd gen) and new Cloud Storage buckets (`*.firebasestorage.app`) need it. There is a free tier; set a **budget alert** (Google Cloud console → Billing → Budgets) so a mistake can't surprise you.
 2. **Authentication → Sign-in method:** enable **Email/Password** and **Google**.
-   - Under *Settings → Authorized domains*, add your custom domain if you use one. `darsi-f0685.web.app` and `.firebaseapp.com` are there by default.
+   - Under *Settings → Authorized domains*, add your custom domain if you use one (the live site uses `darsiai.org` and `www.darsiai.org`). `darsi-f0685.web.app` and `.firebaseapp.com` are there by default.
 3. **Firestore Database → Create database** in production mode. Location: `europe-west1`, next to the functions, or `eur3` for multi-region. **The location can never be changed.**
 4. **Storage → Get started**, and put the bucket in the same region as Firestore. The app stores files in **`darsi-f0685` (europe-west1)**.
    - The original default bucket `darsi-f0685.firebasestorage.app` landed in us-west1, and a bucket can't be moved. It was never used and was deleted on 2026-10-25 (`gcloud storage buckets delete`, which refuses a bucket that isn't empty).
