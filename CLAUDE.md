@@ -106,7 +106,7 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - **Checked:** web 203 tests, design system 24, functions 81, `tsc`, `lint:css`, contrast (148 pairs), e2e 26/26 against a private build, 24/24 tracks checks against the emulators (plus the earlier 42; one needs an empty emulator), and the browser on the emulators.
       - The browser walk-through, in Arabic at 1024 px and English at 375 px: added "Data science" (6 levels) on the Tracks page, put a level-5 unit in it and published it. Onboarding offered the track, and Home and Me showed it in its colour.
     - **Startup:** 4 files since Labs (`dist` = `@capacitor/core`, and `preload-helper`), against 2 before. Builds without Labs stay at 2, so the split came with Labs, not this work. It's the accepted exception in the startup note above: don't let it grow.
-14. Stage 2 done (2026-10-27; not committed, not deployed): **languages.** The user asked to add languages beyond English and Arabic, for the whole app and the lessons. TECHNICAL.md "Languages and right-to-left" has the design.
+14. Stage 2 done and deployed (2026-10-27, commit 4d08723): **languages.** The user asked to add languages beyond English and Arabic, for the whole app and the lessons. TECHNICAL.md "Languages and right-to-left" has the design.
     - **Languages page** (`/super/languages`, linked from the lesson editor):
       - Add a language from a list or by code: names, direction, number locale.
       - Translate the ~460 UI strings, with search, "Not translated" and "To fix" filters (placeholders must match the English), and spreadsheet export and import (.xlsx and .csv).
@@ -135,7 +135,7 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
       - The editor showed French fields and "Français: 206 texts not translated".
       - Screenshots of the right-to-left page weren't possible (the browser pane was hidden), so those checks went through the page's DOM.
     - **Deploy needs:** Firestore rules (`translations`); all functions after `npm run build --prefix functions` (`publishLanguage`, `unpublishLanguage`, and the changed `saveSettings`, `registerDevice` and `sendBroadcast`); and Hosting.
-15. Done (2026-10-27; with stage 2): **no built-in courses.** The user asked that all courses load from the editor.
+15. Done and deployed (2026-10-27, commit 4d08723, with stage 2): **no built-in courses.** The user asked that all courses load from the editor.
     - The app ships no course files any more. `apps/web/public/content/` holds only `placement.json` (the onboarding check, not a course). The catalog and units come only from Storage, and the "coming soon" placeholders are gone.
     - The starting course moved to `content/units/ai-1.json`, with its kits in `content/kits/`. `npm run seed` publishes it through `publishDraft`, the code behind the editor's Publish (`functions/src/content.ts`): the kits go to `content/media/ai-1/`, and the unit and lesson ids stay `ai-1…`.
     - Nothing published shows "No courses yet". A first visit offline shows Retry.
@@ -183,6 +183,23 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - The Labs catalogue lists every shelf with "Save all labs for offline (0.3 MB)", and the playground trained and stopped by itself.
     - `/lab` redirects to `/labs`; `/super/tracks` redirects to `/learn` without loading the editor chunk.
   - Not yet checked live: the Tracks page and the new editor, which need a platform-admin sign-in.
+- Deployed 2026-10-27 (commit 4d08723: stage 2, languages, and no built-in courses), with the user's go-ahead, in three steps:
+  1. The Labs session deployed Firestore rules (with `translations/{code}`) and indexes, Storage rules (unchanged, skipped) and **all 24 Cloud Functions**, from a frozen copy of 4d08723. `publishLanguage` and `unpublishLanguage` are new.
+  2. `npm run seed` published **ai-1** live, using the local application-default login (the personal account): 18 kit files went to `content/media/ai-1/`, and the unit was published as v1 with its original lesson ids.
+  3. Hosting went out from the clean tree at 4d08723 (`index-BqeLF9o7.js`).
+  - The order mattered: the live catalog was empty, and this build has no built-in courses.
+  - Checked live without an account:
+    - `content/catalog.json` lists ai-1 v1 (3 lessons). Its kit files download, and the bucket allows the site's origin.
+    - The old built-in paths (`/content/catalog.json`, `/content/units/ai-1.json`, `/kits/…`) now return the app page; `/content/placement.json` is still served.
+    - The new and changed callables return UNAUTHENTICATED. `content/settings.json` lists the three built-in tracks and no added languages.
+  - Checked in a browser as a returning guest:
+    - The update toast moved the old version to the new one.
+    - Home shows AI basics from the published catalog, and its first lesson opens. No Firebase chunk and no old course path were requested.
+    - `/super/languages` redirects to `/learn` without loading the editor chunk.
+  - Not yet checked live, because both need a platform-admin sign-in:
+    - the Languages page, with a language pack loading when someone picks the language;
+    - the track picker and the new editor.
+  - Known leftover: ai-1's video steps still point at `/media/…` placeholders (the narrated videos are step 6, deferred). Hosting answers those with the app page, so the lessons use the transcript, as designed.
 - **Storage**: the app uses the bucket **`darsi-f0685` in europe-west1**, set by `VITE_FIREBASE_STORAGE_BUCKET` in `.env.local`. It is deploy target `main` with `firebase/storage.rules`.
   - The original default bucket `darsi-f0685.firebasestorage.app` (us-west1, never used) was deleted on 2026-10-25 and now returns 404 `NoSuchBucket`. Keep the `main` target: without one, `firebase deploy --only storage` aims at the project's default bucket, which no longer exists.
   - Checked live on 2026-10-25: media/kits are public, and submissions return 403 to anonymous requests.
