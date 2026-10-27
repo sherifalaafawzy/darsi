@@ -69,6 +69,12 @@ describe("catalog", () => {
     expect(e.sizeMB).toBe(sizeMB(ai1, 59_325));
     expect(e.sizeMB).toBeCloseTo(0.1 + 2.8 + 2.4 + 2.9, 5); // the JSON plus one language's videos
   });
+  it("counts a light lesson instead of its MP4, since that's what a download stores", () => {
+    const light = structuredClone(ai1);
+    const v = light.lessons[0].steps.find((s) => s.type === "video")!;
+    if (v.type === "video") v.light = { files: {}, langs: { en: "en", ar: "ar-EG" }, sizeKB: { en: 383, ar: 410 } };
+    expect(sizeMB(light, 59_325)).toBeCloseTo(0.1 + 0.4 + 2.4 + 2.9, 5); // 410 KB, the larger language
+  });
   it("orders units by track, then level, then title", () => {
     const u = (id: string, track: Unit["track"], level: number, title: string) => catalogEntry({ ...ai1, id, track, level, title: { en: title } }, "public", 1, 1000);
     const cat = buildCatalog([u("c", "cyber", 1, "A"), u("b", "ai", 2, "A"), u("a", "ai", 1, "Z"), u("d", "ai", 1, "B")]);

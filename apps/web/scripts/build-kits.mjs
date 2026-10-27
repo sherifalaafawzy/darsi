@@ -31,9 +31,15 @@ const pickList = (t, lang) => (t ? t[lang] ?? t.en : []);
 const digits = (n, lang) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en").format(n);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const UI = {
-  en: { footer: "Darsi · free to copy for your school", plan: "Lesson plan · for the teacher", sheet: "Worksheet · for pupils", goals: "Learning goals", activity: "Activity", discuss: "Discussion", exit: "Exit ticket", tomorrow: "Try it in class tomorrow", time: "Time", min: "min", materials: "Materials", materialsV: "Board, chalk, paper. No devices needed.", name: "Name", cls: "Class", date: "Date", tf: ["True", "False"], reflect: "In your own words", bank: "Word bank", unit: "Unit", lesson: "Lesson" },
-  ar: { footer: "درسي — يُسمح بنسخها لمدرستك مجانًا", plan: "خطة درس — للمعلم", sheet: "ورقة عمل — للطلاب", goals: "أهداف التعلّم", activity: "النشاط", discuss: "للنقاش", exit: "بطاقة الخروج", tomorrow: "جرّبها في الصف غدًا", time: "المدة", min: "دقيقة", materials: "المواد", materialsV: "سبّورة، طباشير، ورق. لا حاجة إلى أجهزة.", name: "الاسم", cls: "الصف", date: "التاريخ", tf: ["صح", "خطأ"], reflect: "بكلماتك", bank: "بنك الكلمات", unit: "الوحدة", lesson: "الدرس" },
+  en: { footer: "Darsi · free to copy for your school", plan: "Lesson plan · for the teacher", sheet: "Worksheet · for pupils", goals: "Learning goals", activity: "Activity", discuss: "Discussion", exit: "Exit ticket", tomorrow: "Try it in class tomorrow", time: "Time", min: "min", materials: "Materials", materialsV: "Board, chalk, paper. No devices needed.", name: "Name", cls: "Class", date: "Date", tf: ["True", "False"], reflect: "In your own words", bank: "Word bank", unit: "Unit", lesson: "Lesson", sep: " · ", listSep: "; " },
+  ar: { footer: "درسي — يُسمح بنسخها لمدرستك مجانًا", plan: "خطة درس — للمعلم", sheet: "ورقة عمل — للطلاب", goals: "أهداف التعلّم", activity: "النشاط", discuss: "للنقاش", exit: "بطاقة الخروج", tomorrow: "جرّبها في الصف غدًا", time: "المدة", min: "دقيقة", materials: "المواد", materialsV: "سبّورة، طباشير، ورق. لا حاجة إلى أجهزة.", name: "الاسم", cls: "الصف", date: "التاريخ", tf: ["صح", "خطأ"], reflect: "بكلماتك", bank: "بنك الكلمات", unit: "الوحدة", lesson: "الدرس", sep: "، ", listSep: "، " },
 };
+
+/**
+ * Type size for a slide's text: the base size while it fits `room` characters, smaller as it grows (area goes with the
+ * square of the size), never under `min`. Activity slides carry the steps and the preparation note, so they get long.
+ */
+const fit = (texts, base, room, min) => { const n = texts.join(" ").length; return n <= room ? base : Math.max(min, Math.floor(base * Math.sqrt(room / n))); };
 
 /* ---------------- PPTX ---------------- */
 function buildPptx(unit, lesson, lang) {
@@ -49,7 +55,7 @@ function buildPptx(unit, lesson, lang) {
     s.background = { color: "FFFFFF" };
     s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 0.28, fill: { color: trackC }, line: { color: trackC } });
     s.addImage({ path: MARK_PNG, x: rtl ? 0.45 : 12.38, y: 6.75, w: 0.5, h: 0.5 });
-    s.addText(`${u.footer}  ·  ${pick(lesson.title, lang)}  ·  ${digits(n, lang)}`, T({ x: rtl ? 1.1 : 0.5, y: 6.82, w: 11.7, h: 0.4, fontSize: 11, color: C.muted }));
+    s.addText(`${u.footer}${u.sep}${pick(lesson.title, lang)}${u.sep}${digits(n, lang)}`, T({ x: rtl ? 1.1 : 0.5, y: 6.82, w: 11.7, h: 0.4, fontSize: 11, color: C.muted }));
   };
   lesson.slides.forEach((sl, i) => {
     const s = pptx.addSlide();
@@ -65,11 +71,12 @@ function buildPptx(unit, lesson, lang) {
     s.addText(title, T({ x: 0.7, y: 0.65, w: 11.9, h: 1.0, fontSize: 38, bold: true }));
     const numbered = sl.layout === "activity" || sl.layout === "questions";
     const box = sl.layout === "activity" && note;
-    s.addText(bullets.map((b, k) => ({ text: b, options: { bullet: numbered ? { type: "number", style: rtl ? "arabicPeriod" : "arabicPeriod" } : { code: "25CF" }, breakLine: k < bullets.length - 1, paraSpaceAfter: 14, rtlMode: rtl } })),
-      T({ x: 0.9, y: 1.85, w: box ? 7.9 : 11.5, h: 4.6, fontSize: 26, valign: "top", ...(rtl && box ? { x: 4.55 } : {}) }));
+    const size = fit(bullets, 26, box ? 230 : 360, 14), noteSize = fit([note], 20, 100, 12), tall = note.length > 100;
+    s.addText(bullets.map((b, k) => ({ text: b, options: { bullet: numbered ? { type: "number", style: rtl ? "arabicPeriod" : "arabicPeriod" } : { code: "25CF" }, breakLine: k < bullets.length - 1, paraSpaceAfter: Math.round(size / 2), rtlMode: rtl } })),
+      T({ x: 0.9, y: 1.85, w: box ? 7.9 : 11.5, h: 4.6, fontSize: size, valign: "top", ...(rtl && box ? { x: 4.55 } : {}) }));
     if (box) {
-      s.addShape(pptx.ShapeType.roundRect, { x: rtl ? 0.7 : 9.1, y: 1.95, w: 3.55, h: 2.2, fill: { color: C.kolaSoft }, line: { color: C.kola, width: 2 }, rectRadius: 0.2 });
-      s.addText(note, T({ x: rtl ? 0.85 : 9.25, y: 2.05, w: 3.25, h: 2.0, fontSize: 20, bold: true, valign: "middle", align: "center" }));
+      s.addShape(pptx.ShapeType.roundRect, { x: rtl ? 0.7 : 9.1, y: 1.95, w: 3.55, h: tall ? 4.4 : 2.2, fill: { color: C.kolaSoft }, line: { color: C.kola, width: 2 }, rectRadius: 0.2 });
+      s.addText(note, T({ x: rtl ? 0.85 : 9.25, y: 2.05, w: 3.25, h: tall ? 4.2 : 2.0, fontSize: noteSize, bold: true, valign: "middle", align: "center" }));
     } else if (note) s.addText(note, T({ x: 0.9, y: 6.1, w: 11.5, h: 0.5, fontSize: 18, color: C.muted }));
     if (sl.layout === "exit") s.addShape(pptx.ShapeType.rect, { x: 0.9, y: 5.0, w: 11.5, h: 0.04, fill: { color: C.line }, line: { color: C.line } });
   });
@@ -93,11 +100,13 @@ function slidesHtml(unit, lesson, lang) {
   const slides = lesson.slides.map((sl, i) => {
     const title = esc(pick(sl.title, lang)), note = esc(pick(sl.note, lang)), bullets = pickList(sl.bullets, lang).map(esc);
     const numbered = sl.layout === "activity" || sl.layout === "questions";
-    const list = bullets.length ? `<${numbered ? "ol" : "ul"}>${bullets.map((b) => `<li>${b}</li>`).join("")}</${numbered ? "ol" : "ul"}>` : "";
+    const boxed = sl.layout === "activity" && note;
+    const size = fit(pickList(sl.bullets, lang), 26, boxed ? 230 : 360, 14), noteSize = fit([pick(sl.note, lang)], 20, 100, 12);
+    const list = bullets.length ? `<${numbered ? "ol" : "ul"} style="font-size:${size}pt">${bullets.map((b) => `<li>${b}</li>`).join("")}</${numbered ? "ol" : "ul"}>` : "";
     const body = sl.layout === "title"
       ? `<div class="hero"><div><h1 class="big">${title}</h1>${note ? `<p class="kicker">${note}</p>` : ""}</div><div class="markbox">${MARK_SVG}</div></div>`
-      : `<h1>${title}</h1><div class="cols${sl.layout === "activity" && note ? " with-box" : ""}">${list}${sl.layout === "activity" && note ? `<div class="box">${note}</div>` : ""}</div>${sl.layout !== "activity" && note ? `<p class="note">${note}</p>` : ""}${sl.layout === "exit" ? `<div class="lines"><i></i><i></i><i></i></div>` : ""}`;
-    return `<section class="slide"><div class="band"></div>${body}<footer><span class="m">${MARK_SVG}</span><span>${esc(u.footer)} · ${esc(pick(lesson.title, lang))}</span><span class="n">${digits(i + 1, lang)}</span></footer></section>`;
+      : `<h1>${title}</h1><div class="cols${sl.layout === "activity" && note ? " with-box" : ""}">${list}${boxed ? `<div class="box" style="font-size:${noteSize}pt">${note}</div>` : ""}</div>${sl.layout !== "activity" && note ? `<p class="note">${note}</p>` : ""}${sl.layout === "exit" ? `<div class="lines"><i></i><i></i><i></i></div>` : ""}`;
+    return `<section class="slide"><div class="band"></div>${body}<footer><span class="m">${MARK_SVG}</span><span>${esc(u.footer)}${u.sep}${esc(pick(lesson.title, lang))}</span><span class="n">${digits(i + 1, lang)}</span></footer></section>`;
   }).join("");
   return `<!doctype html><html lang="${lang}" dir="${rtl ? "rtl" : "ltr"}"><head><meta charset="utf-8"><style>${fontCss}
 @page{size:13.333in 7.5in;margin:0}
@@ -126,14 +135,20 @@ function planHtml(unit, lesson, lang) {
   const bySlide = (layout) => lesson.slides.find((s) => s.layout === layout);
   const goals = bySlide("bullets"), act = bySlide("activity"), q = bySlide("questions"), ex = bySlide("exit"), titleSl = bySlide("title");
   const li = (sl) => pickList(sl?.bullets, lang).map((b) => `<li>${esc(b)}</li>`).join("");
+  // The activity in full when the slide has it (the slide itself keeps one line per step).
+  const steps = (sl) => (sl?.details ? pickList(sl.details, lang).map((b) => `<li>${esc(b)}</li>`).join("") : li(sl));
   const n = (k) => digits(k, lang);
+  // The activity's own timing ("Warm-up (5 min): …") when every step gives it, and what the class needs.
+  const mins = pickList(act?.bullets, "en").map((b) => Number(/\((\d+) min\)/.exec(b)?.[1]));
+  const minutes = mins.length && mins.every((m) => m > 0) ? mins.reduce((a, b) => a + b, 0) : 45;
+  const materials = lesson.materials ? pickList(lesson.materials, lang).map(esc).join(u.listSep) : u.materialsV;
   const qs = lesson.steps.filter((s) => ["choice", "multi", "truefalse", "match", "order", "fill", "type"].includes(s.type)).slice(0, 5).map((s, k) => {
     let body = "";
     if (s.type === "choice" || s.type === "multi") body = `<div class="opts">${s.options.map((o) => `<span><i class="${s.type === "multi" ? "sq" : ""}"></i>${esc(pick(o.text, lang))}</span>`).join("")}</div>`;
     if (s.type === "truefalse") body = `<div class="opts">${u.tf.map((x) => `<span><i></i>${x}</span>`).join("")}</div>`;
     if (s.type === "match") { const right = [...s.pairs].reverse(); body = `<div class="match">${s.pairs.map((p, j) => `<span class="b">${esc(pick(p.left, lang))}</span><span class="dots">• • • •</span><span class="b">${esc(pick(right[j].right, lang))}</span>`).join("")}</div>`; }
     if (s.type === "order") body = `<div class="order">${[...s.steps].reverse().map((x) => `<div><i></i>${esc(pick(x, lang))}</div>`).join("")}</div>`;
-    if (s.type === "fill") { const parts = s.sentence[lang] ?? s.sentence.en; body = `<p class="fill">${parts.map((p) => (typeof p === "string" ? esc(p) : `<span class="gap"></span>`)).join("")}</p><p class="bank"><b>${u.bank}:</b> ${pickList(s.bank, lang).map(esc).join(" · ")}</p>`; }
+    if (s.type === "fill") { const parts = s.sentence[lang] ?? s.sentence.en; body = `<p class="fill">${parts.map((p) => (typeof p === "string" ? esc(p) : `<span class="gap"></span>`)).join("")}</p><p class="bank"><b>${u.bank}:</b> ${pickList(s.bank, lang).map(esc).join(u.sep)}</p>`; }
     if (s.type === "type") body = `<div class="lines"><i></i></div>`;
     return `<div class="q"><h3><span class="qn">${n(k + 1)}</span>${esc(pick(s.prompt, lang))}</h3>${body}</div>`;
   }).join("");
@@ -161,9 +176,9 @@ ul,ol{margin:0;padding-inline-start:6mm}li{margin-bottom:1mm}${rtl ? "ol{list-st
 .foot{position:absolute;bottom:0;inset-inline:0;display:flex;justify-content:space-between;font-size:7.5pt;color:#5c5470;border-top:.6pt solid #c9b8a4;padding-top:2mm}
 </style></head><body>
 <section class="page">${head(u.plan, esc(pick(lesson.title, lang)))}
-<div class="grid"><div class="box"><b>${u.time}</b>${n(45)} ${u.min}</div><div class="box"><b>${u.materials}</b>${u.materialsV}</div></div>
+<div class="grid"><div class="box"><b>${u.time}</b>${n(minutes)} ${u.min}</div><div class="box"><b>${u.materials}</b>${materials}</div></div>
 <h2>${u.goals}</h2><ul>${li(goals)}</ul>
-<h2>${u.activity}: ${esc(pick(act?.title, lang))}</h2><ol>${li(act)}</ol>${act?.note ? `<p><b>${esc(pick(act.note, lang))}</b></p>` : ""}
+<h2>${u.activity}: ${esc(pick(act?.title, lang))}</h2><ol>${steps(act)}</ol>${act?.note ? `<p><b>${esc(pick(act.note, lang))}</b></p>` : ""}
 <h2>${u.discuss}</h2><ul>${li(q)}</ul>
 <h2>${u.exit}</h2><ul>${li(ex)}</ul>
 <div class="note"><h3>${u.tomorrow}</h3><div>${esc(pick(lesson.tryTomorrow, lang))}</div></div>${foot}</section>

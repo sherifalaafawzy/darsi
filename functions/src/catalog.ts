@@ -29,9 +29,14 @@ export const versionOf = (path: string) => Number(/\/v(\d+)\.json$/.exec(path)?.
 /** Versions to delete after publishing `current`: all but the current and the previous one (a device holding the old catalog still loads). */
 export const staleVersions = (paths: string[], current: number) => paths.filter((p) => versionOf(p) < current - 1);
 
-/** Download size shown before a download: the JSON plus one language's videos (the brand book: sizes before every download). */
+/**
+ * Download size shown before a download (the brand book: sizes before every download): the JSON plus one language's
+ * videos. A download stores a video step's light lesson instead of its MP4 when it has one (unitAssetUrls in the app).
+ */
 export function sizeMB(unit: Unit, jsonBytes: number) {
-  const videoMB = unit.lessons.reduce((a, l) => a + l.steps.reduce((b, s) => b + (s.type === "video" ? s.sizeMB || 0 : 0), 0), 0);
+  const stepMB = (s: Unit["lessons"][number]["steps"][number]) => s.type !== "video" ? 0
+    : s.light?.sizeKB ? Math.max(0, ...Object.values(s.light.sizeKB).map(Number).filter(Number.isFinite)) / 1024 : s.sizeMB || 0;
+  const videoMB = unit.lessons.reduce((a, l) => a + l.steps.reduce((b, s) => b + stepMB(s), 0), 0);
   return Math.max(0.1, Math.round((jsonBytes / 1e6 + videoMB) * 10) / 10);
 }
 

@@ -9,6 +9,8 @@ export interface VideoPlayerProps {
   src?: string;
   /** <track kind="captions" …> elements, one per language. */
   tracks?: ReactNode;
+  /** "anonymous" when the video or its captions come from another origin: a cross-origin <track> loads only then. */
+  crossOrigin?: "anonymous";
   duration: number;
   current?: number;
   chapters?: { at: number; label: string }[];
@@ -47,7 +49,7 @@ export function VideoPlayer(p: VideoPlayerProps) {
     <figure className={cx("dr-video", checkpoint ? "has-checkpoint" : undefined)}>
       <div className="dr-video-stage">
         {src ? (
-          <video ref={ref} src={src} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onError={() => { setPlaying(false); p.onError?.(); }} poster={typeof poster === "string" ? poster : undefined} preload="none" playsInline
+          <video ref={ref} src={src} crossOrigin={p.crossOrigin} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onError={() => { setPlaying(false); p.onError?.(); }} poster={typeof poster === "string" ? poster : undefined} preload="none" playsInline
             onTimeUpdate={(e) => { setCurrent(e.currentTarget.currentTime); p.onTimeUpdate?.(e.currentTarget.currentTime); }}>{tracks}</video>
         ) : <div className="dr-video-poster">{typeof poster === "string" ? <img src={poster} alt="" /> : poster}</div>}
         {!playing && !checkpoint && <button type="button" className="dr-video-bigplay" onClick={toggle} aria-label={playLabel}><Icon name="play" size={32} /></button>}

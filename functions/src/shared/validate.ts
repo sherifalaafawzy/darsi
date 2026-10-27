@@ -196,15 +196,34 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
       if (!isObj(s[key])) { add(key, "badValue"); continue; }
       for (const [lang, url] of Object.entries(s[key] as Obj)) if (!okUrl(url)) add(`${key}.${lang}`, "badUrl");
     }
+    /** Per-language times: seconds inside that language's own video. */
+    const atBy = (o: Obj, field: string) => {
+      if (o.atBy === undefined) return;
+      if (!isObj(o.atBy)) return add(`${field}.atBy`, "badValue");
+      for (const [lang, v] of Object.entries(o.atBy)) if (!isNum(v) || v < 0 || v > 3600) add(`${field}.atBy.${lang}`, "range", { min: 0, max: 3600 });
+    };
+    if (s.light !== undefined) {
+      const light = s.light;
+      if (!isObj(light) || !isObj(light.files) || !isObj(light.langs)) add("light", "badValue");
+      else {
+        for (const [path, url] of Object.entries(light.files)) if (!okUrl(url)) add(`light.files.${path}`, "badUrl");
+        for (const [lang, pl] of Object.entries(light.langs)) {
+          if (!filled(pl)) { add(`light.langs.${lang}`, "badValue"); continue; }
+          for (const need of ["manifest.json", "scenes.json", `timing/${pl}.json`]) if (!filled(light.files[need])) add(`light.files.${need}`, "required");
+        }
+      }
+    }
     arr(s.chapters).forEach((c, i) => {
       if (!isObj(c)) return add(`chapters.${i}`, "badValue");
       text(c, "label");
+      atBy(c, `chapters.${i}`);
       if (!isNum(c.at) || c.at < 0 || (isNum(s.duration) && c.at >= s.duration)) add(`chapters.${i}.at`, "range", { min: 0, max: isNum(s.duration) ? s.duration - 1 : 0 });
     });
     if (s.checkpoint !== undefined) {
       const cp = s.checkpoint;
       if (!isObj(cp) || !isObj(cp.question) || (cp.question.type !== "choice" && cp.question.type !== "truefalse")) return add("checkpoint", "checkpoint");
       if (!isNum(cp.at) || cp.at < 0 || (isNum(s.duration) && cp.at >= s.duration)) add("checkpoint.at", "range", { min: 0, max: isNum(s.duration) ? s.duration - 1 : 0 });
+      atBy(cp, "checkpoint");
       const before = issues.length;
       step(cp.question, "checkpoint.question");
       // Field paths inside the checkpoint question are relative to it; prefix the ones step() added.
@@ -215,7 +234,7 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
   const lesson = (l: unknown, unitId: string) => {
     if (!isObj(l)) return add("", "badValue");
     if (byteSize(l) > MAX_LESSON_BYTES) add("", "tooLarge", { max: Math.round(MAX_LESSON_BYTES / 1000) });
-    text(l, "title"); text(l, "tryTomorrow");
+    text(l, "title"); text(l, "tryTomorrow"); list(l, "materials", 1, false);
     if (!isNum(l.minutes) || !Number.isInteger(l.minutes) || l.minutes < 1 || l.minutes > 60) add("minutes", "range", { min: 1, max: 60 });
     const steps = arr(l.steps); minItems(steps, "steps", 1); ids(steps, "steps");
     const outer = ctx;
@@ -227,7 +246,8 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
       ctx = { ...outer, slide: i };
       if (!isObj(sl)) { add("", "badValue"); return; }
       oneOf(sl, "layout", SLIDE_LAYOUTS); text(sl, "title");
-      list(sl, "bullets", 1, false); text(sl, "note", false); text(sl, "narration", false);
+      list(sl, "bullets", 1, false); text(sl, "note", false); text(sl, "narration", false); list(sl, "details", 1, false);
+      if (isObj(sl.details) && Array.isArray(sl.details.en) && (!isObj(sl.bullets) || !Array.isArray(sl.bullets.en) || sl.details.en.length !== sl.bullets.en.length)) add("details.en", "badValue");
     });
     ctx = outer;
     arr(l.kit).forEach((k, i) => {

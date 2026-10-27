@@ -142,6 +142,25 @@ describe("validateUnit", () => {
     expect(all.find((i) => i.code === "missingLang")).toMatchObject({ at: { lesson: 0, field: "title.ar" }, params: { lang: "ar" } });
   });
 
+  it("checks a lesson's optional materials list like any other list", () => {
+    const u = base(); u.lessons[0].materials = { en: ["Board and chalk", "A thermometer"] };
+    const all = validateUnit(u, { competencies: codes });
+    expect(errorsOf(all)).toEqual([]);
+    expect(all.find((i) => i.at.field === "materials.ar")).toMatchObject({ code: "missingLang", at: { lesson: 0 } });
+    u.lessons[0].materials = { en: [] };
+    expect(has(errs(u), "required", "materials.en")).toBe(true);
+    delete u.lessons[0].materials;
+    expect(validateUnit(u, { competencies: codes }).filter((i) => i.at.field.startsWith("materials"))).toEqual([]);
+  });
+
+  it("checks an activity slide's details: a list with one entry per bullet", () => {
+    const u = base(); const sl = u.lessons[0].slides.find((s: AnyObj) => s.bullets);
+    sl.details = { en: sl.bullets.en.map((b: string) => `${b} In full.`), ar: sl.bullets.ar.map((b: string) => `${b} كاملة.`) };
+    expect(validateUnit(u, { competencies: codes }).filter((i) => i.at.field.startsWith("details"))).toEqual([]);
+    sl.details.en = sl.details.en.slice(1);
+    expect(has(errs(u), "badValue", "details.en")).toBe(true);
+  });
+
   it("caps the size of a lesson", () => {
     const u = base(); stepOf(u, "read").body.en = "x".repeat(310_000);
     expect(errs(u).some((i) => i.code === "tooLarge" && i.at.lesson === 0)).toBe(true);

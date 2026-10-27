@@ -388,6 +388,8 @@ function LessonDetail({ lesson: l, index, count, onChange, canPreview, onPreview
       <LText label={t("cms.title")} value={l.title} onChange={(title) => onChange({ ...l, title })} />
       <div className="form-grid"><Num label={t("cms.minutes")} min={1} max={60} value={l.minutes} onChange={(minutes) => onChange({ ...l, minutes })} /></div>
       <LText label={t("lesson.try")} hint={t("cms.tryHint")} value={l.tryTomorrow} onChange={(tryTomorrow) => onChange({ ...l, tryTomorrow })} multiline rows={2} />
+      <LList label={t("cms.materials")} hint={t("cms.materialsHint")} value={l.materials} rows={3}
+        onChange={(materials) => onChange({ ...l, materials: materials.en.length || Object.values(materials).some((v) => v?.length) ? materials : undefined })} />
       <div className="stack-sm">
         <span className="dr-field-label">{t("p.capabilities")}</span>
         <div className="row-gap">
@@ -471,6 +473,8 @@ function SlidesForm({ lesson: l, onChange }: { lesson: Lesson; onChange: (l: Les
             <Sel label={t("cms.layout")} value={s.layout} onChange={(layout) => set({ ...s, layout })} options={SLIDE_LAYOUTS.map((x) => [x, t(`cms.layout.${x}` as MessageKey)] as const)} />
             <LText label={t("cms.title")} value={s.title} onChange={(title) => set({ ...s, title })} />
             <LList label={t("cms.bullets")} hint={t("cms.onePerLine")} value={s.bullets} onChange={(bullets) => set({ ...s, bullets })} rows={3} />
+            {(s.layout === "activity" || s.details) && <LList label={t("cms.details")} hint={t("cms.detailsHint")} value={s.details} rows={5}
+              onChange={(details) => set({ ...s, details: Object.values(details).some((v) => v?.length) ? details : undefined })} />}
             <LText label={t("cms.note")} value={s.note} onChange={(note) => set({ ...s, note })} multiline rows={2} />
             <LText label={t("cms.narration")} hint={t("cms.narrationHint")} value={s.narration} onChange={(narration) => set({ ...s, narration })} multiline rows={2} />
           </div>

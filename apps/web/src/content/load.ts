@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { firebaseConfig, firebaseReady, useEmulators } from "../firebase-config";
-import { captionsFor, kitUrl, videoSrc, type Catalog, type CatalogEntry, type Placement, type Settings, type Unit } from "./types";
+import { captionsFor, kitUrl, lightLang, videoSrc, type Catalog, type CatalogEntry, type Placement, type Settings, type Unit } from "./types";
 
 const memo = new Map<string, Promise<unknown>>();
 /** Fetches content JSON; the service worker serves it from cache when offline. */
@@ -154,7 +154,27 @@ export function unitAssetUrls(unit: Unit, lang: string): string[] {
   const urls: string[] = [];
   for (const l of unit.lessons) {
     for (const k of l.kit) if (k.kind !== "video") for (const f of k.formats) { const u = kitUrl(k, lang, f); if (u) urls.push(u); }
-    for (const s of l.steps) if (s.type === "video") { const v = videoSrc(s, lang); if (v) urls.push(v); const c = captionsFor(s, lang); if (c) urls.push(c.src); }
+    for (const s of l.steps) {
+      if (s.type !== "video") continue;
+      const pl = lightLang(s, lang);
+      if (pl && s.light) {
+        // The light lesson is what plays by default: its files and the narration the phone can play, not the MP4.
+        const f = s.light.files;
+        const opus = typeof document !== "undefined" && !!document.createElement("audio").canPlayType?.('audio/ogg; codecs="opus"');
+        for (const p of ["manifest.json", "scenes.json", `timing/${pl}.json`, opus ? `audio/${pl}.opus` : `audio/${pl}.m4a`]) if (f[p]) urls.push(f[p]);
+        urls.push(...LIBRARY_FILES);
+        continue;
+      }
+      const v = videoSrc(s, lang); if (v) urls.push(v); const c = captionsFor(s, lang); if (c) urls.push(c.src);
+    }
   }
   return [...new Set(urls)];
 }
+
+/** The shared library the light lessons draw with (public/lib, from Lesson Studio): the cast, the extra icons, the mark. */
+const CAST = ["amina", "okafor", "salma", "joseph", "farah"].flatMap((who) => ["smile", "talking", "curious", "happy"].map((m) => `/lib/v1/cast/${who}_${m}.svg`));
+export const LIBRARY_FILES = ["/lib/v1/icons.json", "/lib/v1/brand/darsi-mark.svg", ...CAST];
+
+/** A light lesson's JSON (scenes, timing): cache-first like unit files, since a published file's URL never changes. */
+export const loadStoredJSON = <T,>(url: string): Promise<T> =>
+  cachedJSON<T>(url, async () => { const r = await fetch(url); if (!r.ok) throw new Error(`${url}: ${r.status}`); return r.json(); }, false);

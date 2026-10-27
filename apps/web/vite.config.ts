@@ -69,7 +69,7 @@ export default defineConfig({
         // Lesson content is tiny and precached; kits are cached when a unit is downloaded. Staff-only and first-visit
         // chunks (and exceljs, ~930 KB) are not precached, so a learner's install stays small; "darsi-chunks" caches them on first use.
         // firebase-* covers firebase-extra (Functions, Storage, Messaging) too.
-        globIgnores: ["kits/**", "push-sw.js", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin,firebase,Cms,competencies}-*.{js,css}",
+        globIgnores: ["kits/**", "lib/**", "push-sw.js", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin,firebase,Cms,competencies}-*.{js,css}",
           // Each lab app (~5–20 KB) is cached when first opened, or all at once with "Save all labs for offline".
           "**/lab-*.js"],
         navigateFallback: "/index.html",
@@ -84,6 +84,8 @@ export default defineConfig({
           { urlPattern: ({ url }) => url.pathname.endsWith(".woff2"), handler: "CacheFirst", options: { cacheName: "darsi-fonts", matchOptions: { ignoreVary: true }, cacheableResponse: { statuses: [200], headers: { "content-type": "font/woff2" } }, expiration: { maxEntries: 20 } } },
           { urlPattern: ({ url }) => url.pathname.startsWith("/content/"), handler: "StaleWhileRevalidate", options: { cacheName: "darsi-content" } },
           { urlPattern: ({ url }) => url.pathname.startsWith("/kits/"), handler: "CacheFirst", options: { cacheName: "darsi-kits", expiration: { maxEntries: 200 } } },
+          // Lesson Studio's shared library (cast, icons) for light lessons: a few small, versioned files kept for good.
+          { urlPattern: ({ url }) => url.pathname.startsWith("/lib/"), handler: "CacheFirst", options: { cacheName: "darsi-lib", cacheableResponse: { statuses: [200] } } },
           { urlPattern: ({ url }) => url.pathname.startsWith("/media/"), handler: "CacheFirst", options: { cacheName: "darsi-media", rangeRequests: true, expiration: { maxEntries: 60 } } },
           // Videos, captions and kits uploaded in the course editor (Cloud Storage): served from darsi-media once the unit is
           // downloaded (platform cacheUrls). Streaming without a download is never stored: those responses are opaque

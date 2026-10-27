@@ -46,9 +46,11 @@ Darsi's users are teachers on low-cost Android phones, often shared, with expens
 
 ```
 darsi/
-├─ content/                      the starting courses, not shipped with the app: units/*.json (en + ar) and the
-│                                generated kits/ (PDF + PPTX, committed); `npm run seed` publishes them to Storage
-├─ scripts/seed-content.mjs      publishes content/ like the course editor (kits uploaded, then publishDraft)
+├─ content/                      the starting courses, not shipped with the app: units/*.json (en + ar), the
+│                                generated kits/ (PDF + PPTX, committed) and media/ (videos and light lessons,
+│                                gitignored); `npm run seed` publishes them to Storage
+├─ scripts/seed-content.mjs      publishes content/ like the course editor (kits and media uploaded, then publishDraft)
+├─ scripts/import-packs.mjs      turns the course packs and their Lesson Studio videos into content/units, kits and media
 ├─ apps/web/                     the PWA
 │  ├─ public/content/            placement.json (the onboarding check) only: the app ships no courses
 │  ├─ public/push-sw.js          the service worker's push and notification-click handlers (imported into sw.js)
@@ -97,6 +99,7 @@ Run from the repository root. Node 22 is recommended and npm 11 is expected (`np
 | `npm run typecheck` | TypeScript across the workspace |
 | `npm run lint:css` | Checks every app stylesheet against the RTL, token and old-WebView rules |
 | `npm run kits` | Regenerates the classroom kits in `content/kits` from `content/units` |
+| `node scripts/import-packs.mjs --packs <dir> --studio ../lessonstudio` | Imports the unzipped course packs as units (English), with their videos and light lessons from Lesson Studio in `content/media`. An existing unit file is left alone unless `--force`; `--media-only` refreshes only the video fields and files |
 | `npm run seed -- --emulator` | Publishes the starting courses (`content/`) to the emulators; without `--emulator`, to the real project (Application Default Credentials, as for `superadmin`). An existing draft is left alone unless `--replace` |
 | `npm run superadmin -- <email>` | Makes an account a platform admin (`--revoke`, `--emulator`) |
 | `npm --prefix functions run build` / `test` | Builds or tests the Cloud Functions |
@@ -165,8 +168,9 @@ The service worker (Workbox `generateSW`) installs when a person enters the app.
 | `/content/placement.json` | Stale-while-revalidate (`darsi-content`) |
 | `/kits/*` | Cache-first (`darsi-kits`). No longer shipped: only phones that downloaded the old built-in kits still have entries, which "Remove" clears |
 | `/media/*` | Cache-first with range requests (`darsi-media`) |
+| `/lib/*` (Lesson Studio's shared library for light lessons: the cast, extra icons, the mark; ~56 KB before compression) | **Not precached**; cache-first in `darsi-lib` when a light lesson first plays or a unit with one is downloaded. Versioned (`/lib/v1/`), immutable on Hosting, and "Remove" leaves it for the other units |
 | Courses (Cloud Storage `…/catalog.json`, `…/units/{id}/v{n}.json`) | Kept by `content/load.ts` itself in `darsi-content`, not by a service-worker rule: catalogs network-first with the last copy as the offline fallback; unit files cache-first (a version's path never changes). See [Authored content](#authored-content) |
-| Uploaded media (Cloud Storage videos, captions, kit files) | Cache-first with range requests (`darsi-media`) once a unit is downloaded; only `200` responses are kept, so streaming without a download (opaque responses) is never stored |
+| Uploaded media (Cloud Storage videos, captions, kit files, light-lesson audio) | Cache-first with range requests (`darsi-media`) once a unit is downloaded; only `200` responses are kept, so streaming without a download (opaque responses) is never stored. A light lesson's JSON (manifest, scenes, timing) is kept by `loadStoredJSON` in `darsi-content`, cache-first |
 | Firestore data | The SDK's persistent IndexedDB cache, capped at **10 MB** (the default is 40 MB) |
 
 - **Updates** use prompt mode: a "Reload" toast appears on app screens, never in the middle of a lesson.
@@ -344,7 +348,16 @@ Every role or organization change goes through these functions, which set the cl
 ## Content, lessons and kits
 
 - **Content is data, and the app ships none.** Every course a learner sees is published with the course editor to Cloud Storage (see [Authored content](#authored-content)); units are typed by `src/content/types.ts`. Every learner-facing string is `{ "en": …, "ar": … }` (or more languages), with English as the fallback.
-- **The starting courses** (`ai-1` today) are sources in `content/units/` at the repo root, with their kits in `content/kits/`. `npm run seed` publishes them through the editor's own publish code (`publishDraft`), uploading the kits as media, so they are ordinary published units that platform admins can edit. Their ids are kept, so progress, notes and certificates still match.
+- **The starting courses** are sources in `content/units/` at the repo root, with their kits in `content/kits/` and their media in `content/media/`: `ai-1`, plus the three units imported from the course packs, `ai-1-1` (AI basics), `cyber-1-1` (Passwords and phishing) and `iot-1-2` (Sensors). `npm run seed` publishes them through the editor's own publish code (`publishDraft`), uploading the kits and media, so they are ordinary published units that platform admins can edit. Their ids are kept, so progress, notes and certificates still match.
+  - **Media** (`content/media/<lesson>/`, gitignored, about 56 MB) is made by `scripts/import-packs.mjs` from the Lesson Studio repository: the 240p MP4 and captions per language, and the light lesson. The seed uploads each file to `content/media/<unit>/<content hash>/…` with a one-year immutable cache, so a re-seed sends only what changed. Media that isn't on the computer keeps its app path.
+  - **Kits** that exist only in English (the packs' own lesson plans, worksheets and answer keys) are uploaded in English only; `kitUrl` falls back to English.
+  - `tests/units.test.ts` checks every starting course: no errors and no warnings (Arabic included), the content rules in docs/CONTENT.md (every course but `ai-1`), the published form (Storage URLs) and no "·" in Arabic.
+- **Light lessons.** A video step may carry `light`: the same lesson as a Lesson Studio package (manifest, scenes, per-language timing and narration), which the phone draws itself. It's about 380 KB per language with the narration, against about 1.1 MB for the 240p MP4, and stays sharp on any screen.
+  - `lesson/LightLesson.tsx` plays it with the vendored Lesson Studio player (`src/vendor/lessonstudio-player.js`, an ES module of `createPlayer`, about 22 KB gzipped, precached so downloaded lessons play offline; refresh it with `node scripts/darsi/vendor-player.mjs` in the Lesson Studio repository, which also copies its `public/lib` here). The player's `resolve` maps package paths to `light.files` URLs; `library` points at `/lib/`.
+  - **Bundle:** the player is a lazy chunk that App registers with `setLightPlayer(() => import(…))`, and it imports nothing. A lazy `LightLesson` component (sharing React and `content/load` with startup code) split the startup bundle into six files, and moving its `import()` into App didn't help; only a chunk with no shared imports keeps startup at four.
+  - `StepView` shows the light lesson first when it has the teacher's language (`lightLang`: `light.langs`, e.g. `ar` → `ar-EG`, else English), with "Watch as a video file (1.1 MB)" to switch to the MP4 and "Light version" to switch back. The player asks its own quick checks, so the step's checkpoint question is for the MP4 and the transcript. The step can continue once a check is answered or the lesson ends, as with the video.
+  - Each language is narrated separately, so chapter and checkpoint times can differ: `atBy[lang]` holds that language's own time, read with `timeIn()`.
+  - Downloading a unit stores the light lesson (its JSON, the narration in Opus or, where the phone can't play Opus, AAC, and the library) instead of the MP4.
 - **Lesson shape:** video (with a checkpoint question) → reading with key terms → mixed questions (some lessons add a `lab` step that embeds any Labs app) → classroom project → reflection → "Try it in class tomorrow".
 - **Step types:** `video`, `read`, `choice`, `multi`, `truefalse`, `image`, `match`, `order`, `fill`, `type`, `hotspot`, `scenario`, `lab`, `project`, `reflect`.
 - **Engine** (`src/lesson/engine.ts`): pure, unit-tested grading. Answers that ignore case and Arabic diacritics are accepted. A wrong answer comes back once at the end of the lesson. XP is `10 + round(accuracy × 20)`.
@@ -356,6 +369,9 @@ Every role or organization change goes through these functions, which set the cl
   - `lesson-plan-<lang>.pdf`: an A4 lesson plan and pupil worksheet built from the lesson's questions.
 
   The files are committed to `content/kits/`, so seeding doesn't need Chromium. Regenerate them after editing a starting course, then seed it again with `--replace`.
+  - The lesson plan lists the lesson's `materials` (else "board, chalk, paper"), the activity's real length (the sum of its "(N min)" steps, else 45) and, when the activity slide has `details`, every step in full; the slide keeps its one-line bullets.
+  - Long activity slides get smaller type (`fit()` in build-kits) so the steps and the preparation note stay on the slide; Arabic kits use «،» as the separator, never "·".
+- **Captions from Storage** need `crossorigin="anonymous"` on the video (a cross-origin `<track>` loads only then). `StepView` sets it when the video or its captions come from another origin; Storage answers with CORS headers.
 
 ## Labs
 
@@ -440,9 +456,10 @@ Each catalog entry carries `src` (the JSON's Storage path), `version`, `owner` a
 **The bundle rule (learned the hard way).** A module shared between the startup bundle and lazy chunks (`content/load.ts`, the lesson player…) must not import the Firebase SDK or anything that lazy-loads it, **not even dynamically**. Otherwise Rolldown splits the startup bundle into several files: 7 instead of 2 when this was measured, with more requests on a first visit. That is why:
 - App passes the org reader in (`setOrgReader`);
 - App passes the lesson player in (`<UnitEditor Player={LessonPlayer} />`) instead of the editor importing it;
-- the editor has a single lazy entry module (`cms/Cms.tsx`).
+- the editor has a single lazy entry module (`cms/Cms.tsx`);
+- App registers the light-lesson player (`setLightPlayer`), a lazy chunk that imports nothing. A new lazy chunk that imports React or `content/load` can split startup too (six files when measured on 2026-10-27), so measure every new one.
 
-Manual `codeSplitting` groups capture their dependencies recursively (a `src/cms` group once pulled React, the router and the design system into the editor chunk and loaded it at startup), so never add one for app code. To check, build into a separate folder and follow the entry chunk's static imports: they should stay at `index` + `rolldown-runtime`. Measured on 2026-10-26 with the Labs apps in the tree, the entry also imports `dist` (`@capacitor/core`, 7.8 KB) and `preload-helper`: 4 files, 152 KB gzipped. Builds without Labs stay at 2 files, so the split came in with Labs. It is accepted for now: the total size is the same, and it must not grow past these four.
+Manual `codeSplitting` groups capture their dependencies recursively (a `src/cms` group once pulled React, the router and the design system into the editor chunk and loaded it at startup), so never add one for app code. To check, build into a separate folder and follow the entry chunk's static imports: they should stay at `index` + `rolldown-runtime`. Measured on 2026-10-26 with the Labs apps in the tree, the entry also imports `dist` (`@capacitor/core`, 7.8 KB) and `preload-helper`: 4 files, 152 KB gzipped (155 KB on 2026-10-27, with languages and light lessons). Builds without Labs stay at 2 files, so the split came in with Labs. It is accepted for now: the total size is the same, and it must not grow past these four.
 
 ## Tracks and levels
 

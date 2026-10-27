@@ -14,6 +14,7 @@ import { usePushRefresh } from "./notify/usePushRefresh";
 import { Layout } from "./components/Layout";
 import { Home } from "./screens/Home";
 import { LessonPlayer, LessonScreen } from "./screens/LessonScreen";
+import { setLightPlayer } from "./lesson/LightLesson";
 import { Onboarding } from "./screens/Onboarding";
 import { Kit } from "./screens/Kit";
 import { Downloads } from "./screens/Downloads";
@@ -40,6 +41,7 @@ const TracksPage = lazy(() => import("./cms/Cms").then((m) => ({ default: m.Trac
 const LanguagesPage = lazy(() => import("./cms/Cms").then((m) => ({ default: m.LanguagesPage })));
 const TranslatePage = lazy(() => import("./cms/Cms").then((m) => ({ default: m.TranslatePage })));
 setOrgReader((path) => loadFirebase().then((fb) => fb.storageJSON(path)));
+setLightPlayer(() => import("./vendor/lessonstudio-player.js"));
 
 const Loading = () => <div className="loading" aria-busy="true" />;
 

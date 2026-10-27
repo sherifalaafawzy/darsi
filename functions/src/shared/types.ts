@@ -69,9 +69,25 @@ export interface VideoStep extends Base {
   duration: number;
   sizeMB: number;
   transcript: LocalText;
-  chapters?: { at: number; label: LocalText }[];
-  checkpoint?: { at: number; question: ChoiceStep | TrueFalseStep };
+  /** `atBy`: the same moment in each language's own video, when they differ (each language is narrated separately). */
+  chapters?: { at: number; atBy?: Partial<Record<string, number>>; label: LocalText }[];
+  checkpoint?: { at: number; atBy?: Partial<Record<string, number>>; question: ChoiceStep | TrueFalseStep };
+  /**
+   * The same lesson as a Lesson Studio light lesson: drawn on the phone from a few KB of scenes plus the narration audio,
+   * about a third of the MP4's data. Shown first when it has the teacher's language; the MP4 stays a choice.
+   */
+  light?: LightLesson;
 }
+/**
+ * A Lesson Studio package (lesson/LightLesson.tsx plays it). `files` maps each package path ("manifest.json",
+ * "scenes.json", "timing/ar-EG.json", "audio/ar-EG.opus", …) to its URL; `langs` maps a Darsi language to the
+ * package's ("ar" → "ar-EG"); `sizeKB` is what one language downloads, narration included.
+ */
+export interface LightLesson { files: Record<string, string>; langs: Partial<Record<string, string>>; sizeKB?: Partial<Record<string, number>> }
+/** The moment in this language's video (its own time, else the English one). */
+export const timeIn = (o: { at: number; atBy?: Partial<Record<string, number>> }, lang: string): number => o.atBy?.[lang] ?? o.at;
+/** The light lesson's own language for a Darsi language, falling back to English; null when it has neither. */
+export const lightLang = (s: VideoStep, lang: string): string | null => s.light ? s.light.langs[lang] ?? s.light.langs.en ?? null : null;
 /** A Labs app id (apps/web/src/labs/apps/<id>), e.g. "prompt", "neuron", "playground". */
 export type LabTool = string;
 export interface LabStep extends Base { type: "lab"; tool: LabTool }
@@ -84,7 +100,11 @@ export type Step = ChoiceStep | MultiStep | TrueFalseStep | ImageStep | MatchSte
 export type GradedStep = ChoiceStep | MultiStep | TrueFalseStep | ImageStep | MatchStep | OrderStep | FillStep | TypeStep | HotspotStep;
 export const GRADED = new Set<Step["type"]>(["choice", "multi", "truefalse", "image", "match", "order", "fill", "type", "hotspot"]);
 
-export interface Slide { layout: "title" | "bullets" | "activity" | "questions" | "exit"; title: LocalText; bullets?: LocalList; note?: LocalText; /** Voice-over for the narrated video and the speaker notes in the PPTX (Google Vids uses these). */ narration?: LocalText }
+export interface Slide {
+  layout: "title" | "bullets" | "activity" | "questions" | "exit"; title: LocalText; bullets?: LocalList; note?: LocalText;
+  /** Voice-over for the narrated video and the speaker notes in the PPTX (Google Vids uses these). */ narration?: LocalText;
+  /** Each bullet in full, one per bullet: the kit's lesson plan prints these, while the slide keeps its short bullets. */ details?: LocalList;
+}
 export type KitKind = "slides" | "lesson-plan" | "worksheet" | "video";
 export interface KitFile {
   kind: KitKind; title: LocalText; pages: number;
@@ -118,6 +138,8 @@ export interface Lesson {
   kit: KitFile[];
   /** Competency codes this lesson builds (see competencies.ts) — feeds the capability view for admins. */
   competencies?: string[];
+  /** What the teacher needs for the class activity, one item each. The kit's lesson plan lists it (else "board, chalk, paper"). */
+  materials?: LocalList;
 }
 export interface Unit { id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: Lesson[] }
 export interface CatalogEntry {

@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 /**
- * Publishes the starting courses, content/units/*.json (with their kits in content/kits), the way the course editor
- * does: uploads the kit files to Storage, saves the unit as a platform draft (units/{id}, unitDrafts/{id}) and publishes
- * it through the same code as the editor's Publish (publishDraft in functions/src/content.ts: checks, versioned JSON,
- * content/catalog.json). The app ships no courses of its own, so a new project shows none until this has run.
+ * Publishes the starting courses, content/units/*.json (with their kits in content/kits and their media in content/media),
+ * the way the course editor does: uploads the kit and media files to Storage, saves the unit as a platform draft
+ * (units/{id}, unitDrafts/{id}) and publishes it through the same code as the editor's Publish (publishDraft in
+ * functions/src/content.ts: checks, versioned JSON, content/catalog.json). The app ships no courses of its own, so a new
+ * project shows none until this has run.
+ *
+ * Media (narrated videos, captions and light lessons) is gitignored: scripts/import-packs.mjs makes it from the course
+ * packs and Lesson Studio. Each file goes to a folder named by its content, so phones cache it for good and a re-seed
+ * uploads only what changed. A unit's media that isn't on this computer keeps its app path (and video kits are left out).
  *
  *   npm run seed -- --emulator          the local Emulator Suite (demo-darsi)
  *   npm run seed                        the real project (.firebaserc)
@@ -18,10 +23,11 @@
  * or `gcloud auth application-default login` with an account that can manage the project.
  */
 import { createRequire } from "node:module";
+import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { basename, join } from "node:path";
+import { basename, extname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { contentTypeOf, kitFiles, withKitUrls } from "./lib/kits.mjs";
+import { contentTypeOf, kitFiles, mediaPathOf, mediaPaths, withKitUrls } from "./lib/kits.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const args = process.argv.slice(2);
@@ -59,6 +65,26 @@ const urlOf = (path) => `${emulator ? "http://127.0.0.1:9199" : "https://firebas
 const files = readdirSync(join(ROOT, "content/units")).filter((f) => f.endsWith(".json") && (!only.length || only.includes(basename(f, ".json"))));
 if (!files.length) { console.error(`No units to seed${only.length ? ` among: ${only.join(", ")}` : ""}.`); process.exit(1); }
 
+const hasKit = (file) => existsSync(join(ROOT, "content/kits", file));
+
+/** Uploads the unit's media that is on this computer; returns app path → download URL, and how many files were missing. */
+async function uploadMedia(unitId, paths) {
+  const media = new Map();
+  let missing = 0, sent = 0;
+  const todo = paths.filter((p) => existsSync(join(ROOT, "content", p)) || (missing++, false));
+  for (let i = 0; i < todo.length; i += 6) await Promise.all(todo.slice(i, i + 6).map(async (p) => {
+    const body = readFileSync(join(ROOT, "content", p));
+    const dest = mediaPathOf(unitId, p, createHash("sha256").update(body).digest("hex").slice(0, 12));
+    const file = bucket().file(dest);
+    if (!(await file.exists())[0]) {
+      await file.save(body, { resumable: false, metadata: { contentType: contentTypeOf(extname(p).slice(1)), cacheControl: "public, max-age=31536000, immutable" } });
+      sent++;
+    }
+    media.set(p, urlOf(dest));
+  }));
+  return { media, missing, sent };
+}
+
 console.log(`Seeding ${files.length} unit(s) into ${emulator ? "the emulators" : projectId} (bucket ${BUCKET})`);
 let failed = 0;
 for (const f of files) {
@@ -71,12 +97,14 @@ for (const f of files) {
       continue;
     }
     if (meta.exists && meta.get("owner") !== "public") throw new Error(`units/${id} belongs to ${meta.get("owner")}`);
-    for (const k of kitFiles(source)) {
+    const kits = kitFiles(source, hasKit);
+    for (const k of kits) {
       const local = join(ROOT, "content/kits", k.file);
       if (!existsSync(local)) throw new Error(`${k.file} is missing: build the kits (npm run kits -w @darsi/web)`);
       await bucket().upload(local, { destination: k.path, resumable: false, metadata: { contentType: contentTypeOf(k.fmt), cacheControl: "public, max-age=86400" } });
     }
-    const unit = withKitUrls(source, urlOf);
+    const { media, missing, sent } = await uploadMedia(id, mediaPaths(source));
+    const unit = withKitUrls(source, urlOf, { has: hasKit, media });
     const rev = (Number(meta.get("rev")) || 0) + 1;
     const batch = db.batch();
     // The same light record the editor writes (apps/web/src/cms/data.ts metaOf); `published` stays as it is.
@@ -88,7 +116,8 @@ for (const f of files) {
     batch.set(db.doc(`unitDrafts/${id}`), { owner: "public", rev, unit });
     await batch.commit();
     const { version } = await publishDraft("public", id, "seed");
-    console.log(`  ${id}: ${kitFiles(source).length} kit files uploaded, published as v${version}`);
+    console.log(`  ${id}: ${kits.length} kit files and ${media.size} media files (${sent} new) uploaded, published as v${version}`
+      + (missing ? `. ${missing} media file(s) aren't on this computer and keep their app paths.` : ""));
   } catch (e) {
     failed++;
     console.error(`  ${id}: not published. ${e.message}${e.details?.issues ? ` ${JSON.stringify(e.details.issues.slice(0, 5))}` : ""}`);

@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FillBlank, HotspotImage, ImageChoice, MatchPairs, OrderSteps, QuestionHeader, QuizOption, Reflection, ScenarioCard, TextField, TrueFalse, VideoPlayer, Button,
 } from "@darsi/design-system";
-import { captionsFor, pickList, videoSrc, type Step, type VideoStep, type ChoiceStep, type TrueFalseStep } from "../content/types";
+import { captionsFor, lightLang, pickList, timeIn, videoSrc, type Step, type VideoStep, type ChoiceStep, type TrueFalseStep } from "../content/types";
 import { useI18n, type MessageKey } from "../i18n";
 import { Art } from "../components/Art";
 import { LabEmbed } from "../labs/loader";
 import { ProjectView } from "./ProjectView";
 import { grade, shuffled, type Answer } from "./engine";
+import { canPlayLight, LightLesson } from "./LightLesson";
+
+/** The Lesson Studio player, only for lessons that have a light version (it carries its own small chunk). */
 
 const KEY_LABELS: Record<string, string[]> = { en: ["A", "B", "C", "D", "E"], ar: ["أ", "ب", "ج", "د", "هـ"] };
 
@@ -193,6 +196,14 @@ function VideoStepView({ step, onReady }: { step: VideoStep; onReady: () => void
   const { t, L, lang, num } = useI18n();
   const [failed, setFailed] = useState(false);
   const src = videoSrc(step, lang), captions = captionsFor(step, lang);
+  // The light lesson (Lesson Studio) plays first when it has this language; the MP4 is a choice, and the fallback.
+  const pl = canPlayLight() ? lightLang(step, lang) : null;
+  const [mode, setMode] = useState<"light" | "video">(pl ? "light" : "video");
+  const light = mode === "light" && !!pl && !!step.light;
+  // Times inside the video that plays: this language's own, or the English one when it falls back to English.
+  const videoLang = step.sources?.[lang] ? lang : "en";
+  const readied = useRef(false);
+  const ready = () => { if (!readied.current) { readied.current = true; onReady(); } };
   const playable = !!src && !failed;
   const [checkpointOpen, setCheckpointOpen] = useState(false);
   const [cpDone, setCpDone] = useState(false);
@@ -200,7 +211,7 @@ function VideoStepView({ step, onReady }: { step: VideoStep; onReady: () => void
   const [cpAnswer, setCpAnswer] = useState<Answer | null>(null);
   const [showTranscript, setShowTranscript] = useState(!src);
   const reading = !playable || showTranscript;
-  useEffect(() => { if (!step.checkpoint) onReady(); }, []);
+  useEffect(() => { if (!step.checkpoint) ready(); }, []);
   const cp = step.checkpoint?.question;
   const keys = KEY_LABELS[lang] ?? KEY_LABELS.en;
   const fmt = (sec: number) => `${num(Math.floor(sec / 60))}:${num(sec % 60, { minimumIntegerDigits: 2 })}`;
@@ -223,24 +234,50 @@ function VideoStepView({ step, onReady }: { step: VideoStep; onReady: () => void
       {cpResult === null
         ? <Button block disabled={!cpAnswer} onClick={() => { const ok = grade(cp, cpAnswer!, lang); setCpResult(ok); }}>{t("common.check")}</Button>
         : <><p className={cpResult ? "cp-ok" : "cp-no"}>{cpResult ? t("lesson.correct") : t("lesson.wrong")} — {L(cp.explain)}</p>
-            <Button block iconEnd="next" onClick={() => { setCheckpointOpen(false); setCpDone(true); onReady(); }}>{t("common.continue")}</Button></>}
+            <Button block iconEnd="next" onClick={() => { setCheckpointOpen(false); setCpDone(true); ready(); }}>{t("common.continue")}</Button></>}
     </div>
   );
+  const kb = pl ? step.light?.sizeKB?.[lang] ?? step.light?.sizeKB?.en : undefined;
+  const switchTo = (
+    <div className="video-modes">
+      {light && playable && <Button size="sm" variant="ghost" icon="play" onClick={() => setMode("video")}>{t("lesson.asVideo", { mb: num(step.sizeMB, { maximumFractionDigits: 1 }) })}</Button>}
+      {!light && pl && <Button size="sm" variant="ghost" icon="play" onClick={() => setMode("light")}>{t("lesson.asLight", { mb: num((kb ?? 400) / 1024, { maximumFractionDigits: 1 }) })}</Button>}
+    </div>
+  );
+  if (light) {
+    return (
+      <div className="stack">
+        <QuestionHeader type="video" typeLabel={t("lesson.video")} prompt={L(step.title)} />
+        {showTranscript ? null : (
+          // The quick checks are asked inside the player: answering one, or reaching the end, lets the lesson go on.
+          <LightLesson light={step.light!} lang={pl!} poster={poster} onEvent={(e) => { if (e.type === "check" || e.type === "ended") ready(); }} onError={() => setMode("video")} />
+        )}
+        <div className="video-modes">
+          <Button size="sm" variant="ghost" icon="file" onClick={() => setShowTranscript((x) => !x)}>{t("lesson.transcript")}</Button>
+          {playable && <Button size="sm" variant="ghost" icon="play" onClick={() => setMode("video")}>{t("lesson.asVideo", { mb: num(step.sizeMB, { maximumFractionDigits: 1 }) })}</Button>}
+        </div>
+        {showTranscript && <div className="transcript" dir="auto"><strong>{t("lesson.transcript")}</strong><p>{L(step.transcript)}</p></div>}
+        {showTranscript && cp && !cpDone && <div className="checkpoint-card"><span className="checkpoint-tag">{t("lesson.pause")}</span>{question}</div>}
+      </div>
+    );
+  }
   return (
     <div className="stack">
       <QuestionHeader type="video" typeLabel={t("lesson.video")} prompt={L(step.title)} />
       <VideoPlayer
         poster={poster} src={playable ? src! : undefined} duration={step.duration} title={L(step.title)}
         meta={[fmt(step.duration), "240p", `${num(step.sizeMB, { maximumFractionDigits: 1 })} MB`].join(t("common.sep"))}
-        chapters={step.chapters?.map((c) => ({ at: c.at, label: L(c.label) }))} questionsAt={step.checkpoint ? [step.checkpoint.at] : []}
+        chapters={step.chapters?.map((c) => ({ at: timeIn(c, videoLang), label: L(c.label) }))} questionsAt={step.checkpoint ? [timeIn(step.checkpoint, videoLang)] : []}
         tracks={captions ? <track kind="captions" srcLang={captions.lang} src={captions.src} default /> : undefined}
+        crossOrigin={[src, captions?.src].some((u) => u && new URL(u, location.href).origin !== location.origin) ? "anonymous" : undefined}
         checkpoint={playable && !reading && checkpointOpen && !cpDone ? question : undefined} checkpointLabel={t("lesson.pause")}
-        onTimeUpdate={(sec) => { if (step.checkpoint && cpResult === null && sec >= step.checkpoint.at) setCheckpointOpen(true); }}
+        onTimeUpdate={(sec) => { if (step.checkpoint && cpResult === null && sec >= timeIn(step.checkpoint, videoLang)) setCheckpointOpen(true); }}
         onError={() => { setFailed(true); setShowTranscript(true); }}
         actions={<Button size="sm" variant="ghost" icon="file" onClick={() => setShowTranscript((x) => !x)}>{t("lesson.transcript")}</Button>}
         playLabel={t("lesson.video")} captionsLabel="CC"
       />
       {!playable && <p className="muted small">{t("lesson.noVideo")}</p>}
+      {pl && switchTo}
       {showTranscript && <div className="transcript" dir="auto"><strong>{t("lesson.transcript")}</strong><p>{L(step.transcript)}</p></div>}
       {reading && cp && !cpDone && <div className="checkpoint-card"><span className="checkpoint-tag">{t("lesson.pause")}</span>{question}</div>}
     </div>

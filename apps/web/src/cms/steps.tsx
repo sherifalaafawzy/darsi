@@ -201,6 +201,7 @@ function FillLang({ lang, dir, name, step, onChange }: { lang: string; dir: "ltr
 
 /* ---------- Video ---------- */
 
+/** Imported videos carry per-language times (`atBy`); editing a time replaces them, since the app reads `atBy` first. */
 function VideoForm({ step: s, onChange, media }: { step: VideoStep; onChange: (s: Step) => void; media: MediaCtx }) {
   const { t } = useI18n();
   const langs = useEditLangs();
@@ -230,14 +231,14 @@ function VideoForm({ step: s, onChange, media }: { step: VideoStep; onChange: (s
       </div>
       {s.src !== null && <Text label={t("cms.videoPath")} hint={t("cms.videoPathHint", { lang: "{lang}" })} dir="ltr" value={s.src} onChange={(v) => onChange({ ...s, src: v.trim() || null })} />}
       <LText label={t("lesson.transcript")} hint={t("cms.transcriptHint")} value={s.transcript} onChange={(transcript) => onChange({ ...s, transcript })} multiline rows={6} />
-      <Items items={s.chapters ?? []} itemLabel={(i) => `${t("cms.chapter")} ${i + 1}`} addLabel={t("cms.addChapter")} onChange={(chapters) => onChange({ ...s, chapters: chapters.length ? chapters : undefined })}
+      <Items<NonNullable<VideoStep["chapters"]>[number]> items={s.chapters ?? []} itemLabel={(i) => `${t("cms.chapter")} ${i + 1}`} addLabel={t("cms.addChapter")} onChange={(chapters) => onChange({ ...s, chapters: chapters.length ? chapters : undefined })}
         add={() => ({ at: 0, label: LT() })}
-        render={(c, set) => <div className="stack"><Num label={t("cms.at")} hint={t("cms.seconds")} min={0} value={c.at} onChange={(at) => set({ ...c, at })} /><LText label={t("cms.label")} value={c.label} onChange={(label) => set({ ...c, label })} /></div>} />
+        render={(c, set) => <div className="stack"><Num label={t("cms.at")} hint={t("cms.seconds")} min={0} value={c.at} onChange={(at) => set({ ...c, at, atBy: undefined })} /><LText label={t("cms.label")} value={c.label} onChange={(label) => set({ ...c, label })} /></div>} />
       <Check label={t("cms.checkpoint")} checked={!!cp} onChange={(on) => onChange({ ...s, checkpoint: on ? { at: Math.max(0, Math.min(30, (s.duration || 1) - 1)), question: blankStep("choice", `${s.id}-q`) as ChoiceStep } : undefined })} />
       {cp && (
         <div className="ed-item stack">
           <div className="form-grid">
-            <Num label={t("cms.at")} hint={t("cms.seconds")} min={0} value={cp.at} onChange={(at) => onChange({ ...s, checkpoint: { ...cp, at } })} />
+            <Num label={t("cms.at")} hint={t("cms.seconds")} min={0} value={cp.at} onChange={(at) => onChange({ ...s, checkpoint: { ...cp, at, atBy: undefined } })} />
             <Sel label={t("cms.questionType")} value={cp.question.type} onChange={(type) => onChange({ ...s, checkpoint: { ...cp, question: blankStep(type, `${s.id}-q`) as ChoiceStep | TrueFalseStep } })}
               options={[["choice", t("q.choice")], ["truefalse", t("q.truefalse")]]} />
           </div>
