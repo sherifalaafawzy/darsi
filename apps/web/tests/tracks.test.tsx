@@ -15,7 +15,7 @@ const { placementLevel } = await import("../src/screens/Onboarding");
 const { useHistory } = await import("../src/cms/history");
 
 const data: TrackDef = { id: "data", name: { en: "Data science", ar: "علم البيانات" }, icon: "chart", tone: "leaf", levels: 6, levelNames: [{ en: "Basics" }], order: 3 };
-const wrap = (lang = "en") => ({ children }: { children: ReactNode }) => <I18nProvider lang={lang}><SettingsProvider>{children}</SettingsProvider></I18nProvider>;
+const wrap = (lang = "en") => ({ children }: { children: ReactNode }) => <I18nProvider lang={lang}><SettingsProvider lang={lang}>{children}</SettingsProvider></I18nProvider>;
 
 beforeEach(() => { m.settings = null; });
 

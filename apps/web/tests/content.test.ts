@@ -6,7 +6,6 @@ vi.mock("../src/firebase-config", () => ({ firebaseConfig: { storageBucket: "bkt
 const fetchOrgJSON = vi.fn();
 
 const entry = (id: string, extra: Partial<CatalogEntry> = {}): CatalogEntry => ({ id, track: "ai", level: 1, title: { en: id }, summary: { en: "" }, lessons: 1, sizeMB: 1, available: true, ...extra });
-const builtIn: Catalog = { version: 1, units: [entry("ai-1"), entry("iot-1", { available: false })] };
 const unit = (id: string): Unit => ({ id, track: "ai", level: 1, title: { en: id }, summary: { en: "" }, lessons: [] });
 const url = (path: string) => `https://firebasestorage.googleapis.com/v0/b/bkt/o/${encodeURIComponent(path)}?alt=media`;
 
@@ -32,7 +31,7 @@ let cs: ReturnType<typeof fakeCaches>;
 beforeEach(() => {
   vi.resetModules(); fetchOrgJSON.mockReset(); localStorage.clear();
   offline = false;
-  net = { "/content/catalog.json": builtIn, "/content/units/ai-1.json": unit("ai-1") };
+  net = {};
   cs = fakeCaches();
   vi.stubGlobal("caches", cs);
   vi.stubGlobal("fetch", vi.fn(async (u: string) => {
@@ -44,28 +43,37 @@ afterEach(() => vi.unstubAllGlobals());
 const load = async () => { const m = await import("../src/content/load"); m.setOrgReader((p) => fetchOrgJSON(p)); return m; };
 
 describe("mergeCatalog", () => {
-  it("lets public units replace built-in ones, appends new ones, and never lets an org unit replace anything", async () => {
+  it("lists public units, then the org's, and never lets an org unit replace a public one", async () => {
     const { mergeCatalog } = await load();
     const pub: Catalog = { version: 1, units: [entry("ai-1", { src: "content/units/ai-1/v2.json", version: 2 }), entry("u12345678", { src: "content/units/u12345678/v1.json" })] };
     const org: Catalog = { version: 1, units: [entry("ai-1", { src: "orgs/o/units/ai-1/v1.json" }), entry("uorg00001", { src: "orgs/o/units/uorg00001/v1.json" }), { junk: true } as unknown as CatalogEntry] };
-    const m = mergeCatalog(builtIn, pub, org);
-    expect(m.units.map((u) => u.id)).toEqual(["ai-1", "iot-1", "u12345678", "uorg00001"]);
+    const m = mergeCatalog(pub, org);
+    expect(m.units.map((u) => u.id)).toEqual(["ai-1", "u12345678", "uorg00001"]);
     expect(m.units[0].src).toBe("content/units/ai-1/v2.json");
   });
 });
 
 describe("loadCatalog", () => {
-  it("shows guests the built-in and public units, and never loads the SDK module", async () => {
-    net[url("content/catalog.json")] = { version: 1, units: [entry("u12345678", { src: "content/units/u12345678/v1.json" })] };
+  it("shows guests the published units, and never loads the SDK module", async () => {
+    net[url("content/catalog.json")] = { version: 1, units: [entry("ai-1", { src: "content/units/ai-1/v1.json" }), entry("u12345678", { src: "content/units/u12345678/v1.json" })] };
     const { configureContent, loadCatalog } = await load();
     configureContent({ orgId: null, signedIn: false });
-    expect((await loadCatalog()).units.map((u) => u.id)).toEqual(["ai-1", "iot-1", "u12345678"]);
+    expect((await loadCatalog()).units.map((u) => u.id)).toEqual(["ai-1", "u12345678"]);
     expect(fetchOrgJSON).not.toHaveBeenCalled();
+    expect((fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.some(([u]) => String(u).startsWith("/content/"))).toBe(false); // the app ships no courses
   });
 
-  it("falls back to the built-in catalog when there is no public one yet", async () => {
+  it("is empty, not an error, while nothing is published", async () => {
     const { loadCatalog } = await load();
-    expect((await loadCatalog()).units.map((u) => u.id)).toEqual(["ai-1", "iot-1"]);
+    expect((await loadCatalog()).units).toEqual([]);
+  });
+
+  it("is an error on a first visit with no connection (nothing to fall back on), and retries later", async () => {
+    offline = true;
+    const { loadCatalog } = await load();
+    await expect(loadCatalog()).rejects.toThrow();
+    offline = false; net[url("content/catalog.json")] = { version: 1, units: [entry("u12345678", { src: "content/units/u12345678/v1.json" })] };
+    expect((await loadCatalog()).units.map((u) => u.id)).toEqual(["u12345678"]);
   });
 
   it("adds the org's units for its members, through the SDK", async () => {
@@ -97,8 +105,9 @@ describe("loadUnit", () => {
     expect((fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(([u]) => u === url("content/units/u12345678/v3.json")).length).toBe(calls); // served from Cache Storage
   });
 
-  it("still loads built-in units from /content", async () => {
-    expect((await (await load()).loadUnit("ai-1")).id).toBe("ai-1");
+  it("refuses a unit that isn't published (there are no built-in ones to fall back on)", async () => {
+    net[url("content/catalog.json")] = { version: 1, units: [] };
+    await expect((await load()).loadUnit("ai-1")).rejects.toThrow(/No published unit ai-1/);
   });
 });
 
@@ -118,12 +127,13 @@ describe("signing out", () => {
 });
 
 describe("unitAssetUrls", () => {
-  it("leaves an authored unit's JSON out and includes uploaded files", async () => {
+  it("lists the uploaded files a unit needs offline (its JSON is cached by loadUnit)", async () => {
     const { unitAssetUrls } = await load();
     const u: Unit = { ...unit("u12345678"), lessons: [{ id: "u12345678-1", title: { en: "L" }, minutes: 5, tryTomorrow: { en: "x" }, slides: [],
       kit: [{ kind: "slides", title: { en: "S" }, pages: 1, formats: ["pdf"], urls: { en: { pdf: "https://x/slides.pdf" } } }],
       steps: [{ type: "video", id: "v", prompt: { en: "W" }, title: { en: "V" }, src: null, sources: { en: "https://x/v-en.mp4" }, captions: { en: "https://x/v-en.vtt" }, duration: 60, sizeMB: 2, transcript: { en: "t" } }] }] };
-    expect(unitAssetUrls(u, "ar", entry("u12345678", { src: "content/units/u12345678/v1.json" }))).toEqual(["https://x/slides.pdf", "https://x/v-en.mp4"]);
-    expect(unitAssetUrls(unit("ai-1"), "en")).toEqual(["/content/units/ai-1.json"]);
+    // No Arabic files: the English video and its English captions (what an Arabic-speaking learner will play).
+    expect(unitAssetUrls(u, "ar")).toEqual(["https://x/slides.pdf", "https://x/v-en.mp4", "https://x/v-en.vtt"]);
+    expect(unitAssetUrls(unit("ai-1"), "en")).toEqual([]);
   });
 });

@@ -3,18 +3,19 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AppBar, Button, EmptyState, Icon } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import { COMPETENCIES } from "../content/competencies";
-import { useTracks } from "../content/settings";
+import { usePack, useTracks } from "../content/settings";
 import { levelsByTrack } from "../content/tracks";
 import { labMeta } from "../labs/catalog";
 import type { KitFile, KitFormat, Lesson, Slide, Step, Unit } from "../content/types";
 import { errorsOf, SLIDE_LAYOUTS, validateUnit, type Issue } from "../content/validate";
-import { I18nProvider, LANGUAGES, useI18n, type MessageKey } from "../i18n";
+import { I18nProvider, isolate, languageOf, useI18n, useLanguages, type MessageKey } from "../i18n";
 import type { LessonPlayer } from "../screens/LessonScreen";
 /** The lesson player, passed in by App (importing it here would split the startup bundle: see App.tsx). */
 type Player = typeof LessonPlayer;
 import { cmsApi, issuesOf } from "./api";
 import { copyLessonTo, createUnit, getUnit, listUnits, saveUnit, statusOf, type UnitMeta } from "./data";
-import { Items, LangName, LANGS, LList, LText, Num, Sel, Upload } from "./fields";
+import { Items, LangName, LList, LText, Num, Sel, Upload } from "./fields";
+import { EditLangsProvider, langsIn, savedEditLangs, saveEditLangs, useEditLangs } from "./langs";
 import { useHistory, useUndoKeys } from "./history";
 import { blankLesson, blankStep, copyLesson, copyStep, copyTitle, newLessonId, newStepId, withNewIds } from "./ids";
 import { LevelPicker, TrackPicker } from "./pickers";
@@ -66,10 +67,16 @@ export function UnitEditor({ Player }: { Player: Player }) {
   const [sel, setSel] = useState<Sel>({ kind: "unit" });
   const [pane, setPane] = useState<"outline" | "detail">("outline");
   const [preview, setPreview] = useState<{ lesson: string; lang: string } | null>(null);
+  const [editLangs, setEditLangs] = useState<string[]>(savedEditLangs);
+  const languages = useLanguages();
 
   useEffect(() => {
     setMeta(null); setLoadErr(""); setMsg(null); setAsk(""); setSel({ kind: "unit" }); setPane("outline");
-    getUnit(unitId).then((r) => { if (!r) setLoadErr(t("err.notFound")); else { setMeta(r.meta); hist.reset(r.unit); setSaved(JSON.stringify(r.unit)); } })
+    getUnit(unitId).then((r) => {
+      if (!r) return setLoadErr(t("err.notFound"));
+      setMeta(r.meta); hist.reset(r.unit); setSaved(JSON.stringify(r.unit));
+      setEditLangs((cur) => [...new Set([...cur, ...langsIn(r.unit)])]); // never hide a language the unit already has
+    })
       .catch((e: Error) => setLoadErr(e.message));
   }, [unitId]); // eslint-disable-line react-hooks/exhaustive-deps
   const dirty = useMemo(() => !!unit && JSON.stringify(unit) !== saved, [unit, saved]);
@@ -85,7 +92,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
 
   // Checking runs on a deferred copy, so typing stays smooth on a slow laptop.
   const checked = useDeferredValue(unit);
-  const issues = useMemo(() => (checked ? [...validateUnit(checked, { competencies: CODES, tracks: levelsByTrack(tracks.all) }), ...unknownLabs(checked)] : []), [checked, tracks.all]);
+  const issues = useMemo(() => (checked ? [...validateUnit(checked, { competencies: CODES, tracks: levelsByTrack(tracks.all), langs: editLangs }), ...unknownLabs(checked)] : []), [checked, tracks.all, editLangs]);
   const errors = errorsOf(issues);
 
   if (loadErr) return <main className="screen"><EmptyState tone="error" title={t("err.title")} body={loadErr} action={<Button size="sm" onClick={() => nav(base)}>{t("common.back")}</Button>} /></main>;
@@ -235,8 +242,11 @@ export function UnitEditor({ Player }: { Player: Player }) {
   const crumb = view.kind === "step" ? `${t("cms.step")} ${num(si + 1)}` : view.kind === "add-step" ? t("cms.addStep") : view.kind === "slides" ? t("kit.slides")
     : view.kind === "kit" ? t("kit.title") : view.kind === "checks" ? t("cms.issues") : "";
 
+  const toggleLang = (code: string) => setEditLangs((cur) => { const next = cur.includes(code) ? cur.filter((c) => c !== code) : [...cur, code]; saveEditLangs(next); return next; });
+  const langChoices = [...new Set([...languages.map((l) => l.code), ...editLangs])];
+
   return (
-    <>
+    <EditLangsProvider langs={editLangs}>
       <AppBar title={L(unit.title) || t("cms.untitled")} onBack={() => go(base)} backLabel={t("common.back")}
         actions={<span className={`ed-status is-${status}`}>{t(`cms.status.${status}` as MessageKey, { n: meta.published?.version ?? 0 })}</span>} />
       <main className="screen wide ed">
@@ -276,6 +286,17 @@ export function UnitEditor({ Player }: { Player: Player }) {
             </ol>
             <Button size="sm" variant="secondary" onClick={() => lessonOps.insert(unit.lessons.length)}>{t("cms.addLesson")}</Button>
             <Node on={here({ kind: "checks" })} badge={errors.length} onClick={() => pick({ kind: "checks" })}><Icon name={errors.length ? "warning" : "check"} size={18} />{t("cms.issues")}</Node>
+            <fieldset className="ed-fieldset">
+              <legend className="ed-outline-h">{t("cms.langs")}</legend>
+              <div className="ed-filter">
+                {langChoices.map((code) => {
+                  const on = code === "en" || editLangs.includes(code);
+                  return <button key={code} type="button" className={`ed-chip${on ? " is-on" : ""}`} aria-pressed={on} disabled={code === "en"} onClick={() => toggleLang(code)}>
+                    <LangName name={languageOf(code).native} code={code} /></button>;
+                })}
+              </div>
+              <p className="muted small">{t("cms.langsHint")}</p>
+            </fieldset>
           </nav>
 
           <section id="ed-detail" className="ed-detail" aria-label={t("cms.editing")}>
@@ -321,7 +342,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
 
       {preview && unit.lessons.find((l) => l.id === preview.lesson) && <Preview Player={Player} unit={unit} lesson={unit.lessons.find((l) => l.id === preview.lesson)!}
         lang={preview.lang} onLang={(lang) => setPreview({ ...preview, lang })} onExit={() => setPreview(null)} />}
-    </>
+    </EditLangsProvider>
   );
 }
 
@@ -463,6 +484,7 @@ const KIT_FORMATS: Record<"slides" | "lesson-plan", KitFormat[]> = { slides: ["p
 /** Classroom kit files: uploaded per language and format. Built-in kits (from an imported unit) are kept as they are. */
 function KitForm({ lesson: l, onChange, media }: { lesson: Lesson; onChange: (l: Lesson) => void; media: MediaCtx }) {
   const { t } = useI18n();
+  const langs = useEditLangs();
   const add = (kind: "slides" | "lesson-plan") => onChange({ ...l, kit: [...l.kit, {
     kind, pages: 1, formats: KIT_FORMATS[kind], urls: {},
     title: kind === "slides" ? { en: "Slides", ar: "شرائح" } : { en: "Lesson plan", ar: "خطة الدرس" },
@@ -482,8 +504,8 @@ function KitForm({ lesson: l, onChange, media }: { lesson: Lesson; onChange: (l:
             <div className="form-grid"><Num label={t("cms.pages")} min={0} value={k.pages} onChange={(pages) => set({ ...k, pages })} /></div>
             {k.urls ? (
               <div className="ed-pair">
-                {LANGS.map((lng) => <div key={lng.code} className="stack">{k.formats.map((fmt) => fmt !== "mp4" && (
-                  <Upload key={fmt} label={<>{t(fmt === "pdf" ? "kit.pdf" : "kit.pptx")} (<LangName name={lng.name} />)</>} kind={fmt} owner={media.owner} unitId={media.unitId}
+                {langs.map((lng) => <div key={lng.code} className="stack">{k.formats.map((fmt) => fmt !== "mp4" && (
+                  <Upload key={fmt} label={<>{t(fmt === "pdf" ? "kit.pdf" : "kit.pptx")} (<LangName name={lng.name} code={lng.code} />)</>} kind={fmt} owner={media.owner} unitId={media.unitId}
                     base={`${media.lessonId}_kit_${k.kind}_${lng.code}`} current={k.urls?.[lng.code]?.[fmt]}
                     onDone={(url) => setUrl(k, i, lng.code, fmt, url)} onClear={() => setUrl(k, i, lng.code, fmt, null)} />
                 ))}</div>)}
@@ -513,22 +535,30 @@ function IssuesPanel({ issues, unit, onJump }: { issues: Issue[]; unit: Unit; on
     return parts.join(" › ");
   };
   const nErr = errorsOf(issues).length, nWarn = issues.length - nErr;
+  // Missing translations can run to hundreds: one folded group per language, after everything else.
+  const langName = (code: unknown) => isolate(languageOf(String(code)).native);
+  const missing = new Map<string, Issue[]>();
+  for (const i of sorted) if (i.code === "missingLang") missing.set(String(i.params?.lang), [...(missing.get(String(i.params?.lang)) ?? []), i]);
+  const item = (i: Issue, k: number) => (
+    <li key={k}>
+      <button type="button" className={`ed-issue is-${i.level}`} onClick={() => onJump(i)}>
+        <span className="ed-where">{where(i)}{i.at.field && <> <code dir="ltr">{i.at.field}</code></>}</span>
+        <span>{t(`cms.issue.${i.code}` as MessageKey, { ...i.params, ...(i.params?.lang ? { lang: langName(i.params.lang) } : {}) })}</span>
+      </button>
+    </li>
+  );
+  const rest = sorted.filter((i) => i.code !== "missingLang");
   return (
     <div className="stack">
       <h3 className="ed-h4">{t("cms.issues")}</h3>
       <p className={nErr ? "notice err" : "notice ok"}>{nErr ? t("cms.errorsCount", { n: nErr }) : t("cms.noErrors")}{nWarn ? `${t("common.sep")}${t("cms.warningsCount", { n: nWarn })}` : ""}</p>
-      {sorted.length > 0 && (
-        <ul className="ed-issues">
-          {sorted.slice(0, 200).map((i, k) => (
-            <li key={k}>
-              <button type="button" className={`ed-issue is-${i.level}`} onClick={() => onJump(i)}>
-                <span className="ed-where">{where(i)}{i.at.field && <> <code dir="ltr">{i.at.field}</code></>}</span>
-                <span>{t(`cms.issue.${i.code}` as MessageKey, { ...i.params })}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      {rest.length > 0 && <ul className="ed-issues">{rest.slice(0, 200).map(item)}</ul>}
+      {[...missing].map(([code, list]) => (
+        <details key={code} className="ed-more">
+          <summary>{t("cms.issue.missingGroup", { lang: langName(code), n: list.length })}</summary>
+          <ul className="ed-issues">{list.slice(0, 200).map(item)}</ul>
+        </details>
+      ))}
     </div>
   );
 }
@@ -536,14 +566,16 @@ function IssuesPanel({ issues, unit, onJump }: { issues: Issue[]; unit: Unit; on
 /** The lesson as learners will play it, from the unsaved draft: nothing is recorded, submitted or synced. */
 function Preview({ Player, unit, lesson, lang, onLang, onExit }: { Player: Player; unit: Unit; lesson: Lesson; lang: string; onLang: (l: string) => void; onExit: () => void }) {
   const { t } = useI18n();
-  const dir = LANGUAGES.find((l) => l.code === lang)?.dir ?? "ltr";
+  const languages = useLanguages();
+  usePack(lang); // an added language's interface strings, for the preview's buttons and labels
+  const dir = languageOf(lang).dir;
   useEffect(() => { const esc = (e: KeyboardEvent) => e.key === "Escape" && onExit(); addEventListener("keydown", esc); return () => removeEventListener("keydown", esc); }, [onExit]);
   return (
     <div className="ed-preview" role="dialog" aria-modal="true" aria-label={t("cms.preview")}>
       <div className="ed-preview-bar">
         <strong>{t("cms.preview")}</strong>
         <span className="row-gap">
-          {LANGUAGES.map((l) => <Button key={l.code} size="sm" variant={l.code === lang ? "primary" : "ghost"} onClick={() => onLang(l.code)}><LangName name={l.native} /></Button>)}
+          {languages.map((l) => <Button key={l.code} size="sm" variant={l.code === lang ? "primary" : "ghost"} onClick={() => onLang(l.code)}><LangName name={l.native} code={l.code} /></Button>)}
           <Button size="sm" variant="secondary" icon="close" onClick={onExit}>{t("common.close")}</Button>
         </span>
       </div>

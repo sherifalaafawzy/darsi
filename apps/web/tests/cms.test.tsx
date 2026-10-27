@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
-import ai1 from "../public/content/units/ai-1.json";
+import ai1 from "../../../content/units/ai-1.json";
 import type { TrackDef, Unit } from "../src/content/types";
 import { mergeTracks } from "../src/content/tracks";
 import { I18nProvider } from "../src/i18n";
@@ -13,8 +13,9 @@ const m = vi.hoisted(() => ({
   auth: { user: { uid: "me" }, role: "superadmin", orgId: null as string | null },
   list: [] as unknown[],
   got: null as unknown,
-  data: { listUnits: vi.fn(), getUnit: vi.fn(), createUnit: vi.fn(), saveUnit: vi.fn(), unitExists: vi.fn(), copyLessonTo: vi.fn(), getSettings: vi.fn(), unitsByTrack: vi.fn() },
-  api: { publishUnit: vi.fn(), unpublishUnit: vi.fn(), deleteUnit: vi.fn(), saveSettings: vi.fn() },
+  data: { listUnits: vi.fn(), getUnit: vi.fn(), createUnit: vi.fn(), saveUnit: vi.fn(), unitExists: vi.fn(), copyLessonTo: vi.fn(), getSettings: vi.fn(), unitsByTrack: vi.fn(),
+    listTranslations: vi.fn(), getTranslation: vi.fn(), createTranslation: vi.fn(), saveTranslation: vi.fn(), deleteTranslation: vi.fn() },
+  api: { publishUnit: vi.fn(), unpublishUnit: vi.fn(), deleteUnit: vi.fn(), saveSettings: vi.fn(), publishLanguage: vi.fn(), unpublishLanguage: vi.fn() },
 }));
 vi.mock("../src/firebase", () => ({ db: {}, storage: vi.fn() }));
 vi.mock("../src/platform", async (orig) => ({ ...(await orig<typeof import("../src/platform")>()), storage: { get: async () => undefined, set: async () => {}, remove: async () => {} } }));
@@ -25,6 +26,8 @@ vi.mock("../src/cms/api", async (orig) => ({ ...(await orig<typeof import("../sr
 const { ContentList } = await import("../src/cms/ContentList");
 const { UnitEditor: Editor } = await import("../src/cms/UnitEditor");
 const { TracksPage, slugOf } = await import("../src/cms/TracksPage");
+const { LanguagesPage, TranslatePage } = await import("../src/cms/LanguagesPage");
+const { setLanguages, useLanguages } = await import("../src/i18n");
 const { LessonPlayer } = await import("../src/screens/LessonScreen");
 const UnitEditor = () => <Editor Player={LessonPlayer} />; // App passes the player the same way
 const { parseFill } = await import("../src/cms/steps");
@@ -346,6 +349,81 @@ describe("TracksPage", () => {
   });
 });
 
+describe("Languages", () => {
+  const fr = { code: "fr", native: "Français", english: "French", dir: "ltr" as const, numerals: "fr" };
+  const draft = (messages: Record<string, string>, extra = {}) => ({ ...fr, messages, rev: 2, published: null, ...extra });
+  afterEach(() => act(() => setLanguages([])));
+
+  it("lists the built-in languages and the drafts with their progress", async () => {
+    m.data.listTranslations.mockResolvedValue([draft({ "common.continue": "Continuer" })]);
+    wrap(<LanguagesPage />, "/super/languages", "/super/languages");
+    expect(await screen.findByText("Français")).toBeTruthy();
+    expect(screen.getByText("العربية")).toBeTruthy();
+    expect(screen.getAllByText("Built in")).toHaveLength(2);
+    expect(screen.getByText(/Translated: 1 of/)).toBeTruthy();
+    expect(screen.getByText("Draft")).toBeTruthy();
+  });
+
+  it("adds a language from the list, right to left for Persian", async () => {
+    m.data.listTranslations.mockResolvedValue([draft({})]);
+    m.data.createTranslation.mockResolvedValue(undefined);
+    wrap(<LanguagesPage />, "/super/languages", "/super/languages");
+    fireEvent.click(await screen.findByRole("button", { name: "Add a language" }));
+    expect(screen.queryByRole("option", { name: /French/ })).toBeNull(); // already added
+    fireEvent.change(screen.getByLabelText("Language"), { target: { value: "fa" } });
+    expect(screen.getByRole("radio", { name: "Right to left" }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "Add and start translating" }));
+    await waitFor(() => expect(m.data.createTranslation).toHaveBeenCalledWith(expect.objectContaining({ code: "fa", native: "فارسی", english: "Persian", dir: "rtl", numerals: "fa" }), "me"));
+    expect(await screen.findByText("elsewhere")).toBeTruthy(); // went on to /super/languages/fa
+  });
+
+  it("finds what's missing or broken, blocks publishing until placeholders match, then publishes", async () => {
+    m.data.getTranslation.mockResolvedValue(draft({ "common.continue": "Continuer", "q.found": "trouvés", "old.key": "x" }));
+    m.data.saveTranslation.mockImplementation(async (_d: unknown, rev: number) => ({ rev: rev + 1 }));
+    m.api.publishLanguage.mockResolvedValue({ version: 1, languages: [{ ...fr, version: 1 }] });
+    let pickers: string[] = [];
+    const Spy = () => { pickers = useLanguages().map((l) => l.code); return null; };
+    wrap(<><TranslatePage /><Spy /></>, "/super/languages/fr", "/super/languages/:code");
+    fireEvent.click(await screen.findByRole("button", { name: /To fix \(1\)/ }));
+    expect(screen.getByText("q.found")).toBeTruthy();
+    expect(screen.getByText("Use exactly these, as in English: {n} {total}")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+    expect(await screen.findByText(/Not published yet: 1 translations need fixing/)).toBeTruthy();
+    expect(m.api.publishLanguage).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText("French"), { target: { value: "{n} sur {total} trouvés" } });
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+    await waitFor(() => expect(m.api.publishLanguage).toHaveBeenCalledWith({ code: "fr" }));
+    // Saved first, without the key the app no longer has.
+    expect(m.data.saveTranslation.mock.calls[0][0].messages).toEqual({ "common.continue": "Continuer", "q.found": "{n} sur {total} trouvés" });
+    expect(await screen.findByText(/Published as version 1/)).toBeTruthy();
+    expect(pickers).toEqual(["en", "ar", "fr"]); // pickers offer it at once
+  });
+
+  it("imports translations from a spreadsheet, skipping keys the app doesn't have", async () => {
+    m.data.getTranslation.mockResolvedValue(draft({}));
+    wrap(<TranslatePage />, "/super/languages/fr", "/super/languages/:code");
+    const input = (await screen.findByText("Import a spreadsheet (.xlsx or .csv)")).parentElement!.querySelector("input")!;
+    const csv = new File([["key,English,fr", "common.continue,Continue,Continuer", "home.title,Learn,Apprendre", "nope,x,y", ""].join("\n")], "fr.csv", { type: "text/csv" });
+    fireEvent.change(input, { target: { files: [csv] } });
+    expect(await screen.findByText("Read 2 translations from the file. Save to keep them. Skipped 1 rows with keys the app doesn't have.")).toBeTruthy();
+    expect(screen.getByText(/Translated: 2 of/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Save draft" })).toBeTruthy(); // not saved until asked
+  });
+
+  it("lets the lesson editor show fields for an added language, and checks what's missing in it", async () => {
+    act(() => setLanguages([{ ...fr, version: 1 }]));
+    const nav = await openEditor();
+    expect(screen.getAllByLabelText(/^Title/)).toHaveLength(2);
+    fireEvent.click(within(nav).getByRole("button", { name: "Français" }));
+    expect(screen.getAllByLabelText(/^Title/)).toHaveLength(3);
+    fireEvent.click(within(nav).getByRole("button", { name: /Checks/ }));
+    expect(await screen.findByText(/Français.*texts not translated/)).toBeTruthy();
+    fireEvent.click(within(nav).getByRole("button", { name: "Français" })); // and hide them again
+    await waitFor(() => expect(screen.queryByText(/Français.*texts not translated/)).toBeNull());
+  });
+});
+
 describe("editor strings", () => {
   it("exist in English and Arabic, including every key built at run time", async () => {
     const en = (await import("../src/cms/strings/en.json")).default as Record<string, string>;
@@ -355,7 +433,7 @@ describe("editor strings", () => {
     const { STEP_MENU } = await import("../src/cms/steps");
     const { TRACK_ICONS } = await import("../src/cms/TracksPage");
     const codes = ["required", "minItems", "duplicateId", "badId", "lessonIdPrefix", "badValue", "range", "answerNotInOptions", "answersNotInOptions",
-      "fillBlanks", "fillAnswers", "fillBank", "badUrl", "checkpoint", "tooLarge", "missingAr", "unknownCompetency", "noSlides"];
+      "fillBlanks", "fillAnswers", "fillBank", "badUrl", "checkpoint", "tooLarge", "missingLang", "unknownCompetency", "noSlides"];
     const dynamic = [...codes.map((c) => `cms.issue.${c}`), ...ARTS.map((a) => `cms.art.${a}`),
       ...SLIDE_LAYOUTS.map((x) => `cms.layout.${x}`), ...["x", "y", "w", "h"].map((k) => `cms.spot.${k}`), ...["draft", "live", "changed"].map((s) => `cms.status.${s}`),
       ...["draft", "live", "changed"].map((s) => `cms.filter.${s}`), ...STEP_MENU.map((s) => `cms.stepHint.${s}`),

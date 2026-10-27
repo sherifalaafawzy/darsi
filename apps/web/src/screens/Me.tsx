@@ -5,7 +5,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { displayLogin } from "../auth/api";
 import { accountLinks } from "../components/Layout";
 import { NotificationsPanel } from "../notify/NotificationsPanel";
-import { isolate, LANGUAGES, useI18n } from "../i18n";
+import { isolate, useI18n, useLanguages } from "../i18n";
 import { useStore } from "../state/store";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
 import type { Unit } from "../content/types";
@@ -14,7 +14,8 @@ import { share } from "../platform";
 import { useInstall } from "../pwa";
 
 export function Me() {
-  const { t, L, lang } = useI18n();
+  const { t, L, locale } = useI18n();
+  const languages = useLanguages();
   const { state, dispatch } = useStore();
   const set = (patch: Parameters<typeof dispatch>[0] & { type: "set" } extends { patch: infer P } ? P : never) => dispatch({ type: "set", patch });
   const { data: catalog } = useAsync(loadCatalog, []);
@@ -23,7 +24,7 @@ export function Me() {
   useEffect(() => { if (catalog) Promise.all(catalog.units.filter((u) => u.available).map((u) => loadUnit(u.id))).then(setUnits).catch(() => {}); }, [catalog]);
   useEffect(() => { if (location.hash === "#certificates") document.getElementById("certificates")?.scrollIntoView(); }, [units]);
   const done = units.filter((u) => u.lessons.every((l) => state.progress[l.id]));
-  const dateFmt = new Intl.DateTimeFormat(LANGUAGES.find((l) => l.code === lang)?.numerals ?? lang, { dateStyle: "medium" });
+  const dateFmt = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
   const tracks = useTracks();
   // The learner's own tracks, or every track on offer if they haven't chosen.
   const mine = tracks.visible.filter((x) => !state.tracks.length || state.tracks.includes(x.id));
@@ -33,7 +34,7 @@ export function Me() {
       <main className="screen narrow stack-lg">
         <Account />
         <section className="stack"><h2 className="section-title">{t("me.language")}</h2>
-          <LanguagePicker label={t("me.language")} value={state.lang} onChange={(l) => set({ lang: l })} languages={LANGUAGES} /></section>
+          <LanguagePicker label={t("me.language")} value={state.lang} onChange={(l) => set({ lang: l })} languages={languages} /></section>
         <section>
           <Switch label={t("me.sunlight")} description={t("me.sunlightD")} checked={state.theme === "sunlight"} onChange={(on) => set({ theme: on ? "sunlight" : "light" })} />
           <Switch label={t("me.dataSaver")} description={t("me.dataSaverD")} checked={state.dataSaver} onChange={(on) => set({ dataSaver: on })} />

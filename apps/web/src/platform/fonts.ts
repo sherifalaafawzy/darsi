@@ -12,6 +12,12 @@ const FAMILIES: Record<string, string[]> = {
   en: ["Noto Sans", "Baloo 2"],
   ar: ["Noto Sans", "Baloo 2", "Noto Sans Arabic", "Baloo Bhaijaan 2"],
 };
+/** Languages platform admins add: Arabic-script ones get the Arabic faces; the rest also get the extended-Latin headings (ş, ğ, ư…). Other scripts use the phone's fonts. */
+const ARABIC_SCRIPT = new Set(["ar", "fa", "ur", "ps", "ckb", "sd", "ug"]);
+export const familiesFor = (lang: string) => {
+  const base = lang.toLowerCase().split("-")[0];
+  return FAMILIES[base] ?? (ARABIC_SCRIPT.has(base) ? FAMILIES.ar : [...FAMILIES.en, "Baloo 2 Ext"]);
+};
 
 /** Absolute URLs of these families' font files, read from the page's own @font-face rules (Vite hashes the file names). */
 export function fontUrls(families: string[], sheets: ArrayLike<CSSStyleSheet> = document.styleSheets): string[] {
@@ -35,7 +41,7 @@ export function fontUrls(families: string[], sheets: ArrayLike<CSSStyleSheet> = 
  */
 export async function cacheFonts(lang: string): Promise<void> {
   const cache = await caches.open(CACHE);
-  await Promise.all(fontUrls(FAMILIES[lang] ?? FAMILIES.en).map(async (url) => {
+  await Promise.all(fontUrls(familiesFor(lang)).map(async (url) => {
     if (await cache.match(url)) return;
     const res = await fetch(url);
     if (res.ok && res.headers.get("content-type")?.startsWith("font/")) await cache.put(url, res);

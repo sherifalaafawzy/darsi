@@ -1,16 +1,15 @@
 import { useMemo, useState } from "react";
 import { AppBar, Button, EmptyState, TextField } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
-import { api, displayLogin, type BroadcastAudience, type PushLang } from "../auth/api";
+import { api, displayLogin, type BroadcastAudience, type BroadcastLang } from "../auth/api";
 import type { Org } from "../auth/types";
-import { isolate, LANGUAGES, useI18n, type MessageKey } from "../i18n";
+import { isolate, useI18n, type MessageKey } from "../i18n";
 import { useBroadcasts, useOrgsByStatus, usePerson, type Broadcast } from "./data";
 import "../styles/admin.css";
 
 /** Display helpers for an organization: localized type, "city، country" and a locale date. */
 export function useOrgText() {
-  const { t, lang } = useI18n();
-  const locale = LANGUAGES.find((l) => l.code === lang)?.numerals ?? lang;
+  const { t, locale } = useI18n();
   return {
     type: (o: Org) => (["school", "university", "ministry", "ngo"].includes(o.type) ? t(`type.${o.type}` as "type.school") : o.type),
     place: (o: Org) => [o.city, o.country].filter(Boolean).join(t("common.sep")) || "—",
@@ -137,7 +136,7 @@ type AudienceType = BroadcastAudience["type"];
 type AudienceRole = Extract<BroadcastAudience, { type: "role" }>["role"];
 const ROLES: { role: AudienceRole; key: MessageKey }[] = [{ role: "teacher", key: "bc.teachers" }, { role: "student", key: "bc.students" }, { role: "orgAdmin", key: "bc.orgAdmins" }];
 const LINKS: { path: string; key: MessageKey }[] = [{ path: "/learn", key: "nav.learn" }, { path: "/labs", key: "nav.lab" }, { path: "/kit", key: "bc.linkKit" }, { path: "/org", key: "nav.org" }];
-const LABEL: Record<Kind, Record<PushLang, MessageKey>> = { title: { en: "bc.titleEn", ar: "bc.titleAr" }, body: { en: "bc.bodyEn", ar: "bc.bodyAr" } };
+const LABEL: Record<Kind, Record<BroadcastLang, MessageKey>> = { title: { en: "bc.titleEn", ar: "bc.titleAr" }, body: { en: "bc.bodyEn", ar: "bc.bodyAr" } };
 
 /** Who an announcement goes to, for the confirm dialog and the recent list. */
 function useAudienceText(orgs: Org[]) {
@@ -164,7 +163,7 @@ function Announce({ orgs, onSent }: { orgs: Org[]; onSent: () => void }) {
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
-  const problem = (k: Kind, l: PushLang) => { const n = text[k][l].trim().length; return n === 0 ? t("bc.required") : n > MAX[k] ? t("bc.tooLong", { max: MAX[k] }) : undefined; };
+  const problem = (k: Kind, l: BroadcastLang) => { const n = text[k][l].trim().length; return n === 0 ? t("bc.required") : n > MAX[k] ? t("bc.tooLong", { max: MAX[k] }) : undefined; };
   const noOrg = aud === "org" && !orgs.some((o) => o.id === orgId);
   const valid = !noOrg && (["title", "body"] as const).every((k) => !problem(k, "en") && !problem(k, "ar"));
   const audience = (): BroadcastAudience => (aud === "org" ? { type: "org", orgId } : aud === "role" ? { type: "role", role } : { type: "all" });
@@ -174,7 +173,7 @@ function Announce({ orgs, onSent }: { orgs: Org[]; onSent: () => void }) {
     if (!valid || !confirm(t("bc.confirm", { audience: isolate(audienceText(audience())) }))) return;
     setBusy(true);
     try {
-      const trim = (o: Record<PushLang, string>) => ({ en: o.en.trim(), ar: o.ar.trim() });
+      const trim = (o: Record<BroadcastLang, string>) => ({ en: o.en.trim(), ar: o.ar.trim() });
       const { results } = await api.sendBroadcast({ title: trim(text.title), body: trim(text.body), link, audience: audience() });
       const failed = (["en", "ar"] as const).filter((l) => !results?.[l]);
       if (failed.length === 2) setResult({ ok: false, text: t("bc.failed") });
@@ -186,7 +185,7 @@ function Announce({ orgs, onSent }: { orgs: Org[]; onSent: () => void }) {
     finally { setBusy(false); }
   };
 
-  const field = (k: Kind, l: PushLang) => {
+  const field = (k: Kind, l: BroadcastLang) => {
     const id = `bc-${k}-${l}`, value = text[k][l], error = tried ? problem(k, l) : undefined, count = t("bc.count", { n: value.length, max: MAX[k] });
     const props = { dir: l === "ar" ? "rtl" as const : "ltr" as const, lang: l, maxLength: MAX[k], value, onChange: (e: { target: { value: string } }) => setText((x) => ({ ...x, [k]: { ...x[k], [l]: e.target.value } })) };
     if (k === "title") return <TextField key={id} label={t(LABEL[k][l])} hint={count} error={error} {...props} />;
@@ -256,7 +255,7 @@ function RecentAnnouncements({ list, error, orgs }: { list?: Broadcast[]; error?
             <thead><tr><th>{t("bc.colTitle")}</th><th>{t("bc.colAudience")}</th><th>{t("bc.colDate")}</th></tr></thead>
             <tbody>{list.map((b) => (
               <tr key={b.id}>
-                <td data-label={t("bc.colTitle")}><strong><bdi>{b.title?.[lang as PushLang] || b.title?.en || "—"}</bdi></strong></td>
+                <td data-label={t("bc.colTitle")}><strong><bdi>{b.title?.[lang as BroadcastLang] || b.title?.en || "—"}</bdi></strong></td>
                 <td data-label={t("bc.colAudience")}><bdi>{audienceText(b.audience)}</bdi></td>
                 <td data-label={t("bc.colDate")}>{ot.date(b.sentAt)}</td>
               </tr>

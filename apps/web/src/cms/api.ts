@@ -1,5 +1,5 @@
 import { call } from "../fb";
-import type { TrackDef } from "../content/types";
+import type { LanguageDef, TrackDef } from "../content/types";
 import type { Issue } from "../content/validate";
 
 /** Course editor callables (functions/src/content.ts). publishUnit refuses a draft with errors and returns them in `details.issues`. */
@@ -9,6 +9,9 @@ export const cmsApi = {
   deleteUnit: call<{ unitId: string }, { ok: boolean }>("deleteUnit"),
   /** Platform admins (functions/src/settings.ts). `rev` is the version edited; refused with "aborted" if someone saved since. */
   saveSettings: call<{ rev: number; tracks: TrackDef[] }, { rev: number; tracks: TrackDef[] }>("saveSettings"),
+  /** Platform admins (functions/src/languages.ts): publish the saved draft of a language, or take it off the pickers. */
+  publishLanguage: call<{ code: string }, { version: number; languages: LanguageDef[] }>("publishLanguage"),
+  unpublishLanguage: call<{ code: string }, { ok: boolean; languages: LanguageDef[] }>("unpublishLanguage"),
 };
 export const issuesOf = (e: unknown): Issue[] => ((e as { details?: { issues?: Issue[] } }).details?.issues ?? []);
 /** What saveSettings refused: tracks that units still use, or levels below the ones units use. */

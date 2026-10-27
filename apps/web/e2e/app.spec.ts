@@ -1,4 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
+import { fakeStorage } from "./storage";
+
+// The app ships no courses: every test reads the starting course from (a stand-in for) Cloud Storage.
+test.beforeEach(async ({ context }) => { await fakeStorage(context); });
 
 async function onboard(page: Page, lang: "English" | "العربية" = "English") {
   await page.goto("/");
@@ -14,10 +18,9 @@ async function onboard(page: Page, lang: "English" | "العربية" = "English
   await page.getByRole("button", { name: /Start from the beginning|ابدأ من البداية/ }).click();
 }
 
-test("onboarding → home shows the AI unit", async ({ page }) => {
+test("onboarding → home shows the published AI unit", async ({ page }) => {
   await onboard(page);
   await expect(page.getByRole("heading", { name: "AI basics for teachers" })).toBeVisible();
-  await expect(page.getByText("Coming soon").first()).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
 });
 

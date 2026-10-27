@@ -2,18 +2,21 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button, Icon, LessonCard, Mark, ProgressBar, QuizOption, TrackChip, QuestionHeader, StreakCounter, trackClass, useTrackStyles } from "@darsi/design-system";
 import { landing as C } from "./content";
 import { useStore } from "../state/store";
-import { useI18n } from "../i18n";
+import { useI18n, useLanguages } from "../i18n";
 import "../styles/landing.css";
 
 /** Public home page: what Darsi is, how it works, who it is for, standards, FAQ. */
 export function Landing() {
   const nav = useNavigate();
-  const { lang, t } = useI18n();
+  const { lang, t, locale } = useI18n();
+  const languages = useLanguages();
   const { dispatch } = useStore();
   const styleOf = useTrackStyles();
   const guest = () => { dispatch({ type: "set", patch: { guest: true } }); nav("/learn"); };
   const L = (x: { en: string; ar: string }) => x[lang as "en" | "ar"] ?? x.en;
-  const otherLang = lang === "ar" ? "en" : "ar";
+  const setLang = (code: string) => dispatch({ type: "set", patch: { lang: code } });
+  // Two languages: one tap switches. More (platform admins added some): a short menu of their own names.
+  const others = languages.filter((l) => l.code !== lang);
   return (
     <div className="landing">
       <header className="lp-nav">
@@ -22,7 +25,11 @@ export function Landing() {
           <a href="#how">{L(C.nav.approach)}</a><a href="#tracks">{L(C.nav.tracks)}</a><a href="#orgs">{L(C.nav.orgs)}</a><a href="#standards">{L(C.nav.standards)}</a><a href="#faq">{L(C.nav.faq)}</a>
         </nav>
         <div className="lp-actions">
-          <button type="button" className="lp-lang dr-other-script" onClick={() => dispatch({ type: "set", patch: { lang: otherLang } })} lang={otherLang}>{otherLang === "ar" ? "العربية" : "English"}</button>
+          {others.length === 1
+            ? <button type="button" className="lp-lang dr-other-script" onClick={() => setLang(others[0].code)} lang={others[0].code}>{others[0].native}</button>
+            : <select className="lp-lang lp-lang-menu" aria-label={L(C.nav.language)} value={lang} onChange={(e) => setLang(e.target.value)}>
+              {languages.map((l) => <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>)}
+            </select>}
           <Button size="sm" variant="ghost" onClick={() => nav("/signin")}>{L(C.nav.signIn)}</Button>
           <Button size="sm" onClick={() => nav("/signup")}>{L(C.nav.start)}</Button>
         </div>
@@ -63,7 +70,7 @@ export function Landing() {
 
       <section className="lp-section" id="how" aria-labelledby="how-h">
         <h2 id="how-h">{L(C.how.title)}</h2>
-        <ol className="lp-steps">{C.how.steps.map((s, i) => <li key={i}><span className="lp-step-n">{new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en").format(i + 1)}</span><h3>{L(s.title)}</h3><p>{L(s.text)}</p></li>)}</ol>
+        <ol className="lp-steps">{C.how.steps.map((s, i) => <li key={i}><span className="lp-step-n">{new Intl.NumberFormat(locale).format(i + 1)}</span><h3>{L(s.title)}</h3><p>{L(s.text)}</p></li>)}</ol>
       </section>
 
       <section className="lp-section" id="tracks" aria-labelledby="tracks-h">

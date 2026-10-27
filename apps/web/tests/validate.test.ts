@@ -1,4 +1,4 @@
-import unit from "../public/content/units/ai-1.json";
+import unit from "../../../content/units/ai-1.json";
 import { COMPETENCIES } from "../src/content/competencies";
 import { errorsOf, validateUnit, type Issue } from "../src/content/validate";
 
@@ -111,6 +111,9 @@ describe("validateUnit", () => {
     expect(has(e, "badUrl", "src")).toBe(true);
     expect(has(e, "badUrl", "sources.en")).toBe(true);
     expect(has(e, "badUrl", "captions.ar")).toBe(true);
+    // The local Emulator Suite's Storage is http on localhost: allowed, so units publish and check there too.
+    const local = base(); stepOf(local, "video").sources = { en: "http://127.0.0.1:9199/v0/b/demo/o/v.mp4?alt=media", ar: "http://localhost:9199/v0/b/demo/o/v.mp4" };
+    expect(errs(local).filter((i) => i.code === "badUrl")).toEqual([]);
     const v = base(); const sv = stepOf(v, "video"); sv.duration = 0;
     expect(has(errs(v), "range", "duration")).toBe(true);
     const w = base(); const sw = stepOf(w, "video"); sw.checkpoint = { at: 9999, question: { type: "choice", id: "v-q", prompt: { en: "?" }, options: [{ id: "a", text: { en: "A" } }], answer: "b" } };
@@ -135,8 +138,8 @@ describe("validateUnit", () => {
     const u = base(); delete u.lessons[0].title.ar; u.lessons[0].competencies = ["NOPE.1"]; u.lessons[0].slides = [];
     const all = validateUnit(u, { competencies: codes });
     expect(errorsOf(all)).toEqual([]);
-    expect(all.map((i) => i.code).sort()).toEqual(["missingAr", "noSlides", "unknownCompetency"]);
-    expect(all.find((i) => i.code === "missingAr")?.at).toEqual({ lesson: 0, field: "title.ar" });
+    expect(all.map((i) => i.code).sort()).toEqual(["missingLang", "noSlides", "unknownCompetency"]);
+    expect(all.find((i) => i.code === "missingLang")).toMatchObject({ at: { lesson: 0, field: "title.ar" }, params: { lang: "ar" } });
   });
 
   it("caps the size of a lesson", () => {

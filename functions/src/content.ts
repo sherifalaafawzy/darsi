@@ -56,7 +56,18 @@ async function deleteJson(owner: Owner, unitId: string, keepFrom = Infinity) {
 
 /** Validate the draft, write content/…/units/{id}/v{n+1}.json, and rebuild the catalog. */
 export const publishUnit = onCall({ memory: "512MiB" }, async (req) => {
-  const { c, unitId, meta, owner } = await target(req);
+  const { c, unitId, owner } = await target(req);
+  return publishDraft(owner, unitId, c.uid);
+});
+
+/**
+ * Publishes a unit's saved draft. The callable above and `npm run seed` (scripts/seed-content.mjs, which publishes the
+ * starting courses) both go through here, so a seeded unit is checked and laid out exactly like one from the editor.
+ */
+export async function publishDraft(owner: Owner, unitId: string, by: string) {
+  const meta = await db.doc(`units/${unitId}`).get();
+  if (!meta.exists || meta.get("owner") !== owner) throw new HttpsError("not-found", "No such unit.");
+  const c = { uid: by };
   const draft = await db.doc(`unitDrafts/${unitId}`).get();
   const unit = draft.get("unit") as Unit | undefined;
   // The unit's track must be one platform admins set up, and its level must fit that track.
@@ -77,7 +88,7 @@ export const publishUnit = onCall({ memory: "512MiB" }, async (req) => {
   await deleteJson(owner, unitId, version);
   await audit("publishUnit", c.uid, { unitId, owner, version });
   return { version };
-});
+}
 
 /** Take a unit away from learners. Its media stays, so publishing again needs no new uploads. */
 export const unpublishUnit = onCall(async (req) => {

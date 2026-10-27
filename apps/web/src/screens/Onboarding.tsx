@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, ChoiceCard, LanguagePicker, Mark, OnboardingStep, PlacementResult, QuestionHeader, QuizOption, TrueFalse, LessonTopBar, type IconName } from "@darsi/design-system";
-import { LANGUAGES, useI18n } from "../i18n";
+import { useI18n, useLanguages } from "../i18n";
 import { useStore, type AppState } from "../state/store";
 import { loadPlacement, useAsync } from "../content/load";
 import type { Track } from "../content/types";
@@ -19,6 +19,7 @@ export const placementLevel = (correct: number, asked: number, levels: number) =
 export function Onboarding() {
   const nav = useNavigate();
   const { t } = useI18n();
+  const languages = useLanguages();
   const { state, dispatch } = useStore();
   const [phase, setPhase] = useState<Phase>("language");
   const tracks = useTracks();
@@ -31,7 +32,7 @@ export function Onboarding() {
     <main className="screen narrow onb">
       <div className="onb-hero"><Mark size={72} /></div>
       <h1 className="dr-onb-title">{t("onb.language")}</h1>
-      <LanguagePicker label={t("onb.language")} value={state.lang} onChange={(lang) => set({ lang })} languages={LANGUAGES} />
+      <LanguagePicker label={t("onb.language")} value={state.lang} onChange={(lang) => set({ lang })} languages={languages} />
       {cont("where")}
     </main>
   );

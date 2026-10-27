@@ -5,14 +5,17 @@ export interface MemberInput { name: string; email?: string; username?: string; 
 export interface MemberResult { row: number; name: string; login: string; password?: string; uid?: string; status: "created" | "exists" | "error"; error?: string }
 
 /** Push notifications (functions/src/notify.ts). Each device gets its own language; cats can each be switched off. */
-export type PushLang = "en" | "ar";
+/** The phone's language: notifications come in Arabic for Arabic and in English for every other language. */
+export type PushLang = string;
+/** Announcements from /super are written in English and Arabic; phones in other languages get the English one. */
+export type BroadcastLang = "en" | "ar";
 export interface NotifyCats { reminders: boolean; reviews: boolean; staff: boolean; news: boolean }
 /** hourLocal 0–23 (the reminder time on this phone's clock), weeklyGoal 1–14 lessons. */
 export interface NotifyPrefs { hourLocal: number; cats: NotifyCats; weeklyGoal: number }
 export type BroadcastAudience = { type: "all" } | { type: "org"; orgId: string } | { type: "role"; role: "student" | "teacher" | "orgAdmin" };
-export interface BroadcastInput { title: Record<PushLang, string>; body: Record<PushLang, string>; link?: string; audience: BroadcastAudience }
+export interface BroadcastInput { title: Record<BroadcastLang, string>; body: Record<BroadcastLang, string>; link?: string; audience: BroadcastAudience }
 /** FCM message id per language, or null where that send failed. */
-export type BroadcastResults = Record<PushLang, string | null>;
+export type BroadcastResults = Record<BroadcastLang, string | null>;
 
 export const api = {
   requestOrg: call<{ name: string; type: string; country: string; city: string; size?: number; contact?: string; reason?: string }, { orgId: string; status: string }>("requestOrg"),

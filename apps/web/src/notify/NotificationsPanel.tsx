@@ -3,7 +3,7 @@ import { Switch } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import { isStaff } from "../auth/types";
 import type { NotifyCats, NotifyPrefs } from "../auth/api";
-import { LANGUAGES, useI18n, type MessageKey } from "../i18n";
+import { useI18n, type MessageKey } from "../i18n";
 import { useStore } from "../state/store";
 import { disablePush, enablePush, HOURS, permission, prefsFrom, pushOn, pushSupport, savePrefs, type PushSupport, type ServerNotify } from "./push";
 
@@ -35,7 +35,7 @@ export function NotificationsPanel() {
 type Note = { tone: "ok" | "err" | ""; text: MessageKey };
 
 function Controls({ uid, staff, server }: { uid: string; staff: boolean; server?: ServerNotify }) {
-  const { t, lang } = useI18n();
+  const { t, lang, locale } = useI18n();
   const { state } = useStore();
   const support = useMemo(pushSupport, []);
   const [perm, setPerm] = useState(permission);
@@ -56,7 +56,7 @@ function Controls({ uid, staff, server }: { uid: string; staff: boolean; server?
     setBusy(true); setNote(null);
     try {
       if (next) {
-        const p = await enablePush({ ...prefs, lang: lang === "ar" ? "ar" : "en" });
+        const p = await enablePush({ ...prefs, lang });
         setPerm(p); setOn(p === "granted");
         setNote(p === "granted" ? { tone: "ok", text: "ntf.onMsg" } : p === "default" ? { tone: "", text: "ntf.dismissed" } : null);
       } else { await disablePush(); setOn(false); }
@@ -69,7 +69,7 @@ function Controls({ uid, staff, server }: { uid: string; staff: boolean; server?
     try { await savePrefs(next); } catch { setPrefs(prev); setNote({ tone: "err", text: "ntf.err" }); }
   };
 
-  const hourFmt = new Intl.DateTimeFormat(LANGUAGES.find((l) => l.code === lang)?.numerals ?? lang, { hour: "numeric", minute: "2-digit" });
+  const hourFmt = new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" });
   const hours = HOURS.includes(prefs.hourLocal) ? HOURS : [...HOURS, prefs.hourLocal].sort((a, b) => a - b);
   const cat = (c: (typeof CATS)[number]) => <Switch key={c.key} label={t(c.label)} description={t(c.hint)} checked={prefs.cats[c.key]} onChange={(v) => { void change({ cats: { [c.key]: v } }); }} />;
   return (

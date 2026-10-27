@@ -8,7 +8,7 @@ import { I18nProvider, useI18n } from "./i18n";
 import { StoreProvider, useStore } from "./state/store";
 import { useCloudSync } from "./state/sync";
 import { configureContent, setOrgReader } from "./content/load";
-import { SettingsProvider } from "./content/settings";
+import { SettingsProvider, useLanguageReady } from "./content/settings";
 import { loadFirebase } from "./fb";
 import { usePushRefresh } from "./notify/usePushRefresh";
 import { Layout } from "./components/Layout";
@@ -37,6 +37,8 @@ const SuperAdmin = lazy(() => import("./admin/SuperAdmin").then((m) => ({ defaul
 const ContentList = lazy(() => import("./cms/Cms").then((m) => ({ default: m.ContentList })));
 const UnitEditor = lazy(() => import("./cms/Cms").then((m) => ({ default: m.UnitEditor })));
 const TracksPage = lazy(() => import("./cms/Cms").then((m) => ({ default: m.TracksPage })));
+const LanguagesPage = lazy(() => import("./cms/Cms").then((m) => ({ default: m.LanguagesPage })));
+const TranslatePage = lazy(() => import("./cms/Cms").then((m) => ({ default: m.TranslatePage })));
 setOrgReader((path) => loadFirebase().then((fb) => fb.storageJSON(path)));
 
 const Loading = () => <div className="loading" aria-busy="true" />;
@@ -69,19 +71,21 @@ const homeFor = (role: Role) => (role === "orgAdmin" ? "/admin" : role === "supe
 function Routed() {
   const { state, ready, dispatch } = useStore();
   const { user, profile, role, orgId, configured, offlineUid } = useAuth();
-  const { t } = useI18n();
+  const { t, dir } = useI18n();
   // Before any screen asks for the catalog: org members also see their org's published units.
   configureContent({ orgId: user ? orgId : null, signedIn: Boolean(user || offlineUid) });
   useEffect(() => {
-    applyLocale(state.lang, state.theme);
+    applyLocale(state.lang, state.theme, dir); // an added language's direction is the one platform admins set
     document.title = state.lang === "ar" ? "درسي — Darsi" : "Darsi — درسي";
-  }, [state.lang, state.theme]);
+  }, [state.lang, state.theme, dir]);
   // Certificates use the local name; start it from the account name.
   useEffect(() => { if (ready && profile?.name && !state.name) dispatch({ type: "set", patch: { name: profile.name } }); }, [ready, profile?.name, state.name, dispatch]);
   useCloudSync(user?.uid);
   usePushRefresh(); // signed in and opted in on this phone only; guests never load messaging
+  const langReady = useLanguageReady();
 
-  if (!ready) return <Loading />;
+  // An added language's strings are fetched when it is picked: until then the loading screen, not English.
+  if (!ready || !langReady) return <Loading />;
   if (user && profile?.mustChangePassword) return <SetPassword />;
   // Guests: chose "Continue without an account", or used Darsi on this device before accounts existed.
   const inApp = Boolean(user) || Boolean(offlineUid) || Boolean(state.guest) || state.onboarded;
@@ -131,6 +135,8 @@ function Routed() {
             <Route path="super/content" element={<ContentList />} />
             <Route path="super/content/:unitId" element={<UnitEditor Player={LessonPlayer} />} />
             <Route path="super/tracks" element={<TracksPage />} />
+            <Route path="super/languages" element={<LanguagesPage />} />
+            <Route path="super/languages/:code" element={<TranslatePage />} />
           </Route>
           <Route path="*" element={<main className="screen"><EmptyState title={t("err.notFound")} /></main>} />
         </Route>
@@ -142,7 +148,7 @@ function Routed() {
 
 function WithI18n() {
   const { state } = useStore();
-  return <I18nProvider lang={state.lang}><SettingsProvider><BrowserRouter><Routed /></BrowserRouter></SettingsProvider></I18nProvider>;
+  return <I18nProvider lang={state.lang}><SettingsProvider lang={state.lang}><BrowserRouter><Routed /></BrowserRouter></SettingsProvider></I18nProvider>;
 }
 
 /** One local store per person on this device; a just-created account takes over the guest's progress. */

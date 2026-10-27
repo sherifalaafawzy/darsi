@@ -2,14 +2,15 @@
  * The Admin SDK, initialised once, and the helpers every callable shares.
  * index.ts and notify.ts both import from here, so neither imports the other's internals.
  */
-import { initializeApp } from "firebase-admin/app";
+import { getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import { HttpsError, type CallableRequest } from "firebase-functions/v2/https";
 import { setGlobalOptions } from "firebase-functions/v2";
 
-initializeApp();
+// A script that reuses this code (scripts/seed-content.mjs) starts the app itself, with its own credentials.
+if (!getApps().length) initializeApp();
 setGlobalOptions({ region: "europe-west1", maxInstances: 20 });
 export const db = getFirestore();
 export const auth = getAuth();

@@ -1,42 +1,45 @@
 /**
- * Form building blocks for the course editor. Every learner-facing text is edited as an English/Arabic pair (Arabic
- * right-to-left, side by side on wide screens). Ids come from useId(): labels can't be used, Arabic ones collapse
- * to the same id in the design system's TextField.
+ * Form building blocks for the course editor. Every learner-facing text is edited in English plus the languages the
+ * author shows (cms/langs.tsx), each in its own direction, side by side when there is room. Ids come from useId():
+ * labels can't be used, Arabic ones collapse to the same id in the design system's TextField.
  */
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Button, ProgressBar, Switch } from "@darsi/design-system";
 import type { LocalList, LocalText } from "../content/types";
 import { useI18n } from "../i18n";
+import { useEditLangs, type EditLang } from "./langs";
 import { fits, MEDIA, uploadMedia, type MediaKind } from "./upload";
 
-export const LANGS = [{ code: "en", name: "English", dir: "ltr" }, { code: "ar", name: "العربية", dir: "rtl" }] as const;
-type Lang = (typeof LANGS)[number]["code"];
-
-/** A language's own name. Arabic words on an English page are marked so that page never downloads the Arabic fonts. */
-export function LangName({ name }: { name: string }) {
-  return /[؀-ۿ]/.test(name) ? <span lang="ar" className="dr-other-script">{name}</span> : <>{name}</>;
+/**
+ * A language's own name. Names in other languages are marked (lang + dr-other-script), so they use the phone's font and
+ * a page never downloads another script's web fonts for one word.
+ */
+export function LangName({ name, code }: { name: string; code?: string }) {
+  const other = code ? code !== "en" : /[؀-ۿ]/.test(name);
+  return other ? <span lang={code ?? "ar"} className="dr-other-script">{name}</span> : <>{name}</>;
 }
 
 /** Label + control + hint, in the design system's field styles. */
-function Field({ id, label, tag, hint, children }: { id: string; label: string; tag?: string; hint?: string; children: ReactNode }) {
+function Field({ id, label, tag, hint, children }: { id: string; label: string; tag?: EditLang; hint?: string; children: ReactNode }) {
   return (
     <div className="dr-field">
-      <label htmlFor={id} className="dr-field-label"><bdi>{label}</bdi>{tag && <span className="ed-lang"><LangName name={tag} /></span>}</label>
+      <label htmlFor={id} className="dr-field-label"><bdi>{label}</bdi>{tag && <span className="ed-lang"><LangName name={tag.name} code={tag.code} /></span>}</label>
       {children}
       {hint && <span className="dr-field-hint">{hint}</span>}
     </div>
   );
 }
 
-/** A LocalText: English (required, the fallback) and Arabic. */
+/** A LocalText: English (required, the fallback) and the other languages shown. */
 export function LText({ label, value, onChange, multiline, rows = 3, hint }: { label: string; value?: LocalText; onChange: (v: LocalText) => void; multiline?: boolean; rows?: number; hint?: string }) {
   const id = useId();
+  const langs = useEditLangs();
   const v = value ?? { en: "" };
   return (
     <div className="ed-pair">
-      {LANGS.map((l) => {
+      {langs.map((l) => {
         const props = { id: `${id}-${l.code}`, className: "dr-field-input", dir: l.dir, lang: l.code, value: v[l.code] ?? "", onChange: (e: { target: { value: string } }) => onChange({ ...v, [l.code]: e.target.value }) };
-        return <Field key={l.code} id={props.id} label={label} tag={l.name} hint={l.code === "en" ? hint : undefined}>{multiline ? <textarea rows={rows} {...props} /> : <input {...props} />}</Field>;
+        return <Field key={l.code} id={props.id} label={label} tag={l} hint={l.code === "en" ? hint : undefined}>{multiline ? <textarea rows={rows} {...props} /> : <input {...props} />}</Field>;
       })}
     </div>
   );
@@ -45,17 +48,18 @@ export function LText({ label, value, onChange, multiline, rows = 3, hint }: { l
 /** A LocalList, one item per line. Typing keeps blank lines on screen; the lesson only gets the filled ones. */
 export function LList({ label, value, onChange, hint, rows = 4 }: { label: string; value?: LocalList; onChange: (v: LocalList) => void; hint?: string; rows?: number }) {
   const id = useId();
-  return <div className="ed-pair">{LANGS.map((l) => <ListBox key={l.code} id={`${id}-${l.code}`} lang={l.code} label={label} tag={l.name} hint={l.code === "en" ? hint : undefined} rows={rows}
+  const langs = useEditLangs();
+  return <div className="ed-pair">{langs.map((l) => <ListBox key={l.code} id={`${id}-${l.code}`} lang={l} label={label} hint={l.code === "en" ? hint : undefined} rows={rows}
     items={value?.[l.code] ?? []} onChange={(items) => onChange({ ...(value ?? { en: [] }), [l.code]: items })} />)}</div>;
 }
-function ListBox({ id, lang, label, tag, hint, rows, items, onChange }: { id: string; lang: Lang; label: string; tag: string; hint?: string; rows: number; items: string[]; onChange: (v: string[]) => void }) {
+function ListBox({ id, lang, label, hint, rows, items, onChange }: { id: string; lang: EditLang; label: string; hint?: string; rows: number; items: string[]; onChange: (v: string[]) => void }) {
   const [text, setText] = useState(items.join("\n"));
   const clean = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean);
   // Follow outside changes (moving items, importing) without fighting the typing.
   useEffect(() => { if (clean(text).join("\n") !== items.join("\n")) setText(items.join("\n")); }, [items.join("\n")]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <Field id={id} label={label} tag={tag} hint={hint}>
-      <textarea id={id} className="dr-field-input" rows={rows} dir={lang === "ar" ? "rtl" : "ltr"} lang={lang} value={text} onChange={(e) => { setText(e.target.value); onChange(clean(e.target.value)); }} />
+    <Field id={id} label={label} tag={lang} hint={hint}>
+      <textarea id={id} className="dr-field-input" rows={rows} dir={lang.dir} lang={lang.code} value={text} onChange={(e) => { setText(e.target.value); onChange(clean(e.target.value)); }} />
     </Field>
   );
 }

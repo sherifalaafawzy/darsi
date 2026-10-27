@@ -51,9 +51,13 @@ describe("cacheFonts", () => {
     expect(fetchFn.mock.calls.map(([u]) => file(String(u))).sort()).toEqual(["baloo-bhaijaan-2-arabic-700-normal", "noto-sans-arabic-arabic-wght-normal"]);
     expect(stored.size).toBe(5);
   });
-  it("treats a language without its own fonts as Latin", async () => {
+  it("gives an added Latin-script language the Latin fonts plus the extended-Latin headings", async () => {
     await cacheFonts("fr");
-    expect(stored.size).toBe(3);
+    expect([...stored.keys()].map((u) => file(String(u))).sort()).toEqual(["baloo-2-latin-700-normal", "baloo-2-latin-800-normal", "baloo-2-latin-ext-700-normal", "noto-sans-latin-wght-normal"]);
+  });
+  it("gives an added Arabic-script language the Arabic fonts", async () => {
+    await cacheFonts("fa");
+    expect(stored.size).toBe(5);
   });
   it("never caches the HTML page Hosting returns for a font that no longer exists", async () => {
     type = "text/html; charset=utf-8";

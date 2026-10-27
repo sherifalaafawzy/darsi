@@ -24,6 +24,7 @@ export function Home() {
           <ProgressBar value={Math.min(100, (doneThisWeek / state.weeklyLessons) * 100)} label={t("home.thisWeek", { done: doneThisWeek, goal: state.weeklyLessons })} valueText={`${num(doneThisWeek)} / ${num(state.weeklyLessons)}`} />
         </section>
         {error && <EmptyState tone="offline" title={t("pwa.offline")} action={<Button size="sm" icon="sync" onClick={retry}>{t("common.retry")}</Button>} />}
+        {catalog && !units.length && <EmptyState icon="learn" title={t("home.empty")} body={t("home.emptyBody")} />}
         {units.map((u) => u.available ? <UnitBlock key={u.id} entry={u} /> : <LockedUnit key={u.id} entry={u} />)}
       </main>
     </>

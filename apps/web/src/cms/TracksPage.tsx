@@ -5,7 +5,8 @@ import { useTracks } from "../content/settings";
 import { BUILTIN_TRACKS, MAX_LEVELS, mergeTracks } from "../content/tracks";
 import type { LocalText, TrackDef } from "../content/types";
 import { validateTracks, type Issue } from "../content/validate";
-import { useI18n, type MessageKey } from "../i18n";
+import { useI18n, useLanguages, type MessageKey } from "../i18n";
+import { EditLangsProvider } from "./langs";
 import { cmsApi, codeOf, conflictsOf, issuesOf } from "./api";
 import { getSettings, unitsByTrack, type TrackUse } from "./data";
 import { Check, LText, Text } from "./fields";
@@ -36,6 +37,7 @@ const strip = (rows: Row[]): TrackDef[] => rows.map(({ def }, order) => {
  */
 export function TracksPage() {
   const { t, L, num } = useI18n();
+  const languages = useLanguages(); // track names in every language people can pick
   const nav = useNavigate();
   const { apply } = useTracks();
   const [rev, setRev] = useState<number | null>(null);
@@ -98,7 +100,7 @@ export function TracksPage() {
   };
 
   return (
-    <>
+    <EditLangsProvider langs={languages.map((l) => l.code)}>
       <AppBar title={t("cms.tracks.title")} onBack={() => { if (!dirty || confirm(t("cms.leaveConfirm"))) nav("/super/content"); }} backLabel={t("common.back")} />
       <main className="screen wide stack-lg ed">
         <p className="muted">{t("cms.tracks.intro")}</p>
@@ -134,7 +136,7 @@ export function TracksPage() {
         {dirty && <Button variant="ghost" disabled={busy} onClick={() => { setRows(base); setMsg(null); setTried(false); }}>{t("cms.tracks.discard")}</Button>}
         {msg && <div className={msg.ok ? "notice ok" : "notice err"} role={msg.ok ? "status" : "alert"}>{msg.text}{msg.list && <ul>{msg.list.map((x) => <li key={x}>{x}</li>)}</ul>}</div>}
       </div>
-    </>
+    </EditLangsProvider>
   );
 }
 

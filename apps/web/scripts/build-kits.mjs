@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
- * Builds the teacher classroom kits from the lesson content (public/content/units/*.json):
- *   public/kits/<lesson>/slides-<lang>.pptx   — editable PowerPoint (pptxgenjs), RTL for Arabic
- *   public/kits/<lesson>/slides-<lang>.pdf    — the same slides as PDF (headless Chromium, brand fonts embedded)
- *   public/kits/<lesson>/lesson-plan-<lang>.pdf — A4 lesson plan + pupil worksheet
+ * Builds the teacher classroom kits from the course sources (content/units/*.json at the repo root):
+ *   content/kits/<lesson>/slides-<lang>.pptx   — editable PowerPoint (pptxgenjs), RTL for Arabic
+ *   content/kits/<lesson>/slides-<lang>.pdf    — the same slides as PDF (headless Chromium, brand fonts embedded)
+ *   content/kits/<lesson>/lesson-plan-<lang>.pdf — A4 lesson plan + pupil worksheet
+ * The app ships no courses: `npm run seed` uploads these with the unit and publishes it (scripts/seed-content.mjs).
  *
  * Usage:  npm run kits            (all units, all languages)
  *         npm run kits -- ai-1    (one unit)
@@ -15,8 +16,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import PptxGenJS from "pptxgenjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const CONTENT = join(ROOT, "public/content/units");
-const OUT = join(ROOT, "public/kits");
+const CONTENT = resolve(ROOT, "../../content/units");
+const OUT = resolve(ROOT, "../../content/kits");
 const DS = resolve(ROOT, "../../packages/design-system");
 const FONTS = pathToFileURL(join(DS, "assets/fonts")).href;
 const MARK_PNG = join(ROOT, "public/app-icons/app-icon-192.png");
@@ -196,7 +197,7 @@ async function main() {
     console.log(`✓ ${lesson.id}`);
   }
   await browser?.close();
-  console.log(`${count} files written to public/kits/`);
+  console.log(`${count} files written to content/kits/`);
   if (!existsSync(MARK_PNG)) console.warn("! app icon missing for PPTX logo");
 }
 main().catch((e) => { console.error(e); process.exit(1); });

@@ -6,7 +6,7 @@ import { db } from "../firebase";
 import { useAuth } from "../auth/AuthProvider";
 import { api, displayLogin } from "../auth/api";
 import type { Profile, Role } from "../auth/types";
-import { LANGUAGES, useI18n } from "../i18n";
+import { useI18n } from "../i18n";
 import { COMPETENCIES, competency, strength } from "../content/competencies";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
 import type { Unit } from "../content/types";
@@ -54,9 +54,9 @@ export function CapabilityProfile({ counts }: { counts: Record<string, number> }
 export function PersonDetail({ back = "/admin" }: { back?: string }) {
   const { uid = "" } = useParams();
   const nav = useNavigate();
-  const { t, L, num, lang } = useI18n();
+  const { t, L, num, locale } = useI18n();
   const tracks = useTracks();
-  const dateFmt = new Intl.DateTimeFormat(LANGUAGES.find((l) => l.code === lang)?.numerals ?? lang, { dateStyle: "medium" });
+  const dateFmt = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
   const { role: myRole, orgId } = useAuth();
   const { data: person, error } = usePerson(uid);
   const { data: progress = [] } = useProgress(uid);

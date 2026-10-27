@@ -11,10 +11,11 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { audit, caller, db, messaging, str } from "./admin.js";
 import {
-  broadcastCondition, isTopicPart, linkFor, message, tagFor, topicsFor, webpush,
+  broadcastCondition, isTopicPart, linkFor, message, tagFor, topicLang, topicsFor, webpush, wordingFor,
   type Audience, type Cat, type Kind, type Lang, type MessageVars,
 } from "./messages.js";
 import { isValidTz, parseTime, pickNudge, utcHourFor } from "./nudge.js";
+import { LANG_CODE } from "./shared/languages.js";
 
 interface Cats { reminders: boolean; reviews: boolean; staff: boolean; news: boolean }
 interface Notify {
@@ -22,7 +23,8 @@ interface Notify {
   lastAutoAt?: string; comeback7At?: string; comeback21At?: string;
 }
 const CAT_KEYS: (keyof Cats)[] = ["reminders", "reviews", "staff", "news"];
-const LANGS: Lang[] = ["en", "ar"];
+/** Announcements are written in these two; phones in other languages get the English one. */
+const LANGS = ["en", "ar"] as const;
 /** FCM errors that mean the token will never work again: the device is forgotten. */
 const STALE = new Set(["messaging/registration-token-not-registered", "messaging/invalid-registration-token", "messaging/invalid-argument"]);
 
@@ -34,7 +36,7 @@ function vToken(v: unknown): string {
   return v;
 }
 function vLang(v: unknown): Lang {
-  if (v !== "en" && v !== "ar") throw bad("lang must be en or ar.");
+  if (typeof v !== "string" || !LANG_CODE.test(v)) throw bad("lang must be a language code such as en, ar or fr.");
   return v;
 }
 function vTz(v: unknown): string {
@@ -91,7 +93,7 @@ async function vAudience(v: unknown): Promise<Audience> {
 /* ---------- Devices and topics ---------- */
 
 const deviceIdOf = (token: string) => createHash("sha256").update(token).digest("hex").slice(0, 40);
-const langOf = (v: unknown): Lang => (typeof v === "string" && v.toLowerCase().startsWith("ar") ? "ar" : "en");
+const langOf = (v: unknown): Lang => topicLang(typeof v === "string" ? v.toLowerCase() : v);
 const topicsOf = (v: unknown): string[] => (Array.isArray(v) ? v.filter((t): t is string => typeof t === "string") : []);
 const userTopics = (u: DocumentData | undefined, lang: Lang, news: boolean) => topicsFor(lang, u?.role, u?.orgId ?? null, news);
 
@@ -150,7 +152,7 @@ async function deliver(uid: string, kind: Kind, vars: MessageVars, link: string,
   const byLang = new Map<Lang, QueryDocumentSnapshot[]>();
   for (const d of devs.docs) {
     if (typeof d.get("token") !== "string") continue;
-    const lang = langOf(d.get("lang"));
+    const lang = wordingFor(langOf(d.get("lang")));
     byLang.set(lang, [...(byLang.get(lang) ?? []), d]);
   }
   let ok = 0;
@@ -268,7 +270,7 @@ export const sendBroadcast = onCall(async (req) => {
   const link = vLink(d.link);
   const audience = await vAudience(d.audience);
   const ref = db.collection("broadcasts").doc();
-  const results: Record<Lang, string | null> = { en: null, ar: null };
+  const results: Record<(typeof LANGS)[number], string | null> = { en: null, ar: null };
   await Promise.all(LANGS.map(async (lang) => {
     try {
       results[lang] = await messaging.send({

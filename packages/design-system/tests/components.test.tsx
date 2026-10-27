@@ -3,7 +3,7 @@ import { Button, QuizOption, MatchPairs, OrderSteps, FillBlank, TrueFalse, Langu
   TrackChip, TrackStylesProvider, ProgressBar, PlacementResult, TRACK_TONES, ICON_NAMES } from "../src";
 import paths from "../src/icons/paths.json";
 import { approximateTokens, withTemperature, classify } from "../src/components/lab";
-import { dirFor, formatNumber } from "../src/locale";
+import { applyLocale, dirFor, formatNumber } from "../src/locale";
 
 describe("locale", () => {
   it("knows RTL languages", () => {
@@ -11,6 +11,11 @@ describe("locale", () => {
     expect(dirFor("sw")).toBe("ltr"); expect(dirFor("fr")).toBe("ltr");
   });
   it("formats Arabic-Indic digits", () => { expect(formatNumber(80, "ar-EG")).toBe("٨٠"); });
+  it("sets the page's language and direction, which the app may give for a language it added", () => {
+    applyLocale("fa"); expect([document.documentElement.lang, document.documentElement.dir]).toEqual(["fa", "rtl"]);
+    applyLocale("xx", "light", "rtl"); expect(document.documentElement.dir).toBe("rtl");
+    applyLocale("en"); expect(document.documentElement.dir).toBe("ltr");
+  });
   it("DarsiRoot sets dir from lang", () => {
     const { container } = render(<DarsiRoot lang="ar" theme="sunlight"><span>x</span></DarsiRoot>);
     const root = container.firstElementChild!;

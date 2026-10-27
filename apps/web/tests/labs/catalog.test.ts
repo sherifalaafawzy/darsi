@@ -3,7 +3,7 @@ import path from "node:path";
 import { CATEGORIES } from "../../src/labs/categories";
 import { LAB_METAS, LADDER, labMeta, nextLab } from "../../src/labs/catalog";
 import { LAB_ID } from "../../src/content/validate";
-import ai1 from "../../public/content/units/ai-1.json";
+import ai1 from "../../../../content/units/ai-1.json";
 
 const APPS = path.join(__dirname, "../../src/labs/apps");
 

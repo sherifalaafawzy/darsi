@@ -7,7 +7,7 @@ import type { LocalText, Track, Unit } from "../content/types";
 import { errorsOf, UNIT_ID, validateUnit } from "../content/validate";
 import { useTracks } from "../content/settings";
 import { levelsByTrack } from "../content/tracks";
-import { LANGUAGES, useI18n, type MessageKey } from "../i18n";
+import { useI18n, type MessageKey } from "../i18n";
 import { cmsApi } from "./api";
 import { createUnit, freshMeta, getUnit, listUnits, statusOf, unitExists, type Status, type UnitMeta } from "./data";
 import { LText } from "./fields";
@@ -27,10 +27,10 @@ const words = (x?: LocalText) => Object.values(x ?? {}).join(" ").toLowerCase();
  * duplicated or deleted from here; "New unit" and "Import JSON" (a unit file, exported here or written by hand) add one.
  */
 export function ContentList() {
-  const { t, L, num, lang } = useI18n();
+  const { t, L, num, locale } = useI18n();
   const tracks = useTracks();
   const nav = useNavigate();
-  const fmt = new Intl.DateTimeFormat(LANGUAGES.find((l) => l.code === lang)?.numerals ?? lang, { dateStyle: "medium" });
+  const fmt = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
   const date = (ts?: { seconds: number } | null) => (ts ? fmt.format(new Date(ts.seconds * 1000)) : "—");
   const { user, role, orgId } = useAuth();
   const owner = role === "superadmin" ? "public" : orgId;
@@ -90,6 +90,7 @@ export function ContentList() {
     <>
       <AppBar title={t("cms.title.list")} actions={<>
         {owner === "public" && <Button size="sm" variant="ghost" icon="settings" onClick={() => nav("/super/tracks")}>{t("cms.tracks.title")}</Button>}
+        {owner === "public" && <Button size="sm" variant="ghost" icon="language" onClick={() => nav("/super/languages")}>{t("cms.lang.title")}</Button>}
         <Button size="sm" variant="secondary" icon="file" onClick={() => setPanel(panel === "import" ? "" : "import")}>{t("cms.import")}</Button>
         <Button size="sm" icon="edit" onClick={() => setPanel(panel === "new" ? "" : "new")}>{t("cms.newUnit")}</Button>
       </>} />
@@ -201,8 +202,8 @@ function NewUnit({ onCreate, onCancel }: { onCreate: (u: Unit) => Promise<void>;
 }
 
 /**
- * A unit file from disk or pasted. Platform admins keep its id, so importing ai-1.json edits the built-in unit
- * (the published copy replaces it for learners); org units always get new ids. Errors are fixed in the editor.
+ * A unit file from disk or pasted. Platform admins keep its id (a unit exported here comes back as itself, with its
+ * learners' progress); org units always get new ids. Errors are fixed in the editor.
  */
 function ImportUnit({ owner, onCreate, onCancel }: { owner: string; onCreate: (u: Unit) => Promise<void>; onCancel: () => void }) {
   const { t } = useI18n();

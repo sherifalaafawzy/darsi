@@ -12,7 +12,7 @@ import type { Unit } from "./types.js";
 export type IssueCode =
   | "required" | "minItems" | "duplicateId" | "badId" | "lessonIdPrefix" | "badValue" | "range"
   | "answerNotInOptions" | "answersNotInOptions" | "fillBlanks" | "fillAnswers" | "fillBank"
-  | "badUrl" | "checkpoint" | "tooLarge" | "missingAr" | "unknownCompetency" | "noSlides";
+  | "badUrl" | "checkpoint" | "tooLarge" | "missingLang" | "unknownCompetency" | "noSlides";
 
 /** Where an issue is: indexes into the unit (for "Lesson 2 › Step 4") and the field inside it. */
 export interface IssueAt { lesson?: number; step?: number; slide?: number; kit?: number; field: string }
@@ -44,8 +44,12 @@ const filled = (v: unknown): v is string => typeof v === "string" && v.trim().le
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 export const byteSize = (v: unknown) => new TextEncoder().encode(JSON.stringify(v) ?? "").length;
-/** Media and kit links: app paths, or https (uploads are Storage download URLs). Never javascript:, data: or http:. */
-export const okUrl = (v: unknown) => isStr(v) && (/^\/(media|kits)\/[^\s]*$/.test(v) || /^https:\/\/[^\s]+$/.test(v));
+/**
+ * Media and kit links: app paths, or https (uploads are Storage download URLs). Never javascript:, data: or http:, except
+ * the local Emulator Suite's own Storage (http://localhost or 127.0.0.1), so units can be published and checked locally.
+ */
+const emulatorUrl = (v: string) => { try { const u = new URL(v); return u.protocol === "http:" && (u.hostname === "localhost" || u.hostname === "127.0.0.1") && !v.includes(" "); } catch { return false; } };
+export const okUrl = (v: unknown) => isStr(v) && (emulatorUrl(v) || /^\/(media|kits)\/[^\s]*$/.test(v) || /^https:\/\/[^\s]+$/.test(v));
 
 export interface ValidateOptions {
   /** Known competency codes (the editor passes competencies.ts); unknown ones become warnings. Omit to skip the check. */
@@ -55,19 +59,26 @@ export interface ValidateOptions {
    * of them and its level must fit. Omit it and any well-formed track id with a level from 1 to 12 passes.
    */
   tracks?: ReadonlyMap<string, number>;
+  /**
+   * The languages besides English that the unit should have: a missing translation is a warning (learners see the
+   * English). The editor passes the languages it shows; the default is Arabic.
+   */
+  langs?: readonly string[];
 }
 
 export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[] {
   const issues: Issue[] = [];
   let ctx: Omit<IssueAt, "field"> = {};
   const add = (field: string, code: IssueCode, params?: Issue["params"], level: Issue["level"] = "error") => issues.push({ at: { ...ctx, field }, code, level, params });
+  const langs = (opts.langs ?? ["ar"]).filter((l) => l !== "en");
+  const missing = (field: string, lang: string) => add(field, "missingLang", { lang }, "warning");
 
-  /** LocalText: English is required (the fallback for every language); missing Arabic is a warning. */
+  /** LocalText: English is required (the fallback for every language); a missing translation is a warning. */
   const text = (o: Obj, key: string, required = true) => {
     const v = o[key];
     if (v === undefined && !required) return;
     if (!isObj(v) || !filled(v.en)) { if (required || v !== undefined) add(`${key}.en`, "required"); return; }
-    if (!filled(v.ar)) add(`${key}.ar`, "missingAr", undefined, "warning");
+    for (const l of langs) if (!filled(v[l])) missing(`${key}.${l}`, l);
     for (const [lang, s] of Object.entries(v)) if (!isStr(s)) add(`${key}.${lang}`, "badValue");
   };
   /** LocalList: English needs at least `min` non-empty items. */
@@ -75,7 +86,7 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
     const v = o[key];
     if (v === undefined && !required) return;
     if (!isObj(v) || arr(v.en).filter(filled).length < min) { add(`${key}.en`, min > 1 ? "minItems" : "required", { n: min }); return; }
-    if (!isObj(v) || !Array.isArray(v.ar) || !v.ar.some(filled)) add(`${key}.ar`, "missingAr", undefined, "warning");
+    for (const l of langs) if (!Array.isArray(v[l]) || !(v[l] as unknown[]).some(filled)) missing(`${key}.${l}`, l);
     for (const [lang, items] of Object.entries(v)) if (!Array.isArray(items) || !items.every(isStr)) add(`${key}.${lang}`, "badValue");
   };
   const oneOf = (o: Obj, key: string, allowed: readonly string[]) => { if (!allowed.includes(o[key] as string)) add(key, "badValue", { value: String(o[key] ?? "") }); };
@@ -116,7 +127,7 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
       }
       case "truefalse": if (typeof s.answer !== "boolean") add("answer", "required"); break;
       case "match": { const pairs = arr(s.pairs); minItems(pairs, "pairs", 2); pairs.forEach((p, i) => { if (!isObj(p)) return add(`pairs.${i}`, "badValue"); text(p, "left"); text(p, "right"); }); break; }
-      case "order": { const items = arr(s.steps); minItems(items, "steps", 2); items.forEach((it, i) => { if (!isObj(it) || !filled(it.en)) add(`steps.${i}.en`, "required"); else if (!filled(it.ar)) add(`steps.${i}.ar`, "missingAr", undefined, "warning"); }); break; }
+      case "order": { const items = arr(s.steps); minItems(items, "steps", 2); items.forEach((it, i) => { if (!isObj(it) || !filled(it.en)) add(`steps.${i}.en`, "required"); else for (const l of langs) if (!filled(it[l])) missing(`steps.${i}.${l}`, l); }); break; }
       case "fill": fill(s); break;
       case "type": list(s, "accept"); text(s, "placeholder", false); break;
       case "hotspot": {
@@ -159,7 +170,7 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
   const fill = (s: Obj) => {
     const sentence = s.sentence, bank = s.bank, answers = s.answers;
     if (!isObj(sentence) || !Array.isArray(sentence.en)) return add("sentence.en", "required");
-    if (!Array.isArray(sentence.ar)) add("sentence.ar", "missingAr", undefined, "warning");
+    for (const l of langs) if (!Array.isArray(sentence[l])) missing(`sentence.${l}`, l);
     for (const [lang, parts] of Object.entries(sentence)) {
       if (!Array.isArray(parts)) { add(`sentence.${lang}`, "badValue"); continue; }
       const blanks = parts.filter((p) => isObj(p)).map((p) => (p as Obj).blank);

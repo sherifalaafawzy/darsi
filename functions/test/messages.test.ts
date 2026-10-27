@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  CATALOGUE, KINDS, broadcastCondition, catOf, formatNumber, isolate, linkFor, message, tagFor, topicsFor, trimFeedback, webpush,
+  CATALOGUE, KINDS, broadcastCondition, catOf, formatNumber, isolate, linkFor, message, tagFor, topicsFor, trimFeedback, webpush, wordingFor,
   type Kind, type Lang,
 } from "../src/messages";
 
@@ -166,9 +166,21 @@ describe("announcement topics", () => {
     expect(topicsFor("en", "teacher", "org1", false)).toEqual([]);
   });
 
-  it("sends one condition per language for the audience", () => {
-    expect(broadcastCondition("en", { type: "all" })).toBe("'lang-en' in topics");
+  it("gives languages platform admins added their own topic, and anything else counts as English", () => {
+    expect(topicsFor("fr", "student", null, true)).toEqual(["all", "lang-fr", "role-student"]);
+    expect(topicsFor("pt-br", "student", null, true)).toContain("lang-pt-br");
+    expect(topicsFor("../x", "student", null, true)).toContain("lang-en");
+  });
+
+  it("sends the Arabic text to Arabic phones and the English text to every other phone", () => {
+    expect(broadcastCondition("en", { type: "all" })).toBe("'all' in topics && !('lang-ar' in topics)");
     expect(broadcastCondition("ar", { type: "org", orgId: "o1" })).toBe("'lang-ar' in topics && 'org-o1' in topics");
-    expect(broadcastCondition("en", { type: "role", role: "teacher" })).toBe("'lang-en' in topics && 'role-teacher' in topics");
+    expect(broadcastCondition("en", { type: "role", role: "teacher" })).toBe("'all' in topics && !('lang-ar' in topics) && 'role-teacher' in topics");
+  });
+
+  it("words a phone in an added language in English", () => {
+    expect(wordingFor("fr")).toBe("en");
+    expect(wordingFor("ar")).toBe("ar");
+    expect(message("daily0", "fr")).toEqual(message("daily0", "en"));
   });
 });

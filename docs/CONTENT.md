@@ -1,6 +1,6 @@
 # Writing content
 
-Units live in `apps/web/public/content/units/<id>.json` and are listed in `catalog.json`. Types: `apps/web/src/content/types.ts`.
+Courses are made in the course editor (`/super/content`), which publishes them to Cloud Storage; the app ships none. The starting courses also live as files in `content/units/<id>.json` at the repo root, published with `npm run seed`. Types: `apps/web/src/content/types.ts`.
 
 - Every learner-facing string is `{ "en": "…", "ar": "…" }`. English is the fallback.
 - Arabic: Modern Standard Arabic, friendly; use "،" or ":" as separators — never "·".
@@ -9,4 +9,4 @@ Units live in `apps/web/public/content/units/<id>.json` and are listed in `catal
 - Mix at least three question types per lesson; never two of the same in a row; every graded step has an `explain` that says *why*.
 - `order.steps` and `match.pairs` are written in the correct order — the app shuffles them.
 - Each lesson needs `tryTomorrow`, 6 `slides` (title, bullets, bullets, activity, questions, exit) and a `kit` list.
-- After editing, run `npm run kits` and `npm test` (content integrity tests).
+- After editing a file in `content/units/`, run `npm run kits` and `npm test` (content integrity tests), then `npm run seed -- --replace <id>` to publish it (or import the file in the editor).

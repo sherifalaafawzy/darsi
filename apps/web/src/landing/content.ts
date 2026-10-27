@@ -3,7 +3,7 @@ type L = { en: string; ar: string };
 const t = (en: string, ar: string): L => ({ en, ar });
 
 export const landing = {
-  nav: { approach: t("How it works", "كيف يعمل"), tracks: t("Tracks", "المسارات"), orgs: t("For organizations", "للمؤسسات"), standards: t("Standards", "المعايير"), faq: t("FAQ", "أسئلة شائعة"), signIn: t("Sign in", "تسجيل الدخول"), start: t("Start learning", "ابدأ التعلّم") },
+  nav: { approach: t("How it works", "كيف يعمل"), tracks: t("Tracks", "المسارات"), orgs: t("For organizations", "للمؤسسات"), standards: t("Standards", "المعايير"), faq: t("FAQ", "أسئلة شائعة"), language: t("Language", "اللغة"), signIn: t("Sign in", "تسجيل الدخول"), start: t("Start learning", "ابدأ التعلّم") },
   hero: {
     kicker: t("AI · IoT · Cyber security — for teachers", "الذكاء الاصطناعي، إنترنت الأشياء، الأمن السيبراني — للمعلمين"),
     title: t("Teachers who understand technology change a country.", "المعلم الذي يفهم التقنية يغيّر بلدًا."),

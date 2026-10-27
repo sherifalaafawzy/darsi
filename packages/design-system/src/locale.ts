@@ -6,9 +6,10 @@ export function dirFor(lang: string): "rtl" | "ltr" {
 }
 
 /** Sets lang, dir and theme on <html>. Call on start-up and whenever the teacher changes language or theme. */
-export function applyLocale(lang: string, theme: "light" | "sunlight" = "light") {
+/** Sets the page's language, direction (from the code unless the app knows better) and theme on <html>. */
+export function applyLocale(lang: string, theme: "light" | "sunlight" = "light", dir: "ltr" | "rtl" = dirFor(lang)) {
   const el = document.documentElement;
-  el.lang = lang; el.dir = dirFor(lang); el.dataset.theme = theme;
+  el.lang = lang; el.dir = dir; el.dataset.theme = theme;
 }
 
 /** Locale-correct numbers (Arabic-Indic digits for ar-EG, ar-SA…). */

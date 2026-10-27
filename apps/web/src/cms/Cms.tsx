@@ -5,3 +5,4 @@
 export { ContentList } from "./ContentList";
 export { UnitEditor } from "./UnitEditor";
 export { TracksPage } from "./TracksPage";
+export { LanguagesPage, TranslatePage } from "./LanguagesPage";

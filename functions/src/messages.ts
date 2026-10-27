@@ -1,9 +1,16 @@
 /**
  * Push notification wording, in English and Arabic. Pure: no Firebase imports, so it is unit-tested directly.
  * Tone: "Encourage, never punish". No guilt, no threats, no emoji, and Arabic never uses "·".
+ * A phone set to a language platform admins added gets the English wording.
  */
+import { LANG_CODE } from "./shared/languages.js";
 
-export type Lang = "en" | "ar";
+/** A device's language: English, Arabic, or one platform admins added ("fr", "pt-br"). */
+export type Lang = string;
+/** The wording a device gets: Arabic for Arabic, English for every other language. */
+export const wordingFor = (lang: Lang): "en" | "ar" => (lang === "ar" ? "ar" : "en");
+/** A language code that may go into a topic name; anything else counts as English. */
+export const topicLang = (lang: unknown): Lang => (typeof lang === "string" && LANG_CODE.test(lang) ? lang : "en");
 export type Cat = "reminders" | "reviews" | "staff" | "news";
 export type Kind =
   | "daily0" | "daily1" | "daily2" | "weekGoal" | "streak" | "comeback7" | "comeback21"
@@ -138,14 +145,17 @@ const ROLES = ["learner", "student", "teacher", "orgAdmin", "superadmin"];
 export function topicsFor(lang: Lang, role: unknown, orgId: unknown, news: boolean): string[] {
   if (!news) return [];
   const r = typeof role === "string" && ROLES.includes(role) ? role : "learner";
-  const t = ["all", `lang-${lang === "ar" ? "ar" : "en"}`, `role-${r}`];
+  const t = ["all", `lang-${topicLang(lang)}`, `role-${r}`];
   if (typeof orgId === "string" && TOPIC_PART.test(orgId)) t.push(`org-${orgId}`);
   return t;
 }
 
-/** One condition per language, so every device gets the announcement in its own language. */
-export function broadcastCondition(lang: Lang, audience: Audience): string {
-  const base = `'lang-${lang === "ar" ? "ar" : "en"}' in topics`;
+/**
+ * One condition per wording: the Arabic text to Arabic phones, the English text to every other phone (English and the
+ * languages platform admins added). Every subscribed device is in "all".
+ */
+export function broadcastCondition(lang: "en" | "ar", audience: Audience): string {
+  const base = lang === "ar" ? "'lang-ar' in topics" : "'all' in topics && !('lang-ar' in topics)";
   if (audience.type === "org") return `${base} && 'org-${audience.orgId}' in topics`;
   if (audience.type === "role") return `${base} && 'role-${audience.role}' in topics`;
   return base;

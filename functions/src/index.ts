@@ -19,6 +19,7 @@ export * from "./notify.js";
 export * from "./content.js";
 /** Platform settings: the tracks (and later the languages) that every unit and screen uses. */
 export { saveSettings } from "./settings.js";
+export { publishLanguage, unpublishLanguage } from "./languages.js";
 
 const MEMBER_ROLES: Role[] = ["student", "teacher", "orgAdmin"];
 

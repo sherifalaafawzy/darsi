@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   FillBlank, HotspotImage, ImageChoice, MatchPairs, OrderSteps, QuestionHeader, QuizOption, Reflection, ScenarioCard, TextField, TrueFalse, VideoPlayer, Button,
 } from "@darsi/design-system";
-import { pickList, videoSrc, type Step, type VideoStep, type ChoiceStep, type TrueFalseStep } from "../content/types";
+import { captionsFor, pickList, videoSrc, type Step, type VideoStep, type ChoiceStep, type TrueFalseStep } from "../content/types";
 import { useI18n, type MessageKey } from "../i18n";
 import { Art } from "../components/Art";
 import { LabEmbed } from "../labs/loader";
@@ -28,7 +28,7 @@ export interface StepViewProps {
 }
 
 export function StepView(p: StepViewProps) {
-  const { t, L, lang } = useI18n();
+  const { t, L, lang, dir } = useI18n();
   const s = p.step;
   const keys = KEY_LABELS[lang] ?? KEY_LABELS.en;
   const res = p.result === null ? undefined : p.result ? "correct" : "wrong";
@@ -52,11 +52,10 @@ export function StepView(p: StepViewProps) {
     case "fill": return <Fill key={seed} {...p} header={header("q.fill")} />;
     case "type": return <TypeIn key={seed} {...p} header={header("q.type")} />;
     case "hotspot": {
-      const ar = lang === "ar";
       return <div className="stack">{header("q.hotspot")}
         <HotspotImage key={seed} spots={s.spots.map((x) => ({ ...x, label: L(x.label) }))} counter={(a, b) => t("q.found", { n: a, total: b })}
           onChange={(found) => p.onAnswer({ kind: "hotspot", found })}>
-          <div className="mock-answer" dir={ar ? "rtl" : "ltr"} lang={lang}>
+          <div className="mock-answer" dir={dir} lang={lang}>
             <p className="mock-from">{s.mock.from}</p><p>{L(s.mock.body)}</p><p className="mock-link" dir="ltr">{L(s.mock.link)}</p>
           </div>
         </HotspotImage></div>;
@@ -193,7 +192,7 @@ function LabStepView(p: StepViewProps) {
 function VideoStepView({ step, onReady }: { step: VideoStep; onReady: () => void }) {
   const { t, L, lang, num } = useI18n();
   const [failed, setFailed] = useState(false);
-  const src = videoSrc(step, lang);
+  const src = videoSrc(step, lang), captions = captionsFor(step, lang);
   const playable = !!src && !failed;
   const [checkpointOpen, setCheckpointOpen] = useState(false);
   const [cpDone, setCpDone] = useState(false);
@@ -234,7 +233,7 @@ function VideoStepView({ step, onReady }: { step: VideoStep; onReady: () => void
         poster={poster} src={playable ? src! : undefined} duration={step.duration} title={L(step.title)}
         meta={[fmt(step.duration), "240p", `${num(step.sizeMB, { maximumFractionDigits: 1 })} MB`].join(t("common.sep"))}
         chapters={step.chapters?.map((c) => ({ at: c.at, label: L(c.label) }))} questionsAt={step.checkpoint ? [step.checkpoint.at] : []}
-        tracks={step.captions?.[lang] ? <track kind="captions" srcLang={lang} src={step.captions[lang]} default /> : undefined}
+        tracks={captions ? <track kind="captions" srcLang={captions.lang} src={captions.src} default /> : undefined}
         checkpoint={playable && !reading && checkpointOpen && !cpDone ? question : undefined} checkpointLabel={t("lesson.pause")}
         onTimeUpdate={(sec) => { if (step.checkpoint && cpResult === null && sec >= step.checkpoint.at) setCheckpointOpen(true); }}
         onError={() => { setFailed(true); setShowTranscript(true); }}

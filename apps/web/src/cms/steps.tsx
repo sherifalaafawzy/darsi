@@ -9,7 +9,8 @@ import { categoryOf } from "../labs/categories";
 import { LAB_METAS, labMeta } from "../labs/catalog";
 import { useI18n, type MessageKey } from "../i18n";
 import { blankStep, nextLetter } from "./ids";
-import { Check, Items, LangName, LANGS, LList, LText, Num, Sel, Text, Upload } from "./fields";
+import { Check, Items, LangName, LList, LText, Num, Sel, Text, Upload } from "./fields";
+import { useEditLangs } from "./langs";
 
 export const STEP_LABEL: Record<Step["type"], MessageKey> = {
   video: "lesson.video", read: "lesson.read", choice: "q.choice", multi: "q.multi", truefalse: "q.truefalse", image: "q.image", match: "q.match",
@@ -161,10 +162,11 @@ export function parseFill(text: string, extras: string) {
 
 function FillForm({ step, onChange }: { step: FillStep; onChange: (s: Step) => void }) {
   const { t } = useI18n();
+  const langs = useEditLangs();
   return (
     <>
       <p className="muted small">{t("cms.fillHint")}</p>
-      <div className="ed-pair">{LANGS.map((l) => <FillLang key={l.code} lang={l.code} dir={l.dir} name={l.name} step={step} onChange={onChange} />)}</div>
+      <div className="ed-pair">{langs.map((l) => <FillLang key={l.code} lang={l.code} dir={l.dir} name={l.name} step={step} onChange={onChange} />)}</div>
     </>
   );
 }
@@ -185,12 +187,12 @@ function FillLang({ lang, dir, name, step, onChange }: { lang: string; dir: "ltr
   return (
     <div className="stack">
       <div className="dr-field">
-        <label className="dr-field-label" htmlFor={`fill-${step.id}-${lang}`}>{t("cms.sentence")}<span className="ed-lang">{name}</span></label>
+        <label className="dr-field-label" htmlFor={`fill-${step.id}-${lang}`}>{t("cms.sentence")}<span className="ed-lang"><LangName name={name} code={lang} /></span></label>
         <textarea id={`fill-${step.id}-${lang}`} className="dr-field-input" rows={3} dir={dir} lang={lang} value={text} onChange={(e) => apply(e.target.value, extras)} />
         <span className="dr-field-hint">{t("cms.blanks", { n })}</span>
       </div>
       <div className="dr-field">
-        <label className="dr-field-label" htmlFor={`fillx-${step.id}-${lang}`}>{t("cms.extraWords")}<span className="ed-lang">{name}</span></label>
+        <label className="dr-field-label" htmlFor={`fillx-${step.id}-${lang}`}>{t("cms.extraWords")}<span className="ed-lang"><LangName name={name} code={lang} /></span></label>
         <input id={`fillx-${step.id}-${lang}`} className="dr-field-input" dir={dir} lang={lang} value={extras} onChange={(e) => apply(text, e.target.value)} />
       </div>
     </div>
@@ -201,6 +203,7 @@ function FillLang({ lang, dir, name, step, onChange }: { lang: string; dir: "ltr
 
 function VideoForm({ step: s, onChange, media }: { step: VideoStep; onChange: (s: Step) => void; media: MediaCtx }) {
   const { t } = useI18n();
+  const langs = useEditLangs();
   const cp = s.checkpoint;
   const setSource = (key: "sources" | "captions", lang: string, url: string | null, bytes = 0) => {
     const next = { ...(s[key] ?? {}) } as Record<string, string>;
@@ -216,11 +219,11 @@ function VideoForm({ step: s, onChange, media }: { step: VideoStep; onChange: (s
         <Num label={t("cms.sizeMB")} hint={t("cms.sizeHint")} min={0} step={0.1} value={s.sizeMB} onChange={(sizeMB) => onChange({ ...s, sizeMB })} />
       </div>
       <div className="ed-pair">
-        {LANGS.map((l) => (
+        {langs.map((l) => (
           <div key={l.code} className="stack">
-            <Upload label={<>{t("cms.videoFile")} (<LangName name={l.name} />)</>} kind="video" owner={media.owner} unitId={media.unitId} base={`${media.lessonId}_${s.id}_video_${l.code}`}
+            <Upload label={<>{t("cms.videoFile")} (<LangName name={l.name} code={l.code} />)</>} kind="video" owner={media.owner} unitId={media.unitId} base={`${media.lessonId}_${s.id}_video_${l.code}`}
               current={s.sources?.[l.code]} onDone={(url, bytes) => setSource("sources", l.code, url, bytes)} onClear={() => setSource("sources", l.code, null)} />
-            <Upload label={<>{t("cms.captions")} (<LangName name={l.name} />)</>} kind="captions" owner={media.owner} unitId={media.unitId} base={`${media.lessonId}_${s.id}_captions_${l.code}`}
+            <Upload label={<>{t("cms.captions")} (<LangName name={l.name} code={l.code} />)</>} kind="captions" owner={media.owner} unitId={media.unitId} base={`${media.lessonId}_${s.id}_captions_${l.code}`}
               current={s.captions?.[l.code]} onDone={(url) => setSource("captions", l.code, url)} onClear={() => setSource("captions", l.code, null)} />
           </div>
         ))}

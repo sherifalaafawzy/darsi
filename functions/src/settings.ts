@@ -9,10 +9,23 @@ import { audit, caller, db } from "./admin.js";
 import { savePublicJson } from "./storage.js";
 import { trackConflicts } from "./trackRules.js";
 import { BUILTIN_TRACKS, mergeTracks } from "./shared/tracks.js";
-import type { TrackDef } from "./shared/types.js";
+import type { LanguageDef, TrackDef } from "./shared/types.js";
 import { validateTracks } from "./shared/validate.js";
 
-const SETTINGS = "config/settings";
+export const SETTINGS = "config/settings";
+
+/**
+ * Publishes content/settings.json from config/settings as it is now: the tracks (saveSettings) and the languages
+ * (publishLanguage). Each writer changes only its own part of the document, then calls this.
+ */
+export async function writeSettingsFile() {
+  const s = await db.doc(SETTINGS).get();
+  await savePublicJson("content/settings.json", {
+    version: Number(s.get("rev")) || 0,
+    tracks: mergeTracks(s.exists ? (s.get("tracks") as TrackDef[]) : null).map(({ builtIn: _b, ...t }) => t),
+    languages: (s.get("languages") as LanguageDef[] | undefined) ?? [],
+  });
+}
 
 /** The tracks in use now: the saved list, with the built-in tracks always present. */
 export async function loadTracks(): Promise<TrackDef[]> {
@@ -42,9 +55,10 @@ export const saveSettings = onCall(async (req) => {
   await db.runTransaction(async (tx) => {
     const again = await tx.get(ref);
     if ((Number(again.get("rev")) || 0) !== currentRev) throw new HttpsError("aborted", "Someone else saved the tracks meanwhile. Reload to see their changes.", { conflict: true });
-    tx.set(ref, { tracks: next, rev: newRev, updatedAt: FieldValue.serverTimestamp(), updatedBy: c.uid });
+    // merge: the languages in the same document are publishLanguage's.
+    tx.set(ref, { tracks: next, rev: newRev, updatedAt: FieldValue.serverTimestamp(), updatedBy: c.uid }, { merge: true });
   });
-  await savePublicJson("content/settings.json", { version: newRev, tracks: next });
+  await writeSettingsFile();
   await audit("saveSettings", c.uid, { tracks: next.map((t) => `${t.id}:${t.levels}${t.hidden ? ":hidden" : ""}`) });
   return { rev: newRev, tracks: next };
 });

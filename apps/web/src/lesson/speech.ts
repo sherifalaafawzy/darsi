@@ -4,7 +4,7 @@ export function speak(text: string, lang: string) {
   const synth = window.speechSynthesis;
   if (synth.speaking) { synth.cancel(); return; }
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang === "ar" ? "ar-SA" : "en-GB";
+  u.lang = lang === "ar" ? "ar-SA" : lang === "en" ? "en-GB" : lang; // added languages: the phone picks its own voice
   const voice = synth.getVoices().find((v) => v.lang.toLowerCase().startsWith(lang));
   if (voice) u.voice = voice;
   u.rate = 0.95;

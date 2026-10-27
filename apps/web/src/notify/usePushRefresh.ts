@@ -20,7 +20,7 @@ export function usePushRefresh() {
     if (!uid || !ready || !loaded || done.has(uid) || !pushOn(uid)) return;
     done.add(uid);
     const prefs = prefsFrom((profile as { notify?: ServerNotify } | null)?.notify, state.weeklyLessons);
-    refreshPush({ ...prefs, lang: state.lang === "ar" ? "ar" : "en" }).catch(() => { done.delete(uid); });
+    refreshPush({ ...prefs, lang: state.lang }).catch(() => { done.delete(uid); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, ready, loaded]);
 }

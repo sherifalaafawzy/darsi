@@ -98,6 +98,19 @@ service cloud.firestore {
     // else reads the published copy, content/settings.json in Storage.
     match /config/{doc} { allow read: if isSuper(); allow write: if false; }
 
+    // Languages platform admins add (/super/languages): drafts of a language's UI strings. Only publishLanguage puts a
+    // language in front of learners, and only it writes `published`. Every save bumps `rev`, as for units.
+    match /translations/{code} {
+      allow read: if isSuper();
+      allow create: if isSuper() && request.resource.data.code == code && request.resource.data.rev == 1
+        && request.resource.data.keys().hasOnly(['code', 'native', 'english', 'dir', 'numerals', 'messages', 'rev', 'updatedAt', 'updatedBy'])
+        && request.resource.data.messages is map && request.resource.data.updatedBy == request.auth.uid;
+      allow update: if isSuper() && nextRev()
+        && onlyChanges(['native', 'english', 'dir', 'numerals', 'messages', 'rev', 'updatedAt', 'updatedBy'])
+        && request.resource.data.messages is map && request.resource.data.updatedBy == request.auth.uid;
+      allow delete: if isSuper() && resource.data.get('published', null) == null;
+    }
+
     match /orgs/{orgId} {
       allow read: if inOrg(orgId) || isSuper() || (signedIn() && resource.data.createdBy == request.auth.uid);
       allow update: if isOrgAdmin(orgId) && onlyChanges(['name', 'settings', 'country', 'city']);

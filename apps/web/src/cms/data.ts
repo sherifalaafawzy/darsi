@@ -3,9 +3,9 @@
  * when they open it, never through a live listener. units/{id} is the light record lists read; unitDrafts/{id} holds
  * the content. Both are saved in one batch, and every save bumps `rev` so two editors can't overwrite each other.
  */
-import { collection, doc, getDoc, getDocs, orderBy, query, serverTimestamp, where, writeBatch, type Timestamp } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, serverTimestamp, setDoc, updateDoc, where, writeBatch, type Timestamp } from "firebase/firestore";
 import { db } from "../firebase";
-import type { Lesson, LocalText, Track, TrackDef, Unit } from "../content/types";
+import type { LanguageDef, Lesson, LocalText, Track, TrackDef, Unit } from "../content/types";
 import { mergeTracks } from "../content/tracks";
 import { copyLesson } from "./ids";
 
@@ -86,3 +86,38 @@ export async function unitsByTrack(): Promise<Map<string, TrackUse[]>> {
   }
   return out;
 }
+
+/** A language platform admins are adding (translations/{code}): its details and its UI strings, saved as drafts. */
+export interface TranslationDraft extends LanguageDef {
+  messages: Record<string, string>;
+  rev: number;
+  updatedAt?: Timestamp | null;
+  updatedBy?: string;
+  /** Set by publishLanguage: the live pack's version and the draft rev it was made from. */
+  published?: { version: number; rev?: number; at?: Timestamp | null; by?: string } | null;
+}
+export const translationStatus = (d: Pick<TranslationDraft, "rev" | "published">): Status => statusOf(d);
+
+export async function listTranslations(): Promise<TranslationDraft[]> {
+  return (await getDocs(collection(db, "translations"))).docs.map((d) => ({ ...d.data(), code: d.id }) as TranslationDraft);
+}
+export async function getTranslation(code: string): Promise<TranslationDraft | null> {
+  const d = await getDoc(doc(db, "translations", code));
+  return d.exists() ? ({ ...d.data(), code } as TranslationDraft) : null;
+}
+const draftFields = (d: LanguageDef & { messages: Record<string, string> }) =>
+  ({ native: d.native.trim(), english: d.english.trim(), dir: d.dir, numerals: d.numerals.trim(), messages: d.messages });
+export async function createTranslation(d: LanguageDef, uid: string) {
+  await setDoc(doc(db, "translations", d.code), { code: d.code, ...draftFields({ ...d, messages: {} }), rev: 1, updatedAt: serverTimestamp(), updatedBy: uid });
+}
+/** Saves as rev + 1; refused (and reported as "conflict") when someone else saved meanwhile. */
+export async function saveTranslation(d: LanguageDef & { messages: Record<string, string> }, rev: number, uid: string): Promise<{ rev: number } | { conflict: true }> {
+  try { await updateDoc(doc(db, "translations", d.code), { ...draftFields(d), rev: rev + 1, updatedAt: serverTimestamp(), updatedBy: uid }); return { rev: rev + 1 }; }
+  catch (e) {
+    const now = (await getDoc(doc(db, "translations", d.code)).catch(() => null))?.get("rev");
+    if (typeof now === "number" && now !== rev) return { conflict: true };
+    throw e;
+  }
+}
+/** Only while unpublished (the rules refuse otherwise). */
+export const deleteTranslation = (code: string) => deleteDoc(doc(db, "translations", code));

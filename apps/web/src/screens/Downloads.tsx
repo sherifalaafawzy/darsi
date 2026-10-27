@@ -15,18 +15,17 @@ export function Downloads() {
   const units = catalog?.units.filter((u) => u.available) ?? [];
   const blocked = state.dataSaver && onMeteredConnection();
 
-  const entryOf = (id: string) => units.find((u) => u.id === id);
   const download = async (id: string) => {
     const ctl = new AbortController(); aborts.current[id] = ctl;
     setErrors((e) => ({ ...e, [id]: false })); setProgress((p) => ({ ...p, [id]: 1 }));
     try {
       const unit = await loadUnit(id);
-      await cacheUrls(unitAssetUrls(unit, lang, entryOf(id)), (d, n) => setProgress((p) => ({ ...p, [id]: Math.round((d / n) * 100) })), ctl.signal);
+      await cacheUrls(unitAssetUrls(unit, lang), (d, n) => setProgress((p) => ({ ...p, [id]: Math.round((d / n) * 100) })), ctl.signal);
       dispatch({ type: "download", unit: id, on: true });
     } catch { if (!ctl.signal.aborted) setErrors((e) => ({ ...e, [id]: true })); }
     finally { setProgress((p) => { const n = { ...p }; delete n[id]; return n; }); }
   };
-  const remove = async (id: string) => { const unit = await loadUnit(id); await removeCached(unitAssetUrls(unit, lang, entryOf(id))); dispatch({ type: "download", unit: id, on: false }); };
+  const remove = async (id: string) => { const unit = await loadUnit(id); await removeCached(unitAssetUrls(unit, lang)); dispatch({ type: "download", unit: id, on: false }); };
 
   return (
     <>

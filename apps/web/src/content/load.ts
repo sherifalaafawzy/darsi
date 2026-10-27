@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { firebaseConfig, firebaseReady, useEmulators } from "../firebase-config";
-import { kitUrl, videoSrc, type Catalog, type CatalogEntry, type Placement, type Settings, type Unit } from "./types";
+import { captionsFor, kitUrl, videoSrc, type Catalog, type CatalogEntry, type Placement, type Settings, type Unit } from "./types";
 
 const memo = new Map<string, Promise<unknown>>();
 /** Fetches content JSON; the service worker serves it from cache when offline. */
@@ -10,12 +10,12 @@ export function loadJSON<T>(path: string): Promise<T> {
 }
 export const loadPlacement = () => loadJSON<Placement>("/content/placement.json");
 
-/* ---------- Authored units (course editor) ----------
- * Built-in units ship in /content and are precached. Units published from the editor are versioned JSON files in Cloud
- * Storage (functions/src/catalog.ts): public ones under content/, read with a plain fetch, so guests never load the
- * Firebase SDK; org ones under orgs/{orgId}/, read through the SDK by that org's signed-in members (content/remote.ts).
- * This module keeps them in Cache Storage itself: catalogs network-first with the last copy as the offline fallback,
- * unit files cache-first (a version's path never changes). A public unit may replace a built-in one with the same id. */
+/* ---------- Courses (published with the course editor) ----------
+ * The app ships no courses. Every unit is published from the editor as a versioned JSON file in Cloud Storage
+ * (functions/src/catalog.ts): public ones under content/, read with a plain fetch, so guests never load the Firebase
+ * SDK; org ones under orgs/{orgId}/, read through the SDK by that org's signed-in members. This module keeps them in
+ * Cache Storage itself: catalogs network-first with the last copy as the offline fallback, unit files cache-first
+ * (a version's path never changes). The starting courses are published by `npm run seed` (scripts/seed-content.mjs). */
 
 const CONTENT_CACHE = "darsi-content";
 let scope: { orgId: string | null } = { orgId: null };
@@ -65,7 +65,10 @@ async function cachedJSON<T>(key: string, fetcher: () => Promise<unknown>, fresh
     throw e;
   }
 }
-const fetchPublic = (path: string) => async () => { const r = await fetch(storageUrl(path)); if (!r.ok) throw new Error(`${path}: ${r.status}`); return r.json(); };
+const fetchPublic = (path: string) => async () => { const r = await fetch(storageUrl(path)); if (!r.ok) throw Object.assign(new Error(`${path}: ${r.status}`), { status: r.status }); return r.json(); };
+/** Storage answered that the file isn't there (nothing published yet), as opposed to no answer at all (offline). */
+const notFound = (e: unknown) => (e as { status?: number }).status === 404;
+const EMPTY: Catalog = { version: 1, units: [] };
 /**
  * Org files go through the SDK (only that org's members may read them). App hands over the reader (setOrgReader):
  * this module is shared with lazy staff chunks, and any SDK import here, even a dynamic one, makes the bundler split
@@ -82,27 +85,26 @@ const fetchOrg = (path: string) => async () => {
 const isOrgPath = (path: string) => path.startsWith("orgs/");
 
 const isEntry = (u: unknown): u is CatalogEntry => typeof u === "object" && u !== null && typeof (u as CatalogEntry).id === "string" && typeof (u as CatalogEntry).src === "string" && typeof (u as CatalogEntry).track === "string";
-/**
- * Built-in entries first (in their order), then authored ones. A public entry replaces a built-in one with its id
- * (that is how an edited ai-1 reaches learners); an org entry never replaces anything.
- */
-export function mergeCatalog(builtIn: Catalog, pub: Catalog | null, org: Catalog | null): Catalog {
-  const byId = new Map(builtIn.units.map((u) => [u.id, u] as const));
+/** Public units first (in their order), then the org's; an org entry never replaces a public one with the same id. */
+export function mergeCatalog(pub: Catalog | null, org: Catalog | null): Catalog {
+  const byId = new Map<string, CatalogEntry>();
   for (const u of (pub?.units ?? []).filter(isEntry)) byId.set(u.id, u);
   for (const u of (org?.units ?? []).filter(isEntry)) if (!byId.has(u.id)) byId.set(u.id, u);
-  return { version: builtIn.version, units: [...byId.values()] };
+  return { version: pub?.version ?? 1, units: [...byId.values()] };
 }
 
-/** Every unit this person can see: built-in, published for everyone, and (for org members) their org's. */
+/**
+ * Every unit this person can see: published for everyone, and (for org members) their org's. Nothing published yet is
+ * an empty list; no answer and no copy from an earlier visit (a first visit offline) is an error, so Home can say so.
+ */
 export const loadCatalog = (): Promise<Catalog> => (catalog ??= (async () => {
-  const builtIn = await loadJSON<Catalog>("/content/catalog.json");
-  if (!firebaseReady || !firebaseConfig.storageBucket) return builtIn;
+  if (!firebaseReady || !firebaseConfig.storageBucket) return EMPTY;
   const orgId = scope.orgId;
   const [pub, org] = await Promise.all([
-    cachedJSON<Catalog>(storageUrl("content/catalog.json"), fetchPublic("content/catalog.json"), true).catch(() => null),
+    cachedJSON<Catalog>(storageUrl("content/catalog.json"), fetchPublic("content/catalog.json"), true).catch((e) => (notFound(e) ? EMPTY : Promise.reject(e))),
     orgId ? cachedJSON<Catalog>(storageUrl(`orgs/${orgId}/catalog.json`), fetchOrg(`orgs/${orgId}/catalog.json`), true).catch(() => null) : null,
   ]);
-  return mergeCatalog(builtIn, pub, org);
+  return mergeCatalog(pub, org);
 })().catch((e) => { catalog = null; throw e; }));
 
 let settings: Promise<Settings | null> | null = null;
@@ -117,9 +119,17 @@ export const loadSettings = (): Promise<Settings | null> => (settings ??= (async
 /** After the Tracks page saves: read the new settings next time. */
 export const forgetSettings = () => { settings = null; };
 
+/** A published language's UI strings, content/i18n/{code}/v{n}.json: cache-first, since a version's path never changes. */
+export async function loadLanguagePack(code: string, version: number): Promise<Record<string, string>> {
+  if (!firebaseReady || !firebaseConfig.storageBucket) throw new Error("No content storage");
+  const path = `content/i18n/${code}/v${version}.json`;
+  const pack = await cachedJSON<{ messages?: Record<string, string> }>(storageUrl(path), fetchPublic(path), false);
+  return pack.messages ?? {};
+}
+
 export async function loadUnit(id: string): Promise<Unit> {
-  const entry = (await loadCatalog().catch(() => null))?.units.find((u) => u.id === id);
-  if (!entry?.src) return loadJSON<Unit>(`/content/units/${id}.json`);
+  const entry = (await loadCatalog()).units.find((u) => u.id === id);
+  if (!entry?.src) throw new Error(`No published unit ${id}`);
   const src = entry.src;
   return cachedJSON<Unit>(storageUrl(src), isOrgPath(src) ? fetchOrg(src) : fetchPublic(src), false);
 }
@@ -137,14 +147,14 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): { data?: T; 
 }
 
 /**
- * All URLs needed to use a unit offline: its JSON, kit files in both formats for the current language, captions, videos.
- * An authored unit's JSON is left out: loadUnit has already cached it (org files can't be fetched without the SDK).
+ * All URLs needed to use a unit offline: kit files in both formats for the current language, captions, videos. The
+ * unit's JSON is not among them: loadUnit has already cached it (org files can't be fetched without the SDK).
  */
-export function unitAssetUrls(unit: Unit, lang: string, entry?: CatalogEntry): string[] {
-  const urls = entry?.src ? [] : [`/content/units/${unit.id}.json`];
+export function unitAssetUrls(unit: Unit, lang: string): string[] {
+  const urls: string[] = [];
   for (const l of unit.lessons) {
     for (const k of l.kit) if (k.kind !== "video") for (const f of k.formats) { const u = kitUrl(k, lang, f); if (u) urls.push(u); }
-    for (const s of l.steps) if (s.type === "video") { const v = videoSrc(s, lang); if (v) urls.push(v); const c = s.captions?.[lang]; if (c) urls.push(c); }
+    for (const s of l.steps) if (s.type === "video") { const v = videoSrc(s, lang); if (v) urls.push(v); const c = captionsFor(s, lang); if (c) urls.push(c.src); }
   }
   return [...new Set(urls)];
 }

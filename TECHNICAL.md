@@ -46,11 +46,13 @@ Darsi's users are teachers on low-cost Android phones, often shared, with expens
 
 ```
 darsi/
+├─ content/                      the starting courses, not shipped with the app: units/*.json (en + ar) and the
+│                                generated kits/ (PDF + PPTX, committed); `npm run seed` publishes them to Storage
+├─ scripts/seed-content.mjs      publishes content/ like the course editor (kits uploaded, then publishDraft)
 ├─ apps/web/                     the PWA
-│  ├─ public/content/            lesson content as JSON (en + ar): the single source for the app and the kits
-│  ├─ public/kits/               generated classroom kits (PDF + PPTX), committed
+│  ├─ public/content/            placement.json (the onboarding check) only: the app ships no courses
 │  ├─ public/push-sw.js          the service worker's push and notification-click handlers (imported into sw.js)
-│  ├─ scripts/build-kits.mjs     generates the kits from the content
+│  ├─ scripts/build-kits.mjs     generates the kits from content/units into content/kits
 │  ├─ src/
 │  │  ├─ App.tsx                 providers, routes, role guards, lazy staff chunks
 │  │  ├─ firebase-config.ts      Firebase settings from env (no SDK; safe on the startup path)
@@ -94,7 +96,8 @@ Run from the repository root. Node 22 is recommended and npm 11 is expected (`np
 | `npm run e2e` | Playwright on desktop and phone. It runs `npm run build` first; set `CHROMIUM_PATH` if Playwright's own Chromium isn't installed |
 | `npm run typecheck` | TypeScript across the workspace |
 | `npm run lint:css` | Checks every app stylesheet against the RTL, token and old-WebView rules |
-| `npm run kits` | Regenerates the classroom kits from the content |
+| `npm run kits` | Regenerates the classroom kits in `content/kits` from `content/units` |
+| `npm run seed -- --emulator` | Publishes the starting courses (`content/`) to the emulators; without `--emulator`, to the real project (Application Default Credentials, as for `superadmin`). An existing draft is left alone unless `--replace` |
 | `npm run superadmin -- <email>` | Makes an account a platform admin (`--revoke`, `--emulator`) |
 | `npm --prefix functions run build` / `test` | Builds or tests the Cloud Functions |
 | `npm run cap:android` / `cap:ios` | Creates and opens the native projects |
@@ -107,7 +110,8 @@ Run from the repository root. Node 22 is recommended and npm 11 is expected (`np
 AuthProvider            Firebase user + custom claims {role, orgId}; claims are read before the user is published
 └─ StoreProvider        local state, keyed by uid (or "guest"); switching accounts remounts everything below
    └─ I18nProvider      language from the store
-      └─ SettingsProvider   the tracks platform admins set up (built-ins first, then content/settings.json)
+      └─ SettingsProvider   tracks and languages platform admins set up (built-ins first, then content/settings.json);
+         │                 fetches the picked language's strings (App waits for them)
          └─ BrowserRouter
             └─ Routed   routes, guards, useCloudSync(uid)
 ```
@@ -137,6 +141,7 @@ AuthProvider            Firebase user + custom claims {role, orgId}; claims are 
 | `/super/content`, `/super/content/:unitId` | `superadmin` | Course editor: units published for everyone (see [Authored content](#authored-content)) |
 | `/admin/content`, `/admin/content/:unitId` | `orgAdmin` | Course editor: units published for this organization's members only |
 | `/super/tracks` | `superadmin` | Tracks and levels for every unit (see [Tracks and levels](#tracks-and-levels)) |
+| `/super/languages`, `/super/languages/:code` | `superadmin` | Languages beyond English and Arabic: add, translate, publish (see [Languages and right-to-left](#languages-and-right-to-left)) |
 
 Roles are `learner` (independent), `student`, `teacher`, `orgAdmin` and `superadmin`. They live in **Auth custom claims**, which only Cloud Functions set, and are mirrored to `users/{uid}` for the UI. When `users/{uid}` changes role or organization, AuthProvider refreshes the token so the security rules see the new claims.
 
@@ -157,10 +162,10 @@ The service worker (Workbox `generateSW`) installs when a person enters the app.
 | The Firebase SDK (`firebase-*`, including `firebase-extra`: Functions, Storage, Messaging), staff chunks, landing page, exceljs, and their CSS | **Not precached**; `darsi-chunks` caches them cache-first on first use (hashed file names) |
 | Lab apps (`lab-<id>-[hash].js`, 48 chunks, ~320 KB in all) | **Not precached**; `darsi-labs` caches each cache-first when it is first opened, and "Save all labs" on the Labs screen fetches them all (its size comes from `labs-manifest.json`, written at build time). The labs kit (shared chunks such as `LabShell`, `Plot`, `controls`) and its stylesheet are small and precached. See [Labs](#labs) |
 | `push-sw.js` (push handlers, ~3 KB) | **Imported** into `sw.js` with `importScripts`, so the browser stores it with the worker; not precached. Its URL carries a content hash (`?v=…`), so changing it changes `sw.js` and triggers the normal update prompt |
-| `/content/*` | Stale-while-revalidate (`darsi-content`) |
-| `/kits/*` | Cache-first (`darsi-kits`), filled per unit when the teacher taps Download |
+| `/content/placement.json` | Stale-while-revalidate (`darsi-content`) |
+| `/kits/*` | Cache-first (`darsi-kits`). No longer shipped: only phones that downloaded the old built-in kits still have entries, which "Remove" clears |
 | `/media/*` | Cache-first with range requests (`darsi-media`) |
-| Authored units (Cloud Storage `…/catalog.json`, `…/units/{id}/v{n}.json`) | Kept by `content/load.ts` itself in `darsi-content`, not by a service-worker rule: catalogs network-first with the last copy as the offline fallback; unit files cache-first (a version's path never changes). See [Authored content](#authored-content) |
+| Courses (Cloud Storage `…/catalog.json`, `…/units/{id}/v{n}.json`) | Kept by `content/load.ts` itself in `darsi-content`, not by a service-worker rule: catalogs network-first with the last copy as the offline fallback; unit files cache-first (a version's path never changes). See [Authored content](#authored-content) |
 | Uploaded media (Cloud Storage videos, captions, kit files) | Cache-first with range requests (`darsi-media`) once a unit is downloaded; only `200` responses are kept, so streaming without a download (opaque responses) is never stored |
 | Firestore data | The SDK's persistent IndexedDB cache, capped at **10 MB** (the default is 40 MB) |
 
@@ -195,7 +200,7 @@ The panel in Me (`src/notify/NotificationsPanel.tsx`) is shown to signed-in peop
    2. `getToken()` with the VAPID key and the app's own Workbox service worker registration (there is no `firebase-messaging-sw.js`);
    3. the `registerDevice` callable, with the language, the IANA time zone, the reminder hour, the categories and the weekly goal;
    4. `darsi:push` in localStorage remembers `{ token, on: true, uid }` (the uid keeps a shared phone from refreshing one account's token into another's).
-3. **`registerDevice`** stores `users/{uid}/devices/{id}` (`id` = the first 40 hex characters of sha256(token)), sets `users/{uid}.notify`, and subscribes the token to its FCM topics while Announcements are on: `all`, `lang-<en|ar>`, `role-<role>`, and `org-<orgId>` in an organization.
+3. **`registerDevice`** stores `users/{uid}/devices/{id}` (`id` = the first 40 hex characters of sha256(token)), sets `users/{uid}.notify`, and subscribes the token to its FCM topics while Announcements are on: `all`, `lang-<code>` (the phone's language: `en`, `ar`, or one platform admins added), `role-<role>`, and `org-<orgId>` in an organization.
 4. **On each app start**, `usePushRefresh()` calls `registerDevice` again if `darsi:push.on` and permission is still granted. Tokens can rotate, and this also refreshes `lastSeen`. Changing a preference calls `updateNotifyPrefs`; turning it off calls `unregisterDevice` and deletes the token. Signing out (any Sign out button: `AuthProvider.signOut`) does the same first, so on a shared phone the next person never sees the previous account's notifications; `registerDevice` also moves a token to whoever registers it last (`pushTokens/{deviceId}` records the owner).
 5. **Topics follow the person.** When their role, organization or language changes, `onUserTopicsChanged` re-subscribes all their devices.
 
@@ -221,9 +226,9 @@ Each category can be switched off in Me (`notify.cats`).
 
 ### The message and the service worker
 
-- **Payload:** data-only web push with `TTL: 86400` (an offline phone gets it within a day) and `Urgency: normal`. The data is `{ title, body, link, tag, lang, dir }`, in the device's own language.
+- **Payload:** data-only web push with `TTL: 86400` (an offline phone gets it within a day) and `Urgency: normal`. The data is `{ title, body, link, tag, lang, dir }`: in Arabic for Arabic phones, in English for every other language (`wordingFor`); there is no wording in the languages platform admins add.
   - The wording lives in `functions/src/messages.ts`. Names are wrapped in Unicode isolates, and numbers use the language's numerals.
-  - Announcements go out once per language, to a topic condition such as `'lang-ar' in topics && 'org-<id>' in topics`.
+  - Announcements are written in English and Arabic and go out once each: the Arabic text to `'lang-ar' in topics`, the English text to `'all' in topics && !('lang-ar' in topics)` (English phones and every added language), each with the audience's topic added (`&& 'org-<id>' in topics`).
   - Personal messages use `sendEachForMulticast` on the person's devices, grouped by language. Tokens that FCM reports as unregistered or invalid are deleted on the spot.
 - **`public/push-sw.js`:** plain JavaScript with no imports and no SDK, loaded into Workbox's `sw.js` (`workbox.importScripts` in `vite.config.ts`).
   - `push`: reads `payload.data` and calls `showNotification` with the Darsi icon, the monochrome badge, `lang` and `dir`.
@@ -252,7 +257,7 @@ users/{uid}                 name, email, username, role, orgId, group, teacherId
 ├─ notes/{lessonId}         text, updatedAt (ms)
 ├─ submissions/{id}         lessonId, unitId, stepId, orgId, text, fileUrl, fileName,
 │                           status (submitted | approved | revise), feedback, score, reviewedBy, reviewedAt, createdAt
-└─ devices/{deviceId}       token, lang (en | ar), platform ("web"), createdAt, lastSeen, topics[]   ← Cloud Functions only
+└─ devices/{deviceId}       token, lang (any language code), platform ("web"), createdAt, lastSeen, topics[]   ← Cloud Functions only
                             deviceId = the first 40 hex characters of sha256(token)
 pushTokens/{deviceId}       uid (the account the token belongs to now), at   ← Cloud Functions only
 orgs/{orgId}                name, type, country, city, size, contact, reason, status (pending | active | rejected),
@@ -262,7 +267,11 @@ units/{unitId}              owner ("public" | orgId), title {en, ar}, track, lev
                             rev (int, +1 per save), updatedAt, updatedBy,
                             published {version, rev, at, by, entry (its catalog.json entry)} | null   ← published: functions only
 unitDrafts/{unitId}         owner, rev, unit (the whole draft Unit, ≤ 600 KB)   ← the course editor; lists never read it
-config/settings             tracks [TrackDef], rev, updatedAt, updatedBy   ← saveSettings only; platform admins read
+config/settings             tracks [TrackDef], rev, updatedAt, updatedBy   ← saveSettings
+                            languages [LanguageDef: code, native, english, dir, numerals, version]   ← publishLanguage
+                                                                 (each writer merges its own part; platform admins read)
+translations/{code}         code, native, english, dir, numerals, messages {key: text}, rev (+1 per save), updatedAt,
+                            updatedBy, published {version, rev, at, by} | null   ← the Languages page; published: functions only
 broadcasts/{id}             title {en, ar}, body {en, ar}, link, audience {type: all | org | role, orgId?, role?},
                             sentBy, sentAt, results {en, ar} (FCM message id, or null on error)   ← sendBroadcast; platform admins read
 audit/{id}                  action, by, …, at                ← Cloud Functions write; platform admins read
@@ -292,7 +301,8 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
   - *Update:* `nextRev`: every save sets `rev` to exactly the stored `rev + 1`, so a second editor with a stale copy is refused instead of silently overwriting; `owner` and `published` can't change.
   - *Delete:* only while unpublished; `deleteUnit` handles published units.
   - Students and teachers never read drafts; learners get published units from Storage.
-- **`config/{doc}`** (platform settings): platform admins read; nobody writes from a client (`saveSettings` does). Everyone else reads the published copy, `content/settings.json`.
+- **`config/{doc}`** (platform settings): platform admins read; nobody writes from a client (`saveSettings` and `publishLanguage` do). Everyone else reads the published copy, `content/settings.json`.
+- **`translations/{code}`** (languages being added): platform admins only. The id must equal `code`, every save sets `rev` to exactly `rev + 1`, `published` is never written from a client, and a draft can be deleted only while unpublished.
 
 **Storage** (`firebase/storage.rules` on `darsi-f0685`):
 - `media/` and `kits/` are publicly readable and never writable from the client.
@@ -326,12 +336,15 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 | `unpublishUnit` | callable | Takes a unit away from learners: catalog entry and JSON versions go, uploaded media stay |
 | `deleteUnit` | callable | Deletes a unit everywhere: catalog entry, JSON versions, media and both Firestore documents. Media that another draft of the same owner links to (a duplicated unit or a copied lesson) stay |
 | `saveSettings` | callable | Platform admin only: saves the tracks list (see [Tracks and levels](#tracks-and-levels)) to `config/settings` and publishes `content/settings.json` |
+| `publishLanguage` | callable | Platform admin only: checks a saved language draft (`validateLanguage`), writes `content/i18n/{code}/v{n+1}.json`, lists the language in `config/settings` and `content/settings.json`, keeps the previous pack and deletes older ones |
+| `unpublishLanguage` | callable | Platform admin only: takes a language off the pickers and deletes its packs; people who chose it see English. The draft stays |
 
 Every role or organization change goes through these functions, which set the claims and write an `audit` entry. Clients can never grant themselves access. `functions/src/admin.ts` initializes the Admin SDK once and sets the region and instance cap for every function.
 
 ## Content, lessons and kits
 
-- **Content is data.** Units are JSON in `apps/web/public/content/units/`, listed in `catalog.json` and typed by `src/content/types.ts`. Every learner-facing string is `{ "en": …, "ar": … }`, with English as the fallback. Today `ai-1` is live; `iot-1` and `cyber-1` are marked "coming soon". Units made in the course editor are published to Cloud Storage and merged into the same catalog (see [Authored content](#authored-content)).
+- **Content is data, and the app ships none.** Every course a learner sees is published with the course editor to Cloud Storage (see [Authored content](#authored-content)); units are typed by `src/content/types.ts`. Every learner-facing string is `{ "en": …, "ar": … }` (or more languages), with English as the fallback.
+- **The starting courses** (`ai-1` today) are sources in `content/units/` at the repo root, with their kits in `content/kits/`. `npm run seed` publishes them through the editor's own publish code (`publishDraft`), uploading the kits as media, so they are ordinary published units that platform admins can edit. Their ids are kept, so progress, notes and certificates still match.
 - **Lesson shape:** video (with a checkpoint question) → reading with key terms → mixed questions (some lessons add a `lab` step that embeds any Labs app) → classroom project → reflection → "Try it in class tomorrow".
 - **Step types:** `video`, `read`, `choice`, `multi`, `truefalse`, `image`, `match`, `order`, `fill`, `type`, `hotspot`, `scenario`, `lab`, `project`, `reflect`.
 - **Engine** (`src/lesson/engine.ts`): pure, unit-tested grading. Answers that ignore case and Arabic diacritics are accepted. A wrong answer comes back once at the end of the lesson. XP is `10 + round(accuracy × 20)`.
@@ -342,7 +355,7 @@ Every role or organization change goes through these functions, which set the cl
   - `slides-<lang>.pdf`: the same slides with the brand fonts embedded (headless Chromium);
   - `lesson-plan-<lang>.pdf`: an A4 lesson plan and pupil worksheet built from the lesson's questions.
 
-  The files are committed to `public/kits/`, so builds don't need Chromium. Regenerate them after editing content.
+  The files are committed to `content/kits/`, so seeding doesn't need Chromium. Regenerate them after editing a starting course, then seed it again with `--replace`.
 
 ## Labs
 
@@ -365,26 +378,27 @@ Labs (`/labs`) is a catalogue of 48 hands-on apps on 13 shelves across the three
 
 ## Authored content
 
-The course editor lets **platform admins publish units for everyone** (guests included) and **org admins publish units for their own organization's members**. It edits full units: every step type, slides, competencies and uploaded media (an MP4 and VTT captions per language, plus kit PDF/PPTX files). Built-in units stay in `public/content/` and still work offline on first launch.
+The course editor lets **platform admins publish units for everyone** (guests included) and **org admins publish units for their own organization's members**. It edits full units: every step type, slides, competencies and uploaded media (an MP4 and VTT captions per language, plus kit PDF/PPTX files). It is the only way courses reach learners: the app ships none.
 
 **Flow.** Drafts live in Firestore (`units/{id}` holds the light record lists read; `unitDrafts/{id}` holds the content), saved explicitly with "Save draft" (no autosave timer). "Publish" saves, then calls `publishUnit`. Only the functions write what learners read.
 
 **Ids.**
 - New units: `u` + 8 random characters (`[a-z0-9]`). Org units must use this form (`idFits` in the rules, `idAllowed` in `functions/src/catalog.ts`).
-- A platform admin may import a unit JSON that keeps a built-in id, such as `ai-1.json`. Once published, that copy **replaces the built-in unit** for learners; the bundled copy stays as the offline fallback.
+- A platform admin's import keeps the unit's id (`ai-1.json` stays `ai-1`), so a unit exported from the editor comes back as itself with its learners' progress. `npm run seed` keeps the starting courses' ids the same way.
 - Lesson ids are `<unitId>-` + 4 random characters and are never reused. Progress, notes and kit anchors are keyed by lesson id, so deleting a lesson and adding another can't hand someone's old progress to the new one.
 - Step ids (`choice1`, `video2`, …) only need to be unique within a lesson.
 
 **Validation** (`apps/web/src/content/validate.ts`): pure, dependency-free, and takes `unknown`, so pasted JSON can't crash it.
 - **Errors** block publishing. They are everything that would crash a lesson or leave it stuck: an answer missing from the options, fill-in blanks that aren't numbered 0…n-1 or whose answers aren't each once in the word bank, hotspots outside the stage, unsafe media links (only `https:`, `/media/` and `/kits/`), duplicate ids, a lesson over 300 KB or a unit over 600 KB.
-- **Warnings** don't block: missing Arabic, unknown competency codes, no slides.
+- **Warnings** don't block: a missing translation (`missingLang`, for Arabic or the languages the editor shows), unknown competency codes, no slides.
 - **Track and level:** with the `tracks` option (track id → number of levels), the track must be one platform admins set up and the level must be one it has. Without it, any well-formed id (`[a-z][a-z0-9-]{1,23}`) and levels 1–12 pass. The editor and `publishUnit` both pass the saved tracks.
 - `functions/scripts/copy-shared.mjs` (npm `prebuild` in `functions/`) copies `validate.ts`, `types.ts` and `tracks.ts` into `functions/src/shared/`. The copies are committed, and a functions test fails if they drift from the web source.
 
 **Storage layout** (`functions/src/catalog.ts`, pure and unit-tested):
 
 ```
-content/settings.json                  the tracks: { version, tracks: TrackDef[] }, max-age=60 (saveSettings)
+content/settings.json                  tracks and languages: { version, tracks, languages }, max-age=60 (saveSettings, publishLanguage)
+content/i18n/{code}/v{n}.json          a published language's UI strings: { code, version, messages }, immutable
 content/catalog.json                   public units: { version, units: CatalogEntry[] }, max-age=60
 content/units/{id}/v{n}.json           one file per published version, immutable (the current and previous version are kept)
 content/media/{id}/…                   uploaded videos, captions and kit files
@@ -396,11 +410,11 @@ orgs/{orgId}/media/{id}/…
 Each catalog entry carries `src` (the JSON's Storage path), `version`, `owner` and `sizeMB` (the JSON plus one language's videos). Media links in a lesson are Storage download URLs, so `<video src>` plays without headers. For org media they are bearer links: anyone given the link can open the file. Uploaded files get a unique suffix, so replacing a file never breaks the link inside an already-published version.
 
 **Loading** (`apps/web/src/content/load.ts`):
-- `loadCatalog()` merges three catalogs:
-  1. the bundled `/content/catalog.json`;
-  2. the public catalog, fetched with **plain `fetch`** from the Storage REST URL, so guests never load the SDK;
-  3. for org members, the org catalog.
-- `mergeCatalog`: a public entry may replace a built-in one; an org entry never replaces anything. A failure (offline, 404 before anything is published) falls back to whatever loaded.
+- `loadCatalog()` merges two catalogs:
+  1. the public catalog, fetched with **plain `fetch`** from the Storage REST URL, so guests never load the SDK;
+  2. for org members, the org catalog.
+- `mergeCatalog`: public entries first, then the org's; an org entry never replaces a public one.
+- Nothing published yet (a 404) is an empty catalog, and Home says "No courses yet". No answer and no copy from an earlier visit (a first visit offline) is an error, and Home offers Retry. A unit missing from the catalog can't be loaded: there are no built-in files to fall back on.
 - **Caching.** Catalogs are network-first with the last copy as the offline fallback. Unit files are cache-first by their versioned path. Both live in `darsi-content`, managed here rather than by a service-worker rule (a stale-while-revalidate rule would serve old catalogs and store everything twice).
 - **Org files** go through the SDK (`storageJSON()` in `firebase.ts`). App hands load.ts the reader with `setOrgReader` (see "The bundle rule" below).
 - **Scope.** App calls `configureContent({ orgId, signedIn })` on every render. A change re-reads the catalog. Signing out deletes every cached org file (shared phones): a `darsi:orgFiles` flag in localStorage says whether there are any.
@@ -465,11 +479,30 @@ Every unit belongs to one **track** (AI, IoT, Cyber security, or one a platform 
 
 ## Languages and right-to-left
 
-- **UI strings:** `src/i18n/en.json` and `ar.json`. `t(key, vars)` interpolates `{var}` and formats numbers with the language's numerals (Arabic-Indic for `ar`).
+- **UI strings:** `src/i18n/en.json` and `ar.json` ship with the app. `t(key, vars)` interpolates `{var}` and formats numbers with the language's numerals (Arabic-Indic for `ar`). A key a language lacks shows in English. `useI18n()` also gives `dir` and `locale` (for `Intl` dates and numbers).
 - **Names inside sentences:** wrap user and organization names with `isolate()`, the plain-text `<bdi>`, so a Latin name can't reorder an Arabic sentence.
 - **Separators:** never use "·" in Arabic text (it reads as Arabic zero). Use `t("common.sep")`, which is " · " in English and "، " in Arabic.
 - **Codes, logins and URLs** always render left-to-right (`dir="ltr"`). Inputs use `dir="auto"`.
-- **To add a language:** add `src/i18n/<code>.json`, register it in `LANGUAGES` (code, native name, direction, numerals), and add `<code>` strings to the content.
+
+### Languages platform admins add
+
+English and Arabic are built in (`BUILTIN_LANGUAGES` in `content/languages.ts`). Platform admins add more at `/super/languages`, with no deploy:
+- **Add:** pick from common languages (names prefilled, direction from the code) or type a code. Each language has its own name, English name, writing direction and number locale, with a live sample.
+- **Translate** (`/super/languages/:code`): one card per UI string with the English and Arabic for reference. Search; filters for "Not translated" and "To fix" (placeholders that differ from the English, which block publishing); a progress bar. Drafts are saved in `translations/{code}` with a `rev` check.
+- **Spreadsheets:** download `.xlsx` or `.csv` (key, English, Arabic, the language), translate anywhere, import it back (`cms/sheets.ts`). The text column is the one headed with the code or name; empty cells are skipped, and keys the app doesn't have are reported and left out.
+- **Publish** (`publishLanguage`): the page first saves the draft with only the keys the app has, trimmed; the function writes the immutable pack `content/i18n/{code}/v{n}.json` and lists the language in the settings. **Unpublish** takes it off the pickers. A draft can be deleted while unpublished.
+- Only the main UI strings are translated: the course editor's own strings stay English and Arabic, and so do Labs and the landing page's marketing copy (they fall back to English).
+
+**At run time** (`i18n/index.tsx`, `content/settings.tsx`):
+- `SettingsProvider` reads the published languages with the tracks (`content/settings.json`) and registers them (`setLanguages`). `useLanguages()` feeds every picker: Onboarding, Me, the landing page (a menu once there are more than two), the lesson preview.
+- **Packs load when someone picks the language**, never for everyone: cache-first by versioned path (`loadLanguagePack` in `load.ts`, a plain `fetch`, so guests still never load the SDK). Until it arrives, App shows its loading screen instead of a flash of English, for at most 6 seconds; after that English shows and the strings switch in when they come.
+- The last version used is remembered (`darsi:langPacks` in localStorage), so the next start reads the pack from the cache at once instead of waiting for the settings over the network. A language that is no longer published shows English.
+- **Direction has one source:** the language's `dir`. `applyLocale(lang, theme, dir)` sets `<html dir>`; before the settings arrive, `dirFor(code)` guesses from the code.
+- **Fonts:** an added Latin-script language caches the Latin fonts plus the extended-Latin headings; an Arabic-script one (`fa`, `ur`, `ps`…) the Arabic fonts; other scripts use the phone's fonts (`familiesFor` in `platform/fonts.ts`). A language's own name in a picker always uses the phone's font (`.dr-lang-native`, `.dr-other-script`), so no page downloads a script's web fonts for one word.
+- **Files:** built-in kits and media exist in English and Arabic only, so `kitUrl` and `videoSrc` use the English file for any other language (Hosting would otherwise answer a missing file with the app's HTML). `captionsFor` gives the language's captions, else the English ones. Read-aloud asks the phone for a voice in the language's own code.
+- **Push:** a phone registers with its real language (`lang-<code>` topic). Notifications are worded in Arabic for Arabic and in English for every other language (see [Push notifications](#push-notifications)).
+
+**Lessons in any language:** content is `LocalText` keyed by language code already. The lesson editor shows English plus the languages the author picks ("Languages" in the outline, remembered per browser; a unit's existing languages are always added). Every text, list, fill-in sentence, video, captions and kit file then has a field per language, in that language's direction. `validateUnit(u, { langs })` warns about missing translations (`missingLang`, with the language) for the shown languages, and the checks fold them into one group per language ("Français: 206 texts not translated").
 
 ## Design system and CSS
 
@@ -499,11 +532,12 @@ Every unit belongs to one **track** (AI, IoT, Cyber security, or one a platform 
 | Unit (design system) | `packages/design-system` | Component and token tests |
 | Unit (functions) | `functions/test/` | Generated passwords (character classes, no look-alikes), invite-code format, usernames from any script; `pickNudge` rules across time zones and daylight saving; every message in both languages, with no "·" in Arabic; the course editor's Storage layout, permission matrix and catalog, and that the shared validator copies match the web source; tracks (`mergeTracks`, `validateTracks`, units against a tracks list, `trackConflicts`, media kept for other drafts, catalog order) |
 | Unit (course editor) | `apps/web/tests/validate.test.ts`, `content.test.ts`, `cms.test.tsx`, `tracks.test.tsx` | The validator (ai-1 passes with no issues; one broken copy per error rule; track and level against the saved tracks); catalog merge, offline fallbacks, cache-first units and the sign-out purge; the editor screens (list grouping, filters and search, duplicate and delete, new unit with the track and level pickers, org import with fresh ids, publish blocked by errors, save conflict, inserting a step between two, duplicating a lesson, delete then Undo, Ctrl+Z and Ctrl+Y, copying a lesson to another unit, leaving with unsaved changes, preview, en/ar string parity); the Tracks page (add with a suggested id, levels and delete guarded by units in use, refused saves explained); `mergeTracks`, `useTracks`, the design-system colours from settings, `placementLevel` and the undo history |
+| Unit (languages) | `apps/web/tests/languages.test.tsx`, `cms.test.tsx`, `functions/test/languages.test.ts`, `messages.test.ts` | The language rules (merge, translation check, placeholders, publish problems); packs at run time (loading screen, English fallback, the remembered version, an unpublished language, right-to-left for Persian); English files and captions for added languages; fonts per script; spreadsheets (rows, the language's column, CSV with a byte-order mark); the Languages page (list, add Persian right to left, the To fix filter blocking publishing, publishing, spreadsheet import); the editor's language choice and grouped checks; push topics and wording for added languages |
 | Unit (Labs) | `apps/web/tests/labs/` | The kit (network gradients against numeric ones, softmax, plots); the catalogue (every folder's meta is valid, ids unique, en+ar text, ladder positions); render tests of the Labs screen and `LabEmbed`; and every app's model, in `models.test.ts` and `b1`–`b4.test.ts` (for example: the perceptron converges but never on XOR, ID3 picks the textbook split, Q-learning finds the 10-step route, TOTP matches the RFC 6238 vectors, SHA-256 and RSA round trips in English and Arabic) |
-| End-to-end | `apps/web/e2e/` | Desktop Chrome and Pixel 7: guest onboarding, the Arabic RTL switch, a full lesson through to the kit download, the video fallback, Labs (cards open apps, the playground trains then pauses, labs aren't precached and "Save all labs" works offline), offline after the first visit |
+| End-to-end | `apps/web/e2e/` (`storage.ts` stands in for Cloud Storage and serves the starting course as `npm run seed` publishes it, since the app ships none) | Desktop Chrome and Pixel 7: guest onboarding, the Arabic RTL switch, a full lesson through to the kit download, the video fallback, Labs (cards open apps, the playground trains then pauses, labs aren't precached and "Save all labs" works offline), offline after the first visit |
 | CSS lint | `scripts/check-css.mjs` | Brand, RTL and old-WebView rules |
 
-The Firebase Emulator Suite needs **JDK 21+** (on this Windows machine also `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:\Users\Public`; see docs/FIREBASE.md). The course editor's backend was checked end to end against the emulators on 2026-10-26: 42 checks covering the rules, publish, versions, org-only reads, media upload limits, unpublish and delete. Tracks and levels add 24 more: who may save, the public settings file, stale saves, validation, a level-5 unit in an added track, refusals that would strand units, and removal once no unit uses a track. Rules tests with `@firebase/rules-unit-testing` are planned.
+The Firebase Emulator Suite needs **JDK 21+** (on this Windows machine also `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:\Users\Public`; see docs/FIREBASE.md). The course editor's backend was checked end to end against the emulators on 2026-10-26: 42 checks covering the rules, publish, versions, org-only reads, media upload limits, unpublish and delete. Tracks and levels add 24 more: who may save, the public settings file, stale saves, validation, a level-5 unit in an added track, refusals that would strand units, and removal once no unit uses a track. Languages add 26: draft rules, who may publish, problems refused, the public pack, settings keeping tracks and languages side by side, versions, no client uploads, unpublish and delete. Rules tests with `@firebase/rules-unit-testing` are planned.
 
 ## Performance budget
 

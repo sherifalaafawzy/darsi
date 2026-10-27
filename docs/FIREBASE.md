@@ -112,7 +112,7 @@ FCM isn't part of the Emulator Suite, and `npm run dev` runs without a service w
 
 ## 7. Course editor
 
-Platform admins publish units for everyone at `/super/content`; org admins publish units for their own members at `/admin/content`. Drafts live in Firestore. Publishing (the `publishUnit` function) writes the unit as a versioned JSON file to Storage, under `content/` (public) or `orgs/{orgId}/` (members only), plus a `catalog.json` the app merges with the built-in units. How it works is in [TECHNICAL.md](../TECHNICAL.md#authored-content).
+Platform admins publish units for everyone at `/super/content`; org admins publish units for their own members at `/admin/content`. Drafts live in Firestore. Publishing (the `publishUnit` function) writes the unit as a versioned JSON file to Storage, under `content/` (public) or `orgs/{orgId}/` (members only), plus a `catalog.json` the app reads its courses from. The app ships no courses, so publish the starting ones once (see "Publish the starting courses" below). How it works is in [TECHNICAL.md](../TECHNICAL.md#authored-content).
 
 ### Set up once
 
@@ -128,6 +128,21 @@ Platform admins publish units for everyone at `/super/content`; org admins publi
    ```
    - The list holds the Hosting domains, the local dev and preview ports, and the Capacitor origins. Add a custom domain there when you get one.
    - Uploads from the editor don't need it; reading does. Without it, Home simply doesn't show published units.
+
+### Publish the starting courses
+
+The app ships no courses: every course comes from the editor. The starting ones (AI basics, `ai-1`, with its classroom kits) are files in `content/` at the repo root, published once with:
+
+```bash
+npm run build --prefix functions
+npm run seed
+```
+
+- It uses the same credentials as `npm run superadmin` (§4): a service-account key in `GOOGLE_APPLICATION_CREDENTIALS`, or `gcloud auth application-default login` with your personal account.
+- It uploads the kit files to `content/media/ai-1/`, saves `ai-1` as a platform draft and publishes it through the editor's own publish code. The ids stay `ai-1` and its lesson ids, so learners keep their progress, notes and certificates.
+- A unit that already has a draft is left alone (it may hold edits made in the editor); `--replace` overwrites it. `npm run seed -- --emulator` does the same against the emulators.
+- **Do this before deploying a Hosting build without built-in courses** (since 2026-10-27): until the public catalog lists the units, learners see "No courses yet".
+- Without a key: sign in on the live site as a platform admin, **Lesson editor → Import JSON** with `content/units/ai-1.json`, upload each lesson's kit files (in `content/kits/`) in the lesson's **Classroom kit**, then **Publish**.
 
 ### Check it works
 
@@ -151,6 +166,7 @@ npm run dev                          # the web app talks to the emulators (.env.
   JAVA_TOOL_OPTIONS="-Djdk.net.unixdomain.tmpdir=C:\Users\Public" npx firebase emulators:start --project demo-darsi --only auth,firestore,functions,storage
   ```
 - `npm run superadmin -- you@example.com --emulator` gives a local account the platform-admin role.
+- `npm run seed -- --emulator` publishes the starting courses to the emulators (the app ships none, so Home is empty until then).
 
 `.claude/launch.json` has the same `web` and `emulators` entries for Claude Code's preview.
 
