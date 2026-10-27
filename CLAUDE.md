@@ -209,6 +209,12 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - the Languages page, with a language pack loading when someone picks the language;
     - the track picker and the new editor.
   - Known leftover: ai-1's video steps still point at `/media/…` placeholders (the narrated videos are step 6, deferred). Hosting answers those with the app page, so the lessons use the transcript, as designed.
+- Deployed 2026-10-27 (commit 7e26de8: the new curriculum and light lessons), with the user's go-ahead:
+  1. `npm run seed -- ai-1-1 cyber-1-1 iot-1-2` published the three units live as v1: 39 kit files and 48 media files each, the media under `content/media/<unit>/<hash>/` with a one-year immutable cache.
+  2. **All 24 Cloud Functions** (validator with `light`, `atBy`, `materials` and `details`; download size counting light lessons).
+  3. Hosting (`index-CMEYsyZd.js`). That release also brought darsiai.org up: it had answered "Site Not Found" while the domain and certificate were already active.
+  - Checked live: the catalog lists ai-1, ai-1-1, cyber-1-1 and iot-1-2. As a guest on darsiai.org (Playwright), lessons in Arabic and English played the light lesson first, then the MP4 with captions, with no errors and no Firebase download. `/__/auth/handler` answers on darsiai.org, and the web.app address forwards there.
+  - Still the user's: the `_acme-challenge.www` TXT record in Cloudflare for www's certificate, and a check of signing in on darsiai.org.
 - **Storage**: the app uses the bucket **`darsi-f0685` in europe-west1**, set by `VITE_FIREBASE_STORAGE_BUCKET` in `.env.local`. It is deploy target `main` with `firebase/storage.rules`.
   - The original default bucket `darsi-f0685.firebasestorage.app` (us-west1, never used) was deleted on 2026-10-25 and now returns 404 `NoSuchBucket`. Keep the `main` target: without one, `firebase deploy --only storage` aims at the project's default bucket, which no longer exists.
   - Checked live on 2026-10-25: media/kits are public, and submissions return 403 to anonymous requests.
