@@ -17,9 +17,10 @@ export const PRESETS: Record<"lazy" | "careful", Setup> = {
 
 export function attack(setup: Setup): Record<Site, Outcome> {
   const out = {} as Record<Site, Outcome>;
-  // The leaked password works on the forum itself, and on every site that uses the same one.
+  // The leaked password works on the forum itself, and on every site that uses the same one. (The forum's own
+  // "same" means nothing: it is the password that leaked.)
   for (const site of SITES) {
-    const works = site === LEAKED || (setup[site].same && setup[LEAKED].same);
+    const works = site === LEAKED || setup[site].same;
     out[site] = !works ? "safe-unique" : setup[site].twoStep ? "safe-2fa" : "taken";
   }
   // With the email account, "forgot password" links let them into anything without two-step sign-in.

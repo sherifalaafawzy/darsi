@@ -1,8 +1,9 @@
 import { build, CORPUS as WORDS, nearest } from "../../src/labs/apps/embeddings/model";
 import { attend, SENTENCES } from "../../src/labs/apps/attention/model";
+import { CORPUS as MINI, generate, isCopy, train as trainMini } from "../../src/labs/apps/minilm/model";
 import { CORPUS as STORY, END, pick, PROMPTS, think, tokenize, train as trainLm } from "../../src/labs/apps/llm/model";
 import { answer, DOCS, index, QUESTIONS, search, stem } from "../../src/labs/apps/rag/model";
-import { accuracy as treeAccuracy, auto, DATA, entropy, gain, grow } from "../../src/labs/apps/tree/model";
+import { accuracy as treeAccuracy, auto, DATA, entropy, gain, grow, questions, type Node } from "../../src/labs/apps/tree/model";
 import { knn, looAccuracy, mangoes } from "../../src/labs/apps/knn/model";
 import { assign, houses, move, run, startStops, walk } from "../../src/labs/apps/kmeans/model";
 import { episode, greedyPath, newQ, yard } from "../../src/labs/apps/rl/model";
@@ -29,6 +30,17 @@ describe("word map", () => {
     expect(nearest(ar, matchKey("المانجو"), 1)[0].key).toBe(matchKey("الموز"));
     expect(nearest(ar, matchKey("المطر"), 1)[0].key).toBe(matchKey("الرياح"));
   });
+
+  it("places a new word by the company it keeps (Try this: the camel)", () => {
+    const en = build(`${WORDS.en}
+The camel eats grass on the farm. The camel gives milk on the farm.`);
+    expect(nearest(en, "camel", 2).map((n) => n.key).sort()).toEqual(["cow", "goat"]);
+    const ar = build(`${WORDS.ar}
+تأكل الناقة العشب في المزرعة. تعطي الناقة الحليب في المزرعة.`);
+    expect(nearest(ar, matchKey("الناقة"), 2).map((n) => n.key).sort()).toEqual([matchKey("البقرة"), matchKey("العنزة")].sort());
+    expect(build(`${WORDS.en}
+The camel eats grass.`).v.keys).not.toContain("camel"); // seen once: not on the map
+  });
 });
 
 describe("attention", () => {
@@ -38,6 +50,24 @@ describe("attention", () => {
       expect(top("hungry")).toMatch(lang === "en" ? /dog/ : /الكلب/);
       expect(top("fresh")).toMatch(lang === "en" ? /milk/ : /الحليب/);
       expect(top("light")).toMatch(lang === "en" ? /sack/ : /الكيس/);
+    }
+  });
+
+  it("a verb splits its attention between who and what; focus 0 shares it out evenly", () => {
+    const toks = SENTENCES.hungry.en, verb = toks.findIndex((x) => x.text === "drank"), a = attend(toks, verb, 3).weights;
+    expect(a[1]).toBeCloseTo(a[4]); // dog and milk
+    expect(a[1]).toBeGreaterThan(0.4);
+    for (const w of attend(toks, 6, 0).weights) expect(w).toBeCloseTo(1 / toks.length);
+    expect(Math.max(...attend(toks, 6, 8).weights)).toBeGreaterThan(0.99);
+  });
+});
+
+describe("tiny language model (minilm)", () => {
+  it("looking back two words makes it copy the training text far more often", () => {
+    for (const lang of ["en", "ar"] as const) {
+      const copies = (order: 1 | 2) => { const m = trainMini(MINI[lang], order), r = rng(3); let n = 0; for (let i = 0; i < 200; i++) if (isCopy(m, generate(m, 1, r))) n++; return n / 200; };
+      expect(copies(2)).toBeGreaterThan(0.8);
+      expect(copies(1)).toBeLessThan(0.5);
     }
   });
 });
@@ -56,7 +86,20 @@ describe("inside an LLM", () => {
       for (let i = 0; i < 20 && w !== END; i++) { w = pick(think(lmAr, c).cands, r()); if (w !== END) c.push(w); }
       expect(w).toBe(END);
     }
-    expect(think(lm, ctx, 0.05).cands[0].p).toBeGreaterThan(0.95); // cold: nearly always the top word
+    expect(think(lm, ctx, 0.02).cands[0].p).toBeGreaterThan(0.95); // cold: nearly always the top word
+  });
+
+  it("attention brings in the earlier words: the cat sleeps on the bed, the teacher writes on the board", () => {
+    const lm = trainLm(STORY.en);
+    const p = (text: string, w: string, ctxWeight: number) => think(lm, text.split(" "), 1, ctxWeight).cands.find((c) => c.key === w)!.p;
+    for (const [text, w] of [["the cat sleeps on the", "bed"], ["the teacher writes on the", "board"], ["the cow eats grass on the", "farm"]]) {
+      expect(p(text, w, 0)).toBeCloseTo(1 / 3); // the word counts only see "on the"
+      expect(p(text, w, 4)).toBeGreaterThan(0.6);
+    }
+    const ar = trainLm(STORY.ar);
+    expect(think(ar, ["المعلم", "يشرب", "الشاي", "بعد"].map(matchKey), 1, 4).cands[0].key).toBe(matchKey("الدرس"));
+    // Every Arabic prompt has more than one way to go on, so temperature and attention change something.
+    for (const p of PROMPTS.ar) expect(think(ar, tokenize(ar, p).map((t) => t.key)).cands.length).toBeGreaterThan(1);
   });
 });
 
@@ -71,6 +114,8 @@ describe("answers with sources", () => {
     expect(stem("الامتحانات")).toBe(stem("امتحانات"));
     const edited = index(DOCS.en.map((d) => (d.id === "exams" ? { ...d, text: "Mid-year exams start on Monday 20 January." } : d)));
     expect(answer(edited, "When do the exams start?")?.quote).toMatch(/Monday 20 January/);
+    expect(answer(index(DOCS.en), "When does the library open?")?.doc.id).toBe("library");
+    expect(answer(index(DOCS.ar), "متى تفتح المكتبة؟")?.doc.id).toBe("library");
   });
 });
 
@@ -81,6 +126,16 @@ describe("decision tree", () => {
     const root = grow(auto());
     expect(root.kind === "split" && root.attr).toBe("sky");
     expect(treeAccuracy(root)).toBe(1);
+    expect(questions(root)).toBe(3);
+    expect(questions(grow(auto(new Map([["", "heat"]]))))).toBe(7); // the smallest gain first: a bigger tree
+  });
+
+  it("an answer no day had goes with the majority one level up", () => {
+    // Humid days were mostly "stay"; none of them was cool.
+    const root = grow(new Map([["", "humid"], ["humid=high", "heat"]]));
+    const find = (n: Node, path: string): Node | null => n.path === path ? n : n.kind === "split" ? n.kids.map((k) => find(k.node, path)).find(Boolean) ?? null : null;
+    const empty = find(root, "humid=high/heat=cool");
+    expect(empty?.kind === "leaf" && empty.rows.length === 0 && empty.play).toBe(false);
   });
 });
 
@@ -91,6 +146,7 @@ describe("nearest neighbours", () => {
     expect(looAccuracy(pts, 5)).toBeGreaterThan(0.8);
     const messy = mangoes(true);
     expect(looAccuracy(messy, 7)).toBeGreaterThanOrEqual(looAccuracy(messy, 1));
+    expect(looAccuracy(messy, 5)).toBeGreaterThan(looAccuracy(messy, 1) + 0.1);
   });
 });
 
@@ -100,6 +156,12 @@ describe("k-means", () => {
     let stops = startStops(pts, 4, 3), a = assign(pts, stops), w = walk(pts, stops, a);
     for (let i = 0; i < 20; i++) { stops = move(pts, stops, a); a = assign(pts, stops); const nw = walk(pts, stops, a); expect(nw).toBeLessThanOrEqual(w + 1e-9); w = nw; }
     expect(run(pts, startStops(pts, 4, 3)).rounds).toBeLessThan(100);
+  });
+
+  it("with 3 stops, different starts can settle on different answers", () => {
+    const pts = houses(), ends = new Set<number>();
+    for (let seed = 3; seed < 9; seed++) { const r = run(pts, startStops(pts, 3, seed)); ends.add(Math.round(walk(pts, r.stops, r.a) * 100)); }
+    expect(ends.size).toBeGreaterThan(1);
   });
 });
 
@@ -111,6 +173,21 @@ describe("learn by reward", () => {
     expect(p.reached).toBe(true);
     expect(p.path.length - 1).toBe(10);
   });
+
+  it("knows it is lost as soon as it goes round in a loop, and learns a way round a new puddle", () => {
+    const lost = greedyPath(yard(), newQ()); // nothing learned: always "up", then it bumps the top wall
+    expect(lost.reached).toBe(false);
+    expect(lost.path.length).toBeLessThan(10);
+    const g = yard(), q = newQ(), r = rng(5);
+    for (let e = 0; e < 200; e++) episode(g, q, r);
+    expect(greedyPath(g, q).path).toContain(18);
+    g[18] = "puddle";
+    for (let e = 0; e < 200; e++) episode(g, q, r);
+    const p = greedyPath(g, q);
+    expect(p.reached).toBe(true);
+    expect(p.path).not.toContain(18);
+    expect(p.path.length - 1).toBe(12);
+  });
 });
 
 describe("thresholds", () => {
@@ -120,6 +197,8 @@ describe("thresholds", () => {
     expect(lo.hit + lo.miss + lo.falseAlarm + lo.quiet).toBe(60);
     expect(best("smoke", cs)).toBeLessThan(best("spam", cases("spam")));
     expect(cost("smoke", confusion(cs, best("smoke", cs)))).toBeLessThanOrEqual(cost("smoke", confusion(cs, 0.5)));
+    const high = confusion(cs, 0.9); // Try this: no false alarms, nearly every fire missed
+    expect(high.falseAlarm).toBe(0); expect(high.miss).toBeGreaterThan(25);
   });
 });
 
@@ -142,5 +221,6 @@ describe("bias in data", () => {
     expect(missRate(skewed, testB)).toBeGreaterThan(0.25);
     expect(missRate(fair, testB)).toBeLessThan(0.1);
     expect(Math.abs(errorRate(fair, testA) - errorRate(fair, testB))).toBeLessThan(0.05);
+    expect(missRate(trainBias(leaves(200, 0, 77)), testB)).toBeGreaterThan(0.4); // no hill photos: nearly half missed
   });
 });

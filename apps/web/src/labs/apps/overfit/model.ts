@@ -42,3 +42,16 @@ export function fit(pts: P[], d: number, ridge = 1e-9) {
 }
 
 export const mse = (f: (x: number) => number, pts: P[]) => pts.reduce((s, p) => s + (f(p.x) - p.y) ** 2, 0) / Math.max(1, pts.length);
+
+export type Verdict = "under" | "good" | "over" | "calm";
+/**
+ * What the lab says about a fit, judged from its two errors against the noise in the data (noise² is the best error any
+ * curve can hope for). Missing the training examples by more than the noise explains is underfitting; doing much worse
+ * on new examples than on its own, and than the noise explains, is overfitting.
+ */
+export function verdict(eTrain: number, eTest: number, noise: number, degree: number, many: boolean): Verdict {
+  const floor = noise * noise;
+  if (eTrain > floor + 0.04) return "under";
+  if (eTest > 2 * floor + 0.05 && eTest > 2 * eTrain) return "over";
+  return many && degree >= 7 ? "calm" : "good";
+}

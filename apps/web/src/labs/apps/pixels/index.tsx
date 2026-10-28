@@ -13,15 +13,21 @@ const S = {
   en: {
     intro: "A digital picture is a grid of tiny squares (pixels), and each pixel is just a number: 0 is white, 9 is darkest here. Draw, or pick a picture, and watch the numbers.",
     picture: "Start from", smile: "Smile", house: "House", sun: "Sun", grid: "Picture you can draw on", numbers: "The same picture as numbers",
-    invert: "Swap dark and light", brighter: "Darker", lighter: "Lighter", move: "Move one step", what: "What the computer reads, in one long row:",
+    invert: "Swap dark and light", brighter: "Darker", lighter: "Lighter", move: "Move right", what: "What the computer reads, in one long row:",
     count: (n: string) => `This picture is ${n} numbers. A phone photo is about 12 million pixels, each with 3 numbers (red, green, blue).`,
+    try1: "Draw on the picture with your finger: the numbers change as you paint. The squares you touch become 9, and their neighbours 5.",
+    try2: "Press “Swap dark and light”: every 9 becomes 0 and every 0 becomes 9. Editing a picture is just maths on its numbers.",
+    try3: "Press Lighter a few times: every number drops, the faint parts vanish first, and then the whole picture is gone.",
     takeaway: "To a computer, every picture is a grid of numbers. Changing a picture means doing maths on those numbers, and vision AI learns patterns in them.",
   },
   ar: {
     intro: "الصورة الرقمية شبكة من مربعات صغيرة (بكسلات)، وكل بكسل ما هو إلا رقم: ٠ أبيض، و٩ الأغمق هنا. ارسم أو اختر صورة، وراقب الأرقام.",
     picture: "ابدأ من", smile: "ابتسامة", house: "بيت", sun: "شمس", grid: "صورة يمكنك الرسم عليها", numbers: "الصورة نفسها أرقامًا",
-    invert: "بدّل الداكن والفاتح", brighter: "أغمق", lighter: "أفتح", move: "حرّك خطوة", what: "ما يقرؤه الحاسوب، في صف طويل واحد:",
+    invert: "بدّل الداكن والفاتح", brighter: "أغمق", lighter: "أفتح", move: "حرّك إلى اليمين", what: "ما يقرؤه الحاسوب، في صف طويل واحد:",
     count: (n: string) => `هذه الصورة ${n} رقم. صورة الهاتف نحو ١٢ مليون بكسل، ولكل بكسل ٣ أرقام (أحمر وأخضر وأزرق).`,
+    try1: "ارسم على الصورة بإصبعك: تتغيّر الأرقام وأنت ترسم. المربعات التي تلمسها تصبح ٩، وجاراتها ٥.",
+    try2: "اضغط «بدّل الداكن والفاتح»: يصبح كل ٩ صفرًا، وكل صفر ٩. تعديل الصورة ليس إلا حسابًا على أرقامها.",
+    try3: "اضغط «أفتح» عدة مرات: ينقص كل رقم، وتختفي الأجزاء الباهتة أولًا، ثم تختفي الصورة كلها.",
     takeaway: "كل صورة في نظر الحاسوب شبكة من الأرقام. تغيير الصورة يعني إجراء عمليات حسابية على هذه الأرقام، والذكاء الاصطناعي البصري يتعلّم الأنماط فيها.",
   },
 };
@@ -36,7 +42,7 @@ export default function Pixels({ meta, onDone }: LabProps) {
   useEffect(() => { if (edits >= 3) onDone?.(); }, [edits >= 3]); // eslint-disable-line react-hooks/exhaustive-deps
   const flat = Array.from(img.slice(0, 30), level);
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <Segmented label={s.picture} value={p} options={[["smile", s.smile], ["house", s.house], ["sun", s.sun]]} onChange={(v) => { setP(v); setImg(preset(v)); }} />
       <div className="lb-two">
         <div className="stack">

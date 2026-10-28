@@ -5,7 +5,7 @@ import { LabShell } from "../../kit/LabShell";
 import { Segmented, Stats } from "../../kit/controls";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
-import { backward, error, START, train, update, type W } from "./model";
+import { backward, error, forward, START, train, update, type W } from "./model";
 
 const X: [number, number] = [1, 0.5];
 const T = 1;
@@ -24,6 +24,9 @@ const S = {
     ],
     next: "Next", again: "Start again", train100: "Learn 100 more times", rate: "Step size", error: "Error", learned: "Examples learned", answer: "Answer",
     old: "Old", blame: "Blame", newW: "New", weight: "Weight",
+    try1: (a: string, b: string) => `Press Next until “Fix every weight”, then once more: the weights change, the Answer rises from ${a} to ${b} and the Error falls.`,
+    try2: "At “Fix every weight”, look at the Blame column: a negative blame makes a weight grow, a positive one makes it shrink. The weights into h₂ shrink, because h₂ pulls the answer down through its negative weight v₂.",
+    try3: (a: string, b: string) => `Set the step size to 3 and press “Learn 100 more times”: the answer gets to about ${a}. Press Start again, set the step size to 0.5 and do the same: it only reaches about ${b}.`,
     takeaway: "Backpropagation is how almost every neural network learns: a forward pass for the answer, a backward pass that hands each weight its share of the blame, and a small step for every weight.",
   },
   ar: {
@@ -40,9 +43,16 @@ const S = {
     ],
     next: "التالي", again: "ابدأ من جديد", train100: "تعلّم ١٠٠ مرة أخرى", rate: "حجم الخطوة", error: "الخطأ", learned: "الأمثلة المتعلَّمة", answer: "الإجابة",
     old: "القديم", blame: "المسؤولية", newW: "الجديد", weight: "الوزن",
+    try1: (a: string, b: string) => `اضغط «التالي» حتى تصل إلى «تصحيح كل وزن»، ثم اضغطه مرة أخرى: تتغيّر الأوزان، وترتفع الإجابة من ${a} إلى ${b}، وينخفض الخطأ.`,
+    try2: "في «تصحيح كل وزن» انظر إلى عمود «المسؤولية»: المسؤولية السالبة تكبّر الوزن، والموجبة تصغّره. وتصغر الأوزان الداخلة إلى h₂، لأن h₂ تسحب الإجابة إلى الأسفل عبر وزنها السالب v₂.",
+    try3: (a: string, b: string) => `اجعل حجم الخطوة ٣ واضغط «تعلّم ١٠٠ مرة أخرى»: تصل الإجابة إلى ${a} تقريبًا. ثم اضغط «ابدأ من جديد»، واجعل حجم الخطوة ٠٫٥ وكرّر ذلك: لا تصل إلا إلى ${b} تقريبًا.`,
     takeaway: "الانتشار العكسي هو طريقة تعلّم كل الشبكات العصبية تقريبًا: تمرير أمامي للإجابة، وتمرير عكسي يعطي كل وزن نصيبه من المسؤولية، وخطوة صغيرة لكل وزن.",
   },
 };
+// What "Try this" promises, worked out from the model: the answer before and after one fix (step size 1), and after
+// 100 fixes with a big and a small step.
+const Y0 = forward(START, X).y, Y1 = forward(train(START, X, T, 1, 1), X).y;
+const Y_BIG = forward(train(START, X, T, 3, 100), X).y, Y_SMALL = forward(train(START, X, T, 0.5, 100), X).y;
 const NAMES: (keyof W)[] = ["w11", "w12", "b1", "w21", "w22", "b2", "v1", "v2", "c"];
 const SUB: Record<keyof W, string> = { w11: "w₁₁", w12: "w₁₂", b1: "b₁", w21: "w₂₁", w22: "w₂₂", b2: "b₂", v1: "v₁", v2: "v₂", c: "c" };
 
@@ -54,7 +64,7 @@ export default function Backprop({ meta, onDone }: LabProps) {
   const [rate, setRate] = useState(1);
   const [learned, setLearned] = useState(0);
   const b = backward(w, X, T), f = b.f, E = error(f.y, T);
-  const n = (v: number) => num(Math.round(v * 1000) / 1000);
+  const n = (v: number) => num(Math.round(v * 1000) / 1000), n2 = (v: number) => num(Math.round(v * 100) / 100);
   const eq = (...parts: (string | number)[]) => <p className="lb-mono" dir="ltr">{parts.map((p, i) => <bdi key={i}>{typeof p === "number" ? n(p) : p}</bdi>)}</p>;
   const next = () => {
     if (stage < 6) setStage(stage + 1);
@@ -72,7 +82,7 @@ export default function Backprop({ meta, onDone }: LabProps) {
   ];
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway} onReset={() => { setW(START); setStage(0); setLearned(0); }}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1(n(Y0), n(Y1)), s.try2, s.try3(n2(Y_BIG), n2(Y_SMALL))]} takeaway={s.takeaway} onReset={() => { setW(START); setStage(0); setLearned(0); }}>
       <ol className="lb-stages">{s.stages.map((st, i) => <li key={i} className={i === stage ? "is-on" : i < stage ? "is-past" : ""} aria-current={i === stage ? "step" : undefined}>{st}</li>)}</ol>
       <div className="lb-two">
         <BackpropDiagram w={w} f={f} stage={stage} fmt={n} />

@@ -16,6 +16,8 @@ const S = {
     clue: { urgent: "Pressure to act fast: “within 24 hours”, “today”, “now”.", money: "It asks you to pay or buy something.", code: "It asks for codes. Real services and real head teachers never do.", link: "The link's address doesn't belong to the real organisation.", sender: "Unknown or odd sender, or a “new number”.", prize: "A prize from a draw you never entered.", file: "The “photo” ends in .apk: it's an app that can take over your phone. Friends' accounts get hacked too.", password: "It asks you to confirm your password." } as Record<Clue, string>,
     next: "Next message", done: (n: string, t: string) => `You judged ${n} of ${t} correctly.`, again: "Try again",
     rule: "When in doubt: don't click, don't reply. Contact the person or company another way you already trust: their official app, number or office.",
+    try1: "Before you answer, check three things: who sent it, what it asks you to do, and whether it rushes you.",
+    try2: "Read each link's address closely: a scam's link uses a look-alike name, not the real organisation's. The genuine messages here ask you for nothing.",
     takeaway: "Scams work by rushing you and borrowing trust. Slow down, check the sender and the link's real address, and never share passwords or codes. A genuine message can always wait while you check another way.",
   },
   ar: {
@@ -27,6 +29,8 @@ const S = {
     clue: { urgent: "ضغط للتصرّف بسرعة: «خلال ٢٤ ساعة»، «اليوم»، «الآن».", money: "تطلب منك أن تدفع أو تشتري شيئًا.", code: "تطلب رموزًا. الخدمات الحقيقية والمديرون الحقيقيون لا يفعلون ذلك أبدًا.", link: "عنوان الرابط لا يخصّ الجهة الحقيقية.", sender: "مرسل مجهول أو غريب، أو «رقم جديد».", prize: "جائزة من سحب لم تشارك فيه.", file: "«الصورة» تنتهي بـ ‎.apk: إنها تطبيق قد يستولي على هاتفك. وحسابات الأصدقاء تُخترق أيضًا.", password: "تطلب منك تأكيد كلمة مرورك." } as Record<Clue, string>,
     next: "الرسالة التالية", done: (n: string, t: string) => `حكمت على ${n} من ${t} حكمًا صحيحًا.`, again: "حاول من جديد",
     rule: "عند الشك: لا تضغط ولا ترد. تواصل مع الشخص أو الشركة بطريقة أخرى تثق بها أصلًا: تطبيقها الرسمي أو رقمها أو مكتبها.",
+    try1: "قبل أن تجيب، تحقّق من ثلاثة أشياء: من أرسلها، وماذا تطلب منك، وهل تستعجلك.",
+    try2: "اقرأ عنوان كل رابط بعناية: رابط الاحتيال يستعمل اسمًا يشبه اسم الجهة الحقيقية وليس اسمها. أما الرسائل الحقيقية هنا فلا تطلب منك شيئًا.",
     takeaway: "ينجح الاحتيال بالاستعجال واستعارة الثقة. تمهّل، وتحقّق من المرسل ومن العنوان الحقيقي للرابط، ولا تشارك كلمات المرور أو الرموز أبدًا. فالرسالة الحقيقية تستطيع دائمًا أن تنتظر ريثما تتحقّق بطريقة أخرى.",
   },
 };
@@ -42,7 +46,7 @@ export default function Phishing({ meta, onDone }: LabProps) {
   const m = MESSAGES[Math.min(i, MESSAGES.length - 1)], t = m[L], said = answers[m.id];
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2]} takeaway={s.takeaway}>
       {finished ? (
         <>
           <p className="lb-verdict" aria-live="polite">{s.done(num(score(answers)), num(MESSAGES.length))}</p>

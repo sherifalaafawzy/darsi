@@ -6,7 +6,7 @@ import { Plot } from "../../kit/Plot";
 import { useKit, useS } from "../../kit/strings";
 import { useLoop } from "../../kit/useLoop";
 import type { LabProps } from "../../types";
-import { best, data, grad, loss, step, type Line } from "./model";
+import { best, data, grad, loss, MAX_STEPS, RATES, step, type Line } from "./model";
 
 const S = {
   en: {
@@ -17,6 +17,9 @@ const S = {
     history: "Error after each step", steps: "Steps", gradient: "Downhill direction",
     converged: "Found the bottom of the valley: this is the best straight line.", diverged: "The steps are too big: the ball jumps across the valley and climbs higher each time. Try a smaller step.",
     slow: "Still crawling. A bigger step would get there faster.", line: "Score ≈",
+    try1: "Leave the step size on Good and press Run: the ball rolls down into the valley, and the line settles on the dashed best line in under 100 steps.",
+    try2: "Pick Too big and press Run: the ball leaps from one side of the valley to the other, higher each time, and the error climbs instead of falling.",
+    try3: "Pick Tiny and press Run: the error falls, but after 200 steps the line still hasn't reached the dashed one.",
     takeaway: "Training a neural network is this same walk downhill, done on millions of weights at once. The step size matters: too small is slow, too big never settles.",
   },
   ar: {
@@ -27,12 +30,15 @@ const S = {
     history: "الخطأ بعد كل خطوة", steps: "الخطوات", gradient: "اتجاه النزول",
     converged: "وصلنا إلى قاع الوادي: هذا أفضل خط مستقيم.", diverged: "الخطوات كبيرة جدًا: تقفز الكرة فوق الوادي وتصعد أعلى كل مرة. جرّب خطوة أصغر.",
     slow: "ما زالت تزحف. الخطوة الأكبر ستصل أسرع.", line: "الدرجة ≈",
+    try1: "اترك حجم الخطوة على «مناسبة» واضغط «شغّل»: تتدحرج الكرة إلى قاع الوادي، ويستقر الخط على الخط المتقطع الأفضل في أقل من ١٠٠ خطوة.",
+    try2: "اختر «كبيرة جدًا» واضغط «شغّل»: تقفز الكرة من جانب الوادي إلى جانبه الآخر، أعلى في كل مرة، ويرتفع الخطأ بدل أن ينخفض.",
+    try3: "اختر «صغيرة جدًا» واضغط «شغّل»: ينخفض الخطأ، لكن الخط بعد ٢٠٠ خطوة لم يصل بعد إلى الخط المتقطع.",
     takeaway: "تدريب الشبكة العصبية هو هذا النزول نفسه، لكن على ملايين الأوزان معًا. وحجم الخطوة مهم: الصغيرة جدًا بطيئة، والكبيرة جدًا لا تستقر أبدًا.",
   },
 };
-const RATES = { small: 0.05, good: 0.6, big: 1.9 } as const;
 const START: Line = { m: 0, c: 0 };
-const MAX = 400;
+/** Time between steps, on any screen: quick for the small steps, slow enough for "Too big" that every jump shows. */
+const STEP_MS: Record<keyof typeof RATES, number> = { small: 16, good: 33, big: 300 };
 
 export default function Gradient({ meta, onDone }: LabProps) {
   const s = useS(S), k = useKit();
@@ -41,18 +47,19 @@ export default function Gradient({ meta, onDone }: LabProps) {
   const target = useMemo(() => best(pts), [pts]);
   const [rate, setRate] = useState<keyof typeof RATES>("good");
   const [l, setL] = useState<Line>(START);
-  const hist = useRef<number[]>([loss(START, pts)]);
+  // The line also lives in a ref, so One step right after Start again begins from the flat line, not the last one.
+  const lRef = useRef<Line>(START), hist = useRef<number[]>([loss(START, pts)]), lastAt = useRef(0);
   const [status, setStatus] = useState<"" | "converged" | "diverged" | "slow">("");
-  const reset = () => { setL(START); hist.current = [loss(START, pts)]; setStatus(""); };
+  const reset = () => { lRef.current = START; setL(START); hist.current = [loss(START, pts)]; setStatus(""); };
   const one = () => {
-    const next = step(l, pts, RATES[rate]), e = loss(next, pts);
-    setL(next); hist.current.push(e);
+    const next = step(lRef.current, pts, RATES[rate]), e = loss(next, pts);
+    lRef.current = next; setL(next); hist.current.push(e);
     if (!Number.isFinite(e) || e > 5) { setStatus("diverged"); return false; }
     const g = grad(next, pts);
     if (Math.abs(g.dm) + Math.abs(g.dc) < 2e-4) { setStatus("converged"); onDone?.(); return false; }
-    if (hist.current.length > MAX) { setStatus("slow"); return false; }
+    if (hist.current.length > MAX_STEPS) { setStatus("slow"); return false; }
   };
-  const loop = useLoop(one, { maxPerFrame: rate === "small" ? 4 : 1 });
+  const loop = useLoop(() => { const now = performance.now(); if (now - lastAt.current < STEP_MS[rate]) return true; lastAt.current = now; return one(); }, { maxPerFrame: 1 });
   const e = hist.current.at(-1) ?? 0;
   const g = grad(l, pts);
   const n2 = (v: number) => num(Math.round(v * 100) / 100);
@@ -62,7 +69,7 @@ export default function Gradient({ meta, onDone }: LabProps) {
   const h = hist.current, stride = Math.max(1, Math.ceil(h.length / 120));
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <Segmented label={s.rate} value={rate} options={[["small", s.small], ["good", s.good], ["big", s.big]]} onChange={(v) => { setRate(v); loop.stop(); reset(); }} />
       <div className="lb-two">
         <div className="stack">
@@ -77,7 +84,7 @@ export default function Gradient({ meta, onDone }: LabProps) {
         <div className="stack">
           <Plot x={[-0.5, 1]} y={[0, vMax]} height={180} label={s.valley} xLabel={s.slope} yLabel={s.error} fmt={n2}
             lines={[{ points: valley, tone: "a" }]} dots={[{ x: Math.max(-0.5, Math.min(1, l.m)), y: Math.min(vMax, loss(l, pts)), tone: "b", r: 8 }]} />
-          {h.length > 1 && <Plot x={[0, Math.max(10, h.length - 1)]} y={[0, Math.min(1, Math.max(...h.slice(0, 3)))]} height={150} label={s.history} xLabel={k.epoch} yLabel={s.error} fmt={n2}
+          {h.length > 1 && <Plot x={[0, Math.max(10, h.length - 1)]} y={[0, Math.min(1, Math.max(...h.filter(Number.isFinite)))]} height={150} label={s.history} xLabel={k.epoch} yLabel={s.error} fmt={n2}
             lines={[{ points: h.filter((_, i) => i % stride === 0).map((v, i) => [i * stride, Math.min(1, v)] as const), tone: "b" }]} />}
         </div>
       </div>

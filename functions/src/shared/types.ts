@@ -155,7 +155,8 @@ export interface CatalogEntry {
   audience?: Audience;
 }
 export interface Catalog { version: number; units: CatalogEntry[] }
-export interface Placement { questions: Array<(ChoiceStep | TrueFalseStep) & { track: Track }> }
+/** The onboarding check (public/content/placement.json): per track and audience, questions for each level. */
+export interface Placement { version: 2; questions: Array<(ChoiceStep | TrueFalseStep) & { track: Track; audience: Audience; level: number }> }
 
 /** Pick the string for a language, falling back to English. */
 export const pick = (t: LocalText | undefined, lang: string): string => (t ? t[lang] ?? t.en : "");

@@ -22,7 +22,7 @@ export const STEPS: Record<StepId, Step> = {
     caller: { en: "Thank you. I've just sent a code to your phone by text message. Read it to me so I can confirm it's really you.", ar: "شكرًا لك. أرسلت للتو رمزًا إلى هاتفك في رسالة نصية. اقرأه لي لأتأكد أنك أنت فعلًا." },
     flags: ["secret", "authority"],
     choices: [
-      { to: "lost", good: false, say: { en: "It's 482193.", ar: "إنه 482193." } },
+      { to: "lost", good: false, say: { en: "It's 482193.", ar: "إنه ٤٨٢١٩٣." } },
       { to: "pressure", good: true, say: { en: "The message says never to share this code. I won't.", ar: "الرسالة تقول ألّا أشارك هذا الرمز أبدًا. لن أفعل." } },
     ],
   },
@@ -30,7 +30,7 @@ export const STEPS: Record<StepId, Step> = {
     caller: { en: "If you don't give me the code in the next five minutes, your account will be deleted and the school will lose all its data. It will be your fault!", ar: "إن لم تعطني الرمز خلال خمس دقائق فسيُحذف حسابك وستفقد المدرسة كل بياناتها. وسيكون ذلك خطأك!" },
     flags: ["urgency", "fear"],
     choices: [
-      { to: "lost", good: false, say: { en: "OK, OK… it's 482193.", ar: "حسنًا، حسنًا… إنه 482193." } },
+      { to: "lost", good: false, say: { en: "OK, OK… it's 482193.", ar: "حسنًا، حسنًا… إنه ٤٨٢١٩٣." } },
       { to: "refuse", good: true, say: { en: "No. I'm hanging up and calling the school's IT teacher.", ar: "لا. سأغلق الخط وأتصل بمعلم الحاسوب في المدرسة." } },
     ],
   },

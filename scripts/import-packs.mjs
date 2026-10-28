@@ -14,9 +14,10 @@
  * The units in content/units also had a hand pass after import (2026-10-27): multi-answer explanations that name each
  * option and say why the others are wrong, and a few sentences fixed for clarity and local fit. --force undoes it.
  */
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { basename, dirname, join, resolve } from "node:path";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readJson, sceneTimes, studioMedia, walk } from "./lib/studio-media.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const args = process.argv.slice(2);
@@ -25,7 +26,6 @@ const PACKS = resolve(flag("--packs") ?? join(ROOT, "trainings"));
 const STUDIO = resolve(flag("--studio") ?? join(ROOT, "..", "lessonstudio"));
 const force = args.includes("--force");
 const mediaOnly = args.includes("--media-only");
-const HOLD = 4; // seconds the Lesson Studio MP4 holds still on each quick check (scripts/video/mp4.ts --hold)
 
 /** The three packs: unit id, the pack's code, and per lesson the lab app and the competencies it builds. */
 const UNITS = {
@@ -52,14 +52,6 @@ const TRACK_NAME = { ai: "AI", cyber: "Cyber safety", iot: "IoT" };
 
 /* ---------- reading the packs ---------- */
 
-const readJson = (p) => JSON.parse(readFileSync(p, "utf8"));
-function walk(dir, out = []) {
-  for (const f of readdirSync(dir)) {
-    const p = join(dir, f);
-    if (statSync(p).isDirectory()) walk(p, out); else out.push(p);
-  }
-  return out;
-}
 const files = walk(PACKS);
 const find = (re) => files.find((f) => re.test(basename(f)));
 const findAll = (re) => files.filter((f) => re.test(basename(f)));
@@ -189,71 +181,17 @@ function spread(steps) {
   return out;
 }
 
-/* ---------- media from Lesson Studio ---------- */
-
-/** The video and light lesson Lesson Studio made for this lesson, copied under content/media/<lesson>/. */
-function media(studioId, lessonId) {
-  const out = join(ROOT, "content", "media", lessonId);
-  rmSync(out, { recursive: true, force: true });
-  mkdirSync(out, { recursive: true });
-  const langs = { en: "en", ar: "ar-EG" };
-  const sources = {}, captions = {}, info = {};
-  for (const [dl, sl] of Object.entries(langs)) {
-    const v = join(STUDIO, "out", "videos", studioId, sl);
-    if (!existsSync(join(v, "video.json"))) throw new Error(`No ${sl} video for ${studioId} in ${v}: render it with npm run mp4 in Lesson Studio`);
-    info[dl] = readJson(join(v, "video.json"));
-    if (!info[dl].narrated) throw new Error(`The ${sl} video for ${studioId} has no narration yet`);
-    copyFileSync(join(v, "240p.mp4"), join(out, `video-${dl}.mp4`));
-    copyFileSync(join(v, "captions.vtt"), join(out, `captions-${dl}.vtt`));
-    sources[dl] = `/media/${lessonId}/video-${dl}.mp4`;
-    captions[dl] = `/media/${lessonId}/captions-${dl}.vtt`;
-  }
-  // The light lesson: Lesson Studio's package (manifest, scenes, timing and narration per language).
-  const pkg = join(STUDIO, "out", "packages", studioId);
-  if (!existsSync(join(pkg, "manifest.json"))) throw new Error(`No light lesson for ${studioId}: run npm run package-lessons in Lesson Studio`);
-  const lightFiles = {};
-  const sizeKB = {};
-  for (const f of walk(pkg)) {
-    const rel = f.slice(pkg.length + 1).replace(/\\/g, "/");
-    if (rel.startsWith("captions/")) continue; // the player captions from the timing
-    mkdirSync(join(out, "light", dirname(rel)), { recursive: true });
-    copyFileSync(f, join(out, "light", rel));
-    lightFiles[rel] = `/media/${lessonId}/light/${rel}`;
-  }
-  for (const [dl, sl] of Object.entries(langs)) {
-    sizeKB[dl] = Math.round(["manifest.json", "scenes.json", `timing/${sl}.json`, `audio/${sl}.opus`].reduce((n, p) => n + (existsSync(join(pkg, p)) ? statSync(join(pkg, p)).size : 0), 0) / 1024);
-  }
-  const mb = (dl) => statSync(join(out, `video-${dl}.mp4`)).size / 1048576;
-  return {
-    sources, captions, info,
-    duration: Math.ceil(Math.max(info.en.seconds, info.ar.seconds)),
-    sizeMB: Math.round(Math.max(mb("en"), mb("ar")) * 10) / 10,
-    light: { files: lightFiles, langs, sizeKB },
-  };
-}
-
-/** When storyboard scene i starts in each language's video: Lesson Studio's measured timing plus the holds before it. */
-function sceneTimes(studioId) {
-  const dir = join(STUDIO, "content", "darsi", "lessons", studioId);
-  const scenes = readJson(join(dir, "scenes.json")).scenes;
-  const at = {};
-  for (const [dl, sl] of [["en", "en"], ["ar", "ar-EG"]]) {
-    const t = readJson(join(dir, "timing", `${sl}.json`));
-    const holds = t.scenes.flatMap((s, i) => (scenes[i].check ? [s.end] : []));
-    at[dl] = t.scenes.map((s) => Math.round((s.start + HOLD * holds.filter((h) => h <= s.start + 1e-6).length) * 10) / 10);
-  }
-  return at;
-}
+/* ---------- media from Lesson Studio: scripts/lib/studio-media.mjs ---------- */
 
 /* ---------- lessons ---------- */
 
 function lessonOf(unit, code, cfg, S, n) {
   const lessonId = `${cfg.id}-${n}`;
   const studioId = S.id.toLowerCase();
-  const m = media(studioId, lessonId);
+  const m = studioMedia(ROOT, STUDIO, studioId, lessonId);
   const story = readJson(join(STUDIO, "content", "darsi", "source", `${S.id}.json`)).video;
   const arabic = readJson(join(STUDIO, "content", "darsi", studioId, "ar-EG.json"));
-  const at = sceneTimes(studioId);
+  const at = sceneTimes(STUDIO, studioId);
   const sceneOf = (mmss) => story.scenes.findIndex((s) => s.start === mmss);
   const chapters = story.chapters.map((c) => {
     const i = Math.max(0, sceneOf(c.at));

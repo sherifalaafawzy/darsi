@@ -18,6 +18,9 @@ const S = {
     weights: (n: string) => `This network has ${n} weights to learn.`,
     hint: { blobs: "A straight line is enough here: even zero hidden layers works.", circle: "No straight line can do this. Add a hidden layer with a few neurons.", xor: "Each neuron draws one line; you need at least two lines. Try 1 layer with 3 or more neurons.", spiral: "The hardest: try 2–3 layers of 8 neurons. Be patient." } as Record<Dataset, string>,
     lossChart: "Error going down as the network learns", done: "It works! The network learned this shape.", stuck: "Stopped: try more neurons, another activation or a different learning rate.",
+    try1: "Press Train: within a few seconds the background bends into a ring around the circles, and accuracy reaches 100%.",
+    try2: "Set Hidden layers to 0 and train again: with no hidden layer the network can only draw one straight line, so accuracy stays near 50%.",
+    try3: "Pick Spiral, set 3 hidden layers with 8 neurons per layer, and train: the error stays flat for a while, then drops quickly once the network finds the shape.",
     takeaway: "One neuron can only draw one straight line. Layers of neurons combine and bend those lines, so a network can learn shapes a single neuron never could. Training is just many small weight changes that lower the error.",
     map: "What the network answers across the plane",
   },
@@ -28,6 +31,9 @@ const S = {
     weights: (n: string) => `في هذه الشبكة ${n} وزنًا عليها أن تتعلّمها.`,
     hint: { blobs: "يكفي خط مستقيم هنا: حتى صفر طبقات مخفية ينجح.", circle: "لا يستطيع أي خط مستقيم فعل هذا. أضف طبقة مخفية فيها بضع خلايا.", xor: "كل خلية ترسم خطًا واحدًا، وتحتاج إلى خطين على الأقل. جرّب طبقة واحدة بثلاث خلايا أو أكثر.", spiral: "الأصعب: جرّب ٢ أو ٣ طبقات بثماني خلايا. وتحلَّ بالصبر." } as Record<Dataset, string>,
     lossChart: "الخطأ ينخفض بينما تتعلّم الشبكة", done: "نجحت! تعلّمت الشبكة هذا الشكل.", stuck: "توقّف التدريب: جرّب خلايا أكثر، أو دالة تنشيط أخرى، أو معدّل تعلّم مختلفًا.",
+    try1: "اضغط «درّب»: خلال ثوانٍ تنثني الخلفية لتصبح حلقة حول الدوائر، وتصل الدقة إلى ١٠٠٪.",
+    try2: "اجعل «الطبقات المخفية» صفرًا ودرّب من جديد: من دون طبقة مخفية لا ترسم الشبكة إلا خطًا مستقيمًا واحدًا، فتبقى الدقة قرب ٥٠٪.",
+    try3: "اختر «حلزون»، واجعل الطبقات المخفية ٣ بثماني خلايا في كل طبقة، ثم درّب: يبقى الخطأ ثابتًا مدة، ثم ينخفض بسرعة حين تجد الشبكة الشكل.",
     takeaway: "الخلية الواحدة لا ترسم إلا خطًا مستقيمًا واحدًا. أما طبقات الخلايا فتجمع هذه الخطوط وتثنيها، فتتعلّم الشبكة أشكالًا لا تستطيعها خلية واحدة. والتدريب ما هو إلا تغييرات صغيرة كثيرة في الأوزان تقلّل الخطأ.",
     map: "ما تجيب به الشبكة في كل أنحاء المستوى",
   },
@@ -69,7 +75,7 @@ export default function Playground({ meta, onDone }: LabProps) {
   const lossLine = h.filter((_, i) => i % stride === 0 || i === h.length - 1).map((v, i) => [Math.min(h.length, i * stride), v] as const);
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <Segmented label={s.data} value={data} options={(["blobs", "circle", "xor", "spiral"] as const).map((d) => [d, s[d]] as const)} onChange={setData} />
       <p className="lb-note">{s.hint[data]}</p>
       <div className="lb-two">

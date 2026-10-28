@@ -11,7 +11,7 @@ vi.mock("../src/content/load", async (orig) => ({ ...(await orig<typeof import("
 const { SettingsProvider, useTracks } = await import("../src/content/settings");
 const { BUILTIN_TRACKS, mergeTracks, levelsByTrack } = await import("../src/content/tracks");
 const { TRACK_TONE_IDS } = await import("../src/content/validate");
-const { placementLevel } = await import("../src/screens/Onboarding");
+const { placementNext } = await import("../src/screens/Onboarding");
 const { useHistory } = await import("../src/cms/history");
 
 const data: TrackDef = { id: "data", name: { en: "Data science", ar: "علم البيانات" }, icon: "chart", tone: "leaf", levels: 6, levelNames: [{ en: "Basics" }], order: 3 };
@@ -70,15 +70,28 @@ describe("track colours", () => {
   });
 });
 
-describe("placementLevel", () => {
-  it("maps the share of right answers onto every level of the track", () => {
-    expect(placementLevel(0, 4, 4)).toBe(1);
-    expect(placementLevel(2, 4, 4)).toBe(2);
-    expect(placementLevel(3, 4, 4)).toBe(3);
-    expect(placementLevel(4, 4, 4)).toBe(4); // all right reaches the top level
-    expect(placementLevel(6, 6, 6)).toBe(6);
-    expect(placementLevel(0, 0, 6)).toBe(1); // no questions for this track
-    expect(placementLevel(1, 1, 1)).toBe(1);
+describe("placementNext", () => {
+  /** Runs answers through the check for one track; returns the level it places the learner at. */
+  const run = (answers: boolean[], top = 4) => {
+    let st = { level: 1, asked: 0 };
+    for (const ok of answers) {
+      const r = placementNext(st, ok, top);
+      if ("level" in r) return { level: r.level };
+      st = r.state;
+    }
+    return { level: -1 }; // still asking
+  };
+  it("asks two per level and stops at the first level not passed", () => {
+    expect(run([false]).level).toBe(1); // nothing known: Beginner, after one question
+    expect(run([true, false]).level).toBe(1); // a level needs both right
+    expect(run([true, true, false]).level).toBe(2);
+    expect(run([true, true, true, true, true, false]).level).toBe(3);
+    expect(run([true, true, true, true, true, true, true, true]).level).toBe(4); // every level passed: the top
+    expect(run([true, true, true]).level).toBe(-1); // still asking level 2
+  });
+  it("works for tracks with fewer levels", () => {
+    expect(run([true, true], 1).level).toBe(1);
+    expect(run([true, true, true, true], 2).level).toBe(2);
   });
 });
 

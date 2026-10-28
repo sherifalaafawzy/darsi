@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@darsi/design-system";
 import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
+import { usePlural, type Forms } from "../../kit/plural";
 import { Segmented, Slider } from "../../kit/controls";
 import { Plot } from "../../kit/Plot";
 import { useS } from "../../kit/strings";
@@ -15,10 +16,13 @@ const S = {
     real: { smoke: "real smoke", spam: "spam" } as Record<Job, string>, harmless: { smoke: "cooking steam", spam: "real email" } as Record<Job, string>,
     strip: "Every case by its score; filled circles are real, open squares harmless; the dashed line is the threshold (tap to move it)",
     alarm: "Alarm", noAlarm: "No alarm", caught: "Caught", missed: "Missed", falseAlarm: "False alarm", quiet: "Rightly quiet",
-    costLine: (miss: string, fa: string, cm: string, cf: string, total: string) => `Cost of mistakes: ${miss} missed × ${cm} + ${fa} false alarms × ${cf} = ${total}`,
+    costLine: (miss: string, fa: string, cm: string, cf: string, total: string) => `Cost of mistakes: ${miss} × ${cm} + ${fa} × ${cf} = ${total}`,
+    missedN: { other: "{n} missed" } as Forms, falseN: { one: "{n} false alarm", other: "{n} false alarms" } as Forms,
     why: { smoke: "A missed fire is far worse than an annoying false alarm, so a missed case costs 20 and a false alarm 1.", spam: "Hiding a real email (a false alarm) is worse than letting a spam through, so a false alarm costs 5 and a miss 1." } as Record<Job, string>,
     best: (t: string, c: string) => `Lowest cost: ${c}, at threshold ${t}.`, go: "Go to the best threshold",
     rocTitle: "ROC curve: real cases caught against harmless cases flagged, for every threshold (the ring is yours)", rocX: "harmless flagged", rocY: "real caught",
+    try1: "Move the threshold to 0.9: the false alarms are gone, but almost every real fire is missed, and the cost of mistakes jumps.",
+    try2: "Press Go to the best threshold for the smoke alarm, then switch to Spam filter and press it again: the best threshold moves a long way up, because there a false alarm is the costly mistake.",
     takeaway: "Every detector, human or AI, trades false alarms for misses. The threshold is a choice about values, not maths: decide which mistake is worse for the people affected, then set it, and check it again as things change.",
   },
   ar: {
@@ -27,10 +31,14 @@ const S = {
     real: { smoke: "دخان حقيقي", spam: "رسالة مزعجة" } as Record<Job, string>, harmless: { smoke: "بخار الطبخ", spam: "رسالة حقيقية" } as Record<Job, string>,
     strip: "كل حالة بحسب درجتها؛ الدوائر الممتلئة حقيقية والمربعات المفرغة غير ضارة، والخط المتقطع هو العتبة (المس لتحريكه)",
     alarm: "إنذار", noAlarm: "لا إنذار", caught: "اكتُشفت", missed: "فاتت", falseAlarm: "إنذار كاذب", quiet: "صمت صحيح",
-    costLine: (miss: string, fa: string, cm: string, cf: string, total: string) => `كلفة الأخطاء: ${miss} فائتة × ${cm} + ${fa} إنذارات كاذبة × ${cf} = ${total}`,
+    costLine: (miss: string, fa: string, cm: string, cf: string, total: string) => `كلفة الأخطاء: ${miss} × ${cm} + ${fa} × ${cf} = ${total}`,
+    missedN: { zero: "{n} حالة فائتة", one: "حالة فائتة واحدة", two: "حالتان فائتتان", few: "{n} حالات فائتة", other: "{n} حالة فائتة" } as Forms,
+    falseN: { zero: "{n} إنذار كاذب", one: "إنذار كاذب واحد", two: "إنذاران كاذبان", few: "{n} إنذارات كاذبة", many: "{n} إنذارًا كاذبًا", other: "{n} إنذار كاذب" } as Forms,
     why: { smoke: "الحريق الفائت أسوأ بكثير من إنذار كاذب مزعج، لذلك كلفة الحالة الفائتة ٢٠ والإنذار الكاذب ١.", spam: "إخفاء رسالة حقيقية (إنذار كاذب) أسوأ من مرور رسالة مزعجة، لذلك كلفة الإنذار الكاذب ٥ والفائتة ١." } as Record<Job, string>,
     best: (t: string, c: string) => `أقل كلفة: ${c}، عند العتبة ${t}.`, go: "انتقل إلى أفضل عتبة",
     rocTitle: "منحنى ROC: الحالات الحقيقية المكتشفة مقابل الحالات غير الضارة المُنذَر بها، لكل عتبة (الحلقة هي عتبتك)", rocX: "غير الضارة المُنذَر بها", rocY: "الحقيقية المكتشفة",
+    try1: "حرّك العتبة إلى ٠٫٩: تختفي الإنذارات الكاذبة، لكن يفوت كل حريق حقيقي تقريبًا، وتقفز كلفة الأخطاء.",
+    try2: "اضغط «انتقل إلى أفضل عتبة» لإنذار الدخان، ثم اختر «مرشّح الرسائل المزعجة» واضغطه من جديد: ترتفع أفضل عتبة كثيرًا، لأن الإنذار الكاذب هناك هو الخطأ الأغلى.",
     takeaway: "كل كاشف، إنسانًا كان أو ذكاءً اصطناعيًا، يقايض الإنذارات الكاذبة بالحالات الفائتة. والعتبة اختيار قيمي لا حسابي: قرّر أي الخطأين أسوأ على الناس المتأثرين، ثم اضبطها، وراجعها كلما تغيّرت الأمور.",
   },
 };
@@ -38,6 +46,7 @@ const S = {
 export default function Threshold({ meta, onDone }: LabProps) {
   const s = useS(S);
   const { num } = useI18n();
+  const plural = usePlural();
   const [job, setJob] = useState<Job>("smoke");
   const [t, setT] = useState(0.5);
   const [tried, setTried] = useState(() => new Set<Job>());
@@ -50,7 +59,7 @@ export default function Threshold({ meta, onDone }: LabProps) {
   useEffect(() => { if (tried.size >= 2) onDone?.(); }, [tried.size >= 2]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2]} takeaway={s.takeaway}>
       <Segmented label={s.job} value={job} options={[["smoke", s.smoke], ["spam", s.spam]]} onChange={(v) => { setJob(v); setT(0.5); }} />
       <p className="lb-note">{s.why[job]}</p>
       <Plot x={[0, 1]} y={[0, 1]} height={170} ticks={4} label={s.strip} onPick={(x) => touch(x)}
@@ -72,7 +81,7 @@ export default function Threshold({ meta, onDone }: LabProps) {
               <tr><th>{s.harmless[job]}</th><td className="lb-no">{s.falseAlarm} {num(m.falseAlarm)}</td><td className="lb-ok">{s.quiet} {num(m.quiet)}</td></tr>
             </tbody>
           </table>
-          <p className="lb-verdict" aria-live="polite">{s.costLine(num(m.miss), num(m.falseAlarm), num(COST[job].miss), num(COST[job].falseAlarm), num(c))}</p>
+          <p className="lb-verdict" aria-live="polite">{s.costLine(plural(m.miss, s.missedN), plural(m.falseAlarm, s.falseN), num(COST[job].miss), num(COST[job].falseAlarm), num(c))}</p>
           <p className="lb-note">{s.best(n2(bt), num(bc))}</p>
           <div className="lb-row"><Button size="sm" variant="secondary" disabled={t === bt} onClick={() => touch(bt)}>{s.go}</Button></div>
         </div>

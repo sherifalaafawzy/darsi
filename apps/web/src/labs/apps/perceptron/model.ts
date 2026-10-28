@@ -7,6 +7,12 @@ import { rng } from "../../kit/rng";
 export interface Pt { x: number; y: number; label: 0 | 1 }
 export interface Neuron { w1: number; w2: number; b: number }
 
+/** Where the lab starts: a nearly flat line that gets most points of every preset wrong, so there is something to learn. */
+export const START: Neuron = { w1: 0.1, w2: 0.9, b: -0.2 };
+export const RATE = 0.2;
+/** The lab gives up after this many passes; every preset a line can separate finishes well within it. */
+export const MAX_PASSES = 12;
+
 export const predict = (n: Neuron, p: { x: number; y: number }) => (n.w1 * p.x + n.w2 * p.y + n.b >= 0 ? 1 : 0);
 export const mistakes = (n: Neuron, pts: Pt[]) => pts.filter((p) => predict(n, p) !== p.label).length;
 

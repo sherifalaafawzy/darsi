@@ -30,7 +30,7 @@
 .lb-range { grid-column: 1 / -1; inline-size: 100%; block-size: 32px; margin: 0; accent-color: var(--kola); }
 .lb-seg { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
 .lb-seg-label { flex: 1 0 100%; font: var(--text-label); }
-.lb-seg-btn { min-block-size: 40px; padding: 0 var(--space-3); background: var(--surface); color: var(--ink); border: 2px solid var(--line-strong); border-radius: var(--radius-pill); font: var(--text-label); cursor: pointer; }
+.lb-seg-btn { min-block-size: 44px; min-inline-size: 44px; padding: 0 var(--space-3); background: var(--surface); color: var(--ink); border: 2px solid var(--line-strong); border-radius: var(--radius-pill); font: var(--text-label); cursor: pointer; }
 .lb-seg-btn.is-on { background: var(--lb-tone, var(--sunbird)); border-color: var(--ink); }
 .lb-seg-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .lb-runbar { display: flex; flex-wrap: wrap; gap: var(--space-2); }
@@ -86,9 +86,9 @@ span.lb-attn-word { cursor: default; }
 .lb-attn-word:focus-visible, .lb-attn-row:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .lb-attn-matrix { display: grid; gap: 2px; align-items: center; font-size: 12px; line-height: 16px; }
 .lb-attn-col { overflow: hidden; color: var(--ink-muted); text-align: center; text-overflow: ellipsis; white-space: nowrap; }
-.lb-attn-row { padding: var(--space-1); border: 0; background: none; color: var(--ink-muted); font: inherit; text-align: start; white-space: nowrap; cursor: pointer; }
+.lb-attn-row { min-block-size: 40px; padding: var(--space-1); border: 0; background: none; color: var(--ink-muted); font: inherit; text-align: start; white-space: nowrap; cursor: pointer; }
 .lb-attn-row.is-on { color: var(--ink); font-weight: 700; }
-.lb-attn-cell { display: block; block-size: 28px; overflow: hidden; border-radius: 2px; background: var(--surface-sunk); }
+.lb-attn-cell { display: block; block-size: 40px; overflow: hidden; border-radius: 2px; background: var(--surface-sunk); }
 .lb-attn-cell > span { display: block; block-size: 100%; background: var(--lb-tone, var(--sunbird)); }
 .lb-table tr.is-on td { background: var(--surface-sunk); font-weight: 700; }
 
@@ -130,7 +130,7 @@ span.lb-attn-word { cursor: default; }
 .lb-tree-node.is-open { border-style: dashed; border-color: var(--ink); }
 .lb-tree-node.is-path { border-color: var(--ink); }
 .lb-tree-node.is-leaf.is-path { background: var(--lb-soft); }
-.lb-tree-count { padding: 0; border: 0; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; text-decoration: underline dotted; cursor: pointer; }
+.lb-tree-count { display: inline-flex; align-items: center; min-block-size: 40px; padding: 0; border: 0; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; text-decoration: underline dotted; cursor: pointer; }
 .lb-tree-node.is-sel > .lb-tree-count { color: var(--ink); text-decoration: underline solid; }
 .lb-tree-count:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .lb-verdict { margin: 0; font-size: 18px; font-weight: 700; line-height: 26px; }
@@ -169,7 +169,8 @@ span.lb-attn-word { cursor: default; }
 .lb-truth td, .lb-truth th { text-align: center; }
 
 /* Bits: eight switches with their place values. */
-.lb-bits { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: var(--space-1); max-inline-size: 480px; }
+/* Phones: two rows of four bits, so each is big enough to tap; wider screens: one row of eight. */
+.lb-bits { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-1); max-inline-size: 480px; }
 .lb-bit { display: grid; justify-items: center; gap: 2px; min-block-size: 56px; padding: var(--space-1) 0; border: 2px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
 .lb-bit > strong { font-size: 20px; line-height: 24px; }
 .lb-bit > small { color: var(--ink-muted); font-size: 12px; }
@@ -245,9 +246,6 @@ span.lb-attn-word { cursor: default; }
 .lb-reply:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* Caesar: the shifted alphabet, letter counts against normal language, and the keys tried. */
-.lb-alpha { inline-size: auto; }
-.lb-alpha td { padding: 2px 6px; border: 1px solid var(--line); text-align: center; }
-.lb-alpha tr:last-child td { background: var(--lb-soft); font-weight: 700; }
 .lb-freq { display: flex; align-items: stretch; gap: 2px; block-size: 140px; padding-block-end: 18px; }
 .lb-freq-col { position: relative; flex: 1 1 0; min-inline-size: 0; border-block-end: 2px solid var(--ink); }
 .lb-freq-bar { position: absolute; inset-inline: 1px; inset-block-end: 0; border-radius: 2px 2px 0 0; background: var(--lb-tone); }
@@ -257,6 +255,11 @@ span.lb-attn-word { cursor: default; }
 .lb-tries > li { display: flex; gap: var(--space-2); align-items: baseline; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); background: var(--surface-sunk); }
 .lb-tries > li.is-on { background: var(--correct-soft); font-weight: 700; }
 .lb-tries-k { min-inline-size: 3ch; font-weight: 700; }
+
+/* "Try this" (LabShell `tries`): what to do first, and what to notice. */
+.lb-try { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-3); border-inline-start: 4px solid var(--lb-tone, var(--sunbird)); background: var(--surface-sunk); border-radius: var(--radius-sm); }
+.lb-try-list { display: grid; gap: var(--space-1); margin: 0; padding-inline-start: var(--space-4); }
+.lb-try-list:lang(ar) { list-style-type: arabic-indic; } /* numbered ١، ٢، ٣ in Arabic */
 
 /* Hash fingerprints: monospace, wrapping anywhere, changed characters highlighted. */
 .lb-hash { display: block; overflow-wrap: anywhere; font: 13px/20px ui-monospace, Menlo, Consolas, monospace; }
@@ -327,11 +330,14 @@ span.lb-attn-word { cursor: default; }
 
 /* Bars (probabilities, confidences): the fill grows from inline-start; the number is always written next to it. */
 .lb-bars { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
-.lb-bar { display: grid; grid-template-columns: minmax(5ch, 30%) minmax(0, 1fr) 6ch; align-items: center; gap: var(--space-2); font-size: 14px; line-height: 20px; }
+/* Phones give the label more of the row (labels such as "sleeps seen once, fit 0.91"); wider screens 30%. */
+.lb-bar { display: grid; grid-template-columns: minmax(5ch, 42%) minmax(0, 1fr) 6ch; align-items: center; gap: var(--space-2); font-size: 14px; line-height: 20px; }
 .lb-bar-track { block-size: 14px; border-radius: var(--radius-pill); background: var(--surface-sunk); border: 2px solid var(--line); overflow: hidden; }
 .lb-bar-fill { display: block; block-size: 100%; background: var(--lb-tone, var(--sunbird)); }
 .lb-bar > :last-child { text-align: end; font-variant-numeric: tabular-nums; }
 
 @media (min-width: 600px) {
   .lb-two, .lb-apps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lb-bits { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .lb-bar { grid-template-columns: minmax(5ch, 30%) minmax(0, 1fr) 6ch; }
 }

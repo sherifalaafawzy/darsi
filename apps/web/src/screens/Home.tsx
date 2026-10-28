@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppBar, Button, EmptyState, Icon, LessonCard, ProgressBar, StreakCounter, TrackChip, UnitPath } from "@darsi/design-system";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
@@ -19,10 +19,12 @@ export function Home() {
   const mine = useMine();
   const nav = useNavigate();
   const [menu, setMenu] = useState(false);
-  // One of the learner's tracks at a time, and only courses for their audience: ready units first, then by level.
-  const units = (catalog?.units ?? []).filter((u) => u.track === mine.active && audienceOf(u) === mine.audience)
-    .sort((a, b) => Number(b.available) - Number(a.available) || a.level - b.level);
+  // One of the learner's tracks at a time, and only courses for their audience, starting at the learner's level.
+  const units = (catalog?.units ?? []).filter((u) => u.track === mine.active && audienceOf(u) === mine.audience);
   const name = mine.active ? tracks.name(mine.active) : "";
+  const level = mine.active ? Math.min(state.levels[mine.active] ?? 1, tracks.of(mine.active).levels) : 1;
+  const { current, later, earlier } = startAt(units, level);
+  const block = (u: CatalogEntry) => (u.available ? <UnitBlock key={u.id} entry={u} current={u.level === level} /> : <LockedUnit key={u.id} entry={u} />);
   return (
     <>
       <AppBar title={<TrackSwitchButton open={menu} onToggle={() => setMenu(!menu)} />} actions={<StreakCounter compact count={num(weeks)} label={t("home.streak")} />} />
@@ -35,25 +37,52 @@ export function Home() {
         {catalog && !units.length && <EmptyState icon="learn"
           title={mine.audience === "students" ? t("home.emptyStudents", { track: name }) : t("home.emptyTrack", { track: name })} body={t("home.emptyTrackBody")}
           action={<Button size="sm" variant="secondary" icon="settings" onClick={() => nav("/tracks")}>{t("tracks.manage")}</Button>} />}
-        {units.map((u) => u.available ? <UnitBlock key={u.id} entry={u} /> : <LockedUnit key={u.id} entry={u} />)}
+        {[...current, ...later].map(block)}
+        {/* Nothing at or above the learner's level yet: say so, and show the earlier courses open. */}
+        {!current.length && !later.length && earlier.length > 0 && <p className="notice">{t("home.noneAtLevel", { level: tracks.levelName(mine.active!, level), track: name })}</p>}
+        {earlier.length > 0 && (
+          <details className="earlier" open={!current.length && !later.length}>
+            <summary className="earlier-summary">{t("home.earlier", { n: earlier.length })}</summary>
+            <div className="stack-lg">{earlier.map(block)}</div>
+          </details>
+        )}
       </main>
     </>
   );
 }
 
-function UnitBlock({ entry }: { entry: CatalogEntry }) {
+/**
+ * Where Home starts: the course at the learner's level, then the levels above in order; the earlier ones are folded
+ * away. Ready courses come before "coming soon" ones at the same level.
+ */
+export function startAt<T extends Pick<CatalogEntry, "level" | "available">>(units: T[], level: number) {
+  const order = (a: T, b: T) => a.level - b.level || Number(b.available) - Number(a.available);
+  return {
+    current: units.filter((u) => u.level === level).sort(order),
+    later: units.filter((u) => u.level > level).sort(order),
+    earlier: units.filter((u) => u.level < level).sort(order),
+  };
+}
+
+function UnitBlock({ entry, current }: { entry: CatalogEntry; current: boolean }) {
   const tracks = useTracks();
   const nav = useNavigate();
   const { t, L } = useI18n();
-  const { state } = useStore();
+  const { state, dispatch } = useStore();
   const { data: unit } = useAsync(() => loadUnit(entry.id), [entry.id]);
+  const done = !!unit && unit.lessons.every((l) => state.progress[l.id]);
+  // Finishing the course at your level moves you up one.
+  useEffect(() => {
+    if (current && done && entry.level < tracks.of(entry.track).levels) dispatch({ type: "set", patch: { levels: { ...state.levels, [entry.track]: entry.level + 1 } } });
+  }, [current, done]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!unit) return <section className="unit"><h2 className="unit-title">{L(entry.title)}</h2><div className="loading" aria-busy="true" /></section>;
   const nextIdx = unit.lessons.findIndex((l) => !state.progress[l.id]);
   const next = unit.lessons[nextIdx];
   const go = (id: string) => nav(`/lesson/${unit.id}/${id}`);
   return (
     <section className="unit" aria-labelledby={`u-${unit.id}`}>
-      <div className="unit-head"><TrackChip track={unit.track} solid>{tracks.name(unit.track)}</TrackChip>{state.downloads[unit.id] && <span className="offline-badge"><Icon name="offline" size={16} />{t("home.offline")}</span>}</div>
+      <div className="unit-head"><TrackChip track={unit.track} solid>{tracks.name(unit.track)}</TrackChip>
+        <span className="pill">{current ? t("home.yourLevel", { level: tracks.levelName(entry.track, entry.level) }) : tracks.levelName(entry.track, entry.level)}</span>{state.downloads[unit.id] && <span className="offline-badge"><Icon name="offline" size={16} />{t("home.offline")}</span>}</div>
       <h2 className="unit-title" id={`u-${unit.id}`}>{L(unit.title)}</h2>
       <p className="muted">{L(unit.summary)}</p>
       {next ? (

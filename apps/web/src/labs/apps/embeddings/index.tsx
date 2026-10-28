@@ -15,6 +15,10 @@ const S = {
     map: "Each word placed by its numbers: close together means used in a similar way", pick: "Pick a word", near: (w: string) => `Words closest to “${w}”`,
     numbers: (w: string, n: string) => `“${w}” as ${n} numbers (darker: seen together more often than chance)`,
     add: "Add your own sentence", addHint: "Use words from the map, for example: The dog eats grass on the farm.", addBtn: "Add and redraw", known: (n: string) => `${n} words on the map`,
+    twice: "A new word needs to appear at least twice to get onto the map.",
+    try1: "Tap “mangoes”: its closest word is “bananas”, because both keep the same company (eat, sweet, market). Then tap “goat” and find “cow”.",
+    try2: "Look at the map: fruit, school words, animals and weather each gather in their own patch, though nobody told the computer what any word means.",
+    try3: "Type “The camel eats grass on the farm. The camel gives milk on the farm.” and press Add and redraw: “camel” lands right beside the cow and the goat. Nobody said what a camel is; the company it keeps was enough.",
     takeaway: "Meaning becomes position: similar words get similar numbers. Language models learn lists like these (embeddings) for every token, hundreds of numbers long, from billions of sentences.",
   },
   ar: {
@@ -22,6 +26,10 @@ const S = {
     map: "كل كلمة في موضعها بحسب أرقامها: التجاور يعني استعمالًا متشابهًا", pick: "اختر كلمة", near: (w: string) => `أقرب الكلمات إلى «${w}»`,
     numbers: (w: string, n: string) => `«${w}» في صورة ${n} رقمًا (الأغمق: يظهران معًا أكثر مما تتوقعه الصدفة)`,
     add: "أضف جملة من عندك", addHint: "استعمل كلمات من الخريطة، مثلًا: يشرب الكلب الحليب في المزرعة.", addBtn: "أضف وأعد الرسم", known: (n: string) => `${n} كلمة على الخريطة`,
+    twice: "تحتاج الكلمة الجديدة إلى أن تظهر مرتين على الأقل لتدخل الخريطة.",
+    try1: "المس «المانجو»: أقرب كلمة إليها «الموز»، لأن الكلمتين ترافقان الكلمات نفسها (نأكل، حلوة، السوق). ثم المس «العنزة» وستجد «البقرة».",
+    try2: "انظر إلى الخريطة: تجتمع الفاكهة، وكلمات المدرسة، والحيوانات، والطقس، كلٌّ في ركن خاص بها، مع أن أحدًا لم يخبر الحاسوب بمعنى أي كلمة.",
+    try3: "اكتب «تأكل الناقة العشب في المزرعة. تعطي الناقة الحليب في المزرعة.» واضغط «أضف وأعد الرسم»: تقع «الناقة» بجوار البقرة والعنزة تمامًا. لم يخبر أحدٌ الحاسوب ما الناقة، فالكلمات التي ترافقها كانت كافية.",
     takeaway: "يصبح المعنى موضعًا: الكلمات المتشابهة تحصل على أرقام متشابهة. والنماذج اللغوية تتعلّم قوائم كهذه (التضمينات) لكل رمز، طول كل منها مئات الأرقام، من مليارات الجمل.",
   },
 };
@@ -45,7 +53,7 @@ export default function Embeddings({ meta, onDone }: LabProps) {
   const choose = (k: string) => { setSel(k); setPicked((p) => new Set(p).add(k)); };
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <div className="lb-two">
         <div className="stack">
           <Plot x={pad(Math.min(...xs), Math.max(...xs))} y={pad(Math.min(...ys), Math.max(...ys))} label={s.map} height={MAP_H} ticks={0}
@@ -92,6 +100,7 @@ export default function Embeddings({ meta, onDone }: LabProps) {
           )}
           <label className="dr-field-label" htmlFor="lb-emb-add">{s.add}</label>
           <input id="lb-emb-add" className="dr-field-input" dir="auto" value={draft} placeholder={s.addHint} onChange={(e) => setDraft(e.target.value)} />
+          <span className="lb-note">{s.twice}</span>
           <div className="lb-row"><Button size="sm" variant="secondary" disabled={!draft.trim()} onClick={() => { setExtra((x) => [...x, draft.trim()]); setDraft(""); }}>{s.addBtn}</Button></div>
         </div>
       </div>

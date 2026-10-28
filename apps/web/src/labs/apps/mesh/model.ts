@@ -3,7 +3,8 @@
  * (a mesh network). Two nodes can talk if they are within radio range. Breadth-first search finds each node's
  * shortest route; when a node fails, messages must find another way, or get cut off.
  */
-export interface Node { id: number; x: number; y: number; gateway?: boolean }
+/** `relay`: a node the learner added only to pass messages on; it is not a sensor, so it isn't counted as one. */
+export interface Node { id: number; x: number; y: number; gateway?: boolean; relay?: boolean }
 
 /** A gateway at the farm office and sensors spread over the fields (map units are 100 m). */
 export const NODES: Node[] = [

@@ -3,6 +3,7 @@ import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
 import { Segmented, Slider, Stats } from "../../kit/controls";
 import { Plot } from "../../kit/Plot";
+import { usePlural, type Forms } from "../../kit/plural";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
 import { alerts, END, mistakes, readings, smooth, START, truth } from "./model";
@@ -13,22 +14,31 @@ const S = {
     chart: "Temperature through the school day: real (dashed), readings (dots), smoothed (line), threshold (flat line)", time: "time of day", temp: "°C",
     every: "Read every", min: (n: string) => `${n} min`, noise: "Sensor quality", good: "Good", cheap: "Cheap", awful: "Very noisy",
     smooth: "Average the last", readingsN: (n: string, c: number) => `${n} ${c === 1 ? "reading" : "readings"}`, threshold: "Fan on above",
-    perDay: "Readings a day", falseAlerts: "False alarms", missed: "Minutes too hot, fan off", fanOn: (t: string) => `Fan switched on at ${t}`, never: "The fan never switched on.",
+    perDay: "Readings a day", falseAlerts: "False alarms", missed: "Minutes too hot, fan off", fanOn: (times: string, t: string) => `The fan switched on ${times}: at ${t}`, never: "The fan never switched on.",
+    times: { one: "once", other: "{n} times" } as Forms, sep: ", ",
+    try1: "Set “Average the last” to 6 readings: the false alarms fall to 0 and the fan stops flicking on and off.",
+    try2: "Try 12 readings: the line is smooth but late, so the fan misses the first hot spell and the minutes too hot go up.",
+    try3: "Go back to 1 reading and read every 1 min: 481 readings a day set off over 20 false alarms. More data isn't better data.",
     takeaway: "Every sensor reading is a little wrong. Reading more often costs battery and data; averaging hides noise but reacts later. Good IoT design balances the three for the job: a fan can wait a few minutes, a gas alarm cannot.",
   },
   ar: {
     intro: "ميزان حرارة في الصف يشغّل المروحة حين تتجاوز الحرارة العتبة. الخط المتقطع هو الحرارة الحقيقية، والنقاط ما يقرؤه المستشعر. اجعله أرخص أو أكثر دقة أو أسرع، وراقب الأخطاء.",
     chart: "الحرارة خلال اليوم الدراسي: الحقيقية (متقطع)، والقراءات (نقاط)، والمنعّمة (خط)، والعتبة (خط أفقي)", time: "الوقت", temp: "°س",
     every: "اقرأ كل", min: (n: string) => `${n} دقيقة`, noise: "جودة المستشعر", good: "جيد", cheap: "رخيص", awful: "كثير التشويش",
-    smooth: "خذ متوسط آخر", readingsN: (n: string, c: number) => (c === 1 ? "قراءة واحدة" : c === 2 ? "قراءتين" : `${n} قراءات`), threshold: "شغّل المروحة فوق",
-    perDay: "القراءات في اليوم", falseAlerts: "إنذارات كاذبة", missed: "دقائق حر والمروحة متوقفة", fanOn: (t: string) => `اشتغلت المروحة الساعة ${t}`, never: "لم تشتغل المروحة أبدًا.",
+    smooth: "خذ متوسط آخر", readingsN: (n: string, c: number) => (c === 1 ? "قراءة واحدة" : c === 2 ? "قراءتين" : c <= 10 ? `${n} قراءات` : `${n} قراءة`), threshold: "شغّل المروحة فوق",
+    perDay: "القراءات في اليوم", falseAlerts: "إنذارات كاذبة", missed: "دقائق حر والمروحة متوقفة", fanOn: (times: string, t: string) => `اشتغلت المروحة ${times}: الساعة ${t}`, never: "لم تشتغل المروحة أبدًا.",
+    times: { one: "مرة واحدة", two: "مرتين", few: "{n} مرات", many: "{n} مرة", other: "{n} مرة" } as Forms, sep: "، ",
+    try1: "اجعل «خذ متوسط آخر» ٦ قراءات: تختفي الإنذارات الكاذبة، وتكفّ المروحة عن الاشتغال والتوقف مرة بعد مرة.",
+    try2: "جرّب ١٢ قراءة: يصبح الخط ناعمًا لكنه يتأخر، فلا تشتغل المروحة في موجة الحر الأولى، وتزيد دقائق الحر.",
+    try3: "عُد إلى قراءة واحدة واقرأ كل دقيقة: ٤٨١ قراءة في اليوم تطلق أكثر من ٢٠ إنذارًا كاذبًا. البيانات الأكثر ليست بيانات أفضل.",
     takeaway: "كل قراءة مستشعر فيها خطأ صغير. القراءة الأكثر تكرارًا تكلّف بطارية وبيانات، والمتوسط يخفي التشويش لكنه يتأخر في الاستجابة. والتصميم الجيد لإنترنت الأشياء يوازن بين الثلاثة بحسب المهمة: المروحة تحتمل الانتظار دقائق، أما إنذار الغاز فلا.",
   },
 };
 
 export default function Sensor({ meta, onDone }: LabProps) {
   const s = useS(S);
-  const { lang, num } = useI18n();
+  const { num } = useI18n();
+  const count = usePlural();
   const [every, setEvery] = useState(5);
   const [noise, setNoise] = useState(0.8);
   const [win, setWin] = useState(1);
@@ -43,7 +53,7 @@ export default function Sensor({ meta, onDone }: LabProps) {
   const real = Array.from({ length: (END - START) / 5 + 1 }, (_, i) => [START + i * 5, truth(START + i * 5)] as const);
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <Plot x={[START, END]} y={[20, 36]} height={240} label={s.chart} xLabel={s.time} yLabel={s.temp} xFmt={(v) => clock(Math.round(v))} yFmt={(v) => num(Math.round(v))}
         lines={[{ points: real, tone: "muted", dashed: true }, { points: sm.map((x) => [x.t, x.v] as const), tone: "b" }, { points: [[START, th], [END, th]], tone: "c", width: 1.5 }]}
         dots={raw.length <= 120 ? raw.map((x) => ({ x: x.t, y: x.v, r: 2.5, tone: "a" as const })) : []} />
@@ -57,7 +67,7 @@ export default function Sensor({ meta, onDone }: LabProps) {
         </div>
         <div className="stack">
           <Stats items={[{ label: s.perDay, value: num(raw.length) }, { label: s.falseAlerts, value: num(m.falseAlerts) }, { label: s.missed, value: num(m.missed) }]} />
-          <p className="lb-verdict" aria-live="polite">{on.length ? s.fanOn(on.map(clock).join(lang === "ar" ? "، " : ", ")) : s.never}</p>
+          <p className="lb-verdict" aria-live="polite">{on.length ? s.fanOn(count(on.length, s.times), on.slice(0, 6).map(clock).join(s.sep) + (on.length > 6 ? " …" : "")) : s.never}</p>
         </div>
       </div>
     </LabShell>

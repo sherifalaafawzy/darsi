@@ -17,6 +17,9 @@ const S = {
     first: "First gate (A, B)", second: "Second gate (first gate's output, C)", wanted: "Wanted", yours: "Yours",
     solved: "Solved! Your two gates behave exactly as described, for all 8 cases.", notYet: (n: string) => `${n} of 8 cases right. Try other gates.`,
     switch: (n: string, on: boolean) => `Switch ${n}: ${on ? "on" : "off"}`,
+    try1: "Pick XOR and switch A and B both on: the lamp goes off. That one row is the only difference from OR.",
+    try2: "Solve the Fan: each ✗ in the table is a case your gates get wrong. Change one gate at a time until all 8 rows show ✓.",
+    try3: "Then try the Stair lamp: which gate changes its output whenever either input flips?",
     takeaway: "Every chip is built from gates like these, millions or billions of them. A microcontroller in an IoT device runs your IF … AND … OR … rules on exactly this kind of logic.",
   },
   ar: {
@@ -28,6 +31,9 @@ const S = {
     first: "البوابة الأولى (A وB)", second: "البوابة الثانية (مخرج الأولى وC)", wanted: "المطلوب", yours: "دائرتك",
     solved: "أحسنت! تتصرّف بوابتاك تمامًا كما في الوصف، في الحالات الثماني كلها.", notYet: (n: string) => `${n} من ٨ حالات صحيحة. جرّب بوابات أخرى.`,
     switch: (n: string, on: boolean) => `المفتاح ${n}: ${on ? "يعمل" : "متوقف"}`,
+    try1: "اختر XOR وشغّل المفتاحين A وB معًا: ينطفئ المصباح. هذا الصف وحده هو الفرق بينها وبين OR.",
+    try2: "حلّ مشكلة المروحة: كل ✗ في الجدول حالة تخطئ فيها بوابتاك. غيّر بوابة واحدة في كل مرة حتى تظهر ✓ في الصفوف الثمانية كلها.",
+    try3: "ثم جرّب مصباح الدرج: أي بوابة يتغيّر مخرجها كلما انقلب أحد مدخليها؟",
     takeaway: "كل شريحة إلكترونية مبنية من بوابات كهذه، بالملايين أو المليارات. والمتحكّم الدقيق في أجهزة إنترنت الأشياء ينفّذ قواعدك «إذا … و … أو …» بهذا النوع من المنطق تمامًا.",
   },
 };
@@ -44,7 +50,7 @@ export default function Logic({ meta, onDone }: LabProps) {
   const [a, setA] = useState(false);
   const [b, setB] = useState(false);
   const [p, setP] = useState<Puzzle>("fan");
-  const [g1, setG1] = useState<Gate>("OR");
+  const [g1, setG1] = useState<Gate>("AND"); // AND then AND solves none of the problems, so no problem starts solved
   const [g2, setG2] = useState<Gate>("AND");
   const [abc, setAbc] = useState<[boolean, boolean, boolean]>([true, false, false]);
   const [wins, setWins] = useState(() => new Set<Puzzle>());
@@ -56,7 +62,7 @@ export default function Logic({ meta, onDone }: LabProps) {
   const rows2 = g === "NOT" ? [[false, false], [true, false]] : [[false, false], [false, true], [true, false], [true, true]];
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <h3 className="lb-h">{s.try}</h3>
       <Segmented label={s.gate} value={g} options={GATES.map((x) => [x, x] as const)} onChange={setG} />
       <p className="lb-note">{s.what[g]}</p>

@@ -17,6 +17,9 @@ const S = {
     why: (score: string, cover: string, need: string, needCover: string) => `The best match scored ${score} and covered ${cover} of the question. It needs at least ${need} and ${needCover}.`,
     without: "Without sources (for comparison)", withoutB: "Sounds sure, but nothing backs it up. It may be right or wrong, and you can't check.",
     docs: "The school's documents (you can edit them)", edited: "Edit a document, then ask again: the answer follows the document.",
+    try1: "Tap “Who won the football match last year?”: no document covers it, so it says it doesn't know. The answer without sources still sounds sure.",
+    try2: "Open “Exam timetable” at the bottom and change the date, then ask “When do the exams start?”: the answer follows the document.",
+    try3: "Type your own question, such as “When does the library open?”, and look at the shared words under each document: they decide which one wins.",
     takeaway: "Grounding an AI in real documents makes its answers checkable and lets it say “I don't know”. But it is only as good as its documents and its search: wrong or missing documents still give wrong or missing answers.",
   },
   ar: {
@@ -29,6 +32,9 @@ const S = {
     why: (score: string, cover: string, need: string, needCover: string) => `أفضل تطابق حصل على ${score} وغطّى ${cover} من السؤال. والمطلوب ${need} على الأقل و${needCover}.`,
     without: "من دون مصادر (للمقارنة)", withoutB: "تبدو واثقة، لكن لا شيء يسندها. قد تكون صحيحة أو خاطئة، ولا تستطيع التحقق.",
     docs: "وثائق المدرسة (يمكنك تعديلها)", edited: "عدّل وثيقة ثم اسأل من جديد: الإجابة تتبع الوثيقة.",
+    try1: "المس «من فاز بمباراة كرة القدم العام الماضي؟»: لا تتناوله أي وثيقة، فيقول إنه لا يعرف. أما الإجابة من دون مصادر فتبدو واثقة رغم ذلك.",
+    try2: "افتح «جدول الامتحانات» في الأسفل وغيّر التاريخ، ثم اسأل «متى تبدأ الامتحانات؟»: الإجابة تتبع الوثيقة.",
+    try3: "اكتب سؤالًا من عندك، مثل «متى تفتح المكتبة؟»، وانظر إلى الكلمات المشتركة تحت كل وثيقة: هي التي تحدّد الوثيقة الفائزة.",
     takeaway: "ربط الذكاء الاصطناعي بوثائق حقيقية يجعل إجاباته قابلة للتحقق ويتيح له أن يقول «لا أعرف». لكنه لا يكون أفضل من وثائقه وبحثه: الوثائق الخاطئة أو الناقصة تعطي إجابات خاطئة أو ناقصة.",
   },
 };
@@ -51,7 +57,7 @@ export default function Rag({ meta, onDone }: LabProps) {
   const best = Math.max(ranked[0]?.score ?? 0, 0.01);
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <form className="lb-ask" onSubmit={(e) => { e.preventDefault(); go(draft); }}>
         <label className="dr-field-label" htmlFor="lb-rag-q">{s.ask}</label>
         <div className="lb-ask-row">

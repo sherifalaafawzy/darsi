@@ -13,6 +13,8 @@ const S = {
     knows: "What a stranger now knows about Lina", nothing: "Nothing useful. Her profile is safe.",
     fact: { school: "Her school and class: where to find her every weekday.", birthday: "Her birthday and age: used to guess passwords and answer security questions.", route: "Her route home and the time: where she'll be, alone.", pet: "Her pet's name: a very common password and security answer.", phone: "Her phone number: for scam calls and messages.", away: "That the house is empty this week." } as Record<Fact, string>,
     risk: (n: string) => `${n} of 6 risky facts are public.`,
+    try1: "Read the posts as a stranger would: together they say where Lina is every weekday, when she walks home alone, and when her house is empty.",
+    try2: "Set the walk home and the family trip to Friends only: those facts leave the stranger's list. Can you get the list down to nothing?",
     takeaway: "Your footprint is everything you and others post about you, and it lasts. Before posting, ask: who can see this, and what could a stranger do with it combined with everything else? Share wins with friends; keep routines, places and dates private.",
   },
   ar: {
@@ -21,6 +23,8 @@ const S = {
     knows: "ما يعرفه الغريب الآن عن لينا", nothing: "لا شيء مفيد. حسابها آمن.",
     fact: { school: "مدرستها وصفّها: أين يجدها في كل يوم دراسي.", birthday: "تاريخ ميلادها وعمرها: يُستعملان لتخمين كلمات المرور والإجابة عن أسئلة الأمان.", route: "طريقها إلى البيت ووقته: أين ستكون وحدها.", pet: "اسم قطتها: كلمة مرور وإجابة أمان شائعة جدًا.", phone: "رقم هاتفها: للمكالمات والرسائل الاحتيالية.", away: "أن البيت فارغ هذا الأسبوع." } as Record<Fact, string>,
     risk: (n: string) => `${n} من ٦ معلومات خطِرة متاحة للجميع.`,
+    try1: "اقرأ المنشورات كما يقرؤها غريب: معًا تخبره أين تكون لينا كل يوم دراسي، ومتى تمشي إلى البيت وحدها، ومتى يكون بيتها فارغًا.",
+    try2: "اجعل منشورَي الطريق إلى البيت والرحلة العائلية «للأصدقاء فقط»: تختفي هاتان المعلومتان من قائمة الغريب. هل تستطيع أن تفرغ القائمة كلها؟",
     takeaway: "بصمتك هي كل ما تنشره أنت وينشره الآخرون عنك، وهي تبقى. قبل النشر اسأل: من يرى هذا، وماذا يستطيع غريب أن يفعل به إذا جمعه مع كل ما سواه؟ شارك إنجازاتك مع أصدقائك، واحتفظ بالمواعيد والأماكن والتواريخ لنفسك.",
   },
 };
@@ -34,7 +38,7 @@ export default function Footprint({ meta, onDone }: LabProps) {
   useEffect(() => { if (facts.length <= 1 && Object.keys(aud).length >= 3) onDone?.(); }, [facts.length <= 1 && Object.keys(aud).length >= 3]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2]} takeaway={s.takeaway}>
       <div className="lb-two">
         <ul className="lb-posts">
           {POSTS.map((p) => {

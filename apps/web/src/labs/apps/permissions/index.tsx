@@ -4,7 +4,7 @@ import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
-import { APPS, mark, RISKY, type AppId, type Choices, type Perm } from "./model";
+import { APPS, isRight, mark, RISKY, type AppId, type Choices, type Perm } from "./model";
 
 const S = {
   en: {
@@ -15,11 +15,13 @@ const S = {
     allow: "Allow", deny: "Deny", check: "Check my choices", score: (r: string, t: string) => `${r} of ${t} choices match what the apps need.`,
     why: {
       "torch.camera": "Needed: the light is the camera's flash.", "torch.location": "Not needed: a torch has no reason to know where you are.", "torch.contacts": "Not needed, and a warning sign: why would a torch want your friends' numbers?",
-      "timetable.notifications": "Needed for lesson reminders.", "timetable.calendar": "Fine: it adds lessons to your calendar.", "timetable.mic": "Not needed: a timetable doesn't listen.", "timetable.contacts": "Not needed.",
-      "photo.photos": "Needed to edit your photos.", "photo.camera": "Fine, to take a photo to edit.", "photo.location": "Not needed: photos can carry where you were.", "photo.sms": "Never: a photo app that sends text messages can cost you money and spread scams.",
-      "quiz.notifications": "Fine, for new quizzes.", "quiz.mic": "Not needed.", "quiz.contacts": "Not needed: often used to send invitations or ads to all your friends.", "quiz.location": "Not needed for a quiz.",
+      "timetable.notifications": "Needed for lesson reminders.", "timetable.calendar": "Your choice: it only adds your lessons to your calendar. The app works without it.", "timetable.mic": "Not needed: a timetable doesn't listen.", "timetable.contacts": "Not needed.",
+      "photo.photos": "Needed to edit your photos.", "photo.camera": "Your choice: handy for taking a photo to edit, but it can edit the photos you already have without it.", "photo.location": "Not needed: photos can carry where you were.", "photo.sms": "Never: a photo app that sends text messages can cost you money and spread scams.",
+      "quiz.notifications": "Your choice: only to tell you about new quizzes. The game works without it.", "quiz.mic": "Not needed.", "quiz.contacts": "Not needed: often used to send invitations or ads to all your friends.", "quiz.location": "Not needed for a quiz.",
     } as Record<string, string>,
     risky: "risky",
+    try1: "For each request, ask: does this app need it to do its job? A torch needs the camera, for its flash, and nothing else.",
+    try2: "Press Check my choices, then fix the crosses. Be strict with requests marked risky: contacts or text messages for an app with no use for them are a warning sign.",
     takeaway: "Ask “does this app need this to do its job?” before you tap Allow. You can change permissions any time in your phone's settings, and remove apps that ask for far more than they need.",
   },
   ar: {
@@ -30,11 +32,13 @@ const S = {
     allow: "اسمح", deny: "ارفض", check: "افحص اختياراتي", score: (r: string, t: string) => `${r} من ${t} اختيارًا تطابق ما تحتاج إليه التطبيقات.`,
     why: {
       "torch.camera": "مطلوب: الضوء هو فلاش الكاميرا.", "torch.location": "غير مطلوب: لا سبب يجعل المصباح يعرف مكانك.", "torch.contacts": "غير مطلوب، وعلامة تحذير: لماذا يريد مصباح أرقام أصدقائك؟",
-      "timetable.notifications": "مطلوب لتذكيرك بالحصص.", "timetable.calendar": "لا بأس: يضيف الحصص إلى تقويمك.", "timetable.mic": "غير مطلوب: الجدول لا يستمع.", "timetable.contacts": "غير مطلوب.",
-      "photo.photos": "مطلوب لتحرير صورك.", "photo.camera": "لا بأس، لالتقاط صورة لتحريرها.", "photo.location": "غير مطلوب: قد تحمل الصور المكان الذي كنت فيه.", "photo.sms": "أبدًا: تطبيق صور يرسل رسائل نصية قد يكلّفك مالًا وينشر الاحتيال.",
-      "quiz.notifications": "لا بأس، للمسابقات الجديدة.", "quiz.mic": "غير مطلوب.", "quiz.contacts": "غير مطلوب: كثيرًا ما يُستعمل لإرسال دعوات أو إعلانات إلى كل أصدقائك.", "quiz.location": "غير مطلوب لمسابقة.",
+      "timetable.notifications": "مطلوب لتذكيرك بالحصص.", "timetable.calendar": "الخيار لك: يضيف حصصك إلى تقويمك فقط، ويعمل التطبيق دونه.", "timetable.mic": "غير مطلوب: الجدول لا يستمع.", "timetable.contacts": "غير مطلوب.",
+      "photo.photos": "مطلوب لتحرير صورك.", "photo.camera": "الخيار لك: مفيد لالتقاط صورة لتحريرها، لكنه يستطيع تحرير صورك الموجودة دونه.", "photo.location": "غير مطلوب: قد تحمل الصور المكان الذي كنت فيه.", "photo.sms": "أبدًا: تطبيق صور يرسل رسائل نصية قد يكلّفك مالًا وينشر الاحتيال.",
+      "quiz.notifications": "الخيار لك: لإعلامك بالمسابقات الجديدة فقط، وتعمل اللعبة دونه.", "quiz.mic": "غير مطلوب.", "quiz.contacts": "غير مطلوب: كثيرًا ما يُستعمل لإرسال دعوات أو إعلانات إلى كل أصدقائك.", "quiz.location": "غير مطلوب لمسابقة.",
     } as Record<string, string>,
     risky: "خطِر",
+    try1: "اسأل عن كل طلب: هل يحتاج التطبيق إليه ليؤدي عمله؟ المصباح يحتاج إلى الكاميرا من أجل الفلاش، ولا شيء غيرها.",
+    try2: "اضغط «افحص اختياراتي» ثم صحّح الإجابات الخاطئة. وكن صارمًا مع الطلبات الموسومة «خطِر»: جهات الاتصال أو الرسائل النصية لتطبيق لا حاجة له بها علامة تحذير.",
     takeaway: "اسأل «هل يحتاج التطبيق إلى هذا ليؤدي عمله؟» قبل أن تضغط «اسمح». ويمكنك تغيير الأذونات في أي وقت من إعدادات هاتفك، وحذف التطبيقات التي تطلب أكثر بكثير مما تحتاج إليه.",
   },
 };
@@ -49,7 +53,7 @@ export default function Permissions({ meta, onDone }: LabProps) {
   const set = (app: AppId, p: Perm, v: boolean) => setChoices((c) => ({ ...c, [app]: { ...c[app], [p]: v } }));
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2]} takeaway={s.takeaway}>
       <div className="lb-apps">
         {(Object.keys(APPS) as AppId[]).map((app) => (
           <section key={app} className="lb-app">
@@ -57,7 +61,7 @@ export default function Permissions({ meta, onDone }: LabProps) {
             <p className="lb-note">{s.does[app]}</p>
             <ul className="lb-perms">
               {APPS[app].asks.map((p) => {
-                const v = choices[app]?.[p] ?? false, right = v === APPS[app].needs.includes(p);
+                const v = choices[app]?.[p] ?? false, right = isRight(app, p, v);
                 return (
                   <li key={p}>
                     <div className="lb-perm-row">

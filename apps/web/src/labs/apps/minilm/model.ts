@@ -6,6 +6,43 @@
 import { matchKey, sentences, words } from "../../kit/text";
 
 export const START = "^", END = "$";
+
+/** The starting training text: classroom sentences in each language. Learners can change it. */
+export const CORPUS = {
+  en: `The pupils open their books.
+The pupils open the window.
+The teacher opens the door.
+The teacher writes on the board.
+The pupils write in their notebooks.
+The sun is hot today.
+The rain is heavy today.
+We read a story in class.
+We read the lesson together.
+The teacher reads a story.
+The pupils ask good questions.
+The teacher answers the questions.
+We plant seeds in the school garden.
+The seeds need water and sun.
+The class goes to the garden.
+After the lesson we play outside.`,
+  ar: `يفتح الطلاب كتبهم.
+يفتح الطلاب النافذة.
+يفتح المعلم الباب.
+يكتب المعلم على السبورة.
+يكتب الطلاب في دفاترهم.
+الشمس حارة اليوم.
+المطر غزير اليوم.
+نقرأ قصة في الصف.
+نقرأ الدرس معًا.
+يقرأ المعلم قصة.
+يسأل الطلاب أسئلة جيدة.
+يجيب المعلم عن الأسئلة.
+نزرع البذور في حديقة المدرسة.
+تحتاج البذور إلى الماء والشمس.
+يذهب الصف إلى الحديقة.
+بعد الدرس نلعب في الخارج.`,
+};
+
 export type Order = 1 | 2;
 export interface Model {
   order: Order;

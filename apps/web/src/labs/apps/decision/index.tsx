@@ -15,12 +15,15 @@ const S = {
     opt: { museum: "Museum", farm: "Farm", science: "Science centre" } as Record<Option, string>,
     crit: { cost: "Cost", learning: "Learning", travel: "Travel time", safety: "Safety" } as Record<Criterion, string>,
     matters: "How much each thing matters (0 to 5)", scores: "Scores (1 to 5)", score: (o: string, c: string) => `${o}: ${c}`,
-    result: "Weighted score (share of a perfect score)", pick: (o: string) => `Best choice with these weights: ${o}.`,
+    result: "Weighted score (share of a perfect score)", pick: (o: string) => `Best choice with these weights: ${o}.`, nothing: "Nothing matters yet: give at least one thing a weight.",
     sports: "Sports day: outside or in the hall? Each choice is scored from 0 to 10 for a dry day and a rainy day. Set the chance of rain.",
     rain: "Chance of rain", outside: "Outside", hall: "In the hall", dry: "Dry", wet: "Rain",
     evLine: (o: string, h: string) => `On average: outside ${o}, in the hall ${h}.`,
-    evPick: (c: string) => `Better on average: ${c}.`, even: (p: string) => `Above ${p} chance of rain, the hall is the better bet.`, noEven: "With these scores one choice is always better.",
+    evPick: (c: string) => `Better on average: ${c}.`, tie: "On average both choices are equally good.",
+    even: (p: string, hall: boolean) => `Above ${p} chance of rain, ${hall ? "the hall" : "outside"} is the better bet.`, noEven: "With these scores one choice is always better.",
     chart: "Average score of each choice for every chance of rain (the ring is today's forecast)", chanceAxis: "chance of rain", valueAxis: "average score",
+    try1: "Set Cost to 5 and the other three to 0: the Farm, the cheapest, wins. Now set Learning to 5 and Cost to 0: the Science centre wins. The scores didn't change; what matters did.",
+    try2: "Switch to Expected value and drag the chance of rain past 50 %: the better choice flips from outside to the hall, just where the two lines cross.",
     takeaway: "Decision models don't decide what matters: people choose the weights and the payoffs. What the model adds is honesty: everyone can see the trade-offs and test “what if this mattered more?”. AI systems that recommend or decide work the same way, with learned chances and values.",
   },
   ar: {
@@ -30,12 +33,15 @@ const S = {
     opt: { museum: "المتحف", farm: "المزرعة", science: "مركز العلوم" } as Record<Option, string>,
     crit: { cost: "الكلفة", learning: "التعلّم", travel: "مدة السفر", safety: "الأمان" } as Record<Criterion, string>,
     matters: "أهمية كل أمر (من ٠ إلى ٥)", scores: "الدرجات (من ١ إلى ٥)", score: (o: string, c: string) => `${o}: ${c}`,
-    result: "الدرجة الموزونة (نسبةً إلى الدرجة الكاملة)", pick: (o: string) => `أفضل خيار بهذه الأوزان: ${o}.`,
+    result: "الدرجة الموزونة (نسبةً إلى الدرجة الكاملة)", pick: (o: string) => `أفضل خيار بهذه الأوزان: ${o}.`, nothing: "لا شيء مهم بعد: أعطِ أمرًا واحدًا على الأقل وزنًا.",
     sports: "اليوم الرياضي: في الخارج أم في القاعة؟ يحصل كل خيار على درجة من ٠ إلى ١٠ ليوم جاف وليوم ممطر. حدّد احتمال المطر.",
     rain: "احتمال المطر", outside: "في الخارج", hall: "في القاعة", dry: "جاف", wet: "مطر",
     evLine: (o: string, h: string) => `في المتوسط: في الخارج ${o}، وفي القاعة ${h}.`,
-    evPick: (c: string) => `الأفضل في المتوسط: ${c}.`, even: (p: string) => `إذا تجاوز احتمال المطر ${p} فالقاعة هي الرهان الأفضل.`, noEven: "بهذه الدرجات يكون أحد الخيارين أفضل دائمًا.",
+    evPick: (c: string) => `الأفضل في المتوسط: ${c}.`, tie: "الخياران متساويان في المتوسط.",
+    even: (p: string, hall: boolean) => `إذا تجاوز احتمال المطر ${p} ${hall ? "فالقاعة هي الرهان الأفضل" : "فالخارج هو الرهان الأفضل"}.`, noEven: "بهذه الدرجات يكون أحد الخيارين أفضل دائمًا.",
     chart: "متوسط درجة كل خيار لكل احتمال للمطر (الحلقة هي توقّع اليوم)", chanceAxis: "احتمال المطر", valueAxis: "متوسط الدرجة",
+    try1: "اضبط «الكلفة» على ٥ والثلاثة الأخرى على ٠: تفوز المزرعة، الأرخص. ثم اضبط «التعلّم» على ٥ و«الكلفة» على ٠: يفوز مركز العلوم. لم تتغيّر الدرجات، بل تغيّر ما يهمّ.",
+    try2: "انتقل إلى «القيمة المتوقعة» واسحب احتمال المطر إلى ما بعد ٥٠٪: ينقلب الخيار الأفضل من الخارج إلى القاعة، عند تقاطع الخطين تمامًا.",
     takeaway: "نماذج القرار لا تقرّر ما المهم: الناس هم من يختارون الأوزان والعوائد. وما يضيفه النموذج هو الشفافية: يرى الجميع المقايضات ويختبرون «ماذا لو كان هذا أهم؟». وأنظمة الذكاء الاصطناعي التي توصي أو تقرّر تعمل بالطريقة نفسها، مع احتمالات وقيم متعلَّمة.",
   },
 };
@@ -60,7 +66,7 @@ export default function Decision({ meta, onDone }: LabProps) {
   );
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2]} takeaway={s.takeaway}>
       <Segmented label={s.tool} value={tool} options={[["matrix", s.matrix], ["expected", s.expected]]} onChange={setTool} />
       {tool === "matrix" ? (
         <>
@@ -89,7 +95,7 @@ export default function Decision({ meta, onDone }: LabProps) {
           <ul className="lb-bars">
             {OPTIONS.map((o) => <li key={o} className={o === w ? "lb-bar is-on" : "lb-bar"}><span>{s.opt[o]}</span><span className="lb-bar-track"><span className="lb-bar-fill" style={{ inlineSize: `${Math.round(t[o] * 100)}%` }} /></span><span>{pct(t[o])}</span></li>)}
           </ul>
-          <p className="lb-verdict" aria-live="polite">{s.pick(s.opt[w])}</p>
+          <p className="lb-verdict" aria-live="polite">{CRITERIA.some((c) => weights[c] > 0) ? s.pick(s.opt[w]) : s.nothing}</p>
         </>
       ) : (
         <>
@@ -105,8 +111,8 @@ export default function Decision({ meta, onDone }: LabProps) {
                 </tbody>
               </table>
               <p className="lb-note">{s.evLine(n1(e.outside), n1(e.hall))}</p>
-              <p className="lb-verdict" aria-live="polite">{s.evPick(e.outside >= e.hall ? s.outside : s.hall)}</p>
-              <p className="lb-note">{be === null ? s.noEven : s.even(pct(Math.round(be * 100) / 100))}</p>
+              <p className="lb-verdict" aria-live="polite">{Math.abs(e.outside - e.hall) < 1e-9 ? s.tie : s.evPick(e.outside > e.hall ? s.outside : s.hall)}</p>
+              <p className="lb-note">{be === null ? s.noEven : s.even(pct(Math.round(be * 100) / 100), pay.hallRain > pay.outsideRain)}</p>
             </div>
             <div className="stack">
               <Plot x={[0, 1]} y={[0, 10]} height={240} label={s.chart} xLabel={s.chanceAxis} yLabel={s.valueAxis}

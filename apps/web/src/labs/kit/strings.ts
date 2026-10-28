@@ -14,12 +14,12 @@ export function useS<T extends object>(s: Strings<T>): T {
 export const KIT = {
   en: {
     run: "Run", pause: "Pause", step: "One step", reset: "Start again", train: "Train", test: "Test", stop: "Stop",
-    loss: "Error", epoch: "Round", accuracy: "Accuracy", takeaway: "Takeaway", tryIt: "Try it",
+    loss: "Error", epoch: "Round", accuracy: "Accuracy", takeaway: "Takeaway", tryIt: "Try it", tryThis: "Try this",
     drawHint: "Draw with your finger or mouse. Keyboard: arrows move, Space paints.", clear: "Clear", yes: "Yes", no: "No",
   },
   ar: {
     run: "شغّل", pause: "أوقف مؤقتًا", step: "خطوة واحدة", reset: "ابدأ من جديد", train: "درّب", test: "اختبر", stop: "أوقف",
-    loss: "الخطأ", epoch: "الجولة", accuracy: "الدقة", takeaway: "الخلاصة", tryIt: "جرّب",
+    loss: "الخطأ", epoch: "الجولة", accuracy: "الدقة", takeaway: "الخلاصة", tryIt: "جرّب", tryThis: "جرّب هذا",
     drawHint: "ارسم بإصبعك أو بالفأرة. لوحة المفاتيح: الأسهم للتحريك، والمسافة للتلوين.", clear: "امسح", yes: "نعم", no: "لا",
   },
 };

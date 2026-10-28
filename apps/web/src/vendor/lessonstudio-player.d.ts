@@ -1,6 +1,7 @@
 // Types for the vendored Lesson Studio player (lessonstudio-player.js): only what Darsi uses.
 export type LightEvent = { type: "check"; id: string; correct: boolean } | { type: "ended" } | { type: "no-audio" } | { type: string };
-export interface LightPlayer { play(): void; pause(): void; destroy(): void; readonly ready: Promise<void> }
+export type Orient = "landscape" | "portrait" | "square";
+export interface LightPlayer { play(): void; pause(): void; destroy(): void; setOrient(orient: Orient | "auto"): void; readonly ready: Promise<void> }
 export interface LightPackage {
   manifest: unknown;
   scenes: unknown;
@@ -16,5 +17,7 @@ export function createPlayer(host: HTMLElement, pkg: LightPackage, opts?: {
   captions?: boolean;
   library?: string;
   remember?: boolean;
+  /** The stage's shape; "auto" picks portrait for upright phones. */
+  orient?: Orient | "auto";
   onEvent?: (e: LightEvent) => void;
 }): LightPlayer;

@@ -10,22 +10,28 @@ type Id = keyof typeof SENTENCES;
 const S = {
   en: {
     intro: "In “The dog drank the milk because it was hungry”, how does a model know that “it” is the dog? With attention: the word asks a question, every word offers a label, and the best matches get most of its attention.",
-    sentence: "Sentence ending", names: { hungry: "…hungry", fresh: "…fresh", strong: "…strong", light: "…light", reads: "reads" } as Record<Id, string>,
+    sentence: "Sentence", names: { hungry: "…hungry", fresh: "…fresh", strong: "…strong", light: "…light", reads: "The pupil reads…" } as Record<Id, string>,
     tap: "Tap a word to see what it pays attention to", looks: (w: string) => `What “${w}” pays attention to`,
     question: "Its question (query)", match: "Match", share: "Share of attention", word: "Word",
     meaning: (w: string) => `What “${w}” means after attention (the mix it takes from the words)`,
     feature: { alive: "alive", thing: "thing", action: "action", quality: "describes" } as Record<(typeof FEATURES)[number], string>,
     focus: "How sharply it focuses", all: "Every word does this at once (row: the word asking; darker: more attention)",
+    try1: "Tap “…fresh”: “it” now pays most attention to “milk”, not “dog”. Only the last word changed, and that changed the question “it” asks.",
+    try2: "Drag “How sharply it focuses” to 0: every word gets the same share. Push it to 8: almost all of the attention goes to one word.",
+    try3: "Tap “drank”: a verb asks “who did it, and to what?”, so it splits its attention between “dog” and “milk”.",
     takeaway: "Attention lets each word gather meaning from the words that matter to it. An LLM runs dozens of attention layers with many “heads” each, and learns the question and label numbers itself instead of us setting them by hand.",
   },
   ar: {
     intro: "في جملة «شرب الكلب الحليب لأنه كان جائعًا»، كيف يعرف النموذج أن الضمير في «لأنه» يعود إلى الكلب؟ بالانتباه: تطرح الكلمة سؤالًا، وتقدّم كل كلمة وصفًا لنفسها، وتنال أنسب الكلمات معظم الانتباه.",
-    sentence: "آخر الجملة", names: { hungry: "…جائعًا", fresh: "…طازجًا", strong: "…قويًا", light: "…خفيفًا", reads: "يقرأ" } as Record<Id, string>,
+    sentence: "الجملة", names: { hungry: "…جائعًا", fresh: "…طازجًا", strong: "…قويًا", light: "…خفيفًا", reads: "يقرأ التلميذ…" } as Record<Id, string>,
     tap: "المس كلمة لترى إلامَ تنتبه", looks: (w: string) => `إلامَ تنتبه «${w}»`,
     question: "سؤالها (الاستعلام)", match: "التطابق", share: "حصة الانتباه", word: "الكلمة",
     meaning: (w: string) => `معنى «${w}» بعد الانتباه (المزيج الذي تأخذه من الكلمات)`,
     feature: { alive: "حيّ", thing: "شيء", action: "فعل", quality: "صفة" } as Record<(typeof FEATURES)[number], string>,
     focus: "حدّة التركيز", all: "كل الكلمات تفعل هذا في آنٍ واحد (الصف: الكلمة السائلة، والأغمق: انتباه أكثر)",
+    try1: "اختر «…طازجًا»: صار الضمير في «لأنه» ينتبه أكثر إلى «الحليب» لا إلى «الكلب». تغيّرت الكلمة الأخيرة فقط، فتغيّر السؤال الذي يطرحه الضمير.",
+    try2: "اسحب «حدّة التركيز» إلى ٠: تنال كل الكلمات الحصة نفسها. وادفعها إلى ٨: يذهب الانتباه كله تقريبًا إلى كلمة واحدة.",
+    try3: "المس «شرب»: يسأل الفعل «من فعل؟ وبماذا؟»، فيقسم انتباهه بين «الكلب» و«الحليب».",
     takeaway: "يتيح الانتباه لكل كلمة أن تجمع المعنى من الكلمات التي تهمّها. والنموذج اللغوي الكبير يشغّل عشرات طبقات الانتباه، في كل منها «رؤوس» كثيرة، ويتعلّم أرقام الأسئلة والأوصاف بنفسه بدل أن نضعها نحن يدويًا.",
   },
 };
@@ -47,7 +53,7 @@ export default function Attention({ meta, onDone }: LabProps) {
   const top = toks.map((w, j) => ({ w, j, p: a.weights[j] })).sort((x, y) => y.p - x.p).slice(0, 4);
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <Segmented label={s.sentence} value={id} options={(Object.keys(SENTENCES) as Id[]).map((k) => [k, s.names[k]] as const)} onChange={(v) => { setId(v); setSeen((x) => new Set(x).add(v)); }} />
       <p className="lb-note">{s.tap}</p>
       <div className="lb-attn-sentence" role="group" aria-label={s.tap}>

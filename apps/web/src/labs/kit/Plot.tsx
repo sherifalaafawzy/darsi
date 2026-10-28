@@ -22,29 +22,31 @@ export function Plot({ x, y, lines = [], dots = [], heat, label, height = 240, x
 }) {
   const { num } = useI18n();
   const svg = useRef<SVGSVGElement>(null);
-  const H = height, iw = W - PAD - 8, ih = H - PAD - 8;
-  const px = (v: number) => PAD + ((v - x[0]) / (x[1] - x[0])) * iw;
-  const py = (v: number) => 8 + (1 - (v - y[0]) / (y[1] - y[0])) * ih;
   const f = fmt ?? ((v: number) => num(Math.round(v * 100) / 100)), fx = xFmt ?? f, fy = yFmt ?? f;
+  const tx = ticks > 0 ? Array.from({ length: ticks + 1 }, (_, i) => x[0] + ((x[1] - x[0]) * i) / ticks) : [];
+  const ty = yTicks > 0 ? Array.from({ length: yTicks + 1 }, (_, i) => y[0] + ((y[1] - y[0]) * i) / yTicks) : [];
+  // The left margin fits the longest y label ("10,000" needs more than the usual 28 units), so none is cut off.
+  const L = Math.max(PAD, Math.ceil(10 + 6.4 * Math.max(0, ...ty.map((v) => fy(v).length))));
+  const H = height, iw = W - L - 8, ih = H - PAD - 8;
+  const px = (v: number) => L + ((v - x[0]) / (x[1] - x[0])) * iw;
+  const py = (v: number) => 8 + (1 - (v - y[0]) / (y[1] - y[0])) * ih;
   const heatUrl = useMemo(() => (heat ? heatToDataUrl(heat) : null), [heat]);
   const pick = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!onPick || !svg.current) return;
     const ctm = svg.current.getScreenCTM(); if (!ctm) return;
     const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
-    const dx = x[0] + ((p.x - PAD) / iw) * (x[1] - x[0]), dy = y[0] + (1 - (p.y - 8) / ih) * (y[1] - y[0]);
+    const dx = x[0] + ((p.x - L) / iw) * (x[1] - x[0]), dy = y[0] + (1 - (p.y - 8) / ih) * (y[1] - y[0]);
     if (dx >= x[0] && dx <= x[1] && dy >= y[0] && dy <= y[1]) onPick(dx, dy);
   };
-  const tx = ticks > 0 ? Array.from({ length: ticks + 1 }, (_, i) => x[0] + ((x[1] - x[0]) * i) / ticks) : [];
-  const ty = yTicks > 0 ? Array.from({ length: yTicks + 1 }, (_, i) => y[0] + ((y[1] - y[0]) * i) / yTicks) : [];
   return (
     <figure className="lb-plot" dir="ltr">
       <svg ref={svg} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label} onPointerDown={pick} className={onPick ? "lb-plot-svg is-pick" : "lb-plot-svg"}>
-        <rect x={PAD} y={8} width={iw} height={ih} className="lb-plot-bg" />
-        {heatUrl && <image href={heatUrl} x={PAD} y={8} width={iw} height={ih} preserveAspectRatio="none" />}
+        <rect x={L} y={8} width={iw} height={ih} className="lb-plot-bg" />
+        {heatUrl && <image href={heatUrl} x={L} y={8} width={iw} height={ih} preserveAspectRatio="none" />}
         {tx.map((v, i) => <line key={`x${i}`} x1={px(v)} x2={px(v)} y1={8} y2={8 + ih} className="lb-plot-grid" />)}
-        {ty.map((v, i) => <line key={`y${i}`} y1={py(v)} y2={py(v)} x1={PAD} x2={PAD + iw} className="lb-plot-grid" />)}
+        {ty.map((v, i) => <line key={`y${i}`} y1={py(v)} y2={py(v)} x1={L} x2={L + iw} className="lb-plot-grid" />)}
         {tx.map((v, i) => <text key={`tx${i}`} x={px(v)} y={H - 10} textAnchor="middle" className="lb-plot-tick">{fx(v)}</text>)}
-        {ty.map((v, i) => <text key={`ty${i}`} x={PAD - 4} y={py(v) + 4} textAnchor="end" className="lb-plot-tick">{fy(v)}</text>)}
+        {ty.map((v, i) => <text key={`ty${i}`} x={L - 4} y={py(v) + 4} textAnchor="end" className="lb-plot-tick">{fy(v)}</text>)}
         {lines.map((l, i) => <polyline key={i} points={l.points.map(([a, b]) => `${px(a)},${py(b)}`).join(" ")} className={`lb-plot-line lb-tone-${l.tone ?? "ink"}`} strokeWidth={l.width ?? 2.5} strokeDasharray={l.dashed ? "6 5" : undefined} />)}
         {children?.({ px, py })}
         {dots.map((d, i) => <Marker key={i} d={d} cx={px(d.x)} cy={py(d.y)} />)}

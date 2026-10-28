@@ -21,9 +21,12 @@ const S = {
     examples: "Examples it learns from (tap one to remove it)", count: (group: string, n: string) => `${group}: ${n}`, remove: "Remove this example",
     sees: "What the network thinks", thinks: (shape: string, p: string) => `It thinks this is ${shape} (${p} sure).`,
     drawToTest: "Draw a shape on the grid to test it.", trainFirst: "Train it first, then draw a shape to test it.",
-    weights: (n: string) => `This network has ${n} numbers to learn: one for every link from each of the 144 pixels to 16 hidden neurons, and from those to the 3 answers.`,
+    weights: (n: string) => `This network has ${n} numbers to learn: one for every link from each of the 144 pixels to 16 hidden neurons and from those to the 3 answers, plus a bias for each neuron.`,
     fresh: "Not trained yet. Press Train.", changed: "You changed the examples. Train again so it learns them.", done: "Trained. Now draw a new shape and test it.",
     stuck: "It could not learn every example. Check for a drawing added under the wrong shape.", few: "Give it at least 2 examples of each shape.",
+    try1: "Press Train, then draw a circle on the grid: the bars show how sure the network is that it's a circle.",
+    try2: "Now draw a square: it will probably call it a circle, and be very sure. It only knows the three shapes it was shown, so it can't say “I don't know”.",
+    try3: "Draw a plus sign (+): to us it's a turned cross, but it calls it a line. Add three plus signs with “Add as a cross”, train again and test a new one: the examples you give change what it learns.",
     takeaway: "The network learned from examples, not rules. More varied examples make it better; a drawing unlike any example confuses it. Real vision AI learns the same way, from millions of photos.",
   },
   ar: {
@@ -34,9 +37,12 @@ const S = {
     examples: "الأمثلة التي تتعلّم منها (المس مثالًا لحذفه)", count: (group: string, n: string) => `${group}: ${n}`, remove: "احذف هذا المثال",
     sees: "ماذا تظن الشبكة", thinks: (shape: string, p: string) => `تظن الشبكة أنها ${shape} (متأكدة بنسبة ${p}).`,
     drawToTest: "ارسم شكلًا على الشبكة لتختبرها.", trainFirst: "درّبها أولًا، ثم ارسم شكلًا لتختبرها.",
-    weights: (n: string) => `في هذه الشبكة ${n} رقمًا عليها أن تتعلّمها: رقم لكل وصلة من كل بكسل من البكسلات الـ١٤٤ إلى ١٦ خلية مخفية، ومنها إلى الإجابات الثلاث.`,
+    weights: (n: string) => `في هذه الشبكة ${n} رقمًا عليها أن تتعلّمها: رقم لكل وصلة من كل بكسل من البكسلات الـ١٤٤ إلى ١٦ خلية مخفية، ومنها إلى الإجابات الثلاث، إضافة إلى انحياز لكل خلية.`,
     fresh: "لم تتدرّب بعد. اضغط «درّب».", changed: "غيّرت الأمثلة. درّبها من جديد لتتعلّمها.", done: "تدرّبت. ارسم الآن شكلًا جديدًا واختبرها.",
     stuck: "لم تستطع تعلّم كل الأمثلة. تحقّق من رسمة أُضيفت تحت الشكل الخطأ.", few: "أعطها مثالين على الأقل من كل شكل.",
+    try1: "اضغط «درّب»، ثم ارسم دائرة على الشبكة: تُظهر الأشرطة مدى تأكد الشبكة أنها دائرة.",
+    try2: "ارسم الآن مربعًا: غالبًا ستقول إنه دائرة، وبثقة كبيرة. فهي لا تعرف إلا الأشكال الثلاثة التي رأتها، ولا تستطيع أن تقول «لا أعرف».",
+    try3: "ارسم علامة الجمع (+): نراها نحن علامة × مُدارة، لكنها تسمّيها خطًا. أضف ثلاث علامات جمع بزر «أضفها علامة ×»، ودرّب من جديد، ثم اختبر واحدة جديدة: الأمثلة التي تعطيها تغيّر ما تتعلّمه.",
     takeaway: "تعلّمت الشبكة من الأمثلة لا من القواعد. كلما تنوّعت الأمثلة تحسّنت، والرسمة التي لا تشبه أي مثال تربكها. والذكاء الاصطناعي البصري الحقيقي يتعلّم بالطريقة نفسها من ملايين الصور.",
   },
 };
@@ -71,7 +77,7 @@ export default function Shapes({ meta, onDone }: LabProps) {
   const best = probs ? argmax(probs) : -1;
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway} onReset={reset}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway} onReset={reset}>
       <div className="lb-two">
         <div className="stack">
           <PixelGrid n={N} value={drawing} onChange={setDrawing} label={s.draw} />

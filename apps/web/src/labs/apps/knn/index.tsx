@@ -15,6 +15,8 @@ const S = {
     verdict: (n: string, k: string, kn: number, yes: boolean) => `${n} of its ${kn === 1 ? "nearest neighbour is" : `${k} nearest neighbours are`} ripe, so: ${yes ? "ready to eat" : "not ready yet"}.`,
     tap: "Tap the chart to place a mango.", loo: "Right when each example is judged by the others",
     hint: "With k = 1 a single odd example can sway the answer; a bigger k smooths it out, but too big and it ignores the details.",
+    try1: "Tap the chart where filled circles and open squares meet, then slide k from 1 to 15: the lines show which neighbours it asks, and the verdict can flip.",
+    try2: "Choose “With mistakes” and set k to 1: the background grows little islands around the odd mangoes, and the score below drops. Raise k to 5: the islands shrink and the score climbs back.",
     takeaway: "Nearest neighbours learns nothing in advance: it compares each new case with stored examples. Simple and often good, but it needs good examples, a sensible measure of “near”, and a sensible k.",
   },
   ar: {
@@ -24,6 +26,8 @@ const S = {
     verdict: (n: string, k: string, kn: number, yes: boolean) => `${n} من ${kn === 1 ? "أقرب جار" : kn === 2 ? "أقرب جارين" : kn <= 10 ? `أقرب ${k} جيران` : `أقرب ${k} جارًا`} ناضجة، إذن: ${yes ? "جاهزة للأكل" : "ليست جاهزة بعد"}.`,
     tap: "المس الرسم لتضع مانجو.", loo: "صحيحة حين يُحكم على كل مثال بالأمثلة الأخرى",
     hint: "مع k = ١ قد يغيّر مثال شاذ واحد الإجابة، والقيمة الأكبر تنعّمها، لكن إن كبرت كثيرًا تجاهلت التفاصيل.",
+    try1: "المس الرسم حيث تلتقي الدوائر الممتلئة بالمربعات المفرغة، ثم حرّك k من ١ إلى ١٥: تبيّن الخطوط الجيران الذين يسألهم، وقد ينقلب الحكم.",
+    try2: "اختر «فيها أخطاء» واضبط k على ١: تظهر في الخلفية جزر صغيرة حول المانجو الشاذة، وتنخفض النتيجة في الأسفل. ثم ارفع k إلى ٥: تصغر الجزر وتعود النتيجة إلى الارتفاع.",
     takeaway: "لا تتعلّم طريقة أقرب الجيران شيئًا مسبقًا: إنها تقارن كل حالة جديدة بالأمثلة المحفوظة. بسيطة وجيدة غالبًا، لكنها تحتاج إلى أمثلة جيدة، ومقياس معقول لـ«القرب»، وقيمة k معقولة.",
   },
 };
@@ -43,7 +47,7 @@ export default function Knn({ meta, onDone }: LabProps) {
   useEffect(() => { if (placed >= 3 && ks.size >= 2) onDone?.(); }, [placed >= 3 && ks.size >= 2]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2]} takeaway={s.takeaway}>
       <div className="lb-two">
         <div className="stack">
           <Plot x={[0, 10]} y={[0, 10]} label={s.chart} xLabel={s.soft} yLabel={s.colour} heat={heat} height={300}

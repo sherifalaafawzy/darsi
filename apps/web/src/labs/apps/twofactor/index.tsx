@@ -15,17 +15,23 @@ const S = {
     thief: "A thief has your password", thiefGo: "Let the thief try", thiefTry: (c: string) => `The thief signs in with your password, then guesses the code ${c}…`, thiefNo: "Blocked. Without your phone the thief has a one-in-a-million guess, and the site locks after a few tries.", thiefLucky: "A one-in-a-million lucky guess! This is why sites lock after a few wrong codes.",
     how: "How the code is made", secret: "Shared secret (set up once, by scanning a QR code)", stepL: "Time step (seconds since 1970 ÷ 30)", made: "HMAC-SHA1(secret, time step), cut down to 6 digits",
     never: "Never tell anyone a code, not even “the school” or “the bank” on the phone. A real service never asks for it.",
+    try1: "Press Next, type the six digits from the phone and press Sign in: the site makes the same code from the shared secret and the time, so they match.",
+    try2: "Press Let the thief try a few times: the thief has your password, but not the code on your phone, so the door stays shut.",
+    try3: "Open How the code is made and wait for the bar to run out: the time step goes up by one, and a completely new code appears.",
     takeaway: "Two-step sign-in stops most account takeovers: a stolen or guessed password alone isn't enough. Use an authenticator app where you can, and never share a code; scammers who ask for “the code we just sent” are trying to get past this lock.",
   },
   ar: {
-    intro: "مع الدخول بخطوتين لا تكفي كلمة المرور: يطلب الموقع أيضًا رمزًا من هاتفك. يتشارك الهاتف والموقع سرًا، ويحوّل كل منهما الوقت الحالي إلى الأرقام الستة نفسها كل ٣٠ ثانية. وهذه الرموز حقيقية.",
+    intro: "مع التحقق بخطوتين لا تكفي كلمة المرور: يطلب الموقع أيضًا رمزًا من هاتفك. يتشارك الهاتف والموقع سرًا، ويحوّل كل منهما الوقت الحالي إلى الأرقام الستة نفسها كل ٣٠ ثانية. وهذه الرموز حقيقية.",
     phone: "هاتفك: تطبيق المصادقة", account: "بوابة المدرسة", left: (n: string) => `رمز جديد بعد ${n} ث`,
     site: "بوابة المدرسة: تسجيل الدخول", pw: "كلمة المرور", next: "التالي", code: "الرمز من هاتفك", check: "ادخل",
     ok: "تم الدخول. الرمز مطابق، إذن هذا أنت ومعك هاتفك.", bad: "رمز خاطئ أو قديم. انظر إلى الهاتف وجرّب الرمز الحالي.",
     thief: "لص يعرف كلمة مرورك", thiefGo: "دع اللص يحاول", thiefTry: (c: string) => `يدخل اللص بكلمة مرورك، ثم يخمّن الرمز ${c}…`, thiefNo: "مُنع. دون هاتفك فرصة اللص واحد في المليون، ويُقفل الموقع بعد محاولات قليلة.", thiefLucky: "تخمين محظوظ فرصته واحد في المليون! لهذا تُقفل المواقع بعد رموز خاطئة قليلة.",
     how: "كيف يُصنع الرمز", secret: "السر المشترك (يُضبط مرة واحدة بمسح رمز QR)", stepL: "خطوة الوقت (الثواني منذ ١٩٧٠ ÷ ٣٠)", made: "HMAC-SHA1(السر، خطوة الوقت) مختصرًا إلى ٦ أرقام",
     never: "لا تخبر أحدًا بالرمز أبدًا، ولا حتى «المدرسة» أو «البنك» على الهاتف. فالخدمة الحقيقية لا تطلبه أبدًا.",
-    takeaway: "يوقف الدخول بخطوتين معظم محاولات الاستيلاء على الحسابات: كلمة المرور المسروقة أو المخمَّنة وحدها لا تكفي. استعمل تطبيق مصادقة حيثما استطعت، ولا تشارك رمزًا أبدًا؛ فالمحتالون الذين يطلبون «الرمز الذي أرسلناه للتو» يحاولون تجاوز هذا القفل.",
+    try1: "اضغط «التالي»، واكتب الأرقام الستة الظاهرة على الهاتف، ثم اضغط «ادخل»: يصنع الموقع الرمز نفسه من السر المشترك والوقت، فيتطابقان.",
+    try2: "اضغط «دع اللص يحاول» عدة مرات: اللص يعرف كلمة مرورك، لكنه لا يملك الرمز الذي على هاتفك، فيبقى الباب مغلقًا.",
+    try3: "افتح «كيف يُصنع الرمز» وانتظر حتى ينتهي الشريط: تزيد خطوة الوقت واحدًا، ويظهر رمز جديد تمامًا.",
+    takeaway: "يوقف التحقق بخطوتين معظم محاولات الاستيلاء على الحسابات: كلمة المرور المسروقة أو المخمَّنة وحدها لا تكفي. استعمل تطبيق مصادقة حيثما استطعت، ولا تشارك رمزًا أبدًا؛ فالمحتالون الذين يطلبون «الرمز الذي أرسلناه للتو» يحاولون تجاوز هذا القفل.",
   },
 };
 const westernDigits = (x: string) => x.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660)).replace(/\D/g, "");
@@ -36,7 +42,7 @@ export default function TwoFactor({ meta, onDone }: LabProps) {
   const { num } = useI18n();
   const secret = useMemo(newSecret, []);
   const [t, setT] = useState(now);
-  const [code, setCode] = useState("······");
+  const [code, setCode] = useState("------");
   const [stage, setStage] = useState<"pw" | "code">("pw");
   const [typed, setTyped] = useState("");
   const [result, setResult] = useState<"ok" | "bad" | null>(null);
@@ -57,7 +63,7 @@ export default function TwoFactor({ meta, onDone }: LabProps) {
   const left = Math.ceil(STEP - (t % STEP));
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <div className="lb-two">
         <div className="lb-phone" aria-live="off">
           <span className="lb-phone-head"><Icon name="lock" size={16} /> {s.phone}</span>
@@ -85,7 +91,7 @@ export default function TwoFactor({ meta, onDone }: LabProps) {
         <summary>{s.how}</summary>
         <dl className="lb-stats lb-how">
           <div><dt>{s.secret}</dt><dd className="lb-mono">{base32(secret)}</dd></div>
-          <div><dt>{s.stepL}</dt><dd className="lb-mono">{step}</dd></div>
+          <div><dt>{s.stepL}</dt><dd className="lb-mono">{num(step, { useGrouping: false })}</dd></div>
           <div><dt>{s.made}</dt><dd className="lb-mono">{code}</dd></div>
         </dl>
       </details>

@@ -39,14 +39,17 @@ export type Node =
 
 const majority = (rows: Row[]) => rows.filter((r) => r.play).length * 2 >= rows.length;
 
-/** Grows the tree from the learner's choices (path → question asked there). Pure or exhausted nodes become leaves. */
-export function grow(choices: ReadonlyMap<Path, Attr>, rows: Row[] = DATA, path: Path = "", used: Attr[] = []): Node {
+/**
+ * Grows the tree from the learner's choices (path → question asked there). Pure or exhausted nodes become leaves. An
+ * answer no day had (an empty branch) has nothing to learn from, so it goes with the majority one level up, as in ID3.
+ */
+export function grow(choices: ReadonlyMap<Path, Attr>, rows: Row[] = DATA, path: Path = "", used: Attr[] = [], fallback = true): Node {
   const left = ATTRS.filter((a) => !used.includes(a));
-  if (!rows.length) return { kind: "leaf", path, rows, play: true };
+  if (!rows.length) return { kind: "leaf", path, rows, play: fallback };
   if (entropy(rows) === 0 || !left.length) return { kind: "leaf", path, rows, play: majority(rows) };
   const attr = choices.get(path);
   if (!attr) return { kind: "open", path, rows, options: left.map((a) => ({ attr: a, gain: gain(rows, a) })).sort((x, y) => y.gain - x.gain) };
-  return { kind: "split", path, rows, attr, kids: split(rows, attr).map(([value, part]) => ({ value, node: grow(choices, part, child(path, attr, value), [...used, attr]) })) };
+  return { kind: "split", path, rows, attr, kids: split(rows, attr).map(([value, part]) => ({ value, node: grow(choices, part, child(path, attr, value), [...used, attr], majority(rows)) })) };
 }
 
 /** ID3: at every open node, ask the question with the biggest gain. */

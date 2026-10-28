@@ -5,13 +5,14 @@ import { MemoryRouter } from "react-router-dom";
 import type { CatalogEntry } from "../src/content/types";
 import { I18nProvider } from "../src/i18n";
 
-const h = vi.hoisted(() => ({ stored: null as unknown, role: "learner", units: [] as unknown[] }));
+const h = vi.hoisted(() => ({ stored: null as unknown, role: "learner", units: [] as unknown[], placement: { version: 2, questions: [] as unknown[] } }));
 vi.mock("../src/platform", async (orig) => ({ ...(await orig<typeof import("../src/platform")>()), storage: { get: async () => h.stored, set: async () => {}, remove: async () => {} } }));
 vi.mock("../src/auth/AuthProvider", () => ({ useAuth: () => ({ role: h.role, user: null, configured: false }) }));
 vi.mock("../src/content/load", async (orig) => ({
   ...(await orig<typeof import("../src/content/load")>()),
   loadSettings: async () => null, forgetSettings: () => {},
   loadCatalog: async () => ({ version: 1, units: h.units }),
+  loadPlacement: async () => h.placement,
   loadUnit: async (id: string) => ({ id, track: id.split("-")[0], level: 1, title: { en: `Course ${id}` }, summary: { en: "S" },
     lessons: [{ id: `${id}-1`, title: { en: "First lesson" }, minutes: 5, steps: [], tryTomorrow: { en: "T" }, slides: [], kit: [] }] }),
 }));
@@ -22,7 +23,8 @@ const { SettingsProvider } = await import("../src/content/settings");
 const { StoreProvider, initialState, useStore } = await import("../src/state/store");
 const { Home } = await import("../src/screens/Home");
 const { MyTracks } = await import("../src/screens/MyTracks");
-const { Onboarding } = await import("../src/screens/Onboarding");
+const { Onboarding, PlacementQuiz } = await import("../src/screens/Onboarding");
+const { startAt } = await import("../src/screens/Home");
 const { validateUnit } = await import("../src/content/validate");
 
 const entry = (id: string, extra: Partial<CatalogEntry> = {}): CatalogEntry => ({ id, track: id.split("-")[0], level: 1, title: { en: `Course ${id}` }, summary: { en: "S" },
@@ -131,5 +133,62 @@ describe("Onboarding", () => {
     show(<Onboarding />);
     fireEvent.click(await screen.findByRole("button", { name: "Continue" }));
     expect(screen.getByRole("heading", { name: "What do you want to learn?" })).toBeTruthy();
+  });
+});
+
+describe("starting at your level", () => {
+  const q = (track: string, audience: string, level: number, n: number) => ({ id: `${track}-${audience}-${level}-${n}`, track, audience, level, type: "choice",
+    prompt: { en: `${track} ${audience} level ${level} question ${n}` }, options: [{ id: "a", text: { en: "right" } }, { id: "b", text: { en: "wrong" } }], answer: "a", explain: { en: "E" } });
+  beforeEach(() => {
+    h.placement = { version: 2, questions: ["ai", "cyber"].flatMap((tr) => ["teachers", "students"].flatMap((au) => [1, 2, 3, 4].flatMap((lv) => [1, 2, 3].map((n) => q(tr, au, lv, n))))) };
+  });
+  const answer = async (right: boolean) => {
+    fireEvent.click(await screen.findByRole("button", { name: right ? /right/ : /wrong/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+  };
+
+  it("asks only your audience's questions, two per level, and stops at the first level not passed", async () => {
+    seed({ tracks: ["ai", "cyber"], audience: "students" });
+    const done = vi.fn();
+    show(<PlacementQuiz tracks={["ai"]} onDone={done} />);
+    expect(await screen.findByText(/^ai students level 1 question/)).toBeTruthy();
+    await answer(true); await answer(true); // level 1 passed
+    expect(screen.getByText(/^ai students level 2 question/)).toBeTruthy();
+    await answer(true); await answer(false); // level 2 not passed: start there
+    expect(done).toHaveBeenCalledWith({ ai: 2 });
+  });
+
+  it("checks each of your tracks in turn, and \"I don't know yet\" ends a track", async () => {
+    seed({ tracks: ["ai", "cyber"], audience: "teachers" });
+    const done = vi.fn();
+    show(<PlacementQuiz onDone={done} />);
+    expect(await screen.findByText(/^ai teachers level 1/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "I don’t know yet" }));
+    expect(await screen.findByText(/^cyber teachers level 1/)).toBeTruthy();
+    for (let i = 0; i < 8; i++) await answer(true); // every level passed
+    expect(done).toHaveBeenCalledWith({ ai: 1, cyber: 4 });
+  });
+
+  it("orders Home from your level up, with earlier levels folded away", () => {
+    const u = (id: string, level: number, available = true) => ({ id, level, available });
+    const r = startAt([u("a1", 1), u("a3", 3), u("a2", 2), u("a4", 4, false), u("a2b", 2, false)], 2);
+    expect(r.current.map((x) => x.id)).toEqual(["a2", "a2b"]);
+    expect(r.later.map((x) => x.id)).toEqual(["a3", "a4"]);
+    expect(r.earlier.map((x) => x.id)).toEqual(["a1"]);
+  });
+
+  it("shows your level's course first, and moves you up when you finish it", async () => {
+    h.units = [entry("ai-t"), entry("ai-two", { level: 2 }), entry("ai-three", { level: 3 })];
+    seed({ tracks: ["ai"], audience: "teachers", levels: { ai: 2 } });
+    let state = initialState;
+    const view = show(<><Home /><Probe on={(s) => { state = s; }} /></>);
+    expect(await screen.findByText("Your level: Elementary")).toBeTruthy();
+    const headings = () => screen.getAllByRole("heading", { level: 2 }).map((x) => x.textContent);
+    await waitFor(() => expect(headings().slice(0, 2)).toEqual(["Course ai-two", "Course ai-three"]));
+    expect(screen.getByText("Earlier levels (1)")).toBeTruthy();
+    view.unmount();
+    seed({ tracks: ["ai"], audience: "teachers", levels: { ai: 2 }, progress: { "ai-two-1": { done: true, accuracy: 1, xp: 30, seconds: 60, completedAt: "2026-10-28T00:00:00Z" } } });
+    show(<><Home /><Probe on={(s) => { state = s; }} /></>);
+    await waitFor(() => expect(state.levels.ai).toBe(3));
   });
 });

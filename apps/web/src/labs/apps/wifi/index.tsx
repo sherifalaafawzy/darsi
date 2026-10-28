@@ -14,8 +14,10 @@ const S = {
     do: "What you do", act: { news: "Read the sports news", login: "Sign in to the school portal", search: "Search for a medicine" } as Record<Action, string>,
     you: "Your phone", them: "What the hotspot owner sees",
     what: { site: "Website", page: "Page", typed: "What you typed", size: "Data", tunnel: "All traffic goes to" } as Record<string, string>, kb: (n: string) => `${n} KB`, scrambled: "scrambled",
-    pwLeak: "They can read your password. Anyone on this network can now sign in as you.", allVisible: "Everything is readable: the full page address, what you searched for, and the page itself.", pwSafe: "Your password and pages are scrambled; they can only see which sites you visit and how much data.", vpnNote: "Even the site names are hidden from the café. But now the VPN company can see them, so choose one you trust.",
+    pwLeak: "They can read your password. Anyone on this network can now sign in as you.", allVisible: "Everything is readable: the full page address, anything you type or search for, and the page itself.", pwSafe: "Your password and pages are scrambled; they can only see which sites you visit and how much data.", vpnNote: "Even the site names are hidden from the café. But now the VPN company can see them, so choose one you trust.",
     tips: "Look for the padlock and https:// before typing anything. Be wary of open networks with tempting names, and use mobile data for banking if you can.",
+    try1: "With http:// and Sign in to the school portal, look at What you typed: your password, in plain text. Switch to https://: now it's scrambled.",
+    try2: "With https://, choose Search for a medicine: the café still sees which site you used, but not what you searched for. Add the VPN: even the site is hidden.",
     takeaway: "On shared networks, assume someone is watching. HTTPS (the padlock) protects what you read and type; a VPN hides where you go from the local network. Neither helps if you type your password into a fake site.",
   },
   ar: {
@@ -24,8 +26,10 @@ const S = {
     do: "ماذا تفعل", act: { news: "اقرأ الأخبار الرياضية", login: "ادخل إلى بوابة المدرسة", search: "ابحث عن دواء" } as Record<Action, string>,
     you: "هاتفك", them: "ما يراه صاحب الشبكة",
     what: { site: "الموقع", page: "الصفحة", typed: "ما كتبته", size: "البيانات", tunnel: "كل البيانات تذهب إلى" } as Record<string, string>, kb: (n: string) => `${n} كيلوبايت`, scrambled: "مشفّر",
-    pwLeak: "يستطيعون قراءة كلمة مرورك. أي أحد على هذه الشبكة يستطيع الآن الدخول باسمك.", allVisible: "كل شيء مقروء: عنوان الصفحة كاملًا، وما بحثت عنه، والصفحة نفسها.", pwSafe: "كلمة مرورك وصفحاتك مشفّرة؛ لا يرون إلا المواقع التي تزورها وكمية البيانات.", vpnNote: "حتى أسماء المواقع مخفية عن المقهى. لكن شركة VPN تستطيع الآن رؤيتها، فاختر شركة تثق بها.",
+    pwLeak: "يستطيعون قراءة كلمة مرورك. أي أحد على هذه الشبكة يستطيع الآن الدخول باسمك.", allVisible: "كل شيء مقروء: عنوان الصفحة كاملًا، وكل ما تكتبه أو تبحث عنه، والصفحة نفسها.", pwSafe: "كلمة مرورك وصفحاتك مشفّرة؛ لا يرون إلا المواقع التي تزورها وكمية البيانات.", vpnNote: "حتى أسماء المواقع مخفية عن المقهى. لكن شركة VPN تستطيع الآن رؤيتها، فاختر شركة تثق بها.",
     tips: "ابحث عن القفل و‎https://‎ قبل أن تكتب أي شيء. واحذر الشبكات المفتوحة ذات الأسماء المغرية، واستعمل بيانات الهاتف للمعاملات المالية إن استطعت.",
+    try1: "مع http://‎ و«ادخل إلى بوابة المدرسة» انظر إلى «ما كتبته»: كلمة مرورك نصًا واضحًا. انتقل إلى https://‎: صارت مشفّرة.",
+    try2: "مع https://‎ اختر «ابحث عن دواء»: ما زال المقهى يرى الموقع الذي استعملته، لا ما بحثت عنه. أضف VPN: حتى الموقع يختفي.",
     takeaway: "على الشبكات المشتركة افترض أن أحدًا يراقب. يحمي HTTPS (القفل) ما تقرؤه وتكتبه، ويخفي VPN وجهتك عن الشبكة المحلية. ولا يفيد أيٌّ منهما إن كتبت كلمة مرورك في موقع مزيّف.",
   },
 };
@@ -40,7 +44,7 @@ export default function Wifi({ meta, onDone }: LabProps) {
   const lines = seen(act, conn);
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2]} takeaway={s.takeaway}>
       <Segmented label={s.conn} value={conn} options={[["http", s.http], ["https", s.https], ["vpn", s.vpn]]} onChange={(v) => { setConn(v); setTried((t) => new Set(t).add(v)); }} />
       <Segmented label={s.do} value={act} options={(["news", "login", "search"] as const).map((a) => [a, s.act[a]] as const)} onChange={setAct} />
       <div className="lb-two">

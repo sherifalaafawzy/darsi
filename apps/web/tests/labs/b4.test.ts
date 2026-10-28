@@ -1,4 +1,4 @@
-import { analyse, bruteBits, OFFLINE, seconds } from "../../src/labs/apps/password/model";
+import { analyse, bruteBits, fromList, OFFLINE, pools, seconds } from "../../src/labs/apps/password/model";
 import { base32, hotp, totp, verify } from "../../src/labs/apps/twofactor/model";
 import { attack, lost, PRESETS } from "../../src/labs/apps/breach/model";
 import { MESSAGES, score } from "../../src/labs/apps/phishing/model";
@@ -8,7 +8,7 @@ import { ALPHABET, crack, shift } from "../../src/labs/apps/caesar/model";
 import { bitsDiffer, salted, sha256 } from "../../src/labs/apps/hash/model";
 import { check, codes, keys, lock, modinv, modpow, sign, unlock } from "../../src/labs/apps/publickey/model";
 import { leaksPassword, seen } from "../../src/labs/apps/wifi/model";
-import { APPS, mark } from "../../src/labs/apps/permissions/model";
+import { APPS, isRight, mark } from "../../src/labs/apps/permissions/model";
 import { known, POSTS } from "../../src/labs/apps/footprint/model";
 
 describe("password strength", () => {
@@ -19,6 +19,25 @@ describe("password strength", () => {
     expect(analyse("sunshine2024").bits).toBeLessThan(bruteBits("sunshine2024"));
     expect(analyse("river-mango-camel-desert-olive").bits).toBeGreaterThan(analyse("Tr0ub4dor!").bits);
     expect(seconds(analyse("123456").bits, OFFLINE)).toBeLessThan(1);
+  });
+  it("reads Arabic passwords the same way: Arabic-Indic digits are digits, Arabic names are words", () => {
+    expect(pools("٩٨٧٦٥٤٣٢").size).toBe(10);
+    expect(analyse("٩٨٧٦٥٤٣٢").found).toContain("keyboard");
+    expect(analyse("محمد٢٠٢٤").bits).toBe(analyse("محمد2024").bits);
+    expect(analyse("محمد٢٠٢٤").found).toEqual(expect.arrayContaining(["word", "year"]));
+    expect(analyse("محمد٢٠٢٤").bits).toBeLessThan(30);
+    expect(analyse("أحمد1990").found).toContain("word"); // the hamza spelling is the same name
+  });
+  it("knows common names and pets' names", () => {
+    expect(analyse("Mishmish2010").found).toEqual(expect.arrayContaining(["word", "year"]));
+    expect(analyse("Mishmish2010").bits).toBeLessThan(30);
+  });
+  it("judges a passphrase of list words by the list, even after editing it by hand", () => {
+    const list = ["river", "mango", "camel", "desert", "olive", "window", "pencil", "cloud"];
+    expect(fromList("river-mango-camel", list)).toEqual({ words: 3, bits: 9 });
+    expect(fromList("river mango camel desert", list)?.bits).toBe(12); // one more word: 8 times the guesses
+    expect(fromList("river", list)).toBeNull();
+    expect(fromList("river-mango-banana", list)).toBeNull();
   });
 });
 
@@ -45,6 +64,12 @@ describe("one leak, many accounts", () => {
     expect(lost(careful)).toBe(1); // only the forum itself
     const emailOnly = attack({ ...PRESETS.careful, email: { same: true, twoStep: false }, forum: { same: true, twoStep: false } });
     expect(emailOnly.shop).toBe("taken-reset"); // email falls, then "forgot password" opens the shop
+  });
+  it("a site that reuses the forum's password falls, whatever the presets say about the forum", () => {
+    const reused = attack({ ...PRESETS.careful, shop: { same: true, twoStep: false } });
+    expect(reused.shop).toBe("taken");
+    expect(lost(reused)).toBe(2);
+    expect(attack({ ...PRESETS.careful, email: { same: true, twoStep: false } }).shop).toBe("taken-reset");
   });
 });
 
@@ -131,6 +156,14 @@ describe("app permissions", () => {
     const m = mark(perfect);
     expect(m.right).toBe(m.total);
     expect(mark({}).right).toBeLessThan(m.total);
+  });
+  it("denying an optional extra is never wrong; allowing a risky request the app doesn't need is", () => {
+    expect(isRight("quiz", "notifications", false)).toBe(true);
+    expect(isRight("quiz", "notifications", true)).toBe(true);
+    expect(isRight("torch", "camera", false)).toBe(false);
+    expect(isRight("photo", "sms", true)).toBe(false);
+    const careful = Object.fromEntries(Object.entries(APPS).map(([a, { needs }]) => [a, Object.fromEntries(needs.map((p) => [p, true]))]));
+    expect(mark(careful).right).toBe(mark(careful).total);
   });
 });
 

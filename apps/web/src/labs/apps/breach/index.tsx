@@ -15,17 +15,21 @@ const S = {
     out: { "safe-unique": "Safe: the leaked password doesn't work here.", "safe-2fa": "Safe: the password worked, but two-step sign-in stopped them.", taken: "Taken over with the leaked password.", "taken-reset": "Taken over: from your email they clicked “forgot password”." } as Record<Outcome, string>,
     leaked: "This is where the leak came from.",
     none: "No accounts lost. Well protected!", summary: { one: "1 account lost.", other: "{n} accounts lost." } as Forms,
+    try1: "Press The forum gets hacked: with the same password everywhere you lose 4 of your 5 accounts. Only Mobile money, with two-step sign-in, holds.",
+    try2: "Press Different passwords, two-step on the important ones, then give Email the forum's password and untick its two-step sign-in. Hack again: losing your email loses the Online shop too, through “forgot password”.",
     takeaway: "Sites get hacked; you can't stop that. What you control is the damage: a different password for every site (a password manager makes it easy), two-step sign-in on your email and money, and your email best protected of all, because it can reset everything else.",
   },
   ar: {
     intro: "لديك خمسة حسابات. منتدى هوايات صغير خزّن كلمات المرور بإهمال فاختُرق: أصبح بريدك وكلمة مرورك في المنتدى على قائمة يتبادلها المهاجمون، وهم يجرّبونها في كل مكان. اضبط حساباتك، ثم دع المنتدى يسقط.",
     site: { email: "البريد الإلكتروني", school: "بوابة المدرسة", shop: "متجر إلكتروني", bank: "محفظة الهاتف", forum: "منتدى الهوايات" } as Record<Site, string>,
-    pw: "كلمة المرور", same: "نفس كلمة المنتدى", unique: "كلمة خاصة به", twoStep: "الدخول بخطوتين", lazy: "كلمة مرور واحدة لكل شيء", careful: "كلمات مختلفة، وخطوتان للحسابات المهمة",
+    pw: "كلمة المرور", same: "نفس كلمة المنتدى", unique: "كلمة خاصة به", twoStep: "التحقق بخطوتين", lazy: "كلمة مرور واحدة لكل شيء", careful: "كلمات مختلفة، وخطوتان للحسابات المهمة",
     hack: "يُخترق المنتدى", again: "غيّر إعداداتي",
-    out: { "safe-unique": "آمن: كلمة المرور المسرّبة لا تعمل هنا.", "safe-2fa": "آمن: نجحت كلمة المرور، لكن الدخول بخطوتين أوقفهم.", taken: "استُولي عليه بكلمة المرور المسرّبة.", "taken-reset": "استُولي عليه: من بريدك ضغطوا «نسيت كلمة المرور»." } as Record<Outcome, string>,
+    out: { "safe-unique": "آمن: كلمة المرور المسرّبة لا تعمل هنا.", "safe-2fa": "آمن: نجحت كلمة المرور، لكن التحقق بخطوتين أوقفهم.", taken: "استُولي عليه بكلمة المرور المسرّبة.", "taken-reset": "استُولي عليه: من بريدك ضغطوا «نسيت كلمة المرور»." } as Record<Outcome, string>,
     leaked: "من هنا جاء التسريب.",
     none: "لم تفقد أي حساب. حماية ممتازة!", summary: { one: "فقدت حسابًا واحدًا.", two: "فقدت حسابين.", few: "فقدت {n} حسابات.", other: "فقدت {n} حسابًا." } as Forms,
-    takeaway: "المواقع تُخترق، ولا تستطيع منع ذلك. ما تتحكّم فيه هو حجم الضرر: كلمة مرور مختلفة لكل موقع (يسهّل ذلك مدير كلمات المرور)، والدخول بخطوتين لبريدك وأموالك، وأقوى حماية لبريدك قبل كل شيء، لأنه يستطيع إعادة تعيين كل ما سواه.",
+    try1: "اضغط «يُخترق المنتدى»: مع كلمة مرور واحدة لكل شيء تفقد ٤ من حساباتك الخمسة. ولا تصمد إلا «محفظة الهاتف»، لأن فيها التحقق بخطوتين.",
+    try2: "اضغط «كلمات مختلفة، وخطوتان للحسابات المهمة»، ثم أعطِ البريد الإلكتروني كلمة مرور المنتدى وألغِ التحقق بخطوتين فيه. اخترق المنتدى من جديد: بخسارة بريدك تخسر «المتجر الإلكتروني» أيضًا، عبر «نسيت كلمة المرور».",
+    takeaway: "المواقع تُخترق، ولا تستطيع منع ذلك. ما تتحكّم فيه هو حجم الضرر: كلمة مرور مختلفة لكل موقع (يسهّل ذلك مدير كلمات المرور)، والتحقق بخطوتين لبريدك وأموالك، وأقوى حماية لبريدك قبل كل شيء، لأنه يستطيع إعادة تعيين كل ما سواه.",
   },
 };
 
@@ -41,7 +45,7 @@ export default function Breach({ meta, onDone }: LabProps) {
   const set = (site: Site, change: Partial<Setup[Site]>) => { setSetup((x) => ({ ...x, [site]: { ...x[site], ...change } })); setHacked(false); };
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2]} takeaway={s.takeaway}>
       <div className="lb-row">
         <Button size="sm" variant="ghost" onClick={() => { setSetup(PRESETS.lazy); setHacked(false); }}>{s.lazy}</Button>
         <Button size="sm" variant="ghost" onClick={() => { setSetup(PRESETS.careful); setHacked(false); }}>{s.careful}</Button>

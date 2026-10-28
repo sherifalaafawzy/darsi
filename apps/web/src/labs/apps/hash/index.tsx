@@ -14,6 +14,9 @@ const S = {
     store: "How a website stores passwords", storeIntro: "A good site never keeps your password: only its fingerprint. Two pupils happen to choose the same password:", pw: "Their password", salt: "Salt", noSalt: "No salt", withSalt: "Random salt per user", newSalts: "New salts",
     sameWarn: "Same fingerprint! Anyone who cracks one has cracked both, and attackers keep huge tables of common passwords' fingerprints.", diffOk: "Different fingerprints, even though the passwords match: a salt makes every stored fingerprint unique.",
     names: ["Amal", "Omar"], login: "Signing in", loginIntro: "Amal types her password. The site makes the fingerprint again and compares:", typed: "Typed password", match: "Fingerprints match: signed in.", nomatch: "No match: wrong password.",
+    try1: "Make Text B exactly “Darsi”, like Text A: the fingerprints match. Then add a full stop to B: about half of the 256 bits change, though the text barely did.",
+    try2: "Switch the salt to Random salt per user: Amal's and Omar's fingerprints stop matching, though their passwords are still the same.",
+    try3: "Under Signing in, type “sun123”: the site makes the fingerprint again and it matches, so Amal is in. The site never had to keep her password.",
     takeaway: "Hashes check that files and messages haven't changed, and let websites check passwords without storing them. A hash can't be reversed, but a weak password can still be guessed: the attacker just hashes guesses until one matches.",
   },
   ar: {
@@ -22,6 +25,9 @@ const S = {
     store: "كيف يخزّن الموقع كلمات المرور", storeIntro: "الموقع الجيد لا يحتفظ بكلمة مرورك أبدًا، بل ببصمتها فقط. واتفق أن تلميذين اختارا كلمة المرور نفسها:", pw: "كلمة مرورهما", salt: "الملح", noSalt: "بلا ملح", withSalt: "ملح عشوائي لكل مستخدم", newSalts: "ملح جديد",
     sameWarn: "البصمة نفسها! من يكسر إحداهما يكسر الأخرى، والمهاجمون يحتفظون بجداول ضخمة لبصمات كلمات المرور الشائعة.", diffOk: "بصمتان مختلفتان مع أن كلمتي المرور متطابقتان: الملح يجعل كل بصمة مخزّنة فريدة.",
     names: ["أمل", "عمر"], login: "تسجيل الدخول", loginIntro: "تكتب أمل كلمة مرورها، فيصنع الموقع البصمة من جديد ويقارن:", typed: "كلمة المرور المكتوبة", match: "البصمتان متطابقتان: تم الدخول.", nomatch: "لا تطابق: كلمة المرور خاطئة.",
+    try1: "اجعل النص ب «Darsi» تمامًا مثل النص أ: تتطابق البصمتان. ثم أضف نقطة في آخر النص ب: يتغيّر نحو نصف البتات الـ٢٥٦، مع أن النص لم يكد يتغيّر.",
+    try2: "اختر «ملح عشوائي لكل مستخدم»: لا تعود بصمتا أمل وعمر متطابقتين، مع أن كلمتي مرورهما ما زالتا متطابقتين.",
+    try3: "في «تسجيل الدخول» اكتب «sun123»: يصنع الموقع البصمة من جديد فتتطابق، وتدخل أمل. ولم يحتج الموقع قط إلى الاحتفاظ بكلمة مرورها.",
     takeaway: "تتحقّق البصمات من أن الملفات والرسائل لم تتغيّر، وتتيح للمواقع فحص كلمات المرور دون تخزينها. لا يمكن عكس البصمة، لكن كلمة المرور الضعيفة تبقى قابلة للتخمين: يكفي المهاجمَ أن يحسب بصمات تخميناته حتى تتطابق إحداها.",
   },
 };
@@ -51,7 +57,7 @@ export default function Hash({ meta, onDone }: LabProps) {
   const d = ha && hb ? bitsDiffer(ha, hb) : 0;
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <div className="lb-two">
         <div className="stack-sm">
           <label className="dr-field-label" htmlFor="lb-hash-a">{s.a}</label>

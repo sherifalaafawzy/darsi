@@ -16,6 +16,9 @@ const S = {
     line: "Needs water below", min: "Lowest", max: "Highest", mean: "Average", median: "Middle value (median)", dry: "Hours too dry",
     daily: "Average for each day", days: ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6", "Day 7"],
     save: "Save as a spreadsheet file (CSV)", saved: "Saved: open it in any spreadsheet app.",
+    try1: "Choose “Leave them out”: the lowest reading jumps from 0 to about 55, and the hours too dry fall to 0. The garden never dried out; a loose wire did that.",
+    try2: "Compare the daily bars before and after: days 4 and 5 rise by about 3, yet the middle value (median) doesn't move.",
+    try3: "Raise “Needs water below” to 60%: now the real dry hours show up, all on days 2 and 3, just before the club waters.",
     takeaway: "Logged data is only useful after checking it. A few bad readings can drag an average or fake a “lowest” value; the median barely moves. Always look at the chart before trusting a summary, and keep the raw data with a note of what you removed.",
   },
   ar: {
@@ -25,6 +28,9 @@ const S = {
     line: "تحتاج إلى سقاية تحت", min: "الأدنى", max: "الأعلى", mean: "المتوسط", median: "القيمة الوسطى (الوسيط)", dry: "ساعات الجفاف",
     daily: "متوسط كل يوم", days: ["اليوم ١", "اليوم ٢", "اليوم ٣", "اليوم ٤", "اليوم ٥", "اليوم ٦", "اليوم ٧"],
     save: "احفظ ملفَّ جدول (CSV)", saved: "حُفظ الملف: افتحه في أي برنامج جداول.",
+    try1: "اختر «استبعدها»: تقفز أدنى قراءة من ٠ إلى نحو ٥٥، وتنخفض ساعات الجفاف إلى ٠. لم تجفّ الحديقة قط، بل السلك المرتخي هو ما صنع ذلك.",
+    try2: "قارن أعمدة الأيام قبل الاستبعاد وبعده: يرتفع اليومان ٤ و٥ نحو ٣ نقاط، لكن القيمة الوسطى (الوسيط) لا تتحرك.",
+    try3: "ارفع «تحتاج إلى سقاية تحت» إلى ٦٠٪: تظهر الآن ساعات الجفاف الحقيقية، وكلها في اليومين ٢ و٣، قبل أن يسقي النادي مباشرة.",
     takeaway: "لا تفيد البيانات المسجّلة إلا بعد فحصها. قراءات خاطئة قليلة قد تشدّ المتوسط أو تصنع قيمة «دنيا» زائفة، أما الوسيط فبالكاد يتحرك. انظر دائمًا إلى الرسم قبل أن تثق بالملخّص، واحتفظ بالبيانات الأصلية مع ملاحظة بما استبعدته.",
   },
 };
@@ -51,7 +57,7 @@ export default function Datalog({ meta, onDone }: LabProps) {
   };
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <Plot x={[0, HOURS]} y={[0, 100]} height={240} ticks={7} label={s.chart} xLabel={s.hours} yLabel={s.pct} yTicks={4} xFmt={(v) => (v >= HOURS ? "" : num(Math.round(v / 24) + 1))}
         lines={[{ points: rows.filter((_, i) => !skip[i]).map((x) => [x.h, x.v] as const), tone: "a", width: 1.5 }, { points: [[0, line], [HOURS, line]], tone: "c", dashed: true, width: 1.5 }]}
         dots={hide ? [] : rows.filter((_, i) => bad[i]).map((x) => ({ x: x.h, y: x.v, r: 5, tone: "c" as const }))} />

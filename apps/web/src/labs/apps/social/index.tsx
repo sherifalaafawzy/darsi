@@ -13,6 +13,8 @@ const S = {
     flag: { unknown: "A number you don't know, claiming to be someone important.", authority: "Claims authority (the Ministry, IT support, the bank) so you'll obey.", urgency: "Rushes you so you don't stop to think.", secret: "Asks for a password or a code: real support staff never need these.", fear: "Threats: “your account will be deleted”, “it will be your fault”." } as Record<Flag, string>,
     safe: "Safe", lost: "Account taken over", again: "Take the call again",
     rule: "Real IT staff, banks and ministries never ask for your password or a code. Hang up, and call back on a number you already know.",
+    try1: "Answer the way many people would, and read the code out: see how fast a six-digit code becomes a stolen account.",
+    try2: "Press Take the call again and refuse this time. After each caller line, read the tricks he used: authority, hurry and fear.",
     takeaway: "Social engineering hacks people, not computers: it borrows authority, creates panic and asks for secrets. The defence is simple and always works: slow down, never share passwords or codes, and check by calling back on a number you trust.",
   },
   ar: {
@@ -21,6 +23,8 @@ const S = {
     flag: { unknown: "رقم لا تعرفه يدّعي صاحبه أنه شخص مهم.", authority: "يدّعي سلطة (الوزارة، الدعم الفني، البنك) لكي تطيعه.", urgency: "يستعجلك حتى لا تتوقف لتفكّر.", secret: "يطلب كلمة مرور أو رمزًا: موظفو الدعم الحقيقيون لا يحتاجون إليهما أبدًا.", fear: "تهديدات: «سيُحذف حسابك»، «سيكون ذلك خطأك»." } as Record<Flag, string>,
     safe: "في أمان", lost: "استُولي على الحساب", again: "استقبل المكالمة من جديد",
     rule: "موظفو الحاسوب والبنوك والوزارات الحقيقيون لا يطلبون كلمة مرورك أو رمزًا أبدًا. أغلق الخط، واتصل على رقم تعرفه أصلًا.",
+    try1: "أجب كما يجيب كثير من الناس، واقرأ الرمز للمتصل: انظر كيف يتحوّل رمز من ستة أرقام بسرعة إلى حساب مسروق.",
+    try2: "اضغط «استقبل المكالمة من جديد» وارفض هذه المرة. وبعد كل جملة من المتصل اقرأ الحيل التي استعملها: السلطة والاستعجال والتخويف.",
     takeaway: "الهندسة الاجتماعية تخترق الناس لا الحواسيب: تستعير السلطة، وتصنع الذعر، وتطلب الأسرار. والدفاع بسيط وينجح دائمًا: تمهّل، ولا تشارك كلمات المرور أو الرموز أبدًا، وتحقّق بالاتصال على رقم تثق به.",
   },
 };
@@ -34,7 +38,7 @@ export default function Social({ meta, onDone }: LabProps) {
   useEffect(() => { if (step.end === "safe") onDone?.(); }, [step.end]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2]} takeaway={s.takeaway}>
       <ol className="lb-call" aria-live="polite">
         {trail.map((t, k) => {
           const st = STEPS[t.id], answered = k < trail.length - 1;

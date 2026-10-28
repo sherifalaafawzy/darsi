@@ -17,6 +17,9 @@ const S = {
     challenge: "Challenge: set the weights so the neuron is right on all four days.", days: ["Sunny, dry season", "Cloudy, rain likely, rainy season", "Cloudy, dry forecast", "Light cloud, rain forecast"],
     expect: "Should", right: "Right", wrong: "Wrong", solved: "All four right. You just did what training does: you found weights that work.",
     curve: "The activation turns the sum into the output", input: "Input", output: "Output",
+    try1: (b: string) => `Drag the bias down to ${b}: “Today” flips to “Leave it at home”. A negative bias makes the neuron harder to convince.`,
+    try2: "Now raise the weight of input 2 (the forecast) bit by bit and watch the table: at 0.9, all four days are right. You found working weights by hand.",
+    try3: "Switch the activation to Step: every answer stays the same, but you no longer see how sure the neuron is.",
     takeaway: "A neuron multiplies each input by a weight, adds a bias, and squashes the total. Learning means finding good weights: a network does it with thousands of neurons and millions of examples.",
   },
   ar: {
@@ -27,6 +30,9 @@ const S = {
     challenge: "التحدي: اضبط الأوزان لتصيب الخلية في الأيام الأربعة كلها.", days: ["مشمس، موسم جاف", "غائم، المطر مرجّح، موسم الأمطار", "غائم، النشرة جافة", "غيوم خفيفة، النشرة ممطرة"],
     expect: "المطلوب", right: "صحيح", wrong: "خطأ", solved: "الأيام الأربعة صحيحة. لقد فعلت ما يفعله التدريب: وجدت أوزانًا تنجح.",
     curve: "دالة التنشيط تحوّل المجموع إلى المخرج", input: "المدخل", output: "المخرج",
+    try1: (b: string) => `اسحب الانحياز إلى ${b}: يتحوّل «اليوم» إلى «اتركها في البيت». الانحياز السالب يجعل إقناع الخلية أصعب.`,
+    try2: "ارفع الآن وزن المدخل ٢ (النشرة) قليلًا قليلًا وراقب الجدول: عند ٠٫٩ تصح الأيام الأربعة كلها. لقد وجدت بيدك أوزانًا تنجح.",
+    try3: "بدّل دالة التنشيط إلى «درجة»: تبقى كل الإجابات كما هي، لكنك لم تعد ترى مدى تأكد الخلية.",
     takeaway: "تضرب الخلية العصبية كل مدخل في وزن، وتضيف انحيازًا، ثم تضغط المجموع. التعلّم يعني إيجاد أوزان جيدة، والشبكة تفعل ذلك بآلاف الخلايا وملايين الأمثلة.",
   },
 };
@@ -46,7 +52,7 @@ export default function Neuron({ meta, onDone }: LabProps) {
   const curve = Array.from({ length: 61 }, (_, i) => { const t = -6 + i * 0.2; return [t, activate(t, f)] as const; });
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway} onReset={() => { setW(START.w); setB(START.b); }}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1(num(-1)), s.try2, s.try3]} takeaway={s.takeaway} onReset={() => { setW(START.w); setB(START.b); }}>
       <div className="lb-two">
         <div className="stack">
           {s.inputs.map((label, i) => (

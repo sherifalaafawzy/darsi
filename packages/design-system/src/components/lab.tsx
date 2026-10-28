@@ -1,7 +1,9 @@
 import { Fragment, useState, type ReactNode } from "react";
 import { Button, Icon, ProgressBar, TextField, cx, type IconName, type Tone } from "./primitives";
 
-export interface LabProps { title: string; kicker?: string; takeaway?: ReactNode; }
+/** `num` formats numbers for the page's language (Arabic-Indic digits in Arabic); plain digits without it. */
+export interface LabProps { title: string; kicker?: string; takeaway?: ReactNode; num?: (n: number, opts?: Intl.NumberFormatOptions) => string }
+const plainNum = (n: number, o?: Intl.NumberFormatOptions) => new Intl.NumberFormat("en", o).format(n);
 export function LabFrame({ title, kicker = "AI lab", takeaway, icon = "ai", children }: LabProps & { icon?: IconName; children: ReactNode }) {
   return (
     <section className="dr-lab">
@@ -48,14 +50,14 @@ export function approximateTokens(text: string): string[] {
   return parts.flatMap((w) => (w.length <= 5 ? [w] : Array.from({ length: Math.ceil(w.length / 4) }, (_, i) => w.slice(i * 4, i * 4 + 4))));
 }
 export interface TokenViewerProps extends LabProps { text: string; inputLabel?: string; tokensLabel?: string; charsLabel?: string; }
-export function TokenViewer({ text, inputLabel = "Text to split into tokens", tokensLabel = "tokens", charsLabel = "characters", ...lab }: TokenViewerProps) {
+export function TokenViewer({ text, inputLabel = "Text to split into tokens", tokensLabel = "tokens", charsLabel = "characters", num = plainNum, ...lab }: TokenViewerProps) {
   const [t, setT] = useState(text);
   const toks = approximateTokens(t);
   return (
     <LabFrame {...lab} icon="grip">
       <textarea className="dr-reflect-input" dir="auto" rows={2} value={t} onChange={(e) => setT(e.target.value)} aria-label={inputLabel} />
       <div className="dr-tokens" dir="auto">{toks.map((k, i) => <span key={i} className={`dr-token dr-token-${i % 4}`}>{k}</span>)}</div>
-      <div className="dr-lab-stats"><span><strong>{toks.length}</strong> {tokensLabel}</span><span><strong>{t.length}</strong> {charsLabel}</span></div>
+      <div className="dr-lab-stats"><span><strong>{num(toks.length)}</strong> {tokensLabel}</span><span><strong>{num(t.length)}</strong> {charsLabel}</span></div>
     </LabFrame>
   );
 }
@@ -67,7 +69,7 @@ export function withTemperature(cands: { word: string; p: number }[], temp: numb
   return cands.map((c, i) => ({ word: c.word, p: w[i] / sum }));
 }
 export interface NextWordLabProps extends LabProps { context: string; candidates: { word: string; p: number }[]; temperature?: number; generated?: string; tempLabel?: string; lowLabel?: string; highLabel?: string; generateLabel?: string; }
-export function NextWordLab({ context, candidates, temperature = 1, generated = "", tempLabel = "Temperature", lowLabel = "Predictable", highLabel = "Creative", generateLabel = "Pick the next word", ...lab }: NextWordLabProps) {
+export function NextWordLab({ context, candidates, temperature = 1, generated = "", tempLabel = "Temperature", lowLabel = "Predictable", highLabel = "Creative", generateLabel = "Pick the next word", num = plainNum, ...lab }: NextWordLabProps) {
   const [temp, setTemp] = useState(temperature);
   const [gen, setGen] = useState(generated);
   const probs = withTemperature(candidates, temp);
@@ -76,10 +78,10 @@ export function NextWordLab({ context, candidates, temperature = 1, generated = 
     <LabFrame {...lab} icon="ai">
       <p className="dr-nw-context" dir="auto">{context} <span className={cx("dr-blank", gen && "is-filled")}>{gen ? <bdi>{gen}</bdi> : " "}</span></p>
       <ul className="dr-nw-bars">
-        {probs.map((c) => <li key={c.word}><bdi className="dr-nw-word">{c.word}</bdi><span className="dr-nw-track"><span className="dr-nw-fill" style={{ inlineSize: `${Math.round(c.p * 100)}%` }} /></span><span className="dr-nw-pct">{Math.round(c.p * 100)}%</span></li>)}
+        {probs.map((c) => <li key={c.word}><bdi className="dr-nw-word">{c.word}</bdi><span className="dr-nw-track"><span className="dr-nw-fill" style={{ inlineSize: `${Math.round(c.p * 100)}%` }} /></span><span className="dr-nw-pct">{num(c.p, { style: "percent", maximumFractionDigits: 0 })}</span></li>)}
       </ul>
       <label className="dr-nw-temp">
-        <span>{tempLabel}: <strong>{temp.toFixed(1)}</strong></span>
+        <span>{tempLabel}: <strong>{num(temp, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</strong></span>
         <input type="range" min={0.2} max={2} step={0.1} value={temp} onChange={(e) => setTemp(parseFloat(e.target.value))} />
         <span className="dr-nw-ends"><span>{lowLabel}</span><span>{highLabel}</span></span>
       </label>
@@ -88,7 +90,7 @@ export function NextWordLab({ context, candidates, temperature = 1, generated = 
   );
 }
 
-const words = (s: string) => s.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+const words = (s: string) => s.toLowerCase().split(/[^\p{L}\p{M}\p{N}]+/u).filter(Boolean); // \p{M}: Arabic vowel marks stay inside their word
 /** Transparent word-overlap "model": score = shared words + 0.5 smoothing. */
 export function classify(text: string, classes: { examples: string[] }[]) {
   const scores = classes.map((c) => { const bag = new Set(c.examples.flatMap(words)); return words(text).filter((w) => bag.has(w)).length + 0.5; });

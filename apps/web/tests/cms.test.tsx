@@ -117,7 +117,7 @@ describe("ContentList", () => {
     fireEvent.click(await screen.findByRole("button", { name: "New unit" }));
     fireEvent.change(screen.getAllByLabelText(/Title/)[0], { target: { value: "Data and privacy" } });
     fireEvent.click(screen.getByRole("radio", { name: /^Cyber security/ }));
-    fireEvent.click(screen.getByRole("radio", { name: "Level 3" }));
+    fireEvent.click(screen.getByRole("radio", { name: /^Level 3\b/ }));
     fireEvent.click(screen.getByRole("button", { name: "Create unit" }));
     await waitFor(() => expect(m.data.createUnit).toHaveBeenCalled());
     const [owner, created, uid] = m.data.createUnit.mock.calls[0];
@@ -193,7 +193,7 @@ describe("UnitEditor", () => {
 
   it("picks the track and a level that track has", async () => {
     await openEditor();
-    fireEvent.click(screen.getByRole("radio", { name: "Level 4" }));
+    fireEvent.click(screen.getByRole("radio", { name: /^Level 4\b/ }));
     fireEvent.click(screen.getByRole("radio", { name: /^IoT/ }));
     expect(screen.getByRole("radio", { name: /^IoT/ }).getAttribute("aria-checked")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: "Save draft" }));

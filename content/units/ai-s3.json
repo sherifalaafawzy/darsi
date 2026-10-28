@@ -1,0 +1,3390 @@
+{
+  "id": "ai-s3",
+  "track": "ai",
+  "level": 3,
+  "audience": "students",
+  "title": {
+    "en": "Train your own model",
+    "ar": "درّب نموذجك بنفسك"
+  },
+  "summary": {
+    "en": "Collect and label your own data, see how a classifier decides, test your model honestly and make it fair for everyone.",
+    "ar": "اجمع بياناتك وصنّفها بنفسك، واكتشف كيف يقرّر المصنِّف، واختبر نموذجك بأمانة، واجعله منصفًا للجميع."
+  },
+  "lessons": [
+    {
+      "id": "ai-s3-1",
+      "title": {
+        "en": "Data first",
+        "ar": "البيانات أولًا"
+      },
+      "minutes": 16,
+      "tryTomorrow": {
+        "en": "Collect twenty labelled examples of something around you: leaves, fruit at the market, or handwriting (ask the writers first). Count how many you have of each label, then write down what your dataset is missing: other kinds, other light, other places.",
+        "ar": "اجمع عشرين مثالًا مصنّفًا لشيء من حولك: أوراق شجر، أو فاكهة في السوق، أو خط يد (بعد استئذان أصحابه). عُدّ ما لديك من كل تصنيف، ثم اكتب ما ينقص مجموعة بياناتك: أنواع أخرى، وإضاءة أخرى، وأماكن أخرى."
+      },
+      "materials": {
+        "en": [
+          "A notebook and a pen",
+          "A phone with a camera, if you have one (or draw your examples)",
+          "Things to sort: leaves, fruit or handwriting samples"
+        ],
+        "ar": [
+          "دفتر وقلم",
+          "هاتف بكاميرا إن توفّر لديك (أو ارسم أمثلتك)",
+          "أشياء للفرز: أوراق شجر أو فاكهة أو نماذج من خط اليد"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Data first",
+            "ar": "البيانات أولًا"
+          },
+          "src": null,
+          "duration": 231,
+          "sizeMB": 1.4,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A model that got it wrong",
+                "ar": "نموذج أخطأ"
+              }
+            },
+            {
+              "at": 20.9,
+              "atBy": {
+                "en": 20.9,
+                "ar": 21.1
+              },
+              "label": {
+                "en": "Plan your data",
+                "ar": "خطّط لبياناتك"
+              }
+            },
+            {
+              "at": 59.7,
+              "atBy": {
+                "en": 59.7,
+                "ar": 60.9
+              },
+              "label": {
+                "en": "Three data problems",
+                "ar": "ثلاث مشكلات في البيانات"
+              }
+            },
+            {
+              "at": 140.8,
+              "atBy": {
+                "en": 140.8,
+                "ar": 138.8
+              },
+              "label": {
+                "en": "Collect fairly, and the lab",
+                "ar": "اجمع بإنصاف، والمختبر"
+              }
+            },
+            {
+              "at": 192.2,
+              "atBy": {
+                "en": 192.2,
+                "ar": 187.6
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Forty ripe and forty unripe tomatoes, all photographed at noon in bright sun. What’s missing?",
+                "ar": "أربعون حبة طماطم ناضجة وأربعون غير ناضجة، صُوّرت كلها عند الظهر في شمس ساطعة. ما الذي ينقص؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "More photos at noon",
+                    "ar": "صور أكثر عند الظهر"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Photos in other light",
+                    "ar": "صور في إضاءة أخرى"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Nothing: eighty is plenty",
+                    "ar": "لا شيء: ثمانون صورة تكفي"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Every photo has the same bright light, so the model never sees shade, dusk or a dim market stall, and may fail the first time it meets one. More noon photos add numbers, not variety.",
+                "ar": "كل الصور في الضوء الساطع نفسه، فلا يرى النموذج الظل ولا الغروب ولا بسطة معتمة في السوق، وقد يخطئ أول مرة يقابلها. أما المزيد من صور الظهر فيزيد العدد لا التنوّع."
+              }
+            },
+            "at": 124.43,
+            "atBy": {
+              "en": 124.43,
+              "ar": 123.72
+            }
+          },
+          "transcript": {
+            "en": "Last term, my class trained a model to spot sick bean leaves. It called almost every leaf healthy, even the sick ones! The computer wasn’t the problem. Our data was. Today: data first, because a model can only learn what its examples show it. A model never sees the garden. All it knows comes from your examples. Each one is something you collected, like a leaf photo, plus a label: the right answer, “healthy” or “sick”. Together, they’re your data. So plan before you collect anything. What will you collect: photos of bean leaves? Which labels: healthy and sick? How many: at least ten of each, to start? And how varied: young and old leaves, sun and shade, different phones? Then check for three problems. Wrong labels: a sick leaf filed as healthy teaches a wrong answer. Too few examples: five photos can’t show every way a leaf looks. And one kind far outnumbering another: ninety healthy leaves and ten sick, like Mr Joseph’s class. A dataset is all the labelled examples a model learns from. A good one has correct labels, enough of each kind, and a fair mix of everything it will meet. Think of your data as the model’s only textbook. If answers in the back are wrong, it learns wrong answers. If there’s one page on fractions, it won’t be ready for fractions in the exam. Quick check! Your class photographs forty ripe and forty unripe tomatoes, all at noon in bright sun. What’s missing? Photos in other light. The model never saw shade, dusk or a dim market stall. It may fail the first time it meets one. Eighty is a good start, but variety matters as much as numbers. Collect fairly, too. Recording voices? Ask each person first, and say what it’s for. Photographing handwriting? Use a made-up sentence, never names or addresses. Taking photos at the market? Photograph the fruit, not the sellers, unless they agree. In the app, you’ll teach a small network to see. Draw a circle, a cross or a line, and add it to its group. Press Train, then test a new drawing. Then remove examples, or add a messy one, and see what changes. Your turn. You want to train a model on your classmates’ handwriting. What should you do first? Ask each one first, and keep names off the pages. Remember: plan what to collect, the labels, how many and how varied. Check for wrong labels, too few examples and one kind outnumbering another. A model is only as good as its data. Try it yourself: collect twenty labelled examples of something around you: leaves, fruit at the market, or handwriting. Count each label. Then write down what’s missing: other kinds, other light, other places.",
+            "ar": "الترم اللي فات، الفصل بتاعي درّب نموذج يكتشف ورق الفاصوليا المريض. قال على كل ورقة تقريبًا إنها سليمة، حتى المريضة! المشكلة ما كانتش في الكمبيوتر. المشكلة كانت في البيانات بتاعتنا. النهارده: البيانات أولًا، لأن النموذج ما بيعرفش غير اللي أمثلته بتوريهوله. النموذج عمره ما بيشوف الجنينة. كل اللي يعرفه جاي من أمثلتك. كل مثال حاجة إنت جمعتها، زي صورة ورقة، ومعاها تصنيف: الإجابة الصح، «سليمة» أو «مريضة». الاتنين مع بعض هما البيانات بتاعتك. علشان كده خطّط قبل ما تجمع أي حاجة. هتجمع إيه: صور ورق فاصوليا؟ إيه التصنيفات: سليمة ومريضة؟ كام مثال: عشرة على الأقل من كل نوع، كبداية؟ وقد إيه متنوعة: ورق صغير وكبير، في الشمس وفي الضل، ومن موبايلات مختلفة؟ بعد كده دوّر على تلات مشاكل. تصنيفات غلط: ورقة مريضة متسجلة سليمة بتعلّمه إجابة غلط. أمثلة قليلة: خمس صور مش هيوروا كل أشكال الورقة. ونوع أكتر بكتير من التاني: تسعين ورقة سليمة وعشرة مريضة، زي فصل مستر جوزيف. مجموعة البيانات هي كل الأمثلة المتصنّفة اللي النموذج بيتعلم منها. المجموعة الكويسة تصنيفاتها صح، وفيها كفاية من كل نوع، وخليط عادل من كل حاجة هيقابلها. اعتبر بياناتك هي الكتاب الوحيد اللي النموذج بيذاكر منه. لو الإجابات اللي في آخره غلط، هيتعلم إجابات غلط. ولو فيه صفحة واحدة عن الكسور، مش هيكون جاهز للكسور في الامتحان. سؤال سريع! فصلك صوّر أربعين طماطماية مستوية وأربعين لسه خضرا، كلهم الضهر في شمس قوية. إيه اللي ناقص؟ صور في إضاءة تانية. النموذج عمره ما شاف ضل، ولا مغرب، ولا فرشة ضلمة في السوق. ممكن يغلط أول مرة يقابل واحدة منهم. تمانين بداية كويسة، بس التنوع مهم زي العدد بالظبط. واجمع بالأصول كمان. هتسجّل أصوات؟ استأذن كل واحد الأول، وقوله هتستخدمها في إيه. هتصوّر خط إيد؟ خلّيهم يكتبوا جملة متألفة، من غير أسامي ولا عناوين. هتصوّر في السوق؟ صوّر الفاكهة، مش البيّاعين، إلا لو وافقوا. في التطبيق، هتعلّم شبكة صغيرة إزاي تشوف. ارسم دايرة، أو علامة ضرب، أو خط، وضيفه لمجموعته. دوس «درّب»، وبعدين اختبرها برسمة جديدة. بعد كده شيل أمثلة، أو ضيف رسمة ملخبطة، وشوف إيه اللي هيتغير. دورك. عايز تدرّب نموذج على خط إيد زمايلك. تعمل إيه الأول؟ استأذن كل واحد الأول، ومن غير أسامي على الورق. افتكر: خطّط هتجمع إيه، والتصنيفات، وكام مثال، وقد إيه متنوعين. دوّر على التصنيفات الغلط، والأمثلة القليلة، والنوع اللي أكتر بكتير من التاني. النموذج عمره ما هيبقى أحسن من بياناته. جرّبها بنفسك: اجمع عشرين مثال متصنّف لحاجة حواليك: ورق شجر، أو فاكهة في السوق، أو خط إيد. عِدّ كل تصنيف. وبعدين اكتب إيه اللي ناقص: أنواع تانية، وإضاءة تانية، وأماكن تانية."
+          },
+          "sources": {
+            "en": "/media/ai-s3-1/video-en.mp4",
+            "ar": "/media/ai-s3-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-s3-1/captions-en.vtt",
+            "ar": "/media/ai-s3-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-s3-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-s3-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-s3-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-s3-1/light/audio/en.opus",
+              "manifest.json": "/media/ai-s3-1/light/manifest.json",
+              "scenes.json": "/media/ai-s3-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-s3-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-s3-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 509,
+              "ar": 500
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Plan, collect, check",
+            "ar": "خطّط، واجمع، وراجع"
+          },
+          "body": {
+            "en": "A model can only learn what its examples show it. So before you train anything, plan your dataset, collect it fairly and check it for problems. Good data matters more than a clever computer.\n\nStart with a plan. What will you collect: photos of bean leaves, recordings of voices, samples of handwriting? Which label will each example get: “healthy” or “sick”, “ripe” or “not ripe”? How many: at least ten of each label to start, and about the same number of each? And how varied: young and old leaves, sun and shade, different phones, different people’s writing? Write the plan down before you begin, so you notice what is missing.\n\nThen check your data for three common problems. Wrong labels: a sick leaf filed as “healthy” teaches the model a wrong answer, so check labels twice, ideally with a second person. Too few examples: five photos can’t show every way a leaf can look. One kind far outnumbering another: with ninety healthy leaves and ten sick ones, a model can be right 90 times in 100 by calling every leaf healthy, and still be useless.\n\nVariety matters as much as numbers. If every tomato is photographed at noon in bright sun, the model has never seen shade, dusk or a dim market stall, and it may fail there. In the same way, a model trained only on big, clean leaves may be confused by a small, dusty one. Collect examples from all the places, times and people your model will meet in real life.\n\nFinally, collect fairly. Data often comes from people, and it belongs to them. Ask each person before you record their voice or photograph their work, and tell them what it is for. Keep personal details out: use a made-up sentence for handwriting, photograph fruit rather than faces, and never collect names, addresses or phone numbers you don’t need. If someone says no, respect it.",
+            "ar": "لا يتعلّم النموذج إلا ما تُظهره له أمثلته. لذلك، قبل أن تدرّب أي شيء، خطّط لمجموعة بياناتك، واجمعها بإنصاف، وراجعها بحثًا عن المشكلات. فالبيانات الجيدة أهم من حاسوب بارع.\n\nابدأ بخطة. ماذا ستجمع: صور أوراق الفاصوليا، أم تسجيلات أصوات، أم نماذج من خط اليد؟ وما التصنيف الذي سيأخذه كل مثال: «سليمة» أو «مريضة»، «ناضجة» أو «غير ناضجة»؟ وكم مثالًا: عشرة على الأقل من كل تصنيف كبداية، وعدد متقارب من كل تصنيف؟ وما مدى التنوّع: أوراق صغيرة وكبيرة، في الشمس وفي الظل، بهواتف مختلفة، وبخطوط أشخاص مختلفين؟ اكتب الخطة قبل أن تبدأ، لتلاحظ ما ينقصك.\n\nثم راجع بياناتك بحثًا عن ثلاث مشكلات شائعة. التصنيفات الخاطئة: ورقة مريضة سُجّلت «سليمة» تعلّم النموذج إجابة خاطئة، فراجع التصنيفات مرتين، ويُفضَّل أن يراجعها معك شخص آخر. الأمثلة القليلة: خمس صور لا تكفي لإظهار كل أشكال الورقة. ونوع يفوق الآخر عددًا بكثير: مع تسعين ورقة سليمة وعشر مريضة، يستطيع النموذج أن يصيب في ٩٠ حالة من كل ١٠٠ بأن يقول عن كل ورقة إنها سليمة، ويبقى مع ذلك بلا فائدة.\n\nوالتنوّع مهم بقدر العدد. فإذا صُوّرت كل حبات الطماطم عند الظهر في شمس ساطعة، لم يرَ النموذج قط ظلًّا ولا غروبًا ولا بسطة معتمة في السوق، وقد يخطئ هناك. وبالطريقة نفسها، قد يرتبك نموذج تدرّب على أوراق كبيرة نظيفة فقط أمام ورقة صغيرة مغبرّة. اجمع أمثلة من كل الأماكن والأوقات والأشخاص الذين سيقابلهم نموذجك في الواقع.\n\nوأخيرًا، اجمع البيانات بإنصاف. فالبيانات تأتي غالبًا من أشخاص، وهي ملك لهم. استأذن كل شخص قبل أن تسجّل صوته أو تصوّر عمله، وأخبره بالغرض من ذلك. وأبعِد التفاصيل الشخصية: استخدم جملة مؤلَّفة لعيّنات الخط، وصوّر الفاكهة لا الوجوه، ولا تجمع أبدًا أسماء أو عناوين أو أرقام هواتف لا تحتاج إليها. وإن رفض أحد، فاحترم رفضه."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Dataset",
+                "ar": "مجموعة البيانات"
+              },
+              "def": {
+                "en": "All the labelled examples a model learns from, such as forty leaf photos, each marked “healthy” or “sick”.",
+                "ar": "كل الأمثلة المصنّفة التي يتعلّم منها النموذج، مثل أربعين صورة لأوراق شجر، صُنّفت كل منها «سليمة» أو «مريضة»."
+              }
+            },
+            {
+              "term": {
+                "en": "Label",
+                "ar": "التصنيف"
+              },
+              "def": {
+                "en": "The right answer that goes with an example, usually added by a person.",
+                "ar": "الإجابة الصحيحة المرفقة بالمثال، ويضيفها عادةً إنسان."
+              }
+            },
+            {
+              "term": {
+                "en": "Balanced data",
+                "ar": "البيانات المتوازنة"
+              },
+              "def": {
+                "en": "A dataset with about the same number of examples of each label, so a model can’t look good by always giving one answer.",
+                "ar": "مجموعة بيانات فيها عدد متقارب من الأمثلة لكل تصنيف، فلا يستطيع النموذج أن يبدو جيدًا بإعطاء الإجابة نفسها دائمًا."
+              }
+            },
+            {
+              "term": {
+                "en": "Permission",
+                "ar": "الإذن"
+              },
+              "def": {
+                "en": "A person’s agreement before you collect their voice, photo or work, after you have told them what it is for.",
+                "ar": "موافقة الشخص قبل أن تجمع صوته أو صورته أو عمله، بعد أن تخبره بالغرض من ذلك."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "You want to train a model on your classmates’ handwriting. What should you do first?",
+            "ar": "تريد أن تدرّب نموذجًا على خط زملائك في الصف. ماذا تفعل أولًا؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Use old pages they threw away",
+                "ar": "أستخدم أوراقًا قديمة رموها"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Ask the teacher, not the classmates",
+                "ar": "أستأذن المعلّم بدلًا من زملائي"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Ask each one, and leave names off",
+                "ar": "أستأذن كل واحد منهم، دون أسماء"
+              }
+            }
+          ],
+          "answer": "c",
+          "explain": {
+            "en": "It is their handwriting, so they decide. Ask each classmate, say what it is for, and keep names off the pages. Pages from the bin still belong to the people who wrote them, and a teacher’s yes doesn’t replace theirs.",
+            "ar": "إنه خطّهم، فهم أصحاب القرار. استأذن كل زميل، وأخبره بالغرض، وأبعِد الأسماء عن الأوراق. فالأوراق المرمية ما زالت ملكًا لمن كتبها، وموافقة المعلّم لا تغني عن موافقتهم."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p2",
+          "prompt": {
+            "en": "Which of these are problems in a dataset? Choose all that apply.",
+            "ar": "أيّ مما يلي مشكلات في مجموعة البيانات؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A sick leaf labelled “healthy”",
+                "ar": "ورقة مريضة مصنّفة «سليمة»"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Only six examples in all",
+                "ar": "ستة أمثلة فقط في المجموع"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "90 photos of one label and 10 of the other",
+                "ar": "٩٠ صورة لتصنيف و١٠ صور للآخر"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Photos taken at different times of day",
+                "ar": "صور التُقطت في أوقات مختلفة من اليوم"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "Every label checked by two people",
+                "ar": "كل تصنيف راجعه شخصان"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "A wrong label, too few examples and one label far outnumbering the other all weaken a model. Photos from different times of day add useful variety, and a second person checking the labels helps catch mistakes.",
+            "ar": "التصنيف الخاطئ، والأمثلة القليلة، وتصنيف يفوق الآخر عددًا بكثير: كلها تُضعف النموذج. أما الصور الملتقطة في أوقات مختلفة فتضيف تنوّعًا مفيدًا، ومراجعة شخص ثانٍ للتصنيفات تساعد على اكتشاف الأخطاء."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p3",
+          "prompt": {
+            "en": "You don’t need to check the labels: the model will work out which ones are wrong.",
+            "ar": "لا داعي لمراجعة التصنيفات، فالنموذج سيكتشف بنفسه أيّها خاطئ."
+          },
+          "answer": false,
+          "explain": {
+            "en": "A model treats every label as the truth. A wrong label teaches it a wrong answer, so check labels yourself, ideally with a second person.",
+            "ar": "يتعامل النموذج مع كل تصنيف على أنه الحقيقة. والتصنيف الخاطئ يعلّمه إجابة خاطئة، فراجع التصنيفات بنفسك، ويُفضَّل مع شخص آخر."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: teach a small network to see. Press Train and test it with a new drawing. Then draw a plus sign (+): it is a cross turned round, but none of its crosses look like that, so it will probably call it a line. Add three plus signs with “Add as a cross”, train again and test a new one. More varied examples changed what it learned.",
+            "ar": "جرّب: علّم شبكة صغيرة أن ترى. اضغط «درّب» واختبرها برسمة جديدة. ثم ارسم علامة الجمع (+): إنها علامة × مُدارة، لكن لا شيء من أمثلتها يشبهها، فغالبًا ستسمّيها خطًا. أضف ثلاث علامات جمع بزر «أضفها علامة ×»، ودرّب من جديد، واختبر واحدة جديدة. الأمثلة الأكثر تنوّعًا غيّرت ما تعلّمته."
+          },
+          "tool": "shapes"
+        },
+        {
+          "type": "scenario",
+          "id": "p4",
+          "prompt": {
+            "en": "What do you suggest?",
+            "ar": "ماذا تقترح؟"
+          },
+          "who": {
+            "en": "Mr Joseph Mwangi, computer studies",
+            "ar": "أ. جوزيف موانجي، مادة الحاسوب"
+          },
+          "initial": {
+            "en": "J",
+            "ar": "ج"
+          },
+          "situation": {
+            "en": "Your group is building a model to tell ripe from unripe mangoes for a stall at the market. You have 60 photos of ripe mangoes and 12 of unripe ones, all taken at home in the evening. Mr Joseph asks what you will do next.",
+            "ar": "تبني مجموعتك نموذجًا يميّز ثمار المانجو الناضجة من غير الناضجة لبسطة في السوق. لديكم ٦٠ صورة لثمار ناضجة و١٢ صورة لثمار غير ناضجة، التُقطت كلها في البيت مساءً. ويسألكم أ. جوزيف: ماذا ستفعلون بعد ذلك؟"
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Train it now: 72 photos is plenty.”",
+                "ar": "«لندرّبه الآن، فـ٧٢ صورة تكفي.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "With so few unripe photos, it may call almost every mango ripe and still score well on your photos. And it has never seen a mango in daylight at a stall.",
+                "ar": "مع قلة صور الثمار غير الناضجة، قد يصف النموذج كل ثمرة تقريبًا بأنها ناضجة، ويبدو رغم ذلك جيدًا على صوركم. كما أنه لم يرَ قط ثمرة مانجو في ضوء النهار على بسطة."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Photograph more unripe mangoes, some at the stall in daylight, then train.”",
+                "ar": "«لنصوّر ثمارًا غير ناضجة أكثر، بعضها على البسطة في ضوء النهار، ثم ندرّبه.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Both labels now have enough examples, and the light matches where the model will be used. Ask the seller before you photograph at the stall.",
+                "ar": "صار لكل تصنيف أمثلة كافية، وأصبحت الإضاءة تشبه المكان الذي سيُستخدم فيه النموذج. واستأذنوا البائع قبل التصوير على بسطته."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Delete ripe photos until there are 12 of each.”",
+                "ar": "«لنحذف صورًا للثمار الناضجة حتى يصبح لدينا ١٢ من كل نوع.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "The labels are balanced now, but you threw away examples, and the model still hasn’t seen daylight. Collecting more is better than deleting.",
+                "ar": "صارت التصنيفات متوازنة، لكنكم تخلّصتم من أمثلة، وما زال النموذج لم يرَ ضوء النهار. وجمع المزيد أفضل من الحذف."
+              }
+            }
+          ]
+        },
+        {
+          "type": "fill",
+          "id": "p5",
+          "prompt": {
+            "en": "Complete the sentence.",
+            "ar": "أكمل الجملة."
+          },
+          "sentence": {
+            "en": [
+              "A good dataset has correct ",
+              {
+                "blank": 0
+              },
+              ", enough examples of each kind and a ",
+              {
+                "blank": 1
+              },
+              " mix, and the people in it gave their ",
+              {
+                "blank": 2
+              },
+              "."
+            ],
+            "ar": [
+              "مجموعة البيانات الجيدة فيها ",
+              {
+                "blank": 0
+              },
+              " صحيحة، وأمثلة كافية من كل نوع، وخليط ",
+              {
+                "blank": 1
+              },
+              "، وقد أعطى أصحابها ",
+              {
+                "blank": 2
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "labels",
+              "varied",
+              "permission",
+              "rules",
+              "names"
+            ],
+            "ar": [
+              "تصنيفات",
+              "متنوّع",
+              "إذنهم",
+              "قواعد",
+              "أسماءهم"
+            ]
+          },
+          "answers": {
+            "en": [
+              "labels",
+              "varied",
+              "permission"
+            ],
+            "ar": [
+              "تصنيفات",
+              "متنوّع",
+              "إذنهم"
+            ]
+          },
+          "explain": {
+            "en": "Correct labels, enough of each kind, variety and permission are the four checks of a good dataset. A model needs examples, not rules, and names are personal details to leave out.",
+            "ar": "التصنيفات الصحيحة، والعدد الكافي من كل نوع، والتنوّع، والإذن: هذه هي الفحوص الأربعة لمجموعة البيانات الجيدة. فالنموذج يحتاج إلى أمثلة لا إلى قواعد، والأسماء تفاصيل شخصية ينبغي إبعادها."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "What would you like to teach a model to sort? Which labels would you use, and what would be hardest to collect fairly?",
+            "ar": "ما الشيء الذي تودّ أن تعلّم نموذجًا فرزه؟ وما التصنيفات التي ستستخدمها، وما الأصعب في جمعه بإنصاف؟"
+          },
+          "placeholder": {
+            "en": "For example: “Ripe and unripe tomatoes. The hardest part is getting photos in dim light at the market, and asking the sellers first.”",
+            "ar": "مثلًا: «طماطم ناضجة وغير ناضجة. الأصعب هو التصوير في الضوء الخافت في السوق، واستئذان الباعة أولًا.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Your first dataset",
+            "ar": "مشروع: أول مجموعة بيانات لك"
+          },
+          "task": {
+            "en": "Choose something around you to sort into two labels: healthy and sick leaves, ripe and unripe fruit, or neat and messy handwriting (ask the writers first). Write a short plan: what you will collect, the labels, how many and how varied. Collect twenty examples (photos, drawings or the things themselves) and label each one. Count each label, then list three things your dataset is missing.",
+            "ar": "اختر شيئًا من حولك لتفرزه في تصنيفين: أوراق سليمة وأوراق مريضة، أو فاكهة ناضجة وغير ناضجة، أو خط مرتّب وخط غير مرتّب (بعد استئذان أصحابه). اكتب خطة قصيرة: ماذا ستجمع، والتصنيفات، وكم مثالًا، وما مدى التنوّع. اجمع عشرين مثالًا (صورًا أو رسومًا أو الأشياء نفسها) وصنّف كلًّا منها. عُدّ كل تصنيف، ثم اكتب ثلاثة أشياء تنقص مجموعة بياناتك."
+          },
+          "deliverable": {
+            "en": "A photo of your labelled examples or your tally sheet (no faces or names), and two sentences: what your dataset is missing, and how you would fix it.",
+            "ar": "صورة لأمثلتك المصنّفة أو لورقة العدّ (بلا وجوه ولا أسماء)، وجملتان: ما الذي ينقص مجموعة بياناتك، وكيف ستعالج ذلك."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: plan a dataset: what to collect, the labels, how many and how varied.",
+                "ar": "أستطيع: أن أخطّط لمجموعة بيانات: ماذا أجمع، والتصنيفات، وكم مثالًا، وما مدى التنوّع."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: spot wrong labels, too few examples and an unbalanced dataset.",
+                "ar": "أستطيع: أن أكتشف التصنيفات الخاطئة، والأمثلة القليلة، والبيانات غير المتوازنة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: collect data fairly, with permission and without personal details.",
+                "ar": "أستطيع: أن أجمع البيانات بإنصاف، بإذن أصحابها ومن دون تفاصيل شخصية."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Data first",
+            "ar": "البيانات أولًا"
+          },
+          "note": {
+            "en": "AI · Level 3 · Lesson 1",
+            "ar": "الذكاء الاصطناعي، المستوى ٣، الدرس ١"
+          },
+          "narration": {
+            "en": "What does a model know before you give it any examples?",
+            "ar": "ماذا يعرف النموذج قبل أن تعطيه أي أمثلة؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Plan a dataset: what to collect, the labels, how many and how varied.",
+              "Spot wrong labels, too few examples and one kind far outnumbering another.",
+              "Collect data fairly: ask permission and keep personal details out."
+            ],
+            "ar": [
+              "نخطّط لمجموعة بيانات: ماذا نجمع، والتصنيفات، وكم مثالًا، وما مدى التنوّع.",
+              "نكتشف التصنيفات الخاطئة، والأمثلة القليلة، والنوع الذي يفوق الآخر عددًا بكثير.",
+              "نجمع البيانات بإنصاف: نستأذن ونُبعد التفاصيل الشخصية."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "A model only knows its examples: your data is its only textbook.",
+              "Check for wrong labels, too few examples and unbalanced labels. Variety matters as much as numbers.",
+              "Data comes from people: ask first, say what it’s for, and leave names out."
+            ],
+            "ar": [
+              "لا يعرف النموذج إلا أمثلته: بياناتك هي كتابه الوحيد.",
+              "ابحث عن التصنيفات الخاطئة والأمثلة القليلة والتصنيفات غير المتوازنة. والتنوّع مهم بقدر العدد.",
+              "البيانات تأتي من أشخاص: استأذن أولًا، واذكر الغرض، وأبعِد الأسماء."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Data detectives",
+            "ar": "محقّقو البيانات"
+          },
+          "bullets": {
+            "en": [
+              "Pick (3 min): a sorting job with two labels.",
+              "Plan (5 min): what, labels, how many, how varied.",
+              "Collect (8 min): 12 labelled examples, one label wrong on purpose.",
+              "Swap (5 min): a partner hunts for problems.",
+              "Fix (4 min): three things to add or change."
+            ],
+            "ar": [
+              "الاختيار (٣ دقائق): مهمة فرز بتصنيفين.",
+              "التخطيط (٥ دقائق): ماذا، والتصنيفات، وكم مثالًا، وما مدى التنوّع.",
+              "الجمع (٨ دقائق): ١٢ مثالًا مصنّفًا، أحدها مصنّف خطأً عن قصد.",
+              "التبادل (٥ دقائق): يبحث زميلك عن المشكلات.",
+              "الإصلاح (٤ دقائق): ثلاثة أشياء تُضاف أو تُغيَّر."
+            ]
+          },
+          "details": {
+            "en": [
+              "Pick (3 min): Choose something to sort into two labels: ripe or unripe fruit, healthy or sick leaves, round or pointed leaves, neat or messy writing.",
+              "Plan (5 min): Write a four-line plan: what you will collect, the two labels, how many of each, and how you will make them varied (size, light, place, who made them).",
+              "Collect (8 min): Draw or gather 12 examples and write a label on each. Label one of them wrongly on purpose, and note which one on a hidden slip.",
+              "Swap (5 min): Give your examples to a partner. They look for the wrong label, count each label, and list what kinds of examples are missing.",
+              "Fix (4 min): Together, write three things that would make the dataset better: more of a label, more variety, or a label to correct. Then reveal the hidden mistake."
+            ],
+            "ar": [
+              "الاختيار (٣ دقائق): اختر شيئًا تفرزه في تصنيفين: فاكهة ناضجة أو غير ناضجة، أوراق سليمة أو مريضة، أوراق مستديرة أو مدبّبة، خط مرتّب أو غير مرتّب.",
+              "التخطيط (٥ دقائق): اكتب خطة من أربعة أسطر: ماذا ستجمع، والتصنيفان، وكم مثالًا من كل تصنيف، وكيف ستجعلها متنوّعة (الحجم، والإضاءة، والمكان، ومن صنعها).",
+              "الجمع (٨ دقائق): ارسم ١٢ مثالًا أو اجمعها، واكتب على كل منها تصنيفه. وصنّف واحدًا منها خطأً عن قصد، واكتب أيّها على ورقة مخفية.",
+              "التبادل (٥ دقائق): أعطِ أمثلتك لزميلك. يبحث عن التصنيف الخاطئ، ويعدّ كل تصنيف، ويكتب أنواع الأمثلة الناقصة.",
+              "الإصلاح (٤ دقائق): اكتبا معًا ثلاثة أشياء تحسّن مجموعة البيانات: مزيد من تصنيف ما، أو تنوّع أكبر، أو تصنيف يجب تصحيحه. ثم اكشف الخطأ المخفي."
+            ]
+          },
+          "note": {
+            "en": "Works in a group of three or four, or at home with a family member. Use drawings if there is no camera, and never photograph people without asking.",
+            "ar": "يصلح لمجموعة من ثلاثة أو أربعة، أو في البيت مع أحد أفراد أسرتك. استخدم الرسوم إن لم تتوفّر كاميرا، ولا تصوّر أحدًا أبدًا دون استئذانه."
+          },
+          "narration": {
+            "en": "Can your partner find the wrong label you hid?",
+            "ar": "هل يستطيع زميلك أن يجد التصنيف الخاطئ الذي أخفيته؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why can’t a model notice that one of its labels is wrong?",
+              "A dataset has 90 healthy leaves and 10 sick ones. What could go wrong?",
+              "Whose permission would you need to collect voices at school?"
+            ],
+            "ar": [
+              "لماذا لا يستطيع النموذج أن يلاحظ أن أحد تصنيفاته خاطئ؟",
+              "في مجموعة بيانات ٩٠ ورقة سليمة و١٠ أوراق مريضة. ما الذي قد يسوء؟",
+              "إذن مَن ستحتاج لتجمع أصواتًا في المدرسة؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Before you go",
+            "ar": "قبل أن تغادر"
+          },
+          "bullets": {
+            "en": [
+              "One thing my dataset would be missing, and how I would collect it fairly."
+            ],
+            "ar": [
+              "شيء واحد قد ينقص مجموعة بياناتي، وكيف سأجمعه بإنصاف."
+            ]
+          },
+          "narration": {
+            "en": "Plan your data first: it’s all your model will ever know.",
+            "ar": "خطّط لبياناتك أولًا، فهي كل ما سيعرفه نموذجك."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides for revising: Data first",
+            "ar": "شرائح للمراجعة: البيانات أولًا"
+          },
+          "pages": 6,
+          "base": "ai-s3-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Notes and worksheet: Data first",
+            "ar": "ملاحظات وورقة عمل: البيانات أولًا"
+          },
+          "pages": 2,
+          "base": "ai-s3-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-s3-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "S.SD.A",
+        "S.TA.A"
+      ]
+    },
+    {
+      "id": "ai-s3-2",
+      "title": {
+        "en": "How a classifier decides",
+        "ar": "كيف يقرّر المصنِّف"
+      },
+      "minutes": 16,
+      "tryTomorrow": {
+        "en": "Score ten fruits of one kind from 0 to 10 for size and for softness, mark each on a chart on squared paper, and label it ripe or not. Then score a new fruit and let its three nearest neighbours vote. Taste it or cut it open: were they right?",
+        "ar": "أعطِ عشر حبات فاكهة من نوع واحد درجة من ٠ إلى ١٠ للحجم وأخرى للطراوة، وضع كل حبة على رسم بياني على ورق مربّعات، وصنّفها ناضجة أو غير ناضجة. ثم أعطِ حبة جديدة درجتيها، ودع أقرب ثلاثة جيران لها يصوّتون. تذوّقها أو اقطعها: هل أصابوا؟"
+      },
+      "materials": {
+        "en": [
+          "Squared paper (or a grid you draw) and a pencil",
+          "Ten fruits of one kind, at home or at a market stall (ask first)",
+          "A ruler"
+        ],
+        "ar": [
+          "ورق مربّعات (أو شبكة ترسمها بنفسك) وقلم رصاص",
+          "عشر حبات فاكهة من نوع واحد، في البيت أو على بسطة في السوق (بعد الاستئذان)",
+          "مسطرة"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "How a classifier decides",
+            "ar": "كيف يقرّر المصنِّف"
+          },
+          "src": null,
+          "duration": 227,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "The mango seller",
+                "ar": "بائعة المانجو"
+              }
+            },
+            {
+              "at": 22.2,
+              "atBy": {
+                "en": 22.2,
+                "ar": 18.8
+              },
+              "label": {
+                "en": "Features",
+                "ar": "الخصائص"
+              }
+            },
+            {
+              "at": 54.8,
+              "atBy": {
+                "en": 54.8,
+                "ar": 50
+              },
+              "label": {
+                "en": "Nearest neighbours",
+                "ar": "أقرب الجيران"
+              }
+            },
+            {
+              "at": 142.5,
+              "atBy": {
+                "en": 142.5,
+                "ar": 131.4
+              },
+              "label": {
+                "en": "Choosing features, and the lab",
+                "ar": "اختيار الخصائص، والمختبر"
+              }
+            },
+            {
+              "at": 191.1,
+              "atBy": {
+                "en": 191.1,
+                "ar": 183.1
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A new mango’s five nearest neighbours: three ripe, two not ripe. What does the classifier say?",
+                "ar": "أقرب خمس ثمار إلى ثمرة مانجو جديدة: ثلاث ناضجة واثنتان غير ناضجتين. ماذا يقول المصنِّف؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Not ripe: two is enough",
+                    "ar": "غير ناضجة: اثنتان تكفيان"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "It needs a rule first",
+                    "ar": "يحتاج إلى قاعدة أولًا"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Ripe: three of five",
+                    "ar": "ناضجة: ثلاث من خمس"
+                  }
+                }
+              ],
+              "answer": "c",
+              "explain": {
+                "en": "It goes with the majority: three of its five nearest neighbours are ripe, so it says ripe. Nearest neighbours needs no rules, only labelled examples.",
+                "ar": "يتّبع المصنِّف الأغلبية: ثلاث من أقرب خمس ثمار إليها ناضجة، فيقول «ناضجة». وطريقة أقرب الجيران لا تحتاج إلى قواعد، بل إلى أمثلة مصنّفة فقط."
+              }
+            },
+            "at": 120.94,
+            "atBy": {
+              "en": 120.94,
+              "ar": 109.93
+            }
+          },
+          "transcript": {
+            "en": "At the market this morning, a mango seller judged a mango in two seconds. One squeeze, one look at its colour: “Eat it tomorrow.” She’s handled thousands, so she compares. Can a computer do that? Today: how a classifier decides, by asking its neighbours. A computer can’t squeeze a mango, so we describe it with numbers. Softness, from zero to ten. Colour, from green at zero to yellow at ten. Measurable numbers like these are called features. Now put every mango you’ve checked on a chart: softness along the bottom, colour up the side. Each is a dot, marked ripe or not. Ripe ones gather in one corner, unripe in the other. A new mango arrives, with no label. Find the three closest dots: its nearest neighbours. Two are ripe and one isn’t, so the majority says ripe. No rules, just: which mangoes is it most like? A classifier is a model that puts a new example into a class, like ripe or not ripe. Nearest neighbours is one simple kind: it compares the new example with stored ones, and goes with the majority. It’s like a grandmother who can tell when it will rain. She remembers days that felt like today: the same heavy air, the same dark clouds. Most of them ended in rain, so she takes the washing in. Her nearest neighbours are the days most like today! Quick check! A new mango’s five nearest neighbours: three ripe, two not. What does the classifier say? Ripe: three of its five neighbours are ripe. But the number you ask, called k, matters. Ask only one, and a single odd or mislabelled mango decides. Ask too many, and faraway mangoes outvote close ones. In between usually works best. Features matter as much as neighbours. Softness and colour separate ripe from unripe, so close neighbours agree. Weight alone doesn’t: a big unripe mango sits right beside a big ripe one, and its neighbours mislead. In the app, mangoes sit on a chart: filled circles are ready to eat, open squares not yet. Tap to place a new mango, then slide k from one to fifteen and watch the answer change. Then try the data with mistakes. Your turn. Your model must tell handwritten sevens from ones. Which feature helps more? How wide the digit is: a seven is wider than a one, whatever the ink. Remember: describe each example with features you can measure. A new example takes the class of most of its k nearest neighbours. And choose features that separate classes. Try it yourself: score ten fruits for size and softness, from zero to ten. Mark each on a chart, labelled ripe or not. Then score a new fruit, and let its three nearest neighbours decide.",
+            "ar": "الصبح ده في السوق، بيّاعة مانجة حكمت على مانجاية في ثانيتين. دوسة واحدة، وبصّة على اللون: «كُلها بكرة.» هي مسكت آلاف، فبتقارن. الكمبيوتر يقدر يعمل كده؟ النهارده: إزاي المصنِّف بيقرّر، بإنه يسأل جيرانه. الكمبيوتر ما يقدرش يدوس على المانجاية، فبنوصفها بأرقام. الطراوة، من صفر لعشرة. اللون، من أخضر عند الصفر لأصفر عند العشرة. الأرقام اللي بتتقاس كده اسمها خصائص. دلوقتي حط كل مانجاية فحصتها على رسم بياني: الطراوة على الخط اللي تحت، واللون على الخط اللي على الجنب. كل واحدة بتبقى نقطة، مستوية أو لأ. المستوية بتتجمع في ركن، واللي مش مستوية في التاني. جت مانجاية جديدة من غير تصنيف. دوّر على أقرب تلات نقط ليها: أقرب جيرانها. اتنين مستويين وواحدة لأ، فالأغلبية بتقول مستوية. مافيش قواعد، بس سؤال: هي شبه أنهي مانجات أكتر؟ المصنِّف نموذج بيحط المثال الجديد في فئة، زي مستوية أو مش مستوية. وطريقة أقرب الجيران نوع بسيط منه: بتقارن المثال الجديد بالأمثلة المتخزنة، وتمشي ورا الأغلبية. زي الجدة اللي بتعرف إمتى الدنيا هتمطر. بتفتكر أيام كانت شبه النهارده: نفس الجو التقيل، ونفس السحاب الغامق. أغلبها مطرت، فبتلمّ الغسيل. أقرب جيرانها هما الأيام اللي شبه النهارده! سؤال سريع! أقرب خمس جيران لمانجاية جديدة: تلاتة مستويين واتنين لأ. المصنِّف هيقول إيه؟ مستوية: تلاتة من الخمس جيران مستويين. بس العدد اللي بتسأله، واسمه k، بيفرق. لو سألت واحد بس، مانجاية غريبة أو متصنّفة غلط هي اللي هتقرر. ولو سألت كتير أوي، البعيدين هيغلبوا القريبين. وعدد في النص غالبًا هو اللي بينفع. الخصائص مهمة زي الجيران بالظبط. الطراوة واللون بيفرّقوا المستوية من اللي مش مستوية، فالجيران القريبين بيتفقوا. لكن الوزن لوحده لأ: مانجاية كبيرة مش مستوية بتقعد جنب مانجاية كبيرة مستوية، فالجيران بيلخبطوا المصنِّف. في التطبيق، المانجات على رسم بياني: الدواير المليانة جاهزة للأكل، والمربعات الفاضية لسه. المس الرسم علشان تحط مانجاية جديدة، وبعدين حرّك k من واحد لخمستاشر وشوف الإجابة بتتغير إزاي. بعد كده جرّب البيانات اللي فيها أخطاء. دورك. نموذجك لازم يفرّق بين السبعة والواحد المكتوبين بخط الإيد. أنهي خاصية بتساعد أكتر؟ عرض الرقم: السبعة أعرض من الواحد، بأي حبر. افتكر: اوصف كل مثال بخصائص تقدر تقيسها. المثال الجديد بياخد فئة أغلب أقرب k جيران ليه. واختار خصائص بتفرّق بين الفئات. جرّبها بنفسك: إدّي عشر حبّات فاكهة درجة للحجم ودرجة للطراوة، من صفر لعشرة. حط كل واحدة على رسم بياني، واكتب عليها مستوية ولا لأ. وبعدين قيّم حبّاية جديدة، وخلّي أقرب تلات جيران ليها يقرروا."
+          },
+          "sources": {
+            "en": "/media/ai-s3-2/video-en.mp4",
+            "ar": "/media/ai-s3-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-s3-2/captions-en.vtt",
+            "ar": "/media/ai-s3-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-s3-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-s3-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-s3-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-s3-2/light/audio/en.opus",
+              "manifest.json": "/media/ai-s3-2/light/manifest.json",
+              "scenes.json": "/media/ai-s3-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-s3-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-s3-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 510,
+              "ar": 495
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Features, neighbours and a vote",
+            "ar": "خصائص وجيران وتصويت"
+          },
+          "body": {
+            "en": "A classifier is a model that puts a new example into a class, such as “ripe” or “not ripe”. One of the simplest kinds, nearest neighbours, describes every example with measurable numbers called features, then lets the examples most like the new one vote.\n\nA computer can’t squeeze a mango, so we give it numbers. Softness from 0 to 10 and colour from green (0) to yellow (10) are features: things you can measure the same way every time. Put each mango you have already checked on a chart, softness along the bottom and colour up the side, and each one becomes a dot with its label. Ripe mangoes gather in one corner and unripe ones in the opposite corner. In the lab’s chart, ripe mangoes are filled circles and unripe ones are open squares.\n\nNow a new mango arrives with no label. Find the k dots closest to it: its k nearest neighbours. If k is 3 and two of them are ripe, the majority says “ripe”. There are no rules in this model at all: the stored examples are the model. That is why it needs good, correctly labelled examples.\n\nThe number k matters. With k = 1, a single odd or mislabelled mango decides the answer. With a very large k, faraway mangoes outvote the close ones and the details are lost. A value in between usually works best, and an odd number avoids ties between two classes.\n\nFeatures matter even more. Softness and colour separate ripe from unripe, so close neighbours agree. Weight alone doesn’t: a big unripe mango sits right beside a big ripe one, so its neighbours mislead. Here, choosing features is a human decision. Bigger models, like the network in lesson 1, find their own features in the pixels, but people still choose the examples they learn from. For handwriting, a useful feature might be how wide a digit is; for voices, how high or low they are. Before you trust a classifier, ask which features it measures.",
+            "ar": "المصنِّف نموذج يضع المثال الجديد في فئة، مثل «ناضجة» أو «غير ناضجة». وأحد أبسط أنواعه، طريقة أقرب الجيران، يصف كل مثال بأرقام قابلة للقياس تُسمّى الخصائص، ثم يترك الأمثلة الأشبه بالمثال الجديد تصوّت.\n\nلا يستطيع الحاسوب أن يضغط ثمرة المانجو، لذلك نعطيه أرقامًا. فالطراوة من ٠ إلى ١٠، واللون من الأخضر (٠) إلى الأصفر (١٠)، خصائص: أشياء تستطيع قياسها بالطريقة نفسها كل مرة. ضع كل ثمرة فحصتها من قبل على رسم بياني، الطراوة على المحور الأفقي واللون على المحور الرأسي، فتصبح كل ثمرة نقطة معها تصنيفها. وستجد الثمار الناضجة تتجمّع في ركن، وغير الناضجة في الركن المقابل. وفي رسم المختبر، الثمار الناضجة دوائر مملوءة، وغير الناضجة مربعات مفرغة.\n\nتصل الآن ثمرة جديدة بلا تصنيف. ابحث عن أقرب k نقاط إليها: هذه هي أقرب جيرانها. فإذا كان k يساوي ٣، وكانت اثنتان منها ناضجتين، تقول الأغلبية: «ناضجة». لا توجد في هذا النموذج أي قواعد، فالأمثلة المحفوظة هي النموذج نفسه. ولهذا يحتاج إلى أمثلة جيدة مصنّفة تصنيفًا صحيحًا.\n\nوالعدد k مهم. فمع k = ١، تحسم الإجابةَ ثمرةٌ واحدة غريبة أو مصنّفة خطأً. ومع k كبير جدًا، تتغلّب الثمار البعيدة على القريبة وتضيع التفاصيل. والقيمة المتوسطة تنجح عادةً أكثر، والعدد الفردي يمنع التعادل بين فئتين.\n\nأما الخصائص فأهم من ذلك. فالطراوة واللون يفصلان الناضجة عن غير الناضجة، فيتّفق الجيران القريبون. أما الوزن وحده فلا يفصلهما: ثمرة كبيرة غير ناضجة تقع بجوار ثمرة كبيرة ناضجة، فيضلّلها جيرانها. واختيار الخصائص هنا قرار بشري. أما النماذج الأكبر، مثل الشبكة في الدرس الأول، فتجد خصائصها بنفسها في البكسلات، لكن الناس هم من يختارون الأمثلة التي تتعلّم منها. ففي خط اليد قد تكون الخاصية المفيدة عرض الرقم، وفي الأصوات مدى حدّتها أو غلظتها. وقبل أن تثق بمصنِّف، اسأل: ما الخصائص التي يقيسها؟"
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Classifier",
+                "ar": "المصنِّف"
+              },
+              "def": {
+                "en": "A model that puts a new example into one of several classes, such as “ripe” or “not ripe”.",
+                "ar": "نموذج يضع المثال الجديد في إحدى فئات عدة، مثل «ناضجة» أو «غير ناضجة»."
+              }
+            },
+            {
+              "term": {
+                "en": "Feature",
+                "ar": "الخاصية"
+              },
+              "def": {
+                "en": "A number you can measure about every example in the same way, such as softness from 0 to 10.",
+                "ar": "رقم تستطيع قياسه في كل مثال بالطريقة نفسها، مثل الطراوة من ٠ إلى ١٠."
+              }
+            },
+            {
+              "term": {
+                "en": "Nearest neighbours",
+                "ar": "أقرب الجيران"
+              },
+              "def": {
+                "en": "A way to classify: find the stored examples most like the new one, and go with the label most of them have.",
+                "ar": "طريقة للتصنيف: تجد الأمثلة المحفوظة الأشبه بالمثال الجديد، وتأخذ التصنيف الذي يحمله أغلبها."
+              }
+            },
+            {
+              "term": {
+                "en": "k",
+                "ar": "العدد k"
+              },
+              "def": {
+                "en": "How many neighbours you ask. Too few, and one odd example decides; too many, and faraway examples outvote close ones.",
+                "ar": "عدد الجيران الذين تسألهم. إن كان قليلًا جدًا حسم مثالٌ غريب واحد الإجابة، وإن كان كثيرًا جدًا تغلّبت الأمثلة البعيدة على القريبة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Your model must tell handwritten sevens from ones. Which feature helps more?",
+            "ar": "على نموذجك أن يميّز بين الرقمين ٧ و١ المكتوبين بخط اليد. أيّ خاصية تساعد أكثر؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "The colour of the ink",
+                "ar": "لون الحبر"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "How wide the digit is",
+                "ar": "عرض الرقم"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The writer’s name",
+                "ar": "اسم الكاتب"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "A seven is wider than a one, whoever writes it and in any ink. Ink colour and names say nothing about which digit it is, so neighbours chosen by them would mislead.",
+            "ar": "الرقم ٧ أعرض من الرقم ١ أيًّا كان كاتبه وأيًّا كان لون الحبر. أما لون الحبر والاسم فلا يدلّان على الرقم، فالجيران الذين نختارهم بهما سيضلّلون المصنِّف."
+          }
+        },
+        {
+          "type": "order",
+          "id": "p2",
+          "prompt": {
+            "en": "Put the steps of classifying a new mango by its nearest neighbours in order.",
+            "ar": "رتّب خطوات تصنيف ثمرة مانجو جديدة بطريقة أقرب الجيران."
+          },
+          "steps": [
+            {
+              "en": "Measure its features: softness and colour",
+              "ar": "قِس خصائصها: الطراوة واللون"
+            },
+            {
+              "en": "Place it on the chart with the checked mangoes",
+              "ar": "ضعها على الرسم البياني مع الثمار المفحوصة"
+            },
+            {
+              "en": "Find the k closest dots",
+              "ar": "ابحث عن أقرب k نقاط إليها"
+            },
+            {
+              "en": "Count the labels of those neighbours",
+              "ar": "عُدّ تصنيفات هؤلاء الجيران"
+            },
+            {
+              "en": "Give it the label most of them have",
+              "ar": "أعطها التصنيف الذي يحمله أغلبهم"
+            }
+          ],
+          "explain": {
+            "en": "You need its features before it has a place on the chart. Then its closest neighbours vote, and the majority label wins.",
+            "ar": "تحتاج أولًا إلى خصائصها لتجد لها مكانًا على الرسم. ثم يصوّت أقرب جيرانها، ويفوز تصنيف الأغلبية."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p3",
+          "prompt": {
+            "en": "With k = 1, a single mislabelled example can change the answer for new mangoes near it.",
+            "ar": "مع k = ١، يستطيع مثال واحد مصنّف خطأً أن يغيّر الإجابة لثمار المانجو الجديدة القريبة منه."
+          },
+          "answer": true,
+          "explain": {
+            "en": "With k = 1 the closest example decides alone, so one wrong label misleads every new mango that lands next to it. Asking a few more neighbours outvotes it.",
+            "ar": "مع k = ١ يقرّر المثال الأقرب وحده، فيضلّل تصنيف خاطئ واحد كل ثمرة جديدة تقع بجواره. وسؤال عدد أكبر قليلًا من الجيران يتغلّب عليه."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: tap the chart to place new mangoes and see what their nearest neighbours say. Slide k from 1 to 15 and watch the answer and the shaded map change. Then switch to the data with mistakes and find a k that copes well.",
+            "ar": "جرّب: المس الرسم لتضع ثمار مانجو جديدة، وانظر ماذا يقول أقرب جيرانها. حرّك k من ١ إلى ١٥ وراقب كيف تتغيّر الإجابة والخريطة المظلّلة. ثم انتقل إلى البيانات التي فيها أخطاء، وابحث عن قيمة k تتعامل معها جيدًا."
+          },
+          "tool": "knn"
+        },
+        {
+          "type": "scenario",
+          "id": "p4",
+          "prompt": {
+            "en": "Which features would you choose?",
+            "ar": "أيّ الخصائص ستختار؟"
+          },
+          "who": {
+            "en": "Ms Salma Haddad, maths",
+            "ar": "أ. سلمى حدّاد، الرياضيات"
+          },
+          "initial": {
+            "en": "S",
+            "ar": "س"
+          },
+          "situation": {
+            "en": "Your group wants a classifier that sorts bean seeds into “good to plant” and “damaged”, scoring each seed by hand. Ms Salma asks which two features you will measure.",
+            "ar": "تريد مجموعتك مصنِّفًا يفرز بذور الفاصوليا إلى «صالحة للزراعة» و«تالفة»، وتعطي كل بذرة درجاتها يدويًّا. وتسألكم أ. سلمى: ما الخاصيتان اللتان ستقيسونهما؟"
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Colour, and the date we collected the seed.”",
+                "ar": "«اللون، وتاريخ جمع البذرة.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Colour may help, but the date says nothing about damage. Seeds collected on the same day would become neighbours for no good reason.",
+                "ar": "قد يساعد اللون، لكن التاريخ لا يدلّ على التلف. فالبذور التي جُمعت في اليوم نفسه ستصبح جيرانًا بلا سبب وجيه."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Colour, and how many holes or cracks it has, from 0 to 5.”",
+                "ar": "«اللون، وعدد ما فيها من ثقوب أو شقوق، من ٠ إلى ٥.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Both features describe the seed itself, so damaged seeds gather together and their neighbours agree.",
+                "ar": "كلتا الخاصيتين تصفان البذرة نفسها، فتتجمّع البذور التالفة معًا ويتّفق جيرانها."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Only weight: damaged seeds are lighter.”",
+                "ar": "«الوزن فقط: البذور التالفة أخفّ.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Weight can help, but on its own it puts a small healthy seed beside a damaged one. One feature often isn’t enough.",
+                "ar": "قد يساعد الوزن، لكنه وحده يضع بذرة صغيرة سليمة بجوار بذرة تالفة. وكثيرًا ما لا تكفي خاصية واحدة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each classifier to a useful feature.",
+            "ar": "صِل كل مصنِّف بخاصية مفيدة له."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Ripe or unripe mango",
+                "ar": "مانجو ناضجة أو غير ناضجة"
+              },
+              "right": {
+                "en": "Softness, from 0 to 10",
+                "ar": "الطراوة، من ٠ إلى ١٠"
+              }
+            },
+            {
+              "left": {
+                "en": "Handwritten 7 or 1",
+                "ar": "الرقم ٧ أو ١ بخط اليد"
+              },
+              "right": {
+                "en": "How wide the digit is",
+                "ar": "عرض الرقم"
+              }
+            },
+            {
+              "left": {
+                "en": "Healthy or sick leaf",
+                "ar": "ورقة سليمة أو مريضة"
+              },
+              "right": {
+                "en": "How much of the leaf is spotted",
+                "ar": "مساحة البقع على الورقة"
+              }
+            },
+            {
+              "left": {
+                "en": "Child’s or adult’s voice",
+                "ar": "صوت طفل أو صوت بالغ"
+              },
+              "right": {
+                "en": "How high or low the voice is",
+                "ar": "حدّة الصوت أو غلظته"
+              }
+            }
+          ],
+          "explain": {
+            "en": "A useful feature changes between the classes and can be measured the same way every time.",
+            "ar": "الخاصية المفيدة تختلف بين الفئات، ويمكن قياسها بالطريقة نفسها كل مرة."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of something you could sort with a classifier. Which two features would you measure, and why those?",
+            "ar": "فكّر في شيء تستطيع فرزه بمصنِّف. ما الخاصيتان اللتان ستقيسهما، ولماذا هاتان بالذات؟"
+          },
+          "placeholder": {
+            "en": "For example: “Ripe and unripe tomatoes: softness and colour, because both change as a tomato ripens. Size wouldn’t help.”",
+            "ar": "مثلًا: «طماطم ناضجة وغير ناضجة: الطراوة واللون، لأنهما يتغيّران مع نضج الطماطم. أما الحجم فلن يساعد.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Be the classifier",
+            "ar": "مشروع: كن أنت المصنِّف"
+          },
+          "task": {
+            "en": "Take ten fruits of one kind (at home, or at a stall after asking the seller). Score each one from 0 to 10 for softness and for size, and decide whether it is ripe. On squared paper, draw a chart with softness along the bottom and size up the side, and mark each fruit as a filled dot (ripe) or an open dot (not ripe). Then score a new fruit, find its three nearest neighbours and let them vote. Taste it or cut it open: were they right? Finally, try colour instead of size and see whether the dots separate better.",
+            "ar": "خذ عشر حبات فاكهة من نوع واحد (في البيت، أو على بسطة بعد استئذان البائع). أعطِ كل حبة درجة من ٠ إلى ١٠ للطراوة وأخرى للحجم، وقرّر هل هي ناضجة. ارسم على ورق مربّعات رسمًا بيانيًّا، الطراوة على المحور الأفقي والحجم على الرأسي، وضع كل حبة نقطةً مملوءة (ناضجة) أو مفرغة (غير ناضجة). ثم أعطِ حبة جديدة درجتيها، وابحث عن أقرب ثلاثة جيران لها ودعهم يصوّتون. تذوّقها أو اقطعها: هل أصابوا؟ وأخيرًا، جرّب اللون بدل الحجم، وانظر هل تنفصل النقاط بصورة أفضل."
+          },
+          "deliverable": {
+            "en": "A photo of your chart (no faces), and two sentences: what the three neighbours said, and which features worked best.",
+            "ar": "صورة لرسمك البياني (بلا وجوه)، وجملتان: ماذا قال الجيران الثلاثة، وأيّ الخصائص نجحت أكثر."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: describe an example with features I can measure.",
+                "ar": "أستطيع: أن أصف مثالًا بخصائص أستطيع قياسها."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: classify a new example by its nearest neighbours, and explain how k changes the answer.",
+                "ar": "أستطيع: أن أصنّف مثالًا جديدًا بأقرب جيرانه، وأن أشرح كيف يغيّر العدد k الإجابة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: explain why some features work better than others.",
+                "ar": "أستطيع: أن أشرح لماذا تنجح بعض الخصائص أكثر من غيرها."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "How a classifier decides",
+            "ar": "كيف يقرّر المصنِّف"
+          },
+          "note": {
+            "en": "AI · Level 3 · Lesson 2",
+            "ar": "الذكاء الاصطناعي، المستوى ٣، الدرس ٢"
+          },
+          "narration": {
+            "en": "How can a computer judge a mango it has never seen?",
+            "ar": "كيف يحكم الحاسوب على ثمرة مانجو لم يرها من قبل؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Describe each example by features: numbers you can measure.",
+              "Classify a new example by its nearest neighbours, and see how the number of neighbours changes the answer.",
+              "Explain why the choice of features matters."
+            ],
+            "ar": [
+              "نصف كل مثال بخصائص: أرقام نستطيع قياسها.",
+              "نصنّف مثالًا جديدًا بأقرب جيرانه، ونرى كيف يغيّر عدد الجيران الإجابة.",
+              "نشرح لماذا يهمّ اختيار الخصائص."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Features are numbers you can measure, like softness from 0 to 10.",
+              "A new example takes the class most of its k nearest neighbours have. With k = 1 one example decides; a huge k loses the details.",
+              "Good features separate the classes: softness and colour do, weight alone doesn’t."
+            ],
+            "ar": [
+              "الخصائص أرقام تستطيع قياسها، مثل الطراوة من ٠ إلى ١٠.",
+              "يأخذ المثال الجديد فئة أغلب أقرب k جيران له. ومع k = ١ يحسم مثال واحد الإجابة، ومع k كبير جدًا تضيع التفاصيل.",
+              "الخصائص الجيدة تفصل بين الفئات: الطراوة واللون يفعلان ذلك، أما الوزن وحده فلا."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Neighbours on paper",
+            "ar": "الجيران على الورق"
+          },
+          "bullets": {
+            "en": [
+              "Measure (5 min): eight leaves from two kinds of tree.",
+              "Chart (5 min): plot them as labelled dots.",
+              "Mystery (5 min): a partner measures a new leaf.",
+              "Vote (5 min): ask 1, 3 and 5 neighbours.",
+              "Swap features (5 min): try a poor feature instead."
+            ],
+            "ar": [
+              "القياس (٥ دقائق): ثماني أوراق من نوعين من الشجر.",
+              "الرسم (٥ دقائق): ضعها نقاطًا مصنّفة.",
+              "اللغز (٥ دقائق): يقيس زميلك ورقة جديدة.",
+              "التصويت (٥ دقائق): اسأل ١ و٣ و٥ جيران.",
+              "تبديل الخصائص (٥ دقائق): جرّب خاصية ضعيفة بدلًا منها."
+            ]
+          },
+          "details": {
+            "en": [
+              "Measure (5 min): Collect eight leaves from two kinds of tree (or draw eight shapes in two groups). Measure each leaf’s length and width in centimetres and write its label: tree A or tree B.",
+              "Chart (5 min): On squared paper, draw a chart with length along the bottom and width up the side. Mark tree A leaves as filled dots and tree B leaves as open dots.",
+              "Mystery (5 min): A partner secretly picks a new leaf, measures it, and tells you only its length and width. Mark it on the chart as a triangle.",
+              "Vote (5 min): Draw lines to its 1, 3 and 5 nearest dots, and write what each k says. Then your partner reveals the real tree. Which k was right?",
+              "Swap features (5 min): Replace width with a poor feature, such as how dusty the leaf is. Do the two kinds still separate? Write one sentence on why features matter."
+            ],
+            "ar": [
+              "القياس (٥ دقائق): اجمع ثماني أوراق من نوعين من الشجر (أو ارسم ثمانية أشكال في مجموعتين). قِس طول كل ورقة وعرضها بالسنتيمتر، واكتب تصنيفها: الشجرة (أ) أو الشجرة (ب).",
+              "الرسم (٥ دقائق): ارسم على ورق مربّعات رسمًا بيانيًّا، الطول على المحور الأفقي والعرض على الرأسي. ضع أوراق الشجرة (أ) نقاطًا مملوءة، وأوراق الشجرة (ب) نقاطًا مفرغة.",
+              "اللغز (٥ دقائق): يختار زميلك سرًّا ورقة جديدة، ويقيسها، ولا يخبرك إلا بطولها وعرضها. ضعها على الرسم مثلثًا.",
+              "التصويت (٥ دقائق): ارسم خطوطًا إلى أقرب ١ و٣ و٥ نقاط إليها، واكتب ماذا تقول كل قيمة لـ k. ثم يكشف زميلك الشجرة الحقيقية. أيّ قيمة لـ k أصابت؟",
+              "تبديل الخصائص (٥ دقائق): ضع مكان العرض خاصية ضعيفة، مثل مقدار الغبار على الورقة. هل ما زال النوعان منفصلين؟ اكتب جملة واحدة عن سبب أهمية الخصائص."
+            ]
+          },
+          "note": {
+            "en": "Works in pairs or at home. Any two kinds of objects will do: leaves from two trees, two kinds of beans, or two shapes you draw. Use a ruler for every measurement.",
+            "ar": "يصلح للعمل في ثنائيات أو في البيت. ويكفي أي نوعين من الأشياء: أوراق من شجرتين، أو نوعان من الفاصوليا، أو شكلان ترسمهما. واستخدم المسطرة في كل قياس."
+          },
+          "narration": {
+            "en": "Did the answer change when you asked more neighbours?",
+            "ar": "هل تغيّرت الإجابة حين سألت جيرانًا أكثر؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why might k = 1 give a strange answer?",
+              "Which two features would you use to sort bananas into ripe and not ripe?",
+              "Can a classifier be better than the features it is given? Why?"
+            ],
+            "ar": [
+              "لماذا قد يعطي k = ١ إجابة غريبة؟",
+              "ما الخاصيتان اللتان ستستخدمهما لفرز الموز إلى ناضج وغير ناضج؟",
+              "هل يمكن أن يكون المصنِّف أفضل من الخصائص التي يُعطاها؟ لماذا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Before you go",
+            "ar": "قبل أن تغادر"
+          },
+          "bullets": {
+            "en": [
+              "One feature I would measure for a classifier of my own, and why."
+            ],
+            "ar": [
+              "خاصية واحدة سأقيسها لمصنِّف من صنعي، ولماذا."
+            ]
+          },
+          "narration": {
+            "en": "Good features make good neighbours.",
+            "ar": "الخصائص الجيدة تصنع جيرانًا جيدين."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides for revising: How a classifier decides",
+            "ar": "شرائح للمراجعة: كيف يقرّر المصنِّف"
+          },
+          "pages": 6,
+          "base": "ai-s3-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Notes and worksheet: How a classifier decides",
+            "ar": "ملاحظات وورقة عمل: كيف يقرّر المصنِّف"
+          },
+          "pages": 2,
+          "base": "ai-s3-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-s3-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "S.TA.A"
+      ]
+    },
+    {
+      "id": "ai-s3-3",
+      "title": {
+        "en": "Test it honestly",
+        "ar": "اختبره بأمانة"
+      },
+      "minutes": 16,
+      "tryTomorrow": {
+        "en": "Make up a secret rule for a new sign, such as 3 ★ 4 = 13 (multiply, then add 1), and write five ★ sums with their answers. Ask a friend to memorise the five answers without hunting for the rule, test them on the same five, then give them five new ★ sums. If they only memorised, they’ll struggle: explain overfitting to them using what just happened.",
+        "ar": "اخترع قاعدة سرّية لعلامة جديدة، مثل ٣ ★ ٤ = ١٣ (اضرب ثم أضف ١)، واكتب خمس مسائل بهذه العلامة مع إجاباتها. اطلب من صديق أن يحفظ الإجابات الخمس دون أن يبحث عن القاعدة، واختبره في المسائل الخمس نفسها، ثم أعطه خمس مسائل جديدة. فإن كان قد حفظ فقط فسيتعثّر: اشرح له الإفراط في المطابقة بما حدث للتو."
+      },
+      "materials": {
+        "en": [
+          "Paper and a pen",
+          "Ten made-up ★ sums that follow one secret rule: five to memorise and five new ones",
+          "A friend or family member to test"
+        ],
+        "ar": [
+          "ورقة وقلم",
+          "عشر مسائل مخترعة بالعلامة ★ تتبع قاعدة سرّية واحدة: خمس للحفظ وخمس جديدة",
+          "صديق أو أحد أفراد الأسرة لتختبره"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Test it honestly",
+            "ar": "اختبره بأمانة"
+          },
+          "src": null,
+          "duration": 220,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Twenty out of twenty?",
+                "ar": "عشرون من عشرين؟"
+              }
+            },
+            {
+              "at": 17.7,
+              "atBy": {
+                "en": 17.7,
+                "ar": 17.6
+              },
+              "label": {
+                "en": "An honest test",
+                "ar": "اختبار صادق"
+              }
+            },
+            {
+              "at": 63.3,
+              "atBy": {
+                "en": 63.3,
+                "ar": 64.7
+              },
+              "label": {
+                "en": "Overfitting",
+                "ar": "الإفراط في المطابقة"
+              }
+            },
+            {
+              "at": 133.5,
+              "atBy": {
+                "en": 133.5,
+                "ar": 130
+              },
+              "label": {
+                "en": "Which mistake matters, and the lab",
+                "ar": "أيّ خطأ أهم، والمختبر"
+              }
+            },
+            {
+              "at": 181.6,
+              "atBy": {
+                "en": 181.6,
+                "ar": 176.7
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A model gets 20 out of 20 on its training photos, but 11 out of 20 on new ones. What’s going on?",
+                "ar": "حصل نموذج على ٢٠ من ٢٠ في صور التدريب، لكنه حصل على ١١ من ٢٠ في صور جديدة. ماذا يحدث؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "It’s ready to use",
+                    "ar": "إنه جاهز للاستخدام"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "It memorised: overfitting",
+                    "ar": "لقد حفظ: إنه الإفراط في المطابقة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "The new photos are wrong",
+                    "ar": "الصور الجديدة خاطئة"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "A big gap between the training score and the score on new photos is the sign of overfitting: it memorised its examples instead of learning the pattern. The new photos are the honest test.",
+                "ar": "الفجوة الكبيرة بين درجة التدريب والدرجة على الصور الجديدة علامة الإفراط في المطابقة: فقد حفظ النموذج أمثلته بدل أن يتعلّم النمط. والصور الجديدة هي الاختبار الصادق."
+              }
+            },
+            "at": 118.01,
+            "atBy": {
+              "en": 118.01,
+              "ar": 112.95
+            }
+          },
+          "transcript": {
+            "en": "One of my students said her leaf model was perfect: twenty out of twenty! I asked which photos she’d tested it on. The same twenty she’d trained it on. Today: how to test a model honestly, and what its mistakes tell you. Before you train, put about one in five examples aside. The model never sees them while it learns. They’re your test set, the only fair way to measure it. Then test. Show the model each test example and compare its answer with the real label. Count the right ones: seventeen out of twenty, say. That’s fair, because they were new to it. Now look at the three wrong ones: there are two kinds. A false positive says yes when it’s no: “sick” for a healthy leaf. That’s a false alarm. A false negative says no when it’s yes: “healthy” for a sick leaf. That’s a miss. Why not test on the training examples? Because a model can memorise them. Overfitting is when a model is perfect on its training examples, but poor on new ones. It memorised, instead of learning the pattern. When I moved to a new town, I found my way to school by landmarks: left at the red kiosk. Then someone painted the kiosk blue, and I was lost! My neighbour could read the map, so she found the way from anywhere. Landmarks are memorising; the map is learning. Quick check! A model gets twenty out of twenty on its training photos, but eleven on new ones. What’s going on? It memorised: overfitting. A big gap between the training and test scores is the warning sign. More, and more varied, examples help. So does a simpler model that can’t just memorise. Which mistake matters more depends on your model. For a leaf-disease spotter, a miss is worse: one sick plant can infect the field. For a spam filter, a false alarm is worse: a message from school gets hidden. In the app, circles are the training examples and squares are new ones. Give the model more freedom, a bendier curve, and watch it hit every circle while missing the squares. Switch to forty examples, and it calms down. Your turn. Your model spots malaria in microscope photos of blood. Which mistake matters more? Missing a real case: a sick person could go untreated, while a false alarm means a second test. Remember: keep a test set apart, and count right and wrong on it. Perfect on training, poor on new examples: that’s overfitting. And decide which mistake costs more. Try it yourself: ask a friend to memorise the answers to five sums. Then give them five new sums of the same kind. If they only memorised, they’ll struggle. Then explain overfitting, using what just happened.",
+            "ar": "واحدة من طالباتي قالتلي إن نموذج الورق بتاعها مظبوط تمامًا: عشرين من عشرين! سألتها اختبرته على أنهي صور. نفس العشرين صورة اللي درّبته عليهم. النهارده: إزاي تختبر النموذج بأمانة، وغلطاته بتقولك إيه. قبل ما تدرّب، شيل على جنب حوالي مثال من كل خمسة. النموذج عمره ما بيشوفهم وهو بيتعلم. دول بيانات الاختبار بتاعتك، والطريقة العادلة الوحيدة إنك تقيسه. بعد كده اختبر. ورّي النموذج كل مثال من أمثلة الاختبار وقارن إجابته بالتصنيف الحقيقي. عِدّ الإجابات الصح: سبعتاشر من عشرين مثلًا. دي درجة عادلة، لأنهم كانوا جداد عليه. دلوقتي بص على التلات غلطات: هما نوعين. الإيجابي الكاذب بيقول أيوه والإجابة لأ: «مريضة» لورقة سليمة. ده إنذار كاذب. السلبي الكاذب بيقول لأ والإجابة أيوه: «سليمة» لورقة مريضة. دي حالة فاتته. طب ليه ما نختبرش على أمثلة التدريب؟ لأن النموذج ممكن يحفظها. الإفراط في المطابقة معناه إن النموذج يبقى ممتاز في أمثلة تدريبه، وضعيف في الجديدة. يعني حفظ، بدل ما يتعلم النمط. لما نقلت لبلد جديدة، كنت بوصل المدرسة بالعلامات: شمال عند الكشك الأحمر. وبعدين حد دهن الكشك أزرق، وتُهت! جارتي كانت بتعرف تقرا الخريطة، فكانت بتلاقي الطريق من أي حتة. العلامات حفظ؛ والخريطة فهم. سؤال سريع! نموذج جاب عشرين من عشرين في صور التدريب، لكن حداشر بس في الصور الجديدة. إيه اللي بيحصل؟ حفظ: إفراط في المطابقة. الفرق الكبير بين درجة التدريب ودرجة الاختبار هو جرس الإنذار. الأمثلة الأكتر والأكتر تنوعًا بتساعد. وكمان النموذج الأبسط، اللي ما يقدرش يحفظ وخلاص. أنهي غلطة أخطر، ده بيعتمد على نموذجك. في كاشف أمراض الورق، الحالة الفايتة أوحش: نبتة واحدة مريضة ممكن تعدي الغيط. وفي فلتر السبام، الإنذار الكاذب أوحش: رسالة من المدرسة بتستخبى. في التطبيق، الدواير هي أمثلة التدريب، والمربعات أمثلة جديدة. إدّي النموذج حرية أكتر، يعني منحنى بيتلوّى أكتر، وشوفه بيعدّي على كل دايرة وهو بيغلط في المربعات. بعد كده خلّيهم أربعين مثال، وشوفه بيهدى. دورك. نموذجك بيكشف الملاريا في صور دم تحت الميكروسكوب. أنهي غلطة أخطر؟ إنه تفوته حالة حقيقية: حد عيّان ممكن ما ياخدش علاج، لكن الإنذار الكاذب معناه تحليل تاني. افتكر: خلّي بيانات الاختبار على جنب، وعِدّ عليها الصح والغلط. ممتاز في التدريب وضعيف في الجديد: ده إفراط في المطابقة. واعرف أنهي غلطة بتكلّف أكتر. جرّبها بنفسك: خلّي صاحبك يحفظ إجابات خمس مسائل حساب. وبعدين إدّيله خمس مسائل جديدة من نفس النوع. لو كان حافظ وبس، هيتلخبط. وبعدين اشرحله الإفراط في المطابقة، باللي حصل ده."
+          },
+          "sources": {
+            "en": "/media/ai-s3-3/video-en.mp4",
+            "ar": "/media/ai-s3-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-s3-3/captions-en.vtt",
+            "ar": "/media/ai-s3-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-s3-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-s3-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-s3-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-s3-3/light/audio/en.opus",
+              "manifest.json": "/media/ai-s3-3/light/manifest.json",
+              "scenes.json": "/media/ai-s3-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-s3-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-s3-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 494,
+              "ar": 483
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "An honest test, and two kinds of mistake",
+            "ar": "اختبار صادق، ونوعان من الأخطاء"
+          },
+          "body": {
+            "en": "A model’s score only means something if it was tested on examples it never saw while training. Keep a test set apart, count right and wrong answers on it, and look closely at the mistakes: a false positive and a false negative can matter very differently.\n\nBefore you train, put about one example in five aside. This is your test set; the model learns only from the rest, the training set. After training, show it each test example, compare its answer with the real label and count: 17 right out of 20 is an honest score, because those 20 were new to it. Make sure the test examples are really new: not a second photo of a leaf that is already in the training set. Testing on the training examples is like marking a quiz the student has already seen the answers to.\n\nThat is the danger called overfitting. A model with lots of freedom can memorise its training examples, including their accidents and mistakes, instead of learning the pattern. It then scores perfectly on what it has seen and poorly on anything new. A big gap between the training score and the test score is the warning sign. More examples, and more varied ones, help, and so does a simpler model that can’t simply memorise. The opposite, a model too stiff to follow the pattern at all, is underfitting: poor on both.\n\nWrong answers come in two kinds, which you have met as false alarms and misses. Suppose a model looks for sick leaves. A false positive says “sick” about a healthy leaf: a false alarm. A false negative says “healthy” about a sick leaf: a miss. Counting the two separately tells you far more than one score does.\n\nWhich mistake matters more depends on what the model is for. For a leaf-disease spotter, a miss is worse, because one sick plant can infect a field. For a spam filter, a false alarm is worse, because an important message ends up hidden. For a malaria check, a missed case is far worse than a false alarm that leads to a second test. Decide this before you build, so you know which mistake to watch most closely.",
+            "ar": "لا تعني درجة النموذج شيئًا إلا إذا اختُبر على أمثلة لم يرها أثناء التدريب. احتفظ بمجموعة اختبار جانبًا، وعُدّ عليها الإجابات الصحيحة والخاطئة، وانظر في الأخطاء عن قرب: فالإيجابي الكاذب والسلبي الكاذب قد يختلفان كثيرًا في أهميتهما.\n\nقبل أن تدرّب، ضع جانبًا مثالًا من كل خمسة تقريبًا. هذه مجموعة الاختبار، ولا يتعلّم النموذج إلا من البقية، أي مجموعة التدريب. وبعد التدريب، اعرض عليه كل مثال من أمثلة الاختبار، وقارن إجابته بالتصنيف الحقيقي، وعُدّ. فـ١٧ إجابة صحيحة من ٢٠ نتيجةٌ صادقة، لأن هذه الأمثلة العشرين كانت جديدة عليه. وتأكّد أن أمثلة الاختبار جديدة حقًّا: لا صورة ثانية لورقة موجودة في مجموعة التدريب. أما الاختبار على أمثلة التدريب فيشبه تصحيح اختبار قصير رأى الطالب إجاباته من قبل.\n\nوهذا هو الخطر المسمّى الإفراط في المطابقة. فالنموذج الذي يملك حرية كبيرة قد يحفظ أمثلة تدريبه، بما فيها من مصادفات وأخطاء، بدل أن يتعلّم النمط. فيحصل على درجة كاملة فيما رآه، وعلى درجة ضعيفة في كل جديد. والفجوة الكبيرة بين درجة التدريب ودرجة الاختبار هي علامة الخطر. وتساعد الأمثلة الأكثر والأكثر تنوّعًا، كما يساعد نموذج أبسط لا يستطيع الحفظ ببساطة. وعكسه نموذج متصلّب لا يتبع النمط أصلًا، فيضعف في الحالتين: هذا هو نقص المطابقة.\n\nوالإجابات الخاطئة نوعان، عرفتهما من قبل باسم الإنذار الكاذب والحالة الفائتة. لنفترض أن نموذجًا يبحث عن الأوراق المريضة. الإيجابي الكاذب يقول «مريضة» عن ورقة سليمة: إنه إنذار كاذب. والسلبي الكاذب يقول «سليمة» عن ورقة مريضة: إنها حالة فائتة. وعدّ النوعين كلٍّ على حدة يخبرك بأكثر بكثير مما تخبرك به درجة واحدة.\n\nوأيّ الخطأين أهم يعتمد على الغرض من النموذج. ففي كاشف أمراض الأوراق تكون الحالة الفائتة أسوأ، لأن نبتة مريضة واحدة قد تنقل العدوى إلى الحقل كله. وفي فلتر الرسائل المزعجة يكون الإنذار الكاذب أسوأ، لأن رسالة مهمة تنتهي مخفية. وفي فحص الملاريا، تكون الحالة الفائتة أسوأ بكثير من إنذار كاذب يؤدي إلى تحليل ثانٍ. فقرّر ذلك قبل أن تبني نموذجك، لتعرف أيّ خطأ تراقب عن كثب."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Test set",
+                "ar": "مجموعة الاختبار"
+              },
+              "def": {
+                "en": "Examples kept apart while training, used only to measure the finished model honestly.",
+                "ar": "أمثلة تُحفظ جانبًا أثناء التدريب، ولا تُستخدم إلا لقياس النموذج المكتمل بأمانة."
+              }
+            },
+            {
+              "term": {
+                "en": "Overfitting",
+                "ar": "الإفراط في المطابقة"
+              },
+              "def": {
+                "en": "When a model memorises its training examples: perfect on them, poor on new ones.",
+                "ar": "أن يحفظ النموذج أمثلة تدريبه: ممتاز فيها، وضعيف في الأمثلة الجديدة."
+              }
+            },
+            {
+              "term": {
+                "en": "False positive",
+                "ar": "الإيجابي الكاذب"
+              },
+              "def": {
+                "en": "The model says yes when the answer is no: a false alarm, such as “sick” for a healthy leaf.",
+                "ar": "يقول النموذج «نعم» والإجابة «لا»: إنذار كاذب، مثل «مريضة» لورقة سليمة."
+              }
+            },
+            {
+              "term": {
+                "en": "False negative",
+                "ar": "السلبي الكاذب"
+              },
+              "def": {
+                "en": "The model says no when the answer is yes: a miss, such as “healthy” for a sick leaf.",
+                "ar": "يقول النموذج «لا» والإجابة «نعم»: حالة فائتة، مثل «سليمة» لورقة مريضة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Your model spots malaria in microscope photos of blood. Which mistake matters more?",
+            "ar": "يكتشف نموذجك الملاريا في صور الدم تحت المجهر. أيّ الخطأين أهم؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A false alarm on someone healthy",
+                "ar": "إنذار كاذب لشخص سليم"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "They matter exactly the same",
+                "ar": "الخطآن متساويان تمامًا"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Missing a real case",
+                "ar": "تفويت حالة حقيقية"
+              }
+            }
+          ],
+          "answer": "c",
+          "explain": {
+            "en": "A missed case leaves a sick person untreated, and malaria can kill. A false alarm is caught by a second test. So for this model, the miss costs far more.",
+            "ar": "الحالة الفائتة تترك شخصًا مريضًا بلا علاج، والملاريا قد تقتل. أما الإنذار الكاذب فيكشفه تحليل ثانٍ. لذا فالحالة الفائتة في هذا النموذج أغلى ثمنًا بكثير."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p2",
+          "prompt": {
+            "en": "Your test set has 20 photos, but 8 of them are second photos of leaves that are also in the training set. Its score is still an honest measure.",
+            "ar": "مجموعة الاختبار فيها ٢٠ صورة، لكن ٨ منها صور ثانية لأوراق موجودة أيضًا في مجموعة التدريب. ومع ذلك تبقى درجتها مقياسًا صادقًا."
+          },
+          "answer": false,
+          "explain": {
+            "en": "A second photo of the same leaf isn’t really new: the model may recognise that leaf rather than the disease, so the score looks better than it will in a farmer’s field. Test examples must be different leaves, ideally from other plants and days.",
+            "ar": "الصورة الثانية للورقة نفسها ليست جديدة حقًّا: قد يتعرّف النموذج على تلك الورقة لا على المرض، فتبدو الدرجة أفضل مما ستكون عليه في حقل المزارع. يجب أن تكون أمثلة الاختبار أوراقًا مختلفة، ويُفضَّل أن تكون من نباتات وأيام أخرى."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p3",
+          "prompt": {
+            "en": "A model looks for sick leaves. Match each result to its name.",
+            "ar": "نموذج يبحث عن الأوراق المريضة. صِل كل نتيجة باسمها."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Says “sick”; the leaf is healthy",
+                "ar": "يقول «مريضة» والورقة سليمة"
+              },
+              "right": {
+                "en": "False positive: a false alarm",
+                "ar": "إيجابي كاذب: إنذار كاذب"
+              }
+            },
+            {
+              "left": {
+                "en": "Says “healthy”; the leaf is sick",
+                "ar": "يقول «سليمة» والورقة مريضة"
+              },
+              "right": {
+                "en": "False negative: a miss",
+                "ar": "سلبي كاذب: حالة فائتة"
+              }
+            },
+            {
+              "left": {
+                "en": "Says “sick”; the leaf is sick",
+                "ar": "يقول «مريضة» والورقة مريضة"
+              },
+              "right": {
+                "en": "Right: a sick leaf caught",
+                "ar": "صحيح: كُشفت ورقة مريضة"
+              }
+            },
+            {
+              "left": {
+                "en": "Says “healthy”; the leaf is healthy",
+                "ar": "يقول «سليمة» والورقة سليمة"
+              },
+              "right": {
+                "en": "Right: a healthy leaf passed",
+                "ar": "صحيح: مرّت ورقة سليمة"
+              }
+            }
+          ],
+          "explain": {
+            "en": "“Positive” means the model says yes, here “sick”, and it is false when the leaf is really healthy. A false negative says no when the answer is yes.",
+            "ar": "«الإيجابي» يعني أن النموذج يقول نعم، أي «مريضة» هنا، ويكون كاذبًا إذا كانت الورقة سليمة في الحقيقة. أما السلبي الكاذب فيقول لا والإجابة نعم."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: circles are the training examples and squares are new ones. Here the model draws a curve instead of sorting into classes, and its error is how far the curve is from the points: smaller is better. Drag the freedom up to 9 and compare the two errors, then switch to Many (40) and see what happens.",
+            "ar": "جرّب: الدوائر أمثلة التدريب، والمربعات أمثلة جديدة. يرسم النموذج هنا منحنى بدل أن يفرز في فئات، وخطؤه هو بُعد المنحنى عن النقاط: كلما صغر كان أفضل. اسحب «الحرية» إلى ٩ وقارن بين الخطأين، ثم اختر «كثيرة (٤٠)» وانظر ماذا يحدث."
+          },
+          "tool": "overfit"
+        },
+        {
+          "type": "scenario",
+          "id": "p4",
+          "prompt": {
+            "en": "What do you tell them?",
+            "ar": "ماذا تقول لهم؟"
+          },
+          "who": {
+            "en": "Mr Joseph Mwangi, computer studies",
+            "ar": "أ. جوزيف موانجي، مادة الحاسوب"
+          },
+          "initial": {
+            "en": "J",
+            "ar": "ج"
+          },
+          "situation": {
+            "en": "Amani’s group trained a model to spot sick bean leaves. It got 50 out of 50 right on the photos they trained it with, and they want to tell the school farm club it is ready.",
+            "ar": "درّبت مجموعة أماني نموذجًا يكتشف أوراق الفاصوليا المريضة. فأصاب في ٥٠ من ٥٠ على الصور التي درّبوه بها، ويريدون أن يخبروا نادي مزرعة المدرسة بأنه جاهز."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Great score: send it to the farm club.”",
+                "ar": "«درجة رائعة، أرسلوه إلى نادي المزرعة.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "The club may trust it, but 50 out of 50 on training photos only shows it remembers them. It could miss sick leaves it has never seen.",
+                "ar": "قد يثق به النادي، لكن ٥٠ من ٥٠ على صور التدريب لا تُظهر إلا أنه يتذكّرها. وقد تفوته أوراق مريضة لم يرها قط."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Test it on 20 new photos it never saw, and count the misses separately.”",
+                "ar": "«اختبروه على ٢٠ صورة جديدة لم يرها، وعُدّوا الحالات الفائتة وحدها.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Now the score means something, and you know how many sick leaves it misses: the mistake that costs the farm most.",
+                "ar": "الآن صار للدرجة معنى، وعرفتم كم ورقة مريضة تفوته، وهو الخطأ الأغلى على المزرعة."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Train it again on the same 50 photos, to be sure.”",
+                "ar": "«درّبوه مرة أخرى على الصور الخمسين نفسها للتأكّد.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "More training on the same photos can make it memorise even more, and it still hasn’t been tested on anything new.",
+                "ar": "مزيد من التدريب على الصور نفسها قد يزيد حفظه، وما زال لم يُختبر على أي شيء جديد."
+              }
+            }
+          ]
+        },
+        {
+          "type": "fill",
+          "id": "p5",
+          "prompt": {
+            "en": "Complete the sentence.",
+            "ar": "أكمل الجملة."
+          },
+          "sentence": {
+            "en": [
+              "A model that is perfect on its ",
+              {
+                "blank": 0
+              },
+              " examples but poor on ",
+              {
+                "blank": 1
+              },
+              " ones is ",
+              {
+                "blank": 2
+              },
+              "."
+            ],
+            "ar": [
+              "النموذج الممتاز في أمثلة ",
+              {
+                "blank": 0
+              },
+              " والضعيف في الأمثلة ",
+              {
+                "blank": 1
+              },
+              " يعاني من ",
+              {
+                "blank": 2
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "training",
+              "new",
+              "overfitting",
+              "underfitting",
+              "balanced"
+            ],
+            "ar": [
+              "التدريب",
+              "الجديدة",
+              "الإفراط في المطابقة",
+              "نقص المطابقة",
+              "المتوازنة"
+            ]
+          },
+          "answers": {
+            "en": [
+              "training",
+              "new",
+              "overfitting"
+            ],
+            "ar": [
+              "التدريب",
+              "الجديدة",
+              "الإفراط في المطابقة"
+            ]
+          },
+          "explain": {
+            "en": "That is overfitting: it memorised its training examples. You discover it on the test set, by measuring the model on examples it never saw.",
+            "ar": "هذا هو الإفراط في المطابقة: لقد حفظ أمثلة تدريبه. وتكتشفه في مجموعة الاختبار، حين تقيس النموذج على أمثلة لم يرها."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of a model you might build. Which would cost more for it, a false alarm or a miss, and who would pay for it?",
+            "ar": "فكّر في نموذج قد تبنيه. أيّهما أغلى ثمنًا فيه، الإنذار الكاذب أم الحالة الفائتة، ومن سيدفع الثمن؟"
+          },
+          "placeholder": {
+            "en": "For example: “A model that spots sick chickens in photos. A miss is worse: the illness spreads through the flock. A false alarm only means checking one healthy chicken.”",
+            "ar": "مثلًا: «نموذج يكتشف الدجاج المريض في الصور. الحالة الفائتة أسوأ، لأن المرض ينتشر في القطيع. أما الإنذار الكاذب فيعني فحص دجاجة سليمة فقط.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: The memoriser test",
+            "ar": "مشروع: اختبار الحافظ"
+          },
+          "task": {
+            "en": "Make up a secret rule for a new sign, such as 3 ★ 4 = 13 (multiply, then add 1), and write five ★ sums with their answers. Ask a friend or family member to memorise the answers without looking for the rule, then test them on the same five: that is their training score. Then give them five new ★ sums that follow the same rule: that is their test score. Compare the two scores, tell them the rule, and explain overfitting to them using what happened. Finally, ask them: for a model that spots malaria, which mistake would worry them more, and why?",
+            "ar": "اخترع قاعدة سرّية لعلامة جديدة، مثل ٣ ★ ٤ = ١٣ (اضرب ثم أضف ١)، واكتب خمس مسائل بهذه العلامة مع إجاباتها. اطلب من صديق أو أحد أفراد أسرتك أن يحفظ الإجابات دون أن يبحث عن القاعدة، ثم اختبره في المسائل الخمس نفسها: هذه درجة التدريب. ثم أعطه خمس مسائل جديدة تتبع القاعدة نفسها: هذه درجة الاختبار. قارن الدرجتين، واكشف له القاعدة، واشرح له الإفراط في المطابقة بما حدث. وأخيرًا، اسأله: في نموذج يكتشف الملاريا، أيّ الخطأين يقلقه أكثر، ولماذا؟"
+          },
+          "deliverable": {
+            "en": "A photo of the two score sheets (no faces or names), and two sentences: what the gap showed, and how you explained overfitting.",
+            "ar": "صورة لورقتي الدرجات (بلا وجوه ولا أسماء)، وجملتان: ماذا أظهرت الفجوة، وكيف شرحت الإفراط في المطابقة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: keep test examples apart and count right and wrong answers.",
+                "ar": "أستطيع: أن أحتفظ بأمثلة الاختبار جانبًا وأعدّ الإجابات الصحيحة والخاطئة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: explain overfitting: perfect on training examples, poor on new ones.",
+                "ar": "أستطيع: أن أشرح الإفراط في المطابقة: ممتاز في أمثلة التدريب، وضعيف في الأمثلة الجديدة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: tell a false positive from a false negative, and say which matters more for a model.",
+                "ar": "أستطيع: أن أميّز الإيجابي الكاذب من السلبي الكاذب، وأن أقول أيّهما أهم في نموذج ما."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Test it honestly",
+            "ar": "اختبره بأمانة"
+          },
+          "note": {
+            "en": "AI · Level 3 · Lesson 3",
+            "ar": "الذكاء الاصطناعي، المستوى ٣، الدرس ٣"
+          },
+          "narration": {
+            "en": "Twenty out of twenty: is that good news?",
+            "ar": "عشرون من عشرين: هل هذا خبر سار؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Keep test data apart from training data, and count right and wrong answers.",
+              "Explain overfitting: perfect on training examples, poor on new ones.",
+              "Tell a false positive from a false negative, and say which matters more for your model."
+            ],
+            "ar": [
+              "نُبقي بيانات الاختبار منفصلة عن بيانات التدريب، ونعدّ الإجابات الصحيحة والخاطئة.",
+              "نشرح الإفراط في المطابقة: ممتاز في أمثلة التدريب، وضعيف في الأمثلة الجديدة.",
+              "نميّز الإيجابي الكاذب من السلبي الكاذب، ونقول أيّهما أهم في نموذجنا."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Put about one example in five aside: only examples the model never saw give an honest score.",
+              "A big gap between training and test scores means overfitting. More varied data, or a simpler model, helps.",
+              "A false positive is a false alarm; a false negative is a miss. Decide which costs more."
+            ],
+            "ar": [
+              "ضع جانبًا مثالًا من كل خمسة تقريبًا: فالأمثلة التي لم يرها النموذج وحدها تعطي درجة صادقة.",
+              "الفجوة الكبيرة بين درجتي التدريب والاختبار تعني الإفراط في المطابقة. وتساعد بيانات أكثر تنوّعًا، أو نموذج أبسط.",
+              "الإيجابي الكاذب إنذار كاذب، والسلبي الكاذب حالة فائتة. فقرّر أيّهما أغلى ثمنًا."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Memoriser and learner",
+            "ar": "الحافظ والفاهم"
+          },
+          "bullets": {
+            "en": [
+              "Set up (3 min): write ten ★ sums with a secret rule.",
+              "Train (5 min): one memorises, one is told the rule.",
+              "Test (5 min): the same five sums, then five new ones.",
+              "Score (4 min): a training and a test score for each.",
+              "Explain (6 min): who overfitted, and why?"
+            ],
+            "ar": [
+              "التحضير (٣ دقائق): اكتب عشر مسائل بالعلامة ★ وفق قاعدة سرّية.",
+              "التدريب (٥ دقائق): أحدهما يحفظ، والآخر يُخبَر بالقاعدة.",
+              "الاختبار (٥ دقائق): المسائل الخمس نفسها، ثم خمس جديدة.",
+              "الدرجات (٤ دقائق): درجة تدريب ودرجة اختبار لكلٍّ منهما.",
+              "الشرح (٦ دقائق): مَن أفرط في المطابقة، ولماذا؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Set up (3 min): Make up a secret rule for a new sign, such as 3 ★ 4 = 13 (multiply, then add 1), and write ten ★ sums with their answers. Keep five as “training” sums and hide the other five.",
+              "Train (5 min): Player 1 memorises the five answers and must not look for the rule. Player 2 is told the rule.",
+              "Test (5 min): Ask both players the five training sums, then the five hidden sums they have never seen.",
+              "Score (4 min): Write each player’s training score and test score side by side, like the two bars in the video.",
+              "Explain (6 min): Which player overfitted? Write one sentence linking the memoriser to a model that is perfect on its training data, and one on which mistake would matter more in a malaria test."
+            ],
+            "ar": [
+              "التحضير (٣ دقائق): اخترع قاعدة سرّية لعلامة جديدة، مثل ٣ ★ ٤ = ١٣ (اضرب ثم أضف ١)، واكتب عشر مسائل بهذه العلامة مع إجاباتها. احتفظ بخمس منها مسائلَ «تدريب»، وأخفِ الخمس الأخرى.",
+              "التدريب (٥ دقائق): يحفظ اللاعب الأول الإجابات الخمس دون أن يبحث عن القاعدة، ويُخبَر اللاعب الثاني بالقاعدة.",
+              "الاختبار (٥ دقائق): اسأل اللاعبين مسائل التدريب الخمس، ثم المسائل الخمس المخفية التي لم يرياها من قبل.",
+              "الدرجات (٤ دقائق): اكتب درجة التدريب ودرجة الاختبار لكل لاعب جنبًا إلى جنب، مثل العمودين في الفيديو.",
+              "الشرح (٦ دقائق): أيّ اللاعبين أفرط في المطابقة؟ اكتب جملة تربط الحافظ بنموذج ممتاز في بيانات تدريبه، وجملة عن الخطأ الأهم في فحص الملاريا."
+            ]
+          },
+          "note": {
+            "en": "Works with three people (two players and a quizmaster) or at home with family. Keep the hidden sums out of sight until the test.",
+            "ar": "يصلح لثلاثة أشخاص (لاعبان ومقدّم للأسئلة) أو في البيت مع الأسرة. وأبقِ المسائل المخفية بعيدة عن الأنظار حتى الاختبار."
+          },
+          "narration": {
+            "en": "Who did better on the new sums, and why?",
+            "ar": "مَن كان أفضل في المسائل الجديدة، ولماذا؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why is a score on training examples not an honest test?",
+              "Your model is perfect on training photos and poor on new ones. What would you try?",
+              "For a model that spots smoke in photos to warn of fire, which mistake is worse?"
+            ],
+            "ar": [
+              "لماذا لا تُعدّ الدرجة على أمثلة التدريب اختبارًا صادقًا؟",
+              "نموذجك ممتاز في صور التدريب وضعيف في الصور الجديدة. ماذا ستجرّب؟",
+              "في نموذج يكتشف الدخان في الصور لينذر بالحريق، أيّ الخطأين أسوأ؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Before you go",
+            "ar": "قبل أن تغادر"
+          },
+          "bullets": {
+            "en": [
+              "My own example of a false alarm and a miss, and which one costs more."
+            ],
+            "ar": [
+              "مثال من عندي على إنذار كاذب وحالة فائتة، وأيّهما أغلى ثمنًا."
+            ]
+          },
+          "narration": {
+            "en": "Only new examples tell you the truth about a model.",
+            "ar": "الأمثلة الجديدة وحدها تقول لك الحقيقة عن النموذج."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides for revising: Test it honestly",
+            "ar": "شرائح للمراجعة: اختبره بأمانة"
+          },
+          "pages": 6,
+          "base": "ai-s3-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Notes and worksheet: Test it honestly",
+            "ar": "ملاحظات وورقة عمل: اختبره بأمانة"
+          },
+          "pages": 2,
+          "base": "ai-s3-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-s3-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "S.TA.A",
+        "S.SD.A"
+      ]
+    },
+    {
+      "id": "ai-s3-4",
+      "title": {
+        "en": "Fair for everyone",
+        "ar": "منصف للجميع"
+      },
+      "minutes": 16,
+      "tryTomorrow": {
+        "en": "Ask family members first, then test voice typing with them (or the microphone in a translation app, checking only the words it writes down): young and old, different accents or languages. Have each person say the same three sentences, count the words it writes correctly out of all the words, and compare the shares, such as 10 out of 12. Write down who it understands best and why that might be. With one person for each kind of voice, your result is a clue, not proof.",
+        "ar": "استأذن أفراد أسرتك أولًا، ثم اختبر معهم الكتابة بالصوت (أو ميكروفون تطبيق ترجمة، مع فحص الكلمات التي يكتبها فقط): صغارًا وكبارًا، وبلهجات أو لغات مختلفة. اطلب من كل شخص أن يقول الجمل الثلاث نفسها، وعُدّ الكلمات التي تكتبها الأداة صحيحة من مجموع الكلمات، وقارن النسب، مثل ١٠ من ١٢. واكتب مَن تفهمه أكثر، ولماذا قد يكون ذلك. ومع شخص واحد لكل نوع من الأصوات، تكون نتيجتك دليلًا أوليًّا لا برهانًا."
+      },
+      "materials": {
+        "en": [
+          "A phone with voice typing (yours, or a family member’s with permission)",
+          "Three short sentences written on paper, in each language you will test",
+          "A notebook for your results table"
+        ],
+        "ar": [
+          "هاتف فيه الكتابة بالصوت (هاتفك، أو هاتف أحد أفراد الأسرة بإذنه)",
+          "ثلاث جمل قصيرة مكتوبة على ورقة، بكل لغة ستختبرها",
+          "دفتر لجدول النتائج"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Fair for everyone",
+            "ar": "منصف للجميع"
+          },
+          "src": null,
+          "duration": 223,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A model that failed the girls",
+                "ar": "نموذج خذل الفتيات"
+              }
+            },
+            {
+              "at": 19.2,
+              "atBy": {
+                "en": 19.2,
+                "ar": 18.9
+              },
+              "label": {
+                "en": "One score, many groups",
+                "ar": "درجة واحدة ومجموعات كثيرة"
+              }
+            },
+            {
+              "at": 53.7,
+              "atBy": {
+                "en": 53.7,
+                "ar": 54.6
+              },
+              "label": {
+                "en": "Where bias comes from",
+                "ar": "من أين يأتي التحيّز"
+              }
+            },
+            {
+              "at": 111.7,
+              "atBy": {
+                "en": 111.7,
+                "ar": 112
+              },
+              "label": {
+                "en": "Fix it, and why it matters",
+                "ar": "أصلِحه، ولماذا يهمّ ذلك"
+              }
+            },
+            {
+              "at": 182.6,
+              "atBy": {
+                "en": 182.6,
+                "ar": 179.8
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A leaf-disease model scores 95% overall. What should you check next?",
+                "ar": "حصل نموذج لأمراض الأوراق على ٩٥٪ إجمالًا. ماذا تفحص بعد ذلك؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Nothing: 95% is great",
+                    "ar": "لا شيء: ٩٥٪ ممتازة"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Its score on training photos",
+                    "ar": "درجته على صور التدريب"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Its score for each region",
+                    "ar": "درجته في كل منطقة"
+                  }
+                }
+              ],
+              "answer": "c",
+              "explain": {
+                "en": "An overall score can hide a region where the model fails badly, so check each group separately. Training photos can’t show fairness: they only show what it memorised.",
+                "ar": "قد تخفي الدرجة الإجمالية منطقة يخفق فيها النموذج إخفاقًا كبيرًا، فافحص كل مجموعة على حدة. أما صور التدريب فلا تكشف الإنصاف، بل تكشف ما حفظه فقط."
+              }
+            },
+            "at": 99.26,
+            "atBy": {
+              "en": 99.26,
+              "ar": 98.07
+            }
+          },
+          "transcript": {
+            "en": "My class trained a model to understand spoken numbers, and it scored ninety per cent. We cheered! Then we looked closer: most of its mistakes were on girls’ voices. Today: how to make your model fair for everyone it judges. One overall score can hide a problem. Most recordings were boys’ voices, and the model got almost all of those right. On girls’ voices, it got about seven in ten. Mixed together, that still looked like ninety per cent. So test each group on its own. Split your test examples by group: boys and girls, young and old, one accent and another. Count right and wrong for each. If one group scores much lower, your model is failing them. When a model makes more mistakes for one group than for others, it’s biased. Bias usually starts in the data: a group that’s missing, or too small. In Mr Joseph’s class, three in four recordings were boys’. It’s like a tailor who learned from one person’s measurements. Every shirt fits that person perfectly. On everyone else, the sleeves are too short! The tailor isn’t unkind; they never measured anyone else. Quick check! A leaf-disease model scores ninety-five per cent overall. What should you check next? Its score for each region, or each group it serves. A great overall score can hide a group the model fails badly. So test groups separately, every time. So how do you fix bias? Go back to the data. Collect examples from the missing group, with permission, and label them carefully. Then train again and test every group. When the girls in Mr Joseph’s class recorded their numbers, the gap almost closed. Why does this matter? Because models judge real people. A leaf spotter that fails hill farmers can cost them a harvest. A voice tool that can’t hear an accent shuts people out. Fair means it works for everyone it judges, not just those in its data. In the app, a leaf-disease spotter learned mostly from sunny-valley photos, but hill photos come out darker. Its overall score looks great, yet it misses about a third of sick leaves in the hills. Add hill photos, and watch the gap close. Your turn. Your voice model struggles with older people’s voices. What’s the best fix? Record more older voices, with permission, then test every group again. Remember: one overall score can hide a group the model fails. Test each group separately. Fix bias at its source, the data, so the model works for everyone. Try it yourself: test voice typing or a translator with your family: young and old, different accents or languages. Ask first, then have each person say the same three sentences. Count the words it gets right. Who does it understand best, and why?",
+            "ar": "الفصل بتاعي درّب نموذج يفهم الأرقام وهي بتتقال بالصوت، وجاب تسعين في الميّة. هيّصنا! وبعدين بصّينا كويس: أغلب غلطاته كانت في أصوات البنات. النهارده: إزاي تخلّي نموذجك منصف لكل اللي بيحكم عليهم. درجة إجمالية واحدة ممكن تخبّي مشكلة. أغلب التسجيلات كانت أصوات ولاد، والنموذج جاب كلها صح تقريبًا. في أصوات البنات، جاب صح حوالي سبعة من عشرة. ولما اتخلطوا مع بعض، برضه بانت تسعين في الميّة. علشان كده اختبر كل مجموعة لوحدها. قسّم أمثلة الاختبار حسب المجموعة: ولاد وبنات، صغيرين وكبار، لهجة ولهجة تانية. عِدّ الصح والغلط لكل واحدة. لو مجموعة درجتها أقل بكتير، يبقى نموذجك بيخذلهم. لما النموذج يغلط مع مجموعة أكتر من الباقيين، يبقى متحيّز. التحيّز غالبًا بيبدأ من البيانات: مجموعة ناقصة، أو قليلة أوي. في فصل مستر جوزيف، تلات تسجيلات من كل أربعة كانت أصوات ولاد. زي ترزي اتعلم التفصيل من مقاسات شخص واحد. كل قميص بيقف على الشخص ده بالظبط. لكن على أي حد تاني، الكُم بيطلع قصير! الترزي مش قاصد؛ هو بس عمره ما خد مقاس حد تاني. سؤال سريع! نموذج لأمراض الورق جاب خمسة وتسعين في الميّة إجمالًا. تتأكد من إيه بعد كده؟ درجته في كل منطقة، أو في كل مجموعة بيخدمها. درجة إجمالية حلوة ممكن تخبّي مجموعة النموذج بيخذلها جامد. علشان كده اختبر المجموعات لوحدها، كل مرة. طب تعالج التحيّز إزاي؟ ارجع للبيانات. اجمع أمثلة من المجموعة الناقصة، بعد ما تستأذن، وصنّفها بعناية. وبعدين درّب تاني واختبر كل مجموعة. لما البنات في فصل مستر جوزيف سجّلوا أرقامهم، الفرق اتقفل تقريبًا. ليه ده مهم؟ لأن النماذج بتحكم على ناس حقيقيين. كاشف ورق بيخذل فلاحين التلال ممكن يضيّع عليهم المحصول. وأداة صوت مش فاهمة لهجة معيّنة بتقفل الباب في وش ناس. المنصف يعني يشتغل مع كل اللي بيحكم عليهم، مش بس الناس اللي في بياناته. في التطبيق، كاشف أمراض ورق اتعلم أغلبه من صور وادي مشمس، لكن صور التلال بتطلع أغمق. درجته الإجمالية شكلها ممتاز، ومع ذلك بتفوته حوالي تلت الأوراق المريضة في التلال. ضيف صور من التلال، وشوف الفرق بيتقفل. دورك. نموذج الصوت بتاعك بيتلخبط مع أصوات الكبار في السن. إيه أحسن حل؟ سجّل أصوات كبار أكتر، بإذنهم، وبعدين اختبر كل مجموعة تاني. افتكر: درجة إجمالية واحدة ممكن تخبّي مجموعة النموذج بيخذلها. اختبر كل مجموعة لوحدها. وعالج التحيّز من أصله، يعني البيانات، علشان النموذج يشتغل مع الكل. جرّبها بنفسك: اختبر الكتابة بالصوت أو الترجمة مع عيلتك: صغيرين وكبار، ولهجات أو لغات مختلفة. استأذن الأول، وبعدين خلّي كل واحد يقول نفس التلات جمل. عِدّ الكلمات اللي طلعت صح. مين اللي بيفهمه أحسن، وليه؟"
+          },
+          "sources": {
+            "en": "/media/ai-s3-4/video-en.mp4",
+            "ar": "/media/ai-s3-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-s3-4/captions-en.vtt",
+            "ar": "/media/ai-s3-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-s3-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-s3-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-s3-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-s3-4/light/audio/en.opus",
+              "manifest.json": "/media/ai-s3-4/light/manifest.json",
+              "scenes.json": "/media/ai-s3-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-s3-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-s3-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 484,
+              "ar": 480
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Test every group, fix the data",
+            "ar": "اختبر كل مجموعة، وأصلح البيانات"
+          },
+          "body": {
+            "en": "A model can look excellent overall and still fail one group of people. To find out, test each group separately; to fix it, go back to the data and collect the examples that were missing. A fair model works for everyone it judges.\n\nMr Joseph’s class trained a model to understand spoken numbers. It scored 90%, but three in every four recordings were boys’ voices. The model got nearly all of those right and only about seven in ten of the girls’. Mixed together, the overall score hid the gap. This is what bias in a model looks like: more mistakes for one group than for others.\n\nSo never stop at one number. Split your test examples by group (boys and girls, young and old voices, one region and another) and count right and wrong for each. If one group scores much lower, the model is failing them, whatever the overall score says. For a leaf spotter, the number to watch may be the sick leaves it misses in each region.\n\nBias usually starts in the data: a group that is missing, or too small, among the training examples. The model isn’t unkind; it simply never learned what that group looks or sounds like. The fix is at the source. Collect examples from the missing group, with their permission, label them carefully, train again and test every group again. Hiding the low score, or asking people to change how they speak, fixes nothing.\n\nThis matters because models make decisions about real people. A leaf spotter that misses sick plants in the hills can cost a family its harvest. A voice tool that can’t understand an accent shuts people out of services others use easily. When you build or use a model, ask who it was tested on, and whether it works as well for them as for everyone else.",
+            "ar": "قد يبدو النموذج ممتازًا في المجمل، ومع ذلك يخذل مجموعة من الناس. ولتكتشف ذلك، اختبر كل مجموعة على حدة، ولتصلحه، عُد إلى البيانات واجمع الأمثلة التي كانت ناقصة. فالنموذج المنصف يعمل جيدًا مع كل من يحكم عليهم.\n\nدرّب صف أ. جوزيف نموذجًا يفهم الأرقام المنطوقة. فحصل على ٩٠٪، لكن ثلاثة من كل أربعة تسجيلات كانت أصوات أولاد. وأصاب النموذج في جميعها تقريبًا، ولم يُصب إلا في نحو سبعة من كل عشرة من أصوات الفتيات. وحين اختلطت النتائج، أخفت الدرجةُ الإجمالية الفجوة. وهذا هو شكل التحيّز في النموذج: أخطاء أكثر مع مجموعة منها مع غيرها.\n\nلذلك لا تتوقف أبدًا عند رقم واحد. قسّم أمثلة الاختبار حسب المجموعة (أولاد وفتيات، وأصوات صغار وكبار، ومنطقة وأخرى)، وعُدّ الصحيح والخاطئ لكل منها. فإذا كانت درجة مجموعة أقل بكثير، فالنموذج يخذلها، مهما قالت الدرجة الإجمالية. وفي كاشف الأوراق، قد يكون الرقم الذي تراقبه هو عدد الأوراق المريضة التي تفوته في كل منطقة.\n\nيبدأ التحيّز عادةً في البيانات: مجموعة غائبة، أو صغيرة جدًا، بين أمثلة التدريب. فالنموذج ليس سيّئ النية، لكنه ببساطة لم يتعلّم قط كيف تبدو تلك المجموعة أو كيف يبدو صوتها. والعلاج من المصدر: اجمع أمثلة من المجموعة الناقصة بإذن أصحابها، وصنّفها بعناية، ثم درّب النموذج من جديد واختبر كل المجموعات مرة أخرى. أما إخفاء الدرجة المنخفضة، أو مطالبة الناس بتغيير طريقة كلامهم، فلا يصلح شيئًا.\n\nوهذا مهم لأن النماذج تتخذ قرارات تخص أناسًا حقيقيين. فكاشف أوراق يفوّت النباتات المريضة في التلال قد يكلّف أسرة محصولها. وأداة صوت لا تفهم لهجة ما تُقصي أصحابها عن خدمات يستخدمها غيرهم بسهولة. وحين تبني نموذجًا أو تستخدمه، اسأل: على مَن اختُبر؟ وهل يعمل معهم بالجودة نفسها التي يعمل بها مع غيرهم؟"
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Bias",
+                "ar": "التحيّز"
+              },
+              "def": {
+                "en": "When a model makes more mistakes for one group of people than for others, usually because that group was missing or rare in its data.",
+                "ar": "أن يخطئ النموذج مع مجموعة من الناس أكثر من غيرها، غالبًا لأن تلك المجموعة كانت غائبة أو نادرة في بياناته."
+              }
+            },
+            {
+              "term": {
+                "en": "Overall score",
+                "ar": "الدرجة الإجمالية"
+              },
+              "def": {
+                "en": "One score for all the test examples together. It can look good while hiding a group the model fails.",
+                "ar": "درجة واحدة لكل أمثلة الاختبار معًا. قد تبدو جيدة وهي تخفي مجموعة يخذلها النموذج."
+              }
+            },
+            {
+              "term": {
+                "en": "Testing by group",
+                "ar": "الاختبار حسب المجموعة"
+              },
+              "def": {
+                "en": "Counting right and wrong answers separately for each group, so a gap can’t hide.",
+                "ar": "عدّ الإجابات الصحيحة والخاطئة لكل مجموعة على حدة، حتى لا تختبئ أي فجوة."
+              }
+            },
+            {
+              "term": {
+                "en": "Data gap",
+                "ar": "الفجوة في البيانات"
+              },
+              "def": {
+                "en": "A group of people, places or situations that is missing or too rare in the training data.",
+                "ar": "مجموعة من الناس أو الأماكن أو المواقف غائبة أو نادرة جدًا في بيانات التدريب."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Your voice model struggles with older people’s voices. What’s the best fix?",
+            "ar": "يتعثّر نموذج الصوت الذي صنعته مع أصوات كبار السن. ما أفضل حل؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Record more older voices, with permission",
+                "ar": "سجّل أصواتًا أكثر لكبار السن، بإذنهم"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Ask older people to speak differently",
+                "ar": "اطلب من كبار السن أن يتكلموا بطريقة أخرى"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Report only the overall score",
+                "ar": "انشر الدرجة الإجمالية فقط"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The gap comes from the data, so fix it there: collect the missing voices with permission, retrain and test every group again. Asking people to change how they speak blames them, and hiding the gap fixes nothing.",
+            "ar": "الفجوة مصدرها البيانات، فأصلحها هناك: اجمع الأصوات الناقصة بإذن أصحابها، وأعد التدريب، واختبر كل المجموعات من جديد. أما مطالبة الناس بتغيير طريقة كلامهم فتلقي اللوم عليهم، وإخفاء الفجوة لا يصلح شيئًا."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p2",
+          "prompt": {
+            "en": "A leaf spotter was trained mostly on photos from a sunny valley. Which steps would show whether it is fair to farmers in the cloudy hills? Choose all that apply.",
+            "ar": "دُرّب كاشف للأوراق في الغالب على صور من وادٍ مشمس. أيّ الخطوات تكشف هل هو منصف لمزارعي التلال الغائمة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Test it on photos from the hills",
+                "ar": "اختباره على صور من التلال"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Count the sick leaves it misses in each region",
+                "ar": "عدّ الأوراق المريضة التي تفوته في كل منطقة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Check only its overall score",
+                "ar": "فحص درجته الإجمالية فقط"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Test it again on its training photos",
+                "ar": "اختباره مرة أخرى على صور تدريبه"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "Compare the hills’ score with the valley’s",
+                "ar": "مقارنة درجة التلال بدرجة الوادي"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "e"
+          ],
+          "explain": {
+            "en": "Fairness shows up group by group: test on hill photos, count the misses in each region and compare. The overall score can hide the hills, and training photos only show what it memorised.",
+            "ar": "الإنصاف يظهر مجموعةً مجموعة: اختبره على صور التلال، وعُدّ الحالات الفائتة في كل منطقة، وقارن. فالدرجة الإجمالية قد تخفي التلال، وصور التدريب لا تكشف إلا ما حفظه."
+          }
+        },
+        {
+          "type": "order",
+          "id": "p3",
+          "prompt": {
+            "en": "Put the steps for fixing a biased model in order.",
+            "ar": "رتّب خطوات إصلاح نموذج متحيّز."
+          },
+          "steps": [
+            {
+              "en": "Test each group separately",
+              "ar": "اختبر كل مجموعة على حدة"
+            },
+            {
+              "en": "Find the group with the lower score",
+              "ar": "حدّد المجموعة ذات الدرجة الأقل"
+            },
+            {
+              "en": "Collect and label examples from that group, with permission",
+              "ar": "اجمع أمثلة من تلك المجموعة بإذن أصحابها وصنّفها"
+            },
+            {
+              "en": "Train the model again",
+              "ar": "درّب النموذج من جديد"
+            },
+            {
+              "en": "Test every group again",
+              "ar": "اختبر كل المجموعات مرة أخرى"
+            }
+          ],
+          "explain": {
+            "en": "You can’t fix a gap you haven’t found, so testing by group comes first. The fix is new data, and the last step checks that the gap has really closed.",
+            "ar": "لا تستطيع إصلاح فجوة لم تكتشفها، لذا يأتي الاختبار حسب المجموعة أولًا. والعلاج بيانات جديدة، والخطوة الأخيرة تتأكّد من أن الفجوة أُغلقت فعلًا."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: a leaf-disease spotter learned mostly from photos of a sunny valley. Compare how often it is wrong overall with how often it is wrong in the cloudy hills, and the share of sick leaves it misses there. Then slide up the share of hill photos in training and watch the hills’ bars fall.",
+            "ar": "جرّب: تعلّم كاشف أمراض الأوراق في الغالب من صور وادٍ مشمس. قارن نسبة خطئه الإجمالية بنسبة خطئه في التلال الغائمة، وبنسبة الأوراق المريضة التي تفوته هناك. ثم زِد نسبة صور التلال في التدريب، وراقب أشرطة التلال وهي تنخفض."
+          },
+          "tool": "bias"
+        },
+        {
+          "type": "scenario",
+          "id": "p4",
+          "prompt": {
+            "en": "What do you suggest?",
+            "ar": "ماذا تقترح؟"
+          },
+          "who": {
+            "en": "Ms Salma Haddad, maths",
+            "ar": "أ. سلمى حدّاد، الرياضيات"
+          },
+          "initial": {
+            "en": "S",
+            "ar": "س"
+          },
+          "situation": {
+            "en": "A company offers your school a free app that reads students’ handwritten answers and marks them. It says the app is 96% accurate. It was trained mostly on the handwriting of older students in one big city. Ms Salma asks your AI club for advice.",
+            "ar": "تعرض شركة على مدرستك تطبيقًا مجانيًا يقرأ إجابات الطلاب المكتوبة بخط اليد ويصحّحها، وتقول إن دقته ٩٦٪. وقد دُرّب في الغالب على خط طلاب أكبر سنًّا من مدينة كبيرة واحدة. وتطلب أ. سلمى نصيحة نادي الذكاء الاصطناعي في مدرستكم."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“96% is excellent: use it for every class.”",
+                "ar": "«٩٦٪ ممتازة، استخدموه مع كل الصفوف.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "The overall number may hide younger students or messy writers it reads badly, and their marks could be wrong without anyone noticing.",
+                "ar": "قد يخفي هذا الرقم الإجمالي طلابًا أصغر سنًّا أو خطوطًا غير مرتّبة يقرؤها التطبيق بصعوبة، فتصبح درجاتهم خاطئة دون أن يلاحظ أحد."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Try it on a few pages from each class first, and compare the scores class by class.”",
+                "ar": "«جرّبوه أولًا على بضع صفحات من كل صف، وقارنوا الدرجات صفًّا صفًّا.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "You find out who it fails before anyone’s marks depend on it, and you can ask the company to collect the missing examples.",
+                "ar": "تكتشفون مَن يخذلهم قبل أن تعتمد عليه درجات أحد، وتستطيعون أن تطلبوا من الشركة جمع الأمثلة الناقصة."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Tell the younger students to write more neatly.”",
+                "ar": "«اطلبوا من الطلاب الأصغر أن يكتبوا بخط أكثر ترتيبًا.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "The problem is the missing examples, not the students. Asking people to fit the model is unfair, and it doesn’t fix the model.",
+                "ar": "المشكلة في الأمثلة الناقصة، لا في الطلاب. ومطالبة الناس بأن يتلاءموا مع النموذج ظلم، ولا تصلح النموذج."
+              }
+            }
+          ]
+        },
+        {
+          "type": "fill",
+          "id": "p5",
+          "prompt": {
+            "en": "Complete the sentence.",
+            "ar": "أكمل الجملة."
+          },
+          "sentence": {
+            "en": [
+              "Bias can hide inside the ",
+              {
+                "blank": 0
+              },
+              " score, so test each ",
+              {
+                "blank": 1
+              },
+              " on its own, and close the gap by collecting the ",
+              {
+                "blank": 2
+              },
+              " examples."
+            ],
+            "ar": [
+              "قد يختبئ التحيّز داخل الدرجة ",
+              {
+                "blank": 0
+              },
+              "، لذا اختبر كل ",
+              {
+                "blank": 1
+              },
+              " وحدها، وأغلق الفجوة بجمع الأمثلة ",
+              {
+                "blank": 2
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "overall",
+              "group",
+              "missing",
+              "training",
+              "perfect"
+            ],
+            "ar": [
+              "الإجمالية",
+              "مجموعة",
+              "الناقصة",
+              "التدريبية",
+              "الكاملة"
+            ]
+          },
+          "answers": {
+            "en": [
+              "overall",
+              "group",
+              "missing"
+            ],
+            "ar": [
+              "الإجمالية",
+              "مجموعة",
+              "الناقصة"
+            ]
+          },
+          "explain": {
+            "en": "One overall number can hide a group the model fails. Testing group by group finds the gap, and collecting the missing examples closes it.",
+            "ar": "رقم إجمالي واحد قد يخفي مجموعة يخذلها النموذج. والاختبار مجموعةً مجموعة يكشف الفجوة، وجمع الأمثلة الناقصة يغلقها."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of an AI tool you or your family use. Which group of people might it work less well for, and how could you find out?",
+            "ar": "فكّر في أداة ذكاء اصطناعي تستخدمها أنت أو أسرتك. أيّ مجموعة من الناس قد تعمل معها بجودة أقل، وكيف تستطيع أن تتأكّد؟"
+          },
+          "placeholder": {
+            "en": "For example: “Voice typing on my uncle’s phone. It may not understand his accent well. I could count its mistakes with him and with my cousin.”",
+            "ar": "مثلًا: «الكتابة بالصوت في هاتف عمّي. قد لا تفهم لهجته جيدًا. أستطيع أن أعدّ أخطاءها معه ومع ابن عمّي.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Who does it understand?",
+            "ar": "مشروع: مَن الذي تفهمه الأداة؟"
+          },
+          "task": {
+            "en": "Choose voice typing on a phone you are allowed to use (or the microphone in a translation app, checking only the words it writes down). Write three short sentences. Ask at least four people (young and old, different accents or languages) whether they would like to help, and tell them what it is for. If someone speaks another language, write the sentences in their language too. Each person says the three sentences while you count the words the tool writes correctly, out of all the words. Make a small table with each person’s share (for example 10 out of 12), not just counts, then write down who it understood best and a likely reason in its training data. With one person for each kind of voice, your result is a clue, not proof: say so.",
+            "ar": "اختر الكتابة بالصوت على هاتف يُسمح لك باستخدامه (أو ميكروفون تطبيق ترجمة، مع فحص الكلمات التي يكتبها فقط). اكتب ثلاث جمل قصيرة. اسأل أربعة أشخاص على الأقل (صغارًا وكبارًا، وبلهجات أو لغات مختلفة) هل يودّون المساعدة، وأخبرهم بالغرض. وإن كان أحدهم يتكلّم لغة أخرى، فاكتب الجمل بلغته أيضًا. يقول كل شخص الجمل الثلاث، وتعدّ أنت الكلمات التي تكتبها الأداة صحيحة من مجموع الكلمات. اصنع جدولًا صغيرًا فيه نسبة كل شخص (مثل ١٠ من ١٢) لا الأعداد وحدها، ثم اكتب مَن فهمته الأداة أكثر، وسببًا محتملًا لذلك في بيانات تدريبها. ومع شخص واحد لكل نوع من الأصوات، تكون نتيجتك دليلًا أوليًّا لا برهانًا، فاذكر ذلك."
+          },
+          "deliverable": {
+            "en": "A photo of your results table (no names: use Person A, Person B; no recordings), and two sentences: who it understood best, and how its makers could close the gap.",
+            "ar": "صورة لجدول نتائجك (بلا أسماء: استخدم الشخص أ والشخص ب، ولا تسجيلات)، وجملتان: مَن فهمته الأداة أكثر، وكيف يستطيع صانعوها إغلاق الفجوة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: test a tool group by group, not only overall.",
+                "ar": "أستطيع: أن أختبر أداةً مجموعةً مجموعة، لا في المجمل فقط."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: explain that bias usually starts with missing data, and how to fix it.",
+                "ar": "أستطيع: أن أشرح أن التحيّز يبدأ عادةً من بيانات ناقصة، وكيف يُعالَج."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: explain why a fair model matters to the people it judges.",
+                "ar": "أستطيع: أن أشرح لماذا يهمّ إنصافُ النموذج الناسَ الذين يحكم عليهم."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Fair for everyone",
+            "ar": "منصف للجميع"
+          },
+          "note": {
+            "en": "AI · Level 3 · Lesson 4",
+            "ar": "الذكاء الاصطناعي، المستوى ٣، الدرس ٤"
+          },
+          "narration": {
+            "en": "Ninety per cent right: right for whom?",
+            "ar": "تسعون في المئة من الإجابات صحيحة: صحيحة لمن؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Find who a model fails by testing each group separately, not only overall.",
+              "Fix bias at its source: collect the missing examples, then test again.",
+              "Explain why a fair model matters to the people it judges."
+            ],
+            "ar": [
+              "نكتشف مَن يخذلهم النموذج باختبار كل مجموعة على حدة، لا في المجمل فقط.",
+              "نعالج التحيّز من مصدره: نجمع الأمثلة الناقصة، ثم نختبر من جديد.",
+              "نشرح لماذا يهمّ إنصافُ النموذج الناسَ الذين يحكم عليهم."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "One overall score can hide a group the model fails: always test group by group.",
+              "Bias usually starts with a data gap: a group missing or too rare in the examples.",
+              "Fix the data, not the people: collect the missing examples with permission, retrain and test again."
+            ],
+            "ar": [
+              "درجة إجمالية واحدة قد تخفي مجموعة يخذلها النموذج: فاختبر دائمًا مجموعةً مجموعة.",
+              "يبدأ التحيّز عادةً من فجوة في البيانات: مجموعة غائبة أو نادرة جدًا بين الأمثلة.",
+              "أصلح البيانات لا الناس: اجمع الأمثلة الناقصة بإذن أصحابها، وأعد التدريب، واختبر من جديد."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Fairness audit",
+            "ar": "تدقيق الإنصاف"
+          },
+          "bullets": {
+            "en": [
+              "Choose (3 min): voice typing and three sentences.",
+              "Ask (4 min): four volunteers, with permission.",
+              "Test (8 min): each person says the sentences.",
+              "Table (5 min): each person’s share of words right.",
+              "Explain (5 min): who does it fail, and why?"
+            ],
+            "ar": [
+              "الاختيار (٣ دقائق): الكتابة بالصوت وثلاث جمل.",
+              "الاستئذان (٤ دقائق): أربعة متطوعين، بإذنهم.",
+              "الاختبار (٨ دقائق): يقول كل شخص الجمل.",
+              "الجدول (٥ دقائق): نسبة الكلمات الصحيحة لكل شخص.",
+              "الشرح (٥ دقائق): مَن تخذله الأداة، ولماذا؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Choose (3 min): Pick voice typing you are allowed to use (or a translation app’s microphone, checking only the words it writes) and write three short, everyday sentences. If a volunteer speaks another language, write the sentences in that language too.",
+              "Ask (4 min): Find at least four volunteers who differ in age, accent or language. Tell them what the test is for and that no recordings will be kept.",
+              "Test (8 min): Each person says the same three sentences once. Count the words the tool writes correctly, out of all the words, and write down the share (such as 10 out of 12), not the person’s name.",
+              "Table (5 min): Make a table (Person A, Person B…) with each person’s share, and add the overall share at the bottom.",
+              "Explain (5 min): Does the overall share hide anyone? Write who the tool understood least, a likely gap in its training data, and how its makers could fix it. With one person for each kind of voice, call it a clue, not proof."
+            ],
+            "ar": [
+              "الاختيار (٣ دقائق): اختر الكتابة بالصوت على هاتف يُسمح لك باستخدامه (أو ميكروفون تطبيق ترجمة، مع فحص الكلمات التي يكتبها فقط)، واكتب ثلاث جمل قصيرة من الحياة اليومية. وإن كان أحد المتطوعين يتكلّم لغة أخرى، فاكتب الجمل بلغته أيضًا.",
+              "الاستئذان (٤ دقائق): ابحث عن أربعة متطوعين على الأقل يختلفون في العمر أو اللهجة أو اللغة. أخبرهم بالغرض من الاختبار، وبأنك لن تحتفظ بأي تسجيل.",
+              "الاختبار (٨ دقائق): يقول كل شخص الجمل الثلاث نفسها مرة واحدة. عُدّ الكلمات التي تكتبها الأداة صحيحة من مجموع الكلمات، واكتب النسبة (مثل ١٠ من ١٢) لا اسم الشخص.",
+              "الجدول (٥ دقائق): اصنع جدولًا (الشخص أ، الشخص ب…) فيه نسبة كل شخص، وأضف في أسفله النسبة الإجمالية.",
+              "الشرح (٥ دقائق): هل تخفي النسبة الإجمالية أحدًا؟ اكتب مَن فهمته الأداة أقل من غيره، وفجوة محتملة في بيانات تدريبها، وكيف يستطيع صانعوها إصلاحها. ومع شخص واحد لكل نوع من الأصوات، اعتبر ذلك دليلًا أوليًّا لا برهانًا."
+            ]
+          },
+          "note": {
+            "en": "Works in a small group or at home with family. Only test people who agree, keep no recordings, and use letters instead of names.",
+            "ar": "يصلح لمجموعة صغيرة أو في البيت مع الأسرة. لا تختبر إلا من يوافق، ولا تحتفظ بأي تسجيل، واستخدم الحروف بدل الأسماء."
+          },
+          "narration": {
+            "en": "Did the overall score hide anyone?",
+            "ar": "هل أخفت الدرجة الإجمالية أحدًا؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why can a model with a great overall score still be unfair?",
+              "Who might be missing from the data behind a tool you use every day?",
+              "Is it ever fair to ask people to change how they speak or write so a model understands them?"
+            ],
+            "ar": [
+              "لماذا قد يكون نموذج ذو درجة إجمالية ممتازة غير منصف مع ذلك؟",
+              "مَن قد يكون غائبًا عن البيانات التي تقف خلف أداة تستخدمها كل يوم؟",
+              "هل من العدل أن نطلب من الناس تغيير طريقة كلامهم أو كتابتهم ليفهمهم النموذج؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Before you go",
+            "ar": "قبل أن تغادر"
+          },
+          "bullets": {
+            "en": [
+              "One group a model I use might fail, and how I would test it."
+            ],
+            "ar": [
+              "مجموعة واحدة قد يخذلها نموذج أستخدمه، وكيف سأختبر ذلك."
+            ]
+          },
+          "narration": {
+            "en": "A fair model works for everyone it judges, not just the people in its data.",
+            "ar": "النموذج المنصف يعمل مع كل من يحكم عليهم، لا مع الموجودين في بياناته فقط."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides for revising: Fair for everyone",
+            "ar": "شرائح للمراجعة: منصف للجميع"
+          },
+          "pages": 6,
+          "base": "ai-s3-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Notes and worksheet: Fair for everyone",
+            "ar": "ملاحظات وورقة عمل: منصف للجميع"
+          },
+          "pages": 3,
+          "base": "ai-s3-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-s3-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "S.ET.A",
+        "S.SD.A"
+      ]
+    },
+    {
+      "id": "ai-s3-check",
+      "title": {
+        "en": "Train your own model: unit check",
+        "ar": "درّب نموذجك بنفسك: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Pick one AI tool you use (voice typing, a translator, a photo app) and ask the three questions from this unit: what data did it learn from, how was it tested, and who might it fail?",
+        "ar": "اختر أداة ذكاء اصطناعي تستخدمها (الكتابة بالصوت، أو الترجمة، أو تطبيق صور)، واطرح عنها أسئلة هذه الوحدة الثلاثة: من أيّ بيانات تعلّمت، وكيف اختُبرت، ومَن قد تخذل؟"
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "You want a model that tells healthy from sick cassava leaves. Which dataset is best?",
+            "ar": "تريد نموذجًا يميّز أوراق الكسافا السليمة من المريضة. أيّ مجموعة بيانات هي الأفضل؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "100 healthy photos and 5 sick ones",
+                "ar": "١٠٠ صورة لأوراق سليمة و٥ صور لأوراق مريضة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "60 healthy and 60 sick, all from one plant at noon",
+                "ar": "٦٠ ورقة سليمة و٦٠ مريضة، كلها من نبتة واحدة عند الظهر"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "30 healthy and 30 sick, from different fields, times and phones",
+                "ar": "٣٠ ورقة سليمة و٣٠ مريضة، من حقول وأوقات وهواتف مختلفة"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Any leaf photos from the internet, unlabelled",
+                "ar": "أي صور أوراق من الإنترنت، بلا تصنيفات"
+              }
+            }
+          ],
+          "answer": "c",
+          "explain": {
+            "en": "Thirty of each from different fields, times and phones is balanced, labelled and varied. A hundred healthy against five sick is badly unbalanced, one plant at noon gives numbers but no variety, and unlabelled photos give it nothing to learn from.",
+            "ar": "ثلاثون من كل نوع من حقول وأوقات وهواتف مختلفة: مجموعة متوازنة ومصنّفة ومتنوّعة. أما مئة سليمة مقابل خمس مريضة فغير متوازنة بشدّة، ونبتة واحدة عند الظهر تعطي عددًا بلا تنوّع، والصور غير المصنّفة لا تعطي النموذج شيئًا يتعلّم منه."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "A model treats every label in its training data as correct, even the wrong ones.",
+            "ar": "يتعامل النموذج مع كل تصنيف في بيانات تدريبه على أنه صحيح، حتى التصنيفات الخاطئة."
+          },
+          "answer": true,
+          "explain": {
+            "en": "A model can’t tell a wrong label from a right one: it learns from all of them. That is why people must check the labels.",
+            "ar": "لا يستطيع النموذج أن يميّز التصنيف الخاطئ من الصحيح، فهو يتعلّم منها كلها. ولهذا يجب أن يراجع الناس التصنيفات."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q3",
+          "prompt": {
+            "en": "Match each word to its meaning.",
+            "ar": "صِل كل كلمة بمعناها."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Feature",
+                "ar": "الخاصية"
+              },
+              "right": {
+                "en": "A number you can measure about every example",
+                "ar": "رقم تستطيع قياسه في كل مثال"
+              }
+            },
+            {
+              "left": {
+                "en": "Label",
+                "ar": "التصنيف"
+              },
+              "right": {
+                "en": "The right answer given to an example",
+                "ar": "الإجابة الصحيحة المعطاة لمثال"
+              }
+            },
+            {
+              "left": {
+                "en": "Test set",
+                "ar": "مجموعة الاختبار"
+              },
+              "right": {
+                "en": "Examples kept apart to measure the model honestly",
+                "ar": "أمثلة تُحفظ جانبًا لقياس النموذج بأمانة"
+              }
+            },
+            {
+              "left": {
+                "en": "Bias",
+                "ar": "التحيّز"
+              },
+              "right": {
+                "en": "More mistakes for one group than for others",
+                "ar": "أخطاء أكثر مع مجموعة منها مع غيرها"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Features describe examples, labels give the answers, the test set measures the model, and bias is what testing group by group can reveal.",
+            "ar": "الخصائص تصف الأمثلة، والتصنيفات تعطي الإجابات، ومجموعة الاختبار تقيس النموذج، والتحيّز هو ما يكشفه الاختبار حسب المجموعة."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q4",
+          "prompt": {
+            "en": "A new mango’s nearest neighbour is ripe, but its next four neighbours are all unripe. What does the classifier say with k = 1, and with k = 5?",
+            "ar": "أقرب ثمرة إلى ثمرة مانجو جديدة ناضجة، لكن الثمار الأربع التالية في القرب كلها غير ناضجة. ماذا يقول المصنِّف مع k = ١، ومع k = ٥؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Ripe with k = 1, not ripe with k = 5",
+                "ar": "ناضجة مع k = ١، وغير ناضجة مع k = ٥"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Ripe both times",
+                "ar": "ناضجة في الحالتين"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Not ripe both times",
+                "ar": "غير ناضجة في الحالتين"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "It can’t decide with k = 5",
+                "ar": "لا يستطيع أن يقرّر مع k = ٥"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "With k = 1 only the closest mango votes, and it is ripe. With k = 5 the vote is four to one for unripe. That is how k changes the answer.",
+            "ar": "مع k = ١ لا تصوّت إلا أقرب ثمرة، وهي ناضجة. ومع k = ٥ تصبح النتيجة أربعة إلى واحد لصالح «غير ناضجة». وهكذا يغيّر العدد k الإجابة."
+          }
+        },
+        {
+          "type": "order",
+          "id": "q5",
+          "prompt": {
+            "en": "Put the steps of building and checking a model in order.",
+            "ar": "رتّب خطوات بناء النموذج والتحقّق منه."
+          },
+          "steps": [
+            {
+              "en": "Plan the data: what, labels, how many, how varied",
+              "ar": "خطّط للبيانات: ماذا، والتصنيفات، وكم مثالًا، وما مدى التنوّع"
+            },
+            {
+              "en": "Collect examples fairly, with permission",
+              "ar": "اجمع الأمثلة بإنصاف وبإذن أصحابها"
+            },
+            {
+              "en": "Label them and check the labels",
+              "ar": "صنّفها وراجع التصنيفات"
+            },
+            {
+              "en": "Train on most examples, keeping a test set apart",
+              "ar": "درّب على معظم الأمثلة، مع إبقاء مجموعة اختبار جانبًا"
+            },
+            {
+              "en": "Test on the test set, group by group",
+              "ar": "اختبر على أمثلة الاختبار، كل مجموعة على حدة"
+            }
+          ],
+          "explain": {
+            "en": "Planning comes before collecting, and labels before training. The test set stays unseen until the end, when you check every group.",
+            "ar": "التخطيط يسبق الجمع، والتصنيف يسبق التدريب. وتبقى مجموعة الاختبار بعيدة عن النموذج حتى النهاية، حين تفحص كل مجموعة."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q6",
+          "prompt": {
+            "en": "Which of these are signs of overfitting, or make it likely? Choose all that apply.",
+            "ar": "أيّ مما يلي علامة على الإفراط في المطابقة أو يجعله مرجّحًا؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "100% on training examples, 60% on new ones",
+                "ar": "١٠٠٪ في أمثلة التدريب، و٦٠٪ في الأمثلة الجديدة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A curve that passes through every training point but swings wildly between them",
+                "ar": "منحنى يمرّ بكل نقطة تدريب لكنه يتأرجح بشدّة بينها"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Similar scores on training and test examples",
+                "ar": "درجات متقاربة في أمثلة التدريب والاختبار"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Lots of freedom, trained on very few examples",
+                "ar": "حرية كبيرة مع تدريب على أمثلة قليلة جدًا"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "A test on examples it never saw",
+                "ar": "اختبار على أمثلة لم يرها"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "A big gap between training and test scores, a curve that memorises every point, and lots of freedom with few examples all point to overfitting. Similar scores are a good sign, and testing on unseen examples is how you find the problem.",
+            "ar": "الفجوة الكبيرة بين درجتي التدريب والاختبار، والمنحنى الذي يحفظ كل نقطة، والحرية الكبيرة مع أمثلة قليلة: كلها تدلّ على الإفراط في المطابقة. أما الدرجات المتقاربة فعلامة جيدة، والاختبار على أمثلة لم يرها هو طريقة كشف المشكلة."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q7",
+          "prompt": {
+            "en": "Your club’s model reads handwritten exam numbers. It is 92% right overall, but only 70% right for the youngest class. What should you do?",
+            "ar": "يقرأ نموذج ناديكم أرقام الامتحان المكتوبة بخط اليد. نسبة صوابه ٩٢٪ إجمالًا، لكنها ٧٠٪ فقط في أصغر الصفوف. ماذا تفعلون؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Publish 92%: it is the true overall score",
+                "ar": "ننشر ٩٢٪، فهي الدرجة الإجمالية الحقيقية"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Collect samples from the youngest class with permission, retrain, test each class",
+                "ar": "نجمع عيّنات من أصغر الصفوف بإذن أصحابها، ونعيد التدريب، ونختبر كل صف"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Use it only for older classes and say nothing",
+                "ar": "نستخدمه مع الصفوف الأكبر فقط دون أن نقول شيئًا"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Ask the youngest class to write like the older students",
+                "ar": "نطلب من أصغر الصفوف أن يكتب مثل الطلاب الأكبر"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "The 70% shows a data gap: the youngest class’s writing was missing or rare. Fix it at the source and test every class again. The other choices hide the gap or blame the students.",
+            "ar": "نسبة ٧٠٪ تكشف فجوة في البيانات: خط أصغر الصفوف كان غائبًا أو نادرًا. فعالجوها من مصدرها، واختبروا كل الصفوف من جديد. أما الخيارات الأخرى فتخفي الفجوة أو تلوم الطلاب."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q8",
+          "prompt": {
+            "en": "A model with a 95% overall score can still get most examples from one small group wrong.",
+            "ar": "النموذج الذي درجته الإجمالية ٩٥٪ قد يخطئ مع ذلك في معظم أمثلة مجموعة صغيرة واحدة."
+          },
+          "answer": true,
+          "explain": {
+            "en": "If a group makes up only a few of the test examples, the model can fail most of them and the overall score barely moves. Only testing by group shows it.",
+            "ar": "إذا كانت مجموعة ما لا تمثّل إلا قليلًا من أمثلة الاختبار، فقد يخطئ النموذج في معظمها دون أن تتأثّر الدرجة الإجمالية تقريبًا. ووحده الاختبار حسب المجموعة يكشف ذلك."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q9",
+          "prompt": {
+            "en": "Complete the sentence.",
+            "ar": "أكمل الجملة."
+          },
+          "sentence": {
+            "en": [
+              "Choose ",
+              {
+                "blank": 0
+              },
+              " that separate the classes, keep a ",
+              {
+                "blank": 1
+              },
+              " set apart, and check each ",
+              {
+                "blank": 2
+              },
+              " separately."
+            ],
+            "ar": [
+              "اختر ",
+              {
+                "blank": 0
+              },
+              " تفصل بين الفئات، واحتفظ بأمثلة ",
+              {
+                "blank": 1
+              },
+              " جانبًا، وافحص نتيجة كل ",
+              {
+                "blank": 2
+              },
+              " على حدة."
+            ]
+          },
+          "bank": {
+            "en": [
+              "features",
+              "test",
+              "group",
+              "colours",
+              "training"
+            ],
+            "ar": [
+              "خصائص",
+              "الاختبار",
+              "مجموعة",
+              "ألوانًا",
+              "التدريب"
+            ]
+          },
+          "answers": {
+            "en": [
+              "features",
+              "test",
+              "group"
+            ],
+            "ar": [
+              "خصائص",
+              "الاختبار",
+              "مجموعة"
+            ]
+          },
+          "explain": {
+            "en": "Good features, a test set the model never saw, and group-by-group checks: the three habits of an honest model maker.",
+            "ar": "خصائص جيدة، ومجموعة اختبار لم يرها النموذج، وفحص مجموعةً مجموعة: هذه هي العادات الثلاث لصانع النماذج الأمين."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q10",
+          "prompt": {
+            "en": "A model looks for sick cows in 20 test photos. Ten cows are really sick. It calls 9 cows sick: 7 of them are sick and 2 are healthy. How many sick cows did it miss (false negatives)?",
+            "ar": "يبحث نموذج عن الأبقار المريضة في ٢٠ صورة اختبار، منها ١٠ أبقار مريضة فعلًا. وصف النموذج ٩ أبقار بأنها مريضة: ٧ منها مريضة فعلًا، واثنتان سليمتان. كم بقرة مريضة فاتته (سلبي كاذب)؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "2",
+                "ar": "٢"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "7",
+                "ar": "٧"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "11",
+                "ar": "١١"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "3",
+                "ar": "٣"
+              }
+            }
+          ],
+          "answer": "d",
+          "explain": {
+            "en": "Ten cows are sick and it caught seven, so it missed three: three false negatives. The two healthy cows it called sick are false positives, so 15 of its 20 answers were right.",
+            "ar": "هناك ١٠ أبقار مريضة كشف منها ٧، ففاتته ٣: هذه ثلاث حالات سلبية كاذبة. أما البقرتان السليمتان اللتان وصفهما بالمرض فإيجابيتان كاذبتان، فأصاب في ١٥ من ٢٠ إجابة."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Train your own model: review",
+            "ar": "درّب نموذجك بنفسك: مراجعة"
+          },
+          "note": {
+            "en": "AI · Level 3 · Unit check",
+            "ar": "الذكاء الاصطناعي، المستوى ٣، اختبار الوحدة"
+          },
+          "narration": {
+            "en": "Today we look back at the whole unit and check what stuck.",
+            "ar": "اليوم نراجع الوحدة كلها ونتحقّق مما رسخ في أذهاننا."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Data first",
+              "How a classifier decides",
+              "Test it honestly",
+              "Fair for everyone"
+            ],
+            "ar": [
+              "البيانات أولًا",
+              "كيف يقرّر المصنِّف",
+              "اختبره بأمانة",
+              "منصف للجميع"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "A model only knows its data: plan it, check it, collect it fairly",
+              "Features and nearest neighbours: how a classifier decides",
+              "Only examples the model never saw give an honest score",
+              "Test every group, and fix bias in the data"
+            ],
+            "ar": [
+              "لا يعرف النموذج إلا بياناته: خطّط لها وراجعها واجمعها بإنصاف",
+              "الخصائص وأقرب الجيران: كيف يقرّر المصنِّف",
+              "الأمثلة التي لم يرها النموذج وحدها تعطي درجة صادقة",
+              "اختبر كل مجموعة، وعالج التحيّز في البيانات"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Team quiz",
+            "ar": "مسابقة الفرق"
+          },
+          "bullets": {
+            "en": [
+              "Make teams of three or four, or quiz a family member",
+              "Read each question aloud; agree on one answer",
+              "Reveal the answer and explain why it is right",
+              "Write the hardest question in your notebook to revise"
+            ],
+            "ar": [
+              "كوّنوا فرقًا من ثلاثة أو أربعة، أو اختبر أحد أفراد أسرتك",
+              "اقرؤوا كل سؤال بصوت عالٍ، واتفقوا على إجابة واحدة",
+              "اكشفوا الإجابة واشرحوا لماذا هي الصحيحة",
+              "اكتب أصعب سؤال في دفترك لتراجعه"
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which idea from this unit surprised you most?",
+              "What would you check first before trusting an AI tool’s score?",
+              "What model would you like to build, and whose data would it need?"
+            ],
+            "ar": [
+              "أيّ فكرة في هذه الوحدة فاجأتك أكثر؟",
+              "ما أول ما ستفحصه قبل أن تثق بدرجة أداة ذكاء اصطناعي؟",
+              "أيّ نموذج تودّ أن تبنيه، وبيانات مَن سيحتاج؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Before you go",
+            "ar": "قبل أن تغادر"
+          },
+          "bullets": {
+            "en": [
+              "One question I will ask about the next AI tool I use"
+            ],
+            "ar": [
+              "سؤال واحد سأطرحه عن أداة الذكاء الاصطناعي التالية التي أستخدمها"
+            ]
+          },
+          "narration": {
+            "en": "Data, testing and fairness: three questions for every model you meet.",
+            "ar": "البيانات والاختبار والإنصاف: ثلاثة أسئلة لكل نموذج تقابله."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides for revising: Train your own model",
+            "ar": "شرائح للمراجعة: درّب نموذجك بنفسك"
+          },
+          "pages": 6,
+          "base": "ai-s3-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Revision plan and quiz sheet: Train your own model",
+            "ar": "خطة المراجعة وورقة الاختبار: درّب نموذجك بنفسك"
+          },
+          "pages": 2,
+          "base": "ai-s3-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "S.SD.A",
+        "S.TA.A",
+        "S.ET.A"
+      ]
+    }
+  ]
+}

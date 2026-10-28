@@ -13,6 +13,9 @@ const S = {
     winRule: "IF the CO₂ (stale air) is above", winThen: "THEN open the window", use: "Use this rule", unitC: "°C", unitLux: "lux", unitPpm: "ppm",
     timeline: "The school day: when a class is in and when each device is on", rows: { occupied: "Class in", fan: "Fan", lights: "Lights", window: "Window open" },
     energy: "Electricity used", kwh: (n: string) => `${n} kWh`, hot: "Minutes too hot", dark: "Minutes too dark", stuffy: "Minutes of stale air", during: "(counted only while a class is in)",
+    try1: "Untick “only while a class is in”: the lights also burn through the breaks, and the electricity goes up with no gain in comfort.",
+    try2: "Raise the fan rule to 31 °C: the fan never comes on and the electricity drops, but over 2 hours too hot appear around midday.",
+    try3: "Move the window rule to 1,500 ppm: the window opens late, and stale air fills over 3 hours of lessons.",
     takeaway: "Automation is rules plus sensors. Good rules use the right sensor, a sensible threshold and conditions like “only when someone is there”. Every rule trades comfort, energy and cost, and someone has to choose that balance.",
   },
   ar: {
@@ -21,6 +24,9 @@ const S = {
     winRule: "إذا تجاوز ثاني أكسيد الكربون (الهواء الفاسد)", winThen: "فافتح النافذة", use: "فعّل هذه القاعدة", unitC: "°س", unitLux: "لكس", unitPpm: "جزء في المليون",
     timeline: "اليوم الدراسي: متى يكون في الصف تلاميذ ومتى يعمل كل جهاز", rows: { occupied: "الصف مشغول", fan: "المروحة", lights: "الأضواء", window: "النافذة مفتوحة" },
     energy: "الكهرباء المستهلكة", kwh: (n: string) => `${n} كيلوواط ساعة`, hot: "دقائق حرّ", dark: "دقائق إضاءة ضعيفة", stuffy: "دقائق هواء فاسد", during: "(تُحسب فقط حين يكون في الصف تلاميذ)",
+    try1: "ألغِ اختيار «فقط حين يكون في الصف تلاميذ»: تبقى الأضواء مضاءة في الاستراحات أيضًا، فيزيد استهلاك الكهرباء دون أي مكسب في الراحة.",
+    try2: "ارفع قاعدة المروحة إلى ٣١ °س: لا تعمل المروحة أبدًا فتقل الكهرباء، لكن تظهر أكثر من ساعتين من الحر حول الظهيرة.",
+    try3: "اجعل قاعدة النافذة عند ١٥٠٠ جزء في المليون: تُفتح النافذة متأخرة، ويملأ الهواء الفاسد أكثر من ٣ ساعات من الحصص.",
     takeaway: "الأتمتة قواعد ومستشعرات. والقواعد الجيدة تستعمل المستشعر المناسب وعتبة معقولة وشروطًا مثل «فقط حين يوجد أحد». وكل قاعدة تقايض بين الراحة والطاقة والكلفة، ولا بد أن يختار أحدٌ هذا التوازن.",
   },
 };
@@ -38,7 +44,7 @@ export default function RulesLab({ meta, onDone }: LabProps) {
   const W = 320, LABEL = 84, x = (t: number) => LABEL + ((t - START) / (END - START)) * (W - LABEL - 4);
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <div className="lb-rules">
         <div className="lb-rule">
           <label className="lb-check"><input type="checkbox" checked={r.fan.on} onChange={(e) => set({ ...r, fan: { ...r.fan, on: e.target.checked } })} /> {s.use}</label>

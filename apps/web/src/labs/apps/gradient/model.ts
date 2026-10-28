@@ -7,6 +7,15 @@ import { rng } from "../../kit/rng";
 export interface P { x: number; y: number }
 export interface Line { m: number; c: number }
 
+/**
+ * The lab's three step sizes. "Too big" is just past the edge of stability (about 0.79 for this data), so the line
+ * visibly overshoots back and forth, further each time, for several steps before it flies off; a much bigger rate would
+ * blow up in one step and show nothing.
+ */
+export const RATES = { small: 0.05, good: 0.6, big: 0.8 } as const;
+/** Steps before the lab stops a run that is still crawling. */
+export const MAX_STEPS = 200;
+
 /** Hours studied (0–10, scaled to 0–1) and test score (scaled to 0–1). */
 export function data(seed = 5, n = 18): P[] {
   const r = rng(seed);

@@ -17,7 +17,10 @@ const S = {
     map: "Houses (small marks) and bus stops (big rings); lines show who walks to which stop", k: "Number of bus stops (k)",
     next: { assign: "Next: every house picks its nearest stop", move: "Next: every stop moves to the middle of its houses" },
     newStart: "New random start", walk: "Average walk", round: "Round", history: "Average walk, round by round",
-    done: (n: string, c: number) => `Finished: the stops stopped moving after ${c === 1 ? "1 round" : `${n} rounds`}.`, local: "Try a few new starts: some end with a longer average walk. k-means finds a good answer, not always the best one.",
+    done: (n: string, c: number) => `Finished: the stops stopped moving after ${c === 1 ? "1 round" : `${n} rounds`}.`, local: "Try a few new starts, with 3 or 5 stops: some end with a longer average walk. k-means finds a good answer, not always the best one.",
+    try1: "Press One step again and again: every house picks its nearest stop, then every stop moves to the middle of its houses. Watch the average walk shrink until the stops stop moving.",
+    try2: "Set the number of bus stops to 3 and press Run. Then press New random start and Run again, a few times: the final average walk is not always the same.",
+    try3: "Set the number of bus stops to 1 and press Run, then 5 and Run again: one stop makes everyone walk far; five stops shorten the walk, but that is more stops to pay for.",
     takeaway: "k-means groups things by similarity without any labelled examples: this is unsupervised learning. The same two steps group customers, photos or survey answers. You still choose k, and the result depends on where it starts.",
   },
   ar: {
@@ -25,7 +28,10 @@ const S = {
     map: "البيوت (العلامات الصغيرة) ومواقف الحافلة (الحلقات الكبيرة)، والخطوط تبيّن من يمشي إلى أي موقف", k: "عدد المواقف (k)",
     next: { assign: "التالي: يختار كل بيت أقرب موقف إليه", move: "التالي: ينتقل كل موقف إلى وسط بيوته" },
     newStart: "بداية عشوائية جديدة", walk: "متوسط المشي", round: "الجولة", history: "متوسط المشي جولةً بعد جولة",
-    done: (n: string, c: number) => `انتهى: توقّفت المواقف عن الحركة بعد ${c === 1 ? "جولة واحدة" : c === 2 ? "جولتين" : c <= 10 ? `${n} جولات` : `${n} جولة`}.`, local: "جرّب بدايات جديدة: بعضها ينتهي بمتوسط مشي أطول. تجد k-means إجابة جيدة، لا الأفضل دائمًا.",
+    done: (n: string, c: number) => `انتهى: توقّفت المواقف عن الحركة بعد ${c === 1 ? "جولة واحدة" : c === 2 ? "جولتين" : c <= 10 ? `${n} جولات` : `${n} جولة`}.`, local: "جرّب بدايات جديدة مع ٣ مواقف أو ٥: بعضها ينتهي بمتوسط مشي أطول. تجد k-means إجابة جيدة، لا الأفضل دائمًا.",
+    try1: "اضغط «خطوة واحدة» مرة بعد مرة: يختار كل بيت أقرب موقف إليه، ثم ينتقل كل موقف إلى وسط بيوته. راقب متوسط المشي يقصر حتى تتوقف المواقف عن الحركة.",
+    try2: "اضبط عدد المواقف على ٣ واضغط «شغّل». ثم اضغط «بداية عشوائية جديدة» و«شغّل» من جديد، بضع مرات: لا ينتهي متوسط المشي إلى الرقم نفسه دائمًا.",
+    try3: "اضبط عدد المواقف على ١ واضغط «شغّل»، ثم على ٥ وشغّل من جديد: موقف واحد يجعل الجميع يمشون بعيدًا، وخمسة مواقف تقصّر المشي، لكنها مواقف أكثر تحتاج إلى كلفة.",
     takeaway: "تجمع k-means الأشياء بحسب التشابه دون أي أمثلة معنونة، وهذا هو التعلّم غير الموجّه. والخطوتان نفسهما تجمعان العملاء أو الصور أو إجابات الاستبيانات. لكنك ما زلت تختار k، والنتيجة تعتمد على نقطة البداية.",
   },
 };
@@ -58,7 +64,7 @@ export default function Kmeans({ meta, onDone }: LabProps) {
   const cur = useMemo(() => a ?? assign(pts, stops), [a, pts, stops]);
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <div className="lb-two">
         <div className="stack">
           <Plot x={[0, 10]} y={[0, 10]} label={s.map} height={300} ticks={0}

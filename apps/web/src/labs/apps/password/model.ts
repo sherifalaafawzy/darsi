@@ -10,15 +10,20 @@ export const COMMON = [
   "teacher", "student", "computer", "internet", "samsung", "google", "freedom", "flower", "lovely", "hello", "baseball", "soccer",
   "محمد", "احمد", "الله", "مصر", "حبيبي", "بسم الله", "١٢٣٤٥٦", "كلمةالسر", "عمر", "فاطمة", "علي", "مدرسة",
 ];
-const WORDS = ["sun", "moon", "star", "love", "baby", "cat", "dog", "lion", "tiger", "king", "queen", "angel", "magic", "happy", "summer", "winter", "spring", "school", "class", "teacher", "pass", "word", "admin", "user", "login", "hello", "world", "family", "friend", "football", "music", "apple", "orange", "mango", "coffee", "chocolate", "shine", "sunshine", "light", "power", "super", "money", "lucky", "smile"];
-/** Every dictionary word an attacker tries, longest first (so "sunshine" is found before "sun"). */
-const DICT = [...new Set([...WORDS, ...COMMON.filter((w) => /^[a-z]+$/.test(w))])].sort((a, b) => b.length - a.length);
+const WORDS = ["sun", "moon", "star", "love", "baby", "cat", "dog", "lion", "tiger", "king", "queen", "angel", "magic", "happy", "summer", "winter", "spring", "school", "class", "teacher", "pass", "word", "admin", "user", "login", "hello", "world", "family", "friend", "football", "music", "apple", "orange", "mango", "coffee", "chocolate", "shine", "sunshine", "light", "power", "super", "money", "lucky", "smile",
+  // Names and pets' names are in every attacker's dictionary too (the footprint lab's Mishmish among them).
+  "mohamed", "mohammed", "ahmed", "omar", "fatima", "fatma", "aisha", "mariam", "maryam", "youssef", "hassan", "amal", "lina", "sara", "nour", "mishmish"];
+/** Every dictionary word an attacker tries, English and Arabic, longest first (so "sunshine" is found before "sun"). */
+const DICT = [...new Set([...WORDS, ...COMMON.filter((w) => /^([a-z]+|[ء-ي]+)$/.test(w))])].sort((a, b) => b.length - a.length);
 const WORD_BITS = Math.log2(50000); // picking one word from a big dictionary
 const ROWS = ["qwertyuiop", "asdfghjkl", "zxcvbnm", "1234567890", "0987654321"];
-const LEET: Record<string, string> = { "@": "a", "4": "a", "3": "e", "1": "i", "!": "i", "0": "o", "$": "s", "5": "s", "7": "t" };
+const LEET: Record<string, string> = { "@": "a", "4": "a", "3": "e", "1": "i", "!": "i", "0": "o", "$": "s", "5": "s", "7": "t", "أ": "ا", "إ": "ا", "آ": "ا" };
+/** Arabic-Indic digits are digits: the same ten choices, years and runs as 0–9. */
+const western = (pw: string) => pw.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660));
 
 export function pools(pw: string) {
-  const p = { lower: /[a-z]/.test(pw), upper: /[A-Z]/.test(pw), digit: /[0-9٠-٩]/.test(pw), arabic: /[؀-ۿ]/.test(pw), symbol: /[^a-zA-Z0-9؀-ۿ\s]/.test(pw), space: /\s/.test(pw) };
+  // Arabic letters (and marks) exclude the Arabic-Indic digits ٠–٩, which count as digits.
+  const p = { lower: /[a-z]/.test(pw), upper: /[A-Z]/.test(pw), digit: /[0-9٠-٩]/.test(pw), arabic: /[؀-ٟٮ-ۿ]/.test(pw), symbol: /[^a-zA-Z0-9؀-ۿ\s]/.test(pw), space: /\s/.test(pw) };
   const size = (p.lower ? 26 : 0) + (p.upper ? 26 : 0) + (p.digit ? 10 : 0) + (p.arabic ? 36 : 0) + (p.symbol ? 33 : 0) + (p.space ? 1 : 0);
   return { ...p, size };
 }
@@ -28,8 +33,8 @@ export const bruteBits = (pw: string) => ([...pw].length ? [...pw].length * Math
 
 export type Weakness = "common" | "word" | "year" | "keyboard" | "repeat" | "short" | "digitsOnly";
 /** The patterns attackers try first, and the guesses they would need with them. */
-export function analyse(pw: string) {
-  const lower = pw.toLowerCase(), plain = [...lower].map((c) => LEET[c] ?? c).join("");
+export function analyse(typed: string) {
+  const pw = western(typed), lower = pw.toLowerCase(), plain = [...lower].map((c) => LEET[c] ?? c).join("");
   const found: Weakness[] = [];
   let bits = bruteBits(pw);
   if (COMMON.includes(lower) || COMMON.includes(plain)) { found.push("common"); bits = Math.min(bits, Math.log2(COMMON.length * 20)); }
@@ -60,6 +65,16 @@ export function analyse(pw: string) {
 /** Seconds to try half the possibilities at `perSecond` guesses a second. */
 export const seconds = (bits: number, perSecond: number) => 2 ** bits / 2 / perSecond;
 export const ONLINE = 10, OFFLINE = 1e10; // a website that slows guessing down; a stolen password file and a gaming graphics card
+
+/**
+ * A phrase made only of words from a generator's list (any separators): an attacker who knows the list needs
+ * list size ^ words guesses, however long the text looks. Null when it isn't such a phrase.
+ */
+export function fromList(pw: string, list: readonly string[]) {
+  const known = new Set(list.map((w) => w.toLowerCase()));
+  const words = pw.toLowerCase().split(/[\s\-_.,،]+/).filter(Boolean);
+  return words.length >= 2 && words.every((w) => known.has(w)) ? { words: words.length, bits: words.length * Math.log2(known.size) } : null;
+}
 
 /** A passphrase of random words, chosen with the phone's secure random numbers. */
 export function passphrase(words: readonly string[], n = 5) {

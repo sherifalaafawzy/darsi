@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Icon } from "@darsi/design-system";
 import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
+import { usePlural, type Forms } from "../../kit/plural";
 import { RunBar, Segmented, Slider, Stats } from "../../kit/controls";
 import { Plot } from "../../kit/Plot";
 import { rng } from "../../kit/rng";
@@ -16,21 +17,27 @@ const S = {
   en: {
     intro: "The robot starts in the bottom corner and must find its charger. It gets +10 at the charger, −5 in a puddle and pays a little battery for every step. At first it wanders; with practice, it learns how good each move is in each square.",
     grid: "The school yard. Arrows: the robot's best move in each square. Darker: closer to a reward.",
-    practise: "Practise", watch: "Watch the robot", forget: "Forget everything", explore: "Trying random moves", rate: "Learning rate",
+    practise: "Practise", oneTrip: "One practice trip", watch: "Watch the robot", forget: "Forget everything", explore: "Trying random moves", rate: "Learning rate",
     edit: "Tap a square to", look: "Look", wall: "Add a wall", puddle: "Add a puddle", clear: "Clear it",
     trips: "Practice trips", last: "Steps on the last trip", chart: "Steps per trip: fewer means it has learned a shorter way",
-    reached: (n: string, c: number) => `It reached the charger in ${n} ${c === 1 ? "step" : "steps"}.`, lost: "It's still lost: give it more practice.", idle: "Press Practise, then Watch the robot.",
+    reached: { one: "It reached the charger in {n} step.", other: "It reached the charger in {n} steps." } as Forms, lost: "It's still lost: give it more practice.", idle: "Press Practise, then Watch the robot.",
     cell: { free: "path", wall: "wall", puddle: "puddle", goal: "charger" } as Record<Cell, string>,
+    try1: "Press Watch the robot: it has learned nothing yet, so it is lost. Press Practise (200 trips), then watch again: it drives straight to the charger in 10 steps.",
+    try2: "Choose Add a puddle and tap the second square above the start, then Practise again: the arrows change, and it takes a slightly longer way round to stay dry.",
+    try3: "Press Forget everything, set Learning rate to 0.1 and Practise: the chart of steps per trip falls much more slowly, because each trip changes what it knows only a little.",
     takeaway: "Reinforcement learning learns from rewards, not from examples of right answers. Game-playing AIs and some robots learn this way, and it is also used to shape how chatbots answer. The tricky part is choosing rewards that really mean what you want.",
   },
   ar: {
     intro: "يبدأ الروبوت من الزاوية السفلية وعليه أن يجد شاحنه. يحصل على +١٠ عند الشاحن، و−٥ في البركة، ويدفع قليلًا من البطارية مع كل خطوة. في البداية يتجوّل، ومع التدريب يتعلّم قيمة كل حركة في كل مربع.",
     grid: "ساحة المدرسة. الأسهم: أفضل حركة للروبوت في كل مربع. الأغمق: أقرب إلى مكافأة.",
-    practise: "درّب", watch: "شاهد الروبوت", forget: "انسَ كل شيء", explore: "تجربة حركات عشوائية", rate: "معدّل التعلّم",
+    practise: "درّب", oneTrip: "رحلة تدريب واحدة", watch: "شاهد الروبوت", forget: "انسَ كل شيء", explore: "تجربة حركات عشوائية", rate: "معدّل التعلّم",
     edit: "المس مربعًا لـ", look: "النظر", wall: "إضافة جدار", puddle: "إضافة بركة", clear: "إخلائه",
     trips: "رحلات التدريب", last: "خطوات آخر رحلة", chart: "الخطوات في كل رحلة: الأقل يعني أنه تعلّم طريقًا أقصر",
-    reached: (n: string, c: number) => `وصل إلى الشاحن في ${c <= 10 && c > 2 ? `${n} خطوات` : `${n} خطوة`}.`, lost: "ما زال تائهًا: درّبه أكثر.", idle: "اضغط «درّب»، ثم «شاهد الروبوت».",
+    reached: { one: "وصل إلى الشاحن في خطوة واحدة.", two: "وصل إلى الشاحن في خطوتين.", few: "وصل إلى الشاحن في {n} خطوات.", other: "وصل إلى الشاحن في {n} خطوة." } as Forms, lost: "ما زال تائهًا: درّبه أكثر.", idle: "اضغط «درّب»، ثم «شاهد الروبوت».",
     cell: { free: "ممر", wall: "جدار", puddle: "بركة", goal: "شاحن" } as Record<Cell, string>,
+    try1: "اضغط «شاهد الروبوت»: لم يتعلّم شيئًا بعد، فهو تائه. اضغط «درّب» (٢٠٠ رحلة)، ثم شاهده من جديد: يذهب مباشرةً إلى الشاحن في ١٠ خطوات.",
+    try2: "اختر «إضافة بركة» والمس المربع الثاني فوق نقطة البداية، ثم درّبه من جديد: تتغيّر الأسهم، ويسلك طريقًا أطول قليلًا ليبقى جافًا.",
+    try3: "اضغط «انسَ كل شيء»، واضبط «معدّل التعلّم» على ٠٫١ ثم درّبه: ينخفض منحنى الخطوات في كل رحلة أبطأ بكثير، لأن كل رحلة تغيّر ما يعرفه قليلًا فقط.",
     takeaway: "يتعلّم التعلّم المعزّز من المكافآت، لا من أمثلة الإجابات الصحيحة. هكذا تتعلّم برامج الذكاء الاصطناعي التي تلعب الألعاب وبعض الروبوتات، ويُستعمل أيضًا لتوجيه إجابات روبوتات المحادثة. والجزء الصعب هو اختيار مكافآت تعني فعلًا ما تريده.",
   },
 };
@@ -40,6 +47,7 @@ type Tool = "look" | "wall" | "puddle" | "clear";
 export default function Rl({ meta, onDone }: LabProps) {
   const s = useS(S);
   const { num } = useI18n();
+  const plural = usePlural();
   const [g, setG] = useState<Cell[]>(yard);
   const q = useRef(newQ());
   const r = useRef(rng(5));
@@ -82,7 +90,7 @@ export default function Rl({ meta, onDone }: LabProps) {
   const robot = walk ? walk.path[walk.at] : START;
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway} onReset={() => { forget(); setG(yard()); }}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway} onReset={() => { forget(); setG(yard()); }}>
       <div className="lb-two">
         <div className="stack">
           <div className="lb-yard" dir="ltr" role="group" aria-label={s.grid}>
@@ -102,12 +110,12 @@ export default function Rl({ meta, onDone }: LabProps) {
           <Segmented label={s.edit} value={tool} options={[["look", s.look], ["wall", s.wall], ["puddle", s.puddle], ["clear", s.clear]]} onChange={setTool} />
         </div>
         <div className="stack">
-          <RunBar running={practise.running} runLabel={s.practise} onToggle={() => { watch.stop(); setWalk(null); pressStart.current = trips.current; practise.toggle(); }}
-            onStep={trip}>
+          <RunBar running={practise.running} runLabel={s.practise} onToggle={() => { watch.stop(); setWalk(null); pressStart.current = trips.current; practise.toggle(); }}>
+            <Button size="sm" variant="secondary" icon="next" disabled={practise.running} onClick={() => { watch.stop(); setWalk(null); trip(); }}>{s.oneTrip}</Button>
             <Button size="sm" variant="secondary" icon="play" disabled={practise.running} onClick={() => { const p = greedyPath(g, q.current); setWalk({ ...p, at: 0 }); lastAt.current = 0; watch.start(); }}>{s.watch}</Button>
             <Button size="sm" variant="ghost" icon="sync" onClick={forget}>{s.forget}</Button>
           </RunBar>
-          <p className="lb-verdict" aria-live="polite">{!walk ? s.idle : walk.at < walk.path.length - 1 ? "…" : walk.reached ? s.reached(num(walk.path.length - 1), walk.path.length - 1) : s.lost}</p>
+          <p className="lb-verdict" aria-live="polite">{!walk ? s.idle : walk.at < walk.path.length - 1 ? "…" : walk.reached ? plural(walk.path.length - 1, s.reached) : s.lost}</p>
           <Slider label={s.explore} value={explore} min={0} max={0.5} step={0.05} onChange={setExplore} format={(v) => num(v, { style: "percent" })} />
           <Slider label={s.rate} value={rate} min={0.1} max={1} step={0.1} onChange={setRate} format={(v) => num(v)} />
           <Stats items={[{ label: s.trips, value: num(trips.current) }, { label: s.last, value: hist.length ? num(hist[hist.length - 1]) : "—" }]} />

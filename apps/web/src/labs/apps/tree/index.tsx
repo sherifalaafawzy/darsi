@@ -13,12 +13,15 @@ const S = {
     attr: { sky: "Sky", heat: "Temperature", humid: "Humidity", wind: "Wind" } as Record<Attr, string>,
     q: { sky: "What is the sky like?", heat: "How hot is it?", humid: "How humid is it?", wind: "How windy is it?" } as Record<Attr, string>,
     val: { sunny: "sunny", cloudy: "cloudy", rainy: "rainy", hot: "hot", mild: "mild", cool: "cool", high: "high", normal: "normal", weak: "light", strong: "strong" } as Record<string, string>,
-    play: "Play outside", stay: "Stay inside", days: (n: string, y: string, c: number) => `${c === 1 ? "1 day" : `${n} days`}, ${y} played`,
+    play: "Play outside", stay: "Stay inside", days: (n: string, y: string, c: number) => (c === 0 ? "No days like this" : `${c === 1 ? "1 day" : `${n} days`}, ${y} played`),
     open: "Which question should go here?", gain: (g: string) => `gain ${g}`, best: "biggest gain",
     entropy: "Mixedness (entropy) here:", gainHelp: "Gain is how much a question lowers the mixedness: 0 means the answers stay just as mixed, higher means it sorts the days into “play” and “stay” better.",
     auto: "Build the rest automatically", clear: "Clear the tree", table: "The 14 days (highlighted: the days that reach the chosen spot)", played: "Played",
     test: "Try a new day", answer: (a: string) => `The tree says: ${a}.`, unfinished: "The tree isn't finished on this path yet.",
     qs: "Questions", acc: "Right on the 14 days",
+    try1: "Press Build the rest automatically: the computer asks about the sky first, and needs only 3 questions to sort all 14 days.",
+    try2: "Press Clear the tree and put Temperature at the top instead (it has the smallest gain), then build the rest: the tree needs 7 questions for the same 14 days.",
+    try3: "Under Try a new day, choose a sunny sky and high humidity: follow the highlighted path to the tree's answer, and see the matching days light up in the table.",
     takeaway: "Decision trees are easy to read and to question: you can see exactly why they decide. The computer picks each question by information gain, the same rule you can follow by hand. But a tree that fits a few examples perfectly can still be wrong about new days.",
   },
   ar: {
@@ -26,12 +29,15 @@ const S = {
     attr: { sky: "السماء", heat: "الحرارة", humid: "الرطوبة", wind: "الرياح" } as Record<Attr, string>,
     q: { sky: "كيف السماء؟", heat: "ما درجة الحرارة؟", humid: "ما درجة الرطوبة؟", wind: "كيف الرياح؟" } as Record<Attr, string>,
     val: { sunny: "مشمسة", cloudy: "غائمة", rainy: "ممطرة", hot: "حارة", mild: "معتدلة", cool: "باردة", high: "عالية", normal: "عادية", weak: "خفيفة", strong: "قوية" } as Record<string, string>,
-    play: "نلعب في الخارج", stay: "نبقى في الداخل", days: (n: string, y: string, c: number) => `${c === 1 ? "يوم واحد" : c === 2 ? "يومان" : c <= 10 ? `${n} أيام` : `${n} يومًا`}، لعبوا في ${y} منها`,
+    play: "نلعب في الخارج", stay: "نبقى في الداخل", days: (n: string, y: string, c: number) => (c === 0 ? "لا أيام كهذه" : `${c === 1 ? "يوم واحد" : c === 2 ? "يومان" : c <= 10 ? `${n} أيام` : `${n} يومًا`}، لعبوا في ${y} منها`),
     open: "أي سؤال يوضع هنا؟", gain: (g: string) => `الكسب ${g}`, best: "أكبر كسب",
     entropy: "الاختلاط (الإنتروبيا) هنا:", gainHelp: "الكسب هو مقدار ما يقلّله السؤال من الاختلاط: صفر يعني أن الإجابات تبقى مختلطة كما هي، والأعلى يعني أنه يفرز الأيام إلى «نلعب» و«نبقى» أفضل.",
     auto: "ابنِ الباقي تلقائيًا", clear: "امسح الشجرة", table: "الأيام الأربعة عشر (المظلّلة: الأيام التي تصل إلى الموضع المختار)", played: "لعبوا",
     test: "جرّب يومًا جديدًا", answer: (a: string) => `تقول الشجرة: ${a}.`, unfinished: "لم تكتمل الشجرة على هذا المسار بعد.",
     qs: "الأسئلة", acc: "صحيحة في الأيام الأربعة عشر",
+    try1: "اضغط «ابنِ الباقي تلقائيًا»: يسأل الحاسوب عن السماء أولًا، ويكفيه ٣ أسئلة لفرز الأيام الأربعة عشر كلها.",
+    try2: "اضغط «امسح الشجرة» وضع «الحرارة» في الأعلى بدلًا منها (كسبها هو الأصغر)، ثم ابنِ الباقي: تحتاج الشجرة إلى ٧ أسئلة للأيام نفسها.",
+    try3: "في «جرّب يومًا جديدًا» اختر سماءً مشمسة ورطوبة عالية: تتبّع المسار المظلّل إلى إجابة الشجرة، وانظر إلى الأيام المطابقة تُظلَّل في الجدول.",
     takeaway: "أشجار القرار سهلة القراءة والمساءلة: ترى بالضبط لماذا تقرّر. ويختار الحاسوب كل سؤال بكسب المعلومات، وهي القاعدة نفسها التي تستطيع اتّباعها يدويًا. لكن الشجرة التي تطابق أمثلة قليلة تمامًا قد تخطئ في أيام جديدة.",
   },
 };
@@ -83,7 +89,7 @@ export default function Tree({ meta, onDone }: LabProps) {
   };
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <p className="lb-note">{s.gainHelp}</p>
       <div className="lb-row">
         <Button size="sm" variant="secondary" disabled={complete} onClick={() => setChoices((c) => auto(c))}>{s.auto}</Button>

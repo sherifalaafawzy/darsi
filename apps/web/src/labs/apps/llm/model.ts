@@ -1,13 +1,17 @@
 /**
  * A tiny stand-in for an LLM, with every stage visible: words → token ids → number lists (embeddings) → attention
  * over the text so far → a score for each possible next word → probabilities (softmax with temperature) → a pick.
- * The scores mix word-pair counts with how well each word fits the attention context.
+ * The scores mix word-pair counts with how well each word fits the attention context. Attention is what lets
+ * "The cat sleeps on the …" lean towards "bed" and "The teacher writes on the …" towards "board": the word counts
+ * only see "on the", attention looks further back.
  */
 import { softmax } from "../../kit/math";
 import { matchKey, sentences, words } from "../../kit/text";
 import { cooccur, cosine, norm, pca, ppmi, vocab } from "../../kit/vectors";
 
 export const END = "⏎";
+/** How many numbers each token's meaning gets (real models use thousands). */
+export const DIMS = 8;
 export const CORPUS = {
   en: `The cat drinks milk.
 The cat sleeps on the bed.
@@ -33,32 +37,33 @@ In the morning the sun shines.
 After school the children play football.
 The cat plays in the garden.
 The teacher drinks tea after class.`,
-  ar: `تشرب القطة الحليب.
-تنام القطة على السرير.
-يشرب الكلب الماء.
-يجري الكلب في الحديقة.
-تأكل البقرة العشب في المزرعة.
-تعطي البقرة الحليب.
-يكتب المعلم على السبورة.
-يقرأ المعلم قصة للصف.
-يكتب التلاميذ في دفاترهم.
-يقرأ التلاميذ قصة في الصف.
+  // Most sentences start with the noun, like the English ones, so a prompt such as "القطة" has several ways to go on.
+  ar: `القطة تشرب الحليب.
+القطة تنام على السرير.
+الكلب يشرب الماء.
+الكلب يجري في الحديقة.
+البقرة تأكل العشب في المزرعة.
+البقرة تعطي الحليب.
+المعلم يكتب على السبورة.
+المعلم يقرأ قصة للصف.
+التلاميذ يكتبون في دفاترهم.
+التلاميذ يقرؤون قصة في الصف.
 نأكل الخبز في الفطور.
 نأكل الأرز في الغداء.
 نشرب الشاي بعد الغداء.
 نشرب الماء في الحديقة.
-ينزل المطر في الشتاء.
-تشرق الشمس في الصيف.
-تهب الرياح في الشتاء.
-يلعب الأطفال في الحديقة بعد المدرسة.
-يذهب الأطفال إلى المدرسة في الصباح.
-تأخذ الحافلة الأطفال إلى المدرسة.
+المطر ينزل في الشتاء.
+الشمس تشرق في الصيف.
+الرياح تهب في الشتاء.
+الأطفال يلعبون في الحديقة بعد المدرسة.
+الأطفال يذهبون إلى المدرسة في الصباح.
+الحافلة تأخذ الأطفال إلى المدرسة.
 في الصباح تشرق الشمس.
-بعد المدرسة يلعب الأطفال الكرة.
-تلعب القطة في الحديقة.
-يشرب المعلم الشاي بعد الدرس.`,
+الأطفال يلعبون الكرة بعد المدرسة.
+القطة تلعب في الحديقة.
+المعلم يشرب الشاي بعد الدرس.`,
 };
-export const PROMPTS = { en: ["The cat", "The teacher", "We eat", "The children"], ar: ["تشرب القطة", "يقرأ المعلم", "نأكل", "يلعب الأطفال"] };
+export const PROMPTS = { en: ["The cat", "The teacher", "We eat", "The children"], ar: ["القطة", "المعلم", "نأكل", "الأطفال"] };
 
 type Counts = Map<string, Map<string, number>>;
 export interface Lm { ids: Map<string, number>; surface: Map<string, string>; emb: Map<string, number[]>; uni: Map<string, number>; bi: Counts; tri: Counts }
@@ -70,7 +75,7 @@ export function train(text: string): Lm {
   const ids = new Map(v.keys.map((k, i) => [k, i + 1]));
   ids.set(END, 0);
   const rows = ppmi(cooccur(v)).map((r) => { const l = norm(r) || 1; return r.map((x) => x / l); });
-  const emb = new Map(pca(rows, 4).map((e, i) => { const l = norm(e) || 1; return [v.keys[i], e.map((x) => x / l)] as const; }));
+  const emb = new Map(pca(rows, DIMS).map((e, i) => { const l = norm(e) || 1; return [v.keys[i], e.map((x) => x / l)] as const; }));
   const uni = new Map<string, number>(), bi: Counts = new Map(), tri: Counts = new Map();
   for (const s of sentences(text)) {
     const seq = ["", "", ...words(s).map(matchKey), END];
@@ -96,15 +101,26 @@ export interface Step {
   cands: { key: string; count: number; fit: number; score: number; p: number }[];
 }
 
+const zeros = () => new Array<number>(DIMS).fill(0);
+
+/**
+ * How much the last token attends to each token so far: how well the two match (cosine of their number lists), plus
+ * a bonus for rare words, which carry the meaning ("cat", "sleeps"), over common ones ("the", "on"). Real models learn
+ * their attention; this hand-made rule does the same job here.
+ */
+export function attention(lm: Lm, ctx: string[]): number[] {
+  const vecs = ctx.map((k) => lm.emb.get(k) ?? zeros()), last = vecs[vecs.length - 1];
+  return vecs.length ? softmax(vecs.map((e, j) => cosine(last, e) - Math.log(lm.uni.get(ctx[j]) ?? 1))) : [];
+}
+
 /** Everything the model computes to choose the next word. `useContext` is how much the attention context counts. */
 export function think(lm: Lm, ctx: string[], temperature = 1, useContext = 1.5): Step {
-  const vecs = ctx.map((k) => lm.emb.get(k) ?? [0, 0, 0, 0]);
-  const last = vecs[vecs.length - 1] ?? [0, 0, 0, 0];
-  const attn = vecs.length ? softmax(vecs.map((e) => cosine(last, e) * 4)) : [];
-  const context = [0, 1, 2, 3].map((d) => vecs.reduce((s, e, j) => s + attn[j] * e[d], 0));
+  const vecs = ctx.map((k) => lm.emb.get(k) ?? zeros());
+  const attn = attention(lm, ctx);
+  const context = zeros().map((_, d) => vecs.reduce((s, e, j) => s + attn[j] * e[d], 0));
   const c = counts(lm, ctx), total = [...c.values()].reduce((a, b) => a + b, 0);
   const raw = [...c.entries()].map(([key, count]) => {
-    const fit = key === END ? 0 : cosine(lm.emb.get(key) ?? [0, 0, 0, 0], context);
+    const fit = key === END ? 0 : cosine(lm.emb.get(key) ?? zeros(), context);
     return { key, count, fit, score: Math.log(count / total) + useContext * fit };
   });
   const ps = softmax(raw.map((r) => r.score), temperature);

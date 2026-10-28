@@ -3,7 +3,7 @@
  * sample rate) and round each measurement to one of 2^bits levels. Too few samples and a fast wave looks slow
  * (aliasing); too few bits and the wave turns into steps.
  */
-export const wave = (t: number, f: number) => 0.9 * Math.sin(2 * Math.PI * f * t);
+export const wave = (t: number, f: number) => { const v = 0.9 * Math.sin(2 * Math.PI * f * t); return Math.abs(v) < 1e-9 ? 0 : v; }; // sin(kπ) is 1e-16, not 0
 
 /** Rounds a value in [-1, 1] to the nearest of 2^bits evenly spaced levels. */
 export function quantize(v: number, bits: number) {
@@ -17,8 +17,14 @@ export interface Sample { t: number; v: number; q: number }
 export const sample = (f: number, rate: number, bits: number): Sample[] =>
   Array.from({ length: Math.floor(rate) + 1 }, (_, k) => { const t = k / rate, v = wave(t, f); return { t, v, q: quantize(v, bits) }; });
 
-/** The frequency the samples seem to show: a wave faster than half the sample rate folds back to a slower one. */
-export const apparent = (f: number, rate: number) => Math.abs(f - rate * Math.round(f / rate));
+/**
+ * The frequency the samples seem to show: a wave faster than half the sample rate folds back to a slower one. At exactly
+ * half the sample rate every sample catches this sine as it crosses the middle, so the samples look flat (0).
+ */
+export function apparent(f: number, rate: number) {
+  const folded = Math.abs(f - rate * Math.round(f / rate));
+  return Math.abs(2 * folded - rate) < 1e-9 ? 0 : folded;
+}
 /** Nyquist: you need more than two samples per wiggle. */
 export const enough = (f: number, rate: number) => rate > 2 * f;
 /** Typical gap between a sample's true and rounded value. */

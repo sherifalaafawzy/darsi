@@ -34,6 +34,12 @@ const UI = {
   en: { footer: "Darsi · free to copy for your school", plan: "Lesson plan · for the teacher", sheet: "Worksheet · for pupils", goals: "Learning goals", activity: "Activity", discuss: "Discussion", exit: "Exit ticket", tomorrow: "Try it in class tomorrow", time: "Time", min: "min", materials: "Materials", materialsV: "Board, chalk, paper. No devices needed.", name: "Name", cls: "Class", date: "Date", tf: ["True", "False"], reflect: "In your own words", bank: "Word bank", unit: "Unit", lesson: "Lesson", sep: " · ", listSep: "; " },
   ar: { footer: "درسي — يُسمح بنسخها لمدرستك مجانًا", plan: "خطة درس — للمعلم", sheet: "ورقة عمل — للطلاب", goals: "أهداف التعلّم", activity: "النشاط", discuss: "للنقاش", exit: "بطاقة الخروج", tomorrow: "جرّبها في الصف غدًا", time: "المدة", min: "دقيقة", materials: "المواد", materialsV: "سبّورة، طباشير، ورق. لا حاجة إلى أجهزة.", name: "الاسم", cls: "الصف", date: "التاريخ", tf: ["صح", "خطأ"], reflect: "بكلماتك", bank: "بنك الكلمات", unit: "الوحدة", lesson: "الدرس", sep: "، ", listSep: "، " },
 };
+// Students' courses (`audience: "students"`) are written to the student: their notes and sheet never speak to a teacher.
+const STUDENT_UI = {
+  en: { plan: "Lesson notes · for you", sheet: "Worksheet", exit: "Check yourself", tomorrow: "Try it this week", materialsV: "Paper and a pen. No device needed." },
+  ar: { plan: "ملاحظات الدرس — لك", sheet: "ورقة عمل", exit: "تحقّق من نفسك", tomorrow: "جرّبها هذا الأسبوع", materialsV: "ورق وقلم. لا حاجة إلى جهاز." },
+};
+const uiFor = (unit, lang) => (unit.audience === "students" ? { ...UI[lang], ...STUDENT_UI[lang] } : UI[lang]);
 
 /**
  * Type size for a slide's text: the base size while it fits `room` characters, smaller as it grows (area goes with the
@@ -131,7 +137,7 @@ footer .m svg{width:.35in;height:.35in;display:block}footer .n{margin-inline-sta
 }
 
 function planHtml(unit, lesson, lang) {
-  const rtl = lang === "ar", u = UI[lang], [trackC] = C.track[unit.track];
+  const rtl = lang === "ar", u = uiFor(unit, lang), [trackC] = C.track[unit.track];
   const bySlide = (layout) => lesson.slides.find((s) => s.layout === layout);
   const goals = bySlide("bullets"), act = bySlide("activity"), q = bySlide("questions"), ex = bySlide("exit"), titleSl = bySlide("title");
   const li = (sl) => pickList(sl?.bullets, lang).map((b) => `<li>${esc(b)}</li>`).join("");

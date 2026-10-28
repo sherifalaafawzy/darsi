@@ -13,6 +13,11 @@ export const KERNELS: Record<"vertical" | "horizontal" | "outline" | "blur" | "s
   blur: [1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9],
   sharpen: [0, -1, 0, -1, 5, -1, 0, -1, 0],
 };
+/**
+ * "My own" starts as a diagonal edge filter (top-right minus bottom-left): it lights up edges that slope like \, such
+ * as the right side of the roof, far more than / ones. Mirrored left to right, it lights up the left side instead.
+ */
+export const CUSTOM: Kernel = [0, 1, 2, -1, 0, 1, -2, -1, 0];
 
 /** A small school with a door, two windows, a roof and the sun. Later parts paint over earlier ones. */
 export function picture(): Img {

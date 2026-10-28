@@ -47,10 +47,17 @@ export function episode(g: Cell[], q: Q, r: Rng, { rate = 0.5, explore = 0.2, ga
   return { steps, total, reached: false };
 }
 
-/** The path it takes when it only uses what it has learned (no exploring). */
-export function greedyPath(g: Cell[], q: Q, max = N * N * 2) {
-  const path = [START];
+/**
+ * The path it takes when it only uses what it has learned (no exploring). It always makes the same move in a square,
+ * so once it is back on a square it has visited (or bumps into a wall and stays put) it would go round for ever: lost.
+ */
+export function greedyPath(g: Cell[], q: Q) {
+  const path = [START], seen = new Set(path);
   let s = START;
-  for (let i = 0; i < max; i++) { const m = move(g, s, bestA(q, s)); s = m.s; path.push(s); if (m.end) return { path, reached: true }; }
-  return { path, reached: false };
+  for (;;) {
+    const m = move(g, s, bestA(q, s)); s = m.s; path.push(s);
+    if (m.end) return { path, reached: true };
+    if (seen.has(s)) return { path, reached: false };
+    seen.add(s);
+  }
 }

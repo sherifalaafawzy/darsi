@@ -19,7 +19,7 @@ export const MESSAGES: Msg[] = [
     ar: { from: "المديرة (رقم جديد)", text: "مرحبًا، أنا الأستاذة أمل. ضاع هاتفي وهذا رقمي الجديد. من فضلك اشترِ ثلاث بطاقات شحن لفعالية المدرسة وأرسل لي أرقامها الآن، وسأعيد لك المال غدًا." } },
   { id: "code", channel: "sms", scam: false, clues: [],
     en: { from: "SchoolPortal", text: "Your sign-in code is 482193. Don't share it with anyone. We will never ask you for it." },
-    ar: { from: "SchoolPortal", text: "رمز دخولك هو 482193. لا تشاركه مع أحد. لن نطلبه منك أبدًا." } },
+    ar: { from: "SchoolPortal", text: "رمز دخولك هو ٤٨٢١٩٣. لا تشاركه مع أحد. لن نطلبه منك أبدًا." } },
   { id: "security", channel: "email", scam: true, clues: ["urgent", "password", "link", "sender"],
     en: { from: "Security Team <security@portal-verify.example>", text: "We detected an unusual sign-in. Your account will be closed today unless you confirm your password.", link: "http://portal-verify.example/login" },
     ar: { from: "فريق الأمان <security@portal-verify.example>", text: "رصدنا دخولًا غير معتاد. سيُغلق حسابك اليوم ما لم تؤكّد كلمة مرورك.", link: "http://portal-verify.example/login" } },
@@ -30,8 +30,8 @@ export const MESSAGES: Msg[] = [
     en: { from: "NATIONAL-DRAW", text: "Congratulations! Your number won 50,000 in the national draw. Send your ID number and bank card details to claim your prize." },
     ar: { from: "NATIONAL-DRAW", text: "مبروك! فاز رقمك بـ٥٠٬٠٠٠ في السحب الوطني. أرسل رقم هويتك وبيانات بطاقتك المصرفية لتستلم جائزتك." } },
   { id: "darsi", channel: "email", scam: false, clues: [],
-    en: { from: "Darsi <hello@darsi.app>", text: "Well done: you finished Level 1 of the AI track. Your certificate is in the app, under Me." },
-    ar: { from: "درسي <hello@darsi.app>", text: "أحسنت: أنهيت المستوى الأول من مسار الذكاء الاصطناعي. شهادتك في التطبيق، في قسم «حسابي»." } },
+    en: { from: "Darsi <hello@darsiai.org>", text: "Well done: you finished Level 1 of the AI track. Your certificate is in the app, under Me." },
+    ar: { from: "درسي <hello@darsiai.org>", text: "أحسنت: أنهيت المستوى الأول من مسار الذكاء الاصطناعي. شهادتك في التطبيق، في قسم «حسابي»." } },
 ];
 
 export const score = (answers: Record<string, boolean>) => MESSAGES.filter((m) => answers[m.id] === m.scam).length;

@@ -180,6 +180,8 @@ describe("AI lab logic", () => {
   });
   it("classifier picks the class with shared words", () => {
     expect(classify("click now", [{ examples: ["meeting tuesday"] }, { examples: ["click now please"] }]).best).toBe(1);
+    // Arabic vowel marks belong to their word: «سيُغلق» is one word, matched by the same word with its mark.
+    expect(classify("سيُغلق حسابك", [{ examples: ["اجتماع الثلاثاء"] }, { examples: ["سيُغلق حسابك اليوم"] }]).best).toBe(1);
   });
   it("TrainClassifier shows a guess", () => {
     render(<TrainClassifier title="t" classes={[{ id: "s", label: "Safe", examples: ["meeting"] }, { id: "p", label: "Phishing", examples: ["click now"] }]} test="click here now" />);

@@ -12,19 +12,27 @@ const S = {
     intro: "Sensors measure smooth, continuous things: sound, light, temperature. A microcontroller can only store numbers, so it measures a number of times per second and rounds each measurement to a fixed set of levels.",
     chart: "One second of the signal: the real wave (thin), the samples (dots), the rounded values (steps) and the wave you could rebuild from them (dashed)", time: "seconds",
     f: "The signal wiggles", hz: (n: string, c: number) => (c === 1 ? "once a second" : `${n} times a second`), rate: "Samples per second", bits: "Bits per sample",
-    levels: (n: string) => `${n} levels`, data: "Data per second", bitsN: (n: string) => `${n} bits`, perMin: "One minute takes", kb: (n: string) => `${n} KB`,
+    levels: (n: string, _c: number) => `${n} levels`, data: "Data per second", bitsN: (n: string) => `${n} bits`, perMin: "One minute takes", kb: (n: string) => `${n} KB`,
     error: "Typical rounding error", ok: (hz: string) => `Enough samples: the rebuilt wave wiggles ${hz}, like the real one.`,
-    alias: (real: string, seen: string) => `Too few samples! The real wave wiggles ${real}, but the samples look like ${seen}. This is aliasing: sample more than twice as fast as the fastest wiggle.`,
-    takeaway: "Turning signals into numbers is always a trade: more samples and more bits capture more detail, but cost memory, data and battery. Phone audio uses about 44,000 samples a second at 16 bits; a classroom thermometer needs one reading a minute.",
+    alias: (real: string, seen: string) => `Too few samples! The real wave wiggles ${real}, but the samples look like a wave that wiggles ${seen}. This is aliasing: sample more than twice as fast as the fastest wiggle.`,
+    aliasFlat: (real: string) => `Too few samples! The real wave wiggles ${real}, but every sample catches it just as it crosses the middle, so the samples look flat. Sample more than twice as fast as the fastest wiggle.`,
+    try1: "Lower “Samples per second” to 5: the dots now trace a wave that wiggles only twice a second. Too few samples invent a slower wave.",
+    try2: "Set “Bits per sample” to 1, then 8: with 2 levels the wave turns into blocks; with 256 the rounding error almost vanishes, but each second takes 8 times the data.",
+    try3: "Choose 8 times a second and find the fewest samples per second that still work: just over 16, twice the wiggles.",
+    takeaway: "Turning signals into numbers is always a trade: more samples and more bits capture more detail, but cost memory, data and battery. Music on a phone uses about 44,000 samples a second at 16 bits; a classroom thermometer needs one reading a minute.",
   },
   ar: {
     intro: "تقيس المستشعرات أشياء ناعمة متصلة: الصوت والضوء والحرارة. أما المتحكّم الدقيق فلا يخزّن إلا الأرقام، لذلك يقيس عددًا من المرات في الثانية ويقرّب كل قياس إلى مجموعة ثابتة من المستويات.",
     chart: "ثانية واحدة من الإشارة: الموجة الحقيقية (رفيعة)، والعيّنات (نقاط)، والقيم المقرّبة (درجات)، والموجة التي يمكن إعادة بنائها منها (متقطعة)", time: "ثوانٍ",
     f: "تتذبذب الإشارة", hz: (n: string, c: number) => (c === 1 ? "مرة واحدة في الثانية" : c === 2 ? "مرتين في الثانية" : Number.isInteger(c) && c <= 10 ? `${n} مرات في الثانية` : `${n} مرة في الثانية`), rate: "العيّنات في الثانية", bits: "البتات لكل عيّنة",
-    levels: (n: string) => `${n} مستوى`, data: "البيانات في الثانية", bitsN: (n: string) => `${n} بت`, perMin: "دقيقة واحدة تشغل", kb: (n: string) => `${n} كيلوبايت`,
+    levels: (n: string, c: number) => (c === 2 ? "مستويان" : c <= 10 ? `${n} مستويات` : `${n} مستوى`), data: "البيانات في الثانية", bitsN: (n: string) => `${n} بت`, perMin: "دقيقة واحدة تشغل", kb: (n: string) => `${n} كيلوبايت`,
     error: "خطأ التقريب المعتاد", ok: (hz: string) => `العيّنات كافية: تتذبذب الموجة المعاد بناؤها ${hz} مثل الحقيقية.`,
     alias: (real: string, seen: string) => `العيّنات قليلة جدًا! الموجة الحقيقية تتذبذب ${real}، لكن العيّنات تبدو كأنها تتذبذب ${seen}. هذا هو التشويه الترددي (aliasing): خذ العيّنات بأسرع من ضعف أسرع تذبذب.`,
-    takeaway: "تحويل الإشارات إلى أرقام مقايضة دائمًا: عيّنات وبتات أكثر تلتقط تفاصيل أكثر، لكنها تكلّف ذاكرة وبيانات وبطارية. صوت الهاتف يستعمل نحو ٤٤٠٠٠ عيّنة في الثانية بدقة ١٦ بتًا، أما ميزان حرارة الصف فتكفيه قراءة في الدقيقة.",
+    aliasFlat: (real: string) => `العيّنات قليلة جدًا! الموجة الحقيقية تتذبذب ${real}، لكن كل عيّنة تلتقطها لحظة مرورها بالمنتصف، فتبدو العيّنات خطًا مستويًا. خذ العيّنات بأسرع من ضعف أسرع تذبذب.`,
+    try1: "اخفض «العيّنات في الثانية» إلى ٥: ترسم النقاط الآن موجة تتذبذب مرتين فقط في الثانية. العيّنات القليلة تخترع موجة أبطأ.",
+    try2: "اجعل «البتات لكل عيّنة» ١ ثم ٨: بمستويين تصير الموجة كتلًا، وبـ٢٥٦ مستوى يكاد خطأ التقريب يختفي، لكن كل ثانية تأخذ ٨ أضعاف البيانات.",
+    try3: "اختر «٨ مرات في الثانية» وابحث عن أقل عدد من العيّنات في الثانية يكفي: أكثر من ١٦ بقليل، أي ضعف عدد التذبذبات.",
+    takeaway: "تحويل الإشارات إلى أرقام مقايضة دائمًا: عيّنات وبتات أكثر تلتقط تفاصيل أكثر، لكنها تكلّف ذاكرة وبيانات وبطارية. الموسيقى على الهاتف تستعمل نحو ٤٤٠٠٠ عيّنة في الثانية بدقة ١٦ بتًا، أما ميزان حرارة الصف فتكفيه قراءة في الدقيقة.",
   },
 };
 
@@ -43,10 +51,10 @@ export default function Adc({ meta, onDone }: LabProps) {
   const touch = () => setMoves((m) => m + 1);
   useEffect(() => { if (!ok) setAliased(true); }, [ok]);
   useEffect(() => { if (moves >= 4 && aliased) onDone?.(); }, [moves >= 4 && aliased]); // eslint-disable-line react-hooks/exhaustive-deps
-  const bps = bitsPerSecond(rate, bits);
+  const bps = bitsPerSecond(rate, bits), seen = Math.round(apparent(f, rate) * 10) / 10;
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <Plot x={[0, 1]} y={[-1, 1]} height={240} label={s.chart} xLabel={s.time}
         lines={[
           ...(bits <= 4 ? levels(bits).map((l) => ({ points: [[0, l], [1, l]] as const, tone: "muted" as const, width: 0.5 })) : []),
@@ -60,10 +68,10 @@ export default function Adc({ meta, onDone }: LabProps) {
         <div className="stack">
           <Segmented label={s.f} value={f} options={[1, 3, 8].map((n) => [n, s.hz(num(n), n)] as const)} onChange={(v) => { setF(v); touch(); }} />
           <Slider label={s.rate} value={rate} min={2} max={60} onChange={(v) => { setRate(v); touch(); }} format={(v) => num(v)} />
-          <Slider label={s.bits} value={bits} min={1} max={8} onChange={(v) => { setBits(v); touch(); }} format={(v) => `${num(v)} (${s.levels(num(2 ** v))})`} />
+          <Slider label={s.bits} value={bits} min={1} max={8} onChange={(v) => { setBits(v); touch(); }} format={(v) => `${num(v)} (${s.levels(num(2 ** v), 2 ** v)})`} />
         </div>
         <div className="stack">
-          <p className={ok ? "lb-verdict" : "lb-verdict is-warn"} aria-live="polite">{ok ? s.ok(s.hz(num(f), f)) : s.alias(s.hz(num(f), f), s.hz(num(Math.round(apparent(f, rate) * 10) / 10), Math.round(apparent(f, rate) * 10) / 10))}</p>
+          <p className={ok ? "lb-verdict" : "lb-verdict is-warn"} aria-live="polite">{ok ? s.ok(s.hz(num(f), f)) : seen === 0 ? s.aliasFlat(s.hz(num(f), f)) : s.alias(s.hz(num(f), f), s.hz(num(seen), seen))}</p>
           <Stats items={[
             { label: s.error, value: num(Math.round(roundingError(ss) * 1000) / 1000) },
             { label: s.data, value: s.bitsN(num(bps)) },

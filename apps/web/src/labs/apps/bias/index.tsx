@@ -16,6 +16,9 @@ const S = {
     overall: "Wrong overall, on photos like the training ones", errA: "Wrong in the sunny valley (A)", errB: "Wrong in the cloudy hills (B)", missB: "Sick leaves missed in the hills (B)",
     gap: (o: string, b: string) => `The headline score says it is wrong only ${o} of the time, yet it misses ${b} of sick leaves in the hills.`,
     fair: "With enough photos from both regions, the errors are close: the model learned that darker photos make spots look lighter.",
+    try1: "At 5 %, read the bars: overall the app is wrong only about 3 % of the time, yet it misses about a third of the sick leaves in the hills.",
+    try2: "Drag the slider to 50 %: the errors in the valley and the hills come close, and the dashed line tilts, because the model learns that darker photos make spots look lighter.",
+    try3: "Set it to 0 %: with no photos from the hills at all, it misses nearly half of their sick leaves.",
     takeaway: "An AI is only as fair as its data. If a group is missing from the training data, the model can fail that group while its overall score still looks good. Ask who the data came from, and check errors for each group, not just overall. The same happens with faces, voices and accents.",
   },
   ar: {
@@ -25,6 +28,9 @@ const S = {
     overall: "الخطأ الإجمالي في صور تشبه صور التدريب", errA: "الخطأ في الوادي المشمس (أ)", errB: "الخطأ في التلال الغائمة (ب)", missB: "الأوراق المريضة الفائتة في التلال (ب)",
     gap: (o: string, b: string) => `تقول النتيجة الإجمالية إنه يخطئ في ${o} فقط من الحالات، لكنه يفوّت ${b} من الأوراق المريضة في التلال.`,
     fair: "مع صور كافية من المنطقتين تتقارب الأخطاء: تعلّم النموذج أن الصور الأغمق تجعل البقع تبدو أفتح.",
+    try1: "عند ٥٪ اقرأ الأشرطة: يخطئ التطبيق إجمالًا في نحو ٣٪ فقط من الحالات، لكنه يفوّت نحو ثلث الأوراق المريضة في التلال.",
+    try2: "اسحب المؤشر إلى ٥٠٪: تتقارب الأخطاء في الوادي والتلال، ويميل الخط المتقطع أكثر، لأن النموذج يتعلّم أن الصور الأغمق تجعل البقع تبدو أفتح.",
+    try3: "اضبطه على ٠٪: من دون أي صور من التلال، يفوّت التطبيق نحو نصف أوراقها المريضة.",
     takeaway: "لا يكون الذكاء الاصطناعي أعدل من بياناته. إذا غابت فئة عن بيانات التدريب فقد يخذلها النموذج بينما تبدو نتيجته الإجمالية جيدة. اسأل من أين جاءت البيانات، وافحص الأخطاء لكل فئة لا للمجموع فقط. ويحدث الشيء نفسه مع الوجوه والأصوات واللهجات.",
   },
 };
@@ -45,7 +51,7 @@ export default function Bias({ meta, onDone }: LabProps) {
   const rows = [{ label: s.overall, v: overall }, { label: s.errA, v: eA }, { label: s.errB, v: eB }, { label: s.missB, v: mB }];
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <Slider label={s.share} value={share} min={0} max={0.5} step={0.05} onChange={(v) => { setShare(v); setSeen((x) => new Set(x).add(v)); }} format={pct} />
       <div className="lb-two">
         <div className="stack">

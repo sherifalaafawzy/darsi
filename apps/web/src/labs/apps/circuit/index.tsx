@@ -6,7 +6,7 @@ import { Segmented, Stats } from "../../kit/controls";
 import { Formula } from "../../kit/Formula";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
-import { BATTERIES, hours, led, LEDS, RESISTORS, safest, WIRE, type Colour } from "./model";
+import { BATTERIES, CAPACITY, hours, led, LEDS, RESISTORS, safest, WIRE, type Colour } from "./model";
 
 const GLOW: Record<Colour, string> = { red: "var(--hibiscus)", green: "var(--lagoon)", blue: "var(--sky, var(--lagoon))" };
 const S = {
@@ -14,18 +14,24 @@ const S = {
     intro: "An LED needs just the right current. The resistor limits it. The LED always takes about the same voltage (red 2 V, blue 3 V); the resistor takes what's left, and Ohm's law gives the current.",
     battery: "Battery", volt: (n: string) => `${n} V`, resistor: "Resistor", colour: "LED colour", red: "Red", green: "Green", blue: "Blue", ohm: (n: string) => `${n} Ω`, none: "None",
     diagram: "Circuit: battery, resistor and LED in a loop", law: "Ohm's law: current = voltage left for the resistor ÷ resistance",
-    state: { off: "Dark: the battery's voltage is too low to light this LED.", dim: "Barely glowing: the resistor is too big.", good: "Just right: bright and safe.", bright: "Very bright, but it will run hot and wear out fast.", burnt: "Burned out! Too much current. Always use a resistor." } as Record<string, string>,
-    current: "Current", mA: (n: string) => `${n} mA`, heat: "Heat in the resistor", mW: (n: string) => `${n} mW`, life: "A 2000 mAh battery lasts", hrs: (n: string) => `${n} hours`, forever: "forever (nothing flows)",
+    state: { off: "Dark: the battery's voltage is too low to light this LED.", dim: "Dim: the resistor is too big, so only a little current flows.", good: "Just right: bright and safe.", bright: "Very bright, but it will run hot and wear out fast.", burnt: "Burned out! Too much current. Always use a resistor." } as Record<string, string>,
+    current: "Current", mA: (n: string) => `${n} mA`, heat: "Heat in the resistor", mW: (n: string) => `${n} mW`, life: (mAh: string) => `A ${mAh} mAh battery lasts`, hrs: (n: string) => `${n} hours`, forever: "forever (nothing flows)",
     fresh: "Fit a new LED", hint: (r: string) => `Smallest safe resistor here: ${r}.`,
+    try1: "The LED starts dim. Pick 470 Ω, then 220 Ω: each smaller resistor lets more current through, and the LED glows brighter.",
+    try2: "Pick None: nothing limits the current, so it shoots past 30 mA and the LED burns out.",
+    try3: "Pick 220 Ω, fit a new LED, then switch to 9 V: the same resistor now lets too much through. Which is the smallest safe one?",
     takeaway: "Every IoT gadget is circuits like this one. Ohm's law (V = I × R) lets you work out a part before you buy it, and protects your parts: a 20-cent resistor saves your LED, your pins and your battery.",
   },
   ar: {
     intro: "يحتاج الصمام الضوئي (LED) إلى تيار مناسب تمامًا، والمقاومة تحدّ منه. يأخذ الصمام دائمًا الجهد نفسه تقريبًا (الأحمر ٢ فولت، والأزرق ٣ فولت)، وتأخذ المقاومة الباقي، ويعطي قانون أوم التيار.",
     battery: "البطارية", volt: (n: string) => `${n} فولت`, resistor: "المقاومة", colour: "لون الصمام", red: "أحمر", green: "أخضر", blue: "أزرق", ohm: (n: string) => `${n} أوم`, none: "بلا",
     diagram: "الدائرة: بطارية ومقاومة وصمام ضوئي في حلقة", law: "قانون أوم: التيار = الجهد المتبقي للمقاومة ÷ المقاومة",
-    state: { off: "مطفأ: جهد البطارية أقل من أن يضيء هذا الصمام.", dim: "يتوهّج بالكاد: المقاومة كبيرة جدًا.", good: "مناسب تمامًا: مضيء وآمن.", bright: "مضيء جدًا، لكنه سيسخن ويتلف بسرعة.", burnt: "احترق! التيار كبير جدًا. استعمل مقاومة دائمًا." } as Record<string, string>,
-    current: "التيار", mA: (n: string) => `${n} ملي أمبير`, heat: "الحرارة في المقاومة", mW: (n: string) => `${n} ملي واط`, life: "بطارية ٢٠٠٠ ملي أمبير ساعة تدوم", hrs: (n: string) => `${n} ساعة`, forever: "إلى الأبد (لا يمر تيار)",
+    state: { off: "مطفأ: جهد البطارية أقل من أن يضيء هذا الصمام.", dim: "خافت: المقاومة كبيرة جدًا، فلا يمر إلا تيار قليل.", good: "مناسب تمامًا: مضيء وآمن.", bright: "مضيء جدًا، لكنه سيسخن ويتلف بسرعة.", burnt: "احترق! التيار كبير جدًا. استعمل مقاومة دائمًا." } as Record<string, string>,
+    current: "التيار", mA: (n: string) => `${n} ملي أمبير`, heat: "الحرارة في المقاومة", mW: (n: string) => `${n} ملي واط`, life: (mAh: string) => `بطارية ${mAh} ملي أمبير ساعة تدوم`, hrs: (n: string) => `${n} ساعة`, forever: "إلى الأبد (لا يمر تيار)",
     fresh: "ركّب صمامًا جديدًا", hint: (r: string) => `أصغر مقاومة آمنة هنا: ${r}.`,
+    try1: "يبدأ الصمام خافتًا. اختر ٤٧٠ أوم ثم ٢٢٠ أوم: كل مقاومة أصغر تمرّر تيارًا أكبر، فيزداد توهّج الصمام.",
+    try2: "اختر «بلا»: لا شيء يحدّ من التيار، فيتجاوز ٣٠ ملي أمبير ويحترق الصمام.",
+    try3: "اختر ٢٢٠ أوم وركّب صمامًا جديدًا، ثم انتقل إلى ٩ فولت: المقاومة نفسها تمرّر الآن تيارًا زائدًا. ما أصغر مقاومة آمنة؟",
     takeaway: "كل جهاز من أجهزة إنترنت الأشياء دوائر كهذه. يتيح لك قانون أوم (الجهد = التيار × المقاومة) أن تحسب القطعة قبل شرائها، ويحمي قطعك: مقاومة ثمنها قروش تحمي الصمام والأطراف والبطارية.",
   },
 };
@@ -44,10 +50,10 @@ export default function Circuit({ meta, onDone }: LabProps) {
   useEffect(() => { if (seen.has("burnt") && seen.has("good")) onDone?.(); }, [seen.has("burnt") && seen.has("good")]); // eslint-disable-line react-hooks/exhaustive-deps
   const ohms = (x: number) => (x === 0 ? s.none : s.ohm(num(x)));
   const n = (x: number, d = 2) => num(Math.round(x * 10 ** d) / 10 ** d);
-  const life = hours(2000, res.amps);
+  const mAh = CAPACITY[v], life = hours(mAh, res.amps);
 
   return (
-    <LabShell meta={meta} intro={s.intro} takeaway={s.takeaway}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <div className="lb-two">
         <div className="stack">
           <svg viewBox="0 0 300 170" className="lb-diagram" role="img" aria-label={s.diagram} direction="ltr">
@@ -83,7 +89,7 @@ export default function Circuit({ meta, onDone }: LabProps) {
           <Stats items={[
             { label: s.current, value: s.mA(n(res.amps * 1000, 1)) },
             { label: s.heat, value: s.mW(n(res.watts * 1000, 0)) },
-            { label: s.life, value: dead ? "—" : Number.isFinite(life) ? s.hrs(num(Math.round(life))) : s.forever },
+            { label: s.life(num(mAh)), value: dead ? "—" : Number.isFinite(life) ? s.hrs(num(Math.round(life))) : s.forever },
           ]} />
         </div>
       </div>
