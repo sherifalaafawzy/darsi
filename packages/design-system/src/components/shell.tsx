@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Button, Icon, Mark, cx, type IconName } from "./primitives";
 import { dirFor } from "../locale";
 
-export interface AppBarProps { title: string; onBack?: () => void; backLabel?: string; actions?: ReactNode; floating?: boolean; }
+export interface AppBarProps { title: ReactNode; onBack?: () => void; backLabel?: string; actions?: ReactNode; floating?: boolean; }
 export function AppBar({ title, onBack, backLabel = "Back", actions, floating }: AppBarProps) {
   return (
     <header className={cx("dr-appbar", floating && "dr-floating-top")}>

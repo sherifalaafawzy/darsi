@@ -6,6 +6,7 @@ import { useStore, type AppState } from "../state/store";
 import { loadPlacement, useAsync } from "../content/load";
 import type { Track } from "../content/types";
 import { useTracks } from "../content/settings";
+import { useMine } from "../content/mine";
 import { grade, shuffled, type Answer } from "../lesson/engine";
 
 type Phase = "language" | "where" | "tracks" | "time" | "offer" | "quiz" | "result";
@@ -23,6 +24,9 @@ export function Onboarding() {
   const { state, dispatch } = useStore();
   const [phase, setPhase] = useState<Phase>("language");
   const tracks = useTracks();
+  // School accounts are already a teacher or a student, so they skip "Who are you?".
+  const { fixed } = useMine();
+  const teacher = state.audience !== "students";
   const [levels, setLevels] = useState<Partial<Record<Track, number>>>({});
   const set = (patch: Partial<AppState>) => dispatch({ type: "set", patch });
   const finish = (lv: Partial<Record<Track, number>>) => { set({ onboarded: true, levels: lv }); nav("/learn", { replace: true }); };
@@ -33,16 +37,17 @@ export function Onboarding() {
       <div className="onb-hero"><Mark size={72} /></div>
       <h1 className="dr-onb-title">{t("onb.language")}</h1>
       <LanguagePicker label={t("onb.language")} value={state.lang} onChange={(lang) => set({ lang })} languages={languages} />
-      {cont("where")}
+      {cont(fixed ? "tracks" : "where")}
     </main>
   );
   if (phase === "where") return (
     <main className="screen narrow">
-      <OnboardingStep step={1} total={4} title={t("onb.where")} body={t("onb.whereBody")} primary={cont("tracks", !state.teach)}
+      <OnboardingStep step={1} total={4} title={t("onb.where")} body={t("onb.whereBody")} primary={cont("tracks", teacher && !state.teach)}
         secondary={<Button block variant="ghost" onClick={() => setPhase("tracks")}>{t("common.skip")}</Button>}>
-        <ChoiceCard icon="profile" title={t("onb.primary")} description={t("onb.primaryD")} selected={state.teach === "primary"} onClick={() => set({ teach: "primary" })} />
-        <ChoiceCard icon="learn" title={t("onb.secondary")} description={t("onb.secondaryD")} selected={state.teach === "secondary"} onClick={() => set({ teach: "secondary" })} />
-        <ChoiceCard icon="award" title={t("onb.university")} selected={state.teach === "university"} onClick={() => set({ teach: "university" })} />
+        <ChoiceCard icon="profile" title={t("onb.primary")} description={t("onb.primaryD")} selected={teacher && state.teach === "primary"} onClick={() => set({ teach: "primary", audience: "teachers" })} />
+        <ChoiceCard icon="learn" title={t("onb.secondary")} description={t("onb.secondaryD")} selected={teacher && state.teach === "secondary"} onClick={() => set({ teach: "secondary", audience: "teachers" })} />
+        <ChoiceCard icon="award" title={t("onb.university")} selected={teacher && state.teach === "university"} onClick={() => set({ teach: "university", audience: "teachers" })} />
+        <ChoiceCard icon="book" title={t("onb.student")} description={t("onb.studentD")} selected={!teacher} onClick={() => set({ teach: undefined, audience: "students" })} />
       </OnboardingStep>
     </main>
   );

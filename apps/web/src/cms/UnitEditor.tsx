@@ -6,7 +6,7 @@ import { COMPETENCIES } from "../content/competencies";
 import { usePack, useTracks } from "../content/settings";
 import { levelsByTrack } from "../content/tracks";
 import { labMeta } from "../labs/catalog";
-import type { KitFile, KitFormat, Lesson, Slide, Step, Unit } from "../content/types";
+import { audienceOf, type KitFile, type KitFormat, type Lesson, type Slide, type Step, type Unit } from "../content/types";
 import { errorsOf, SLIDE_LAYOUTS, validateUnit, type Issue } from "../content/validate";
 import { I18nProvider, isolate, languageOf, useI18n, useLanguages, type MessageKey } from "../i18n";
 import type { LessonPlayer } from "../screens/LessonScreen";
@@ -18,7 +18,7 @@ import { Items, LangName, LList, LText, Num, Sel, Upload } from "./fields";
 import { EditLangsProvider, langsIn, savedEditLangs, saveEditLangs, useEditLangs } from "./langs";
 import { useHistory, useUndoKeys } from "./history";
 import { blankLesson, blankStep, copyLesson, copyStep, copyTitle, newLessonId, newStepId, withNewIds } from "./ids";
-import { LevelPicker, TrackPicker } from "./pickers";
+import { AudiencePicker, LevelPicker, TrackPicker } from "./pickers";
 import { STEP_LABEL, STEP_MENU, StepForm, type MediaCtx } from "./steps";
 import "../styles/editor.css";
 import "./strings";
@@ -198,6 +198,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
       <LText label={t("cms.summary")} value={unit.summary} onChange={(summary) => typing({ ...unit, summary })} multiline rows={2} />
       <TrackPicker value={unit.track} onChange={(track) => edit({ ...unit, track, level: Math.min(unit.level, tracks.of(track).levels) })} />
       <LevelPicker track={unit.track} value={unit.level} onChange={(level) => edit({ ...unit, level })} />
+      <AudiencePicker value={audienceOf(unit)} onChange={(a) => edit({ ...unit, audience: a === "students" ? a : undefined })} />
       <p className="muted small" dir="ltr"><span className="cap-code">{unit.id}</span></p>
       <div className="stack">
         <h4 className="ed-h4">{t("cms.unitActions")}</h4>

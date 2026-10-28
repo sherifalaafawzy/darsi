@@ -34,7 +34,10 @@ const errText = (code: string, t: ReturnType<typeof useI18n>["t"]) =>
   : code.includes("weak-password") ? t("auth.errWeak")
   : code.includes("network") || code.includes("fetch") ? t("auth.errNetwork") // "fetch": the SDK itself couldn't download
   : code.includes("too-many-requests") ? t("auth.errTooMany")
+  : code.includes("popup-blocked") ? t("auth.errPopup")
   : t("auth.errGeneric");
+/** Closing the Google window (or tapping twice) is a choice, not an error. */
+const quiet = (code: string) => code.includes("popup-closed-by-user") || code.includes("cancelled-popup-request") || code.includes("user-cancelled");
 
 export function SignIn() {
   const { t } = useI18n();
@@ -124,20 +127,24 @@ function GoogleButton({ next = "/learn" }: { next?: string }) {
   const nav = useNavigate();
   const { ensureFirebase } = useAuth();
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
   // Browsers only allow the sign-in popup straight from the tap, so wait until the SDK is here before enabling it.
   const [ready, setReady] = useState(false);
   useEffect(() => { let live = true; ensureFirebase().then(() => live && setReady(true)).catch(() => {}); return () => { live = false; }; }, [ensureFirebase]);
   return (
-    <Button block variant="secondary" loading={busy || !ready} onClick={async () => {
-      setBusy(true);
-      try {
-        const { auth, db, signInWithPopup, GoogleAuthProvider } = await authSdk();
-        const cred = await signInWithPopup(auth, new GoogleAuthProvider());
-        const { doc, getDoc } = await import("firebase/firestore");
-        if (!(await getDoc(doc(db, "users", cred.user.uid))).exists()) await createLearnerProfile(cred.user.uid, { name: cred.user.displayName ?? "", email: (cred.user.email ?? "").toLowerCase(), lang });
-        nav(next, { replace: true });
-      } catch { /* closed popup */ } finally { setBusy(false); }
-    }}>{t("auth.google")}</Button>
+    <div className="stack-sm">
+      <Button block variant="secondary" loading={busy || !ready} onClick={async () => {
+        setBusy(true); setErr("");
+        try {
+          const { auth, db, signInWithPopup, GoogleAuthProvider } = await authSdk();
+          const cred = await signInWithPopup(auth, new GoogleAuthProvider());
+          const { doc, getDoc } = await import("firebase/firestore");
+          if (!(await getDoc(doc(db, "users", cred.user.uid))).exists()) await createLearnerProfile(cred.user.uid, { name: cred.user.displayName ?? "", email: (cred.user.email ?? "").toLowerCase(), lang });
+          nav(next, { replace: true });
+        } catch (x) { const code = String((x as { code?: string }).code ?? x); if (!quiet(code)) setErr(errText(code, t)); } finally { setBusy(false); }
+      }}>{t("auth.google")}</Button>
+      {err && <p className="notice err" role="alert">{err}</p>}
+    </div>
   );
 }
 

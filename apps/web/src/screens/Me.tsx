@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppBar, Button, CertificateCard, Icon, LanguagePicker, PlacementResult, Switch, TextField } from "@darsi/design-system";
+import { AppBar, Button, CertificateCard, ChoiceCard, Icon, LanguagePicker, PlacementResult, Switch, TextField, TrackChip } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import { displayLogin } from "../auth/api";
 import { accountLinks } from "../components/Layout";
@@ -10,6 +10,7 @@ import { useStore } from "../state/store";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
 import type { Unit } from "../content/types";
 import { useTracks } from "../content/settings";
+import { useMine } from "../content/mine";
 import { share } from "../platform";
 import { useInstall } from "../pwa";
 
@@ -26,8 +27,10 @@ export function Me() {
   const done = units.filter((u) => u.lessons.every((l) => state.progress[l.id]));
   const dateFmt = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
   const tracks = useTracks();
+  const nav = useNavigate();
   // The learner's own tracks, or every track on offer if they haven't chosen.
-  const mine = tracks.visible.filter((x) => !state.tracks.length || state.tracks.includes(x.id));
+  const me = useMine();
+  const mine = me.tracks;
   return (
     <>
       <AppBar title={t("me.title")} />
@@ -41,6 +44,15 @@ export function Me() {
         </section>
         <NotificationsPanel />
         <TextField label={t("me.name")} hint={t("me.nameHint")} value={state.name} onChange={(e) => set({ name: e.target.value })} autoComplete="name" />
+        <section className="stack" aria-labelledby="tracks-h"><h2 id="tracks-h" className="section-title">{t("tracks.title")}</h2>
+          <div className="row-gap">{mine.map((x) => <TrackChip key={x.id} track={x.id}>{tracks.name(x.id)}</TrackChip>)}</div>
+          <div><Button size="sm" variant="secondary" icon="settings" onClick={() => nav("/tracks")}>{t("tracks.manage")}</Button></div>
+        </section>
+        {/* School accounts are a teacher or a student already; everyone else can change what they said in onboarding. */}
+        {!me.fixed && <section className="stack" aria-labelledby="iam-h"><h2 id="iam-h" className="section-title">{t("me.iAm")}</h2>
+          <ChoiceCard icon="profile" title={t("me.teacher")} selected={me.audience === "teachers"} onClick={() => set({ audience: "teachers" })} />
+          <ChoiceCard icon="book" title={t("me.student")} selected={me.audience === "students"} onClick={() => set({ audience: "students" })} />
+        </section>}
         <PlacementResult title={t("me.levels")} levels={mine.map(({ id: tr, levels: of }) => ({ track: tr, trackLabel: tracks.name(tr), level: Math.min(state.levels[tr] ?? 1, of), of, label: tracks.levelName(tr, Math.min(state.levels[tr] ?? 1, of)) }))} />
         <section id="certificates" className="stack"><h2 className="section-title">{t("me.certs")}</h2>
           {done.length === 0 && <p className="muted">{t("me.noCerts")}</p>}

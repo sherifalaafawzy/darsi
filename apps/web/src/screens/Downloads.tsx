@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { AppBar, DownloadRow, EmptyState } from "@darsi/design-system";
 import { loadCatalog, loadUnit, unitAssetUrls, useAsync } from "../content/load";
+import { useMine } from "../content/mine";
 import { useI18n } from "../i18n";
 import { useStore } from "../state/store";
 import { cacheUrls, onMeteredConnection, removeCached } from "../platform";
@@ -12,7 +13,8 @@ export function Downloads() {
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const aborts = useRef<Record<string, AbortController>>({});
-  const units = catalog?.units.filter((u) => u.available) ?? [];
+  const { isMine } = useMine();
+  const units = catalog?.units.filter((u) => u.available && isMine(u)) ?? [];
   const blocked = state.dataSaver && onMeteredConnection();
 
   const download = async (id: string) => {

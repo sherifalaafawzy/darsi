@@ -68,6 +68,11 @@ describe("catalog", () => {
     expect(e).toMatchObject({ id: "ai-1", track: "ai", level: 1, lessons: 3, available: true, src: "content/units/ai-1/v2.json", version: 2, owner: "public" });
     expect(e.sizeMB).toBe(sizeMB(ai1, 59_325));
     expect(e.sizeMB).toBeCloseTo(0.1 + 2.8 + 2.4 + 2.9, 5); // the JSON plus one language's videos
+    expect(e).not.toHaveProperty("audience"); // a course for teachers
+  });
+  it("marks a course for students", () => {
+    expect(catalogEntry({ ...ai1, audience: "students" }, "public", 1, 1000).audience).toBe("students");
+    expect(catalogEntry({ ...ai1, audience: "teachers" }, "public", 1, 1000)).not.toHaveProperty("audience");
   });
   it("counts a light lesson instead of its MP4, since that's what a download stores", () => {
     const light = structuredClone(ai1);

@@ -28,12 +28,12 @@ service cloud.firestore {
     match /units/{unitId} {
       allow read: if canEdit(resource.data.owner);
       allow create: if canEdit(request.resource.data.owner) && idFits(request.resource.data.owner, unitId)
-        && request.resource.data.keys().hasOnly(['owner', 'title', 'track', 'level', 'lessonCount', 'lessons', 'rev', 'updatedAt', 'updatedBy', 'published'])
+        && request.resource.data.keys().hasOnly(['owner', 'title', 'track', 'level', 'audience', 'lessonCount', 'lessons', 'rev', 'updatedAt', 'updatedBy', 'published'])
         && request.resource.data.rev == 1 && request.resource.data.get('published', null) == null
         && request.resource.data.updatedBy == request.auth.uid;
       // `lessons` is a small summary ({id, title} per lesson) so the unit list can show lesson titles without the drafts.
       allow update: if canEdit(resource.data.owner) && nextRev()
-        && onlyChanges(['title', 'track', 'level', 'lessonCount', 'lessons', 'rev', 'updatedAt', 'updatedBy'])
+        && onlyChanges(['title', 'track', 'level', 'audience', 'lessonCount', 'lessons', 'rev', 'updatedAt', 'updatedBy'])
         && request.resource.data.updatedBy == request.auth.uid;
       allow delete: if canEdit(resource.data.owner) && resource.data.get('published', null) == null;
     }

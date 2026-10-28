@@ -73,6 +73,9 @@ export default defineConfig({
           // Each lab app (~5–20 KB) is cached when first opened, or all at once with "Save all labs for offline".
           "**/lab-*.js"],
         navigateFallback: "/index.html",
+        // /__/ is Firebase Hosting's own (the sign-in helper page /__/auth/handler opens in the Google popup, since the
+        // auth domain is the site's own). Answering it with the app made Google sign-in hang.
+        navigateFallbackDenylist: [/^\/__\//],
         runtimeCaching: [
           // Lab apps have their own cache, so 48 of them never push other chunks out of "darsi-chunks" (40 entries).
           { urlPattern: ({ url }) => url.pathname.startsWith("/assets/lab-") && url.pathname.endsWith(".js"), handler: "CacheFirst", options: { cacheName: "darsi-labs", expiration: { maxEntries: 150, maxAgeSeconds: 120 * 864e2 } } },

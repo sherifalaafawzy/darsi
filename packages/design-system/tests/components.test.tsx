@@ -113,6 +113,65 @@ describe("shell & settings", () => {
   });
 });
 
+describe("VideoPlayer controls", () => {
+  // jsdom has no media playback: a tiny stand-in for play/pause and the caption tracks.
+  let paused = true;
+  const track = { kind: "captions", mode: "showing" };
+  beforeEach(() => {
+    paused = true; track.mode = "showing";
+    Object.defineProperty(HTMLMediaElement.prototype, "paused", { configurable: true, get: () => paused });
+    Object.defineProperty(HTMLMediaElement.prototype, "textTracks", { configurable: true, get: () => [track] });
+    HTMLMediaElement.prototype.play = function () { paused = false; this.dispatchEvent(new Event("play")); return Promise.resolve(); };
+    HTMLMediaElement.prototype.pause = function () { paused = true; this.dispatchEvent(new Event("pause")); };
+  });
+  const player = (extra: Partial<Parameters<typeof VideoPlayer>[0]> = {}) => render(<VideoPlayer title="t" duration={100} src="/v.mp4" {...extra} />);
+
+  it("CC shows and hides the real caption track", () => {
+    player();
+    fireEvent.click(screen.getByRole("button", { name: "Captions" }));
+    expect(track.mode).toBe("hidden");
+    fireEvent.click(screen.getByRole("button", { name: "Captions" }));
+    expect(track.mode).toBe("showing");
+  });
+
+  it("seeks with the keyboard and reports the new time", () => {
+    const at: number[] = [];
+    player({ onTimeUpdate: (s) => at.push(s) });
+    const seek = screen.getByRole("slider", { name: "Seek" });
+    fireEvent.keyDown(seek, { key: "ArrowRight" });
+    fireEvent.keyDown(seek, { key: "End" });
+    expect(at).toEqual([5, 100]);
+    expect(seek.getAttribute("aria-valuenow")).toBe("100");
+  });
+
+  it("steps through speeds", () => {
+    player();
+    fireEvent.click(screen.getByRole("button", { name: "Speed: 1×" }));
+    expect(screen.getByRole("button", { name: "Speed: 1.25×" })).toBeTruthy();
+  });
+
+  it("goes full screen over the page where the Fullscreen API is missing, and Escape leaves", () => {
+    const { container } = player();
+    fireEvent.click(screen.getByRole("button", { name: "Full screen" }));
+    const fig = container.querySelector(".dr-video")!;
+    expect(fig.classList.contains("is-full")).toBe(true);
+    fireEvent.keyDown(fig, { key: "Escape" });
+    expect(fig.classList.contains("is-full")).toBe(false);
+  });
+
+  it("pauses for a question and plays on once it is answered", () => {
+    const { rerender } = player();
+    fireEvent.click(screen.getAllByRole("button", { name: "Play" })[0]);
+    expect(paused).toBe(false);
+    rerender(<VideoPlayer title="t" duration={100} src="/v.mp4" checkpoint={<p>Question</p>} />);
+    expect(paused).toBe(true);
+    // Only the bar's button is left, and it waits for the answer.
+    expect(screen.getAllByRole("button", { name: "Play" }).map((b) => (b as HTMLButtonElement).disabled)).toEqual([true]);
+    rerender(<VideoPlayer title="t" duration={100} src="/v.mp4" />);
+    expect(paused).toBe(false);
+  });
+});
+
 describe("AI lab logic", () => {
   it("splits long words into pieces", () => { expect(approximateTokens("photosynthesis!")).toEqual(["phot", "osyn", "thes", "is", "!"]); });
   it("temperature flattens or sharpens", () => {

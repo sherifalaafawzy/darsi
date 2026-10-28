@@ -137,7 +137,7 @@ AuthProvider            Firebase user + custom claims {role, orgId}; claims are 
 |---|---|---|
 | `/` | everyone | Landing page for new visitors; otherwise redirects to the role's home |
 | `/signin`, `/signup`, `/forgot` | signed out | A "not configured" notice when the build has no Firebase config |
-| `/learn`, `/lesson/:unit/:lesson`, `/downloads`, `/labs`, `/labs/:id`, `/kit`, `/me` | signed in or guest | Behind the onboarding gate (language, school level, tracks, weekly goal, placement). `/lab` (the old AI lab, linked from sent notifications) redirects to `/labs` |
+| `/learn`, `/lesson/:unit/:lesson`, `/downloads`, `/labs`, `/labs/:id`, `/kit`, `/tracks`, `/me` | signed in or guest | Behind the onboarding gate (language, "Who are you?" (a teacher at a school level, or a student), tracks, weekly goal, placement). `/tracks` is My tracks. `/lab` (the old AI lab, linked from sent notifications) redirects to `/labs` |
 | `/org` | signed in | Join with an invite code, or request a new organization (`?request=1`) |
 | `/admin`, `/admin/people/:uid`, `/admin/add`, `/admin/import` | `orgAdmin` | Organization dashboard, person page, add people, Excel/CSV import |
 | `/teach`, `/teach/:uid` | `teacher`, `orgAdmin` | The teacher's assigned students |
@@ -153,7 +153,7 @@ After sign-in, `homeFor(role)` sends org admins to `/admin` and platform admins 
 
 ### Layout
 
-At 900 px and wider, a nav rail shows the five learner tabs plus the role's staff links. On phones, the design system's bottom nav keeps five tabs (Learn, Downloads, Labs, Kit, Me), and the staff links live in Me's account section. Staff screens and the landing page are **lazy chunks** (`React.lazy`), so a learner's phone never downloads or parses them.
+At 900 px and wider, a nav rail shows the five learner tabs plus the role's staff links. On phones, the design system's bottom nav keeps five tabs (Learn, Downloads, Labs, Kit, Me), and the staff links live in Me's account section. Students have no Kit tab: the classroom kits are for teaching. Staff screens and the landing page are **lazy chunks** (`React.lazy`), so a learner's phone never downloads or parses them.
 
 ## Offline and caching
 
@@ -175,7 +175,9 @@ The service worker (Workbox `generateSW`) installs when a person enters the app.
 | Firestore data | The SDK's persistent IndexedDB cache, capped at **10 MB** (the default is 40 MB) |
 
 - **Updates** use prompt mode: a "Reload" toast appears on app screens, never in the middle of a lesson.
+- **`/__/` is Hosting's own** (`navigateFallbackDenylist`). The auth domain is the site's own address, so Google sign-in opens `/__/auth/handler` in its popup; answering that with the app made the popup show "Page not found" and sign-in never finished (fixed 2026-10-28; the e2e test "the service worker leaves Firebase's own pages" guards it). Phones still running an older worker get the fix once they take the update.
 - **Hosting headers:** `sw.js` and `index.html` are `no-cache`; hashed assets are cached for a year.
+- **The MP4 player** (design system `VideoPlayer`): play and pause, a seek bar you can tap, drag or move with the arrow keys, CC that shows or hides the real `<track>` captions, a speed button (1×, 1.25×, 1.5×, 0.75×) and full screen. Full screen covers the whole player, so the question and the captions stay on top; where the browser has no Fullscreen API on elements (iPhone) the player is stretched over the page instead (Escape or the button leaves). A checkpoint question pauses the video, also when the learner seeks past it, and the video plays on once it is answered.
 - **Lesson videos are optional.** If a video can't load (not produced yet, offline, not downloaded), the step switches to the transcript, and the checkpoint question sits under it. Opening the transcript to read instead of streaming does the same. A missing video never blocks a lesson.
 
 ## Cloud sync
@@ -360,6 +362,7 @@ Every role or organization change goes through these functions, which set the cl
   - `StepView` shows the light lesson first when it has the teacher's language (`lightLang`: `light.langs`, e.g. `ar` → `ar-EG`, else English), with "Watch as a video file (1.1 MB)" to switch to the MP4 and "Light version" to switch back. The player asks its own quick checks, so the step's checkpoint question is for the MP4 and the transcript. The step can continue once a check is answered or the lesson ends, as with the video.
   - Each language is narrated separately, so chapter and checkpoint times can differ: `atBy[lang]` holds that language's own time, read with `timeIn()`.
   - Downloading a unit stores the light lesson (its JSON, the narration in Opus or, where the phone can't play Opus, AAC, and the library) instead of the MP4.
+  - **Its controls fit the lesson column** (Lesson Studio player, 2026-10-28): under 720 px the floating bar drops the volume slider and the time; under 480 px (phones) play, time and seek share one row and the other buttons a second, with "Made with AI help" as a badge on the picture. A quick check or the end screen in a small player sits under the picture (on phones, in its place), so its Continue button is never cut off. Full screen falls back to stretching over the page where the Fullscreen API on elements is missing (iPhone), and the pause icon is a filled shape (it was invisible). Upright phones get the portrait stage narrowed to `(100vh − 24rem) × 9/16`, so it and its two rows of controls fit above Continue.
 - **Lesson shape:** video (with a checkpoint question) → reading with key terms → mixed questions (some lessons add a `lab` step that embeds any Labs app) → classroom project → reflection → "Try it in class tomorrow".
 - **Step types:** `video`, `read`, `choice`, `multi`, `truefalse`, `image`, `match`, `order`, `fill`, `type`, `hotspot`, `scenario`, `lab`, `project`, `reflect`.
 - **Engine** (`src/lesson/engine.ts`): pure, unit-tested grading. Answers that ignore case and Arabic diacritics are accepted. A wrong answer comes back once at the end of the lesson. XP is `10 + round(accuracy × 20)`.
@@ -484,8 +487,16 @@ Every unit belongs to one **track** (AI, IoT, Cyber security, or one a platform 
 - **Design system:** a track's colours come from `dr-tr dr-tr-<tone>`, which sets `--tr`, `--tr-soft` and `--tr-ink`. Chips, progress bars, the unit path, certificates, placement results, page previews and download rows read those variables. Components still take a `track` id and resolve it through the provider (`useTrackStyles`, `trackClass`).
 - **Where tracks show up:**
   - **Onboarding** offers the visible tracks. Placement spreads each score over all of a track's levels (`placementLevel`: all right reaches the top level). A track with no placement questions starts at level 1.
-  - **Home** leaves out units of hidden tracks, then sorts ready units first, the learner's tracks next, then by track order and level.
-  - **Me** shows "My levels" out of each track's own number of levels, with level names when set.
+  - **Home** shows **one of the learner's tracks at a time** (`content/mine.ts`: `useMine`, `myTracks`, `activeTrack`). The current track is a switcher in the app bar (`components/TrackSwitch.tsx`); its menu lists the learner's tracks and "Add or remove tracks". Ready units first, then by level. A track with nothing for the learner says so, with a link to My tracks.
+  - **My tracks** (`/tracks`, `screens/MyTracks.tsx`): every visible track as a choice card with its number of courses for the learner's audience. Adding a track makes it the current one; removing one keeps its progress; at least one stays. `state.tracks` holds the choice (none chosen means every visible track) and `state.track` the current one.
+  - **Kit and Downloads** list the learner's courses: their audience, in any of their tracks.
+  - **Me** shows "My tracks" (with "Add or remove tracks"), "I am" (a teacher or a student; not for school accounts), and "My levels" out of each track's own number of levels, with level names when set.
+
+**Courses for teachers or for students.** Every unit has an audience: `audience: "students"`, or none for teachers (every course before audiences existed). Students see only courses for students and teachers only courses for teachers, in the same tracks.
+- **Who is who:** school accounts follow their role (`student` → students, `teacher` → teachers); everyone else answers "Who are you?" in onboarding (three teacher choices, or Student) and can change it in Me (`audienceFor` in `content/mine.ts`).
+- **Editor:** "Who is it for?" (Teachers / Students) in a unit's details; the list marks courses for students. `units/{id}` keeps `audience` for the list (rules allow the field).
+- **Published:** `catalogEntry` adds `audience: "students"` to the catalog for courses for students only; the validator accepts `teachers` or `students`.
+- No courses for students exist yet: a student's track says "Courses for students in … are on their way".
 - **Order:** `publishUnit` writes catalogs in the saved track order (`buildCatalog(entries, order)`; unknown tracks last).
 
 **The Tracks page** (`cms/TracksPage.tsx`, in the `Cms` chunk). It reads `config/settings`, plus every unit's track and level, once.

@@ -141,11 +141,18 @@ export interface Lesson {
   /** What the teacher needs for the class activity, one item each. The kit's lesson plan lists it (else "board, chalk, paper"). */
   materials?: LocalList;
 }
-export interface Unit { id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: Lesson[] }
+/** Who a course is for: teachers (the default, and every course before audiences existed) or their students. */
+export type Audience = "teachers" | "students";
+export const AUDIENCES: Audience[] = ["teachers", "students"];
+/** A course's audience; courses without one are for teachers. */
+export const audienceOf = (u: { audience?: Audience }): Audience => u.audience ?? "teachers";
+export interface Unit { id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: Lesson[]; audience?: Audience }
 export interface CatalogEntry {
   id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: number; sizeMB: number; available: boolean;
   /** Authored units (course editor): Storage path of the published JSON, its version, and who sees it ("public" or an orgId). */
   src?: string; version?: number; owner?: string;
+  /** Set only for courses for students. */
+  audience?: Audience;
 }
 export interface Catalog { version: number; units: CatalogEntry[] }
 export interface Placement { questions: Array<(ChoiceStep | TrueFalseStep) & { track: Track }> }

@@ -200,6 +200,18 @@ describe("UnitEditor", () => {
     await waitFor(() => expect(saved()).toMatchObject({ track: "iot", level: 4 }));
   });
 
+  it("marks a course for students, and back for teachers (who need no field)", async () => {
+    await openEditor();
+    expect(screen.getByRole("radio", { name: "Teachers" }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(screen.getByRole("radio", { name: "Students" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    await waitFor(() => expect(saved().audience).toBe("students"));
+    fireEvent.click(screen.getByRole("radio", { name: "Teachers" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    await waitFor(() => expect(m.data.saveUnit).toHaveBeenCalledTimes(2));
+    expect(saved().audience).toBeUndefined(); // dropped when stored
+  });
+
   it("adds a step between two others, from the kinds of step", async () => {
     const nav = await openEditor();
     fireEvent.click(within(nav).getByRole("button", { name: /Is it AI\?/ }));

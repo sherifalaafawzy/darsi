@@ -45,6 +45,8 @@ export function catalogEntry(unit: Unit, owner: Owner, version: number, jsonByte
     id: unit.id, track: unit.track, level: unit.level, title: unit.title, summary: unit.summary,
     lessons: unit.lessons.length, sizeMB: sizeMB(unit, jsonBytes), available: true,
     src: unitPath(owner, unit.id, version), version, owner,
+    // Phones show teachers' and students' courses apart; teachers' courses (the default) carry no field.
+    ...(unit.audience === "students" ? { audience: "students" as const } : {}),
   };
 }
 

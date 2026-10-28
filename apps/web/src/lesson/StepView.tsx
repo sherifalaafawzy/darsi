@@ -274,7 +274,8 @@ function VideoStepView({ step, onReady }: { step: VideoStep; onReady: () => void
         onTimeUpdate={(sec) => { if (step.checkpoint && cpResult === null && sec >= timeIn(step.checkpoint, videoLang)) setCheckpointOpen(true); }}
         onError={() => { setFailed(true); setShowTranscript(true); }}
         actions={<Button size="sm" variant="ghost" icon="file" onClick={() => setShowTranscript((x) => !x)}>{t("lesson.transcript")}</Button>}
-        playLabel={t("lesson.video")} captionsLabel="CC"
+        playLabel={t("video.play")} pauseLabel={t("video.pause")} captionsLabel={t("video.captions")} seekLabel={t("video.seek")}
+        speedLabel={t("video.speed")} fullscreenLabel={t("video.fullscreen")} exitFullscreenLabel={t("video.exitFullscreen")}
       />
       {!playable && <p className="muted small">{t("lesson.noVideo")}</p>}
       {pl && switchTo}

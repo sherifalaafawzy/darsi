@@ -132,7 +132,7 @@ export function ContentList() {
                         <a className="ed-unit-title" href={`${base}/${u.id}`} onClick={(e) => { e.preventDefault(); nav(`${base}/${u.id}`); }}><bdi>{titleOf(u)}</bdi></a>
                         <span className={`ed-status is-${st}`}>{t(`cms.status.${st}` as MessageKey, { n: u.published?.version ?? 0 })}</span>
                       </div>
-                      <p className="muted small">{[tracks.levelName(u.track, u.level), t("cms.lessonsCount", { n: num(u.lessonCount) }), t("cms.updatedOn", { date: date(u.updatedAt) })].join(t("common.sep"))}</p>
+                      <p className="muted small">{[tracks.levelName(u.track, u.level), ...(u.audience === "students" ? [t("cms.audience.students")] : []), t("cms.lessonsCount", { n: num(u.lessonCount) }), t("cms.updatedOn", { date: date(u.updatedAt) })].join(t("common.sep"))}</p>
                       {!!u.lessons?.length && (
                         <ol className="ed-unit-lessons">
                           {u.lessons.slice(0, 4).map((l) => <li key={l.id}><bdi>{titleOf(l)}</bdi></li>)}

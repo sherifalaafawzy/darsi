@@ -5,12 +5,14 @@
  */
 import { collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, serverTimestamp, setDoc, updateDoc, where, writeBatch, type Timestamp } from "firebase/firestore";
 import { db } from "../firebase";
-import type { LanguageDef, Lesson, LocalText, Track, TrackDef, Unit } from "../content/types";
+import { audienceOf, type Audience, type LanguageDef, type Lesson, type LocalText, type Track, type TrackDef, type Unit } from "../content/types";
 import { mergeTracks } from "../content/tracks";
 import { copyLesson } from "./ids";
 
 export interface UnitMeta {
   id: string; owner: string; title: LocalText; track: Track; level: number; lessonCount: number; rev: number;
+  /** Units saved before audiences existed have none: they are for teachers. */
+  audience?: Audience;
   /** Lesson titles (units saved before this was added have none until their next save). */
   lessons?: { id: string; title: LocalText }[];
   updatedAt?: Timestamp | null; updatedBy?: string;
@@ -23,7 +25,7 @@ export const statusOf = (m: Pick<UnitMeta, "rev" | "published">): Status => (!m.
 /** Firestore refuses `undefined`; the editor leaves optional fields undefined. */
 const plain = <T,>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 /** The light record lists read: no step content, but each lesson's title so the list can show them. */
-const metaOf = (u: Unit) => ({ title: plain(u.title), track: u.track, level: u.level, lessonCount: u.lessons.length, lessons: u.lessons.map((l) => ({ id: l.id, title: plain(l.title) })) });
+const metaOf = (u: Unit) => ({ title: plain(u.title), track: u.track, level: u.level, audience: audienceOf(u), lessonCount: u.lessons.length, lessons: u.lessons.map((l) => ({ id: l.id, title: plain(l.title) })) });
 
 /** The list record of a unit just created here, so the list can show it without reading it back. */
 export const freshMeta = (owner: string, u: Unit): UnitMeta => ({ id: u.id, owner, ...metaOf(u), rev: 1, updatedAt: null, published: null });

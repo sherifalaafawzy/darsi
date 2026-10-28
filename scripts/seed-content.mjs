@@ -125,7 +125,7 @@ for (const f of files) {
     const batch = db.batch();
     // The same light record the editor writes (apps/web/src/cms/data.ts metaOf); `published` stays as it is.
     batch.set(db.doc(`units/${id}`), {
-      owner: "public", title: unit.title, track: unit.track, level: unit.level, lessonCount: unit.lessons.length,
+      owner: "public", title: unit.title, track: unit.track, level: unit.level, audience: unit.audience ?? "teachers", lessonCount: unit.lessons.length,
       lessons: unit.lessons.map((l) => ({ id: l.id, title: l.title })), rev, updatedAt: FieldValue.serverTimestamp(), updatedBy: "seed",
       ...(meta.exists ? {} : { published: null }),
     }, { merge: true });

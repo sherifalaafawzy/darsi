@@ -204,6 +204,18 @@ for (const [lang, label, heading, offline] of [
   });
 }
 
+// The auth domain is the site's own, so Google sign-in opens /__/auth/handler here: the service worker must leave it
+// to Hosting (it used to answer with the app, and the sign-in popup never finished).
+test("the service worker leaves Firebase's own pages (/__/) to the server", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium");
+  await onboard(page);
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  expect(await page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+  expect((await page.goto("/learn"))!.fromServiceWorker()).toBe(true);
+  expect((await page.goto("/__/auth/handler?apiKey=x&authType=signInViaPopup"))!.fromServiceWorker()).toBe(false);
+});
+
 test("an English page never downloads the Arabic or extended-Latin fonts", async ({ page }) => {
   // The landing page and the language picker show "العربية"; Me shows the picker again and "درسي" in its footer.
   await onboard(page);

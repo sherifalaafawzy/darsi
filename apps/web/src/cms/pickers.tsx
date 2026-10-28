@@ -5,6 +5,7 @@
  */
 import { ChoiceCard, type IconName } from "@darsi/design-system";
 import { useTracks } from "../content/settings";
+import { AUDIENCES, type Audience } from "../content/types";
 import { useI18n } from "../i18n";
 
 export function TrackPicker({ value, onChange }: { value: string; onChange: (id: string) => void }) {
@@ -24,6 +25,24 @@ export function TrackPicker({ value, onChange }: { value: string; onChange: (id:
           </div>
         ))}
       </div>
+    </fieldset>
+  );
+}
+
+/** Who the course is for: students see only courses for students, teachers only courses for teachers. */
+export function AudiencePicker({ value, onChange }: { value: Audience; onChange: (a: Audience) => void }) {
+  const { t } = useI18n();
+  return (
+    <fieldset className="ed-fieldset">
+      <legend className="dr-field-label">{t("cms.audience")}</legend>
+      <div className="ed-seg" role="radiogroup" aria-label={t("cms.audience")}>
+        {AUDIENCES.map((a) => (
+          <button key={a} type="button" role="radio" aria-checked={value === a} className={`ed-seg-btn${value === a ? " is-on" : ""}`} onClick={() => onChange(a)}>
+            <strong>{t(`cms.audience.${a}`)}</strong>
+          </button>
+        ))}
+      </div>
+      <p className="muted small">{t("cms.audienceHint")}</p>
     </fieldset>
   );
 }

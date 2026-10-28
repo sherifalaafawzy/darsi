@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AppBar, Button, ClassroomKit, EmptyState } from "@darsi/design-system";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
+import { useMine } from "../content/mine";
 import { kitUrl, type KitFile } from "../content/types";
 import { useI18n } from "../i18n";
 import { useStore } from "../state/store";
@@ -14,7 +15,8 @@ const fileKey = (f: KitFile, fmt: KitFmt, lessonId: string) => `${fileId(f, less
 export function Kit() {
   const { t } = useI18n();
   const { data: catalog } = useAsync(loadCatalog, []);
-  const available = (catalog?.units ?? []).filter((u) => u.available);
+  const { isMine } = useMine();
+  const available = (catalog?.units ?? []).filter((u) => u.available && isMine(u));
   useEffect(() => { const id = location.hash.slice(1); if (id) setTimeout(() => document.getElementById(`kit-${id}`)?.scrollIntoView({ block: "start" }), 300); }, [catalog]);
   return (
     <>

@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthProvider";
 import type { Role } from "../auth/types";
 import { useI18n, type MessageKey } from "../i18n";
 import { useStore } from "../state/store";
+import { audienceFor } from "../content/mine";
 import { useInstall, useOnline, usePwaUpdate } from "../pwa";
 
 interface NavItem { path: string; icon: IconName; key: MessageKey }
@@ -47,8 +48,10 @@ export function Layout() {
   const snoozed = state.installDismissedAt && Date.now() - state.installDismissedAt < 14 * 864e5;
   const showInstall = completed && !snoozed && install.canInstall;
   const extra = accountLinks(role, Boolean(user));
+  // Students have no classroom kit to teach with.
+  const tabs = audienceFor(role, state.audience) === "students" ? TABS.filter((x) => x.path !== "/kit") : TABS;
   // The longest matching link wins, so /admin/content lights up the editor, not Admin as well.
-  const hits = [...TABS, ...extra].map((i) => i.path).filter((p) => pathname === p || pathname.startsWith(`${p}/`));
+  const hits = [...tabs, ...extra].map((i) => i.path).filter((p) => pathname === p || pathname.startsWith(`${p}/`));
   const best = hits.sort((a, b) => b.length - a.length)[0];
   const active = (path: string) => path === best;
   const railItem = (item: NavItem) => (
@@ -60,7 +63,7 @@ export function Layout() {
     <div className="app-shell">
       <nav className="nav-rail" aria-label={t("nav.main")}>
         <Link to="/learn" className="rail-brand" aria-label="Darsi"><Mark size={36} /><span>{lang === "ar" ? "درسي" : "Darsi"}</span></Link>
-        {TABS.map(railItem)}
+        {tabs.map(railItem)}
         {extra.length > 0 && <><hr className="rail-sep" />{extra.map(railItem)}</>}
         {/* On phones Sign out is at the top of Me; on wide screens it is always here. */}
         {user && <button type="button" className="rail-item rail-signout" onClick={() => { void signOut(); }}><Icon name="close" size={24} /><span>{t("me.signOut")}</span></button>}
@@ -75,7 +78,7 @@ export function Layout() {
           onInstall={install.install} onDismiss={() => dispatch({ type: "set", patch: { installDismissedAt: Date.now() } })} />}
       </div>
       <div className="nav-bottom">
-        <BottomNav floating label={t("nav.main")} items={TABS.map((tab) => ({
+        <BottomNav floating label={t("nav.main")} items={tabs.map((tab) => ({
           icon: tab.icon, label: t(tab.key), href: tab.path,
           active: active(tab.path) || (tab.path === "/me" && extra.some((x) => active(x.path))),
           onClick: (e?: unknown) => { (e as Event | undefined)?.preventDefault?.(); nav(tab.path); },

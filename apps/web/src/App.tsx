@@ -18,6 +18,7 @@ import { setLightPlayer } from "./lesson/LightLesson";
 import { Onboarding } from "./screens/Onboarding";
 import { Kit } from "./screens/Kit";
 import { Downloads } from "./screens/Downloads";
+import { MyTracks } from "./screens/MyTracks";
 import { LabApp, Labs } from "./screens/Labs";
 import { Me } from "./screens/Me";
 
@@ -113,6 +114,7 @@ function Routed() {
             {/* Old links (notifications already sent, bookmarks) still open Labs. */}
             <Route path="lab" element={<Navigate to="/labs" replace />} />
             <Route path="kit" element={<Kit />} />
+            <Route path="tracks" element={<MyTracks />} />
           </Route>
         </Route>
         {/* Staff screens skip onboarding: an admin may never take a lesson on this device. Me does too: it holds the
