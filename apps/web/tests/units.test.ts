@@ -19,8 +19,7 @@ describe.each(units.map((u) => [u.id, u] as const))("course %s", (_, unit) => {
     expect(validateUnit(unit, { competencies: codes }).map((i) => `${i.level} ${i.code} lesson ${i.at.lesson} step ${i.at.step} ${i.at.field}`)).toEqual([]);
   });
 
-  // The new curriculum keeps every rule in docs/CONTENT.md; ai-1, the first starting course, predates some of them.
-  it.skipIf(unit.id === "ai-1")("follows the content rules in every lesson", () => {
+  it("follows the content rules in docs/CONTENT.md in every lesson", () => {
     for (const l of unit.lessons) {
       const types = l.steps.map((s) => s.type);
       // Never two steps of the same type in a row; at least three question types; every graded step says why.

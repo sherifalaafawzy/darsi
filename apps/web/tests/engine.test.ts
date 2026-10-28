@@ -1,5 +1,5 @@
 import { grade, LessonRun, shuffled } from "../src/lesson/engine";
-import unit from "../../../content/units/ai-1.json";
+import unit from "../../../content/retired/ai-1.json";
 import type { Unit, GradedStep } from "../src/content/types";
 import { isoWeek, streakWeeks, initialState } from "../src/state/store";
 

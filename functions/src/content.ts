@@ -90,15 +90,26 @@ export async function publishDraft(owner: Owner, unitId: string, by: string) {
   return { version };
 }
 
-/** Take a unit away from learners. Its media stays, so publishing again needs no new uploads. */
+/** Take a unit away from learners. */
 export const unpublishUnit = onCall(async (req) => {
-  const { c, unitId, meta, owner } = await target(req);
+  const { c, unitId, owner } = await target(req);
+  return unpublishDraft(owner, unitId, c.uid);
+});
+
+/**
+ * Takes a unit out of its owner's catalog and deletes its published JSON. The draft and the media stay, so publishing
+ * again needs no new uploads, and learners' progress is untouched. The callable above and `npm run seed -- --unpublish`
+ * (which retires a starting course) both go through here.
+ */
+export async function unpublishDraft(owner: Owner, unitId: string, by: string) {
+  const meta = await db.doc(`units/${unitId}`).get();
+  if (!meta.exists || meta.get("owner") !== owner) throw new HttpsError("not-found", "No such unit.");
   await meta.ref.update({ published: null });
   await writeCatalog(owner);
   await deleteJson(owner, unitId);
-  await audit("unpublishUnit", c.uid, { unitId, owner });
+  await audit("unpublishUnit", by, { unitId, owner });
   return { ok: true };
-});
+}
 
 /**
  * Delete a unit everywhere: catalog entry, JSON versions, uploaded media and both Firestore documents. Media that another

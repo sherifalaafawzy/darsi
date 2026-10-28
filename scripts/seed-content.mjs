@@ -16,6 +16,8 @@
  *   npm run seed -- ai-1                only these units
  *   npm run seed -- --replace           overwrite a draft that already exists (it is left alone by default: it may hold
  *                                       edits made in the editor), then publish it
+ *   npm run seed -- --unpublish ai-1    take these units away from learners, like the editor's Unpublish (the draft,
+ *                                       the media and learners' progress stay). Retired courses live in content/retired.
  *
  * Unit and lesson ids are kept, so learners' progress, notes and certificates still match.
  * Build the functions first (npm run build --prefix functions): this reuses their code.
@@ -33,7 +35,9 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const args = process.argv.slice(2);
 const emulator = args.includes("--emulator");
 const replace = args.includes("--replace");
+const unpublish = args.includes("--unpublish");
 const only = args.filter((a) => !a.startsWith("--"));
+if (unpublish && !only.length) { console.error("Name the units to unpublish: npm run seed -- --unpublish <id>…"); process.exit(1); }
 const projectId = args.find((a) => a.startsWith("--project="))?.split("=")[1]
   ?? (emulator ? "demo-darsi" : JSON.parse(readFileSync(join(ROOT, ".firebaserc"), "utf8")).projects.default);
 
@@ -56,12 +60,24 @@ const require = createRequire(join(ROOT, "functions/package.json"));
 const { initializeApp, applicationDefault } = require("firebase-admin/app");
 initializeApp({ projectId, storageBucket: BUCKET, ...(emulator ? {} : { credential: applicationDefault() }) });
 // After initializeApp: the functions' own admin.ts reuses this app instead of starting one without credentials.
-const { publishDraft } = await import(pathToFileURL(join(lib, "content.js")).href);
+const { publishDraft, unpublishDraft } = await import(pathToFileURL(join(lib, "content.js")).href);
 const { bucket } = await import(pathToFileURL(join(lib, "storage.js")).href);
 const { db } = await import(pathToFileURL(join(lib, "admin.js")).href);
 const { FieldValue } = require("firebase-admin/firestore");
 
 const urlOf = (path) => `${emulator ? "http://127.0.0.1:9199" : "https://firebasestorage.googleapis.com"}/v0/b/${BUCKET}/o/${encodeURIComponent(path)}?alt=media`;
+
+if (unpublish) {
+  console.log(`Unpublishing ${only.join(", ")} in ${emulator ? "the emulators" : projectId}`);
+  let failed = 0;
+  for (const id of only) {
+    try { await unpublishDraft("public", id, "seed"); console.log(`  ${id}: unpublished`); }
+    catch (e) { failed++; console.error(`  ${id}: not unpublished. ${e.message}`); }
+  }
+  console.log(failed ? `${failed} unit(s) failed.` : `Done. The catalog: ${urlOf("content/catalog.json")}`);
+  process.exit(failed ? 1 : 0);
+}
+
 const files = readdirSync(join(ROOT, "content/units")).filter((f) => f.endsWith(".json") && (!only.length || only.includes(basename(f, ".json"))));
 if (!files.length) { console.error(`No units to seed${only.length ? ` among: ${only.join(", ")}` : ""}.`); process.exit(1); }
 

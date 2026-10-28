@@ -7,7 +7,7 @@
  * The app ships no courses: `npm run seed` uploads these with the unit and publishes it (scripts/seed-content.mjs).
  *
  * Usage:  npm run kits            (all units, all languages)
- *         npm run kits -- ai-1    (one unit)
+ *         npm run kits -- ai-1-1  (one unit)
  * Needs Chromium for the PDFs: run `npx playwright install chromium` once, or set CHROMIUM_PATH.
  */
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from "node:fs";

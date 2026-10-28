@@ -58,7 +58,7 @@ The app picks up the role by itself: it refreshes claims when `users/{uid}` chan
 ## 5. Check before going live
 
 - Sign up, sign out, sign in again; reset a password from "Forgot password?".
-- As an independent learner: finish lesson 1. In Firestore, `users/{uid}/progress/ai-1-1` appears and `users/{uid}.summary` updates within seconds (that is the trigger).
+- As an independent learner: finish lesson 1. In Firestore, `users/{uid}/progress/ai-1-1-1` appears and `users/{uid}.summary` updates within seconds (that is the trigger).
 - Request an organization from `/org?request=1`, approve it at `/super`, then join it with an invite code from a second account.
 - In an org admin account: add two people, download the credentials, print the login slips.
 - On a cheap Android phone: install the PWA, go offline, and confirm a downloaded unit still opens.
@@ -131,7 +131,7 @@ Platform admins publish units for everyone at `/super/content`; org admins publi
 
 ### Publish the starting courses
 
-The app ships no courses: every course comes from the editor. The starting ones (AI basics, `ai-1`, with its classroom kits) are files in `content/` at the repo root, published once with:
+The app ships no courses: every course comes from the editor. The starting ones (AI basics `ai-1-1`, Passwords and phishing `cyber-1-1` and Sensors `iot-1-2`, with their kits and media) are files in `content/` at the repo root, published once with:
 
 ```bash
 npm run build --prefix functions
@@ -139,10 +139,11 @@ npm run seed
 ```
 
 - It uses the same credentials as `npm run superadmin` (§4): a service-account key in `GOOGLE_APPLICATION_CREDENTIALS`, or `gcloud auth application-default login` with your personal account.
-- It uploads the kit files to `content/media/ai-1/`, saves `ai-1` as a platform draft and publishes it through the editor's own publish code. The ids stay `ai-1` and its lesson ids, so learners keep their progress, notes and certificates.
+- It uploads the kit and media files to `content/media/<unit>/`, saves each unit as a platform draft and publishes it through the editor's own publish code. Unit and lesson ids stay the same, so learners keep their progress, notes and certificates.
 - A unit that already has a draft is left alone (it may hold edits made in the editor); `--replace` overwrites it. `npm run seed -- --emulator` does the same against the emulators.
+- `npm run seed -- --unpublish <id>` takes a unit off the site, like the editor's Unpublish. The old `ai-1` was retired this way on 2026-10-28; its source is in `content/retired/`.
 - **Do this before deploying a Hosting build without built-in courses** (since 2026-10-27): until the public catalog lists the units, learners see "No courses yet".
-- Without a key: sign in on the live site as a platform admin, **Lesson editor → Import JSON** with `content/units/ai-1.json`, upload each lesson's kit files (in `content/kits/`) in the lesson's **Classroom kit**, then **Publish**.
+- Without a key: sign in on the live site as a platform admin, **Lesson editor → Import JSON** with a file from `content/units/`, upload each lesson's kit files (in `content/kits/`) in the lesson's **Classroom kit** and its videos (in `content/media/`), then **Publish**.
 
 ### Check it works
 

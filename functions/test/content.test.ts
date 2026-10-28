@@ -7,7 +7,7 @@ import type { Unit } from "../src/shared/types";
 import { errorsOf, validateUnit } from "../src/shared/validate";
 
 const root = join(__dirname, "..");
-const ai1 = JSON.parse(readFileSync(join(root, "../content/units/ai-1.json"), "utf8")) as Unit;
+const ai1 = JSON.parse(readFileSync(join(root, "../content/retired/ai-1.json"), "utf8")) as Unit;
 
 describe("shared copies", () => {
   it("match the web app's content types and validator", () => {

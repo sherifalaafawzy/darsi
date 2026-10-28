@@ -1,4 +1,4 @@
-import unit from "../../../content/units/ai-1.json";
+import unit from "../../../content/retired/ai-1.json";
 import { COMPETENCIES } from "../src/content/competencies";
 import { errorsOf, validateUnit, type Issue } from "../src/content/validate";
 

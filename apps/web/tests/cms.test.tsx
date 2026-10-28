@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
-import ai1 from "../../../content/units/ai-1.json";
+import ai1 from "../../../content/retired/ai-1.json";
 import type { TrackDef, Unit } from "../src/content/types";
 import { mergeTracks } from "../src/content/tracks";
 import { I18nProvider } from "../src/i18n";
