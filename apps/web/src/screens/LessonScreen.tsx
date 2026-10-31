@@ -75,7 +75,7 @@ export function LessonPlayer({ unitId, lesson, nextId, track, preview }: { unitI
 
   return (
     <div className="lesson">
-      <div className="lesson-top"><LessonTopBar value={run.progress} track={track} onClose={() => nav("/learn")} closeLabel={t("common.close")} onAudio={() => speak(audioText, lang)} audioLabel={t("common.readAloud")} /></div>
+      <div className="lesson-top"><LessonTopBar value={run.progress} track={track} onClose={() => nav("/learn")} closeLabel={t("common.close")} progressLabel={t("lesson.progress")} onAudio={() => speak(audioText, lang)} audioLabel={t("common.readAloud")} /></div>
       <main className="screen narrow lesson-body" aria-live="polite">
         {run.isRetry && <p className="retry-note">{t("lesson.again")}</p>}
         <StepView key={`${step.id}-${run.index}`} step={step} result={result} onAnswer={onAnswer} onUngradedReady={onUngradedReady} attempt={attempt} lessonId={lesson.id} unitId={unitId}

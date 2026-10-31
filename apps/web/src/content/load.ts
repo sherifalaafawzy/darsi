@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { firebaseConfig, firebaseReady, useEmulators } from "../firebase-config";
 import { captionsFor, kitUrl, lightLang, videoSrc, type Catalog, type CatalogEntry, type Placement, type Settings, type Unit } from "./types";
+import { RUNTIMES, runtimeScript, runtimesOf } from "./runtimes";
 
 const memo = new Map<string, Promise<unknown>>();
 /** Fetches content JSON; the service worker serves it from cache when offline. */
@@ -167,6 +168,8 @@ export function unitAssetUrls(unit: Unit, lang: string): string[] {
       }
       const v = videoSrc(s, lang); if (v) urls.push(v); const c = captionsFor(s, lang); if (c) urls.push(c.src);
     }
+    // Code steps run on the phone: their language's runtime, kept (darsi-lib) when the unit is removed.
+    for (const rt of runtimesOf(l.steps)) { const [script, wasm] = RUNTIMES[rt].files; urls.push(runtimeScript(script), wasm); }
   }
   return [...new Set(urls)];
 }

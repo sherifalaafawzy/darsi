@@ -1,6 +1,6 @@
 import type { CategoryId, LocalStr, Track } from "./types";
 
-/** The Labs shelves, in the order they appear. Adding an app never needs a change here; adding a shelf does. */
+/** The Labs shelves, in the order they appear (a shelf with no apps yet doesn't show). Adding an app never needs a change here; adding a shelf does. */
 export const CATEGORIES: { id: CategoryId; track: Track; name: LocalStr }[] = [
   { id: "ai-learning", track: "ai", name: { en: "Neurons and learning", ar: "الخلايا العصبية والتعلّم" } },
   { id: "ai-networks", track: "ai", name: { en: "Neural networks", ar: "الشبكات العصبية" } },
@@ -15,5 +15,17 @@ export const CATEGORIES: { id: CategoryId; track: Track; name: LocalStr }[] = [
   { id: "cyber-threats", track: "cyber", name: { en: "Threats and scams", ar: "التهديدات والاحتيال" } },
   { id: "cyber-crypto", track: "cyber", name: { en: "Cryptography", ar: "التشفير" } },
   { id: "cyber-privacy", track: "cyber", name: { en: "Privacy and networks", ar: "الخصوصية والشبكات" } },
+  { id: "code-basics", track: "code", name: { en: "Code basics", ar: "أساسيات البرمجة" } },
+  { id: "code-algorithms", track: "code", name: { en: "Algorithms", ar: "الخوارزميات" } },
+  { id: "data-tables", track: "data", name: { en: "Tables and clean data", ar: "الجداول والبيانات النظيفة" } },
+  { id: "data-pipelines", track: "data", name: { en: "Pipelines and quality", ar: "خطوط البيانات وجودتها" } },
+  { id: "agents-how", track: "agents", name: { en: "How agents work", ar: "كيف يعمل الوكلاء" } },
+  { id: "agents-practice", track: "agents", name: { en: "Agents in practice", ar: "الوكلاء في العمل" } },
+  { id: "opt-models", track: "opt", name: { en: "Models and choices", ar: "النماذج والاختيارات" } },
+  { id: "opt-search", track: "opt", name: { en: "Routes, schedules and search", ar: "المسارات والجداول والبحث" } },
+  { id: "aisec-apps", track: "aisec", name: { en: "Attacks on AI apps", ar: "الهجمات على تطبيقات الذكاء الاصطناعي" } },
+  { id: "ds-explore", track: "data-science", name: { en: "Describing and exploring data", ar: "وصف البيانات واستكشافها" } },
+  { id: "ds-models", track: "data-science", name: { en: "Samples, models and evidence", ar: "العيّنات والنماذج والأدلة" } },
+  { id: "aisec-models", track: "aisec", name: { en: "Protecting models and data", ar: "حماية النماذج والبيانات" } },
 ];
 export const categoryOf = (id: CategoryId) => CATEGORIES.find((c) => c.id === id)!;

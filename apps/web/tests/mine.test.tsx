@@ -48,7 +48,7 @@ describe("audience and tracks", () => {
 
   it("keeps the chosen tracks still on offer, in the platform's order, and every track when none is left", () => {
     expect(myTracks(["cyber", "ai"], BUILTIN_TRACKS).map((t) => t.id)).toEqual(["ai", "cyber"]);
-    expect(myTracks(["gone"], BUILTIN_TRACKS).map((t) => t.id)).toEqual(["ai", "iot", "cyber"]);
+    expect(myTracks(["gone"], BUILTIN_TRACKS).map((t) => t.id)).toEqual(BUILTIN_TRACKS.map((t) => t.id));
     const mine = myTracks(["ai", "cyber"], BUILTIN_TRACKS);
     expect(activeTrack("cyber", mine)).toBe("cyber");
     expect(activeTrack("iot", mine)).toBe("ai"); // removed since: back to the first
@@ -104,12 +104,12 @@ describe("My tracks", () => {
     show(<><MyTracks /><Probe on={(s) => { state = s; }} /></>);
     await waitFor(() => expect(state.tracks).toEqual(["ai"]));
     expect(await screen.findAllByText("Courses: 1")).toHaveLength(3); // ai-t, iot-t and cyber-t, each for teachers
-    fireEvent.click(screen.getByRole("checkbox", { name: /AI/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /^AI(?! (agents|security))/ }));
     expect(screen.getByRole("status").textContent).toBe("Keep at least one track.");
     expect(state.tracks).toEqual(["ai"]);
     fireEvent.click(screen.getByRole("checkbox", { name: /Cyber security/ }));
     expect(state).toMatchObject({ tracks: ["ai", "cyber"], track: "cyber" });
-    fireEvent.click(screen.getByRole("checkbox", { name: /AI/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /^AI(?! (agents|security))/ }));
     expect(state.tracks).toEqual(["cyber"]);
   });
 });
@@ -124,7 +124,20 @@ describe("Onboarding", () => {
     fireEvent.click(screen.getByRole("radio", { name: /Student/ }));
     expect(state.audience).toBe("students");
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("heading", { name: "Where do you study?" })).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("radio", { name: /Upper secondary/ }));
+    expect(state.stage).toBe("upper");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(screen.getByRole("heading", { name: "What do you want to learn?" })).toBeTruthy();
+  });
+
+  it("asks a school's student accounts where they study, and teachers nothing", async () => {
+    h.role = "student";
+    h.stored = { ...initialState, lang: "en" };
+    show(<Onboarding />);
+    fireEvent.click(await screen.findByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("heading", { name: "Where do you study?" })).toBeTruthy();
   });
 
   it("skips the question for a school's accounts", async () => {
@@ -156,6 +169,24 @@ describe("starting at your level", () => {
     expect(screen.getByText(/^ai students level 2 question/)).toBeTruthy();
     await answer(true); await answer(false); // level 2 not passed: start there
     expect(done).toHaveBeenCalledWith({ ai: 2 });
+  });
+
+  it("starts a student at their school stage, and moves down when that level is new to them", async () => {
+    seed({ tracks: ["ai", "cyber"], audience: "students", stage: "upper" });
+    const done = vi.fn();
+    show(<PlacementQuiz tracks={["ai"]} onDone={done} />);
+    expect(await screen.findByText(/^ai students level 3 question/)).toBeTruthy();
+    await answer(false); // level 3 is new
+    expect(screen.getByText(/^ai students level 2 question/)).toBeTruthy();
+    await answer(true); await answer(true); // level 2 known: start at 3
+    expect(done).toHaveBeenCalledWith({ ai: 3 });
+  });
+
+  it("starts a student at their stage's course without the check, with the stage beside the level", async () => {
+    h.units = [entry("ai-s", { audience: "students" }), entry("ai-s3", { level: 3, audience: "students" })];
+    seed({ tracks: ["ai"], audience: "students", stage: "upper" });
+    show(<Home />);
+    expect(await screen.findByText("Your level: Intermediate · Upper secondary")).toBeTruthy();
   });
 
   it("checks each of your tracks in turn, and \"I don't know yet\" ends a track", async () => {

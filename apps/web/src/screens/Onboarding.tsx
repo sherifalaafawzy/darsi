@@ -4,12 +4,13 @@ import { Button, ChoiceCard, LanguagePicker, Mark, OnboardingStep, PlacementResu
 import { useI18n, useLanguages } from "../i18n";
 import { useStore, type AppState } from "../state/store";
 import { loadPlacement, useAsync } from "../content/load";
-import type { Audience, Placement, Track } from "../content/types";
+import { STAGES, type Audience, type Placement, type Stage, type Track } from "../content/types";
 import { useTracks } from "../content/settings";
 import { useMine } from "../content/mine";
 import { grade, shuffled, type Answer } from "../lesson/engine";
 
-type Phase = "language" | "where" | "tracks" | "time" | "offer" | "quiz" | "result";
+type Phase = "language" | "where" | "stage" | "tracks" | "time" | "offer" | "quiz" | "result";
+const STAGE_ICON: Record<Stage, IconName> = { primary: "book", lower: "learn", upper: "target", university: "award" };
 export function Onboarding() {
   const nav = useNavigate();
   const { t } = useI18n();
@@ -17,9 +18,12 @@ export function Onboarding() {
   const { state, dispatch } = useStore();
   const [phase, setPhase] = useState<Phase>("language");
   const tracks = useTracks();
-  // School accounts are already a teacher or a student, so they skip "Who are you?".
-  const { fixed } = useMine();
-  const teacher = state.audience !== "students";
+  // School accounts are already a teacher or a student, so they skip "Who are you?". Students say where they study.
+  const mine = useMine();
+  const { fixed } = mine;
+  const teacher = mine.audience !== "students";
+  const steps: Phase[] = [...(fixed ? [] : ["where" as const]), ...(teacher ? [] : ["stage" as const]), "tracks", "time", "offer"];
+  const stepOf = (p: Phase) => steps.indexOf(p) + 1;
   const [levels, setLevels] = useState<Partial<Record<Track, number>>>({});
   const set = (patch: Partial<AppState>) => dispatch({ type: "set", patch });
   const finish = (lv: Partial<Record<Track, number>>) => { set({ onboarded: true, levels: lv }); nav("/learn", { replace: true }); };
@@ -30,12 +34,12 @@ export function Onboarding() {
       <div className="onb-hero"><Mark size={72} /></div>
       <h1 className="dr-onb-title">{t("onb.language")}</h1>
       <LanguagePicker label={t("onb.language")} value={state.lang} onChange={(lang) => set({ lang })} languages={languages} />
-      {cont(fixed ? "tracks" : "where")}
+      {cont(steps[0])}
     </main>
   );
   if (phase === "where") return (
     <main className="screen narrow">
-      <OnboardingStep step={1} total={4} title={t("onb.where")} body={t("onb.whereBody")} primary={cont("tracks", teacher && !state.teach)}
+      <OnboardingStep step={stepOf("where")} total={steps.length} title={t("onb.where")} body={t("onb.whereBody")} primary={cont(teacher ? "tracks" : "stage", teacher && !state.teach)}
         secondary={<Button block variant="ghost" onClick={() => setPhase("tracks")}>{t("common.skip")}</Button>}>
         <ChoiceCard icon="profile" title={t("onb.primary")} description={t("onb.primaryD")} selected={teacher && state.teach === "primary"} onClick={() => set({ teach: "primary", audience: "teachers" })} />
         <ChoiceCard icon="learn" title={t("onb.secondary")} description={t("onb.secondaryD")} selected={teacher && state.teach === "secondary"} onClick={() => set({ teach: "secondary", audience: "teachers" })} />
@@ -44,9 +48,16 @@ export function Onboarding() {
       </OnboardingStep>
     </main>
   );
+  if (phase === "stage") return (
+    <main className="screen narrow">
+      <OnboardingStep step={stepOf("stage")} total={steps.length} title={t("onb.stage")} body={t("onb.stageBody")} primary={cont("tracks", !state.stage)}>
+        {STAGES.map((st) => <ChoiceCard key={st} icon={STAGE_ICON[st]} title={t(`stage.${st}`)} description={t(`stage.${st}D`)} selected={state.stage === st} onClick={() => set({ stage: st })} />)}
+      </OnboardingStep>
+    </main>
+  );
   if (phase === "tracks") return (
     <main className="screen narrow">
-      <OnboardingStep step={2} total={4} title={t("onb.tracks")} body={t("onb.tracksBody")} primary={cont("time", !state.tracks.length)}>
+      <OnboardingStep step={stepOf("tracks")} total={steps.length} title={t("onb.tracks")} body={t("onb.tracksBody")} primary={cont("time", !state.tracks.length)}>
         {tracks.visible.map(({ id: tr, icon }) => <ChoiceCard key={tr} icon={icon as IconName} multi title={tracks.name(tr)} selected={state.tracks.includes(tr)}
           onClick={() => set({ tracks: state.tracks.includes(tr) ? state.tracks.filter((x) => x !== tr) : [...state.tracks, tr] })} />)}
       </OnboardingStep>
@@ -54,7 +65,7 @@ export function Onboarding() {
   );
   if (phase === "time") return (
     <main className="screen narrow">
-      <OnboardingStep step={3} total={4} title={t("onb.time")} body={t("onb.timeBody")} primary={cont("offer")}>
+      <OnboardingStep step={stepOf("time")} total={steps.length} title={t("onb.time")} body={t("onb.timeBody")} primary={cont("offer")}>
         {([[2, "onb.t15", "onb.t15d"], [4, "onb.t30", "onb.t30d"], [8, "onb.t60", "onb.t60d"]] as const).map(([n, a, b]) =>
           <ChoiceCard key={n} title={t(a)} description={t(b)} selected={state.weeklyLessons === n} onClick={() => set({ weeklyLessons: n })} />)}
       </OnboardingStep>
@@ -62,7 +73,7 @@ export function Onboarding() {
   );
   if (phase === "offer") return (
     <main className="screen narrow">
-      <OnboardingStep step={4} total={4} title={t("onb.placement")} body={t("onb.placementBody")} art={<Mark size={72} />}
+      <OnboardingStep step={stepOf("offer")} total={steps.length} title={t("onb.placement")} body={t("onb.placementBody")} art={<Mark size={72} />}
         primary={<Button block iconEnd="next" onClick={() => setPhase("quiz")}>{t("onb.startCheck")}</Button>}
         secondary={<Button block variant="ghost" onClick={() => finish({})}>{t("onb.skipCheck")}</Button>} />
     </main>
@@ -71,24 +82,32 @@ export function Onboarding() {
   return (
     <main className="screen narrow">
       <PlacementResult title={t("place.title")} summary={t("place.summary")}
-        levels={tracks.visible.filter(({ id }) => !state.tracks.length || state.tracks.includes(id)).map(({ id: tr, levels: of }) => ({ track: tr, trackLabel: tracks.name(tr), level: levels[tr] ?? 1, of, label: tracks.levelName(tr, levels[tr] ?? 1) }))}
+        levels={tracks.visible.filter(({ id }) => !state.tracks.length || state.tracks.includes(id)).map(({ id: tr, levels: of }) => ({ track: tr, trackLabel: tracks.name(tr), level: levels[tr] ?? mine.startLevel(tr), of, label: mine.levelName(tr, levels[tr] ?? mine.startLevel(tr)) }))}
         actions={<Button block iconEnd="next" onClick={() => finish(levels)}>{t("place.go")}</Button>} />
     </main>
   );
 }
 
 type PQ = Placement["questions"][number];
-/** Where the check stands in one track: the level being asked, and how many of its two questions were answered. */
-export interface PlaceState { level: number; asked: number }
 /**
- * After one answer. Two questions per level from Beginner up, and a level is passed only with both right, so a wrong
- * answer (or "I don't know yet") ends the track at that level: the learner starts there. Passing the top level places
- * them at the top.
+ * Where the check stands in one track: the level being asked, how many of its two questions were answered, and which
+ * way it has moved from the starting level (up after a pass, down after a miss).
+ */
+export interface PlaceState { level: number; asked: number; dir?: "up" | "down" }
+/**
+ * After one answer. Each level asks two questions and is passed only with both right, so a wrong answer (or "I don't
+ * know yet") is a miss. The check starts at the learner's level (Beginner for teachers, a student's school stage):
+ * - a pass moves up, until a level is missed (the learner starts there) or the top is passed (they start at the top);
+ * - a miss at the start moves down, until a level is passed (they start one above it) or Beginner is missed.
  */
 export function placementNext(s: PlaceState, ok: boolean, top: number): { level: number } | { state: PlaceState } {
-  if (!ok) return { level: s.level };
-  if (s.asked === 0) return { state: { level: s.level, asked: 1 } };
-  return s.level >= top ? { level: top } : { state: { level: s.level + 1, asked: 0 } };
+  if (ok && s.asked === 0) return { state: { ...s, asked: 1 } };
+  if (ok) {
+    if (s.dir === "down") return { level: s.level + 1 };
+    return s.level >= top ? { level: top } : { state: { level: s.level + 1, asked: 0, dir: "up" } };
+  }
+  if (s.dir === "up" || s.level <= 1) return { level: s.level };
+  return { state: { level: s.level - 1, asked: 0, dir: "down" } };
 }
 const randomly = <T,>(items: T[]) => items.map((x) => [Math.random(), x] as const).sort((a, b) => a[0] - b[0]).map(([, x]) => x);
 /** One track's questions for one audience: two per level (picked at random, so checking again asks others). */
@@ -97,7 +116,7 @@ export const placementBank = (questions: PQ[], track: Track, audience: Audience,
 
 /**
  * The placement check for the learner's tracks (or only `tracks`), for their audience. Tracks without questions start
- * at level 1. Closing it gives no levels.
+ * where the learner starts (`useMine().startLevel`). Closing it gives no levels.
  */
 export function PlacementQuiz({ tracks: only, onDone, onClose }: { tracks?: Track[]; onDone: (levels: Partial<Record<Track, number>>) => void; onClose?: () => void }) {
   const { t, L, lang } = useI18n();
@@ -108,36 +127,40 @@ export function PlacementQuiz({ tracks: only, onDone, onClose }: { tracks?: Trac
   const banks = useMemo(() => (data ? Object.fromEntries(list.map((tr) => [tr, placementBank(data.questions, tr, mine.audience, tracks.of(tr).levels)])) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [data]);
-  const asked = list.filter((tr) => banks?.[tr]?.[0]?.length);
+  // Only tracks with questions at the level the check starts from.
+  const asked = list.filter((tr) => banks?.[tr]?.[mine.startLevel(tr) - 1]?.length);
   const [ti, setTi] = useState(0);
-  const [st, setSt] = useState<PlaceState>({ level: 1, asked: 0 });
+  const begin = (tr: Track | undefined): PlaceState => ({ level: tr ? mine.startLevel(tr) : 1, asked: 0 });
+  const [st, setSt] = useState<PlaceState | null>(null);
   const [n, setN] = useState(1);
   const [levels, setLevels] = useState<Partial<Record<Track, number>>>({});
   const [answer, setAnswer] = useState<Answer | null>(null);
-  const all = (got: Partial<Record<Track, number>>) => ({ ...Object.fromEntries(list.map((tr) => [tr, 1])), ...got });
+  const all = (got: Partial<Record<Track, number>>) => ({ ...Object.fromEntries(list.map((tr) => [tr, mine.startLevel(tr)])), ...got });
   useEffect(() => { if (banks && !asked.length) onDone(all({})); }, [banks]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!banks || !asked.length) return <div className="loading" aria-busy="true" />;
   const tr = asked[ti];
   const top = tracks.of(tr).levels;
-  const q = banks[tr][st.level - 1]?.[st.asked];
+  const at = st ?? begin(tr);
+  const q = banks[tr][at.level - 1]?.[at.asked];
   const finish = (level: number) => {
     const got = { ...levels, [tr]: level };
-    setLevels(got); setAnswer(null); setN(1); setSt({ level: 1, asked: 0 });
+    setLevels(got); setAnswer(null); setN(1); setSt(begin(asked[ti + 1]));
     if (ti + 1 < asked.length) setTi(ti + 1); else onDone(all(got));
   };
   const next = (ok: boolean) => {
-    const r = placementNext(st, ok, top);
+    const r = placementNext(at, ok, top);
     if ("level" in r) return finish(r.level);
-    // A level without two questions (a track with more levels than the check covers) is where the learner starts.
-    if (!banks[tr][r.state.level - 1]?.[r.state.asked]) return finish(r.state.level);
+    // A level without two questions (a track with more levels than the check covers): going up, the learner starts
+    // there; going down, at the level they just missed.
+    if (!banks[tr][r.state.level - 1]?.[r.state.asked]) return finish(r.state.dir === "down" ? at.level : r.state.level);
     setSt(r.state); setAnswer(null); setN(n + 1);
   };
   if (!q) return <div className="loading" aria-busy="true" />;
   const keys = lang === "ar" ? ["أ", "ب", "ج", "د"] : ["A", "B", "C", "D"];
-  const progress = ((ti + (st.level - 1 + st.asked / 2) / top) / asked.length) * 100;
+  const progress = ((ti + (at.level - 1 + at.asked / 2) / top) / asked.length) * 100;
   return (
     <div className="lesson">
-      <div className="lesson-top"><LessonTopBar value={progress} track={tr} onClose={onClose ?? (() => onDone({}))} closeLabel={t("common.close")} /></div>
+      <div className="lesson-top"><LessonTopBar value={progress} track={tr} onClose={onClose ?? (() => onDone({}))} closeLabel={t("common.close")} progressLabel={t("lesson.progress")} /></div>
       <main className="screen narrow lesson-body">
         <div className="stack">
           <QuestionHeader type={q.type} typeLabel={t("place.qTrack", { track: tracks.name(tr), n })} prompt={L(q.prompt)} />

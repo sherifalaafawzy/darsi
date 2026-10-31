@@ -14,32 +14,34 @@ const { TRACK_TONE_IDS } = await import("../src/content/validate");
 const { placementNext } = await import("../src/screens/Onboarding");
 const { useHistory } = await import("../src/cms/history");
 
-const data: TrackDef = { id: "data", name: { en: "Data science", ar: "علم البيانات" }, icon: "chart", tone: "leaf", levels: 6, levelNames: [{ en: "Basics" }], order: 3 };
+// A track a platform admin added (every id in BUILTIN_TRACKS is built in).
+const geo: TrackDef = { id: "geo", name: { en: "Geography", ar: "الجغرافيا" }, icon: "globe", tone: "leaf", levels: 6, levelNames: [{ en: "Basics" }], order: 3 };
+const builtIn = BUILTIN_TRACKS.map((t) => t.id);
 const wrap = (lang = "en") => ({ children }: { children: ReactNode }) => <I18nProvider lang={lang}><SettingsProvider lang={lang}>{children}</SettingsProvider></I18nProvider>;
 
 beforeEach(() => { m.settings = null; });
 
 describe("mergeTracks", () => {
   it("keeps every built-in track, with its own colour and icon, and sorts by order", () => {
-    const merged = mergeTracks([{ ...BUILTIN_TRACKS[2], tone: "slate", icon: "book", hidden: true, order: 9 }, data]);
-    expect(merged.map((t) => t.id)).toEqual(["ai", "iot", "data", "cyber"]);
-    expect(merged[3]).toMatchObject({ tone: "hibiscus", icon: "cyber", hidden: true, builtIn: true });
-    expect(levelsByTrack(merged).get("data")).toBe(6);
+    const merged = mergeTracks([{ ...BUILTIN_TRACKS[2], tone: "slate", icon: "book", hidden: true, order: 9 }, geo]);
+    expect(merged.map((t) => t.id)).toEqual(["ai", "iot", "code", "geo", "data", "agents", "opt", "aisec", "data-science", "cyber"]);
+    expect(merged.at(-1)).toMatchObject({ tone: "hibiscus", icon: "cyber", hidden: true, builtIn: true });
+    expect(levelsByTrack(merged).get("geo")).toBe(6);
   });
 });
 
 describe("useTracks", () => {
   it("starts with the built-in tracks, then uses the published settings", async () => {
-    m.settings = { version: 2, tracks: [{ ...BUILTIN_TRACKS[0], name: { en: "Artificial intelligence", ar: "الذكاء الاصطناعي" }, levels: 5 }, { ...BUILTIN_TRACKS[1], hidden: true }, data] };
+    m.settings = { version: 2, tracks: [{ ...BUILTIN_TRACKS[0], name: { en: "Artificial intelligence", ar: "الذكاء الاصطناعي" }, levels: 5 }, { ...BUILTIN_TRACKS[1], hidden: true }, geo] };
     const { result } = renderHook(() => useTracks(), { wrapper: wrap() });
-    expect(result.current.all.map((t) => t.id)).toEqual(["ai", "iot", "cyber"]);
-    await waitFor(() => expect(result.current.all).toHaveLength(4));
-    expect(result.current.visible.map((t) => t.id)).toEqual(["ai", "cyber", "data"]);
+    expect(result.current.all.map((t) => t.id)).toEqual(builtIn);
+    await waitFor(() => expect(result.current.all).toHaveLength(builtIn.length + 1));
+    expect(result.current.visible.map((t) => t.id)).toEqual(["ai", "cyber", "code", "geo", "data", "agents", "opt", "aisec", "data-science"]);
     expect(result.current.name("ai")).toBe("Artificial intelligence");
     expect(result.current.of("ai").levels).toBe(5);
-    expect(result.current.levelName("data", 1)).toBe("Basics");
-    expect(result.current.levelName("data", 2)).toBe("Level 2");
-    expect(result.current.order("data")).toBe(3);
+    expect(result.current.levelName("geo", 1)).toBe("Basics");
+    expect(result.current.levelName("geo", 2)).toBe("Level 2");
+    expect(result.current.order("geo")).toBe(3);
   });
 
   it("shows a track nobody set up under its id, in neutral colours", () => {
@@ -50,8 +52,8 @@ describe("useTracks", () => {
   });
 
   it("tells the design system each track's colour and icon", async () => {
-    m.settings = { version: 1, tracks: [data] };
-    const { container } = render(<TrackChip track="data">Data</TrackChip>, { wrapper: wrap() });
+    m.settings = { version: 1, tracks: [geo] };
+    const { container } = render(<TrackChip track="geo">Geography</TrackChip>, { wrapper: wrap() });
     await waitFor(() => expect(container.querySelector(".dr-chip")?.className).toContain("dr-tr-leaf"));
     render(<TrackChip track="ai">AI</TrackChip>, { wrapper: wrap() });
     expect(screen.getByText("AI").closest(".dr-chip")?.className).toContain("dr-tr-sunbird");
@@ -59,8 +61,8 @@ describe("useTracks", () => {
 
   it("uses a saved list at once (the Tracks page)", async () => {
     const { result } = renderHook(() => useTracks(), { wrapper: wrap() });
-    act(() => result.current.apply([...BUILTIN_TRACKS, data]));
-    expect(result.current.of("data").levels).toBe(6);
+    act(() => result.current.apply([...BUILTIN_TRACKS, geo]));
+    expect(result.current.of("geo").levels).toBe(6);
   });
 });
 
@@ -72,8 +74,8 @@ describe("track colours", () => {
 
 describe("placementNext", () => {
   /** Runs answers through the check for one track; returns the level it places the learner at. */
-  const run = (answers: boolean[], top = 4) => {
-    let st = { level: 1, asked: 0 };
+  const run = (answers: boolean[], top = 4, start = 1) => {
+    let st: Parameters<typeof placementNext>[0] = { level: start, asked: 0 };
     for (const ok of answers) {
       const r = placementNext(st, ok, top);
       if ("level" in r) return { level: r.level };
@@ -88,6 +90,14 @@ describe("placementNext", () => {
     expect(run([true, true, true, true, true, false]).level).toBe(3);
     expect(run([true, true, true, true, true, true, true, true]).level).toBe(4); // every level passed: the top
     expect(run([true, true, true]).level).toBe(-1); // still asking level 2
+  });
+  it("from a student's stage, moves up after a pass and down after a miss", () => {
+    expect(run([true, true, false], 4, 3).level).toBe(4); // upper secondary knows level 3: starts at 4
+    expect(run([true, true, true, true], 4, 3).level).toBe(4); // and at the top
+    expect(run([false, true, true], 4, 3).level).toBe(3); // missed 3, knows 2: starts at 3
+    expect(run([false, false, true, true], 4, 3).level).toBe(2); // missed 3 and 2, knows 1: starts at 2
+    expect(run([false, false, false], 4, 3).level).toBe(1); // missed every level down to Beginner
+    expect(run([false, true, false, true, true], 4, 3).level).toBe(2); // going down, a level needs both right too
   });
   it("works for tracks with fewer levels", () => {
     expect(run([true, true], 1).level).toBe(1);

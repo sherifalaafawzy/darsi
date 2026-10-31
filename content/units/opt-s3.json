@@ -1,0 +1,3313 @@
+{
+  "id": "opt-s3",
+  "track": "opt",
+  "level": 3,
+  "audience": "students",
+  "title": {
+    "en": "Let the computer search: knapsack, routes, timetables",
+    "ar": "دع الحاسوب يبحث: الحقيبة والطرق والجداول"
+  },
+  "summary": {
+    "en": "Write and run Python that searches: try every load, then think ahead with dynamic programming; find shortest paths with Dijkstra; build a bus route and improve it; and model a timetable with Google’s OR-Tools. Then judge every answer: is it the best, and is it fair?",
+    "ar": "اكتب برامج بايثون تبحث وشغّلها: جرّب كل الحمولات، ثم فكّر مسبقًا بالبرمجة الديناميكية، وجِد أقصر الطرق بطريقة ديكسترا، وابنِ طريق حافلة وحسّنه، وصِغ جدولًا مدرسيًا في نموذج بأدوات OR-Tools من Google. ثم احكم على كل إجابة: هل هي الأفضل، وهل هي عادلة؟"
+  },
+  "lessons": [
+    {
+      "id": "opt-s3-1",
+      "title": {
+        "en": "Try them all, or think ahead",
+        "ar": "جرّبها كلها أم فكّر مسبقًا"
+      },
+      "minutes": 16,
+      "tryTomorrow": {
+        "en": "Pack your bag for a school trip as a knapsack problem: pick six things, weigh them (or estimate in hundreds of grams), give each points for how much you need it, and set a weight limit. Find the best load greedily, then with your brute-force program from this lesson. Did greedy get it right?",
+        "ar": "جهّز حقيبتك لرحلة مدرسية كأنها مسألة الحقيبة: اختر ستة أشياء، وزِنها (أو قدّر وزنها بمئات الغرامات)، وأعطِ كلًّا منها نقاطًا بحسب حاجتك إليه، وحدّد حدًّا للوزن. جِد أفضل حمولة بالطريقة الجشعة، ثم ببرنامج التجريب الكامل الذي كتبته في هذا الدرس. هل أصابت الطريقة الجشعة؟"
+      },
+      "materials": {
+        "en": [
+          "Paper and a pen",
+          "Six things to pack and, if you can, a kitchen scale",
+          "Optional: a phone with Darsi to run your program"
+        ],
+        "ar": [
+          "ورقة وقلم",
+          "ستة أشياء للتعبئة، وميزان مطبخ إن أمكن",
+          "اختياري: هاتف عليه تطبيق «درسي» لتشغيل برنامجك"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Try them all, or think ahead",
+            "ar": "جرّبها كلها أم فكّر مسبقًا"
+          },
+          "src": null,
+          "duration": 232,
+          "sizeMB": 1.4,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Six loads, one truck",
+                "ar": "ست حمولات وشاحنة واحدة"
+              }
+            },
+            {
+              "at": 20.8,
+              "atBy": {
+                "en": 20.8,
+                "ar": 19.8
+              },
+              "label": {
+                "en": "Try them all",
+                "ar": "جرّبها كلها"
+              }
+            },
+            {
+              "at": 88.9,
+              "atBy": {
+                "en": 88.9,
+                "ar": 83.1
+              },
+              "label": {
+                "en": "Greedy, and thinking ahead",
+                "ar": "الطريقة الجشعة، والتفكير مسبقًا"
+              }
+            },
+            {
+              "at": 156.9,
+              "atBy": {
+                "en": 156.9,
+                "ar": 151.1
+              },
+              "label": {
+                "en": "Whose points? And the lab",
+                "ar": "نقاط مَن؟ والمختبر"
+              }
+            },
+            {
+              "at": 201.2,
+              "atBy": {
+                "en": 201.2,
+                "ar": 195
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Greedy says 60 points; brute force says 65. Which is guaranteed to be the best?",
+                "ar": "تقول الطريقة الجشعة ٦٠ نقطة، ويقول التجريب الكامل ٦٥. أيّهما مضمون أنه الأفضل؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Greedy: it takes the best value first",
+                    "ar": "الجشعة: فهي تأخذ الأعلى قيمة أولًا"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Brute force: it checked every load",
+                    "ar": "التجريب الكامل: فقد فحص كل حمولة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Neither can be sure",
+                    "ar": "لا يمكن لأيّ منهما أن يكون متأكدًا"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Brute force compared all 2⁶ = 64 possible loads, so its 65 points is the best there is. Greedy follows one rule (most points per kilo first) and never compares alternatives, so it can miss, as it does here.",
+                "ar": "قارن التجريب الكامل كل الحمولات الممكنة، وعددها ٢⁶ = ٦٤، فنقاطه الـ ٦٥ هي الأفضل على الإطلاق. أما الطريقة الجشعة فتتبع قاعدة واحدة (الأكثر نقاطًا لكل كيلوغرام أولًا) ولا تقارن البدائل أبدًا، فقد تخطئ، كما يحدث هنا."
+              }
+            },
+            "at": 122.28,
+            "atBy": {
+              "en": 122.28,
+              "ar": 115.92
+            }
+          },
+          "transcript": {
+            "en": "A truck for a village school can carry a thousand kilos, and there are six loads to choose from. Can you write a program that finds the best load, and knows it’s the best? Today: let the computer search, by trying everything, or by thinking ahead. Each load has a weight and points for how much the school needs it. Solar panels: six hundred kilos, forty-two points. Desks and books: five hundred kilos each. A water filter, footballs and chalk are lighter. The goal: the most points within a thousand kilos. The simplest search tries every possible load. Each item is in or out, six times over. That’s two to the six, sixty-four loads: a phone checks them in a blink. In Python, count from zero to sixty-three, and read each number in binary: bit i says whether item i is in. Add up the weight and points, and keep the best that fits. But every extra item doubles the work. Thirty items: over a billion loads. Sixty items: more than a billion billion. Brute force is sure, but it doesn’t scale. A greedy rule is fast: take the most points per kilo first. Solar panels go in, then whatever still fits: sixty points. But desks and books give sixty-five. The panels took space that two other loads fill better. Quick check! Greedy says sixty points, and brute force says sixty-five. Which one is guaranteed to be the best? Brute force: it checked every load. But you can be sure without checking everything. Dynamic programming solves smaller trucks first: for each amount of room, either skip this item, or take it and fill the rest with an answer you already know. Fill a table: one row per item, one column per hundred kilos of room. Each cell needs just two lookups in the row above. A hundred items is about a thousand cells, where brute force would never finish. The points are someone’s opinion of what the school needs. Who decided solar panels are worth forty-two? If the truck served two schools, the best total might send everything to one. Ask who chose the points, and who is left out. In the app, open “Pack the truck”. Pack greedily, then show the best load. Open the table under the results, and follow the outlined cells back from the corner. Your turn. A friend adds a seventh load to the list. How many loads must brute force check now? A hundred and twenty-eight: every extra item doubles it. Remember: brute force is sure, but it explodes. Greedy is fast, but it can miss. And dynamic programming is sure and fast, because it reuses smaller answers. Try it yourself: pack your bag for a school trip. Give each thing a weight and points, set a limit, and find the best load three ways.",
+            "ar": "عربية نقل رايحة لمدرسة في قرية بتشيل ألف كيلو، وقدامنا ست حمولات نختار منهم. تقدر تكتب برنامج يلاقي أحسن حمولة، ويبقى متأكد إنها الأحسن؟ النهارده: هنخلّي الكمبيوتر يدوّر، يا إما يجرّب كل حاجة، يا إما يفكّر قدّام. كل حمولة ليها وزن، وليها نقط على قد ما المدرسة محتاجاها. الألواح الشمسية: ستمية كيلو، واتنين وأربعين نقطة. والمكاتب والكتب: خمسمية كيلو كل واحد. وفلتر المية والكور والطباشير أخف. والهدف: أكبر عدد نقط في حدود الألف كيلو. أبسط بحث بيجرّب كل حمولة ممكنة. كل حاجة يا جوّه يا برّه، ست مرات. يعني اتنين أس ستة، أربعة وستين حمولة: والموبايل بيراجعهم في لمح البصر. ببايثون، عدّ من صفر لتلاتة وستين، واقرا كل رقم بالنظام الثنائي: البت رقم i بيقول الحاجة رقم i جوّه ولا لأ. اجمع الوزن والنقط، وخلّي الأحسن اللي بيتشال. بس كل حاجة زيادة بتضاعف الشغل. تلاتين حاجة: أكتر من مليار حمولة. ستين حاجة: أكتر من مليار مليار. التجريب الكامل متأكد، بس مايكبرش. القاعدة الجشعة سريعة: خد الأكتر نقط لكل كيلو الأول. الألواح الشمسية تتحط، وبعدين اللي لسه يتشال: ستين نقطة. بس المكاتب والكتب بيدّوا خمسة وستين. الألواح أخدت مكان كان حمولتين تانيين يملوه أحسن. سؤال سريع! الجشعة بتقول ستين نقطة، والتجريب الكامل بيقول خمسة وستين. مين فيهم مضمون إنه الأحسن؟ التجريب الكامل: لأنه راجع كل حمولة. بس تقدر تتأكد من غير ما تراجع كل حاجة. البرمجة الديناميكية بتحل العربيات الأصغر الأول: لكل مساحة، يا تسيب الحاجة دي، يا تاخدها وتملا الباقي بإجابة إنت عارفها خلاص. املا جدول: صف لكل حاجة، وعمود لكل مية كيلو من المساحة. كل خانة محتاجة نظرتين بس في الصف اللي فوقها. ومية حاجة يعني حوالي ألف خانة، في حين التجريب الكامل عمره ما هيخلص. النقط دي رأي حد في المدرسة محتاجة إيه. مين قرّر إن الألواح الشمسية تستاهل اتنين وأربعين؟ ولو العربية رايحة لمدرستين، أحسن مجموع ممكن يودّي كل حاجة لواحدة بس. اسأل مين اختار النقط، ومين اللي اتساب برّه. في التطبيق، افتح «حمّل الشاحنة». عبّي بالجشع، وبعدين اعرض أحسن حمولة. وافتح الجدول اللي تحت النتايج، وامشي ورا الخانات المحددة من الركن لورا. دورك. واحد صاحبك زوّد حمولة سابعة على القايمة. التجريب الكامل لازم يراجع كام حمولة دلوقتي؟ مية تمانية وعشرين: كل حاجة زيادة بتضاعفها. افتكر: التجريب الكامل متأكد، بس بينفجر. والجشعة سريعة، بس ممكن تفوّت. والبرمجة الديناميكية متأكدة وسريعة، لأنها بتستخدم الإجابات الأصغر تاني. جرّبها بنفسك: جهّز شنطتك لرحلة المدرسة. ادّي كل حاجة وزن ونقط، وحط حد، ودوّر على أحسن حمولة بتلات طرق."
+          },
+          "sources": {
+            "en": "/media/opt-s3-1/video-en.mp4",
+            "ar": "/media/opt-s3-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/opt-s3-1/captions-en.vtt",
+            "ar": "/media/opt-s3-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/opt-s3-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/opt-s3-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/opt-s3-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/opt-s3-1/light/audio/en.opus",
+              "manifest.json": "/media/opt-s3-1/light/manifest.json",
+              "scenes.json": "/media/opt-s3-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/opt-s3-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/opt-s3-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 508,
+              "ar": 494
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Three ways to search",
+            "ar": "ثلاث طرق للبحث"
+          },
+          "body": {
+            "en": "A truck can carry 1,000 kg to a village school, and there are six loads, each with a weight and points for how much the school needs it: solar panels 600 kg and 42 points, desks 500 kg and 33, books 500 kg and 32, a water filter 300 kg and 15, footballs 200 kg and 8, chalk and paper 100 kg and 3. Which loads give the most points without going over the limit? This is the knapsack problem, and there are three very different ways to search for the answer.\n\nBrute force tries everything. Each load is either on the truck or not, so six loads give 2⁶ = 64 possible loads. In Python, count mask from 0 to 63 and read it in binary: bit i of mask (mask >> i & 1) says whether item i is in. Add up the weight and points of each load and keep the best one that fits: 65 points, desks and books. Brute force is sure, but every extra item doubles the work: 30 items make over a billion loads, and 60 make more than a billion billion.\n\nA greedy rule is fast: take the most points per kilo first. Solar panels have 7 points per 100 kg, so they go first, then whatever still fits (the filter and the chalk): 60 points. The panels’ great value per kilo used space that two other loads fill better. On this truck, greedy is wrong only at exactly 1,000 kg; at 1,100 kg it finds the best (solar panels and desks, 75). It is often right, but it can never promise.\n\nDynamic programming is sure without trying everything. It solves smaller trucks first, in a table with one row per item and one column per 100 kg of room. Each cell is the better of two choices: skip this item (the cell above), or take it and add its points to the best answer for the room that is left (prev[c - w[k]] + v[k]). A hundred items need only about a thousand cells, where brute force would never finish. The same problem can also be written as a CP-SAT model (the “Truck load” example in the modeller lab) and solved by Google’s OR-Tools, on your phone or in Colab.\n\nFinally, remember where the points came from. They are someone’s opinion of what the school needs. If the truck served two schools, the best total could send everything to one of them. Before trusting the “best” load, ask who chose the points and who is left out.",
+            "ar": "تستطيع شاحنة أن تحمل ١٠٠٠ كغ إلى مدرسة في قرية، وهناك ست حمولات، لكلٍّ منها وزن ونقاط بحسب حاجة المدرسة إليها: ألواح شمسية ٦٠٠ كغ و٤٢ نقطة، ومقاعد ٥٠٠ كغ و٣٣، وكتب ٥٠٠ كغ و٣٢، ومرشّح ماء ٣٠٠ كغ و١٥، وكرات قدم ٢٠٠ كغ و٨، وطباشير وورق ١٠٠ كغ و٣. أيّ الحمولات تعطي أكبر عدد من النقاط دون تجاوز الحد؟ هذه مسألة الحقيبة، وهناك ثلاث طرق مختلفة جدًا للبحث عن الإجابة.\n\nالتجريب الكامل يجرّب كل شيء. فكل حمولة إمّا على الشاحنة وإمّا لا، فتعطي ست حمولات ٢⁶ = ٦٤ حمولة ممكنة. وفي بايثون، عُدّ بالمتغيّر mask من 0 إلى 63 واقرأه بالنظام الثنائي: البت i من mask (أي ⁦mask >> i⁩ & 1) يقول هل الشيء i موجود. اجمع وزن كل حمولة ونقاطها، واحتفظ بأفضل حمولة تتّسع لها الشاحنة: ٦٥ نقطة، المقاعد والكتب. والتجريب الكامل مضمون، لكن كل شيء إضافي يضاعف العمل: ٣٠ شيئًا تعطي أكثر من مليار حمولة، و٦٠ تعطي أكثر من مليار مليار.\n\nأما القاعدة الجشعة فسريعة: خذ الأكثر نقاطًا لكل كيلوغرام أولًا. للألواح الشمسية ٧ نقاط لكل ١٠٠ كغ، فتُحمَّل أولًا، ثم ما يتّسع بعدها (المرشّح والطباشير): ٦٠ نقطة. فقيمة الألواح العالية لكل كيلوغرام شغلت مكانًا تملؤه حمولتان أخريان بشكل أفضل. وفي هذه الشاحنة لا يخطئ الجشع إلا عند ١٠٠٠ كغ بالضبط، أما عند ١١٠٠ كغ فيجد الأفضل (الألواح والمقاعد، ٧٥). إنه يصيب كثيرًا، لكنه لا يستطيع أن يَعِد أبدًا.\n\nوالبرمجة الديناميكية مضمونة دون أن تجرّب كل شيء. فهي تحلّ الشاحنات الأصغر أولًا، في جدول فيه صف لكل شيء وعمود لكل ١٠٠ كغ من المساحة. وكل خانة هي الأفضل بين خيارين: تخطّي هذا الشيء (الخانة التي فوقها)، أو أخذه وإضافة نقاطه إلى أفضل إجابة للمساحة الباقية ⁦(prev[c - w[k]] + v[k])⁩. ومئة شيء لا تحتاج إلا إلى نحو ألف خانة، حيث لا ينتهي التجريب الكامل أبدًا. ويمكن أيضًا كتابة المسألة نفسها نموذجًا في CP-SAT (مثال «حمولة الشاحنة» في مختبر النمذجة) وحلّها بأدوات OR-Tools من Google، على هاتفك أو في Colab.\n\nوأخيرًا، تذكّر من أين جاءت النقاط. إنها رأي شخص ما في ما تحتاج إليه المدرسة. ولو خدمت الشاحنة مدرستين، لربما أرسل أفضل مجموع كل شيء إلى إحداهما. فقبل أن تثق بالحمولة «الأفضل»، اسأل: مَن اختار النقاط، ومَن يُستبعد؟"
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Brute force",
+                "ar": "التجريب الكامل"
+              },
+              "def": {
+                "en": "Trying every possible answer. Sure, but the work doubles with every extra item.",
+                "ar": "تجريب كل إجابة ممكنة. مضمون، لكن العمل يتضاعف مع كل شيء إضافي."
+              }
+            },
+            {
+              "term": {
+                "en": "Bitmask",
+                "ar": "قناع البتات"
+              },
+              "def": {
+                "en": "A number whose binary bits say which items are in: bit i is 1 when item i is chosen.",
+                "ar": "رقم تقول بتاته الثنائية أيّ الأشياء موجودة: البت i يساوي ١ حين يُختار الشيء i."
+              }
+            },
+            {
+              "term": {
+                "en": "Greedy rule",
+                "ar": "القاعدة الجشعة"
+              },
+              "def": {
+                "en": "Taking what looks best now (most points per kilo) without looking ahead. Fast, but can miss the best.",
+                "ar": "أخذ ما يبدو الأفضل الآن (الأكثر نقاطًا لكل كيلوغرام) دون نظر إلى ما بعده. سريعة، لكنها قد تفوّت الأفضل."
+              }
+            },
+            {
+              "term": {
+                "en": "Dynamic programming",
+                "ar": "البرمجة الديناميكية"
+              },
+              "def": {
+                "en": "Solving smaller versions first and reusing their answers, so the best is found without trying everything.",
+                "ar": "حلّ النسخ الأصغر أولًا وإعادة استعمال إجاباتها، فيُعثر على الأفضل دون تجريب كل شيء."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Your brute-force program checks all 64 loads of six items. A friend adds a seventh load. How many loads must it check now?",
+            "ar": "يفحص برنامج التجريب الكامل الذي كتبته كل الحمولات الأربع والستين لستة أشياء. ثم يضيف صديقك حمولة سابعة. كم حمولة يجب أن يفحص الآن؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "65",
+                "ar": "65"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "128",
+                "ar": "128"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "70",
+                "ar": "70"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Every old load can now be with or without the new item, so the count doubles: 2⁷ = 128. Thirty items would be over a billion, which is why brute force doesn’t scale.",
+            "ar": "كل حمولة قديمة صار يمكن أن تكون مع الشيء الجديد أو دونه، فيتضاعف العدد: ٢⁷ = ١٢٨. وثلاثون شيئًا تعطي أكثر من مليار، ولهذا لا يصلح التجريب الكامل للمسائل الكبيرة."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p2",
+          "prompt": {
+            "en": "Taking the most points per kilo first always gives the best load.",
+            "ar": "أخذ الأكثر نقاطًا لكل كيلوغرام أولًا يعطي دائمًا أفضل حمولة."
+          },
+          "answer": false,
+          "explain": {
+            "en": "On the 1,000 kg truck, greedy takes the solar panels first and ends with 60 points, but desks and books give 65. A choice that looks best now can block a better whole.",
+            "ar": "في شاحنة الـ ١٠٠٠ كغ تأخذ الطريقة الجشعة الألواح الشمسية أولًا وتنتهي بـ ٦٠ نقطة، لكن المقاعد والكتب تعطي ٦٥. فالخيار الذي يبدو الأفضل الآن قد يسدّ الطريق أمام مجموع أفضل."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p3",
+          "prompt": {
+            "en": "Match each way of searching to what it is like.",
+            "ar": "صِل كل طريقة بحث بما يميّزها."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Brute force",
+                "ar": "التجريب الكامل"
+              },
+              "right": {
+                "en": "Sure, but doubles with every item",
+                "ar": "مضمون، لكنه يتضاعف مع كل شيء"
+              }
+            },
+            {
+              "left": {
+                "en": "Greedy rule",
+                "ar": "القاعدة الجشعة"
+              },
+              "right": {
+                "en": "Fast, but can miss the best",
+                "ar": "سريعة، لكنها قد تفوّت الأفضل"
+              }
+            },
+            {
+              "left": {
+                "en": "Dynamic programming",
+                "ar": "البرمجة الديناميكية"
+              },
+              "right": {
+                "en": "Sure, by reusing smaller answers",
+                "ar": "مضمونة، بإعادة استعمال إجابات أصغر"
+              }
+            },
+            {
+              "left": {
+                "en": "A CP-SAT model",
+                "ar": "نموذج CP-SAT"
+              },
+              "right": {
+                "en": "You describe it; the solver searches",
+                "ar": "أنت تصفها، وبرنامج الحل يبحث"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Brute force is honest but explodes; greedy is quick but makes no promise; dynamic programming is exact because it builds on smaller answers; and with a solver you write the rules and the goal, and it does the searching.",
+            "ar": "التجريب الكامل صادق لكنه ينفجر، والجشعة سريعة لكنها لا تَعِد بشيء، والبرمجة الديناميكية دقيقة لأنها تبني على إجابات أصغر، ومع برنامج الحل تكتب أنت القواعد والهدف، وهو يتولّى البحث."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "tool": "knapsack",
+          "prompt": {
+            "en": "Try it: in “Pack the truck”, press “Pack greedily”, then “Show the best load”. Open the table under the results and follow the outlined cells from the bottom-right corner: which loads does each step take or skip? Then move the truck’s limit to 1,100 kg and compare again.",
+            "ar": "جرّب: في «حمّل الشاحنة» اضغط «عبّئ بالجشع»، ثم «اعرض أفضل حمولة». افتح الجدول تحت النتائج واتبع الخانات المحاطة من الزاوية السفلى: أيّ الحمولات تأخذ كل خطوة أو تتخطّى؟ ثم اجعل حدّ الشاحنة ١٬١٠٠ كغ وقارن من جديد."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "w and v are the weights (in 100 kg) and points of the six loads; the truck takes 10. Complete the brute-force search: for each mask, add up the weight and points of every item whose bit is 1. The program keeps the best load that fits and prints its points.",
+            "ar": "w وv هما الأوزان (بمئات الكيلوغرامات) والنقاط للحمولات الست، والشاحنة تحمل 10. أكمل التجريب الكامل: لكل mask، اجمع وزن ونقاط كل شيء بته يساوي 1. ويحتفظ البرنامج بأفضل حمولة تتّسع لها الشاحنة ويطبع نقاطها."
+          },
+          "starter": "w = [6, 5, 5, 3, 2, 1]\nv = [42, 33, 32, 15, 8, 3]\nbest = 0\nfor mask in range(2 ** 6):\n    kg = pts = 0\n    # add the items whose bit is 1 in mask\n\n    if kg <= 10 and pts > best:\n        best = pts\nprint(best)\n",
+          "solution": "w = [6, 5, 5, 3, 2, 1]\nv = [42, 33, 32, 15, 8, 3]\nbest = 0\nfor mask in range(2 ** 6):\n    kg = pts = 0\n    for i in range(6):\n        if mask >> i & 1:\n            kg += w[i]\n            pts += v[i]\n    if kg <= 10 and pts > best:\n        best = pts\nprint(best)\n",
+          "tests": [
+            {
+              "output": "65",
+              "hint": {
+                "en": "Loop over the six items; when bit i of mask is 1 (mask >> i & 1), add w[i] and v[i].",
+                "ar": "مُرّ على الأشياء الستة، وحين يكون البت i من mask يساوي ⁦1 (mask >> i⁩ & 1)، أضف ⁦w[i]⁩ و⁦v[i]⁩."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "Inside the mask loop: for i in range(6):",
+              "ar": "داخل حلقة ⁦mask: for i in range(6)⁩:"
+            },
+            {
+              "en": "if mask >> i & 1: then kg += w[i] and pts += v[i]",
+              "ar": "⁦if mask >> i⁩ & 1: ثم ⁦kg += w[i]⁩ و⁦pts += v[i]⁩"
+            }
+          ],
+          "explain": {
+            "en": "The 64 masks are all the possible loads; the best one that fits is desks and books, 65 points, five more than greedy’s 60. Plain Python like this runs the same in Colab, but it doubles with every item, which is why the lab’s table (dynamic programming) matters.",
+            "ar": "الأقنعة الأربعة والستون هي كل الحمولات الممكنة، وأفضلها مما يتّسع هو المقاعد والكتب، ٦٥ نقطة، أي خمس نقاط أكثر من ٦٠ عند الطريقة الجشعة. ويعمل برنامج بايثون العادي هذا بالطريقة نفسها في Colab، لكنه يتضاعف مع كل شيء، ولهذا يهمّ جدول المختبر (البرمجة الديناميكية)."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete the dynamic-programming step. row[c] is the most points with room c; prev is the row before this item was considered.",
+            "ar": "أكمل خطوة البرمجة الديناميكية. ⁦row[c]⁩ هي أكبر عدد من النقاط مع مساحة c، وprev هو الصف قبل النظر في هذا الشيء."
+          },
+          "code": [
+            "row = [0] * (cap + 1)\nfor k in range(len(w)):\n    prev = row[:]\n    for c in range(w[k], cap + 1):\n        row[c] = ",
+            {
+              "blank": 0
+            },
+            "(prev[c],\n                     prev[c - ",
+            {
+              "blank": 1
+            },
+            "] + ",
+            {
+              "blank": 2
+            },
+            ")"
+          ],
+          "answers": [
+            "max",
+            "w[k]",
+            "v[k]"
+          ],
+          "distractors": [
+            "min",
+            "v[c]",
+            "c"
+          ],
+          "explain": {
+            "en": "Each cell is the better (max) of skipping item k, prev[c], or taking it: its points v[k] plus the best answer for the room left after its weight, prev[c - w[k]].",
+            "ar": "كل خانة هي الأفضل (max) بين تخطّي الشيء k، أي ⁦prev[c]⁩، أو أخذه: نقاطه ⁦v[k]⁩ مضافة إلى أفضل إجابة للمساحة الباقية بعد وزنه، أي ⁦prev[c - w[k]]⁩."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you say?",
+            "ar": "ماذا تقول؟"
+          },
+          "who": {
+            "en": "Tunde, in your school’s charity club",
+            "ar": "تونده، في نادي العمل الخيري بمدرستك"
+          },
+          "initial": {
+            "en": "T",
+            "ar": "ت"
+          },
+          "situation": {
+            "en": "Your club sends one truck to two village schools, Tala and Mina. Your program’s best load gives 65 points, but every load goes to Tala, because Tala’s teacher gave her school’s needs higher points. Tunde says: “The program found the best, so it’s fair.”",
+            "ar": "يرسل ناديكم شاحنة واحدة إلى مدرستين في قريتين، تالا ومينا. وأفضل حمولة في برنامجك تعطي ٦٥ نقطة، لكن كل الحمولات تذهب إلى تالا، لأن معلمة تالا أعطت احتياجات مدرستها نقاطًا أعلى. يقول تونده: «وجد البرنامج الأفضل، إذن هو عادل.»"
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Let’s ask both schools to score their needs the same way, and give each school at least one load.”",
+                "ar": "«لنطلب من المدرستين أن تقدّرا احتياجاتهما بالطريقة نفسها، ونعطِ كل مدرسة حمولة واحدة على الأقل.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Now the points mean the same thing for both schools, and a rule protects Mina. The best load under those rules may score a little less, but it is fairer and you can explain it.",
+                "ar": "صارت النقاط تعني الشيء نفسه للمدرستين، وتحمي قاعدةٌ مدرسةَ مينا. وقد تحقّق أفضل حمولة بهذه القواعد نقاطًا أقل قليلًا، لكنها أعدل ويمكنك شرحها."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“He’s right: the best total is the best.”",
+                "ar": "«معه حق: أفضل مجموع هو الأفضل.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "The program only maximised the points it was given, and those points came from one teacher. Best for the numbers isn’t the same as fair to both schools.",
+                "ar": "لم يفعل البرنامج إلا أن جعل النقاط التي أُعطيها أكبر ما يمكن، وتلك النقاط جاءت من معلمة واحدة. والأفضل بحسب الأرقام ليس هو العادل للمدرستين."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Toss a coin for each load.”",
+                "ar": "«ارمِ قطعة نقود لكل حمولة.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "A coin is fair to the schools but not to their needs: you might send footballs and leave the water filter. Better to fix the points and the rules.",
+                "ar": "القطعة النقدية عادلة مع المدرستين لكن لا مع احتياجاتهما: فقد ترسل كرات القدم وتترك مرشّح الماء. والأفضل أن تُصلح النقاط والقواعد."
+              }
+            }
+          ],
+          "explain": {
+            "en": "Make the points mean the same for everyone, and add a rule that protects each school.",
+            "ar": "اجعل النقاط تعني الشيء نفسه للجميع، وأضف قاعدة تحمي كل مدرسة."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "When have you used a quick rule, like biggest first or nearest first, that turned out not to be the best? What would checking every option have cost you?",
+            "ar": "متى استعملت قاعدة سريعة، مثل «الأكبر أولًا» أو «الأقرب أولًا»، ثم تبيّن أنها لم تكن الأفضل؟ وكم كان سيكلّفك فحص كل الخيارات؟"
+          },
+          "placeholder": {
+            "en": "For example: “Revising the biggest topic first left no time for two short ones that were worth more marks.”",
+            "ar": "مثلًا: «راجعت أكبر موضوع أولًا، فلم يبقَ وقت لموضوعين قصيرين كانت درجتهما أكبر.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: The best bag",
+            "ar": "مشروع: أفضل حقيبة"
+          },
+          "task": {
+            "en": "At home or at school, choose six things you might take on a school trip. Weigh each (or estimate in hundreds of grams), give each points from 1 to 10 for how much you need it, and set a weight limit your bag can carry. Find the best load three ways: greedy (most points per 100 g first), your brute-force program from this lesson (change w, v and the limit), and a small table by hand for the first three items. Compare the answers, and say whether any method missed the best.",
+            "ar": "في البيت أو في المدرسة، اختر ستة أشياء قد تأخذها في رحلة مدرسية. زِن كلًّا منها (أو قدّر وزنه بمئات الغرامات)، وأعطِه نقاطًا من ١ إلى ١٠ بحسب حاجتك إليه، وحدّد حدًّا للوزن تتحمّله حقيبتك. جِد أفضل حمولة بثلاث طرق: الجشعة (الأكثر نقاطًا لكل ١٠٠ غرام أولًا)، وبرنامج التجريب الكامل من هذا الدرس (غيّر w وv والحد)، وجدول صغير باليد لأول ثلاثة أشياء. قارن الإجابات، وقل هل فوّتت أيّ طريقة الأفضل."
+          },
+          "deliverable": {
+            "en": "Your table of things (weight and points), the load each method chose with its points, and one sentence on which method you would trust and why.",
+            "ar": "جدول أشيائك (الوزن والنقاط)، والحمولة التي اختارتها كل طريقة مع نقاطها، وجملة عن الطريقة التي تثق بها ولماذا."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: count how many loads brute force must check.",
+                "ar": "أستطيع: حساب عدد الحمولات التي يجب أن يفحصها التجريب الكامل."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: run a brute-force search in Python and read its answer.",
+                "ar": "أستطيع: تشغيل بحث بالتجريب الكامل في بايثون وقراءة إجابته."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: explain when greedy fails and how dynamic programming avoids it.",
+                "ar": "أستطيع: شرح متى تخطئ الطريقة الجشعة وكيف تتجنّب البرمجة الديناميكية ذلك."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Try them all, or think ahead",
+            "ar": "جرّبها كلها أم فكّر مسبقًا"
+          },
+          "narration": {
+            "en": "How can a program know it found the best load?",
+            "ar": "كيف يعرف البرنامج أنه وجد أفضل حمولة؟"
+          },
+          "note": {
+            "en": "Optimization · Level 3 · Lesson 1",
+            "ar": "الحلول المثلى، المستوى ٣، الدرس ١"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Count the loads a brute-force search must try.",
+              "Write a brute-force knapsack search in Python.",
+              "Explain how dynamic programming is sure without trying everything."
+            ],
+            "ar": [
+              "تحسب عدد الحمولات التي يجب أن يجرّبها التجريب الكامل.",
+              "تكتب بحث تجريب كامل لمسألة الحقيبة في بايثون.",
+              "تشرح كيف تكون البرمجة الديناميكية مضمونة دون تجريب كل شيء."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "2⁶ = 64 loads; every item doubles it",
+              "Greedy: 60; the best: 65",
+              "Skip it, or take it and reuse the rest",
+              "Whose points?"
+            ],
+            "ar": [
+              "٢⁶ = ٦٤ حمولة، وكل شيء يضاعفها",
+              "الجشعة: ٦٠، والأفضل: ٦٥",
+              "تخطَّه، أو خذه واستعمل الباقي",
+              "نقاط مَن؟"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: The best bag",
+            "ar": "النشاط: أفضل حقيبة"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (3 min): Six things, weights and points.",
+              "Greedy (5 min): Most points per 100 g first.",
+              "Brute force (7 min): Run your program on your bag.",
+              "Compare (5 min): Did greedy miss the best?"
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): ستة أشياء، وأوزانها ونقاطها.",
+              "الجشعة (٥ دقائق): الأكثر نقاطًا لكل ١٠٠ غرام أولًا.",
+              "التجريب الكامل (٧ دقائق): شغّل برنامجك على حقيبتك.",
+              "المقارنة (٥ دقائق): هل فوّتت الجشعة الأفضل؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (3 min): Choose six things for a school trip. Write each one’s weight (in hundreds of grams) and points from 1 to 10, and set your bag’s limit.",
+              "Greedy (5 min): Work out points per 100 g for each thing. Pack the highest first, then whatever still fits, and add up the points.",
+              "Brute force (7 min): Change w, v and the limit in your program from this lesson and run it, on a phone or on paper for a few masks. Write down the best load it finds.",
+              "Compare (5 min): Compare the greedy load with the best one. If they differ, find the item that took the space a better pair could have used."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): اختر ستة أشياء لرحلة مدرسية. اكتب وزن كلٍّ منها (بمئات الغرامات) ونقاطه من ١ إلى ١٠، وحدّد حدّ حقيبتك.",
+              "الجشعة (٥ دقائق): احسب النقاط لكل ١٠٠ غرام لكل شيء. عبّئ الأعلى أولًا، ثم ما يتّسع بعده، واجمع النقاط.",
+              "التجريب الكامل (٧ دقائق): غيّر w وv والحد في برنامجك من هذا الدرس وشغّله، على هاتف أو على الورق لبضعة أقنعة. واكتب أفضل حمولة يجدها.",
+              "المقارنة (٥ دقائق): قارن حمولة الجشعة بالأفضل. فإن اختلفتا، جِد الشيء الذي شغل مكانًا كان زوج أفضل يستطيع أن يستعمله."
+            ]
+          },
+          "note": {
+            "en": "No scale? Estimate: a bottle of water is about 500 g, a book about 300 g, a phone about 200 g.",
+            "ar": "لا ميزان لديك؟ قدّر: زجاجة الماء نحو ٥٠٠ غرام، والكتاب نحو ٣٠٠ غرام، والهاتف نحو ٢٠٠ غرام."
+          },
+          "narration": {
+            "en": "Did the quick rule pack your bag as well as checking everything?",
+            "ar": "هل عبّأت القاعدة السريعة حقيبتك بقدر ما يفعل فحص كل شيء؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why does every extra item double the work for brute force?",
+              "When is a greedy answer good enough?",
+              "Who should choose the points in a real decision?"
+            ],
+            "ar": [
+              "لماذا يضاعف كل شيء إضافي عمل التجريب الكامل؟",
+              "متى تكون إجابة الطريقة الجشعة كافية؟",
+              "مَن يجب أن يختار النقاط في قرار حقيقي؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "How many loads for 10 items + one example where greedy fails."
+            ],
+            "ar": [
+              "عدد الحمولات لعشرة أشياء + مثال واحد تخطئ فيه الطريقة الجشعة."
+            ]
+          },
+          "narration": {
+            "en": "Don’t search harder; search smarter, and ask whose points they are.",
+            "ar": "لا تبحث أكثر، بل ابحث بذكاء، واسأل: نقاط مَن هذه؟"
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Try them all, or think ahead",
+            "ar": "شرائح للمراجعة: جرّبها كلها أم فكّر مسبقًا"
+          },
+          "pages": 6,
+          "base": "opt-s3-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Try them all, or think ahead",
+            "ar": "ورقة النشاط: جرّبها كلها أم فكّر مسبقًا"
+          },
+          "pages": 3,
+          "base": "opt-s3-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/opt-s3-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "OPT.3",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "opt-s3-2",
+      "title": {
+        "en": "Shortest paths",
+        "ar": "أقصر الطرق"
+      },
+      "minutes": 16,
+      "tryTomorrow": {
+        "en": "Draw a map of the roads between your home, two friends’ homes and school, with rough distances in minutes or kilometres. Run Dijkstra’s method on paper, writing each place’s number as it changes, then put the map into your program and check that it agrees.",
+        "ar": "ارسم خريطة للطرق بين بيتك وبيتَي صديقين والمدرسة، مع مسافات تقريبية بالدقائق أو الكيلومترات. نفّذ طريقة ديكسترا على الورق، واكتب رقم كل مكان كلما تغيّر، ثم أدخل الخريطة في برنامجك وتحقّق من أنه يوافقك."
+      },
+      "materials": {
+        "en": [
+          "Paper and a pen",
+          "A rough map of roads near your home or school",
+          "Optional: a phone with Darsi to run your program"
+        ],
+        "ar": [
+          "ورقة وقلم",
+          "خريطة تقريبية للطرق قرب بيتك أو مدرستك",
+          "اختياري: هاتف عليه تطبيق «درسي» لتشغيل برنامجك"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Shortest paths",
+            "ar": "أقصر الطرق"
+          },
+          "src": null,
+          "duration": 224,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "How does a map app know?",
+                "ar": "كيف يعرف تطبيق الخرائط؟"
+              }
+            },
+            {
+              "at": 19.5,
+              "atBy": {
+                "en": 19.5,
+                "ar": 17.5
+              },
+              "label": {
+                "en": "Settle the closest first",
+                "ar": "ثبّت الأقرب أولًا"
+              }
+            },
+            {
+              "at": 88.6,
+              "atBy": {
+                "en": 88.6,
+                "ar": 88.2
+              },
+              "label": {
+                "en": "In Python",
+                "ar": "ببايثون"
+              }
+            },
+            {
+              "at": 130.6,
+              "atBy": {
+                "en": 130.6,
+                "ar": 126.6
+              },
+              "label": {
+                "en": "The lab, and who gains",
+                "ar": "المختبر، ومَن يستفيد"
+              }
+            },
+            {
+              "at": 193.3,
+              "atBy": {
+                "en": 193.3,
+                "ar": 189.7
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Tala is waiting at 7 and Rubi at 5. Which do you settle next?",
+                "ar": "تنتظر تالا برقم ٧، وروبي برقم ٥. أيّهما تثبّت بعد ذلك؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Tala: it was found first",
+                    "ar": "تالا: فقد وُجدت أولًا"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Rubi: it has the smallest number",
+                    "ar": "روبي: فرقمها هو الأصغر"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Both at once",
+                    "ar": "كلتاهما معًا"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Dijkstra settles the waiting place with the smallest number. Any other way to Rubi would pass through a place at 7 or more, and with no negative roads it can’t come back below 5.",
+                "ar": "تثبّت طريقة ديكسترا المكان المنتظر صاحب الرقم الأصغر. فأي طريق آخر إلى روبي يمرّ بمكان رقمه ٧ أو أكثر، ومع عدم وجود طرق سالبة لا يمكن أن يعود تحت ٥."
+              }
+            },
+            "at": 115.41,
+            "atBy": {
+              "en": 115.41,
+              "ar": 113.04
+            }
+          },
+          "transcript": {
+            "en": "A map app finds the fastest way across a whole country in a blink. It doesn’t try every route: there are far too many. So how does it know it found the shortest? Today: shortest paths, the way Dijkstra found them, in Python. Draw places as dots and roads as lines, each with its length. In Python, a dictionary holds the map: each place points to its neighbours and how far away they are. Dijkstra’s idea, from nineteen fifty-six: give every place a number, the shortest way found so far. Home is zero; the others start very large. Each turn, settle the waiting place with the smallest number. Then check its roads: can they make a neighbour’s number smaller? Why can you settle the smallest? Every other way to it would pass through a place that is already further away. With no negative road lengths, nothing can ever make it shorter. On our small map, home is zero. Kesi gets one and Tala four. Settle Kesi: through Kesi, Tala drops to three, and school gets eight. Settle Tala: school drops to six. The straight-looking way, home to Tala to school, is seven. Here it is in Python. While places are waiting, take the one with the smallest number, and remove it. Then relax its roads: keep whichever is smaller, the old number or the new way. Quick check! Two places are waiting: Tala at seven, and Rubi at five. Which one do you settle next? Rubi, the smallest. Nothing can make its number smaller now, because every other way passes through places at seven or more. Settling Tala first could freeze a number that is still too big. In the lab’s map, the shortest way to school is thirteen kilometres, through Tala, Kesi and Mina. The road that looks straightest, through Bora, is fifteen. Flood the bridge between Kesi and Mina, and it becomes fourteen, by Rubi and Sana. Shortest for whom? A new footbridge might save one village twenty minutes and another nothing. When a town chooses which road to fix, run the shortest paths from every home, and see who gains. In the app, open “The shortest way to school”. Tap Home, then always the waiting village with the smallest number. Then flood the bridge, and do it again. Your turn. A friend’s program settles places in list order, not smallest first. It says school is seven kilometres away, not six. Why? It settled Tala too early, before the shorter way through Kesi was known. Remember: store the map as a dictionary, settle the smallest number first, and relax its roads. And ask who a new road really helps. Try it yourself: draw the roads between your home, two friends’ homes and school, with rough distances. Run Dijkstra on paper, then check it with your code.",
+            "ar": "تطبيق الخرايط بيلاقي أسرع طريق في بلد كامل في لمح البصر. وهو مش بيجرّب كل الطرق: دول كتير قوي. طب إزاي بيعرف إنه لقى الأقصر؟ النهارده: أقصر الطرق، بالطريقة اللي لاقاها بيها ديكسترا، ببايثون. ارسم الأماكن نقط والطرق خطوط، وكل طريق عليه طوله. وببايثون، القاموس بيشيل الخريطة: كل مكان بيشاور على جيرانه وعلى بعدهم قد إيه. فكرة ديكسترا، من سنة ألف تسعمية ستة وخمسين: ادّي كل مكان رقم، هو أقصر طريق لقيته لحد دلوقتي. البيت صفر، والباقي بيبدأوا بأرقام كبيرة قوي. وفي كل دور، ثبّت المكان المستني اللي رقمه أصغر حاجة. وبعدين بص على طرقه: تقدر تصغّر رقم أي جار؟ ليه تقدر تثبّت الأصغر؟ لأن أي طريق تاني ليه هيعدّي على مكان بعيد أصلًا أكتر منه. وطول ما مفيش طرق بأطوال بالسالب، مفيش حاجة هتقصّره أبدًا. على خريطتنا الصغيرة، البيت صفر. كيسي ياخد واحد، وتالا أربعة. ثبّت كيسي: من خلال كيسي، تالا تنزل لتلاتة، والمدرسة تاخد تمانية. ثبّت تالا: المدرسة تنزل لستة. والطريق اللي شكله مستقيم، من البيت لتالا للمدرسة، طوله سبعة. ودي هي ببايثون. طول ما فيه أماكن مستنية، خد اللي رقمه أصغر حاجة، وشيله. وبعدين راجع طرقه: خلّي الأصغر، الرقم القديم ولا الطريق الجديد. سؤال سريع! فيه مكانين مستنيين: تالا بسبعة، وروبي بخمسة. تثبّت مين الأول؟ روبي، الأصغر. مفيش حاجة تقدر تصغّر رقمها دلوقتي، لأن أي طريق تاني بيعدّي على أماكن رقمها سبعة أو أكتر. وإنك تثبّت تالا الأول ممكن يجمّد رقم لسه كبير. في خريطة المعمل، أقصر طريق للمدرسة تلتاشر كيلو، عن طريق تالا وكيسي ومينا. والطريق اللي شكله أكتر استقامة، عن طريق بورا، خمستاشر. ولو الكوبري اللي بين كيسي ومينا غرق، يبقى أربعتاشر، عن طريق روبي وسانا. الأقصر لمين؟ كوبري مشاة جديد ممكن يوفّر على قرية عشرين دقيقة وعلى قرية تانية ولا حاجة. ولما مدينة تختار تصلّح أنهي طريق، شغّل أقصر الطرق من كل بيت، وشوف مين اللي استفاد. في التطبيق، افتح «أقصر طريق إلى المدرسة». المس البيت، وبعدين دايمًا القرية المستنية اللي رقمها أصغر. وبعدين غرّق الكوبري، واعملها تاني. دورك. برنامج واحد صاحبك بيثبّت الأماكن بترتيب القايمة، مش الأصغر الأول. وبيقول إن المدرسة على بعد سبعة كيلو، مش ستة. ليه؟ ثبّت تالا بدري قوي، قبل ما الطريق الأقصر من خلال كيسي يبان. افتكر: خزّن الخريطة في قاموس، وثبّت أصغر رقم الأول، وراجع طرقه. واسأل الطريق الجديد بيفيد مين بجد. جرّبها بنفسك: ارسم الطرق اللي بين بيتك، وبيوت اتنين صحابك، والمدرسة، وعليها مسافات تقريبية. شغّل ديكسترا على الورق، وبعدين اتأكد بالكود بتاعك."
+          },
+          "sources": {
+            "en": "/media/opt-s3-2/video-en.mp4",
+            "ar": "/media/opt-s3-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/opt-s3-2/captions-en.vtt",
+            "ar": "/media/opt-s3-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/opt-s3-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/opt-s3-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/opt-s3-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/opt-s3-2/light/audio/en.opus",
+              "manifest.json": "/media/opt-s3-2/light/manifest.json",
+              "scenes.json": "/media/opt-s3-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/opt-s3-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/opt-s3-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 486,
+              "ar": 477
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Dijkstra’s method",
+            "ar": "طريقة ديكسترا"
+          },
+          "body": {
+            "en": "A road map is a graph: places are dots (nodes) and roads are lines (edges), each with a length. In Python, a dictionary of dictionaries holds it neatly: roads[\"home\"] is {\"tala\": 4, \"kesi\": 1}, the neighbours of home and how far they are.\n\nEdsger Dijkstra found a way to get the shortest path without trying every route (1956). Give every place a number, the shortest way found so far: home is 0 and every other place starts very large. Each turn, settle the waiting place with the smallest number, because nothing can make it smaller: any other way to it passes through a place that is already further away. Then relax its roads: for each neighbour, keep the smaller of its old number and the settled place’s number plus the road. When the school is settled, its number is the shortest distance. This is only safe when no road has a negative length, which is true for real roads.\n\nOn the small map in this lesson, home is 0, Kesi gets 1 and Tala 4. Settling Kesi lowers Tala to 3 (1 + 2) and gives the school 8; settling Tala lowers the school to 6. The way that looks straight, home to Tala to school, is 7. In the lab’s bigger map, the shortest way is 13 km through Tala, Kesi and Mina; the straight-looking road through Bora is 15; and when the bridge between Kesi and Mina floods, the best way becomes 14 km by Rubi and Sana.\n\nThe simple version looks through every waiting place to find the smallest, so it takes about n × n steps for n places: fine for a school map. Map apps and internet routers use faster versions of the same idea (a priority queue, and clever shortcuts) to handle millions of roads every second. The program you write today is plain Python, and it runs the same in Colab.\n\nShortest paths also help decisions, and decisions raise the question of fairness. A new footbridge might save one village twenty minutes and another nothing. Before a school or a town chooses which road to fix, run the shortest paths from every home, and look at who gains, especially the families who are furthest away.",
+            "ar": "خريطة الطرق مخطّط: الأماكن نقاط (عُقد)، والطرق خطوط (أضلاع)، ولكل طريق طوله. وفي بايثون يحفظها قاموس من القواميس بشكل مرتّب: ⁦roads[\"home\"]⁩ هو ⁦{\"tala\": 4, \"kesi\": 1}⁩، أي جيران البيت والمسافة إلى كلٍّ منهم.\n\nوجد إدسخر ديكسترا طريقة للحصول على أقصر طريق دون تجريب كل الطرق (١٩٥٦). أعطِ كل مكان رقمًا هو أقصر طريق وُجد إليه حتى الآن: البيت ٠، وكل مكان آخر يبدأ برقم كبير جدًا. وفي كل دور، ثبّت المكان المنتظر صاحب الرقم الأصغر، لأنه لا شيء يستطيع أن يصغّره: فأي طريق آخر إليه يمرّ بمكان أبعد أصلًا. ثم راجِع طرقه: لكل جار، احتفظ بالأصغر بين رقمه القديم ورقم المكان المثبَّت مضافًا إليه طول الطريق. وحين تُثبَّت المدرسة، يكون رقمها أقصر مسافة. ولا يكون هذا مضمونًا إلا إذا لم يكن لأي طريق طول سالب، وهذا صحيح في الطرق الحقيقية.\n\nفي الخريطة الصغيرة في هذا الدرس، البيت ٠، ويحصل كيسي على ١ وتالا على ٤. وتثبيت كيسي يُنزل تالا إلى ٣ (١ + ٢) ويعطي المدرسة ٨، ثم تثبيت تالا يُنزل المدرسة إلى ٦. أما الطريق الذي يبدو مستقيمًا، من البيت إلى تالا إلى المدرسة، فطوله ٧. وفي خريطة المختبر الأكبر، أقصر طريق ١٣ كم عبر تالا وكيسي ومينا، والطريق الذي يبدو أكثر استقامة عبر بورا ١٥، وحين يغمر الماء الجسر بين كيسي ومينا يصبح أفضل طريق ١٤ كم عبر روبي وسانا.\n\nتبحث النسخة البسيطة في كل الأماكن المنتظرة لتجد الأصغر، فتحتاج إلى نحو ⁦n × n⁩ خطوة لـ n من الأماكن: وهذا يكفي لخريطة مدرسة. أما تطبيقات الخرائط وموجّهات الإنترنت فتستعمل نسخًا أسرع من الفكرة نفسها (طابور أولويات، واختصارات ذكية) لتتعامل مع ملايين الطرق كل ثانية. والبرنامج الذي تكتبه اليوم بايثون عادي، ويعمل بالطريقة نفسها في Colab.\n\nوتساعد أقصر الطرق في القرارات أيضًا، والقرارات تطرح سؤال العدالة. فقد يوفّر جسر مشاة جديد على قرية عشرين دقيقة ولا يوفّر على أخرى شيئًا. وقبل أن تختار مدرسة أو بلدة الطريق الذي تصلحه، شغّل أقصر الطرق من كل بيت، وانظر مَن يستفيد، وخاصة الأسر الأبعد."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Graph",
+                "ar": "المخطّط"
+              },
+              "def": {
+                "en": "Dots (places) joined by lines (roads), each line with a length.",
+                "ar": "نقاط (أماكن) تصلها خطوط (طرق)، ولكل خط طوله."
+              }
+            },
+            {
+              "term": {
+                "en": "Dijkstra’s method",
+                "ar": "طريقة ديكسترا"
+              },
+              "def": {
+                "en": "Finding shortest paths by always settling the waiting place with the smallest number first.",
+                "ar": "إيجاد أقصر الطرق بتثبيت المكان المنتظر صاحب الرقم الأصغر أولًا دائمًا."
+              }
+            },
+            {
+              "term": {
+                "en": "Settle",
+                "ar": "التثبيت"
+              },
+              "def": {
+                "en": "Marking a place’s number as final: no shorter way to it can exist.",
+                "ar": "اعتبار رقم المكان نهائيًا: لا يمكن أن يوجد طريق أقصر إليه."
+              }
+            },
+            {
+              "term": {
+                "en": "Relax a road",
+                "ar": "مراجعة الطريق"
+              },
+              "def": {
+                "en": "Checking whether going through a settled place gives a neighbour a smaller number, and keeping the smaller.",
+                "ar": "التحقّق من أن المرور بمكان مثبَّت يعطي الجار رقمًا أصغر، والاحتفاظ بالأصغر."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A friend’s program settles places in list order (home, Tala, Kesi, school) instead of the smallest number first. It says school is 7 km away; your Dijkstra says 6. Why?",
+            "ar": "يثبّت برنامج صديقك الأماكن بترتيب القائمة (البيت، تالا، كيسي، المدرسة) بدل الرقم الأصغر أولًا. ويقول إن المدرسة على بعد ٧ كم، أما برنامجك بطريقة ديكسترا فيقول ٦. لماذا؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Python added the numbers wrongly",
+                "ar": "أخطأت بايثون في جمع الأرقام"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "It settled Tala at 4 before the shorter way via Kesi was found",
+                "ar": "ثبّت تالا عند ٤ قبل أن يجد الطريق الأقصر عبر كيسي"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "One of the roads is negative",
+                "ar": "أحد الطرق طوله سالب"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "In list order, Tala is settled at 4 and gives school 4 + 3 = 7. Only afterwards does Kesi show that Tala could be 3, but Tala is already done, so school never gets 6. Settling the smallest number first prevents this.",
+            "ar": "بترتيب القائمة تُثبَّت تالا عند ٤ وتعطي المدرسة ٤ + ٣ = ٧. ولا يُظهر كيسي إلا بعد ذلك أن تالا يمكن أن تكون ٣، لكن تالا قد ثُبّتت، فلا تحصل المدرسة على ٦ أبدًا. وتثبيت الرقم الأصغر أولًا يمنع ذلك."
+          }
+        },
+        {
+          "type": "order",
+          "id": "p2",
+          "prompt": {
+            "en": "Put Dijkstra’s method in order.",
+            "ar": "رتّب خطوات طريقة ديكسترا."
+          },
+          "steps": [
+            {
+              "en": "Give home 0 and every other place a very large number",
+              "ar": "أعطِ البيت ٠ وكل مكان آخر رقمًا كبيرًا جدًا"
+            },
+            {
+              "en": "Pick the waiting place with the smallest number",
+              "ar": "اختر المكان المنتظر صاحب الرقم الأصغر"
+            },
+            {
+              "en": "Settle it: its number is final",
+              "ar": "ثبّته: صار رقمه نهائيًا"
+            },
+            {
+              "en": "Relax its roads: lower any neighbour’s number you can",
+              "ar": "راجِع طرقه: أنزِل رقم أي جار تستطيع"
+            },
+            {
+              "en": "Repeat until the school is settled",
+              "ar": "كرّر حتى تُثبَّت المدرسة"
+            }
+          ],
+          "explain": {
+            "en": "Start with what you know (home is 0), and each turn make the smallest number final before using its roads. Relaxing before settling, or settling a bigger number first, could freeze a distance that is still too long.",
+            "ar": "ابدأ بما تعرفه (البيت ٠)، وفي كل دور اجعل الرقم الأصغر نهائيًا قبل أن تستعمل طرقه. أما المراجعة قبل التثبيت، أو تثبيت رقم أكبر أولًا، فقد يجمّد مسافة ما زالت أطول من اللازم."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p3",
+          "prompt": {
+            "en": "Dijkstra’s method still gives the right answer if some roads have negative lengths.",
+            "ar": "تعطي طريقة ديكسترا الإجابة الصحيحة حتى لو كانت أطوال بعض الطرق سالبة."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Settling the smallest number is safe only because every other way is at least as long. A negative road could make a settled place shorter later, after it was declared final. Real road lengths are never negative, so maps are fine.",
+            "ar": "لا يكون تثبيت الرقم الأصغر مضمونًا إلا لأن أي طريق آخر ليس أقصر منه. أما الطريق السالب فقد يجعل مكانًا مثبَّتًا أقصر لاحقًا، بعد أن أُعلن نهائيًا. وأطوال الطرق الحقيقية لا تكون سالبة أبدًا، فالخرائط آمنة."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "tool": "shortest",
+          "prompt": {
+            "en": "Try it: in “The shortest way to school”, first guess the shortest way by looking. Then tap Home, and always tap the waiting village with the smallest number, until the school is settled (13 km). Press “Flood the bridge” and find the way again: what changes, and why?",
+            "ar": "جرّب: في «أقصر طريق إلى المدرسة» خمّن أقصر طريق بالنظر أولًا. ثم المس البيت، والمس دائمًا القرية المنتظرة ذات الرقم الأصغر، حتى يصير رقم المدرسة نهائيًا (١٣ كم). اضغط «أغرِق الجسر» وجِد الطريق من جديد: ما الذي يتغيّر، ولماذا؟"
+          }
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete Dijkstra’s method: after taking the waiting place p with the smallest number, relax each of its roads, so that dist[q] keeps the smaller of its old value and dist[p] + km. The program prints the shortest distance to school.",
+            "ar": "أكمل طريقة ديكسترا: بعد أخذ المكان المنتظر p صاحب الرقم الأصغر، راجِع كل طريق من طرقه، بحيث يحتفظ ⁦dist[q]⁩ بالأصغر بين قيمته القديمة و⁦dist[p] + km⁩. ويطبع البرنامج أقصر مسافة إلى المدرسة."
+          },
+          "starter": "roads = {\"home\": {\"tala\": 4, \"kesi\": 1},\n         \"kesi\": {\"tala\": 2, \"school\": 7},\n         \"tala\": {\"school\": 3}, \"school\": {}}\ndist = {p: 99 for p in roads}\ndist[\"home\"] = 0\ntodo = list(roads)\nwhile todo:\n    p = min(todo, key=lambda q: dist[q])\n    todo.remove(p)\n    for q, km in roads[p].items():\n        pass  # keep the smaller distance\nprint(dist[\"school\"])\n",
+          "solution": "roads = {\"home\": {\"tala\": 4, \"kesi\": 1},\n         \"kesi\": {\"tala\": 2, \"school\": 7},\n         \"tala\": {\"school\": 3}, \"school\": {}}\ndist = {p: 99 for p in roads}\ndist[\"home\"] = 0\ntodo = list(roads)\nwhile todo:\n    p = min(todo, key=lambda q: dist[q])\n    todo.remove(p)\n    for q, km in roads[p].items():\n        dist[q] = min(dist[q], dist[p] + km)\nprint(dist[\"school\"])\n",
+          "tests": [
+            {
+              "output": "6",
+              "check": "assert dist[\"kesi\"] == 1 and dist[\"tala\"] == 3, \"Kesi should be 1 and Tala 3 (through Kesi)\"",
+              "hint": {
+                "en": "Replace pass with one line: dist[q] = min(dist[q], dist[p] + km)",
+                "ar": "ضع مكان pass سطرًا واحدًا: ⁦dist[q] = min(dist[q], dist[p] + km)⁩"
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "Going through p, q is dist[p] + km away.",
+              "ar": "عبر p، تبعد q مسافة ⁦dist[p] + km⁩."
+            },
+            {
+              "en": "Keep the smaller of that and dist[q], with min().",
+              "ar": "احتفظ بالأصغر بين ذلك و⁦dist[q]⁩، باستعمال ⁦min()⁩."
+            }
+          ],
+          "explain": {
+            "en": "Kesi is settled first (1) and lowers Tala to 3 and the school to 8; then Tala lowers the school to 6. The way that looks direct, through Tala, is 7. This plain Python runs the same in Colab.",
+            "ar": "يُثبَّت كيسي أولًا (١) فيُنزل تالا إلى ٣ والمدرسة إلى ٨، ثم تُنزل تالا المدرسة إلى ٦. أما الطريق الذي يبدو مباشرًا، عبر تالا، فطوله ٧. وبرنامج بايثون العادي هذا يعمل بالطريقة نفسها في Colab."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "This program says the school is 7 km away, but the shortest way is 6. Which line is wrong?",
+            "ar": "يقول هذا البرنامج إن المدرسة على بعد ٧ كم، لكن أقصر طريق ٦. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "roads = {\"home\": {\"tala\": 4, \"kesi\": 1},\n         \"tala\": {\"school\": 3},\n         \"kesi\": {\"tala\": 2, \"school\": 7},\n         \"school\": {}}\ndist = {p: 99 for p in roads}\ndist[\"home\"] = 0\ntodo = list(roads)\nwhile todo:\n    p = todo[0]\n    todo.remove(p)\n    for q, km in roads[p].items():\n        dist[q] = min(dist[q], dist[p] + km)",
+          "line": 9,
+          "fix": "    p = min(todo, key=lambda q: dist[q])",
+          "explain": {
+            "en": "todo[0] settles places in list order, so Tala (4) is settled before Kesi (1) can lower it to 3, and the school is stuck at 4 + 3 = 7. Dijkstra must always take the smallest number first.",
+            "ar": "يثبّت ⁦todo[0]⁩ الأماكن بترتيب القائمة، فتُثبَّت تالا (٤) قبل أن يُنزلها كيسي (١) إلى ٣، وتعلق المدرسة عند ٤ + ٣ = ٧. ويجب أن تأخذ طريقة ديكسترا الرقم الأصغر أولًا دائمًا."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you advise?",
+            "ar": "بماذا تنصح؟"
+          },
+          "who": {
+            "en": "The town council, asking your class",
+            "ar": "مجلس البلدة، يسأل صفّك"
+          },
+          "initial": {
+            "en": "C",
+            "ar": "م"
+          },
+          "situation": {
+            "en": "The council can repair one road before the rains: the bridge between Kesi and Mina, or the road past Rubi. Your class ran shortest paths to school from every village. The bridge saves the most minutes in total, mostly for the big villages; the Rubi road helps the two farthest villages most.",
+            "ar": "يستطيع المجلس أن يصلح طريقًا واحدًا قبل الأمطار: الجسر بين كيسي ومينا، أو الطريق المارّ بروبي. وقد شغّل صفّك أقصر الطرق إلى المدرسة من كل قرية. فالجسر يوفّر أكبر عدد من الدقائق في المجموع، ومعظمها للقرى الكبيرة، أما طريق روبي فيفيد القريتين الأبعد أكثر من غيرهما."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Show the minutes saved for each village, the total and the worst-off, and let people discuss.”",
+                "ar": "«اعرضوا الدقائق الموفَّرة لكل قرية، والمجموع، والأسوأ حالًا، ودعوا الناس يتناقشون.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Your numbers make the trade-off visible: more minutes overall, or help for the children who walk furthest. The council decides, but everyone can see why.",
+                "ar": "تجعل أرقامكم الموازنة مرئية: دقائق أكثر في المجموع، أم مساعدة الأطفال الذين يمشون أبعد. والمجلس يقرّر، لكن الجميع يرون السبب."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Fix the bridge: it saves the most minutes in total.”",
+                "ar": "«أصلحوا الجسر: فهو يوفّر أكبر عدد من الدقائق في المجموع.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Efficient, but the farthest villages, who already walk longest, get nothing. A total hides who carries the cost.",
+                "ar": "فعّال، لكن القريتين الأبعد، اللتين تمشيان أطول أصلًا، لا تحصلان على شيء. فالمجموع يُخفي مَن يتحمّل الكلفة."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Fix whichever is cheaper.”",
+                "ar": "«أصلحوا الأرخص.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Cost matters, but on its own it ignores everything your shortest paths showed. Put cost beside the minutes saved, not instead of them.",
+                "ar": "الكلفة مهمة، لكنها وحدها تتجاهل كل ما أظهرته أقصر الطرق التي حسبتموها. ضعوا الكلفة بجانب الدقائق الموفَّرة، لا مكانها."
+              }
+            }
+          ],
+          "explain": {
+            "en": "Show the total and the worst-off side by side, and let people decide openly.",
+            "ar": "اعرض المجموع والأسوأ حالًا جنبًا إلى جنب، ودع الناس يقرّرون علنًا."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which road or path near you would you fix first, and who would gain most? Would the shortest paths agree with you?",
+            "ar": "أيّ طريق أو ممر قريب منك ستصلحه أولًا، ومَن سيستفيد أكثر؟ هل ستوافقك أقصر الطرق؟"
+          },
+          "placeholder": {
+            "en": "For example: “The path across the stream. It floods every rainy season and the children from the hill walk an extra half hour.”",
+            "ar": "مثلًا: «الممر فوق الجدول. يغمره الماء كل موسم أمطار، فيمشي أطفال التلّ نصف ساعة إضافية.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Shortest ways to my school",
+            "ar": "مشروع: أقصر الطرق إلى مدرستي"
+          },
+          "task": {
+            "en": "Draw a map of six to eight places around your school (homes, a market, a bridge, the school), with rough distances on each road. Run Dijkstra’s method on paper from one home, writing each place’s number as it changes. Then type the map into your program and check that it agrees. Finally, close one road (a flood or roadworks) and find who is affected most.",
+            "ar": "ارسم خريطة لستة إلى ثمانية أماكن حول مدرستك (بيوت، وسوق، وجسر، والمدرسة)، مع مسافات تقريبية على كل طريق. نفّذ طريقة ديكسترا على الورق انطلاقًا من بيت واحد، واكتب رقم كل مكان كلما تغيّر. ثم أدخل الخريطة في برنامجك وتحقّق من أنه يوافقك. وأخيرًا أغلق طريقًا واحدًا (فيضان أو أعمال صيانة) وجِد مَن يتأثر أكثر."
+          },
+          "deliverable": {
+            "en": "Your map with the numbers (no addresses or names of real people), your program’s answer, and one sentence on who a closed road hurts most.",
+            "ar": "خريطتك مع الأرقام (دون عناوين أو أسماء أشخاص حقيقيين)، وإجابة برنامجك، وجملة عمّن يتضرّر أكثر من إغلاق طريق."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: write a map as a Python dictionary.",
+                "ar": "أستطيع: كتابة خريطة قاموسًا في بايثون."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: run Dijkstra’s method on paper and in code, and get the same answer.",
+                "ar": "أستطيع: تنفيذ طريقة ديكسترا على الورق وفي الكود، والحصول على الإجابة نفسها."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: say who gains and who loses when a road opens or closes.",
+                "ar": "أستطيع: أن أقول مَن يستفيد ومَن يخسر حين يُفتح طريق أو يُغلق."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Shortest paths",
+            "ar": "أقصر الطرق"
+          },
+          "narration": {
+            "en": "How does a map app find the shortest way without trying them all?",
+            "ar": "كيف يجد تطبيق الخرائط أقصر طريق دون أن يجرّبها كلها؟"
+          },
+          "note": {
+            "en": "Optimization · Level 3 · Lesson 2",
+            "ar": "الحلول المثلى، المستوى ٣، الدرس ٢"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Store a road map as a Python dictionary.",
+              "Follow and complete Dijkstra’s method.",
+              "Explain why settling the closest place first is safe."
+            ],
+            "ar": [
+              "تحفظ خريطة طرق قاموسًا في بايثون.",
+              "تتبع طريقة ديكسترا وتكملها.",
+              "تشرح لماذا يكون تثبيت أقرب مكان أولًا مضمونًا."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "A map is a graph",
+              "Settle the smallest number first",
+              "Relax: keep the smaller",
+              "No negative roads",
+              "Who gains from a road?"
+            ],
+            "ar": [
+              "الخريطة مخطّط",
+              "ثبّت الرقم الأصغر أولًا",
+              "المراجعة: احتفظ بالأصغر",
+              "لا طرق سالبة",
+              "مَن يستفيد من الطريق؟"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: My map, settled",
+            "ar": "النشاط: خريطتي، مثبَّتة"
+          },
+          "bullets": {
+            "en": [
+              "Draw (5 min): Six places and the roads between them.",
+              "Settle (8 min): Dijkstra on paper from your home.",
+              "Code (5 min): Type the map; does it agree?",
+              "Close a road (2 min): Who is hurt most?"
+            ],
+            "ar": [
+              "الرسم (٥ دقائق): ستة أماكن والطرق بينها.",
+              "التثبيت (٨ دقائق): ديكسترا على الورق انطلاقًا من بيتك.",
+              "الكود (٥ دقائق): أدخل الخريطة، هل يوافقك؟",
+              "إغلاق طريق (دقيقتان): مَن يتضرّر أكثر؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Draw (5 min): Draw six places near your school as dots, join the ones with a road, and write a rough distance on each road.",
+              "Settle (8 min): Write 0 by your home and a big number by every other place. Repeatedly circle the smallest uncircled number and update its neighbours, until the school is circled.",
+              "Code (5 min): Type your map as a dictionary into your program from this lesson and run it. Does it print the same distance to school?",
+              "Close a road (2 min): Cross out one road and run it again. Which place’s distance grows the most?"
+            ],
+            "ar": [
+              "الرسم (٥ دقائق): ارسم ستة أماكن قرب مدرستك نقاطًا، وصِل بين المتصلة بطريق، واكتب مسافة تقريبية على كل طريق.",
+              "التثبيت (٨ دقائق): اكتب ٠ بجانب بيتك ورقمًا كبيرًا بجانب كل مكان آخر. وضع دائرة مرة بعد مرة حول أصغر رقم لم تُحَط بعد وحدّث جيرانه، حتى تُحاط المدرسة.",
+              "الكود (٥ دقائق): أدخل خريطتك قاموسًا في برنامجك من هذا الدرس وشغّله. هل يطبع المسافة نفسها إلى المدرسة؟",
+              "إغلاق طريق (دقيقتان): اشطب طريقًا واحدًا وشغّل من جديد. أيّ مكان تزداد مسافته أكثر من غيره؟"
+            ]
+          },
+          "note": {
+            "en": "Use made-up names for homes. Distances can be minutes of walking instead of kilometres.",
+            "ar": "استعمل أسماء خيالية للبيوت. ويمكن أن تكون المسافات دقائق مشي بدل الكيلومترات."
+          },
+          "narration": {
+            "en": "Circle the smallest number, update its neighbours, and repeat.",
+            "ar": "ضع دائرة حول أصغر رقم، وحدّث جيرانه، وكرّر."
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why is the straightest-looking road not always the shortest?",
+              "What would go wrong with a negative road length?",
+              "Who should decide which road gets repaired first?"
+            ],
+            "ar": [
+              "لماذا لا يكون الطريق الذي يبدو أكثر استقامة هو الأقصر دائمًا؟",
+              "ما الذي يفسد لو كان طول طريق ما سالبًا؟",
+              "مَن يجب أن يقرّر أيّ طريق يُصلح أولًا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "The one line that relaxes a road + why the smallest goes first."
+            ],
+            "ar": [
+              "السطر الوحيد الذي يراجع طريقًا + لماذا يأتي الأصغر أولًا."
+            ]
+          },
+          "narration": {
+            "en": "Smallest first is always safe, and ask who a road really helps.",
+            "ar": "الأصغر أولًا مضمون دائمًا، واسأل: الطريق يفيد مَن حقًا؟"
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Shortest paths",
+            "ar": "شرائح للمراجعة: أقصر الطرق"
+          },
+          "pages": 6,
+          "base": "opt-s3-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Shortest paths",
+            "ar": "ورقة النشاط: أقصر الطرق"
+          },
+          "pages": 3,
+          "base": "opt-s3-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/opt-s3-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "OPT.3",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "opt-s3-3",
+      "title": {
+        "en": "The bus route",
+        "ar": "طريق الحافلة"
+      },
+      "minutes": 16,
+      "tryTomorrow": {
+        "en": "Map five places you visit in a week (home, school, the market, a friend’s house, the clinic) with rough distances. Plan a round trip from home by nearest neighbour, draw it, and look for a crossing: swap it and add up the distance again. Then ask: if a friend joined at your first stop, how long would they ride?",
+        "ar": "ارسم خريطة لخمسة أماكن تزورها في الأسبوع (البيت، والمدرسة، والسوق، وبيت صديق، والعيادة) مع مسافات تقريبية. خطّط رحلة ذهاب وإياب من البيت بقاعدة «أقرب جار»، وارسمها، وابحث عن تقاطع: بدّله واجمع المسافة من جديد. ثم اسأل: لو انضمّ إليك صديق في أول محطة، فكم سيركب؟"
+      },
+      "materials": {
+        "en": [
+          "Paper and a pen",
+          "Rough distances between five places you know",
+          "Optional: a phone with Darsi to run your program"
+        ],
+        "ar": [
+          "ورقة وقلم",
+          "مسافات تقريبية بين خمسة أماكن تعرفها",
+          "اختياري: هاتف عليه تطبيق «درسي» لتشغيل برنامجك"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "The bus route",
+            "ar": "طريق الحافلة"
+          },
+          "src": null,
+          "duration": 218,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Is this the shortest?",
+                "ar": "هل هذا هو الأقصر؟"
+              }
+            },
+            {
+              "at": 22.6,
+              "atBy": {
+                "en": 22.6,
+                "ar": 18.8
+              },
+              "label": {
+                "en": "Build it fast",
+                "ar": "ابنِه بسرعة"
+              }
+            },
+            {
+              "at": 66.7,
+              "atBy": {
+                "en": 66.7,
+                "ar": 60.8
+              },
+              "label": {
+                "en": "Improve it with 2-opt",
+                "ar": "حسّنه بطريقة ⁦2-opt⁩"
+              }
+            },
+            {
+              "at": 126,
+              "atBy": {
+                "en": 126,
+                "ar": 118.7
+              },
+              "label": {
+                "en": "Who rides longest? And the lab",
+                "ar": "مَن يركب أطول؟ والمختبر"
+              }
+            },
+            {
+              "at": 186,
+              "atBy": {
+                "en": 186,
+                "ar": 177.3
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "2-opt has stopped, but a shorter route exists. How can that be?",
+                "ar": "توقّفت طريقة ⁦2-opt⁩، لكن يوجد طريق أقصر. كيف يمكن ذلك؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "It ran out of villages to visit",
+                    "ar": "نفدت القرى التي تزورها"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "No single swap helps, though a bigger change would",
+                    "ar": "لا يفيد أي تبديل واحد، مع أن تغييرًا أكبر كان سيفيد"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "2-opt only works on straight roads",
+                    "ar": "لا تعمل طريقة ⁦2-opt⁩ إلا على الطرق المستقيمة"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "2-opt only makes one two-road swap at a time and stops when none helps: a local best. Sometimes the best route needs a bigger change that no single swap can make, so 2-opt stops short, as on some of the lab’s new maps.",
+                "ar": "لا تجري طريقة ⁦2-opt⁩ إلا تبديلًا واحدًا لطريقين في كل مرة، وتتوقّف حين لا يفيد أيّ تبديل: أفضل محلي. وأحيانًا يحتاج أفضل طريق إلى تغيير أكبر لا يصنعه أي تبديل واحد، فتتوقّف ⁦2-opt⁩ قبله، كما في بعض الخرائط الجديدة في المختبر."
+              }
+            },
+            "at": 104.83,
+            "atBy": {
+              "en": 104.83,
+              "ar": 96.85
+            }
+          },
+          "transcript": {
+            "en": "Our school bus visits nine villages every morning. Last week a student asked me two questions: is this really the shortest route, and why do I always get on first? Today: the bus route, built fast, improved, and judged fairly. Visiting every stop once and coming back by the shortest route is the travelling salesperson problem. One more village multiplies the routes: nine villages have a hundred and eighty-one thousand, and ten have one point eight million. Twenty have more than a billion billion. So start with a quick rule: always drive to the closest village you haven’t visited yet. It’s greedy: it never looks ahead, so the last legs home are often long. In Python, keep a list called route. While villages are left, append the one closest to your last stop. Then improve it with 2-opt. Pick two roads, reverse the stretch between them, and keep the change if the route got shorter. A crossing in a route always means a swap can shorten it. In code, a swap is a slice turned round. Try every pair of cut points, keep any change that helps, and stop when none does. Quick check! 2-opt has stopped, but the lab says a shorter route exists. How can that be? No single swap helps, but a bigger change would. 2-opt has found a local best, not the best of all. In the lab, three swaps take nearest neighbour’s thirty-four point six kilometres down to twenty-eight point six, the best route. On some new maps, it stops short. On the small map in your code, nearest neighbour drives nineteen kilometres. The best route is sixteen. Now look at the riders: the village picked up first rides almost the whole route. On the best route, driven one way, the longest ride is fifteen kilometres. Driven the other way, it’s fourteen. Same road, same length, a fairer ride, so check the direction too. In the app, open “The school bus route”. Press Run, and watch both steps. Then press New map until 2-opt stops short of the best. Your turn. Two routes have the same length. On one, a village rides for fifty minutes; on the other, nobody rides more than thirty. Which should the school choose? The one where nobody rides more than thirty: same cost, fairer ride. Remember: build a route fast with nearest neighbour, and improve it with 2-opt, which can stop at a local best. And judge a route by its length and its longest ride. Try it yourself: map five places you visit in a week, with rough distances. Plan a round trip by nearest neighbour, then look for a crossing and swap it.",
+            "ar": "أتوبيس مدرستنا بيلف على تسع قرى كل يوم الصبح. والأسبوع اللي فات طالبة سألتني سؤالين: ده فعلًا أقصر طريق، وليه أنا دايمًا أول واحدة تركب؟ النهارده: طريق الأتوبيس، نبنيه بسرعة، ونحسّنه، ونحكم عليه بعدل. إنك تلف على كل محطة مرة وترجع بأقصر طريق، دي اسمها مسألة البايع المتجوّل. وكل قرية زيادة بتضرب عدد الطرق: تسع قرى ليهم مية واحد وتمانين ألف، وعشرة ليهم مليون وتمنمية ألف. وعشرين ليهم أكتر من مليار مليار. يبقى ابدأ بقاعدة سريعة: روح دايمًا لأقرب قرية لسه مازرتهاش. ودي طريقة جشعة: عمرها ما بتبص قدّام، فآخر حتة في الرجوع غالبًا بتبقى طويلة. ببايثون، خلّي ليستة اسمها route. وطول ما فيه قرى فاضلة، زوّد أقرب واحدة لآخر محطة. وبعدين حسّنه بطريقة «تو أوبت». اختار طريقين، واعكس الحتة اللي بينهم، وخلّي التغيير لو الطريق قصر. وأي تقاطع في الطريق معناه دايمًا إن فيه تبديل يقدر يقصّره. في الكود، التبديل حتة من الليستة بتتقلب. جرّب كل اتنين نقط قطع، وخلّي أي تغيير يفيد، ووقّف لما مفيش حاجة تفيد. سؤال سريع! «تو أوبت» وقفت، بس المعمل بيقول فيه طريق أقصر. إزاي ده يحصل؟ مفيش تبديل واحد بيفيد، بس تغيير أكبر كان هيفيد. «تو أوبت» لقت أحسن حاجة محليًا، مش أحسن حاجة خالص. في المعمل، تلات تبديلات بينزّلوا أربعة وتلاتين كيلو وست أعشار بتوع أقرب جار لتمانية وعشرين وست أعشار، وده أحسن طريق. وفي خرايط جديدة، بتقف قبله. على الخريطة الصغيرة اللي في الكود بتاعك، أقرب جار بيمشي تسعتاشر كيلو. وأحسن طريق ستاشر. بص بقى على الراكبين: القرية اللي بتركب الأول بتلف الطريق كله تقريبًا. في أحسن طريق، لو مشيت في اتجاه، أطول مشوار خمستاشر كيلو. ولو مشيت في الاتجاه التاني، أربعتاشر. نفس الطريق، ونفس الطول، ومشوار أعدل، يبقى بص على الاتجاه كمان. في التطبيق، افتح «طريق حافلة المدرسة». دوس «شغّل»، واتفرج على الخطوتين. وبعدين دوس «خريطة جديدة» لحد ما «تو أوبت» تقف قبل الأحسن. دورك. فيه طريقين ليهم نفس الطول. في واحد، قرية بتركب خمسين دقيقة، وفي التاني، محدش بيركب أكتر من تلاتين. المدرسة تختار أنهي واحد؟ اللي محدش فيه بيركب أكتر من تلاتين: نفس التكلفة، ومشوار أعدل. افتكر: ابني الطريق بسرعة بأقرب جار، وحسّنه بـ«تو أوبت»، ودي ممكن تقف عند أحسن حاجة محليًا. واحكم على الطريق بطوله وبأطول مشوار فيه. جرّبها بنفسك: ارسم خريطة لخمس أماكن بتروحها في الأسبوع، وعليها مسافات تقريبية. خطّط لفّة بطريقة أقرب جار، وبعدين دوّر على تقاطع وبدّله."
+          },
+          "sources": {
+            "en": "/media/opt-s3-3/video-en.mp4",
+            "ar": "/media/opt-s3-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/opt-s3-3/captions-en.vtt",
+            "ar": "/media/opt-s3-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/opt-s3-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/opt-s3-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/opt-s3-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/opt-s3-3/light/audio/en.opus",
+              "manifest.json": "/media/opt-s3-3/light/manifest.json",
+              "scenes.json": "/media/opt-s3-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/opt-s3-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/opt-s3-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 477,
+              "ar": 461
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Build it fast, improve it, judge it",
+            "ar": "ابنِه بسرعة، وحسّنه، واحكم عليه"
+          },
+          "body": {
+            "en": "A bus that leaves the school, visits every village once and comes back is solving the travelling salesperson problem. It is hard because routes multiply: with n villages there are n! ÷ 2 round trips. Nine villages give 181,440; ten give 1,814,400, ten times as many; twenty give about 1.2 × 10¹⁸, more than a billion billion. No computer checks them all for a real bus network.\n\nSo planners build a route quickly and then improve it. Nearest neighbour is a greedy rule: from wherever the bus is, go to the closest village not yet visited. In Python, keep a list route that starts at 0 (the school); while it is shorter than the number of places, look at the distances from the last stop, d[route[-1]], and append the closest place not yet in route. The length is the sum of every leg, including the drive back to the school: zip(route, route[1:] + [0]) pairs each stop with the next.\n\n2-opt then improves the route. Pick two cut points i and j, reverse the stretch between them (list(reversed(route[i:j + 1]))), and keep the new route if it is shorter. When two roads in a route cross, such a swap always shortens it. Repeat until no swap helps. In the lab, three swaps take nearest neighbour’s 34.6 km down to 28.6 km, the best route; but 2-opt can stop at a local best, where no single swap helps although a shorter route exists. The plain Python in this lesson runs the same in Colab, and Google’s OR-Tools has a routing library for real fleets.\n\nOn the small map in your code, nearest neighbour drives 19 km and the best route is 16. Length is not the only thing to judge. The children picked up first ride almost the whole route back to school. On the best route driven one way, the first village rides 15 km; driven the other way, the first village rides 14. Same road, same fuel, a fairer longest ride. When two routes cost about the same, let the longest ride decide, and when they don’t, agree a limit on the longest ride with the families and find the shortest route that keeps it.",
+            "ar": "الحافلة التي تغادر المدرسة، وتزور كل قرية مرة واحدة، ثم تعود، تحلّ مسألة البائع المتجوّل. وهي صعبة لأن الطرق تتكاثر: فمع n من القرى هناك ⁦n! ÷ 2⁩ من الرحلات. تسع قرى تعطي ١٨١٤٤٠، وعشر تعطي ١٨١٤٤٠٠، أي عشرة أضعاف، وعشرون تعطي نحو ١٫٢ × ١٠¹⁸، أي أكثر من مليار مليار. ولا يفحصها أي حاسوب كلها لشبكة حافلات حقيقية.\n\nلذلك يبني المخطّطون طريقًا بسرعة ثم يحسّنونه. و«أقرب جار» قاعدة جشعة: من أي مكان تكون فيه الحافلة، اذهب إلى أقرب قرية لم تُزَر بعد. وفي بايثون، احتفظ بقائمة route تبدأ بـ 0 (المدرسة)، وما دامت أقصر من عدد الأماكن، انظر إلى المسافات من آخر محطة، ⁦d[route[-1]]⁩، وأضف أقرب مكان ليس في route بعد. والطول هو مجموع كل المراحل، ومعها العودة إلى المدرسة: فـ ⁦zip(route, route[1:] + [0])⁩ يقرن كل محطة بالتي تليها.\n\nثم تحسّن طريقة ⁦2-opt⁩ الطريق. اختر نقطتَي قطع i وj، واعكس المقطع الذي بينهما (⁦list(reversed(route[i:j + 1]))⁩، واحتفظ بالطريق الجديد إذا كان أقصر. وحين يتقاطع طريقان في المسار، فإن تبديلًا كهذا يقصّره دائمًا. وكرّر حتى لا يفيد أي تبديل. وفي المختبر تُنزل ثلاثة تبديلات طريقَ «أقرب جار» من ٣٤٫٦ كم إلى ٢٨٫٦ كم، وهو أفضل طريق، لكن ⁦2-opt⁩ قد تتوقّف عند أفضل محلي، حيث لا يفيد أي تبديل واحد مع أن طريقًا أقصر موجود. وبرنامج بايثون العادي في هذا الدرس يعمل بالطريقة نفسها في Colab، ولأدوات OR-Tools من Google مكتبة لتخطيط طرق الأساطيل الحقيقية.\n\nفي الخريطة الصغيرة في برنامجك تقطع «أقرب جار» ١٩ كم، وأفضل طريق ١٦. والطول ليس الشيء الوحيد الذي نحكم به. فالأطفال الذين يركبون أولًا يبقون في الحافلة طوال الطريق تقريبًا حتى المدرسة. وفي أفضل طريق، إذا سارت الحافلة في اتجاه ركبت القرية الأولى ١٥ كم، وإذا سارت في الاتجاه الآخر ركبت القرية الأولى ١٤. الطريق نفسه، والوقود نفسه، وأطول رحلة أعدل. وحين تتقارب كلفة طريقين، دع أطول رحلة تحسم، وحين لا تتقارب، اتفق مع الأسر على حدّ لأطول رحلة، وجِد أقصر طريق يلتزم به."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Travelling salesperson problem",
+                "ar": "مسألة البائع المتجوّل"
+              },
+              "def": {
+                "en": "The shortest round trip that visits every place once. The number of routes explodes as places are added.",
+                "ar": "أقصر رحلة ذهاب وإياب تزور كل مكان مرة واحدة. وعدد الطرق ينفجر كلما أُضيفت أماكن."
+              }
+            },
+            {
+              "term": {
+                "en": "Nearest neighbour",
+                "ar": "أقرب جار"
+              },
+              "def": {
+                "en": "A greedy rule: always go to the closest place not yet visited.",
+                "ar": "قاعدة جشعة: اذهب دائمًا إلى أقرب مكان لم تزره بعد."
+              }
+            },
+            {
+              "term": {
+                "en": "2-opt",
+                "ar": "طريقة ⁦2-opt⁩"
+              },
+              "def": {
+                "en": "Reverse the stretch between two cut points and keep it if the route gets shorter; repeat until nothing helps.",
+                "ar": "اعكس المقطع بين نقطتَي قطع واحتفظ به إذا قصر الطريق، وكرّر حتى لا يفيد شيء."
+              }
+            },
+            {
+              "term": {
+                "en": "Local best",
+                "ar": "الأفضل المحلي"
+              },
+              "def": {
+                "en": "A plan no single small change can improve, even though a better plan may exist.",
+                "ar": "خطة لا يحسّنها أي تغيير صغير واحد، مع أن خطة أفضل قد تكون موجودة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Two routes have the same length. On one a village rides 50 minutes; on the other nobody rides more than 30. Which should the school choose?",
+            "ar": "طريقان لهما الطول نفسه. في أحدهما تركب قرية ٥٠ دقيقة، وفي الآخر لا يركب أحد أكثر من ٣٠. أيّهما تختار المدرسة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Either: they cost the same",
+                "ar": "أيّهما: فالكلفة واحدة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The one where nobody rides more than 30 minutes",
+                "ar": "الذي لا يركب فيه أحد أكثر من ٣٠ دقيقة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Whichever the driver prefers",
+                "ar": "الذي يفضّله السائق"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "When two plans cost the same, a second goal can decide between them. Here the longest ride is that goal: a route where nobody rides more than thirty minutes is fairer at no extra cost. Even the direction of the same loop can change the longest ride.",
+            "ar": "حين تتساوى كلفة خطتين، يمكن لهدف ثانٍ أن يحسم بينهما. وأطول رحلة هي ذلك الهدف هنا: فالطريق الذي لا يركب فيه أحد أكثر من ثلاثين دقيقة أعدل دون كلفة إضافية. بل إن اتجاه الدورة نفسها قد يغيّر أطول رحلة."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p2",
+          "prompt": {
+            "en": "When two roads in a bus route cross each other, a 2-opt swap can always make the route shorter.",
+            "ar": "حين يتقاطع طريقان في مسار الحافلة، يستطيع تبديل ⁦2-opt⁩ دائمًا أن يجعل الطريق أقصر."
+          },
+          "answer": true,
+          "explain": {
+            "en": "Replacing the two crossing roads by the two that don’t cross (reversing the stretch between them) is always shorter on a flat map, like the two diagonals of a shape against two of its sides. That’s why 2-opt untangles routes.",
+            "ar": "استبدال الطريقين المتقاطعين بالطريقين اللذين لا يتقاطعان (بعكس المقطع الذي بينهما) أقصر دائمًا على خريطة مستوية، مثل قطرَي شكل مقارنةً بضلعين من أضلاعه. ولهذا تفكّ ⁦2-opt⁩ تشابك الطرق."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "p3",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "route = [0, 1, 2, 3, 4]\ni, j = 1, 3\nmid = list(reversed(route[i:j + 1]))\nprint(route[:i] + mid + route[j + 1:])"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "[0, 3, 2, 1, 4]",
+                "ar": "⁦[0, 3, 2, 1, 4]⁩"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "[4, 3, 2, 1, 0]",
+                "ar": "⁦[4, 3, 2, 1, 0]⁩"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "[0, 1, 3, 2, 4]",
+                "ar": "⁦[0, 1, 3, 2, 4]⁩"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "route[1:4] is [1, 2, 3]; reversed it is [3, 2, 1]. The school (0) stays first and village 4 stays last: [0, 3, 2, 1, 4]. That is one 2-opt swap: the roads 0–1 and 3–4 become 0–3 and 1–4.",
+            "ar": "⁦route[1:4]⁩ هي ⁦[1, 2, 3]⁩، ومعكوسها ⁦[3, 2, 1]⁩. وتبقى المدرسة (0) أولًا والقرية 4 أخيرًا: ⁦[0, 3, 2, 1, 4]⁩. وهذا تبديل ⁦2-opt⁩ واحد: يصبح الطريقان 0–1 و3–4 هما 0–3 و1–4."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "tool": "routes",
+          "prompt": {
+            "en": "Try it: in “The school bus route”, press Run and watch nearest neighbour (34.6 km), then the 2-opt swaps. Press “Find the best route” to compare. Then press “New map” several times and run again: find a map where 2-opt stops before the best route, and describe the change it would need.",
+            "ar": "جرّب: في «طريق حافلة المدرسة» اضغط «شغّل» وشاهد «أقرب جار» (٣٤٫٦ كم)، ثم تبديلات ⁦2-opt⁩. واضغط «جِد أفضل طريق» لتقارن. ثم اضغط «خريطة جديدة» عدة مرات وشغّل من جديد: جِد خريطة تتوقّف فيها ⁦2-opt⁩ قبل أفضل طريق، وصِف التغيير الذي كانت ستحتاج إليه."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "d[a][b] is the distance in km between places a and b; 0 is the school. Write nearest neighbour: keep adding the closest place not yet in route until all 5 are in. The program prints the route, its length (with the drive back) and how far the first village rides.",
+            "ar": "⁦d[a][b]⁩ هي المسافة بالكيلومتر بين المكانين a وb، و0 هو المدرسة. اكتب «أقرب جار»: أضف كل مرة أقرب مكان ليس في route بعد، حتى تدخل الأماكن الخمسة كلها. ويطبع البرنامج الطريق، وطوله (مع العودة)، والمسافة التي تركبها القرية الأولى."
+          },
+          "starter": "d = [[0, 7, 1, 5, 2],\n     [7, 0, 5, 2, 8],\n     [1, 5, 0, 4, 3],\n     [5, 2, 4, 0, 6],\n     [2, 8, 3, 6, 0]]\nroute = [0]\n# add the closest place not yet in route,\n# until all 5 places are in\n\nback = route[1:] + [0]\nkm = sum(d[a][b] for a, b in zip(route, back))\nprint(route, km, km - d[0][route[1]])\n",
+          "solution": "d = [[0, 7, 1, 5, 2],\n     [7, 0, 5, 2, 8],\n     [1, 5, 0, 4, 3],\n     [5, 2, 4, 0, 6],\n     [2, 8, 3, 6, 0]]\nroute = [0]\nwhile len(route) < 5:\n    left = [v for v in range(5) if v not in route]\n    route.append(min(left, key=lambda v: d[route[-1]][v]))\nback = route[1:] + [0]\nkm = sum(d[a][b] for a, b in zip(route, back))\nprint(route, km, km - d[0][route[1]])\n",
+          "tests": [
+            {
+              "output": "[0, 2, 4, 3, 1] 19 18",
+              "check": "assert sorted(route) == [0, 1, 2, 3, 4], \"Every place must be in the route once\"",
+              "hint": {
+                "en": "From the school the closest place is 2 (1 km); from 2 it is 4 (3 km). Always the closest one still left.",
+                "ar": "من المدرسة أقرب مكان هو 2 (١ كم)، ومن 2 هو 4 (٣ كم). دائمًا أقرب مكان ما زال باقيًا."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "while len(route) < 5:",
+              "ar": "⁦while len(route) < 5:⁩"
+            },
+            {
+              "en": "left = the places not yet in route",
+              "ar": "⁦left⁩ = الأماكن التي ليست في route بعد"
+            },
+            {
+              "en": "route.append(min(left, key=lambda v: d[route[-1]][v]))",
+              "ar": "⁦route.append(min(left, key=lambda v: d[route[-1]][v]))⁩"
+            }
+          ],
+          "explain": {
+            "en": "Nearest neighbour goes 0 → 2 → 4 → 3 → 1 and back: 19 km, and the first village (2) rides 18 of them because it is picked up after only 1 km. The best route is 16 km, and driven the right way its longest ride is 14. The quick rule is fast but long, and hard on the first stop. This plain Python runs the same in Colab.",
+            "ar": "تمشي «أقرب جار» 0 ← 2 ← 4 ← 3 ← 1 ثم تعود: ١٩ كم، وتركب القرية الأولى (2) ١٨ كم منها لأنها تُؤخذ بعد ١ كم فقط. وأفضل طريق ١٦ كم، وإذا سارت فيه الحافلة في الاتجاه المناسب كانت أطول رحلة ١٤. فالقاعدة السريعة سريعة لكنها طويلة، وقاسية على أول محطة. وبرنامج بايثون العادي هذا يعمل بالطريقة نفسها في Colab."
+          }
+        },
+        {
+          "type": "parsons",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "Put the lines in order: a function that returns a route’s length, including the drive back to the start.",
+            "ar": "رتّب الأسطر: دالة تُرجع طول الطريق، مع العودة إلى نقطة البداية."
+          },
+          "lines": [
+            "def length(route):",
+            "    km = 0",
+            "    for i in range(len(route)):",
+            "        a = route[i]",
+            "        b = route[(i + 1) % len(route)]",
+            "        km += d[a][b]",
+            "    return km"
+          ],
+          "distractors": [
+            "        b = route[i + 1]"
+          ],
+          "explain": {
+            "en": "The % len(route) makes the last stop’s next place the first one, so the drive back is counted. route[i + 1] would run off the end of the list on the last stop.",
+            "ar": "يجعل % ⁦len(route)⁩ المكانَ التالي لآخر محطة هو المكانَ الأول، فتُحسب العودة. أما ⁦route[i + 1]⁩ فتتجاوز نهاية القائمة عند آخر محطة."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you say?",
+            "ar": "ماذا تقول؟"
+          },
+          "who": {
+            "en": "Your student council",
+            "ar": "مجلس الطلاب في مدرستك"
+          },
+          "initial": {
+            "en": "S",
+            "ar": "م"
+          },
+          "situation": {
+            "en": "To save fuel, a council member suggests the bus skips the smallest village, where only two students live. They would walk 3 km to the next stop, on a road with no pavement.",
+            "ar": "لتوفير الوقود، يقترح عضو في المجلس أن تتخطّى الحافلة أصغر قرية، حيث يسكن طالبان فقط. وسيمشيان ٣ كم إلى المحطة التالية، على طريق بلا رصيف."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Let’s work out what the detour really costs, compare it with the walk, and ask the two families.”",
+                "ar": "«لنحسب ما يكلّفه الالتفاف فعلًا، ونقارنه بالمشي، ونسأل الأسرتين.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Your route program can give the extra kilometres in a minute. Seen next to a 3 km walk on a dangerous road, the choice is clearer, and the families have a say.",
+                "ar": "يستطيع برنامج الطرق الذي كتبته أن يعطي الكيلومترات الإضافية في دقيقة. وحين تُوضع بجانب مشي ٣ كم على طريق خطر يصبح الاختيار أوضح، ويكون للأسرتين رأي."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Skip it: two students against fuel for everyone.”",
+                "ar": "«تخطّوها: طالبان مقابل وقود للجميع.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "The total looks better, but two students now carry all the cost, and a risky walk. A shortest route that leaves people out isn’t the same problem any more.",
+                "ar": "يبدو المجموع أفضل، لكن طالبين صارا يتحمّلان الكلفة كلها، ومعها مشي خطر. والطريق الأقصر الذي يستبعد أناسًا لم يعد حلًّا للمسألة نفسها."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Let the two students decide on their own.”",
+                "ar": "«دعوا الطالبين يقرّران وحدهما.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Their voice matters, but the bus serves everyone and safety is the school’s job too. Decide together, with the numbers on the table.",
+                "ar": "صوتهما مهم، لكن الحافلة تخدم الجميع، والسلامة مسؤولية المدرسة أيضًا. قرّروا معًا، والأرقام أمامكم."
+              }
+            }
+          ],
+          "explain": {
+            "en": "Put the real cost of the detour beside the risk of the walk, and ask the families.",
+            "ar": "ضع الكلفة الحقيقية للالتفاف بجانب خطر المشي، واسأل الأسر."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of a route you take often. Is it the shortest, the safest or the one that suits others? What would you change, and who would that affect?",
+            "ar": "فكّر في طريق تسلكه كثيرًا. هل هو الأقصر، أم الأكثر أمانًا، أم الذي يناسب الآخرين؟ ما الذي ستغيّره، ومَن سيتأثر بذلك؟"
+          },
+          "placeholder": {
+            "en": "For example: “I go round by the market, not the river path. It’s longer, but there are people and lights.”",
+            "ar": "مثلًا: «ألتفّ من جهة السوق، لا من ممر النهر. هو أطول، لكن فيه ناس وأضواء.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A fairer round trip",
+            "ar": "مشروع: رحلة ذهاب وإياب أعدل"
+          },
+          "task": {
+            "en": "Choose five or six places around your home or school and estimate the distance between each pair (a table like d). Plan a round trip from one place by nearest neighbour, then improve it with 2-opt on paper or with your program. For the final route, work out how far someone picked up at each stop would ride, in both directions, and choose the direction where the longest ride is shortest.",
+            "ar": "اختر خمسة أو ستة أماكن حول بيتك أو مدرستك، وقدّر المسافة بين كل زوج منها (جدول مثل d). خطّط رحلة ذهاب وإياب من أحدها بقاعدة «أقرب جار»، ثم حسّنها بطريقة ⁦2-opt⁩ على الورق أو ببرنامجك. واحسب للطريق النهائي المسافة التي يركبها من يُؤخذ من كل محطة، في الاتجاهين، واختر الاتجاه الذي تكون فيه أطول رحلة هي الأقصر."
+          },
+          "deliverable": {
+            "en": "Your distance table (made-up names are fine), the route before and after 2-opt with their lengths, and the longest ride in each direction.",
+            "ar": "جدول مسافاتك (الأسماء الخيالية مقبولة)، والطريق قبل ⁦2-opt⁩ وبعدها مع طولَيهما، وأطول رحلة في كل اتجاه."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: build a route with nearest neighbour and compute its length.",
+                "ar": "أستطيع: بناء طريق بقاعدة «أقرب جار» وحساب طوله."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: improve a route with a 2-opt swap and explain why it is shorter.",
+                "ar": "أستطيع: تحسين طريق بتبديل ⁦2-opt⁩ وشرح لماذا صار أقصر."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: judge a route by its longest ride as well as its length.",
+                "ar": "أستطيع: الحكم على الطريق بأطول رحلة فيه إلى جانب طوله."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "The bus route",
+            "ar": "طريق الحافلة"
+          },
+          "narration": {
+            "en": "Is this really the shortest route, and why does the same village always get on first?",
+            "ar": "هل هذا هو أقصر طريق فعلًا، ولماذا تركب القرية نفسها أولًا دائمًا؟"
+          },
+          "note": {
+            "en": "Optimization · Level 3 · Lesson 3",
+            "ar": "الحلول المثلى، المستوى ٣، الدرس ٣"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Explain why the number of routes explodes.",
+              "Write nearest neighbour in Python and improve a route with 2-opt.",
+              "Judge a route by its length and its longest ride."
+            ],
+            "ar": [
+              "تشرح لماذا ينفجر عدد الطرق.",
+              "تكتب «أقرب جار» في بايثون وتحسّن طريقًا بطريقة ⁦2-opt⁩.",
+              "تحكم على الطريق بطوله وبأطول رحلة فيه."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "n! ÷ 2 routes",
+              "Nearest neighbour: fast, greedy",
+              "2-opt: reverse a stretch",
+              "A local best",
+              "Longest ride, both directions"
+            ],
+            "ar": [
+              "⁦n! ÷ 2⁩ من الطرق",
+              "أقرب جار: سريعة وجشعة",
+              "⁦2-opt⁩: اعكس مقطعًا",
+              "أفضل محلي",
+              "أطول رحلة، في الاتجاهين"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: A fairer round trip",
+            "ar": "النشاط: رحلة ذهاب وإياب أعدل"
+          },
+          "bullets": {
+            "en": [
+              "Map (5 min): Five places and their distances.",
+              "Build (5 min): Nearest neighbour; add it up.",
+              "Improve (5 min): Find a crossing; swap it.",
+              "Ride (5 min): Longest ride, both directions."
+            ],
+            "ar": [
+              "الخريطة (٥ دقائق): خمسة أماكن ومسافاتها.",
+              "البناء (٥ دقائق): «أقرب جار»، ثم اجمع.",
+              "التحسين (٥ دقائق): جِد تقاطعًا وبدّله.",
+              "الرحلة (٥ دقائق): أطول رحلة في الاتجاهين."
+            ]
+          },
+          "details": {
+            "en": [
+              "Map (5 min): Draw five places as dots and write a rough distance between every pair, in a table like d.",
+              "Build (5 min): From your starting place, always go to the closest place not yet visited, then back. Draw the route and add up its length.",
+              "Improve (5 min): If two roads cross, reverse the stretch between them and add up again. Repeat while it helps.",
+              "Ride (5 min): For each stop, add the distance from there to the end. Do it for both directions and choose the one with the shorter longest ride."
+            ],
+            "ar": [
+              "الخريطة (٥ دقائق): ارسم خمسة أماكن نقاطًا، واكتب مسافة تقريبية بين كل زوج منها في جدول مثل d.",
+              "البناء (٥ دقائق): من مكان البداية، اذهب دائمًا إلى أقرب مكان لم تزره، ثم عُد. ارسم الطريق واجمع طوله.",
+              "التحسين (٥ دقائق): إن تقاطع طريقان، فاعكس المقطع الذي بينهما واجمع من جديد. وكرّر ما دام ذلك يفيد.",
+              "الرحلة (٥ دقائق): لكل محطة، اجمع المسافة منها حتى النهاية. افعل ذلك في الاتجاهين، واختر الاتجاه الذي تكون فيه أطول رحلة أقصر."
+            ]
+          },
+          "note": {
+            "en": "Distances can be minutes of walking. Use made-up names if you prefer not to show real places.",
+            "ar": "يمكن أن تكون المسافات دقائق مشي. واستعمل أسماء خيالية إن فضّلت ألا تُظهر أماكن حقيقية."
+          },
+          "narration": {
+            "en": "Shortest for the bus, and fair for the riders.",
+            "ar": "الأقصر للحافلة، والأعدل للركّاب."
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why does nearest neighbour often end with a long leg?",
+              "How can 2-opt stop before the best route?",
+              "Should the bus ever skip a stop to save fuel?"
+            ],
+            "ar": [
+              "لماذا تنتهي «أقرب جار» كثيرًا بمرحلة طويلة؟",
+              "كيف يمكن أن تتوقّف ⁦2-opt⁩ قبل أفضل طريق؟",
+              "هل يجوز أن تتخطّى الحافلة محطة لتوفير الوقود؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Draw a route with a crossing + the route after one 2-opt swap."
+            ],
+            "ar": [
+              "ارسم طريقًا فيه تقاطع + الطريق بعد تبديل ⁦2-opt⁩ واحد."
+            ]
+          },
+          "narration": {
+            "en": "Build it fast, improve it, and check who rides longest.",
+            "ar": "ابنِه بسرعة، وحسّنه، وانظر مَن يركب أطول."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: The bus route",
+            "ar": "شرائح للمراجعة: طريق الحافلة"
+          },
+          "pages": 6,
+          "base": "opt-s3-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: The bus route",
+            "ar": "ورقة النشاط: طريق الحافلة"
+          },
+          "pages": 3,
+          "base": "opt-s3-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/opt-s3-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "OPT.3",
+        "OPT.4",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "opt-s3-4",
+      "title": {
+        "en": "Timetables with CP-SAT",
+        "ar": "الجداول باستخدام CP-SAT"
+      },
+      "minutes": 16,
+      "tryTomorrow": {
+        "en": "Model a week of your own (your study plan, or your family’s chores) with the same few lines: one variable per task for its day, a rule for anything that can’t share a day, and any fixed days. Run it, look at who gets the worst slot, then add a rule to share it out and run it again.",
+        "ar": "صِغ أسبوعًا من حياتك في نموذج (خطة مذاكرتك، أو أعمال البيت في أسرتك) بالأسطر القليلة نفسها: متغيّر لكل مهمة يمثّل يومها، وقاعدة لكل ما لا يجوز أن يشترك في يوم، وأي أيام ثابتة. شغّله، وانظر مَن يحصل على أسوأ موعد، ثم أضف قاعدة توزّعه وشغّله من جديد."
+      },
+      "materials": {
+        "en": [
+          "Paper and a pen",
+          "A list of clubs, tasks or subjects and who takes part in each",
+          "Optional: a phone with Darsi to run your model"
+        ],
+        "ar": [
+          "ورقة وقلم",
+          "قائمة بالنوادي أو المهام أو المواد ومَن يشارك في كلٍّ منها",
+          "اختياري: هاتف عليه تطبيق «درسي» لتشغيل نموذجك"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Timetables with CP-SAT",
+            "ar": "الجداول باستخدام CP-SAT"
+          },
+          "src": null,
+          "duration": 196,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Four clubs, three afternoons",
+                "ar": "أربعة نوادٍ وثلاثة أيام"
+              }
+            },
+            {
+              "at": 21.7,
+              "atBy": {
+                "en": 21.7,
+                "ar": 18.3
+              },
+              "label": {
+                "en": "The model",
+                "ar": "النموذج"
+              }
+            },
+            {
+              "at": 44.6,
+              "atBy": {
+                "en": 44.6,
+                "ar": 40.7
+              },
+              "label": {
+                "en": "How the solver searches",
+                "ar": "كيف يبحث برنامج الحل"
+              }
+            },
+            {
+              "at": 107.6,
+              "atBy": {
+                "en": 107.6,
+                "ar": 101
+              },
+              "label": {
+                "en": "Who gets the bad slot?",
+                "ar": "مَن يحصل على الموعد السيئ؟"
+              }
+            },
+            {
+              "at": 161.4,
+              "atBy": {
+                "en": 161.4,
+                "ar": 152.6
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "The club model has no goal, and the solver says OPTIMAL. What does that mean?",
+                "ar": "ليس لنموذج النوادي هدف، ويقول برنامج الحل OPTIMAL. ماذا يعني ذلك؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "It found the best timetable for everyone",
+                    "ar": "وجد أفضل جدول للجميع"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "It found a timetable that keeps every rule",
+                    "ar": "وجد جدولًا يلتزم بكل القواعد"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "It tried all 81 plans",
+                    "ar": "جرّب الخطط الـ ٨١ كلها"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Without a goal there is nothing to make best, so OPTIMAL only says the solver found a timetable that keeps every rule you wrote. It didn’t try all 81 plans (it crossed most out), and it knows nothing about what students would like.",
+                "ar": "من دون هدف لا يوجد ما يُجعل أفضل، فلا تقول OPTIMAL إلا إن برنامج الحل وجد جدولًا يلتزم بكل القواعد التي كتبتها. ولم يجرّب الخطط الـ ٨١ كلها (فقد شطب معظمها)، ولا يعرف شيئًا عمّا يحبّه الطلاب."
+              }
+            },
+            "at": 107.55,
+            "atBy": {
+              "en": 107.55,
+              "ar": 101.01
+            }
+          },
+          "transcript": {
+            "en": "Four clubs, three afternoons, and one student who’s in three of them. Every term we argue about which club meets when. This term, let’s let a solver search. Today: timetables with CP-SAT, from Google’s OR-Tools. Each club gets a variable: its day, from one to three. Each student’s clubs must all be on different days. And the football field is busy on day three. That’s the whole model. In Python, that’s a dictionary of day variables, one all-different rule per student, and one line for the field. The solver doesn’t try all eighty-one plans. It crosses out days that can’t work, guesses only when it’s stuck, and undoes any guess that hits a dead end. That’s propagation and search. In the lab’s school timetable, propagation and search need eight guesses. Plain backtracking needs three hundred and eighty-nine. Add one rule, and the search needs only two. Sometimes the answer is INFEASIBLE, and that’s a proof, not a failure. Sara is in chess, drama and coding, so she needs three different days. Add a rule that no club meets on day three, and only two days are left. The solver proves no timetable exists. Quick check! Our club model has no goal, and the solver says OPTIMAL. What does OPTIMAL mean here? With no goal, OPTIMAL just means a timetable that keeps every rule. Not the fairest, and not the one students would pick. Only what you wrote down. So look at who carries the cost. If drama always gets the last afternoon before the holiday, the same students always miss it. Write fairness down, as a rule like rotating days each term, and solve again. In the app, open “Build the timetable”. Press One step to watch propagation, then Run. Tick the extra rules one at a time, and watch the guesses fall, then the proof. Your turn. Your club model says INFEASIBLE. What should you do first? Find the rules that clash, and ask the people involved which one can bend. Remember: a variable for each choice, a line for each rule, and the solver crosses out and searches. INFEASIBLE is a proof. And OPTIMAL only keeps the rules you wrote. Try it yourself: model your study week, or your family’s chores, with the same few lines. Who gets the worst slot? Add a rule to share it, and solve again.",
+            "ar": "أربع نوادي، وتلات أيام بعد الضهر، وطالبة مشتركة في تلاتة منهم. كل ترم بنتخانق مين النادي اللي يتقابل إمتى. الترم ده، خلّي السولفر هو اللي يدوّر. النهارده: الجداول بـ«سي بي سات»، من «أو آر تولز» بتاعة جوجل. كل نادي بياخد متغيّر: يومه، من واحد لتلاتة. ونوادي كل طالب لازم تبقى كلها في أيام مختلفة. وملعب الكورة مشغول في اليوم التالت. وده النموذج كله. ببايثون، ده قاموس فيه متغيّرات الأيام، وقاعدة «كلهم مختلفين» لكل طالب، وسطر واحد للملعب. السولفر مش بيجرّب الواحد وتمانين خطة كلهم. بيشطب الأيام اللي مستحيل تنفع، ومايخمّنش غير لما يقف، وبيرجع في أي تخمين يوصّله لطريق مسدود. ده اسمه الانتشار والبحث. في جدول المدرسة اللي في المعمل، الانتشار والبحث محتاجين تمن تخمينات. والرجوع البسيط محتاج تلتمية تسعة وتمانين. زوّد قاعدة واحدة، والبحث يحتاج اتنين بس. ساعات الإجابة بتبقى «إنفيزيبل»، ودي إثبات مش فشل. سارة في الشطرنج والمسرح والبرمجة، يبقى محتاجة تلات أيام مختلفة. زوّد قاعدة إن مفيش نادي يتقابل في اليوم التالت، يفضل يومين بس. والسولفر بيثبت إن مفيش جدول ينفع. سؤال سريع! نموذج النوادي بتاعنا مفيهوش هدف، والسولفر قال «أوبتيمال». «أوبتيمال» هنا معناها إيه؟ من غير هدف، «أوبتيمال» معناها جدول بيلتزم بكل القواعد وبس. مش الأعدل، ومش اللي الطلاب كانوا هيختاروه. بس اللي إنت كتبته. يبقى بص مين اللي شايل التكلفة. لو المسرح دايمًا واخد آخر يوم قبل الإجازة، نفس الطلاب دايمًا بيفوّتوه. اكتب العدل، كقاعدة زي إن الأيام تلف كل ترم، وحلّ تاني. في التطبيق، افتح «اصنع الجدول المدرسي». دوس «خطوة واحدة» علشان تتفرج على الانتشار، وبعدين «شغّل». فعّل القواعد الزيادة واحدة واحدة، واتفرج على التخمينات وهي بتقل، وبعدين على الإثبات. دورك. نموذج النوادي بتاعك قال «إنفيزيبل». تعمل إيه الأول؟ دوّر على القواعد المتعارضة، واسأل الناس اللي ليهم دعوة أنهي قاعدة ممكن تتساهل فيها. افتكر: متغيّر لكل اختيار، وسطر لكل قاعدة، والسولفر بيشطب ويدوّر. و«إنفيزيبل» إثبات. و«أوبتيمال» بتلتزم بس بالقواعد اللي إنت كتبتها. جرّبها بنفسك: اعمل نموذج لأسبوع مذاكرتك، أو لشغل البيت عندكم، بنفس السطور القليلة دي. مين بياخد أوحش ميعاد؟ زوّد قاعدة تقسّمه، وحلّ تاني."
+          },
+          "sources": {
+            "en": "/media/opt-s3-4/video-en.mp4",
+            "ar": "/media/opt-s3-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/opt-s3-4/captions-en.vtt",
+            "ar": "/media/opt-s3-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/opt-s3-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/opt-s3-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/opt-s3-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/opt-s3-4/light/audio/en.opus",
+              "manifest.json": "/media/opt-s3-4/light/manifest.json",
+              "scenes.json": "/media/opt-s3-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/opt-s3-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/opt-s3-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 430,
+              "ar": 413
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Say the rules; let the solver search",
+            "ar": "قل القواعد، ودع برنامج الحل يبحث"
+          },
+          "body": {
+            "en": "Four after-school clubs (chess, football, drama and coding) must each meet on one of three afternoons. Some students belong to several clubs, so those clubs can’t share a day, and the football field is busy on day 3. Instead of writing a search yourself, you can describe the problem as a model and let a solver find a timetable. Google’s OR-Tools includes CP-SAT, a constraint solver; Darsi runs a small copy of it on your phone, and the same program runs on the real one on a computer or in Colab.\n\nThe model has three parts. Each club gets a variable, its day, with a domain of 1 to 3: day = {c: m.new_int_var(1, 3, c) for c in clubs}. Each student’s clubs must all be on different days: one m.add_all_different([...]) per student. And the field gives one more line: m.add(day[\"football\"] <= 2), with the expression on the left of the comparison. Then solver.solve(m) returns a status, and solver.value(day[c]) gives each club’s day.\n\nThe solver does not try all 3 × 3 × 3 × 3 = 81 plans. It propagates: it crosses out days that can’t work (if Sara’s chess is on day 1, her drama and coding can’t be). When nothing more can be crossed out, it guesses a day for the club with the fewest choices left, propagates again, and undoes any guess that leads to a dead end. In the lab’s school timetable, that takes 8 guesses where plain backtracking needs 389; one more rule brings it down to 2.\n\nRead the status carefully. With no goal, OPTIMAL means only that every rule you wrote is kept: not the fairest timetable, and not the one students would choose. INFEASIBLE is a proof that no timetable keeps all the rules: Sara is in three clubs, so she needs three different days, and if you add “no club on day 3” only two are left. Running it again won’t change that; find the rules that clash and decide with the people involved which one can bend.\n\nFinally, ask who carries the cost. If drama always meets on the last afternoon before the holidays, the same students always miss it. Fairness can be written down too: as a rule (rotate the days each term), or as a goal (as few students as possible on their least wanted day), and then solved again.",
+            "ar": "يجب أن يجتمع كلٌّ من أربعة نوادٍ بعد المدرسة (الشطرنج، وكرة القدم، والمسرح، والبرمجة) في واحد من ثلاثة أيام. وبعض الطلاب أعضاء في عدة نوادٍ، فلا يجوز أن تشترك نواديهم في يوم، وملعب كرة القدم مشغول في اليوم ٣. وبدل أن تكتب البحث بنفسك، يمكنك أن تصف المسألة نموذجًا وتدع برنامج حلٍّ يجد الجدول. وتضمّ أدوات OR-Tools من Google برنامج حلّ القيود CP-SAT، ويشغّل «درسي» نسخة صغيرة منه على هاتفك، والبرنامج نفسه يعمل على النسخة الحقيقية في حاسوب أو في Colab.\n\nللنموذج ثلاثة أجزاء. يحصل كل نادٍ على متغيّر هو يومه، ومجاله من ١ إلى ٣: ⁦day = {c: m.new_int_var(1, 3, c) for c in clubs}⁩. ويجب أن تكون نوادي كل طالب في أيام مختلفة كلها: ⁦m.add_all_different([...])⁩ واحدة لكل طالب. ويضيف الملعب سطرًا آخر: ⁦m.add(day[\"football\"] <= 2)⁩، والتعبير على يسار المقارنة. ثم يُرجع ⁦solver.solve(m)⁩ حالة، ويعطي ⁦solver.value(day[c])⁩ يوم كل نادٍ.\n\nلا يجرّب برنامج الحل الخطط كلها، وعددها ٣ × ٣ × ٣ × ٣ = ٨١. فهو يقوم بالانتشار: يشطب الأيام التي لا يمكن أن تنجح (فإن كان شطرنج سارة في اليوم ١، فلا يمكن أن يكون المسرح أو البرمجة فيه). وحين لا يبقى ما يُشطب، يخمّن يومًا للنادي الذي بقيت له أقل الخيارات، ثم ينشر من جديد، ويتراجع عن أي تخمين يؤدي إلى طريق مسدود. وفي جدول المدرسة في المختبر يحتاج ذلك إلى ٨ تخمينات، حيث يحتاج التراجع البسيط إلى ٣٨٩، وقاعدة إضافية واحدة تُنزلها إلى ٢.\n\nاقرأ الحالة بعناية. فمن دون هدف، لا تعني OPTIMAL إلا أن كل قاعدة كتبتها متحقّقة: لا الجدول الأعدل، ولا الجدول الذي كان الطلاب سيختارونه. أما INFEASIBLE فإثبات أنه لا يوجد جدول يلتزم بكل القواعد: فسارة في ثلاثة نوادٍ، فتحتاج إلى ثلاثة أيام مختلفة، وإن أضفت «لا نادي في اليوم ٣» لم يبقَ إلا يومان. وتشغيله من جديد لن يغيّر ذلك، فابحث عن القواعد المتعارضة وقرّر مع المعنيين أيّها يمكن تخفيفه.\n\nوأخيرًا، اسأل: مَن يتحمّل الكلفة؟ فإن اجتمع المسرح دائمًا في آخر يوم قبل الإجازة، فاته الطلاب أنفسهم دائمًا. ويمكن كتابة العدالة أيضًا: قاعدةً (تدوير الأيام كل فصل دراسي)، أو هدفًا (أقل عدد ممكن من الطلاب في أقل الأيام رغبة لديهم)، ثم الحل من جديد."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Domain",
+                "ar": "المجال"
+              },
+              "def": {
+                "en": "The values a variable may take, such as days 1 to 3 for a club.",
+                "ar": "القيم التي يمكن أن يأخذها المتغيّر، مثل الأيام من ١ إلى ٣ للنادي."
+              }
+            },
+            {
+              "term": {
+                "en": "All-different constraint",
+                "ar": "قيد «كلها مختلفة»"
+              },
+              "def": {
+                "en": "A rule that a group of variables must all take different values, such as a student’s clubs on different days.",
+                "ar": "قاعدة تفرض أن تأخذ مجموعة من المتغيّرات قيمًا مختلفة كلها، مثل نوادي الطالب في أيام مختلفة."
+              }
+            },
+            {
+              "term": {
+                "en": "Propagation and search",
+                "ar": "الانتشار والبحث"
+              },
+              "def": {
+                "en": "Crossing out values that can’t work, then guessing only when stuck and undoing dead ends.",
+                "ar": "شطب القيم التي لا يمكن أن تنجح، ثم التخمين عند التوقف فقط والتراجع عن الطرق المسدودة."
+              }
+            },
+            {
+              "term": {
+                "en": "INFEASIBLE",
+                "ar": "INFEASIBLE (لا حل)"
+              },
+              "def": {
+                "en": "A proof that no answer keeps all the rules.",
+                "ar": "إثبات أنه لا توجد إجابة تلتزم بكل القواعد."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Your club model says INFEASIBLE. What should you do first?",
+            "ar": "يقول نموذج النوادي الذي كتبته INFEASIBLE. ماذا تفعل أولًا؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Run it again: it might work next time",
+                "ar": "أشغّله مرة أخرى: فقد ينجح في المرة القادمة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Find which rules clash, and decide with people which can bend",
+                "ar": "أبحث عن القواعد المتعارضة، وأقرّر مع الناس أيّها يمكن تخفيفه"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Delete rules until it works",
+                "ar": "أحذف قواعد حتى يعمل"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "INFEASIBLE is the solver’s proof that no timetable keeps all the rules, so running it again gives the same answer. Find the rules that clash (here, Sara’s three clubs and only two free days), then decide with the people involved which rule to relax, instead of deleting rules at random.",
+            "ar": "INFEASIBLE إثبات من برنامج الحل أنه لا يوجد جدول يلتزم بكل القواعد، فتشغيله من جديد يعطي الإجابة نفسها. ابحث عن القواعد المتعارضة (هنا، نوادي سارة الثلاثة مع يومين فارغين فقط)، ثم قرّر مع المعنيين أيّ قاعدة تخفّفها، بدل أن تحذف القواعد عشوائيًا."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p2",
+          "prompt": {
+            "en": "Which of these can you write as a rule (a constraint) in the club model? Choose all that apply.",
+            "ar": "أيّ مما يلي تستطيع أن تكتبه قاعدةً (قيدًا) في نموذج النوادي؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Sara’s clubs are on different days",
+                "ar": "نوادي سارة في أيام مختلفة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Football is not on day 3",
+                "ar": "كرة القدم ليست في اليوم ٣"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Coding meets before drama",
+                "ar": "تجتمع البرمجة قبل المسرح"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "The timetable everyone likes best",
+                "ar": "الجدول الذي يفضّله الجميع"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "Chess and drama meet on the same day",
+                "ar": "يجتمع الشطرنج والمسرح في اليوم نفسه"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c",
+            "e"
+          ],
+          "explain": {
+            "en": "Each is one line: add_all_different for Sara, day[\"football\"] <= 2, day[\"coding\"] < day[\"drama\"], and day[\"chess\"] == day[\"drama\"]. “What everyone likes best” isn’t a rule: you would need people’s preferences as numbers and a goal.",
+            "ar": "كلٌّ منها سطر واحد: add_all_different لسارة، و⁦day[\"football\"] <= 2⁩، و⁦day[\"coding\"] < day[\"drama\"]⁩، و⁦day[\"chess\"] == day[\"drama\"]⁩. أما «ما يفضّله الجميع» فليس قاعدة: ستحتاج إلى تفضيلات الناس أرقامًا وإلى هدف."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p3",
+          "prompt": {
+            "en": "With four clubs and three afternoons there are 81 possible plans, so the solver checks all 81.",
+            "ar": "مع أربعة نوادٍ وثلاثة أيام هناك ٨١ خطة ممكنة، فيفحص برنامج الحل الخطط الـ ٨١ كلها."
+          },
+          "answer": false,
+          "explain": {
+            "en": "The solver crosses out impossible days first and guesses only when stuck, so it usually looks at a tiny part of the plans. In the lab, propagation and search need 8 guesses where plain backtracking needs 389.",
+            "ar": "يشطب برنامج الحل الأيام المستحيلة أولًا ولا يخمّن إلا عند التوقف، فينظر عادةً في جزء صغير جدًا من الخطط. وفي المختبر يحتاج الانتشار والبحث إلى ٨ تخمينات، حيث يحتاج التراجع البسيط إلى ٣٨٩."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "tool": "timetable",
+          "prompt": {
+            "en": "Try it: in “Build the timetable”, press One step a few times to watch propagation, then Run and count the guesses. Choose “Plain backtracking” and Run again. Then tick “The art room holds an exam in period 3”, and finally “The lab is busy in period 1” too: what does the search prove, and why?",
+            "ar": "جرّب: في «اصنع الجدول المدرسي» اضغط «خطوة واحدة» بضع مرات لتشاهد الانتشار، ثم «شغّل» وعُدّ التخمينات. واختر «التراجع البسيط» وشغّل من جديد. ثم فعّل «في غرفة الفنون امتحان في الحصة ٣»، وأخيرًا «المختبر مشغول في الحصة ١» أيضًا: ماذا يثبت البحث، ولماذا؟"
+          }
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "Four clubs meet on days 1 to 3, and the football field is busy on day 3. Each list in pupils is one student’s clubs. Add the rule that each student’s clubs are all on different days, then run it.",
+            "ar": "تجتمع أربعة نوادٍ في الأيام من ١ إلى ٣، وملعب كرة القدم مشغول في اليوم ٣. وكل قائمة في pupils هي نوادي طالب واحد. أضف القاعدة: نوادي كل طالب في أيام مختلفة كلها، ثم شغّل البرنامج."
+          },
+          "starter": "from ortools.sat.python import cp_model\nclubs = [\"chess\", \"football\", \"drama\", \"coding\"]\npupils = [[\"chess\", \"drama\", \"coding\"],\n          [\"football\", \"chess\"], [\"drama\", \"football\"]]\nm = cp_model.CpModel()\nday = {c: m.new_int_var(1, 3, c) for c in clubs}\n# each pupil: their clubs on different days\n\nm.add(day[\"football\"] <= 2)\nsolver = cp_model.CpSolver()\nprint(solver.status_name(solver.solve(m)))\n",
+          "solution": "from ortools.sat.python import cp_model\nclubs = [\"chess\", \"football\", \"drama\", \"coding\"]\npupils = [[\"chess\", \"drama\", \"coding\"],\n          [\"football\", \"chess\"], [\"drama\", \"football\"]]\nm = cp_model.CpModel()\nday = {c: m.new_int_var(1, 3, c) for c in clubs}\nfor p in pupils:\n    m.add_all_different([day[c] for c in p])\nm.add(day[\"football\"] <= 2)\nsolver = cp_model.CpSolver()\nprint(solver.status_name(solver.solve(m)))\n",
+          "tests": [
+            {
+              "output": "OPTIMAL",
+              "check": "assert all(len(set(solver.value(day[c]) for c in p)) == len(p) for p in pupils), \"A student has two clubs on the same day\"",
+              "hint": {
+                "en": "Without the rule, every club can sit on day 1. One all-different per student.",
+                "ar": "من دون القاعدة يمكن أن تكون كل النوادي في اليوم ١. قيد «كلها مختلفة» واحد لكل طالب."
+              }
+            },
+            {
+              "check": "assert solver.value(day[\"football\"]) <= 2, \"Football can't be on day 3\"",
+              "hint": {
+                "en": "Keep the football line.",
+                "ar": "أبقِ سطر كرة القدم."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "for p in pupils:",
+              "ar": "⁦for p in pupils⁩:"
+            },
+            {
+              "en": "m.add_all_different([day[c] for c in p])",
+              "ar": "⁦m.add_all_different([day[c] for c in p])⁩"
+            }
+          ],
+          "explain": {
+            "en": "One all-different rule per student keeps their clubs apart. Sara’s three clubs take all three days, and football (not day 3) must share a day with coding, the only club with no other link. The status is OPTIMAL: every rule kept. The same program runs unchanged on the real OR-Tools in Colab.",
+            "ar": "قاعدة «كلها مختلفة» لكل طالب تفصل بين نواديه. فنوادي سارة الثلاثة تأخذ الأيام الثلاثة كلها، ويجب أن تشارك كرة القدم (ليست في اليوم ٣) يومًا مع البرمجة، النادي الوحيد الذي لا يربطه بها أحد. والحالة OPTIMAL: كل القواعد متحقّقة. والبرنامج نفسه يعمل دون تغيير على أدوات OR-Tools الحقيقية في Colab."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete the end of the program: solve the model, and if it found a timetable, print each club’s day.",
+            "ar": "أكمل نهاية البرنامج: حُلّ النموذج، وإن وجد جدولًا فاطبع يوم كل نادٍ."
+          },
+          "code": [
+            "solver = cp_model.CpSolver()\nstatus = solver.",
+            {
+              "blank": 0
+            },
+            "(m)\nif status == cp_model.",
+            {
+              "blank": 1
+            },
+            " or status == cp_model.FEASIBLE:\n    for c in clubs:\n        print(c, solver.",
+            {
+              "blank": 2
+            },
+            "(day[c]))\nelse:\n    print(\"No timetable:\", solver.status_name(status))"
+          ],
+          "answers": [
+            "solve",
+            "OPTIMAL",
+            "value"
+          ],
+          "distractors": [
+            "maximize",
+            "INFEASIBLE",
+            "add"
+          ],
+          "explain": {
+            "en": "solve runs the search and returns a status. Only OPTIMAL and FEASIBLE come with a timetable, and value reads each variable’s day. Otherwise, the status name says why there is none.",
+            "ar": "تشغّل solve البحث وتُرجع حالة. ولا يأتي جدول إلا مع OPTIMAL وFEASIBLE، وتقرأ value يوم كل متغيّر. وإلا فاسم الحالة يقول لماذا لا يوجد جدول."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you suggest?",
+            "ar": "ماذا تقترح؟"
+          },
+          "who": {
+            "en": "Halima, the drama club captain",
+            "ar": "حليمة، قائدة نادي المسرح"
+          },
+          "initial": {
+            "en": "H",
+            "ar": "ح"
+          },
+          "situation": {
+            "en": "Your model keeps every rule, and it has put drama on day 3 for the third term running. Day 3 is when many drama students help at the family market. Halima asks you to fix it.",
+            "ar": "يلتزم نموذجك بكل القواعد، وقد وضع المسرح في اليوم ٣ للفصل الدراسي الثالث على التوالي. واليوم ٣ هو يوم يساعد فيه كثير من طلاب المسرح أسرهم في السوق. تطلب منك حليمة أن تُصلح ذلك."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Let’s ask the drama students which days work, add that as a rule, and solve again.”",
+                "ar": "«لنسأل طلاب المسرح أيّ الأيام تناسبهم، ونضيف ذلك قاعدةً، ونحلّ من جديد.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "A rule such as day[\"drama\"] != 3 takes one line. If the model turns INFEASIBLE, you have learned which other rule clashes, and can discuss that openly.",
+                "ar": "قاعدة مثل ⁦day[\"drama\"] != 3⁩ تأخذ سطرًا واحدًا. وإن صار النموذج INFEASIBLE، فقد عرفت أيّ قاعدة أخرى تتعارض معها، ويمكنكم مناقشة ذلك علنًا."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“The solver said OPTIMAL, so it’s fair.”",
+                "ar": "«قال برنامج الحل OPTIMAL، إذن هو عادل.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "With no goal, OPTIMAL only means your rules are kept, and none of them was about the market. The same students keep paying.",
+                "ar": "من دون هدف، لا تعني OPTIMAL إلا أن قواعدك متحقّقة، ولم تكن أيٌّ منها عن السوق. ويستمر الطلاب أنفسهم في دفع الثمن."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Move drama by hand this term.”",
+                "ar": "«انقل المسرح باليد هذا الفصل.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "It helps this term, but a hand move can break another rule, and next term the model will do it again. Put the reason into the model.",
+                "ar": "يفيد هذا الفصل، لكن النقل اليدوي قد يكسر قاعدة أخرى، وفي الفصل القادم سيفعل النموذج الشيء نفسه. ضع السبب في النموذج."
+              }
+            }
+          ],
+          "explain": {
+            "en": "Ask the people affected, add their need as a rule, and solve again.",
+            "ar": "اسأل المتأثّرين، وأضف حاجتهم قاعدةً، وحُلّ من جديد."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which timetable in your life (school, clubs, chores) puts the same people in the worst slot every time? How would you write a fairer rule?",
+            "ar": "أيّ جدول في حياتك (المدرسة، أو النوادي، أو أعمال البيت) يضع الأشخاص أنفسهم في أسوأ موعد كل مرة؟ وكيف تكتب قاعدة أعدل؟"
+          },
+          "placeholder": {
+            "en": "For example: “My younger brother always gets the dishes on Friday. Rule: Friday rotates between the three of us.”",
+            "ar": "مثلًا: «أخي الأصغر يغسل الأطباق دائمًا يوم الجمعة. القاعدة: يتناوب الثلاثة منا على يوم الجمعة.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Model a real week",
+            "ar": "مشروع: صِغ أسبوعًا حقيقيًا في نموذج"
+          },
+          "task": {
+            "en": "Choose a real scheduling problem you know: your clubs, a study plan for exams, or your family’s chores. List the tasks, the days, who is involved in each, and the rules (what can’t share a day, fixed days). Write it as a CP-SAT model like the one in this lesson and run it in the code step or the “Model it with CP-SAT” lab. Then look at who gets the worst slot, add one fairness rule, and run it again.",
+            "ar": "اختر مسألة جدولة حقيقية تعرفها: نواديك، أو خطة مذاكرة للامتحانات، أو أعمال البيت في أسرتك. اكتب المهام، والأيام، ومَن يشارك في كلٍّ منها، والقواعد (ما لا يجوز أن يشترك في يوم، والأيام الثابتة). صِغها نموذج CP-SAT مثل نموذج هذا الدرس، وشغّله في خطوة الكود أو في مختبر «صِغ النموذج بـ CP-SAT». ثم انظر مَن يحصل على أسوأ موعد، وأضف قاعدة عدالة واحدة، وشغّله من جديد."
+          },
+          "deliverable": {
+            "en": "Your list of rules, your model (on paper or a screenshot), the timetable before and after the fairness rule, and one sentence on what the rule cost.",
+            "ar": "قائمة قواعدك، ونموذجك (على الورق أو صورة شاشة)، والجدول قبل قاعدة العدالة وبعدها، وجملة عمّا كلّفته القاعدة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: turn a real schedule into variables, domains and rules.",
+                "ar": "أستطيع: تحويل جدول حقيقي إلى متغيّرات ومجالات وقواعد."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: run a CP-SAT model and read its status.",
+                "ar": "أستطيع: تشغيل نموذج CP-SAT وقراءة حالته."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: add a fairness rule and explain what it changes.",
+                "ar": "أستطيع: إضافة قاعدة عدالة وشرح ما تغيّره."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Timetables with CP-SAT",
+            "ar": "الجداول باستخدام CP-SAT"
+          },
+          "narration": {
+            "en": "What if you just said the rules, and let a solver find the timetable?",
+            "ar": "ماذا لو قلت القواعد فقط، وتركت برنامج الحل يجد الجدول؟"
+          },
+          "note": {
+            "en": "Optimization · Level 3 · Lesson 4",
+            "ar": "الحلول المثلى، المستوى ٣، الدرس ٤"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Model a club timetable in CP-SAT with all-different rules.",
+              "Explain propagation and search, and what INFEASIBLE proves.",
+              "Add a fairness rule and judge the result."
+            ],
+            "ar": [
+              "تصوغ جدول نوادٍ في نموذج CP-SAT بقواعد «كلها مختلفة».",
+              "تشرح الانتشار والبحث، وما تثبته INFEASIBLE.",
+              "تضيف قاعدة عدالة وتحكم على النتيجة."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "A variable per choice, a line per rule",
+              "Cross out, then guess",
+              "INFEASIBLE: a proof",
+              "OPTIMAL: only your rules",
+              "Who gets the bad slot?"
+            ],
+            "ar": [
+              "متغيّر لكل اختيار، وسطر لكل قاعدة",
+              "اشطب، ثم خمّن",
+              "INFEASIBLE: إثبات",
+              "OPTIMAL: قواعدك فقط",
+              "مَن يحصل على الموعد السيئ؟"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Model a real week",
+            "ar": "النشاط: صِغ أسبوعًا حقيقيًا"
+          },
+          "bullets": {
+            "en": [
+              "List (5 min): Tasks, days, people and rules.",
+              "Model (8 min): Variables, all-different, fixed days.",
+              "Run (4 min): Read the status and the timetable.",
+              "Fairness (3 min): Who gets the worst slot? Add a rule."
+            ],
+            "ar": [
+              "القائمة (٥ دقائق): المهام والأيام والأشخاص والقواعد.",
+              "النموذج (٨ دقائق): المتغيّرات، و«كلها مختلفة»، والأيام الثابتة.",
+              "التشغيل (٤ دقائق): اقرأ الحالة والجدول.",
+              "العدالة (٣ دقائق): مَن يحصل على أسوأ موعد؟ أضف قاعدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "List (5 min): Write four to six tasks (clubs, revision subjects or chores), the days available, who is involved in each, and every rule you know.",
+              "Model (8 min): Write one day variable per task, one all-different line for each person’s tasks, and one line for each fixed or forbidden day.",
+              "Run (4 min): Run the model in the code step or the modeller lab. Read the status first: OPTIMAL, or INFEASIBLE and why.",
+              "Fairness (3 min): Find who gets the worst slot. Add one rule that shares it and run again. Did anything else have to move?"
+            ],
+            "ar": [
+              "القائمة (٥ دقائق): اكتب أربع إلى ست مهام (نوادٍ، أو مواد مراجعة، أو أعمال منزلية)، والأيام المتاحة، ومَن يشارك في كلٍّ منها، وكل قاعدة تعرفها.",
+              "النموذج (٨ دقائق): اكتب متغيّر يوم لكل مهمة، وسطر «كلها مختلفة» لمهام كل شخص، وسطرًا لكل يوم ثابت أو ممنوع.",
+              "التشغيل (٤ دقائق): شغّل النموذج في خطوة الكود أو في مختبر النمذجة. اقرأ الحالة أولًا: OPTIMAL، أو INFEASIBLE ولماذا.",
+              "العدالة (٣ دقائق): جِد مَن يحصل على أسوأ موعد. أضف قاعدة واحدة توزّعه وشغّل من جديد. هل اضطُرّ شيء آخر إلى التحرّك؟"
+            ]
+          },
+          "note": {
+            "en": "No phone? Do it on paper: cross out impossible days for each task, then guess, as the solver does.",
+            "ar": "لا هاتف لديك؟ افعلها على الورق: اشطب الأيام المستحيلة لكل مهمة، ثم خمّن، كما يفعل برنامج الحل."
+          },
+          "narration": {
+            "en": "Say the rules, let the solver search, then judge who it’s hard on.",
+            "ar": "قل القواعد، ودع برنامج الحل يبحث، ثم احكم على مَن يقسو عليه."
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why doesn’t the solver need to try every plan?",
+              "What should you do when the answer is INFEASIBLE?",
+              "Is a timetable that keeps every rule always fair?"
+            ],
+            "ar": [
+              "لماذا لا يحتاج برنامج الحل إلى تجريب كل خطة؟",
+              "ماذا تفعل حين تكون الإجابة INFEASIBLE؟",
+              "هل الجدول الذي يلتزم بكل القواعد عادل دائمًا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One rule I would write as a line + one fairness rule for my week."
+            ],
+            "ar": [
+              "قاعدة سأكتبها سطرًا + قاعدة عدالة واحدة لأسبوعي."
+            ]
+          },
+          "narration": {
+            "en": "The solver keeps your rules; you decide which rules are fair.",
+            "ar": "يلتزم برنامج الحل بقواعدك، وأنت تقرّر أيّ القواعد عادلة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Timetables with CP-SAT",
+            "ar": "شرائح للمراجعة: الجداول باستخدام CP-SAT"
+          },
+          "pages": 6,
+          "base": "opt-s3-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Timetables with CP-SAT",
+            "ar": "ورقة النشاط: الجداول باستخدام CP-SAT"
+          },
+          "pages": 3,
+          "base": "opt-s3-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/opt-s3-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "OPT.2",
+        "OPT.3",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "opt-s3-check",
+      "title": {
+        "en": "Let the computer search: unit check",
+        "ar": "دع الحاسوب يبحث: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Pick one search from your own life (packing a bag, a route you take, a week to plan). Solve it with code or on paper using a method from this unit, then check whether the answer is fair to everyone it affects.",
+        "ar": "اختر مسألة بحث واحدة من حياتك (تعبئة حقيبة، أو طريق تسلكه، أو أسبوع تخطّط له). حُلّها بالكود أو على الورق بطريقة من هذه الوحدة، ثم تحقّق: هل الإجابة عادلة لكل من تمسّه؟"
+      },
+      "steps": [
+        {
+          "type": "truefalse",
+          "id": "q1",
+          "prompt": {
+            "en": "A brute-force search over 10 items checks 1,024 possible loads.",
+            "ar": "يفحص بحث بالتجريب الكامل على ١٠ أشياء ١٠٢٤ حمولة ممكنة."
+          },
+          "answer": true,
+          "explain": {
+            "en": "Each item is in or out, so 10 items give 2¹⁰ = 1,024 loads. Twenty items would give over a million, and every extra item doubles it.",
+            "ar": "كل شيء إمّا موجود وإمّا لا، فتعطي ١٠ أشياء ٢¹⁰ = ١٠٢٤ حمولة. وعشرون شيئًا تعطي أكثر من مليون، وكل شيء إضافي يضاعف العدد."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q2",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "w = [3, 2, 2]\nv = [5, 3, 3]\nbest = 0\nfor mask in range(2 ** 3):\n    kg = sum(w[i] for i in range(3) if mask >> i & 1)\n    pts = sum(v[i] for i in range(3) if mask >> i & 1)\n    if kg <= 4 and pts > best:\n        best = pts\nprint(best)"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "6",
+                "ar": "6"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "5",
+                "ar": "5"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "11",
+                "ar": "11"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The two lighter items fit together (4 kg, 6 points); the heavy one alone gives only 5, and all three (11 points) are too heavy. A greedy rule, taking the best value per kilo first, would grab the heavy item and stop at 5.",
+            "ar": "يتّسع الشيئان الأخفّان معًا (٤ كغ، ٦ نقاط)، والثقيل وحده لا يعطي إلا ٥، والثلاثة معًا (١١ نقطة) أثقل من الحد. أما القاعدة الجشعة، التي تأخذ الأعلى قيمة لكل كيلوغرام أولًا، فستأخذ الثقيل وتتوقّف عند ٥."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q3",
+          "prompt": {
+            "en": "What does Dijkstra’s method need to give the right answer? Choose all that apply.",
+            "ar": "ماذا تحتاج طريقة ديكسترا لتعطي الإجابة الصحيحة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "No road with a negative length",
+                "ar": "ألا يكون طول أي طريق سالبًا"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Settling the smallest waiting number first",
+                "ar": "تثبيت أصغر رقم منتظر أولًا"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Places listed in alphabetical order",
+                "ar": "ترتيب الأماكن أبجديًا"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Every road the same length",
+                "ar": "أن تكون كل الطرق بالطول نفسه"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b"
+          ],
+          "explain": {
+            "en": "Settling the smallest number is safe because every other way is at least as long, which needs road lengths that are never negative. The order of the list and equal lengths don’t matter.",
+            "ar": "تثبيت الرقم الأصغر مضمون لأن أي طريق آخر ليس أقصر منه، وهذا يحتاج إلى أطوال طرق لا تكون سالبة أبدًا. أما ترتيب القائمة وتساوي الأطوال فلا يهمّان."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "q4",
+          "lang": "python",
+          "prompt": {
+            "en": "This Dijkstra program finds the longest way instead of the shortest. Which line is wrong?",
+            "ar": "يجد برنامج ديكسترا هذا أطول طريق بدل أقصره. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "while todo:\n    p = min(todo, key=lambda q: dist[q])\n    todo.remove(p)\n    for q, km in roads[p].items():\n        dist[q] = max(dist[q], dist[p] + km)",
+          "line": 5,
+          "fix": "        dist[q] = min(dist[q], dist[p] + km)",
+          "explain": {
+            "en": "Relaxing a road must keep the smaller of the old number and the new way: min, not max. With max, numbers only grow, and the “shortest” way comes out wrong.",
+            "ar": "يجب أن تحتفظ مراجعة الطريق بالأصغر بين الرقم القديم والطريق الجديد: min لا max. فمع max لا تزيد الأرقام إلا كبرًا، ويخرج «أقصر» طريق خاطئًا."
+          }
+        },
+        {
+          "type": "order",
+          "id": "q5",
+          "prompt": {
+            "en": "Put in order: solving a timetable with CP-SAT.",
+            "ar": "رتّب: حلّ جدول باستخدام CP-SAT."
+          },
+          "steps": [
+            {
+              "en": "Give each choice a variable with its domain",
+              "ar": "أعطِ كل اختيار متغيّرًا مع مجاله"
+            },
+            {
+              "en": "Write each rule as a line",
+              "ar": "اكتب كل قاعدة سطرًا"
+            },
+            {
+              "en": "Run the solver",
+              "ar": "شغّل برنامج الحل"
+            },
+            {
+              "en": "Read the status",
+              "ar": "اقرأ الحالة"
+            },
+            {
+              "en": "Check the result with the people involved",
+              "ar": "راجِع النتيجة مع المعنيين"
+            }
+          ],
+          "explain": {
+            "en": "First describe the problem (variables, then rules), then let the solver search, then read the status (OPTIMAL, FEASIBLE or INFEASIBLE) before you look at the timetable, and finally judge it with the people it affects.",
+            "ar": "صِف المسألة أولًا (المتغيّرات ثم القواعد)، ثم دع برنامج الحل يبحث، ثم اقرأ الحالة (OPTIMAL أو FEASIBLE أو INFEASIBLE) قبل أن تنظر في الجدول، وأخيرًا احكم عليه مع من يمسّهم."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q6",
+          "prompt": {
+            "en": "Complete the sentence.",
+            "ar": "أكمل الجملة."
+          },
+          "sentence": {
+            "en": [
+              "A greedy rule is ",
+              {
+                "blank": 0
+              },
+              " but can ",
+              {
+                "blank": 1
+              },
+              " the best; dynamic programming is sure because it ",
+              {
+                "blank": 2
+              },
+              " smaller answers."
+            ],
+            "ar": [
+              "القاعدة الجشعة ",
+              {
+                "blank": 0
+              },
+              " لكنها قد ",
+              {
+                "blank": 1
+              },
+              " الأفضل، والبرمجة الديناميكية مضمونة لأنها ",
+              {
+                "blank": 2
+              },
+              " استعمال إجابات أصغر."
+            ]
+          },
+          "bank": {
+            "en": [
+              "fast",
+              "miss",
+              "reuses",
+              "doubles",
+              "guesses"
+            ],
+            "ar": [
+              "سريعة",
+              "تفوّت",
+              "تعيد",
+              "تضاعف",
+              "تخمّن"
+            ]
+          },
+          "answers": {
+            "en": [
+              "fast",
+              "miss",
+              "reuses"
+            ],
+            "ar": [
+              "سريعة",
+              "تفوّت",
+              "تعيد"
+            ]
+          },
+          "explain": {
+            "en": "Greedy takes what looks best now and never compares, so it is quick but can miss (60 against 65 on the truck). Dynamic programming builds the best answer from the best answers to smaller trucks.",
+            "ar": "تأخذ الجشعة ما يبدو الأفضل الآن ولا تقارن أبدًا، فهي سريعة لكنها قد تخطئ (٦٠ مقابل ٦٥ في الشاحنة). أما البرمجة الديناميكية فتبني أفضل إجابة من أفضل إجابات الشاحنات الأصغر."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "q7",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete the club model: a day from 1 to 3 for each club, each student’s clubs on different days, and football not on day 3.",
+            "ar": "أكمل نموذج النوادي: يوم من ١ إلى ٣ لكل نادٍ، ونوادي كل طالب في أيام مختلفة، وكرة القدم ليست في اليوم ٣."
+          },
+          "code": [
+            "day = {c: m.",
+            {
+              "blank": 0
+            },
+            "(1, 3, c) for c in clubs}\nfor p in pupils:\n    m.",
+            {
+              "blank": 1
+            },
+            "([day[c] for c in p])\nm.add(day[\"football\"] ",
+            {
+              "blank": 2
+            },
+            " 2)"
+          ],
+          "answers": [
+            "new_int_var",
+            "add_all_different",
+            "<="
+          ],
+          "distractors": [
+            "new_bool_var",
+            "maximize",
+            ">="
+          ],
+          "explain": {
+            "en": "A day is a whole number from 1 to 3 (new_int_var, not a yes/no variable); one all-different rule per student keeps their clubs apart; and football’s day must be at most 2, with the expression on the left.",
+            "ar": "اليوم عدد صحيح من ١ إلى ٣ (new_int_var لا متغيّر نعم أو لا)، وقاعدة «كلها مختلفة» لكل طالب تفصل بين نواديه، ويوم كرة القدم يجب أن يكون ٢ على الأكثر، والتعبير على اليسار."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q8",
+          "prompt": {
+            "en": "Your nearest-neighbour program prints a 19 km route, and an exact search finds 16 km. What does that tell you?",
+            "ar": "يطبع برنامج «أقرب جار» الذي كتبته طريقًا طوله ١٩ كم، ويجد بحث دقيق طريقًا طوله ١٦ كم. ماذا يخبرك ذلك؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Your program added the distances wrongly",
+                "ar": "جمع برنامجك المسافات خطأً"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A quick rule can miss the best route",
+                "ar": "القاعدة السريعة قد تفوّت أفضل طريق"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The 16 km route must skip a village",
+                "ar": "لا بد أن طريق الـ ١٦ كم يتخطّى قرية"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Nearest neighbour never looks ahead, so its last legs can be long; the 16 km route visits every village too. 2-opt swaps can close some or all of the gap.",
+            "ar": "لا تنظر «أقرب جار» إلى الأمام أبدًا، فقد تكون مراحلها الأخيرة طويلة، وطريق الـ ١٦ كم يزور كل القرى أيضًا. ويمكن لتبديلات ⁦2-opt⁩ أن تسدّ الفرق كله أو بعضه."
+          }
+        },
+        {
+          "type": "parsons",
+          "id": "q9",
+          "lang": "python",
+          "prompt": {
+            "en": "Put the lines in order: add up the weight and points of every load in a brute-force search.",
+            "ar": "رتّب الأسطر: اجمع وزن ونقاط كل حمولة في بحث بالتجريب الكامل."
+          },
+          "lines": [
+            "for mask in range(2 ** 6):",
+            "    kg = pts = 0",
+            "    for i in range(6):",
+            "        if mask >> i & 1:",
+            "            kg += w[i]",
+            "            pts += v[i]"
+          ],
+          "distractors": [
+            "        if mask >> i:"
+          ],
+          "explain": {
+            "en": "Every mask from 0 to 63 is one load; for each, start from zero and add the items whose bit is 1. Without & 1, the test would also count bits further left.",
+            "ar": "كل قناع من 0 إلى 63 حمولة واحدة، ولكلٍّ منها ابدأ من الصفر وأضف الأشياء التي بتّها 1. ومن دون & 1 سيحسب الاختبار البتات الأبعد إلى اليسار أيضًا."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q10",
+          "prompt": {
+            "en": "If a timetable model with no goal says OPTIMAL, the timetable is the fairest one possible.",
+            "ar": "إذا قال نموذج جدول بلا هدف OPTIMAL، فالجدول هو الأعدل على الإطلاق."
+          },
+          "answer": false,
+          "explain": {
+            "en": "With no goal, OPTIMAL only means every rule you wrote is kept. Fairness counts only if you write it down, as a rule or a goal, and check the result with the people affected.",
+            "ar": "من دون هدف، لا تعني OPTIMAL إلا أن كل قاعدة كتبتها متحقّقة. ولا تُحسب العدالة إلا إذا كتبتها، قاعدةً أو هدفًا، وراجعت النتيجة مع المتأثرين بها."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Let the computer search: review",
+            "ar": "دع الحاسوب يبحث: مراجعة"
+          },
+          "narration": {
+            "en": "Four searches, four ways to be smart about them. What stuck?",
+            "ar": "أربع مسائل بحث، وأربع طرق للذكاء فيها. ما الذي رسخ؟"
+          },
+          "note": {
+            "en": "Optimization · Level 3 · Unit check",
+            "ar": "الحلول المثلى، المستوى ٣، اختبار الوحدة"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Try them all, or think ahead",
+              "Shortest paths",
+              "The bus route",
+              "Timetables with CP-SAT"
+            ],
+            "ar": [
+              "جرّبها كلها أم فكّر مسبقًا",
+              "أقصر الطرق",
+              "طريق الحافلة",
+              "الجداول باستخدام CP-SAT"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "Brute force is sure but explodes; dynamic programming reuses smaller answers",
+              "Dijkstra settles the smallest number first",
+              "Build a route fast, improve it with 2-opt, judge the longest ride",
+              "Say the rules; the solver searches; you judge fairness"
+            ],
+            "ar": [
+              "التجريب الكامل مضمون لكنه ينفجر، والبرمجة الديناميكية تعيد استعمال إجابات أصغر",
+              "تثبّت طريقة ديكسترا الرقم الأصغر أولًا",
+              "ابنِ الطريق بسرعة، وحسّنه بـ ⁦2-opt⁩، واحكم على أطول رحلة",
+              "قل القواعد، ويبحث برنامج الحل، وأنت تحكم على العدالة"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Search race",
+            "ar": "النشاط: سباق البحث"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (3 min): Name one search from each lesson.",
+              "Race (10 min): Solve a small problem two ways.",
+              "Compare (4 min): Fast or sure? Same answer?",
+              "Fair (3 min): Who would the answer be hard on?"
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): سمِّ مسألة بحث من كل درس.",
+              "السباق (١٠ دقائق): حُلّ مسألة صغيرة بطريقتين.",
+              "المقارنة (٤ دقائق): سريع أم مضمون؟ الإجابة نفسها؟",
+              "العدالة (٣ دقائق): على مَن ستقسو الإجابة؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (3 min): For each lesson, write one search from your life that it could solve: packing, a way to school, a round trip, a timetable.",
+              "Race (10 min): With a partner, pick one small problem. One of you solves it with a quick rule (greedy or nearest neighbour), the other with a sure method (every option, Dijkstra, or a small model).",
+              "Compare (4 min): Compare your answers and how long each took. When did the quick rule miss?",
+              "Fair (3 min): Look at the best answer and ask who it would be hard on: the first stop, the last slot, the school that got nothing."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): اكتب لكل درس مسألة بحث من حياتك يمكن أن يحلّها: تعبئة، أو طريق إلى المدرسة، أو رحلة ذهاب وإياب، أو جدول.",
+              "السباق (١٠ دقائق): مع زميل، اختر مسألة صغيرة. يحلّها أحدكما بقاعدة سريعة (الجشعة أو «أقرب جار»)، والآخر بطريقة مضمونة (كل الخيارات، أو ديكسترا، أو نموذج صغير).",
+              "المقارنة (٤ دقائق): قارنا إجابتيكما والوقت الذي استغرقته كلٌّ منهما. متى فوّتت القاعدة السريعة الأفضل؟",
+              "العدالة (٣ دقائق): انظرا إلى أفضل إجابة واسألا: على مَن ستقسو؟ أول محطة، أم آخر موعد، أم المدرسة التي لم تحصل على شيء."
+            ]
+          },
+          "note": {
+            "en": "Keep the problems small (four or five items, places or tasks) so both methods finish in the time.",
+            "ar": "اجعل المسائل صغيرة (أربعة أو خمسة أشياء أو أماكن أو مهام) حتى تنتهي الطريقتان في الوقت."
+          },
+          "narration": {
+            "en": "Fast or sure, and fair to whom?",
+            "ar": "سريع أم مضمون، وعادل لمَن؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "When is a quick rule good enough?",
+              "Which method surprised you most?",
+              "Who should decide what “fair” means in a search?"
+            ],
+            "ar": [
+              "متى تكون القاعدة السريعة كافية؟",
+              "أيّ طريقة فاجأتك أكثر من غيرها؟",
+              "مَن يجب أن يقرّر معنى «العادل» في مسألة بحث؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "The method I would trust for my own search + one fairness question I would ask."
+            ],
+            "ar": [
+              "الطريقة التي أثق بها لمسألة البحث الخاصة بي + سؤال عدالة واحد سأطرحه."
+            ]
+          },
+          "narration": {
+            "en": "Search smarter, and always ask who the answer is hard on.",
+            "ar": "ابحث بذكاء، واسأل دائمًا: على مَن تقسو الإجابة؟"
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Let the computer search: knapsack, routes, timetables: unit check",
+            "ar": "شرائح للمراجعة: دع الحاسوب يبحث: الحقيبة والطرق والجداول: اختبار الوحدة"
+          },
+          "pages": 6,
+          "base": "opt-s3-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Let the computer search: knapsack, routes, timetables: unit check",
+            "ar": "ورقة النشاط: دع الحاسوب يبحث: الحقيبة والطرق والجداول: اختبار الوحدة"
+          },
+          "pages": 3,
+          "base": "opt-s3-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "OPT.2",
+        "OPT.3",
+        "OPT.4",
+        "DC.3.4"
+      ]
+    }
+  ]
+}

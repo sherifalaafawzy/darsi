@@ -1,5 +1,5 @@
 /**
- * The three built-in tracks, and how published settings change them. Shared with the Cloud Functions
+ * The nine built-in tracks, and how published settings change them. Shared with the Cloud Functions
  * (functions/scripts/copy-shared.mjs copies it into functions/src/shared/), so the editor, the app and saveSettings
  * agree on the rules.
  *
@@ -18,6 +18,12 @@ export const BUILTIN_TRACKS: TrackDef[] = [
   { id: "ai", name: { en: "AI", ar: "الذكاء الاصطناعي" }, icon: "ai", tone: "sunbird", levels: 4, levelNames: LEVEL_NAMES, order: 0, builtIn: true },
   { id: "iot", name: { en: "IoT", ar: "إنترنت الأشياء" }, icon: "iot", tone: "lagoon", levels: 4, levelNames: LEVEL_NAMES, order: 1, builtIn: true },
   { id: "cyber", name: { en: "Cyber security", ar: "الأمن السيبراني" }, icon: "cyber", tone: "hibiscus", levels: 4, levelNames: LEVEL_NAMES, order: 2, builtIn: true },
+  { id: "code", name: { en: "Programming", ar: "البرمجة" }, icon: "code", tone: "sky", levels: 4, levelNames: LEVEL_NAMES, order: 3, builtIn: true },
+  { id: "data", name: { en: "Data engineering", ar: "هندسة البيانات" }, icon: "chart", tone: "leaf", levels: 4, levelNames: LEVEL_NAMES, order: 4, builtIn: true },
+  { id: "agents", name: { en: "AI agents", ar: "وكلاء الذكاء الاصطناعي" }, icon: "agent", tone: "lilac", levels: 4, levelNames: LEVEL_NAMES, order: 5, builtIn: true },
+  { id: "opt", name: { en: "Optimization", ar: "الحلول المثلى" }, icon: "peak", tone: "clay", levels: 4, levelNames: LEVEL_NAMES, order: 6, builtIn: true },
+  { id: "aisec", name: { en: "AI security", ar: "أمن الذكاء الاصطناعي" }, icon: "aisec", tone: "slate", levels: 4, levelNames: LEVEL_NAMES, order: 7, builtIn: true },
+  { id: "data-science", name: { en: "Data science", ar: "علم البيانات" }, icon: "target", tone: "lagoon", levels: 4, levelNames: LEVEL_NAMES, order: 8, builtIn: true },
 ];
 const BUILTIN = new Map(BUILTIN_TRACKS.map((t) => [t.id, t]));
 

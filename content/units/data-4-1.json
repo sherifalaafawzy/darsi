@@ -1,0 +1,3381 @@
+{
+  "id": "data-4-1",
+  "track": "data",
+  "level": 4,
+  "title": {
+    "en": "Pipelines, quality and governance",
+    "ar": "خطوط البيانات والجودة والحوكمة"
+  },
+  "summary": {
+    "en": "Lead your school’s data: automate reports with pipelines that are safe to run again, build checks that catch problems, decide who may see what, and set how long records are kept and how they are deleted.",
+    "ar": "قُد بيانات مدرستك: أتمت التقارير بخطوط بيانات آمنة عند إعادة تشغيلها، وابنِ فحوصًا تكشف المشكلات، وقرّر من يرى ماذا، وحدّد مدة حفظ السجلّات وطريقة حذفها."
+  },
+  "lessons": [
+    {
+      "id": "data-4-1-1",
+      "title": {
+        "en": "Automate the weekly report",
+        "ar": "أتمتة التقرير الأسبوعي"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Run a “Human pipeline”: one group reads the registers aloud, one counts, and one writes the counts on the board. Then stop it halfway and run it again: did anyone count a class twice?",
+        "ar": "نفّذوا «خط البيانات البشري»: تقرأ مجموعة السجلّات بصوت عالٍ، وتعدّ مجموعة، وتكتب مجموعة الأعداد على السبّورة. ثم أوقفوه في منتصفه وشغّلوه من جديد: هل عدّ أحد صفًّا مرتين؟"
+      },
+      "materials": {
+        "en": [
+          "Three made-up class registers on paper",
+          "Board and chalk",
+          "Optional: a computer or phone with Python"
+        ],
+        "ar": [
+          "ثلاثة سجلّات حضور خيالية على الورق",
+          "السبّورة والطباشير",
+          "اختياري: حاسوب أو هاتف فيه Python"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Automate the weekly report",
+            "ar": "أتمتة التقرير الأسبوعي"
+          },
+          "src": null,
+          "duration": 194,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Three hours every Friday",
+                "ar": "ثلاث ساعات كل خميس"
+              }
+            },
+            {
+              "at": 20.2,
+              "atBy": {
+                "en": 20.2,
+                "ar": 18.6
+              },
+              "label": {
+                "en": "Extract, transform, load",
+                "ar": "الاستخراج والتحويل والتحميل"
+              }
+            },
+            {
+              "at": 48.1,
+              "atBy": {
+                "en": 48.1,
+                "ar": 46.2
+              },
+              "label": {
+                "en": "Steps fail",
+                "ar": "الخطوات تفشل"
+              }
+            },
+            {
+              "at": 61.6,
+              "atBy": {
+                "en": 61.6,
+                "ar": 60.1
+              },
+              "label": {
+                "en": "Safe to run again",
+                "ar": "آمن عند إعادة التشغيل"
+              }
+            },
+            {
+              "at": 88.2,
+              "atBy": {
+                "en": 88.2,
+                "ar": 87.1
+              },
+              "label": {
+                "en": "A step in Python",
+                "ar": "خطوة بلغة Python"
+              }
+            },
+            {
+              "at": 127.7,
+              "atBy": {
+                "en": 127.7,
+                "ar": 125.7
+              },
+              "label": {
+                "en": "The lab",
+                "ar": "المختبر"
+              }
+            },
+            {
+              "at": 156.7,
+              "atBy": {
+                "en": 156.7,
+                "ar": 154.2
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 113.1,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "The load step failed halfway and the pipeline runs again. Which way of loading is safe?",
+                "ar": "فشلت خطوة التحميل في منتصفها، فأُعيد تشغيل خط البيانات. أيّ طريقة تحميل آمنة؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Add the rows again",
+                    "ar": "إضافة الصفوف مرة أخرى"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Replace the day’s rows",
+                    "ar": "استبدال صفوف اليوم"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Load only on Mondays",
+                    "ar": "التحميل أيام الاثنين فقط"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Replacing the day’s rows gives the same answer however many times the pipeline runs: it’s idempotent. Adding the rows again would count the classes written before the failure twice.",
+                "ar": "استبدال صفوف اليوم يعطي الإجابة نفسها مهما تكرّر تشغيل خط البيانات: إنه تشغيل متساوي الأثر. أما إضافة الصفوف مرة أخرى فتعدّ الصفوف الدراسية التي كُتبت قبل الفشل مرتين."
+              }
+            },
+            "atBy": {
+              "en": 113.1,
+              "ar": 110.6
+            }
+          },
+          "transcript": {
+            "en": "Every Friday, our deputy head copies attendance from twelve registers into one report. It takes her three hours. And last month, she counted one class twice. Today: automating the weekly report, with a pipeline that's safe to run again. A data pipeline is a set of steps that runs on its own, again and again. Extract: read the data where it lives, like the registers. Transform: clean it and count it. Load: write the result where the report reads it. Then put it on a schedule: every evening at six, say. Nobody copies anything by hand, and the report is ready each morning. But steps fail. The connection drops halfway. The database is busy. A register says question mark instead of P or A. A good pipeline expects this. So every run must be safe to repeat. That's called idempotent: run it once or five times, and the answer is the same. The trick: replace the day's rows, don't just add more. And tell faults apart. A dropped connection passes: just retry. Bad data won't fix itself: set the row aside and ask a person. Here's the transform step in Python. Read the register, and for every P, add one to that class's count. Five lines replace an hour of counting. Quick check! The load step failed halfway, and the pipeline runs again. Which way of loading is safe? Replace the day's rows: the rerun first clears Monday, then writes it again. Adding would count two classes twice, and the report would say a hundred and fifty-two pupils came, out of ninety. In the app, make a step fail and press Retry. With “Add the rows”, watch the report climb to a hundred and fifty-two. Switch to replace, and it stays at ninety however often it runs. Your turn. One register says question mark for a pupil, and the transform step stops. Will pressing Retry fix it? No: retrying fixes passing faults, not bad data. Remember: a pipeline extracts, transforms and loads, on a schedule. Make every run safe to repeat. And log every run, so you know what happened. Try it in class tomorrow: run a “Human pipeline”. One group reads the registers aloud, one counts, and one writes the counts on the board. Then stop it halfway and run it again: did anyone count a class twice?",
+            "ar": "كل يوم خميس، الوكيلة عندنا بتنقل الحضور من اتناشر كشف لتقرير واحد. بياخد منها تلات ساعات. والشهر اللي فات، عدّت فصل مرتين. النهارده: نأتمت التقرير الأسبوعي، بخط بيانات آمن لو اتعاد تشغيله. خط البيانات مجموعة خطوات بتشتغل لوحدها، مرة ورا مرة. الاستخراج: اقرا البيانات من مكانها، زي كشوف الغياب. والتحويل: نضّفها واعدّها. والتحميل: اكتب النتيجة في المكان اللي التقرير بيقرا منه. وبعدين حطه على جدول مواعيد: كل يوم الساعة ستة بالليل مثلًا. محدش بينقل حاجة بإيده، والتقرير بيبقى جاهز كل يوم الصبح. بس الخطوات بتفشل. الاتصال بيقطع في النص. قاعدة البيانات بتبقى مشغولة. كشف مكتوب فيه علامة استفهام بدل ح أو غ. وخط البيانات الكويس بيبقى عامل حسابه. فلازم كل تشغيل يبقى آمن لو اتكرر. ده اسمه «idempotent»، يعني شغّله مرة أو خمس مرات، والإجابة واحدة. والسر: استبدل صفوف اليوم، ما تزوّدش عليها وخلاص. وفرّق بين الأعطال. الاتصال اللي قطع بيعدّي: أعد المحاولة وخلاص. لكن البيانات الغلط مش هتصلّح نفسها: حط الصف على جنب واسأل حد. دي خطوة التحويل ببايثون. اقرا الكشف، ومع كل P، زوّد واحد على عدد الفصل بتاعه. خمس سطور بيوفّروا ساعة عدّ. سؤال سريع! خطوة التحميل فشلت في النص، وخط البيانات اشتغل تاني. أنهي طريقة تحميل آمنة؟ استبدل صفوف اليوم: التشغيل التاني بيمسح يوم الأحد الأول، وبعدين يكتبه من جديد. لكن الإضافة هتعدّ فصلين مرتين، والتقرير هيقول إن مية اتنين وخمسين تلميذ حضروا، من تسعين. في التطبيق، خلّي خطوة تفشل واضغط «أعد المحاولة». ومع «أضف الصفوف»، اتفرّج على التقرير وهو بيطلع لمية اتنين وخمسين. غيّر للاستبدال، ويفضل تسعين مهما اشتغل. دورك. كشف مكتوب فيه علامة استفهام قدام تلميذ، وخطوة التحويل وقفت. لو دوست «أعد المحاولة» هيتصلّح؟ لأ: إعادة المحاولة بتصلّح الأعطال العابرة، مش البيانات الغلط. افتكر: خط البيانات بيستخرج ويحوّل ويحمّل، بجدول مواعيد. خلّي كل تشغيل آمن لو اتكرر. وسجّل كل تشغيل، علشان تعرف إيه اللي حصل. جرّبها في الفصل بكرة: شغّلوا «خط بيانات بشري». مجموعة تقرا الكشوف بصوت عالي، ومجموعة تعدّ، ومجموعة تكتب الأعداد على السبورة. وبعدين وقّفوه في النص وشغّلوه تاني: حد عدّ فصل مرتين؟"
+          },
+          "sources": {
+            "en": "/media/data-4-1-1/video-en.mp4",
+            "ar": "/media/data-4-1-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-4-1-1/captions-en.vtt",
+            "ar": "/media/data-4-1-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-4-1-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-4-1-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-4-1-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-4-1-1/light/audio/en.opus",
+              "manifest.json": "/media/data-4-1-1/light/manifest.json",
+              "scenes.json": "/media/data-4-1-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-4-1-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-4-1-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 417,
+              "ar": 410
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Pipelines that are safe to rerun",
+            "ar": "خطوط بيانات آمنة عند إعادة التشغيل"
+          },
+          "body": {
+            "en": "A data pipeline is a set of steps that runs on its own, again and again. Extract reads the data where it lives: the class registers, the gauge readings, the exam sheet. Transform cleans and counts it. Load writes the result where the report reads it: the district’s table, the head’s dashboard. Put it on a schedule, every evening at six, and nobody copies anything by hand; the report is ready each morning, and it’s counted the same way every time.\n\nSteps fail. The connection drops halfway through, the database is busy, the disk is full, or a register says “?” instead of P or A. A good pipeline expects this. It retries passing faults, such as a dropped connection, a few times. But bad data won’t fix itself: retrying a “?” fails the same way every time, so the pipeline sets the row aside and tells a person.\n\nEvery run must be safe to repeat. That’s called idempotent: run it once or five times, and the answer is the same. A load that adds rows isn’t: if it fails after writing two classes and runs again, those two classes are written twice, and the report says 152 pupils came out of 90. A load that replaces the day’s rows (delete Monday, then write Monday) gives 90 however often it runs.\n\nFinally, log every run: when it ran, how many rows it read and wrote, what it set aside and why. Without a log, a missing report is a mystery; with one, you can see the failed step in a minute. The transform step is often only a few lines: in Python, read the register with csv, add one to a class’s count for every P, and print the counts in a fixed order.",
+            "ar": "خط البيانات مجموعة خطوات تعمل وحدها مرة بعد مرة. فالاستخراج يقرأ البيانات حيث تعيش: سجلّات الصفوف، وقراءات المقاييس، وورقة الامتحانات. والتحويل ينظّفها ويعدّها. والتحميل يكتب النتيجة حيث يقرؤها التقرير: جدول الإدارة، أو لوحة متابعة المدير. ثم ضعه على جدول زمني، كل مساء في السادسة، فلا ينسخ أحد شيئًا باليد، ويكون التقرير جاهزًا كل صباح، ويُعدّ بالطريقة نفسها في كل مرة.\n\nوالخطوات تفشل. فقد ينقطع الاتصال في المنتصف، أو تكون قاعدة البيانات مشغولة، أو القرص ممتلئًا، أو يكون في السجلّ «؟» بدل «ح» أو «غ». وخط البيانات الجيد يتوقّع ذلك. فهو يعيد محاولة الأخطاء العابرة، كانقطاع الاتصال، بضع مرات. لكن البيانات الخاطئة لا تصلح نفسها: فإعادة محاولة «؟» تفشل بالطريقة نفسها كل مرة، فيضع خط البيانات الصف جانبًا ويخبر شخصًا.\n\nويجب أن يكون كل تشغيل آمنًا عند تكراره، وهذا يسمّى التشغيل متساوي الأثر: شغّله مرة أو خمس مرات، تكن الإجابة واحدة. والتحميل الذي يضيف الصفوف ليس كذلك: فإن فشل بعد كتابة صفّين دراسيين ثم شُغّل من جديد، كُتب هذان الصفّان مرتين، فيقول التقرير إن ١٥٢ تلميذًا حضروا من ٩٠. أما التحميل الذي يستبدل صفوف اليوم (يحذف الاثنين ثم يكتب الاثنين) فيعطي ٩٠ مهما تكرّر.\n\nوأخيرًا، سجّل كل تشغيل: متى عمل، وكم صفًّا قرأ وكتب، وما الذي وضعه جانبًا ولماذا. فدون سجلّ يبقى التقرير الغائب لغزًا، ومع السجلّ ترى الخطوة الفاشلة في دقيقة. وخطوة التحويل كثيرًا ما تكون بضعة أسطر فقط: ففي Python اقرأ السجلّ بـ csv، وأضف واحدًا إلى عدد الصف لكل «P»، واطبع الأعداد بترتيب ثابت."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Pipeline",
+                "ar": "خط البيانات"
+              },
+              "def": {
+                "en": "Steps that run on their own on a schedule: extract, transform, load.",
+                "ar": "خطوات تعمل وحدها وفق جدول زمني: الاستخراج، والتحويل، والتحميل."
+              }
+            },
+            {
+              "term": {
+                "en": "Idempotent",
+                "ar": "متساوي الأثر"
+              },
+              "def": {
+                "en": "Safe to repeat: running it once or five times gives the same answer, such as replacing the day’s rows.",
+                "ar": "آمن عند التكرار: تشغيله مرة أو خمس مرات يعطي الإجابة نفسها، كاستبدال صفوف اليوم."
+              }
+            },
+            {
+              "term": {
+                "en": "Passing fault",
+                "ar": "الخطأ العابر"
+              },
+              "def": {
+                "en": "A failure that a retry can fix, such as a dropped connection.",
+                "ar": "فشل تصلحه إعادة المحاولة، كانقطاع الاتصال."
+              }
+            },
+            {
+              "term": {
+                "en": "Run log",
+                "ar": "سجلّ التشغيل"
+              },
+              "def": {
+                "en": "A record of every run: when, rows read and written, what was set aside and why.",
+                "ar": "توثيق لكل تشغيل: متى، والصفوف المقروءة والمكتوبة، وما وُضع جانبًا ولماذا."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A register says “?” instead of P or A, and the transform step stops. Will a retry fix it?",
+            "ar": "في أحد السجلّات «؟» بدل «ح» أو «غ»، فتوقّفت خطوة التحويل. هل تصلحها إعادة المحاولة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Yes, retry until it works",
+                "ar": "نعم، أعد المحاولة حتى تنجح"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "No: bad data needs a person to check it",
+                "ar": "لا: البيانات الخاطئة تحتاج إلى شخص يراجعها"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Yes, if the network is faster",
+                "ar": "نعم، إذا كانت الشبكة أسرع"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "The data itself is wrong, so every retry fails the same way. Retrying fixes passing faults such as a dropped connection; bad data needs the row set aside and the teacher asked.",
+            "ar": "البيانات نفسها خاطئة، فتفشل كل إعادة بالطريقة نفسها. فإعادة المحاولة تصلح الأخطاء العابرة كانقطاع الاتصال، أما البيانات الخاطئة فتحتاج إلى وضع الصف جانبًا وسؤال المعلّم."
+          }
+        },
+        {
+          "type": "order",
+          "id": "p2",
+          "prompt": {
+            "en": "Put the steps of the evening’s attendance pipeline in order.",
+            "ar": "رتّب خطوات خط بيانات الحضور المسائي."
+          },
+          "steps": [
+            {
+              "en": "Extract: read the three class registers",
+              "ar": "الاستخراج: قراءة سجلّات الصفوف الثلاثة"
+            },
+            {
+              "en": "Transform: count the pupils present in each class",
+              "ar": "التحويل: عدّ الحاضرين في كل صف"
+            },
+            {
+              "en": "Load: replace today’s rows in the district’s table",
+              "ar": "التحميل: استبدال صفوف اليوم في جدول الإدارة"
+            },
+            {
+              "en": "Log: write what ran, and what was set aside",
+              "ar": "التسجيل: كتابة ما عمل، وما وُضع جانبًا"
+            }
+          ],
+          "explain": {
+            "en": "Extract, transform, load, in that order, and then the log, so it can record what every step did, including any rows set aside for a person to check.",
+            "ar": "الاستخراج ثم التحويل ثم التحميل، بهذا الترتيب، ثم السجلّ، ليوثّق ما فعلته كل خطوة، بما في ذلك الصفوف الموضوعة جانبًا ليراجعها شخص."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p3",
+          "lang": "python",
+          "prompt": {
+            "en": "The transform step. register.csv has one row per pupil: class, pupil number and P (present) or A (away). Fix the program so it counts only the pupils present in each class, printed in class order: 5A 4, 5B 3, 6A 5.",
+            "ar": "خطوة التحويل. في register.csv صف لكل تلميذ: الصف، ورقم التلميذ، وP (حاضر) أو A (غائب). أصلح البرنامج ليعدّ الحاضرين فقط في كل صف، مطبوعين بترتيب الصفوف: ⁦5A 4⁩، و⁦5B 3⁩، و⁦6A 5⁩."
+          },
+          "starter": "import csv\npresent = {}\nwith open(\"register.csv\") as f:\n    for row in csv.DictReader(f):\n        c = row[\"class\"]\n        present[c] = present.get(c, 0) + 1\nfor c in sorted(present):\n    print(c, present[c])\n",
+          "solution": "import csv\npresent = {}\nwith open(\"register.csv\") as f:\n    for row in csv.DictReader(f):\n        if row[\"status\"] == \"P\":\n            c = row[\"class\"]\n            present[c] = present.get(c, 0) + 1\nfor c in sorted(present):\n    print(c, present[c])\n",
+          "tests": [
+            {
+              "output": "5A 4\n5B 3\n6A 5",
+              "hint": {
+                "en": "The starter counts every pupil, present or away. Count a row only when its status is P.",
+                "ar": "يعدّ البرنامج الأول كل تلميذ، حاضرًا أو غائبًا. لا تعدّ الصف إلا حين تكون حالته P."
+              }
+            }
+          ],
+          "files": [
+            {
+              "name": "register.csv",
+              "text": "class,pupil,status\n5A,1,P\n5A,2,P\n5A,3,A\n5A,4,P\n5A,5,P\n5B,6,P\n5B,7,A\n5B,8,P\n5B,9,P\n6A,10,P\n6A,11,P\n6A,12,P\n6A,13,A\n6A,14,P\n6A,15,P\n"
+            }
+          ],
+          "hints": [
+            {
+              "en": "Add an if before the counting lines, and indent them under it.",
+              "ar": "أضف if قبل سطرَي العدّ، وأزِحهما تحتها."
+            },
+            {
+              "en": "if row[\"status\"] == \"P\":",
+              "ar": "⁦if row[\"status\"] == \"P\":⁩"
+            }
+          ],
+          "explain": {
+            "en": "present.get(c, 0) + 1 adds one to the class’s count, starting from 0 the first time. Counting only the rows with P gives 4, 3 and 5. The dictionary keeps classes in the order it first met them, which may not be class order, so sorted() prints them in a fixed order every run.",
+            "ar": "تضيف ⁦present.get(c, 0) + 1⁩ واحدًا إلى عدد الصف، بدءًا من 0 في المرة الأولى. وعدّ الصفوف التي فيها P فقط يعطي ٤ و٣ و٥. ويحفظ القاموس الصفوف بترتيب ظهورها أول مرة، وقد لا يكون ترتيب الصفوف، لذلك تطبعها ⁦sorted()⁩ بترتيب ثابت في كل تشغيل."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: make Load fail with “Add the rows”, press Run, then Retry, and read the district’s table. Then do the same with “Replace the day’s rows”, and press Run again twice. Finally make Transform fail: why does Retry not help, and what does?",
+            "ar": "جرّب: اجعل «التحميل» يفشل مع «أضف الصفوف»، واضغط «شغّل» ثم «أعد المحاولة»، واقرأ جدول الإدارة. ثم افعل الشيء نفسه مع «استبدل صفوف اليوم»، واضغط «شغّل مرة أخرى» مرتين. وأخيرًا اجعل «التحويل» يفشل: لماذا لا تفيد إعادة المحاولة، وما الذي يفيد؟"
+          },
+          "tool": "pipeline"
+        },
+        {
+          "type": "parsons",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "Put the lines in order (and indent them): an idempotent load that replaces the day’s rows in the report instead of adding to them.",
+            "ar": "رتّب الأسطر (وأزِحها): تحميل متساوي الأثر يستبدل صفوف اليوم في التقرير بدل الإضافة إليها."
+          },
+          "lines": [
+            "def load(report, day, counts):",
+            "    report = [r for r in report if r[0] != day]",
+            "    for cls, n in counts:",
+            "        report.append((day, cls, n))",
+            "    return report"
+          ],
+          "distractors": [
+            "    report = report + counts"
+          ],
+          "explain": {
+            "en": "First drop every row already in the report for that day, then add the day’s counts, and return the new report. Run it twice with the same day and the report is the same: Monday is cleared before it’s written again. Adding the counts to the old report would count them twice.",
+            "ar": "احذف أولًا كل صف موجود في التقرير لذلك اليوم، ثم أضف أعداد اليوم، وأعِد التقرير الجديد. وشغّله مرتين لليوم نفسه يبقَ التقرير كما هو: فيُمسح الاثنين قبل أن يُكتب من جديد. أما إضافة الأعداد إلى التقرير القديم فتعدّها مرتين."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p5",
+          "prompt": {
+            "en": "Retrying a failed step fixes any fault, as long as you retry enough times.",
+            "ar": "إعادة محاولة الخطوة الفاشلة تصلح أي خطأ، ما دمت تعيد المحاولة مرات كافية."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Retries fix passing faults, such as a dropped connection. Bad data, such as “?” in a register, fails the same way every time, so set the row aside and ask a person.",
+            "ar": "تصلح إعادة المحاولة الأخطاء العابرة، كانقطاع الاتصال. أما البيانات الخاطئة، مثل «؟» في السجلّ، فتفشل بالطريقة نفسها كل مرة، فضع الصف جانبًا واسأل شخصًا."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p6",
+          "prompt": {
+            "en": "Match each problem to the right response.",
+            "ar": "صِل كل مشكلة بالاستجابة المناسبة."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "The connection dropped during Extract",
+                "ar": "انقطع الاتصال أثناء الاستخراج"
+              },
+              "right": {
+                "en": "Retry: it’s a passing fault",
+                "ar": "أعد المحاولة: إنه خطأ عابر"
+              }
+            },
+            {
+              "left": {
+                "en": "A register says “?” for one pupil",
+                "ar": "في أحد السجلّات «؟» لتلميذ واحد"
+              },
+              "right": {
+                "en": "Set the row aside and ask the teacher",
+                "ar": "ضع الصف جانبًا واسأل المعلّم"
+              }
+            },
+            {
+              "left": {
+                "en": "Load failed after writing two classes",
+                "ar": "فشل التحميل بعد كتابة صفّين"
+              },
+              "right": {
+                "en": "Run again: replacing the day’s rows makes it safe",
+                "ar": "شغّل من جديد: استبدال صفوف اليوم يجعله آمنًا"
+              }
+            },
+            {
+              "left": {
+                "en": "Last night’s run didn’t happen at all",
+                "ar": "لم يحدث تشغيل البارحة أصلًا"
+              },
+              "right": {
+                "en": "The log shows it, and someone is told",
+                "ar": "يُظهر السجلّ ذلك، ويُبلَّغ شخص"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each kind of failure has its own fix: retry the passing ones, hand bad data to a person, rely on an idempotent load for reruns, and use the log to notice what didn’t run.",
+            "ar": "لكل نوع من الفشل علاجه: أعد محاولة العابر، وسلّم البيانات الخاطئة لشخص، واعتمد على التحميل متساوي الأثر عند إعادة التشغيل، واستعمل السجلّ لملاحظة ما لم يعمل."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which report at your school is put together by hand every week or term? Sketch it as extract, transform and load.",
+            "ar": "أيّ تقرير في مدرستك يُجمع باليد كل أسبوع أو فصل دراسي؟ ارسمه استخراجًا وتحويلًا وتحميلًا."
+          },
+          "placeholder": {
+            "en": "For example: “The weekly attendance return: extract the 12 registers, transform by counting P per class, load into the district’s form.”",
+            "ar": "مثلًا: «تقرير الحضور الأسبوعي: استخراج السجلّات الاثني عشر، وتحويلها بعدّ الحاضرين لكل صف، وتحميلها في استمارة الإدارة.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Map one report’s pipeline",
+            "ar": "مشروع: خريطة خط بيانات تقرير واحد"
+          },
+          "task": {
+            "en": "Choose one report your school sends regularly. With your school’s data team, or a class, draw its pipeline: where each piece of data comes from (extract), what is done to it (transform), where it ends up (load), and when it runs. Mark where it can fail, and for each failure whether a retry would fix it. Then run it as a “human pipeline” with made-up registers, stop it halfway and run it again: does the result stay right?",
+            "ar": "اختر تقريرًا واحدًا ترسله مدرستك بانتظام. وارسم مع فريق البيانات في مدرستك، أو مع صف، خط بياناته: من أين تأتي كل قطعة بيانات (الاستخراج)، وماذا يُفعل بها (التحويل)، وأين تنتهي (التحميل)، ومتى يعمل. وحدّد أين قد يفشل، ولكل فشل هل تصلحه إعادة المحاولة. ثم نفّذه «خط بيانات بشريًا» بسجلّات خيالية، وأوقفه في منتصفه وشغّله من جديد: هل تبقى النتيجة صحيحة؟"
+          },
+          "deliverable": {
+            "en": "A photo of your pipeline map (no real pupils’ data), and two sentences: the step most likely to fail, and how you’d make the load safe to rerun.",
+            "ar": "صورة لخريطة خط البيانات (دون بيانات تلاميذ حقيقيين)، وجملتان: الخطوة الأكثر عرضة للفشل، وكيف ستجعل التحميل آمنًا عند إعادة التشغيل."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "The map shows extract, transform and load, and when the report runs.",
+                "ar": "تُظهر الخريطة الاستخراج والتحويل والتحميل، ومتى يعمل التقرير."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Each failure point says whether a retry fixes it, or a person must.",
+                "ar": "تقول كل نقطة فشل هل تصلحها إعادة المحاولة، أم يجب أن يصلحها شخص."
+              }
+            },
+            {
+              "criterion": {
+                "en": "The load is designed to be safe to run again.",
+                "ar": "صُمّم التحميل ليكون آمنًا عند إعادة تشغيله."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Automate the weekly report",
+            "ar": "أتمتة التقرير الأسبوعي"
+          },
+          "note": {
+            "en": "Data engineering · Level 4 · Lesson 1",
+            "ar": "هندسة البيانات، المستوى ٤، الدرس ١"
+          },
+          "narration": {
+            "en": "Three hours every Friday, and one class counted twice.",
+            "ar": "ثلاث ساعات كل خميس، وصف عُدّ مرتين."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Describe a pipeline: extract, transform, load.",
+              "Make every run safe to repeat.",
+              "Tell passing faults from bad data."
+            ],
+            "ar": [
+              "نصف خط البيانات: الاستخراج والتحويل والتحميل.",
+              "نجعل كل تشغيل آمنًا عند تكراره.",
+              "نميّز الأخطاء العابرة من البيانات الخاطئة."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Extract, transform, load, on a schedule.",
+              "Replace the day’s rows: idempotent.",
+              "Retry passing faults; bad data needs a person."
+            ],
+            "ar": [
+              "استخراج، وتحويل، وتحميل، وفق جدول زمني.",
+              "استبدل صفوف اليوم: تشغيل متساوي الأثر.",
+              "أعد محاولة الأخطاء العابرة، والبيانات الخاطئة تحتاج إلى شخص."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "The human pipeline",
+            "ar": "خط البيانات البشري"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): How is our report made?",
+              "Teach (8 min): Extract, transform, load.",
+              "Run (12 min): The human pipeline.",
+              "Fail (10 min): Stop it halfway, and rerun.",
+              "Wrap-up (5 min): What goes in the log?"
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): كيف يُصنع تقريرنا؟",
+              "الشرح (٨ دقائق): الاستخراج والتحويل والتحميل.",
+              "التشغيل (١٢ دقيقة): خط البيانات البشري.",
+              "الفشل (١٠ دقائق): أوقفوه في المنتصف، وأعيدوا تشغيله.",
+              "الختام (٥ دقائق): ماذا يُكتب في السجلّ؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Ask how the school’s weekly attendance report is put together today, who does it and how long it takes.",
+              "Teach (8 min): Draw the three steps and a schedule on the board. Explain passing faults and bad data, and why the load replaces the day’s rows.",
+              "Run (12 min): One group reads three made-up registers aloud, one counts the P’s per class, and one writes the counts on the board. Put a “?” in one register.",
+              "Fail (10 min): Stop the writers after two classes, then run again. First add the rows, then try wiping the day’s rows first. Which gives the right total?",
+              "Wrap-up (5 min): Agree what the run log should say, including the “?”. Then give the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اسأل: كيف يُجمع تقرير الحضور الأسبوعي في المدرسة اليوم، ومن يجمعه، وكم يستغرق؟",
+              "الشرح (٨ دقائق): ارسم الخطوات الثلاث وجدولًا زمنيًا على السبّورة. واشرح الأخطاء العابرة والبيانات الخاطئة، ولماذا يستبدل التحميل صفوف اليوم.",
+              "التشغيل (١٢ دقيقة): تقرأ مجموعة ثلاثة سجلّات خيالية بصوت عالٍ، وتعدّ مجموعة الحاضرين لكل صف، وتكتب مجموعة الأعداد على السبّورة. وضع «؟» في أحد السجلّات.",
+              "الفشل (١٠ دقائق): أوقفوا الكاتبين بعد صفّين، ثم شغّلوا من جديد. أضيفوا الصفوف أولًا، ثم جرّبوا مسح صفوف اليوم أولًا. أيّهما يعطي المجموع الصحيح؟",
+              "الختام (٥ دقائق): اتفقوا على ما يجب أن يقوله سجلّ التشغيل، بما في ذلك «؟». ثم وزّع بطاقة الخروج."
+            ]
+          },
+          "note": {
+            "en": "Use made-up registers. Make the class sizes add up to a number pupils can check, such as 90, so a double count is easy to spot.",
+            "ar": "استعمل سجلّات خيالية. واجعل مجموع أعداد التلاميذ رقمًا يستطيع التلاميذ التحقّق منه، مثل ٩٠، ليسهل اكتشاف العدّ المزدوج."
+          },
+          "narration": {
+            "en": "Read, count, write, then stop it and run it again.",
+            "ar": "اقرأوا، وعُدّوا، واكتبوا، ثم أوقفوه وشغّلوه من جديد."
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why did adding the rows again give 152 pupils?",
+              "Which failures will a retry never fix?",
+              "What should the run log tell the head?"
+            ],
+            "ar": [
+              "لماذا أعطت إضافة الصفوف مرة أخرى ١٥٢ تلميذًا؟",
+              "أيّ الأخطاء لن تصلحها إعادة المحاولة أبدًا؟",
+              "ماذا يجب أن يخبر سجلّ التشغيل المدير؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one passing fault and one bad-data fault, and what the pipeline should do with each."
+            ],
+            "ar": [
+              "اكتب خطأً عابرًا وخطأً في البيانات، وما يجب أن يفعله خط البيانات بكلٍّ منهما."
+            ]
+          },
+          "narration": {
+            "en": "Safe to rerun: replace the day’s rows, and log every run.",
+            "ar": "آمن عند إعادة التشغيل: استبدل صفوف اليوم، وسجّل كل تشغيل."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Automate the weekly report",
+            "ar": "شرائح: أتمتة التقرير الأسبوعي"
+          },
+          "pages": 6,
+          "base": "data-4-1-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: Automate the weekly report",
+            "ar": "خطة الدرس وورقة العمل: أتمتة التقرير الأسبوعي"
+          },
+          "pages": 3,
+          "base": "data-4-1-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-4-1-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.4",
+        "DATA.2",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "data-4-1-2",
+      "title": {
+        "en": "Checks that catch problems",
+        "ar": "فحوص تكشف المشكلات"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Ask your pupils to write checks for their own class data: a mark must be from 0 to 20, every pupil appears once. Then test the checks on a made-up sheet with planted mistakes.",
+        "ar": "اطلب من تلاميذك كتابة فحوص لبيانات صفّهم: الدرجة يجب أن تكون من ٠ إلى ٢٠، وكل تلميذ يظهر مرة واحدة. ثم اختبروا الفحوص على ورقة خيالية فيها أخطاء مزروعة."
+      },
+      "materials": {
+        "en": [
+          "A made-up mark or rain sheet with planted mistakes",
+          "Board and chalk",
+          "Optional: a phone or computer for the SQL steps"
+        ],
+        "ar": [
+          "ورقة درجات أو أمطار خيالية فيها أخطاء مزروعة",
+          "السبّورة والطباشير",
+          "اختياري: هاتف أو حاسوب لخطوات SQL"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Checks that catch problems",
+            "ar": "فحوص تكشف المشكلات"
+          },
+          "src": null,
+          "duration": 188,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "999 reached the district",
+                "ar": "٩٩٩ وصلت إلى الإدارة"
+              }
+            },
+            {
+              "at": 19.2,
+              "atBy": {
+                "en": 19.2,
+                "ar": 19.2
+              },
+              "label": {
+                "en": "Kinds of checks",
+                "ar": "أنواع الفحوص"
+              }
+            },
+            {
+              "at": 48.2,
+              "atBy": {
+                "en": 48.2,
+                "ar": 48.8
+              },
+              "label": {
+                "en": "A check as a query",
+                "ar": "الفحص استعلامًا"
+              }
+            },
+            {
+              "at": 62.2,
+              "atBy": {
+                "en": 62.2,
+                "ar": 61.6
+              },
+              "label": {
+                "en": "When a check fails",
+                "ar": "حين يفشل الفحص"
+              }
+            },
+            {
+              "at": 115.6,
+              "atBy": {
+                "en": 115.6,
+                "ar": 113.4
+              },
+              "label": {
+                "en": "Checks have limits",
+                "ar": "للفحوص حدود"
+              }
+            },
+            {
+              "at": 129,
+              "atBy": {
+                "en": 129,
+                "ar": 126.2
+              },
+              "label": {
+                "en": "The lab",
+                "ar": "المختبر"
+              }
+            },
+            {
+              "at": 153.3,
+              "atBy": {
+                "en": 153.3,
+                "ar": 150.6
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 103.51,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A rain gauge sent 999, its error code. Which check would have caught it?",
+                "ar": "أرسل مقياس مطر القيمة ٩٩٩، وهي رمز الخطأ فيه. أيّ فحص كان سيلتقطها؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Not empty",
+                    "ar": "غير فارغ"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "In range: 0 to 300 mm",
+                    "ar": "ضمن المدى: من ٠ إلى ٣٠٠ مم"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Unique station and day",
+                    "ar": "محطة ويوم دون تكرار"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "999 is far above 300 mm, so the range check returns it. “Not empty” and “unique” would both have let it through: the value is there, and it’s sent once.",
+                "ar": "٩٩٩ أعلى بكثير من ٣٠٠ مم، فيعيدها فحص المدى. أما «غير فارغ» و«دون تكرار» فكانا سيمرّرانها: فالقيمة موجودة، وأُرسلت مرة واحدة."
+              }
+            },
+            "atBy": {
+              "en": 103.51,
+              "ar": 100.55
+            }
+          },
+          "transcript": {
+            "en": "Our rainfall report went to the district with Riverside at over two hundred millimetres. One gauge had sent nine nine nine, its error code. Nothing in our pipeline stopped it. Today: checks that catch problems before your report does. A check is a rule the data must pass. In range: rain from zero to three hundred millimetres. Not empty. Unique: one reading per station per day. Allowed values: only the stations we know. Some checks compare. Do the class counts add up to the school's roll? Did today's batch arrive at all? Is the date this week, and not last year? In SQL, write each check as a query that finds the bad rows. If it returns nothing, the check passes. If it returns rows, those are your problems, with their details. Then decide what a failure does. Stop the batch, and lose good data with the bad. Set the bad rows aside, and let the rest through. Or warn, and let it all through. Choose by what a wrong report costs. And fix problems at their source. Send the reading back to the club that took it, so tomorrow's batch is right. Cleaning the same mistake every week means nobody fixed it. Quick check! Which check would have caught the nine nine nine? In range. Nine nine nine is far above three hundred millimetres, so the range check returns it. Not empty and unique would both have let it through. But checks only catch what you thought of. A reading of twelve, when it really rained twenty, passes every check. So also compare with neighbours, and look at the chart. In the app, turn the checks on and off, and choose what a failure does. With “Stop the batch”, only the first day gets through. Without the repeats check, Hilltop's average creeps up. Your turn. Every check passes on today's batch. What can I say about the data? No known problem was found; that's all. Remember: write checks for range, gaps, repeats and allowed values. Decide what each failure does, and fix problems at their source. And a passing check is not proof the data is right. Try it in class tomorrow: ask your pupils to write checks for their own class data. A mark must be from zero to twenty. Every pupil appears once. Then test the checks on a made-up sheet with planted mistakes.",
+            "ar": "تقرير الأمطار بتاعنا راح للإدارة وفيه ضفة النهر بأكتر من ميتين مليمتر. مقياس واحد كان باعت تسعمية تسعة وتسعين، كود الخطأ بتاعه. ومفيش حاجة في خط البيانات بتاعنا وقّفته. النهارده: فحوص بتمسك المشاكل قبل ما تظهر في تقريرك. الفحص قاعدة البيانات لازم تعدّيها. في المدى: المطر من صفر لتلتمية مليمتر. مش فاضي. ومن غير تكرار: قراءة واحدة لكل محطة في اليوم. وقيم مسموحة: المحطات اللي نعرفها بس. فيه فحوص بتقارن. أعداد الفصول مجموعها بيساوي عدد المدرسة؟ دفعة النهارده وصلت أصلًا؟ التاريخ ده الأسبوع ده، ولا السنة اللي فاتت؟ في SQL، اكتب كل فحص كاستعلام بيدوّر على الصفوف الغلط. لو مرجّعش حاجة، الفحص عدّى. ولو رجّع صفوف، يبقى دي مشاكلك، بتفاصيلها. وبعدين قرّر الفشل يعمل إيه. توقّف الدفعة، وتضيّع البيانات السليمة مع الغلط. أو تحط الصفوف الغلط على جنب، وتعدّي الباقي. أو تحذّر، وتعدّي كله. واختار على حسب التقرير الغلط هيكلّف قد إيه. وصلّح المشاكل من مصدرها. رجّع القراءة للنادي اللي أخدها، علشان دفعة بكرة تبقى صح. ولو بتنضّف نفس الغلطة كل أسبوع، يبقى محدش صلّحها. سؤال سريع! أنهي فحص كان هيمسك التسعمية تسعة وتسعين؟ فحص المدى. تسعمية تسعة وتسعين أعلى بكتير من تلتمية مليمتر، ففحص المدى بيرجّعها. أما «مش فاضي» و«من غير تكرار» فالاتنين كانوا هيعدّوها. بس الفحوص بتمسك اللي إنت فكّرت فيه بس. قراءة تناشر، والمطر الحقيقي كان عشرين، بتعدّي من كل الفحوص. فقارن كمان بالجيران، وبص على الرسم. في التطبيق، شغّل الفحوص واقفلها، واختار الفشل يعمل إيه. مع «أوقف الدفعة»، أول يوم بس هو اللي بيعدّي. ومن غير فحص التكرار، متوسط «التل» بيزحف لفوق. دورك. كل الفحوص عدّت على دفعة النهارده. أقدر أقول إيه عن البيانات؟ إنه مفيش مشكلة معروفة اتلقت، وبس. افتكر: اكتب فحوص للمدى، والفراغات، والتكرار، والقيم المسموحة. قرّر كل فشل يعمل إيه، وصلّح المشاكل من مصدرها. والفحص اللي عدّى مش دليل إن البيانات صح. جرّبها في الفصل بكرة: خلّي تلاميذك يكتبوا فحوص لبيانات فصلهم. الدرجة لازم تبقى من صفر لعشرين. وكل تلميذ يظهر مرة واحدة. وبعدين جرّبوا الفحوص على شيت متألّف فيه أخطاء متخبّية."
+          },
+          "sources": {
+            "en": "/media/data-4-1-2/video-en.mp4",
+            "ar": "/media/data-4-1-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-4-1-2/captions-en.vtt",
+            "ar": "/media/data-4-1-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-4-1-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-4-1-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-4-1-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-4-1-2/light/audio/en.opus",
+              "manifest.json": "/media/data-4-1-2/light/manifest.json",
+              "scenes.json": "/media/data-4-1-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-4-1-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-4-1-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 414,
+              "ar": 408
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Checks, and what failure does",
+            "ar": "الفحوص، وما يفعله الفشل"
+          },
+          "body": {
+            "en": "A check is a rule the data must pass before anyone uses it. In range: rain from 0 to 300 mm, a mark from 0 to 20. Not empty: every reading has a value. Unique: one reading per station per day, one row per pupil. Allowed values: only the stations, classes or codes we know. Some checks compare: do the class counts add up to the school’s roll? Did today’s batch arrive at all? Is the date this week, and not last year?\n\nIn SQL, write each check as a query that finds the bad rows. If it returns nothing, the check passes; if it returns rows, those are your problems, with their details. WHERE mm < 0 OR mm > 300 finds impossible amounts; WHERE mm IS NULL finds the gaps; GROUP BY station, day HAVING COUNT(*) > 1 finds repeats; and a left join to the list of stations finds names that aren’t on it. Run them on every batch, before the report.\n\nThen decide what a failure does. Stop the batch, and lose the good data with the bad. Set the bad rows aside, and let the rest through. Or warn, and let everything through. Choose by what a wrong report costs: a flood warning can’t wait, but a termly return can be held for a day. And fix problems at their source: send the reading back to the club that took it, so tomorrow’s batch is right. Cleaning the same mistake every week means nobody has fixed it.\n\nChecks only catch what you thought of. A reading of 12 mm when it really rained 20 passes every check: it’s in range, not empty, unique and from a known station. So also compare each station with its neighbours, look at the chart, and when every check passes, say what is true: no known problem was found.",
+            "ar": "الفحص قاعدة يجب أن تجتازها البيانات قبل أن يستعملها أحد. ضمن المدى: المطر من ٠ إلى ٣٠٠ مم، والدرجة من ٠ إلى ٢٠. غير فارغ: لكل قراءة قيمة. دون تكرار: قراءة واحدة لكل محطة في اليوم، وصف واحد لكل تلميذ. قيم مسموح بها: المحطات أو الصفوف أو الرموز التي نعرفها فقط. وبعض الفحوص تقارن: هل يساوي مجموع أعداد الصفوف عدد تلاميذ المدرسة؟ هل وصلت دفعة اليوم أصلًا؟ هل التاريخ من هذا الأسبوع لا من العام الماضي؟\n\nوفي SQL اكتب كل فحص استعلامًا يجد الصفوف المعيبة. فإن لم يُعِد شيئًا نجح الفحص، وإن أعاد صفوفًا فتلك مشكلاتك بتفاصيلها. فـ ⁦WHERE mm < 0 OR mm > 300⁩ تجد الكميات المستحيلة، و⁦WHERE mm IS NULL⁩ تجد الفجوات، و⁦GROUP BY station, day HAVING COUNT(*) > 1⁩ تجد التكرار، والربط اليساري مع قائمة المحطات يجد الأسماء التي ليست فيها. وشغّلها على كل دفعة، قبل التقرير.\n\nثم قرّر ما يفعله الفشل. أوقف الدفعة، فتضيع البيانات السليمة مع المعيبة. أو ضع الصفوف المعيبة جانبًا، ومرّر الباقي. أو حذّر، ومرّر كل شيء. واختر حسب كلفة التقرير الخاطئ: فإنذار الفيضان لا ينتظر، أما التقرير الفصلي فيمكن تأخيره يومًا. وأصلح المشكلات من مصدرها: أعد القراءة إلى النادي الذي أخذها، لتصحّ دفعة الغد. فتنظيف الخطأ نفسه كل أسبوع يعني أن أحدًا لم يصلحه.\n\nولا تلتقط الفحوص إلا ما فكّرت فيه. فقراءة ١٢ مم والمطر الحقيقي ٢٠ تجتاز كل الفحوص: فهي ضمن المدى، وغير فارغة، وغير مكرّرة، ومن محطة معروفة. فقارن أيضًا كل محطة بجاراتها، وانظر إلى الرسم، وحين تنجح كل الفحوص فقل الحقيقة: لم تُكتشف أي مشكلة معروفة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Range check",
+                "ar": "فحص المدى"
+              },
+              "def": {
+                "en": "A value must lie between a lowest and a highest possible value, such as 0 to 300 mm.",
+                "ar": "يجب أن تقع القيمة بين أدنى قيمة ممكنة وأعلاها، مثل ٠ إلى ٣٠٠ مم."
+              }
+            },
+            {
+              "term": {
+                "en": "Uniqueness check",
+                "ar": "فحص عدم التكرار"
+              },
+              "def": {
+                "en": "Only one row per key, such as one reading per station per day.",
+                "ar": "صف واحد فقط لكل مفتاح، مثل قراءة واحدة لكل محطة في اليوم."
+              }
+            },
+            {
+              "term": {
+                "en": "Check as a query",
+                "ar": "الفحص استعلامًا"
+              },
+              "def": {
+                "en": "A query that returns the bad rows; no rows means the check passes.",
+                "ar": "استعلام يعيد الصفوف المعيبة، وغياب الصفوف يعني نجاح الفحص."
+              }
+            },
+            {
+              "term": {
+                "en": "Fix at the source",
+                "ar": "الإصلاح من المصدر"
+              },
+              "def": {
+                "en": "Send a problem back to whoever made the data, so it stops happening.",
+                "ar": "إعادة المشكلة إلى من صنع البيانات، لتتوقّف عن الحدوث."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Every check passes on today’s batch. What can you say about the data?",
+            "ar": "اجتازت دفعة اليوم كل الفحوص. ماذا تستطيع أن تقول عن البيانات؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "It’s correct",
+                "ar": "إنها صحيحة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "No known problem was found",
+                "ar": "لم تُكتشف أي مشكلة معروفة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The checks are broken",
+                "ar": "إن الفحوص معطّلة"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Checks find only the problems you thought of. A wrong but believable reading, such as 12 mm when it really rained 20, passes them all, so also compare with neighbours and look at the chart.",
+            "ar": "لا تجد الفحوص إلا المشكلات التي فكّرت فيها. فالقراءة الخاطئة المعقولة، مثل ١٢ مم والمطر الحقيقي ٢٠، تجتازها كلها، فقارن أيضًا بالمحطات المجاورة وانظر إلى الرسم."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p2",
+          "lang": "sql",
+          "prompt": {
+            "en": "A range check as a query: find every reading outside 0 to 300 mm. Show the station, the day and the amount.",
+            "ar": "فحص المدى استعلامًا: جد كل قراءة خارج المدى من ٠ إلى ٣٠٠ مم. اعرض المحطة واليوم والكمية."
+          },
+          "setup": "CREATE TABLE rain (station TEXT, day TEXT, mm REAL);\nINSERT INTO rain VALUES ('Hilltop', 'Mon', 12), ('Riverside', 'Mon', 999), ('Market', 'Mon', 0), ('Lakeside', 'Mon', 8),\n  ('Hilltop', 'Tue', 15), ('Riverside', 'Tue', 14), ('Market', 'Tue', -3), ('Lakeside', 'Tue', NULL),\n  ('Hilltop', 'Wed', 16), ('Hilltop', 'Wed', 16), ('Riverside', 'Wed', 11), ('Hiltop', 'Wed', 9), ('Lakeside', 'Wed', 10);",
+          "starter": "SELECT station, day, mm FROM rain\nWHERE mm > 300;",
+          "solution": "SELECT station, day, mm FROM rain\nWHERE mm < 0 OR mm > 300;",
+          "hints": [
+            {
+              "en": "The starter finds the 999, but a reading can also be too low.",
+              "ar": "يجد البرنامج الأول ٩٩٩، لكن القراءة قد تكون منخفضة جدًّا أيضًا."
+            },
+            {
+              "en": "WHERE mm < 0 OR mm > 300",
+              "ar": "⁦WHERE mm < 0 OR mm > 300⁩"
+            }
+          ],
+          "explain": {
+            "en": "A reading is out of range if it’s below 0 or above 300, so the two conditions are joined with OR: Riverside’s 999 and Market’s -3. Lakeside’s NULL isn’t returned: a comparison with an empty value is never true, so gaps need their own check.",
+            "ar": "تكون القراءة خارج المدى إن كانت أقل من ٠ أو أكثر من ٣٠٠، فيُربط الشرطان بـ OR: ‏٩٩٩ لضفة النهر و-٣ للسوق. ولا تعود قيمة NULL للبحيرة: فالمقارنة مع قيمة فارغة لا تكون صحيحة أبدًا، فتحتاج الفجوات إلى فحص خاص بها."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which of these faults would the range check (0 to 300 mm) let through? Choose all that apply.",
+            "ar": "أيّ هذه الأخطاء سيمرّره فحص المدى (٠ إلى ٣٠٠ مم)؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "12 mm typed when it really rained 21",
+                "ar": "١٢ مم كُتبت والمطر الحقيقي ٢١"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A reading sent twice",
+                "ar": "قراءة أُرسلت مرتين"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "An empty reading",
+                "ar": "قراءة فارغة"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "999, the error code",
+                "ar": "٩٩٩، رمز الخطأ"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "A minus sign: -3",
+                "ar": "إشارة سالب: -٣"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "A range check catches only impossible amounts, here 999 and -3. A repeat needs the uniqueness check, an empty value the not-empty check, and a believable typo needs a person comparing with neighbours.",
+            "ar": "لا يلتقط فحص المدى إلا الكميات المستحيلة، وهي هنا ٩٩٩ و-٣. أما التكرار فيحتاج إلى فحص عدم التكرار، والقيمة الفارغة إلى فحص «غير فارغ»، والخطأ المعقول إلى شخص يقارن بالمحطات المجاورة."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: turn every check off and read the report, then turn them on one by one and note what each finds. Choose what a failure does for a district report that goes out every evening. Then turn off only “No repeats”: how far does Hilltop’s average creep?",
+            "ar": "جرّب: أوقف كل الفحوص واقرأ التقرير، ثم شغّلها واحدًا بعد آخر وسجّل ما يجده كلٌّ منها. واختر ما يفعله الفشل لتقرير إدارة يصدر كل مساء. ثم أوقف «بلا تكرار» وحده: إلى أيّ حدّ يزحف متوسط «التل»؟"
+          },
+          "tool": "quality"
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "sql",
+          "prompt": {
+            "en": "A uniqueness check: find every station and day that has more than one reading. Show the station, the day and how many readings it has.",
+            "ar": "فحص عدم التكرار: جد كل محطة ويوم فيهما أكثر من قراءة واحدة. اعرض المحطة واليوم وعدد القراءات."
+          },
+          "setup": "CREATE TABLE rain (station TEXT, day TEXT, mm REAL);\nINSERT INTO rain VALUES ('Hilltop', 'Mon', 12), ('Riverside', 'Mon', 999), ('Market', 'Mon', 0), ('Lakeside', 'Mon', 8),\n  ('Hilltop', 'Tue', 15), ('Riverside', 'Tue', 14), ('Market', 'Tue', -3), ('Lakeside', 'Tue', NULL),\n  ('Hilltop', 'Wed', 16), ('Hilltop', 'Wed', 16), ('Riverside', 'Wed', 11), ('Hiltop', 'Wed', 9), ('Lakeside', 'Wed', 10);",
+          "starter": "SELECT station, day, COUNT(*) FROM rain\nGROUP BY station, day;",
+          "solution": "SELECT station, day, COUNT(*) FROM rain\nGROUP BY station, day\nHAVING COUNT(*) > 1;",
+          "hints": [
+            {
+              "en": "The starter counts every group. A check should return only the bad ones.",
+              "ar": "يعدّ البرنامج الأول كل مجموعة، أما الفحص فيجب ألّا يعيد إلا المعيبة."
+            },
+            {
+              "en": "Add HAVING COUNT(*) > 1.",
+              "ar": "أضف ⁦HAVING COUNT(*) > 1⁩."
+            }
+          ],
+          "explain": {
+            "en": "GROUP BY station, day makes one group per reading slot; HAVING COUNT(*) > 1 keeps the slots with repeats: Hilltop on Wednesday, twice. “Hiltop” on Wednesday isn’t a repeat to this check: it’s a misspelt station, which the allowed-values check catches.",
+            "ar": "تصنع ⁦GROUP BY station, day⁩ مجموعة لكل موعد قراءة، وتُبقي ⁦HAVING COUNT(*) > 1⁩ المواعيد المكرّرة: «التل» يوم الأربعاء، مرتين. أما «Hiltop» يوم الأربعاء فليس تكرارًا عند هذا الفحص، بل محطة مكتوبة خطأً، يلتقطها فحص القيم المسموح بها."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "p5",
+          "lang": "sql",
+          "prompt": {
+            "en": "This check should find the empty readings, but it never returns a row, even when Lakeside’s reading is missing. Which line is wrong?",
+            "ar": "يجب أن يجد هذا الفحص القراءات الفارغة، لكنه لا يعيد أي صف أبدًا، حتى حين تنقص قراءة البحيرة. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "SELECT station, day\nFROM rain\nWHERE mm = NULL;",
+          "line": 3,
+          "fix": "WHERE mm IS NULL;",
+          "explain": {
+            "en": "Nothing equals NULL, not even NULL, so = NULL is never true and the check always “passes”. IS NULL is the test for an empty value. A check that can’t fail is worse than none: it says all is well.",
+            "ar": "لا شيء يساوي NULL، ولا NULL نفسها، فلا تكون ⁦= NULL⁩ صحيحة أبدًا، و«ينجح» الفحص دائمًا. أما ⁦IS NULL⁩ فهي اختبار القيمة الفارغة. والفحص الذي لا يمكن أن يفشل أسوأ من غيابه: فهو يقول إن كل شيء على ما يرام."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you set the pipeline to do?",
+            "ar": "ماذا تجعل خط البيانات يفعل؟"
+          },
+          "who": {
+            "en": "Mr Okafor, science, weather club",
+            "ar": "أ. أوكافور، معلّم العلوم ومشرف نادي الطقس"
+          },
+          "initial": {
+            "en": "O",
+            "ar": "و"
+          },
+          "situation": {
+            "en": "Tonight’s batch has 20 good readings and one impossible one: 999 from the Riverside gauge. The district’s rainfall report goes out at nine, and farmers use it to plan planting.",
+            "ar": "في دفعة الليلة ٢٠ قراءة سليمة وقراءة مستحيلة واحدة: ٩٩٩ من مقياس ضفة النهر. ويصدر تقرير الأمطار في الإدارة في التاسعة، ويستعمله المزارعون لتخطيط الزراعة."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "Stop the whole batch until Riverside is fixed.",
+                "ar": "إيقاف الدفعة كلها حتى يُصلَح مقياس ضفة النهر."
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "No wrong number goes out, but neither do the 20 good readings: tonight’s report is empty, and farmers get nothing.",
+                "ar": "لا يخرج أي رقم خاطئ، لكن القراءات السليمة العشرين لا تخرج أيضًا: فتقرير الليلة فارغ، ولا يحصل المزارعون على شيء."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "Set the 999 aside, send the rest, and ask the Riverside club to read the gauge again.",
+                "ar": "وضع ٩٩٩ جانبًا، وإرسال الباقي، وسؤال نادي ضفة النهر أن يعيد قراءة المقياس."
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "The report goes out on time with 20 good readings, Riverside is marked as missing, and the problem is fixed at its source for tomorrow.",
+                "ar": "يصدر التقرير في وقته بعشرين قراءة سليمة، وتُعلَّم ضفة النهر ناقصة، وتُصلَح المشكلة من مصدرها للغد."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "Let it all through with a warning in the log.",
+                "ar": "تمرير كل شيء مع تحذير في السجلّ."
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "The warning sits in a log nobody reads at nine, and the report shows Riverside under a flood. Farmers may plan around a storm that never happened.",
+                "ar": "يبقى التحذير في سجلّ لا يقرؤه أحد في التاسعة، ويُظهر التقرير ضفة النهر تحت فيضان. وقد يخطّط المزارعون لعاصفة لم تحدث."
+              }
+            }
+          ],
+          "explain": {
+            "en": "Set bad rows aside, let the good data through on time, and fix the problem at its source.",
+            "ar": "ضع الصفوف الخاطئة جانبًا، ومرّر البيانات السليمة في وقتها، وأصلح المشكلة من مصدرها."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Pick one dataset your school sends out. Which four checks would you run on it, and what should happen when each one fails?",
+            "ar": "اختر مجموعة بيانات ترسلها مدرستك. ما الفحوص الأربعة التي ستطبّقها عليها، وماذا يجب أن يحدث حين يفشل كلٌّ منها؟"
+          },
+          "placeholder": {
+            "en": "For example: “Exam marks: 0 to 100, no blanks, one row per pupil per subject, only subjects on the timetable. Hold the batch if a whole class is missing.”",
+            "ar": "مثلًا: «درجات الامتحانات: من ٠ إلى ١٠٠، دون فراغات، وصف واحد لكل تلميذ في كل مادة، ومواد الجدول فقط. وأوقف الدفعة إن غاب صف كامل.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Five checks on a week of data",
+            "ar": "مشروع: خمسة فحوص على أسبوع من البيانات"
+          },
+          "task": {
+            "en": "Take a week of real or made-up data your school uses (marks, attendance or rain readings). With your data team or a class, write five checks: in range, not empty, unique, allowed values and one comparison (such as counts adding up to the roll). For each, decide what a failure does and who fixes the source. Run the checks by hand or in SQL, and write down what each one found.",
+            "ar": "خذ أسبوعًا من بيانات حقيقية أو خيالية تستعملها مدرستك (درجات، أو حضور، أو قراءات أمطار). واكتب مع فريق البيانات أو مع صف خمسة فحوص: ضمن المدى، وغير فارغ، ودون تكرار، وقيم مسموح بها، وفحص مقارنة واحد (كأن يساوي مجموع الأعداد عدد تلاميذ المدرسة). وقرّر لكلٍّ منها ما يفعله الفشل ومن يصلح المصدر. ثم طبّق الفحوص باليد أو بلغة SQL، واكتب ما وجده كلٌّ منها."
+          },
+          "deliverable": {
+            "en": "Your five checks (as rules or SQL queries) with what each found, and two sentences: which failure you chose to stop the batch for, and one problem no check could catch.",
+            "ar": "فحوصك الخمسة (قواعد أو استعلامات SQL) مع ما وجده كلٌّ منها، وجملتان: أيّ فشل اخترت أن توقف الدفعة بسببه، ومشكلة واحدة لم يكن أي فحص ليلتقطها."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "The five checks cover range, gaps, repeats, allowed values and a comparison.",
+                "ar": "تغطّي الفحوص الخمسة المدى والفجوات والتكرار والقيم المسموح بها والمقارنة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Each check says what a failure does and who fixes the source.",
+                "ar": "يقول كل فحص ما يفعله الفشل ومن يصلح المصدر."
+              }
+            },
+            {
+              "criterion": {
+                "en": "The results say honestly what was and wasn’t found.",
+                "ar": "تقول النتائج بصدق ما وُجد وما لم يوجد."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Checks that catch problems",
+            "ar": "فحوص تكشف المشكلات"
+          },
+          "note": {
+            "en": "Data engineering · Level 4 · Lesson 2",
+            "ar": "هندسة البيانات، المستوى ٤، الدرس ٢"
+          },
+          "narration": {
+            "en": "A 999 reached the district. What should have stopped it?",
+            "ar": "وصلت ٩٩٩ إلى الإدارة. ما الذي كان يجب أن يوقفها؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Write checks: range, gaps, repeats, allowed values.",
+              "Write a check as a query that returns the bad rows.",
+              "Decide what a failure does, and fix the source."
+            ],
+            "ar": [
+              "نكتب فحوصًا: المدى، والفجوات، والتكرار، والقيم المسموح بها.",
+              "نكتب الفحص استعلامًا يعيد الصفوف المعيبة.",
+              "نقرّر ما يفعله الفشل، ونصلح المصدر."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "No rows back means the check passes.",
+              "Set bad rows aside; keep good data moving.",
+              "Passing every check isn’t proof."
+            ],
+            "ar": [
+              "عدم عودة صفوف يعني نجاح الفحص.",
+              "ضع الصفوف المعيبة جانبًا، ودع البيانات السليمة تمضي.",
+              "اجتياز كل الفحوص ليس دليلًا."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Planted mistakes",
+            "ar": "أخطاء مزروعة"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): What could go wrong in a mark sheet?",
+              "Teach (8 min): Kinds of checks.",
+              "Write (10 min): Our class’s checks.",
+              "Test (12 min): Find the planted mistakes.",
+              "Wrap-up (5 min): What did no check catch?"
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): ماذا قد يخطئ في ورقة درجات؟",
+              "الشرح (٨ دقائق): أنواع الفحوص.",
+              "الكتابة (١٠ دقائق): فحوص صفّنا.",
+              "الاختبار (١٢ دقيقة): جدوا الأخطاء المزروعة.",
+              "الختام (٥ دقائق): ماذا لم يلتقطه أي فحص؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Ask pupils to list mistakes a mark sheet could contain: a mark of 25, a blank, a pupil twice, a class that doesn’t exist.",
+              "Teach (8 min): Turn each mistake into a check. Show one check as a SQL query that returns the bad rows.",
+              "Write (10 min): Groups write four checks for their class’s marks, each as one clear rule.",
+              "Test (12 min): Give each group a made-up sheet with five planted mistakes, one of them believable. Groups run their checks and note what they found and missed.",
+              "Wrap-up (5 min): Reveal the believable mistake no check caught, and discuss how a person would notice it. Then give the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اطلب من التلاميذ تعداد الأخطاء التي قد تحويها ورقة درجات: درجة ٢٥، وفراغ، وتلميذ مرتين، وصف غير موجود.",
+              "الشرح (٨ دقائق): حوّل كل خطأ إلى فحص. واعرض فحصًا واحدًا استعلامًا بلغة SQL يعيد الصفوف المعيبة.",
+              "الكتابة (١٠ دقائق): تكتب المجموعات أربعة فحوص لدرجات صفّها، كلٌّ منها قاعدة واحدة واضحة.",
+              "الاختبار (١٢ دقيقة): أعطِ كل مجموعة ورقة خيالية فيها خمسة أخطاء مزروعة، أحدها معقول. وتطبّق المجموعات فحوصها وتسجّل ما وجدته وما فاتها.",
+              "الختام (٥ دقائق): اكشف الخطأ المعقول الذي لم يلتقطه أي فحص، وناقشوا كيف يلاحظه شخص. ثم وزّع بطاقة الخروج."
+            ]
+          },
+          "note": {
+            "en": "Plant one mistake of each kind, plus one believable one (such as 12 typed as 15) that no rule can catch. Use made-up names.",
+            "ar": "ازرع خطأً من كل نوع، وخطأً معقولًا واحدًا (مثل ١٢ كُتبت ١٥) لا تستطيع أي قاعدة التقاطه. واستعمل أسماء خيالية."
+          },
+          "narration": {
+            "en": "Five planted mistakes. Which do your checks catch?",
+            "ar": "خمسة أخطاء مزروعة. أيّها تلتقطه فحوصكم؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which check would have stopped the 999?",
+              "Why is “= NULL” a check that can never fail?",
+              "What should we say when every check passes?"
+            ],
+            "ar": [
+              "أيّ فحص كان سيوقف ٩٩٩؟",
+              "لماذا تكون «⁦= NULL⁩» فحصًا لا يفشل أبدًا؟",
+              "ماذا يجب أن نقول حين تنجح كل الفحوص؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one check as a rule and as a SQL query, and what should happen when it fails."
+            ],
+            "ar": [
+              "اكتب فحصًا واحدًا قاعدةً واستعلامًا بلغة SQL، وماذا يجب أن يحدث حين يفشل."
+            ]
+          },
+          "narration": {
+            "en": "Check every batch, decide what failure does, fix the source.",
+            "ar": "افحص كل دفعة، وقرّر ما يفعله الفشل، وأصلح المصدر."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Checks that catch problems",
+            "ar": "شرائح: فحوص تكشف المشكلات"
+          },
+          "pages": 6,
+          "base": "data-4-1-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: Checks that catch problems",
+            "ar": "خطة الدرس وورقة العمل: فحوص تكشف المشكلات"
+          },
+          "pages": 3,
+          "base": "data-4-1-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-4-1-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.2",
+        "DATA.4",
+        "DC.1.2"
+      ]
+    },
+    {
+      "id": "data-4-1-3",
+      "title": {
+        "en": "Who may see what",
+        "ar": "مَن يرى ماذا"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Play “Guess who” with a made-up pupil: give one fact at a time (her class, her age, her bus stop, her sports team). After how many facts can the class tell who she is?",
+        "ar": "العبوا «خمّن مَن» بتلميذة خيالية: أعطِ معلومة واحدة في كل مرة (صفّها، وعمرها، وموقف حافلتها، وفريقها الرياضي). بعد كم معلومة يستطيع الصف أن يعرف مَن هي؟"
+      },
+      "materials": {
+        "en": [
+          "Fact cards about one made-up pupil",
+          "A list of the school’s reports and who reads them",
+          "Optional: a phone or computer for the SQL step"
+        ],
+        "ar": [
+          "بطاقات معلومات عن تلميذة خيالية واحدة",
+          "قائمة بتقارير المدرسة ومن يقرأ كلًّا منها",
+          "اختياري: هاتف أو حاسوب لخطوة SQL"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Who may see what",
+            "ar": "مَن يرى ماذا"
+          },
+          "src": null,
+          "duration": 203,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "One pupil in Six B",
+                "ar": "تلميذ واحد في ٦ب"
+              }
+            },
+            {
+              "at": 21.1,
+              "atBy": {
+                "en": 21.1,
+                "ar": 19.9
+              },
+              "label": {
+                "en": "Least privilege",
+                "ar": "أقل صلاحية ممكنة"
+              }
+            },
+            {
+              "at": 38.8,
+              "atBy": {
+                "en": 38.8,
+                "ar": 37.4
+              },
+              "label": {
+                "en": "Summaries, not rows",
+                "ar": "ملخّصات لا صفوف"
+              }
+            },
+            {
+              "at": 51.3,
+              "atBy": {
+                "en": 51.3,
+                "ar": 49.5
+              },
+              "label": {
+                "en": "Small groups",
+                "ar": "المجموعات الصغيرة"
+              }
+            },
+            {
+              "at": 65.2,
+              "atBy": {
+                "en": 65.2,
+                "ar": 63.1
+              },
+              "label": {
+                "en": "Numbers aren’t anonymous",
+                "ar": "الأرقام لا تُخفي الهوية"
+              }
+            },
+            {
+              "at": 120,
+              "atBy": {
+                "en": 120,
+                "ar": 115.8
+              },
+              "label": {
+                "en": "In SQL",
+                "ar": "بلغة SQL"
+              }
+            },
+            {
+              "at": 131.6,
+              "atBy": {
+                "en": 131.6,
+                "ar": 126.8
+              },
+              "label": {
+                "en": "The lab",
+                "ar": "المختبر"
+              }
+            },
+            {
+              "at": 164.3,
+              "atBy": {
+                "en": 164.3,
+                "ar": 159.8
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 108.49,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "The district asks for this term’s maths results. Which is safest to send?",
+                "ar": "تطلب الإدارة نتائج الرياضيات لهذا الفصل الدراسي. أيّها أكثر أمانًا للإرسال؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Every pupil’s mark, with names",
+                    "ar": "درجة كل تلميذ بالأسماء"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Every pupil’s mark, with numbers instead of names",
+                    "ar": "درجة كل تلميذ بأرقام بدل الأسماء"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Averages per class, hiding groups under five",
+                    "ar": "متوسط لكل صف، مع إخفاء المجموعات التي تقلّ عن خمسة"
+                  }
+                }
+              ],
+              "answer": "c",
+              "explain": {
+                "en": "Averages answer the district’s question without describing any child, and hiding groups under five stops anyone picking a child out. Numbers instead of names still describe each child, one row at a time.",
+                "ar": "تجيب المتوسطات عن سؤال الإدارة دون وصف أي طفل، وإخفاء المجموعات التي تقلّ عن خمسة يمنع أي أحد من تمييز طفل بعينه. أما الأرقام بدل الأسماء فما زالت تصف كل طفل، صفًّا صفًّا."
+              }
+            },
+            "atBy": {
+              "en": 108.49,
+              "ar": 103.42
+            }
+          },
+          "transcript": {
+            "en": "A district report said: in Class Six B, one pupil has a disability and failed maths. There is one pupil with a disability in Six B. Everyone knew who. Today: who may see what, and how to share data without exposing a child. Start with roles. A class teacher sees her own class. The head sees the whole school. Parents see their own child. The district sees summaries. Each role gets only what it needs: that's least privilege. Share summaries, not rows, whenever you can. A class average answers the district's question without a single name. But small groups give people away. So hide any group of fewer than five pupils. One pupil with a disability in Six B is not a statistic; it's a person. Report it at school level, or not at all. Replacing names with numbers is a start, not the end. It's called pseudonymisation: whoever holds the list of numbers can bring the names back. And a few ordinary facts can do it too. In a well-known study, birth date, sex and postcode alone picked out eighty-seven people in a hundred in the United States. In a school, a class, an age and one detail can be enough. Quick check! The district asks for this term's maths results. Which is safest to send? Averages per class, with groups under five hidden. Numbers instead of names still describe each child, and anyone with the list can match them back. In SQL, GROUP BY makes the averages, and HAVING drops the small groups. One line of HAVING protects every child in a small class. In the app, six harmless posts by Lina, fourteen, add up to her school, her route home and when her house is empty. Choose who sees each one. School data works the same way: each column alone is harmless, but together they point at a child. Your turn. We replaced every name with a number before sharing a file. Is the data anonymous now? No: it's pseudonymised, and the list or a few facts can bring the child back. Remember: each role sees only what it needs. Share summaries, and hide groups under five. And numbers instead of names are a start, not the end. Try it in class tomorrow: play “Guess who” with a made-up pupil. Give one fact at a time: her class, her age, her bus stop, her sports team. After how many facts can the class tell who she is?",
+            "ar": "تقرير من الإدارة قال: في فصل ستة ب، فيه تلميذ عنده إعاقة وسقط في الرياضيات. وفصل ستة ب فيه تلميذ واحد بس عنده إعاقة. الكل عرف هو مين. النهارده: مين يشوف إيه، وإزاي نشارك البيانات من غير ما نكشف طفل. ابدأ بالأدوار. مدرّسة الفصل بتشوف فصلها. والمدير بيشوف المدرسة كلها. وأولياء الأمور بيشوفوا ابنهم بس. والإدارة بتشوف ملخّصات. وكل دور بياخد اللي محتاجه بس: ده مبدأ أقل صلاحية. شارك ملخّصات، مش صفوف، كل ما تقدر. متوسط الفصل بيجاوب على سؤال الإدارة من غير ولا اسم. بس المجموعات الصغيرة بتفضح أصحابها. فخبّي أي مجموعة فيها أقل من خمس تلاميذ. تلميذ واحد عنده إعاقة في ستة ب مش إحصائية، ده إنسان. اعرضها على مستوى المدرسة، أو ما تعرضهاش خالص. إنك تبدّل الأسامي بأرقام بداية، مش نهاية. ده اسمه أسماء مستعارة: أي حد معاه قائمة الأرقام يقدر يرجّع الأسامي. وكام معلومة عادية ممكن تعمل كده برضه. في دراسة مشهورة، تاريخ الميلاد والنوع والرمز البريدي لوحدهم حددوا سبعة وتمانين شخص من كل مية في أمريكا. وفي المدرسة، الفصل والسن وتفصيلة واحدة ممكن يبقوا كفاية. سؤال سريع! الإدارة طالبة نتايج الرياضيات بتاعة الترم ده. أنهي حاجة أأمن نبعتها؟ متوسطات لكل فصل، والمجموعات الأقل من خمسة متخبّية. أما الأرقام بدل الأسامي فلسه بتوصف كل طفل، وأي حد معاه القائمة يقدر يرجّعها. في SQL، GROUP BY بتعمل المتوسطات، وHAVING بتشيل المجموعات الصغيرة. سطر HAVING واحد بيحمي كل طفل في فصل صغير. في التطبيق، ست بوستات مش مؤذية للينا، أربعتاشر سنة، بيتجمعوا ويكشفوا مدرستها، وطريقها للبيت، وإمتى بيتها بيبقى فاضي. اختار مين يشوف كل بوست. وبيانات المدرسة بتشتغل بنفس الطريقة: كل عمود لوحده مش مؤذي، بس مع بعض بيشاوروا على طفل. دورك. بدّلنا كل اسم برقم قبل ما نشارك ملف. كده البيانات بقت مجهولة؟ لأ: دي أسماء مستعارة، والقائمة أو كام معلومة ممكن يرجّعوا الطفل. افتكر: كل دور بيشوف اللي محتاجه بس. شارك ملخّصات، وخبّي المجموعات الأقل من خمسة. والأرقام بدل الأسامي بداية، مش نهاية. جرّبها في الفصل بكرة: العبوا «خمّن مين» بتلميذة متألّفة. قول معلومة واحدة في المرة: فصلها، وسنها، ومحطة الأتوبيس بتاعتها، وفريقها الرياضي. بعد كام معلومة الفصل يقدر يعرف هي مين؟"
+          },
+          "sources": {
+            "en": "/media/data-4-1-3/video-en.mp4",
+            "ar": "/media/data-4-1-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-4-1-3/captions-en.vtt",
+            "ar": "/media/data-4-1-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-4-1-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-4-1-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-4-1-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-4-1-3/light/audio/en.opus",
+              "manifest.json": "/media/data-4-1-3/light/manifest.json",
+              "scenes.json": "/media/data-4-1-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-4-1-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-4-1-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 443,
+              "ar": 429
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Roles, summaries and small groups",
+            "ar": "الأدوار والملخّصات والمجموعات الصغيرة"
+          },
+          "body": {
+            "en": "Start with roles, not people. A class teacher sees her own class’s marks and attendance. The head sees the whole school. A parent sees their own child. The nurse sees health notes. The district sees summaries. Each role gets only what its job needs: that’s least privilege. Write it as an access table, with the records down the side, the roles across the top, and in each cell “full”, “summary” or “none”, and check it against what each system really allows.\n\nShare summaries, not rows, whenever you can. A class average answers the district’s question without a single name. But small groups give people away: “in 6B, one pupil has a disability and failed maths” is not a statistic, it’s a person, and everyone at the school knows who. So never publish a count or an average for a group of fewer than five pupils. Report it at school level, merge it with another group, or leave it out. In SQL, GROUP BY makes the averages and HAVING COUNT(*) >= 5 drops the small groups.\n\nReplacing names with numbers is a start, not the end. It’s called pseudonymisation: whoever holds the list of numbers can bring the names back, so the list must be kept apart and locked. And ordinary facts can do it too. In a well-known study, date of birth, sex and postcode alone picked out 87% of people in the United States. In a school, a class, an age and one detail, such as a bus stop or a sports team, can be enough.\n\nSo before data leaves the school, ask three questions. Who will read it, and what does their role need? Could any row, or any small group, point at one child? And what else is already known (a class photo, a team list, a newsletter) that could be put next to it? The law agrees: data protection laws such as Kenya’s (2019), Nigeria’s (2023), Egypt’s (Law 151 of 2020) and South Africa’s POPIA ask for the least data for the purpose, and extra care for children.",
+            "ar": "ابدأ بالأدوار لا بالأشخاص. فمعلّمة الصف ترى درجات صفّها وحضوره. والمدير يرى المدرسة كلها. ووليّ الأمر يرى طفله. والممرّضة ترى الملاحظات الصحية. والإدارة ترى الملخّصات. فيحصل كل دور على ما يحتاج إليه عمله فقط، وهذا مبدأ أقل صلاحية ممكنة. واكتبه جدول صلاحيات: السجلّات على الجانب، والأدوار في الأعلى، وفي كل خانة «كامل» أو «ملخّص» أو «لا شيء»، وراجعه على ما يسمح به كل نظام فعلًا.\n\nشارك الملخّصات لا الصفوف كلما استطعت. فمتوسط الصف يجيب عن سؤال الإدارة دون اسم واحد. لكن المجموعات الصغيرة تكشف أصحابها: «في ٦ب تلميذ واحد ذو إعاقة رسب في الرياضيات» ليست إحصاءً، بل إنسان، والمدرسة كلها تعرف مَن هو. فلا تنشر أبدًا عددًا أو متوسطًا لمجموعة فيها أقل من خمسة تلاميذ. بل اذكره على مستوى المدرسة، أو ادمجه مع مجموعة أخرى، أو احذفه. وفي SQL تصنع ⁦GROUP BY⁩ المتوسطات، وتُسقط ⁦HAVING COUNT(*) >= 5⁩ المجموعات الصغيرة.\n\nواستبدال الأسماء بالأرقام بداية لا نهاية. ويسمّى هذا الترميز بأسماء مستعارة: فمن يملك قائمة الأرقام يستطيع إعادة الأسماء، فيجب أن تُحفظ القائمة منفصلة ومقفلة. والمعلومات العادية تستطيع ذلك أيضًا. ففي دراسة مشهورة، كان تاريخ الميلاد والجنس والرمز البريدي وحدها كافية لتحديد ٨٧٪ من الناس في الولايات المتحدة. وفي المدرسة قد يكفي الصف والعمر وتفصيل واحد، كموقف حافلة أو فريق رياضي.\n\nفقبل أن تغادر البيانات المدرسة، اطرح ثلاثة أسئلة. مَن سيقرؤها، وماذا يحتاج دوره؟ هل يمكن أن يشير أي صف، أو أي مجموعة صغيرة، إلى طفل واحد؟ وماذا يُعرف أصلًا (صورة الصف، وقائمة الفريق، والنشرة المدرسية) مما يمكن وضعه بجانبها؟ والقانون يؤيّد ذلك: فقوانين حماية البيانات، ككينيا (٢٠١٩) ونيجيريا (٢٠٢٣) ومصر (القانون ١٥١ لسنة ٢٠٢٠) وPOPIA في جنوب أفريقيا، تطلب أقل قدر من البيانات للغرض، وعناية إضافية بالأطفال."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Least privilege",
+                "ar": "أقل صلاحية ممكنة"
+              },
+              "def": {
+                "en": "Each role sees only the data its job needs, and no more.",
+                "ar": "يرى كل دور البيانات التي يحتاج إليها عمله فقط، لا أكثر."
+              }
+            },
+            {
+              "term": {
+                "en": "Small-group rule",
+                "ar": "قاعدة المجموعات الصغيرة"
+              },
+              "def": {
+                "en": "Never publish a count or average for fewer than five pupils; merge or hide the group.",
+                "ar": "لا تنشر أبدًا عددًا أو متوسطًا لأقل من خمسة تلاميذ، بل ادمج المجموعة أو أخفها."
+              }
+            },
+            {
+              "term": {
+                "en": "Pseudonymisation",
+                "ar": "الترميز بأسماء مستعارة"
+              },
+              "def": {
+                "en": "Replacing names with numbers. Whoever holds the list, or a few facts, can bring the names back.",
+                "ar": "استبدال الأسماء بأرقام. ومن يملك القائمة، أو بضع معلومات، يستطيع إعادة الأسماء."
+              }
+            },
+            {
+              "term": {
+                "en": "Re-identification",
+                "ar": "إعادة التعرّف"
+              },
+              "def": {
+                "en": "Finding who a row is about by putting harmless facts together.",
+                "ar": "معرفة صاحب الصف بجمع معلومات بريئة معًا."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Every name was replaced with a number before a file was shared. Is the data anonymous now?",
+            "ar": "استُبدل كل اسم برقم قبل مشاركة ملف. هل صارت البيانات مجهولة الهوية؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Yes: without names, nobody can tell",
+                "ar": "نعم: دون أسماء لا يستطيع أحد أن يعرف"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "No: it’s pseudonymised; the list or a few facts can identify a child",
+                "ar": "لا: هذه أسماء مستعارة، والقائمة أو بضع معلومات قد تكشف الطفل"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Only if the file is a CSV",
+                "ar": "فقط إن كان الملف بصيغة CSV"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "That’s pseudonymisation, not anonymisation. Whoever holds the list of numbers can bring the names back, and a few ordinary facts, such as class, age and one detail, can do it too.",
+            "ar": "هذا ترميز بأسماء مستعارة، لا إخفاء للهوية. فمن يملك قائمة الأرقام يستطيع إعادة الأسماء، وبضع معلومات عادية، كالصف والعمر وتفصيل واحد، تستطيع ذلك أيضًا."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p2",
+          "prompt": {
+            "en": "Match each role to what it should see.",
+            "ar": "صِل كل دور بما يجب أن يراه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "A class teacher",
+                "ar": "معلّمة الصف"
+              },
+              "right": {
+                "en": "Her own class’s marks and attendance",
+                "ar": "درجات صفّها وحضوره"
+              }
+            },
+            {
+              "left": {
+                "en": "A parent",
+                "ar": "وليّ الأمر"
+              },
+              "right": {
+                "en": "Their own child’s marks",
+                "ar": "درجات طفله"
+              }
+            },
+            {
+              "left": {
+                "en": "The school nurse",
+                "ar": "ممرّضة المدرسة"
+              },
+              "right": {
+                "en": "Health notes, not marks",
+                "ar": "الملاحظات الصحية، لا الدرجات"
+              }
+            },
+            {
+              "left": {
+                "en": "The district office",
+                "ar": "الإدارة التعليمية"
+              },
+              "right": {
+                "en": "Summaries, with small groups hidden",
+                "ar": "الملخّصات، مع إخفاء المجموعات الصغيرة"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Least privilege: each role gets what its job needs. The nurse needs health notes but not marks; the district needs summaries, not children.",
+            "ar": "أقل صلاحية ممكنة: يحصل كل دور على ما يحتاج إليه عمله. فالممرّضة تحتاج إلى الملاحظات الصحية لا الدرجات، والإدارة تحتاج إلى الملخّصات لا الأطفال."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p3",
+          "lang": "sql",
+          "prompt": {
+            "en": "The district’s report: each class’s number of pupils and average mark (to 1 decimal place), hiding any class with fewer than 5 pupils.",
+            "ar": "تقرير الإدارة: عدد تلاميذ كل صف ومتوسط درجاته (إلى منزلة عشرية واحدة)، مع إخفاء أي صف فيه أقل من ٥ تلاميذ."
+          },
+          "setup": "CREATE TABLE marks (class TEXT, pupil_id INTEGER, mark INTEGER);\nINSERT INTO marks VALUES ('6A', 1, 14), ('6A', 2, 9), ('6A', 3, 12), ('6A', 4, 16), ('6A', 5, 11), ('6A', 6, 13),\n  ('6B', 7, 17), ('6B', 8, 8), ('6B', 9, 10), ('6B', 10, 15), ('6B', 11, 12), ('6B', 12, 14), ('6B', 13, 11),\n  ('6C', 14, 6), ('6C', 15, 18), ('6C', 16, 9);",
+          "starter": "SELECT class, COUNT(*), ROUND(AVG(mark), 1) FROM marks\nGROUP BY class;",
+          "solution": "SELECT class, COUNT(*), ROUND(AVG(mark), 1) FROM marks\nGROUP BY class\nHAVING COUNT(*) >= 5;",
+          "hints": [
+            {
+              "en": "Run it: 6C has only 3 pupils, so its average describes three children.",
+              "ar": "شغّله: في ٦ج ثلاثة تلاميذ فقط، فمتوسطه يصف ثلاثة أطفال."
+            },
+            {
+              "en": "Add HAVING COUNT(*) >= 5 after GROUP BY.",
+              "ar": "أضف ⁦HAVING COUNT(*) >= 5⁩ بعد ⁦GROUP BY⁩."
+            }
+          ],
+          "explain": {
+            "en": "GROUP BY class makes the summaries; HAVING COUNT(*) >= 5 drops 6C, whose three pupils could be picked out. 6A (6 pupils) and 6B (7) stay. One line protects every child in a small class.",
+            "ar": "تصنع ⁦GROUP BY class⁩ الملخّصات، وتُسقط ⁦HAVING COUNT(*) >= 5⁩ الصف ٦ج الذي يمكن تمييز تلاميذه الثلاثة. ويبقى ٦أ (٦ تلاميذ) و٦ب (٧). فسطر واحد يحمي كل طفل في صف صغير."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: read Lina’s six posts as a stranger would, then choose who sees each one until the stranger learns nothing useful. Which two posts were harmless alone but risky together? The same happens when a report puts class, age and one detail side by side.",
+            "ar": "جرّب: اقرأ منشورات لينا الستة كما يقرؤها غريب، ثم اختر مَن يرى كلًّا منها حتى لا يعرف الغريب شيئًا مفيدًا. أيّ منشورين كانا بريئين وحدهما وخطيرين معًا؟ والشيء نفسه يحدث حين يضع تقرير الصف والعمر وتفصيلًا واحدًا جنبًا إلى جنب."
+          },
+          "tool": "footprint"
+        },
+        {
+          "type": "choice",
+          "id": "p4",
+          "prompt": {
+            "en": "A report query returns the row: 6B | hearing | 1 | 7.0. What’s the problem?",
+            "ar": "يعيد استعلام تقرير الصف: ⁦6B | hearing | 1 | 7.0⁩. ما المشكلة؟"
+          },
+          "snippet": {
+            "lang": "sql",
+            "text": "SELECT class, need, COUNT(*), AVG(mark)\nFROM pupils\nGROUP BY class, need;"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "It points at one child’s need and mark",
+                "ar": "يشير إلى احتياج طفل واحد ودرجته"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "AVG gives the wrong answer for one row",
+                "ar": "تعطي AVG إجابة خاطئة لصف واحد"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Nothing: there are no names in it",
+                "ar": "لا شيء: لا أسماء فيه"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "A group of one is a person. Everyone who knows 6B knows which child has a hearing need, so the row reveals that child’s mark too. Add HAVING COUNT(*) >= 5, or report needs at school level.",
+            "ar": "المجموعة المكوّنة من فرد واحد إنسان. فكل من يعرف ٦ب يعرف أيّ طفل لديه احتياج سمعي، فيكشف الصف درجة هذا الطفل أيضًا. أضف ⁦HAVING COUNT(*) >= 5⁩، أو اذكر الاحتياجات على مستوى المدرسة."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p5",
+          "prompt": {
+            "en": "If each column on its own is harmless, the whole table is safe to publish.",
+            "ar": "إذا كان كل عمود وحده بريئًا، فالجدول كله آمن للنشر."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Harmless facts add up. A class, an age and a bus stop are each harmless, but together they can point at one child. Judge the combination, and what else is already known.",
+            "ar": "المعلومات البريئة تتجمّع. فالصف والعمر وموقف الحافلة كلٌّ منها بريء، لكنها معًا قد تشير إلى طفل واحد. فاحكم على اجتماعها، وعلى ما هو معروف أصلًا."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you advise?",
+            "ar": "بماذا تنصح؟"
+          },
+          "who": {
+            "en": "Dr Farah, education lecturer",
+            "ar": "د. فرح، محاضرة في التربية"
+          },
+          "initial": {
+            "en": "F",
+            "ar": "ف"
+          },
+          "situation": {
+            "en": "A university researcher asks the school for a file of every pupil’s marks, date of birth, home village and special needs, “anonymised, with numbers instead of names”, for a study of rural attainment. The head asks Dr Farah what to do.",
+            "ar": "يطلب باحث جامعي من المدرسة ملفًّا بدرجات كل تلميذ وتاريخ ميلاده وقريته واحتياجاته الخاصة، «مجهول الهوية، بأرقام بدل الأسماء»، لدراسة عن التحصيل في الريف. ويسأل المدير د. فرح عمّا يفعل."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "Send it: without names, it’s anonymous.",
+                "ar": "أرسله: دون أسماء يكون مجهول الهوية."
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Birth date, village and special needs together can identify most children in a small school. Numbers instead of names is pseudonymisation, not anonymity.",
+                "ar": "تاريخ الميلاد والقرية والاحتياجات الخاصة معًا تستطيع تحديد معظم الأطفال في مدرسة صغيرة. والأرقام بدل الأسماء ترميز بأسماء مستعارة، لا إخفاء للهوية."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "Ask what the study needs, and offer summaries: averages by village and age group, with groups under five hidden.",
+                "ar": "يُسأل عمّا تحتاج إليه الدراسة، وتُعرض الملخّصات: المتوسطات حسب القرية والفئة العمرية، مع إخفاء المجموعات التي تقلّ عن خمسة."
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "The research question is answered, no child can be picked out, and the school shares the least data for the purpose, as the law asks.",
+                "ar": "يُجاب عن سؤال البحث، ولا يمكن تمييز أي طفل، وتشارك المدرسة أقل قدر من البيانات للغرض، كما يطلب القانون."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "Refuse all research requests.",
+                "ar": "رفض كل طلبات البحث."
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Good research can help rural schools. The answer isn’t no data, but the least data that answers the question, safely.",
+                "ar": "البحث الجيد قد يساعد مدارس الريف. والحل ليس منع البيانات، بل أقل قدر من البيانات يجيب عن السؤال بأمان."
+              }
+            }
+          ],
+          "explain": {
+            "en": "Numbers instead of names isn’t anonymous: share the least data the question needs, as summaries with small groups hidden.",
+            "ar": "استبدال الأسماء بأرقام لا يجعل البيانات مجهولة: شارك أقل ما يحتاجه السؤال، ملخّصاتٍ مع إخفاء المجموعات الصغيرة."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Draw your school’s access table in your head: which record does someone see today that their role doesn’t need?",
+            "ar": "ارسم جدول صلاحيات مدرستك في ذهنك: أيّ سجلّ يراه أحدٌ اليوم ولا يحتاج إليه دوره؟"
+          },
+          "placeholder": {
+            "en": "For example: “Every teacher can open the whole school’s health notes in the shared drive.”",
+            "ar": "مثلًا: «يستطيع كل معلّم فتح الملاحظات الصحية للمدرسة كلها في المجلّد المشترك.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: An access table",
+            "ar": "مشروع: جدول الصلاحيات"
+          },
+          "task": {
+            "en": "With your school’s data team, list the main records (marks, attendance, health notes, contact details, photos) down the side and the roles (class teacher, head, nurse, parent, district) across the top. In each cell, write “full”, “summary” or “none”. Then check one real system, such as the shared drive or the school app, against your table, and list the gaps. With a class, play “Guess who” with a made-up pupil to show why summaries need the small-group rule.",
+            "ar": "ضع مع فريق البيانات في مدرستك السجلّات الرئيسية (الدرجات، والحضور، والملاحظات الصحية، وبيانات التواصل، والصور) على الجانب، والأدوار (معلّم الصف، والمدير، والممرّضة، ووليّ الأمر، والإدارة) في الأعلى. واكتب في كل خانة «كامل» أو «ملخّص» أو «لا شيء». ثم راجع نظامًا حقيقيًا واحدًا، كالمجلّد المشترك أو تطبيق المدرسة، على جدولك، واكتب الفجوات. ومع صف، العبوا «خمّن مَن» بتلميذة خيالية لتبيّنوا لماذا تحتاج الملخّصات إلى قاعدة المجموعات الصغيرة."
+          },
+          "deliverable": {
+            "en": "Your access table (records × roles), and two sentences: the biggest gap you found in a real system, and what you will change first.",
+            "ar": "جدول صلاحياتك (السجلّات × الأدوار)، وجملتان: أكبر فجوة وجدتها في نظام حقيقي، وما ستغيّره أولًا."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Every record has a full, summary or none for every role.",
+                "ar": "لكل سجلّ «كامل» أو «ملخّص» أو «لا شيء» لكل دور."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Summaries going outside the school follow the small-group rule.",
+                "ar": "تتبع الملخّصات التي تخرج من المدرسة قاعدة المجموعات الصغيرة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "At least one real system was checked, and its gaps listed.",
+                "ar": "رُوجع نظام حقيقي واحد على الأقل، وكُتبت فجواته."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Who may see what",
+            "ar": "مَن يرى ماذا"
+          },
+          "note": {
+            "en": "Data engineering · Level 4 · Lesson 3",
+            "ar": "هندسة البيانات، المستوى ٤، الدرس ٣"
+          },
+          "narration": {
+            "en": "“One pupil in 6B.” Everyone knew who.",
+            "ar": "«تلميذ واحد في ٦ب». الجميع عرف مَن هو."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Give each role only the data it needs.",
+              "Share summaries, and hide groups under five.",
+              "See how harmless facts can identify a child."
+            ],
+            "ar": [
+              "نعطي كل دور البيانات التي يحتاج إليها فقط.",
+              "نشارك الملخّصات، ونُخفي المجموعات التي تقلّ عن خمسة.",
+              "نرى كيف تكشف المعلومات البريئة هوية طفل."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Least privilege: each role, only what it needs.",
+              "Groups of fewer than five stay hidden.",
+              "Numbers instead of names is a start, not the end."
+            ],
+            "ar": [
+              "أقل صلاحية: لكل دور ما يحتاج إليه فقط.",
+              "تبقى المجموعات التي تقلّ عن خمسة مخفيّة.",
+              "الأرقام بدل الأسماء بداية لا نهاية."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Guess who",
+            "ar": "خمّن مَن"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Who sees our marks?",
+              "Teach (8 min): Roles, summaries and small groups.",
+              "Play (10 min): Guess who.",
+              "Decide (12 min): Our access table.",
+              "Wrap-up (5 min): What would we never send out?"
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): مَن يرى درجاتنا؟",
+              "الشرح (٨ دقائق): الأدوار والملخّصات والمجموعات الصغيرة.",
+              "اللعب (١٠ دقائق): خمّن مَن.",
+              "القرار (١٢ دقيقة): جدول صلاحياتنا.",
+              "الختام (٥ دقائق): ماذا لن نرسله أبدًا؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Ask who can see pupils’ marks today, and who should.",
+              "Teach (8 min): Draw an access table on the board. Explain least privilege, summaries and the small-group rule, and why numbers instead of names isn’t enough.",
+              "Play (10 min): Read one fact at a time about a made-up pupil. After each fact, pupils guess who it could be. Count how many facts it took.",
+              "Decide (12 min): Groups fill in an access table for five records and five roles, and compare their tables.",
+              "Wrap-up (5 min): Agree one thing the school should never send outside, even without names. Then give the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اسأل: مَن يستطيع رؤية درجات التلاميذ اليوم، ومَن يجب أن يراها؟",
+              "الشرح (٨ دقائق): ارسم جدول صلاحيات على السبّورة. واشرح أقل صلاحية والملخّصات وقاعدة المجموعات الصغيرة، ولماذا لا تكفي الأرقام بدل الأسماء.",
+              "اللعب (١٠ دقائق): اقرأ معلومة واحدة في كل مرة عن تلميذة خيالية، وبعد كل معلومة يخمّن التلاميذ مَن قد تكون. واعدّوا كم معلومة احتاج الأمر.",
+              "القرار (١٢ دقيقة): تملأ المجموعات جدول صلاحيات لخمسة سجلّات وخمسة أدوار، وتقارن جداولها.",
+              "الختام (٥ دقائق): اتفقوا على شيء واحد يجب ألّا ترسله المدرسة إلى الخارج أبدًا، حتى دون أسماء. ثم وزّع بطاقة الخروج."
+            ]
+          },
+          "note": {
+            "en": "Make the “Guess who” pupil entirely made up, and choose facts that don’t describe a real pupil in your school. Keep the discussion of special needs general.",
+            "ar": "اجعل تلميذة «خمّن مَن» خيالية تمامًا، واختر معلومات لا تصف تلميذًا حقيقيًا في مدرستك. وأبقِ النقاش عن الاحتياجات الخاصة عامًّا."
+          },
+          "narration": {
+            "en": "One fact at a time: when can you tell who she is?",
+            "ar": "معلومة في كل مرة: متى تعرفون مَن هي؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "After how many facts could we tell who she was?",
+              "Why hide groups of fewer than five?",
+              "What should we ask before data leaves the school?"
+            ],
+            "ar": [
+              "بعد كم معلومة استطعنا معرفة مَن هي؟",
+              "لماذا نُخفي المجموعات التي تقلّ عن خمسة؟",
+              "ماذا يجب أن نسأل قبل أن تغادر البيانات المدرسة؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one record, the roles that may see it, and whether each sees it in full or as a summary."
+            ],
+            "ar": [
+              "اكتب سجلًّا واحدًا، والأدوار التي يحقّ لها رؤيته، وهل يراه كلٌّ منها كاملًا أم ملخّصًا."
+            ]
+          },
+          "narration": {
+            "en": "Each role, only what it needs; no group under five.",
+            "ar": "لكل دور ما يحتاج إليه فقط، ولا مجموعة تقلّ عن خمسة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Who may see what",
+            "ar": "شرائح: مَن يرى ماذا"
+          },
+          "pages": 6,
+          "base": "data-4-1-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: Who may see what",
+            "ar": "خطة الدرس وورقة العمل: مَن يرى ماذا"
+          },
+          "pages": 3,
+          "base": "data-4-1-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-4-1-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.4",
+        "DC.4.2"
+      ]
+    },
+    {
+      "id": "data-4-1-4",
+      "title": {
+        "en": "Keep, archive, delete",
+        "ar": "احتفظ وأرشِف واحذف"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Play “Keep or delete?”: give groups cards of school records (registers, test papers, sports-day photos, report cards). For each, they decide how long it’s needed and why. Then compare with your school’s real rules.",
+        "ar": "العبوا «نحتفظ أم نحذف؟»: أعطِ المجموعات بطاقات لسجلّات مدرسية (سجلّات الحضور، وأوراق الاختبارات، وصور اليوم الرياضي، والشهادات). وتقرّر لكلٍّ منها كم تلزم ولماذا. ثم قارنوا بقواعد مدرستك الحقيقية."
+      },
+      "materials": {
+        "en": [
+          "Record cards: registers, test papers, sports-day photos, report cards, trip forms",
+          "Your ministry’s or school’s retention rules, if there are any",
+          "Optional: a phone or computer for the SQL step"
+        ],
+        "ar": [
+          "بطاقات سجلّات: سجلّات الحضور، وأوراق الاختبارات، وصور اليوم الرياضي، والشهادات، واستمارات الرحلات",
+          "قواعد الاحتفاظ في وزارتك أو مدرستك، إن وُجدت",
+          "اختياري: هاتف أو حاسوب لخطوة SQL"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Keep, archive, delete",
+            "ar": "احتفظ وأرشِف واحذف"
+          },
+          "src": null,
+          "duration": 219,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Nobody decided",
+                "ar": "لم يقرّر أحد"
+              }
+            },
+            {
+              "at": 24.2,
+              "atBy": {
+                "en": 24.2,
+                "ar": 21.4
+              },
+              "label": {
+                "en": "How long?",
+                "ar": "إلى متى؟"
+              }
+            },
+            {
+              "at": 57.9,
+              "atBy": {
+                "en": 57.9,
+                "ar": 55.2
+              },
+              "label": {
+                "en": "Backups",
+                "ar": "النسخ الاحتياطية"
+              }
+            },
+            {
+              "at": 85.3,
+              "atBy": {
+                "en": 85.3,
+                "ar": 82.5
+              },
+              "label": {
+                "en": "Archive formats",
+                "ar": "صيغ الأرشفة"
+              }
+            },
+            {
+              "at": 123.8,
+              "atBy": {
+                "en": 123.8,
+                "ar": 121.9
+              },
+              "label": {
+                "en": "Delete on purpose",
+                "ar": "الحذف عن قصد"
+              }
+            },
+            {
+              "at": 150.2,
+              "atBy": {
+                "en": 150.2,
+                "ar": 146.8
+              },
+              "label": {
+                "en": "The lab",
+                "ar": "المختبر"
+              }
+            },
+            {
+              "at": 178.6,
+              "atBy": {
+                "en": 178.6,
+                "ar": 172.4
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 111.75,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Which backup follows the 3-2-1 rule?",
+                "ar": "أيّ نسخة احتياطية تتبع قاعدة ٣-٢-١؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Three copies, all on the office computer",
+                    "ar": "ثلاث نسخ، كلها على حاسوب المكتب"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Three copies, on the computer and a USB drive, one kept away from school",
+                    "ar": "ثلاث نسخ، على الحاسوب وعلى ذاكرة USB، وواحدة محفوظة خارج المدرسة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "One copy on a USB drive",
+                    "ar": "نسخة واحدة على ذاكرة USB"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "3-2-1 means three copies, on two kinds of storage, with one away from the school. If the office floods or the computer is stolen, the copy across town survives.",
+                "ar": "تعني قاعدة ٣-٢-١ ثلاث نسخ، على نوعين من وسائط التخزين، وواحدة منها خارج المدرسة. فإن غرق المكتب أو سُرق الحاسوب نجت النسخة البعيدة."
+              }
+            },
+            "atBy": {
+              "en": 111.75,
+              "ar": 110.72
+            }
+          },
+          "transcript": {
+            "en": "Our office cupboard holds registers from nineteen ninety-eight. The old computer still holds every pupil's photo since twenty ten. Nobody decided to keep them, and nobody decided to delete them. Today: how long to keep school records, how to archive them, and how to delete them on purpose. Every kind of record needs a keep-until rule. Some rules come from the law or the ministry, like how long to keep exam results. The rest you decide by the purpose: why do we still need this? A pupil's final results may be needed for many years. Daily registers, perhaps a few. Photos for a sports-day display, until the display comes down. Write each rule in a table: the record, how long, why, and who deletes it. Records you keep must survive. Use the three-two-one rule: three copies, on two kinds of storage, and one away from the school. A fire or a stolen laptop shouldn't take the only copy. And test it. Once a term, restore one file from the backup, and open it. A backup you've never restored is a hope, not a backup. For records you keep for years, choose open formats: CSV for tables, PDF for documents. They'll still open in twenty years. Compress them, and a whole school's term of attendance fits in a few kilobytes. Quick check! Which of these backups follows the three-two-one rule? Three copies, on the computer and on a USB drive, with one kept away from the school. If the office floods, the copy across town survives. When the keep-until date comes, delete on purpose. Empty the bin, wipe old phones and computers before giving them away, and shred paper. Then write in the log what was deleted, and when. A query can find what's due. Select the records whose year, plus the years to keep them, is before this year. That's your deletion list for the term. In the app, compare a school's term of attendance as CSV, JSON and columns, squeezed or not. Which would you archive, and which would you send over a slow connection? Your turn. We've copied the marks to a USB drive every week for a year, but never opened one. What do we really have? A hope, until you restore a file and open it. Remember: give every record a keep-until rule. Back up with three-two-one, in open formats. And delete on purpose, on time, and write it down. Try it in class tomorrow: play “Keep or delete?”. Give groups cards of school records: registers, test papers, sports-day photos, report cards. For each, they decide how long it's needed and why. Then compare with your school's real rules.",
+            "ar": "دولاب المكتب عندنا فيه كشوف غياب من سنة تمانية وتسعين. والكمبيوتر القديم لسه عليه صورة كل تلميذ من سنة ألفين وعشرة. محدش قرّر نحتفظ بيهم، ومحدش قرّر نمسحهم. النهارده: نحتفظ بسجلات المدرسة قد إيه، ونأرشفها إزاي، ونمسحها عن قصد إزاي. كل نوع سجل محتاج قاعدة: نحتفظ بيه لحد إمتى. فيه قواعد جاية من القانون أو الوزارة، زي نحتفظ بنتايج الامتحانات قد إيه. والباقي بتقرره على حسب الغرض: إحنا لسه محتاجين ده ليه؟ النتايج النهائية للتلميذ ممكن نحتاجها سنين كتير. وكشوف الغياب اليومية، يمكن كام سنة. وصور لوحة يوم الرياضة، لحد ما اللوحة تتشال. واكتب كل قاعدة في جدول: السجل، وقد إيه، وليه، ومين يمسحه. السجلات اللي بتحتفظ بيها لازم تعيش. استخدم قاعدة تلاتة اتنين واحد: تلات نسخ، على نوعين تخزين، وواحدة بعيد عن المدرسة. الحريقة أو اللابتوب المسروق ما ينفعش ياخدوا النسخة الوحيدة. وجرّبها. مرة كل ترم، رجّع ملف واحد من النسخة الاحتياطية، وافتحه. النسخة اللي عمرك ما رجّعت منها حاجة أمل، مش نسخة احتياطية. للسجلات اللي هتحتفظ بيها سنين، اختار صيغ مفتوحة: CSV للجداول، وPDF للمستندات. هتفضل تتفتح بعد عشرين سنة. واضغطها، وحضور ترم كامل لمدرسة كلها يدخل في كام كيلوبايت. سؤال سريع! أنهي نسخة احتياطية من دول ماشية على قاعدة تلاتة اتنين واحد؟ تلات نسخ، على الكمبيوتر وعلى فلاشة، وواحدة محفوظة بعيد عن المدرسة. ولو المكتب غرق، النسخة اللي في الناحية التانية من البلد بتعيش. لما ييجي التاريخ اللي محتفظين لحده، امسح عن قصد. فضّي سلة المهملات، وامسح الموبايلات والكمبيوترات القديمة قبل ما تدّيها لحد، وقطّع الورق. وبعدين اكتب في السجل إيه اللي اتمسح، وإمتى. الاستعلام يقدر يلاقي اللي جه وقته. هات السجلات اللي سنتها، زائد سنين الاحتفاظ، قبل السنة دي. ودي قائمة المسح بتاعة الترم. في التطبيق، قارن حضور ترم لمدرسة بصيغة CSV وJSON والأعمدة، مضغوط أو لأ. أنهي هتأرشفه، وأنهي هتبعته على اتصال بطيء؟ دورك. بننسخ الدرجات على فلاشة كل أسبوع من سنة، بس عمرنا ما فتحنا نسخة. إحنا في الحقيقة معانا إيه؟ أمل، لحد ما ترجّع ملف وتفتحه. افتكر: ادّي كل سجل قاعدة احتفاظ. اعمل نسخ احتياطي بقاعدة تلاتة اتنين واحد، بصيغ مفتوحة. وامسح عن قصد، وفي ميعاده، واكتب ده. جرّبها في الفصل بكرة: العبوا «نحتفظ ولا نمسح؟». ادّي المجموعات كروت لسجلات المدرسة: كشوف الغياب، وأوراق الامتحانات، وصور يوم الرياضة، والشهادات. ولكل واحد، يقرروا محتاجينه قد إيه وليه. وبعدين قارنوا بقواعد مدرستكم الحقيقية."
+          },
+          "sources": {
+            "en": "/media/data-4-1-4/video-en.mp4",
+            "ar": "/media/data-4-1-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-4-1-4/captions-en.vtt",
+            "ar": "/media/data-4-1-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-4-1-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-4-1-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-4-1-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-4-1-4/light/audio/en.opus",
+              "manifest.json": "/media/data-4-1-4/light/manifest.json",
+              "scenes.json": "/media/data-4-1-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-4-1-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-4-1-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 491,
+              "ar": 475
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Keep-until rules, backups and deletion",
+            "ar": "قواعد مدة الاحتفاظ والنسخ الاحتياطية والحذف"
+          },
+          "body": {
+            "en": "Every kind of record needs a keep-until rule. Some rules come from the law or your ministry, such as how long to keep exam results or registers. Where they say nothing, decide by the purpose: why do we still need this? A pupil’s final results may be needed for decades; daily registers perhaps for a few years; test papers until the marks are agreed; photos for a sports-day display, until the display comes down. Write each rule in a retention table: the record, how long, why, and who deletes it.\n\nRecords you keep must survive. Use the 3-2-1 rule: three copies, on two kinds of storage (the office computer and an external drive, say), with one kept away from the school, in another building or a cloud service the school has agreed to use. A fire, a flood or a stolen laptop shouldn’t take the only copy. And test it: once a term, restore one file from the backup and open it. A backup you’ve never restored is a hope, not a backup.\n\nFor records you keep for years, choose open formats: CSV for tables, PDF for documents (ideally PDF/A, the archive version). They’ll still open in twenty years, long after today’s apps are gone. Compression and storing by column squeeze them: a school’s whole term of attendance, stored by columns and compressed, fits in about 6 KB. Label every archive with what it holds, its dates, and its keep-until date.\n\nWhen the keep-until date comes, delete on purpose. A query can find what’s due: the records whose year plus their years to keep is before this year. Check the list, then delete, empty the bin, wipe old phones and computers before giving them away (a full reset that also cleans the drive: on phones a factory reset, on computers the reset option that cleans the drive; not just deleting files), and shred paper. Then write in a log what was deleted and when. Data you no longer hold can’t be lost, stolen or misused.",
+            "ar": "كل نوع من السجلّات يحتاج إلى قاعدة لمدة الاحتفاظ. فبعض القواعد يأتي من القانون أو من وزارتك، كمدة حفظ نتائج الامتحانات أو سجلّات الحضور. وحيث لا تقول شيئًا، فقرّر حسب الغرض: لماذا ما زلنا نحتاج إلى هذا؟ فالنتائج النهائية للتلميذ قد تلزم لعقود، وسجلّات الحضور اليومية لبضع سنوات ربما، وأوراق الاختبارات حتى تُعتمد الدرجات، وصور معرض اليوم الرياضي حتى يُزال المعرض. واكتب كل قاعدة في جدول احتفاظ: السجلّ، والمدة، والسبب، ومن يحذفه.\n\nوالسجلّات التي تحتفظ بها يجب أن تنجو. فاستعمل قاعدة ٣-٢-١: ثلاث نسخ، على نوعين من وسائط التخزين (حاسوب المكتب وقرص خارجي مثلًا)، وواحدة محفوظة خارج المدرسة، في مبنى آخر أو في خدمة سحابية وافقت المدرسة على استعمالها. فلا يجوز أن يأخذ حريق أو فيضان أو حاسوب مسروق النسخة الوحيدة. وجرّبها: مرة كل فصل دراسي، استرجع ملفًّا واحدًا من النسخة الاحتياطية وافتحه. فالنسخة الاحتياطية التي لم تسترجعها قط أمل لا نسخة احتياطية.\n\nوللسجلّات التي تحتفظ بها لسنوات، اختر صيغًا مفتوحة: CSV للجداول، وPDF للمستندات (والأفضل ⁦PDF/A⁩، نسخة الأرشفة). فستظل تُفتح بعد عشرين سنة، بعد زوال تطبيقات اليوم بزمن طويل. والضغط والحفظ بالأعمدة يقلّصانها: فحضور فصل دراسي كامل لمدرسة، محفوظًا بالأعمدة ومضغوطًا، يتّسع في نحو ٦ كيلوبايت. وضع على كل أرشيف ما يحويه، وتواريخه، وتاريخ انتهاء حفظه.\n\nوحين يحين تاريخ انتهاء الحفظ، فاحذف عن قصد. ويستطيع استعلام أن يجد ما حان وقته: السجلّات التي سنتها مضافًا إليها سنوات حفظها أقل من السنة الحالية. راجع القائمة، ثم احذف، وأفرغ سلّة المحذوفات، وامسح الهواتف والحواسيب القديمة قبل التخلّي عنها (إعادة ضبط كاملة تنظّف القرص أيضًا: في الهواتف إعادة ضبط المصنع، وفي الحواسيب خيار إعادة الضبط الذي ينظّف القرص، لا حذف الملفات فقط)، ومزّق الورق. ثم اكتب في سجلّ ما حُذف ومتى. فالبيانات التي لم تعد تحفظها لا يمكن أن تضيع أو تُسرق أو يُساء استعمالها."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Retention rule",
+                "ar": "قاعدة الاحتفاظ"
+              },
+              "def": {
+                "en": "How long a kind of record is kept, why, and who deletes it.",
+                "ar": "مدة حفظ نوع من السجلّات، وسببها، ومن يحذفه."
+              }
+            },
+            {
+              "term": {
+                "en": "3-2-1 backup",
+                "ar": "النسخ الاحتياطي ٣-٢-١"
+              },
+              "def": {
+                "en": "Three copies, on two kinds of storage, one kept away from the school.",
+                "ar": "ثلاث نسخ، على نوعين من وسائط التخزين، وواحدة خارج المدرسة."
+              }
+            },
+            {
+              "term": {
+                "en": "Restore test",
+                "ar": "اختبار الاسترجاع"
+              },
+              "def": {
+                "en": "Getting a file back from a backup and opening it, to prove the backup works.",
+                "ar": "استعادة ملف من النسخة الاحتياطية وفتحه، لإثبات أنها تعمل."
+              }
+            },
+            {
+              "term": {
+                "en": "Open format",
+                "ar": "الصيغة المفتوحة"
+              },
+              "def": {
+                "en": "A format any program can read for years, such as CSV or PDF.",
+                "ar": "صيغة يستطيع أي برنامج قراءتها لسنوات، مثل CSV أو PDF."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "The marks are copied to a USB drive every week, but no copy has ever been opened. What do you really have?",
+            "ar": "تُنسخ الدرجات على ذاكرة USB كل أسبوع، لكن لم تُفتح أي نسخة قط. ماذا لديك في الحقيقة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A tested backup",
+                "ar": "نسخة احتياطية مجرَّبة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A hope: restore a file and open it to be sure",
+                "ar": "أمل: استرجع ملفًّا وافتحه لتتأكّد"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Three copies",
+                "ar": "ثلاث نسخ"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Until you’ve restored a file and opened it, you don’t know the backup works. Test one restore every term.",
+            "ar": "حتى تسترجع ملفًّا وتفتحه، لا تعرف أن النسخة الاحتياطية تعمل. فجرّب استرجاعًا واحدًا كل فصل دراسي."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p2",
+          "prompt": {
+            "en": "Which of these belong in a row of the school’s retention table? Choose all that apply.",
+            "ar": "أيّ مما يلي مكانه صف في جدول الاحتفاظ بالمدرسة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "The kind of record",
+                "ar": "نوع السجلّ"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "How long it is kept",
+                "ar": "مدة حفظه"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Why it is kept that long",
+                "ar": "سبب حفظه طوال هذه المدة"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Who deletes it",
+                "ar": "من يحذفه"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "The names of the pupils in it",
+                "ar": "أسماء التلاميذ فيه"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c",
+            "d"
+          ],
+          "explain": {
+            "en": "A retention rule names the record, the period, the reason and who acts. The pupils’ names belong in the records themselves, not in the rules about them.",
+            "ar": "تسمّي قاعدة الاحتفاظ السجلّ والمدة والسبب ومن يتصرّف. أما أسماء التلاميذ فمكانها السجلّات نفسها، لا القواعد التي تنظّمها."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p3",
+          "lang": "sql",
+          "prompt": {
+            "en": "Make this term’s deletion list: the id and kind of every record whose year plus its years to keep is before 2026. The rules table says how long each kind is kept.",
+            "ar": "اصنع قائمة الحذف لهذا الفصل الدراسي: رقم ونوع كل سجلّ تكون سنته مضافًا إليها سنوات حفظه أقل من ٢٠٢٦. ويقول جدول rules كم يُحفظ كل نوع."
+          },
+          "setup": "CREATE TABLE rules (kind TEXT PRIMARY KEY, keep_years INTEGER);\nINSERT INTO rules VALUES ('register', 5), ('test paper', 1), ('sports photo', 1), ('final results', 50);\nCREATE TABLE records (id INTEGER PRIMARY KEY, kind TEXT, year INTEGER);\nINSERT INTO records VALUES (1, 'register', 2018), (2, 'register', 2023), (3, 'test paper', 2024), (4, 'test paper', 2025),\n  (5, 'sports photo', 2023), (6, 'final results', 1998), (7, 'register', 2020), (8, 'sports photo', 2025);",
+          "starter": "SELECT records.id, records.kind FROM records\nWHERE records.year < 2026;",
+          "solution": "SELECT records.id, records.kind FROM records\nJOIN rules ON rules.kind = records.kind\nWHERE records.year + rules.keep_years < 2026;",
+          "hints": [
+            {
+              "en": "The starter lists every record. Each kind has its own keep_years, in the rules table.",
+              "ar": "يسرد البرنامج الأول كل السجلّات، ولكل نوع مدة keep_years الخاصة به في جدول rules."
+            },
+            {
+              "en": "JOIN rules ON rules.kind = records.kind, then WHERE records.year + rules.keep_years < 2026.",
+              "ar": "⁦JOIN rules ON rules.kind = records.kind⁩، ثم ⁦WHERE records.year + rules.keep_years < 2026⁩."
+            }
+          ],
+          "explain": {
+            "en": "The join brings each record’s rule next to it, so the query can add the years: the 2018 and 2020 registers (kept 5 years), the 2024 test paper and the 2023 sports photo (kept 1 year) are due. The 1998 final results stay: they’re kept for 50 years.",
+            "ar": "يجلب الربط قاعدة كل سجلّ إلى جانبه، فيستطيع الاستعلام جمع السنوات: فسجلّا حضور ٢٠١٨ و٢٠٢٠ (يُحفظان ٥ سنوات)، وورقة اختبار ٢٠٢٤ وصورة اليوم الرياضي ٢٠٢٣ (تُحفظان سنة) قد حان وقتها. أما النتائج النهائية لسنة ١٩٩٨ فتبقى: فهي تُحفظ ٥٠ سنة."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: choose “A school, a term” and compare all six ways side by side. Which would you archive for twenty years, and why? Which would you send to the district over 2G? Note the size of Columns, compressed, for a whole term.",
+            "ar": "جرّب: اختر «مدرسة، فصل دراسي» وقارن الطرق الست جنبًا إلى جنب. أيّها ستؤرشف لعشرين سنة، ولماذا؟ وأيّها سترسل إلى الإدارة على شبكة الجيل الثاني؟ وسجّل حجم «الأعمدة» مضغوطة لفصل دراسي كامل."
+          },
+          "tool": "formats"
+        },
+        {
+          "type": "codefill",
+          "id": "p4",
+          "lang": "sql",
+          "prompt": {
+            "en": "Fill the gaps: once the list has been checked, delete the registers kept for more than 5 years.",
+            "ar": "املأ الفراغات: بعد مراجعة القائمة، احذف سجلّات الحضور المحفوظة أكثر من ٥ سنوات."
+          },
+          "code": [
+            {
+              "blank": 0
+            },
+            " FROM records\nWHERE kind = 'register' AND year + 5 ",
+            {
+              "blank": 1
+            },
+            " 2026;"
+          ],
+          "answers": [
+            "DELETE",
+            "<"
+          ],
+          "distractors": [
+            "SELECT",
+            ">"
+          ],
+          "explain": {
+            "en": "DELETE removes the matching rows, so run the same WHERE with SELECT first and check the list. year + 5 < 2026 picks the registers whose five years are over; > would delete the recent ones and keep the old.",
+            "ar": "تحذف DELETE الصفوف المطابقة، فشغّل الشرط WHERE نفسه مع SELECT أولًا وراجع القائمة. وتختار ⁦year + 5 < 2026⁩ السجلّات التي انقضت سنواتها الخمس، أما > فكانت ستحذف الحديثة وتُبقي القديمة."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p5",
+          "prompt": {
+            "en": "Before giving away an old school computer, deleting the files and emptying the bin is enough.",
+            "ar": "قبل التخلّي عن حاسوب مدرسي قديم، يكفي حذف الملفات وإفراغ سلّة المحذوفات."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Deleted files can often be recovered from the disk. Wipe the computer with a full reset that also cleans the drive (or remove and destroy the drive) before it leaves the school, and log that you did it.",
+            "ar": "كثيرًا ما يمكن استرجاع الملفات المحذوفة من القرص. فامسح الحاسوب بإعادة ضبط كاملة تنظّف القرص (أو انزع القرص وأتلفه) قبل أن يغادر المدرسة، وسجّل أنك فعلت ذلك."
+          }
+        },
+        {
+          "type": "order",
+          "id": "p6",
+          "prompt": {
+            "en": "Put the steps of deleting on purpose in order.",
+            "ar": "رتّب خطوات الحذف عن قصد."
+          },
+          "steps": [
+            {
+              "en": "Run the query that lists what’s past its date",
+              "ar": "شغّل الاستعلام الذي يسرد ما انتهت مدته"
+            },
+            {
+              "en": "Check the list with the head",
+              "ar": "راجع القائمة مع المدير"
+            },
+            {
+              "en": "Delete the records and empty the bin",
+              "ar": "احذف السجلّات وأفرغ سلّة المحذوفات"
+            },
+            {
+              "en": "Shred the paper copies",
+              "ar": "مزّق النسخ الورقية"
+            },
+            {
+              "en": "Write in the log what was deleted, and when",
+              "ar": "اكتب في السجلّ ما حُذف ومتى"
+            }
+          ],
+          "explain": {
+            "en": "Find, check, delete, destroy the paper, then log it. Checking first stops a wrong rule deleting records you still need; the log shows the school deleted on purpose, not by accident.",
+            "ar": "جد، وراجع، واحذف، وأتلف الورق، ثم سجّل. فالمراجعة أولًا تمنع قاعدة خاطئة من حذف سجلّات ما زلت تحتاج إليها، والسجلّ يُظهر أن المدرسة حذفت عن قصد لا مصادفة."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which records does your school keep that nobody decided to keep? What keep-until rule would you give them?",
+            "ar": "أيّ السجلّات تحتفظ بها مدرستك دون أن يقرّر أحد الاحتفاظ بها؟ وأيّ قاعدة احتفاظ ستضع لها؟"
+          },
+          "placeholder": {
+            "en": "For example: “Every pupil’s photo since 2010 on the old computer. Keep the current year’s for the school app; delete the rest.”",
+            "ar": "مثلًا: «صورة كل تلميذ منذ ٢٠١٠ على الحاسوب القديم. نُبقي صور العام الحالي لتطبيق المدرسة، ونحذف الباقي.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A one-page data policy",
+            "ar": "مشروع: سياسة بيانات في صفحة واحدة"
+          },
+          "task": {
+            "en": "Write a one-page data policy for your head teacher. Include: a retention table for at least five kinds of records (how long, why, who deletes), the school’s backup plan using 3-2-1 with a termly restore test, the open formats for the archive, and how the school deletes on purpose. Base the periods on your country’s law and ministry rules where they exist, and say where you decided yourselves. With a class, play “Keep or delete?” with record cards first.",
+            "ar": "اكتب سياسة بيانات في صفحة واحدة لمدير مدرستك. وضمّنها: جدول احتفاظ لخمسة أنواع من السجلّات على الأقل (المدة، والسبب، ومن يحذف)، وخطة النسخ الاحتياطي في المدرسة وفق ٣-٢-١ مع اختبار استرجاع كل فصل دراسي، والصيغ المفتوحة للأرشيف، وطريقة الحذف عن قصد. واعتمد في المدد على قانون بلدك وقواعد الوزارة حيث وُجدت، واذكر أين قرّرتم بأنفسكم. ومع صف، العبوا «نحتفظ أم نحذف؟» ببطاقات السجلّات أولًا."
+          },
+          "deliverable": {
+            "en": "The one-page policy, and two sentences: which rule came from the law or ministry and which you decided, and when the first restore test will happen.",
+            "ar": "السياسة في صفحة واحدة، وجملتان: أيّ قاعدة جاءت من القانون أو الوزارة وأيّها قرّرتموها، ومتى سيكون أول اختبار استرجاع."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "The retention table covers at least five records, each with a period, a reason and who deletes.",
+                "ar": "يغطّي جدول الاحتفاظ خمسة سجلّات على الأقل، لكلٍّ منها مدة وسبب ومن يحذف."
+              }
+            },
+            {
+              "criterion": {
+                "en": "The backup plan follows 3-2-1 and includes a restore test.",
+                "ar": "تتبع خطة النسخ الاحتياطي قاعدة ٣-٢-١ وتتضمّن اختبار استرجاع."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Deletion is planned, checked and logged.",
+                "ar": "الحذف مخطّط له، ومراجَع، وموثّق في سجلّ."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Keep, archive, delete",
+            "ar": "احتفظ وأرشِف واحذف"
+          },
+          "note": {
+            "en": "Data engineering · Level 4 · Lesson 4",
+            "ar": "هندسة البيانات، المستوى ٤، الدرس ٤"
+          },
+          "narration": {
+            "en": "Registers from 1998, photos since 2010. Who decided to keep them?",
+            "ar": "سجلّات من ١٩٩٨، وصور منذ ٢٠١٠. مَن قرّر الاحتفاظ بها؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Give every record a keep-until rule.",
+              "Back up with 3-2-1, and test a restore.",
+              "Archive in open formats, and delete on purpose."
+            ],
+            "ar": [
+              "نضع لكل سجلّ قاعدة لمدة الاحتفاظ.",
+              "ننسخ احتياطيًا وفق ٣-٢-١، ونجرّب الاسترجاع.",
+              "نؤرشف بصيغ مفتوحة، ونحذف عن قصد."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Keep it only as long as the purpose needs.",
+              "3-2-1: three copies, two kinds, one away.",
+              "An untested backup is a hope."
+            ],
+            "ar": [
+              "احتفظ به ما دام الغرض يحتاج إليه فقط.",
+              "٣-٢-١: ثلاث نسخ، ونوعان، وواحدة بعيدة.",
+              "النسخة الاحتياطية غير المجرَّبة أمل."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Keep or delete?",
+            "ar": "نحتفظ أم نحذف؟"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): What’s in the cupboard?",
+              "Teach (8 min): Retention, backups, deletion.",
+              "Sort (12 min): Keep or delete?",
+              "Compare (10 min): Our rules and the real ones.",
+              "Wrap-up (5 min): Who tests the backup?"
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): ماذا في الخزانة؟",
+              "الشرح (٨ دقائق): الاحتفاظ والنسخ الاحتياطي والحذف.",
+              "التصنيف (١٢ دقيقة): نحتفظ أم نحذف؟",
+              "المقارنة (١٠ دقائق): قواعدنا والقواعد الحقيقية.",
+              "الختام (٥ دقائق): مَن يجرّب النسخة الاحتياطية؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Ask what old records the school still holds, on paper and on computers, and who decided to keep them.",
+              "Teach (8 min): Explain keep-until rules, 3-2-1 backups with a restore test, open formats, and deleting on purpose.",
+              "Sort (12 min): Groups take the record cards and decide for each how long it’s needed, why, and who should delete it.",
+              "Compare (10 min): Compare the groups’ periods with the ministry’s or school’s real rules, where they exist. Where there are none, agree one.",
+              "Wrap-up (5 min): Agree who will restore one file from the backup this term, and when. Then give the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اسأل: ما السجلّات القديمة التي ما زالت المدرسة تحتفظ بها، على الورق وفي الحواسيب، ومن قرّر الاحتفاظ بها؟",
+              "الشرح (٨ دقائق): اشرح قواعد مدة الاحتفاظ، والنسخ الاحتياطي ٣-٢-١ مع اختبار الاسترجاع، والصيغ المفتوحة، والحذف عن قصد.",
+              "التصنيف (١٢ دقيقة): تأخذ المجموعات بطاقات السجلّات وتقرّر لكلٍّ منها كم يلزم، ولماذا، ومن يجب أن يحذفه.",
+              "المقارنة (١٠ دقائق): قارنوا مدد المجموعات بالقواعد الحقيقية للوزارة أو المدرسة حيث وُجدت، وحيث لا توجد اتفقوا على واحدة.",
+              "الختام (٥ دقائق): اتفقوا على من سيسترجع ملفًّا من النسخة الاحتياطية هذا الفصل، ومتى. ثم وزّع بطاقة الخروج."
+            ]
+          },
+          "note": {
+            "en": "Find your ministry’s retention rules before the lesson, if they exist. Use cards that name kinds of records, never real pupils’ documents.",
+            "ar": "ابحث عن قواعد الاحتفاظ في وزارتك قبل الدرس، إن وُجدت. واستعمل بطاقات تسمّي أنواع السجلّات، لا وثائق تلاميذ حقيقيين أبدًا."
+          },
+          "narration": {
+            "en": "Keep or delete: how long, why, and who decides?",
+            "ar": "نحتفظ أم نحذف: إلى متى، ولماذا، ومن يقرّر؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which record should we keep the longest, and why?",
+              "Where is our away-from-school copy?",
+              "How do we know our backup works?"
+            ],
+            "ar": [
+              "أيّ سجلّ يجب أن نحتفظ به أطول مدة، ولماذا؟",
+              "أين نسختنا المحفوظة خارج المدرسة؟",
+              "كيف نعرف أن نسختنا الاحتياطية تعمل؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one record, its keep-until rule, the reason, and who deletes it."
+            ],
+            "ar": [
+              "اكتب سجلًّا واحدًا، وقاعدة مدة الاحتفاظ به، والسبب، ومن يحذفه."
+            ]
+          },
+          "narration": {
+            "en": "Keep it on purpose, back it up 3-2-1, delete it on time.",
+            "ar": "احتفظ به عن قصد، وانسخه وفق ٣-٢-١، واحذفه في وقته."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Keep, archive, delete",
+            "ar": "شرائح: احتفظ وأرشِف واحذف"
+          },
+          "pages": 6,
+          "base": "data-4-1-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: Keep, archive, delete",
+            "ar": "خطة الدرس وورقة العمل: احتفظ وأرشِف واحذف"
+          },
+          "pages": 2,
+          "base": "data-4-1-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-4-1-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.4",
+        "DC.4.2",
+        "DC.1.3"
+      ]
+    },
+    {
+      "id": "data-4-1-check",
+      "title": {
+        "en": "Pipelines, quality and governance: unit check",
+        "ar": "خطوط البيانات والجودة والحوكمة: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Pick one report your school sends, and write down its pipeline, its checks, who may see it and how long its data is kept: one line each.",
+        "ar": "اختر تقريرًا ترسله مدرستك، واكتب خط بياناته، وفحوصه، ومن يحقّ له رؤيته، ومدة حفظ بياناته: سطرًا لكلٍّ منها."
+      },
+      "steps": [
+        {
+          "type": "order",
+          "id": "q1",
+          "prompt": {
+            "en": "Put a pipeline’s steps in order.",
+            "ar": "رتّب خطوات خط البيانات."
+          },
+          "steps": [
+            {
+              "en": "Extract",
+              "ar": "الاستخراج"
+            },
+            {
+              "en": "Transform",
+              "ar": "التحويل"
+            },
+            {
+              "en": "Load",
+              "ar": "التحميل"
+            },
+            {
+              "en": "Log the run",
+              "ar": "تسجيل التشغيل"
+            }
+          ],
+          "explain": {
+            "en": "Extract reads the data, transform cleans and counts it, load writes the result, and the log records what happened.",
+            "ar": "يقرأ الاستخراج البيانات، وينظّفها التحويل ويعدّها، ويكتب التحميل النتيجة، ويوثّق السجلّ ما حدث."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q2",
+          "prompt": {
+            "en": "A load fails halfway and the pipeline reruns. Which load gives the right report?",
+            "ar": "يفشل التحميل في منتصفه ويُعاد تشغيل خط البيانات. أيّ تحميل يعطي التقرير الصحيح؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "One that replaces the day’s rows",
+                "ar": "تحميل يستبدل صفوف اليوم"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "One that adds the rows again",
+                "ar": "تحميل يضيف الصفوف مرة أخرى"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Either: the computer sorts it out",
+                "ar": "أيّهما: فالحاسوب يتدبّر الأمر"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Replacing the day’s rows is idempotent: however many reruns, the report is the same. Adding again counts what was already written twice.",
+            "ar": "استبدال صفوف اليوم متساوي الأثر: فمهما تكرّرت إعادة التشغيل يبقى التقرير نفسه. أما الإضافة مرة أخرى فتعدّ ما كُتب مرتين."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q3",
+          "prompt": {
+            "en": "Retrying fixes a register that says “?” instead of P or A.",
+            "ar": "إعادة المحاولة تصلح سجلًّا فيه «؟» بدل «ح» أو «غ»."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Bad data fails the same way on every retry. Set the row aside and ask the teacher; retries are for passing faults.",
+            "ar": "البيانات الخاطئة تفشل بالطريقة نفسها في كل إعادة. فضع الصف جانبًا واسأل المعلّم، وإعادة المحاولة للأخطاء العابرة."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q4",
+          "prompt": {
+            "en": "Match each check to the SQL that runs it.",
+            "ar": "صِل كل فحص باستعلام SQL الذي ينفّذه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "In range",
+                "ar": "ضمن المدى"
+              },
+              "right": {
+                "en": "WHERE mm < 0 OR mm > 300",
+                "ar": "⁦WHERE mm < 0 OR mm > 300⁩"
+              }
+            },
+            {
+              "left": {
+                "en": "Not empty",
+                "ar": "غير فارغ"
+              },
+              "right": {
+                "en": "WHERE mm IS NULL",
+                "ar": "⁦WHERE mm IS NULL⁩"
+              }
+            },
+            {
+              "left": {
+                "en": "No repeats",
+                "ar": "دون تكرار"
+              },
+              "right": {
+                "en": "GROUP BY station, day HAVING COUNT(*) > 1",
+                "ar": "⁦GROUP BY station, day HAVING COUNT(*) > 1⁩"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each check is a query that returns the bad rows: out-of-range amounts, empty values, and station-days with more than one reading.",
+            "ar": "كل فحص استعلام يعيد الصفوف المعيبة: الكميات خارج المدى، والقيم الفارغة، ومواعيد المحطات التي فيها أكثر من قراءة."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "q5",
+          "lang": "sql",
+          "prompt": {
+            "en": "This check never finds the missing marks. Which line is wrong?",
+            "ar": "لا يجد هذا الفحص الدرجات الناقصة أبدًا. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "SELECT pupil_id\nFROM marks\nWHERE mark = NULL;",
+          "line": 3,
+          "fix": "WHERE mark IS NULL;",
+          "explain": {
+            "en": "Nothing equals NULL, so = NULL is never true. IS NULL is the test for an empty value.",
+            "ar": "لا شيء يساوي NULL، فلا تكون ⁦= NULL⁩ صحيحة أبدًا. أما ⁦IS NULL⁩ فهي اختبار القيمة الفارغة."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q6",
+          "prompt": {
+            "en": "Every check passes on today’s batch. What can you truthfully say?",
+            "ar": "اجتازت دفعة اليوم كل الفحوص. ماذا تستطيع أن تقول بصدق؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "No known problem was found",
+                "ar": "لم تُكتشف أي مشكلة معروفة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The data is correct",
+                "ar": "البيانات صحيحة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The checks need switching off",
+                "ar": "يجب إيقاف الفحوص"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Checks catch only the problems someone thought of. A believable wrong reading passes them all.",
+            "ar": "لا تلتقط الفحوص إلا المشكلات التي فكّر فيها أحد. والقراءة الخاطئة المعقولة تجتازها كلها."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q7",
+          "prompt": {
+            "en": "Which are safe ways to share this term’s results with the district? Choose all that apply.",
+            "ar": "أيّ مما يلي طرق آمنة لمشاركة نتائج هذا الفصل مع الإدارة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Averages per class, hiding groups under five",
+                "ar": "متوسطات لكل صف، مع إخفاء المجموعات التي تقلّ عن خمسة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "School-level results by subject",
+                "ar": "نتائج على مستوى المدرسة حسب المادة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Every pupil’s mark with numbers instead of names",
+                "ar": "درجة كل تلميذ بأرقام بدل الأسماء"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "A class of three’s average next to its special needs",
+                "ar": "متوسط صف من ثلاثة تلاميذ بجانب احتياجاتهم الخاصة"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b"
+          ],
+          "explain": {
+            "en": "Summaries with the small-group rule answer the district without describing any child. Pupil-level rows with numbers are pseudonymised, not anonymous, and a group of three points at real children.",
+            "ar": "تجيب الملخّصات مع قاعدة المجموعات الصغيرة عن سؤال الإدارة دون وصف أي طفل. أما الصفوف لكل تلميذ بأرقام فترميز بأسماء مستعارة لا إخفاء للهوية، والمجموعة المكوّنة من ثلاثة تشير إلى أطفال حقيقيين."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "q8",
+          "lang": "sql",
+          "prompt": {
+            "en": "Fill the gaps: averages per class, without any class of fewer than 5 pupils.",
+            "ar": "املأ الفراغات: المتوسطات لكل صف، دون أي صف فيه أقل من ٥ تلاميذ."
+          },
+          "code": [
+            "SELECT class, ROUND(AVG(mark), 1) FROM marks\nGROUP BY class\n",
+            {
+              "blank": 0
+            },
+            " COUNT(*) ",
+            {
+              "blank": 1
+            },
+            " 5;"
+          ],
+          "answers": [
+            "HAVING",
+            ">="
+          ],
+          "distractors": [
+            "WHERE",
+            "<"
+          ],
+          "explain": {
+            "en": "HAVING filters the groups after they’re counted, and >= 5 keeps only classes of five or more. WHERE can’t use COUNT, and < 5 would keep only the small groups.",
+            "ar": "تصفّي HAVING المجموعات بعد عدّها، وتُبقي ⁦>= 5⁩ الصفوف التي فيها خمسة أو أكثر فقط. أما WHERE فلا تستطيع استعمال COUNT، و⁦< 5⁩ كانت ستُبقي المجموعات الصغيرة وحدها."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q9",
+          "prompt": {
+            "en": "Complete the backup rule.",
+            "ar": "أكمل قاعدة النسخ الاحتياطي."
+          },
+          "sentence": {
+            "en": [
+              "Keep ",
+              {
+                "blank": 0
+              },
+              " copies, on ",
+              {
+                "blank": 1
+              },
+              " kinds of storage, with ",
+              {
+                "blank": 2
+              },
+              " away from the school, and test a restore every term."
+            ],
+            "ar": [
+              "احتفظ بـ ",
+              {
+                "blank": 0
+              },
+              " نسخ، على ",
+              {
+                "blank": 1
+              },
+              " من وسائط التخزين، وواحدة منها ",
+              {
+                "blank": 2
+              },
+              " المدرسة، وجرّب الاسترجاع كل فصل دراسي."
+            ]
+          },
+          "bank": {
+            "en": [
+              "three",
+              "five",
+              "inside",
+              "two",
+              "one"
+            ],
+            "ar": [
+              "ثلاث",
+              "خمس",
+              "داخل",
+              "نوعين",
+              "خارج"
+            ]
+          },
+          "answers": {
+            "en": [
+              "three",
+              "two",
+              "one"
+            ],
+            "ar": [
+              "ثلاث",
+              "نوعين",
+              "خارج"
+            ]
+          },
+          "explain": {
+            "en": "3-2-1: three copies, two kinds of storage, one away from the school, and a restore test, because an untested backup is only a hope.",
+            "ar": "٣-٢-١: ثلاث نسخ، ونوعان من وسائط التخزين، وواحدة خارج المدرسة، مع اختبار استرجاع، لأن النسخة غير المجرَّبة ليست إلا أملًا."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q10",
+          "prompt": {
+            "en": "The school is giving away five old laptops. What should happen first?",
+            "ar": "ستتخلّى المدرسة عن خمسة حواسيب محمولة قديمة. ماذا يجب أن يحدث أولًا؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Wipe each one with a full reset, and log it",
+                "ar": "مسح كلٍّ منها بإعادة ضبط كاملة، وتسجيل ذلك"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Delete the pupils’ folders",
+                "ar": "حذف مجلّدات التلاميذ"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Nothing: they’re too old to matter",
+                "ar": "لا شيء: إنها قديمة جدًّا ولا تهمّ"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Deleted files can often be recovered. A full reset that also cleans the drive (or destroying the drive), written in the log, is deleting on purpose.",
+            "ar": "كثيرًا ما يمكن استرجاع الملفات المحذوفة. أما إعادة الضبط الكاملة التي تنظّف القرص (أو إتلاف القرص)، مع تسجيلها، فهي الحذف عن قصد."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Pipelines, quality and governance: review",
+            "ar": "خطوط البيانات والجودة والحوكمة: مراجعة"
+          },
+          "note": {
+            "en": "Data engineering · Level 4 · Unit check",
+            "ar": "هندسة البيانات، المستوى ٤، اختبار الوحدة"
+          },
+          "narration": {
+            "en": "Let’s look back at the whole unit and see what stuck.",
+            "ar": "لنراجع الوحدة كلها ونرَ ما الذي رسخ في أذهاننا."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Automate the weekly report",
+              "Checks that catch problems",
+              "Who may see what",
+              "Keep, archive, delete"
+            ],
+            "ar": [
+              "أتمتة التقرير الأسبوعي",
+              "فحوص تكشف المشكلات",
+              "مَن يرى ماذا",
+              "احتفظ وأرشِف واحذف"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "Pipelines must be safe to rerun",
+              "Checks return the bad rows; passing isn’t proof",
+              "Each role, only what it needs; no group under five",
+              "Keep on purpose, back up 3-2-1, delete on time"
+            ],
+            "ar": [
+              "خطوط البيانات يجب أن تكون آمنة عند إعادة التشغيل",
+              "الفحوص تعيد الصفوف المعيبة، والنجاح ليس دليلًا",
+              "لكل دور ما يحتاج إليه، ولا مجموعة تقلّ عن خمسة",
+              "احتفظ عن قصد، وانسخ وفق ٣-٢-١، واحذف في الوقت"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Team quiz",
+            "ar": "مسابقة الفرق"
+          },
+          "bullets": {
+            "en": [
+              "Teams (2 min): Make teams of four.",
+              "Quiz (20 min): Read each question; teams agree on one answer.",
+              "Explain (10 min): One team explains each answer.",
+              "Wrap-up (8 min): The hardest question goes on the board."
+            ],
+            "ar": [
+              "الفرق (دقيقتان): كوّنوا فرقًا من أربعة.",
+              "المسابقة (٢٠ دقيقة): اقرأ كل سؤال، ويتّفق كل فريق على إجابة.",
+              "الشرح (١٠ دقائق): يشرح فريق كل إجابة.",
+              "الختام (٨ دقائق): أصعب سؤال على السبّورة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Teams (2 min): Make teams of four and give each team a sheet of paper for its answers.",
+              "Quiz (20 min): Read each question aloud from the quiz sheet; each team agrees on one answer and writes it down.",
+              "Explain (10 min): Reveal each answer and ask one team to explain why it’s right, using an example from the unit.",
+              "Wrap-up (8 min): Write the question most teams got wrong on the board, and work through it together."
+            ],
+            "ar": [
+              "الفرق (دقيقتان): كوّنوا فرقًا من أربعة، وأعطِ كل فريق ورقة لإجاباته.",
+              "المسابقة (٢٠ دقيقة): اقرأ كل سؤال بصوت عالٍ من ورقة الاختبار، ويتّفق كل فريق على إجابة واحدة ويكتبها.",
+              "الشرح (١٠ دقائق): اكشف كل إجابة، واطلب من أحد الفرق أن يشرح سبب صحّتها بمثال من الوحدة.",
+              "الختام (٨ دقائق): اكتب على السبّورة السؤال الذي أخطأت فيه أغلب الفرق، وحلّوه معًا."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which report would you automate first?",
+              "Who sees too much in our school today?",
+              "When did we last test a restore?"
+            ],
+            "ar": [
+              "أيّ تقرير ستؤتمته أولًا؟",
+              "مَن يرى أكثر مما يجب في مدرستنا اليوم؟",
+              "متى جرّبنا الاسترجاع آخر مرة؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One change I will propose to our head this term, and why."
+            ],
+            "ar": [
+              "تغيير واحد سأقترحه على مديرنا هذا الفصل، ولماذا."
+            ]
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Pipelines, quality and governance: unit check",
+            "ar": "شرائح: خطوط البيانات والجودة والحوكمة: اختبار الوحدة"
+          },
+          "pages": 6,
+          "base": "data-4-1-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Review plan and quiz sheet: Pipelines, quality and governance: unit check",
+            "ar": "خطة المراجعة وورقة الاختبار: خطوط البيانات والجودة والحوكمة: اختبار الوحدة"
+          },
+          "pages": 2,
+          "base": "data-4-1-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "DATA.4",
+        "DATA.2",
+        "DC.3.4",
+        "DC.1.2",
+        "DC.4.2",
+        "DC.1.3"
+      ]
+    }
+  ]
+}

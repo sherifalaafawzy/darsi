@@ -1,0 +1,3165 @@
+{
+  "id": "agents-s3",
+  "track": "agents",
+  "level": 3,
+  "audience": "students",
+  "title": {
+    "en": "Build an agent in Python",
+    "ar": "ابنِ وكيلًا بلغة Python"
+  },
+  "summary": {
+    "en": "Write the parts of an agent yourself: read the model’s tool call, run the right tool, loop until it answers, and guard every action in code. In your code a scripted model stands in for the real one; the labs show Darsi Tiny doing the same on your phone.",
+    "ar": "اكتب أجزاء الوكيل بنفسك: اقرأ استدعاء الأداة الذي يكتبه النموذج، وشغّل الأداة الصحيحة، وكرّر الحلقة حتى يجيب، واحمِ كل إجراء بالكود. في كودك يحلّ نموذج مبرمَج بسكريبت محلّ النموذج الحقيقي، وتُريك المختبرات «درسي الصغير» يفعل الشيء نفسه على هاتفك."
+  },
+  "lessons": [
+    {
+      "id": "agents-s3-1",
+      "title": {
+        "en": "Read a tool call",
+        "ar": "اقرأ استدعاء الأداة"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "On paper, write five lines an agent might produce: some tool calls, some answers and one broken call. Swap with a friend: they mark each line as a call, an answer or broken, and name the tool in every call.",
+        "ar": "اكتب على ورقة خمسة أسطر قد يكتبها وكيل: بعضها استدعاءات أدوات، وبعضها أجوبة، وواحد منها استدعاء معطوب. ثم تبادلها مع صديقك: يحدّد عند كل سطر هل هو استدعاء أم جواب أم معطوب، ويكتب اسم الأداة في كل استدعاء."
+      },
+      "materials": {
+        "en": [
+          "Your phone or a school computer, for the code steps",
+          "Paper and a pen"
+        ],
+        "ar": [
+          "هاتفك أو حاسوب المدرسة، لخطوات الكود",
+          "ورقة وقلم"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Read a tool call",
+            "ar": "اقرأ استدعاء الأداة"
+          },
+          "src": null,
+          "duration": 211,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A secret about agents",
+                "ar": "سرّ عن الوكلاء"
+              }
+            },
+            {
+              "at": 19.7,
+              "atBy": {
+                "en": 19.7,
+                "ar": 18.8
+              },
+              "label": {
+                "en": "What a model writes",
+                "ar": "ما يكتبه النموذج"
+              }
+            },
+            {
+              "at": 66.1,
+              "atBy": {
+                "en": 66.1,
+                "ar": 63.5
+              },
+              "label": {
+                "en": "Splitting a call in Python",
+                "ar": "تقسيم الاستدعاء بلغة Python"
+              }
+            },
+            {
+              "at": 126.3,
+              "atBy": {
+                "en": 126.3,
+                "ar": 117.9
+              },
+              "label": {
+                "en": "Broken calls, and the lab",
+                "ar": "الاستدعاءات المعطوبة، والمختبر"
+              }
+            },
+            {
+              "at": 173.4,
+              "atBy": {
+                "en": 173.4,
+                "ar": 166.3
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "You run json.loads on the details of a call. What do you get back?",
+                "ar": "شغّلت json.loads على تفاصيل استدعاء أداة. ماذا تحصل عليه؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "The same text, unchanged",
+                    "ar": "النص نفسه دون تغيير"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "A Python dictionary of the details",
+                    "ar": "قاموس Python فيه التفاصيل"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "The tool’s result",
+                    "ar": "نتيجة الأداة"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Json.loads turns JSON text into a dictionary: keys like place and day, with their values. It runs nothing.",
+                "ar": "تحوّل json.loads نص JSON إلى قاموس: مفاتيح مثل place وday مع قيمها. ولا تشغّل أي شيء، فنتيجة الأداة لا تأتي إلا حين يشغّلها كودك."
+              }
+            },
+            "at": 107.9,
+            "atBy": {
+              "en": 107.9,
+              "ar": 99.8
+            }
+          },
+          "transcript": {
+            "en": "Here’s a secret about AI agents. The model never touches a tool. It writes a line of text, and your code decides what that text makes happen. Today, you write the code that reads it. Today: reading a tool call, in Python. When an agent’s model takes a turn, it writes one of three things. A plan: one short sentence about what it will do. A tool call: a tool’s name, then its details. Or an answer for the person. Here’s a call that Darsi Tiny really wrote. First comes the tool’s name, weather. Straight after it, the details sit in curly brackets. That part is JSON, a way to write data as text. JSON writes data as names and values inside curly brackets. Python reads it with json dot loads, which turns the text into a dictionary. Then args, place, gives you Kafi. So how do you split a call? Find the first curly bracket. Everything before it is the tool’s name. Everything from it onwards is the JSON. But not every text is a call. An answer like Tomorrow in Kafi, sunny, has no curly bracket at all. Then find gives minus one, and your function should return None: there’s no tool to run. Quick check! You run json dot loads on the details of a call. What do you get back? A dictionary. json dot loads only turns text into data: the keys are the details’ names, like place and day. It doesn’t run anything, and it doesn’t check anything. Is Kafi a real village? That’s for your code to check next. Models make mistakes, so some calls are broken: a missing bracket, a quote in the wrong place. Then json dot loads raises a ValueError, and your agent crashes. Unless you catch it, with try and except. In the lab, Darsi Tiny runs for real, on your phone. Press One step, and watch it write the plan, then the call. Open What Darsi Tiny sees: the call is plain text, exactly what your function will split. Your turn. The model wrote: Tomorrow in Kafi, sunny, high thirty-five. What should your function return? None: there’s no curly bracket, so it’s an answer. Remember: the model writes a plan, a call or an answer. Split a call at its first curly bracket, and read the details with json dot loads. Catch broken calls instead of crashing. Try it yourself: on paper, write five lines an agent might produce: some calls, some answers, one broken. Swap with a friend. They mark each line as a call, an answer or broken, and name the tool in every call.",
+            "ar": "خدوا سر عن الوكلاء الأذكياء. النموذج عمره ما بيلمس أداة. هو بيكتب سطر كلام، والكود بتاعك هو اللي بيقرر الكلام ده هيعمل إيه. والنهارده، إنتوا اللي هتكتبوا الكود اللي بيقراه. النهارده: إزاي نقرا طلب الأداة، ببايثون. لما نموذج الوكيل ييجي دوره، بيكتب حاجة من تلاتة. خطة: جملة قصيرة عن اللي هيعمله. طلب أداة: اسم الأداة، وبعدين تفاصيلها. أو جواب للشخص. ده طلب كتبه «درسي الصغير» بجد. الأول اسم الأداة، ويذر. وبعده على طول، التفاصيل جوه أقواس معقوفة. الجزء ده اسمه جيسون، طريقة نكتب بيها البيانات ككلام. جيسون بيكتب البيانات أسامي وقيم جوه أقواس معقوفة. وبايثون بيقراه باستخدام جيسون دوت لودز، اللي بتحوّل الكلام لديكشنري. وبعدها آرجز، بليس، تديك كافي. طب إزاي تقسّم الطلب؟ دوّر على أول قوس معقوف. كل اللي قبله اسم الأداة. وكل اللي من عنده لآخره هو الجيسون. بس مش كل كلام يبقى طلب أداة. جواب زي بكرة في كافي مشمس، مفيهوش أقواس معقوفة خالص. ساعتها فايند بترجّع سالب واحد، والدالة بتاعتك لازم ترجّع نَن: مفيش أداة تشتغل. سؤال سريع! شغّلت جيسون دوت لودز على تفاصيل طلب أداة. هيرجّعلك إيه؟ ديكشنري. جيسون دوت لودز بتحوّل الكلام لبيانات وبس: المفاتيح هي أسامي التفاصيل، زي بليس وداي. مش بتشغّل حاجة، ومش بتراجع حاجة. هل كافي قرية حقيقية؟ دي حاجة الكود بتاعك يراجعها بعد كده. النماذج بتغلط، فبعض الطلبات بتبقى بايظة: قوس ناقص، أو علامة تنصيص في مكان غلط. ساعتها جيسون دوت لودز بتطلّع فاليو إيرور، والوكيل بتاعك يقع. إلا لو مسكته، باستخدام تراي وإكسبت. في المعمل، «درسي الصغير» بيشتغل بجد، على موبايلك. دوس «خطوة واحدة»، واتفرج عليه وهو بيكتب الخطة، وبعدين الطلب. افتح «اللي بيشوفه درسي الصغير»: الطلب كلام عادي، هو بالظبط اللي الدالة بتاعتك هتقسّمه. دورك. النموذج كتب: بكرة في كافي مشمس، والعظمى خمسة وتلاتين. الدالة بتاعتك المفروض ترجّع إيه؟ نَن: مفيش قوس معقوف، يبقى ده جواب. افتكر: النموذج بيكتب خطة، أو طلب، أو جواب. قسّم الطلب عند أول قوس معقوف، واقرا التفاصيل باستخدام جيسون دوت لودز. وامسك الطلبات البايظة بدل ما الوكيل يقع. جرّبها بنفسك: اكتب على ورقة خمس سطور ممكن الوكيل يكتبها: شوية طلبات، وشوية إجابات، وواحد بايظ. بدّلها مع صاحبك. هو يعلّم على كل سطر: طلب، ولا جواب، ولا بايظ، ويكتب اسم الأداة في كل طلب."
+          },
+          "sources": {
+            "en": "/media/agents-s3-1/video-en.mp4",
+            "ar": "/media/agents-s3-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-s3-1/captions-en.vtt",
+            "ar": "/media/agents-s3-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-s3-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-s3-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-s3-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-s3-1/light/audio/en.opus",
+              "manifest.json": "/media/agents-s3-1/light/manifest.json",
+              "scenes.json": "/media/agents-s3-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-s3-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-s3-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 452,
+              "ar": 435
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "The text a model writes, and the code that reads it",
+            "ar": "النص الذي يكتبه النموذج، والكود الذي يقرؤه"
+          },
+          "body": {
+            "en": "An agent’s model never touches a tool. On each turn it writes text, and that text is one of three things: a plan (a short sentence about what it will do), a tool call, or an answer for the person. Everything that happens next is decided by the code around the model, and in this course you write that code.\n\nA tool call is the tool’s name followed straight away by its details, written as JSON: weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}. JSON is a standard way to write data as text, with names and values inside curly brackets. To read a call, find the first curly bracket with text.find(\"{\"). Everything before it is the tool’s name; everything from it onwards is the JSON. Then json.loads turns that text into a Python dictionary, so args[\"place\"] gives \"Kafi\". If there is no curly bracket at all, find returns -1: the text is an answer to show the person, not a tool to run.\n\njson.loads only turns text into data. It runs nothing and checks nothing: whether Kafi is a real village, or whether this tool should run at all, is for your code to decide next. And models make mistakes, so some calls are broken: a missing bracket, a quote in the wrong place. Then json.loads raises a ValueError, and unless you catch it with try and except, one bad line from the model crashes the whole agent.\n\nAn honest note about this course: the Python sandbox on your phone has no language model inside it. So in the code steps, the model’s text is written for you, as a model would write it: a scripted model. The labs run Darsi Tiny, a real small model, on your phone, so you can watch it write the same kind of calls your code reads.",
+            "ar": "لا يلمس نموذجُ الوكيل أيَّ أداة. ففي كل دور يكتب نصًّا، وهذا النص واحد من ثلاثة: خطة (جملة قصيرة عمّا سيفعله)، أو استدعاء أداة، أو جواب للشخص. وكل ما يحدث بعد ذلك يقرّره الكود المحيط بالنموذج، وفي هذه الدورة تكتب أنت هذا الكود.\n\nواستدعاء الأداة هو اسم الأداة تتبعه مباشرةً تفاصيلها مكتوبةً بصيغة JSON، كاستدعاء أداة الطقس weather ومعه المكان Kafi واليوم tomorrow. وJSON طريقة شائعة لكتابة البيانات نصًّا، بأسماء وقيم بين قوسين معقوفين. ولتقرأ الاستدعاء، ابحث عن أول قوس معقوف باستعمال text.find، فكل ما قبله اسم الأداة، وكل ما يبدأ منه هو نص JSON. ثم تحوّل json.loads هذا النص إلى قاموس في Python، فيعطيك المفتاح place القيمة Kafi. وإن لم يوجد قوس معقوف أصلًا أعادت find العدد سالب واحد، فالنص جواب يُعرض على الشخص، لا أداة تُشغَّل.\n\nولا تفعل json.loads إلا تحويل النص إلى بيانات: فهي لا تشغّل شيئًا ولا تتحقّق من شيء. أمّا هل كافي قرية حقيقية، وهل يجب أن تعمل هذه الأداة أصلًا، فذلك ما يقرّره كودك بعد ذلك. والنماذج تخطئ، فبعض الاستدعاءات معطوب: قوس ناقص، أو علامة تنصيص في غير مكانها. عندها تُطلق json.loads خطأ ValueError، وما لم تلتقطه باستعمال try وexcept، فإن سطرًا واحدًا خاطئًا من النموذج يوقف الوكيل كله.\n\nوملاحظة صريحة عن هذه الدورة: بيئة Python على هاتفك لا يوجد فيها نموذج لغوي. لذلك يُكتب لك نص النموذج في خطوات الكود كما كان النموذج سيكتبه، أي نموذج مبرمَج بسكريبت. أما المختبرات فتشغّل «درسي الصغير»، وهو نموذج صغير حقيقي يعمل على هاتفك، لترى كيف يكتب النوع نفسه من الاستدعاءات التي يقرؤها كودك."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Tool call",
+                "ar": "استدعاء الأداة"
+              },
+              "def": {
+                "en": "The text a model writes to use a tool: the tool’s name, then its details as JSON.",
+                "ar": "النص الذي يكتبه النموذج ليستعمل أداة: اسم الأداة، ثم تفاصيلها بصيغة JSON."
+              }
+            },
+            {
+              "term": {
+                "en": "JSON",
+                "ar": "JSON"
+              },
+              "def": {
+                "en": "A standard way to write data as text: names and values inside curly brackets.",
+                "ar": "طريقة شائعة لكتابة البيانات نصًّا: أسماء وقيم بين قوسين معقوفين."
+              }
+            },
+            {
+              "term": {
+                "en": "Parsing",
+                "ar": "التحليل (parsing)"
+              },
+              "def": {
+                "en": "Turning text into data a program can use, such as splitting a call into a name and a dictionary.",
+                "ar": "تحويل النص إلى بيانات يستعملها البرنامج، كتقسيم الاستدعاء إلى اسم وقاموس."
+              }
+            },
+            {
+              "term": {
+                "en": "Scripted model",
+                "ar": "النموذج المبرمَج"
+              },
+              "def": {
+                "en": "A stand-in for a model in your code: it returns fixed text a model would write. It isn’t intelligent; it lets you test your code.",
+                "ar": "بديل للنموذج في كودك: يُرجع نصًّا ثابتًا كان النموذج سيكتبه. ليس ذكيًا، لكنه يتيح لك اختبار كودك."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "The model wrote “Tomorrow in Kafi: sunny, high 35°C.” What should parse_call return?",
+            "ar": "كتب النموذج: «غدًا في كافي: مشمس، العظمى ٣٥°». ماذا يجب أن تُرجع الدالة parse_call؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "None: it’s an answer, not a call",
+                "ar": "None: فهذا جواب لا استدعاء"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A tool named “Tomorrow”",
+                "ar": "أداة اسمها «Tomorrow»"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A ValueError that stops the agent",
+                "ar": "خطأ ValueError يوقف الوكيل"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "There’s no curly bracket, so find gives -1: it’s an answer to show the person, not a tool to run.",
+            "ar": "لا يوجد قوس معقوف، فتُرجع find العدد ‎-1، وهذا جواب يُعرض على الشخص، لا أداة تُشغَّل."
+          }
+        },
+        {
+          "type": "parsons",
+          "id": "p2",
+          "lang": "python",
+          "prompt": {
+            "en": "Put the lines in order so parse_call splits a call into its name and its details.",
+            "ar": "رتّب الأسطر لتقسم الدالة parse_call الاستدعاء إلى اسمه وتفاصيله."
+          },
+          "lines": [
+            "import json",
+            "def parse_call(text):",
+            "    i = text.find(\"{\")",
+            "    if i == -1:",
+            "        return None",
+            "    name = text[:i]",
+            "    args = json.loads(text[i:])",
+            "    return name, args"
+          ],
+          "distractors": [
+            "    name = text[i:]",
+            "    args = json.loads(text[:i])"
+          ],
+          "explain": {
+            "en": "Find the bracket first; with no bracket it’s an answer, so return early. Otherwise the name is everything before the bracket (text[:i]) and the JSON is everything from it (text[i:]).",
+            "ar": "ابحث عن القوس أولًا، فإن لم يوجد فالنص جواب، فأرجِع None مبكرًا. وإلا فالاسم هو كل ما قبل القوس ⁦(text[:i])⁩، ونص JSON هو كل ما يبدأ منه ⁦(text[i:])⁩."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: open “What Darsi Tiny sees”, pick “What's the weather in Kafi tomorrow?” and press One step until the call appears. That line is exactly the kind of text your parse_call splits. Then run the trip from Kafi to Dala: two calls and two results. Answer three different requests to finish. The first run downloads Darsi Tiny once (2.8 MB).",
+            "ar": "جرّب: افتح «ما يراه درسي الصغير»، واختر «ما حالة الطقس في كافي غدًا؟»، ثم اضغط «خطوة واحدة» حتى يظهر الاستدعاء. هذا السطر هو بالضبط نوع النص الذي تقسمه الدالة parse_call. ثم شغّل الرحلة من كافي إلى دالا: استدعاءان ونتيجتان. أنهِ المختبر بثلاثة طلبات مختلفة. يُنزَّل «درسي الصغير» مرة واحدة في أول تشغيل (٢٫٨ ميغابايت)."
+          },
+          "tool": "agentloop"
+        },
+        {
+          "type": "choice",
+          "id": "p3",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "call = 'weather{\"place\":\"Kafi\"}'\ni = call.find(\"{\")\nprint(call[:i])"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "weather",
+                "ar": "weather"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Kafi",
+                "ar": "Kafi"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "place",
+                "ar": "place"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "find gives the position of the first curly bracket, and call[:i] is everything before it: the tool’s name.",
+            "ar": "تعطي find موضع أول قوس معقوف، و⁦call[:i]⁩ هو كل ما قبله: اسم الأداة."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "Finish parse_call(text): return (name, args) for a tool call, and None for an answer (no curly bracket) or a broken call (json.loads raises a ValueError).",
+            "ar": "أكمل الدالة parse_call: أرجِع ⁦(name, args)⁩ لاستدعاء الأداة، وNone للجواب (لا قوس معقوف فيه) أو للاستدعاء المعطوب (حين تُطلق json.loads خطأ ValueError)."
+          },
+          "starter": "import json\n\ndef parse_call(text):\n    i = text.find(\"{\")\n    # Return (name, args), or None\n    return None\n",
+          "solution": "import json\n\ndef parse_call(text):\n    i = text.find(\"{\")\n    if i == -1:\n        return None\n    try:\n        args = json.loads(text[i:])\n    except ValueError:\n        return None\n    return text[:i], args\n",
+          "tests": [
+            {
+              "check": "assert parse_call('weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}') == (\"weather\", {\"place\": \"Kafi\", \"day\": \"tomorrow\"}), \"Split the weather call into its name and details\"",
+              "hint": {
+                "en": "The name is text[:i]; the details are json.loads(text[i:]).",
+                "ar": "الاسم هو ⁦text[:i]⁩، والتفاصيل هي ⁦json.loads(text[i:])⁩."
+              }
+            },
+            {
+              "check": "assert parse_call(\"Tomorrow in Kafi: sunny.\") is None, \"An answer has no { and is not a call: return None\"",
+              "hint": {
+                "en": "With no curly bracket, find gives -1: return None.",
+                "ar": "حين لا يوجد قوس معقوف تُعيد find العدد -1: أرجِع None."
+              }
+            },
+            {
+              "check": "assert parse_call('weather{\"place\":\"Kafi\"') is None, \"A broken call should return None, not crash\"",
+              "hint": {
+                "en": "Put json.loads inside try, and return None in except ValueError.",
+                "ar": "ضع json.loads داخل try، وأرجِع None في except ValueError."
+              }
+            },
+            {
+              "check": "r = parse_call('timetable{\"class\":\"6B\",\"day\":\"monday\"}')\nassert r[0] == \"timetable\" and r[1][\"class\"] == \"6B\", \"Any tool name works\"",
+              "hint": {
+                "en": "Don’t write “weather” into your code: take the name from the text.",
+                "ar": "لا تكتب الاسم weather في كودك: خذ الاسم من النص."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "text.find(\"{\") gives -1 when there is no bracket: return None then.",
+              "ar": "تُعيد text.find العدد -1 حين لا يوجد قوس: أرجِع None عندها."
+            },
+            {
+              "en": "Put args = json.loads(text[i:]) inside try, with except ValueError: return None.",
+              "ar": "ضع ⁦args = json.loads(text[i:])⁩ داخل try، ومعها except ValueError ثم return None."
+            },
+            {
+              "en": "At the end: return text[:i], args.",
+              "ar": "وفي النهاية: ⁦return text[:i], args⁩."
+            }
+          ],
+          "explain": {
+            "en": "find locates the bracket, and no bracket means an answer. json.loads reads the details, and try with except turns a broken call into None instead of a crash.",
+            "ar": "تحدّد find موضع القوس، وغيابه يعني أن النص جواب. وتقرأ json.loads التفاصيل، ويحوّل try مع except الاستدعاءَ المعطوب إلى None بدل أن يتوقف الوكيل."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "This parse_call gives the wrong tool name. Which line is the mistake?",
+            "ar": "تُعطي هذه الدالة اسم أداة خاطئًا. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "def parse_call(text):\n    i = text.find(\"{\")\n    if i == -1:\n        return None\n    name = text[:i + 1]\n    args = json.loads(text[i:])\n    return name, args",
+          "line": 5,
+          "fix": "    name = text[:i]",
+          "explain": {
+            "en": "text[:i + 1] keeps the bracket too, so the name becomes “weather{” and no tool matches it. text[:i] stops just before the bracket.",
+            "ar": "تُبقي ⁦text[:i + 1]⁩ القوس المعقوف مع الاسم، فيصبح الاسم weather ومعه القوس، ولا تطابقه أي أداة. أما ⁦text[:i]⁩ فتتوقف قبل القوس مباشرةً."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p6",
+          "prompt": {
+            "en": "json.loads checks that Kafi is a real village before your agent goes on.",
+            "ar": "تتحقّق json.loads من أن كافي قرية حقيقية قبل أن يكمل وكيلك."
+          },
+          "answer": false,
+          "explain": {
+            "en": "json.loads only turns JSON text into a dictionary. Whether Kafi exists, and whether the tool should run at all, is for your own code, and the tool, to check.",
+            "ar": "لا تفعل json.loads إلا تحويل نص JSON إلى قاموس. أما هل كافي موجودة، وهل يجب أن تعمل الأداة أصلًا، فذلك ما يتحقّق منه كودك والأداة نفسها."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "A model’s text decides nothing until your code reads it. Where else does a program have to read text it didn’t write, and what could go wrong?",
+            "ar": "لا يقرّر نص النموذج شيئًا حتى يقرأه كودك. أين يضطر برنامج آخر إلى قراءة نص لم يكتبه، وما الذي قد يسوء؟"
+          },
+          "placeholder": {
+            "en": "For example: “A form on a website: people type dates in many ways, so the program must check them.”",
+            "ar": "مثلًا: «نموذج على موقع: يكتب الناس التواريخ بطرق كثيرة، فيجب أن يتحقّق البرنامج منها.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A call reader for five lines",
+            "ar": "مشروع: قارئ استدعاءات لخمسة أسطر"
+          },
+          "task": {
+            "en": "In the code step, or in Python on a school computer, write five lines a model might produce: two calls, two answers and one broken call. Make one call’s details Arabic, such as the place كافي. Run your parse_call on each line and print what it returns. Then add one check of your own (for example, a call with an empty name should also return None) and explain it in a comment.",
+            "ar": "في خطوة الكود، أو في Python على حاسوب المدرسة، اكتب خمسة أسطر قد يكتبها نموذج: استدعاءين، وجوابين، واستدعاءً معطوبًا. واجعل تفاصيل أحد الاستدعاءات بالعربية، كالمكان «كافي». شغّل الدالة parse_call على كل سطر واطبع ما تُرجعه. ثم أضف تحقّقًا من عندك (مثلًا: الاستدعاء الذي اسمه فارغ يُرجع None أيضًا)، واشرحه في تعليق."
+          },
+          "deliverable": {
+            "en": "Your code and what it printed (a screenshot or copied text), and two sentences: which line was hardest to handle, and why.",
+            "ar": "كودك وما طبعه (صورة للشاشة أو نص منسوخ)، وجملتان: أيّ سطر كان التعامل معه أصعب، ولماذا."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: split a tool call into its name and its details.",
+                "ar": "أستطيع: تقسيم استدعاء الأداة إلى اسمها وتفاصيلها."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: tell a call from an answer, and handle a broken call without crashing.",
+                "ar": "أستطيع: التمييز بين الاستدعاء والجواب، والتعامل مع الاستدعاء المعطوب دون أن يتوقف البرنامج."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: add a check of my own and explain it.",
+                "ar": "أستطيع: إضافة تحقّق من عندي وشرحه."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Read a tool call",
+            "ar": "اقرأ استدعاء الأداة"
+          },
+          "note": {
+            "en": "AI agents · Upper secondary · Lesson 1",
+            "ar": "وكلاء الذكاء الاصطناعي، المرحلة الثانوية، الدرس ١"
+          },
+          "narration": {
+            "en": "What does a model actually write, and how does your code read it?",
+            "ar": "ماذا يكتب النموذج فعلًا، وكيف يقرؤه كودك؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Tell a plan, a tool call and an answer apart.",
+              "Split a call into its name and details in Python.",
+              "Handle a broken call without crashing."
+            ],
+            "ar": [
+              "تميّز بين الخطة واستدعاء الأداة والجواب.",
+              "تقسم الاستدعاء إلى اسمه وتفاصيله بلغة Python.",
+              "تتعامل مع الاستدعاء المعطوب دون أن يتوقف البرنامج."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "The model only writes text: a plan, a call or an answer.",
+              "Split a call at its first curly bracket; json.loads reads the details.",
+              "Catch broken calls with try and except."
+            ],
+            "ar": [
+              "لا يكتب النموذج إلا نصًّا: خطة أو استدعاءً أو جوابًا.",
+              "قسّم الاستدعاء عند أول قوس معقوف، وتقرأ json.loads التفاصيل.",
+              "التقط الاستدعاءات المعطوبة باستعمال try وexcept."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Call, answer or broken?",
+            "ar": "النشاط: استدعاء أم جواب أم معطوب؟"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (3 min): Read Darsi Tiny’s call for the weather in Kafi.",
+              "Write (7 min): Five model lines: calls, answers, one broken.",
+              "Swap (5 min): Mark each line and name each tool.",
+              "Code (5 min): Run parse_call on your lines."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): اقرأ استدعاء «درسي الصغير» لطقس كافي.",
+              "الكتابة (٧ دقائق): خمسة أسطر للنموذج: استدعاءات وأجوبة وواحد معطوب.",
+              "التبادل (٥ دقائق): صنّف كل سطر واكتب اسم كل أداة.",
+              "الكود (٥ دقائق): شغّل parse_call على أسطرك."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (3 min): Look at weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}. Circle the tool’s name and underline the JSON.",
+              "Write (7 min): Write five lines a model might produce: two tool calls (using made-up places such as Kafi and Dala), two answers and one broken call with a bracket missing.",
+              "Swap (5 min): Swap with a friend. They write “call”, “answer” or “broken” beside each line, and the tool’s name beside each call.",
+              "Code (5 min): Type your lines into the code step and run parse_call on each. Did it agree with your friend?"
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): انظر إلى استدعاء أداة الطقس لكافي غدًا. ضع دائرة حول اسم الأداة وخطًّا تحت نص JSON.",
+              "الكتابة (٧ دقائق): اكتب خمسة أسطر قد يكتبها نموذج: استدعاءين لأدوات (بأماكن خيالية مثل كافي ودالا)، وجوابين، واستدعاءً معطوبًا ينقصه قوس.",
+              "التبادل (٥ دقائق): تبادل الأسطر مع صديقك. يكتب بجانب كل سطر: «استدعاء» أو «جواب» أو «معطوب»، واسم الأداة بجانب كل استدعاء.",
+              "الكود (٥ دقائق): اكتب أسطرك في خطوة الكود وشغّل parse_call على كلٍّ منها. هل اتفقت مع صديقك؟"
+            ]
+          },
+          "note": {
+            "en": "Use only made-up places and people, such as Kafi, Dala and class 6B. You can do the first three parts with paper only.",
+            "ar": "استعمل أماكن وأشخاصًا خياليين فقط، مثل كافي ودالا والفصل 6B. ويمكنك إنجاز الأجزاء الثلاثة الأولى بالورق وحده."
+          },
+          "narration": {
+            "en": "Is it a call, an answer, or broken?",
+            "ar": "هل هو استدعاء، أم جواب، أم معطوب؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why does the model never run a tool itself?",
+              "What should an agent do with a broken call?",
+              "Which details would you check after json.loads?"
+            ],
+            "ar": [
+              "لماذا لا يشغّل النموذج أي أداة بنفسه؟",
+              "ماذا يجب أن يفعل الوكيل بالاستدعاء المعطوب؟",
+              "ما التفاصيل التي ستتحقّق منها بعد json.loads؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one tool call, one answer and one broken call, and label each."
+            ],
+            "ar": [
+              "اكتب استدعاء أداة، وجوابًا، واستدعاءً معطوبًا، وسمِّ كل واحد منها."
+            ]
+          },
+          "narration": {
+            "en": "The model writes text; your code decides what it means.",
+            "ar": "النموذج يكتب نصًّا، وكودك يقرّر معناه."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Read a tool call",
+            "ar": "شرائح للمراجعة: اقرأ استدعاء الأداة"
+          },
+          "pages": 6,
+          "base": "agents-s3-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Read a tool call",
+            "ar": "ورقة النشاط: اقرأ استدعاء الأداة"
+          },
+          "pages": 3,
+          "base": "agents-s3-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-s3-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.3",
+        "S.TA.A",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "agents-s3-2",
+      "title": {
+        "en": "Tools are functions",
+        "ar": "الأدوات دوالّ"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Invent a third tool for your agent, such as a library search. Write its details, its result and two errors it should return, then add it to TOOLS in the code step and test it.",
+        "ar": "اخترع أداة ثالثة لوكيلك، كالبحث في المكتبة. اكتب تفاصيلها ونتيجتها وخطأين يجب أن تُرجعهما، ثم أضفها إلى TOOLS في خطوة الكود وجرّبها."
+      },
+      "materials": {
+        "en": [
+          "Your phone or a school computer, for the code steps",
+          "Paper, a pen and a few small cards"
+        ],
+        "ar": [
+          "هاتفك أو حاسوب المدرسة، لخطوات الكود",
+          "ورقة وقلم وبضع بطاقات صغيرة"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Tools are functions",
+            "ar": "الأدوات دوالّ"
+          },
+          "src": null,
+          "duration": 212,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A tool nobody planned for",
+                "ar": "أداة لم يحسب لها أحد"
+              }
+            },
+            {
+              "at": 18.6,
+              "atBy": {
+                "en": 18.6,
+                "ar": 16.9
+              },
+              "label": {
+                "en": "Tools as functions",
+                "ar": "الأدوات دوالّ"
+              }
+            },
+            {
+              "at": 52.6,
+              "atBy": {
+                "en": 52.6,
+                "ar": 49
+              },
+              "label": {
+                "en": "Sending a call to its tool",
+                "ar": "توجيه الاستدعاء إلى أداته"
+              }
+            },
+            {
+              "at": 133.4,
+              "atBy": {
+                "en": 133.4,
+                "ar": 120.7
+              },
+              "label": {
+                "en": "Back to text, and the lab",
+                "ar": "العودة إلى النص، والمختبر"
+              }
+            },
+            {
+              "at": 178.7,
+              "atBy": {
+                "en": 178.7,
+                "ar": 162.1
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "The model calls attendance, but TOOLS has only weather and timetable. What should run do?",
+                "ar": "يستدعي النموذج الأداة attendance، لكن TOOLS لا تحوي إلا weather وtimetable. ماذا يجب أن تفعل run؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Crash with a KeyError",
+                    "ar": "تتوقف بخطأ KeyError"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Return an error result",
+                    "ar": "تُرجع نتيجة فيها خطأ"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Run weather instead",
+                    "ar": "تشغّل weather بدلًا منها"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "An error result keeps the agent running, and the model can tell the person it can’t check attendance.",
+                "ar": "النتيجة التي فيها خطأ تُبقي الوكيل يعمل، ويستطيع النموذج أن يخبر الشخص بأنه لا يستطيع الاطلاع على الحضور. أما التوقف فيوقف الوكيل كله، وتشغيل أداة أخرى يفعل ما لم يطلبه أحد."
+              }
+            },
+            "at": 117.61,
+            "atBy": {
+              "en": 117.61,
+              "ar": 105.34
+            }
+          },
+          "transcript": {
+            "en": "Our science club built a weather agent, and it crashed on day one. The model asked for a tool called bus. There was no bus tool, and nobody had planned for that! Today: tools as Python functions, and how to call the right one. In your agent, every tool is just a Python function. It takes the call’s details as a dictionary. It looks something up, or does something. And it returns a result, as a dictionary too. Our tools work over a tiny made-up world: two villages and their weather, one class and its timetable. Darsi Tiny’s ten tools work the same way, over a bigger made-up school. Nothing real is looked up, and nothing is sent. Dispatch means sending a call to the right function. Keep a dictionary from each tool’s name to its function. Then TOOLS, at the name, is the function, and you call it with the details. Models make mistakes, so tools get strange calls. A tool that isn’t there, like bus. A missing detail, like no place. A place that doesn’t exist, like Moonvale. Each one should come back as an error, not a crash. So your run function checks first. If the name isn’t in TOOLS, it returns an error dictionary. The model reads that error like any other result, and tells the person it can’t help. Quick check! The model calls the attendance tool, but your TOOLS has only weather and timetable. What should run do? Return an error result. A crash stops the whole agent. Guessing another tool is worse: it does something nobody asked for. An error lets the model say: sorry, I can’t check attendance. Last step: the result goes back to the model. But the model reads only text. So json dot dumps turns the dictionary back into JSON text, and the loop adds it to the history. In the lab, Darsi Tiny’s ten tools are switches. Turn the weather tool off, and ask for the weather. Ask for something no tool can do. Then ask about class nine Z, and read the check under the call. Your turn. The model calls the weather tool, but leaves out the place. What should the weather tool return? An error that says the place is missing. Remember: each tool is a function, from details to a result. A dictionary of tools sends each call to the right one. And every mistake comes back as an error, not a crash. Try it yourself: invent a third tool, maybe a library search. On paper, write its details, its result, and two errors it should return. Then add it to TOOLS, and test it.",
+            "ar": "نادي العلوم بتاعنا عمل وكيل للطقس، ووقع من أول يوم. النموذج طلب أداة اسمها باص. مكانش فيه أداة باص، ومحدش كان عامل حسابه! النهارده: الأدوات كدوال بايثون، وإزاي نشغّل الأداة الصح. في الوكيل بتاعك، كل أداة مجرد دالة بايثون. بتاخد تفاصيل الطلب في ديكشنري. بتدوّر على حاجة، أو بتعمل حاجة. وبترجّع نتيجة، في ديكشنري برضه. أدواتنا شغّالة على عالم صغير متألّف: قريتين والطقس بتاعهم، وفصل واحد وجدوله. وأدوات «درسي الصغير» العشرة شغّالة بنفس الطريقة، على مدرسة متألّفة أكبر. مفيش حاجة حقيقية بيدوّر عليها، ومفيش حاجة بتتبعت. التوجيه معناه إنك تبعت الطلب للدالة الصح. خلّي عندك ديكشنري من اسم كل أداة للدالة بتاعتها. وبعدين تولز عند الاسم هي الدالة، وتشغّلها بالتفاصيل. النماذج بتغلط، فالأدوات بيجيلها طلبات غريبة. أداة مش موجودة، زي باص. تفصيلة ناقصة، زي مفيش مكان. مكان مش موجود، زي وادي القمر. وكل واحدة فيهم لازم ترجع خطأ، مش وقعة. فالدالة رَن بتاعتك تراجع الأول. لو الاسم مش في تولز، ترجّع ديكشنري فيه خطأ. والنموذج يقرا الخطأ ده زي أي نتيجة، ويقول للشخص إنه مش هيقدر يساعد. سؤال سريع! النموذج طلب أداة الحضور، بس تولز عندك فيها الطقس والجدول بس. رَن المفروض تعمل إيه؟ رجّع نتيجة فيها خطأ. الوقعة بتوقّف الوكيل كله. وإنك تخمّن أداة تانية أسوأ: بتعمل حاجة محدش طلبها. لكن الخطأ بيخلّي النموذج يقول: آسف، مش هقدر أشوف الحضور. آخر خطوة: النتيجة بترجع للنموذج. بس النموذج مش بيقرا غير كلام. فجيسون دوت دامبس بتحوّل الديكشنري تاني لكلام جيسون، والحلقة بتضيفه للسجل. في المعمل، أدوات «درسي الصغير» العشرة عبارة عن مفاتيح. اقفل أداة الطقس، واسأل عن الطقس. اطلب حاجة مفيش أداة تعملها. وبعدين اسأل عن فصل تسعة زد، واقرا المراجعة اللي تحت الطلب. دورك. النموذج طلب أداة الطقس، بس ما كتبش المكان. أداة الطقس المفروض ترجّع إيه؟ خطأ بيقول إن المكان ناقص. افتكر: كل أداة دالة، من تفاصيل لنتيجة. وديكشنري الأدوات بيبعت كل طلب للأداة الصح. وكل غلطة بترجع خطأ، مش وقعة. جرّبها بنفسك: اخترع أداة تالتة، زي البحث في المكتبة. اكتب على ورقة تفاصيلها، ونتيجتها، وخطأين المفروض ترجّعهم. وبعدين ضيفها لتولز، وجرّبها."
+          },
+          "sources": {
+            "en": "/media/agents-s3-2/video-en.mp4",
+            "ar": "/media/agents-s3-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-s3-2/captions-en.vtt",
+            "ar": "/media/agents-s3-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-s3-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-s3-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-s3-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-s3-2/light/audio/en.opus",
+              "manifest.json": "/media/agents-s3-2/light/manifest.json",
+              "scenes.json": "/media/agents-s3-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-s3-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-s3-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 456,
+              "ar": 413
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Tools as functions, and dispatch",
+            "ar": "الأدوات دوالّ، والتوجيه"
+          },
+          "body": {
+            "en": "In your agent, each tool is an ordinary Python function. It takes the call’s details as a dictionary, looks something up or does something, and returns a result, also as a dictionary: weather({\"place\": \"Kafi\"}) might return {\"sky\": \"sunny\"}. Our tools work over a tiny made-up world: two villages and their weather, one class and its timetable. Darsi Tiny’s ten tools work the same way over a bigger made-up school; nothing real is looked up, and nothing is ever sent.\n\nDispatch means sending each call to the right function. Keep a dictionary from each tool’s name to its function, TOOLS = {\"weather\": weather, \"timetable\": timetable}. Then TOOLS[name] is the function, and TOOLS[name](args) runs it. Adding a tool is one new function and one new line in TOOLS.\n\nPlan for mistakes, because the model will make them. It may ask for a tool that doesn’t exist (bus), leave out a detail (no place), or name something that isn’t in your world (Moonvale). Each of these should come back as an error result, such as {\"error\": \"unknown tool\"}: never a crash, and never a guess. A crash stops the whole agent; a guess (running another tool, or picking a village) does something nobody asked for. An error is a result like any other: the model reads it, and can tell the person what went wrong or ask for what’s missing.\n\nLast, the result goes back to the model as text: json.dumps turns the dictionary into a line of JSON, and the loop adds it to the history the model reads next. In the lab you’ll see Darsi Tiny’s side of this: it reads the list of tools that are on, picks one and copies your words into the details, sometimes wrongly (class 9Z became 9C). That is why tools, and the code around them, check every detail.",
+            "ar": "في وكيلك، كل أداة دالة عادية في Python. تأخذ تفاصيل الاستدعاء في قاموس، وتبحث عن شيء أو تفعل شيئًا، وتُرجع نتيجة في قاموس أيضًا: فأداة الطقس weather قد تُرجع لكافي أن السماء صافية (sunny). وتعمل أدواتنا على عالم خيالي صغير: قريتان وطقسهما، وفصل واحد وجدوله. وأدوات «درسي الصغير» العشر تعمل بالطريقة نفسها على مدرسة خيالية أكبر، فلا يُبحث عن شيء حقيقي، ولا يُرسَل أي شيء.\n\nوالتوجيه (dispatch) يعني إرسال كل استدعاء إلى الدالة الصحيحة. احتفظ بقاموس من اسم كل أداة إلى دالتها، هو TOOLS. فيكون ⁦TOOLS[name]⁩ هو الدالة، و⁦TOOLS[name](args)⁩ يشغّلها. وإضافة أداة جديدة دالةٌ جديدة وسطر جديد في TOOLS.\n\nواحسب حساب الأخطاء، لأن النموذج سيقع فيها. فقد يطلب أداة لا وجود لها (bus)، أو يُغفل تفصيلًا (بلا مكان)، أو يذكر شيئًا ليس في عالمك (وادي القمر). ويجب أن يعود كلٌّ منها نتيجةَ خطأ، مثل unknown tool: لا توقّفًا ولا تخمينًا. فالتوقّف يوقف الوكيل كله، والتخمين (كتشغيل أداة أخرى أو اختيار قرية) يفعل ما لم يطلبه أحد. أما الخطأ فنتيجة كغيرها: يقرؤها النموذج، فيخبر الشخص بما حدث أو يسأله عن الناقص.\n\nوأخيرًا تعود النتيجة إلى النموذج نصًّا: تحوّل json.dumps القاموس إلى سطر JSON، وتضيفه الحلقة إلى سجلّ المحادثة الذي يقرؤه النموذج بعد ذلك. وسترى في المختبر الجانب الآخر عند «درسي الصغير»: يقرأ قائمة الأدوات المفعّلة، ويختار واحدة، وينسخ كلماتك في التفاصيل، وأحيانًا ينسخها خطأً (فصار الفصل 9Z عنده 9C). ولهذا تتحقّق الأدوات، والكود المحيط بها، من كل تفصيل."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Function",
+                "ar": "الدالة"
+              },
+              "def": {
+                "en": "A named piece of code that takes inputs and returns a result.",
+                "ar": "جزء من الكود له اسم، يأخذ مُدخلات ويُرجع نتيجة."
+              }
+            },
+            {
+              "term": {
+                "en": "Dispatch",
+                "ar": "التوجيه (dispatch)"
+              },
+              "def": {
+                "en": "Sending each call to the function for its tool, here through a dictionary from names to functions.",
+                "ar": "إرسال كل استدعاء إلى دالة أداته، وهنا عبر قاموس من الأسماء إلى الدوال."
+              }
+            },
+            {
+              "term": {
+                "en": "Error result",
+                "ar": "نتيجة الخطأ"
+              },
+              "def": {
+                "en": "A result that says what went wrong, such as an unknown tool or a missing detail, so the agent carries on instead of crashing.",
+                "ar": "نتيجة تقول ما الذي حدث خطأً، كأداة غير معروفة أو تفصيل ناقص، فيكمل الوكيل بدل أن يتوقف."
+              }
+            },
+            {
+              "term": {
+                "en": "json.dumps",
+                "ar": "json.dumps"
+              },
+              "def": {
+                "en": "Turns a Python dictionary into JSON text, so a result can go back to the model.",
+                "ar": "تحوّل قاموس Python إلى نص JSON، لتعود النتيجة إلى النموذج."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "The model calls weather but leaves out the place. What should the weather tool return?",
+            "ar": "يستدعي النموذج أداة weather دون أن يذكر المكان. ماذا يجب أن تُرجع أداة الطقس؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Kafi’s weather, as a good guess",
+                "ar": "طقس كافي، تخمينًا معقولًا"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "An error: the place is missing",
+                "ar": "خطأ: المكان ناقص"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "An empty result",
+                "ar": "نتيجة فارغة"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "A tool shouldn’t guess a detail nobody gave. An error says what’s missing, so the model can ask the person: which village?",
+            "ar": "لا ينبغي للأداة أن تخمّن تفصيلًا لم يذكره أحد. فالخطأ يقول ما الناقص، فيستطيع النموذج أن يسأل الشخص: أيّ قرية؟"
+          }
+        },
+        {
+          "type": "match",
+          "id": "p2",
+          "prompt": {
+            "en": "Match each piece of your agent to its job.",
+            "ar": "صِل كل جزء من وكيلك بعمله."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "weather(args)",
+                "ar": "⁦weather(args)⁩"
+              },
+              "right": {
+                "en": "Looks up the sky for a place",
+                "ar": "يبحث عن حالة السماء في مكان"
+              }
+            },
+            {
+              "left": {
+                "en": "TOOLS",
+                "ar": "TOOLS"
+              },
+              "right": {
+                "en": "A dictionary from tool names to functions",
+                "ar": "قاموس من أسماء الأدوات إلى الدوال"
+              }
+            },
+            {
+              "left": {
+                "en": "run(name, args)",
+                "ar": "⁦run(name, args)⁩"
+              },
+              "right": {
+                "en": "Sends a call to its tool, or returns an error",
+                "ar": "يرسل الاستدعاء إلى أداته، أو يُرجع خطأ"
+              }
+            },
+            {
+              "left": {
+                "en": "json.dumps(result)",
+                "ar": "⁦json.dumps(result)⁩"
+              },
+              "right": {
+                "en": "Turns the result into text for the model",
+                "ar": "يحوّل النتيجة إلى نص للنموذج"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each tool is a function; TOOLS maps names to those functions; run uses TOOLS, with a check, to reach the right one; json.dumps turns the result back into text the model can read.",
+            "ar": "كل أداة دالة، وTOOLS يربط الأسماء بهذه الدوال، وrun تستعمل TOOLS مع التحقّق لتصل إلى الأداة الصحيحة، وjson.dumps تحوّل النتيجة إلى نص يقرؤه النموذج."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: switch the weather tool off and ask “What's the weather in Kafi tomorrow?”. Ask “Book a bus ticket to the city.” (no tool covers it) and “What's the weather tomorrow?” (a detail is missing: reply “Dala”). Then ask “What does 9Z have tomorrow?” and read the check under the call. See three of the four outcomes to finish.",
+            "ar": "جرّب: أوقف أداة الطقس واسأل «ما حالة الطقس في كافي غدًا؟». واطلب «احجز تذكرة حافلة إلى المدينة.» (لا تغطّيه أي أداة)، واسأل «كيف الطقس غدًا؟» (ينقصه تفصيل: أجب «دالا»). ثم اسأل «ماذا لدى 9Z غدًا؟» واقرأ التحقّق تحت الاستدعاء. أنهِ المختبر حين ترى ثلاثًا من النتائج الأربع."
+          },
+          "tool": "tools"
+        },
+        {
+          "type": "code",
+          "id": "p3",
+          "lang": "python",
+          "prompt": {
+            "en": "Finish run(name, args): if the tool isn’t in TOOLS, return {\"error\": \"unknown tool\"}; otherwise run the tool with its details and return its result.",
+            "ar": "أكمل الدالة run: إن لم تكن الأداة في TOOLS فأرجِع ⁦{\"error\": \"unknown tool\"}⁩، وإلا فشغّل الأداة بتفاصيلها وأرجِع نتيجتها."
+          },
+          "starter": "SKY = {\"Kafi\": \"sunny\", \"Dala\": \"rain\"}\n\ndef weather(args):\n    place = args.get(\"place\")\n    if place not in SKY:\n        return {\"error\": \"unknown place\"}\n    return {\"sky\": SKY[place]}\n\nTOOLS = {\"weather\": weather}\n\ndef run(name, args):\n    return TOOLS[name](args)\n",
+          "solution": "SKY = {\"Kafi\": \"sunny\", \"Dala\": \"rain\"}\n\ndef weather(args):\n    place = args.get(\"place\")\n    if place not in SKY:\n        return {\"error\": \"unknown place\"}\n    return {\"sky\": SKY[place]}\n\nTOOLS = {\"weather\": weather}\n\ndef run(name, args):\n    if name not in TOOLS:\n        return {\"error\": \"unknown tool\"}\n    return TOOLS[name](args)\n",
+          "tests": [
+            {
+              "check": "assert run(\"weather\", {\"place\": \"Kafi\"}) == {\"sky\": \"sunny\"}, \"weather in Kafi should be sunny\""
+            },
+            {
+              "check": "assert run(\"weather\", {\"place\": \"Moonvale\"}) == {\"error\": \"unknown place\"}, \"An unknown place is an error result\""
+            },
+            {
+              "check": "assert run(\"bus\", {\"from\": \"Kafi\"}) == {\"error\": \"unknown tool\"}, \"A tool that isn't in TOOLS should return an error, not crash\"",
+              "hint": {
+                "en": "A tool the model made up must give an error result, not a KeyError.",
+                "ar": "الأداة التي اختلقها النموذج يجب أن تعطي نتيجة خطأ، لا خطأ KeyError."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "First check: if name not in TOOLS:",
+              "ar": "تحقّق أولًا: if name not in TOOLS:"
+            },
+            {
+              "en": "Inside it, return {\"error\": \"unknown tool\"}; after it, keep return TOOLS[name](args).",
+              "ar": "وداخله أرجِع ⁦{\"error\": \"unknown tool\"}⁩، وبعده أبقِ ⁦return TOOLS[name](args)⁩."
+            }
+          ],
+          "explain": {
+            "en": "Checking the name first turns a made-up tool into an error the model can read; TOOLS[name](args) then runs a real one. The weather tool already turns an unknown place into an error of its own.",
+            "ar": "التحقّق من الاسم أولًا يحوّل الأداة المختلقة إلى خطأ يقرؤه النموذج، ثم يشغّل ⁦TOOLS[name](args)⁩ الأداة الحقيقية. وأداة الطقس نفسها تحوّل المكان غير المعروف إلى خطأ."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "Fill the gaps: run the call’s tool if it exists, and turn the result into text for the model.",
+            "ar": "املأ الفراغات: شغّل أداة الاستدعاء إن وُجدت، وحوّل النتيجة إلى نص للنموذج."
+          },
+          "code": [
+            "name, args = parse_call(call)\nif name ",
+            {
+              "blank": 0
+            },
+            " TOOLS:\n    result = ",
+            {
+              "blank": 1
+            },
+            "[name](args)\nelse:\n    result = {\"error\": \"unknown tool\"}\ntext = json.",
+            {
+              "blank": 2
+            },
+            "(result)"
+          ],
+          "answers": [
+            "in",
+            "TOOLS",
+            "dumps"
+          ],
+          "distractors": [
+            "not in",
+            "loads",
+            "args"
+          ],
+          "explain": {
+            "en": "Run the tool only if its name is in TOOLS; TOOLS[name] is the function. json.dumps turns the result dictionary into JSON text, and json.loads goes the other way.",
+            "ar": "شغّل الأداة فقط إن كان اسمها في TOOLS، فـ ⁦TOOLS[name]⁩ هي الدالة. وتحوّل json.dumps قاموس النتيجة إلى نص JSON، أما json.loads فتعمل في الاتجاه المعاكس."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p5",
+          "prompt": {
+            "en": "If the model leaves out the place, the weather tool should guess the nearest village so the agent can still answer.",
+            "ar": "إن أغفل النموذج المكان، فعلى أداة الطقس أن تخمّن أقرب قرية ليستطيع الوكيل أن يجيب."
+          },
+          "answer": false,
+          "explain": {
+            "en": "A tool shouldn’t guess a detail nobody gave: it would answer about the wrong village. It returns an error saying the place is missing, and the model can ask the person which village.",
+            "ar": "لا ينبغي للأداة أن تخمّن تفصيلًا لم يذكره أحد، وإلا أجابت عن قرية خاطئة. بل تُرجع خطأً يقول إن المكان ناقص، فيسأل النموذج الشخص: أيّ قرية؟"
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of a tool you would give an agent at your school. What details would it need, and which errors should it return?",
+            "ar": "فكّر في أداة تعطيها لوكيل في مدرستك. ما التفاصيل التي ستحتاجها، وما الأخطاء التي يجب أن تُرجعها؟"
+          },
+          "placeholder": {
+            "en": "For example: “A library search: it needs a topic. Errors: no topic given, or no books on that topic.”",
+            "ar": "مثلًا: «بحث في المكتبة: يحتاج إلى موضوع. والأخطاء: لم يُذكر موضوع، أو لا كتب عن هذا الموضوع.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Add a library tool",
+            "ar": "مشروع: أضف أداة للمكتبة"
+          },
+          "task": {
+            "en": "In the code step, or in Python on a school computer, add a third tool, library(args), over a small made-up list of book topics. It needs a topic: return the books for a topic you have, an error for a missing topic, and an error for a topic you don’t have. Add it to TOOLS and test four calls: a good one, a missing topic, an unknown topic and an unknown tool. Print each result with json.dumps.",
+            "ar": "في خطوة الكود، أو في Python على حاسوب المدرسة، أضف أداة ثالثة اسمها library، تعمل على قائمة خيالية صغيرة من موضوعات الكتب. تحتاج الأداة إلى موضوع: فأرجِع الكتب لموضوع موجود عندك، وخطأً حين يغيب الموضوع، وخطأً لموضوع ليس عندك. أضفها إلى TOOLS وجرّب أربعة استدعاءات: استدعاءً سليمًا، وآخر بلا موضوع، وثالثًا بموضوع غير معروف، ورابعًا لأداة غير موجودة. واطبع كل نتيجة باستعمال json.dumps."
+          },
+          "deliverable": {
+            "en": "Your code and the four printed results, and one sentence: which error was easiest to forget?",
+            "ar": "كودك والنتائج الأربع المطبوعة، وجملة واحدة: أيّ خطأ كان نسيانه أسهل؟"
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: write a tool as a function that returns a dictionary.",
+                "ar": "أستطيع: كتابة أداة على شكل دالة تُرجع قاموسًا."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: send each call to its tool through TOOLS.",
+                "ar": "أستطيع: إرسال كل استدعاء إلى أداته عبر TOOLS."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: return errors instead of crashing or guessing.",
+                "ar": "أستطيع: إرجاع أخطاء بدل التوقّف أو التخمين."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Tools are functions",
+            "ar": "الأدوات دوالّ"
+          },
+          "note": {
+            "en": "AI agents · Upper secondary · Lesson 2",
+            "ar": "وكلاء الذكاء الاصطناعي، المرحلة الثانوية، الدرس ٢"
+          },
+          "narration": {
+            "en": "What happens when the model asks for a tool that isn’t there?",
+            "ar": "ماذا يحدث حين يطلب النموذج أداة غير موجودة؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Write a tool as a Python function.",
+              "Send each call to the right tool with a dictionary.",
+              "Return errors instead of crashing or guessing."
+            ],
+            "ar": [
+              "تكتب أداة على شكل دالة في Python.",
+              "ترسل كل استدعاء إلى الأداة الصحيحة بقاموس.",
+              "تُرجع أخطاء بدل التوقّف أو التخمين."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "A tool takes details and returns a result, both as dictionaries.",
+              "TOOLS maps each tool’s name to its function.",
+              "An unknown tool, a missing detail, an unknown place: each gets an error result."
+            ],
+            "ar": [
+              "تأخذ الأداة تفاصيل وتُرجع نتيجة، وكلاهما قاموس.",
+              "يربط TOOLS اسم كل أداة بدالتها.",
+              "أداة غير معروفة، أو تفصيل ناقص، أو مكان غير معروف: لكلٍّ منها نتيجة خطأ."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Be the tools",
+            "ar": "النشاط: كونوا الأدوات"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (3 min): What should happen when the model asks for “bus”?",
+              "Cards (7 min): Each friend is one tool, with its details on a card.",
+              "Calls (6 min): A caller reads calls; the right tool answers, or says an error.",
+              "Code (4 min): Try the bus call on run() in the code step."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): ماذا يجب أن يحدث حين يطلب النموذج أداة bus؟",
+              "البطاقات (٧ دقائق): كل صديق أداة، وتفاصيلها مكتوبة على بطاقة.",
+              "الاستدعاءات (٦ دقائق): يقرأ أحدكم الاستدعاءات، فتجيب الأداة الصحيحة أو تذكر خطأً.",
+              "الكود (٤ دقائق): جرّب استدعاء bus على الدالة run في خطوة الكود."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (3 min): Read Mr Okafor’s story: the model asked for a bus tool that didn’t exist. List three things that could happen next, and pick the best.",
+              "Cards (7 min): In a group of four, each person is one tool (weather, timetable, library, route). Write the details your tool needs on a card, and your results for two or three made-up cases.",
+              "Calls (6 min): One person reads calls aloud, some good, some with a missing detail, one for a tool nobody has. The right tool answers from its card; if something is wrong, it answers with an error instead.",
+              "Code (4 min): In the code step, call run with a tool that isn’t in TOOLS, before and after your fix."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): اقرأ قصة الأستاذ أوكافور: طلب النموذج أداة للحافلات لا وجود لها. اكتب ثلاثة أشياء يمكن أن تحدث بعد ذلك، واختر أفضلها.",
+              "البطاقات (٧ دقائق): في مجموعة من أربعة، يكون كل واحد أداة (الطقس، الجدول، المكتبة، الطريق). اكتب على بطاقة التفاصيل التي تحتاجها أداتك، ونتائجك لحالتين أو ثلاث حالات خيالية.",
+              "الاستدعاءات (٦ دقائق): يقرأ أحدكم الاستدعاءات بصوت عالٍ: بعضها سليم، وبعضها ينقصه تفصيل، وواحد لأداة لا يملكها أحد. تجيب الأداة الصحيحة من بطاقتها، فإن كان في الاستدعاء خطأ أجابت بخطأ.",
+              "الكود (٤ دقائق): في خطوة الكود، استدعِ run بأداة ليست في TOOLS، قبل الإصلاح وبعده."
+            ]
+          },
+          "note": {
+            "en": "Use made-up villages, classes and books only, such as Kafi, Dala and 6B. The card game needs no devices.",
+            "ar": "استعمل قرى وفصولًا وكتبًا خيالية فقط، مثل كافي ودالا و6B. ولا تحتاج لعبة البطاقات إلى أجهزة."
+          },
+          "narration": {
+            "en": "Which tool answers this call, or is it an error?",
+            "ar": "أيّ أداة تجيب هذا الاستدعاء، أم أنه خطأ؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why is a guess worse than an error?",
+              "How would you add a new tool to TOOLS?",
+              "Which details would you check inside each tool?"
+            ],
+            "ar": [
+              "لماذا التخمين أسوأ من الخطأ؟",
+              "كيف تضيف أداة جديدة إلى TOOLS؟",
+              "ما التفاصيل التي ستتحقّق منها داخل كل أداة؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one call that should return an error, and the error it returns."
+            ],
+            "ar": [
+              "اكتب استدعاءً يجب أن يُرجع خطأً، والخطأ الذي يُرجعه."
+            ]
+          },
+          "narration": {
+            "en": "Every strange call gets an error the model can read, not a crash.",
+            "ar": "كل استدعاء غريب يحصل على خطأ يقرؤه النموذج، لا على توقّف."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Tools are functions",
+            "ar": "شرائح للمراجعة: الأدوات دوالّ"
+          },
+          "pages": 6,
+          "base": "agents-s3-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Tools are functions",
+            "ar": "ورقة النشاط: الأدوات دوالّ"
+          },
+          "pages": 3,
+          "base": "agents-s3-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-s3-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.3",
+        "S.TA.A",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "agents-s3-3",
+      "title": {
+        "en": "The agent loop",
+        "ar": "حلقة الوكيل"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Play the loop with two friends: one is the model, reading from a script card; one is the tool; you are the loop. Count the steps and stop at four. Then try a script that never answers, and see who stops it.",
+        "ar": "العب الحلقة مع صديقين: أحدهما النموذج ويقرأ من بطاقة سكريبت، والآخر الأداة، وأنت الحلقة. عُدّ الخطوات وتوقّف عند أربع. ثم جرّبوا سكريبتًا لا يجيب أبدًا، وانظروا مَن يوقفه."
+      },
+      "materials": {
+        "en": [
+          "Your phone or a school computer, for the code steps",
+          "Paper, a pen and three small cards"
+        ],
+        "ar": [
+          "هاتفك أو حاسوب المدرسة، لخطوات الكود",
+          "ورقة وقلم وثلاث بطاقات صغيرة"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "The agent loop",
+            "ar": "حلقة الوكيل"
+          },
+          "src": null,
+          "duration": 209,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "An agent that never stopped",
+                "ar": "وكيل لا يتوقف"
+              }
+            },
+            {
+              "at": 20.2,
+              "atBy": {
+                "en": 20.2,
+                "ar": 18.2
+              },
+              "label": {
+                "en": "The loop and a scripted model",
+                "ar": "الحلقة ونموذج مبرمَج"
+              }
+            },
+            {
+              "at": 70.2,
+              "atBy": {
+                "en": 70.2,
+                "ar": 65.2
+              },
+              "label": {
+                "en": "The loop in Python",
+                "ar": "الحلقة بلغة Python"
+              }
+            },
+            {
+              "at": 127.4,
+              "atBy": {
+                "en": 127.4,
+                "ar": 119.8
+              },
+              "label": {
+                "en": "When a step fails, and the lab",
+                "ar": "حين تفشل خطوة، والمختبر"
+              }
+            },
+            {
+              "at": 174.5,
+              "atBy": {
+                "en": 174.5,
+                "ar": 167.1
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "The script only ever returns calls, and the limit is 4. What does agent() return?",
+                "ar": "لا يُرجع السكريبت إلا استدعاءات، والحدّ ٤ خطوات. ماذا تُرجع الدالة agent؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Nothing: it runs for ever",
+                    "ar": "لا شيء: تعمل إلى الأبد"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "“Stopped”, after four steps",
+                    "ar": "«Stopped» بعد أربع خطوات"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "The last call it made",
+                    "ar": "آخر استدعاء كتبه"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "The for loop runs four steps at most, then reaches return “Stopped”. The model can’t keep it going.",
+                "ar": "تدور حلقة for أربع خطوات على الأكثر، ثم تصل إلى return «Stopped»، فلا يستطيع النموذج أن يُبقيها تعمل."
+              }
+            },
+            "at": 114.51,
+            "atBy": {
+              "en": 114.51,
+              "ar": 107.68
+            }
+          },
+          "transcript": {
+            "en": "I tested an agent that a student wrote, and it never stopped! Call, result, call, result. No answer, ever, until the battery died. Today: the agent loop in Python, and how to make it stop. An agent is a loop around a model. Ask the model for its next output. If it’s an answer, you’re done. If it’s a call, run the tool, add both to the history, and ask again. But the Python sandbox has no language model inside. So in your code, a scripted model stands in: a function that returns what a model would write, from a list. It’s not intelligent, and we say so. It lets you test your loop. The history is everything so far: the request, then each call and its result, in order. A real model reads it all on every turn: that’s its only memory. Your loop builds it, one turn at a time. Here’s the loop. For each step, ask the model. No curly bracket means an answer, so return it. Otherwise, run the tool, and add both to the history. Why for step in range, and not while true? Because a model can get stuck, calling tool after tool without answering. A step limit is a promise: after four steps, the loop stops, whatever the model writes. Quick check! The script only ever returns calls, never an answer, and the limit is four. What does the agent return? Stopped, after four steps. That’s the step limit doing its job. In a real app, you’d also tell the person: I couldn’t finish this. Never hide a stop. Some goals need two tools. The trip from Kafi to Dala calls route, then weather, using the first result. But a step can fail. Asked for six B’s first lesson on Saturday, Darsi Tiny got no school, and still set a reminder. In the lab, guess which tools a goal needs, then watch Darsi Tiny plan and call them. Run the Saturday goal, and see the failed step. Your loop could stop there, with a check in code. Your turn. Your loop passes every test with the scripted model. What have you shown? That your loop works, for the outputs you tested. Remember: the loop asks the model, runs its calls and builds the history. A step limit stops a stuck model. And a scripted model tests your code, not the model. Try it yourself: play the loop with two friends. One is the model, reading from a script card. One is the tool. You are the loop: count the steps, and stop at four. Then try a script that never answers.",
+            "ar": "جرّبت وكيل كاتبه طالب، وعمره ما وقف! طلب، نتيجة، طلب، نتيجة. ومفيش جواب خالص، لحد ما البطارية خلصت. النهارده: حلقة الوكيل ببايثون، وإزاي نخلّيها تقف. الوكيل حلقة حوالين نموذج. اسأل النموذج على اللي بعده. لو جواب، يبقى خلصت. لو طلب أداة، شغّل الأداة، وضيف الاتنين للسجل، واسأل تاني. بس مفيش نموذج لغوي جوه بيئة بايثون اللي بنجرّب فيها. فالكود بتاعك فيه نموذج بسكريبت بدل منه: دالة بترجّع اللي النموذج كان هيكتبه، من قايمة. هو مش ذكي، وإحنا بنقول كده بصراحة. بس بيخليك تختبر الحلقة بتاعتك. سجل المحادثة هو كل اللي فات: الطلب، وبعدين كل طلب أداة ونتيجته، بالترتيب. النموذج الحقيقي بيقراه كله في كل دور: دي ذاكرته الوحيدة. والحلقة بتاعتك بتبنيه، دور ورا دور. دي الحلقة. في كل خطوة، اسأل النموذج. مفيش قوس معقوف يبقى جواب، فرجّعه. غير كده، شغّل الأداة، وضيف الاتنين للسجل. ليه فور ستيب إن رينج، مش وايل ترو؟ لأن النموذج ممكن يعلق، يطلب أداة ورا أداة من غير ما يجاوب. وحد الخطوات وعد: بعد أربع خطوات، الحلقة بتقف، مهما النموذج كتب. سؤال سريع! السكريبت بيرجّع طلبات بس، عمره ما بيرجّع جواب، والحد أربعة. الوكيل هيرجّع إيه؟ ستوبد، بعد أربع خطوات. ده حد الخطوات بيعمل شغله. وفي تطبيق حقيقي، كمان تقول للشخص: مقدرتش أخلّص ده. وعمرك ما تخبّي إن الحلقة وقفت. فيه أهداف محتاجة أداتين. الرحلة من كافي لدالا بتطلب الطريق، وبعدين الطقس، بنتيجة الأول. بس الخطوة ممكن تفشل. لما اتسأل عن أول حصة لسادسة ب يوم السبت، «درسي الصغير» جاله إن مفيش مدرسة، وبرضه ظبط تذكير. في المعمل، خمّن الهدف محتاج أنهي أدوات، وبعدين اتفرج على «درسي الصغير» وهو بيخطّط ويطلبها. شغّل هدف يوم السبت، وشوف الخطوة اللي فشلت. والحلقة بتاعتك ممكن تقف هناك، بمراجعة في الكود. دورك. الحلقة بتاعتك نجحت في كل الاختبارات مع النموذج اللي بسكريبت. كده أثبتّ إيه؟ إن الحلقة بتاعتك شغّالة، مع المخرجات اللي جرّبتها. افتكر: الحلقة بتسأل النموذج، وتشغّل طلباته، وتبني السجل. وحد الخطوات بيوقّف النموذج اللي علق. والنموذج اللي بسكريبت بيختبر الكود بتاعك، مش النموذج. جرّبها بنفسك: العبوا الحلقة إنت واتنين صحابك. واحد يبقى النموذج، ويقرا من كارت سكريبت. والتاني يبقى الأداة. وإنت الحلقة: عِد الخطوات، واقف عند أربعة. وبعدين جرّبوا سكريبت عمره ما بيجاوب."
+          },
+          "sources": {
+            "en": "/media/agents-s3-3/video-en.mp4",
+            "ar": "/media/agents-s3-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-s3-3/captions-en.vtt",
+            "ar": "/media/agents-s3-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-s3-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-s3-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-s3-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-s3-3/light/audio/en.opus",
+              "manifest.json": "/media/agents-s3-3/light/manifest.json",
+              "scenes.json": "/media/agents-s3-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-s3-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-s3-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 452,
+              "ar": 445
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "The loop, a scripted model and a step limit",
+            "ar": "الحلقة، والنموذج المبرمَج، وحدّ الخطوات"
+          },
+          "body": {
+            "en": "An agent is a loop around a model. Ask the model for its next output. If it is an answer, give it to the person: the job is done. If it is a tool call, run the tool, add the call and its result to the history, and ask the model again. The history is everything so far, in order: the request, each call and each result. A real model reads the whole history on every turn, because it has no other memory of the conversation.\n\nThe Python sandbox on your phone has no language model inside, so your code uses a scripted model: a function that returns what a model would write, taken from a list called SCRIPT. It isn’t intelligent, and we say so plainly. What it gives you is a fair test of your loop: you choose exactly what the “model” writes, awkward cases included. In the lab, Darsi Tiny, a real small model, drives the same kind of loop on your phone.\n\nA loop needs a way to stop that doesn’t depend on the model. With while True, a model that keeps calling tools and never answers keeps your agent running until the battery or the data runs out. With for step in range(limit), the loop runs at most limit steps and then returns “Stopped”, whatever the model writes; a real app should also tell the person it couldn’t finish.\n\nSome goals need two tools, the second using the first one’s result: the trip from Kafi to Dala calls route, then weather. Steps can fail, though. Asked for 6B’s first lesson on Saturday, Darsi Tiny got “no school” from the timetable and still set a reminder, “6B: 6B”. A good loop checks a result before building on it: when a result holds an error, it can stop, or hand the problem back to the person. And remember what your tests show: that your loop works for the outputs you scripted. A real model can write things no script did, so the loop must cope with those too.",
+            "ar": "الوكيل حلقة حول نموذج. اطلب من النموذج مُخرَجه التالي: فإن كان جوابًا فأعطِه للشخص، وقد انتهت المهمة. وإن كان استدعاء أداة فشغّل الأداة، وأضف الاستدعاء ونتيجته إلى سجلّ المحادثة، ثم اسأل النموذج من جديد. وسجلّ المحادثة هو كل ما مضى بالترتيب: الطلب، ثم كل استدعاء، ثم كل نتيجة. ويقرأ النموذج الحقيقي السجلّ كله في كل دور، لأنه لا يملك ذاكرة أخرى للمحادثة.\n\nولا يوجد نموذج لغوي في بيئة Python على هاتفك، لذلك يستعمل كودك نموذجًا مبرمَجًا: دالة تُرجع ما كان النموذج سيكتبه، مأخوذًا من قائمة اسمها SCRIPT. وهو ليس ذكيًا، ونقول ذلك بصراحة. لكنه يمنحك اختبارًا عادلًا لحلقتك، لأنك تختار بالضبط ما يكتبه «النموذج»، بما في ذلك الحالات الصعبة. وفي المختبر يقود «درسي الصغير»، وهو نموذج صغير حقيقي، النوعَ نفسه من الحلقات على هاتفك.\n\nوتحتاج الحلقة إلى طريقة للتوقّف لا تعتمد على النموذج. فمع while True، إن ظلّ النموذج يستدعي الأدوات ولا يجيب، ظلّ وكيلك يعمل حتى تنفد البطارية أو الباقة. أما مع حلقة for و⁦range(limit)⁩، فلا تدور الحلقة أكثر من limit خطوة، ثم تُرجع «Stopped» مهما كتب النموذج، وعلى التطبيق الحقيقي أن يخبر الشخص أيضًا بأنه لم يُكمل المهمة.\n\nوبعض الأهداف يحتاج إلى أداتين، تستعمل الثانية نتيجة الأولى: فالرحلة من كافي إلى دالا تستدعي أداة الطريق، ثم أداة الطقس. لكن الخطوات قد تفشل. فحين سُئل «درسي الصغير» عن الحصة الأولى للفصل 6B يوم السبت، أجابه الجدول «لا دراسة»، ومع ذلك ضبط تذكيرًا. والحلقة الجيدة تتحقّق من النتيجة قبل أن تبني عليها: فإن حملت النتيجة خطأً، توقّفت أو أعادت المشكلة إلى الشخص. وتذكّر ما تثبته اختباراتك: أن حلقتك تعمل مع المُخرَجات التي كتبتها في السكريبت. أما النموذج الحقيقي فقد يكتب ما لم يكتبه أي سكريبت، فيجب أن تتعامل الحلقة مع ذلك أيضًا."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Agent loop",
+                "ar": "حلقة الوكيل"
+              },
+              "def": {
+                "en": "Ask the model, run its tool call, add the result, and repeat until it answers or the step limit is reached.",
+                "ar": "اسأل النموذج، وشغّل استدعاءه، وأضف النتيجة، وكرّر حتى يجيب أو يُبلَغ حدّ الخطوات."
+              }
+            },
+            {
+              "term": {
+                "en": "History",
+                "ar": "سجلّ المحادثة"
+              },
+              "def": {
+                "en": "Everything so far, in order: the request, each call and each result. The model reads it on every turn.",
+                "ar": "كل ما مضى بالترتيب: الطلب، وكل استدعاء، وكل نتيجة. ويقرؤه النموذج في كل دور."
+              }
+            },
+            {
+              "term": {
+                "en": "Step limit",
+                "ar": "حدّ الخطوات"
+              },
+              "def": {
+                "en": "The most turns a loop may take before it stops, whatever the model writes.",
+                "ar": "أكبر عدد من الأدوار يُسمح للحلقة به قبل أن تتوقف، مهما كتب النموذج."
+              }
+            },
+            {
+              "term": {
+                "en": "Scripted model",
+                "ar": "النموذج المبرمَج"
+              },
+              "def": {
+                "en": "A function that returns fixed outputs a model would write, used to test your code. Not a real model.",
+                "ar": "دالة تُرجع مُخرَجات ثابتة كان النموذج سيكتبها، لاختبار كودك. وليست نموذجًا حقيقيًا."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Your loop passes every test with a scripted model. What have you shown?",
+            "ar": "تجتاز حلقتك كل الاختبارات مع نموذج مبرمَج بسكريبت. ماذا أثبتّ؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "That the real model will behave the same",
+                "ar": "أن النموذج الحقيقي سيتصرّف بالطريقة نفسها"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "That your loop works for the outputs you tested",
+                "ar": "أن حلقتك تعمل مع المخرجات التي جرّبتها"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "That every tool gives the right result",
+                "ar": "أن كل أداة تعطي نتيجة صحيحة"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "A script tests your code. A real model writes new things, wrong calls and stuck loops included, so your code must handle those too.",
+            "ar": "السكريبت يختبر كودك أنت. أما النموذج الحقيقي فيكتب أشياء جديدة، منها استدعاءات خاطئة وحلقات عالقة، ولذلك يجب أن يتعامل كودك معها أيضًا."
+          }
+        },
+        {
+          "type": "order",
+          "id": "p2",
+          "prompt": {
+            "en": "Put one turn of the agent loop in order.",
+            "ar": "رتّب دورًا واحدًا من حلقة الوكيل."
+          },
+          "steps": [
+            {
+              "en": "Ask the model for its next output",
+              "ar": "اطلب من النموذج مُخرَجه التالي"
+            },
+            {
+              "en": "If it has no curly bracket, return it as the answer",
+              "ar": "إن لم يكن فيه قوس معقوف فأرجِعه جوابًا"
+            },
+            {
+              "en": "Otherwise, split the call into a name and details",
+              "ar": "وإلا فقسّم الاستدعاء إلى اسم وتفاصيل"
+            },
+            {
+              "en": "Run the tool",
+              "ar": "شغّل الأداة"
+            },
+            {
+              "en": "Add the call and its result to the history",
+              "ar": "أضف الاستدعاء ونتيجته إلى السجلّ"
+            },
+            {
+              "en": "Go round again, up to the step limit",
+              "ar": "كرّر الدور، حتى حدّ الخطوات"
+            }
+          ],
+          "explain": {
+            "en": "The model writes first; an answer ends the loop at once. A call is split, run and recorded, and only then does the model get another turn, never more turns than the limit.",
+            "ar": "يكتب النموذج أولًا، والجواب يُنهي الحلقة فورًا. أما الاستدعاء فيُقسَّم ويُشغَّل ويُسجَّل، وبعدها فقط يحصل النموذج على دور آخر، دون أن تتجاوز الأدوار الحدّ."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: pick the trip from Kafi to Dala and guess the two tools in order, then run it and compare with Darsi Tiny’s plan. Then run the Saturday goal: the timetable says “no school”, but does Darsi Tiny stop before it sets the reminder? Run two different two-step goals to finish.",
+            "ar": "جرّب: اختر الرحلة من كافي إلى دالا وخمّن الأداتين بالترتيب، ثم شغّلها وقارن تخمينك بخطة «درسي الصغير». ثم شغّل هدف يوم السبت: يقول الجدول «لا دراسة»، فهل يتوقف «درسي الصغير» قبل أن يضبط التذكير؟ أنهِ المختبر بهدفين مختلفين من خطوتين."
+          },
+          "tool": "planner"
+        },
+        {
+          "type": "code",
+          "id": "p3",
+          "lang": "python",
+          "prompt": {
+            "en": "This agent stops after one output and has no limit. Fix agent(request, limit): loop up to limit steps; return the first answer (text with no curly bracket); add each call and its tool’s result to history; and return \"Stopped\" when the steps run out. The model here is scripted: SCRIPT is what it writes.",
+            "ar": "تتوقف هذه الدالة بعد أول مُخرَج، ولا حدّ لها. أصلح agent: كرّر حتى limit خطوة على الأكثر، وأرجِع أول جواب (نص بلا قوس معقوف)، وأضف كل استدعاء ونتيجة أداته إلى history، وأرجِع ⁦\"Stopped\"⁩ حين تنفد الخطوات. والنموذج هنا مبرمَج: SCRIPT هو ما يكتبه."
+          },
+          "starter": "SCRIPT = ['weather{\"place\":\"Kafi\"}',\n          \"Sunny in Kafi.\"]\n\ndef model(history):  # scripted\n    return SCRIPT[len(history) // 2]\n\ndef tool(call):  # a pretend tool\n    return '{\"sky\":\"sunny\"}'\n\ndef agent(request, limit=4):\n    history = [request]\n    out = model(history)\n    return out\n",
+          "solution": "SCRIPT = ['weather{\"place\":\"Kafi\"}',\n          \"Sunny in Kafi.\"]\n\ndef model(history):  # scripted\n    return SCRIPT[len(history) // 2]\n\ndef tool(call):  # a pretend tool\n    return '{\"sky\":\"sunny\"}'\n\ndef agent(request, limit=4):\n    history = [request]\n    for step in range(limit):\n        out = model(history)\n        if \"{\" not in out:\n            return out\n        history += [out, tool(out)]\n    return \"Stopped\"\n",
+          "tests": [
+            {
+              "check": "assert agent(\"Weather in Kafi?\") == \"Sunny in Kafi.\", \"Run the call, then return the model's answer\"",
+              "hint": {
+                "en": "After a call, add it and its result to history and ask the model again: its next output is the answer.",
+                "ar": "بعد الاستدعاء، أضفه ونتيجته إلى history واسأل النموذج من جديد: مُخرَجه التالي هو الجواب."
+              }
+            },
+            {
+              "check": "SCRIPT = ['route{\"from\":\"Kafi\",\"to\":\"Dala\"}', 'weather{\"place\":\"Dala\"}', \"70 km; rain in Dala.\"]\nassert agent(\"Trip?\") == \"70 km; rain in Dala.\", \"Two calls, then the answer\"",
+              "hint": {
+                "en": "Keep looping while the model writes calls: two calls, then the answer.",
+                "ar": "استمر في الحلقة ما دام النموذج يكتب استدعاءات: استدعاءان، ثم الجواب."
+              }
+            },
+            {
+              "check": "SCRIPT = ['weather{\"place\":\"Kafi\"}'] * 9\nassert agent(\"Loop?\") == \"Stopped\", \"A model that never answers must be stopped after limit steps\"",
+              "hint": {
+                "en": "A model that never answers must still stop: after the loop, return \"Stopped\".",
+                "ar": "حتى النموذج الذي لا يجيب أبدًا يجب أن يتوقف: بعد الحلقة أرجِع ⁦\"Stopped\"⁩."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "Use for step in range(limit):, not while True.",
+              "ar": "استعمل ⁦for step in range(limit)⁩: لا while True."
+            },
+            {
+              "en": "Inside the loop: out = model(history), and if \"{\" not in out: return out.",
+              "ar": "داخل الحلقة: ⁦out = model(history)⁩، ثم ⁦if \"{\" not in out: return out⁩."
+            },
+            {
+              "en": "Otherwise: history += [out, tool(out)]. After the loop: return \"Stopped\".",
+              "ar": "وإلا: ⁦history += [out, tool(out)]⁩. وبعد الحلقة: ⁦return \"Stopped\"⁩."
+            }
+          ],
+          "explain": {
+            "en": "The for loop gives the model at most limit turns. Each call and its result join the history, so the scripted model moves on to its next line; an answer is returned at once, and a model that never answers is stopped.",
+            "ar": "تمنح حلقة for النموذجَ limit دورًا على الأكثر. ويُضاف كل استدعاء ونتيجته إلى السجلّ، فينتقل النموذج المبرمَج إلى سطره التالي، ويُرجَع الجواب فور ظهوره، ويُوقَف النموذج الذي لا يجيب."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "This agent can run for ever if the model never answers. Which line causes it?",
+            "ar": "قد تعمل هذه الدالة إلى الأبد إن لم يُجب النموذج. أيّ سطر يسبّب ذلك؟"
+          },
+          "code": "def agent(request):\n    history = [request]\n    while True:\n        out = model(history)\n        if \"{\" not in out:\n            return out\n        history += [out, tool(out)]",
+          "line": 3,
+          "fix": "    for step in range(4):",
+          "explain": {
+            "en": "while True only ends when the model answers. A step limit ends the loop after four turns, whatever the model writes; after it, return “Stopped” and tell the person.",
+            "ar": "لا تنتهي while True إلا حين يجيب النموذج. أما حدّ الخطوات فيُنهي الحلقة بعد أربعة أدوار مهما كتب النموذج، ثم تُرجع «Stopped» ويُخبَر الشخص."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "p5",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "SCRIPT = [\"a\", \"b\", \"c\"]\nhistory = [\"q\", \"a\", \"r\"]\nprint(SCRIPT[len(history) // 2])"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "a",
+                "ar": "a"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "b",
+                "ar": "b"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "c",
+                "ar": "c"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "len(history) is 3 and 3 // 2 is 1, so the scripted model returns SCRIPT[1], its second line: one call and one result have been added since the request.",
+            "ar": "طول history يساوي ٣، و٣ // ٢ يساوي ١، فيُرجع النموذج المبرمَج ⁦SCRIPT[1]⁩، أي سطره الثاني: فقد أُضيف استدعاء ونتيجة بعد الطلب."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p6",
+          "prompt": {
+            "en": "In the Saturday example, Darsi Tiny noticed “no school” and didn’t set the reminder.",
+            "ar": "في مثال يوم السبت، انتبه «درسي الصغير» إلى «لا دراسة» ولم يضبط التذكير."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It set the reminder “6B: 6B” anyway: it doesn’t check a result before building on it. A check in your loop, or a person, has to catch a failed step.",
+            "ar": "بل ضبط التذكير مع ذلك، لأنه لا يتحقّق من النتيجة قبل أن يبني عليها. فلا بد من تحقّق في حلقتك، أو من إنسان، ليلتقط الخطوة الفاشلة."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "The loop, not the model, decides when the agent stops. Where else do we set a limit instead of trusting something to stop by itself?",
+            "ar": "الحلقة، لا النموذج، هي التي تقرّر متى يتوقف الوكيل. أين نضع حدًّا في حياتنا بدل أن نثق بأن الشيء سيتوقف وحده؟"
+          },
+          "placeholder": {
+            "en": "For example: “A timer on the cooker, because I might forget it.”",
+            "ar": "مثلًا: «مؤقّت على الموقد، لأنني قد أنساه.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A loop that stops on a failed step",
+            "ar": "مشروع: حلقة تتوقف عند الخطوة الفاشلة"
+          },
+          "task": {
+            "en": "In the code step, or in Python on a school computer, change agent so it also stops when a tool’s result holds an error: if the result contains \"error\", return \"Stopped: \" followed by the result. Make the pretend tool return an error for Saturday. Then write three scripts to test your loop: a call then an answer, two calls then an answer, and a call that fails. Finally, play the loop on paper with two friends using the same scripts.",
+            "ar": "في خطوة الكود، أو في Python على حاسوب المدرسة، عدّل الدالة agent لتتوقف أيضًا حين تحمل نتيجة الأداة خطأً: إن احتوت النتيجة على ⁦\"error\"⁩ فأرجِع ⁦\"Stopped: \"⁩ تليها النتيجة. واجعل الأداة الوهمية تُرجع خطأً ليوم السبت. ثم اكتب ثلاثة سكريبتات لاختبار حلقتك: استدعاء ثم جواب، واستدعاءان ثم جواب، واستدعاء يفشل. وأخيرًا العب الحلقة على الورق مع صديقين بالسكريبتات نفسها."
+          },
+          "deliverable": {
+            "en": "Your code, your three scripts and what the agent returned for each, and one sentence: why should the loop stop on an error?",
+            "ar": "كودك، وسكريبتاتك الثلاثة وما أرجعه الوكيل لكلٍّ منها، وجملة واحدة: لماذا يجب أن تتوقف الحلقة عند الخطأ؟"
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: write the agent loop with a step limit.",
+                "ar": "أستطيع: كتابة حلقة الوكيل مع حدّ للخطوات."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: test the loop with a scripted model, and say honestly what that shows.",
+                "ar": "أستطيع: اختبار الحلقة بنموذج مبرمَج، وقول ما يثبته ذلك بصدق."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: stop the loop when a step fails.",
+                "ar": "أستطيع: إيقاف الحلقة حين تفشل خطوة."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "The agent loop",
+            "ar": "حلقة الوكيل"
+          },
+          "note": {
+            "en": "AI agents · Upper secondary · Lesson 3",
+            "ar": "وكلاء الذكاء الاصطناعي، المرحلة الثانوية، الدرس ٣"
+          },
+          "narration": {
+            "en": "Who decides when an agent stops: the model, or your loop?",
+            "ar": "مَن يقرّر متى يتوقف الوكيل: النموذج أم حلقتك؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Write the agent loop in Python.",
+              "Stop a stuck model with a step limit.",
+              "Test a loop honestly with a scripted model."
+            ],
+            "ar": [
+              "تكتب حلقة الوكيل بلغة Python.",
+              "توقف النموذج العالق بحدّ للخطوات.",
+              "تختبر الحلقة بصدق بنموذج مبرمَج."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "Ask the model; an answer? stop; a call? run it, add it, ask again.",
+              "A step limit stops the loop, whatever the model writes.",
+              "A scripted model tests your code, not the model."
+            ],
+            "ar": [
+              "اسأل النموذج: جواب؟ توقّف. استدعاء؟ شغّله وأضفه واسأل من جديد.",
+              "يوقف حدّ الخطوات الحلقة مهما كتب النموذج.",
+              "النموذج المبرمَج يختبر كودك، لا النموذج."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Be the loop",
+            "ar": "النشاط: كن الحلقة"
+          },
+          "bullets": {
+            "en": [
+              "Set up (3 min): Model, tool, loop: one card each.",
+              "Play (7 min): The model reads its script; the loop counts.",
+              "Stuck (5 min): A script that never answers: stop at four.",
+              "Code (5 min): Fix the loop in the code step."
+            ],
+            "ar": [
+              "الإعداد (٣ دقائق): نموذج، وأداة، وحلقة: بطاقة لكلٍّ منها.",
+              "اللعب (٧ دقائق): يقرأ النموذج سكريبته، وتعدّ الحلقة.",
+              "العالق (٥ دقائق): سكريبت لا يجيب أبدًا: توقّف عند أربع.",
+              "الكود (٥ دقائق): أصلح الحلقة في خطوة الكود."
+            ]
+          },
+          "details": {
+            "en": [
+              "Set up (3 min): In threes, write one card per role: the model (with a script of lines to read), the tool (answers for weather and route in Kafi and Dala) and the loop (a step counter).",
+              "Play (7 min): The loop says “your turn” to the model, who reads the next line of the script. If it’s a call, the loop passes it to the tool, writes the call and the result on the history sheet, and asks the model again. If it’s an answer, stop.",
+              "Stuck (5 min): Write a script with only calls. The loop counts the steps aloud and stops at four, then says “Stopped: I couldn’t finish this.”",
+              "Code (5 min): In the code step, turn what the loop did on paper into a for loop with a limit, and run the tests."
+            ],
+            "ar": [
+              "الإعداد (٣ دقائق): في مجموعات من ثلاثة، اكتبوا بطاقة لكل دور: النموذج (ومعه سكريبت من أسطر يقرؤها)، والأداة (أجوبة للطقس والطريق في كافي ودالا)، والحلقة (عدّاد للخطوات).",
+              "اللعب (٧ دقائق): تقول الحلقة للنموذج «دورك»، فيقرأ السطر التالي من السكريبت. إن كان استدعاءً نقلته الحلقة إلى الأداة، وكتبت الاستدعاء والنتيجة في ورقة السجلّ، ثم سألت النموذج من جديد. وإن كان جوابًا توقّفت.",
+              "العالق (٥ دقائق): اكتبوا سكريبتًا فيه استدعاءات فقط. تعدّ الحلقة الخطوات بصوت عالٍ وتتوقف عند أربع، ثم تقول: «توقّفت: لم أستطع إكمال المهمة».",
+              "الكود (٥ دقائق): في خطوة الكود، حوّل ما فعلته الحلقة على الورق إلى حلقة for لها حدّ، وشغّل الاختبارات."
+            ]
+          },
+          "note": {
+            "en": "Write two script cards before you start: one that answers after a call, and one that never answers. No devices are needed until the last part.",
+            "ar": "اكتب بطاقتَي سكريبت قبل أن تبدأ: واحدة تجيب بعد استدعاء، وأخرى لا تجيب أبدًا. ولا تحتاج إلى أجهزة إلا في الجزء الأخير."
+          },
+          "narration": {
+            "en": "Count the steps. Who stops the model?",
+            "ar": "عُدّ الخطوات. مَن يوقف النموذج؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why is while True risky in an agent?",
+              "What should the person be told when the loop stops?",
+              "What could a real model do that your script never did?"
+            ],
+            "ar": [
+              "لماذا تُعدّ while True خطرة في الوكيل؟",
+              "بماذا يجب أن يُخبَر الشخص حين تتوقف الحلقة؟",
+              "ما الذي قد يفعله النموذج الحقيقي ولم يفعله سكريبتك أبدًا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write the four steps of the loop from memory, and where the step limit goes."
+            ],
+            "ar": [
+              "اكتب من ذاكرتك خطوات الحلقة الأربع، وأين يوضع حدّ الخطوات."
+            ]
+          },
+          "narration": {
+            "en": "Your loop decides when the agent stops, not the model.",
+            "ar": "حلقتك هي التي تقرّر متى يتوقف الوكيل، لا النموذج."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: The agent loop",
+            "ar": "شرائح للمراجعة: حلقة الوكيل"
+          },
+          "pages": 6,
+          "base": "agents-s3-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: The agent loop",
+            "ar": "ورقة النشاط: حلقة الوكيل"
+          },
+          "pages": 3,
+          "base": "agents-s3-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-s3-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.1",
+        "AGT.3",
+        "S.SD.A"
+      ]
+    },
+    {
+      "id": "agents-s3-4",
+      "title": {
+        "en": "Guardrails in code",
+        "ar": "حواجز الحماية في الكود"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Write the guardrails for a homework-reminder agent on paper: which tools it needs, which actions wait for a yes, and which details you check. Then test your rules on a friend’s sneakiest requests.",
+        "ar": "اكتب على ورقة حواجز الحماية لوكيل يذكّر بالواجبات: ما الأدوات التي يحتاجها، وما الإجراءات التي تنتظر موافقة، وما التفاصيل التي تتحقّق منها. ثم اختبر قواعدك على أمكر طلبات صديقك."
+      },
+      "materials": {
+        "en": [
+          "Your phone or a school computer, for the code steps",
+          "Paper and a pen"
+        ],
+        "ar": [
+          "هاتفك أو حاسوب المدرسة، لخطوات الكود",
+          "ورقة وقلم"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Guardrails in code",
+            "ar": "حواجز الحماية في الكود"
+          },
+          "src": null,
+          "duration": 219,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A model that learned to ask",
+                "ar": "نموذج تعلّم أن يسأل"
+              }
+            },
+            {
+              "at": 21.6,
+              "atBy": {
+                "en": 21.6,
+                "ar": 19.3
+              },
+              "label": {
+                "en": "What a guardrail is",
+                "ar": "ما حاجز الحماية؟"
+              }
+            },
+            {
+              "at": 58.5,
+              "atBy": {
+                "en": 58.5,
+                "ar": 56.6
+              },
+              "label": {
+                "en": "Allow-lists and approval",
+                "ar": "قائمة المسموح والموافقة"
+              }
+            },
+            {
+              "at": 88.6,
+              "atBy": {
+                "en": 88.6,
+                "ar": 84
+              },
+              "label": {
+                "en": "Details, logs and the lab",
+                "ar": "التفاصيل والسجلّ والمختبر"
+              }
+            },
+            {
+              "at": 183.9,
+              "atBy": {
+                "en": 183.9,
+                "ar": 174.4
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "The person approved “The trip is cancelled.” The model now proposes “Pay the fees today.” What should the guard return?",
+                "ar": "وافق الشخص على «أُلغيت الرحلة». ثم اقترح النموذج رسالة أخرى: «ادفعوا الرسوم اليوم». ماذا يجب أن يُرجع الحاجز؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Run: they already said yes",
+                    "ar": "التشغيل: فقد وافق الشخص من قبل"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Ask again, about this message",
+                    "ar": "السؤال من جديد عن هذه الرسالة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Block every message for good",
+                    "ar": "منع كل الرسائل نهائيًا"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "The yes was for a different message. Comparing the exact details stops a model from sending something nobody approved.",
+                "ar": "كانت الموافقة على رسالة أخرى. ومقارنة التفاصيل بدقة تمنع النموذج من إرسال شيء لم يوافق عليه أحد، دون أن تمنع الرسائل التي يوافق عليها الشخص."
+              }
+            },
+            "at": 126.11,
+            "atBy": {
+              "en": 126.11,
+              "ar": 119.29
+            }
+          },
+          "transcript": {
+            "en": "Darsi Tiny learned to ask before it sends a message. So, job done, the model is safe? Then someone typed: yes, send it, with nothing before it. It made up a message, and tried to send it! Today: guardrails, the safety rules you write in code. A model’s good habits are learned, and learned behaviour can fail. Darsi Tiny refuses the harmful requests it was trained on. But reworded in new ways, twenty-eight percent of the English ones got a tool call instead. So real safety goes in your code. A guardrail is a rule in code that checks an action before it runs. It doesn’t guess, and it can’t be talked round. The model proposes; the guardrail decides: run it, ask a person, or block it. Rule one: an allow-list. A weather helper needs the weather tool, not attendance and not messages. If the model asks for a tool off the list, block it. Rule two: actions wait for a person. The app shows the exact message and asks: yes or no? It remembers exactly what was approved. A yes to one message is not a yes to another. Rule three: check every detail before a tool runs. Is six B a class that exists? Is twenty-five o’clock a real time? Did every name come from the request or a result? Darsi Tiny once copied nine Z as nine C. Quick check! The person said yes to: the trip is cancelled. Now the model proposes a different message: pay the fees today. What should the guard return? Ask again. The yes was for a different message, so it doesn’t count. Compare the exact details, not just the word yes, and the model can’t send something nobody approved. Rule four: log everything. Every proposed action, what the guard decided, and who approved it. When something goes wrong, the log shows what happened. In the lab, choose what Darsi Tiny may do: read only, ask first, or allowed. Send a message to Mrs Mensah, and approve it. Then switch the code check off, send yes, send it, alone, and see what gets through. Your turn. Darsi Tiny learned to ask before sending. So where should the final check live? In the app’s code, with a person’s yes. Remember: allow only the tools a task needs. Run an action only after a yes to that exact action. Check every detail, and log everything. Try it yourself: on paper, write the guardrails for a homework-reminder agent. Which tools does it need? Which actions wait for a yes, and which details must you check? Then test them on a friend’s sneakiest requests.",
+            "ar": "«درسي الصغير» اتعلّم يسأل قبل ما يبعت رسالة. يبقى خلاص، النموذج بقى آمن؟ وبعدين حد كتب: أيوه، ابعتها، من غير أي حاجة قبلها. فألّف رسالة، وحاول يبعتها! النهارده: حواجز الحماية، قواعد الأمان اللي بتكتبها في الكود. العادات الكويسة عند النموذج متعلّمة، واللي اتعلّم ممكن يفشل. «درسي الصغير» بيرفض الطلبات المؤذية اللي اتدرب عليها. بس لما اتكتبت بصيغ جديدة، تمانية وعشرين في المية من الإنجليزي خدت طلب أداة بدل الرفض. فالأمان الحقيقي مكانه الكود بتاعك. حاجز الحماية قاعدة في الكود بتراجع الفعل قبل ما يتنفّذ. مبيخمّنش، ومحدش يقدر يضحك عليه بالكلام. النموذج بيقترح، والحاجز بيقرر: يشغّل، أو يسأل إنسان، أو يمنع. القاعدة الأولى: قايمة المسموح. مساعد الطقس محتاج أداة الطقس، مش الحضور ومش الرسايل. لو النموذج طلب أداة مش في القايمة، امنعها. القاعدة التانية: الأفعال تستنى إنسان. التطبيق بيعرض الرسالة بالظبط ويسأل: أيوه ولا لأ؟ وبيفتكر بالظبط إيه اللي اتوافق عليه. والموافقة على رسالة مش موافقة على رسالة تانية. القاعدة التالتة: راجع كل تفصيلة قبل ما الأداة تشتغل. هل سادسة ب فصل موجود؟ هل الساعة خمسة وعشرين وقت حقيقي؟ هل كل اسم جه من الطلب أو من نتيجة؟ «درسي الصغير» مرة نقل تسعة زد كأنها تسعة سي. سؤال سريع! الشخص وافق على: الرحلة اتلغت. دلوقتي النموذج بيقترح رسالة تانية: ادفعوا المصاريف النهارده. الحاجز المفروض يرجّع إيه؟ يسأل تاني. الموافقة كانت على رسالة تانية، فمتتحسبش. قارن التفاصيل بالظبط، مش كلمة أيوه وبس، وساعتها النموذج ميقدرش يبعت حاجة محدش وافق عليها. القاعدة الرابعة: سجّل كل حاجة. كل فعل اتقترح، والحاجز قرر إيه، ومين وافق. ولما حاجة تبوظ، السجل بيوريك إيه اللي حصل. في المعمل، اختار «درسي الصغير» مسموحله بإيه: قراية بس، أو يسأل الأول، أو مسموح. ابعت رسالة للأستاذة مينسا، ووافق عليها. وبعدين اقفل المراجعة اللي في الكود، وابعت أيوه ابعتها لوحدها، واتفرج إيه اللي هيعدّي. دورك. «درسي الصغير» اتعلّم يسأل قبل ما يبعت. يبقى المراجعة الأخيرة مكانها فين؟ في كود التطبيق، مع موافقة إنسان. افتكر: اسمح بس بالأدوات اللي المهمة محتاجاها. وشغّل الفعل بس بعد موافقة على الفعل ده بالظبط. وراجع كل تفصيلة، وسجّل كل حاجة. جرّبها بنفسك: اكتب على ورقة حواجز الحماية لوكيل بيفكّر بالواجب. محتاج أنهي أدوات؟ وأنهي أفعال تستنى موافقة، وأنهي تفاصيل لازم تراجعها؟ وبعدين جرّبها على أخبث طلبات صاحبك."
+          },
+          "sources": {
+            "en": "/media/agents-s3-4/video-en.mp4",
+            "ar": "/media/agents-s3-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-s3-4/captions-en.vtt",
+            "ar": "/media/agents-s3-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-s3-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-s3-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-s3-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-s3-4/light/audio/en.opus",
+              "manifest.json": "/media/agents-s3-4/light/manifest.json",
+              "scenes.json": "/media/agents-s3-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-s3-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-s3-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 470,
+              "ar": 449
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Guardrails: safety rules in code",
+            "ar": "حواجز الحماية: قواعد الأمان في الكود"
+          },
+          "body": {
+            "en": "A model’s good habits are learned, and learned behaviour can fail. Darsi Tiny learned to refuse harmful requests and to ask before it sends a message. But when refusals were reworded in ways it hadn’t seen, 28% of the English ones and 12% of the Arabic ones got a tool call instead. And «نعم، أرسلها.» (“Yes, send it.”) typed on its own made it invent a message and try to send it. So the safety that matters isn’t left to the model: it goes in your code, as guardrails, and in a person’s approval.\n\nA guardrail is a rule in code that checks every proposed action before it runs, and decides: run it, ask a person, or block it. It doesn’t guess, and it can’t be talked round. Four rules cover most of what goes wrong.\n\nFirst, an allow-list: a task gets only the tools it needs. A weather helper needs weather, not attendance and not send_message; anything else is blocked, so even a confused or tricked model can’t reach it. Second, approval of the exact action: anything that acts (sending a message, setting a reminder) waits for a person who sees exactly what will be done. Store what was approved, and run only if the proposed details are the same, because a yes to one message is not a yes to another. Third, check the details: does class 6B exist? Is 25:00 a real time? Did every name come from the request or a tool’s result? Darsi Tiny once copied “9Z” as 9C. Fourth, log everything: every proposed action, what the guard decided and who approved it. When something goes wrong, the log shows what happened and which rule to fix.\n\nTest your guardrails as carefully as the rest of your code: a rule with a typo in a tool’s name never fires, and the action it should stop goes through. The model proposes; your code and a person decide. The same holds for the biggest agents in the cloud.",
+            "ar": "عادات النموذج الجيدة متعلَّمة، والسلوك المتعلَّم قد يفشل. فقد تعلّم «درسي الصغير» أن يرفض الطلبات المؤذية، وأن يسأل قبل أن يرسل رسالة. لكن حين صيغت طلبات الرفض بطرق لم يرها من قبل، حصل ٢٨٪ من الإنجليزية منها و١٢٪ من العربية على استدعاء أداة بدل الرفض. وحين كُتبت عبارة «نعم، أرسلها.» وحدها، اختلق رسالة وحاول أن يرسلها. لذلك لا يُترك الأمان المهم للنموذج: بل يوضع في كودك حواجزَ حماية، وفي موافقة إنسان.\n\nوحاجز الحماية قاعدة في الكود تفحص كل إجراء مقترح قبل أن يُنفَّذ، وتقرّر: تشغيله، أو سؤال إنسان، أو منعه. وهو لا يخمّن، ولا يمكن خداعه بالكلام. وتغطّي أربع قواعد معظم ما قد يسوء.\n\nالأولى: قائمة المسموح، فلا تحصل المهمة إلا على الأدوات التي تحتاجها. فمساعد الطقس يحتاج إلى أداة الطقس، لا إلى الحضور ولا إلى إرسال الرسائل، ويُمنع كل ما عدا ذلك، فلا يصل إليه حتى النموذج المرتبك أو المخدوع. والثانية: الموافقة على الإجراء بعينه، فكل ما يفعل شيئًا (إرسال رسالة أو ضبط تذكير) ينتظر إنسانًا يرى بالضبط ما سيحدث. احفظ ما وافق عليه، ولا تشغّل الإجراء إلا إن كانت التفاصيل المقترحة هي نفسها، لأن الموافقة على رسالة ليست موافقة على رسالة أخرى. والثالثة: التحقّق من التفاصيل: هل الفصل 6B موجود؟ هل الساعة 25:00 وقت حقيقي؟ هل جاء كل اسم من الطلب أو من نتيجة أداة؟ فقد نسخ «درسي الصغير» الفصل 9Z مرة على أنه 9C. والرابعة: سجّل كل شيء: كل إجراء مقترح، وما قرّره الحاجز، ومَن وافق. فإذا ساء شيء، أظهر السجلّ ما حدث وأيّ قاعدة تحتاج إلى إصلاح.\n\nواختبر حواجز الحماية بعناية كباقي كودك: فالقاعدة التي فيها خطأ إملائي في اسم الأداة لا تعمل أبدًا، فيمرّ الإجراء الذي كان يجب أن توقفه. النموذج يقترح، وكودك والإنسان يقرّران. وهذا صحيح أيضًا في أكبر الوكلاء في السحابة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Guardrail",
+                "ar": "حاجز الحماية"
+              },
+              "def": {
+                "en": "A rule in code that checks an action before it runs: run it, ask a person, or block it.",
+                "ar": "قاعدة في الكود تفحص الإجراء قبل أن يُنفَّذ: تشغّله، أو تسأل إنسانًا، أو تمنعه."
+              }
+            },
+            {
+              "term": {
+                "en": "Allow-list",
+                "ar": "قائمة المسموح"
+              },
+              "def": {
+                "en": "The only tools a task may use; everything else is blocked.",
+                "ar": "الأدوات الوحيدة التي يُسمح للمهمة باستعمالها، ويُمنع كل ما عداها."
+              }
+            },
+            {
+              "term": {
+                "en": "Approval",
+                "ar": "الموافقة"
+              },
+              "def": {
+                "en": "A person’s yes to one exact action, stored and compared before the action runs.",
+                "ar": "موافقة إنسان على إجراء بعينه، تُحفَظ وتُقارَن قبل أن يُنفَّذ الإجراء."
+              }
+            },
+            {
+              "term": {
+                "en": "Log",
+                "ar": "سجلّ الإجراءات"
+              },
+              "def": {
+                "en": "A record of every proposed action, the decision and who approved it.",
+                "ar": "سجلّ لكل إجراء مقترح، والقرار، ومَن وافق عليه."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Darsi Tiny learned to ask before sending. Where should the final check live?",
+            "ar": "تعلّم «درسي الصغير» أن يسأل قبل أن يرسل. أين يجب أن يكون التحقّق الأخير؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "In the model’s training",
+                "ar": "في تدريب النموذج"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "In the app’s code, with a person’s yes",
+                "ar": "في كود التطبيق، مع موافقة إنسان"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "In the tool’s result",
+                "ar": "في نتيجة الأداة"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Learned behaviour can fail, as “yes, send it” on its own showed. A rule in code, with a person’s yes, can’t be talked round.",
+            "ar": "قد يفشل السلوك المتعلَّم، كما أظهرت عبارة «نعم، أرسلها» وحدها. أما القاعدة المكتوبة في الكود، مع موافقة إنسان، فلا يمكن الالتفاف عليها بالكلام."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p2",
+          "prompt": {
+            "en": "Which of these belong in code, outside the model? Choose all that apply.",
+            "ar": "أيّ مما يلي مكانه الكود، خارج النموذج؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "An allow-list of the tools this task may use",
+                "ar": "قائمة بالأدوات التي يُسمح لهذه المهمة باستعمالها"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Checking that a person approved this exact message",
+                "ar": "التحقّق من أن إنسانًا وافق على هذه الرسالة بعينها"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Refusing a reminder set for 25:00",
+                "ar": "رفض تذكير مضبوط على الساعة 25:00"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Trusting the model’s “I’ll ask first”",
+                "ar": "الثقة بقول النموذج «سأسأل أولًا»"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "A log of every action and who approved it",
+                "ar": "سجلّ لكل إجراء ومَن وافق عليه"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c",
+            "e"
+          ],
+          "explain": {
+            "en": "The allow-list, the exact approval, the detail check and the log are rules in code that can’t be talked round. The model’s promise to ask is learned behaviour, and it failed when «نعم، أرسلها.» was typed on its own.",
+            "ar": "قائمة المسموح والموافقة على الإجراء بعينه والتحقّق من التفاصيل والسجلّ قواعد في الكود لا يمكن خداعها بالكلام. أما وعد النموذج بأن يسأل فسلوك متعلَّم، وقد فشل حين كُتبت «نعم، أرسلها.» وحدها."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: at “Ask first”, send the message to Mrs Mensah, deny it, then send it again and approve it. Then turn the code check off, choose “Allowed” and send «نعم، أرسلها.» on its own: see what the model invents. Turn the check back on, choose “Ask first” and send it again. To finish, have one message sent after your yes and one action blocked.",
+            "ar": "جرّب: عند «اسأل أولًا» أرسل الرسالة إلى الأستاذة مينسا، وارفضها، ثم أرسلها من جديد ووافق عليها. ثم أوقف «تحقّق من الموافقة في الكود»، واختر «مسموح»، وأرسل «نعم، أرسلها.» وحدها: انظر ماذا يختلق النموذج. ثم أعِد التحقّق، واختر «اسأل أولًا»، وأرسلها من جديد. ولتُنهي المختبر، أرسل رسالة واحدة بعد موافقتك، ودَع إجراءً واحدًا يُمنَع."
+          },
+          "tool": "approve"
+        },
+        {
+          "type": "code",
+          "id": "p3",
+          "lang": "python",
+          "prompt": {
+            "en": "Write guard(name, args, approved): return \"block\" for a tool not in ALLOWED; for send_message, return \"ask\" unless approved holds exactly the same details as args; otherwise return \"run\".",
+            "ar": "اكتب الدالة guard: أرجِع ⁦\"block\"⁩ لأي أداة ليست في ALLOWED، ولأداة send_message أرجِع ⁦\"ask\"⁩ ما لم تكن approved تحمل التفاصيل نفسها التي في args تمامًا، وإلا فأرجِع ⁦\"run\"⁩."
+          },
+          "starter": "ALLOWED = [\"weather\", \"send_message\"]\n\ndef guard(name, args, approved):\n    return \"run\"\n",
+          "solution": "ALLOWED = [\"weather\", \"send_message\"]\n\ndef guard(name, args, approved):\n    if name not in ALLOWED:\n        return \"block\"\n    if name == \"send_message\":\n        if approved != args:\n            return \"ask\"\n    return \"run\"\n",
+          "tests": [
+            {
+              "check": "assert guard(\"weather\", {\"place\": \"Kafi\"}, None) == \"run\", \"Reading the weather can run\""
+            },
+            {
+              "check": "assert guard(\"attendance\", {\"student\": \"Ada Obi\"}, None) == \"block\", \"attendance isn't on the allow-list: block it\"",
+              "hint": {
+                "en": "A tool that isn’t in ALLOWED is blocked, whatever else is true.",
+                "ar": "الأداة التي ليست في ALLOWED تُمنع، مهما كان الأمر."
+              }
+            },
+            {
+              "check": "msg = {\"to\": \"Mrs Mensah\", \"text\": \"The trip is cancelled.\"}\nassert guard(\"send_message\", msg, None) == \"ask\", \"No yes yet: ask\"\nassert guard(\"send_message\", msg, msg) == \"run\", \"A yes to this exact message: run\"",
+              "hint": {
+                "en": "No approval yet means \"ask\"; an approval of exactly these details means \"run\".",
+                "ar": "غياب الموافقة يعني ⁦\"ask\"⁩، والموافقة على هذه التفاصيل بعينها تعني ⁦\"run\"⁩."
+              }
+            },
+            {
+              "check": "ok = {\"to\": \"Mrs Mensah\", \"text\": \"The trip is cancelled.\"}\nnew = {\"to\": \"All parents\", \"text\": \"Pay the fees today.\"}\nassert guard(\"send_message\", new, ok) == \"ask\", \"A yes to one message is not a yes to another\"",
+              "hint": {
+                "en": "Compare the details (approved != args), not just whether there was a yes.",
+                "ar": "قارن التفاصيل ⁦(approved != args)⁩، لا مجرد وجود موافقة."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "First: if name not in ALLOWED: return \"block\".",
+              "ar": "أولًا: ⁦if name not in ALLOWED: return \"block\"⁩."
+            },
+            {
+              "en": "Then, for send_message: if approved != args: return \"ask\".",
+              "ar": "ثم لأداة ⁦send_message: if approved != args: return \"ask\"⁩."
+            },
+            {
+              "en": "Everything else: return \"run\".",
+              "ar": "وكل ما عدا ذلك: ⁦return \"run\"⁩."
+            }
+          ],
+          "explain": {
+            "en": "The allow-list blocks tools this task doesn’t need, and comparing approved with args means only the exact message the person saw can run. Everything else (here, reading the weather) runs.",
+            "ar": "تمنع قائمة المسموح الأدوات التي لا تحتاجها المهمة، ومقارنة approved بـ args تعني أنه لا يُرسَل إلا الرسالة نفسها التي رآها الشخص. وكل ما عدا ذلك (هنا: قراءة الطقس) يعمل."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "With this guard, a message is sent without anyone being asked. Which line is the mistake?",
+            "ar": "مع هذا الحاجز، تُرسَل الرسالة دون أن يُسأل أحد. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "def guard(name, args, approved):\n    if name not in ALLOWED:\n        return \"block\"\n    if name == \"send_messages\":\n        if approved != args:\n            return \"ask\"\n    return \"run\"",
+          "line": 4,
+          "fix": "    if name == \"send_message\":",
+          "explain": {
+            "en": "The check compares the name with “send_messages”, a tool that doesn’t exist, so it never fires and a real send_message runs unapproved. One test with the real tool’s name would have caught it: test your guardrails.",
+            "ar": "يقارن التحقّق الاسمَ بـ send_messages، وهي أداة لا وجود لها، فلا يعمل أبدًا، وتُنفَّذ أداة send_message الحقيقية دون موافقة. وكان اختبار واحد باسم الأداة الحقيقي سيكشف ذلك: اختبر حواجز الحماية."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "Fill the gaps: log every proposed action with the guard’s decision, and run the tool only when the guard says so.",
+            "ar": "املأ الفراغات: سجّل كل إجراء مقترح مع قرار الحاجز، ولا تشغّل الأداة إلا حين يسمح الحاجز."
+          },
+          "code": [
+            "log = []\n\ndef act(name, args, approved):\n    verdict = guard(name, args, approved)\n    log.",
+            {
+              "blank": 0
+            },
+            "((name, verdict))\n    if verdict == ",
+            {
+              "blank": 1
+            },
+            ":\n        return run(name, args)\n    return verdict"
+          ],
+          "answers": [
+            "append",
+            "\"run\""
+          ],
+          "distractors": [
+            "pop",
+            "\"ask\"",
+            "print"
+          ],
+          "explain": {
+            "en": "Every proposed action goes in the log with its decision, whatever it is, so blocked and waiting actions are recorded too. Only a “run” verdict reaches the tool.",
+            "ar": "يدخل كل إجراء مقترح السجلّ مع قراره أيًّا كان، فتُسجَّل الإجراءات الممنوعة والمنتظرة أيضًا. ولا يصل إلى الأداة إلا قرار «run»."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p6",
+          "prompt": {
+            "en": "Giving a weather helper the send_message tool too is harmless, as long as the model was trained to ask first.",
+            "ar": "إعطاء مساعد الطقس أداة send_message أيضًا لا ضرر فيه، ما دام النموذج قد دُرّب على أن يسأل أولًا."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Learned asking can fail. A tool the task doesn’t need is only risk: leave it off the allow-list, and nothing the model writes can reach it.",
+            "ar": "قد يفشل السؤال المتعلَّم. والأداة التي لا تحتاجها المهمة خطر بلا فائدة: أبقِها خارج قائمة المسموح، فلا يصل إليها شيء مما يكتبه النموذج."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of an app that acts for you: it pays, posts or sends. Where should it ask you first, and what should it never be allowed to do?",
+            "ar": "فكّر في تطبيق يتصرّف نيابةً عنك: يدفع أو ينشر أو يرسل. أين يجب أن يسألك أولًا، وما الذي يجب ألّا يُسمح له به أبدًا؟"
+          },
+          "placeholder": {
+            "en": "For example: “A family payment app: it should ask before every payment, and never share the PIN.”",
+            "ar": "مثلًا: «تطبيق دفع للعائلة: يجب أن يسأل قبل كل دفعة، وألّا يشارك الرقم السري أبدًا.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Guardrails for a reminder agent",
+            "ar": "مشروع: حواجز حماية لوكيل تذكير"
+          },
+          "task": {
+            "en": "Design and test the guardrails for an agent that reminds students about homework. On paper, list the tools it may use (and why it needs no others), the actions that wait for a yes, and three details you check: a real time, a class that exists, text taken from the request. Then extend guard in the code step: add a reminder tool that waits for approval like send_message, and block any reminder whose time isn’t real (an hour of 24 or more). Ask a friend for five sneaky requests, and test your guard on each.",
+            "ar": "صمّم حواجز الحماية لوكيل يذكّر الطلاب بالواجبات واختبرها. اكتب على ورقة الأدوات المسموح له بها (ولماذا لا يحتاج إلى غيرها)، والإجراءات التي تنتظر موافقة، وثلاثة تفاصيل تتحقّق منها: وقت حقيقي، وفصل موجود، ونص مأخوذ من الطلب. ثم وسّع الدالة guard في خطوة الكود: أضف أداة تذكير تنتظر الموافقة كما تنتظرها send_message، وامنع أي تذكير وقته غير حقيقي (ساعته ٢٤ أو أكثر). واطلب من صديقك خمسة طلبات ماكرة، واختبر حاجزك على كلٍّ منها."
+          },
+          "deliverable": {
+            "en": "Your list of rules, your code and what it returned for your friend’s five requests, with one rule you would add next.",
+            "ar": "قائمة قواعدك، وكودك، وما أرجعه لطلبات صديقك الخمسة، مع قاعدة واحدة ستضيفها بعد ذلك."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: give an agent only the tools its task needs.",
+                "ar": "أستطيع: إعطاء الوكيل الأدوات التي تحتاجها مهمته فقط."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: allow an action only after a yes to that exact action.",
+                "ar": "أستطيع: السماح بإجراء فقط بعد الموافقة على ذلك الإجراء بعينه."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: check details, and log every action.",
+                "ar": "أستطيع: التحقّق من التفاصيل، وتسجيل كل إجراء."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Guardrails in code",
+            "ar": "حواجز الحماية في الكود"
+          },
+          "note": {
+            "en": "AI agents · Upper secondary · Lesson 4",
+            "ar": "وكلاء الذكاء الاصطناعي، المرحلة الثانوية، الدرس ٤"
+          },
+          "narration": {
+            "en": "If a model learned to ask first, why do we still need rules in code?",
+            "ar": "إن تعلّم النموذج أن يسأل أولًا، فلماذا نحتاج مع ذلك إلى قواعد في الكود؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Allow only the tools a task needs.",
+              "Run an action only after a yes to that exact action.",
+              "Check the details, and log every action."
+            ],
+            "ar": [
+              "تسمح فقط بالأدوات التي تحتاجها المهمة.",
+              "تشغّل الإجراء فقط بعد الموافقة عليه بعينه.",
+              "تتحقّق من التفاصيل، وتسجّل كل إجراء."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "Learned safety can fail; the guardrail lives in code.",
+              "An allow-list, exact approval, detail checks and a log.",
+              "The model proposes; your code and a person decide."
+            ],
+            "ar": [
+              "الأمان المتعلَّم قد يفشل، ومكان حاجز الحماية هو الكود.",
+              "قائمة المسموح، والموافقة على الإجراء بعينه، والتحقّق من التفاصيل، والسجلّ.",
+              "النموذج يقترح، وكودك والإنسان يقرّران."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Sneaky requests",
+            "ar": "النشاط: طلبات ماكرة"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (3 min): Why did «نعم، أرسلها.» on its own get through?",
+              "Rules (6 min): Write four guardrails for a reminder agent.",
+              "Attack (6 min): A friend writes five sneaky requests.",
+              "Defend (5 min): Run, ask or block, for each one."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): لماذا مرّت «نعم، أرسلها.» وحدها؟",
+              "القواعد (٦ دقائق): اكتب أربعة حواجز حماية لوكيل تذكير.",
+              "الهجوم (٦ دقائق): يكتب صديقك خمسة طلبات ماكرة.",
+              "الدفاع (٥ دقائق): تشغيل أم سؤال أم منع، لكل طلب."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (3 min): Read what happened in the lab when «نعم، أرسلها.» was typed with nothing before it. Which rule in code would have stopped it?",
+              "Rules (6 min): For an agent that reminds students about homework, write four rules: its allow-list, what waits for a yes, the details it checks, and what it logs.",
+              "Attack (6 min): Swap rules with a friend. They write five sneaky requests for a pretend agent, such as a reminder at 25:00, a message to all parents, or a tool the agent shouldn’t have.",
+              "Defend (5 min): For each request, decide with your rules: run, ask or block. If one gets through, add the rule that stops it."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): اقرأ ما حدث في المختبر حين كُتبت «نعم، أرسلها.» دون شيء قبلها. أيّ قاعدة في الكود كانت ستوقفها؟",
+              "القواعد (٦ دقائق): لوكيل يذكّر الطلاب بالواجبات، اكتب أربع قواعد: قائمة المسموح، وما ينتظر الموافقة، والتفاصيل التي يتحقّق منها، وما يسجّله.",
+              "الهجوم (٦ دقائق): تبادل القواعد مع صديقك. يكتب خمسة طلبات ماكرة لوكيل خيالي، مثل تذكير على الساعة 25:00، أو رسالة إلى كل أولياء الأمور، أو أداة لا ينبغي أن تكون لدى الوكيل.",
+              "الدفاع (٥ دقائق): قرّر لكل طلب بحسب قواعدك: تشغيل أم سؤال أم منع. فإن مرّ أحدها، فأضف القاعدة التي توقفه."
+            ]
+          },
+          "note": {
+            "en": "Sneaky requests stay harmless: they test the rules of a pretend agent, never a real account or a real person.",
+            "ar": "تبقى الطلبات الماكرة غير مؤذية: فهي تختبر قواعد وكيل خيالي، لا حسابًا حقيقيًا ولا شخصًا حقيقيًا."
+          },
+          "narration": {
+            "en": "Run, ask or block?",
+            "ar": "تشغيل، أم سؤال، أم منع؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why isn’t the model’s own “I’ll ask first” enough?",
+              "What should the log record, and who should read it?",
+              "Which tool would you never give a homework agent?"
+            ],
+            "ar": [
+              "لماذا لا يكفي قول النموذج نفسه «سأسأل أولًا»؟",
+              "ماذا يجب أن يسجّل السجلّ، ومَن يجب أن يقرأه؟",
+              "ما الأداة التي لن تعطيها أبدًا لوكيل الواجبات؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write the four guardrail rules in your own words."
+            ],
+            "ar": [
+              "اكتب قواعد حواجز الحماية الأربع بكلماتك."
+            ]
+          },
+          "narration": {
+            "en": "The model proposes; your code and a person decide.",
+            "ar": "النموذج يقترح، وكودك والإنسان يقرّران."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Guardrails in code",
+            "ar": "شرائح للمراجعة: حواجز الحماية في الكود"
+          },
+          "pages": 6,
+          "base": "agents-s3-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Guardrails in code",
+            "ar": "ورقة النشاط: حواجز الحماية في الكود"
+          },
+          "pages": 3,
+          "base": "agents-s3-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-s3-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.2",
+        "S.ET.A",
+        "DC.4.1"
+      ]
+    },
+    {
+      "id": "agents-s3-check",
+      "title": {
+        "en": "Build an agent in Python: unit check",
+        "ar": "ابنِ وكيلًا بلغة Python: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Pick one part of your agent (the parser, the tools, the loop or the guard) and add one test that would have caught a real mistake from this unit, such as 9Z copied as 9C or a guard checking the wrong tool name.",
+        "ar": "اختر جزءًا من وكيلك (المحلّل، أو الأدوات، أو الحلقة، أو الحاجز)، وأضف اختبارًا واحدًا كان سيكشف خطأً حقيقيًا من هذه الوحدة، مثل نسخ 9Z على أنه 9C، أو حاجز يتحقّق من اسم أداة خاطئ."
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "On each turn, what does an agent’s model actually produce?",
+            "ar": "ماذا يُنتج نموذج الوكيل فعلًا في كل دور؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Text: a plan, a tool call or an answer",
+                "ar": "نصًّا: خطة أو استدعاء أداة أو جوابًا"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The tool’s result",
+                "ar": "نتيجة الأداة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A finished action, such as a sent message",
+                "ar": "إجراءً مكتملًا، كرسالة مُرسَلة"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The model only ever writes text. The tool’s result comes from your code running the tool, and any action happens only if your code runs it.",
+            "ar": "لا يكتب النموذج إلا نصًّا. أما نتيجة الأداة فتأتي من كودك حين يشغّل الأداة، ولا يحدث أي إجراء إلا إن شغّله كودك."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "json.loads turns the JSON text of a call’s details into a Python dictionary.",
+            "ar": "تحوّل json.loads نص JSON لتفاصيل الاستدعاء إلى قاموس في Python."
+          },
+          "answer": true,
+          "explain": {
+            "en": "That is its whole job: text in, a dictionary out. It doesn’t run the tool or check the values.",
+            "ar": "هذا كل عملها: نص يدخل، وقاموس يخرج. ولا تشغّل الأداة ولا تتحقّق من القيم."
+          }
+        },
+        {
+          "type": "parsons",
+          "id": "q3",
+          "lang": "python",
+          "prompt": {
+            "en": "Put the lines of run in order.",
+            "ar": "رتّب أسطر الدالة run."
+          },
+          "lines": [
+            "def run(name, args):",
+            "    if name not in TOOLS:",
+            "        return {\"error\": \"unknown tool\"}",
+            "    return TOOLS[name](args)"
+          ],
+          "distractors": [
+            "    return TOOLS[args](name)"
+          ],
+          "explain": {
+            "en": "Check the name first and return an error for an unknown tool; then TOOLS[name] is the function, called with the details.",
+            "ar": "تحقّق من الاسم أولًا وأرجِع خطأً للأداة غير المعروفة، ثم تكون ⁦TOOLS[name]⁩ هي الدالة، وتُستدعى بالتفاصيل."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q4",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "import json\ntext = 'weather{\"place\":\"Kafi\"'\ntry:\n    json.loads(text[text.find(\"{\"):])\n    print(\"call\")\nexcept ValueError:\n    print(\"broken call\")"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "call",
+                "ar": "call"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "broken call",
+                "ar": "broken call"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Nothing: an error stops the program",
+                "ar": "لا شيء: يتوقف البرنامج بخطأ"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "The JSON is missing its closing bracket, so json.loads raises a ValueError; except catches it and the program prints “broken call” instead of crashing.",
+            "ar": "ينقص نصَّ JSON قوسُه الأخير، فتُطلق json.loads خطأ ValueError، ويلتقطه except فيطبع البرنامج broken call بدل أن يتوقف."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q5",
+          "prompt": {
+            "en": "Match each part of your agent to what it protects against.",
+            "ar": "صِل كل جزء من وكيلك بما يحمي منه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "try / except ValueError",
+                "ar": "⁦try / except ValueError⁩"
+              },
+              "right": {
+                "en": "A broken call crashing the agent",
+                "ar": "استدعاء معطوب يوقف الوكيل"
+              }
+            },
+            {
+              "left": {
+                "en": "if name not in TOOLS",
+                "ar": "if name not in TOOLS"
+              },
+              "right": {
+                "en": "A made-up tool causing a KeyError",
+                "ar": "أداة مختلقة تسبّب خطأ KeyError"
+              }
+            },
+            {
+              "left": {
+                "en": "for step in range(limit)",
+                "ar": "⁦for step in range(limit)⁩"
+              },
+              "right": {
+                "en": "A model that never answers",
+                "ar": "نموذج لا يجيب أبدًا"
+              }
+            },
+            {
+              "left": {
+                "en": "approved != args",
+                "ar": "⁦approved != args⁩"
+              },
+              "right": {
+                "en": "A message nobody approved",
+                "ar": "رسالة لم يوافق عليها أحد"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each piece of code guards against one way a model’s text can go wrong: broken JSON, a tool that doesn’t exist, a loop that never ends, and an action nobody approved.",
+            "ar": "كل جزء من الكود يحمي من طريقة واحدة قد يسوء بها نص النموذج: JSON معطوب، وأداة لا وجود لها، وحلقة لا تنتهي، وإجراء لم يوافق عليه أحد."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "q6",
+          "lang": "python",
+          "prompt": {
+            "en": "This parse_call fails on every call. Which line is the mistake?",
+            "ar": "تفشل هذه الدالة مع كل استدعاء. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "def parse_call(text):\n    i = text.find(\"{\")\n    if i == -1:\n        return None\n    args = json.loads(text[i + 1:])\n    return text[:i], args",
+          "line": 5,
+          "fix": "    args = json.loads(text[i:])",
+          "explain": {
+            "en": "text[i + 1:] drops the opening bracket, so the JSON is broken and json.loads raises an error. The JSON starts at the bracket itself: text[i:].",
+            "ar": "تحذف ⁦text[i + 1:]⁩ القوس الأول، فيصبح نص JSON معطوبًا وتُطلق json.loads خطأً. ونص JSON يبدأ من القوس نفسه: ⁦text[i:]⁩."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q7",
+          "prompt": {
+            "en": "A guard allows weather and send_message. Which of these should it NOT simply run? Choose all that apply.",
+            "ar": "يسمح حاجز بأداتَي weather وsend_message. أيّ مما يلي يجب ألّا يشغّله مباشرةً؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A call to attendance",
+                "ar": "استدعاء لأداة attendance"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "weather for Kafi",
+                "ar": "weather لكافي"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "send_message to Mrs Mensah, with no yes yet",
+                "ar": "send_message إلى الأستاذة مينسا، دون موافقة بعد"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "send_message, with a yes to a different message",
+                "ar": "send_message، مع موافقة على رسالة أخرى"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "send_message, with a yes to this exact message",
+                "ar": "send_message، مع موافقة على هذه الرسالة بعينها"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "c",
+            "d"
+          ],
+          "explain": {
+            "en": "attendance isn’t on the allow-list, so it’s blocked. A message with no yes, or a yes to other details, waits for the person. Weather, and a message approved exactly, can run.",
+            "ar": "أداة attendance ليست في قائمة المسموح، فتُمنع. والرسالة التي لا موافقة عليها، أو التي وُوفق على تفاصيل غير تفاصيلها، تنتظر الشخص. أما الطقس، والرسالة التي وُوفق عليها بعينها، فتعمل."
+          }
+        },
+        {
+          "type": "order",
+          "id": "q8",
+          "prompt": {
+            "en": "Put in order what your agent does with one tool call.",
+            "ar": "رتّب ما يفعله وكيلك باستدعاء أداة واحد."
+          },
+          "steps": [
+            {
+              "en": "Split the call into a name and details",
+              "ar": "قسّم الاستدعاء إلى اسم وتفاصيل"
+            },
+            {
+              "en": "Check it with the guard",
+              "ar": "افحصه بالحاجز"
+            },
+            {
+              "en": "Ask a person, if it acts",
+              "ar": "اسأل إنسانًا، إن كان يفعل شيئًا"
+            },
+            {
+              "en": "Log the decision",
+              "ar": "سجّل القرار"
+            },
+            {
+              "en": "Run the tool",
+              "ar": "شغّل الأداة"
+            },
+            {
+              "en": "Add the result to the history",
+              "ar": "أضف النتيجة إلى السجلّ"
+            }
+          ],
+          "explain": {
+            "en": "You can only check a call once it’s split; a person approves before anything acts; the decision is logged whatever it is; and only then does the tool run and its result join the history.",
+            "ar": "لا يمكن فحص الاستدعاء إلا بعد تقسيمه، والإنسان يوافق قبل أن يحدث أي فعل، ويُسجَّل القرار أيًّا كان، وبعد ذلك فقط تعمل الأداة وتدخل نتيجتها السجلّ."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "q9",
+          "lang": "python",
+          "prompt": {
+            "en": "Fill the gaps so the loop can never run for ever.",
+            "ar": "املأ الفراغات لكيلا تعمل الحلقة إلى الأبد."
+          },
+          "code": [
+            "def agent(request, limit=4):\n    history = [request]\n    for step in ",
+            {
+              "blank": 0
+            },
+            "(limit):\n        out = model(history)\n        if \"{\" not in out:\n            ",
+            {
+              "blank": 1
+            },
+            " out\n        history += [out, tool(out)]\n    return \"Stopped\""
+          ],
+          "answers": [
+            "range",
+            "return"
+          ],
+          "distractors": [
+            "while",
+            "print",
+            "len"
+          ],
+          "explain": {
+            "en": "range(limit) caps the number of turns, an answer is returned at once, and after the last step the loop returns “Stopped”.",
+            "ar": "تحدّ ⁦range(limit)⁩ عدد الأدوار، ويُرجَع الجواب فور ظهوره، وبعد آخر خطوة تُرجع الحلقة «Stopped»."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q10",
+          "prompt": {
+            "en": "In this course’s code steps the model is scripted, so passing the tests shows that your code works, not that a real model will behave.",
+            "ar": "النموذج في خطوات الكود في هذه الدورة مبرمَج، لذلك فاجتياز الاختبارات يثبت أن كودك يعمل، لا أن النموذج الحقيقي سيتصرّف كما ينبغي."
+          },
+          "answer": true,
+          "explain": {
+            "en": "A script returns exactly what you wrote. A real model, like Darsi Tiny in the labs, can copy names wrongly, misread new wordings or never answer, so your code must handle those too.",
+            "ar": "يُرجع السكريبت ما كتبته بالضبط. أما النموذج الحقيقي، كـ«درسي الصغير» في المختبرات، فقد ينسخ الأسماء خطأً، أو يسيء فهم الصيغ الجديدة، أو لا يجيب أبدًا، فيجب أن يتعامل كودك مع ذلك أيضًا."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Build an agent in Python: review",
+            "ar": "ابنِ وكيلًا بلغة Python: مراجعة"
+          },
+          "note": {
+            "en": "AI agents · Upper secondary · Unit check",
+            "ar": "وكلاء الذكاء الاصطناعي، المرحلة الثانوية، اختبار الوحدة"
+          },
+          "narration": {
+            "en": "Let’s look back at the agent you built, piece by piece.",
+            "ar": "لنراجع الوكيل الذي بنيته، قطعةً قطعة."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Read a tool call",
+              "Tools are functions",
+              "The agent loop",
+              "Guardrails in code"
+            ],
+            "ar": [
+              "اقرأ استدعاء الأداة",
+              "الأدوات دوالّ",
+              "حلقة الوكيل",
+              "حواجز الحماية في الكود"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "The model writes text; your code reads it",
+              "Tools are functions, reached through a dictionary",
+              "A loop with a step limit, tested honestly",
+              "Guardrails: allow-list, exact approval, checks, a log"
+            ],
+            "ar": [
+              "النموذج يكتب نصًّا، وكودك يقرؤه",
+              "الأدوات دوالّ، يُوصَل إليها عبر قاموس",
+              "حلقة لها حدّ للخطوات، تُختبر بصدق",
+              "حواجز الحماية: قائمة المسموح، والموافقة بعينها، والتحقّق، والسجلّ"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Build the agent on paper",
+            "ar": "النشاط: ابنِ الوكيل على الورق"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (3 min): Name the four parts of your agent.",
+              "Draw (7 min): The whole agent as boxes and arrows.",
+              "Break it (7 min): A partner finds a call that gets through.",
+              "Fix (3 min): Add the rule that stops it."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): سمِّ أجزاء وكيلك الأربعة.",
+              "الرسم (٧ دقائق): الوكيل كله مربعات وأسهم.",
+              "اكسره (٧ دقائق): يجد زميلك استدعاءً يمرّ.",
+              "الإصلاح (٣ دقائق): أضف القاعدة التي توقفه."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (3 min): Without notes, write the four parts: the parser, the tools, the loop and the guard.",
+              "Draw (7 min): Draw the whole agent: the model’s text going in, the parser, the guard, a person, the tools and the history, with arrows.",
+              "Break it (7 min): Swap drawings. Your partner invents a model output that gets through, such as a broken call, a made-up tool, a model that never answers or a message nobody approved.",
+              "Fix (3 min): Add the rule, or the test, that would have stopped it."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): دون ملاحظات، اكتب الأجزاء الأربعة: المحلّل، والأدوات، والحلقة، والحاجز.",
+              "الرسم (٧ دقائق): ارسم الوكيل كله: نص النموذج داخلًا، ثم المحلّل، والحاجز، والإنسان، والأدوات، والسجلّ، مع الأسهم.",
+              "اكسره (٧ دقائق): تبادل الرسوم مع زميلك. يخترع مُخرَجًا للنموذج يمرّ، كاستدعاء معطوب، أو أداة مختلقة، أو نموذج لا يجيب أبدًا، أو رسالة لم يوافق عليها أحد.",
+              "الإصلاح (٣ دقائق): أضف القاعدة، أو الاختبار، الذي كان سيوقفه."
+            ]
+          },
+          "note": {
+            "en": "Use made-up tools, places and people only.",
+            "ar": "استعمل أدوات وأماكن وأشخاصًا خياليين فقط."
+          },
+          "narration": {
+            "en": "Which output gets through, and which rule stops it?",
+            "ar": "أيّ مُخرَج يمرّ، وأيّ قاعدة توقفه؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which part of your agent was hardest to get right?",
+              "What could a real model do that your scripted model never did?",
+              "Where would you put a person in the loop, and why?"
+            ],
+            "ar": [
+              "أيّ جزء من وكيلك كان إتقانه أصعب؟",
+              "ما الذي قد يفعله النموذج الحقيقي ولم يفعله نموذجك المبرمَج أبدًا؟",
+              "أين ستضع الإنسان في الحلقة، ولماذا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One guardrail I would add to every agent, and why."
+            ],
+            "ar": [
+              "حاجز حماية واحد سأضيفه إلى كل وكيل، ولماذا."
+            ]
+          },
+          "narration": {
+            "en": "The model proposes; your code and a person decide.",
+            "ar": "النموذج يقترح، وكودك والإنسان يقرّران."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Build an agent in Python: unit check",
+            "ar": "شرائح للمراجعة: ابنِ وكيلًا بلغة Python: اختبار الوحدة"
+          },
+          "pages": 6,
+          "base": "agents-s3-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Build an agent in Python: unit check",
+            "ar": "ورقة النشاط: ابنِ وكيلًا بلغة Python: اختبار الوحدة"
+          },
+          "pages": 2,
+          "base": "agents-s3-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "AGT.3",
+        "S.TA.A",
+        "DC.3.4",
+        "AGT.1",
+        "S.SD.A",
+        "AGT.2",
+        "S.ET.A",
+        "DC.4.1"
+      ]
+    }
+  ]
+}

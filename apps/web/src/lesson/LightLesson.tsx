@@ -18,6 +18,20 @@ export const setLightPlayer = (load: () => Promise<Vendor>) => { loadPlayer = lo
 export const canPlayLight = () => loadPlayer !== null;
 
 /**
+ * A course saved for offline use: load now the technology packs its light lessons draw with (equations and networks,
+ * code running, circuits, networks, optimisation: each a few KB, not precached), so they play without a connection.
+ */
+export async function prefetchLightPacks(unit: { lessons: { steps: { type: string; light?: Light }[] }[] }): Promise<void> {
+  if (!loadPlayer) return;
+  const files = unit.lessons.flatMap((l) => l.steps).map((s) => (s.type === "video" ? s.light?.files["scenes.json"] : undefined)).filter((f): f is string => !!f);
+  if (!files.length) return;
+  const vendor = await loadPlayer();
+  const ids = new Set<string>();
+  for (const f of files) for (const id of vendor.packsUsed(await loadStoredJSON(f).catch(() => null))) ids.add(id);
+  if (ids.size) await vendor.prefetchPacks([...ids]);
+}
+
+/**
  * Upright phones get the portrait stage (9:16, easier to read than 16:9 at this width), as wide as fits between the
  * player's top and the Continue bar, with the player's controls (up to three rows at these widths, 9.5rem) and the
  * bar (6rem) below it. The title above takes one line or three, so this is measured, not guessed. Where that would be

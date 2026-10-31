@@ -93,15 +93,21 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .dr-streak-dots { grid-column: 1 / -1; display: flex; gap: var(--space-1); margin-block-start: var(--space-1); }
 .dr-streak-dots i { inline-size: 20px; block-size: 8px; border-radius: var(--radius-pill); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line-strong); }
 .dr-streak-dots i.on { background: var(--kola); box-shadow: inset 0 0 0 1px var(--kola-deep); }
-.dr-streak-compact { display: inline-flex; align-items: center; gap: var(--space-1); min-block-size: 40px; padding-inline: var(--space-2) var(--space-3);
+/* Margin, not gap: flex gap needs Chrome 84, and Android 11's Chrome is 83. */
+.dr-streak-compact { display: inline-flex; align-items: center; flex: none; min-block-size: 40px; padding-inline: var(--space-2) var(--space-3);
   border-radius: var(--radius-pill); background: var(--kola-soft); color: var(--kola-deep); font-family: var(--font-display); font-weight: 800; font-size: 16px; }
+.dr-streak-compact > * + * { margin-inline-start: var(--space-1); }
 
 /* AppBar */
-.dr-appbar { display: flex; align-items: center; gap: var(--space-2); min-block-size: var(--appbar-h); padding-inline: var(--space-2);
+.dr-appbar { display: flex; align-items: center; min-block-size: var(--appbar-h); padding-inline: var(--space-2);
   padding-block-start: env(safe-area-inset-top); background: var(--paper); border-block-end: 2px solid var(--line); }
-.dr-appbar-brand { display: grid; place-items: center; inline-size: var(--tap-min); }
-.dr-appbar-title { flex: 1; margin: 0; min-inline-size: 0; font-family: var(--font-display); font-size: 20px; line-height: 28px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dr-appbar-actions { display: flex; align-items: center; gap: var(--space-1); }
+.dr-appbar > * + * { margin-inline-start: var(--space-2); }
+.dr-appbar-brand { display: grid; place-items: center; flex: none; inline-size: var(--tap-min); }
+/* min-width as well as min-inline-size: Chrome 83 sizes the flex item from min-width:auto, so a long Arabic track
+   name never shrinks and the streak pill is pushed off the left edge. */
+.dr-appbar-title { flex: 1; margin: 0; min-width: 0; min-inline-size: 0; font-family: var(--font-display); font-size: 20px; line-height: 28px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dr-appbar-actions { display: flex; align-items: center; flex: none; }
+.dr-appbar-actions > * + * { margin-inline-start: var(--space-1); }
 
 /* BottomNav */
 .dr-bottomnav { display: flex; background: var(--surface); border-block-start: 2px solid var(--line); padding-block-end: env(safe-area-inset-bottom); }
@@ -344,11 +350,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .dr-video-checkpoint { position: absolute; inset: 0; display: grid; place-items: center; padding: var(--space-3); background: var(--scrim); }
 .dr-video-checkpoint-card { display: grid; gap: var(--space-2); inline-size: 100%; max-inline-size: 440px; padding: var(--space-3); background: var(--surface); border: 2px solid var(--ink); border-radius: var(--radius-md); }
 .dr-video-checkpoint-tag { display: inline-flex; align-items: center; gap: var(--space-1); font-size: 12px; font-weight: 800; color: var(--kola-deep); }
-.dr-video-bar { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-2); background: var(--ink); color: var(--ink-inverse); }
-.dr-video-btn { display: grid; place-items: center; inline-size: 40px; block-size: 40px; border: 0; border-radius: var(--radius-sm); background: transparent; color: inherit; cursor: pointer; }
+/* Margin, not gap: flex gap needs Chrome 84. Without the space, the scrubber thumb (it hangs 7px off the
+   track) covers the last digit of the time, so "0:00 / 2:49" reads "0:00 / 2:4". */
+.dr-video-bar { display: flex; align-items: center; padding: var(--space-1) var(--space-2); background: var(--ink); color: var(--ink-inverse); }
+.dr-video-bar > * + * { margin-inline-start: var(--space-2); }
+.dr-video-btn { display: grid; place-items: center; flex: none; inline-size: 40px; block-size: 40px; border: 0; border-radius: var(--radius-sm); background: transparent; color: inherit; cursor: pointer; }
 .dr-video-btn.is-on { background: rgba(255, 255, 255, 0.16); }
-.dr-video-time { font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.dr-video-scrub { position: relative; flex: 1; block-size: 6px; border-radius: var(--radius-pill); background: rgba(255, 255, 255, 0.28); cursor: pointer; touch-action: none; }
+.dr-video-time { flex: none; margin-inline-end: var(--space-1); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dr-video-scrub { position: relative; flex: 1 1 auto; min-width: 0; block-size: 6px; border-radius: var(--radius-pill); background: rgba(255, 255, 255, 0.28); cursor: pointer; touch-action: none; }
 /* A taller invisible hit area: the bar is 6px, a thumb needs ~40px. */
 .dr-video-scrub::before { content: ""; position: absolute; inset-block: -17px; inset-inline: 0; }
 .dr-video-scrub:focus-visible { outline: 3px solid var(--focus); outline-offset: 6px; }
@@ -357,7 +366,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .dr-video-scrub-fill { position: absolute; inset-block: 0; left: 0; border-radius: var(--radius-pill); background: var(--kola); }
 .dr-video-tick { position: absolute; top: -2px; inline-size: 2px; block-size: 10px; background: var(--ink-inverse); }
 .dr-video-qmark { position: absolute; top: -5px; inline-size: 12px; block-size: 12px; margin-left: -6px; transform: rotate(45deg); background: var(--sunbird); border: 2px solid var(--ink); }
-.dr-video-chip { padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.5); font-size: 12px; font-weight: 700; }
+.dr-video-chip { flex: none; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.5); font-size: 12px; font-weight: 700; }
 button.dr-video-chip { min-block-size: 32px; min-inline-size: 44px; background: transparent; color: inherit; font-family: inherit; cursor: pointer; }
 .dr-video-btn:disabled { opacity: 0.4; cursor: default; }
 .dr-video-meta { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-3) var(--space-4); flex-wrap: wrap; }
@@ -493,8 +502,9 @@ button.dr-video-chip { min-block-size: 32px; min-inline-size: 44px; background: 
 .dr-video.has-checkpoint .dr-video-stage { aspect-ratio: auto; min-block-size: 200px; display: grid; }
 .dr-video.has-checkpoint .dr-video-poster { position: absolute; inset: 0; }
 .dr-video.has-checkpoint .dr-video-checkpoint { position: relative; inset: auto; padding: var(--space-6) var(--space-3); }
-.dr-video { container-type: inline-size; }
-@container (max-width: 380px) { .dr-video-chip.is-info, .dr-video-time { display: none; } }
+/* The 240p chip repeats the line under the player. Drop it on phones so the time keeps its digits.
+   A viewport query, not a container query: container queries need Chrome 105, and Android 11 is Chrome 83. */
+@media (max-width: 599px) { .dr-video-chip.is-info { display: none; } }
 /* Full screen: the Fullscreen API on the figure, or (iPhone) the figure stretched over the page. The question and the
    captions stay over the picture. */
 .dr-video:fullscreen, .dr-video.is-full { display: flex; flex-direction: column; max-inline-size: none; border: 0; border-radius: 0; box-shadow: none; background: var(--ink); }

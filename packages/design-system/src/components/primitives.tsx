@@ -1,7 +1,7 @@
 import { createContext, useContext, useId, type ButtonHTMLAttributes, type ReactNode } from "react";
 import paths from "../icons/paths.json";
 
-/** A track id. "ai", "iot" and "cyber" are built in; platform admins can add more (see TrackStylesProvider). */
+/** A track id. Nine are built in (ai, iot, cyber, code, data, agents, opt, aisec, data-science); platform admins can add more (see TrackStylesProvider). */
 export type Track = string;
 export type Tone = "kola" | "lagoon" | "sunbird" | "hibiscus";
 export type IconName = keyof typeof paths;
@@ -9,14 +9,19 @@ export const ICON_NAMES = Object.keys(paths) as IconName[];
 
 export const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(" ");
 /** English names of the built-in tracks, the last fallback when no name is passed. */
-export const TRACK_NAMES: Record<string, string> = { ai: "AI", iot: "IoT", cyber: "Cyber security" };
+export const TRACK_NAMES: Record<string, string> = {
+  ai: "AI", iot: "IoT", cyber: "Cyber security", code: "Programming", data: "Data engineering", agents: "AI agents", opt: "Optimization", aisec: "AI security", "data-science": "Data science",
+};
 
-/** The colour families a track can use (tokens.json): the three built-in tracks', then five for tracks added later. */
+/** The colour families a track can use (tokens.json), one per built-in track; tracks added later share them. */
 export const TRACK_TONES = ["sunbird", "lagoon", "hibiscus", "leaf", "lilac", "clay", "sky", "slate"] as const;
 export type TrackTone = (typeof TRACK_TONES)[number];
 export interface TrackStyle { tone: TrackTone; icon: IconName }
 export const BUILTIN_TRACK_STYLES: Record<string, TrackStyle> = {
   ai: { tone: "sunbird", icon: "ai" }, iot: { tone: "lagoon", icon: "iot" }, cyber: { tone: "hibiscus", icon: "cyber" },
+  code: { tone: "sky", icon: "code" }, data: { tone: "leaf", icon: "chart" }, agents: { tone: "lilac", icon: "agent" },
+  opt: { tone: "clay", icon: "peak" }, aisec: { tone: "slate", icon: "aisec" },
+  "data-science": { tone: "lagoon", icon: "target" },
 };
 const UNKNOWN_TRACK: TrackStyle = { tone: "slate", icon: "learn" };
 const TrackStyles = createContext<Record<string, TrackStyle>>(BUILTIN_TRACK_STYLES);

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AppBar, Button, EmptyState, Icon } from "@darsi/design-system";
+import { AppBar, Button, EmptyState, Icon, trackClass, useTrackStyles } from "@darsi/design-system";
 import { useI18n } from "../i18n";
 import { useStore } from "../state/store";
 import { onMeteredConnection } from "../platform";
@@ -8,16 +8,18 @@ import { CATEGORIES, categoryOf } from "../labs/categories";
 import { LAB_METAS, LADDER, labMeta, nextLab } from "../labs/catalog";
 import { LabEmbed, saveAllLabs } from "../labs/loader";
 import { matchKey } from "../labs/kit/text";
-import type { LabMeta, Track } from "../labs/types";
+import { LAB_TRACKS, type LabMeta, type Track } from "../labs/types";
 import "../styles/labs.css";
 
-const TRACKS: (Track | "all")[] = ["all", "ai", "iot", "cyber"];
+// A chip for every track that has labs.
+const TRACKS: (Track | "all")[] = ["all", ...LAB_TRACKS.filter((tr) => LAB_METAS.some((m) => categoryOf(m.category).track === tr))];
 
 /** /labs: every lab as a card, by shelf, with the AI ladder first. */
 export function Labs() {
   const { t, L, num } = useI18n();
   const [track, setTrack] = useState<Track | "all">("all");
   const [q, setQ] = useState("");
+  const style = useTrackStyles();
   const query = matchKey(q.trim());
   const hits = useMemo(() => LAB_METAS.filter((m) => (track === "all" || categoryOf(m.category).track === track)
     && (!query || [m.title.en, m.title.ar, m.summary.en, m.summary.ar].some((s) => matchKey(s).includes(query)))), [track, query]);
@@ -32,7 +34,7 @@ export function Labs() {
           <div className="lb-chips" role="radiogroup" aria-label={t("labs.tracks")}>
             {TRACKS.map((tr) => (
               <button key={tr} type="button" role="radio" aria-checked={track === tr} className={track === tr ? "lb-chip is-on" : "lb-chip"} onClick={() => setTrack(tr)}>
-                {tr !== "all" && <Icon name={tr} size={18} />}{tr === "all" ? t("labs.all") : t(`track.${tr}`)}
+                {tr !== "all" && <Icon name={style(tr).icon} size={18} />}{tr === "all" ? t("labs.all") : t(`track.${tr}`)}
               </button>
             ))}
           </div>
@@ -56,11 +58,11 @@ function LabCard({ m }: { m: LabMeta }) {
   const { t, L } = useI18n();
   const nav = useNavigate();
   const { state } = useStore();
-  const track = categoryOf(m.category).track;
+  const style = useTrackStyles()(categoryOf(m.category).track);
   const done = !!state.labsDone?.[m.id];
   return (
-    <a className={`lb-card is-${track}`} href={`/labs/${m.id}`} onClick={(e) => { e.preventDefault(); nav(`/labs/${m.id}`); }}>
-      <span className="lb-card-top"><span className="lb-card-icon" aria-hidden><Icon name={track} size={20} /></span>{done && <span className="lb-done"><Icon name="check" size={16} />{t("labs.done")}</span>}</span>
+    <a className={`lb-card ${trackClass(style)}`} href={`/labs/${m.id}`} onClick={(e) => { e.preventDefault(); nav(`/labs/${m.id}`); }}>
+      <span className="lb-card-top"><span className="lb-card-icon" aria-hidden><Icon name={style.icon} size={20} /></span>{done && <span className="lb-done"><Icon name="check" size={16} />{t("labs.done")}</span>}</span>
       <strong>{L(m.title)}</strong>
       <span className="lb-card-sum">{L(m.summary)}</span>
       <span className="lb-card-meta"><span className="lb-level">{t(`labs.level${m.level}` as "labs.level1")}</span><span>{t("common.minutes", { n: m.minutes })}</span></span>
@@ -137,13 +139,14 @@ export function LabApp() {
   const { dispatch } = useStore();
   const meta = labMeta(id);
   const next = nextLab(id);
+  const trackStyle = useTrackStyles();
   return (
     <>
       <AppBar title={meta ? L(meta.title) : t("lab.title")} onBack={() => nav("/labs")} backLabel={t("common.back")} />
       <main className="screen stack-lg lb-app">
         <LabEmbed id={id} onDone={() => dispatch({ type: "labDone", id })} />
         {next && (
-          <a className={`lb-next is-${categoryOf(next.category).track}`} href={`/labs/${next.id}`} onClick={(e) => { e.preventDefault(); nav(`/labs/${next.id}`); }}>
+          <a className={`lb-next ${trackClass(trackStyle(categoryOf(next.category).track))}`} href={`/labs/${next.id}`} onClick={(e) => { e.preventDefault(); nav(`/labs/${next.id}`); }}>
             <span className="muted small">{t("labs.next")}</span><strong>{L(next.title)}</strong><span className="small">{L(next.summary)}</span>
           </a>
         )}

@@ -22,7 +22,7 @@ export function Home() {
   // One of the learner's tracks at a time, and only courses for their audience, starting at the learner's level.
   const units = (catalog?.units ?? []).filter((u) => u.track === mine.active && audienceOf(u) === mine.audience);
   const name = mine.active ? tracks.name(mine.active) : "";
-  const level = mine.active ? Math.min(state.levels[mine.active] ?? 1, tracks.of(mine.active).levels) : 1;
+  const level = mine.active ? mine.levelOf(mine.active) : 1;
   const { current, later, earlier } = startAt(units, level);
   const block = (u: CatalogEntry) => (u.available ? <UnitBlock key={u.id} entry={u} current={u.level === level} /> : <LockedUnit key={u.id} entry={u} />);
   return (
@@ -39,7 +39,7 @@ export function Home() {
           action={<Button size="sm" variant="secondary" icon="settings" onClick={() => nav("/tracks")}>{t("tracks.manage")}</Button>} />}
         {[...current, ...later].map(block)}
         {/* Nothing at or above the learner's level yet: say so, and show the earlier courses open. */}
-        {!current.length && !later.length && earlier.length > 0 && <p className="notice">{t("home.noneAtLevel", { level: tracks.levelName(mine.active!, level), track: name })}</p>}
+        {!current.length && !later.length && earlier.length > 0 && <p className="notice">{t("home.noneAtLevel", { level: mine.levelName(mine.active!, level), track: name })}</p>}
         {earlier.length > 0 && (
           <details className="earlier" open={!current.length && !later.length}>
             <summary className="earlier-summary">{t("home.earlier", { n: earlier.length })}</summary>
@@ -66,6 +66,7 @@ export function startAt<T extends Pick<CatalogEntry, "level" | "available">>(uni
 
 function UnitBlock({ entry, current }: { entry: CatalogEntry; current: boolean }) {
   const tracks = useTracks();
+  const mine = useMine();
   const nav = useNavigate();
   const { t, L } = useI18n();
   const { state, dispatch } = useStore();
@@ -82,7 +83,7 @@ function UnitBlock({ entry, current }: { entry: CatalogEntry; current: boolean }
   return (
     <section className="unit" aria-labelledby={`u-${unit.id}`}>
       <div className="unit-head"><TrackChip track={unit.track} solid>{tracks.name(unit.track)}</TrackChip>
-        <span className="pill">{current ? t("home.yourLevel", { level: tracks.levelName(entry.track, entry.level) }) : tracks.levelName(entry.track, entry.level)}</span>{state.downloads[unit.id] && <span className="offline-badge"><Icon name="offline" size={16} />{t("home.offline")}</span>}</div>
+        <span className="pill">{current ? t("home.yourLevel", { level: mine.levelName(entry.track, entry.level) }) : mine.levelName(entry.track, entry.level)}</span>{state.downloads[unit.id] && <span className="offline-badge"><Icon name="offline" size={16} />{t("home.offline")}</span>}</div>
       <h2 className="unit-title" id={`u-${unit.id}`}>{L(unit.title)}</h2>
       <p className="muted">{L(unit.summary)}</p>
       {next ? (

@@ -1,0 +1,3385 @@
+{
+  "id": "agents-s4",
+  "track": "agents",
+  "level": 4,
+  "audience": "students",
+  "title": {
+    "en": "Agent engineering: planning, multi-agent, evals and guardrails",
+    "ar": "هندسة الوكلاء: التخطيط وتعدّد الوكلاء والتقييم وحواجز الحماية"
+  },
+  "summary": {
+    "en": "Engineer agents that hold up: plan under a small context window, split work between a planner and a checker, measure an agent with a proper test set, and change it safely, with Darsi Tiny on your phone as the test bed.",
+    "ar": "اصنع وكلاء يصمدون: خطّط ضمن نافذة سياق صغيرة، ووزّع العمل بين مخطِّط ومدقِّق، وقِس الوكيل بمجموعة اختبار سليمة، وغيّره بأمان، و«درسي الصغير» على هاتفك ميدانُ تجاربك."
+  },
+  "lessons": [
+    {
+      "id": "agents-s4-1",
+      "title": {
+        "en": "Plans and memory",
+        "ar": "الخطط والذاكرة"
+      },
+      "minutes": 20,
+      "tryTomorrow": {
+        "en": "Run a memory test on an assistant you use: state three made-up facts at the start, chat about something else, then ask for them every few messages. Note when each is forgotten, then try again with a two-line note.",
+        "ar": "اختبر ذاكرة مساعد تستعمله: اذكر ثلاث معلومات خيالية في البداية، وتحدّث عن شيء آخر، ثم اسأله عنها كل بضع رسائل. سجّل متى نسي كل معلومة، ثم أعد التجربة مع ملاحظة من سطرين."
+      },
+      "materials": {
+        "en": [
+          "Ten sticky notes or small squares of paper",
+          "A pen",
+          "Your phone, for the lab (Darsi Tiny downloads once, 2.8 MB)"
+        ],
+        "ar": [
+          "عشر أوراق لاصقة أو مربعات ورق صغيرة",
+          "قلم",
+          "هاتفك، للمختبر (يُنزَّل «درسي الصغير» مرة واحدة، ٢٫٨ ميغابايت)"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Plans and memory",
+            "ar": "الخطط والذاكرة"
+          },
+          "src": null,
+          "duration": 215,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A question that fell out",
+                "ar": "سؤال سقط من الذاكرة"
+              }
+            },
+            {
+              "at": 18.5,
+              "atBy": {
+                "en": 18.5,
+                "ar": 19.1
+              },
+              "label": {
+                "en": "Two ways to plan",
+                "ar": "طريقتان للتخطيط"
+              }
+            },
+            {
+              "at": 54.4,
+              "atBy": {
+                "en": 54.4,
+                "ar": 57.3
+              },
+              "label": {
+                "en": "The context window",
+                "ar": "نافذة السياق"
+              }
+            },
+            {
+              "at": 125.7,
+              "atBy": {
+                "en": 125.7,
+                "ar": 124.9
+              },
+              "label": {
+                "en": "Choosing what stays, and the lab",
+                "ar": "اختيار ما يبقى، والمختبر"
+              }
+            },
+            {
+              "at": 186.5,
+              "atBy": {
+                "en": 186.5,
+                "ar": 186.9
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "The app drops the oldest turns. Someone asks for tomorrow’s weather, is asked which village, and says “Dala”. The agent gives today’s weather. Why?",
+                "ar": "يُسقط التطبيق أقدم الأدوار. يسأل شخص عن طقس الغد، فيُسأل: أيّ قرية؟ فيجيب: «دالا». فيعطيه الوكيل طقس اليوم. لماذا؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "It can’t read village names",
+                    "ar": "لا يستطيع قراءة أسماء القرى"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "“Tomorrow” fell out of the window",
+                    "ar": "سقطت كلمة «غدًا» من النافذة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "The weather tool is broken",
+                    "ar": "أداة الطقس معطّلة"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "The turn with “tomorrow” was dropped, so the model never saw it and filled in a default. It can’t tell you what it forgot.",
+                "ar": "سقط الدور الذي فيه «غدًا»، فلم يره النموذج أصلًا وملأ مكانه بقيمة افتراضية. ولا يستطيع النموذج أن يخبرك بما نسيه: التطبيق وحده يعرف ما أسقطه."
+              }
+            },
+            "at": 112.28,
+            "atBy": {
+              "en": 112.28,
+              "ar": 112.37
+            }
+          },
+          "transcript": {
+            "en": "My agent did the first two steps perfectly. Then I replied yes, and it greeted me like a stranger! Nothing was broken. My question had just fallen out of its memory. Today: how agents plan, and what fits in their memory. Agents plan in two common ways. Plan first: write every step, then run them. Or step by step: look at each result, then choose the next step. Darsi Tiny writes a one-line plan, then calls its tools in turn. Each step builds on the last. On Saturday, the timetable tool answers: no school. Darsi Tiny sets the reminder anyway: six B, six B. A failed step that nobody checks becomes the next step’s input. An agent’s only memory is its context window: every token the model reads at once. It holds the tools, the conversation so far, and room to write. Darsi Tiny’s holds three hundred and eighty-four tokens; big cloud models, about a hundred and twenty-eight thousand. When the window fills, the app chooses what stays. Keep everything, and the fourth answer is cut off. Drop the oldest, and the question behind a yes falls out. Keep short notes, and all seven messages work. Quick check! The app drops the oldest turns. I ask for tomorrow’s weather, it asks which village, and I say Dala. It gives me today’s weather. Why? Because tomorrow fell out of the window. The model never saw it, so it used a default. It can’t tell you what it has forgotten. Only the app knows what it dropped. So engineers decide what stays. Keep recent turns, and turn older ones into notes. Pin the facts the task depends on, like the day and the place. Or fetch from documents only the part a step needs: that’s retrieval. In this lesson’s code, you’ll write the trimming. Walk back from the newest turn, adding up tokens. Stop at the first turn that won’t fit, so the conversation has no gaps. In the app, send seven messages and watch the window fill. Try Keep everything, then Drop the oldest at a hundred and twenty-eight tokens, then Keep notes. See which turn falls out. Your turn. An agent helps plan a three-day field trip over a long chat. Which memory strategy is safest? Notes, with the dates and places pinned. Remember: check each step’s result as you go. The context window is the model’s only memory. And the app, not the model, decides what stays. Try it yourself: in a long chat, keep asking about something from the very start. Note when it starts to forget. Then paste back a two-line note, and compare.",
+            "ar": "الوكيل بتاعي عمل أول خطوتين صح جدًا. وبعدين رديت عليه بـ«أيوه»، فسلّم عليّ كأني واحد غريب! مفيش حاجة باظت. سؤالي ببساطة وقع من ذاكرته. النهارده: الوكلاء بيخطّطوا إزاي، وإيه اللي بيكفّي في ذاكرتهم. الوكلاء بيخطّطوا بطريقتين مشهورين. الخطة الأول: تكتب كل الخطوات، وبعدين تنفّذها. أو خطوة بخطوة: تبص على كل نتيجة، وبعدين تختار الخطوة الجاية. و«درسي الصغير» بيكتب خطة في سطر واحد، وبعدين يطلب أدواته واحدة ورا التانية. كل خطوة مبنية على اللي قبلها. يوم السبت، أداة الجدول بترد: مفيش مدرسة. و«درسي الصغير» يظبط التذكير برضه: «ستة ب، ستة ب». خطوة فشلت ومحدش راجعها بتبقى مدخل الخطوة اللي بعدها. الذاكرة الوحيدة للوكيل هي نافذة السياق: كل التوكنز اللي النموذج بيقراها مرة واحدة. فيها الأدوات، والمحادثة لحد دلوقتي، ومساحة يكتب فيها. نافذة «درسي الصغير» تلتمية أربعة وتمانين توكن، والنماذج الكبيرة في السحابة حوالي ميّة تمانية وعشرين ألف. لما النافذة تتملي، التطبيق بيختار إيه اللي يفضل. لو احتفظ بكل حاجة، الجواب الرابع بيتقطع. لو رمى الأقدم، السؤال اللي ورا الـ«أيوه» بيقع. ولو احتفظ بملاحظات قصيرة، السبع رسايل بيشتغلوا كلهم. سؤال سريع! التطبيق بيرمي الأدوار الأقدم. بسأل عن طقس بكرة، فيسألني أنهي قرية، وأقول دالا. يديني طقس النهارده. ليه؟ علشان «بكرة» وقعت من النافذة. النموذج ما شافهاش أصلًا، فاستخدم القيمة العادية. وهو مش بيقدر يقولك نسي إيه. التطبيق بس هو اللي عارف رمى إيه. علشان كده المهندسين بيقرّروا إيه اللي يفضل. احتفظ بآخر الأدوار، وحوّل القديم لملاحظات. ثبّت الحقايق اللي المهمة معتمدة عليها، زي اليوم والمكان. أو هات من المستندات الجزء اللي الخطوة محتاجاه وبس: ودي اسمها «الاسترجاع». في كود الدرس ده، هتكتب القصّ بنفسك. ابدأ من أحدث دور وارجع لورا، واجمع التوكنز. وقف عند أول دور مش هيكفّي، علشان المحادثة ماتبقاش فيها فجوات. في التطبيق، ابعت سبع رسايل واتفرّج على النافذة وهي بتتملي. جرّب «احتفظ بكل حاجة»، وبعدين «ارمي الأقدم» على ميّة تمانية وعشرين توكن، وبعدين «احتفظ بملاحظات». شوف أنهي دور بيقع. دورك. وكيل بيساعد في تخطيط رحلة تلات أيام في شات طويل. أنهي طريقة للذاكرة هي الأأمن؟ الملاحظات، مع تثبيت التواريخ والأماكن. افتكر: راجع نتيجة كل خطوة وإنت ماشي. نافذة السياق هي الذاكرة الوحيدة للنموذج. والتطبيق، مش النموذج، هو اللي بيقرّر إيه اللي يفضل. جرّبها بنفسك: في شات طويل، فضل اسأل عن حاجة من أول الشات خالص. اكتب إمتى بيبدأ ينسى. وبعدين الزق له ملاحظة من سطرين، وقارن."
+          },
+          "sources": {
+            "en": "/media/agents-s4-1/video-en.mp4",
+            "ar": "/media/agents-s4-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-s4-1/captions-en.vtt",
+            "ar": "/media/agents-s4-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-s4-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-s4-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-s4-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-s4-1/light/audio/en.opus",
+              "manifest.json": "/media/agents-s4-1/light/manifest.json",
+              "scenes.json": "/media/agents-s4-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-s4-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-s4-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 477,
+              "ar": 481
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Plans, errors and the context window",
+            "ar": "الخطط والأخطاء ونافذة السياق"
+          },
+          "body": {
+            "en": "Agents reach goals in steps, and they plan those steps in two common ways. In plan-then-act, the model writes every step first and then runs them: cheap and easy to check, but it can’t adapt when a result surprises it. In step-by-step planning (often called ReAct, for reasoning and acting), the model looks at each result before choosing the next step: it adapts better, but costs a model call for every step. Darsi Tiny does a little of both: a one-line plan, then each tool call in turn.\n\nEither way, each step builds on the one before, so errors carry forward and multiply. If each step is right 90% of the time, two steps are both right 81% of the time, and five steps only 59%. Worse, a failed step can quietly become the next step’s input: on Saturday the timetable tool answers “no school”, and Darsi Tiny still sets the reminder “6B: 6B”. The fix is a check after every step, in code or by a person, before anything is built on a result.\n\nA language model’s only memory within a conversation is its context window: every token it reads at once, including the tools list, the conversation so far and room to write its next step. Darsi Tiny’s window holds 384 tokens, about three or four requests; big cloud models read about 128,000. Every token costs time, money and, on a phone, data, at every step. When the window fills, something must go, and the model can’t tell you what it lost: in the memory lab, dropping the oldest turns makes “yes” lose its question, and “Dala” gets today’s weather because “tomorrow” fell out.\n\nSo the app, not the model, decides what stays. Common strategies: keep the most recent turns (a sliding window); replace finished exchanges with short notes or summaries; pin the facts a task depends on, such as dates and places; and fetch only the part of a long document that a step needs (retrieval). Each has a cost: a summary can drop a detail, and retrieval can fetch the wrong passage. And whatever stays in the window is sent again at every step, so keep private details out of it unless the task needs them.",
+            "ar": "يبلغ الوكلاء أهدافهم على خطوات، ويخطّطون لهذه الخطوات بطريقتين شائعتين. في «التخطيط ثم التنفيذ» يكتب النموذج الخطوات كلها أولًا ثم ينفّذها: طريقة رخيصة وسهلة الفحص، لكنها لا تتكيّف حين تفاجئها نتيجة. وفي «التخطيط خطوة بخطوة» (ويُسمّى غالبًا ReAct، أي التفكير ثم الفعل) ينظر النموذج إلى كل نتيجة قبل أن يختار الخطوة التالية: فيتكيّف أفضل، لكنه يكلّف استدعاءً للنموذج في كل خطوة. ويفعل «درسي الصغير» شيئًا من الطريقتين: خطة من سطر واحد، ثم استدعاءات الأدوات واحدًا بعد الآخر.\n\nوفي الحالتين تُبنى كل خطوة على ما قبلها، فتنتقل الأخطاء إلى ما بعدها وتتضاعف. فإن كانت كل خطوة صحيحة في ٩٠٪ من المرات، كانت خطوتان صحيحتين معًا في ٨١٪ فقط، وخمس خطوات في ٥٩٪. والأسوأ أن الخطوة الفاشلة قد تصير بهدوء مدخلًا للخطوة التالية: ففي يوم السبت تجيب أداة الجدول «لا دراسة»، ومع ذلك يضبط «درسي الصغير» التذكير «6B: 6B». والعلاج فحصٌ بعد كل خطوة، في الكود أو على يد إنسان، قبل أن يُبنى أي شيء على نتيجة.\n\nوذاكرة النموذج اللغوي الوحيدة في المحادثة هي نافذة السياق: كل الرموز التي يقرؤها دفعة واحدة، ومنها قائمة الأدوات، والمحادثة حتى الآن، ومساحة ليكتب خطوته التالية. تتسع نافذة «درسي الصغير» لـ٣٨٤ رمزًا، أي نحو ثلاثة طلبات أو أربعة، أما النماذج السحابية الكبيرة فتقرأ نحو ١٢٨ ألفًا. ولكل رمز كلفة من الوقت والمال، ومن البيانات على الهاتف، في كل خطوة. وحين تمتلئ النافذة لا بد أن يخرج منها شيء، ولا يستطيع النموذج أن يخبرك بما فقده: ففي مختبر الذاكرة يؤدي إسقاط أقدم الأدوار إلى أن تفقد «نعم» سؤالها، وإلى أن تحصل «دالا» على طقس اليوم لأن كلمة «غدًا» سقطت.\n\nلذلك فالتطبيق، لا النموذج، هو الذي يقرّر ما يبقى. ومن الطرق الشائعة: الاحتفاظ بأحدث الأدوار (نافذة منزلقة)، واستبدال الحوارات المنتهية بملاحظات أو ملخّصات قصيرة، وتثبيت الحقائق التي تعتمد عليها المهمة كالتواريخ والأماكن، وجلب الجزء الذي تحتاجه الخطوة فقط من مستند طويل (الاسترجاع). ولكل طريقة كلفتها: فقد يُسقط الملخّص تفصيلًا، وقد يجلب الاسترجاع المقطع الخطأ. وتذكّر أن كل ما يبقى في النافذة يُرسَل من جديد في كل خطوة، فأبقِ التفاصيل الخاصة خارجها ما لم تحتجها المهمة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Plan-then-act",
+                "ar": "التخطيط ثم التنفيذ"
+              },
+              "def": {
+                "en": "The model writes every step first, then the steps are run.",
+                "ar": "يكتب النموذج الخطوات كلها أولًا، ثم تُنفَّذ."
+              }
+            },
+            {
+              "term": {
+                "en": "Step-by-step planning",
+                "ar": "التخطيط خطوة بخطوة"
+              },
+              "def": {
+                "en": "The model looks at each result before choosing the next step.",
+                "ar": "ينظر النموذج إلى كل نتيجة قبل أن يختار الخطوة التالية."
+              }
+            },
+            {
+              "term": {
+                "en": "Context window",
+                "ar": "نافذة السياق"
+              },
+              "def": {
+                "en": "Everything a model can read at once: its only memory within a conversation.",
+                "ar": "كل ما يستطيع النموذج قراءته دفعة واحدة، وهي ذاكرته الوحيدة في المحادثة."
+              }
+            },
+            {
+              "term": {
+                "en": "Retrieval",
+                "ar": "الاسترجاع"
+              },
+              "def": {
+                "en": "Fetching only the part of a document or record that a step needs, instead of keeping it all in the window.",
+                "ar": "جلب الجزء الذي تحتاجه الخطوة فقط من مستند أو سجل، بدل إبقائه كله في النافذة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "An agent helps plan a three-day field trip over a long chat. Which memory strategy is safest?",
+            "ar": "يساعد وكيل في التخطيط لرحلة ميدانية مدتها ثلاثة أيام عبر محادثة طويلة. أيّ طريقة لإدارة الذاكرة هي الأكثر أمانًا؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Keep everything until it’s cut off",
+                "ar": "الاحتفاظ بكل شيء حتى ينقطع"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Drop the oldest turns as it fills",
+                "ar": "إسقاط أقدم الأدوار كلما امتلأت النافذة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Keep notes, with the dates and places pinned",
+                "ar": "الاحتفاظ بملاحظات، مع تثبيت التواريخ والأماكن"
+              }
+            }
+          ],
+          "answer": "c",
+          "explain": {
+            "en": "Notes keep what was asked and answered in fewer tokens, and pinning the dates and places means the facts the plan depends on never fall out.",
+            "ar": "تحفظ الملاحظات ما سُئل وما أُجيب برموز أقل، وتثبيت التواريخ والأماكن يعني أن الحقائق التي تعتمد عليها الخطة لا تسقط أبدًا. أما الاحتفاظ بكل شيء فيتوقف عند امتلاء النافذة، وإسقاط الأقدم يُضيع البدايات."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p2",
+          "lang": "python",
+          "prompt": {
+            "en": "A conversation is a list of turns, oldest first; each turn is a pair (text, tokens). Write trim(turns, budget): keep the newest turns whose tokens fit in budget, in their original order, and stop at the first turn that doesn’t fit. (No model runs in this sandbox, so the token counts are given.)",
+            "ar": "المحادثة قائمة من الأدوار، الأقدم أولًا، وكل دور زوج (النص، عدد الرموز). اكتب الدالة ⁦trim(turns, budget)⁩: أبقِ أحدث الأدوار التي تتسع لها budget، بترتيبها الأصلي، وتوقّف عند أول دور لا يتسع. (لا يعمل أي نموذج في هذه البيئة، لذلك أعداد الرموز معطاة.)"
+          },
+          "starter": "def trim(turns, budget):\n    kept = []\n    used = 0\n    # walk back from the newest turn\n    return kept\n",
+          "solution": "def trim(turns, budget):\n    kept = []\n    used = 0\n    for t in reversed(turns):\n        if used + t[1] > budget:\n            break\n        kept.insert(0, t)\n        used += t[1]\n    return kept\n",
+          "tests": [
+            {
+              "check": "T = [(\"hi\", 5), (\"weather?\", 12), (\"sunny\", 9)]\nassert trim(T, 25) == [(\"weather?\", 12), (\"sunny\", 9)], \"Keep the newest turns that fit, oldest first\"",
+              "hint": {
+                "en": "Start from the newest turn, and keep adding while the total stays within the budget.",
+                "ar": "ابدأ من أحدث دور، واستمر في الإضافة ما دام المجموع ضمن الميزانية."
+              }
+            },
+            {
+              "check": "T = [(\"hi\", 5), (\"weather?\", 12), (\"sunny\", 9)]\nassert trim(T, 100) == T, \"When everything fits, keep everything\""
+            },
+            {
+              "check": "T = [(\"a\", 3), (\"b\", 50), (\"c\", 4)]\nassert trim(T, 10) == [(\"c\", 4)], \"Stop at the first turn that doesn't fit: no gaps\"",
+              "hint": {
+                "en": "Skipping the big turn and keeping an older one would leave a gap in the conversation: stop with break.",
+                "ar": "تخطّي الدور الكبير والاحتفاظ بدور أقدم يترك فجوة في المحادثة: توقّف بـ break."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "Loop over reversed(turns) and keep a running total of tokens.",
+              "ar": "مرّ على ⁦reversed(turns)⁩ واحتفظ بمجموع متراكم للرموز."
+            },
+            {
+              "en": "kept.insert(0, t) keeps the oldest-first order; break stops at the first turn that doesn’t fit.",
+              "ar": "تحافظ ⁦kept.insert(0, t)⁩ على ترتيب الأقدم أولًا، وتوقف break الحلقة عند أول دور لا يتسع."
+            }
+          ],
+          "explain": {
+            "en": "Walking back from the newest turn keeps what the model needs most, and stopping at the first turn that doesn’t fit keeps the conversation without gaps. This is the sliding window; real apps add notes or pinned facts so older essentials survive.",
+            "ar": "الرجوع من أحدث دور يُبقي ما يحتاجه النموذج أكثر، والتوقف عند أول دور لا يتسع يحفظ المحادثة بلا فجوات. هذه هي النافذة المنزلقة، وتضيف التطبيقات الحقيقية ملاحظات أو حقائق مثبّتة كي يبقى الضروري من القديم."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p3",
+          "prompt": {
+            "en": "Match each memory strategy to what happens in the memory lab, or what it is for.",
+            "ar": "صِل كل طريقة لإدارة الذاكرة بما يحدث في مختبر الذاكرة، أو بالغرض منها."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Keep everything",
+                "ar": "الاحتفاظ بكل شيء"
+              },
+              "right": {
+                "en": "The fourth answer is cut off, then nothing fits",
+                "ar": "ينقطع الجواب الرابع، ثم لا يتسع شيء"
+              }
+            },
+            {
+              "left": {
+                "en": "Drop the oldest",
+                "ar": "إسقاط الأقدم"
+              },
+              "right": {
+                "en": "“Yes” loses the question it answers",
+                "ar": "تفقد «نعم» السؤال الذي تجيب عنه"
+              }
+            },
+            {
+              "left": {
+                "en": "Keep notes",
+                "ar": "الاحتفاظ بملاحظات"
+              },
+              "right": {
+                "en": "All seven messages work",
+                "ar": "تنجح الرسائل السبع كلها"
+              }
+            },
+            {
+              "left": {
+                "en": "Retrieval",
+                "ar": "الاسترجاع"
+              },
+              "right": {
+                "en": "Fetch only the part a step needs",
+                "ar": "جلب الجزء الذي تحتاجه الخطوة فقط"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Keeping everything fails once the window is full; dropping the oldest loses whatever a later turn depends on; notes keep what was asked and answered in fewer tokens; retrieval keeps long documents outside the window.",
+            "ar": "الاحتفاظ بكل شيء يفشل حين تمتلئ النافذة، وإسقاط الأقدم يُضيع ما يعتمد عليه دور لاحق، والملاحظات تحفظ ما سُئل وما أُجيب برموز أقل، والاسترجاع يُبقي المستندات الطويلة خارج النافذة."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: with Keep everything, send the seven messages one by one and see where the answer is cut off. Start again with Drop the oldest and the window at 128 tokens: when you reply “yes” and then “Dala”, what has fallen out, and what does Darsi Tiny do without it? Then try Keep notes at 384. The lab is done when a turn has fallen out and a turn has finished with notes.",
+            "ar": "جرّب: مع «احتفظ بكل شيء» أرسل الرسائل السبع واحدة بعد الأخرى، ولاحظ أين ينقطع الجواب. ثم ابدأ من جديد مع «أسقِط الأقدم» والنافذة على ١٢٨ رمزًا: حين تجيب «نعم» ثم «دالا»، ما الذي سقط، وماذا يفعل «درسي الصغير» من دونه؟ ثم جرّب «احتفظ بملاحظات» على ٣٨٤. ينتهي المختبر حين يسقط دور، وحين يكتمل دور مع الملاحظات."
+          },
+          "tool": "memory"
+        },
+        {
+          "type": "choice",
+          "id": "p4",
+          "prompt": {
+            "en": "An agent’s steps are each right 90% of the time. What does the last line print?",
+            "ar": "كل خطوة من خطوات وكيلٍ صحيحة في ٩٠٪ من المرات. ماذا يطبع السطر الأخير؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "p = 0.9\nfor steps in [1, 2, 5]:\n    print(steps, round(p ** steps, 2))"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "5 0.59",
+                "ar": "5 0.59"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "5 0.9",
+                "ar": "5 0.9"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "5 4.5",
+                "ar": "5 4.5"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The chance that every step is right multiplies: 0.9 × 0.9 × 0.9 × 0.9 × 0.9 ≈ 0.59. Five steps that are each 90% right succeed together only about 59% of the time, which is why every step needs a check.",
+            "ar": "احتمال أن تصح الخطوات كلها يُضرب: ٠٫٩ × ٠٫٩ × ٠٫٩ × ٠٫٩ × ٠٫٩ ≈ ٠٫٥٩. فخمس خطوات كلٌّ منها صحيحة بنسبة ٩٠٪ تنجح معًا في نحو ٥٩٪ من المرات فقط، ولهذا تحتاج كل خطوة إلى فحص."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "Darsi Tiny’s window is 384 tokens, and the app keeps 64 free for the model to write. Fill the gaps: the turns fit if their tokens plus the room to write are at most the window.",
+            "ar": "تتسع نافذة «درسي الصغير» لـ٣٨٤ رمزًا، ويترك التطبيق ٦٤ منها فارغة ليكتب النموذج. املأ الفراغات: تتسع الأدوار إن كان مجموع رموزها مع مساحة الكتابة لا يزيد على النافذة."
+          },
+          "code": [
+            "def fits(turns, window, reserve):\n    used = 0\n    for t in turns:\n        used += t[1]\n    return used + ",
+            {
+              "blank": 0
+            },
+            " <= ",
+            {
+              "blank": 1
+            }
+          ],
+          "answers": [
+            "reserve",
+            "window"
+          ],
+          "distractors": [
+            "budget",
+            "len(turns)"
+          ],
+          "explain": {
+            "en": "The model needs room to write its next step, so the turns may use only window − reserve tokens: 384 − 64 = 320 for Darsi Tiny’s conversation and tools line.",
+            "ar": "يحتاج النموذج إلى مساحة يكتب فيها خطوته التالية، فلا يحق للأدوار إلا ⁦window − reserve⁩ من الرموز: ٣٨٤ − ٦٤ = ٣٢٠ للمحادثة وسطر الأدوات في «درسي الصغير»."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p6",
+          "prompt": {
+            "en": "When something falls out of a model’s context window, the model will tell you what it has forgotten.",
+            "ar": "حين يسقط شيء من نافذة سياق النموذج، يخبرك النموذج بما نسيه."
+          },
+          "answer": false,
+          "explain": {
+            "en": "The model never sees what fell out, so it can’t know it’s missing: it fills the gap with a default or a guess (today’s weather instead of tomorrow’s). Only the app knows what it dropped, so the app must decide what stays.",
+            "ar": "لا يرى النموذج ما سقط أصلًا، فلا يعرف أنه ناقص: بل يملأ الفراغ بقيمة افتراضية أو بتخمين (طقس اليوم بدل طقس الغد). والتطبيق وحده يعرف ما أسقطه، ولذلك عليه أن يقرّر ما يبقى."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of a long task you might hand an agent, such as planning a group project over a week. What must it never forget, and how would you make sure that stays in its window?",
+            "ar": "فكّر في مهمة طويلة قد تسلّمها لوكيل، كالتخطيط لمشروع جماعي على مدى أسبوع. ما الذي يجب ألا ينساه أبدًا، وكيف تتأكد من بقائه في نافذته؟"
+          },
+          "placeholder": {
+            "en": "For example: “The deadline and who does which part. I’d pin them at the top and keep notes of each meeting instead of the whole chat.”",
+            "ar": "مثلًا: «الموعد النهائي ومن يقوم بكل جزء. سأثبّتهما في الأعلى، وأحتفظ بملاحظات عن كل اجتماع بدل المحادثة كلها.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Measure an assistant’s memory",
+            "ar": "مشروع: قِس ذاكرة مساعد ذكي"
+          },
+          "task": {
+            "en": "Run a memory test on a chat assistant you can use, or on Darsi Tiny in the memory lab. In your first message, state three made-up facts: a name, a date and a place. Then send ten messages about something else, and after each one ask for one of the facts. Record the message at which each fact is first lost. Run it again, this time repeating a two-line note of the three facts every third message. Use made-up facts only, never your own or anyone’s real details.",
+            "ar": "اختبر ذاكرة مساعد محادثة تستطيع استعماله، أو «درسي الصغير» في مختبر الذاكرة. اذكر في رسالتك الأولى ثلاث معلومات خيالية: اسمًا وتاريخًا ومكانًا. ثم أرسل عشر رسائل عن موضوع آخر، واسأل بعد كل واحدة منها عن إحدى المعلومات. سجّل الرسالة التي تضيع عندها كل معلومة أول مرة. ثم أعد التجربة، مكرّرًا هذه المرة ملاحظة من سطرين بالمعلومات الثلاث كل ثلاث رسائل. استعمل معلومات خيالية فقط، ولا تستعمل أبدًا بياناتك الحقيقية أو بيانات أي شخص."
+          },
+          "deliverable": {
+            "en": "A table (message number, and which facts were remembered without and with notes) and three sentences: what you found, and what you would build into an agent because of it.",
+            "ar": "جدول (رقم الرسالة، والمعلومات التي تذكّرها دون الملاحظات ومعها) وثلاث جمل: ما الذي وجدته، وما الذي ستبنيه في وكيلٍ بناءً عليه."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: explain why an agent forgets what falls out of its context window.",
+                "ar": "أستطيع: شرح لماذا ينسى الوكيل ما يسقط من نافذة سياقه."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: compare two memory strategies with evidence from my own test.",
+                "ar": "أستطيع: المقارنة بين طريقتين لإدارة الذاكرة بأدلة من اختباري."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: recommend what an agent should pin, summarise or drop.",
+                "ar": "أستطيع: اقتراح ما يجب أن يثبّته الوكيل أو يلخّصه أو يُسقطه."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Plans and memory",
+            "ar": "الخطط والذاكرة"
+          },
+          "note": {
+            "en": "AI agents · University · Lesson 1",
+            "ar": "وكلاء الذكاء الاصطناعي، الجامعة، الدرس ١"
+          },
+          "narration": {
+            "en": "How does an agent plan, and what does it remember?",
+            "ar": "كيف يخطّط الوكيل، وماذا يتذكّر؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Compare planning first with planning step by step.",
+              "Explain why errors carry forward, and where to check.",
+              "Budget a context window and choose what stays."
+            ],
+            "ar": [
+              "المقارنة بين التخطيط أولًا والتخطيط خطوة بخطوة.",
+              "شرح لماذا تنتقل الأخطاء من خطوة إلى أخرى، وأين نفحص.",
+              "تقسيم نافذة السياق واختيار ما يبقى فيها."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "Each step builds on the last: check every result before using it.",
+              "The context window is the only memory: 384 tokens for Darsi Tiny, about 128,000 for big models.",
+              "The app decides what stays: recent turns, notes, pinned facts, retrieval."
+            ],
+            "ar": [
+              "تُبنى كل خطوة على ما قبلها: افحص كل نتيجة قبل استعمالها.",
+              "نافذة السياق هي الذاكرة الوحيدة: ٣٨٤ رمزًا لـ«درسي الصغير»، ونحو ١٢٨ ألفًا للنماذج الكبيرة.",
+              "التطبيق يقرّر ما يبقى: أحدث الأدوار، والملاحظات، والحقائق المثبّتة، والاسترجاع."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: The ten-note window",
+            "ar": "النشاط: نافذة الأوراق العشر"
+          },
+          "bullets": {
+            "en": [
+              "Set-up (3 min): Ten sticky notes are the window.",
+              "Plan (6 min): Plan a trip, one note per turn.",
+              "Overflow (6 min): Out of notes? Drop or summarise.",
+              "Test (5 min): Ask about day one. What survived?"
+            ],
+            "ar": [
+              "التحضير (٣ دقائق): عشر أوراق لاصقة هي النافذة.",
+              "التخطيط (٦ دقائق): خطّط لرحلة، ورقة لكل دور.",
+              "الامتلاء (٦ دقائق): نفدت الأوراق؟ أسقِط أو لخّص.",
+              "الاختبار (٥ دقائق): اسأل عن اليوم الأول. ماذا بقي؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Set-up (3 min): Work in pairs. One of you is the agent and has only ten sticky notes: that is the whole context window. The other is the person asking.",
+              "Plan (6 min): The person plans a made-up three-day trip with the agent, one message per turn. The agent writes each turn (question or answer) on a new note and lines them up in order.",
+              "Overflow (6 min): When the ten notes run out, the agent must choose: throw away the oldest note, or replace three old notes with one short summary note. Try one choice, then the other.",
+              "Test (5 min): The person asks about day one (the date, the place, the bus time). The agent may answer only from the notes still on the table. Compare which choice kept the facts that mattered."
+            ],
+            "ar": [
+              "التحضير (٣ دقائق): اعملوا في أزواج. أحدكما الوكيل، ولا يملك إلا عشر أوراق لاصقة: هي نافذة السياق كلها. والآخر هو الشخص الذي يسأل.",
+              "التخطيط (٦ دقائق): يخطّط الشخص مع الوكيل لرحلة خيالية مدتها ثلاثة أيام، رسالة في كل دور. ويكتب الوكيل كل دور (سؤالًا أو جوابًا) على ورقة جديدة ويصفّ الأوراق بالترتيب.",
+              "الامتلاء (٦ دقائق): حين تنفد الأوراق العشر، يجب أن يختار الوكيل: أن يرمي أقدم ورقة، أو أن يستبدل بثلاث أوراق قديمة ورقة ملخّص قصيرة. جرّبا خيارًا ثم الآخر.",
+              "الاختبار (٥ دقائق): يسأل الشخص عن اليوم الأول (التاريخ، والمكان، وموعد الحافلة). ولا يجيب الوكيل إلا من الأوراق الباقية على الطاولة. قارنا: أيّ خيار حفظ المعلومات المهمة؟"
+            ]
+          },
+          "note": {
+            "en": "Any made-up trip will do. If you have no sticky notes, use ten small squares of paper and a desk.",
+            "ar": "تصلح أي رحلة خيالية. وإن لم تكن لديك أوراق لاصقة، فاستعمل عشرة مربعات ورق صغيرة وسطح طاولة."
+          },
+          "narration": {
+            "en": "When your ten notes run out, what do you throw away?",
+            "ar": "حين تنفد أوراقك العشر، ماذا ترمي؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "When is planning first better than step by step, and when is it worse?",
+              "Why can’t a model tell you what it has forgotten?",
+              "What would you pin at the top of an agent’s window for your own studies?"
+            ],
+            "ar": [
+              "متى يكون التخطيط أولًا أفضل من التخطيط خطوة بخطوة، ومتى يكون أسوأ؟",
+              "لماذا لا يستطيع النموذج أن يخبرك بما نسيه؟",
+              "ماذا تثبّت في أعلى نافذة وكيلٍ يساعدك في دراستك؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One check an agent needs after every step, and one fact you would pin in its window."
+            ],
+            "ar": [
+              "فحص واحد يحتاجه الوكيل بعد كل خطوة، ومعلومة واحدة تثبّتها في نافذته."
+            ]
+          },
+          "narration": {
+            "en": "Check each result, and decide what stays in the window.",
+            "ar": "افحص كل نتيجة، وقرّر ما يبقى في النافذة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Plans and memory",
+            "ar": "شرائح للمراجعة: الخطط والذاكرة"
+          },
+          "pages": 6,
+          "base": "agents-s4-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Plans and memory",
+            "ar": "ورقة النشاط: الخطط والذاكرة"
+          },
+          "pages": 3,
+          "base": "agents-s4-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-s4-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.1",
+        "AGT.3",
+        "S.SD.A"
+      ]
+    },
+    {
+      "id": "agents-s4-2",
+      "title": {
+        "en": "Several agents, one job",
+        "ar": "عدّة وكلاء لمهمة واحدة"
+      },
+      "minutes": 20,
+      "tryTomorrow": {
+        "en": "Pick an agent task you would like to automate, such as booking a study room. Draw its roles and write five strict checker rules, then invent one slip your rules would still miss.",
+        "ar": "اختر مهمة تحب أن يؤدّيها وكيل، كحجز قاعة للمذاكرة. ارسم أدوارها واكتب خمس قواعد صارمة للمدقِّق، ثم اخترع خطأً واحدًا ستفوّته قواعدك رغم ذلك."
+      },
+      "materials": {
+        "en": [
+          "Paper cards and a pen",
+          "A printed or hand-copied list of the five checker rules",
+          "Your phone, for the lab"
+        ],
+        "ar": [
+          "بطاقات ورقية وقلم",
+          "قائمة بقواعد المدقِّق الخمس، مطبوعة أو منسوخة باليد",
+          "هاتفك، للمختبر"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Several agents, one job",
+            "ar": "عدّة وكلاء لمهمة واحدة"
+          },
+          "src": null,
+          "duration": 219,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A reminder nobody checked",
+                "ar": "تذكير لم يراجعه أحد"
+              }
+            },
+            {
+              "at": 21.1,
+              "atBy": {
+                "en": 21.1,
+                "ar": 19
+              },
+              "label": {
+                "en": "Roles and a checker",
+                "ar": "الأدوار والمدقِّق"
+              }
+            },
+            {
+              "at": 73.2,
+              "atBy": {
+                "en": 73.2,
+                "ar": 72.1
+              },
+              "label": {
+                "en": "Rules, models and cost",
+                "ar": "القواعد والنماذج والكلفة"
+              }
+            },
+            {
+              "at": 140.8,
+              "atBy": {
+                "en": 140.8,
+                "ar": 135.9
+              },
+              "label": {
+                "en": "A rule in code, and the lab",
+                "ar": "قاعدة في الكود، والمختبر"
+              }
+            },
+            {
+              "at": 184.5,
+              "atBy": {
+                "en": 184.5,
+                "ar": 180.6
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "The planner proposes the timetable for 9C, but the request said 9Z. What should the checker do?",
+                "ar": "يقترح المخطِّط جدول الفصل 9C، لكن الطلب كان عن 9Z. ماذا يجب أن يفعل المدقِّق؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Run it: the planner knows best",
+                    "ar": "يشغّله، فالمخطِّط أدرى"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Stop it: 9C was never said, so hand it back",
+                    "ar": "يوقفه، لأن 9C لم يُذكر، ويعيد الطلب"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Quietly change it to 9Z and run it",
+                    "ar": "يغيّره إلى 9Z بصمت ثم يشغّله"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "9C appears nowhere in the request or the results, so it was copied wrongly or made up. A checker stops it and hands it back; it doesn’t guess a fix.",
+                "ar": "لا يظهر 9C في الطلب ولا في أيّ نتيجة، فقد نُسخ خطأً أو اختُلق. والمدقّق يوقفه ويعيده، ولا يخمّن إصلاحًا: فالتصحيح الصامت قد يخفي خطأً آخر."
+              }
+            },
+            "at": 121.4,
+            "atBy": {
+              "en": 121.4,
+              "ar": 118.3
+            }
+          },
+          "transcript": {
+            "en": "Our agent set a reminder to tisums the library. Tisums! Nothing stopped it, because nothing was checking. What if another part of the agent checked its work? Today: splitting an agent into roles that check each other. Big agent systems are often split into roles. A planner proposes each step. A checker reviews it before anything runs. Then a runner runs the tool, and a person approves the actions. In the team lab, the checker is five rules in code. The tool must be on. Every detail needs the right shape. Every name and number must come from the request or a result. No earlier step may have failed, and a person must say yes to any action. Nine Z copied as nine C: stopped, because nobody said nine C. Twenty-five o’clock: stopped, wrong shape. The Saturday reminder: stopped, because the step before it failed. Why not make the checker a second language model? It could catch subtler slips, like a rude message. But it can be wrong too, and fooled like the planner. Rules never guess: start with them, and add a model only where judgement is needed. More roles also cost more tokens, time and money. And errors multiply. If each of two steps is right ninety percent of the time, both are right only eighty-one percent of the time. Quick check! The planner proposes the timetable for nine C, but the request said nine Z. What should the checker do? Stop it. Nine C appears nowhere in the request or the results, so it was copied wrongly. The checker doesn’t guess a fix: it hands the request back. Darsi Tiny never learned to take a checker’s feedback, so a person asks again. Here’s one rule as code: every word in a call’s details must appear in the request or a result. In this lesson’s code, you’ll write a checker with three rules. In the app, send the Kafi weather request: the planner proposes, the checker passes it, the runner runs it. Then send the tidy reminder and nine Z. Turn the checker off and send them again: what gets through? Your turn. An agent runs three steps, each right ninety percent of the time. How often are all three right? About seventy-three percent: errors multiply. Remember: split the agent into planner, checker, runner and person. Strict rules in code make a good first checker. And a person approves actions and handles what’s stopped. Try it yourself: take a task like booking a study room. Draw the agent’s roles, and write five strict rules its checker could test in code. Then find one slip your rules would miss.",
+            "ar": "الوكيل بتاعنا ظبط تذكير إنه «يتيسمز» المكتبة. يتيسمز! محدش وقّفه، علشان مفيش حاجة كانت بتراجع. طب لو جزء تاني في الوكيل راجع شغله؟ النهارده: نقسّم الوكيل لأدوار بتراجع بعضها. أنظمة الوكلاء الكبيرة غالبًا بتتقسم لأدوار. المخطِّط بيقترح كل خطوة. والمدقّق بيراجعها قبل ما أي حاجة تشتغل. وبعدين المنفّذ يشغّل الأداة، والإنسان يوافق على الأفعال. في معمل الفريق، المدقّق عبارة عن خمس قواعد في الكود. الأداة لازم تكون شغالة. كل تفصيلة لازم شكلها يبقى صح. كل اسم ورقم لازم ييجي من الطلب أو من نتيجة. ومفيش خطوة قبلها تكون فشلت، وأي فعل لازم إنسان يقول عليه «أيوه». «تسعة زد» اتنسخت «تسعة سي»: اتوقفت، علشان محدش قال «تسعة سي». الساعة خمسة وعشرين: اتوقفت، شكلها غلط. وتذكير السبت: اتوقف، علشان الخطوة اللي قبله فشلت. طب ليه مانخليش المدقّق نموذج لغوي تاني؟ ممكن يمسك أخطاء أدق، زي رسالة قليلة الأدب. بس هو كمان ممكن يغلط، ويتضحك عليه زي المخطِّط. القواعد عمرها ما بتخمّن: ابدأ بيها، وزوّد نموذج بس في الحتة اللي محتاجة تقدير. والأدوار الأكتر بتكلّف توكنز ووقت وفلوس أكتر. والأخطاء بتتضاعف. لو كل خطوة من خطوتين صح تسعين في المية من المرات، الاتنين مع بعض صح واحد وتمانين في المية بس. سؤال سريع! المخطِّط اقترح جدول «تسعة سي»، بس الطلب كان «تسعة زد». المدقّق يعمل إيه؟ يوقّفه. «تسعة سي» مش موجودة لا في الطلب ولا في النتايج، يبقى اتنسخت غلط. المدقّق مش بيخمّن تصليح: بيرجّع الطلب. و«درسي الصغير» عمره ما اتعلّم ياخد ملاحظات من مدقّق، فالإنسان هو اللي يسأل تاني. دي قاعدة واحدة في صورة كود: كل كلمة في تفاصيل الطلب لازم تكون موجودة في الطلب الأصلي أو في نتيجة. وفي كود الدرس ده، هتكتب مدقّق بتلات قواعد. في التطبيق، ابعت طلب طقس كافي: المخطِّط يقترح، والمدقّق يعدّيه، والمنفّذ يشغّله. وبعدين ابعت تذكير ترتيب المكتبة وطلب «تسعة زد». اقفل المدقّق وابعتهم تاني: إيه اللي هيعدّي؟ دورك. وكيل بيعمل تلات خطوات، كل واحدة صح تسعين في المية من المرات. الخطوات التلاتة بيطلعوا صح مع بعض كام مرة؟ حوالي تلاتة وسبعين في المية: الأخطاء بتتضاعف. افتكر: قسّم الوكيل لمخطِّط ومدقّق ومنفّذ وإنسان. القواعد الصارمة في الكود أحسن مدقّق تبدأ بيه. والإنسان بيوافق على الأفعال وبيتعامل مع اللي اتوقف. جرّبها بنفسك: خد مهمة زي حجز أوضة مذاكرة. ارسم أدوار الوكيل، واكتب خمس قواعد صارمة المدقّق يقدر يختبرها في الكود. وبعدين دوّر على غلطة واحدة قواعدك هتفوّتها."
+          },
+          "sources": {
+            "en": "/media/agents-s4-2/video-en.mp4",
+            "ar": "/media/agents-s4-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-s4-2/captions-en.vtt",
+            "ar": "/media/agents-s4-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-s4-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-s4-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-s4-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-s4-2/light/audio/en.opus",
+              "manifest.json": "/media/agents-s4-2/light/manifest.json",
+              "scenes.json": "/media/agents-s4-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-s4-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-s4-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 478,
+              "ar": 472
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Roles, checkers and the cost of more agents",
+            "ar": "الأدوار والمدقِّقون وكلفة تعدّد الوكلاء"
+          },
+          "body": {
+            "en": "Many agent systems split the work into roles instead of one agent doing everything. A planner proposes the next step; a checker reviews it before anything runs; a runner calls the tool; and a person approves actions and handles whatever is stopped. The roles can be different models, one model with different instructions, or plain code. What matters is that one part checks another before anything happens.\n\nThe checker doesn’t have to be clever. In the team lab it is five strict rules in code: the tool must be on; every detail must have the right shape (25:00 is not a time); every name and number must come from the request or an earlier result; no earlier step may have failed; and a person must say yes to any action. Together they stop 9Z copied as 9C, a reminder to “tisums the library”, a reminder at 25:00 and the Saturday reminder. Rules never guess and can’t be talked round, and they are cheap and fast.\n\nA second language model as checker can catch subtler problems that rules miss, such as a rude or misleading message, but it can also be wrong, and the tricks that fool the planner may fool it too. Start with rules, add a model checker only where judgement is needed, and never let it be the only guard on an action. When the checker stops a call, it should hand it back rather than guess a fix: Darsi Tiny was never trained to take a checker’s feedback, so a person asks again. Silent automatic retries can loop, cost tokens and hide the slip.\n\nMore roles cost more. Every model call reads and writes tokens, so time, money and data add up, and each extra step is another chance to fail. If each of two steps is right 90% of the time, both are right 81% of the time; three steps, about 73%. A good design uses the fewest model calls the job needs, a strict check at every step, and a person for actions.",
+            "ar": "تقسّم أنظمة وكلاء كثيرة العمل إلى أدوار بدل أن يفعل وكيل واحد كل شيء. فالمخطِّط يقترح الخطوة التالية، والمدقِّق يراجعها قبل أن يُشغَّل أي شيء، والمنفِّذ يستدعي الأداة، والإنسان يوافق على الأفعال ويتولّى كل ما أُوقف. وقد تكون الأدوار نماذج مختلفة، أو نموذجًا واحدًا بتعليمات مختلفة، أو كودًا عاديًا. والمهم أن يفحص جزءٌ جزءًا آخر قبل أن يحدث أي شيء.\n\nولا يلزم أن يكون المدقِّق ذكيًا. ففي مختبر الفريق هو خمس قواعد صارمة في الكود: أن تكون الأداة مفعّلة، وأن يكون لكل تفصيل الشكل الصحيح (فـ25:00 ليس وقتًا)، وأن يأتي كل اسم ورقم من الطلب أو من نتيجة سابقة، وألا تكون خطوة سابقة قد فشلت، وأن يوافق إنسان على أي فعل. وهذه القواعد معًا توقف 9Z الذي نُسخ 9C، وتذكيرًا بـ«tisums the library»، وتذكيرًا في الساعة 25:00، وتذكير يوم السبت. فالقواعد لا تخمّن أبدًا ولا يمكن إقناعها بالعدول، وهي رخيصة وسريعة.\n\nأما نموذج لغوي ثانٍ في دور المدقِّق فقد يلتقط مشكلات أدق تفوت القواعد، كرسالة فظّة أو مضلِّلة، لكنه قد يخطئ هو أيضًا، وقد تخدعه الحيل نفسها التي تخدع المخطِّط. فابدأ بالقواعد، وأضف نموذجًا مدقِّقًا حيث يلزم التقدير فقط، ولا تجعله أبدًا الحارس الوحيد على فعل. وحين يوقف المدقِّق استدعاءً، فعليه أن يعيده لا أن يخمّن إصلاحًا: فـ«درسي الصغير» لم يُدرَّب قط على تلقّي ملاحظات المدقِّق، ولذلك يعيد الإنسان السؤال. أما إعادة المحاولة التلقائية الصامتة فقد تدور بلا نهاية، وتستهلك الرموز، وتُخفي الخطأ.\n\nوالأدوار الأكثر أعلى كلفة. فكل استدعاء للنموذج يقرأ رموزًا ويكتبها، فيتراكم الوقت والمال والبيانات، وكل خطوة إضافية فرصة أخرى للفشل. فإن كانت كل خطوة من خطوتين صحيحة في ٩٠٪ من المرات، كانتا صحيحتين معًا في ٨١٪، وثلاث خطوات في نحو ٧٣٪. والتصميم الجيد يستعمل أقل عدد من استدعاءات النموذج تحتاجه المهمة، مع فحص صارم في كل خطوة، وإنسان للأفعال."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Role",
+                "ar": "الدور"
+              },
+              "def": {
+                "en": "One part of an agent system with one job: planner, checker, runner or person.",
+                "ar": "جزء من نظام الوكيل له مهمة واحدة: مخطِّط أو مدقِّق أو منفِّذ أو إنسان."
+              }
+            },
+            {
+              "term": {
+                "en": "Checker",
+                "ar": "المدقِّق"
+              },
+              "def": {
+                "en": "The part that reviews a proposed step before it runs, often strict rules in code.",
+                "ar": "الجزء الذي يراجع الخطوة المقترحة قبل تنفيذها، وكثيرًا ما يكون قواعد صارمة في الكود."
+              }
+            },
+            {
+              "term": {
+                "en": "Human in the loop",
+                "ar": "الإنسان في الحلقة"
+              },
+              "def": {
+                "en": "A person approves actions and decides what happens to anything the checker stops.",
+                "ar": "إنسان يوافق على الأفعال ويقرّر مصير كل ما يوقفه المدقِّق."
+              }
+            },
+            {
+              "term": {
+                "en": "Compounding errors",
+                "ar": "تضاعف الأخطاء"
+              },
+              "def": {
+                "en": "The chance that every step is right multiplies, so long chains fail more often: 0.9 × 0.9 = 0.81.",
+                "ar": "احتمال صحة كل الخطوات يُضرب، فتفشل السلاسل الطويلة أكثر: ٠٫٩ × ٠٫٩ = ٠٫٨١."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "An agent runs three steps, each right 90% of the time. How often are all three right?",
+            "ar": "ينفّذ وكيل ثلاث خطوات، كلٌّ منها صحيحة في ٩٠٪ من المرات. كم مرة تكون الخطوات الثلاث كلها صحيحة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "About 90%",
+                "ar": "نحو ٩٠٪"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "About 73%",
+                "ar": "نحو ٧٣٪"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "About 27%",
+                "ar": "نحو ٢٧٪"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "0.9 × 0.9 × 0.9 ≈ 0.73. Each step’s chance of being right multiplies, so long chains need a check at every step.",
+            "ar": "لأن ٠٫٩ × ٠٫٩ × ٠٫٩ ≈ ٠٫٧٣. فاحتمالات الصواب تتضاعف بالضرب، ولذلك تحتاج السلاسل الطويلة إلى فحص في كل خطوة."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p2",
+          "lang": "python",
+          "prompt": {
+            "en": "Write a checker with three rules. check(call, text, on, failed) returns a list of the rules the call breaks: \"tool\" if its tool isn’t in on; \"said\" if any word in its details doesn’t appear in text (the request and the results); \"after\" if failed is True. An empty list means the call may run. (No model here: the calls are given.)",
+            "ar": "اكتب مدقِّقًا بثلاث قواعد. تعيد ⁦check(call, text, on, failed)⁩ قائمة بالقواعد التي يخالفها الاستدعاء: ⁦\"tool\"⁩ إن لم تكن أداته في on، و⁦\"said\"⁩ إن كانت أي كلمة في تفاصيله غير موجودة في text (الطلب والنتائج)، و⁦\"after\"⁩ إن كانت failed صحيحة (True). والقائمة الفارغة تعني أن الاستدعاء يمكن أن يُنفَّذ. (لا نموذج هنا: الاستدعاءات معطاة.)"
+          },
+          "starter": "def check(call, text, on, failed):\n    broken = []\n    return broken\n",
+          "solution": "def check(call, text, on, failed):\n    broken = []\n    if call[\"tool\"] not in on:\n        broken.append(\"tool\")\n    words = []\n    for v in call[\"args\"].values():\n        words += str(v).split()\n    if any(w not in text for w in words):\n        broken.append(\"said\")\n    if failed:\n        broken.append(\"after\")\n    return broken\n",
+          "tests": [
+            {
+              "check": "ON = [\"weather\", \"timetable\"]\nc = {\"tool\": \"weather\", \"args\": {\"place\": \"Kafi\", \"day\": \"tomorrow\"}}\nassert check(c, \"What's the weather in Kafi tomorrow?\", ON, False) == [], \"A good call breaks no rule\""
+            },
+            {
+              "check": "ON = [\"weather\", \"timetable\"]\nc = {\"tool\": \"timetable\", \"args\": {\"class\": \"9C\", \"day\": \"tomorrow\"}}\nassert check(c, \"What does 9Z have tomorrow?\", ON, False) == [\"said\"], \"9C was never said: rule said\"",
+              "hint": {
+                "en": "Split every detail into words and look for each one in text.",
+                "ar": "قسّم كل تفصيل إلى كلمات وابحث عن كل واحدة منها في text."
+              }
+            },
+            {
+              "check": "ON = [\"weather\", \"timetable\"]\nc = {\"tool\": \"reminder\", \"args\": {\"text\": \"collect the homework\", \"when\": \"tomorrow 08:00\"}}\nassert check(c, \"Remind me tomorrow at 08:00 to collect the homework.\", ON, False) == [\"tool\"], \"The reminder tool is off: rule tool\""
+            },
+            {
+              "check": "ON = [\"weather\", \"timetable\"]\nc = {\"tool\": \"timetable\", \"args\": {\"class\": \"6B\", \"day\": \"saturday\"}}\nassert check(c, \"What is 6B's first lesson on saturday?\", ON, True) == [\"after\"], \"A step before it failed: rule after\""
+            }
+          ],
+          "hints": [
+            {
+              "en": "Check the three rules one after another, appending \"tool\", \"said\" and \"after\" in that order.",
+              "ar": "افحص القواعد الثلاث واحدة بعد الأخرى، وأضف ⁦\"tool\"⁩ ثم ⁦\"said\"⁩ ثم ⁦\"after\"⁩ بهذا الترتيب."
+            },
+            {
+              "en": "For \"said\": collect the words of every value with str(v).split(), then any(w not in text for w in words).",
+              "ar": "لقاعدة ⁦\"said\"⁩: اجمع كلمات كل قيمة بـ ⁦str(v).split()⁩، ثم استعمل ⁦any(w not in text for w in words)⁩."
+            }
+          ],
+          "explain": {
+            "en": "Each rule is a plain test that never guesses: is the tool allowed, did every word come from somewhere, did an earlier step fail? The \"said\" rule here is lenient (a word found anywhere in the text counts), which is why real checkers add shape checks too.",
+            "ar": "كل قاعدة اختبار بسيط لا يخمّن أبدًا: هل الأداة مسموحة، وهل جاءت كل كلمة من مكان ما، وهل فشلت خطوة سابقة؟ وقاعدة ⁦\"said\"⁩ هنا متساهلة (تُقبل الكلمة إن وُجدت في أي مكان من النص)، ولهذا تضيف المدقِّقات الحقيقية فحوصًا للشكل أيضًا."
+          }
+        },
+        {
+          "type": "parsons",
+          "id": "p3",
+          "lang": "python",
+          "prompt": {
+            "en": "Put the team’s steps in order: the planner proposes, the checker reviews, and the call runs only if nothing is broken.",
+            "ar": "رتّب خطوات الفريق: يقترح المخطِّط، ويراجع المدقِّق، ولا يُنفَّذ الاستدعاء إلا إن لم تُخالَف أي قاعدة."
+          },
+          "lines": [
+            "call = planner(request)",
+            "broken = check(call, text, ON, failed)",
+            "if broken:",
+            "    print(\"Stopped:\", broken)",
+            "else:",
+            "    result = run(call)"
+          ],
+          "distractors": [
+            "run(call)"
+          ],
+          "explain": {
+            "en": "The planner only proposes; the checker runs before anything happens; the tool runs in the else branch, so a broken call never reaches it. A run(call) before the check would act first and check too late.",
+            "ar": "المخطِّط يقترح فقط، والمدقِّق يعمل قبل أن يحدث أي شيء، والأداة تُشغَّل في فرع else، فلا يصلها استدعاء مخالف أبدًا. أما ⁦run(call)⁩ قبل الفحص فينفّذ أولًا ويفحص بعد فوات الأوان."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: send “What's the weather in Kafi tomorrow?” and watch the planner propose, the checker pass it and the runner run it. Then send “Remind me to tidy the library tomorrow at 9:00.” and “What does 9Z have tomorrow?”, and read which rule stops each. Turn the checker off and send them again. The lab is done when the checker has stopped a bad call and an action has run after your OK.",
+            "ar": "جرّب: أرسل «ما حالة الطقس في كافي غدًا؟» وشاهد المخطِّط يقترح، والمدقِّق يجيز، والمنفِّذ يشغّل. ثم أرسل طلب التذكير بترتيب المكتبة غدًا الساعة 9:00، و«ماذا لدى 9Z غدًا؟»، واقرأ أيّ قاعدة توقف كلًّا منهما. ثم أوقف المدقِّق وأرسلهما مجددًا. ينتهي المختبر حين يوقف المدقِّق استدعاءً خاطئًا، ويُنفَّذ فعلٌ بعد موافقتك."
+          },
+          "tool": "team"
+        },
+        {
+          "type": "multi",
+          "id": "p4",
+          "prompt": {
+            "en": "Why start with strict rules in code as the checker, rather than a second language model? Choose all that apply.",
+            "ar": "لماذا نبدأ بقواعد صارمة في الكود مدقِّقًا، بدل نموذج لغوي ثانٍ؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Rules never guess, and can’t be talked round",
+                "ar": "القواعد لا تخمّن أبدًا، ولا يمكن إقناعها بالعدول"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Rules are cheap and fast at every step",
+                "ar": "القواعد رخيصة وسريعة في كل خطوة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Rules catch every possible mistake",
+                "ar": "القواعد تلتقط كل خطأ ممكن"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "A model checker can be fooled the same way as the planner",
+                "ar": "قد يُخدع النموذج المدقِّق بالطريقة نفسها التي يُخدع بها المخطِّط"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "Rules understand tone and meaning better than a model",
+                "ar": "القواعد تفهم النبرة والمعنى أفضل من النموذج"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Rules are predictable, cheap and immune to the tricks that fool models. They don’t catch everything, and they don’t understand tone: that is where a model checker can help, as an extra layer, never as the only guard.",
+            "ar": "القواعد متوقَّعة ورخيصة ولا تنطلي عليها الحيل التي تخدع النماذج. لكنها لا تلتقط كل شيء، ولا تفهم النبرة: وهنا قد يفيد نموذج مدقِّق، طبقةً إضافية، لا حارسًا وحيدًا أبدًا."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p5",
+          "prompt": {
+            "en": "If each of three steps is right 90% of the time, the whole task is right about 90% of the time.",
+            "ar": "إن كانت كل خطوة من ثلاث خطوات صحيحة في ٩٠٪ من المرات، فالمهمة كلها صحيحة في نحو ٩٠٪ من المرات."
+          },
+          "answer": false,
+          "explain": {
+            "en": "The chances multiply: 0.9 × 0.9 × 0.9 ≈ 0.73, so the task is right about 73% of the time. Every extra step lowers the odds, which is why each step needs its own check.",
+            "ar": "الاحتمالات تُضرب: ٠٫٩ × ٠٫٩ × ٠٫٩ ≈ ٠٫٧٣، فالمهمة صحيحة في نحو ٧٣٪ من المرات. وكل خطوة إضافية تخفض الفرص، ولهذا تحتاج كل خطوة إلى فحصها الخاص."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you suggest?",
+            "ar": "ماذا تقترح؟"
+          },
+          "who": {
+            "en": "Mr Joseph Mwangi, computer studies",
+            "ar": "أ. جوزيف موانغي، علوم الحاسوب"
+          },
+          "initial": {
+            "en": "J",
+            "ar": "ج"
+          },
+          "situation": {
+            "en": "Your project team is building an agent that answers classmates’ timetable questions and can post in the class group. A teammate suggests: “When the checker stops a call, let the planner retry by itself until it passes.”",
+            "ar": "يبني فريق مشروعك وكيلًا يجيب عن أسئلة الزملاء حول الجدول، ويستطيع النشر في مجموعة الصف. ويقترح أحد أعضاء الفريق: «حين يوقف المدقِّق استدعاءً، دع المخطِّط يعيد المحاولة وحده حتى يمرّ.»"
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Good idea: retries will fix the slips.”",
+                "ar": "«فكرة جيدة: إعادة المحاولة ستصلح الأخطاء.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "A retry can repeat the slip, invent a new one or loop, costing tokens each time, and nobody sees what was stopped or why.",
+                "ar": "قد تكرّر إعادة المحاولة الخطأ، أو تخترع خطأً جديدًا، أو تدور بلا نهاية، فتستهلك الرموز في كل مرة، ولا يرى أحد ما أُوقف ولا سببه."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Hand stopped calls to a person, allow at most one retry, and log both.”",
+                "ar": "«سلّموا الاستدعاءات الموقوفة لإنسان، واسمحوا بمحاولة واحدة على الأكثر، وسجّلوا الاثنتين.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "People see what was stopped and why, the log shows which slips repeat so you can fix them, and there is no silent loop.",
+                "ar": "يرى الناس ما أُوقف ولماذا، ويُظهر السجل الأخطاء المتكرّرة لتصلحوها، ولا توجد حلقة صامتة."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Switch the checker off for posts, to save time.”",
+                "ar": "«أوقفوا المدقِّق عند النشر، لنوفّر الوقت.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Posting to the whole class is exactly the action that needs the strictest check and a person’s yes.",
+                "ar": "النشر للصف كله هو بالضبط الفعل الذي يحتاج إلى أشد الفحص وإلى موافقة إنسان."
+              }
+            }
+          ]
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of a task where one mistake would really matter, such as messaging a whole class. Which role would you trust a model with, and which would you keep as code or a person?",
+            "ar": "فكّر في مهمة يكون لخطأ واحد فيها أثر كبير، كمراسلة صف كامل. أيّ دور تأتمن عليه نموذجًا، وأيّ دور تُبقيه كودًا أو إنسانًا؟"
+          },
+          "placeholder": {
+            "en": "For example: “The model can draft the message. A rule checks the group name, and a person approves the exact text.”",
+            "ar": "مثلًا: «يستطيع النموذج أن يصوغ الرسالة. وتفحص قاعدةٌ اسم المجموعة، ويوافق إنسان على النص نفسه.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Design a team agent",
+            "ar": "مشروع: صمّم وكيلًا من فريق أدوار"
+          },
+          "task": {
+            "en": "Pick a real task at your university or school, such as booking study rooms, answering questions about a course timetable or reminding a study group. Design the agent as roles: planner, checker, runner and person. Write at least five strict rules for the checker as Python functions or clear pseudocode. Then write ten proposed calls yourself, five good and five with slips (a wrong name, a bad time, a tool that should be off, an action with no yes, a step after a failure), and test your rules on them, by hand or in Python.",
+            "ar": "اختر مهمة حقيقية في جامعتك أو مدرستك، كحجز قاعات المذاكرة، أو الإجابة عن أسئلة جدول مقرّر، أو تذكير مجموعة مذاكرة. صمّم الوكيل أدوارًا: مخطِّطًا، ومدقِّقًا، ومنفِّذًا، وإنسانًا. واكتب خمس قواعد صارمة على الأقل للمدقِّق، دوالَّ بلغة Python أو كودًا وصفيًا واضحًا. ثم اكتب بنفسك عشرة استدعاءات مقترحة، خمسة سليمة وخمسة فيها أخطاء (اسم خاطئ، ووقت غير صالح، وأداة يجب أن تكون متوقفة، وفعل دون موافقة، وخطوة بعد فشل)، واختبر قواعدك عليها، يدويًا أو بلغة Python."
+          },
+          "deliverable": {
+            "en": "A role diagram, your rules, a table of the ten calls showing which rules passed or stopped each, and one slip your rules would still miss.",
+            "ar": "مخطّط للأدوار، وقواعدك، وجدول بالاستدعاءات العشرة يبيّن القواعد التي أجازت كلًّا منها أو أوقفته، وخطأ واحد ستفوّته قواعدك رغم ذلك."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: split an agent into roles and say what each may do.",
+                "ar": "أستطيع: تقسيم الوكيل إلى أدوار وتحديد ما يحق لكل دور."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: write strict checker rules and test them on good and bad calls.",
+                "ar": "أستطيع: كتابة قواعد صارمة للمدقِّق واختبارها على استدعاءات سليمة وخاطئة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: explain what more roles cost, in tokens and in compounding errors.",
+                "ar": "أستطيع: شرح كلفة الأدوار الإضافية، في الرموز وفي تضاعف الأخطاء."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Several agents, one job",
+            "ar": "عدّة وكلاء لمهمة واحدة"
+          },
+          "note": {
+            "en": "AI agents · University · Lesson 2",
+            "ar": "وكلاء الذكاء الاصطناعي، الجامعة، الدرس ٢"
+          },
+          "narration": {
+            "en": "Who checks the agent’s work before anything happens?",
+            "ar": "مَن يراجع عمل الوكيل قبل أن يحدث أي شيء؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Split an agent into planner, checker, runner and person.",
+              "Write strict rules that stop a bad call before it runs.",
+              "Weigh what more roles cost: tokens and compounding errors."
+            ],
+            "ar": [
+              "تقسيم الوكيل إلى مخطِّط ومدقِّق ومنفِّذ وإنسان.",
+              "كتابة قواعد صارمة توقف الاستدعاء الخاطئ قبل تنفيذه.",
+              "موازنة كلفة الأدوار الإضافية: الرموز وتضاعف الأخطاء."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "One part proposes; another checks before anything runs.",
+              "Strict rules in code make the first checker: they never guess.",
+              "Errors multiply: two steps at 90% are both right only 81% of the time."
+            ],
+            "ar": [
+              "جزء يقترح، وجزء آخر يفحص قبل أن يُنفَّذ أي شيء.",
+              "القواعد الصارمة في الكود هي المدقِّق الأول: لا تخمّن أبدًا.",
+              "الأخطاء تتضاعف: خطوتان بنسبة ٩٠٪ تصحّان معًا في ٨١٪ فقط."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Planner and checker",
+            "ar": "النشاط: مخطِّط ومدقِّق"
+          },
+          "bullets": {
+            "en": [
+              "Set-up (3 min): Groups of three: planner, checker, runner.",
+              "Play (10 min): The planner writes calls; the checker applies five rules.",
+              "Swap (5 min): Change roles and try to sneak a slip past.",
+              "Debrief (2 min): Which slip got through, and why?"
+            ],
+            "ar": [
+              "التحضير (٣ دقائق): مجموعات من ثلاثة: مخطِّط ومدقِّق ومنفِّذ.",
+              "اللعب (١٠ دقائق): يكتب المخطِّط استدعاءات، ويطبّق المدقِّق خمس قواعد.",
+              "التبديل (٥ دقائق): بدّلوا الأدوار وحاولوا تمرير خطأ.",
+              "النقاش (دقيقتان): أيّ خطأ مرّ، ولماذا؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Set-up (3 min): Form groups of three. The planner gets cards and a pen; the checker gets the list of five rules; the runner holds a made-up timetable and a weather list.",
+              "Play (10 min): Another group writes a request on a card. The planner writes a tool call for it on a new card. The checker tests the call against the five rules and either passes it to the runner or stops it with the rule’s name. The runner answers only calls that passed.",
+              "Swap (5 min): Change roles. The new planner tries to slip a mistake past the checker: a copied name, a 25:00 time, a step after a failure, an action with no yes.",
+              "Debrief (2 min): Share which slip got through and which rule you would add to catch it."
+            ],
+            "ar": [
+              "التحضير (٣ دقائق): كوّنوا مجموعات من ثلاثة. يأخذ المخطِّط بطاقات وقلمًا، ويأخذ المدقِّق قائمة القواعد الخمس، ويحمل المنفِّذ جدولًا خياليًا وقائمة بالطقس.",
+              "اللعب (١٠ دقائق): تكتب مجموعة أخرى طلبًا على بطاقة. يكتب المخطِّط له استدعاء أداة على بطاقة جديدة. ويختبر المدقِّق الاستدعاء بالقواعد الخمس، فإما أن يمرّره إلى المنفِّذ وإما أن يوقفه مع اسم القاعدة. ولا يجيب المنفِّذ إلا عن الاستدعاءات التي مرّت.",
+              "التبديل (٥ دقائق): بدّلوا الأدوار. يحاول المخطِّط الجديد تمرير خطأ من المدقِّق: اسمًا منسوخًا خطأً، أو وقتًا مثل 25:00، أو خطوة بعد فشل، أو فعلًا دون موافقة.",
+              "النقاش (دقيقتان): شاركوا أيّ خطأ مرّ، وأيّ قاعدة تضيفونها لالتقاطه."
+            ]
+          },
+          "note": {
+            "en": "Write the five rules large enough for the checker to read at a glance. Use only made-up names and classes.",
+            "ar": "اكتبوا القواعد الخمس بخط كبير يقرؤه المدقِّق بنظرة واحدة. واستعملوا أسماء وفصولًا خيالية فقط."
+          },
+          "narration": {
+            "en": "The planner proposes, the checker decides. Can you sneak a slip past?",
+            "ar": "المخطِّط يقترح، والمدقِّق يقرّر. هل تستطيع تمرير خطأ؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which mistakes can strict rules never catch?",
+              "When is a second model worth its cost as a checker?",
+              "Why should a stopped call go back to a person instead of a silent retry?"
+            ],
+            "ar": [
+              "ما الأخطاء التي لا تستطيع القواعد الصارمة التقاطها أبدًا؟",
+              "متى يستحق نموذج ثانٍ كلفته مدقِّقًا؟",
+              "لماذا يجب أن يعود الاستدعاء الموقوف إلى إنسان بدل إعادة محاولة صامتة؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one checker rule as Python or pseudocode, and one slip it would stop."
+            ],
+            "ar": [
+              "اكتب قاعدة واحدة للمدقِّق بلغة Python أو بكود وصفي، وخطأ واحدًا ستوقفه."
+            ]
+          },
+          "narration": {
+            "en": "One part proposes, another checks, and a person approves.",
+            "ar": "جزء يقترح، وجزء يفحص، وإنسان يوافق."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Several agents, one job",
+            "ar": "شرائح للمراجعة: عدّة وكلاء لمهمة واحدة"
+          },
+          "pages": 6,
+          "base": "agents-s4-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Several agents, one job",
+            "ar": "ورقة النشاط: عدّة وكلاء لمهمة واحدة"
+          },
+          "pages": 3,
+          "base": "agents-s4-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-s4-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.3",
+        "AGT.2",
+        "S.SD.C"
+      ]
+    },
+    {
+      "id": "agents-s4-3",
+      "title": {
+        "en": "Measuring an agent",
+        "ar": "قياس أداء الوكيل"
+      },
+      "minutes": 20,
+      "tryTomorrow": {
+        "en": "Write ten test requests for an assistant you use, five in odd wordings, with the right answer for each written before you run them. Score them, and note which group failed more.",
+        "ar": "اكتب عشرة طلبات اختبار لمساعد تستعمله، خمسة منها بصيغ غير مألوفة، واكتب الجواب الصحيح لكل طلب قبل أن تشغّلها. ثم صحّحها، ولاحظ أيّ مجموعة أخطأت أكثر."
+      },
+      "materials": {
+        "en": [
+          "Paper and a pen",
+          "A calculator or your phone’s calculator",
+          "Your phone, for the lab"
+        ],
+        "ar": [
+          "ورق وقلم",
+          "آلة حاسبة أو حاسبة الهاتف",
+          "هاتفك، للمختبر"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Measuring an agent",
+            "ar": "قياس أداء الوكيل"
+          },
+          "src": null,
+          "duration": 221,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Ten out of ten",
+                "ar": "عشرة من عشرة"
+              }
+            },
+            {
+              "at": 21.8,
+              "atBy": {
+                "en": 21.8,
+                "ar": 18.1
+              },
+              "label": {
+                "en": "A fair test set",
+                "ar": "مجموعة اختبار عادلة"
+              }
+            },
+            {
+              "at": 69.9,
+              "atBy": {
+                "en": 69.9,
+                "ar": 64.8
+              },
+              "label": {
+                "en": "Reading the score",
+                "ar": "قراءة النتيجة"
+              }
+            },
+            {
+              "at": 135,
+              "atBy": {
+                "en": 135,
+                "ar": 127.3
+              },
+              "label": {
+                "en": "After every change, and the lab",
+                "ar": "بعد كل تغيير، والمختبر"
+              }
+            },
+            {
+              "at": 186.8,
+              "atBy": {
+                "en": 186.8,
+                "ar": 178.6
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Darsi Tiny scores 29 out of 32 (91%). How sure can we be of that number?",
+                "ar": "حصل «درسي الصغير» على ٢٩ من ٣٢ (٩١٪). إلى أيّ حد يمكن أن نثق بهذا الرقم؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Exactly 91%, every time",
+                    "ar": "٩١٪ تمامًا، في كل مرة"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Roughly: one miss moves it by 3 points",
+                    "ar": "تقريبًا: فكل خطأ يحرّكه ٣ نقاط"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Not at all: 32 requests are useless",
+                    "ar": "لا نثق به أبدًا: ٣٢ طلبًا بلا فائدة"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "With 32 requests each miss is about 3 points, so 91% is rough. Small sets show where it fails; thousands of requests pin the number down.",
+                "ar": "مع ٣٢ طلبًا يحرّك كل خطأ النتيجة نحو ٣ نقاط، فالرقم ٩١٪ تقريبي. والمجموعات الصغيرة تُظهر أين يخطئ الوكيل، أما آلاف الطلبات فتثبّت الرقم: ٩٦–٩٨٪ مع الصيغ المدرَّب عليها، و٧٨–٨٠٪ مع الجديدة."
+              }
+            },
+            "at": 112.18,
+            "atBy": {
+              "en": 112.18,
+              "ar": 104.34
+            }
+          },
+          "transcript": {
+            "en": "A student showed me his agent: ten requests, ten right. Then I typed one in my own words, and it called the wrong tool. His ten tries had told us very little. Today: how to measure an agent, and how far to trust the number. An evaluation is a fixed test set: many requests with right answers decided in advance. You run the agent on all of them, score each the same strict way, and count. Keep it fixed, so scores can be compared. The test must include what the agent never saw. Darsi Tiny’s makers held out every fifth wording and a fifth of the names. Test only on trained wordings, and you measure memory, not skill. Score strictly: a request counts only if the tool and every detail are exactly right. Explain the term battery became this call. Right tool, wrong detail: it fails. In the evals lab, Darsi Tiny scores twenty-nine out of thirty-two. Trained wordings: sixteen out of sixteen. New wordings: thirteen out of sixteen. One number hides where an agent fails. Break it down by language, by wording and by tool. Here every miss is a new wording, and two of the three are in Arabic. Quick check! Twenty-nine out of thirty-two is ninety-one percent. How sure can we be of that number? Only roughly. With thirty-two requests, each miss moves the score by three points. On thousands of requests, the model card found ninety-six to ninety-eight percent with trained wordings, and seventy-eight to eighty with new ones. Small sets show where it fails; big ones pin the number down. Re-run the same set after every change: a new prompt, a new tool, a fine-tune. A change that fixes one thing can break another: a regression. In this lesson’s code, you’ll write the scorer. Each case has a group, the call you wanted and the call you got. Count the exact matches in each group. In the app, run all thirty-two requests and compare the columns. Then read every failure. If you taught Darsi Tiny the bus tool, test that model too. Your turn. A test set uses only wordings the model was trained on, and it scores a hundred percent. What does that show? That it remembers its training, not that it handles new words. Remember: fix the set, and decide the answers first. Hold out wordings and names, and score exactly. Break the score down, and re-run it after every change. Try it yourself: write twenty test requests for an assistant, half in odd wordings, in two languages. Write each right answer before you run them. Then score them, and break the score down.",
+            "ar": "طالب وراني الوكيل بتاعه: عشر طلبات، والعشرة صح. وبعدين كتبت واحد بكلامي أنا، فطلب الأداة الغلط. تجاربه العشرة ماقالتلناش حاجة تُذكر. النهارده: نقيس الوكيل إزاي، ونثق في الرقم لحد فين. التقييم مجموعة اختبار ثابتة: طلبات كتير، وإجاباتها الصح متحدّدة من الأول. بتشغّل الوكيل عليها كلها، وتصحّح كل واحد بنفس الطريقة الصارمة، وتعدّ. وخلّيها ثابتة، علشان النتايج تتقارن ببعض. الاختبار لازم يكون فيه حاجات الوكيل عمره ما شافها. اللي عملوا «درسي الصغير» خبّوا كل خامس صيغة وخُمس الأسامي من التدريب. ولو اختبرت بالصيغ اللي اتدرّب عليها بس، هتقيس الحفظ، مش المهارة. صحّح بصرامة: الطلب يتحسب صح بس لو الأداة وكل تفصيلة مظبوطين تمامًا. «اشرح مصطلح البطارية» بقى الطلب ده. الأداة صح، والتفصيلة غلط: يبقى غلط. في معمل التقييم، «درسي الصغير» بيجيب تسعة وعشرين من اتنين وتلاتين. الصيغ اللي اتدرّب عليها: ستاشر من ستاشر. والصيغ الجديدة: تلاتاشر من ستاشر. رقم واحد بيخبّي الوكيل بيغلط فين. فصّصه حسب اللغة، وحسب الصيغة، وحسب الأداة. وهنا كل الغلطات صيغ جديدة، واتنين من التلاتة بالعربي. سؤال سريع! تسعة وعشرين من اتنين وتلاتين يعني واحد وتسعين في المية. نقدر نثق في الرقم ده قد إيه؟ تقريبًا بس. مع اتنين وتلاتين طلب، كل غلطة بتحرّك النتيجة تلات نقط. وعلى آلاف الطلبات، بطاقة النموذج لقت ستة وتسعين لتمانية وتسعين في المية مع الصيغ المتدرّب عليها، وتمانية وسبعين لتمانين مع الجديدة. المجموعات الصغيرة بتوريك بيغلط فين، والكبيرة بتثبّت الرقم. شغّل نفس المجموعة تاني بعد كل تغيير: تعليمات جديدة، أداة جديدة، ضبط دقيق. التغيير اللي بيصلّح حاجة ممكن يبوّظ حاجة تانية: ودي اسمها «تراجع». في كود الدرس ده، هتكتب المصحّح. كل حالة فيها مجموعة، والطلب اللي كنت عايزه، والطلب اللي جالك. عدّ اللي متطابقين بالظبط في كل مجموعة. في التطبيق، شغّل الاتنين وتلاتين طلب كلهم وقارن الأعمدة. وبعدين اقرا كل غلطة. ولو علّمت «درسي الصغير» أداة الأتوبيس، اختبر النموذج ده كمان. دورك. مجموعة اختبار فيها بس الصيغ اللي النموذج اتدرّب عليها، وجاب مية في المية. ده يوري إيه؟ إنه فاكر تدريبه، مش إنه بيتعامل مع كلام جديد. افتكر: ثبّت المجموعة، وحدّد الإجابات الأول. خبّي صيغ وأسامي، وصحّح بالظبط. فصّص الرقم، وشغّله تاني بعد كل تغيير. جرّبها بنفسك: اكتب عشرين طلب اختبار لمساعد، نصهم بصيغ غريبة، وبلغتين. اكتب الإجابة الصح لكل واحد قبل ما تشغّلهم. وبعدين صحّحهم، وفصّص النتيجة."
+          },
+          "sources": {
+            "en": "/media/agents-s4-3/video-en.mp4",
+            "ar": "/media/agents-s4-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-s4-3/captions-en.vtt",
+            "ar": "/media/agents-s4-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-s4-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-s4-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-s4-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-s4-3/light/audio/en.opus",
+              "manifest.json": "/media/agents-s4-3/light/manifest.json",
+              "scenes.json": "/media/agents-s4-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-s4-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-s4-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 488,
+              "ar": 469
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Test sets, held-out data and honest scores",
+            "ar": "مجموعات الاختبار والبيانات المحجوبة والنتائج الصادقة"
+          },
+          "body": {
+            "en": "Trying an agent a few times tells you little, because you tend to choose requests it gets right. An evaluation is a fixed test set: many requests whose right answers you decide before running anything, scored the same strict way every time. Keep it fixed, so that scores from different days, prompts and models can be compared.\n\nA good test set contains what the agent never saw. Darsi Tiny’s makers held out every fifth wording of every request, a fifth of the names and eight of the forty villages from training. With wordings it was trained on, it gets the right tool and every detail 96–98% of the time, even for names it never saw; with new wordings, 78–80%. A test made only of trained wordings measures memory, not skill. And score exactly: “Explain the term battery” became glossary{\"term\":\"the term battery\"}, the right tool with a wrong detail, so it fails.\n\nThen break the score down by language, by wording and by tool. In the evals lab Darsi Tiny scores 29 out of 32 (91%): trained wordings 16/16, new wordings 13/16 (English 7/8, Arabic 6/8), and the right tool alone 31/32. Every miss is a new wording, which tells you what to fix or guard. Be honest about how sure the number is: with 32 requests each miss moves the score by about three points, and a 95% confidence interval for 29 out of 32 runs from about 76% to 97%. Small sets show where an agent fails; it takes hundreds or thousands of requests to pin the number down.\n\nFinally, run the same set again after every change: a new prompt, a new tool, a fine-tune. A change that fixes one thing can break another (a regression), and only a fixed test set will show it. Decide your pass mark before you look at the results, and add every new failure you find to the set.",
+            "ar": "تجربة الوكيل بضع مرات لا تخبرك بالكثير، لأنك تميل إلى اختيار طلبات يصيب فيها. أما التقييم فمجموعة اختبار ثابتة: طلبات كثيرة تحدّد أجوبتها الصحيحة قبل تشغيل أي شيء، وتُصحَّح بالطريقة الصارمة نفسها في كل مرة. وأبقِها ثابتة، لتمكن مقارنة النتائج بين الأيام والتعليمات والنماذج المختلفة.\n\nوالمجموعة الجيدة تضم ما لم يره الوكيل قط. فقد حجب صانعو «درسي الصغير» عن التدريب كل خامس صيغة لكل نوع من الطلبات، وخُمس الأسماء، وثماني قرى من الأربعين. ومع الصيغ التي تدرّب عليها يصيب الأداة وكل تفصيل في ٩٦–٩٨٪ من المرات، حتى مع أسماء لم يرها، أما مع الصيغ الجديدة ففي ٧٨–٨٠٪. فالاختبار المكوَّن من الصيغ المدرَّب عليها وحدها يقيس الحفظ، لا المهارة. وصحّح بدقة: فقد صار الطلب «Explain the term battery» الاستدعاءَ ⁦glossary{\"term\":\"the term battery\"}⁩، أي الأداة الصحيحة بتفصيل خاطئ، فيُحسب خطأً.\n\nثم فصّل النتيجة حسب اللغة والصيغة والأداة. ففي مختبر التقييم يحصل «درسي الصغير» على ٢٩ من ٣٢ (٩١٪): الصيغ المدرَّب عليها ١٦/١٦، والجديدة ١٣/١٦ (الإنجليزية ٧/٨، والعربية ٦/٨)، والأداة وحدها صحيحة في ٣١/٣٢. وكل الأخطاء في صيغ جديدة، وهذا يخبرك بما تصلحه أو تحرسه. وكن صادقًا في مدى يقينك بالرقم: فمع ٣٢ طلبًا يحرّك كل خطأ النتيجة نحو ثلاث نقاط، وفترة الثقة ٩٥٪ لنتيجة ٢٩ من ٣٢ تمتد من نحو ٧٦٪ إلى ٩٧٪. فالمجموعات الصغيرة تُظهر أين يخطئ الوكيل، ويحتاج تثبيت الرقم إلى مئات الطلبات أو آلافها.\n\nوأخيرًا، شغّل المجموعة نفسها من جديد بعد كل تغيير: تعليمات جديدة، أو أداة جديدة، أو ضبط دقيق. فالتغيير الذي يصلح شيئًا قد يُفسد آخر (وهذا هو التراجع)، ولا تكشفه إلا مجموعة اختبار ثابتة. وحدّد درجة النجاح قبل أن تنظر في النتائج، وأضف إلى المجموعة كل خطأ جديد تجده."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Evaluation (test set)",
+                "ar": "التقييم (مجموعة الاختبار)"
+              },
+              "def": {
+                "en": "A fixed set of requests with right answers decided in advance, scored the same way every time.",
+                "ar": "مجموعة ثابتة من الطلبات أجوبتها الصحيحة محدّدة مسبقًا، تُصحَّح بالطريقة نفسها في كل مرة."
+              }
+            },
+            {
+              "term": {
+                "en": "Held-out data",
+                "ar": "البيانات المحجوبة"
+              },
+              "def": {
+                "en": "Wordings and names kept out of training, so a test measures skill rather than memory.",
+                "ar": "صيغ وأسماء تُحجب عن التدريب، كي يقيس الاختبار المهارة لا الحفظ."
+              }
+            },
+            {
+              "term": {
+                "en": "Exact match",
+                "ar": "التطابق التام"
+              },
+              "def": {
+                "en": "A request counts only if the tool and every detail are exactly right.",
+                "ar": "لا يُحسب الطلب صحيحًا إلا إن صحّت الأداة وكل تفصيل تمامًا."
+              }
+            },
+            {
+              "term": {
+                "en": "Regression",
+                "ar": "التراجع"
+              },
+              "def": {
+                "en": "Something that worked before breaks after a change; re-running a fixed test set reveals it.",
+                "ar": "شيء كان يعمل ثم تعطّل بعد تغيير، وتكشفه إعادة تشغيل مجموعة اختبار ثابتة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A test set uses only wordings the model was trained on, and it scores 100%. What does that show?",
+            "ar": "مجموعة اختبار لا تضم إلا صيغًا تدرّب عليها النموذج، فحصل على ١٠٠٪. ماذا يُظهر ذلك؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "That it understands any wording",
+                "ar": "أنه يفهم أيّ صيغة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "That it remembers what it was trained on",
+                "ar": "أنه يتذكّر ما تدرّب عليه"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "That it is safe to give to users",
+                "ar": "أنه آمن لتقديمه للمستخدمين"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Trained wordings measure memory. Only held-out wordings and names show how it copes with requests it never saw: Darsi Tiny drops from 16/16 to 13/16.",
+            "ar": "الصيغ المدرَّب عليها تقيس الحفظ. ولا يُظهر قدرته على التعامل مع طلبات لم يرها إلا الصيغ والأسماء المحجوبة عن التدريب: ينخفض «درسي الصغير» فيها من ١٦/١٦ إلى ١٣/١٦."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p2",
+          "lang": "python",
+          "prompt": {
+            "en": "Each test case is (group, want, got): its group, the call you wanted and the call the agent made, as dicts. Write score(cases) that returns a dict giving, for each group, the share of its cases where got is exactly want. (The agent’s calls are given: no model runs here.)",
+            "ar": "كل حالة اختبار ثلاثية ⁦(group, want, got)⁩: مجموعتها، والاستدعاء المطلوب، والاستدعاء الذي كتبه الوكيل، في صورة قواميس. اكتب ⁦score(cases)⁩ لتعيد قاموسًا يعطي لكل مجموعة نسبة حالاتها التي يطابق فيها got المطلوبَ want تمامًا. (استدعاءات الوكيل معطاة: لا يعمل نموذج هنا.)"
+          },
+          "starter": "def score(cases):\n    out = {}\n    return out\n",
+          "solution": "def score(cases):\n    hits, total = {}, {}\n    for g, want, got in cases:\n        total[g] = total.get(g, 0) + 1\n        if got == want:\n            hits[g] = hits.get(g, 0) + 1\n    out = {}\n    for g in total:\n        out[g] = hits.get(g, 0) / total[g]\n    return out\n",
+          "tests": [
+            {
+              "check": "W = {\"tool\": \"glossary\", \"args\": {\"term\": \"battery\"}}\nG = {\"tool\": \"glossary\", \"args\": {\"term\": \"the term battery\"}}\nC = [(\"new\", W, G), (\"new\", W, W), (\"trained\", W, W)]\nassert score(C) == {\"new\": 0.5, \"trained\": 1.0}, \"new should be 0.5 and trained 1.0\"",
+              "hint": {
+                "en": "A right tool with a wrong detail is not a match: compare the whole dicts.",
+                "ar": "الأداة الصحيحة بتفصيل خاطئ ليست تطابقًا: قارن القاموسين كاملين."
+              }
+            },
+            {
+              "check": "W = {\"tool\": \"weather\", \"args\": {\"place\": \"Kafi\"}}\nassert score([(\"ar-new\", W, None)]) == {\"ar-new\": 0.0}, \"A group with no hits scores 0.0, it isn't left out\"",
+              "hint": {
+                "en": "Count every case in total, even when nothing matched, and use hits.get(g, 0).",
+                "ar": "عُدّ كل حالة في total حتى إن لم يتطابق شيء، واستعمل ⁦hits.get(g, 0)⁩."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "Count two things per group: how many cases, and how many matched.",
+              "ar": "عُدّ شيئين لكل مجموعة: عدد الحالات، وعدد المتطابقة منها."
+            },
+            {
+              "en": "total[g] = total.get(g, 0) + 1 counts; got == want compares the tool and every detail at once.",
+              "ar": "تعدّ ⁦total[g] = total.get(g, 0) + 1⁩، وتقارن ⁦got == want⁩ الأداة وكل تفصيل دفعة واحدة."
+            }
+          ],
+          "explain": {
+            "en": "Scoring by group shows where an agent fails, which one overall number hides. Comparing whole dicts is exact match: the tool and every detail must agree, so “the term battery” fails.",
+            "ar": "التصحيح حسب المجموعة يُظهر أين يخطئ الوكيل، وهذا ما يخفيه رقم إجمالي واحد. ومقارنة القاموسين كاملين هي التطابق التام: يجب أن تتفق الأداة وكل تفصيل، ولذلك يُحسب «the term battery» خطأً."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "p3",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "want = {\"tool\": \"glossary\", \"args\": {\"term\": \"battery\"}}\ngot = {\"tool\": \"glossary\", \"args\": {\"term\": \"the term battery\"}}\nprint(got[\"tool\"] == want[\"tool\"], got == want)"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "True True",
+                "ar": "True True"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "True False",
+                "ar": "True False"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "False False",
+                "ar": "False False"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "The tools match (both glossary), so the first comparison is True; the details differ (“the term battery” against “battery”), so the whole calls are not equal. Exact-match scoring counts this as a failure.",
+            "ar": "الأداتان متطابقتان (كلتاهما glossary)، فالمقارنة الأولى True، لكن التفاصيل مختلفة («the term battery» مقابل «battery»)، فالاستدعاءان غير متساويين. والتصحيح بالتطابق التام يحسب هذا خطأً."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: run the 32 requests and compare the columns: trained wordings against new ones, English against Arabic. Read every failure and decide whether it was the wrong tool or a wrong detail. If you teach Darsi Tiny the bus tool in the next lesson’s lab, come back and test that model too. The lab is done after one full run of 32.",
+            "ar": "جرّب: شغّل الطلبات الاثنين والثلاثين وقارن الأعمدة: الصيغ المدرَّب عليها بالجديدة، والإنجليزية بالعربية. اقرأ كل خطأ وقرّر: هل كانت الأداة خاطئة أم أحد التفاصيل؟ وإن علّمت «درسي الصغير» أداة الحافلات في مختبر الدرس التالي، فعُد واختبر ذلك النموذج أيضًا. ينتهي المختبر بعد تشغيل كامل للطلبات الاثنين والثلاثين."
+          },
+          "tool": "evals"
+        },
+        {
+          "type": "multi",
+          "id": "p4",
+          "prompt": {
+            "en": "Which belong in a good test set for an agent? Choose all that apply.",
+            "ar": "أيّ مما يلي مكانه في مجموعة اختبار جيدة لوكيل؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Requests in every language its users write",
+                "ar": "طلبات بكل لغة يكتب بها مستخدموه"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Wordings and names held out of training",
+                "ar": "صيغ وأسماء محجوبة عن التدريب"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The right answer for each, decided before the run",
+                "ar": "الجواب الصحيح لكل طلب، محدّدًا قبل التشغيل"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Only the requests it got right last time",
+                "ar": "الطلبات التي أصاب فيها في المرة الماضية فقط"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "Brand-new requests each run, so the agent can’t memorise them",
+                "ar": "طلبات جديدة تمامًا في كل تشغيل، كي لا يحفظها الوكيل"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "Cover every language, include held-out wordings and names, and fix the answers in advance. Keeping only past successes hides failures, and changing the set every run makes scores impossible to compare: keep a fixed set and add new cases deliberately.",
+            "ar": "غطِّ كل لغة، وضمّن صيغًا وأسماء محجوبة، وحدّد الأجوبة مسبقًا. أما الاحتفاظ بالنجاحات السابقة فقط فيخفي الأخطاء، وتغيير المجموعة في كل تشغيل يجعل مقارنة النتائج مستحيلة: أبقِ المجموعة ثابتة وأضف إليها حالات جديدة عن قصد."
+          }
+        },
+        {
+          "type": "order",
+          "id": "p5",
+          "prompt": {
+            "en": "Put the steps of an honest evaluation in order.",
+            "ar": "رتّب خطوات التقييم الصادق."
+          },
+          "steps": [
+            {
+              "en": "Collect real requests, including new wordings and both languages",
+              "ar": "اجمع طلبات حقيقية، بصيغ جديدة وباللغتين"
+            },
+            {
+              "en": "Write the right answer for each, before running anything",
+              "ar": "اكتب الجواب الصحيح لكل طلب، قبل تشغيل أي شيء"
+            },
+            {
+              "en": "Run the agent on the whole set",
+              "ar": "شغّل الوكيل على المجموعة كلها"
+            },
+            {
+              "en": "Score every case the same strict way",
+              "ar": "صحّح كل حالة بالطريقة الصارمة نفسها"
+            },
+            {
+              "en": "Break the score down and read every failure",
+              "ar": "فصّل النتيجة واقرأ كل خطأ"
+            },
+            {
+              "en": "Re-run the same set after every change",
+              "ar": "أعد تشغيل المجموعة نفسها بعد كل تغيير"
+            }
+          ],
+          "explain": {
+            "en": "Answers come before the run so you can’t bend them to fit; strict scoring comes before reading failures; and the fixed set is re-run after every change to catch regressions.",
+            "ar": "تأتي الأجوبة قبل التشغيل كي لا تُطوِّعها لتناسب النتائج، ويأتي التصحيح الصارم قبل قراءة الأخطاء، ثم يُعاد تشغيل المجموعة الثابتة بعد كل تغيير لالتقاط التراجع."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p6",
+          "prompt": {
+            "en": "An agent that scores 16 out of 16 on wordings it was trained on will score about the same on new wordings.",
+            "ar": "الوكيل الذي يحصل على ١٦ من ١٦ في صيغ تدرّب عليها سيحصل على نحو ذلك في الصيغ الجديدة."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Trained wordings measure memory. Darsi Tiny scores 16/16 on them but 13/16 on new wordings, and 78–80% on thousands of new-wording requests: only held-out wordings show how it copes with requests it never saw.",
+            "ar": "الصيغ المدرَّب عليها تقيس الحفظ. فـ«درسي الصغير» يحصل فيها على ١٦/١٦، لكنه يحصل على ١٣/١٦ في الصيغ الجديدة، وعلى ٧٨–٨٠٪ في آلاف الطلبات بصيغ جديدة: فالصيغ المحجوبة وحدها تُظهر كيف يتعامل مع طلبات لم يرها."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of an AI tool you or your classmates rely on. What would a fair test set for it contain, and what score would you need before trusting it with something that matters?",
+            "ar": "فكّر في أداة ذكاء اصطناعي تعتمد عليها أنت أو زملاؤك. ماذا تضم مجموعة اختبار عادلة لها، وما النتيجة التي تحتاجها قبل أن تأتمنها على أمر مهم؟"
+          },
+          "placeholder": {
+            "en": "For example: “A note-taking assistant. Lectures in two languages, with names it has never seen; I’d want 95% on the key facts before relying on it.”",
+            "ar": "مثلًا: «مساعد لتدوين الملاحظات. محاضرات بلغتين، فيها أسماء لم يرها قط، وأريد ٩٥٪ في المعلومات الأساسية قبل الاعتماد عليه.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Evaluate an assistant",
+            "ar": "مشروع: قيّم مساعدًا ذكيًا"
+          },
+          "task": {
+            "en": "Write a test set of 20 requests for a chat assistant or agent you can use: 10 in wordings you would expect and 10 in unusual ones, across two languages if you can. Before running anything, write the right answer for each and how you will score it (exact, or by a rule you state). Run the set, score every case, and break the score down by wording and language. Then change one thing, such as a clearer instruction or a different assistant, and run the same set again. Use no real personal data in any request.",
+            "ar": "اكتب مجموعة اختبار من ٢٠ طلبًا لمساعد محادثة أو وكيل تستطيع استعماله: ١٠ بصيغ متوقّعة و١٠ بصيغ غير مألوفة، وبلغتين إن استطعت. وقبل تشغيل أي شيء، اكتب الجواب الصحيح لكل طلب وطريقة تصحيحه (تطابق تام، أو قاعدة تذكرها). ثم شغّل المجموعة، وصحّح كل حالة، وفصّل النتيجة حسب الصيغة واللغة. ثم غيّر شيئًا واحدًا، كتعليمات أوضح أو مساعد آخر، وشغّل المجموعة نفسها مرة أخرى. ولا تضع بيانات شخصية حقيقية في أي طلب."
+          },
+          "deliverable": {
+            "en": "Your test set with the expected answers, a results table by group, the scores before and after your change, and a paragraph on how sure you can be with 20 requests.",
+            "ar": "مجموعة اختبارك مع الأجوبة المتوقّعة، وجدول للنتائج حسب المجموعة، والنتيجتان قبل التغيير وبعده، وفقرة عن مدى اليقين الممكن مع ٢٠ طلبًا."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: build a test set with answers decided in advance and held-out wordings.",
+                "ar": "أستطيع: بناء مجموعة اختبار بأجوبة محدّدة مسبقًا وصيغ محجوبة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: score exactly and break the score down by group.",
+                "ar": "أستطيع: التصحيح بتطابق تام وتفصيل النتيجة حسب المجموعة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: say honestly how sure a score from a small test set is.",
+                "ar": "أستطيع: أن أقول بصدق مدى اليقين في نتيجة من مجموعة اختبار صغيرة."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Measuring an agent",
+            "ar": "قياس أداء الوكيل"
+          },
+          "note": {
+            "en": "AI agents · University · Lesson 3",
+            "ar": "وكلاء الذكاء الاصطناعي، الجامعة، الدرس ٣"
+          },
+          "narration": {
+            "en": "How do you measure an agent, and how far can you trust the number?",
+            "ar": "كيف تقيس أداء الوكيل، وإلى أيّ حد تثق بالرقم؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Build a fixed test set with held-out wordings and names.",
+              "Score exactly, and break the score down by group.",
+              "Say honestly how sure a score is, and re-test after changes."
+            ],
+            "ar": [
+              "بناء مجموعة اختبار ثابتة فيها صيغ وأسماء محجوبة.",
+              "التصحيح بتطابق تام، وتفصيل النتيجة حسب المجموعة.",
+              "قول مدى اليقين في النتيجة بصدق، وإعادة الاختبار بعد التغييرات."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "A fixed test set, answers decided first, scored the same way.",
+              "Trained wordings measure memory; held-out ones measure skill: 16/16 against 13/16.",
+              "29 out of 32 is roughly 76% to 97%: small sets find failures, big ones pin numbers."
+            ],
+            "ar": [
+              "مجموعة اختبار ثابتة، أجوبتها محدّدة أولًا، وتُصحَّح بالطريقة نفسها.",
+              "الصيغ المدرَّب عليها تقيس الحفظ، والمحجوبة تقيس المهارة: ١٦/١٦ مقابل ١٣/١٦.",
+              "٢٩ من ٣٢ تعني تقريبًا ٧٦٪ إلى ٩٧٪: المجموعات الصغيرة تكشف الأخطاء، والكبيرة تثبّت الأرقام."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Write the agent’s exam",
+            "ar": "النشاط: اكتب امتحان الوكيل"
+          },
+          "bullets": {
+            "en": [
+              "Write (6 min): Ten requests for a made-up timetable agent.",
+              "Answer key (4 min): The right call for each, before testing.",
+              "Swap and run (6 min): A partner plays the agent.",
+              "Score (4 min): Exact match, by group. What failed?"
+            ],
+            "ar": [
+              "الكتابة (٦ دقائق): عشرة طلبات لوكيل جدول خيالي.",
+              "مفتاح الإجابة (٤ دقائق): الاستدعاء الصحيح لكل طلب، قبل الاختبار.",
+              "التبادل والتشغيل (٦ دقائق): يمثّل زميلك دور الوكيل.",
+              "التصحيح (٤ دقائق): تطابق تام، حسب المجموعة. ما الذي أخفق؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Write (6 min): In pairs, write ten requests for a made-up timetable agent: five in plain wordings (“What does 4A have on Monday?”) and five in unusual ones (“Monday, 4A: what’s on?”).",
+              "Answer key (4 min): On a separate sheet, write the exact call each request should produce, with the tool and every detail, before anyone plays the agent.",
+              "Swap and run (6 min): Swap requests with another pair. One partner plays the agent and may only use a list of phrases they agreed in advance; the other writes down each call the agent makes.",
+              "Score (4 min): Score with the answer key, exact match only, and give the plain and unusual groups separate scores. Discuss what failed and how sure ten requests can make you."
+            ],
+            "ar": [
+              "الكتابة (٦ دقائق): في أزواج، اكتبا عشرة طلبات لوكيل جدول خيالي: خمسة بصيغ بسيطة («ما حصص 4A يوم الاثنين؟») وخمسة بصيغ غير مألوفة («الاثنين، 4A: ماذا هناك؟»).",
+              "مفتاح الإجابة (٤ دقائق): على ورقة منفصلة، اكتبا الاستدعاء الدقيق الذي يجب أن يُنتجه كل طلب، بالأداة وكل تفصيل، قبل أن يمثّل أحد دور الوكيل.",
+              "التبادل والتشغيل (٦ دقائق): تبادلا الطلبات مع زوج آخر. يمثّل أحدكما الوكيل ولا يستعمل إلا قائمة عبارات اتفقتما عليها مسبقًا، ويكتب الآخر كل استدعاء يكتبه الوكيل.",
+              "التصحيح (٤ دقائق): صحّحا بمفتاح الإجابة، بالتطابق التام فقط، وأعطيا مجموعة الصيغ البسيطة ومجموعة الصيغ غير المألوفة نتيجتين منفصلتين. وناقشا ما الذي أخفق، وإلى أيّ حد تمنحكما عشرة طلبات يقينًا."
+            ]
+          },
+          "note": {
+            "en": "Use made-up classes and days only. A fixed list of phrases for the “agent” makes the unusual wordings fail, just as a small model does.",
+            "ar": "استعملوا فصولًا وأيامًا خيالية فقط. فقائمة العبارات الثابتة لـ«الوكيل» تجعل الصيغ غير المألوفة تُخفق، تمامًا كما يحدث مع نموذج صغير."
+          },
+          "narration": {
+            "en": "Decide the answers first. Then see how the agent does on words it never saw.",
+            "ar": "حدّد الأجوبة أولًا. ثم انظر كيف يتصرّف الوكيل مع كلمات لم يرها قط."
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why must the answers be written before the agent runs?",
+              "What would you need to trust a score enough to deploy an agent?",
+              "Which of your study tools has never been tested on your own language?"
+            ],
+            "ar": [
+              "لماذا يجب أن تُكتب الأجوبة قبل تشغيل الوكيل؟",
+              "ماذا تحتاج كي تثق بنتيجة تكفي لاعتماد وكيل؟",
+              "أيّ أدوات دراستك لم تُختبر قط بلغتك؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One thing a fair test set must contain, and why 29 out of 32 is not exactly 91%."
+            ],
+            "ar": [
+              "شيء واحد يجب أن تضمه مجموعة الاختبار العادلة، ولماذا لا تعني ٢٩ من ٣٢ نسبة ٩١٪ بالضبط."
+            ]
+          },
+          "narration": {
+            "en": "Fix the set, hold some out, score exactly, and re-test after every change.",
+            "ar": "ثبّت المجموعة، واحجب بعضها، وصحّح بدقة، وأعد الاختبار بعد كل تغيير."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Measuring an agent",
+            "ar": "شرائح للمراجعة: قياس أداء الوكيل"
+          },
+          "pages": 6,
+          "base": "agents-s4-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Measuring an agent",
+            "ar": "ورقة النشاط: قياس أداء الوكيل"
+          },
+          "pages": 3,
+          "base": "agents-s4-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-s4-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.3",
+        "S.SD.A",
+        "DC.1.2"
+      ]
+    },
+    {
+      "id": "agents-s4-4",
+      "title": {
+        "en": "Fine-tuning and guardrails",
+        "ar": "الضبط الدقيق وحواجز الحماية"
+      },
+      "minutes": 22,
+      "tryTomorrow": {
+        "en": "Write a one-page guardrail plan for an agent you would like to build: its fewest tools, the actions that need approval of the exact action, the checks in code, what it logs, and the tests you will re-run after every change.",
+        "ar": "اكتب في صفحة واحدة خطة لحواجز الحماية في وكيلٍ تحب أن تبنيه: أقل الأدوات التي يحتاجها، والأفعال التي تحتاج إلى موافقة على الفعل نفسه، والفحوص في الكود، وما يسجّله، والاختبارات التي ستعيد تشغيلها بعد كل تغيير."
+      },
+      "materials": {
+        "en": [
+          "Paper and a pen",
+          "Your phone, charged or plugged in, for the lab (a training run can take up to about 11 minutes on an old phone)"
+        ],
+        "ar": [
+          "ورق وقلم",
+          "هاتفك مشحونًا أو موصولًا بالشاحن، للمختبر (قد يستغرق التدريب نحو ١١ دقيقة على هاتف قديم)"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Fine-tuning and guardrails",
+            "ar": "الضبط الدقيق وحواجز الحماية"
+          },
+          "src": null,
+          "duration": 215,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Learned one thing, forgot another",
+                "ar": "تعلّم شيئًا ونسي آخر"
+              }
+            },
+            {
+              "at": 21.9,
+              "atBy": {
+                "en": 21.9,
+                "ar": 20.7
+              },
+              "label": {
+                "en": "Fine-tuning and forgetting",
+                "ar": "الضبط الدقيق والنسيان"
+              }
+            },
+            {
+              "at": 85.3,
+              "atBy": {
+                "en": 85.3,
+                "ar": 84.3
+              },
+              "label": {
+                "en": "Learned safety, and defence in depth",
+                "ar": "الأمان المتعلَّم، والحماية متعدّدة الطبقات"
+              }
+            },
+            {
+              "at": 141.9,
+              "atBy": {
+                "en": 141.9,
+                "ar": 137.8
+              },
+              "label": {
+                "en": "The gate in code, and the lab",
+                "ar": "البوابة في الكود، والمختبر"
+              }
+            },
+            {
+              "at": 179.4,
+              "atBy": {
+                "en": 179.4,
+                "ar": 173.2
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Which of these fine-tuned models would you put in front of real users?",
+                "ar": "أيّ هذه النماذج المضبوطة ضبطًا دقيقًا تقدّمه لمستخدمين حقيقيين؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Nothing mixed in: it learned the bus tool best",
+                    "ar": "الذي لم تُخلط معه أمثلة قديمة: فقد تعلّم أداة الحافلة أفضل"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "48 mixed in, once it passes the whole test set again",
+                    "ar": "الذي خُلط معه ٤٨ مثالًا قديمًا، بعد أن ينجح في مجموعة الاختبار كلها مجددًا"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Whichever one trained fastest",
+                    "ar": "أيّها تدرّب أسرع"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "With 48 old conversations mixed in it keeps all 8 old skills (and 5 of 8 bus requests). And every fine-tune is a new model, so it must pass the full test set again.",
+                "ar": "مع ٤٨ محادثة قديمة يحتفظ بالمهارات القديمة الثماني كلها (ويصيب ٥ من ٨ طلبات للحافلة). وكل ضبط دقيق ينتج نموذجًا جديدًا، فلا بد أن ينجح في مجموعة الاختبار كلها من جديد."
+              }
+            },
+            "at": 70.09,
+            "atBy": {
+              "en": 70.09,
+              "ar": 69.47
+            }
+          },
+          "transcript": {
+            "en": "I taught Darsi Tiny a new bus tool on my phone. Seven bus questions out of eight: right! Then I asked about the weather, and it called no tool at all. It learned something new, and forgot what it knew. Today: changing a model safely, and guardrails that don’t depend on it. Fine-tuning changes a model’s numbers from examples. On the phone, only Darsi Tiny’s top layer learns: sixteen examples, fifteen steps. That’s up to about eleven minutes on an old phone. With no old conversations mixed in, it gets seven bus questions out of eight, but only one old skill in eight. Mix in sixteen, and it keeps five. Mix in forty-eight, and it keeps all eight, while the bus drops to five. That mixing is called replay. Quick check! Which of these fine-tuned models would you put in front of real users? The one with forty-eight mixed in, and only after it passes the whole test set again. A new tool is worth little if the old skills are gone. Every fine-tune is a new model: evaluate it like one. Darsi Tiny also learned to refuse harmful requests, and to ask before sending. But reworded refusals got a tool call twenty-eight percent of the time in English, and twelve in Arabic. Yes, send it, on its own, makes it invent a message. And fine-tuning changes the very numbers behind those habits. So put the guardrails in code, around the model. Give each task the fewest tools. Approve the exact action, check every detail, and log everything. Then re-run the evaluation after every change. Why the exact action? If the app only remembers your yes, the model could send a different text to someone else. So compare what will run with what you were shown. If anything differs, ask again. In this lesson’s code, you’ll write the gate. It runs a call only if it is exactly the approved one, and logs the decision either way. In the app, ask about a bus before teaching. Teach with forty-eight old conversations mixed in, and test the new tool and the old skills. Then teach with none, and compare. Your turn. A model has learned to ask before it sends a message. Why still check the approval in code? Because learned behaviour can fail. Remember: fine-tuning teaches and forgets, so mix old examples in and test both. Learned safety is not a guarantee. Guard actions in code: fewest tools, exact approval, checks, logs and tests. Try it yourself: write a guardrail plan for an agent you’d like to build. List its tools, the actions needing approval, the checks in code, the logs, and the tests you’ll re-run.",
+            "ar": "علّمت «درسي الصغير» أداة أتوبيس جديدة على موبايلي. سبع أسئلة عن الأتوبيس من تمانية: صح! وبعدين سألته عن الطقس، فماطلبش ولا أداة خالص. اتعلّم حاجة جديدة، ونسي اللي كان عارفه. النهارده: نغيّر النموذج بأمان، وحواجز حماية مش معتمدة عليه. الضبط الدقيق بيغيّر أرقام النموذج من أمثلة. على الموبايل، الطبقة اللي فوق بس في «درسي الصغير» هي اللي بتتعلّم: ستاشر مثال، وخمستاشر خطوة. وده ممكن ياخد لحد حوالي حداشر دقيقة على موبايل قديم. من غير ما تخلط محادثات قديمة، بيجيب سبعة من تمانية في الأتوبيس، بس مهارة قديمة واحدة بس من تمانية. اخلط ستاشر، يحتفظ بخمسة. اخلط تمانية وأربعين، يحتفظ بالتمانية كلهم، والأتوبيس ينزل لخمسة. والخلط ده اسمه «الإعادة». سؤال سريع! أنهي نموذج من دول، بعد الضبط الدقيق، تحطه قدام مستخدمين حقيقيين؟ اللي اتخلط فيه تمانية وأربعين، وبس بعد ما ينجح في مجموعة الاختبار كلها تاني. الأداة الجديدة مالهاش قيمة لو المهارات القديمة راحت. كل ضبط دقيق نموذج جديد: قيّمه على الأساس ده. «درسي الصغير» كمان اتعلّم يرفض الطلبات المؤذية، ويسأل قبل ما يبعت. بس الرفض بصيغ جديدة طلب أداة تمانية وعشرين في المية من المرات بالإنجليزي، واتناشر بالعربي. و«أيوه، ابعتها» لوحدها بتخلّيه يألّف رسالة. والضبط الدقيق بيغيّر نفس الأرقام اللي شايلة العادات دي. علشان كده حط حواجز الحماية في الكود، حوالين النموذج. إدّي كل مهمة أقل أدوات ممكنة. وافق على الفعل بالظبط، وراجع كل تفصيلة، وسجّل كل حاجة. وبعدين شغّل التقييم تاني بعد كل تغيير. ليه الفعل بالظبط؟ لو التطبيق فاكر بس إنك قلت «أيوه»، النموذج ممكن يبعت نص تاني لحد تاني. فقارن اللي هيتنفّذ باللي اتعرض عليك. ولو أي حاجة اختلفت، اسأل تاني. في كود الدرس ده، هتكتب البوابة. بتشغّل الطلب بس لو هو نفس الطلب اللي اتوافق عليه بالظبط، وبتسجّل القرار في الحالتين. في التطبيق، اسأل عن أتوبيس قبل التعليم. علّمه وإنت خالط تمانية وأربعين محادثة قديمة، واختبر الأداة الجديدة والمهارات القديمة. وبعدين علّمه من غير قديم، وقارن. دورك. نموذج اتعلّم يسأل قبل ما يبعت رسالة. ليه برضه نراجع الموافقة في الكود؟ علشان السلوك المتعلَّم ممكن يفشل. افتكر: الضبط الدقيق بيعلّم وبينسّي، فاخلط أمثلة قديمة واختبر الاتنين. الأمان المتعلَّم مش ضمان. احمي الأفعال بالكود: أقل أدوات، وموافقة على الفعل بالظبط، ومراجعات، وسجل، واختبارات. جرّبها بنفسك: اكتب خطة حماية لوكيل نفسك تبنيه. اكتب أدواته، والأفعال اللي محتاجة موافقة، والمراجعات اللي في الكود، والسجل، والاختبارات اللي هتعيدها."
+          },
+          "sources": {
+            "en": "/media/agents-s4-4/video-en.mp4",
+            "ar": "/media/agents-s4-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-s4-4/captions-en.vtt",
+            "ar": "/media/agents-s4-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-s4-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-s4-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-s4-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-s4-4/light/audio/en.opus",
+              "manifest.json": "/media/agents-s4-4/light/manifest.json",
+              "scenes.json": "/media/agents-s4-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-s4-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-s4-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 478,
+              "ar": 465
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Fine-tuning, forgetting and guardrails in code",
+            "ar": "الضبط الدقيق والنسيان وحواجز الحماية في الكود"
+          },
+          "body": {
+            "en": "Fine-tuning changes a model’s numbers so it learns from examples. In the teach lab, Darsi Tiny learns a new bus tool from 16 example conversations (8 per language) in 15 training steps, on your phone. Only its top block and final norm train, about 394,000 of its 2.94 million numbers; the rest stay fixed. That takes seconds to a couple of minutes on a laptop and up to about eleven minutes on an old phone, and the result (1.6 MB) stays on that phone.\n\nNew learning can overwrite old skills: this is called catastrophic forgetting. Before teaching, Darsi Tiny gets 0 of 8 bus requests right and 8 of 8 old skills. Taught with no old conversations mixed in, it gets 7/8 bus requests but only 1/8 old skills. With 16 old conversations replayed alongside the new ones: 7/8 and 5/8. With 48: 5/8 and 8/8. Replay trades a little of the new skill for keeping the old ones. Every fine-tune is a new model, so it must pass the full test set again, including its safety cases.\n\nSafety a model has learned is not a guarantee. Darsi Tiny learned to refuse cheating, harm and scams, and to ask before sending a message. But refusals worded in ways it hadn’t seen got a tool call 28% of the time in English and 12% in Arabic, and «نعم، أرسلها.» (“Yes, send it.”) on its own makes it invent a message. Fine-tuning changes the same numbers that hold these habits, so a careless or deliberate fine-tune can wear them away. Behaviour you need every time can’t rest on the model alone.\n\nSo guard actions in code, around the model, in layers (defence in depth): give each task only the tools it needs (least privilege); bind approval to the exact action, comparing what will run with what the person was shown; check every detail’s shape and source; log every decision, allowed or refused; and re-run the evaluation after every change. Each layer can fail on its own, but they rarely all fail together.",
+            "ar": "الضبط الدقيق يغيّر أرقام النموذج ليتعلّم من أمثلة. ففي مختبر «علّم الوكيل أداة جديدة» يتعلّم «درسي الصغير» أداة جديدة للحافلات من ١٦ محادثة نموذجية (٨ لكل لغة) في ١٥ خطوة تدريب، على هاتفك. ولا يتدرّب منه إلا الكتلة العليا والتطبيع الأخير، أي نحو ٣٩٤ ألفًا من أرقامه البالغة ٢٫٩٤ مليون، وتبقى البقية ثابتة. ويستغرق ذلك من ثوانٍ إلى دقيقتين تقريبًا على حاسوب محمول، ونحو ١١ دقيقة على هاتف قديم، وتبقى النتيجة (١٫٦ ميغابايت) على ذلك الهاتف.\n\nوقد يمحو التعلّم الجديد المهارات القديمة: وهذا ما يُسمّى النسيان الكارثي. فقبل التعليم يصيب «درسي الصغير» ٠ من ٨ طلبات للحافلات، و٨ من ٨ في مهاراته القديمة. وإذا عُلّم دون أن تُخلط معه محادثات قديمة أصاب ٧/٨ في الحافلات، لكن ١/٨ فقط في المهارات القديمة. ومع ١٦ محادثة قديمة يُعاد التدرّب عليها إلى جانب الجديدة: ٧/٨ و٥/٨. ومع ٤٨: ٥/٨ و٨/٨. فإعادة القديم تقايض قليلًا من المهارة الجديدة بالحفاظ على القديمة. وكل ضبط دقيق ينتج نموذجًا جديدًا، فلا بد أن ينجح في مجموعة الاختبار كلها من جديد، بما فيها حالات الأمان.\n\nوالأمان الذي تعلّمه النموذج ليس ضمانًا. فقد تعلّم «درسي الصغير» أن يرفض الغش والأذى والاحتيال، وأن يسأل قبل إرسال رسالة. لكن طلبات الرفض المصوغة بطرق لم يرها حصلت على استدعاء أداة في ٢٨٪ من المرات بالإنجليزية و١٢٪ بالعربية، وعبارة «نعم، أرسلها.» وحدها تجعله يختلق رسالة. والضبط الدقيق يغيّر الأرقام نفسها التي تحمل هذه العادات، فقد يمحوها ضبطٌ مهمل أو متعمَّد. فالسلوك الذي تحتاجه في كل مرة لا يمكن أن يعتمد على النموذج وحده.\n\nلذلك احرس الأفعال بالكود، حول النموذج، على طبقات (الحماية متعدّدة الطبقات): أعطِ كل مهمة الأدوات التي تحتاجها فقط (أقل الصلاحيات)، واربط الموافقة بالفعل نفسه بمقارنة ما سيُنفَّذ بما عُرض على الشخص، وافحص شكل كل تفصيل ومصدره، وسجّل كل قرار، مسموحًا كان أو مرفوضًا، وأعد تشغيل التقييم بعد كل تغيير. فكل طبقة قد تفشل وحدها، لكنها نادرًا ما تفشل كلها معًا."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Fine-tuning",
+                "ar": "الضبط الدقيق"
+              },
+              "def": {
+                "en": "Training an existing model further on new examples, changing some of its numbers.",
+                "ar": "مواصلة تدريب نموذج موجود على أمثلة جديدة، فتتغيّر بعض أرقامه."
+              }
+            },
+            {
+              "term": {
+                "en": "Catastrophic forgetting",
+                "ar": "النسيان الكارثي"
+              },
+              "def": {
+                "en": "New learning overwrites old skills: 7/8 on the new tool, but 1/8 on old skills.",
+                "ar": "تعلّم جديد يمحو المهارات القديمة: ٧/٨ في الأداة الجديدة، لكن ١/٨ في المهارات القديمة."
+              }
+            },
+            {
+              "term": {
+                "en": "Replay",
+                "ar": "إعادة القديم"
+              },
+              "def": {
+                "en": "Mixing old examples into fine-tuning so the model keeps its old skills.",
+                "ar": "خلط أمثلة قديمة في الضبط الدقيق كي يحتفظ النموذج بمهاراته القديمة."
+              }
+            },
+            {
+              "term": {
+                "en": "Defence in depth",
+                "ar": "الحماية متعدّدة الطبقات"
+              },
+              "def": {
+                "en": "Several independent guards in code (fewest tools, exact approval, checks, logs, tests), so one failing isn’t enough.",
+                "ar": "عدة حواجز مستقلة في الكود (أقل الأدوات، والموافقة على الفعل نفسه، والفحوص، والسجلات، والاختبارات)، فلا يكفي أن يفشل واحد منها."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A model has learned to ask before it sends a message. Why still check the approval in code?",
+            "ar": "تعلّم نموذج أن يسأل قبل أن يرسل رسالة. فلماذا نتحقّق من الموافقة في الكود أيضًا؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Code runs faster than the model",
+                "ar": "لأن الكود أسرع من النموذج"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Learned behaviour can fail on new wordings or after fine-tuning",
+                "ar": "لأن السلوك المتعلَّم قد يفشل مع صيغ جديدة أو بعد الضبط الدقيق"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The model can’t send messages anyway",
+                "ar": "لأن النموذج لا يستطيع إرسال الرسائل أصلًا"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Asking first is a learned habit, and habits fail: “Yes, send it” on its own makes Darsi Tiny invent a message, and fine-tuning can wear the habit away. A check in code holds every time.",
+            "ar": "السؤال قبل الإرسال عادة متعلَّمة، والعادات قد تفشل: فعبارة «نعم، أرسلها.» وحدها تجعل «درسي الصغير» يختلق رسالة، والضبط الدقيق قد يمحو العادة. أما الفحص في الكود فيعمل في كل مرة."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p2",
+          "lang": "python",
+          "prompt": {
+            "en": "Write gate(call, approved, log). It appends (tool, ok) to log, where ok says whether call is exactly the approved call, and returns \"run\" only then; otherwise it returns \"ask again\". approved is None when nothing has been approved. (No model here: the calls are given.)",
+            "ar": "اكتب ⁦gate(call, approved, log)⁩. تضيف إلى log الزوج ⁦(tool, ok)⁩، حيث تعني ok أن call هو الاستدعاء الموافَق عليه approved تمامًا، ولا تعيد ⁦\"run\"⁩ إلا عندئذ، وإلا أعادت ⁦\"ask again\"⁩. وتكون approved هي None حين لا توجد موافقة. (لا نموذج هنا: الاستدعاءات معطاة.)"
+          },
+          "starter": "def gate(call, approved, log):\n    return \"run\"\n",
+          "solution": "def gate(call, approved, log):\n    ok = call == approved\n    log.append((call[\"tool\"], ok))\n    if ok:\n        return \"run\"\n    return \"ask again\"\n",
+          "tests": [
+            {
+              "check": "A = {\"tool\": \"send_message\", \"args\": {\"to\": \"Mrs Mensah\", \"text\": \"The trip is cancelled.\"}}\nlog = []\nassert gate(A, A, log) == \"run\", \"The approved call may run\"\nassert log == [(\"send_message\", True)], \"Log every decision\"",
+              "hint": {
+                "en": "Append (call[\"tool\"], ok) to log before you return.",
+                "ar": "أضف ⁦(call[\"tool\"], ok)⁩ إلى log قبل أن تعيد القيمة."
+              }
+            },
+            {
+              "check": "A = {\"tool\": \"send_message\", \"args\": {\"to\": \"Mrs Mensah\", \"text\": \"The trip is cancelled.\"}}\nB = {\"tool\": \"send_message\", \"args\": {\"to\": \"Mrs Mensah\", \"text\": \"The trip is on.\"}}\nlog = []\nassert gate(B, A, log) == \"ask again\", \"A different text needs a new yes\"\nassert log == [(\"send_message\", False)], \"Log refusals too\"",
+              "hint": {
+                "en": "Compare the whole call, not just the tool: the text changed.",
+                "ar": "قارن الاستدعاء كله، لا الأداة فقط: فالنص تغيّر."
+              }
+            },
+            {
+              "check": "A = {\"tool\": \"send_message\", \"args\": {\"to\": \"Mrs Mensah\", \"text\": \"The trip is cancelled.\"}}\nassert gate(A, None, []) == \"ask again\", \"Nothing approved yet: ask\""
+            }
+          ],
+          "hints": [
+            {
+              "en": "ok = call == approved compares the tool and every detail at once (and is False when approved is None).",
+              "ar": "تقارن ⁦ok = call == approved⁩ الأداة وكل تفصيل دفعة واحدة (وتكون False حين تكون approved هي None)."
+            },
+            {
+              "en": "Log first, then return \"run\" if ok, else \"ask again\".",
+              "ar": "سجّل أولًا، ثم أعد ⁦\"run\"⁩ إن كانت ok صحيحة، وإلا ⁦\"ask again\"⁩."
+            }
+          ],
+          "explain": {
+            "en": "Binding approval to the exact call means a yes to one message can’t send a different one, and logging both runs and refusals leaves a record to audit. The gate never asks the model whether it was approved: the code decides.",
+            "ar": "ربط الموافقة بالاستدعاء نفسه يعني أن «نعم» لرسالة لا يمكن أن تُرسل رسالة أخرى، وتسجيل التنفيذ والرفض كليهما يترك سجلًا للمراجعة. والبوابة لا تسأل النموذج أبدًا إن كانت هناك موافقة: الكود هو الذي يقرّر."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p3",
+          "prompt": {
+            "en": "Match each teach-lab run to what Darsi Tiny scores on 8 bus requests and 8 old skills.",
+            "ar": "صِل كل تشغيل في مختبر التعليم بنتيجة «درسي الصغير» في ٨ طلبات للحافلات و٨ مهارات قديمة."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Before teaching",
+                "ar": "قبل التعليم"
+              },
+              "right": {
+                "en": "Bus 0/8, old skills 8/8",
+                "ar": "الحافلات ٠/٨، والقديمة ٨/٨"
+              }
+            },
+            {
+              "left": {
+                "en": "No old conversations mixed in",
+                "ar": "دون خلط محادثات قديمة"
+              },
+              "right": {
+                "en": "Bus 7/8, old skills 1/8",
+                "ar": "الحافلات ٧/٨، والقديمة ١/٨"
+              }
+            },
+            {
+              "left": {
+                "en": "16 old conversations mixed in",
+                "ar": "مع خلط ١٦ محادثة قديمة"
+              },
+              "right": {
+                "en": "Bus 7/8, old skills 5/8",
+                "ar": "الحافلات ٧/٨، والقديمة ٥/٨"
+              }
+            },
+            {
+              "left": {
+                "en": "48 old conversations mixed in",
+                "ar": "مع خلط ٤٨ محادثة قديمة"
+              },
+              "right": {
+                "en": "Bus 5/8, old skills 8/8",
+                "ar": "الحافلات ٥/٨، والقديمة ٨/٨"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Without replay the new tool is learned but old skills collapse (catastrophic forgetting); the more old conversations are replayed, the more old skills survive, at a small cost to the new tool.",
+            "ar": "دون إعادة القديم تُتعلَّم الأداة الجديدة لكن المهارات القديمة تنهار (النسيان الكارثي)، وكلما زادت المحادثات القديمة المعادة بقي من المهارات القديمة أكثر، بكلفة صغيرة على الأداة الجديدة."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: ask about a bus before teaching. Then teach with 48 old conversations mixed in, and test the bus tool on villages it never saw and the old skills. Teach again with none mixed in and compare the two results. One full run, tested, finishes the lab. On an old phone a run takes about 3 to 11 minutes, so plug in first; you can press Stop at any time.",
+            "ar": "جرّب: اسأل عن حافلة قبل التعليم. ثم علّمه مع خلط ٤٨ محادثة قديمة، واختبر أداة الحافلات مع قرى لم يرها، واختبر مهاراته القديمة. ثم علّمه مجددًا دون خلط أي محادثة قديمة وقارن النتيجتين. ينتهي المختبر بتشغيل كامل واحد مع اختباره. وعلى الهاتف القديم يستغرق التشغيل من ٣ إلى ١١ دقيقة تقريبًا، فصِله بالشاحن أولًا، ويمكنك الضغط على «إيقاف» في أي وقت."
+          },
+          "tool": "teach"
+        },
+        {
+          "type": "bug",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "This approval gate has one line that lets a different message through after a single yes. Which line?",
+            "ar": "في بوابة الموافقة هذه سطر واحد يسمح بمرور رسالة مختلفة بعد «نعم» واحدة. أيّ سطر؟"
+          },
+          "code": "def gate(call, shown, reply, log):\n    if reply != \"yes\":\n        return \"ask\"\n    log.append(call[\"tool\"])\n    if call[\"tool\"] == shown[\"tool\"]:\n        return \"run\"\n    return \"ask\"",
+          "line": 5,
+          "fix": "    if call == shown:",
+          "explain": {
+            "en": "Comparing only the tool means any send_message call passes once the person said yes to one: the model could change the text or the recipient. Compare the whole call with the one the person was shown.",
+            "ar": "مقارنة الأداة وحدها تعني أن أي استدعاء send_message يمرّ ما دام الشخص وافق على واحد: فقد يغيّر النموذج النص أو المستلم. قارن الاستدعاء كله بالاستدعاء الذي عُرض على الشخص."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p5",
+          "prompt": {
+            "en": "Which of these keep protecting you even if the model’s learned safety fails? Choose all that apply.",
+            "ar": "أيّ مما يلي يستمر في حمايتك حتى لو فشل الأمان الذي تعلّمه النموذج؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "An allow-list of tools in code for each task",
+                "ar": "قائمة مسموحة من الأدوات في الكود لكل مهمة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Comparing each call with the approved call in code",
+                "ar": "مقارنة كل استدعاء بالاستدعاء الموافَق عليه في الكود"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A line in the prompt: “Always ask before sending.”",
+                "ar": "سطر في التعليمات: «اسأل دائمًا قبل الإرسال.»"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "A log of every action, allowed or refused",
+                "ar": "سجل لكل فعل، مسموحًا كان أو مرفوضًا"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "Trusting the refusals it learned in training",
+                "ar": "الثقة بطلبات الرفض التي تعلّمها في التدريب"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Allow-lists, exact-approval checks and logs live in code and hold whatever the model writes. A line in the prompt and learned refusals are both behaviour of the model, the very thing that can fail on new wordings or after fine-tuning.",
+            "ar": "القوائم المسموحة وفحوص الموافقة على الفعل نفسه والسجلات موجودة في الكود، وتصمد مهما كتب النموذج. أما سطر التعليمات والرفض المتعلَّم فكلاهما من سلوك النموذج نفسه، وهو بالضبط ما قد يفشل مع الصيغ الجديدة أو بعد الضبط الدقيق."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p6",
+          "prompt": {
+            "en": "Fine-tuning a model on a new tool can’t change its safety behaviour, because it only learns from the new examples.",
+            "ar": "الضبط الدقيق لنموذج على أداة جديدة لا يمكن أن يغيّر سلوكه في الأمان، لأنه يتعلّم من الأمثلة الجديدة فقط."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Fine-tuning changes numbers the old behaviour also depends on: with no old conversations mixed in, Darsi Tiny keeps only 1 of 8 old skills. Refusals and asking first can fade the same way, so re-test them after every fine-tune.",
+            "ar": "الضبط الدقيق يغيّر أرقامًا يعتمد عليها السلوك القديم أيضًا: فدون خلط محادثات قديمة لا يحتفظ «درسي الصغير» إلا بمهارة واحدة من ثمانٍ. وقد يتلاشى الرفض والسؤال قبل الإرسال بالطريقة نفسها، فأعد اختبارهما بعد كل ضبط دقيق."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p7",
+          "prompt": {
+            "en": "What do you suggest?",
+            "ar": "ماذا تقترح؟"
+          },
+          "who": {
+            "en": "Dr Farah Rahman, lecturer",
+            "ar": "د. فرح رحمن، محاضِرة"
+          },
+          "initial": {
+            "en": "F",
+            "ar": "ف"
+          },
+          "situation": {
+            "en": "A classmate has fine-tuned an assistant for your study group to call a new “room booking” tool. It books rooms correctly in his tests, and he wants to switch it on for the whole group today, with the approval step off “because it learned to ask”.",
+            "ar": "ضبط زميلك ضبطًا دقيقًا مساعدًا لمجموعة المذاكرة كي يستدعي أداة جديدة «لحجز القاعات». وهو يحجز القاعات صحيحًا في اختباراته، ويريد تشغيله للمجموعة كلها اليوم، مع إيقاف خطوة الموافقة «لأنه تعلّم أن يسأل»."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Ship it: the new tool works.”",
+                "ar": "«شغّله: الأداة الجديدة تعمل.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "His tests cover only the new tool. The fine-tune may have worn away old skills or safety habits, and with approval off nothing would catch it.",
+                "ar": "اختباراته لا تغطي إلا الأداة الجديدة. وربما محا الضبط الدقيق مهارات قديمة أو عادات أمان، ومع إيقاف الموافقة لن يلتقط ذلك شيء."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Run the full test set first, including refusals and asking first, and keep approval on in code.”",
+                "ar": "«شغّل مجموعة الاختبار كلها أولًا، ومنها حالات الرفض والسؤال قبل الإرسال، وأبقِ الموافقة مفعّلة في الكود.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "A fine-tune is a new model: the full set shows what it forgot, and the check in code holds even if the learned habit doesn’t.",
+                "ar": "الضبط الدقيق ينتج نموذجًا جديدًا: فالمجموعة الكاملة تُظهر ما نسيه، والفحص في الكود يصمد حتى لو لم تصمد العادة المتعلَّمة."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Ask it twice whether it will ask before booking.”",
+                "ar": "«اسأله مرتين إن كان سيسأل قبل الحجز.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "The model’s own answer isn’t evidence: learned habits fail on new wordings. Test it on a fixed set, and keep the check in code.",
+                "ar": "جواب النموذج عن نفسه ليس دليلًا: فالعادات المتعلَّمة تفشل مع الصيغ الجديدة. اختبره بمجموعة ثابتة، وأبقِ الفحص في الكود."
+              }
+            }
+          ]
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of an agent you would like to build or use. Which of its behaviours must hold every time, and which layer of code would guarantee each one?",
+            "ar": "فكّر في وكيلٍ تحب أن تبنيه أو تستعمله. أيّ سلوكياته يجب أن يصمد في كل مرة، وأيّ طبقة من الكود تضمن كلًّا منها؟"
+          },
+          "placeholder": {
+            "en": "For example: “It must never email anyone without my yes. A gate in code compares the exact email with the one I approved, and logs it.”",
+            "ar": "مثلًا: «يجب ألا يراسل أحدًا أبدًا دون موافقتي. بوابة في الكود تقارن الرسالة نفسها بالرسالة التي وافقت عليها، وتسجّلها.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A guardrail plan, tested",
+            "ar": "مشروع: خطة لحواجز الحماية، مُختبَرة"
+          },
+          "task": {
+            "en": "Choose an agent you would like to build, for a club, a class or a study group. Write its guardrail plan: the fewest tools it needs, which actions need approval of the exact action, the checks on every detail, what gets logged, and the test set you will re-run after any change. Implement one guardrail in Python (an approval gate, an allow-list or a detail check) and test it with at least five cases, including two that must be blocked. If you can, teach Darsi Tiny the bus tool in the lab and record its old and new scores with 0 and with 48 old conversations mixed in.",
+            "ar": "اختر وكيلًا تحب أن تبنيه، لنادٍ أو صف أو مجموعة مذاكرة. واكتب خطة حواجز الحماية فيه: أقل الأدوات التي يحتاجها، والأفعال التي تحتاج إلى موافقة على الفعل نفسه، والفحوص على كل تفصيل، وما يُسجَّل، ومجموعة الاختبار التي ستعيد تشغيلها بعد أي تغيير. ثم نفّذ حاجزًا واحدًا بلغة Python (بوابة موافقة، أو قائمة مسموحة، أو فحصًا لتفصيل) واختبره بخمس حالات على الأقل، منها حالتان يجب منعهما. وإن استطعت، علّم «درسي الصغير» أداة الحافلات في المختبر، وسجّل نتائجه القديمة والجديدة دون خلط محادثات قديمة ومع خلط ٤٨ منها."
+          },
+          "deliverable": {
+            "en": "Your plan on one page, your guardrail code with its test cases and results, and three sentences on which risks remain.",
+            "ar": "خطتك في صفحة واحدة، وكود الحاجز مع حالات اختباره ونتائجها، وثلاث جمل عن المخاطر التي تبقى."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: explain the trade-off between learning a new skill and forgetting old ones.",
+                "ar": "أستطيع: شرح المقايضة بين تعلّم مهارة جديدة ونسيان المهارات القديمة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: explain why learned safety needs guardrails in code.",
+                "ar": "أستطيع: شرح لماذا يحتاج الأمان المتعلَّم إلى حواجز حماية في الكود."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: design and test layered guardrails for an agent.",
+                "ar": "أستطيع: تصميم حواجز حماية متعدّدة الطبقات لوكيلٍ واختبارها."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Fine-tuning and guardrails",
+            "ar": "الضبط الدقيق وحواجز الحماية"
+          },
+          "note": {
+            "en": "AI agents · University · Lesson 4",
+            "ar": "وكلاء الذكاء الاصطناعي، الجامعة، الدرس ٤"
+          },
+          "narration": {
+            "en": "How do you change a model safely, and what protects you when it fails?",
+            "ar": "كيف تغيّر نموذجًا بأمان، وما الذي يحميك حين يفشل؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Measure what fine-tuning teaches and what it makes a model forget.",
+              "Explain why learned safety is not a guarantee.",
+              "Design layered guardrails in code: tools, approval, checks, logs, tests."
+            ],
+            "ar": [
+              "قياس ما يعلّمه الضبط الدقيق وما يُنسيه للنموذج.",
+              "شرح لماذا لا يكون الأمان المتعلَّم ضمانًا.",
+              "تصميم حواجز حماية متعدّدة الطبقات في الكود: الأدوات، والموافقة، والفحوص، والسجلات، والاختبارات."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "Fine-tuning teaches and forgets: with no replay, 7/8 new but 1/8 old.",
+              "Learned refusals and asking first can fail: 28% and 12% of reworded refusals got a call.",
+              "Guard actions in code: fewest tools, exact approval, checks, logs, re-tests."
+            ],
+            "ar": [
+              "الضبط الدقيق يعلّم ويُنسي: دون إعادة القديم، ٧/٨ في الجديد و١/٨ في القديم.",
+              "الرفض والسؤال المتعلَّمان قد يفشلان: ٢٨٪ و١٢٪ من الرفض المعاد صوغه حصل على استدعاء.",
+              "احرس الأفعال بالكود: أقل الأدوات، والموافقة على الفعل نفسه، والفحوص، والسجلات، وإعادة الاختبار."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Layers of defence",
+            "ar": "النشاط: طبقات الحماية"
+          },
+          "bullets": {
+            "en": [
+              "Pick (3 min): An agent and one risky action.",
+              "Layers (7 min): Write five guards, one per card.",
+              "Attack (7 min): A partner removes cards one at a time.",
+              "Debrief (3 min): Which guard mattered most?"
+            ],
+            "ar": [
+              "الاختيار (٣ دقائق): وكيل وفعل واحد خطِر.",
+              "الطبقات (٧ دقائق): اكتب خمسة حواجز، بطاقة لكل حاجز.",
+              "الهجوم (٧ دقائق): يزيل زميلك البطاقات واحدة تلو الأخرى.",
+              "النقاش (٣ دقائق): أيّ حاجز كان الأهم؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Pick (3 min): In pairs, choose an agent (a study-group assistant, a club helper) and one risky action it could take, such as messaging everyone or booking a room.",
+              "Layers (7 min): Write five guards on separate cards: the fewest tools, approval of the exact action, a detail check, a log, a re-test after changes. Under each, write what it stops.",
+              "Attack (7 min): Your partner describes a failure (the model rewords a refusal, invents a message after “yes”, forgets after a fine-tune) and removes one card at a time. Decide after each removal whether the action would still be stopped.",
+              "Debrief (3 min): Agree which guard mattered most, and which failure no single card would stop on its own."
+            ],
+            "ar": [
+              "الاختيار (٣ دقائق): في أزواج، اختارا وكيلًا (مساعدًا لمجموعة مذاكرة، أو معينًا لنادٍ) وفعلًا خطِرًا واحدًا قد يقوم به، كمراسلة الجميع أو حجز قاعة.",
+              "الطبقات (٧ دقائق): اكتبا خمسة حواجز على بطاقات منفصلة: أقل الأدوات، والموافقة على الفعل نفسه، وفحص التفاصيل، والسجل، وإعادة الاختبار بعد التغييرات. واكتبا تحت كل حاجز ما يمنعه.",
+              "الهجوم (٧ دقائق): يصف زميلك فشلًا (النموذج يعيد صياغة طلب رفض، أو يختلق رسالة بعد «نعم»، أو ينسى بعد ضبط دقيق) ويزيل بطاقة واحدة في كل مرة. وقرّرا بعد كل إزالة: هل سيظل الفعل ممنوعًا؟",
+              "النقاش (٣ دقائق): اتفقا على أهم حاجز، وعلى الفشل الذي لا تمنعه أي بطاقة وحدها."
+            ]
+          },
+          "note": {
+            "en": "Use made-up agents, people and messages only. Five index cards or torn paper squares are enough.",
+            "ar": "استعملا وكلاء وأشخاصًا ورسائل خيالية فقط. وتكفي خمس بطاقات أو مربعات ورق ممزّقة."
+          },
+          "narration": {
+            "en": "Take one guard away at a time. When does the risky action get through?",
+            "ar": "أزل حاجزًا واحدًا في كل مرة. متى يمرّ الفعل الخطِر؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "When is fine-tuning worth it, and when is a new tool or a clearer instruction enough?",
+              "Why is a model’s promise to ask first not enough?",
+              "Which guardrail would you never remove, and why?"
+            ],
+            "ar": [
+              "متى يستحق الضبط الدقيق عناءه، ومتى تكفي أداة جديدة أو تعليمات أوضح؟",
+              "لماذا لا يكفي وعد النموذج بأن يسأل أولًا؟",
+              "أيّ حاجز حماية لن تزيله أبدًا، ولماذا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One thing fine-tuning can make a model forget, and the guard in code that still protects you."
+            ],
+            "ar": [
+              "شيء واحد قد يُنسيه الضبط الدقيق للنموذج، والحاجز في الكود الذي يظل يحميك."
+            ]
+          },
+          "narration": {
+            "en": "Learned safety can fail. Guard the actions in code, and test every change.",
+            "ar": "الأمان المتعلَّم قد يفشل. احرس الأفعال بالكود، واختبر كل تغيير."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Fine-tuning and guardrails",
+            "ar": "شرائح للمراجعة: الضبط الدقيق وحواجز الحماية"
+          },
+          "pages": 6,
+          "base": "agents-s4-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Fine-tuning and guardrails",
+            "ar": "ورقة النشاط: الضبط الدقيق وحواجز الحماية"
+          },
+          "pages": 3,
+          "base": "agents-s4-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-s4-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.3",
+        "AGT.2",
+        "S.ET.C"
+      ]
+    },
+    {
+      "id": "agents-s4-check",
+      "title": {
+        "en": "Agent engineering: planning, multi-agent, evals and guardrails: unit check",
+        "ar": "هندسة الوكلاء: التخطيط وتعدّد الوكلاء والتقييم وحواجز الحماية: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Pick the habit from this unit you need most (checking every step, pinning key facts, a fixed test set or exact approval in code) and use it on a real project this week.",
+        "ar": "اختر من هذه الوحدة العادة التي تحتاجها أكثر (فحص كل خطوة، أو تثبيت الحقائق المهمة، أو مجموعة اختبار ثابتة، أو الموافقة على الفعل نفسه في الكود) واستعملها في مشروع حقيقي هذا الأسبوع."
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "Each step of a four-step agent is right 90% of the time. About how often is the whole task right?",
+            "ar": "كل خطوة من خطوات وكيل ذي أربع خطوات صحيحة في ٩٠٪ من المرات. كم مرة تقريبًا تكون المهمة كلها صحيحة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "About 90%",
+                "ar": "نحو ٩٠٪"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "About 66%",
+                "ar": "نحو ٦٦٪"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "About 36%",
+                "ar": "نحو ٣٦٪"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "The chances multiply: 0.9 × 0.9 × 0.9 × 0.9 ≈ 0.66. Errors compound along a chain, so each step needs its own check.",
+            "ar": "الاحتمالات تُضرب: ٠٫٩ × ٠٫٩ × ٠٫٩ × ٠٫٩ ≈ ٠٫٦٦. فالأخطاء تتراكم على طول السلسلة، ولذلك تحتاج كل خطوة إلى فحصها الخاص."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "A model’s context window is its only memory within a conversation: what falls out of it is forgotten.",
+            "ar": "نافذة سياق النموذج هي ذاكرته الوحيدة في المحادثة: ما يسقط منها يُنسى."
+          },
+          "answer": true,
+          "explain": {
+            "en": "The model sees only the tokens in its window (384 for Darsi Tiny). Anything dropped is gone, and the model can’t even tell it’s missing, so the app decides what stays.",
+            "ar": "لا يرى النموذج إلا الرموز التي في نافذته (٣٨٤ لـ«درسي الصغير»). وكل ما يُسقط يضيع، بل لا يستطيع النموذج أن يعرف أنه ناقص، ولذلك يقرّر التطبيق ما يبقى."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q3",
+          "prompt": {
+            "en": "Which help an agent keep what matters as a conversation grows? Choose all that apply.",
+            "ar": "أيّ مما يلي يساعد الوكيل على الاحتفاظ بالمهم كلما طالت المحادثة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Short notes in place of finished exchanges",
+                "ar": "ملاحظات قصيرة مكان الحوارات المنتهية"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Pinning the key facts, such as dates and places",
+                "ar": "تثبيت الحقائق المهمة، كالتواريخ والأماكن"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Dropping the oldest turns, with no notes",
+                "ar": "إسقاط أقدم الأدوار، دون ملاحظات"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Retrieving only the part of a document a step needs",
+                "ar": "استرجاع الجزء الذي تحتاجه الخطوة فقط من المستند"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "Keeping everything until the window overflows",
+                "ar": "الاحتفاظ بكل شيء حتى تفيض النافذة"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Notes, pinned facts and retrieval keep the essentials in fewer tokens. Dropping turns without notes loses whatever later turns depend on, and keeping everything simply stops working when the window is full.",
+            "ar": "الملاحظات والحقائق المثبّتة والاسترجاع تحفظ الأساسي برموز أقل. أما إسقاط الأدوار دون ملاحظات فيُضيع ما تعتمد عليه الأدوار اللاحقة، والاحتفاظ بكل شيء يتوقف ببساطة حين تمتلئ النافذة."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q4",
+          "prompt": {
+            "en": "Match each role in a team agent to its job.",
+            "ar": "صِل كل دور في فريق الوكيل بمهمته."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Planner",
+                "ar": "المخطِّط"
+              },
+              "right": {
+                "en": "Proposes the next tool call",
+                "ar": "يقترح استدعاء الأداة التالي"
+              }
+            },
+            {
+              "left": {
+                "en": "Checker",
+                "ar": "المدقِّق"
+              },
+              "right": {
+                "en": "Tests the call against strict rules",
+                "ar": "يختبر الاستدعاء بقواعد صارمة"
+              }
+            },
+            {
+              "left": {
+                "en": "Runner",
+                "ar": "المنفِّذ"
+              },
+              "right": {
+                "en": "Runs the tool and returns the result",
+                "ar": "يشغّل الأداة ويعيد النتيجة"
+              }
+            },
+            {
+              "left": {
+                "en": "Person",
+                "ar": "الإنسان"
+              },
+              "right": {
+                "en": "Approves actions and handles what’s stopped",
+                "ar": "يوافق على الأفعال ويتولّى ما يُوقَف"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Splitting the work lets one part check another before anything happens: the model only proposes, code checks and runs, and a person keeps the final say on actions.",
+            "ar": "تقسيم العمل يتيح لجزء أن يفحص جزءًا آخر قبل أن يحدث شيء: فالنموذج يقترح فقط، والكود يفحص وينفّذ، ويبقى للإنسان القول الفصل في الأفعال."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q5",
+          "prompt": {
+            "en": "A test set scored by group. What does this program print?",
+            "ar": "مجموعة اختبار صُحّحت حسب المجموعات. ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "hits = {\"en\": 15, \"ar\": 14}\ntotal = {\"en\": 16, \"ar\": 16}\nprint(hits[\"ar\"] / total[\"ar\"])"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "0.875",
+                "ar": "0.875"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "14",
+                "ar": "14"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "0.9375",
+                "ar": "0.9375"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The Arabic group has 14 hits out of 16 cases, and 14 / 16 = 0.875. Scoring each group separately shows where an agent is weaker.",
+            "ar": "في المجموعة العربية ١٤ إصابة من ١٦ حالة، و١٤ ÷ ١٦ = ٠٫٨٧٥. وتصحيح كل مجموعة على حدة يُظهر أين يضعف الوكيل."
+          }
+        },
+        {
+          "type": "order",
+          "id": "q6",
+          "prompt": {
+            "en": "Put the steps of an honest evaluation in order.",
+            "ar": "رتّب خطوات التقييم الصادق."
+          },
+          "steps": [
+            {
+              "en": "Collect requests, including held-out wordings",
+              "ar": "اجمع الطلبات، ومنها صيغ محجوبة"
+            },
+            {
+              "en": "Decide the right answers before running",
+              "ar": "حدّد الأجوبة الصحيحة قبل التشغيل"
+            },
+            {
+              "en": "Run the agent and score every case exactly",
+              "ar": "شغّل الوكيل وصحّح كل حالة بتطابق تام"
+            },
+            {
+              "en": "Break the score down and read the failures",
+              "ar": "فصّل النتيجة واقرأ الأخطاء"
+            },
+            {
+              "en": "Re-run the same set after every change",
+              "ar": "أعد تشغيل المجموعة نفسها بعد كل تغيير"
+            }
+          ],
+          "explain": {
+            "en": "Answers are fixed before the run so they can’t be bent to fit, scoring is exact, failures are read by group, and the same set is re-run to catch regressions.",
+            "ar": "تُحدَّد الأجوبة قبل التشغيل كي لا تُطوَّع لتناسب النتائج، ويكون التصحيح بتطابق تام، وتُقرأ الأخطاء حسب المجموعة، وتُعاد المجموعة نفسها لالتقاط التراجع."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q7",
+          "prompt": {
+            "en": "An agent that scores 16 out of 16 on wordings it was trained on will do about as well on new wordings.",
+            "ar": "الوكيل الذي يحصل على ١٦ من ١٦ في الصيغ التي تدرّب عليها سيؤدي بالقدر نفسه تقريبًا مع الصيغ الجديدة."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Trained wordings measure memory: Darsi Tiny drops from 16/16 to 13/16 on new wordings, and to 78–80% across thousands of them.",
+            "ar": "الصيغ المدرَّب عليها تقيس الحفظ: فـ«درسي الصغير» ينخفض من ١٦/١٦ إلى ١٣/١٦ مع الصيغ الجديدة، وإلى ٧٨–٨٠٪ على آلاف منها."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "q8",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete the approval gate: it runs a call only if it is exactly the approved one, and logs every decision.",
+            "ar": "أكمل بوابة الموافقة: لا تشغّل الاستدعاء إلا إن كان هو الموافَق عليه تمامًا، وتسجّل كل قرار."
+          },
+          "code": [
+            "def gate(call, approved, log):\n    ok = call ",
+            {
+              "blank": 0
+            },
+            " approved\n    log.",
+            {
+              "blank": 1
+            },
+            "((call[\"tool\"], ok))\n    if ok:\n        return \"run\"\n    return \"ask again\""
+          ],
+          "answers": [
+            "==",
+            "append"
+          ],
+          "distractors": [
+            "!=",
+            "pop"
+          ],
+          "explain": {
+            "en": "== compares the whole call, tool and every detail, with the approved one; append adds the decision to the log, whether it ran or not.",
+            "ar": "تقارن == الاستدعاء كله، الأداة وكل تفصيل، بالاستدعاء الموافَق عليه، وتضيف append القرار إلى السجل، سواء نُفّذ أم لا."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q9",
+          "prompt": {
+            "en": "A fine-tune with no old conversations mixed in gets 7/8 on the new bus tool but 1/8 on old skills. What is happening?",
+            "ar": "ضبطٌ دقيق دون خلط محادثات قديمة يصيب ٧/٨ في أداة الحافلات الجديدة، لكن ١/٨ في المهارات القديمة. ماذا يحدث؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Catastrophic forgetting: the new learning overwrote old skills",
+                "ar": "النسيان الكارثي: التعلّم الجديد محا المهارات القديمة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The test set is too small to show anything",
+                "ar": "مجموعة الاختبار أصغر من أن تُظهر شيئًا"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The bus tool is simply harder than the others",
+                "ar": "أداة الحافلات أصعب من غيرها ببساطة"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Training only on the new examples changed numbers the old skills relied on. Replaying old conversations alongside (48 keeps all 8 old skills) is the usual fix, and the full test set must be re-run after every fine-tune.",
+            "ar": "التدريب على الأمثلة الجديدة وحدها غيّر أرقامًا كانت المهارات القديمة تعتمد عليها. والعلاج المعتاد إعادة محادثات قديمة إلى جانبها (مع ٤٨ تبقى المهارات القديمة الثماني كلها)، ويجب إعادة تشغيل مجموعة الاختبار كلها بعد كل ضبط دقيق."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q10",
+          "prompt": {
+            "en": "Which of these still protect you if the model’s learned safety fails? Choose all that apply.",
+            "ar": "أيّ مما يلي يظل يحميك إذا فشل الأمان الذي تعلّمه النموذج؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Only the tools the task needs, enforced in code",
+                "ar": "الأدوات التي تحتاجها المهمة فقط، مفروضة في الكود"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Comparing each call with the approved call",
+                "ar": "مقارنة كل استدعاء بالاستدعاء الموافَق عليه"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Telling the model in its instructions to be careful",
+                "ar": "أن تطلب من النموذج في تعليماته أن يكون حذرًا"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "A log of every action",
+                "ar": "سجل لكل فعل"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "The refusals it learned in training",
+                "ar": "الرفض الذي تعلّمه في التدريب"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Guards in code hold whatever the model writes. Instructions and learned refusals are the model’s own behaviour, which can fail on new wordings (28% and 12% of reworded refusals got a call) or after fine-tuning.",
+            "ar": "الحواجز في الكود تصمد مهما كتب النموذج. أما التعليمات والرفض المتعلَّم فهما سلوك النموذج نفسه، وقد يفشلان مع الصيغ الجديدة (حصل ٢٨٪ و١٢٪ من الرفض المعاد صوغه على استدعاء) أو بعد الضبط الدقيق."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Agent engineering: planning, multi-agent, evals and guardrails: review",
+            "ar": "هندسة الوكلاء: التخطيط وتعدّد الوكلاء والتقييم وحواجز الحماية: مراجعة"
+          },
+          "note": {
+            "en": "AI agents · University · Unit check",
+            "ar": "وكلاء الذكاء الاصطناعي، الجامعة، اختبار الوحدة"
+          },
+          "narration": {
+            "en": "Let’s look back at the whole unit and check what stuck.",
+            "ar": "لنراجع الوحدة كلها ونتحقّق ممّا رسخ في أذهاننا."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Plans and memory",
+              "Several agents, one job",
+              "Measuring an agent",
+              "Fine-tuning and guardrails"
+            ],
+            "ar": [
+              "الخطط والذاكرة",
+              "عدّة وكلاء لمهمة واحدة",
+              "قياس أداء الوكيل",
+              "الضبط الدقيق وحواجز الحماية"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "Each step builds on the last: check results, and budget the window",
+              "One part proposes, another checks: rules first, people for actions",
+              "A fixed, held-out test set, scored exactly, re-run after every change",
+              "Learned safety can fail: guard actions in code, in layers"
+            ],
+            "ar": [
+              "كل خطوة تُبنى على ما قبلها: افحص النتائج، وقسّم النافذة",
+              "جزء يقترح وجزء يفحص: القواعد أولًا، والإنسان للأفعال",
+              "مجموعة اختبار ثابتة ومحجوبة، تُصحَّح بدقة وتُعاد بعد كل تغيير",
+              "الأمان المتعلَّم قد يفشل: احرس الأفعال بالكود، على طبقات"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Agent design review",
+            "ar": "النشاط: مراجعة تصميم وكيل"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (3 min): One idea from each lesson.",
+              "Design (8 min): Sketch an agent for a real university task.",
+              "Review (7 min): A partner checks memory, roles, tests, guards.",
+              "Share (2 min): The weakest point you found."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): فكرة واحدة من كل درس.",
+              "التصميم (٨ دقائق): ارسم وكيلًا لمهمة جامعية حقيقية.",
+              "المراجعة (٧ دقائق): يفحص زميلك الذاكرة والأدوار والاختبارات والحواجز.",
+              "المشاركة (دقيقتان): أضعف نقطة وجدتها."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (3 min): Write one idea from each of the four lessons, in your own words.",
+              "Design (8 min): Sketch an agent for a real task at your university, such as answering course questions or booking rooms: its steps, what it keeps in its window, its roles and its tools.",
+              "Review (7 min): Swap with a partner. Check their design against the unit: where would errors carry forward, what could fall out of memory, how would they test it, and which actions are guarded in code?",
+              "Share (2 min): Each pair shares the weakest point they found and how they would fix it."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): اكتب بكلماتك فكرة واحدة من كل درس من الدروس الأربعة.",
+              "التصميم (٨ دقائق): ارسم وكيلًا لمهمة حقيقية في جامعتك، كالإجابة عن أسئلة مقرّر أو حجز القاعات: خطواته، وما يبقيه في نافذته، وأدواره، وأدواته.",
+              "المراجعة (٧ دقائق): تبادل التصميم مع زميلك، وافحص تصميمه بما تعلّمته في الوحدة: أين تنتقل الأخطاء من خطوة إلى أخرى، وما الذي قد يسقط من الذاكرة، وكيف سيختبره، وأيّ الأفعال محروسة في الكود؟",
+              "المشاركة (دقيقتان): يشارك كل زوج أضعف نقطة وجدها، وكيف سيصلحها."
+            ]
+          },
+          "note": {
+            "en": "Use made-up names and data in every design. The point is the review, not a perfect agent.",
+            "ar": "استعملوا أسماء وبيانات خيالية في كل تصميم. فالمهم هو المراجعة، لا وكيل مثالي."
+          },
+          "narration": {
+            "en": "Where would your partner’s agent break first?",
+            "ar": "أين سيتعطّل وكيل زميلك أولًا؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which idea from this unit changes how you would build an agent?",
+              "What would convince you that an agent is ready for real users?",
+              "Which guard would you add first to an AI tool you already use?"
+            ],
+            "ar": [
+              "أيّ فكرة من هذه الوحدة تغيّر طريقة بنائك لوكيل؟",
+              "ما الذي يقنعك بأن وكيلًا جاهز لمستخدمين حقيقيين؟",
+              "أيّ حاجز ستضيفه أولًا إلى أداة ذكاء اصطناعي تستعملها الآن؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "My most useful idea from this unit + the project I will use it in."
+            ],
+            "ar": [
+              "أنفع فكرة من هذه الوحدة + المشروع الذي سأستعملها فيه."
+            ]
+          },
+          "narration": {
+            "en": "Check every step, measure honestly, and guard actions in code.",
+            "ar": "افحص كل خطوة، وقِس بصدق، واحرس الأفعال بالكود."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Agent engineering: planning, multi-agent, evals and guardrails: unit check",
+            "ar": "شرائح للمراجعة: هندسة الوكلاء: التخطيط وتعدّد الوكلاء والتقييم وحواجز الحماية: اختبار الوحدة"
+          },
+          "pages": 6,
+          "base": "agents-s4-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Agent engineering: planning, multi-agent, evals and guardrails: unit check",
+            "ar": "ورقة النشاط: هندسة الوكلاء: التخطيط وتعدّد الوكلاء والتقييم وحواجز الحماية: اختبار الوحدة"
+          },
+          "pages": 2,
+          "base": "agents-s4-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "AGT.1",
+        "AGT.3",
+        "S.SD.A",
+        "AGT.2",
+        "S.SD.C",
+        "DC.1.2",
+        "S.ET.C"
+      ]
+    }
+  ]
+}

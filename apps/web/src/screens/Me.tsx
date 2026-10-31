@@ -8,7 +8,7 @@ import { NotificationsPanel } from "../notify/NotificationsPanel";
 import { isolate, useI18n, useLanguages } from "../i18n";
 import { useStore } from "../state/store";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
-import type { Unit } from "../content/types";
+import { STAGES, type Unit } from "../content/types";
 import { useTracks } from "../content/settings";
 import { useMine } from "../content/mine";
 import { share } from "../platform";
@@ -53,7 +53,10 @@ export function Me() {
           <ChoiceCard icon="profile" title={t("me.teacher")} selected={me.audience === "teachers"} onClick={() => set({ audience: "teachers" })} />
           <ChoiceCard icon="book" title={t("me.student")} selected={me.audience === "students"} onClick={() => set({ audience: "students" })} />
         </section>}
-        <PlacementResult title={t("me.levels")} levels={mine.map(({ id: tr, levels: of }) => ({ track: tr, trackLabel: tracks.name(tr), level: Math.min(state.levels[tr] ?? 1, of), of, label: tracks.levelName(tr, Math.min(state.levels[tr] ?? 1, of)) }))} />
+        {me.audience === "students" && <section className="stack" aria-labelledby="stage-h"><h2 id="stage-h" className="section-title">{t("me.stage")}</h2>
+          {STAGES.map((st) => <ChoiceCard key={st} title={t(`stage.${st}`)} description={t(`stage.${st}D`)} selected={state.stage === st} onClick={() => set({ stage: st })} />)}
+        </section>}
+        <PlacementResult title={t("me.levels")} levels={mine.map(({ id: tr, levels: of }) => ({ track: tr, trackLabel: tracks.name(tr), level: me.levelOf(tr), of, label: me.levelName(tr, me.levelOf(tr)) }))} />
         <section id="certificates" className="stack"><h2 className="section-title">{t("me.certs")}</h2>
           {done.length === 0 && <p className="muted">{t("me.noCerts")}</p>}
           {done.map((u) => {

@@ -6,6 +6,8 @@
  *   owner {orgId}  → orgs/{orgId}/catalog.json, orgs/{orgId}/units/{id}/v{n}.json, …/media/…   (that org's members)
  */
 import type { CatalogEntry, Unit } from "./shared/types.js";
+import { runtimesOf, RUNTIMES } from "./shared/runtimes.js";
+import { BUILTIN_TRACKS } from "./shared/tracks.js";
 
 export type Owner = "public" | string;
 export interface Caller { uid: string; role: string; orgId?: string }
@@ -37,7 +39,9 @@ export function sizeMB(unit: Unit, jsonBytes: number) {
   const stepMB = (s: Unit["lessons"][number]["steps"][number]) => s.type !== "video" ? 0
     : s.light?.sizeKB ? Math.max(0, ...Object.values(s.light.sizeKB).map(Number).filter(Number.isFinite)) / 1024 : s.sizeMB || 0;
   const videoMB = unit.lessons.reduce((a, l) => a + l.steps.reduce((b, s) => b + stepMB(s), 0), 0);
-  return Math.max(0.1, Math.round((jsonBytes / 1e6 + videoMB) * 10) / 10);
+  // Code steps need their language's runtime, once.
+  const runtimeMB = runtimesOf(unit.lessons.flatMap((l) => l.steps)).reduce((a, lang) => a + RUNTIMES[lang].sizeMB, 0);
+  return Math.max(0.1, Math.round((jsonBytes / 1e6 + videoMB + runtimeMB) * 10) / 10);
 }
 
 export function catalogEntry(unit: Unit, owner: Owner, version: number, jsonBytes: number): CatalogEntry {
@@ -54,7 +58,8 @@ export function catalogEntry(unit: Unit, owner: Owner, version: number, jsonByte
  * catalog.json for one owner from the entries stored on each published unit, ordered by track (the order platform
  * admins set; unknown tracks last), then level and title.
  */
-export function buildCatalog(entries: CatalogEntry[], order: Record<string, number> = { ai: 0, iot: 1, cyber: 2 }) {
+const BUILTIN_ORDER = Object.fromEntries(BUILTIN_TRACKS.map((t) => [t.id, t.order]));
+export function buildCatalog(entries: CatalogEntry[], order: Record<string, number> = BUILTIN_ORDER) {
   const units = [...entries].sort((a, b) => (order[a.track] ?? 999) - (order[b.track] ?? 999) || a.level - b.level || a.title.en.localeCompare(b.title.en) || a.id.localeCompare(b.id));
   return { version: 1, units };
 }

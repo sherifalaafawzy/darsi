@@ -9,6 +9,8 @@ import { LabEmbed } from "../labs/loader";
 import { ProjectView } from "./ProjectView";
 import { grade, shuffled, type Answer } from "./engine";
 import { canPlayLight, LightLesson } from "./LightLesson";
+import { CodeBlock } from "../code/CodeBlock";
+import { CodeStepEmbed } from "../code/loader";
 
 /** The Lesson Studio player, only for lessons that have a light version (it carries its own small chunk). */
 
@@ -36,7 +38,9 @@ export function StepView(p: StepViewProps) {
   const keys = KEY_LABELS[lang] ?? KEY_LABELS.en;
   const res = p.result === null ? undefined : p.result ? "correct" : "wrong";
   const seed = `${s.id}-${p.attempt}`;
-  const header = (typeKey: MessageKey, extra?: { hint?: string }) => <QuestionHeader type={s.type === "lab" ? "reflect" : s.type === "image" ? "image" : (s.type as "choice")} typeLabel={t(typeKey)} prompt={L(s.prompt)} hint={extra?.hint} />;
+  // A question may show code above its answers ("What does this print?").
+  const header = (typeKey: MessageKey, extra?: { hint?: string }) => <QuestionHeader type={s.type === "lab" ? "reflect" : s.type === "image" ? "image" : (s.type as "choice")} typeLabel={t(typeKey)} prompt={L(s.prompt)} hint={extra?.hint}
+    media={s.snippet ? <CodeBlock text={s.snippet.text} lang={s.snippet.lang} label={t("code.snippet")} /> : undefined} />;
 
   switch (s.type) {
     case "choice": return <Choice key={seed} step={s} keys={keys} result={p.result} onAnswer={p.onAnswer} header={header("q.choice")} />;
@@ -78,6 +82,8 @@ export function StepView(p: StepViewProps) {
       return <ReadView key={seed} step={s} onReady={p.onUngradedReady} />;
     case "project":
       return <ProjectView key={seed} step={s} lessonId={p.lessonId} unitId={p.unitId} onReady={p.onUngradedReady} preview={p.preview} />;
+    case "code": case "parsons": case "codefill": case "bug": case "blocks":
+      return <CodeStepEmbed key={seed} {...p} />;
   }
 }
 

@@ -3,7 +3,7 @@
  * lesson speak the same words. Fill-the-gaps is written as "A sensor turns [heat] into a [number]." per language.
  */
 import { useEffect, useState } from "react";
-import type { ChoiceStep, FillStep, LocalText, Step, TrueFalseStep, VideoStep } from "../content/types";
+import { CODE_STEPS, GRADED, type ChoiceStep, type FillStep, type LocalText, type Step, type TrueFalseStep, type VideoStep } from "../content/types";
 import { ARTS } from "../content/validate";
 import { categoryOf } from "../labs/categories";
 import { LAB_METAS, labMeta } from "../labs/catalog";
@@ -11,13 +11,16 @@ import { useI18n, type MessageKey } from "../i18n";
 import { blankStep, nextLetter } from "./ids";
 import { Check, Items, LangName, LList, LText, Num, Sel, Text, Upload } from "./fields";
 import { useEditLangs } from "./langs";
+import { BlocksForm, BugForm, CodeFillForm, CodeForm, ParsonsForm, SnippetForm } from "./codeForms";
 
 export const STEP_LABEL: Record<Step["type"], MessageKey> = {
   video: "lesson.video", read: "lesson.read", choice: "q.choice", multi: "q.multi", truefalse: "q.truefalse", image: "q.image", match: "q.match",
   order: "q.order", fill: "q.fill", type: "q.type", hotspot: "q.hotspot", scenario: "q.scenario", lab: "q.lab", project: "project.kicker", reflect: "q.reflect",
+  code: "q.code", parsons: "q.parsons", codefill: "q.codefill", bug: "q.bug", blocks: "q.blocks",
 };
 /** The order offered in "Add a step": a lesson usually runs watch → read → practise → project → reflect. */
-export const STEP_MENU: Step["type"][] = ["video", "read", "choice", "multi", "truefalse", "image", "match", "order", "fill", "type", "hotspot", "scenario", "lab", "project", "reflect"];
+export const STEP_MENU: Step["type"][] = ["video", "read", "choice", "multi", "truefalse", "image", "match", "order", "fill", "type", "hotspot", "scenario",
+  "code", "parsons", "codefill", "bug", "blocks", "lab", "project", "reflect"];
 const LT = (): LocalText => ({ en: "", ar: "" });
 
 export interface MediaCtx { owner: string; unitId: string; lessonId: string }
@@ -25,10 +28,13 @@ export interface MediaCtx { owner: string; unitId: string; lessonId: string }
 export function StepForm({ step, onChange, media }: { step: Step; onChange: (s: Step) => void; media: MediaCtx }) {
   const { t } = useI18n();
   const set = <K extends string>(patch: Partial<Record<K, unknown>>) => onChange({ ...step, ...patch } as Step);
-  const graded = ["choice", "multi", "truefalse", "image", "match", "order", "fill", "type", "hotspot"].includes(step.type);
+  const graded = GRADED.has(step.type);
+  // Questions can show code above their answers ("What does this print?"); the code steps have their own.
+  const snippet = graded && !CODE_STEPS.has(step.type);
   return (
     <div className="stack">
       <LText label={t("cms.prompt")} value={step.prompt} onChange={(prompt) => set({ prompt })} />
+      {snippet && <SnippetForm value={step.snippet} onChange={(v) => { const { snippet: _, ...rest } = step; onChange((v ? { ...rest, snippet: v } : rest) as Step); }} />}
       <Body step={step} onChange={onChange} media={media} />
       {graded && <LText label={t("cms.explain")} hint={t("cms.explainHint")} value={step.explain} onChange={(explain) => set({ explain })} multiline rows={2} />}
     </div>
@@ -132,6 +138,11 @@ function Body({ step: s, onChange, media }: { step: Step; onChange: (s: Step) =>
       </>
     );
     case "video": return <VideoForm step={s} onChange={onChange} media={media} />;
+    case "code": return <CodeForm step={s} onChange={onChange} />;
+    case "parsons": return <ParsonsForm step={s} onChange={onChange} />;
+    case "codefill": return <CodeFillForm step={s} onChange={onChange} />;
+    case "bug": return <BugForm step={s} onChange={onChange} />;
+    case "blocks": return <BlocksForm step={s} onChange={onChange} />;
   }
 }
 

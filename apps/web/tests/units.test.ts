@@ -1,3 +1,4 @@
+// @vitest-environment node
 // Every course in content/units (the starting curriculum, published by `npm run seed`) is complete: no errors, no
 // warnings (Arabic included, known competencies), and every lesson follows docs/CONTENT.md.
 import { existsSync, readFileSync, readdirSync } from "node:fs";
@@ -8,6 +9,8 @@ import { GRADED, type Unit } from "../src/content/types";
 import { validateUnit } from "../src/content/validate";
 import { LAB_METAS } from "../src/labs/catalog";
 import { kitFiles, mediaPathOf, mediaPaths, withKitUrls } from "../../../scripts/lib/kits.mjs";
+import { arabicStrings, codePieces, isolatesPair } from "../../../scripts/lib/isolates.mjs";
+import { runInNode } from "./code/node";
 
 const DIR = join(__dirname, "../../../content/units");
 const KITS = join(__dirname, "../../../content/kits");
@@ -31,6 +34,17 @@ describe.each(units.map((u) => [u.id, u] as const))("course %s", (_, unit) => {
     }
   });
 
+  // Code runs as learners' phones run it (tests/code/node.ts): every solution passes its tests, no starter does.
+  it("has code steps whose solution passes and whose starter doesn't", async () => {
+    for (const l of unit.lessons) for (const s of l.steps) {
+      if (s.type !== "code") continue;
+      const req = (code: string) => (s.lang === "sql" ? { lang: s.lang, code, setup: s.setup, solution: s.solution } : { lang: s.lang, code, tests: s.tests, files: s.files });
+      const sol = await runInNode(req(s.solution));
+      expect(sol.filter((r) => !r.passed), `${l.id} ${s.id}: the solution fails`).toEqual([]);
+      expect((await runInNode(req(s.starter))).every((r) => r.passed), `${l.id} ${s.id}: the starter already passes`).toBe(false);
+    }
+  });
+
   // `npm run seed` swaps app paths for Storage URLs (scripts/lib/kits.mjs); the functions check that form when publishing.
   it("is still valid as published, with kits and media in Storage", () => {
     const url = (p: string) => `https://firebasestorage.googleapis.com/v0/b/test/o/${encodeURIComponent(p)}?alt=media`;
@@ -48,5 +62,12 @@ describe.each(units.map((u) => [u.id, u] as const))("course %s", (_, unit) => {
   it("never uses the middle dot in Arabic", () => {
     const text = JSON.stringify(unit);
     for (const m of text.matchAll(/"ar":\s*"([^"]*)"/g)) expect(m[1]).not.toContain("·");
+  });
+
+  it("keeps code and formulas in Arabic text in left-to-right isolates (node scripts/isolate-code.mjs --fix)", () => {
+    const strings = arabicStrings(JSON.parse(JSON.stringify(unit)));
+    const missing = strings.flatMap(([path, text]) => codePieces(text).map(([s, e]) => `${path}: ${text.slice(s, e)}`));
+    expect(missing).toEqual([]);
+    expect(strings.filter(([, text]) => !isolatesPair(text)).map(([path]) => `${path}: isolates don't pair up`)).toEqual([]);
   });
 });

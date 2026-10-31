@@ -7,7 +7,9 @@ export function usePwaUpdate() {
   const [update, setUpdate] = useState<null | (() => void)>(null);
   useEffect(() => {
     if (isNative() || import.meta.env.DEV) return;
-    const updateSW = registerSW({ onNeedRefresh: () => setUpdate(() => () => updateSW(true)) });
+    // immediate: don't wait for window "load" (fonts and images). The worker file itself is registered
+    // from index.html at build time, before this chunk, so this only attaches the update prompt.
+    const updateSW = registerSW({ immediate: true, onNeedRefresh: () => setUpdate(() => () => updateSW(true)) });
   }, []);
   return update;
 }

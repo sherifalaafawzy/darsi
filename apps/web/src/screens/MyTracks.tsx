@@ -36,7 +36,6 @@ export function MyTracks() {
   };
   if (checking) return <PlacementQuiz tracks={[checking]} onClose={() => setChecking(null)}
     onDone={(lv) => { dispatch({ type: "set", patch: { levels: { ...state.levels, ...lv } } }); setChecking(null); setAdded(null); }} />;
-  const levelOf = (id: Track) => Math.min(state.levels[id] ?? 1, tracks.of(id).levels);
   return (
     <>
       <AppBar title={t("tracks.title")} onBack={() => nav("/learn")} backLabel={t("common.back")} />
@@ -54,7 +53,7 @@ export function MyTracks() {
           <h2 id="levels-h" className="section-title">{t("me.levels")}</h2>
           {chosen.map((id) => (
             <div key={id} className="row-gap">
-              <span>{tracks.name(id)}{t("common.sep")}<strong>{tracks.levelName(id, levelOf(id))}</strong></span>
+              <span>{tracks.name(id)}{t("common.sep")}<strong>{mine.levelName(id, mine.levelOf(id))}</strong></span>
               <Button size="sm" variant="secondary" onClick={() => setChecking(id)}>{t("tracks.check")}</Button>
             </div>
           ))}

@@ -5,6 +5,9 @@ import { useMine } from "../content/mine";
 import { useI18n } from "../i18n";
 import { useStore } from "../state/store";
 import { cacheUrls, onMeteredConnection, removeCached } from "../platform";
+import { CODE_STEPS } from "../content/types";
+import { prefetchCodeSteps } from "../code/loader";
+import { prefetchLightPacks } from "../lesson/LightLesson";
 
 export function Downloads() {
   const { t, L, lang, num } = useI18n();
@@ -23,6 +26,8 @@ export function Downloads() {
     try {
       const unit = await loadUnit(id);
       await cacheUrls(unitAssetUrls(unit, lang), (d, n) => setProgress((p) => ({ ...p, [id]: Math.round((d / n) * 100) })), ctl.signal);
+      if (unit.lessons.some((l) => l.steps.some((s) => CODE_STEPS.has(s.type)))) await prefetchCodeSteps();
+      await prefetchLightPacks(unit);
       dispatch({ type: "download", unit: id, on: true });
     } catch { if (!ctl.signal.aborted) setErrors((e) => ({ ...e, [id]: true })); }
     finally { setProgress((p) => { const n = { ...p }; delete n[id]; return n; }); }

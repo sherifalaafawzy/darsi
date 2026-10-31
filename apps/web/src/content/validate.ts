@@ -5,13 +5,16 @@
  * Errors are what crashes a lesson or leaves it stuck (see lesson/engine.ts and lesson/StepView.tsx); publishing
  * refuses them. Warnings (missing Arabic, unknown competency codes, no slides) are shown but don't block.
  * Input is `unknown` on purpose: drafts come from pasted JSON and Firestore, so nothing here trusts the shape.
+ * It imports only robot.ts (pure, copied along with it).
  */
-import type { Unit } from "./types";
+import { fewestBlocks } from "./robot";
+import type { RobotCommand, RobotWorld, Unit } from "./types";
 
 export type IssueCode =
   | "required" | "minItems" | "duplicateId" | "badId" | "lessonIdPrefix" | "badValue" | "range"
   | "answerNotInOptions" | "answersNotInOptions" | "fillBlanks" | "fillAnswers" | "fillBank"
-  | "badUrl" | "checkpoint" | "tooLarge" | "missingLang" | "unknownCompetency" | "noSlides";
+  | "badUrl" | "checkpoint" | "tooLarge" | "missingLang" | "unknownCompetency" | "noSlides"
+  | "codeTest" | "unsolvable";
 
 /** Where an issue is: indexes into the unit (for "Lesson 2 › Step 4") and the field inside it. */
 export interface IssueAt { lesson?: number; step?: number; slide?: number; kit?: number; field: string }
@@ -23,7 +26,14 @@ export const TRACK_ID = /^[a-z][a-z0-9-]{1,23}$/;
 export const TRACK_TONE_IDS = ["sunbird", "lagoon", "hibiscus", "leaf", "lilac", "clay", "sky", "slate"] as const;
 /** The most levels a track can have (also MAX_LEVELS in tracks.ts). */
 const LEVELS_CAP = 12;
-export const STEP_TYPES = ["video", "read", "choice", "multi", "truefalse", "image", "match", "order", "fill", "type", "hotspot", "scenario", "lab", "project", "reflect"] as const;
+export const STEP_TYPES = ["video", "read", "choice", "multi", "truefalse", "image", "match", "order", "fill", "type", "hotspot", "scenario", "lab", "project", "reflect",
+  "code", "parsons", "codefill", "bug", "blocks"] as const;
+export const CODE_LANGS = ["python", "sql"] as const;
+export const ROBOT_COMMANDS = ["forward", "left", "right"] as const;
+export const LED_COLOURS = ["red", "yellow", "green", "blue"] as const;
+export const SENSOR_KINDS = ["light", "temperature", "moisture", "distance", "sound"] as const;
+/** Robot grids: 2 to 8 squares a side (big enough to tap on a phone); a program of at most 20 cards. */
+const ROBOT_SIDE: [number, number] = [2, 8], ROBOT_BLOCKS = 20;
 export const ARTS = ["sensor", "lamp", "phone", "plant", "chat", "calculator"] as const;
 /** A Labs app id. The catalogue itself lives in the web app (labs/catalog.ts); the editor also checks the id exists there. */
 export const LAB_ID = /^[a-z][a-z0-9-]{1,39}$/;
@@ -115,6 +125,10 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
     if (!STEP_TYPES.includes(s.type as typeof STEP_TYPES[number])) return add(f("type"), "badValue", { value: String(s.type ?? "") });
     text(s, "prompt");
     text(s, "explain", false);
+    if (s.snippet !== undefined) {
+      if (!isObj(s.snippet)) add("snippet", "badValue");
+      else { if (!CODE_LANGS.includes(s.snippet.lang as typeof CODE_LANGS[number])) add("snippet.lang", "badValue", { value: String(s.snippet.lang ?? "") }); if (!filled(s.snippet.text)) add("snippet.text", "required"); }
+    }
     switch (s.type) {
       case "choice": { const ok = options(s, "text"); if (!ok.has(s.answer as string)) add("answer", "answerNotInOptions"); break; }
       case "image": { const ok = options(s, "label"); if (!ok.has(s.answer as string)) add("answer", "answerNotInOptions"); break; }
@@ -156,12 +170,120 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
         arr(s.keyTerms).forEach((k, i) => { if (!isObj(k)) return add(`keyTerms.${i}`, "badValue"); text(k, "term"); text(k, "def"); });
         break;
       }
+      case "code": code(s); break;
+      case "parsons": {
+        oneOf(s, "lang", CODE_LANGS);
+        const lines = arr(s.lines), wrong = arr(s.distractors);
+        minItems(lines, "lines", 2);
+        lines.forEach((l, i) => { if (!filled(l)) add(`lines.${i}`, "required"); else if (s.lang === "python" && (l.length - l.trimStart().length) % 4) add(`lines.${i}`, "badValue", { value: l }); });
+        // A wrong line that reads like a right one could never be graded fairly.
+        const right = new Set(lines.filter(isStr).map((l) => l.trim()));
+        wrong.forEach((l, i) => { if (!filled(l) || right.has(l.trim())) add(`distractors.${i}`, "badValue", { value: String(l ?? "") }); });
+        break;
+      }
+      case "codefill": {
+        oneOf(s, "lang", CODE_LANGS);
+        const parts = arr(s.code), answers = arr(s.answers);
+        parts.forEach((p, i) => { if (!isStr(p) && !(isObj(p) && isNum(p.blank))) add(`code.${i}`, "badValue"); });
+        const blanks = parts.filter(isObj).map((p) => p.blank as number);
+        if (!blanks.length || blanks.some((_, i) => !blanks.includes(i)) || new Set(blanks).size !== blanks.length) add("code", "fillBlanks");
+        if (answers.length !== blanks.length || !answers.every(filled)) add("answers", "fillAnswers");
+        const ans = new Set(answers.filter(isStr));
+        arr(s.distractors).forEach((d, i) => { if (!filled(d) || ans.has(d)) add(`distractors.${i}`, "fillBank"); });
+        break;
+      }
+      case "bug": {
+        oneOf(s, "lang", CODE_LANGS);
+        if (!filled(s.code)) add("code", "required");
+        else { const n = s.code.split("\n").length; if (!isNum(s.line) || !Number.isInteger(s.line) || s.line < 1 || s.line > n) add("line", "range", { min: 1, max: n }); }
+        if (!filled(s.fix)) add("fix", "required");
+        break;
+      }
+      case "blocks": blocks(s); break;
       case "project": {
         text(s, "task"); text(s, "deliverable");
         const rubric = arr(s.rubric); minItems(rubric, "rubric", 1);
         rubric.forEach((r, i) => { if (!isObj(r)) add(`rubric.${i}`, "badValue"); else text(r, "criterion"); });
         break;
       }
+    }
+  };
+
+  /** A program to write: Python needs tests (output to match or a check to pass), SQL the tables it runs on. */
+  const code = (s: Obj) => {
+    oneOf(s, "lang", CODE_LANGS);
+    if (!isStr(s.starter)) add("starter", "required");
+    if (!filled(s.solution)) add("solution", "required");
+    if (s.lang === "sql") { if (!filled(s.setup)) add("setup", "required"); }
+    else {
+      const tests = arr(s.tests);
+      minItems(tests, "tests", 1);
+      tests.forEach((t, i) => {
+        if (!isObj(t)) return add(`tests.${i}`, "badValue");
+        if (!isStr(t.output) && !filled(t.check)) add(`tests.${i}`, "codeTest");
+        if (t.input !== undefined && !(Array.isArray(t.input) && t.input.every(isStr))) add(`tests.${i}.input`, "badValue");
+        if (t.hint !== undefined) text(t, "hint");
+      });
+      arr(s.files).forEach((fl, i) => { if (!isObj(fl) || !/^[\w.-]{1,40}$/.test(String(fl.name)) || !isStr(fl.text)) add(`files.${i}`, "badValue"); });
+    }
+    arr(s.hints).forEach((h, i) => {
+      if (!isObj(h) || !filled(h.en)) add(`hints.${i}.en`, "required");
+      else for (const l of langs) if (!filled(h[l])) missing(`hints.${i}.${l}`, l);
+    });
+    if (s.board !== undefined) board(s.board);
+  };
+  /** The virtual board: each pin used once (0–40), known LED colours and sensor kinds, readings 0–65535, 1–120 s. */
+  const board = (b: unknown) => {
+    if (!isObj(b)) return add("board", "badValue");
+    const used = new Set<number>();
+    const pin = (p: unknown, field: string) => {
+      if (!isNum(p) || !Number.isInteger(p) || p < 0 || p > 40) add(field, "range", { min: 0, max: 40 });
+      else if (used.has(p)) add(field, "duplicateId", { value: String(p) });
+      else used.add(p);
+    };
+    const series = (v: unknown, field: string, max: number) => { if (!Array.isArray(v) || !v.length || !v.every((x) => isNum(x) && x >= 0 && x <= max)) add(field, "badValue"); };
+    arr(b.leds).forEach((l, i) => {
+      if (!isObj(l)) return add(`board.leds.${i}`, "badValue");
+      pin(l.pin, `board.leds.${i}.pin`);
+      if (!LED_COLOURS.includes(l.color as typeof LED_COLOURS[number])) add(`board.leds.${i}.color`, "badValue", { value: String(l.color ?? "") });
+    });
+    if (b.buzzer !== undefined) { if (isObj(b.buzzer)) pin(b.buzzer.pin, "board.buzzer.pin"); else add("board.buzzer", "badValue"); }
+    arr(b.buttons).forEach((x, i) => {
+      if (!isObj(x)) return add(`board.buttons.${i}`, "badValue");
+      pin(x.pin, `board.buttons.${i}.pin`);
+      text(x, "label");
+      if (x.presses !== undefined) series(x.presses, `board.buttons.${i}.presses`, 1);
+    });
+    arr(b.sensors).forEach((x, i) => {
+      if (!isObj(x)) return add(`board.sensors.${i}`, "badValue");
+      pin(x.pin, `board.sensors.${i}.pin`);
+      if (!SENSOR_KINDS.includes(x.kind as typeof SENSOR_KINDS[number])) add(`board.sensors.${i}.kind`, "badValue", { value: String(x.kind ?? "") });
+      text(x, "label");
+      series(x.values, `board.sensors.${i}.values`, 65535);
+    });
+    if (b.seconds !== undefined && !(isNum(b.seconds) && Number.isInteger(b.seconds) && b.seconds >= 1 && b.seconds <= 120)) add("board.seconds", "range", { min: 1, max: 120 });
+  };
+  /** The robot's grid, its commands and the card limit: everything in bounds, and the goal reachable within the limit. */
+  const blocks = (s: Obj) => {
+    const w = s.world, int = (v: unknown, lo: number, hi: number) => isNum(v) && Number.isInteger(v) && v >= lo && v <= hi;
+    if (!isObj(w)) return add("world", "required");
+    const ok = [int(w.cols, ...ROBOT_SIDE), int(w.rows, ...ROBOT_SIDE)];
+    if (!ok[0]) add("world.cols", "range", { min: ROBOT_SIDE[0], max: ROBOT_SIDE[1] });
+    if (!ok[1]) add("world.rows", "range", { min: ROBOT_SIDE[0], max: ROBOT_SIDE[1] });
+    if (!ok[0] || !ok[1]) return;
+    const cols = w.cols as number, rows = w.rows as number;
+    const at = (p: unknown, field: string) => { const fine = isObj(p) && int(p.x, 0, cols - 1) && int(p.y, 0, rows - 1); if (!fine) add(field, "range", { min: 0, max: Math.max(cols, rows) - 1 }); return fine; };
+    const start = at(w.start, "world.start");
+    at(w.goal, "world.goal");
+    if (start && !["N", "E", "S", "W"].includes((w.start as Obj).dir as string)) add("world.start.dir", "badValue");
+    const walls = arr(w.walls);
+    walls.forEach((p, i) => { if (!isObj(p) || !int(p.x, 0, cols - 1) || !int(p.y, 0, rows - 1)) add(`world.walls.${i}`, "badValue"); });
+    const cmds = arr(s.commands);
+    if (!cmds.length || !cmds.every((c) => ROBOT_COMMANDS.includes(c as RobotCommand)) || !cmds.includes("forward")) add("commands", "badValue");
+    if (!int(s.maxBlocks, 1, ROBOT_BLOCKS)) return add("maxBlocks", "range", { min: 1, max: ROBOT_BLOCKS });
+    if (!issues.some((i) => i.level === "error" && i.at.step === ctx.step && i.at.lesson === ctx.lesson && /^(world|commands)/.test(i.at.field))) {
+      const n = fewestBlocks(w as unknown as RobotWorld, cmds as RobotCommand[]);
+      if (n === null || n > (s.maxBlocks as number)) add("world", "unsolvable", { n: n ?? 0, max: s.maxBlocks as number });
     }
   };
 

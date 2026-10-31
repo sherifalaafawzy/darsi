@@ -3,11 +3,11 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import type { VideoStep } from "../src/content/types";
 import { unitAssetUrls } from "../src/content/load";
 import { I18nProvider } from "../src/i18n";
-import { setLightPlayer } from "../src/lesson/LightLesson";
+import { prefetchLightPacks, setLightPlayer } from "../src/lesson/LightLesson";
 import { StepView } from "../src/lesson/StepView";
 
-const m = vi.hoisted(() => ({ createPlayer: vi.fn(), destroy: vi.fn() }));
-setLightPlayer(async () => ({ createPlayer: m.createPlayer })); // App registers the real player's lazy chunk
+const m = vi.hoisted(() => ({ createPlayer: vi.fn(), destroy: vi.fn(), packsUsed: vi.fn((): string[] => []), prefetchPacks: vi.fn(async (_ids: readonly string[]) => {}) }));
+setLightPlayer(async () => ({ createPlayer: m.createPlayer, packsUsed: m.packsUsed, prefetchPacks: m.prefetchPacks })); // App registers the real player's lazy chunk
 
 const file = (p: string) => `https://storage.test/${encodeURIComponent(p)}`;
 const step: VideoStep = {
@@ -91,5 +91,15 @@ describe("light lessons", () => {
     expect(urls).not.toContain(file("timing/en.json"));
     expect(urls.some((u) => u.endsWith(".mp4"))).toBe(false);
     expect(urls).toContain("/lib/v1/icons.json");
+  });
+
+  it("saves the packs a course's light lessons draw with, and only those", async () => {
+    m.packsUsed.mockReturnValueOnce(["science", "code"]);
+    await prefetchLightPacks({ lessons: [{ steps: [step] }] });
+    expect(m.prefetchPacks).toHaveBeenCalledWith(["science", "code"]);
+    // Lessons without packs, or without a light lesson, leave them on the server.
+    await prefetchLightPacks({ lessons: [{ steps: [step] }] });
+    await prefetchLightPacks({ lessons: [{ steps: [{ ...step, light: undefined }] }] });
+    expect(m.prefetchPacks).toHaveBeenCalledTimes(1);
   });
 });

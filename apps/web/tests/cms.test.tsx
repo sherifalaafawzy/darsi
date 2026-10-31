@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
 import ai1 from "../../../content/retired/ai-1.json";
 import type { TrackDef, Unit } from "../src/content/types";
-import { mergeTracks } from "../src/content/tracks";
+import { BUILTIN_TRACKS, mergeTracks } from "../src/content/tracks";
 import { I18nProvider } from "../src/i18n";
 import { StoreProvider } from "../src/state/store";
 
@@ -298,12 +298,13 @@ describe("UnitEditor", () => {
 });
 
 describe("TracksPage", () => {
-  const data: TrackDef = { id: "data", name: { en: "Data science", ar: "علم البيانات" }, icon: "chart", tone: "leaf", levels: 6, order: 3 };
+  // A track a platform admin added (every id in BUILTIN_TRACKS is built in).
+  const geo: TrackDef = { id: "geo", name: { en: "Geography", ar: "الجغرافيا" }, icon: "globe", tone: "leaf", levels: 6, order: 8 };
   beforeEach(() => {
-    m.data.getSettings.mockResolvedValue({ rev: 2, tracks: mergeTracks([data]) });
-    m.data.unitsByTrack.mockResolvedValue(new Map([["data", [{ id: "u1", title: { en: "Charts" }, level: 5 }]]]));
+    m.data.getSettings.mockResolvedValue({ rev: 2, tracks: mergeTracks([geo]) });
+    m.data.unitsByTrack.mockResolvedValue(new Map([["geo", [{ id: "u1", title: { en: "Charts" }, level: 5 }]]]));
   });
-  const page = async () => { wrap(<TracksPage />, "/super/tracks", "/super/tracks"); return screen.findByRole("button", { name: /Data science/ }); };
+  const page = async () => { wrap(<TracksPage />, "/super/tracks", "/super/tracks"); return screen.findByRole("button", { name: /Geography/ }); };
 
   it("adds a track with a suggested id and saves the whole list", async () => {
     m.api.saveSettings.mockImplementation(async ({ tracks }: { tracks: TrackDef[] }) => ({ rev: 3, tracks }));
@@ -318,11 +319,11 @@ describe("TracksPage", () => {
     await waitFor(() => expect(m.api.saveSettings).toHaveBeenCalled());
     const { rev, tracks } = m.api.saveSettings.mock.calls[0][0];
     expect(rev).toBe(2);
-    expect(tracks.map((t: TrackDef) => t.id)).toEqual(["ai", "iot", "cyber", "data", "robotics-club"]);
-    expect(tracks[4]).toMatchObject({ name: { en: "Robotics club" }, tone: "lilac", icon: "flask", levels: 5, order: 4 });
+    expect(tracks.map((t: TrackDef) => t.id)).toEqual([...BUILTIN_TRACKS.map((t) => t.id), "geo", "robotics-club"]);
+    expect(tracks.at(-1)).toMatchObject({ name: { en: "Robotics club" }, tone: "lilac", icon: "flask", levels: 5, order: 10 });
     expect(tracks.some((t: TrackDef) => "builtIn" in t)).toBe(false);
     expect(await screen.findByText(/Saved\. Phones get the new tracks/)).toBeTruthy();
-    expect(screen.getAllByText("Built-in")).toHaveLength(3); // the saved list comes back without the marks
+    expect(screen.getAllByText("Built-in")).toHaveLength(BUILTIN_TRACKS.length); // the saved list comes back without the marks
   });
 
   it("keeps the levels and the track that units use", async () => {
@@ -334,13 +335,13 @@ describe("TracksPage", () => {
   });
 
   it("explains a refused save", async () => {
-    m.api.saveSettings.mockRejectedValueOnce(Object.assign(new Error("x"), { code: "functions/failed-precondition", details: { conflicts: [{ track: "data", reason: "levels", units: ["u1"] }] } }))
+    m.api.saveSettings.mockRejectedValueOnce(Object.assign(new Error("x"), { code: "functions/failed-precondition", details: { conflicts: [{ track: "geo", reason: "levels", units: ["u1"] }] } }))
       .mockRejectedValueOnce(Object.assign(new Error("x"), { code: "functions/aborted", details: { conflict: true } }));
     fireEvent.click(await page());
     fireEvent.click(screen.getByRole("switch", { name: "Hide from learners" }));
     fireEvent.click(screen.getByRole("button", { name: "Save tracks" }));
     expect(await screen.findByText("Not saved: units still use what you changed.")).toBeTruthy();
-    expect(screen.getByText("Data science: these units use higher levels: Charts.")).toBeTruthy();
+    expect(screen.getByText("Geography: these units use higher levels: Charts.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Save tracks" }));
     expect(await screen.findByText(/Someone else saved the tracks/)).toBeTruthy();
   });
@@ -445,7 +446,7 @@ describe("editor strings", () => {
     const { STEP_MENU } = await import("../src/cms/steps");
     const { TRACK_ICONS } = await import("../src/cms/TracksPage");
     const codes = ["required", "minItems", "duplicateId", "badId", "lessonIdPrefix", "badValue", "range", "answerNotInOptions", "answersNotInOptions",
-      "fillBlanks", "fillAnswers", "fillBank", "badUrl", "checkpoint", "tooLarge", "missingLang", "unknownCompetency", "noSlides"];
+      "fillBlanks", "fillAnswers", "fillBank", "badUrl", "checkpoint", "tooLarge", "missingLang", "unknownCompetency", "noSlides", "codeTest", "unsolvable"];
     const dynamic = [...codes.map((c) => `cms.issue.${c}`), ...ARTS.map((a) => `cms.art.${a}`),
       ...SLIDE_LAYOUTS.map((x) => `cms.layout.${x}`), ...["x", "y", "w", "h"].map((k) => `cms.spot.${k}`), ...["draft", "live", "changed"].map((s) => `cms.status.${s}`),
       ...["draft", "live", "changed"].map((s) => `cms.filter.${s}`), ...STEP_MENU.map((s) => `cms.stepHint.${s}`),

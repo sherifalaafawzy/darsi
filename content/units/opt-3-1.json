@@ -1,0 +1,3373 @@
+{
+  "id": "opt-3-1",
+  "track": "opt",
+  "level": 3,
+  "title": {
+    "en": "Solving school problems in Python: timetables, routes, assignment",
+    "ar": "حلّ مشكلات المدرسة ببايثون: الجداول والطرق والتوزيع"
+  },
+  "summary": {
+    "en": "Model real school problems with Google’s OR-Tools in Python, run them on your phone, and judge the answers with colleagues: a timetable without clashes, exam slots, the school bus route, and which teacher takes which class. Every model is also fair game for questions: who gets the last period, the longest ride or the worst match?",
+    "ar": "صِغ مشكلات مدرسية حقيقية في نماذج بأدوات OR-Tools من Google بلغة بايثون، وشغّلها على هاتفك، واحكم على إجاباتها مع زملائك: جدول حصص بلا تعارض، ومواعيد الامتحانات، وطريق حافلة المدرسة، ومَن يدرّس أيّ صف. ومع كل نموذج سؤال عن العدالة: مَن يحصل على الحصة الأخيرة، أو أطول رحلة، أو أسوأ توزيع؟"
+  },
+  "lessons": [
+    {
+      "id": "opt-3-1-1",
+      "title": {
+        "en": "A timetable that works",
+        "ar": "جدول حصص يعمل"
+      },
+      "minutes": 17,
+      "tryTomorrow": {
+        "en": "Draw a timetable grid for three classes on the board, with sticky notes for the lessons. Pupils place them and call out every clash: a class with two lessons at once, or a teacher in two rooms. Then add one new rule, such as “the art room is busy in period 3”, and count how many notes have to move.",
+        "ar": "ارسم على السبّورة جدول حصص لثلاثة صفوف، واستعمل أوراقًا لاصقة للدروس. يضع الطلاب الأوراق وينبّهون إلى كل تعارض: صف له درسان في وقت واحد، أو معلم في غرفتين. ثم أضف قاعدة جديدة، مثل «غرفة الفنون مشغولة في الحصة ٣»، وعُدّوا الأوراق التي يجب أن تتحرّك."
+      },
+      "materials": {
+        "en": [
+          "Board and chalk",
+          "Sticky notes or paper squares in four colours, one colour per subject",
+          "Optional: a phone with Darsi to run the model in the lab"
+        ],
+        "ar": [
+          "السبّورة والطباشير",
+          "أوراق لاصقة أو مربعات ورقية بأربعة ألوان، لون لكل مادة",
+          "اختياري: هاتف عليه تطبيق «درسي» لتشغيل النموذج في المختبر"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "A timetable that works",
+            "ar": "جدول حصص يعمل"
+          },
+          "src": null,
+          "duration": 227,
+          "sizeMB": 1.5,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A week with an eraser",
+                "ar": "أسبوع مع الممحاة"
+              }
+            },
+            {
+              "at": 22.8,
+              "atBy": {
+                "en": 22.8,
+                "ar": 21.3
+              },
+              "label": {
+                "en": "The timetable as a model",
+                "ar": "الجدول في صورة نموذج"
+              }
+            },
+            {
+              "at": 73.5,
+              "atBy": {
+                "en": 73.5,
+                "ar": 69.6
+              },
+              "label": {
+                "en": "Cross out, then guess",
+                "ar": "الشطب ثم التخمين"
+              }
+            },
+            {
+              "at": 143.8,
+              "atBy": {
+                "en": 143.8,
+                "ar": 137.7
+              },
+              "label": {
+                "en": "Fits isn’t fair, and the lab",
+                "ar": "الملاءمة ليست العدالة، والمختبر"
+              }
+            },
+            {
+              "at": 190.2,
+              "atBy": {
+                "en": 190.2,
+                "ar": 183.5
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "The solver says INFEASIBLE. What does that mean?",
+                "ar": "يقول برنامج الحل: INFEASIBLE. ماذا يعني ذلك؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "The phone is too slow to find one",
+                    "ar": "الهاتف أبطأ من أن يجد جدولًا"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "No timetable keeps all these rules",
+                    "ar": "لا يوجد جدول يلتزم بكل هذه القواعد"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "There is a timetable, but not the best one",
+                    "ar": "يوجد جدول، لكنه ليس الأفضل"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "INFEASIBLE is a proof, not a failure: the search showed that no timetable keeps every rule (in the lab, science needs three periods but only two are left). The next step is human: decide with colleagues which rule can bend.",
+                "ar": "INFEASIBLE إثبات لا إخفاق: أظهر البحث أنه لا يوجد جدول يلتزم بكل القواعد (في المختبر، تحتاج العلوم إلى ثلاث حصص ولم تبقَ إلا حصتان). والخطوة التالية بشرية: قرّر مع زملائك أيّ قاعدة يمكن تخفيفها."
+              }
+            },
+            "at": 123.74,
+            "atBy": {
+              "en": 123.74,
+              "ar": 117.96
+            }
+          },
+          "transcript": {
+            "en": "Every September, our deputy head spends a week with a pencil and an eraser, building the timetable. Then one teacher changes her days, and it all falls apart. What if we just told a computer the rules? Today: a timetable that works, written as a model in Python. A timetable is a model like any other. The options: which period each lesson goes in. The limits: a class has one lesson at a time, and a teacher is in one class at a time. There’s no goal yet: any timetable that keeps every rule will do. In Google’s OR-Tools, each lesson gets a variable for its period, from one to four. One rule says a class’s lessons are all in different periods. Another says the same for each subject, because each subject here has one teacher. Real schools add rules. Ms Huda leaves after period three. Six A’s maths test is in period one. Each rule is one more line. How does the solver find a timetable? First it crosses out periods that can’t work: if six A’s maths is in period one, Mr Musa can’t teach anyone else then. That’s propagation. When nothing more can be crossed out, it guesses, and undoes any guess that leads to a dead end. In the lab’s small school, propagation and search need eight guesses. Plain backtracking, guessing without crossing out, needs three hundred and eighty-nine. Good rules save work. Quick check! I add one more rule, and the solver says INFEASIBLE. What does that tell me? No timetable keeps all these rules: the solver has proved it; it hasn’t just given up. In the lab, add “the science lab is busy in period one” too: science needs three periods, and only two are left. So talk to people: which rule can bend? A timetable that keeps the rules can still be unkind. Does one class get every hard subject after lunch? Does Ms Rana sit through a gap all morning? Who gets the last period of the week, every week? Check the result with the people who live with it. In the app, open “Build the timetable”. Press One step, and watch the rules cross periods out. Then press Run, switch to plain backtracking, and compare the guesses. Your turn. The solver found a timetable, but five B has maths in the last period every day. What do you do? Add a rule and solve again: the model makes that cheap. Remember: periods are variables, rules are lines, and the solver crosses out and searches. INFEASIBLE means the rules clash. And a timetable that fits still needs fair eyes. Try it in class tomorrow: draw a timetable grid on the board, with sticky notes for the lessons. Pupils place them, and call out every clash. Then add one new rule, and see how much has to move.",
+            "ar": "كل سبتمبر، الوكيل بتاعنا بيقعد أسبوع بالقلم الرصاص والأستيكة علشان يعمل جدول الحصص. وبعدين مدرّسة واحدة تغيّر أيامها، والجدول كله يبوظ. طب لو قلنا القواعد للكمبيوتر وخلاص؟ النهارده: جدول حصص بيشتغل، مكتوب كنموذج ببايثون. جدول الحصص نموذج زي أي نموذج. الاختيارات: كل درس في أنهي حصة. والقيود: الفصل ليه درس واحد في المرة، والمدرس في فصل واحد في المرة. ولسه مفيش هدف: أي جدول يلتزم بكل القواعد ينفع. في «أو آر تولز» بتاعة جوجل، كل درس بياخد متغيّر لحصته، من واحد لأربعة. قاعدة بتقول إن دروس الفصل كلها في حصص مختلفة. وقاعدة تانية بتقول نفس الكلام لكل مادة، لأن كل مادة هنا ليها مدرس واحد. المدارس الحقيقية بتزوّد قواعد. الأستاذة هدى بتمشي بعد الحصة التالتة. وامتحان الرياضيات بتاع ستة أ في الحصة الأولى. وكل قاعدة سطر زيادة. طب السولفر بيلاقي الجدول إزاي؟ الأول بيشطب الحصص اللي مستحيل تنفع: لو رياضيات ستة أ في الحصة الأولى، يبقى الأستاذ موسى مايقدرش يدرّس لحد تاني ساعتها. ده اسمه الانتشار. ولما مايبقاش فيه حاجة تتشطب، بيخمّن، وأي تخمين يوصّله لطريق مسدود بيرجع فيه. في المدرسة الصغيرة اللي في المعمل، الانتشار والبحث محتاجين تمن تخمينات. والرجوع البسيط، يعني التخمين من غير شطب، محتاج تلتمية تسعة وتمانين. القواعد الكويسة بتوفّر شغل. سؤال سريع! زوّدت قاعدة كمان، والسولفر قال «إنفيزيبل». ده يقولّي إيه؟ مفيش جدول بيلتزم بكل القواعد دي: والسولفر أثبت ده، مش استسلم وخلاص. في معمل التطبيق، زوّد كمان «معمل العلوم مشغول في الحصة الأولى»: العلوم محتاجة تلات حصص، وفاضل حصتين بس. يبقى اتكلم مع الناس: أنهي قاعدة ممكن تتساهل فيها؟ الجدول اللي ملتزم بالقواعد ممكن يبقى قاسي برضه. فيه فصل بياخد كل المواد الصعبة بعد الغدا؟ فيه مدرّسة زي الأستاذة رنا عندها فراغ الصبح كله؟ مين بياخد آخر حصة في الأسبوع، كل أسبوع؟ راجع النتيجة مع الناس اللي هيعيشوا بيها. في التطبيق، افتح «اصنع الجدول المدرسي». دوس «خطوة واحدة»، واتفرج على القواعد وهي بتشطب الحصص. وبعدين دوس «شغّل»، وغيّر لـ«التراجع البسيط»، وقارن التخمينات. دورك. السولفر لقى جدول، بس خمسة ب عندهم رياضيات آخر حصة كل يوم. تعمل إيه؟ زوّد قاعدة وحلّ تاني: النموذج بيخلّي ده سهل. افتكر: الحصص متغيّرات، والقواعد سطور، والسولفر بيشطب ويدوّر. و«إنفيزيبل» معناها إن القواعد متعارضة. والجدول اللي ملتزم بالقواعد لسه محتاج عين عادلة. جرّبها في الفصل بكرة: ارسم جدول حصص على السبورة، ومعاه ورق لزق للدروس. التلاميذ يحطّوها، وينادوا على أي تعارض. وبعدين زوّد قاعدة جديدة، وشوفوا قد إيه لازم يتحرّك."
+          },
+          "sources": {
+            "en": "/media/opt-3-1-1/video-en.mp4",
+            "ar": "/media/opt-3-1-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/opt-3-1-1/captions-en.vtt",
+            "ar": "/media/opt-3-1-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/opt-3-1-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/opt-3-1-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/opt-3-1-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/opt-3-1-1/light/audio/en.opus",
+              "manifest.json": "/media/opt-3-1-1/light/manifest.json",
+              "scenes.json": "/media/opt-3-1-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/opt-3-1-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/opt-3-1-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 503,
+              "ar": 490
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "A timetable as a model",
+            "ar": "الجدول المدرسي في صورة نموذج"
+          },
+          "body": {
+            "en": "A timetable is a decision problem like any other, and writing it as a model turns a week of pencil and eraser into a few minutes of thinking. The options are the period each lesson goes in: in Python, one integer variable per lesson, with a domain of the periods it could take (1 to 4, say). The limits are the rules every timetable must keep.\n\nTwo rules do most of the work. A class has one lesson at a time, so all of a class’s lessons must be in different periods; and a teacher is in one class at a time, so all of a teacher’s lessons must be in different periods. In Google’s OR-Tools, each is a single all-different constraint: m.add_all_different([...]). Every extra rule is one more line: Ms Huda leaves after period 3 becomes m.add(p[c, \"science\"] <= 3) for each class, and 6A’s maths test becomes m.add(p[\"6A\", \"maths\"] == 1). Write the expression on the left of the comparison: on the phone’s Python, 3 >= p doesn’t work.\n\nThe solver, CP-SAT, does not try every timetable. First it propagates: it crosses out periods that can’t work, such as Mr Musa’s other lessons in period 1 once 6A’s maths is fixed there. When nothing more can be crossed out, it guesses a period for the lesson with the fewest left, propagates again, and undoes the guess at a dead end. In the lab’s small school, that takes 8 guesses; plain backtracking, which guesses without crossing out, takes 389.\n\nThe solver reports a status. OPTIMAL means it found the best answer (with no goal, any answer that keeps every rule); FEASIBLE means an answer that keeps every rule but may not be the best; INFEASIBLE means it has proved that no timetable keeps all the rules, such as science needing three periods when only two are free; UNKNOWN means it stopped before it was sure. INFEASIBLE is a finding, not a failure: decide with colleagues which rule can bend. The same program runs unchanged on the real OR-Tools on a computer or in Colab (pip install ortools), where it handles schools with hundreds of teachers.\n\nFinally, judge the result. A timetable that keeps every rule can still be unkind: one class with every hard subject after lunch, a teacher with a gap all morning, the same class always in the last period of the week. The solver only keeps the rules it is given. Show the draft to the people who will live with it, then add what they need as a new rule or a goal (for example, as few last-period maths lessons as possible) and solve again.",
+            "ar": "الجدول المدرسي مسألة قرار كغيرها، وكتابته في صورة نموذج تحوّل أسبوعًا من القلم والممحاة إلى دقائق من التفكير. الخيارات هي الحصة التي يوضع فيها كل درس: في بايثون، متغيّر صحيح واحد لكل درس، ومجاله الحصص التي يمكن أن يأخذها (من ١ إلى ٤ مثلًا). والقيود هي القواعد التي يجب أن يلتزم بها كل جدول.\n\nقاعدتان تؤديان معظم العمل. للصف درس واحد في الوقت نفسه، فيجب أن تكون كل دروس الصف في حصص مختلفة. والمعلم في صف واحد في الوقت نفسه، فيجب أن تكون كل دروس المعلم في حصص مختلفة. وفي أدوات OR-Tools من Google، كلٌّ منهما قيد واحد من نوع «كلها مختلفة»: ⁦m.add_all_different([...])⁩. وكل قاعدة إضافية سطر آخر: مغادرة الأستاذة هدى بعد الحصة ٣ تصبح ⁦m.add(p[c, \"science\"] <= 3)⁩ لكل صف، واختبار الرياضيات للصف ٦أ يصبح ⁦m.add(p[\"6A\", \"maths\"] == 1)⁩. واكتب التعبير على يسار المقارنة: فالصيغة ⁦3 >= p⁩ لا تعمل في بايثون الهاتف.\n\nلا يجرّب برنامج الحل CP-SAT كل الجداول. فهو أولًا يقوم بالانتشار: يشطب الحصص التي لا يمكن أن تنجح، مثل دروس الأستاذ موسى الأخرى في الحصة ١ بعد تثبيت رياضيات الصف ٦أ فيها. وحين لا يبقى ما يُشطب، يخمّن حصة للدرس الذي بقيت له أقل الحصص، ثم ينشر من جديد، ويتراجع عن التخمين إذا وصل إلى طريق مسدود. وفي مدرسة المختبر الصغيرة يحتاج ذلك إلى ٨ تخمينات، أما التراجع البسيط، الذي يخمّن دون أن يشطب، فيحتاج إلى ٣٨٩.\n\nويُعلن برنامج الحل حالة. OPTIMAL تعني أنه وجد أفضل إجابة (ومن دون هدف: أي إجابة تلتزم بكل القواعد)، وFEASIBLE تعني إجابة تلتزم بكل القواعد لكنها قد لا تكون الأفضل، وINFEASIBLE تعني أنه أثبت أنه لا يوجد جدول يلتزم بكل القواعد، كأن تحتاج العلوم إلى ثلاث حصص ولا يبقى منها إلا اثنتان، وUNKNOWN تعني أنه توقّف قبل أن يتأكد. والحالة INFEASIBLE نتيجة لا إخفاق: قرّر مع زملائك أيّ قاعدة يمكن تخفيفها. والبرنامج نفسه يعمل دون تغيير على أدوات OR-Tools الحقيقية في حاسوب أو في Colab (بالأمر ⁦pip install ortools⁩)، حيث يتعامل مع مدارس فيها مئات المعلمين.\n\nوأخيرًا، احكم على النتيجة. فالجدول الذي يلتزم بكل القواعد قد يبقى قاسيًا: صف تأتيه كل المواد الصعبة بعد الغداء، أو معلم ينتظر فراغًا طوال الصباح، أو الصف نفسه في آخر حصة من الأسبوع دائمًا. وبرنامج الحل لا يلتزم إلا بالقواعد التي يُعطاها. اعرض المسوّدة على من سيعيشون معها، ثم أضف ما يحتاجون إليه قاعدةً جديدة أو هدفًا (مثل: أقل عدد ممكن من حصص الرياضيات الأخيرة)، وحُلّ من جديد."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Variable and domain",
+                "ar": "المتغيّر ومجاله"
+              },
+              "def": {
+                "en": "A choice the solver makes, such as a lesson’s period, and the values it may take (periods 1 to 4).",
+                "ar": "اختيار يقوم به برنامج الحل، مثل حصة الدرس، والقيم التي يمكن أن يأخذها (الحصص من ١ إلى ٤)."
+              }
+            },
+            {
+              "term": {
+                "en": "All-different constraint",
+                "ar": "قيد «كلها مختلفة»"
+              },
+              "def": {
+                "en": "A rule that a group of variables must all take different values: one lesson per period for a class or a teacher.",
+                "ar": "قاعدة تفرض أن تأخذ مجموعة من المتغيّرات قيمًا مختلفة كلها: درس واحد في الحصة لكل صف أو لكل معلم."
+              }
+            },
+            {
+              "term": {
+                "en": "Propagation",
+                "ar": "الانتشار"
+              },
+              "def": {
+                "en": "Crossing out values that can’t work, using the rules, before any guess.",
+                "ar": "شطب القيم التي لا يمكن أن تنجح، اعتمادًا على القواعد، قبل أي تخمين."
+              }
+            },
+            {
+              "term": {
+                "en": "Search (backtracking)",
+                "ar": "البحث (التراجع)"
+              },
+              "def": {
+                "en": "Guessing a value when propagation is stuck, and undoing the guess at a dead end.",
+                "ar": "تخمين قيمة حين يتوقّف الانتشار، والتراجع عن التخمين عند الطريق المسدود."
+              }
+            },
+            {
+              "term": {
+                "en": "INFEASIBLE",
+                "ar": "INFEASIBLE (لا حل)"
+              },
+              "def": {
+                "en": "The solver’s proof that no answer keeps all the rules: time to decide which rule can bend.",
+                "ar": "إثبات برنامج الحل أنه لا توجد إجابة تلتزم بكل القواعد: حان وقت تحديد القاعدة التي يمكن تخفيفها."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "The solver found a timetable that keeps every rule, but 5B has maths in the last period every day, when pupils are tired. What do you do?",
+            "ar": "وجد برنامج الحل جدولًا يلتزم بكل القواعد، لكن الصف ٥ب يدرس الرياضيات في آخر حصة كل يوم، حين يكون الطلاب متعبين. ماذا تفعل؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Accept it: the solver says OPTIMAL",
+                "ar": "أقبله: فبرنامج الحل يقول OPTIMAL"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Add a rule or a goal against it, and solve again",
+                "ar": "أضيف قاعدة أو هدفًا يمنع ذلك، وأحلّ من جديد"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Go back to pencil and eraser",
+                "ar": "أعود إلى القلم والممحاة"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "The solver keeps exactly the rules it is given, nothing more. A model makes it cheap to add the missing rule (for example, maths last at most twice a week for any class) and solve again; accepting an unkind timetable or starting over by hand both waste that.",
+            "ar": "يلتزم برنامج الحل بالقواعد التي يُعطاها بالضبط، لا أكثر. والنموذج يجعل إضافة القاعدة الناقصة سهلة (مثل: لا تكون الرياضيات آخر حصة لأي صف أكثر من مرتين في الأسبوع) ثم الحل من جديد. أما قبول جدول قاسٍ أو البدء من جديد باليد فكلاهما يضيّع هذه الميزة."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p2",
+          "prompt": {
+            "en": "Match each solver status to what it tells you.",
+            "ar": "صِل كل حالة من حالات برنامج الحل بما تخبرك به."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "OPTIMAL",
+                "ar": "OPTIMAL"
+              },
+              "right": {
+                "en": "The best answer (with no goal: an answer that keeps every rule)",
+                "ar": "أفضل إجابة (ومن دون هدف: إجابة تلتزم بكل القواعد)"
+              }
+            },
+            {
+              "left": {
+                "en": "FEASIBLE",
+                "ar": "FEASIBLE"
+              },
+              "right": {
+                "en": "An answer that keeps every rule, maybe not the best",
+                "ar": "إجابة تلتزم بكل القواعد، وقد لا تكون الأفضل"
+              }
+            },
+            {
+              "left": {
+                "en": "INFEASIBLE",
+                "ar": "INFEASIBLE"
+              },
+              "right": {
+                "en": "Proved: no answer keeps all the rules",
+                "ar": "ثبت أنه لا توجد إجابة تلتزم بكل القواعد"
+              }
+            },
+            {
+              "left": {
+                "en": "UNKNOWN",
+                "ar": "UNKNOWN"
+              },
+              "right": {
+                "en": "Stopped before it was sure either way",
+                "ar": "توقّف قبل أن يتأكّد من أيّ الأمرين"
+              }
+            }
+          ],
+          "explain": {
+            "en": "The status is the first thing to read. Only OPTIMAL and FEASIBLE come with a timetable; INFEASIBLE is a proof that the rules clash; UNKNOWN means the search ran out of time or nodes, so try a smaller model or more time.",
+            "ar": "الحالة أول ما يُقرأ. فلا يأتي جدول إلا مع OPTIMAL وFEASIBLE، والحالة INFEASIBLE إثبات أن القواعد متعارضة، وUNKNOWN تعني أن البحث نفد وقته، فجرّب نموذجًا أصغر أو وقتًا أطول."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "p3",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete the timetable model: a class has one lesson at a time, each subject’s teacher is in one class at a time, and Ms Huda (science) leaves after period 3.",
+            "ar": "أكمل نموذج الجدول: للصف درس واحد في الوقت نفسه، ومعلم كل مادة في صف واحد في الوقت نفسه، والأستاذة هدى (العلوم) تغادر بعد الحصة ٣."
+          },
+          "code": [
+            "for c in classes:\n    m.",
+            {
+              "blank": 0
+            },
+            "(\n        [p[c, s] for s in subjects])\nfor s in subjects:\n    m.add_all_different(\n        [p[c, s] for c in ",
+            {
+              "blank": 1
+            },
+            "])\nfor c in classes:\n    m.add(p[c, \"science\"] ",
+            {
+              "blank": 2
+            },
+            " 3)"
+          ],
+          "answers": [
+            "add_all_different",
+            "classes",
+            "<="
+          ],
+          "distractors": [
+            "maximize",
+            "subjects",
+            ">="
+          ],
+          "explain": {
+            "en": "add_all_different keeps a class’s lessons in different periods; for each subject, the same teacher’s lessons in every class must differ too; and <= 3 keeps science in periods 1 to 3, with the expression on the left.",
+            "ar": "تُبقي add_all_different دروس الصف في حصص مختلفة، ولكل مادة يجب أن تختلف حصص المعلم نفسه في كل الصفوف أيضًا، وتُبقي <= 3 العلوم في الحصص من ١ إلى ٣، والتعبير على اليسار."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "tool": "timetable",
+          "prompt": {
+            "en": "Try it: in “Build the timetable”, press One step a few times and watch the rules cross periods out. Press Run and count the guesses, then choose “Plain backtracking” and Run again. Finally tick “The art room holds an exam in period 3” and “The lab is busy in period 1”: what does the search prove?",
+            "ar": "جرّب: في «اصنع الجدول المدرسي» اضغط «خطوة واحدة» بضع مرات، وشاهد القواعد تشطب الحصص. اضغط «شغّل» وعُدّ التخمينات، ثم اختر «التراجع البسيط» وشغّل من جديد. وأخيرًا فعّل «في غرفة الفنون امتحان في الحصة ٣» و«المختبر مشغول في الحصة ١»: ماذا يثبت البحث؟"
+          }
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "5A (a) and 5B (b) both have maths, science and English in periods 1 to 3. Each subject has one teacher for both classes, and Ms Huda (science) leaves after period 2. Add the missing rule: a teacher can’t be in both classes in the same period. Then run it.",
+            "ar": "للصفّين ٥أ (a) و٥ب (b) رياضيات وعلوم وإنجليزية في الحصص من ١ إلى ٣. ولكل مادة معلم واحد للصفّين، والأستاذة هدى (العلوم) تغادر بعد الحصة ٢. أضف القاعدة الناقصة: لا يكون المعلم في الصفّين في الحصة نفسها. ثم شغّل البرنامج."
+          },
+          "starter": "from ortools.sat.python import cp_model\nS = [\"maths\", \"science\", \"english\"]\nm = cp_model.CpModel()\na = {s: m.new_int_var(1, 3, s) for s in S}\nb = {s: m.new_int_var(1, 3, s) for s in S}\nfor d in (a, b):\n    m.add_all_different(list(d.values()))\n    m.add(d[\"science\"] <= 2)\n# a teacher: not in 5A and 5B at once\n\nsolver = cp_model.CpSolver()\nprint(solver.status_name(solver.solve(m)))\n",
+          "solution": "from ortools.sat.python import cp_model\nS = [\"maths\", \"science\", \"english\"]\nm = cp_model.CpModel()\na = {s: m.new_int_var(1, 3, s) for s in S}\nb = {s: m.new_int_var(1, 3, s) for s in S}\nfor d in (a, b):\n    m.add_all_different(list(d.values()))\n    m.add(d[\"science\"] <= 2)\nfor s in S:\n    m.add(a[s] != b[s])\nsolver = cp_model.CpSolver()\nprint(solver.status_name(solver.solve(m)))\n",
+          "tests": [
+            {
+              "output": "OPTIMAL",
+              "check": "assert all(solver.value(a[s]) != solver.value(b[s]) for s in S), \"A teacher is in 5A and 5B in the same period\"",
+              "hint": {
+                "en": "For every subject s, 5A’s period and 5B’s period must differ.",
+                "ar": "لكل مادة s، يجب أن تختلف حصة ٥أ عن حصة ٥ب."
+              }
+            },
+            {
+              "check": "assert solver.value(a[\"science\"]) <= 2 and solver.value(b[\"science\"]) <= 2, \"Science must be in periods 1 or 2\"",
+              "hint": {
+                "en": "Keep Ms Huda’s rule: science in period 1 or 2.",
+                "ar": "حافظ على قاعدة الأستاذة هدى: العلوم في الحصة ١ أو ٢."
+              }
+            },
+            {
+              "check": "m.add(a[\"maths\"] == b[\"maths\"])\nassert solver.solve(m) == cp_model.INFEASIBLE, \"A teacher can still be in 5A and 5B at once\"",
+              "hint": {
+                "en": "Add one != rule per subject: m.add(a[s] != b[s]).",
+                "ar": "أضف قاعدة ⁦!=⁩ لكل مادة: ⁦m.add(a[s] != b[s])⁩."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "Loop over the subjects: for s in S:",
+              "ar": "مُرّ على المواد: ⁦for s in S⁩:"
+            },
+            {
+              "en": "Inside the loop: m.add(a[s] != b[s])",
+              "ar": "داخل الحلقة: ⁦m.add(a[s] != b[s])⁩"
+            }
+          ],
+          "explain": {
+            "en": "Each subject has one teacher, so 5A’s and 5B’s periods for it must differ: one != rule per subject. Without it, the solver happily puts both classes’ science in period 1, because nobody told it about the teacher. The same program runs unchanged on the real OR-Tools in Colab.",
+            "ar": "لكل مادة معلم واحد، فيجب أن تختلف حصتها في ٥أ عن حصتها في ٥ب: قاعدة != لكل مادة. ومن دونها يضع برنامج الحل علوم الصفّين في الحصة ١ دون تردّد، لأن أحدًا لم يخبره بأمر المعلم. والبرنامج نفسه يعمل دون تغيير على أدوات OR-Tools الحقيقية في Colab."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p5",
+          "prompt": {
+            "en": "If the solver says OPTIMAL for a timetable with no goal, the timetable is fair to every teacher and class.",
+            "ar": "إذا قال برنامج الحل OPTIMAL لجدول بلا هدف، فالجدول عادل لكل معلم وكل صف."
+          },
+          "answer": false,
+          "explain": {
+            "en": "OPTIMAL only says every rule you wrote is kept. Fairness rules nobody wrote, such as not giving one class every last period, are invisible to the solver. Show the draft to the people affected and add what they need.",
+            "ar": "لا تقول OPTIMAL إلا إن كل قاعدة كتبتها متحقّقة. أما قواعد العدالة التي لم يكتبها أحد، مثل ألا يأخذ صف واحد كل الحصص الأخيرة، فلا يراها برنامج الحل. اعرض المسوّدة على المتأثرين بها وأضف ما يحتاجون إليه."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you suggest?",
+            "ar": "ماذا تقترح؟"
+          },
+          "who": {
+            "en": "Mrs Adeyemi, deputy head",
+            "ar": "السيدة أديمي، وكيلة المدرسة"
+          },
+          "initial": {
+            "en": "A",
+            "ar": "أ"
+          },
+          "situation": {
+            "en": "The solver’s timetable keeps every rule, but Ms Rana now teaches all her art lessons on two days, with a four-period gap on one of them. She has a child to collect at 2 pm. Mrs Adeyemi asks you what to do.",
+            "ar": "يلتزم جدول برنامج الحل بكل القواعد، لكن الأستاذة رنا صارت تدرّس كل حصص الفنون في يومين، وفي أحدهما فراغ أربع حصص. ولديها طفل تأخذه من المدرسة الساعة ٢ ظهرًا. تسألك السيدة أديمي ماذا تفعل."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Ask Ms Rana what she needs, add it as a rule, and solve again.”",
+                "ar": "«اسألي الأستاذة رنا عمّا تحتاج إليه، وأضيفيه قاعدةً، ثم حُلّي من جديد.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Her pick-up time becomes a line such as “no art lessons after period 5”. The solver rearranges everything else, and the new timetable still keeps every old rule.",
+                "ar": "يصبح موعدها سطرًا مثل «لا حصص فنون بعد الحصة ٥». ويعيد برنامج الحل ترتيب كل ما سواه، ويبقى الجدول الجديد ملتزمًا بكل القواعد القديمة."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Swap a few of her lessons by hand.”",
+                "ar": "«بدّلي بعض حصصها باليد.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "A hand swap can break a rule somewhere else, a clash for a class or another teacher. If you do swap, fix those lessons as rules in the model and let the solver check the rest.",
+                "ar": "قد يكسر التبديل اليدوي قاعدة في مكان آخر، فيقع تعارض لصف أو لمعلم آخر. وإن بدّلتِ، فثبّتي تلك الحصص قواعدَ في النموذج، ودعي برنامج الحل يتحقّق من الباقي."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“The computer decided, so it’s fair.”",
+                "ar": "«قرّر الحاسوب، فهو عادل.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "The computer only kept the rules it was given, and nobody gave it Ms Rana’s. A timetable people trust is one they could shape.",
+                "ar": "لم يلتزم الحاسوب إلا بالقواعد التي أُعطيها، ولم يعطه أحد ما يخصّ الأستاذة رنا. والجدول الذي يثق به الناس هو الذي شاركوا في تشكيله."
+              }
+            }
+          ],
+          "explain": {
+            "en": "Ask what the person needs, add it as a rule, and solve again, so every other rule still holds.",
+            "ar": "اسأل الشخص عمّا يحتاجه، وأضفه قاعدةً، وحُلّ من جديد، لتبقى كل القواعد الأخرى محفوظة."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which rule of your school’s timetable is written down nowhere, but everyone knows? How would you write it as one line of a model?",
+            "ar": "ما القاعدة في جدول مدرستك التي لم تُكتب في أي مكان، لكن الجميع يعرفها؟ كيف تكتبها سطرًا واحدًا في نموذج؟"
+          },
+          "placeholder": {
+            "en": "For example: “No PE straight after lunch. That’s m.add(p[c, \"pe\"] != 5) for every class.”",
+            "ar": "مثلًا: «لا رياضة بعد الغداء مباشرة. أي ⁦m.add(p[c, \"pe\"] != 5)⁩ لكل صف.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: The sticky-note timetable",
+            "ar": "مشروع: الجدول بالأوراق اللاصقة"
+          },
+          "task": {
+            "en": "On the board, draw a grid for three classes and four periods. Give groups sticky notes for each class’s four lessons (one colour per subject and teacher). Groups place the notes so that no class has two lessons at once and no teacher is in two classes at once, then check each other’s grids for clashes. Add one new rule, such as “the art room holds an exam in period 3”, and count how many notes move. If you have a phone, run the timetable example in the “Model it with CP-SAT” lab and compare it with the class’s answer. End by asking: who got the last period, and is that fair?",
+            "ar": "ارسم على السبّورة جدولًا لثلاثة صفوف وأربع حصص. أعطِ المجموعات أوراقًا لاصقة لدروس كل صف الأربعة (لون لكل مادة ومعلمها). تضع المجموعات الأوراق بحيث لا يكون لصف درسان في وقت واحد ولا يكون معلم في صفّين في وقت واحد، ثم تتحقّق كل مجموعة من جدول الأخرى بحثًا عن التعارضات. أضف قاعدة جديدة، مثل «في غرفة الفنون امتحان في الحصة ٣»، وعُدّوا الأوراق التي تتحرّك. وإن كان لديك هاتف، فشغّل مثال الجدول في مختبر «صِغ النموذج بـ CP-SAT» وقارنه بإجابة الصف. واختم بسؤال: مَن أخذ الحصة الأخيرة، وهل هذا عادل؟"
+          },
+          "deliverable": {
+            "en": "A photo of the finished grid (no faces needed), the number of notes that moved after the new rule, and one sentence on what pupils said about fairness.",
+            "ar": "صورة للجدول المكتمل (لا حاجة إلى ظهور الوجوه)، وعدد الأوراق التي تحرّكت بعد القاعدة الجديدة، وجملة عمّا قاله الطلاب عن العدالة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Pupils could: place lessons so that no class or teacher is in two places at once.",
+                "ar": "تمكّن الطلاب من: وضع الدروس بحيث لا يكون صف أو معلم في مكانين في وقت واحد."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: spot a clash in another group’s grid and explain which rule it breaks.",
+                "ar": "تمكّن الطلاب من: اكتشاف تعارض في جدول مجموعة أخرى وشرح القاعدة التي يكسرها."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: say whether a timetable that keeps every rule is also fair, and why.",
+                "ar": "تمكّن الطلاب من: الحكم على ما إذا كان الجدول الملتزم بكل القواعد عادلًا أيضًا، ولماذا."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "A timetable that works",
+            "ar": "جدول حصص يعمل"
+          },
+          "narration": {
+            "en": "What if we told a computer the rules, and let it search?",
+            "ar": "ماذا لو أخبرنا الحاسوب بالقواعد وتركناه يبحث؟"
+          },
+          "note": {
+            "en": "Optimization · Level 3 · Lesson 1",
+            "ar": "الحلول المثلى، المستوى ٣، الدرس ١"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Write a timetable as a model: a period per lesson, and rules.",
+              "See how a solver crosses out and searches, and what INFEASIBLE means.",
+              "Judge a timetable that keeps every rule: is it also fair?"
+            ],
+            "ar": [
+              "نكتب الجدول في صورة نموذج: حصة لكل درس، وقواعد.",
+              "نرى كيف يشطب برنامج الحل ويبحث، وما معنى INFEASIBLE.",
+              "نحكم على جدول يلتزم بكل القواعد: هل هو عادل أيضًا؟"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Periods are variables; each rule is one line, such as add_all_different for a class or a teacher.",
+              "The solver crosses out what can’t work, then guesses and undoes dead ends.",
+              "INFEASIBLE proves the rules clash; OPTIMAL doesn’t prove the timetable is fair."
+            ],
+            "ar": [
+              "الحصص متغيّرات، وكل قاعدة سطر، مثل add_all_different لصف أو لمعلم.",
+              "يشطب برنامج الحل ما لا يمكن أن ينجح، ثم يخمّن ويتراجع عن الطرق المسدودة.",
+              "INFEASIBLE تثبت أن القواعد متعارضة، وOPTIMAL لا تثبت أن الجدول عادل."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "The sticky-note timetable",
+            "ar": "الجدول بالأوراق اللاصقة"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Who has ever had two lessons at once?",
+              "Teach (8 min): The two rules and the extra rules.",
+              "Build it (15 min): Groups place sticky notes on the grid.",
+              "New rule (7 min): Add one rule and count what moves.",
+              "Wrap-up (5 min): Who got the last period? Is that fair?"
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): مَن حدث له أن كان عنده درسان في وقت واحد؟",
+              "الشرح (٨ دقائق): القاعدتان الأساسيتان والقواعد الإضافية.",
+              "البناء (١٥ دقيقة): تضع المجموعات الأوراق اللاصقة على الجدول.",
+              "قاعدة جديدة (٧ دقائق): أضف قاعدة وعُدّ ما يتحرّك.",
+              "الختام (٥ دقائق): مَن أخذ الحصة الأخيرة؟ وهل هذا عادل؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Ask pupils what goes wrong when a timetable is badly made: two lessons at once, a teacher in two rooms, a free period nobody wanted. List their answers as rules.",
+              "Teach (8 min): Draw a grid for three classes and four periods. Explain the two main rules (a class has one lesson at a time; a teacher is in one class at a time) and two extra rules: Ms Huda leaves after period 3, and 6A’s maths test is in period 1.",
+              "Build it (15 min): Each group gets twelve sticky notes, four per class, coloured by subject. They place them on their own grid, then swap grids with another group to look for clashes.",
+              "New rule (7 min): Announce “the art room holds an exam in period 3”. Groups move notes to keep every rule and count how many moved.",
+              "Wrap-up (5 min): Ask which class got the last period most often, and whether a timetable that keeps every rule is always fair. Show the lab or the modeller if you have a phone."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اسأل الطلاب: ما الذي يفسد حين يُصنع الجدول بشكل سيئ؟ درسان في وقت واحد، أو معلم في غرفتين، أو حصة فراغ لم يردها أحد. واكتب إجاباتهم قواعدَ.",
+              "الشرح (٨ دقائق): ارسم جدولًا لثلاثة صفوف وأربع حصص. واشرح القاعدتين الأساسيتين (للصف درس واحد في الوقت نفسه، والمعلم في صف واحد في الوقت نفسه)، وقاعدتين إضافيتين: الأستاذة هدى تغادر بعد الحصة ٣، واختبار الرياضيات للصف ٦أ في الحصة ١.",
+              "البناء (١٥ دقيقة): تحصل كل مجموعة على اثنتي عشرة ورقة لاصقة، أربع لكل صف، ملوّنة بحسب المادة. تضعها على جدولها، ثم تتبادل الجداول مع مجموعة أخرى بحثًا عن التعارضات.",
+              "قاعدة جديدة (٧ دقائق): أعلن «في غرفة الفنون امتحان في الحصة ٣». تحرّك المجموعات الأوراق لتلتزم بكل القواعد، وتعدّ الأوراق التي تحرّكت.",
+              "الختام (٥ دقائق): اسأل: أيّ صف أخذ الحصة الأخيرة أكثر من غيره؟ وهل الجدول الذي يلتزم بكل القواعد عادل دائمًا؟ واعرض المختبر أو مختبر النمذجة إن كان معك هاتف."
+            ]
+          },
+          "note": {
+            "en": "Prepare twelve notes per group: four lessons for each of 5A, 5B and 6A (maths, science, English, art), one colour per subject. No sticky notes? Squares of paper and a little tape work.",
+            "ar": "جهّز اثنتي عشرة ورقة لكل مجموعة: أربعة دروس لكل من ٥أ و٥ب و٦أ (رياضيات، وعلوم، وإنجليزية، وفنون)، لون لكل مادة. لا توجد أوراق لاصقة؟ تكفي مربعات ورق وقليل من الشريط اللاصق."
+          },
+          "narration": {
+            "en": "Place every lesson so nobody is in two places at once.",
+            "ar": "ضعوا كل درس بحيث لا يكون أحد في مكانين في وقت واحد."
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which rule did we forget at first, and how did we notice?",
+              "What does it mean when no timetable can keep every rule?",
+              "Who got the last period, and is that fair?"
+            ],
+            "ar": [
+              "أيّ قاعدة نسيناها في البداية، وكيف انتبهنا إليها؟",
+              "ماذا يعني ألا يوجد جدول يلتزم بكل القواعد؟",
+              "مَن أخذ الحصة الأخيرة، وهل هذا عادل؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one rule of our school’s timetable, and one change that would make it fairer."
+            ],
+            "ar": [
+              "اكتب قاعدة واحدة من جدول مدرستنا، وتغييرًا واحدًا يجعله أعدل."
+            ]
+          },
+          "narration": {
+            "en": "Say the rules, let the solver search, and judge the result together.",
+            "ar": "قل القواعد، ودع برنامج الحل يبحث، واحكموا على النتيجة معًا."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: A timetable that works",
+            "ar": "شرائح: جدول حصص يعمل"
+          },
+          "pages": 6,
+          "base": "opt-3-1-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: A timetable that works",
+            "ar": "خطة الدرس وورقة العمل: جدول حصص يعمل"
+          },
+          "pages": 4,
+          "base": "opt-3-1-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/opt-3-1-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "OPT.2",
+        "OPT.3",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "opt-3-1-2",
+      "title": {
+        "en": "Exams without clashes",
+        "ar": "امتحانات بلا تعارض"
+      },
+      "minutes": 17,
+      "tryTomorrow": {
+        "en": "List next term’s exams and which classes or pupils take each. Let pupils draw the clash map with chalk dots and lines (or string between chairs), then colour it with as few slots as they can. Ask: who has two exams in a row, and is that fair?",
+        "ar": "اكتب امتحانات الفصل الدراسي القادم ومَن يقدّم كلًّا منها من الصفوف أو الطلاب. ودع الطلاب يرسمون خريطة التعارض بنقاط وخطوط من الطباشير (أو بخيط بين الكراسي)، ثم يلوّنونها بأقل عدد ممكن من المواعيد. واسأل: مَن لديه امتحانان متتاليان، وهل هذا عادل؟"
+      },
+      "materials": {
+        "en": [
+          "Chalk, or string and eight chairs",
+          "Coloured paper or caps for the slots",
+          "A list of exams and who takes each"
+        ],
+        "ar": [
+          "طباشير، أو خيط وثمانية كراسٍ",
+          "أوراق ملوّنة أو أغطية للمواعيد",
+          "قائمة بالامتحانات ومَن يقدّم كلًّا منها"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Exams without clashes",
+            "ar": "امتحانات بلا تعارض"
+          },
+          "src": null,
+          "duration": 239,
+          "sizeMB": 1.4,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Two exams at once",
+                "ar": "امتحانان في وقت واحد"
+              }
+            },
+            {
+              "at": 22.4,
+              "atBy": {
+                "en": 22.4,
+                "ar": 19.6
+              },
+              "label": {
+                "en": "A clash map and quick rules",
+                "ar": "خريطة التعارض والقواعد السريعة"
+              }
+            },
+            {
+              "at": 76.4,
+              "atBy": {
+                "en": 76.4,
+                "ar": 71.5
+              },
+              "label": {
+                "en": "The model and its proof",
+                "ar": "النموذج وإثباته"
+              }
+            },
+            {
+              "at": 129.6,
+              "atBy": {
+                "en": 129.6,
+                "ar": 119
+              },
+              "label": {
+                "en": "Fewest isn’t kindest",
+                "ar": "الأقل ليس الأرحم"
+              }
+            },
+            {
+              "at": 197.4,
+              "atBy": {
+                "en": 197.4,
+                "ar": 180.8
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A quick rule found 4 slots; the solver says OPTIMAL with 3. What does OPTIMAL add?",
+                "ar": "وجدت قاعدة سريعة ٤ مواعيد، ويقول برنامج الحل OPTIMAL مع ٣. ماذا تضيف كلمة OPTIMAL؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "That 3 is fewer than the quick rule found",
+                    "ar": "أن ٣ أقل مما وجدته القاعدة السريعة"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "That no plan with fewer slots exists",
+                    "ar": "أنه لا توجد خطة بمواعيد أقل"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "That 3 slots are fair to every pupil",
+                    "ar": "أن ٣ مواعيد عادلة لكل طالب"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "A quick rule can only show that a plan works. OPTIMAL means the solver searched and proved no plan with fewer slots exists, and Omar’s three exams that all clash (a clique) show the same. It says nothing about fairness.",
+                "ar": "لا تستطيع القاعدة السريعة إلا أن تُظهر أن الخطة تنجح. أما OPTIMAL فتعني أن برنامج الحل بحث وأثبت أنه لا توجد خطة بمواعيد أقل، وامتحانات عمر الثلاثة المتعارضة كلها (الزمرة) تُظهر الشيء نفسه. ولا تقول شيئًا عن العدالة."
+              }
+            },
+            "at": 129.62,
+            "atBy": {
+              "en": 129.62,
+              "ar": 119
+            }
+          },
+          "transcript": {
+            "en": "Last year, a pupil found two of his exams in the same slot. He sat one of them in the staff room at lunchtime. This year I want no clashes, and as few slots as possible. Today: exams without clashes, as a picture and as a model. Draw each exam as a dot. Join two dots when some pupil takes both exams: those two can’t share a slot. Now giving exams slots is colouring the dots, so that joined dots get different colours. A quick rule: go down the list, and give each exam the first slot with no clash. In the lab, that needs four slots. A smarter rule, DSatur, always does next the exam that is hardest to place, and needs three. Can it be done in two? No. Omar’s three exams, maths, Arabic and French, all clash with each other, so they need three different slots. A group of exams that all clash is called a clique, and it proves that fewer is impossible. In CP-SAT, each exam’s slot is a variable. For every pupil, their exams must all be in different slots. A variable called last is at least every slot, and the goal is to make it as small as possible. The solver answers three, and says OPTIMAL. That word matters: the solver has proved that no plan with two slots exists, just as Omar’s clique said. A quick rule can only say “this works”; a solver can say “this is the best”. Quick check! A quick rule found four slots, and the solver says OPTIMAL with three. What does the word OPTIMAL add? A proof: no plan with fewer slots exists. But look at Omar and Tarek: with three slots, they sit three exams back to back. Add the rule “no pupil sits exams in two slots in a row”, and the fewest becomes five. Fewer slots, or rested pupils: that’s a trade-off. Who should decide that trade-off? Not the solver, and not one timetabler alone. Ask the pupils who sit the exams and the teachers who mark them, then write the agreed rule into the model. In the app, open “Exam slots without clashes”. Press Greedy, then DSatur, then “How few slots?”. Then untick Omar, and colour the map yourself. Your turn. Our model says three slots, OPTIMAL, but Tarek has three exams back to back. What should we do? Agree the rule with the people it affects, add it, solve again, and say openly what it costs. Remember: exams are dots, shared pupils are lines, and slots are colours. A clique proves the fewest. And OPTIMAL means best for the goal you wrote, not best for every pupil. Try it in class tomorrow: list next term’s exams, and let pupils draw the clash map with chalk or string. Colour it with as few slots as you can. Then ask: who has two exams in a row, and is that fair?",
+            "ar": "السنة اللي فاتت، تلميذ لقى اتنين من امتحاناته في نفس الميعاد. وقعد يحل واحد منهم في أوضة المدرسين وقت الغدا. السنة دي عايزة من غير أي تعارض، وبأقل عدد مواعيد ممكن. النهارده: امتحانات من غير تعارض، كرسمة وكنموذج. ارسم كل امتحان نقطة. ووصّل بين نقطتين لو فيه تلميذ بياخد الامتحانين: دول مايقدروش يبقوا في نفس الميعاد. وكده توزيع المواعيد بقى تلوين للنقط، بحيث النقط المتوصّلة تاخد ألوان مختلفة. قاعدة سريعة: انزل على القايمة، وادّي كل امتحان أول ميعاد مفيهوش تعارض. في المعمل، ده بيحتاج أربع مواعيد. وقاعدة أذكى اسمها «دي ساتور»، بتختار دايمًا الامتحان الأصعب في توزيعه، وبتحتاج تلاتة. ينفع في اتنين؟ لأ. امتحانات عمر التلاتة، الرياضيات والعربي والفرنساوي، كلهم متعارضين مع بعض، فمحتاجين تلات مواعيد مختلفة. ومجموعة الامتحانات اللي كلها متعارضة مع بعض اسمها «زُمرة»، وهي بتثبت إن الأقل مستحيل. في «سي بي سات»، ميعاد كل امتحان متغيّر. ولكل تلميذ، امتحاناته لازم تبقى كلها في مواعيد مختلفة. ومتغيّر اسمه last أكبر من أو يساوي كل ميعاد، والهدف إننا نصغّره على قد ما نقدر. السولفر بيجاوب تلاتة، وبيقول «أوبتيمال». والكلمة دي مهمة: السولفر أثبت إن مفيش خطة بميعادين، زي ما زُمرة عمر قالت. القاعدة السريعة تقدر تقول «ده بينفع» وبس، إنما السولفر يقدر يقول «ده الأحسن». سؤال سريع! القاعدة السريعة لقت أربع مواعيد، والسولفر قال «أوبتيمال» بتلاتة. كلمة «أوبتيمال» بتزوّد إيه؟ إثبات: مفيش خطة بمواعيد أقل. بس بص على عمر وطارق: بتلات مواعيد، بيدخلوا تلات امتحانات ورا بعض. زوّد قاعدة «مفيش تلميذ يمتحن في ميعادين ورا بعض»، والأقل يبقى خمسة. مواعيد أقل، ولا تلاميذ مرتاحين: دي موازنة. مين اللي يقرّر الموازنة دي؟ مش السولفر، ومش اللي بيعمل الجدول لوحده. اسأل التلاميذ اللي هيمتحنوا والمدرسين اللي هيصحّحوا، وبعدين اكتب القاعدة اللي اتفقتوا عليها في النموذج. في التطبيق، افتح «مواعيد امتحانات بلا تعارض». دوس «الجشع»، وبعدين «دي ساتور»، وبعدين «ما أقل عدد من المواعيد؟». وبعدين شيل علامة عمر، ولوّن الخريطة بنفسك. دورك. النموذج بتاعنا قال تلات مواعيد، «أوبتيمال»، بس طارق عنده تلات امتحانات ورا بعض. نعمل إيه؟ اتفق على القاعدة مع الناس اللي هتأثّر عليهم، وزوّدها، وحلّ تاني، وقول بصراحة هي بتكلّف كام. افتكر: الامتحانات نقط، والتلاميذ المشتركين خطوط، والمواعيد ألوان. والزُمرة بتثبت أقل عدد. و«أوبتيمال» معناها الأحسن للهدف اللي إنت كتبته، مش الأحسن لكل تلميذ. جرّبها في الفصل بكرة: اكتب امتحانات الترم الجاي، وخلّي التلاميذ يرسموا خريطة التعارض بالطباشير أو بالخيط. لوّنوها بأقل عدد مواعيد تقدروا عليه. وبعدين اسأل: مين عنده امتحانين ورا بعض، وده عدل؟"
+          },
+          "sources": {
+            "en": "/media/opt-3-1-2/video-en.mp4",
+            "ar": "/media/opt-3-1-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/opt-3-1-2/captions-en.vtt",
+            "ar": "/media/opt-3-1-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/opt-3-1-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/opt-3-1-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/opt-3-1-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/opt-3-1-2/light/audio/en.opus",
+              "manifest.json": "/media/opt-3-1-2/light/manifest.json",
+              "scenes.json": "/media/opt-3-1-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/opt-3-1-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/opt-3-1-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 530,
+              "ar": 497
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Exam slots as colouring",
+            "ar": "مواعيد الامتحانات كتلوين"
+          },
+          "body": {
+            "en": "Exam week has one hard rule: a pupil can’t sit two exams at once. Draw each exam as a dot, and join two dots with a line when some pupil takes both. This clash map (a graph) turns the timetable into a colouring puzzle: give each dot a colour (a slot) so that no line joins two dots of the same colour. The fewer colours, the shorter the exam week.\n\nQuick rules colour the map fast. Greedy colouring goes down the list and gives each exam the first slot that has no clash; on the lab’s eight exams it needs four slots. DSatur always colours next the exam whose neighbours already use the most different slots, the hardest to place, and needs three. Neither rule can tell you whether fewer would do.\n\nA clique answers that. Omar takes maths, Arabic and French, and those three exams all clash with each other, so they need three different slots: no plan can use fewer than three. In CP-SAT, the model says the same thing directly. Each exam’s slot is an integer variable; for every pupil, m.add_all_different over their exams; a variable last with slot <= last for every exam; and m.minimize(last). The solver answers 3 with the status OPTIMAL, which is a proof that 2 slots can’t work, not just a good try. The same program runs unchanged on the real OR-Tools in Colab.\n\nFewest is not the same as kindest. With three slots in a row, Omar and Tarek sit three exams back to back. The rule “no pupil sits exams in two slots in a row” is fairer to them, and on the lab’s exams it raises the fewest from 3 slots to 5: a longer exam week. That is a trade-off between goals, and the solver can’t choose for you: it only reports what each choice costs.\n\nSo model both versions, show the two plans to pupils and the staff who invigilate and mark, agree the rule, and write it into the model. Then check the result for the people it affects: who has the hardest day, who has a late exam after a long journey, and whether the same class always gets the last slot.",
+            "ar": "لأسبوع الامتحانات قاعدة صارمة واحدة: لا يقدّم طالب امتحانين في الوقت نفسه. ارسم كل امتحان نقطة، وصِل بين نقطتين بخط حين يقدّم طالب ما الامتحانين كليهما. وخريطة التعارض هذه (مخطّط) تحوّل الجدول إلى لغز تلوين: أعطِ كل نقطة لونًا (موعدًا) بحيث لا يصل خط بين نقطتين من اللون نفسه. وكلما قلّت الألوان، قصر أسبوع الامتحانات.\n\nتلوّن القواعد السريعة الخريطة بسرعة. فالتلوين الجشع ينزل في القائمة ويعطي كل امتحان أول موعد خالٍ من التعارض، ويحتاج في امتحانات المختبر الثمانية إلى أربعة مواعيد. أما DSatur فيلوّن دائمًا بعد ذلك الامتحانَ الذي يستعمل جيرانه أكبر عدد من المواعيد المختلفة، أي الأصعب في التوزيع، ويحتاج إلى ثلاثة. ولا تستطيع أيّ من القاعدتين أن تخبرك هل يكفي عدد أقل.\n\nوالزمرة تجيب عن ذلك. فعمر يقدّم الرياضيات والعربية والفرنسية، وهذه الامتحانات الثلاثة يتعارض كلٌّ منها مع الآخرَين، فتحتاج إلى ثلاثة مواعيد مختلفة: لا يمكن لأي خطة أن تستعمل أقل من ثلاثة. وفي CP-SAT يقول النموذج الشيء نفسه مباشرة. موعد كل امتحان متغيّر صحيح، ولكل طالب m.add_all_different على امتحاناته، ومتغيّر last مع ⁦slot <= last⁩ لكل امتحان، ثم ⁦m.minimize(last)⁩. فيجيب برنامج الحل ٣ بالحالة OPTIMAL، وهي إثبات أن موعدين لا يكفيان، لا مجرد محاولة جيدة. والبرنامج نفسه يعمل دون تغيير على أدوات OR-Tools الحقيقية في Colab.\n\nوالأقل ليس هو الأرحم. فمع ثلاثة مواعيد متتالية، يقدّم عمر وطارق ثلاثة امتحانات متلاحقة. وقاعدة «لا يقدّم طالب امتحانين في موعدين متتاليين» أعدل لهما، وفي امتحانات المختبر ترفع أقل عدد من ٣ مواعيد إلى ٥: أسبوع امتحانات أطول. وهذه موازنة بين هدفين، ولا يستطيع برنامج الحل أن يختار عنك: هو يخبرك فقط بكلفة كل خيار.\n\nلذلك صِغ النموذج بالصيغتين، واعرض الخطتين على الطلاب وعلى المعلمين الذين يراقبون ويصحّحون، واتفقوا على القاعدة، واكتبوها في النموذج. ثم افحص النتيجة لمن تمسّهم: مَن لديه أصعب يوم، ومَن لديه امتحان متأخر بعد طريق طويل، وهل يأخذ الصف نفسه الموعد الأخير دائمًا."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Clash map (graph)",
+                "ar": "خريطة التعارض (مخطّط)"
+              },
+              "def": {
+                "en": "Dots for exams, lines between exams that share a pupil.",
+                "ar": "نقاط للامتحانات، وخطوط بين الامتحانات التي يشترك فيها طالب."
+              }
+            },
+            {
+              "term": {
+                "en": "Graph colouring",
+                "ar": "تلوين المخطّط"
+              },
+              "def": {
+                "en": "Giving each dot a colour so that no line joins two dots of the same colour; here, colours are exam slots.",
+                "ar": "إعطاء كل نقطة لونًا بحيث لا يصل خط بين نقطتين من اللون نفسه، والألوان هنا مواعيد الامتحانات."
+              }
+            },
+            {
+              "term": {
+                "en": "Clique",
+                "ar": "الزمرة"
+              },
+              "def": {
+                "en": "A group of exams that all clash with each other. Its size is the fewest slots any plan can use.",
+                "ar": "مجموعة امتحانات يتعارض كلٌّ منها مع الباقي. وحجمها هو أقل عدد من المواعيد يمكن أن تستعمله أي خطة."
+              }
+            },
+            {
+              "term": {
+                "en": "Trade-off",
+                "ar": "الموازنة"
+              },
+              "def": {
+                "en": "Getting more of one goal (rested pupils) by giving up some of another (a short exam week).",
+                "ar": "أن تحصل على المزيد من هدف (طلاب مرتاحون) بالتخلّي عن بعض هدف آخر (أسبوع امتحانات قصير)."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "The exam model says 3 slots, OPTIMAL. But Tarek (science, Arabic, French) now sits three exams back to back, and his parents complain. What should the school do?",
+            "ar": "يقول نموذج الامتحانات: ٣ مواعيد، OPTIMAL. لكن طارق (العلوم والعربية والفرنسية) صار يقدّم ثلاثة امتحانات متتالية، ويشكو أهله. ماذا تفعل المدرسة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Nothing: OPTIMAL can’t be improved",
+                "ar": "لا شيء: الحل OPTIMAL لا يمكن تحسينه"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Agree a fairness rule, add it, and solve again",
+                "ar": "نتفق على قاعدة عادلة، ونضيفها، ونحلّ من جديد"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Leave Tarek out of the model",
+                "ar": "نُخرج طارق من النموذج"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "OPTIMAL is best only for the goal that was written: the fewest slots. Tarek’s day is a fairness question the goal ignored. Agree a rule such as “no pupil sits two slots in a row” with pupils and teachers, add it, and solve again: here it needs 5 slots instead of 3, a cost to decide openly. Leaving Tarek out hides the problem.",
+            "ar": "الحل OPTIMAL هو الأفضل للهدف المكتوب فقط: أقل عدد من المواعيد. أما يوم طارق فسؤال عن العدالة تجاهله الهدف. اتفقوا مع الطلاب والمعلمين على قاعدة مثل «لا يقدّم طالب امتحانين في موعدين متتاليين»، وأضيفوها، وحُلّوا من جديد: هنا يحتاج ذلك إلى ٥ مواعيد بدل ٣، وهي كلفة تُقرَّر علنًا. أما إخراج طارق من النموذج فيُخفي المشكلة."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p2",
+          "prompt": {
+            "en": "Hala takes history, geography and art. Dina takes Arabic and art. Which pairs of exams must be in different slots? Choose all that apply.",
+            "ar": "تقدّم هالة التاريخ والجغرافيا والفنون، وتقدّم دينا العربية والفنون. أيّ أزواج الامتحانات يجب أن تكون في مواعيد مختلفة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "History and art",
+                "ar": "التاريخ والفنون"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Geography and art",
+                "ar": "الجغرافيا والفنون"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Arabic and art",
+                "ar": "العربية والفنون"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "History and Arabic",
+                "ar": "التاريخ والعربية"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "Geography and Arabic",
+                "ar": "الجغرافيا والعربية"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "Two exams clash only when the same pupil takes both. Hala links history, geography and art to each other; Dina links Arabic and art. Nobody here takes history or geography together with Arabic, so those pairs may share a slot.",
+            "ar": "لا يتعارض امتحانان إلا إذا قدّمهما الطالب نفسه. فهالة تربط التاريخ والجغرافيا والفنون ببعضها، ودينا تربط العربية بالفنون. ولا أحد هنا يقدّم التاريخ أو الجغرافيا مع العربية، فيمكن لهذه الأزواج أن تشترك في موعد."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p3",
+          "prompt": {
+            "en": "Greedy colouring used 4 slots, so at least 4 slots are needed.",
+            "ar": "استعمل التلوين الجشع ٤ مواعيد، إذن نحتاج إلى ٤ مواعيد على الأقل."
+          },
+          "answer": false,
+          "explain": {
+            "en": "A quick rule only shows one plan that works. DSatur finds 3 on the same exams, and the solver proves 3 is the fewest. Only a proof, such as a clique of three exams or the solver’s OPTIMAL, tells you the fewest.",
+            "ar": "القاعدة السريعة لا تُظهر إلا خطة واحدة تنجح. فـ DSatur يجد ٣ مواعيد للامتحانات نفسها، ويثبت برنامج الحل أن ٣ هو الأقل. ولا يخبرك بالأقل إلا إثبات، مثل زمرة من ثلاثة امتحانات أو الحالة OPTIMAL من برنامج الحل."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "tool": "colouring",
+          "prompt": {
+            "en": "Try it: in “Exam slots without clashes”, press “Greedy (list order)”, then “DSatur”, then “How few slots?”. Which exams form the clique that proves 3 is the fewest? Then untick Omar and colour the map yourself: how many slots now?",
+            "ar": "جرّب: في «مواعيد امتحانات بلا تعارض» اضغط «الجشع (بترتيب القائمة)»، ثم «DSatur»، ثم «ما أقل عدد من المواعيد؟». أيّ الامتحانات تكوّن الزمرة التي تثبت أن ٣ هو الأقل؟ ثم ألغِ تحديد عمر ولوّن الخريطة بنفسك: كم موعدًا الآن؟"
+          }
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "Four exams, numbered 0 to 3 (maths, science, Arabic, art), and three pupils who take exams [0, 1, 2], [1, 3] and [2, 3]. The model already makes the last slot as early as possible. Add the rule that each pupil’s exams are all in different slots, then run it: how few slots are needed?",
+            "ar": "أربعة امتحانات مرقّمة من 0 إلى 3 (الرياضيات والعلوم والعربية والفنون)، وثلاثة طلاب يقدّمون الامتحانات ⁦[0, 1, 2]⁩ و⁦[1, 3]⁩ و⁦[2, 3]⁩. والنموذج يجعل آخر موعد مبكرًا قدر الإمكان. أضف القاعدة: امتحانات كل طالب في مواعيد مختلفة كلها، ثم شغّل البرنامج: كم موعدًا نحتاج على الأقل؟"
+          },
+          "starter": "from ortools.sat.python import cp_model\nm = cp_model.CpModel()\nslot = [m.new_int_var(1, 4, \"\") for e in range(4)]\nlast = m.new_int_var(1, 4, \"last\")\n# each pupil's exams in different slots:\n# [0, 1, 2], [1, 3] and [2, 3]\nfor s in slot:\n    m.add(s <= last)\nm.minimize(last)\nsolver = cp_model.CpSolver()\nsolver.solve(m)\nprint(\"slots:\", solver.value(last))\n",
+          "solution": "from ortools.sat.python import cp_model\nm = cp_model.CpModel()\nslot = [m.new_int_var(1, 4, \"\") for e in range(4)]\nlast = m.new_int_var(1, 4, \"last\")\nfor p in [[0, 1, 2], [1, 3], [2, 3]]:\n    m.add_all_different([slot[i] for i in p])\nfor s in slot:\n    m.add(s <= last)\nm.minimize(last)\nsolver = cp_model.CpSolver()\nsolver.solve(m)\nprint(\"slots:\", solver.value(last))\n",
+          "tests": [
+            {
+              "output": "slots: 3",
+              "check": "pupils = [[0, 1, 2], [1, 3], [2, 3]]\nassert all(len(set(solver.value(slot[i]) for i in p)) == len(p) for p in pupils), \"Two of a pupil's exams share a slot\"",
+              "hint": {
+                "en": "Without the rule, every exam goes in slot 1. Each pupil’s exams must all differ.",
+                "ar": "من دون القاعدة يوضع كل امتحان في الموعد ١. يجب أن تختلف امتحانات كل طالب كلها."
+              }
+            },
+            {
+              "check": "assert max(solver.value(s) for s in slot) == solver.value(last), \"last should be the latest slot used\"",
+              "hint": {
+                "en": "Keep the lines that tie last to every slot.",
+                "ar": "أبقِ الأسطر التي تربط last بكل موعد."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "Loop over the pupils: for p in [[0, 1, 2], [1, 3], [2, 3]]:",
+              "ar": "مُرّ على الطلاب: ⁦for p in [[0, 1, 2], [1, 3], [2, 3]]⁩:"
+            },
+            {
+              "en": "m.add_all_different([slot[i] for i in p])",
+              "ar": "⁦m.add_all_different([slot[i] for i in p])⁩"
+            }
+          ],
+          "explain": {
+            "en": "One all-different rule per pupil keeps their exams apart. Maths, science and Arabic all clash (pupil [0, 1, 2]), so 3 slots is the fewest, and art can share a slot with maths. The solver proves it: OPTIMAL. The same program runs on the real OR-Tools in Colab.",
+            "ar": "قاعدة «كلها مختلفة» لكل طالب تفصل بين امتحاناته. والرياضيات والعلوم والعربية متعارضة كلها (الطالب ⁦[0, 1, 2]⁩)، فأقل عدد ٣ مواعيد، ويمكن للفنون أن تشارك الرياضيات موعدها. ويثبت برنامج الحل ذلك: OPTIMAL. والبرنامج نفسه يعمل على أدوات OR-Tools الحقيقية في Colab."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "This exam model prints “slots used: 1”, but the exams clearly need more. Which line is wrong?",
+            "ar": "يطبع نموذج الامتحانات هذا «⁦slots used: 1⁩»، مع أن الامتحانات تحتاج بوضوح إلى أكثر. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "m = cp_model.CpModel()\nslot = {e: m.new_int_var(1, 8, e) for e in exams}\nlast = m.new_int_var(1, 8, \"last\")\nfor taken in pupils:\n    m.add_all_different([slot[e] for e in taken])\nfor e in exams:\n    m.add(slot[e] >= last)\nm.minimize(last)",
+          "line": 7,
+          "fix": "    m.add(slot[e] <= last)",
+          "explain": {
+            "en": "last must be at least every exam’s slot (slot <= last), so that minimising it makes the whole week short. With >=, every slot is above last, so the solver simply sets last to 1 and reports a goal that means nothing.",
+            "ar": "يجب أن يكون last أكبر من موعد كل امتحان أو يساويه ⁦(slot <= last)⁩، حتى يقصر الأسبوع كله حين نصغّره. أما مع >= فكل موعد أكبر من last، فيجعل برنامج الحل last يساوي ١ ببساطة، ويُعلن هدفًا لا معنى له."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you advise?",
+            "ar": "بماذا تنصح؟"
+          },
+          "who": {
+            "en": "Mr Okafor Eze, head of year",
+            "ar": "أ. أوكافور إيزي، رئيس المرحلة"
+          },
+          "initial": {
+            "en": "O",
+            "ar": "أ"
+          },
+          "situation": {
+            "en": "Mr Okafor wants exam week done in two days: four slots. The model with “no pupil sits two slots in a row” needs five. Without that rule, three pupils sit three exams back to back.",
+            "ar": "يريد الأستاذ أوكافور أن ينتهي أسبوع الامتحانات في يومين: أربعة مواعيد. والنموذج مع قاعدة «لا يقدّم طالب امتحانين في موعدين متتاليين» يحتاج إلى خمسة. ومن دون هذه القاعدة يقدّم ثلاثة طلاب ثلاثة امتحانات متلاحقة."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Show both plans and their costs to staff and pupils, and decide together.”",
+                "ar": "«اعرض الخطتين وكلفة كلٍّ منهما على المعلمين والطلاب، وقرّروا معًا.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Everyone sees the trade-off: one more slot, or three tired pupils. Whatever they choose, the rule is agreed and written into the model, and the decision can be explained.",
+                "ar": "يرى الجميع الموازنة: موعد إضافي، أو ثلاثة طلاب متعبون. وأيًّا كان اختيارهم، تكون القاعدة متفقًا عليها ومكتوبة في النموذج، ويمكن شرح القرار."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Drop the fairness rule quietly: four slots it is.”",
+                "ar": "«ألغِ قاعدة العدالة بهدوء: أربعة مواعيد إذن.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "The week is short, but three pupils carry the cost and nobody chose that openly. Next year the same complaint comes back, with less trust.",
+                "ar": "يقصر الأسبوع، لكن ثلاثة طلاب يتحمّلون الكلفة، ولم يختر أحد ذلك علنًا. وفي العام القادم تعود الشكوى نفسها بثقة أقل."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Add a fifth slot without telling anyone why.”",
+                "ar": "«أضف موعدًا خامسًا دون أن تخبر أحدًا بالسبب.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Fairer for the pupils, but staff lose a day they planned for and don’t know why. Fair rules work best when people can see their reason.",
+                "ar": "أعدل للطلاب، لكن المعلمين يخسرون يومًا خطّطوا له ولا يعرفون السبب. وقواعد العدالة تنجح أكثر حين يرى الناس سببها."
+              }
+            }
+          ],
+          "explain": {
+            "en": "Show the trade-off and its cost, and decide the rule together.",
+            "ar": "اعرض المفاضلة وكلفتها، وقرّروا القاعدة معًا."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "In your school’s last exam week, who had the hardest timetable? Would a written fairness rule have helped, and what would it have cost?",
+            "ar": "في آخر أسبوع امتحانات في مدرستك، مَن كان جدوله الأصعب؟ هل كانت قاعدة عدالة مكتوبة ستساعد، وكم كانت ستكلّف؟"
+          },
+          "placeholder": {
+            "en": "For example: “Science pupils had three papers in one morning. One more afternoon slot would have fixed it.”",
+            "ar": "مثلًا: «كان لطلاب العلوم ثلاث أوراق امتحان في صباح واحد. وكان موعد إضافي بعد الظهر سيحلّ المشكلة.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: The chalk clash map",
+            "ar": "مشروع: خريطة التعارض بالطباشير"
+          },
+          "task": {
+            "en": "With your class, list six to eight exams (real or from the lab) and which pupils take each. Pupils draw the clash map: a chalk dot per exam on the playground (or a chair), and a line (or string) between exams that share a pupil. In groups, they colour the map with as few slots as they can, using coloured paper on the dots, and look for a group of exams that all clash to prove nobody can do better. Then add the rule “no pupil sits two slots in a row” and count the slots again.",
+            "ar": "اكتب مع صفّك ستة إلى ثمانية امتحانات (حقيقية أو من المختبر) ومَن يقدّم كلًّا منها. يرسم الطلاب خريطة التعارض: نقطة طباشير لكل امتحان في الساحة (أو كرسي)، وخط (أو خيط) بين الامتحانات التي يشترك فيها طالب. وفي مجموعات يلوّنون الخريطة بأقل عدد ممكن من المواعيد، بأوراق ملوّنة على النقاط، ويبحثون عن مجموعة امتحانات متعارضة كلها لتثبت أن أحدًا لا يستطيع أن يفعل أفضل. ثم أضِف قاعدة «لا يقدّم طالب امتحانين في موعدين متتاليين» وعُدّوا المواعيد من جديد."
+          },
+          "deliverable": {
+            "en": "A photo of the clash map (no faces needed), the fewest slots with and without the fairness rule, and one sentence on which your class would choose and why.",
+            "ar": "صورة لخريطة التعارض (لا حاجة إلى ظهور الوجوه)، وأقل عدد من المواعيد مع قاعدة العدالة ومن دونها، وجملة عن الخيار الذي يفضّله صفّك ولماذا."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Pupils could: draw a clash map from a list of who takes which exam.",
+                "ar": "تمكّن الطلاب من: رسم خريطة تعارض من قائمة بمن يقدّم كل امتحان."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: colour it with few slots and find a clique that proves the fewest.",
+                "ar": "تمكّن الطلاب من: تلوينها بعدد قليل من المواعيد وإيجاد زمرة تثبت الأقل."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: explain what the fairness rule costs, and choose.",
+                "ar": "تمكّن الطلاب من: شرح كلفة قاعدة العدالة، والاختيار."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Exams without clashes",
+            "ar": "امتحانات بلا تعارض"
+          },
+          "narration": {
+            "en": "How few exam slots do we really need, and what does fairness cost?",
+            "ar": "كم موعد امتحان نحتاج فعلًا على الأقل، وكم تكلّف العدالة؟"
+          },
+          "note": {
+            "en": "Optimization · Level 3 · Lesson 2",
+            "ar": "الحلول المثلى، المستوى ٣، الدرس ٢"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Draw exam clashes as a map and colour it with few slots.",
+              "Prove the fewest slots with a clique, or a solver’s OPTIMAL.",
+              "Weigh a fairness rule against a short exam week."
+            ],
+            "ar": [
+              "نرسم تعارضات الامتحانات خريطةً ونلوّنها بمواعيد قليلة.",
+              "نثبت أقل عدد من المواعيد بزمرة، أو بالحالة OPTIMAL من برنامج الحل.",
+              "نوازن بين قاعدة عدالة وأسبوع امتحانات قصير."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Exams are dots, shared pupils are lines, and slots are colours.",
+              "Quick rules find a plan; a clique or the solver proves the fewest.",
+              "The fewest slots isn’t always the kindest: decide the trade-off together."
+            ],
+            "ar": [
+              "الامتحانات نقاط، والطلاب المشتركون خطوط، والمواعيد ألوان.",
+              "القواعد السريعة تجد خطة، والزمرة أو برنامج الحل يثبت الأقل.",
+              "أقل عدد من المواعيد ليس الأرحم دائمًا: قرّروا الموازنة معًا."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "The chalk clash map",
+            "ar": "خريطة التعارض بالطباشير"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Who has ever had two exams at once?",
+              "Teach (8 min): Dots, lines and colours.",
+              "Draw and colour (15 min): Groups colour the clash map.",
+              "Prove it (7 min): Find a group that all clash.",
+              "Wrap-up (5 min): Add “no two in a row” and count again."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): مَن حدث له أن كان عنده امتحانان في وقت واحد؟",
+              "الشرح (٨ دقائق): النقاط والخطوط والألوان.",
+              "الرسم والتلوين (١٥ دقيقة): تلوّن المجموعات خريطة التعارض.",
+              "الإثبات (٧ دقائق): ابحثوا عن مجموعة متعارضة كلها.",
+              "الختام (٥ دقائق): أضيفوا «لا امتحانين متتاليين» وعُدّوا من جديد."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Ask whether anyone ever had two exams at the same time or three in one morning. List what made exam weeks hard.",
+              "Teach (8 min): Write six to eight exams on the board with who takes each. Draw a dot per exam and a line between two exams that share a pupil. Explain: same colour = same slot, so joined dots need different colours.",
+              "Draw and colour (15 min): Groups copy the map (on paper or in chalk outside) and colour it with as few colours as they can. Each group writes its number of slots on the board.",
+              "Prove it (7 min): Ask: can anyone do it with fewer? Find a group of exams that all clash with each other. Its size is the fewest possible, whatever anyone tries.",
+              "Wrap-up (5 min): Add the rule “no pupil sits two slots in a row” and recount. Ask which plan the class prefers, the shorter week or the rested pupils, and why."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اسأل: هل حدث لأحد أن كان عنده امتحانان في الوقت نفسه أو ثلاثة في صباح واحد؟ واكتب ما جعل أسابيع الامتحانات صعبة.",
+              "الشرح (٨ دقائق): اكتب على السبّورة ستة إلى ثمانية امتحانات ومَن يقدّم كلًّا منها. ارسم نقطة لكل امتحان وخطًّا بين كل امتحانين يشترك فيهما طالب. ووضّح: اللون نفسه يعني الموعد نفسه، فالنقاط المتصلة تحتاج إلى ألوان مختلفة.",
+              "الرسم والتلوين (١٥ دقيقة): تنقل المجموعات الخريطة (على الورق أو بالطباشير في الخارج) وتلوّنها بأقل عدد ممكن من الألوان. وتكتب كل مجموعة عدد مواعيدها على السبّورة.",
+              "الإثبات (٧ دقائق): اسأل: هل يستطيع أحد أن يفعلها بعدد أقل؟ ابحثوا عن مجموعة امتحانات يتعارض كلٌّ منها مع الباقي. وحجمها هو الأقل الممكن، مهما حاول أي أحد.",
+              "الختام (٥ دقائق): أضف قاعدة «لا يقدّم طالب امتحانين في موعدين متتاليين» وعُدّوا من جديد. واسأل: أيّ الخطتين يفضّل الصف، الأسبوع الأقصر أم الطلاب المرتاحون، ولماذا؟"
+            ]
+          },
+          "note": {
+            "en": "Use the lab’s eight exams if you have no real list: maths, English, science, Arabic, history, geography, art and French, with the six pupils in the “Exam slots without clashes” lab.",
+            "ar": "استعمل امتحانات المختبر الثمانية إن لم تكن لديك قائمة حقيقية: الرياضيات والإنجليزية والعلوم والعربية والتاريخ والجغرافيا والفنون والفرنسية، مع الطلاب الستة في مختبر «مواعيد امتحانات بلا تعارض»."
+          },
+          "narration": {
+            "en": "Joined dots need different colours. How few colours can you use?",
+            "ar": "النقاط المتصلة تحتاج إلى ألوان مختلفة. ما أقل عدد من الألوان تستطيع أن تستعمله؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "How do we know nobody can use fewer slots?",
+              "Who had the hardest exam days in our plan?",
+              "Is a shorter exam week worth three tired pupils?"
+            ],
+            "ar": [
+              "كيف نعرف أن أحدًا لا يستطيع أن يستعمل مواعيد أقل؟",
+              "مَن كانت أيام امتحاناته الأصعب في خطتنا؟",
+              "هل يستحق أسبوع امتحانات أقصر أن يتعب ثلاثة طلاب؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Draw a clash map of four exams that needs exactly three slots, and say why."
+            ],
+            "ar": [
+              "ارسم خريطة تعارض لأربعة امتحانات تحتاج إلى ثلاثة مواعيد بالضبط، وقل لماذا."
+            ]
+          },
+          "narration": {
+            "en": "Count the cost of fairness, then decide it together.",
+            "ar": "احسبوا كلفة العدالة، ثم قرّروها معًا."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Exams without clashes",
+            "ar": "شرائح: امتحانات بلا تعارض"
+          },
+          "pages": 6,
+          "base": "opt-3-1-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: Exams without clashes",
+            "ar": "خطة الدرس وورقة العمل: امتحانات بلا تعارض"
+          },
+          "pages": 3,
+          "base": "opt-3-1-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/opt-3-1-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "OPT.3",
+        "OPT.4",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "opt-3-1-3",
+      "title": {
+        "en": "The school bus route",
+        "ar": "طريق حافلة المدرسة"
+      },
+      "minutes": 17,
+      "tryTomorrow": {
+        "en": "On the playground, pupils stand as villages and one pupil is the bus, starting at the school door. Drive nearest neighbour, counting steps. Then find two paths that cross, swap them, and count again. Finish by asking who rode the longest, and how you would make that fairer.",
+        "ar": "في الساحة، يقف الطلاب كأنهم قرى، ويكون أحدهم الحافلة، ويبدأ من باب المدرسة. امشوا بطريقة «أقرب جار» وعدّوا الخطوات. ثم ابحثوا عن مسارين متقاطعين، وبدّلوهما، وعدّوا من جديد. واختموا بسؤال: مَن ركب أطول مسافة، وكيف نجعل ذلك أعدل؟"
+      },
+      "materials": {
+        "en": [
+          "The playground or a large room",
+          "Chalk to draw the paths",
+          "A card with each village’s name"
+        ],
+        "ar": [
+          "الساحة أو غرفة كبيرة",
+          "طباشير لرسم المسارات",
+          "بطاقة باسم كل قرية"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "The school bus route",
+            "ar": "طريق حافلة المدرسة"
+          },
+          "src": null,
+          "duration": 227,
+          "sizeMB": 1.4,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "An hour on the bus",
+                "ar": "ساعة في الحافلة"
+              }
+            },
+            {
+              "at": 20.1,
+              "atBy": {
+                "en": 20.1,
+                "ar": 17.6
+              },
+              "label": {
+                "en": "Too many routes, a quick rule",
+                "ar": "طرق كثيرة جدًا وقاعدة سريعة"
+              }
+            },
+            {
+              "at": 66.7,
+              "atBy": {
+                "en": 66.7,
+                "ar": 60.6
+              },
+              "label": {
+                "en": "Untangle it with 2-opt",
+                "ar": "فكّ التشابك بطريقة ⁦2-opt⁩"
+              }
+            },
+            {
+              "at": 130.6,
+              "atBy": {
+                "en": 130.6,
+                "ar": 125.1
+              },
+              "label": {
+                "en": "The longest ride, and the lab",
+                "ar": "أطول رحلة، والمختبر"
+              }
+            },
+            {
+              "at": 190.2,
+              "atBy": {
+                "en": 190.2,
+                "ar": 186.5
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "2-opt has stopped: no swap makes the route shorter. Is it the best route of all?",
+                "ar": "توقّفت طريقة ⁦2-opt⁩: لا يوجد تبديل يجعل الطريق أقصر. هل صار أفضل طريق على الإطلاق؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Yes, always: 2-opt is exact",
+                    "ar": "نعم، دائمًا: طريقة ⁦2-opt⁩ دقيقة"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Not always: on some maps it stops short of the best",
+                    "ar": "ليس دائمًا: في بعض الخرائط تتوقّف قبل الأفضل"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "No: 2-opt makes routes longer",
+                    "ar": "لا: طريقة ⁦2-opt⁩ تجعل الطرق أطول"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "2-opt keeps a swap only if it shortens the route, and stops when no single swap helps. That is a local best: often the true best (28.6 km in the lab), but on some maps the best route needs a change no single swap can make.",
+                "ar": "لا تحتفظ طريقة ⁦2-opt⁩ بالتبديل إلا إذا قصّر الطريق، وتتوقّف حين لا يفيد أي تبديل واحد. وهذا أفضل محلي: كثيرًا ما يكون الأفضل حقًا (٢٨٫٦ كم في المختبر)، لكن أفضل طريق في بعض الخرائط يحتاج إلى تغيير لا يصنعه تبديل واحد."
+              }
+            },
+            "at": 109.59,
+            "atBy": {
+              "en": 109.59,
+              "ar": 103.91
+            }
+          },
+          "transcript": {
+            "en": "Our school bus leaves at six every morning and visits nine villages. The children from the first village ride for over an hour. Is there a shorter route, and a fairer one? Today: the school bus route, built fast and then improved. Visit every village once and come back, by the shortest route: that’s the travelling salesperson problem. It sounds easy, but the routes multiply fast. Nine villages have a hundred and eighty-one thousand routes. Twenty have more than a billion billion. A quick rule: from wherever the bus is, drive to the closest village it hasn’t visited yet. It’s fast, and usually decent. But it never looks ahead, so its last legs home are often long. In Python, it’s a few lines. Keep a list for the route. While villages are left, add the one closest to the last stop. Then improve it. 2-opt takes out two roads, and puts the stretch between them back the other way round. If the route got shorter, keep it, and try again, until no swap helps. In the lab, nearest neighbour drives thirty-four point six kilometres. Three 2-opt swaps bring it down to twenty-eight point six, the best route there is. That’s six kilometres saved, every single morning. Quick check! 2-opt has stopped: no swap of two roads makes the route shorter. Is it now the best route of all? Not always. On some maps, 2-opt gets stuck: no single swap helps, but the best route is still shorter. For a few villages, a computer can check every route and be sure. For many, real route planners build a quick route and improve it, just like this. Length isn’t the only measure: the children picked up first ride all the way to school. On the small map in today’s code, nearest neighbour drives twenty-three kilometres, and the first village rides twenty-one of them. The best route is nineteen, with a longest ride of sixteen. Judge a route twice: the total, and the longest ride. In the app, open “The school bus route”. Press Run, and watch nearest neighbour, then the 2-opt swaps. Press “Find the best route” to compare. Then try a new map: does 2-opt always reach the best? Your turn. Route A is two kilometres shorter, but one village’s children ride for fifty minutes. On route B, nobody rides more than thirty-five. How should we choose? Agree a longest-ride limit with the families, then find the shortest route that keeps it. Remember: routes multiply too fast to try them all. Nearest neighbour builds a route, and 2-opt improves it. And judge a route twice: the total, and the longest ride. Try it in class tomorrow: pupils stand as villages around the playground, and one pupil is the bus. Drive nearest neighbour, counting steps. Then find two paths that cross, swap them, and count again.",
+            "ar": "أتوبيس مدرستنا بيطلع الساعة ستة كل يوم الصبح وبيلف على تسع قرى. وعيال أول قرية بيقعدوا فيه أكتر من ساعة. فيه طريق أقصر، وأعدل كمان؟ النهارده: طريق أتوبيس المدرسة، نبنيه بسرعة وبعدين نحسّنه. تلف على كل قرية مرة واحدة وترجع، بأقصر طريق: دي اسمها مسألة البايع المتجوّل. شكلها سهلة، بس عدد الطرق بيكبر بسرعة. تسع قرى ليهم مية واحد وتمانين ألف طريق. وعشرين قرية ليهم أكتر من مليار مليار. قاعدة سريعة: من أي مكان الأتوبيس فيه، روح لأقرب قرية لسه ما زارهاش. سريعة، وغالبًا مش وحشة. بس عمرها ما بتبص قدّام، فآخر حتة في الرجوع غالبًا بتبقى طويلة. ببايثون، دي كام سطر. خلّي ليستة للطريق. وطول ما فيه قرى فاضلة، زوّد أقرب واحدة لآخر وقفة. وبعدين حسّنه. طريقة «تو أوبت» بتشيل طريقين، وبترجّع الحتة اللي بينهم بالعكس. لو الطريق قصر، خلّيه، وجرّب تاني، لحد ما مفيش تبديل يفيد. في المعمل، أقرب جار بيمشي أربعة وتلاتين كيلو وست أعشار. وتلات تبديلات «تو أوبت» بينزّلوه لتمانية وعشرين كيلو وست أعشار، وده أحسن طريق موجود. يعني ست كيلومترات أقل، كل يوم الصبح. سؤال سريع! «تو أوبت» وقفت: مفيش تبديل لطريقين بيقصّر المشوار. كده بقى أحسن طريق خالص؟ مش دايمًا. في بعض الخرايط، «تو أوبت» بتعلق: مفيش تبديل واحد بيفيد، بس أحسن طريق لسه أقصر. ولو القرى قليلة، الكمبيوتر يقدر يراجع كل الطرق ويتأكد. ولو كتير، برامج تخطيط الطرق الحقيقية بتبني طريق سريع وتحسّنه، بالظبط كده. الطول مش المقياس الوحيد: العيال اللي بيركبوا الأول بيفضلوا راكبين لحد المدرسة. في الخريطة الصغيرة اللي في كود النهارده، أقرب جار بيمشي تلاتة وعشرين كيلو، وأول قرية بتركب واحد وعشرين منهم. وأحسن طريق تسعتاشر، وأطول مشوار فيه ستاشر. احكم على الطريق مرتين: الطول كله، وأطول مشوار. في التطبيق، افتح «طريق حافلة المدرسة». دوس «شغّل»، واتفرج على أقرب جار، وبعدين تبديلات «تو أوبت». دوس «جِد أفضل طريق» علشان تقارن. وبعدين جرّب خريطة جديدة: «تو أوبت» دايمًا بتوصل للأحسن؟ دورك. طريق ألف أقصر بكيلومترين، بس عيال قرية واحدة بيركبوا خمسين دقيقة. وفي طريق باء، محدش بيركب أكتر من خمسة وتلاتين. نختار إزاي؟ اتفق مع الأهالي على حد لأطول مشوار، وبعدين دوّر على أقصر طريق بيلتزم بيه. افتكر: الطرق بتكتر بسرعة لدرجة إنك ماتقدرش تجرّبها كلها. أقرب جار بيبني طريق، و«تو أوبت» بتحسّنه. واحكم على الطريق مرتين: الطول كله، وأطول مشوار. جرّبها في الفصل بكرة: التلاميذ يقفوا في الحوش كأنهم قرى، وتلميذ واحد يبقى الأتوبيس. امشوا بطريقة أقرب جار، وعدّوا الخطوات. وبعدين دوّروا على طريقين متقاطعين، بدّلوهم، وعدّوا تاني."
+          },
+          "sources": {
+            "en": "/media/opt-3-1-3/video-en.mp4",
+            "ar": "/media/opt-3-1-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/opt-3-1-3/captions-en.vtt",
+            "ar": "/media/opt-3-1-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/opt-3-1-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/opt-3-1-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/opt-3-1-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/opt-3-1-3/light/audio/en.opus",
+              "manifest.json": "/media/opt-3-1-3/light/manifest.json",
+              "scenes.json": "/media/opt-3-1-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/opt-3-1-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/opt-3-1-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 498,
+              "ar": 493
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Build a route fast, then improve it",
+            "ar": "ابنِ الطريق بسرعة، ثم حسّنه"
+          },
+          "body": {
+            "en": "The school bus leaves the school, visits every village once and comes back. Finding the shortest such round trip is the travelling salesperson problem, and it is famous because the number of routes explodes. A round trip through n villages has n! ÷ 2 orders: 9 villages give 181,440 routes, 10 give 1,814,400, and 20 give about 1.2 × 10¹⁸, more than a billion billion. Checking a billion routes a second, that would take about 38 years.\n\nSo route planners build a route quickly and then improve it. Nearest neighbour is the quick rule: from wherever the bus is, drive to the closest village not yet visited, and at the end drive back. In Python, keep a list called route that starts at the school (0); while villages are left, add the one whose distance from the last stop, d[last][v], is smallest. It is fast and usually decent, but it never looks ahead, so its last legs home are often long. In the lab, nearest neighbour drives 34.6 km.\n\n2-opt then untangles the route: take out two roads, put the stretch between them back the other way round, and keep the change if the route got shorter. Repeat until no swap helps. In the lab, three swaps bring the route to 28.6 km, the best route there is. But 2-opt can stop at a local best: on some maps, no single swap helps although a shorter route exists. For a handful of villages a computer can check every route cleverly and be sure; for many villages, quick rules plus improvements are what real planners use. Google’s OR-Tools has a routing library built on these ideas, and the plain Python you write today runs the same on a computer or in Colab.\n\nJudge a route twice. The total distance is fuel and time. But the children picked up first ride the whole way to school: on today’s small map, nearest neighbour drives 23 km and the first village’s children ride 21 of them, while the best route drives 19 km and its longest ride is 16. Here the shorter route is also the fairer one, but not always. When they pull apart, agree a limit on the longest ride with the families (a constraint), then find the shortest route that keeps it (the goal), and look at earliest pick-up times too: a short route that leaves children at a dark roadside at 5:40 is not a good route.",
+            "ar": "تغادر حافلة المدرسة المدرسةَ، وتزور كل قرية مرة واحدة، ثم تعود. وإيجاد أقصر رحلة من هذا النوع هو مسألة البائع المتجوّل، وهي مشهورة لأن عدد الطرق ينفجر. فرحلة ذهاب وإياب عبر n من القرى لها ⁦n! ÷ 2⁩ من الترتيبات: ٩ قرى تعطي ١٨١٤٤٠ طريقًا، و١٠ تعطي ١٨١٤٤٠٠، و٢٠ تعطي نحو ١٫٢ × ١٠¹⁸، أي أكثر من مليار مليار. ولو فحصنا مليار طريق في الثانية لاستغرق ذلك نحو ٣٨ عامًا.\n\nلذلك يبني مخطّطو الطرق طريقًا بسرعة ثم يحسّنونه. و«أقرب جار» هي القاعدة السريعة: من أي مكان تكون فيه الحافلة، اذهب إلى أقرب قرية لم تُزَر بعد، وفي النهاية عُد. وفي بايثون، احتفظ بقائمة اسمها route تبدأ بالمدرسة (0)، وما دامت هناك قرى باقية، أضف القرية التي تكون مسافتها من آخر محطة، ⁦d[last][v]⁩، هي الأصغر. وهي سريعة وجيدة في الغالب، لكنها لا تنظر إلى الأمام أبدًا، فتكون مراحلها الأخيرة في العودة طويلة غالبًا. وفي المختبر تقطع «أقرب جار» ٣٤٫٦ كم.\n\nثم تفكّ طريقة ⁦2-opt⁩ تشابك الطريق: أزِل طريقين، وأعِد المقطع الذي بينهما بالاتجاه المعاكس، واحتفظ بالتغيير إذا قصر الطريق. وكرّر حتى لا يفيد أي تبديل. وفي المختبر تجعل ثلاثة تبديلات الطريق ٢٨٫٦ كم، وهو أفضل طريق ممكن. لكن ⁦2-opt⁩ قد تتوقّف عند أفضل محلي: ففي بعض الخرائط لا يفيد أي تبديل واحد مع أن طريقًا أقصر موجود. ومع قرى قليلة يستطيع الحاسوب أن يفحص كل الطرق بذكاء ويتأكد، أما مع قرى كثيرة فالقواعد السريعة مع التحسين هي ما يستعمله المخطّطون فعلًا. ولأدوات OR-Tools من Google مكتبة للطرق مبنية على هذه الأفكار، وبرنامج بايثون العادي الذي تكتبه اليوم يعمل بالطريقة نفسها في حاسوب أو في Colab.\n\nاحكم على الطريق مرتين. فالمسافة الكلية وقود ووقت. لكن الأطفال الذين يركبون أولًا يبقون في الحافلة حتى المدرسة: ففي خريطة اليوم الصغيرة تقطع «أقرب جار» ٢٣ كم، ويركب أطفال القرية الأولى ٢١ كم منها، بينما يقطع أفضل طريق ١٩ كم وأطول رحلة فيه ١٦. والطريق الأقصر هنا هو الأعدل أيضًا، لكن ليس دائمًا. وحين يفترقان، اتفق مع الأسر على حدّ لأطول رحلة (قيد)، ثم جِد أقصر طريق يلتزم به (الهدف)، وانظر أيضًا إلى أبكر موعد للركوب: فالطريق القصير الذي يترك الأطفال على جانب طريق مظلم في الساعة ٥:٤٠ ليس طريقًا جيدًا."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Travelling salesperson problem",
+                "ar": "مسألة البائع المتجوّل"
+              },
+              "def": {
+                "en": "Finding the shortest round trip that visits every place once.",
+                "ar": "إيجاد أقصر رحلة ذهاب وإياب تزور كل مكان مرة واحدة."
+              }
+            },
+            {
+              "term": {
+                "en": "Nearest neighbour",
+                "ar": "أقرب جار"
+              },
+              "def": {
+                "en": "A quick rule: always drive to the closest place not yet visited.",
+                "ar": "قاعدة سريعة: اذهب دائمًا إلى أقرب مكان لم تزره بعد."
+              }
+            },
+            {
+              "term": {
+                "en": "2-opt",
+                "ar": "طريقة ⁦2-opt⁩"
+              },
+              "def": {
+                "en": "An improvement: remove two roads, reverse the stretch between them, keep the change if the route is shorter.",
+                "ar": "تحسين: أزِل طريقين، واعكس المقطع الذي بينهما، واحتفظ بالتغيير إذا قصر الطريق."
+              }
+            },
+            {
+              "term": {
+                "en": "Local best",
+                "ar": "الأفضل المحلي"
+              },
+              "def": {
+                "en": "A plan no single small change improves, though a better plan may still exist.",
+                "ar": "خطة لا يحسّنها أي تغيير صغير واحد، مع أن خطة أفضل قد تكون موجودة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Route A is 2 km shorter, but one village rides 50 minutes; on B nobody rides over 35. How should we choose?",
+            "ar": "الطريق أ أقصر بكيلومترين، لكن أطفال إحدى القرى يركبون ٥٠ دقيقة، وفي الطريق ب لا يركب أحد أكثر من ٣٥. كيف نختار؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Always the shortest: fuel comes first",
+                "ar": "الأقصر دائمًا: الوقود أولًا"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Agree a longest-ride limit with families, then the shortest route that keeps it",
+                "ar": "نتفق مع الأسر على حدّ لأطول رحلة، ثم نختار أقصر طريق يلتزم به"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Let the driver decide each day",
+                "ar": "نترك السائق يقرّر كل يوم"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "The total length and the longest ride are two goals. A fair way to choose is to agree a limit on the longest ride with the families (a constraint), then find the shortest route that keeps it (the goal). Always taking the shortest ignores the children who ride longest, and leaving it to the driver gives no rule anyone can check.",
+            "ar": "الطول الكلّي وأطول رحلة هدفان. والطريقة العادلة للاختيار أن تتفق مع الأسر على حدّ لأطول رحلة (قيد)، ثم تجد أقصر طريق يلتزم به (الهدف). أما اختيار الأقصر دائمًا فيتجاهل الأطفال الذين يركبون أطول، وترك الأمر للسائق لا يعطي قاعدة يستطيع أحد أن يتحقّق منها."
+          }
+        },
+        {
+          "type": "order",
+          "id": "p2",
+          "prompt": {
+            "en": "Put the nearest-neighbour rule in order.",
+            "ar": "رتّب خطوات قاعدة «أقرب جار»."
+          },
+          "steps": [
+            {
+              "en": "Start at the school",
+              "ar": "ابدأ من المدرسة"
+            },
+            {
+              "en": "Find the closest village not yet visited",
+              "ar": "جِد أقرب قرية لم تُزَر بعد"
+            },
+            {
+              "en": "Drive there and add it to the route",
+              "ar": "اذهب إليها وأضفها إلى الطريق"
+            },
+            {
+              "en": "Repeat until every village is in the route",
+              "ar": "كرّر حتى تدخل كل القرى في الطريق"
+            },
+            {
+              "en": "Drive back to the school",
+              "ar": "عُد إلى المدرسة"
+            }
+          ],
+          "explain": {
+            "en": "Nearest neighbour only ever looks one step ahead: the closest unvisited village from where the bus is now. That’s why it’s fast, and why the drive home at the end can be long.",
+            "ar": "لا تنظر «أقرب جار» إلا خطوة واحدة إلى الأمام: أقرب قرية لم تُزَر من مكان الحافلة الآن. ولهذا هي سريعة، ولهذا قد تكون العودة في النهاية طويلة."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p3",
+          "prompt": {
+            "en": "One more village roughly doubles the number of possible bus routes.",
+            "ar": "قرية إضافية واحدة تضاعف عدد طرق الحافلة الممكنة تقريبًا."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It multiplies them by the new number of villages: 9 villages have 181,440 routes, 10 have 1,814,400, ten times as many. That growth is why nobody checks every route for a real bus network.",
+            "ar": "بل تضربها في العدد الجديد للقرى: ٩ قرى لها ١٨١٤٤٠ طريقًا، و١٠ لها ١٨١٤٤٠٠، أي عشرة أضعاف. وهذا النمو هو سبب ألا يفحص أحد كل الطرق لشبكة حافلات حقيقية."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "tool": "routes",
+          "prompt": {
+            "en": "Try it: in “The school bus route”, press Run and watch nearest neighbour (34.6 km), then the 2-opt swaps. Press “Find the best route” to compare. Then press “New map” a few times and run again: find a map where 2-opt stops before the best route.",
+            "ar": "جرّب: في «طريق حافلة المدرسة» اضغط «شغّل» وشاهد «أقرب جار» (٣٤٫٦ كم)، ثم تبديلات ⁦2-opt⁩. واضغط «جِد أفضل طريق» لتقارن. ثم اضغط «خريطة جديدة» بضع مرات وشغّل من جديد: جِد خريطة تتوقّف فيها ⁦2-opt⁩ قبل أفضل طريق."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "d[a][b] is the distance in km between places a and b; place 0 is the school. Write nearest neighbour: starting at the school, keep adding the closest place not yet in route until all 5 places are in. The program then prints the route and its length, including the drive back.",
+            "ar": "⁦d[a][b]⁩ هي المسافة بالكيلومتر بين المكانين a وb، والمكان 0 هو المدرسة. اكتب «أقرب جار»: ابدأ من المدرسة، وأضف كل مرة أقرب مكان ليس في route بعد، حتى تدخل الأماكن الخمسة كلها. ثم يطبع البرنامج الطريق وطوله، مع العودة."
+          },
+          "starter": "d = [[0, 3, 3, 2, 6],\n     [3, 0, 6, 4, 6],\n     [3, 6, 0, 3, 7],\n     [2, 4, 3, 0, 4],\n     [6, 6, 7, 4, 0]]\nroute = [0]\n# add the closest place not yet in route,\n# until all 5 places are in\n\nkm = sum(d[a][b] for a, b in zip(route, route[1:] + [0]))\nprint(route, km)\n",
+          "solution": "d = [[0, 3, 3, 2, 6],\n     [3, 0, 6, 4, 6],\n     [3, 6, 0, 3, 7],\n     [2, 4, 3, 0, 4],\n     [6, 6, 7, 4, 0]]\nroute = [0]\nwhile len(route) < 5:\n    last = d[route[-1]]\n    left = [v for v in range(5) if v not in route]\n    route.append(min(left, key=lambda v: last[v]))\nkm = sum(d[a][b] for a, b in zip(route, route[1:] + [0]))\nprint(route, km)\n",
+          "tests": [
+            {
+              "output": "[0, 3, 2, 1, 4] 23",
+              "check": "assert sorted(route) == [0, 1, 2, 3, 4], \"Every place must be in the route once\"",
+              "hint": {
+                "en": "From the school, the closest place is 3 (2 km). Then always the closest one still left.",
+                "ar": "من المدرسة، أقرب مكان هو 3 (٢ كم). ثم دائمًا أقرب مكان ما زال باقيًا."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "Loop while the route is short: while len(route) < 5:",
+              "ar": "كرّر ما دام الطريق ناقصًا: ⁦while len(route) < 5⁩:"
+            },
+            {
+              "en": "The places left: [v for v in range(5) if v not in route]",
+              "ar": "الأماكن الباقية: ⁦[v for v in range(5) if v not in route]⁩"
+            },
+            {
+              "en": "The closest: min(left, key=lambda v: last[v]), where last = d[route[-1]]",
+              "ar": "الأقرب: ⁦min(left, key=lambda v: last[v])⁩، حيث ⁦last = d[route[-1]]⁩"
+            }
+          ],
+          "explain": {
+            "en": "Nearest neighbour gives 0 → 3 → 2 → 1 → 4 → 0, 23 km, and the first village (3) rides 21 of them. The best route on this map is 19 km (0 → 1 → 4 → 3 → 2 → 0), with a longest ride of 16: the quick rule is fast, but its last legs are long. This plain Python runs the same in Colab.",
+            "ar": "تعطي «أقرب جار» الطريق 0 ← 3 ← 2 ← 1 ← 4 ← 0، أي ٢٣ كم، ويركب أطفال القرية الأولى (3) ٢١ كم منها. وأفضل طريق في هذه الخريطة ١٩ كم (0 ← 1 ← 4 ← 3 ← 2 ← 0)، وأطول رحلة فيه ١٦: فالقاعدة السريعة سريعة، لكن مراحلها الأخيرة طويلة. وبرنامج بايثون العادي هذا يعمل بالطريقة نفسها في Colab."
+          }
+        },
+        {
+          "type": "parsons",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "Put the lines in order: one pass of 2-opt that tries every pair of cut points and keeps a reversed stretch when it makes the route shorter.",
+            "ar": "رتّب الأسطر: جولة واحدة من ⁦2-opt⁩ تجرّب كل زوج من نقاط القطع، وتحتفظ بالمقطع المعكوس إذا قصّر الطريق."
+          },
+          "lines": [
+            "for i in range(1, len(route) - 1):",
+            "    for j in range(i + 1, len(route)):",
+            "        mid = list(reversed(route[i:j + 1]))",
+            "        new = route[:i] + mid + route[j + 1:]",
+            "        if length(new) < length(route):",
+            "            route = new"
+          ],
+          "distractors": [
+            "        if length(new) > length(route):"
+          ],
+          "explain": {
+            "en": "Two loops choose where to cut; the stretch between the cuts is reversed and glued back; the new route is kept only if it is shorter. Keeping longer routes would undo the improvement.",
+            "ar": "تختار الحلقتان مكانَي القطع، ويُعكس المقطع الذي بينهما ويُعاد لصقه، ولا يُحتفظ بالطريق الجديد إلا إذا كان أقصر. والاحتفاظ بالطرق الأطول يُفسد التحسين."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you do?",
+            "ar": "ماذا تفعل؟"
+          },
+          "who": {
+            "en": "Mrs Banda, a parent from Kesi",
+            "ar": "السيدة باندا، من أهالي كيسي"
+          },
+          "initial": {
+            "en": "B",
+            "ar": "ب"
+          },
+          "situation": {
+            "en": "The new route saves 6 km a day, but it now picks up Kesi first, at 5:40, while it is still dark. Mrs Banda says her daughter waits alone at the roadside.",
+            "ar": "يوفّر الطريق الجديد ٦ كم في اليوم، لكنه صار يبدأ بقرية كيسي في الساعة ٥:٤٠، والظلام ما زال قائمًا. وتقول السيدة باندا إن ابنتها تنتظر وحدها على جانب الطريق."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Add the rule ‘no pick-up before 6:00’, and find the shortest route that keeps it.”",
+                "ar": "«أضف قاعدة ‹لا ركوب قبل الساعة ٦:٠٠›، وجِد أقصر طريق يلتزم بها.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Safety becomes a written rule, not a favour. The new route may be a little longer; tell the families what it costs and why.",
+                "ar": "تصير السلامة قاعدة مكتوبة لا مجاملة. وقد يكون الطريق الجديد أطول قليلًا، فأخبر الأسر بكلفته وسببه."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“The route is the shortest: we keep it.”",
+                "ar": "«الطريق هو الأقصر: سنُبقي عليه.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Shortest for the goal you wrote, but the goal never mentioned a child alone in the dark. A model is only as good as the rules it was given.",
+                "ar": "الأقصر بحسب الهدف الذي كتبته، لكن الهدف لم يذكر طفلة وحدها في الظلام. والنموذج لا يكون أفضل من القواعد التي أُعطيها."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Go back to last year’s route.”",
+                "ar": "«عُد إلى طريق العام الماضي.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "It solves Kesi’s problem but throws away the savings, and last year’s route had its own long rides. Better to keep the model and add the missing rule.",
+                "ar": "يحلّ مشكلة كيسي، لكنه يضيّع التوفير، ولطريق العام الماضي رحلاته الطويلة أيضًا. والأفضل أن تُبقي النموذج وتضيف القاعدة الناقصة."
+              }
+            }
+          ],
+          "explain": {
+            "en": "Make safety a written rule in the model, and tell families what it costs.",
+            "ar": "اجعل السلامة قاعدة مكتوبة في النموذج، وأخبر الأسر بكلفتها."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of a route at your school: the bus, a delivery, a walk between buildings. What does it make short, and who pays for that?",
+            "ar": "فكّر في طريق في مدرستك: الحافلة، أو توصيلة، أو المشي بين المباني. ما الذي يجعله قصيرًا، ومَن يدفع ثمن ذلك؟"
+          },
+          "placeholder": {
+            "en": "For example: “The lunch delivery visits the main building first, so the farthest classroom always eats cold food.”",
+            "ar": "مثلًا: «توصيلة الغداء تبدأ بالمبنى الرئيسي، فيأكل الصف الأبعد طعامًا باردًا دائمًا.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: The human bus route",
+            "ar": "مشروع: طريق الحافلة البشري"
+          },
+          "task": {
+            "en": "On the playground, place six pupils as villages, holding name cards, and mark the school door. One pupil is the bus. First the class guesses a good route by looking. Then the bus drives nearest neighbour while the class counts steps on each leg; write the legs on the board. Find two paths that cross, swap them (2-opt) and count again. Finally, for each village, count how many steps its children ride before reaching school, and discuss: is the shortest route the fairest one?",
+            "ar": "في الساحة، ضع ستة طلاب كأنهم قرى يحملون بطاقات بأسمائها، وعلّم باب المدرسة. ويكون أحد الطلاب الحافلة. أولًا يخمّن الصف طريقًا جيدًا بالنظر. ثم تمشي الحافلة بطريقة «أقرب جار» بينما يعدّ الصف خطوات كل مرحلة، واكتبوا المراحل على السبّورة. ابحثوا عن مسارين متقاطعين، وبدّلوهما (⁦2-opt⁩)، وعدّوا من جديد. وأخيرًا عُدّوا لكل قرية كم خطوة يركب أطفالها قبل الوصول إلى المدرسة، وناقشوا: هل الطريق الأقصر هو الأعدل؟"
+          },
+          "deliverable": {
+            "en": "A photo of the board with the step counts (no faces needed): the guess, nearest neighbour, after the swap, and the longest ride.",
+            "ar": "صورة للسبّورة وعليها أعداد الخطوات (لا حاجة إلى ظهور الوجوه): التخمين، و«أقرب جار»، وبعد التبديل، وأطول رحلة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Pupils could: build a route with nearest neighbour and add up its length.",
+                "ar": "تمكّن الطلاب من: بناء طريق بقاعدة «أقرب جار» وجمع طوله."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: shorten a route by swapping two crossing paths.",
+                "ar": "تمكّن الطلاب من: تقصير طريق بتبديل مسارين متقاطعين."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: compare routes by total length and by the longest ride.",
+                "ar": "تمكّن الطلاب من: المقارنة بين الطرق بالطول الكلّي وبأطول رحلة."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "The school bus route",
+            "ar": "طريق حافلة المدرسة"
+          },
+          "narration": {
+            "en": "Is there a shorter route, and a fairer one?",
+            "ar": "هل يوجد طريق أقصر، وأعدل أيضًا؟"
+          },
+          "note": {
+            "en": "Optimization · Level 3 · Lesson 3",
+            "ar": "الحلول المثلى، المستوى ٣، الدرس ٣"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "See why trying every bus route is impossible.",
+              "Build a route with nearest neighbour and improve it with 2-opt.",
+              "Judge a route by its length and by the longest ride."
+            ],
+            "ar": [
+              "نرى لماذا يستحيل تجريب كل طرق الحافلة.",
+              "نبني طريقًا بقاعدة «أقرب جار» ونحسّنه بطريقة ⁦2-opt⁩.",
+              "نحكم على الطريق بطوله وبأطول رحلة فيه."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Routes multiply: 9 villages have 181,440, and 20 more than a billion billion.",
+              "Nearest neighbour builds a route fast; 2-opt untangles it, but can stop short of the best.",
+              "The children picked up first ride longest: agree a limit with the families."
+            ],
+            "ar": [
+              "الطرق تتضاعف: لتسع قرى ١٨١٤٤٠ طريقًا، ولعشرين أكثر من مليار مليار.",
+              "تبني «أقرب جار» الطريق بسرعة، وتفكّ ⁦2-opt⁩ تشابكه، لكنها قد تتوقّف قبل الأفضل.",
+              "الأطفال الذين يركبون أولًا يركبون أطول: اتفقوا مع الأسر على حدّ لذلك."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "The human bus route",
+            "ar": "طريق الحافلة البشري"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Guess the shortest route by looking.",
+              "Nearest neighbour (10 min): The bus drives; count steps.",
+              "Untangle (10 min): Swap two crossing paths; count again.",
+              "Longest ride (10 min): Count each village’s ride.",
+              "Wrap-up (5 min): Shortest or fairest?"
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): خمّنوا أقصر طريق بالنظر.",
+              "أقرب جار (١٠ دقائق): تمشي الحافلة، وعُدّوا الخطوات.",
+              "فكّ التشابك (١٠ دقائق): بدّلوا مسارين متقاطعين، وعُدّوا من جديد.",
+              "أطول رحلة (١٠ دقائق): عُدّوا رحلة كل قرية.",
+              "الختام (٥ دقائق): الأقصر أم الأعدل؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Place six pupils as villages with name cards and mark the school door. Each pupil guesses the shortest round trip by looking and writes it down.",
+              "Nearest neighbour (10 min): One pupil is the bus. From the school door, it always walks to the nearest village not yet visited, then back. The class counts the steps of each leg; write them on the board and add them up.",
+              "Untangle (10 min): Draw the route in chalk. Find two paths that cross, reverse the stretch between them and walk it again. Is it shorter? Keep going until no swap helps.",
+              "Longest ride (10 min): For each village, add the steps from its pick-up to the school. Which village rides longest on each route?",
+              "Wrap-up (5 min): Compare the routes by total steps and by the longest ride. Ask which the class would choose, and what rule would make it fair."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): ضع ستة طلاب كأنهم قرى مع بطاقات بأسمائها، وعلّم باب المدرسة. ويخمّن كل طالب أقصر رحلة ذهاب وإياب بالنظر ويكتبها.",
+              "أقرب جار (١٠ دقائق): يكون أحد الطلاب الحافلة. من باب المدرسة يمشي دائمًا إلى أقرب قرية لم يزرها، ثم يعود. ويعدّ الصف خطوات كل مرحلة، فاكتبوها على السبّورة واجمعوها.",
+              "فكّ التشابك (١٠ دقائق): ارسموا الطريق بالطباشير. ابحثوا عن مسارين متقاطعين، واعكسوا المقطع الذي بينهما، وامشوه من جديد. هل صار أقصر؟ استمرّوا حتى لا يفيد أي تبديل.",
+              "أطول رحلة (١٠ دقائق): اجمعوا لكل قرية الخطوات من موعد ركوبها إلى المدرسة. أيّ قرية تركب أطول في كل طريق؟",
+              "الختام (٥ دقائق): قارنوا الطرق بمجموع الخطوات وبأطول رحلة. واسأل: أيّها يختار الصف، وما القاعدة التي تجعله عادلًا؟"
+            ]
+          },
+          "note": {
+            "en": "Spread the villages unevenly, with one far corner, so nearest neighbour leaves a long walk home. No playground? Use desks and a floor plan drawn on the board.",
+            "ar": "وزّع القرى توزيعًا غير منتظم، مع زاوية بعيدة، حتى تترك «أقرب جار» مسافة طويلة في العودة. لا ساحة لديك؟ استعمل المقاعد ومخطّطًا مرسومًا على السبّورة."
+          },
+          "narration": {
+            "en": "Always the nearest village next. Is that the shortest way round?",
+            "ar": "دائمًا أقرب قرية بعد ذلك. هل هذا أقصر طريق للدوران؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why was the walk home so long with nearest neighbour?",
+              "Did swapping two crossing paths always help?",
+              "Which village rode longest, and is that fair?"
+            ],
+            "ar": [
+              "لماذا كانت العودة طويلة جدًا مع «أقرب جار»؟",
+              "هل ساعد تبديل مسارين متقاطعين دائمًا؟",
+              "أيّ قرية ركبت أطول، وهل هذا عادل؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Draw a route with a crossing, and the shorter route after one 2-opt swap."
+            ],
+            "ar": [
+              "ارسم طريقًا فيه تقاطع، والطريق الأقصر بعد تبديل واحد بطريقة ⁦2-opt⁩."
+            ]
+          },
+          "narration": {
+            "en": "Build it fast, improve it, and check who rides longest.",
+            "ar": "ابنِه بسرعة، وحسّنه، وانظر مَن يركب أطول."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: The school bus route",
+            "ar": "شرائح: طريق حافلة المدرسة"
+          },
+          "pages": 6,
+          "base": "opt-3-1-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: The school bus route",
+            "ar": "خطة الدرس وورقة العمل: طريق حافلة المدرسة"
+          },
+          "pages": 3,
+          "base": "opt-3-1-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/opt-3-1-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "OPT.3",
+        "OPT.4",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "opt-3-1-4",
+      "title": {
+        "en": "Matching teachers and classes",
+        "ar": "توزيع المعلّمين على الصفوف"
+      },
+      "minutes": 17,
+      "tryTomorrow": {
+        "en": "Share out five class jobs (board, plants, books, water, bell). Each pupil scores every job from 1 to 5. First let them choose in turn, then look together for the plan with the best total, and for the plan where nobody gets a job they scored 1. Which would the class choose, and why?",
+        "ar": "وزّع خمس مهام في الصف (السبّورة، والنباتات، والكتب، والماء، والجرس). يعطي كل طالب كل مهمة درجة من ١ إلى ٥. دعهم يختارون بالدور أولًا، ثم ابحثوا معًا عن الخطة صاحبة أفضل مجموع، وعن الخطة التي لا يحصل فيها أحد على مهمة أعطاها ١. أيّهما يختار الصف، ولماذا؟"
+      },
+      "materials": {
+        "en": [
+          "Board and chalk",
+          "A score table on the board: pupils by jobs",
+          "Small cards for the jobs"
+        ],
+        "ar": [
+          "السبّورة والطباشير",
+          "جدول درجات على السبّورة: الطلاب والمهام",
+          "بطاقات صغيرة للمهام"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Matching teachers and classes",
+            "ar": "توزيع المعلّمين على الصفوف"
+          },
+          "src": null,
+          "duration": 233,
+          "sizeMB": 1.4,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Choosing in turn",
+                "ar": "الاختيار بالدور"
+              }
+            },
+            {
+              "at": 23,
+              "atBy": {
+                "en": 23,
+                "ar": 19.6
+              },
+              "label": {
+                "en": "The best total",
+                "ar": "أفضل مجموع"
+              }
+            },
+            {
+              "at": 91,
+              "atBy": {
+                "en": 91,
+                "ar": 89
+              },
+              "label": {
+                "en": "The worst match",
+                "ar": "أسوأ توزيع"
+              }
+            },
+            {
+              "at": 140.4,
+              "atBy": {
+                "en": 140.4,
+                "ar": 136
+              },
+              "label": {
+                "en": "Whose scores? And the lab",
+                "ar": "درجات مَن؟ والمختبر"
+              }
+            },
+            {
+              "at": 194.9,
+              "atBy": {
+                "en": 194.9,
+                "ar": 185
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "No teacher should be stuck with a class they can hardly teach. What should the model maximise?",
+                "ar": "يجب ألا يعلق أي معلم بصف لا يكاد يستطيع تدريسه. ماذا يجعل النموذج أكبر ما يمكن؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "The total score",
+                    "ar": "مجموع الدرجات"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "The lowest score among the chosen pairs",
+                    "ar": "أقل درجة بين الأزواج المختارة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "The number of teachers",
+                    "ar": "عدد المعلمين"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "To protect the worst-off, maximise the lowest score: add a variable w, require every chosen pair’s score to be at least w, and maximise w. A high total can hide one very bad match; the number of teachers is fixed.",
+                "ar": "لحماية الأسوأ حظًا، اجعل أقل درجة أكبر ما يمكن: أضف متغيّرًا w، واشترط أن تكون درجة كل زوج مختار w على الأقل، ثم اجعل w أكبر ما يمكن. فالمجموع العالي قد يخفي توزيعًا سيئًا جدًا، وعدد المعلمين ثابت."
+              }
+            },
+            "at": 119.43,
+            "atBy": {
+              "en": 119.43,
+              "ar": 116.68
+            }
+          },
+          "transcript": {
+            "en": "At the start of term, five teachers choose their classes in order of seniority. It feels fair. Then Karim, who teaches maths well and little else, ends up with a science class. Today: matching teachers and classes, for the best total and for the worst-off. This is the assignment problem: each class gets exactly one teacher, and each teacher takes exactly one class. A table scores how well each teacher suits each class, from zero to nine. The goal is the best total score. First come, first served: Amina chooses first and takes maths, her favourite. Karim, good only at maths, gets science, with a score of two. The total is twenty-nine. The best total is thirty-nine. Karim takes maths, Leila science, Yusuf English, Zainab art, and Amina history. The Hungarian method, from nineteen fifty-five, finds it step by step, and a solver finds it too. In CP-SAT, each teacher and class pair gets a yes-or-no variable. Exactly one yes in each row, and exactly one in each column. Then maximise the scores of the pairs you choose. But the total is only one way to judge. You can also ask: how good is the worst match? A plan with a high total can still give one teacher a class they can hardly teach. Quick check! I want no teacher stuck with a class they can hardly teach. What should the model make as large as possible? The lowest score. Add a variable for the worst match, keep every chosen pair at or above it, and maximise it. Here the best-total plan already does well: its worst match is six. On other tables, raising the worst costs a little of the total. Scores are opinions written as numbers. Who wrote them, and did the teachers see them? Show both plans, the best total and the kindest worst match, and decide together. Explain the rule you used before anyone sees their class. In the app, open “Teachers to classes”. Press “Let them choose in turn”, then Run to watch the Hungarian method. Then change Karim’s maths score from nine to five, and run both again. Your turn. The best-total plan gives Zainab, a new teacher, the class nobody wanted. Nobody asked her about her scores. What is the fair next step? Check the scores with the people they describe, then solve again. Remember: one yes-or-no variable per pair, and exactly one per row and per column. First come can lose a lot. And judge two ways: the total, and the worst match. Try it in class tomorrow: share out five class jobs. Pupils score each job from one to five, and first they choose in turn. Then the class looks for the best total, and for the plan where nobody gets a job they hate.",
+            "ar": "في أول الترم، خمس مدرسين بيختاروا فصولهم بالأقدمية. شكله عدل. وبعدين كريم، اللي بيدرّس رياضيات كويس وغيرها لأ، بيطلع له فصل علوم. النهارده: توزيع المدرسين على الفصول، علشان أحسن مجموع، وعلشان اللي حظه أسوأ. دي اسمها مسألة التوزيع: كل فصل ياخد مدرس واحد بالظبط، وكل مدرس ياخد فصل واحد بالظبط. وفيه جدول بيدّي درجة لكل مدرس مع كل فصل، من صفر لتسعة. والهدف أحسن مجموع درجات. اللي يسبق يختار: أمينة بتختار الأول وبتاخد الرياضيات، المادة المفضّلة عندها. وكريم، اللي شاطر في الرياضيات بس، بياخد علوم، بدرجة اتنين. والمجموع تسعة وعشرين. أحسن مجموع تسعة وتلاتين. كريم ياخد الرياضيات، وليلى العلوم، ويوسف الإنجليزي، وزينب الفنون، وأمينة التاريخ. والطريقة الهنغارية، من سنة ألف تسعمية خمسة وخمسين، بتلاقيه خطوة بخطوة، والسولفر كمان بيلاقيه. في «سي بي سات»، كل مدرس مع كل فصل ليهم متغيّر أيوه أو لأ. أيوه واحدة بالظبط في كل صف من الجدول، وواحدة بالظبط في كل عمود. وبعدين كبّر مجموع درجات الأزواج اللي اخترتها. بس المجموع طريقة واحدة بس للحكم. تقدر تسأل كمان: أسوأ توزيع حلو قد إيه؟ خطة مجموعها عالي ممكن برضه تدّي مدرس واحد فصل بالعافية يقدر يدرّسه. سؤال سريع! أنا عايز محدش من المدرسين يتدبّس في فصل بالعافية يقدر يدرّسه. النموذج يكبّر إيه على قد ما يقدر؟ أقل درجة. زوّد متغيّر لأسوأ توزيع، وخلّي كل زوج مختار درجته أكبر منه أو قدّه، وكبّره. هنا خطة أحسن مجموع كويسة أصلًا: أسوأ توزيع فيها ستة. وفي جداول تانية، إنك تعلّي الأسوأ بيكلّفك شوية من المجموع. الدرجات دي آراء مكتوبة أرقام. مين اللي كتبها، والمدرسين شافوها؟ اعرض الخطتين، أحسن مجموع وأرحم أسوأ توزيع، وقرّروا مع بعض. واشرح القاعدة اللي استخدمتها قبل ما حد يشوف فصله. في التطبيق، افتح «المعلّمون والصفوف». دوس «دعهم يختارون بالدور»، وبعدين «شغّل» علشان تتفرج على الطريقة الهنغارية. وبعدين غيّر درجة كريم في الرياضيات من تسعة لخمسة، وشغّل الاتنين تاني. دورك. خطة أحسن مجموع ادّت زينب، المدرّسة الجديدة، الفصل اللي محدش كان عايزه. ومحدش سألها عن درجاتها. إيه الخطوة العادلة الجاية؟ راجع الدرجات مع الناس اللي بتوصفهم، وبعدين حلّ تاني. افتكر: متغيّر أيوه أو لأ لكل زوج، وواحد بالظبط في كل صف وكل عمود. و«اللي يسبق يختار» ممكن يضيّع كتير. واحكم بطريقتين: المجموع، وأسوأ توزيع. جرّبها في الفصل بكرة: وزّعوا خمس مهام في الفصل. التلاميذ يدّوا كل مهمة درجة من واحد لخمسة، والأول يختاروا بالدور. وبعدين الفصل يدوّر على أحسن مجموع، وعلى الخطة اللي محدش فيها ياخد مهمة بيكرهها."
+          },
+          "sources": {
+            "en": "/media/opt-3-1-4/video-en.mp4",
+            "ar": "/media/opt-3-1-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/opt-3-1-4/captions-en.vtt",
+            "ar": "/media/opt-3-1-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/opt-3-1-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/opt-3-1-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/opt-3-1-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/opt-3-1-4/light/audio/en.opus",
+              "manifest.json": "/media/opt-3-1-4/light/manifest.json",
+              "scenes.json": "/media/opt-3-1-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/opt-3-1-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/opt-3-1-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 510,
+              "ar": 493
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "The assignment problem",
+            "ar": "مسألة التوزيع"
+          },
+          "body": {
+            "en": "Matching teachers to classes, pupils to projects or buses to routes is the assignment problem: each class gets exactly one teacher, and each teacher takes exactly one class. A table gives a score for every pair, for example how well each teacher suits each class from 0 to 9, and the usual goal is the best total score.\n\nChoosing in turn feels fair but can waste a lot. In the lab, Amina chooses first and takes maths, so Karim, who is good only at maths, gets science with a score of 2: a total of 29. The best total is 39 (Karim maths, Leila science, Yusuf English, Zainab art, Amina history). The Hungarian method (1955) finds it by working on shortfalls from 9, step by step; a solver finds it too.\n\nIn CP-SAT, give each teacher-and-class pair a yes-or-no variable x[t][c] (1 means teacher t takes class c). Require exactly one yes in each row, m.add_exactly_one(x[t]), and exactly one in each column, then maximise the sum of score[t][c] * x[t][c]. The same program runs unchanged on the real OR-Tools in Colab.\n\nThe total is only one way to judge. You can also ask how good the worst match is, and make that as good as possible: add a variable w, require every chosen pair’s score to be at least w, and maximise w. In the lab’s table, the best-total plan already has a worst match of 6; on other tables, raising the worst match costs a little of the total. Which to choose is a decision about fairness, not arithmetic.\n\nFinally, remember that the scores are opinions written as numbers. Who wrote them, and did the people they describe see them? A plan built on scores nobody checked is not fair, however optimal. Show the table to colleagues, show both plans (best total, best worst match), agree the rule before anyone sees their class, and solve again when a score turns out wrong.",
+            "ar": "توزيع المعلمين على الصفوف، أو الطلاب على المشاريع، أو الحافلات على الطرق، هو مسألة التوزيع: يحصل كل صف على معلم واحد بالضبط، ويأخذ كل معلم صفًّا واحدًا بالضبط. وفي جدول درجة لكل زوج، مثل مدى ملاءمة كل معلم لكل صف من ٠ إلى ٩، والهدف المعتاد هو أفضل مجموع للدرجات.\n\nالاختيار بالدور يبدو عادلًا، لكنه قد يضيّع الكثير. ففي المختبر تختار أمينة أولًا وتأخذ الرياضيات، فيحصل كريم، الذي لا يُحسن إلا الرياضيات، على العلوم بدرجة ٢: والمجموع ٢٩. أما أفضل مجموع فهو ٣٩ (كريم الرياضيات، وليلى العلوم، ويوسف الإنجليزية، وزينب الفنون، وأمينة التاريخ). وتجده الطريقة الهنغارية (١٩٥٥) بالعمل على النقص عن ٩ خطوة بخطوة، ويجده برنامج الحل أيضًا.\n\nوفي CP-SAT أعطِ كل زوج من معلم وصف متغيّرًا من نوع نعم أو لا ⁦x[t][c]⁩ (القيمة ١ تعني أن المعلم t يأخذ الصف c). واشترط «نعم» واحدة بالضبط في كل صف من الجدول، ⁦m.add_exactly_one(x[t])⁩، وواحدة بالضبط في كل عمود، ثم اجعل مجموع ⁦score[t][c] * x[t][c]⁩ أكبر ما يمكن. والبرنامج نفسه يعمل دون تغيير على أدوات OR-Tools الحقيقية في Colab.\n\nوالمجموع طريقة واحدة فقط للحكم. فيمكنك أيضًا أن تسأل: ما جودة أسوأ توزيع؟ وأن تجعله أفضل ما يمكن: أضف متغيّرًا w، واشترط أن تكون درجة كل زوج مختار w على الأقل، ثم اجعل w أكبر ما يمكن. وفي جدول المختبر، أسوأ توزيع في خطة أفضل مجموع هو ٦ أصلًا، أما في جداول أخرى فرفع أسوأ توزيع يكلّف قليلًا من المجموع. والاختيار بينهما قرار عن العدالة، لا مسألة حساب.\n\nوأخيرًا، تذكّر أن الدرجات آراء مكتوبة في صورة أرقام. مَن كتبها، وهل رآها الناس الذين تصفهم؟ فالخطة المبنية على درجات لم يراجعها أحد ليست عادلة، مهما كانت مثلى. اعرض الجدول على زملائك، واعرض الخطتين (أفضل مجموع، وأفضل «أسوأ توزيع»)، واتفقوا على القاعدة قبل أن يرى أحد صفّه، وحُلّوا من جديد حين يتبيّن أن درجة ما خاطئة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Assignment problem",
+                "ar": "مسألة التوزيع"
+              },
+              "def": {
+                "en": "Pairing people with jobs, exactly one each way, for the best total score.",
+                "ar": "مزاوجة الناس بالمهام، واحد بالضبط لكلٍّ منهما، لأفضل مجموع درجات."
+              }
+            },
+            {
+              "term": {
+                "en": "Yes-or-no variable",
+                "ar": "متغيّر نعم أو لا"
+              },
+              "def": {
+                "en": "A variable that is 0 or 1: here, whether teacher t takes class c.",
+                "ar": "متغيّر قيمته ٠ أو ١: هنا، هل يأخذ المعلم t الصف c."
+              }
+            },
+            {
+              "term": {
+                "en": "Hungarian method",
+                "ar": "الطريقة الهنغارية"
+              },
+              "def": {
+                "en": "A step-by-step method (1955) that always finds the best total for an assignment.",
+                "ar": "طريقة خطوة بخطوة (١٩٥٥) تجد دائمًا أفضل مجموع في مسألة التوزيع."
+              }
+            },
+            {
+              "term": {
+                "en": "Worst match (max-min)",
+                "ar": "أسوأ توزيع (تعظيم الأدنى)"
+              },
+              "def": {
+                "en": "Judging a plan by its lowest score, and making that as high as possible.",
+                "ar": "الحكم على الخطة بأقل درجة فيها، وجعلها أعلى ما يمكن."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "The best-total plan gives Zainab, a new teacher, the class nobody wanted. Her scores were written by the deputy head, and nobody asked her. What is the fair next step?",
+            "ar": "تعطي خطة أفضل مجموع زينب، المعلمة الجديدة، الصف الذي لم يرده أحد. وقد كتب درجاتها وكيل المدرسة، ولم يسألها أحد. ما الخطوة العادلة التالية؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Keep it: the solver maximised the total",
+                "ar": "نُبقيها: فبرنامج الحل جعل المجموع أكبر ما يمكن"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Ask her, check her scores, and solve again with the agreed rule",
+                "ar": "نسألها، ونراجع درجاتها، ونحلّ من جديد بالقاعدة المتفق عليها"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Swap her with the most senior teacher",
+                "ar": "نبدّلها مع أقدم معلم"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "A model is only as fair as its data. Zainab’s scores are someone else’s opinion of her, so check them with her, agree the rule (the best total, or a floor for the worst match), and solve again. Keeping the plan trusts unchecked numbers; swapping by seniority brings back first come, first served.",
+            "ar": "لا يكون النموذج أعدل من بياناته. فدرجات زينب رأي شخص آخر فيها، فراجعها معها، واتفقوا على القاعدة (أفضل مجموع، أو حدّ أدنى لأسوأ توزيع)، وحُلّوا من جديد. أما إبقاء الخطة فيثق بأرقام لم يراجعها أحد، والتبديل بالأقدمية يعيد قاعدة «من يسبق يختار»."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p2",
+          "prompt": {
+            "en": "Letting teachers choose classes in turn always gives the best total score.",
+            "ar": "ترك المعلمين يختارون الصفوف بالدور يعطي دائمًا أفضل مجموع للدرجات."
+          },
+          "answer": false,
+          "explain": {
+            "en": "An early choice can take someone else’s only good option: in the lab, choosing in turn gives 29 against the best total of 39, because Amina takes the maths class Karim needed.",
+            "ar": "قد يأخذ اختيار مبكر الخيار الجيد الوحيد لشخص آخر: ففي المختبر يعطي الاختيار بالدور ٢٩ مقابل أفضل مجموع ٣٩، لأن أمينة تأخذ صف الرياضيات الذي يحتاج إليه كريم."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "p3",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "score = [[9, 8, 6], [9, 2, 1], [6, 9, 5]]\npairs = [0, 1, 2]  # teacher t takes class pairs[t]\nprint(sum(score[t][pairs[t]] for t in range(3)))"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "16",
+                "ar": "16"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "24",
+                "ar": "24"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "6",
+                "ar": "6"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Teacher 0 takes class 0 (9), teacher 1 class 1 (2) and teacher 2 class 2 (5): 9 + 2 + 5 = 16. Swapping so that teacher 1 takes class 0 gives 9 + 9 + 6 = 24, the best total for this table.",
+            "ar": "يأخذ المعلم 0 الصف 0 (٩)، والمعلم 1 الصف 1 (٢)، والمعلم 2 الصف 2 (٥): ٩ + ٢ + ٥ = ١٦. والتبديل بحيث يأخذ المعلم 1 الصف 0 يعطي ٩ + ٩ + ٦ = ٢٤، وهو أفضل مجموع لهذا الجدول."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "tool": "assign",
+          "prompt": {
+            "en": "Try it: in “Teachers to classes”, press “Let them choose in turn” (29), then Run to watch the Hungarian method reach 39. Then change Karim’s maths score from 9 to 5 and run both again: does choosing in turn still lose? Note the lowest score in each plan.",
+            "ar": "جرّب: في «المعلّمون والصفوف» اضغط «دعهم يختارون بالدور» (٢٩)، ثم «شغّل» لتشاهد الطريقة الهنغارية تصل إلى ٣٩. ثم غيّر درجة كريم في الرياضيات من ٩ إلى ٥ وشغّل الطريقتين من جديد: هل ما زال الاختيار بالدور يخسر؟ ولاحظ أقل درجة في كل خطة."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "Three teachers, three classes, and a score for each pair. The model already says each teacher takes one class and each class gets one teacher. Write the goal: the biggest total score of the chosen pairs. The program prints the total.",
+            "ar": "ثلاثة معلمين وثلاثة صفوف، ودرجة لكل زوج. والنموذج يقول أصلًا إن كل معلم يأخذ صفًّا واحدًا وكل صف يحصل على معلم واحد. اكتب الهدف: أكبر مجموع لدرجات الأزواج المختارة. ويطبع البرنامج المجموع."
+          },
+          "starter": "from ortools.sat.python import cp_model\nscore = [[9, 8, 6], [9, 2, 1], [6, 9, 5]]\nn = range(3)\nm = cp_model.CpModel()\nx = [[m.new_bool_var(\"\") for c in n] for t in n]\nfor i in n:\n    m.add_exactly_one(x[i])\n    m.add_exactly_one([x[t][i] for t in n])\n# the goal: the biggest total score\nsolver = cp_model.CpSolver()\nsolver.solve(m)\nprint(int(solver.objective_value))\n",
+          "solution": "from ortools.sat.python import cp_model\nscore = [[9, 8, 6], [9, 2, 1], [6, 9, 5]]\nn = range(3)\nm = cp_model.CpModel()\nx = [[m.new_bool_var(\"\") for c in n] for t in n]\nfor i in n:\n    m.add_exactly_one(x[i])\n    m.add_exactly_one([x[t][i] for t in n])\nm.maximize(sum(score[t][c] * x[t][c] for t in n for c in n))\nsolver = cp_model.CpSolver()\nsolver.solve(m)\nprint(int(solver.objective_value))\n",
+          "tests": [
+            {
+              "output": "24",
+              "check": "assert all(sum(solver.value(x[t][c]) for t in range(3)) == 1 for c in range(3)), \"Each class needs exactly one teacher\"",
+              "hint": {
+                "en": "Add up score[t][c] * x[t][c] over every pair, and maximise it.",
+                "ar": "اجمع ⁦score[t][c] * x[t][c]⁩ على كل الأزواج، واجعله أكبر ما يمكن."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "m.maximize(sum(...)) with one term per pair",
+              "ar": "⁦m.maximize(sum(...))⁩ بحدّ واحد لكل زوج"
+            },
+            {
+              "en": "for t in n for c in n inside the sum (n is range(3))",
+              "ar": "⁦for t in n for c in n⁩ داخل المجموع (n هي ⁦range(3)⁩)"
+            }
+          ],
+          "explain": {
+            "en": "The best total is 24: teacher 1 takes class 0 (9), teacher 2 class 1 (9) and teacher 0 class 2 (6). Its worst match is 6; giving teacher 0 their favourite class 0 would leave teacher 1 with a 2 or a 1. The same model runs unchanged on the real OR-Tools in Colab.",
+            "ar": "أفضل مجموع ٢٤: يأخذ المعلم 1 الصف 0 (٩)، والمعلم 2 الصف 1 (٩)، والمعلم 0 الصف 2 (٦). وأسوأ توزيع فيه ٦، أما إعطاء المعلم 0 صفّه المفضّل 0 فيترك المعلم 1 بدرجة ٢ أو ١. والنموذج نفسه يعمل دون تغيير على أدوات OR-Tools الحقيقية في Colab."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete the model that makes the worst match as good as possible: each teacher takes exactly one class, and every teacher’s chosen score is at least w.",
+            "ar": "أكمل النموذج الذي يجعل أسوأ توزيع أفضل ما يمكن: يأخذ كل معلم صفًّا واحدًا بالضبط، ودرجة كل معلم في صفّه المختار w على الأقل."
+          },
+          "code": [
+            "for t in range(3):\n    m.",
+            {
+              "blank": 0
+            },
+            "(x[t])\nw = m.new_int_var(1, 9, \"worst\")\nfor t in range(3):\n    m.add(sum(score[t][c] * x[t][c]\n              for c in range(3)) ",
+            {
+              "blank": 1
+            },
+            " w)\nm.",
+            {
+              "blank": 2
+            },
+            "(w)"
+          ],
+          "answers": [
+            "add_exactly_one",
+            ">=",
+            "maximize"
+          ],
+          "distractors": [
+            "add_all_different",
+            "<=",
+            "minimize"
+          ],
+          "explain": {
+            "en": "Exactly one class per teacher, each chosen score at least w (expression on the left, then >=), and w as large as possible: the worst match rises as far as the table allows.",
+            "ar": "صف واحد بالضبط لكل معلم، وكل درجة مختارة w على الأقل (التعبير على اليسار ثم >=)، ثم w أكبر ما يمكن: فيرتفع أسوأ توزيع إلى أقصى ما يسمح به الجدول."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you suggest?",
+            "ar": "ماذا تقترح؟"
+          },
+          "who": {
+            "en": "Ms Leila Nasser, science",
+            "ar": "أ. ليلى ناصر، العلوم"
+          },
+          "initial": {
+            "en": "L",
+            "ar": "ل"
+          },
+          "situation": {
+            "en": "Leila wants to use the assignment model to put 30 pupils into science-fair projects. She plans to score how well each pupil suits each project herself, from their marks.",
+            "ar": "تريد ليلى أن تستعمل نموذج التوزيع لتوزيع ٣٠ طالبًا على مشاريع معرض العلوم. وتنوي أن تقدّر بنفسها مدى ملاءمة كل طالب لكل مشروع، من درجاته."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Let pupils score the projects too, and check the worst match as well as the total.”",
+                "ar": "«دعي الطلاب يقيّمون المشاريع أيضًا، وانظري إلى أسوأ توزيع مع المجموع.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Pupils’ own interests count, and nobody is left with a project they hate just to lift the total. They can also see the rule that placed them.",
+                "ar": "تُحسب اهتمامات الطلاب أنفسهم، ولا يُترك أحد بمشروع يكرهه لمجرد رفع المجموع. ويستطيعون أيضًا أن يروا القاعدة التي وزّعتهم."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Use marks only: they’re objective.”",
+                "ar": "«استعملي الدرجات وحدها، فهي موضوعية.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Marks measure past tests, not interest. Pupils with low marks may always get the least wanted projects, which is the opposite of what a science fair is for.",
+                "ar": "تقيس الدرجات اختبارات سابقة، لا الاهتمام. وقد يحصل أصحاب الدرجات المنخفضة دائمًا على أقل المشاريع رغبة، وهذا عكس الغرض من معرض العلوم."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Let them pick in turn, by class rank.”",
+                "ar": "«دعيهم يختارون بالدور، بحسب ترتيبهم في الصف.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Choosing in turn by rank gives the top pupils everything and can waste a lot of the total, as Karim found. The model can do better for everyone.",
+                "ar": "الاختيار بالدور بحسب الترتيب يعطي المتفوّقين كل شيء، وقد يضيّع الكثير من المجموع، كما حدث لكريم. والنموذج يستطيع أن يفعل أفضل للجميع."
+              }
+            }
+          ],
+          "explain": {
+            "en": "Let pupils’ own scores count, and check the worst match as well as the total.",
+            "ar": "اجعل تقديرات التلاميذ أنفسهم معتبرة، وافحص أسوأ توافق إلى جانب المجموع."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "How are classes, duties or rooms shared out at your school now? Who would score better, and who worse, under a best-total rule?",
+            "ar": "كيف تُوزَّع الصفوف أو المناوبات أو الغرف في مدرستك الآن؟ مَن سيحصل على نتيجة أفضل، ومَن على أسوأ، بقاعدة «أفضل مجموع»؟"
+          },
+          "placeholder": {
+            "en": "For example: “Senior teachers choose first. Newer teachers always get the exam classes.”",
+            "ar": "مثلًا: «يختار المعلمون الأقدم أولًا، ويحصل الأحدث دائمًا على صفوف الامتحانات.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Fair class jobs",
+            "ar": "مشروع: مهام صف عادلة"
+          },
+          "task": {
+            "en": "List five class jobs (board, plants, books, water, bell) and pick five volunteers. Each volunteer scores every job from 1 to 5, and you write the table on the board. First let them choose in turn and add up the total. Then the class looks for the plan with the best total, and for the plan whose lowest score is as high as possible. Compare the plans, vote on which rule to use this term, and explain it to the volunteers before announcing the jobs.",
+            "ar": "اكتب خمس مهام في الصف (السبّورة، والنباتات، والكتب، والماء، والجرس)، واختر خمسة متطوعين. يعطي كل متطوع كل مهمة درجة من ١ إلى ٥، وتكتب الجدول على السبّورة. دعهم أولًا يختارون بالدور واجمعوا المجموع. ثم يبحث الصف عن الخطة صاحبة أفضل مجموع، وعن الخطة التي تكون أقل درجة فيها أعلى ما يمكن. قارنوا الخطط، وصوّتوا على القاعدة التي تُستعمل هذا الفصل الدراسي، واشرحوها للمتطوعين قبل إعلان المهام."
+          },
+          "deliverable": {
+            "en": "A photo of the score table and the three plans (no faces needed), with each plan’s total and lowest score, and the rule your class chose.",
+            "ar": "صورة لجدول الدرجات والخطط الثلاث (لا حاجة إلى ظهور الوجوه)، مع مجموع كل خطة وأقل درجة فيها، والقاعدة التي اختارها صفّك."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Pupils could: find a plan with one job per pupil and add up its total.",
+                "ar": "تمكّن الطلاب من: إيجاد خطة بمهمة واحدة لكل طالب وجمع مجموعها."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: compare plans by their total and by their lowest score.",
+                "ar": "تمكّن الطلاب من: المقارنة بين الخطط بمجموعها وبأقل درجة فيها."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: choose a rule and explain why it is fair.",
+                "ar": "تمكّن الطلاب من: اختيار قاعدة وشرح لماذا هي عادلة."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Matching teachers and classes",
+            "ar": "توزيع المعلّمين على الصفوف"
+          },
+          "narration": {
+            "en": "Who should teach which class, and how do we decide fairly?",
+            "ar": "مَن يدرّس أيّ صف، وكيف نقرّر بعدل؟"
+          },
+          "note": {
+            "en": "Optimization · Level 3 · Lesson 4",
+            "ar": "الحلول المثلى، المستوى ٣، الدرس ٤"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Write an assignment as yes-or-no choices, one per row and column.",
+              "Find the best total, and the plan with the best worst match.",
+              "Ask who wrote the scores, and decide the rule together."
+            ],
+            "ar": [
+              "نكتب التوزيع خيارات نعم أو لا، واحدًا لكل صف وعمود.",
+              "نجد أفضل مجموع، والخطة صاحبة أفضل «أسوأ توزيع».",
+              "نسأل مَن كتب الدرجات، ونقرّر القاعدة معًا."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Choosing in turn can lose a lot: 29 against 39 in the lab.",
+              "One yes-or-no variable per pair; exactly one per row and per column.",
+              "Judge twice: the total and the worst match, and check the scores with the people."
+            ],
+            "ar": [
+              "الاختيار بالدور قد يضيّع الكثير: ٢٩ مقابل ٣٩ في المختبر.",
+              "متغيّر نعم أو لا لكل زوج، وواحد بالضبط لكل صف ولكل عمود.",
+              "احكم مرتين: بالمجموع وبأسوأ توزيع، وراجع الدرجات مع الناس."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Fair class jobs",
+            "ar": "مهام صف عادلة"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): How are class jobs shared now?",
+              "Score (8 min): Five volunteers score five jobs.",
+              "In turn (7 min): Choose in turn; add the total.",
+              "Better plans (15 min): Best total, then best worst match.",
+              "Wrap-up (5 min): Vote on the rule and explain it."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): كيف تُوزَّع مهام الصف الآن؟",
+              "التقدير (٨ دقائق): يقدّر خمسة متطوعين خمس مهام.",
+              "بالدور (٧ دقائق): اختيار بالدور، ثم جمع المجموع.",
+              "خطط أفضل (١٥ دقيقة): أفضل مجموع، ثم أفضل «أسوأ توزيع».",
+              "الختام (٥ دقائق): صوّتوا على القاعدة واشرحوها."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Ask how class jobs are given out now and whether pupils think it is fair. Write their ideas of “fair” on the board.",
+              "Score (8 min): Write five jobs across the top of a table and five volunteers down the side. Each volunteer scores every job from 1 (hate it) to 5 (love it).",
+              "In turn (7 min): Volunteers choose one job each, in order of the register. Add up the total score and circle the lowest score.",
+              "Better plans (15 min): In groups, pupils look for the plan with the highest total, then for the plan whose lowest score is as high as possible. Each group writes its two plans with their total and lowest score.",
+              "Wrap-up (5 min): Compare the plans and vote on the rule for this term. Explain it to the volunteers before announcing the jobs."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اسأل كيف تُوزَّع مهام الصف الآن، وهل يرى الطلاب ذلك عادلًا. واكتب أفكارهم عن «العدالة» على السبّورة.",
+              "التقدير (٨ دقائق): اكتب خمس مهام في أعلى جدول وخمسة متطوعين على جانبه. يعطي كل متطوع كل مهمة درجة من ١ (يكرهها) إلى ٥ (يحبها).",
+              "بالدور (٧ دقائق): يختار المتطوعون مهمة لكلٍّ منهم بترتيب كشف الأسماء. اجمعوا المجموع وضعوا دائرة حول أقل درجة.",
+              "خطط أفضل (١٥ دقيقة): في مجموعات، يبحث الطلاب عن الخطة صاحبة أعلى مجموع، ثم عن الخطة التي تكون أقل درجة فيها أعلى ما يمكن. وتكتب كل مجموعة خطتيها مع المجموع وأقل درجة.",
+              "الختام (٥ دقائق): قارنوا الخطط وصوّتوا على قاعدة هذا الفصل الدراسي. واشرحوها للمتطوعين قبل إعلان المهام."
+            ]
+          },
+          "note": {
+            "en": "Keep it to five volunteers and five jobs so the table fits the board. Scores of 1 to 5 keep the sums easy.",
+            "ar": "اكتفِ بخمسة متطوعين وخمس مهام حتى يتّسع الجدول على السبّورة. والدرجات من ١ إلى ٥ تُبقي الجمع سهلًا."
+          },
+          "narration": {
+            "en": "Choosing in turn, the best total, or nobody stuck with a job they hate?",
+            "ar": "الاختيار بالدور، أم أفضل مجموع، أم ألا يعلق أحد بمهمة يكرهها؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why did choosing in turn give a lower total?",
+              "Which plan was best for the person with the lowest score?",
+              "Who should write the scores, and who should see them?"
+            ],
+            "ar": [
+              "لماذا أعطى الاختيار بالدور مجموعًا أقل؟",
+              "أيّ خطة كانت الأفضل لصاحب أقل درجة؟",
+              "مَن يجب أن يكتب الدرجات، ومَن يجب أن يراها؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one rule for sharing class jobs fairly, and what it might cost."
+            ],
+            "ar": [
+              "اكتب قاعدة واحدة لتوزيع مهام الصف بعدل، وما الذي قد تكلّفه."
+            ]
+          },
+          "narration": {
+            "en": "Best for the school, and bearable for each person.",
+            "ar": "الأفضل للمدرسة، والمقبول لكل شخص."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Matching teachers and classes",
+            "ar": "شرائح: توزيع المعلّمين على الصفوف"
+          },
+          "pages": 6,
+          "base": "opt-3-1-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: Matching teachers and classes",
+            "ar": "خطة الدرس وورقة العمل: توزيع المعلّمين على الصفوف"
+          },
+          "pages": 3,
+          "base": "opt-3-1-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/opt-3-1-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "OPT.2",
+        "OPT.4",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "opt-3-1-check",
+      "title": {
+        "en": "Solving school problems in Python: unit check",
+        "ar": "حلّ مشكلات المدرسة ببايثون: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Pick one decision at your school this term (duties, exam slots, the bus, who teaches what). With two colleagues, write its options, rules and goal, model the smallest version in the “Model it with CP-SAT” lab, and show the result to the people it affects.",
+        "ar": "اختر قرارًا واحدًا في مدرستك هذا الفصل الدراسي (المناوبات، أو مواعيد الامتحانات، أو الحافلة، أو مَن يدرّس ماذا). واكتب مع زميلين خياراته وقواعده وهدفه، وصِغ أصغر صورة منه في مختبر «صِغ النموذج بـ CP-SAT»، واعرض النتيجة على من تمسّهم."
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "In a CP-SAT timetable model, what is each lesson’s variable?",
+            "ar": "في نموذج جدول بأداة CP-SAT، ما متغيّر كل درس؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "The period it goes in",
+                "ar": "الحصة التي يوضع فيها"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Its teacher’s name",
+                "ar": "اسم معلمه"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The number of pupils in the class",
+                "ar": "عدد طلاب الصف"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The solver decides when each lesson happens, so the period is the variable. The teacher and the class size are facts the rules use.",
+            "ar": "يقرّر برنامج الحل متى يكون كل درس، فالحصة هي المتغيّر. أما المعلم وعدد الطلاب فحقائق تستعملها القواعد."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "INFEASIBLE means the solver ran out of time before finding a timetable.",
+            "ar": "تعني INFEASIBLE أن برنامج الحل نفد وقته قبل أن يجد جدولًا."
+          },
+          "answer": false,
+          "explain": {
+            "en": "INFEASIBLE is a proof that no timetable keeps all the rules. Running out of time is UNKNOWN. With INFEASIBLE, decide which rule can bend.",
+            "ar": "INFEASIBLE إثبات أنه لا يوجد جدول يلتزم بكل القواعد. أما نفاد الوقت فهو UNKNOWN. ومع INFEASIBLE قرّر أيّ قاعدة يمكن تخفيفها."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "q3",
+          "lang": "python",
+          "prompt": {
+            "en": "The second rule should stop a teacher (one per subject) being in two classes at once, but timetables still clash. Which line is wrong?",
+            "ar": "يجب أن تمنع القاعدة الثانية المعلم (واحد لكل مادة) من أن يكون في صفّين في وقت واحد، لكن الجداول ما زالت متعارضة. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "for c in classes:\n    m.add_all_different([p[c, s] for s in subjects])\nfor s in subjects:\n    m.add_all_different([p[c, s] for s in subjects])",
+          "line": 4,
+          "fix": "    m.add_all_different([p[c, s] for c in classes])",
+          "explain": {
+            "en": "For each subject, the rule must cover that subject’s lessons in every class: loop over the classes. Line 4 copies the class rule instead, so it never compares two classes.",
+            "ar": "لكل مادة يجب أن تشمل القاعدة دروس تلك المادة في كل الصفوف: مُرّ على الصفوف. أما السطر ٤ فينسخ قاعدة الصف، فلا يقارن بين صفّين أبدًا."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q4",
+          "prompt": {
+            "en": "Match each school problem to the kind of problem it is.",
+            "ar": "صِل كل مشكلة مدرسية بنوع المسألة التي تمثّلها."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Exam slots without clashes",
+                "ar": "مواعيد امتحانات بلا تعارض"
+              },
+              "right": {
+                "en": "Graph colouring",
+                "ar": "تلوين المخطّط"
+              }
+            },
+            {
+              "left": {
+                "en": "The bus visiting every village",
+                "ar": "الحافلة التي تزور كل القرى"
+              },
+              "right": {
+                "en": "Travelling salesperson",
+                "ar": "البائع المتجوّل"
+              }
+            },
+            {
+              "left": {
+                "en": "One teacher for each class",
+                "ar": "معلم واحد لكل صف"
+              },
+              "right": {
+                "en": "Assignment",
+                "ar": "التوزيع"
+              }
+            },
+            {
+              "left": {
+                "en": "No class with two lessons at once",
+                "ar": "لا صف بدرسين في وقت واحد"
+              },
+              "right": {
+                "en": "An all-different rule",
+                "ar": "قاعدة «كلها مختلفة»"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Naming the kind of problem tells you which methods and labs help: colouring for clashes, routes for the bus, assignment for pairing, and all-different rules for timetables.",
+            "ar": "تسمية نوع المسألة تخبرك بالطرق والمختبرات المفيدة: التلوين للتعارضات، والطرق للحافلة، والتوزيع للمزاوجة، وقواعد «كلها مختلفة» للجداول."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q5",
+          "prompt": {
+            "en": "Which of these prove that 3 exam slots is the fewest possible? Choose all that apply.",
+            "ar": "أيّ مما يلي يثبت أن ٣ مواعيد امتحان هي الأقل الممكن؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Three exams that all clash with each other",
+                "ar": "ثلاثة امتحانات يتعارض كلٌّ منها مع الباقي"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The solver says OPTIMAL when minimising the slots",
+                "ar": "يقول برنامج الحل OPTIMAL عند تصغير عدد المواعيد"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Greedy colouring used 4 slots",
+                "ar": "استعمل التلوين الجشع ٤ مواعيد"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "DSatur found a plan with 3 slots",
+                "ar": "وجد DSatur خطة بثلاثة مواعيد"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b"
+          ],
+          "explain": {
+            "en": "A clique of three needs three slots in any plan, and OPTIMAL means the solver proved nothing smaller works. Greedy and DSatur only show plans that work; neither proves fewer is impossible.",
+            "ar": "الزمرة المكوّنة من ثلاثة امتحانات تحتاج إلى ثلاثة مواعيد في أي خطة، وOPTIMAL تعني أن برنامج الحل أثبت أن الأقل لا ينجح. أما الجشع وDSatur فيُظهران خططًا تنجح فقط، ولا يثبت أيّ منهما أن الأقل مستحيل."
+          }
+        },
+        {
+          "type": "order",
+          "id": "q6",
+          "prompt": {
+            "en": "Put in order: building and improving a bus route.",
+            "ar": "رتّب: بناء طريق الحافلة وتحسينه."
+          },
+          "steps": [
+            {
+              "en": "Build a route with nearest neighbour",
+              "ar": "ابنِ طريقًا بقاعدة «أقرب جار»"
+            },
+            {
+              "en": "Take out two roads",
+              "ar": "أزِل طريقين"
+            },
+            {
+              "en": "Reverse the stretch between them",
+              "ar": "اعكس المقطع الذي بينهما"
+            },
+            {
+              "en": "Keep the change if the route is shorter",
+              "ar": "احتفظ بالتغيير إذا قصر الطريق"
+            },
+            {
+              "en": "Repeat until no swap helps",
+              "ar": "كرّر حتى لا يفيد أي تبديل"
+            }
+          ],
+          "explain": {
+            "en": "A quick rule builds a whole route first; 2-opt then improves it one swap at a time and stops when no single swap helps, which may still be short of the best.",
+            "ar": "تبني القاعدة السريعة طريقًا كاملًا أولًا، ثم تحسّنه ⁦2-opt⁩ تبديلًا بعد تبديل، وتتوقّف حين لا يفيد أي تبديل واحد، وقد يكون ذلك قبل الأفضل."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q7",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "d = [[0, 2, 4], [2, 0, 3], [4, 3, 0]]\nroute = [0, 1, 2]\nback = route[1:] + [0]\nprint(sum(d[a][b] for a, b in zip(route, back)))"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "9",
+                "ar": "9"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "5",
+                "ar": "5"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "6",
+                "ar": "6"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "zip pairs each stop with the next, and back ends with the school: 0→1 (2) + 1→2 (3) + 2→0 (4) = 9. Forgetting the drive back would give 5.",
+            "ar": "يقرن zip كل محطة بالتي تليها، وتنتهي back بالمدرسة: من 0 إلى 1 (٢)، ومن 1 إلى 2 (٣)، ومن 2 إلى 0 (٤)، والمجموع ٩. ونسيان العودة يعطي ٥."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q8",
+          "prompt": {
+            "en": "Complete the habit.",
+            "ar": "أكمل العادة."
+          },
+          "sentence": {
+            "en": [
+              "Judge a plan twice: by its ",
+              {
+                "blank": 0
+              },
+              " and by its ",
+              {
+                "blank": 1
+              },
+              " case, and agree the ",
+              {
+                "blank": 2
+              },
+              " with the people it affects."
+            ],
+            "ar": [
+              "احكم على الخطة مرتين: من خلال ",
+              {
+                "blank": 0
+              },
+              "، ومن خلال الحالة ",
+              {
+                "blank": 1
+              },
+              "، واتفق على ",
+              {
+                "blank": 2
+              },
+              " مع من تمسّهم."
+            ]
+          },
+          "bank": {
+            "en": [
+              "total",
+              "worst",
+              "rule",
+              "colour",
+              "period"
+            ],
+            "ar": [
+              "المجموع",
+              "الأسوأ",
+              "القاعدة",
+              "اللون",
+              "الحصة"
+            ]
+          },
+          "answers": {
+            "en": [
+              "total",
+              "worst",
+              "rule"
+            ],
+            "ar": [
+              "المجموع",
+              "الأسوأ",
+              "القاعدة"
+            ]
+          },
+          "explain": {
+            "en": "A plan with the best total can still be hard on one person: the longest bus ride, three exams in a row, the worst match. Agreeing the rule with them makes the decision fair and explainable.",
+            "ar": "قد تكون الخطة صاحبة أفضل مجموع قاسية على شخص واحد: أطول رحلة في الحافلة، أو ثلاثة امتحانات متتالية، أو أسوأ توزيع. والاتفاق على القاعدة معهم يجعل القرار عادلًا ويمكن شرحه."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "q9",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete the assignment model: exactly one class per teacher, and the best total score.",
+            "ar": "أكمل نموذج التوزيع: صف واحد بالضبط لكل معلم، وأفضل مجموع للدرجات."
+          },
+          "code": [
+            "for t in range(n):\n    m.",
+            {
+              "blank": 0
+            },
+            "(x[t])\nfor c in range(n):\n    m.add_exactly_one([x[t][c] for t in range(n)])\nm.",
+            {
+              "blank": 1
+            },
+            "(sum(score[t][c] * x[t][c]\n    for t in range(n) for c in range(n)))"
+          ],
+          "answers": [
+            "add_exactly_one",
+            "maximize"
+          ],
+          "distractors": [
+            "add_all_different",
+            "minimize"
+          ],
+          "explain": {
+            "en": "Each row of yes-or-no variables needs exactly one yes, like each column, and the goal is the largest total score, so maximise.",
+            "ar": "يحتاج كل صف من متغيّرات نعم أو لا إلى «نعم» واحدة بالضبط، مثل كل عمود، والهدف أكبر مجموع للدرجات، فاستعمل maximize."
+          }
+        },
+        {
+          "type": "parsons",
+          "id": "q10",
+          "lang": "python",
+          "prompt": {
+            "en": "Put the lines of nearest neighbour in order.",
+            "ar": "رتّب أسطر قاعدة «أقرب جار»."
+          },
+          "lines": [
+            "route = [0]",
+            "while len(route) < n:",
+            "    last = d[route[-1]]",
+            "    left = [v for v in range(n) if v not in route]",
+            "    route.append(min(left, key=lambda v: last[v]))"
+          ],
+          "distractors": [
+            "    route.append(max(left, key=lambda v: last[v]))"
+          ],
+          "explain": {
+            "en": "Start at the school, then, while places are left, look at the distances from the last stop and add the closest place not yet visited: min, not max.",
+            "ar": "ابدأ من المدرسة، ثم ما دامت هناك أماكن باقية، انظر إلى المسافات من آخر محطة وأضف أقرب مكان لم يُزَر: min لا max."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Solving school problems in Python: review",
+            "ar": "حلّ مشكلات المدرسة ببايثون: مراجعة"
+          },
+          "narration": {
+            "en": "Four school problems, four models. What stuck?",
+            "ar": "أربع مشكلات مدرسية، وأربعة نماذج. ما الذي رسخ؟"
+          },
+          "note": {
+            "en": "Optimization · Level 3 · Unit check",
+            "ar": "الحلول المثلى، المستوى ٣، اختبار الوحدة"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "A timetable that works",
+              "Exams without clashes",
+              "The school bus route",
+              "Matching teachers and classes"
+            ],
+            "ar": [
+              "جدول حصص يعمل",
+              "امتحانات بلا تعارض",
+              "طريق حافلة المدرسة",
+              "توزيع المعلّمين على الصفوف"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "Say the rules as lines of a model; the solver crosses out and searches",
+              "INFEASIBLE proves the rules clash; OPTIMAL proves the best for the goal you wrote",
+              "Quick rules build plans fast; improvements and solvers make them better",
+              "Judge every plan twice, total and worst case, with the people it affects"
+            ],
+            "ar": [
+              "قل القواعد أسطرًا في نموذج، ويشطب برنامج الحل ويبحث",
+              "INFEASIBLE تثبت تعارض القواعد، وOPTIMAL تثبت الأفضل للهدف الذي كتبته",
+              "القواعد السريعة تبني الخطط بسرعة، والتحسين وبرامج الحل تجعلها أفضل",
+              "احكم على كل خطة مرتين، بالمجموع وبالحالة الأسوأ، مع من تمسّهم"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Model it in teams",
+            "ar": "النمذجة في فرق"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Name one school decision for each lesson.",
+              "Model (15 min): Teams write options, rules and a goal.",
+              "Swap (10 min): Another team finds a missing rule.",
+              "Wrap-up (5 min): Who would each plan be hardest on?"
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): سمِّ قرارًا مدرسيًا لكل درس.",
+              "النمذجة (١٥ دقيقة): تكتب الفرق الخيارات والقواعد والهدف.",
+              "التبادل (١٠ دقائق): يجد فريق آخر قاعدة ناقصة.",
+              "الختام (٥ دقائق): على مَن ستكون كل خطة أقسى؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): For each of the four lessons, the class names one real decision at their school: a timetable, exam week, a route, sharing out jobs.",
+              "Model (15 min): Each team takes one decision and writes, on paper, its options (variables), its rules (constraints) and its goal, as plainly as they can, with a line of Python where they can.",
+              "Swap (10 min): Teams swap papers. Each team looks for one missing rule, the kind a solver would never guess, and writes it down.",
+              "Wrap-up (5 min): For each model, ask who the best plan might be hardest on, and what rule or second goal would protect them."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): لكل درس من الدروس الأربعة، يسمّي الصف قرارًا حقيقيًا في مدرسته: جدولًا، أو أسبوع امتحانات، أو طريقًا، أو توزيع مهام.",
+              "النمذجة (١٥ دقيقة): يأخذ كل فريق قرارًا ويكتب على الورق خياراته (المتغيّرات) وقواعده (القيود) وهدفه، بأوضح ما يستطيع، مع سطر بايثون حيث أمكن.",
+              "التبادل (١٠ دقائق): تتبادل الفرق الأوراق. ويبحث كل فريق عن قاعدة ناقصة واحدة، من النوع الذي لن يخمّنه برنامج الحل أبدًا، ويكتبها.",
+              "الختام (٥ دقائق): اسأل عن كل نموذج: على مَن قد تكون أفضل خطة أقسى، وما القاعدة أو الهدف الثاني الذي يحميه؟"
+            ]
+          },
+          "note": {
+            "en": "No devices needed. If you have a phone, run one team’s model in the “Model it with CP-SAT” lab at the end.",
+            "ar": "لا حاجة إلى أجهزة. وإن كان معك هاتف، فشغّل نموذج أحد الفرق في مختبر «صِغ النموذج بـ CP-SAT» في النهاية."
+          },
+          "narration": {
+            "en": "Which rule would a solver never guess?",
+            "ar": "ما القاعدة التي لن يخمّنها برنامج الحل أبدًا؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which school decision would you model first, and why?",
+              "When is a quick rule good enough?",
+              "Who should see a model’s rules before it decides?"
+            ],
+            "ar": [
+              "أيّ قرار مدرسي ستنمذجه أولًا، ولماذا؟",
+              "متى تكون القاعدة السريعة كافية؟",
+              "مَن يجب أن يرى قواعد النموذج قبل أن يقرّر؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One school decision I will model, its goal, and one fairness rule."
+            ],
+            "ar": [
+              "قرار مدرسي سأنمذجه، وهدفه، وقاعدة عدالة واحدة له."
+            ]
+          },
+          "narration": {
+            "en": "Model one real decision this term, and show it to the people it affects.",
+            "ar": "نمذج قرارًا حقيقيًا واحدًا هذا الفصل الدراسي، واعرضه على من يمسّهم."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Solving school problems in Python: timetables, routes, assignment, review",
+            "ar": "شرائح: حلّ مشكلات المدرسة ببايثون: الجداول والطرق والتوزيع، مراجعة"
+          },
+          "pages": 6,
+          "base": "opt-3-1-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Review plan and quiz sheet: Solving school problems in Python: timetables, routes, assignment",
+            "ar": "خطة المراجعة وورقة الاختبار: حلّ مشكلات المدرسة ببايثون: الجداول والطرق والتوزيع"
+          },
+          "pages": 2,
+          "base": "opt-3-1-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "OPT.2",
+        "OPT.3",
+        "OPT.4",
+        "DC.3.4"
+      ]
+    }
+  ]
+}

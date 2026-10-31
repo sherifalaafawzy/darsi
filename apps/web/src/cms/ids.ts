@@ -45,6 +45,11 @@ export function blankStep(type: Step["type"], id: string): Step {
     case "lab": return { type, id, prompt: LT("Try it", "جرّب"), tool: "prompt" };
     case "read": return { type, id, prompt: LT("Read", "اقرأ"), title: LT(), body: LT() };
     case "project": return { type, id, prompt: LT(), task: LT(), deliverable: LT(), rubric: [{ criterion: LT() }] };
+    case "code": return { type, id, prompt: LT(), lang: "python", starter: "", solution: "", tests: [{ output: "" }] };
+    case "parsons": return { type, id, prompt: LT(), lang: "python", lines: ["", "", ""] };
+    case "codefill": return { type, id, prompt: LT(), lang: "python", code: [], answers: [] };
+    case "bug": return { type, id, prompt: LT(), lang: "python", code: "", line: 1, fix: "" };
+    case "blocks": return { type, id, prompt: LT(), world: { cols: 5, rows: 5, start: { x: 0, y: 4, dir: "N" }, goal: { x: 4, y: 0 } }, commands: ["forward", "left", "right"], maxBlocks: 6 };
   }
 }
 

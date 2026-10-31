@@ -20,7 +20,7 @@ export function LangName({ name, code }: { name: string; code?: string }) {
 }
 
 /** Label + control + hint, in the design system's field styles. */
-function Field({ id, label, tag, hint, children }: { id: string; label: string; tag?: EditLang; hint?: string; children: ReactNode }) {
+export function Field({ id, label, tag, hint, children }: { id: string; label: string; tag?: EditLang; hint?: string; children: ReactNode }) {
   return (
     <div className="dr-field">
       <label htmlFor={id} className="dr-field-label"><bdi>{label}</bdi>{tag && <span className="ed-lang"><LangName name={tag.name} code={tag.code} /></span>}</label>

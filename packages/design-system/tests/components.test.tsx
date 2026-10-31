@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { Button, QuizOption, MatchPairs, OrderSteps, FillBlank, TrueFalse, LanguagePicker, Switch, DarsiRoot, UnitPath, VideoPlayer, FactCheck, TrainClassifier,
-  TrackChip, TrackStylesProvider, ProgressBar, PlacementResult, TRACK_TONES, ICON_NAMES } from "../src";
+  TrackChip, TrackStylesProvider, ProgressBar, PlacementResult, TRACK_TONES, ICON_NAMES, BUILTIN_TRACK_STYLES } from "../src";
 import paths from "../src/icons/paths.json";
 import { approximateTokens, withTemperature, classify } from "../src/components/lab";
 import { applyLocale, dirFor, formatNumber } from "../src/locale";
@@ -50,6 +50,12 @@ describe("track styles", () => {
   it("offers a tone for every track colour token", () => {
     expect(TRACK_TONES).toEqual(["sunbird", "lagoon", "hibiscus", "leaf", "lilac", "clay", "sky", "slate"]);
     for (const n of ["book", "code", "chart", "flask", "globe", "heart", "leaf", "palette", "undo", "redo"]) expect(ICON_NAMES).toContain(n);
+  });
+  it("gives each of the eight built-in tracks its own colour and an icon", () => {
+    const styles = Object.values(BUILTIN_TRACK_STYLES);
+    expect(Object.keys(BUILTIN_TRACK_STYLES)).toEqual(["ai", "iot", "cyber", "code", "data", "agents", "opt", "aisec", "data-science"]);
+    expect(new Set(styles.map((s) => s.tone)).size).toBe(8);
+    for (const s of styles) expect(ICON_NAMES).toContain(s.icon);
   });
 });
 

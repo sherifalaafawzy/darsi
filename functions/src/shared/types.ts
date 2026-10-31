@@ -45,7 +45,11 @@ export interface LanguageDef {
 /** content/settings.json: what platform admins set up for everyone. `version` changes when the tracks are saved. */
 export interface Settings { version: number; tracks: TrackDef[]; languages?: LanguageDef[] }
 
-interface Base { id: string; prompt: LocalText; explain?: LocalText }
+/** Code is always shown and written left to right, in every language. */
+export type CodeLang = "python" | "sql";
+/** A piece of code shown with a question, above its answers ("What does this print?"): a step's `snippet`. */
+export interface CodeSnippet { lang: CodeLang; text: string }
+interface Base { id: string; prompt: LocalText; explain?: LocalText; snippet?: CodeSnippet }
 export interface ChoiceStep extends Base { type: "choice"; options: { id: string; text: LocalText }[]; answer: string }
 export interface MultiStep extends Base { type: "multi"; options: { id: string; text: LocalText }[]; answers: string[] }
 export interface TrueFalseStep extends Base { type: "truefalse"; answer: boolean }
@@ -96,9 +100,70 @@ export interface ReadStep extends Base { type: "read"; title: LocalText; body: L
 /** A real-world task done in school, submitted as evidence and reviewed by a teacher or admin against a rubric. */
 export interface ProjectStep extends Base { type: "project"; task: LocalText; deliverable: LocalText; rubric: { criterion: LocalText }[] }
 
-export type Step = ChoiceStep | MultiStep | TrueFalseStep | ImageStep | MatchStep | OrderStep | FillStep | TypeStep | HotspotStep | ScenarioStep | ReflectStep | VideoStep | LabStep | ReadStep | ProjectStep;
-export type GradedStep = ChoiceStep | MultiStep | TrueFalseStep | ImageStep | MatchStep | OrderStep | FillStep | TypeStep | HotspotStep;
-export const GRADED = new Set<Step["type"]>(["choice", "multi", "truefalse", "image", "match", "order", "fill", "type", "hotspot"]);
+/** One test of a Python program: what input() returns, then what the program must print and/or a check run after it. */
+export interface CodeTest {
+  input?: string[];
+  /** Exactly what the program prints with print() (input()'s prompts and answers, spaces at line ends and the last newline don't count). */
+  output?: string;
+  /** Python run after the program, with its variables: a failing `assert` fails the test, and its message is shown. */
+  check?: string;
+  /** Shown when this test fails. */
+  hint?: LocalText;
+  /** On a step with a board: this test's own sensor readings and button presses (per second, by pin), over the step's. */
+  board?: { sensors?: Record<string, number[]>; buttons?: Record<string, number[]> };
+}
+/**
+ * A virtual microcontroller for IoT code (Python's \`machine\` module, src/code/pylib/machine.py): what is wired to
+ * which pin. The program runs on board time and the phone plays its pin changes back on a drawn board.
+ */
+export interface Board {
+  leds?: { pin: number; color: "red" | "yellow" | "green" | "blue"; label?: LocalText }[];
+  /** A buzzer on a PWM pin: it sounds while its duty is above 0. */
+  buzzer?: { pin: number; label?: LocalText };
+  /** Buttons read with Pin(n).value(): 1 while pressed, for each second of board time (`presses`; never pressed without). */
+  buttons?: { pin: number; label: LocalText; presses?: number[] }[];
+  /** Analogue sensors on ADC pins: the reading (0–65535) for each second of board time; the last one holds. */
+  sensors?: { pin: number; kind: "light" | "temperature" | "moisture" | "distance" | "sound"; label: LocalText; values: number[] }[];
+  /** How long a program may run, in board time (default 20 s); a loop that never ends stops there. */
+  seconds?: number;
+}
+/**
+ * Write and run a program, on the phone, in a sandbox (src/code): Python in MicroPython, SQL in SQLite. Run as often as
+ * you like; the lesson's Check runs the tests. A Python program passes when every test does, an SQL query when its rows
+ * are the solution's (in the same order only when the solution has ORDER BY).
+ */
+export interface CodeStep extends Base {
+  type: "code"; lang: CodeLang;
+  /** What the editor starts with; it must not pass the tests. */ starter: string;
+  /** A program that passes the tests (tests/units.test.ts runs it). */ solution: string;
+  /** Python. */ tests?: CodeTest[];
+  /** SQL: the tables the query runs against (CREATE TABLE and INSERT). */ setup?: string;
+  /** Python: files the program can open, e.g. a small CSV. */ files?: { name: string; text: string }[];
+  /** Python: a virtual board for IoT code. */ board?: Board;
+  /** Shown one at a time when the learner asks. */ hints?: LocalText[];
+}
+/** Put lines of code in order (and, for Python, indent them): a Parsons problem. `lines` is the answer, 4 spaces per indent. */
+export interface ParsonsStep extends Base { type: "parsons"; lang: CodeLang; lines: string[]; /** Lines that don't belong. */ distractors?: string[] }
+/** Fill the gaps in code by tapping tokens: `code` has a { blank: n } where answers[n] goes; `distractors` join the tokens on offer. */
+export interface CodeFillStep extends Base { type: "codefill"; lang: CodeLang; code: Array<string | { blank: number }>; answers: string[]; distractors?: string[] }
+/** Find the line with the mistake: `line` counts from 1, and `fix` (that line corrected) is shown afterwards. */
+export interface BugStep extends Base { type: "bug"; lang: CodeLang; code: string; line: number; fix: string }
+export type RobotDir = "N" | "E" | "S" | "W";
+export type RobotCommand = "forward" | "left" | "right";
+/** A grid for the robot: x to the right and y down, from 0. (Walls are objects: Firestore drafts can't hold arrays in arrays.) */
+export interface RobotWorld { cols: number; rows: number; start: { x: number; y: number; dir: RobotDir }; goal: { x: number; y: number }; walls?: { x: number; y: number }[] }
+/** One command card in a program, done `times` times (1–4): the first idea of a loop. */
+export interface RobotBlock { cmd: RobotCommand; times: number }
+/** Build a program from big command cards that takes the robot to the goal (young learners: no typing). */
+export interface BlocksStep extends Base { type: "blocks"; world: RobotWorld; commands: RobotCommand[]; /** Most cards allowed. */ maxBlocks: number }
+
+export type Step = ChoiceStep | MultiStep | TrueFalseStep | ImageStep | MatchStep | OrderStep | FillStep | TypeStep | HotspotStep | ScenarioStep | ReflectStep | VideoStep | LabStep | ReadStep | ProjectStep
+  | CodeStep | ParsonsStep | CodeFillStep | BugStep | BlocksStep;
+export type GradedStep = ChoiceStep | MultiStep | TrueFalseStep | ImageStep | MatchStep | OrderStep | FillStep | TypeStep | HotspotStep
+  | CodeStep | ParsonsStep | CodeFillStep | BugStep | BlocksStep;
+export const GRADED = new Set<Step["type"]>(["choice", "multi", "truefalse", "image", "match", "order", "fill", "type", "hotspot", "code", "parsons", "codefill", "bug", "blocks"]);
+/** Steps with code in them: the lesson needs that language's runtime (`code`) or shows code (the rest). */
+export const CODE_STEPS = new Set<Step["type"]>(["code", "parsons", "codefill", "bug", "blocks"]);
 
 export interface Slide {
   layout: "title" | "bullets" | "activity" | "questions" | "exit"; title: LocalText; bullets?: LocalList; note?: LocalText;
@@ -143,6 +208,14 @@ export interface Lesson {
 }
 /** Who a course is for: teachers (the default, and every course before audiences existed) or their students. */
 export type Audience = "teachers" | "students";
+/**
+ * Where a student studies. Students' levels are school stages: Beginner is primary school (ages 9–12), Elementary lower
+ * secondary (12–15), Intermediate upper secondary (15–18) and Advanced university (docs/CURRICULUM.md).
+ */
+export type Stage = "primary" | "lower" | "upper" | "university";
+export const STAGES: Stage[] = ["primary", "lower", "upper", "university"];
+/** The level of a stage's courses: 1 for primary school … 4 for university. */
+export const stageLevel = (s: Stage) => STAGES.indexOf(s) + 1;
 export const AUDIENCES: Audience[] = ["teachers", "students"];
 /** A course's audience; courses without one are for teachers. */
 export const audienceOf = (u: { audience?: Audience }): Audience => u.audience ?? "teachers";

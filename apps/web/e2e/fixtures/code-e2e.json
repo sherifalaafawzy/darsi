@@ -1,0 +1,157 @@
+{
+  "id": "code-e2e",
+  "track": "code",
+  "level": 1,
+  "title": {
+    "en": "Code on the phone",
+    "ar": "الكود على الهاتف"
+  },
+  "summary": {
+    "en": "The e2e test course for the code steps.",
+    "ar": "دورة اختبار خطوات الكود."
+  },
+  "lessons": [
+    {
+      "id": "code-e2e-1",
+      "title": {
+        "en": "Run it",
+        "ar": "شغّله"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Try it.",
+        "ar": "جرّبه."
+      },
+      "competencies": [],
+      "slides": [],
+      "kit": [],
+      "steps": [
+        {
+          "type": "code",
+          "id": "sum",
+          "lang": "python",
+          "prompt": {
+            "en": "Make it print the sum of 2 and 3.",
+            "ar": "اجعله يطبع مجموع ٢ و٣."
+          },
+          "starter": "print(2 + 2)",
+          "solution": "print(2 + 3)",
+          "tests": [
+            {
+              "output": "5"
+            }
+          ],
+          "explain": {
+            "en": "2 + 3 is 5.",
+            "ar": "٢ + ٣ = ٥."
+          }
+        },
+        {
+          "type": "code",
+          "id": "loop",
+          "lang": "python",
+          "prompt": {
+            "en": "This loop never ends. Run it, then fix it to print 1, 2, 3.",
+            "ar": "هذه الحلقة لا تنتهي. شغّلها، ثم صحّحها لتطبع ١ و٢ و٣."
+          },
+          "starter": "n = 1\nwhile n <= 3:\n    print(n)",
+          "solution": "n = 1\nwhile n <= 3:\n    print(n)\n    n += 1",
+          "tests": [
+            {
+              "output": "1\n2\n3"
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "id": "escape",
+          "lang": "python",
+          "prompt": {
+            "en": "What can a program reach?",
+            "ar": "ماذا يستطيع البرنامج أن يصل إليه؟"
+          },
+          "starter": "import sys\ndel sys.modules['js']\nimport js\nfor name in ['fetch', 'indexedDB', 'XMLHttpRequest', 'localStorage', 'document']:\n    try:\n        print(name, getattr(js, name))\n    except Exception as e:\n        print(name, type(e).__name__)",
+          "solution": "print('ok')",
+          "tests": [
+            {
+              "output": "ok"
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "id": "lamp",
+          "lang": "python",
+          "prompt": {
+            "en": "Turn the lamp on when it gets dark.",
+            "ar": "أضئ المصباح عندما يحلّ الظلام."
+          },
+          "board": {
+            "seconds": 6,
+            "leds": [
+              {
+                "pin": 15,
+                "color": "yellow",
+                "label": {
+                  "en": "Lamp",
+                  "ar": "المصباح"
+                }
+              }
+            ],
+            "sensors": [
+              {
+                "pin": 26,
+                "kind": "light",
+                "label": {
+                  "en": "Light sensor",
+                  "ar": "حساس الضوء"
+                },
+                "values": [
+                  50000,
+                  40000,
+                  9000,
+                  5000
+                ]
+              }
+            ]
+          },
+          "starter": "from machine import ADC, Pin\nimport time\nlight = ADC(26)\nlamp = Pin(15, Pin.OUT)\nwhile True:\n    time.sleep(1)",
+          "solution": "from machine import ADC, Pin\nimport time\nlight = ADC(26)\nlamp = Pin(15, Pin.OUT)\nwhile True:\n    lamp.value(light.read_u16() < 20000)\n    time.sleep(1)",
+          "tests": [
+            {
+              "check": "import machine\nassert machine.state(15) == 1, 'The lamp should be on in the dark'"
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "id": "solver",
+          "lang": "python",
+          "prompt": {
+            "en": "Two lessons, two different slots from 1 to 2.",
+            "ar": "درسان في حصتين مختلفتين من ١ إلى ٢."
+          },
+          "starter": "from ortools.sat.python import cp_model\nm = cp_model.CpModel()\na = m.new_int_var(1, 2, 'a')\nb = m.new_int_var(1, 2, 'b')\ns = cp_model.CpSolver()\nprint(s.status_name(s.solve(m)))",
+          "solution": "from ortools.sat.python import cp_model\nm = cp_model.CpModel()\na = m.new_int_var(1, 2, 'a')\nb = m.new_int_var(1, 2, 'b')\nm.add(a != b)\nm.add(a < b)\ns = cp_model.CpSolver()\nprint(s.status_name(s.solve(m)), s.value(a), s.value(b))",
+          "tests": [
+            {
+              "output": "OPTIMAL 1 2"
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "id": "query",
+          "lang": "sql",
+          "prompt": {
+            "en": "List the pupils in class 5B.",
+            "ar": "اعرض تلاميذ الصف 5B."
+          },
+          "setup": "CREATE TABLE pupils (name TEXT, class TEXT); INSERT INTO pupils VALUES ('Amina','5A'), ('Joseph','5B'), ('فاطمة','5B');",
+          "starter": "SELECT name FROM pupils",
+          "solution": "SELECT name FROM pupils WHERE class = '5B'"
+        }
+      ]
+    }
+  ]
+}

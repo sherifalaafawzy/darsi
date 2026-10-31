@@ -1,0 +1,99 @@
+/* Code steps (code/CodeSteps.tsx, a lazy chunk that loads this sheet): the editor and its symbol row, output and tests,
+   Parsons lines, gaps, bug lines and the robot. Code is always left to right, in the phone's own monospace font
+   (nothing to download). Every control is at least 44px. */
+
+/* ---------- Editor ---------- */
+.cd-edit { display: grid; gap: var(--space-2); min-inline-size: 0; }
+.cd-editor { display: flex; min-inline-size: 0; border: 2px solid var(--line-strong); border-radius: var(--radius-md); background: var(--surface); overflow: hidden; }
+.cd-editor:focus-within { border-color: var(--ink); }
+.cd-gutter { display: flex; flex-direction: column; flex: none; padding: var(--space-2); border-inline-end: 1px solid var(--line); background: var(--surface-sunk); color: var(--ink-muted); font: 14px/22px ui-monospace, Menlo, Consolas, monospace; text-align: end; user-select: none; }
+.cd-gutter .is-err { color: var(--hibiscus-ink); font-weight: 700; }
+.cd-text { flex: 1 1 auto; min-inline-size: 0; margin: 0; padding: var(--space-2) var(--space-3); border: 0; background: transparent; color: var(--ink); font: 15px/22px ui-monospace, Menlo, Consolas, monospace; resize: none; white-space: pre; overflow-x: auto; overflow-y: hidden; tab-size: 4; }
+.cd-text:focus { outline: none; }
+.cd-keys { display: flex; gap: var(--space-1); overflow-x: auto; padding-block-end: var(--space-1); }
+.cd-key { flex: none; min-inline-size: 44px; min-block-size: 44px; padding: 0 var(--space-2); border: 2px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: 700 17px/1 ui-monospace, Menlo, Consolas, monospace; }
+.cd-key:active { background: var(--surface-sunk); }
+.cd-hint { margin: 0; padding: var(--space-2) var(--space-3); border-inline-start: 4px solid var(--sunbird); background: var(--sunbird-soft); }
+
+/* ---------- Output and tests ---------- */
+.cd-out, .cd-tests { display: grid; gap: var(--space-2); min-inline-size: 0; padding: var(--space-3); border: 2px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
+.cd-out-h { margin: 0; font: 700 16px/22px var(--font-display); }
+.cd-out-text, .cd-err { margin: 0; max-block-size: 16rem; overflow: auto; font: 14px/20px ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.cd-err { color: var(--hibiscus-ink); }
+.cd-err-msg { margin: 0; color: var(--hibiscus-ink); font-weight: 700; }
+.cd-table-wrap { display: grid; gap: var(--space-1); min-inline-size: 0; overflow-x: auto; }
+.cd-table { border-collapse: collapse; font: 14px/20px ui-monospace, Menlo, Consolas, monospace; }
+.cd-table th, .cd-table td { padding: var(--space-1) var(--space-2); border: 1px solid var(--line); text-align: start; }
+.cd-table th { background: var(--surface-sunk); }
+.cd-tests ul { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.cd-tests li { display: grid; gap: var(--space-1); padding-inline-start: var(--space-3); border-inline-start: 4px solid var(--line-strong); }
+.cd-tests li.is-pass { border-color: var(--leaf-ink); }
+.cd-tests li.is-fail { border-color: var(--hibiscus-ink); }
+.cd-test-why { color: var(--ink); }
+
+/* ---------- Put the lines in order ---------- */
+.cd-parsons { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.cd-row { display: flex; align-items: center; gap: var(--space-2); min-inline-size: 0; min-block-size: 52px; padding: var(--space-1) var(--space-2); border: 2px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); }
+.cd-row.is-pass { border-color: var(--leaf-ink); background: var(--leaf-soft); }
+.cd-row.is-fail { border-color: var(--hibiscus-ink); background: var(--hibiscus-soft); }
+.cd-empty { padding: var(--space-3); border: 2px dashed var(--line-strong); border-radius: var(--radius-sm); color: var(--ink-muted); }
+.cd-row-code { flex: 1 1 auto; min-inline-size: 0; font: 15px/22px ui-monospace, Menlo, Consolas, monospace; white-space: pre; overflow-x: auto; }
+.cd-row-tools { display: flex; flex: none; gap: var(--space-1); }
+.cd-tool { min-inline-size: 44px; min-block-size: 44px; border: 2px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: 700 18px/1 ui-monospace, Menlo, Consolas, monospace; }
+.cd-tool:disabled { opacity: 0.4; }
+.cd-pool { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.cd-line-btn, .cd-token { min-block-size: 44px; padding: var(--space-1) var(--space-3); border: 2px solid var(--ink); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: 15px/22px ui-monospace, Menlo, Consolas, monospace; text-align: start; white-space: pre; box-shadow: var(--shadow-press); }
+.cd-line-btn { box-sizing: border-box; inline-size: 100%; min-inline-size: 0; overflow-x: auto; }
+.cd-token { min-inline-size: 44px; }
+
+/* ---------- Fill the gaps ---------- */
+.cd-fill { white-space: pre-wrap; }
+.cd-gap { min-inline-size: 3.5em; min-block-size: 40px; margin: 2px; padding: 0 var(--space-2); border: 2px dashed var(--ink-muted); border-radius: var(--radius-sm); background: var(--surface-sunk); color: var(--ink); font: inherit; vertical-align: middle; }
+.cd-gap.is-sel { border-style: solid; border-color: var(--kola-deep); background: var(--kola-soft); }
+.cd-gap.is-pass { border-style: solid; border-color: var(--leaf-ink); background: var(--leaf-soft); }
+.cd-gap.is-fail { border-style: solid; border-color: var(--hibiscus-ink); background: var(--hibiscus-soft); }
+
+/* ---------- Find the bug ---------- */
+.cd-bug { display: grid; gap: 2px; min-inline-size: 0; padding: var(--space-1); border: 2px solid var(--line); border-radius: var(--radius-md); background: var(--surface); overflow-x: auto; }
+.cd-bug-line { display: flex; align-items: center; min-block-size: 44px; padding: 0 var(--space-2); border: 2px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--ink); font: 15px/22px ui-monospace, Menlo, Consolas, monospace; text-align: start; white-space: pre; }
+.cd-bug-line.is-sel { border-color: var(--kola-deep); background: var(--kola-soft); }
+.cd-bug-line.is-pass { border-color: var(--leaf-ink); background: var(--leaf-soft); }
+.cd-bug-line.is-fail { border-color: var(--hibiscus-ink); background: var(--hibiscus-soft); }
+
+/* ---------- The robot ---------- */
+.cd-world { display: block; inline-size: 100%; max-inline-size: 22rem; block-size: auto; margin-inline: auto; direction: ltr; }
+.cd-cell { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1; }
+.cd-wall { fill: var(--ink-muted); stroke: var(--ink); stroke-width: 1; }
+.cd-goal circle { fill: var(--sunbird); stroke: var(--ink); stroke-width: 2; }
+.cd-goal .cd-goal-in { fill: var(--ink); stroke: none; }
+.cd-trail { fill: var(--kola); }
+.cd-robot rect { fill: var(--kola); stroke: var(--ink); stroke-width: 2; }
+.cd-robot .cd-robot-face { fill: var(--ink); }
+.cd-outcome { margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font-weight: 700; }
+.cd-outcome.is-pass { background: var(--leaf-soft); color: var(--leaf-ink); }
+.cd-outcome.is-fail { background: var(--hibiscus-soft); color: var(--hibiscus-ink); }
+.cd-program { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.cd-program li { display: flex; gap: var(--space-1); }
+.cd-palette { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.cd-card { display: inline-flex; align-items: center; gap: var(--space-2); min-block-size: 56px; padding: var(--space-2) var(--space-3); border: 2px solid var(--ink); border-radius: var(--radius-md); background: var(--sky-soft); color: var(--ink); font: 700 16px/22px var(--font-display); box-shadow: var(--shadow-press); }
+.cd-card.is-new { background: var(--surface); }
+.cd-card:disabled { opacity: 0.5; box-shadow: none; }
+.cd-times { padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--ink); color: var(--ink-inverse); font-size: 14px; }
+.cd-cmd-icon { flex: none; }
+
+/* ---------- The virtual board ---------- */
+.cd-board { display: grid; gap: var(--space-2); min-inline-size: 0; padding: var(--space-3); border: 2px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
+.cd-parts { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.cd-part { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); min-block-size: 44px; }
+.cd-part-state { font-weight: 700; }
+.cd-led { inline-size: 28px; block-size: 28px; border: 2px solid var(--ink); border-radius: 50%; background: var(--surface-sunk); }
+.cd-led.is-red.is-on { background: var(--hibiscus); }
+.cd-led.is-yellow.is-on { background: var(--sunbird); }
+.cd-led.is-green.is-on { background: var(--leaf); }
+.cd-led.is-blue.is-on { background: var(--sky); }
+.cd-buzz { display: grid; place-items: center; inline-size: 28px; block-size: 28px; border: 2px solid var(--ink); border-radius: var(--radius-sm); color: var(--ink-muted); font-weight: 700; }
+.cd-buzz.is-on { background: var(--lilac-soft); color: var(--ink); }
+.cd-btn { inline-size: 28px; block-size: 28px; border: 2px solid var(--ink); border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--shadow-press); }
+.cd-btn.is-on { background: var(--kola-soft); box-shadow: none; }
+.cd-meter { display: block; inline-size: 100%; min-inline-size: 4rem; block-size: 12px; border: 2px solid var(--ink); border-radius: var(--radius-pill); background: var(--surface-sunk); overflow: hidden; }
+.cd-meter-fill { display: block; block-size: 100%; background: var(--sky); }

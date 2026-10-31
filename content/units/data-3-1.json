@@ -1,0 +1,3335 @@
+{
+  "id": "data-3-1",
+  "track": "data",
+  "level": 3,
+  "title": {
+    "en": "Databases and SQL for school records",
+    "ar": "قواعد البيانات ولغة SQL لسجلّات المدرسة"
+  },
+  "summary": {
+    "en": "Move school records from scattered sheets into a database: design tables with keys, ask questions in SQL, summarise with GROUP BY, and join tables for reports that show only what each reader needs. Every SQL step runs in real SQLite on the phone.",
+    "ar": "انقل سجلّات المدرسة من أوراق متفرّقة إلى قاعدة بيانات: صمّم جداول بمفاتيح، واطرح الأسئلة بلغة SQL، ولخّص بـ ⁦GROUP BY⁩، واربط الجداول لتقارير لا تعرض إلا ما يحتاج إليه كل قارئ. وكل خطوة SQL تعمل في SQLite حقيقية على الهاتف."
+  },
+  "lessons": [
+    {
+      "id": "data-3-1-1",
+      "title": {
+        "en": "From sheets to a database",
+        "ar": "من الجداول إلى قاعدة البيانات"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Draw one wide table on the board, with pupils, their class, the class teacher and her phone. Pupils split it into two tables with a key. Then change the phone number: how many places did each design need?",
+        "ar": "ارسم على السبّورة جدولًا عريضًا واحدًا فيه التلاميذ، وصفّهم، ومعلّم الصف، وهاتفه. يقسمه التلاميذ إلى جدولين بمفتاح. ثم غيّروا رقم الهاتف: كم مكانًا احتاج إليه كل تصميم؟"
+      },
+      "materials": {
+        "en": [
+          "Board and chalk",
+          "A wide made-up school table, drawn or printed",
+          "Optional: a phone or computer for the SQL steps"
+        ],
+        "ar": [
+          "السبّورة والطباشير",
+          "جدول مدرسي عريض خيالي، مرسوم أو مطبوع",
+          "اختياري: هاتف أو حاسوب لخطوات SQL"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "From sheets to a database",
+            "ar": "من الجداول إلى قاعدة البيانات"
+          },
+          "src": null,
+          "duration": 206,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Eight copies of one number",
+                "ar": "ثماني نسخ من رقم واحد"
+              }
+            },
+            {
+              "at": 20.7,
+              "atBy": {
+                "en": 20.7,
+                "ar": 19.2
+              },
+              "label": {
+                "en": "What a database adds",
+                "ar": "ماذا تضيف قاعدة البيانات"
+              }
+            },
+            {
+              "at": 37.1,
+              "atBy": {
+                "en": 37.1,
+                "ar": 38.4
+              },
+              "label": {
+                "en": "One fact, one place",
+                "ar": "معلومة واحدة في مكان واحد"
+              }
+            },
+            {
+              "at": 67.4,
+              "atBy": {
+                "en": 67.4,
+                "ar": 69.5
+              },
+              "label": {
+                "en": "Speaking SQL",
+                "ar": "التحدّث بلغة SQL"
+              }
+            },
+            {
+              "at": 135.6,
+              "atBy": {
+                "en": 135.6,
+                "ar": 135.1
+              },
+              "label": {
+                "en": "The lab",
+                "ar": "المختبر"
+              }
+            },
+            {
+              "at": 166.4,
+              "atBy": {
+                "en": 166.4,
+                "ar": 163.6
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 108.6,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "In a well-designed school database, where is a class teacher’s phone number stored?",
+                "ar": "في قاعدة بيانات مدرسية حسنة التصميم، أين يُحفظ رقم هاتف معلّم الصف؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "In every pupil’s row",
+                    "ar": "في صف كل تلميذ"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Once, in the classes table",
+                    "ar": "مرة واحدة، في جدول الصفوف"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "In the marks table",
+                    "ar": "في جدول الدرجات"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "The phone belongs to the class, so it’s stored once, in the classes table. Each pupil’s row only says which class they’re in. Change the number once and every report is right.",
+                "ar": "الهاتف يخصّ الصف، فيُحفظ مرة واحدة في جدول الصفوف، ولا يقول صف كل تلميذ إلا صفّه الدراسي. غيّر الرقم مرة واحدة فيصحّ كل تقرير."
+              }
+            },
+            "atBy": {
+              "en": 108.6,
+              "ar": 109.66
+            }
+          },
+          "transcript": {
+            "en": "Our school keeps the class teachers' phone numbers in eight different sheets. One teacher got a new number last month. Guess how many sheets still have the old one? Today: from scattered sheets to a database, where every fact lives in one place. A database is a set of tables kept by one program, a database system. Everyone works on the same copy. Each column has a type, like whole numbers or text. And rules stop bad data getting in. The big idea: store each fact once. The teacher's phone belongs with the class, not in every pupil's row. Then a change happens in one place, and every report sees it. Each table has a primary key: a column that picks out one row, like the pupil's number. Another table points to it with a foreign key: each mark row holds the pupil's number. Keys are how tables link up. You talk to a database in SQL. CREATE TABLE describes a table: its columns, their types and its key. Then SELECT asks for rows back. Think of a school office with one filing cabinet, instead of every teacher keeping a copy. One drawer for pupils, one for classes, one for marks. Each file has a number, and other files refer to it. Quick check! In a well-designed school database, where should a class teacher's phone number be stored? Once, in the classes table. Each pupil's row just says which class they're in, and the class row holds the teacher and the phone. Change it once, and every pupil's report is right. What goes wrong without it? Update the phone in one row, miss the others, and the data gives two numbers. Delete the last pupils of a class, and the teacher's phone disappears with them. In the app, split one wide school table into two tables, then three. Watch the repeated facts fall from thirty-two to eight to zero, and try a hurried change on each design. Your turn. Each mark row stores the pupil's number, which points to a row in the pupils table. What is that column called? A foreign key: it points to a row in another table. Remember: a database keeps one shared copy, with types and rules. Store each fact once, in its own table. And keys, primary and foreign, link the tables together. Try it in class tomorrow: draw one wide table on the board, with pupils, their class, the class teacher and her phone. Pupils split it into two tables, with a key. Then change the phone number: how many places did each design need?",
+            "ar": "مدرستنا شايلة أرقام تليفونات مدرّسين الفصول في تمن شيتات مختلفة. مدرّسة منهم غيّرت رقمها الشهر اللي فات. تفتكر كام شيت لسه فيه الرقم القديم؟ النهارده: من شيتات متفرّقة لقاعدة بيانات، كل معلومة فيها عايشة في مكان واحد. قاعدة البيانات مجموعة جداول بيمسكها برنامج واحد، اسمه نظام قواعد البيانات. الكل بيشتغل على نفس النسخة. وكل عمود ليه نوع، زي أرقام صحيحة أو كلام. وفيه قواعد بتمنع البيانات الغلط إنها تدخل. الفكرة الكبيرة: خزّن كل معلومة مرة واحدة. تليفون المدرّسة مكانه مع الفصل، مش في صف كل تلميذ. وساعتها التغيير بيحصل في مكان واحد، وكل تقرير بيشوفه. كل جدول ليه مفتاح أساسي: عمود بيحدد صف واحد، زي رقم التلميذ. وجدول تاني بيشاور عليه بمفتاح أجنبي: كل صف درجة فيه رقم التلميذ. والمفاتيح هي اللي بتربط الجداول ببعض. بتكلّم قاعدة البيانات بلغة SQL. CREATE TABLE بيوصف الجدول: أعمدته، وأنواعها، ومفتاحه. وبعدين SELECT بيطلب صفوف ترجع. تخيّل مكتب مدرسة فيه دولاب ملفات واحد، بدل ما كل مدرّس شايل نسخة. درج للتلاميذ، ودرج للفصول، ودرج للدرجات. وكل ملف ليه رقم، والملفات التانية بتشاور عليه. سؤال سريع! في قاعدة بيانات مدرسة متصممة كويس، رقم تليفون مدرّس الفصل يتخزّن فين؟ مرة واحدة، في جدول الفصول. صف كل تلميذ بيقول بس هو في أنهي فصل، وصف الفصل فيه المدرّس والتليفون. غيّره مرة، وتقرير كل تلميذ يبقى صح. إيه اللي بيبوظ من غيرها؟ حدّث التليفون في صف، وانسى الباقي، والبيانات هتدّيك رقمين. وامسح آخر تلاميذ في فصل، وتليفون المدرّس هيختفي معاهم. في التطبيق، قسّم جدول المدرسة العريض لجدولين، وبعدين تلاتة. واتفرّج على المعلومات المكررة وهي بتنزل من اتنين وتلاتين لتمانية لصفر، وجرّب تغيير مستعجل على كل تصميم. دورك. كل صف درجة فيه رقم التلميذ، وبيشاور على صف في جدول التلاميذ. العمود ده اسمه إيه؟ مفتاح أجنبي: بيشاور على صف في جدول تاني. افتكر: قاعدة البيانات بتحتفظ بنسخة واحدة للكل، بأنواع وقواعد. خزّن كل معلومة مرة واحدة، في جدولها. والمفاتيح، الأساسية والأجنبية، بتربط الجداول ببعض. جرّبها في الفصل بكرة: ارسم جدول عريض واحد على السبورة، فيه التلاميذ، وفصلهم، ومدرّسة الفصل، وتليفونها. التلاميذ يقسموه لجدولين، بمفتاح. وبعدين غيّروا رقم التليفون: كل تصميم احتاج تغيّروا في كام مكان؟"
+          },
+          "sources": {
+            "en": "/media/data-3-1-1/video-en.mp4",
+            "ar": "/media/data-3-1-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-3-1-1/captions-en.vtt",
+            "ar": "/media/data-3-1-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-3-1-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-3-1-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-3-1-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-3-1-1/light/audio/en.opus",
+              "manifest.json": "/media/data-3-1-1/light/manifest.json",
+              "scenes.json": "/media/data-3-1-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-3-1-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-3-1-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 449,
+              "ar": 445
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Tables, keys and SQL",
+            "ar": "الجداول والمفاتيح ولغة SQL"
+          },
+          "body": {
+            "en": "A spreadsheet is a good notebook, but schools rarely keep just one. The office has a class list, each teacher has a mark sheet, the library has its loans, and the same facts get typed into all of them. When a teacher’s phone number changes, someone must find every copy; miss one, and the school now holds two numbers for her.\n\nA database is a set of tables kept by one program, a database system such as SQLite. Everyone works on the same copy. Each column has a type (whole numbers, text, dates), and rules stop bad data getting in: a mark must be a number, every pupil needs an ID. The big idea is to store each fact once. The teacher’s phone belongs with the class, so it lives in the classes table, and each pupil’s row only says which class they’re in.\n\nKeys link the tables. A primary key is a column that picks out one row, such as the pupil’s ID or the class name. A foreign key is a column that points to a row in another table: each mark row holds a pupil ID that points to the pupils table. With keys, a change happens in one place, and a question can still bring the pieces back together.\n\nYou talk to a database in SQL. CREATE TABLE describes a table: its columns, their types and its key. SELECT asks for rows back: SELECT name, class FROM pupils returns two columns for every pupil. In the lesson’s SQL steps, the database runs on your phone, so you can try anything; every run starts from a fresh copy.",
+            "ar": "جدول البيانات دفتر جيد، لكن المدارس نادرًا ما تحتفظ بدفتر واحد. فللمكتب قائمة الصفوف، ولكل معلّم ورقة درجاته، وللمكتبة إعاراتها، وتُكتب المعلومات نفسها فيها كلها. وحين يتغيّر رقم هاتف معلّمة، يجب أن يجد أحدٌ كل نسخة، فإن فاتته واحدة صار لدى المدرسة رقمان لها.\n\nقاعدة البيانات مجموعة من الجداول يديرها برنامج واحد، هو نظام قاعدة البيانات مثل SQLite. ويعمل الجميع على النسخة نفسها. ولكل عمود نوع (أعداد صحيحة، أو نصوص، أو تواريخ)، وتمنع القواعدُ البياناتِ الخاطئة من الدخول: فالدرجة يجب أن تكون عددًا، وكل تلميذ يحتاج إلى رقم. والفكرة الكبرى أن تحفظ كل معلومة مرة واحدة. فهاتف المعلّمة يخصّ الصف، فيعيش في جدول الصفوف، ولا يقول صف كل تلميذ إلا صفّه الدراسي.\n\nوالمفاتيح تربط الجداول. فالمفتاح الأساسي عمود يحدّد صفًّا واحدًا، كرقم التلميذ أو اسم الصف. والمفتاح الأجنبي عمود يشير إلى صف في جدول آخر: فكل صف من صفوف الدرجات يحمل رقم تلميذ يشير إلى جدول التلاميذ. وبالمفاتيح يحدث التغيير في مكان واحد، ويستطيع السؤال مع ذلك أن يجمع القطع من جديد.\n\nوتتحدّث إلى قاعدة البيانات بلغة SQL. فـ ⁦CREATE TABLE⁩ تصف جدولًا: أعمدته، وأنواعها، ومفتاحه. وSELECT تطلب صفوفًا: فـ ⁦SELECT name, class FROM pupils⁩ تعيد عمودين لكل تلميذ. وفي خطوات SQL في هذا الدرس تعمل قاعدة البيانات على هاتفك، فتستطيع تجربة أي شيء، وكل تشغيل يبدأ من نسخة جديدة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Database",
+                "ar": "قاعدة البيانات"
+              },
+              "def": {
+                "en": "A set of tables kept by one program, with types and rules, so everyone works on the same copy.",
+                "ar": "مجموعة جداول يديرها برنامج واحد، بأنواع وقواعد، فيعمل الجميع على النسخة نفسها."
+              }
+            },
+            {
+              "term": {
+                "en": "Primary key",
+                "ar": "المفتاح الأساسي"
+              },
+              "def": {
+                "en": "A column that picks out exactly one row of its table, such as a pupil ID.",
+                "ar": "عمود يحدّد صفًّا واحدًا بالضبط في جدوله، كرقم التلميذ."
+              }
+            },
+            {
+              "term": {
+                "en": "Foreign key",
+                "ar": "المفتاح الأجنبي"
+              },
+              "def": {
+                "en": "A column that points to a row in another table, such as the pupil ID in each mark row.",
+                "ar": "عمود يشير إلى صف في جدول آخر، كرقم التلميذ في كل صف من صفوف الدرجات."
+              }
+            },
+            {
+              "term": {
+                "en": "SQL",
+                "ar": "لغة SQL"
+              },
+              "def": {
+                "en": "The language for describing tables (CREATE TABLE) and asking them questions (SELECT).",
+                "ar": "اللغة التي تصف الجداول (CREATE TABLE) وتطرح عليها الأسئلة (SELECT)."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Each mark row stores the pupil’s number, pointing to a row in the pupils table. What is that column?",
+            "ar": "يحفظ كل صف من صفوف الدرجات رقم التلميذ، ويشير إلى صف في جدول التلاميذ. ما هذا العمود؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A primary key",
+                "ar": "مفتاح أساسي"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A foreign key",
+                "ar": "مفتاح أجنبي"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A formula",
+                "ar": "صيغة"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "A foreign key is a column that points to a row in another table, where that value is the primary key. It’s how the marks table knows whose mark each one is.",
+            "ar": "المفتاح الأجنبي عمود يشير إلى صف في جدول آخر، تكون فيه هذه القيمة مفتاحًا أساسيًا. وبه يعرف جدول الدرجات صاحب كل درجة."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p2",
+          "prompt": {
+            "en": "Match each word to what it means in a school database.",
+            "ar": "صِل كل كلمة بمعناها في قاعدة بيانات مدرسية."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Table",
+                "ar": "الجدول"
+              },
+              "right": {
+                "en": "Rows of one kind of thing, such as pupils or classes",
+                "ar": "صفوف لنوع واحد من الأشياء، كالتلاميذ أو الصفوف"
+              }
+            },
+            {
+              "left": {
+                "en": "Primary key",
+                "ar": "المفتاح الأساسي"
+              },
+              "right": {
+                "en": "The pupil ID that picks out one pupil’s row",
+                "ar": "رقم التلميذ الذي يحدّد صف تلميذ واحد"
+              }
+            },
+            {
+              "left": {
+                "en": "Foreign key",
+                "ar": "المفتاح الأجنبي"
+              },
+              "right": {
+                "en": "The pupil ID inside a mark row",
+                "ar": "رقم التلميذ داخل صف درجة"
+              }
+            },
+            {
+              "left": {
+                "en": "Type",
+                "ar": "النوع"
+              },
+              "right": {
+                "en": "Whole number for a mark, text for a name",
+                "ar": "عدد صحيح للدرجة، ونص للاسم"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Tables hold one kind of thing each. The primary key identifies a row in its own table; a foreign key points to that row from another table; and types stop a name landing in a mark column.",
+            "ar": "كل جدول يحمل نوعًا واحدًا من الأشياء. والمفتاح الأساسي يحدّد صفًّا في جدوله، والمفتاح الأجنبي يشير إلى ذلك الصف من جدول آخر، والأنواع تمنع وقوع اسم في عمود درجات."
+          }
+        },
+        {
+          "type": "parsons",
+          "id": "p3",
+          "lang": "sql",
+          "prompt": {
+            "en": "Put the lines in order to create the classes table, with its columns in this order: class (the key), teacher, phone.",
+            "ar": "رتّب الأسطر لإنشاء جدول الصفوف، بأعمدته بهذا الترتيب: class (المفتاح)، ثم teacher، ثم phone."
+          },
+          "lines": [
+            "CREATE TABLE classes (",
+            "    class TEXT PRIMARY KEY,",
+            "    teacher TEXT,",
+            "    phone TEXT",
+            ");"
+          ],
+          "distractors": [
+            "    phone INTEGER"
+          ],
+          "explain": {
+            "en": "CREATE TABLE names the table, then each column with its type, separated by commas, with no comma after the last. The class name is the primary key. A phone number is text, not a number: it starts with 0, has spaces, and nobody adds phone numbers up.",
+            "ar": "تسمّي ⁦CREATE TABLE⁩ الجدول، ثم كل عمود بنوعه، وبين الأعمدة فواصل، ولا فاصلة بعد آخرها. واسم الصف هو المفتاح الأساسي. أما رقم الهاتف فنص لا عدد: يبدأ بصفر، وفيه مسافات، ولا أحد يجمع أرقام الهواتف."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: start with “Everything” in one wide table and make the hurried phone change. Then split it into two tables, then three, and try the same change and “6B’s pupils leave” on each design. Which design loses nothing and keeps one number per teacher?",
+            "ar": "جرّب: ابدأ بـ«كل شيء» في جدول عريض واحد، ونفّذ تغيير الهاتف المتعجّل. ثم قسّمه إلى جدولين، ثم ثلاثة، وجرّب التغيير نفسه و«غادر تلاميذ ٦ب» على كل تصميم. أيّ تصميم لا يضيّع شيئًا ويُبقي رقمًا واحدًا لكل معلّم؟"
+          },
+          "tool": "schema"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "To make reports quicker, each pupil’s name should also be stored in this marks table.",
+            "ar": "لتسريع التقارير، يجب أن يُحفظ اسم كل تلميذ في جدول الدرجات هذا أيضًا."
+          },
+          "snippet": {
+            "lang": "sql",
+            "text": "CREATE TABLE marks (\n    pupil_id INTEGER REFERENCES pupils(id),\n    subject TEXT,\n    mark INTEGER\n);"
+          },
+          "answer": false,
+          "explain": {
+            "en": "Store each fact once. The name already lives in the pupils table; pupil_id points to it, and a query can bring the name in when it’s needed. A second copy of the name would sooner or later disagree with the first.",
+            "ar": "احفظ كل معلومة مرة واحدة. فالاسم يعيش أصلًا في جدول التلاميذ، ويشير إليه pupil_id، ويستطيع الاستعلام جلب الاسم حين يلزم. أما نسخة ثانية من الاسم فستختلف عن الأولى عاجلًا أو آجلًا."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p5",
+          "lang": "sql",
+          "prompt": {
+            "en": "Your first query. Change it so it returns only two columns for every pupil: their name and their class. Press Run to see the tables first.",
+            "ar": "استعلامك الأول. غيّره ليعيد عمودين فقط لكل تلميذ: اسمه وصفّه. اضغط «شغّل» لترى الجداول أولًا."
+          },
+          "setup": "CREATE TABLE classes (class TEXT PRIMARY KEY, teacher TEXT, phone TEXT);\nINSERT INTO classes VALUES ('5A', 'Mr Bello', '0801 555 0101'), ('6A', 'Ms Salma', '0801 555 0102'), ('6B', 'Mr Joseph', '0801 555 0103');\nCREATE TABLE pupils (id INTEGER PRIMARY KEY, name TEXT, class TEXT REFERENCES classes(class));\nINSERT INTO pupils VALUES (1, 'Amina', '6A'), (2, 'Tunde', '6A'), (3, 'Grace', '6B'), (4, 'Musa', '6B'), (5, 'Kofi', '6A'), (6, 'Lina', '6B'), (7, 'Chidi', '5A'), (8, 'Zara', '5A');",
+          "starter": "SELECT * FROM pupils;",
+          "solution": "SELECT name, class FROM pupils;",
+          "hints": [
+            {
+              "en": "SELECT lists the columns you want, separated by commas.",
+              "ar": "تذكر SELECT الأعمدة التي تريدها، تفصل بينها فواصل."
+            },
+            {
+              "en": "SELECT name, class FROM pupils;",
+              "ar": "⁦SELECT name, class FROM pupils;⁩"
+            }
+          ],
+          "explain": {
+            "en": "SELECT * means every column; listing name, class asks for just those two. FROM says which table. The result has 8 rows, one per pupil, and 2 columns.",
+            "ar": "تعني ⁦SELECT *⁩ كل الأعمدة، أما ذكر ⁦name, class⁩ فيطلب هذين العمودين فقط. وتقول FROM من أيّ جدول. وفي النتيجة ٨ صفوف، صف لكل تلميذ، وعمودان."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p6",
+          "prompt": {
+            "en": "Complete the sentences about SQL.",
+            "ar": "أكمل الجمل عن لغة SQL."
+          },
+          "sentence": {
+            "en": [
+              {
+                "blank": 0
+              },
+              " describes a table and its columns. ",
+              {
+                "blank": 1
+              },
+              " asks for rows back. A ",
+              {
+                "blank": 2
+              },
+              " key picks out exactly one row of a table."
+            ],
+            "ar": [
+              "تصف ",
+              {
+                "blank": 0
+              },
+              " الجدول وأعمدته. وتطلب ",
+              {
+                "blank": 1
+              },
+              " صفوفًا. ويحدّد المفتاح ",
+              {
+                "blank": 2
+              },
+              " صفًّا واحدًا بالضبط في الجدول."
+            ]
+          },
+          "bank": {
+            "en": [
+              "CREATE TABLE",
+              "DELETE",
+              "foreign",
+              "SELECT",
+              "primary"
+            ],
+            "ar": [
+              "CREATE TABLE",
+              "DELETE",
+              "الأجنبي",
+              "SELECT",
+              "الأساسي"
+            ]
+          },
+          "answers": {
+            "en": [
+              "CREATE TABLE",
+              "SELECT",
+              "primary"
+            ],
+            "ar": [
+              "CREATE TABLE",
+              "SELECT",
+              "الأساسي"
+            ]
+          },
+          "explain": {
+            "en": "CREATE TABLE sets up a table; SELECT reads from it. The primary key identifies a row in its own table; a foreign key points to a row in another.",
+            "ar": "تُنشئ ⁦CREATE TABLE⁩ الجدول، وتقرأ منه SELECT. والمفتاح الأساسي يحدّد صفًّا في جدوله، أما المفتاح الأجنبي فيشير إلى صف في جدول آخر."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which fact does your school type in more than one place? Which table should it live in, once?",
+            "ar": "ما المعلومة التي تُكتب في مدرستك في أكثر من مكان؟ وفي أيّ جدول يجب أن تعيش، مرة واحدة؟"
+          },
+          "placeholder": {
+            "en": "For example: “Parents’ phone numbers are on the enrolment form, the class list and the trip sheet. They belong in one pupils table.”",
+            "ar": "مثلًا: «أرقام هواتف الأهل في استمارة التسجيل وقائمة الصف وورقة الرحلة، ومكانها جدول تلاميذ واحد.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: One fact, one place",
+            "ar": "مشروع: معلومة واحدة في مكان واحد"
+          },
+          "task": {
+            "en": "Draw one wide made-up table on the board: pupils, their class, the class teacher and the teacher’s phone. With your class, count how many times each teacher’s phone appears. Then split the table into two (pupils and classes) with the class as the key, and redraw them. Change one teacher’s phone in both designs and compare how many cells you had to change. If you have a device, write the CREATE TABLE for each new table.",
+            "ar": "ارسم على السبّورة جدولًا عريضًا خياليًا واحدًا: التلاميذ، وصفّهم، ومعلّم الصف، وهاتف المعلّم. وعُدّ مع صفّك كم مرة يظهر هاتف كل معلّم. ثم قسّم الجدول إلى جدولين (التلاميذ والصفوف) يكون الصف مفتاحهما، وأعد رسمهما. وغيّر هاتف أحد المعلّمين في التصميمين، وقارن عدد الخانات التي احتجت إلى تغييرها. وإن كان لديك جهاز، فاكتب ⁦CREATE TABLE⁩ لكل جدول جديد."
+          },
+          "deliverable": {
+            "en": "A photo of the wide table and the two new tables (made-up data), and two sentences: how many cells the phone change needed in each design, and which other fact in your school is stored in too many places.",
+            "ar": "صورة للجدول العريض والجدولين الجديدين (ببيانات خيالية)، وجملتان: كم خانة احتاج إليها تغيير الهاتف في كل تصميم، وأيّ معلومة أخرى في مدرستك تُحفظ في أماكن كثيرة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Pupils could: find facts that a wide table repeats.",
+                "ar": "تمكّن التلاميذ من: إيجاد المعلومات التي يكرّرها الجدول العريض."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: split a table into two, linked by a key.",
+                "ar": "تمكّن التلاميذ من: تقسيم جدول إلى جدولين يربطهما مفتاح."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: explain why a change in one place is safer.",
+                "ar": "تمكّن التلاميذ من: شرح لماذا يكون التغيير في مكان واحد أكثر أمانًا."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "From sheets to a database",
+            "ar": "من الجداول إلى قاعدة البيانات"
+          },
+          "note": {
+            "en": "Data engineering · Level 3 · Lesson 1",
+            "ar": "هندسة البيانات، المستوى ٣، الدرس ١"
+          },
+          "narration": {
+            "en": "Eight sheets hold one teacher’s phone. How many are still wrong?",
+            "ar": "ثماني أوراق تحمل هاتف معلّمة واحدة. فكم منها ما زال خاطئًا؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Say what a database adds to a spreadsheet.",
+              "Store each fact once, in tables linked by keys.",
+              "Read a CREATE TABLE and run a first SELECT."
+            ],
+            "ar": [
+              "نقول ماذا تضيف قاعدة البيانات إلى جدول البيانات.",
+              "نحفظ كل معلومة مرة واحدة، في جداول تربطها مفاتيح.",
+              "نقرأ ⁦CREATE TABLE⁩ ونشغّل أول SELECT."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "One shared copy, with types and rules.",
+              "Store each fact once.",
+              "Primary keys pick out rows; foreign keys point to them."
+            ],
+            "ar": [
+              "نسخة واحدة مشتركة، بأنواع وقواعد.",
+              "احفظ كل معلومة مرة واحدة.",
+              "المفاتيح الأساسية تحدّد الصفوف، والأجنبية تشير إليها."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "One fact, one place",
+            "ar": "معلومة واحدة في مكان واحد"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): How many copies of one phone number?",
+              "Teach (8 min): Tables and keys.",
+              "Split (15 min): Two tables, one key.",
+              "Change (7 min): A new phone number.",
+              "Wrap-up (5 min): The same tables in SQL."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): كم نسخة من رقم هاتف واحد؟",
+              "الشرح (٨ دقائق): الجداول والمفاتيح.",
+              "التقسيم (١٥ دقيقة): جدولان ومفتاح واحد.",
+              "التغيير (٧ دقائق): رقم هاتف جديد.",
+              "الختام (٥ دقائق): الجداول نفسها بلغة SQL."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Draw the wide table on the board and ask pupils to count how many times each teacher’s phone number appears.",
+              "Teach (8 min): Explain one fact in one place, a primary key and a foreign key, using the pupils and classes as the example.",
+              "Split (15 min): Groups redraw the wide table as a pupils table and a classes table, and mark the primary key and the foreign key in each.",
+              "Change (7 min): Change one teacher’s phone in both designs and count the cells each one needed. Then remove the last pupils of one class: what disappears?",
+              "Wrap-up (5 min): Show the CREATE TABLE for the classes table and a first SELECT. Then give the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): ارسم الجدول العريض على السبّورة، واطلب من التلاميذ عدّ مرات ظهور هاتف كل معلّم.",
+              "الشرح (٨ دقائق): اشرح المعلومة الواحدة في المكان الواحد، والمفتاح الأساسي والمفتاح الأجنبي، بمثال التلاميذ والصفوف.",
+              "التقسيم (١٥ دقيقة): تعيد المجموعات رسم الجدول العريض جدولًا للتلاميذ وجدولًا للصفوف، وتحدّد في كلٍّ منهما المفتاح الأساسي والمفتاح الأجنبي.",
+              "التغيير (٧ دقائق): غيّروا هاتف أحد المعلّمين في التصميمين، واعدّوا الخانات التي احتاج إليها كلٌّ منهما. ثم احذفوا آخر تلاميذ أحد الصفوف: ماذا يختفي؟",
+              "الختام (٥ دقائق): اعرض ⁦CREATE TABLE⁩ لجدول الصفوف وأول SELECT. ثم وزّع بطاقة الخروج."
+            ]
+          },
+          "note": {
+            "en": "Use made-up names and phone numbers in the wide table. Make at least one class have several pupils, so the repeats are easy to see.",
+            "ar": "استعمل أسماء وأرقام هواتف خيالية في الجدول العريض. واجعل في صف واحد على الأقل تلاميذ كثيرين، ليسهل رؤية التكرار."
+          },
+          "narration": {
+            "en": "Split the wide table: one fact, in one place.",
+            "ar": "قسّموا الجدول العريض: معلومة واحدة في مكان واحد."
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "What went wrong when we changed the phone in the wide table?",
+              "Which column links the pupils table to the classes table?",
+              "Why is a phone number stored as text?"
+            ],
+            "ar": [
+              "ما الخطأ الذي حدث حين غيّرنا الهاتف في الجدول العريض؟",
+              "أيّ عمود يربط جدول التلاميذ بجدول الصفوف؟",
+              "لماذا يُحفظ رقم الهاتف نصًّا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name a primary key and a foreign key in our two tables, and say what each one does."
+            ],
+            "ar": [
+              "سمِّ مفتاحًا أساسيًا ومفتاحًا أجنبيًا في جدولينا، وقل ما يفعله كلٌّ منهما."
+            ]
+          },
+          "narration": {
+            "en": "Store each fact once; keys link the tables.",
+            "ar": "احفظ كل معلومة مرة واحدة، والمفاتيح تربط الجداول."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: From sheets to a database",
+            "ar": "شرائح: من الجداول إلى قاعدة البيانات"
+          },
+          "pages": 6,
+          "base": "data-3-1-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: From sheets to a database",
+            "ar": "خطة الدرس وورقة العمل: من الجداول إلى قاعدة البيانات"
+          },
+          "pages": 3,
+          "base": "data-3-1-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-3-1-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.3",
+        "DATA.1"
+      ]
+    },
+    {
+      "id": "data-3-1-2",
+      "title": {
+        "en": "Asking questions: SELECT, WHERE, ORDER BY",
+        "ar": "طرح الأسئلة: SELECT وWHERE و⁦ORDER BY⁩"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Play “Human database”: each pupil holds a card with a class, a birth month and how they travel. Read out a query, such as pupils where travel is walking, ordered by birth month. Those who match step forward and line up in order.",
+        "ar": "العبوا «قاعدة البيانات البشرية»: يحمل كل تلميذ بطاقة فيها صف وشهر ميلاد وطريقة مجيء. اقرأ استعلامًا، مثل التلاميذ الذين يأتون مشيًا مرتّبين حسب شهر الميلاد. فيتقدّم المطابقون ويصطفّون بالترتيب."
+      },
+      "materials": {
+        "en": [
+          "A card per pupil: class, birth month and how they travel (made up or chosen by the pupil)",
+          "Board and chalk",
+          "Optional: a phone or computer for the SQL steps"
+        ],
+        "ar": [
+          "بطاقة لكل تلميذ: الصف وشهر الميلاد وطريقة المجيء (خيالية أو يختارها التلميذ)",
+          "السبّورة والطباشير",
+          "اختياري: هاتف أو حاسوب لخطوات SQL"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Asking questions: SELECT, WHERE, ORDER BY",
+            "ar": "طرح الأسئلة: SELECT وWHERE و⁦ORDER BY⁩"
+          },
+          "src": null,
+          "duration": 193,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Under ten in Six A",
+                "ar": "أقل من عشرة في ٦أ"
+              }
+            },
+            {
+              "at": 24.6,
+              "atBy": {
+                "en": 24.6,
+                "ar": 22.3
+              },
+              "label": {
+                "en": "SELECT and FROM",
+                "ar": "SELECT وFROM"
+              }
+            },
+            {
+              "at": 36.9,
+              "atBy": {
+                "en": 36.9,
+                "ar": 35.2
+              },
+              "label": {
+                "en": "WHERE picks rows",
+                "ar": "WHERE تختار الصفوف"
+              }
+            },
+            {
+              "at": 57.2,
+              "atBy": {
+                "en": 57.2,
+                "ar": 57.6
+              },
+              "label": {
+                "en": "Sorting",
+                "ar": "الترتيب"
+              }
+            },
+            {
+              "at": 100.6,
+              "atBy": {
+                "en": 100.6,
+                "ar": 100.6
+              },
+              "label": {
+                "en": "Check the answer",
+                "ar": "راجع الإجابة"
+              }
+            },
+            {
+              "at": 117.7,
+              "atBy": {
+                "en": 117.7,
+                "ar": 115.9
+              },
+              "label": {
+                "en": "The lab",
+                "ar": "المختبر"
+              }
+            },
+            {
+              "at": 146.6,
+              "atBy": {
+                "en": 146.6,
+                "ar": 143.7
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 91.12,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Which part of a query picks which rows come back?",
+                "ar": "أيّ جزء في الاستعلام يختار الصفوف التي تعود؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "SELECT",
+                    "ar": "SELECT"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "FROM",
+                    "ar": "FROM"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "WHERE",
+                    "ar": "WHERE"
+                  }
+                }
+              ],
+              "answer": "c",
+              "explain": {
+                "en": "WHERE keeps only the rows that match its condition. SELECT picks the columns, and FROM names the table.",
+                "ar": "تُبقي WHERE الصفوف التي تطابق شرطها فقط. أما SELECT فتختار الأعمدة، وتسمّي FROM الجدول."
+              }
+            },
+            "atBy": {
+              "en": 91.12,
+              "ar": 91.11
+            }
+          },
+          "transcript": {
+            "en": "Before the parents' evening, I need every pupil in Six A with a maths mark under ten. Our school has four hundred pupils in one big sheet. Scrolling? No thanks. Today: asking the database questions with SELECT, WHERE and ORDER BY. Every question starts the same way. SELECT says which columns you want back. FROM says which table to look in. And a star means every column. WHERE picks the rows. Equals, greater than, less than: class equals six A, mark less than ten. Text goes in single quotes, and it must match exactly. AND needs both to be true; OR needs either one. ORDER BY sorts the answer. Add DESC for the biggest first. And LIMIT keeps only the first few rows: the top three, say. That's a query: a question in SQL. It describes the rows you want, not how to find them. The same query works on twelve rows or twelve million. Quick check! Which part of a query picks which rows come back? WHERE picks the rows; SELECT picks the columns. Keep them apart in your head: columns across, rows down. Always check an answer against what you know. If WHERE class equals six A returns nobody, look at the data: maybe it says six small a. If a query returns half the school, a condition is missing. In the app, real SQL runs on your phone, on a school's pupils and marks. Pick a question, change it, and run it. Try changing five B to six A, or AVG to MAX. Your turn. I want the three highest maths marks, biggest first. Which lines do that? ORDER BY mark DESC, then LIMIT three. Remember: SELECT picks columns, FROM the table, WHERE the rows. Text goes in single quotes, matched exactly. And check every answer against what you already know. Try it in class tomorrow: play “Human database”. Each pupil holds a card with their class, birth month and how they travel. Read out a query: select pupils where travel is walking, order by birth month. The pupils who match step forward and line up in order.",
+            "ar": "قبل اجتماع أولياء الأمور، محتاجة كل تلاميذ ستة أ اللي درجة الرياضيات بتاعتهم أقل من عشرة. مدرستنا فيها أربعمية تلميذ في شيت واحد كبير. أقعد أقلّب؟ لا شكرًا. النهارده: نسأل قاعدة البيانات أسئلة بـSELECT وWHERE وORDER BY. كل سؤال بيبدأ بنفس الطريقة. SELECT بتقول عايز أنهي أعمدة ترجع. وFROM بتقول تدوّر في أنهي جدول. والنجمة معناها كل الأعمدة. WHERE بتختار الصفوف. يساوي، أكبر من، أقل من: الفصل يساوي ستة A، والدرجة أقل من عشرة. والكلام بيتكتب بين علامتين تنصيص مفردة، ولازم يتطابق بالظبط. وAND محتاجة الاتنين يبقوا صح، وOR محتاجة واحد منهم بس. ORDER BY بترتّب الإجابة. زوّد DESC علشان الأكبر ييجي الأول. وLIMIT بتسيب أول كام صف بس: أعلى تلاتة مثلًا. ده اسمه استعلام: سؤال بلغة SQL. بيوصف الصفوف اللي عايزها، مش إزاي تلاقيها. ونفس الاستعلام بيشتغل على اتناشر صف أو اتناشر مليون. سؤال سريع! أنهي جزء في الاستعلام بيختار أنهي صفوف ترجع؟ WHERE بتختار الصفوف، وSELECT بتختار الأعمدة. افصلهم في دماغك: الأعمدة بالعرض، والصفوف بالطول. دايمًا راجع الإجابة على اللي إنت عارفه. لو WHERE class بيساوي ستة A رجّعت ولا حد، بص على البيانات: يمكن مكتوب ستة a صغيرة. ولو الاستعلام رجّع نص المدرسة، يبقى فيه شرط ناقص. في التطبيق، SQL حقيقية بتشتغل على موبايلك، على تلاميذ مدرسة ودرجاتهم. اختار سؤال، وغيّره، وشغّله. جرّب تغيّر خمسة B لستة A، أو AVG لـMAX. دورك. عايزة أعلى تلات درجات رياضيات، الأكبر الأول. أنهي سطور بتعمل كده؟ ORDER BY mark DESC، وبعدين LIMIT تلاتة. افتكر: SELECT بتختار الأعمدة، وFROM الجدول، وWHERE الصفوف. والكلام بين علامتين مفردتين، ولازم يتطابق بالظبط. وراجع كل إجابة على اللي إنت عارفه أصلًا. جرّبها في الفصل بكرة: العبوا «قاعدة البيانات البشرية». كل تلميذ ماسك كارت عليه فصله، وشهر ميلاده، وبييجي المدرسة إزاي. اقرا استعلام بصوت عالي: هات التلاميذ اللي بييجوا ماشيين، مترتبين بشهر الميلاد. واللي ينطبق عليهم الشرط يتقدموا ويقفوا بالترتيب."
+          },
+          "sources": {
+            "en": "/media/data-3-1-2/video-en.mp4",
+            "ar": "/media/data-3-1-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-3-1-2/captions-en.vtt",
+            "ar": "/media/data-3-1-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-3-1-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-3-1-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-3-1-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-3-1-2/light/audio/en.opus",
+              "manifest.json": "/media/data-3-1-2/light/manifest.json",
+              "scenes.json": "/media/data-3-1-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-3-1-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-3-1-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 409,
+              "ar": 397
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Asking the database",
+            "ar": "سؤال قاعدة البيانات"
+          },
+          "body": {
+            "en": "Every question to a database starts the same way. SELECT says which columns you want back; FROM says which table to look in. SELECT name, maths FROM results returns two columns for every row, and SELECT * returns every column. A question written in SQL is called a query.\n\nWHERE picks the rows. Compare with = (equals), <> (not equal), < and >, <= and >=: WHERE class = '6A', WHERE maths < 10. Text goes in single quotes and must match exactly, so '6a' is not '6A', and 'Amina ' with a space is not 'Amina'. AND needs both conditions to be true; OR needs either one. WHERE class = '6A' AND maths < 10 finds the pupils in 6A who need help in maths.\n\nORDER BY sorts the answer: ORDER BY maths puts the lowest first, and ORDER BY maths DESC the highest first. LIMIT keeps only the first few rows, so ORDER BY science DESC LIMIT 3 gives the top three. A query describes the rows you want, not how to find them, so the same query works on twelve rows or on twelve million.\n\nAlways check an answer against what you know. If a query for 6A returns nobody, look at the data: maybe it says 6a. If it returns half the school, a condition is probably missing. If a mark of 25 out of 20 appears, the data needs cleaning before anyone sees the report. A query that runs without an error isn’t always a query that’s right.",
+            "ar": "كل سؤال لقاعدة البيانات يبدأ بالطريقة نفسها. فـ SELECT تقول أيّ الأعمدة تريدها، وFROM تقول في أيّ جدول تبحث. فـ ⁦SELECT name, maths FROM results⁩ تعيد عمودين لكل صف، و⁦SELECT *⁩ تعيد كل الأعمدة. والسؤال المكتوب بلغة SQL يسمّى استعلامًا.\n\nوتختار WHERE الصفوف. قارن بـ = (يساوي)، و<> (لا يساوي)، و< و>، و<= و>=: مثل ⁦WHERE class = '6A'⁩ و⁦WHERE maths < 10⁩. والنص يوضع بين علامتي تنصيص مفردتين ويجب أن يطابق تمامًا، فـ ⁦'6a'⁩ ليست ⁦'6A'⁩، و⁦'Amina '⁩ بمسافة ليست ⁦'Amina'⁩. وتحتاج AND إلى تحقّق الشرطين معًا، وتكفي OR بأحدهما. فـ ⁦WHERE class = '6A' AND maths < 10⁩ تجد التلاميذ في ٦أ الذين يحتاجون إلى مساعدة في الرياضيات.\n\nوترتّب ⁦ORDER BY⁩ الإجابة: فـ ⁦ORDER BY maths⁩ تضع الأدنى أولًا، و⁦ORDER BY maths DESC⁩ الأعلى أولًا. وتُبقي LIMIT الصفوف الأولى فقط، فـ ⁦ORDER BY science DESC LIMIT 3⁩ تعطي الثلاثة الأوائل. والاستعلام يصف الصفوف التي تريدها لا طريقة إيجادها، فالاستعلام نفسه يعمل على اثني عشر صفًّا أو على اثني عشر مليونًا.\n\nوراجع الإجابة دائمًا على ما تعرفه. فإن لم يُعِد استعلام ٦أ أحدًا، فانظر في البيانات: ربما كُتبت 6a. وإن أعاد نصف المدرسة، فالأرجح أن شرطًا ناقص. وإن ظهرت درجة ٢٥ من ٢٠، فالبيانات تحتاج إلى تنظيف قبل أن يرى أحد التقرير. فالاستعلام الذي يعمل دون خطأ ليس دائمًا استعلامًا صحيحًا."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Query",
+                "ar": "الاستعلام"
+              },
+              "def": {
+                "en": "A question written in SQL, such as SELECT name FROM pupils WHERE class = '6A'.",
+                "ar": "سؤال مكتوب بلغة SQL، مثل ⁦SELECT name FROM pupils WHERE class = '6A'⁩."
+              }
+            },
+            {
+              "term": {
+                "en": "WHERE",
+                "ar": "WHERE"
+              },
+              "def": {
+                "en": "Keeps only the rows that match a condition; AND needs both conditions, OR either.",
+                "ar": "تُبقي الصفوف التي تطابق شرطًا فقط، وتحتاج AND إلى الشرطين معًا، وتكفي OR بأحدهما."
+              }
+            },
+            {
+              "term": {
+                "en": "ORDER BY … DESC",
+                "ar": "⁦ORDER BY … DESC⁩"
+              },
+              "def": {
+                "en": "Sorts the rows; DESC puts the biggest first.",
+                "ar": "ترتّب الصفوف، وتضع DESC الأكبر أولًا."
+              }
+            },
+            {
+              "term": {
+                "en": "LIMIT",
+                "ar": "LIMIT"
+              },
+              "def": {
+                "en": "Keeps only the first few rows of the answer.",
+                "ar": "تُبقي الصفوف الأولى فقط من الإجابة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "You want the three highest maths marks, biggest first. Which lines do that?",
+            "ar": "تريد أعلى ثلاث درجات في الرياضيات، الأكبر أولًا. أيّ الأسطر تفعل ذلك؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "ORDER BY mark DESC LIMIT 3",
+                "ar": "⁦ORDER BY mark DESC LIMIT 3⁩"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "WHERE mark = 3",
+                "ar": "⁦WHERE mark = 3⁩"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "ORDER BY mark LIMIT 3",
+                "ar": "⁦ORDER BY mark LIMIT 3⁩"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "DESC sorts the biggest first, and LIMIT 3 keeps the first three rows. Without DESC you’d get the three lowest; WHERE mark = 3 finds marks of exactly 3.",
+            "ar": "ترتّب DESC الأكبر أولًا، وتُبقي ⁦LIMIT 3⁩ الصفوف الثلاثة الأولى. ودون DESC ستحصل على أدنى ثلاث، أما ⁦WHERE mark = 3⁩ فتجد الدرجات التي تساوي ٣ بالضبط."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p2",
+          "lang": "sql",
+          "prompt": {
+            "en": "Before the parents’ evening: find every pupil in class 6A with a maths mark under 10. Show their name and maths mark.",
+            "ar": "قبل اجتماع أولياء الأمور: جد كل تلميذ في الصف 6A درجته في الرياضيات أقل من ١٠. اعرض اسمه ودرجة الرياضيات."
+          },
+          "setup": "CREATE TABLE results (name TEXT, class TEXT, maths INTEGER, science INTEGER);\nINSERT INTO results VALUES ('Amina', '6A', 14, 15), ('Tunde', '6A', 9, 12), ('Kofi', '6A', 7, 11), ('Zara', '6A', 16, 18),\n  ('Grace', '6B', 17, 16), ('Musa', '6B', 8, 10), ('Lina', '6B', 11, 14), ('Ade', '6B', 13, 9),\n  ('Chidi', '5A', 12, 13), ('Fatima', '5A', 6, 8), ('Yusuf', '5A', 15, 17), ('Nia', '5A', 10, 12);",
+          "starter": "SELECT name, maths FROM results\nWHERE class = '6A';",
+          "solution": "SELECT name, maths FROM results\nWHERE class = '6A' AND maths < 10;",
+          "hints": [
+            {
+              "en": "The starter finds all of 6A. Add a second condition with AND.",
+              "ar": "يجد البرنامج الأول كل ٦أ. أضف شرطًا ثانيًا بـ AND."
+            },
+            {
+              "en": "WHERE class = '6A' AND maths < 10",
+              "ar": "⁦WHERE class = '6A' AND maths < 10⁩"
+            }
+          ],
+          "explain": {
+            "en": "AND keeps only the rows where both conditions are true: Tunde (9) and Kofi (7). Amina and Zara are in 6A too, but their marks are 10 or more.",
+            "ar": "تُبقي AND الصفوف التي يتحقّق فيها الشرطان معًا فقط: تونده (٩) وكوفي (٧). أما أمينة وزارا ففي ٦أ أيضًا، لكن درجتيهما ١٠ أو أكثر."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "p3",
+          "lang": "sql",
+          "prompt": {
+            "en": "Fill the gaps: the names of the pupils in 6B, best science mark first.",
+            "ar": "املأ الفراغات: أسماء تلاميذ ٦ب، الأعلى في العلوم أولًا."
+          },
+          "code": [
+            "SELECT name FROM results\nWHERE class = ",
+            {
+              "blank": 0
+            },
+            "\nORDER BY science ",
+            {
+              "blank": 1
+            },
+            ";"
+          ],
+          "answers": [
+            "'6B'",
+            "DESC"
+          ],
+          "distractors": [
+            "6B",
+            "ASC"
+          ],
+          "explain": {
+            "en": "Text in SQL goes in single quotes, '6B'; without them SQLite can’t read 6B at all and stops with an error (a word like Grace without quotes would be taken as a column name). DESC sorts the biggest first; ASC (the default) would put the lowest first.",
+            "ar": "يوضع النص في SQL بين علامتي تنصيص مفردتين ⁦'6B'⁩، ودونهما لا تستطيع SQLite قراءة ⁦6B⁩ أصلًا وتتوقّف بخطأ (أما كلمة مثل ⁦Grace⁩ بلا علامتين فتُفهم اسمَ عمود). وترتّب DESC الأكبر أولًا، أما ASC (الافتراضية) فتضع الأدنى أولًا."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: run “Who is in class 5B?”, then change '5B' to '6A' and to '6a'. Why does one return nobody? Then write your own query: the pupils who live in Hilltop, youngest first.",
+            "ar": "جرّب: شغّل «من في الفصل 5B؟»، ثم غيّر ⁦'5B'⁩ إلى ⁦'6A'⁩ ثم إلى ⁦'6a'⁩. لماذا لا يعيد أحدهما أحدًا؟ ثم اكتب استعلامك: التلاميذ الذين يسكنون في Hilltop، الأصغر سنًّا أولًا."
+          },
+          "tool": "sqlplay"
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "sql",
+          "prompt": {
+            "en": "The science prize: show the name and science mark of the three highest science marks, highest first.",
+            "ar": "جائزة العلوم: اعرض اسم ودرجة العلوم لأعلى ثلاث درجات في العلوم، الأعلى أولًا."
+          },
+          "setup": "CREATE TABLE results (name TEXT, class TEXT, maths INTEGER, science INTEGER);\nINSERT INTO results VALUES ('Amina', '6A', 14, 15), ('Tunde', '6A', 9, 12), ('Kofi', '6A', 7, 11), ('Zara', '6A', 16, 18),\n  ('Grace', '6B', 17, 16), ('Musa', '6B', 8, 10), ('Lina', '6B', 11, 14), ('Ade', '6B', 13, 9),\n  ('Chidi', '5A', 12, 13), ('Fatima', '5A', 6, 8), ('Yusuf', '5A', 15, 17), ('Nia', '5A', 10, 12);",
+          "starter": "SELECT name, science FROM results\nORDER BY science\nLIMIT 3;",
+          "solution": "SELECT name, science FROM results\nORDER BY science DESC\nLIMIT 3;",
+          "hints": [
+            {
+              "en": "Run it: these are the three lowest.",
+              "ar": "شغّله: هذه أدنى ثلاث."
+            },
+            {
+              "en": "Add DESC after ORDER BY science.",
+              "ar": "أضف DESC بعد ⁦ORDER BY science⁩."
+            }
+          ],
+          "explain": {
+            "en": "ORDER BY on its own sorts from the lowest. DESC flips it, so LIMIT 3 keeps the top three: Zara (18), Yusuf (17) and Grace (16).",
+            "ar": "ترتّب ⁦ORDER BY⁩ وحدها من الأدنى، وتقلبها DESC، فتُبقي ⁦LIMIT 3⁩ الثلاثة الأوائل: زارا (١٨) ويوسف (١٧) وغريس (١٦)."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "p5",
+          "lang": "sql",
+          "prompt": {
+            "en": "Class 6A has four pupils, but this query returns no rows. Which line is wrong?",
+            "ar": "في الصف 6A أربعة تلاميذ، لكن هذا الاستعلام لا يعيد أي صف. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "SELECT name, maths\nFROM results\nWHERE class = '6a'\nORDER BY maths DESC;",
+          "line": 3,
+          "fix": "WHERE class = '6A'",
+          "explain": {
+            "en": "= on text is exact: '6a' with a small a is not '6A'. The query ran without an error and was still wrong, which is why you check answers against what you know.",
+            "ar": "المساواة = على النصوص دقيقة: ⁦'6a'⁩ بحرف صغير ليست ⁦'6A'⁩. وقد عمل الاستعلام دون خطأ وكان مع ذلك خاطئًا، ولهذا تراجع الإجابات على ما تعرفه."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p6",
+          "prompt": {
+            "en": "Which of these are signs that a query or its data needs checking? Choose all that apply.",
+            "ar": "أيّ مما يلي علامة على أن الاستعلام أو بياناته بحاجة إلى مراجعة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "It returns nobody, but you know 6A has pupils",
+                "ar": "لا يعيد أحدًا، مع أنك تعرف أن في ٦أ تلاميذ"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "It returns more pupils than the class has",
+                "ar": "يعيد تلاميذ أكثر مما في الصف"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A mark of 25 out of 20 appears",
+                "ar": "تظهر درجة ٢٥ من ٢٠"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "It returns the four pupils you expected",
+                "ar": "يعيد التلاميذ الأربعة الذين توقّعتهم"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "No rows, too many rows and impossible values all mean something is off: a condition, the spelling in the data, or the data itself. An answer that matches what you know is the one to trust.",
+            "ar": "لا صفوف، أو صفوف أكثر من اللازم، أو قيم مستحيلة، كلها تعني أن شيئًا خاطئ: شرطًا، أو كتابة في البيانات، أو البيانات نفسها. أما الإجابة التي تطابق ما تعرفه فهي التي تثق بها."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which question about your pupils would you ask a database first? Write it in words, then try it in SQL.",
+            "ar": "أيّ سؤال عن تلاميذك ستطرحه على قاعدة البيانات أولًا؟ اكتبه بالكلمات، ثم جرّبه بلغة SQL."
+          },
+          "placeholder": {
+            "en": "For example: “Who in 6B scored under 10 in maths and science?” – SELECT name FROM results WHERE class = '6B' AND maths < 10 AND science < 10.",
+            "ar": "مثلًا: «من في ٦ب نال أقل من ١٠ في الرياضيات والعلوم؟»: ⁦SELECT name FROM results WHERE class = '6B' AND maths < 10 AND science < 10⁩."
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Human database",
+            "ar": "مشروع: قاعدة البيانات البشرية"
+          },
+          "task": {
+            "en": "Give each pupil a card with a class, a birth month and how they travel to school (made up, or chosen by the pupil). Read out queries one at a time, such as “SELECT name WHERE travel = walking ORDER BY birth month” or “WHERE class = 6A AND month > June”. The pupils who match step forward and line up in order. Then pupils write their own query on the board, and the class runs it. If you have a device, run the same queries in SQL.",
+            "ar": "أعطِ كل تلميذ بطاقة فيها صف وشهر ميلاد وطريقة مجيئه إلى المدرسة (خيالية، أو يختارها التلميذ). واقرأ الاستعلامات واحدًا تلو الآخر، مثل «⁦SELECT name WHERE travel = walking ORDER BY birth month⁩» أو «⁦WHERE class = 6A AND month > June⁩». فيتقدّم التلاميذ المطابقون ويصطفّون بالترتيب. ثم يكتب التلاميذ استعلامهم على السبّورة، وينفّذه الصف. وإن كان لديك جهاز، فشغّلوا الاستعلامات نفسها بلغة SQL."
+          },
+          "deliverable": {
+            "en": "A photo of two queries your pupils wrote on the board, and two sentences: which part of a query they found hardest, and one wrong answer the class caught by checking.",
+            "ar": "صورة لاستعلامين كتبهما تلاميذك على السبّورة، وجملتان: أيّ جزء من الاستعلام وجدوه أصعب، وإجابة خاطئة واحدة اكتشفها الصف بالمراجعة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Pupils could: say which part of a query picks columns, rows and the order.",
+                "ar": "تمكّن التلاميذ من: قول أيّ جزء في الاستعلام يختار الأعمدة والصفوف والترتيب."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: combine two conditions with AND or OR.",
+                "ar": "تمكّن التلاميذ من: الجمع بين شرطين بـ AND أو OR."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: check a query’s answer against what they know.",
+                "ar": "تمكّن التلاميذ من: مراجعة إجابة الاستعلام على ما يعرفونه."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Asking questions: SELECT, WHERE, ORDER BY",
+            "ar": "طرح الأسئلة: SELECT وWHERE و⁦ORDER BY⁩"
+          },
+          "note": {
+            "en": "Data engineering · Level 3 · Lesson 2",
+            "ar": "هندسة البيانات، المستوى ٣، الدرس ٢"
+          },
+          "narration": {
+            "en": "Four hundred pupils, one question. Do we scroll, or do we ask?",
+            "ar": "أربعمئة تلميذ وسؤال واحد. هل نتصفّح، أم نسأل؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Pick columns with SELECT and rows with WHERE.",
+              "Sort with ORDER BY, and keep the top rows with LIMIT.",
+              "Check every answer against what we know."
+            ],
+            "ar": [
+              "نختار الأعمدة بـ SELECT والصفوف بـ WHERE.",
+              "نرتّب بـ ⁦ORDER BY⁩، ونُبقي الصفوف الأولى بـ LIMIT.",
+              "نراجع كل إجابة على ما نعرفه."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "SELECT columns, FROM a table, WHERE rows.",
+              "Text in single quotes, matched exactly.",
+              "No error doesn’t mean right."
+            ],
+            "ar": [
+              "SELECT للأعمدة، وFROM للجدول، وWHERE للصفوف.",
+              "النص بين علامتي تنصيص مفردتين، ويُطابَق تمامًا.",
+              "غياب الخطأ لا يعني الصواب."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Human database",
+            "ar": "قاعدة البيانات البشرية"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Find them without a list.",
+              "Teach (8 min): SELECT, FROM, WHERE, ORDER BY.",
+              "Play (15 min): The human database.",
+              "Write (7 min): Pupils’ own queries.",
+              "Wrap-up (5 min): Was any answer wrong?"
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): جدوهم دون قائمة.",
+              "الشرح (٨ دقائق): SELECT وFROM وWHERE و⁦ORDER BY⁩.",
+              "اللعب (١٥ دقيقة): قاعدة البيانات البشرية.",
+              "الكتابة (٧ دقائق): استعلامات التلاميذ.",
+              "الختام (٥ دقائق): هل كانت أي إجابة خاطئة؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Ask: how would you find every pupil in the school who walks more than 30 minutes, from a sheet of 400 rows? Collect ideas.",
+              "Teach (8 min): Write a query on the board and label each part: the columns, the table, the condition and the order. Show AND, OR and DESC.",
+              "Play (15 min): Hand out the cards. Read queries aloud; the matching pupils step forward and line up in order. Include one query that should return nobody.",
+              "Write (7 min): Pairs write a query on the board; the class runs it and checks that the answer makes sense.",
+              "Wrap-up (5 min): Ask how the class knew an answer was wrong. Then give the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اسأل: كيف تجد كل تلميذ في المدرسة يمشي أكثر من ٣٠ دقيقة، من ورقة فيها ٤٠٠ صف؟ واجمع الأفكار.",
+              "الشرح (٨ دقائق): اكتب استعلامًا على السبّورة وسمِّ كل جزء: الأعمدة، والجدول، والشرط، والترتيب. واعرض AND وOR وDESC.",
+              "اللعب (١٥ دقيقة): وزّع البطاقات. واقرأ الاستعلامات بصوت عالٍ، فيتقدّم المطابقون ويصطفّون بالترتيب. وضع بينها استعلامًا يجب ألّا يعيد أحدًا.",
+              "الكتابة (٧ دقائق): يكتب كل زوجين استعلامًا على السبّورة، وينفّذه الصف ويتأكّد أن الإجابة معقولة.",
+              "الختام (٥ دقائق): اسأل: كيف عرف الصف أن إجابة ما خاطئة؟ ثم وزّع بطاقة الخروج."
+            ]
+          },
+          "note": {
+            "en": "Let pupils choose or make up their birth month and travel, so nobody has to share real details. Keep the queries short at first, then add AND and ORDER BY.",
+            "ar": "اترك التلاميذ يختارون شهر ميلادهم وطريقة مجيئهم أو يتخيّلونها، ليلا يُضطر أحد إلى مشاركة بياناته الحقيقية. وابدأ باستعلامات قصيرة، ثم أضف AND و⁦ORDER BY⁩."
+          },
+          "narration": {
+            "en": "If the query matches you, step forward, in order.",
+            "ar": "إن طابقك الاستعلام فتقدّم، بالترتيب."
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which part of a query picks the rows?",
+              "Why did '6a' find nobody?",
+              "How do you get the top three, not the bottom three?"
+            ],
+            "ar": [
+              "أيّ جزء من الاستعلام يختار الصفوف؟",
+              "لماذا لم تجد ⁦'6a'⁩ أحدًا؟",
+              "كيف تحصل على الثلاثة الأوائل لا الأواخر؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write a query for the pupils in 6B with a science mark over 15, highest first."
+            ],
+            "ar": [
+              "اكتب استعلامًا لتلاميذ ٦ب الذين درجتهم في العلوم أكثر من ١٥، الأعلى أولًا."
+            ]
+          },
+          "narration": {
+            "en": "SELECT columns, WHERE rows, then check the answer.",
+            "ar": "SELECT للأعمدة، وWHERE للصفوف، ثم راجع الإجابة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Asking questions: SELECT, WHERE, ORDER BY",
+            "ar": "شرائح: طرح الأسئلة: SELECT وWHERE و⁦ORDER BY⁩"
+          },
+          "pages": 6,
+          "base": "data-3-1-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: Asking questions: SELECT, WHERE, ORDER BY",
+            "ar": "خطة الدرس وورقة العمل: طرح الأسئلة: SELECT وWHERE و⁦ORDER BY⁩"
+          },
+          "pages": 3,
+          "base": "data-3-1-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-3-1-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.3",
+        "DC.1.1"
+      ]
+    },
+    {
+      "id": "data-3-1-3",
+      "title": {
+        "en": "Counts and averages: GROUP BY",
+        "ar": "العدّ والمتوسطات: ⁦GROUP BY⁩"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Pupils group themselves by birth month. Each group counts itself, and the class writes one row per month on the board: that’s GROUP BY, done with people.",
+        "ar": "يتجمّع التلاميذ حسب شهر ميلادهم، وتعدّ كل مجموعة نفسها، ويكتب الصف على السبّورة صفًّا لكل شهر: هذه هي ⁦GROUP BY⁩، منفّذة بالناس."
+      },
+      "materials": {
+        "en": [
+          "Board and chalk",
+          "Space for pupils to stand in groups",
+          "Optional: a phone or computer for the SQL steps"
+        ],
+        "ar": [
+          "السبّورة والطباشير",
+          "مكان يقف فيه التلاميذ في مجموعات",
+          "اختياري: هاتف أو حاسوب لخطوات SQL"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Counts and averages: GROUP BY",
+            "ar": "العدّ والمتوسطات: ⁦GROUP BY⁩"
+          },
+          "src": null,
+          "duration": 180,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A Saturday with a calculator",
+                "ar": "يوم سبت مع الآلة الحاسبة"
+              }
+            },
+            {
+              "at": 18.2,
+              "atBy": {
+                "en": 18.2,
+                "ar": 17
+              },
+              "label": {
+                "en": "Summary functions",
+                "ar": "دوال التلخيص"
+              }
+            },
+            {
+              "at": 33.8,
+              "atBy": {
+                "en": 33.8,
+                "ar": 31.2
+              },
+              "label": {
+                "en": "GROUP BY",
+                "ar": "⁦GROUP BY⁩"
+              }
+            },
+            {
+              "at": 59.2,
+              "atBy": {
+                "en": 59.2,
+                "ar": 56.3
+              },
+              "label": {
+                "en": "HAVING",
+                "ar": "HAVING"
+              }
+            },
+            {
+              "at": 87.4,
+              "atBy": {
+                "en": 87.4,
+                "ar": 83.1
+              },
+              "label": {
+                "en": "NULL",
+                "ar": "NULL"
+              }
+            },
+            {
+              "at": 103.9,
+              "atBy": {
+                "en": 103.9,
+                "ar": 97.9
+              },
+              "label": {
+                "en": "Check before you trust",
+                "ar": "راجع قبل أن تثق"
+              }
+            },
+            {
+              "at": 117,
+              "atBy": {
+                "en": 117,
+                "ar": 110.7
+              },
+              "label": {
+                "en": "The lab",
+                "ar": "المختبر"
+              }
+            },
+            {
+              "at": 146.2,
+              "atBy": {
+                "en": 146.2,
+                "ar": 139.2
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 87.39,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Musa missed the test, so his mark is NULL. What does AVG(mark) do with it?",
+                "ar": "غاب موسى عن الاختبار فدرجته NULL. ماذا تفعل ⁦AVG(mark)⁩ بها؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Counts it as zero",
+                    "ar": "تعدّها صفرًا"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Skips it",
+                    "ar": "تتخطّاها"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Stops with an error",
+                    "ar": "تتوقّف بخطأ"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "AVG and COUNT(mark) skip NULL, so Musa’s empty mark is left out, not counted as zero. COUNT(*) still counts his row, so when the two counts differ, something is missing.",
+                "ar": "تتخطّى AVG و⁦COUNT(mark)⁩ القيمة NULL، فتُستبعد درجة موسى الفارغة ولا تُعدّ صفرًا. أما ⁦COUNT(*)⁩ فتعدّ صفّه مع ذلك، فإذا اختلف العددان فهناك شيء ناقص."
+              }
+            },
+            "atBy": {
+              "en": 87.39,
+              "ar": 83.09
+            }
+          },
+          "transcript": {
+            "en": "The district wants the average science mark for every class, every term. That used to be my whole Saturday, with a calculator. Now it's one query. Today: counts and averages for every group, with GROUP BY. SQL can summarise as well as list. COUNT counts rows. AVG gives the average, and MIN and MAX the lowest and highest. And ROUND tidies the decimals. On their own, they summarise the whole table into one row. GROUP BY splits the rows into groups, one per class, and summarises each group. So you get one row for every class. A group is all the rows that share a value, like every row for Six B. Every column you select must be grouped, or summarised. WHERE filters rows before they're grouped. HAVING filters the groups after: HAVING a count above thirty keeps only the big classes. Quick check! Musa missed the science test, so his mark is empty: NULL. When I average the marks, what does AVG do with his? AVG skips it: Musa's empty mark is left out, not counted as zero. Counting the mark column skips it too, but COUNT star counts every row. So when the two counts differ, something is missing. Summaries hide glitches. Before you trust an average, ask for the lowest and highest in each group. A science mark of ninety-nine out of twenty jumps out at once. In the app, a week of hourly soil readings becomes one average per day: that's a GROUP BY day. Leave out the glitches, and watch days four and five rise by about three while the median doesn't move. Your turn. After grouping by class, I want only the classes with more than thirty pupils. Which line does that? HAVING, because it filters groups after they're counted. Remember: COUNT, AVG, MIN and MAX summarise. GROUP BY makes one row per group. And NULLs are skipped, so check the lowest and highest before you trust an average. Try it in class tomorrow: pupils group themselves by birth month. Each group counts itself, and the class writes one row per month on the board. That's GROUP BY, done with people.",
+            "ar": "الإدارة عايزة متوسط درجات العلوم لكل فصل، كل ترم. ده كان بياخد يوم السبت بتاعي كله، بالآلة الحاسبة. دلوقتي ده استعلام واحد. النهارده: العدّ والمتوسطات لكل مجموعة، بـGROUP BY. SQL بتعرف تلخّص مش بس تعرض. COUNT بتعدّ الصفوف. وAVG بتدّي المتوسط، وMIN وMAX الأقل والأعلى. وROUND بتظبط الكسور. لوحدهم، بيلخّصوا الجدول كله في صف واحد. GROUP BY بتقسّم الصفوف لمجموعات، مجموعة لكل فصل، وبتلخّص كل مجموعة. فيطلعلك صف لكل فصل. المجموعة هي كل الصفوف اللي ليها نفس القيمة، زي كل صفوف ستة ب. وأي عمود بتختاره لازم يكون متجمّع بيه، أو متلخّص. WHERE بتفلتر الصفوف قبل ما تتجمّع. وHAVING بتفلتر المجموعات بعدها: HAVING بعدد أكبر من تلاتين بتسيب الفصول الكبيرة بس. سؤال سريع! موسى غاب عن امتحان العلوم، فدرجته فاضية: NULL. لما أحسب متوسط الدرجات، AVG بتعمل إيه بدرجته؟ AVG بتسيبها: درجة موسى الفاضية بتتشال، مش بتتحسب صفر. وعدّ عمود الدرجة بيسيبها كمان، لكن COUNT نجمة بيعدّ كل صف. فلما العددين يختلفوا، يبقى فيه حاجة ناقصة. الملخّصات بتخبّي الأخطاء. قبل ما تثق في متوسط، اطلب الأقل والأعلى في كل مجموعة. درجة علوم تسعة وتسعين من عشرين بتبان على طول. في التطبيق، أسبوع من قراءات التربة كل ساعة بيتحول لمتوسط لكل يوم: ده GROUP BY باليوم. استبعد الأخطاء، واتفرّج على اليوم الرابع والخامس وهم بيعلوا حوالي تلاتة، والوسيط مش بيتحرك. دورك. بعد ما أجمّع بالفصل، عايز الفصول اللي فيها أكتر من تلاتين تلميذ بس. أنهي سطر بيعمل كده؟ HAVING، لأنها بتفلتر المجموعات بعد ما تتعدّ. افتكر: COUNT وAVG وMIN وMAX بيلخّصوا. وGROUP BY بتعمل صف لكل مجموعة. وNULL بتتساب، فراجع الأقل والأعلى قبل ما تثق في المتوسط. جرّبها في الفصل بكرة: التلاميذ يتجمّعوا حسب شهر ميلادهم. كل مجموعة تعدّ نفسها، والفصل يكتب صف لكل شهر على السبورة. ده GROUP BY، بس بالناس."
+          },
+          "sources": {
+            "en": "/media/data-3-1-3/video-en.mp4",
+            "ar": "/media/data-3-1-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-3-1-3/captions-en.vtt",
+            "ar": "/media/data-3-1-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-3-1-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-3-1-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-3-1-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-3-1-3/light/audio/en.opus",
+              "manifest.json": "/media/data-3-1-3/light/manifest.json",
+              "scenes.json": "/media/data-3-1-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-3-1-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-3-1-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 385,
+              "ar": 370
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Summaries for every group",
+            "ar": "ملخّصات لكل مجموعة"
+          },
+          "body": {
+            "en": "SQL can summarise as well as list. COUNT(*) counts rows; AVG(mark) gives the average; MIN and MAX the lowest and the highest; SUM the total. ROUND(AVG(mark), 1) tidies the average to one decimal place. On their own, these summarise the whole table into a single row: SELECT ROUND(AVG(mark), 1) FROM marks WHERE subject = 'maths' gives the school’s maths average.\n\nGROUP BY splits the rows into groups and summarises each one. SELECT class, ROUND(AVG(mark), 1) FROM marks WHERE subject = 'maths' GROUP BY class gives one row for every class: the work of a Saturday with a calculator, in one query. A group is all the rows that share a value, and every column you select must be either grouped or summarised; selecting name as well would make no sense, because a class has many names.\n\nWHERE and HAVING both filter, at different times. WHERE filters rows before they’re grouped: WHERE subject = 'maths'. HAVING filters the groups afterwards, using their summaries: HAVING COUNT(*) > 3 keeps only the classes with more than three rows (in the lab’s small table; the video uses a bigger threshold). So WHERE COUNT(*) > 3 is an error, because rows haven’t been counted yet.\n\nNULL means empty: nothing was recorded. AVG, SUM and COUNT(mark) skip NULLs, while COUNT(*) still counts the row. When COUNT(*) and COUNT(mark) differ, marks are missing, so say so in the report. And summaries hide glitches: before you trust an average, ask for the MIN and MAX of each group. A science mark of 99 out of 20 jumps out at once.",
+            "ar": "تستطيع SQL أن تلخّص كما تستطيع أن تسرد. فـ ⁦COUNT(*)⁩ تعدّ الصفوف، و⁦AVG(mark)⁩ تعطي المتوسط، وMIN وMAX الأدنى والأعلى، وSUM المجموع. وتهذّب ⁦ROUND(AVG(mark), 1)⁩ المتوسط إلى منزلة عشرية واحدة. وهذه الدوال وحدها تلخّص الجدول كله في صف واحد: فـ ⁦SELECT ROUND(AVG(mark), 1) FROM marks WHERE subject = 'maths'⁩ تعطي متوسط الرياضيات في المدرسة.\n\nأما ⁦GROUP BY⁩ فتقسم الصفوف إلى مجموعات وتلخّص كلًّا منها. فـ ⁦SELECT class, ROUND(AVG(mark), 1) FROM marks WHERE subject = 'maths' GROUP BY class⁩ تعطي صفًّا لكل صف دراسي: عمل يوم سبت كامل مع الآلة الحاسبة، في استعلام واحد. والمجموعة هي كل الصفوف التي تشترك في قيمة، وكل عمود تختاره يجب أن يكون مجمَّعًا أو ملخَّصًا، فاختيار name أيضًا لا معنى له، لأن في الصف الدراسي أسماء كثيرة.\n\nوتصفّي WHERE وHAVING كلتاهما، لكن في وقتين مختلفين. فـ WHERE تصفّي الصفوف قبل تجميعها: ⁦WHERE subject = 'maths'⁩. وتصفّي HAVING المجموعات بعد ذلك بملخّصاتها: فـ ⁦HAVING COUNT(*) > 3⁩ تُبقي الصفوف الدراسية التي فيها أكثر من ثلاثة صفوف فقط (في جدول المختبر الصغير، أما الفيديو فيستعمل حدًّا أكبر). ولهذا تكون ⁦WHERE COUNT(*) > 3⁩ خطأً، لأن الصفوف لم تُعدّ بعد.\n\nوتعني NULL الفراغ: لم يُسجَّل شيء. وتتخطّى AVG وSUM و⁦COUNT(mark)⁩ قيم NULL، أما ⁦COUNT(*)⁩ فتعدّ الصف مع ذلك. وحين تختلف ⁦COUNT(*)⁩ عن ⁦COUNT(mark)⁩ فهناك درجات ناقصة، فاذكر ذلك في التقرير. والملخّصات تُخفي الأخطاء: فقبل أن تثق بمتوسط، اطلب MIN وMAX لكل مجموعة. فدرجة علوم ٩٩ من ٢٠ تظهر فورًا."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "COUNT, AVG, MIN, MAX",
+                "ar": "COUNT وAVG وMIN وMAX"
+              },
+              "def": {
+                "en": "Summary functions: how many, the average, the lowest and the highest.",
+                "ar": "دوال التلخيص: كم، والمتوسط، والأدنى، والأعلى."
+              }
+            },
+            {
+              "term": {
+                "en": "GROUP BY",
+                "ar": "⁦GROUP BY⁩"
+              },
+              "def": {
+                "en": "Splits the rows into groups that share a value and summarises each group: one row per group.",
+                "ar": "تقسم الصفوف إلى مجموعات تشترك في قيمة وتلخّص كل مجموعة: صف لكل مجموعة."
+              }
+            },
+            {
+              "term": {
+                "en": "HAVING",
+                "ar": "HAVING"
+              },
+              "def": {
+                "en": "Filters groups after they are summarised; WHERE filters rows before.",
+                "ar": "تصفّي المجموعات بعد تلخيصها، أما WHERE فتصفّي الصفوف قبل ذلك."
+              }
+            },
+            {
+              "term": {
+                "en": "NULL",
+                "ar": "NULL"
+              },
+              "def": {
+                "en": "An empty value: nothing was recorded. AVG and COUNT(mark) skip it; COUNT(*) counts the row.",
+                "ar": "قيمة فارغة: لم يُسجَّل شيء. تتخطّاها AVG و⁦COUNT(mark)⁩، وتعدّ ⁦COUNT(*)⁩ الصف."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "After GROUP BY class, which line keeps only classes with more than 30 pupils?",
+            "ar": "بعد ⁦GROUP BY class⁩، أيّ سطر يُبقي فقط الصفوف التي فيها أكثر من ٣٠ تلميذًا؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "WHERE COUNT(*) > 30",
+                "ar": "⁦WHERE COUNT(*) > 30⁩"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "HAVING COUNT(*) > 30",
+                "ar": "⁦HAVING COUNT(*) > 30⁩"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "ORDER BY 30",
+                "ar": "⁦ORDER BY 30⁩"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "HAVING filters groups after they’re counted. WHERE works on single rows before grouping, so it can’t use COUNT.",
+            "ar": "تصفّي HAVING المجموعات بعد عدّها، أما WHERE فتعمل على الصفوف المفردة قبل التجميع، فلا تستطيع استعمال COUNT."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p2",
+          "lang": "sql",
+          "prompt": {
+            "en": "The district wants each class’s average maths mark. Show the class and the average rounded to 1 decimal place, one row per class.",
+            "ar": "تريد الإدارة متوسط درجات الرياضيات لكل صف. اعرض الصف والمتوسط مقرّبًا إلى منزلة عشرية واحدة، صفًّا لكل صف دراسي."
+          },
+          "setup": "CREATE TABLE marks (name TEXT, class TEXT, subject TEXT, mark INTEGER);\nINSERT INTO marks VALUES ('Amina', '6A', 'maths', 14), ('Amina', '6A', 'science', 15), ('Tunde', '6A', 'maths', 9), ('Tunde', '6A', 'science', 12),\n  ('Kofi', '6A', 'maths', 7), ('Kofi', '6A', 'science', 11), ('Grace', '6B', 'maths', 17), ('Grace', '6B', 'science', 16),\n  ('Musa', '6B', 'maths', 8), ('Musa', '6B', 'science', NULL), ('Lina', '6B', 'maths', 11), ('Lina', '6B', 'science', 14),\n  ('Chidi', '5A', 'maths', 12), ('Chidi', '5A', 'science', 13), ('Fatima', '5A', 'maths', 6), ('Fatima', '5A', 'science', 8),\n  ('Yusuf', '5A', 'maths', 15), ('Yusuf', '5A', 'science', 17);",
+          "starter": "SELECT class, AVG(mark) FROM marks;",
+          "solution": "SELECT class, ROUND(AVG(mark), 1) FROM marks\nWHERE subject = 'maths'\nGROUP BY class;",
+          "hints": [
+            {
+              "en": "Keep only the maths rows with WHERE, then make one row per class with GROUP BY class.",
+              "ar": "أبقِ صفوف الرياضيات فقط بـ WHERE، ثم اصنع صفًّا لكل صف دراسي بـ ⁦GROUP BY class⁩."
+            },
+            {
+              "en": "ROUND(AVG(mark), 1) gives one decimal place.",
+              "ar": "تعطي ⁦ROUND(AVG(mark), 1)⁩ منزلة عشرية واحدة."
+            }
+          ],
+          "explain": {
+            "en": "WHERE keeps the maths rows, GROUP BY class makes one group per class, and ROUND(AVG(mark), 1) summarises each: 5A 11.0, 6A 10.0, 6B 12.0. Without GROUP BY, the starter squashed every subject and class into one row.",
+            "ar": "تُبقي WHERE صفوف الرياضيات، وتصنع ⁦GROUP BY class⁩ مجموعة لكل صف، وتلخّص ⁦ROUND(AVG(mark), 1)⁩ كلًّا منها: 5A ‏11.0، و6A ‏10.0، و6B ‏12.0. ودون ⁦GROUP BY⁩ دمج البرنامج الأول كل المواد والصفوف في صف واحد."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "p3",
+          "prompt": {
+            "en": "The school has 9 science rows; Musa’s mark is NULL, and the other 8 add up to 106. What does this query return?",
+            "ar": "في المدرسة ٩ صفوف للعلوم، ودرجة موسى NULL، ومجموع الدرجات الثماني الأخرى ١٠٦. ماذا يعيد هذا الاستعلام؟"
+          },
+          "snippet": {
+            "lang": "sql",
+            "text": "SELECT COUNT(*), COUNT(mark), AVG(mark)\nFROM marks\nWHERE subject = 'science';"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "9, 9, 11.78",
+                "ar": "9، 9، 11.78"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "9, 8, 13.25",
+                "ar": "9، 8، 13.25"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "8, 8, 13.25",
+                "ar": "8، 8، 13.25"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "COUNT(*) counts all 9 rows; COUNT(mark) skips the NULL, so 8; and AVG(mark) divides 106 by the 8 real marks: 13.25. Treating Musa’s blank as zero would have given 11.78.",
+            "ar": "تعدّ ⁦COUNT(*)⁩ الصفوف التسعة كلها، وتتخطّى ⁦COUNT(mark)⁩ القيمة NULL فتعطي ٨، وتقسم ⁦AVG(mark)⁩ ‏١٠٦ على الدرجات الحقيقية الثماني: ١٣٫٢٥. أما عدّ فراغ موسى صفرًا فكان سيعطي ١١٫٧٨."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: the daily bars are a GROUP BY day: one average for each day. Before you trust them, look at the Lowest and the Highest. Leave the glitches out: which days change, by how much, and why doesn’t the median move?",
+            "ar": "جرّب: أعمدة الأيام هي ⁦GROUP BY day⁩: متوسط واحد لكل يوم. وقبل أن تثق بها، انظر إلى «الأدنى» و«الأعلى». استبعد الأخطاء: أيّ الأيام تتغيّر، وبكم، ولماذا لا يتحرّك الوسيط؟"
+          },
+          "tool": "datalog"
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "sql",
+          "prompt": {
+            "en": "The absences table has one row for every absence this week. Which classes had more than 3 absences? Show the class and its number of absences.",
+            "ar": "في جدول absences صف لكل غياب هذا الأسبوع. أيّ الصفوف كان فيها أكثر من ٣ غيابات؟ اعرض الصف وعدد غياباته."
+          },
+          "setup": "CREATE TABLE absences (name TEXT, class TEXT, day TEXT);\nINSERT INTO absences VALUES ('Tunde', '6A', 'Mon'), ('Tunde', '6A', 'Tue'), ('Kofi', '6A', 'Mon'), ('Kofi', '6A', 'Thu'), ('Amina', '6A', 'Fri'),\n  ('Musa', '6B', 'Wed'), ('Lina', '6B', 'Wed'), ('Fatima', '5A', 'Mon'), ('Fatima', '5A', 'Tue'), ('Fatima', '5A', 'Wed'), ('Chidi', '5A', 'Fri');",
+          "starter": "SELECT class, COUNT(*) FROM absences\nGROUP BY class;",
+          "solution": "SELECT class, COUNT(*) FROM absences\nGROUP BY class\nHAVING COUNT(*) > 3;",
+          "hints": [
+            {
+              "en": "Run it: all three classes come back. Keep only the big groups.",
+              "ar": "شغّله: تعود الصفوف الثلاثة كلها. أبقِ المجموعات الكبيرة فقط."
+            },
+            {
+              "en": "Add HAVING COUNT(*) > 3 after GROUP BY.",
+              "ar": "أضف ⁦HAVING COUNT(*) > 3⁩ بعد ⁦GROUP BY⁩."
+            }
+          ],
+          "explain": {
+            "en": "GROUP BY class counts each class’s absences: 6A 5, 6B 2 and 5A 4. HAVING COUNT(*) > 3 keeps the groups above 3, so 6A and 5A. WHERE couldn’t do it: it runs before anything is counted.",
+            "ar": "تعدّ ⁦GROUP BY class⁩ غيابات كل صف: ٦أ ٥، و٦ب ٢، و٥أ ٤. وتُبقي ⁦HAVING COUNT(*) > 3⁩ المجموعات التي تزيد على ٣، أي ٦أ و٥أ. ولم تكن WHERE لتستطيع ذلك، لأنها تعمل قبل أي عدّ."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each summary to what it tells you.",
+            "ar": "صِل كل ملخّص بما يخبرك به."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "COUNT(*)",
+                "ar": "⁦COUNT(*)⁩"
+              },
+              "right": {
+                "en": "How many rows, empty marks included",
+                "ar": "كم صفًّا، بما فيها الدرجات الفارغة"
+              }
+            },
+            {
+              "left": {
+                "en": "COUNT(mark)",
+                "ar": "⁦COUNT(mark)⁩"
+              },
+              "right": {
+                "en": "How many rows have a mark",
+                "ar": "كم صفًّا فيه درجة"
+              }
+            },
+            {
+              "left": {
+                "en": "AVG(mark)",
+                "ar": "⁦AVG(mark)⁩"
+              },
+              "right": {
+                "en": "The average of the marks that are there",
+                "ar": "متوسط الدرجات الموجودة"
+              }
+            },
+            {
+              "left": {
+                "en": "MIN and MAX",
+                "ar": "MIN وMAX"
+              },
+              "right": {
+                "en": "The lowest and highest: look here for glitches",
+                "ar": "الأدنى والأعلى: هنا تبحث عن الأخطاء"
+              }
+            }
+          ],
+          "explain": {
+            "en": "COUNT(*) and COUNT(mark) differ exactly when marks are missing, and AVG skips those. MIN and MAX are the quickest way to spot a 99 out of 20 before it spoils an average.",
+            "ar": "تختلف ⁦COUNT(*)⁩ عن ⁦COUNT(mark)⁩ بالضبط حين تنقص درجات، وتتخطّاها AVG. أما MIN وMAX فأسرع طريقة لاكتشاف درجة ٩٩ من ٢٠ قبل أن تُفسد المتوسط."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p6",
+          "prompt": {
+            "en": "WHERE filters groups after they have been counted.",
+            "ar": "تصفّي WHERE المجموعات بعد عدّها."
+          },
+          "answer": false,
+          "explain": {
+            "en": "WHERE filters single rows before grouping; HAVING filters the groups after they’re counted. To keep classes with more than 30 pupils, you need HAVING COUNT(*) > 30.",
+            "ar": "تصفّي WHERE الصفوف المفردة قبل التجميع، أما HAVING فتصفّي المجموعات بعد عدّها. ولإبقاء الصفوف التي فيها أكثر من ٣٠ تلميذًا تحتاج إلى ⁦HAVING COUNT(*) > 30⁩."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which summary does your school work out by hand every term? Write the GROUP BY query that would do it.",
+            "ar": "أيّ ملخّص تحسبه مدرستك باليد كل فصل دراسي؟ اكتب استعلام ⁦GROUP BY⁩ الذي يحسبه."
+          },
+          "placeholder": {
+            "en": "For example: “Attendance per class per month: SELECT class, month, COUNT(*) FROM absences GROUP BY class, month.”",
+            "ar": "مثلًا: «الحضور لكل صف في كل شهر: ⁦SELECT class, month, COUNT(*) FROM absences GROUP BY class, month⁩.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Grouping by hand",
+            "ar": "مشروع: التجميع باليد"
+          },
+          "task": {
+            "en": "Ask pupils to group themselves by birth month (or a month they choose). Each group counts itself and works out one summary, such as the average number of minutes its members take to get to school. The class writes one row per group on the board: that’s GROUP BY. Then filter the groups: which months have more than three pupils? That’s HAVING. If you have a device, run the same idea in SQL on the lesson’s tables.",
+            "ar": "اطلب من التلاميذ أن يتجمّعوا حسب شهر ميلادهم (أو شهر يختارونه). تعدّ كل مجموعة نفسها وتحسب ملخّصًا واحدًا، كمتوسط عدد الدقائق التي يستغرقها أعضاؤها للوصول إلى المدرسة. ويكتب الصف على السبّورة صفًّا لكل مجموعة: هذه هي ⁦GROUP BY⁩. ثم صفّوا المجموعات: أيّ الأشهر فيها أكثر من ثلاثة تلاميذ؟ هذه هي HAVING. وإن كان لديك جهاز، فطبّقوا الفكرة نفسها بلغة SQL على جداول الدرس."
+          },
+          "deliverable": {
+            "en": "A photo of the board’s one-row-per-group table (no names), and two sentences: what HAVING kept, and one summary that would have hidden a glitch without MIN and MAX.",
+            "ar": "صورة لجدول السبّورة الذي فيه صف لكل مجموعة (دون أسماء)، وجملتان: ماذا أبقت HAVING، وملخّص واحد كان سيُخفي خطأً لولا MIN وMAX."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Pupils could: explain that GROUP BY gives one row per group.",
+                "ar": "تمكّن التلاميذ من: شرح أن ⁦GROUP BY⁩ تعطي صفًّا لكل مجموعة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: tell WHERE (rows) from HAVING (groups).",
+                "ar": "تمكّن التلاميذ من: التمييز بين WHERE (الصفوف) وHAVING (المجموعات)."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: say why an empty value is skipped, not counted as zero.",
+                "ar": "تمكّن التلاميذ من: قول لماذا تُتخطّى القيمة الفارغة ولا تُعدّ صفرًا."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Counts and averages: GROUP BY",
+            "ar": "العدّ والمتوسطات: ⁦GROUP BY⁩"
+          },
+          "note": {
+            "en": "Data engineering · Level 3 · Lesson 3",
+            "ar": "هندسة البيانات، المستوى ٣، الدرس ٣"
+          },
+          "narration": {
+            "en": "A whole Saturday with a calculator, or one query?",
+            "ar": "يوم سبت كامل مع الآلة الحاسبة، أم استعلام واحد؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Summarise with COUNT, AVG, MIN and MAX.",
+              "Make one row per group with GROUP BY, and filter groups with HAVING.",
+              "Handle NULL, and check summaries for glitches."
+            ],
+            "ar": [
+              "نلخّص بـ COUNT وAVG وMIN وMAX.",
+              "نصنع صفًّا لكل مجموعة بـ ⁦GROUP BY⁩، ونصفّي المجموعات بـ HAVING.",
+              "نتعامل مع NULL، ونراجع الملخّصات بحثًا عن الأخطاء."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "GROUP BY: one row per group.",
+              "WHERE before grouping, HAVING after.",
+              "Check MIN and MAX before trusting AVG."
+            ],
+            "ar": [
+              "⁦GROUP BY⁩: صف لكل مجموعة.",
+              "WHERE قبل التجميع، وHAVING بعده.",
+              "راجع MIN وMAX قبل أن تثق بـ AVG."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Grouping by hand",
+            "ar": "التجميع باليد"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): How long would this take by hand?",
+              "Teach (8 min): Summaries, GROUP BY and HAVING.",
+              "Group (12 min): By birth month.",
+              "Filter (10 min): HAVING on the board.",
+              "Wrap-up (5 min): The same in SQL."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): كم يستغرق هذا باليد؟",
+              "الشرح (٨ دقائق): الملخّصات و⁦GROUP BY⁩ وHAVING.",
+              "التجميع (١٢ دقيقة): حسب شهر الميلاد.",
+              "التصفية (١٠ دقائق): HAVING على السبّورة.",
+              "الختام (٥ دقائق): الشيء نفسه بلغة SQL."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Ask how long it takes to work out every class’s average by hand, and how often the school does it.",
+              "Teach (8 min): Show COUNT, AVG, MIN and MAX on a small table, then the same with GROUP BY class. Explain WHERE before and HAVING after, and what NULL does.",
+              "Group (12 min): Pupils stand in groups by birth month. Each group counts itself and works out its average travel time; the class writes one row per group.",
+              "Filter (10 min): Cross out the groups with three pupils or fewer: that’s HAVING COUNT(*) > 3. Then ask for each group’s lowest and highest: any glitches?",
+              "Wrap-up (5 min): Write the query for what the class just did. Then give the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اسأل: كم يستغرق حساب متوسط كل صف باليد، وكم مرة تفعل المدرسة ذلك؟",
+              "الشرح (٨ دقائق): اعرض COUNT وAVG وMIN وMAX على جدول صغير، ثم الشيء نفسه مع ⁦GROUP BY class⁩. واشرح WHERE قبل وHAVING بعد، وما تفعله NULL.",
+              "التجميع (١٢ دقيقة): يقف التلاميذ في مجموعات حسب شهر الميلاد. وتعدّ كل مجموعة نفسها وتحسب متوسط مدة وصولها، ويكتب الصف صفًّا لكل مجموعة.",
+              "التصفية (١٠ دقائق): اشطب المجموعات التي فيها ثلاثة تلاميذ أو أقل: هذه ⁦HAVING COUNT(*) > 3⁩. ثم اطلب أدنى وأعلى قيمة لكل مجموعة: هل من أخطاء؟",
+              "الختام (٥ دقائق): اكتب الاستعلام لما فعله الصف للتو. ثم وزّع بطاقة الخروج."
+            ]
+          },
+          "note": {
+            "en": "Pupils may choose a month instead of giving their real birth month. Keep groups small enough to count quickly, and have one pupil whose travel time is “not sure” to show what NULL does.",
+            "ar": "يجوز للتلاميذ اختيار شهر بدل ذكر شهر ميلادهم الحقيقي. واجعل المجموعات صغيرة ليسهل عدّها، وليكن هناك تلميذ مدة وصوله «غير معروفة» لتبيّن ما تفعله NULL."
+          },
+          "narration": {
+            "en": "One group per month: count yourselves, then summarise.",
+            "ar": "مجموعة لكل شهر: عُدّوا أنفسكم، ثم لخّصوا."
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why can’t we select each pupil’s name in a GROUP BY class query?",
+              "What’s the difference between COUNT(*) and COUNT(mark)?",
+              "Why look at MIN and MAX before an average?"
+            ],
+            "ar": [
+              "لماذا لا نستطيع اختيار اسم كل تلميذ في استعلام ⁦GROUP BY class⁩؟",
+              "ما الفرق بين ⁦COUNT(*)⁩ و⁦COUNT(mark)⁩؟",
+              "لماذا ننظر إلى MIN وMAX قبل المتوسط؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write a query for the number of pupils in each class, keeping only classes with more than 30."
+            ],
+            "ar": [
+              "اكتب استعلامًا لعدد التلاميذ في كل صف، مع إبقاء الصفوف التي فيها أكثر من ٣٠ فقط."
+            ]
+          },
+          "narration": {
+            "en": "Group, summarise, and check the lowest and highest.",
+            "ar": "جمّع، ولخّص، وراجع الأدنى والأعلى."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Counts and averages: GROUP BY",
+            "ar": "شرائح: العدّ والمتوسطات: ⁦GROUP BY⁩"
+          },
+          "pages": 6,
+          "base": "data-3-1-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: Counts and averages: GROUP BY",
+            "ar": "خطة الدرس وورقة العمل: العدّ والمتوسطات: ⁦GROUP BY⁩"
+          },
+          "pages": 3,
+          "base": "data-3-1-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-3-1-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.3",
+        "DATA.2",
+        "DC.1.2"
+      ]
+    },
+    {
+      "id": "data-3-1-4",
+      "title": {
+        "en": "Joining tables for reports",
+        "ar": "ربط الجداول لإعداد التقارير"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Ask your pupils what a parent, the school nurse and the head teacher each need from the school records. They sort column cards into three piles. Which columns does nobody need at all?",
+        "ar": "اسأل تلاميذك: ماذا يحتاج كلٌّ من وليّ الأمر وممرّضة المدرسة والمدير من سجلّات المدرسة؟ يصنّفون بطاقات الأعمدة في ثلاث كومات. أيّ الأعمدة لا يحتاج إليها أحد أصلًا؟"
+      },
+      "materials": {
+        "en": [
+          "Column cards: name, class, marks, attendance, phone, address, health notes, date of birth",
+          "Board and chalk",
+          "Optional: a phone or computer for the SQL steps"
+        ],
+        "ar": [
+          "بطاقات أعمدة: الاسم، والصف، والدرجات، والحضور، والهاتف، والعنوان، والملاحظات الصحية، وتاريخ الميلاد",
+          "السبّورة والطباشير",
+          "اختياري: هاتف أو حاسوب لخطوات SQL"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Joining tables for reports",
+            "ar": "ربط الجداول لإعداد التقارير"
+          },
+          "src": null,
+          "duration": 185,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Two pupils vanished",
+                "ar": "تلميذان اختفيا"
+              }
+            },
+            {
+              "at": 16.6,
+              "atBy": {
+                "en": 16.6,
+                "ar": 15.3
+              },
+              "label": {
+                "en": "JOIN and ON",
+                "ar": "JOIN وON"
+              }
+            },
+            {
+              "at": 30.1,
+              "atBy": {
+                "en": 30.1,
+                "ar": 28.9
+              },
+              "label": {
+                "en": "Inner and left",
+                "ar": "الداخلي واليساري"
+              }
+            },
+            {
+              "at": 46,
+              "atBy": {
+                "en": 46,
+                "ar": 45.7
+              },
+              "label": {
+                "en": "Who’s missing?",
+                "ar": "مَن الناقص؟"
+              }
+            },
+            {
+              "at": 95.9,
+              "atBy": {
+                "en": 95.9,
+                "ar": 91.4
+              },
+              "label": {
+                "en": "Reports for readers",
+                "ar": "تقارير لقرّائها"
+              }
+            },
+            {
+              "at": 123.3,
+              "atBy": {
+                "en": 123.3,
+                "ar": 118.4
+              },
+              "label": {
+                "en": "The lab",
+                "ar": "المختبر"
+              }
+            },
+            {
+              "at": 147.9,
+              "atBy": {
+                "en": 147.9,
+                "ar": 142.3
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 85.24,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "An inner join of pupils and marks: what happens to a pupil with no mark?",
+                "ar": "ربط داخلي بين التلاميذ والدرجات: ماذا يحدث للتلميذ الذي لا درجة له؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "They appear with a zero",
+                    "ar": "يظهر بدرجة صفر"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "They’re left out of the result",
+                    "ar": "يُستبعد من النتيجة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "The query stops with an error",
+                    "ar": "يتوقّف الاستعلام بخطأ"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "An inner join keeps only matching pairs, so a pupil with no mark is silently left out. When every pupil must appear, use a left join.",
+                "ar": "يُبقي الربط الداخلي الأزواج المتطابقة فقط، فيُستبعد التلميذ الذي لا درجة له بصمت. وحين يجب أن يظهر كل تلميذ، استعمل الربط اليساري."
+              }
+            },
+            "atBy": {
+              "en": 85.24,
+              "ar": 81.72
+            }
+          },
+          "transcript": {
+            "en": "I joined our pupils table to the marks, and sent the report to the head. Two pupils had vanished from it. Nobody noticed for a whole term. Today: joining tables, and reports that show only what's needed. A join puts rows from two tables side by side. JOIN names the second table, and ON says how rows match: the mark's pupil number equals the pupil's id. A plain JOIN is an inner join: it keeps only rows that match. A pupil with no mark simply vanishes, without a word. LEFT JOIN keeps every row of the first table, and fills the gaps with NULL. So, to find the pupils with no mark, use a left join and keep the rows where the mark is NULL. That's the list of who missed the test. Joins can multiply rows too. A pupil who sat the test and a resit appears twice, once per mark. So count before and after: are rows missing, or counted twice? Quick check! I do an inner join of pupils and marks. What happens to a pupil who has no mark? They're left out, silently. That's how my two pupils vanished. When every pupil must appear, use a left join. Now think about who reads the report. A parent needs their own child's marks. The head needs averages per class. Nobody needs phone numbers and health notes in a marks report. So select only the columns each reader needs, and only their rows. A join can bring in everything; a good report query leaves most of it out. In the app, try each join of pupils and marks. Watch who disappears, who appears twice, and how the count of rows and the count of marks drift apart. Your turn. A report for parents' evening goes to each family. Which columns should it show? Just the child's name and their own marks, for that family only. Remember: a join matches rows on a key. Inner joins drop what doesn't match; left joins keep it as NULL. And a report shows only what its reader needs. Try it in class tomorrow: ask your pupils what a parent, the school nurse and the head teacher each need from the school records. They sort column cards into three piles. Which columns does nobody need at all?",
+            "ar": "ربطت جدول التلاميذ بالدرجات، وبعت التقرير للمدير. اتنين من التلاميذ كانوا اختفوا منه. ومحدش أخد باله ترم كامل. النهارده: ربط الجداول، وتقارير بتعرض اللازم بس. الربط بيحط صفوف من جدولين جنب بعض. JOIN بتسمّي الجدول التاني، وON بتقول الصفوف بتتطابق إزاي: رقم التلميذ في الدرجة يساوي id التلميذ. JOIN العادية اسمها ربط داخلي: بتسيب الصفوف المتطابقة بس. والتلميذ اللي ملوش درجة بيختفي وخلاص، من غير ولا كلمة. أما LEFT JOIN فبتسيب كل صفوف الجدول الأول، وبتملا الفراغات بـNULL. فعلشان تلاقي التلاميذ اللي ملهمش درجة، استخدم ربط يساري وسيب الصفوف اللي الدرجة فيها NULL. ودي قائمة اللي فاتهم الامتحان. والربط ممكن كمان يكرّر الصفوف. التلميذ اللي امتحن ودخل إعادة بيظهر مرتين، مرة لكل درجة. فعدّ قبل وبعد: فيه صفوف ناقصة، ولا متعدّة مرتين؟ سؤال سريع! عملت ربط داخلي بين التلاميذ والدرجات. التلميذ اللي ملوش درجة بيحصله إيه؟ بيتشال، في السكوت. وده اللي خلّى التلميذين بتوعي يختفوا. ولما لازم كل التلاميذ يظهروا، استخدم ربط يساري. فكّر بقى مين هيقرا التقرير. ولي الأمر محتاج درجات ابنه هو بس. والمدير محتاج المتوسطات لكل فصل. ومحدش محتاج أرقام تليفونات ولا ملاحظات صحية في تقرير درجات. فاختار الأعمدة اللي كل قارئ محتاجها بس، وصفوفه هو بس. الربط ممكن يجيب كل حاجة، والاستعلام الكويس للتقرير بيسيب أغلبها برّه. في التطبيق، جرّب كل نوع ربط بين التلاميذ والدرجات. واتفرّج مين بيختفي، ومين بيظهر مرتين، وإزاي عدد الصفوف وعدد الدرجات بيبعدوا عن بعض. دورك. تقرير اجتماع أولياء الأمور رايح لكل أسرة. المفروض يعرض أنهي أعمدة؟ اسم الطفل ودرجاته هو بس، لأسرته بس. افتكر: الربط بيطابق الصفوف على مفتاح. الربط الداخلي بيشيل اللي ما اتطابقش، واليساري بيسيبه NULL. والتقرير بيعرض اللي قارئه محتاجه بس. جرّبها في الفصل بكرة: اسأل تلاميذك ولي الأمر، وممرضة المدرسة، والمدير، كل واحد محتاج إيه من سجلات المدرسة. يقسموا كروت الأعمدة لتلات كومات. أنهي أعمدة محدش محتاجها خالص؟"
+          },
+          "sources": {
+            "en": "/media/data-3-1-4/video-en.mp4",
+            "ar": "/media/data-3-1-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-3-1-4/captions-en.vtt",
+            "ar": "/media/data-3-1-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-3-1-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-3-1-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-3-1-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-3-1-4/light/audio/en.opus",
+              "manifest.json": "/media/data-3-1-4/light/manifest.json",
+              "scenes.json": "/media/data-3-1-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-3-1-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-3-1-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 405,
+              "ar": 388
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Joins and readers",
+            "ar": "الربط والقرّاء"
+          },
+          "body": {
+            "en": "A join puts rows from two tables side by side. JOIN names the second table, and ON says how rows match: SELECT pupils.name, marks.mark FROM pupils JOIN marks ON marks.pupil_id = pupils.id pairs every mark with its pupil’s name. The name is stored once, in pupils; the join brings it in when a report needs it.\n\nA plain JOIN is an inner join: it keeps only rows that match. A pupil with no mark simply vanishes from the result, without an error or a warning, and that’s how two pupils can disappear from a report for a whole term. LEFT JOIN keeps every row of the first table and fills the gaps with NULL. To find the pupils with no mark, use a left join and keep the rows where the mark IS NULL: that’s the list of who missed the test. (Write IS NULL, not = NULL: nothing equals an empty value.)\n\nJoins can multiply rows too. A pupil who sat a test and a resit has two marks, so they appear twice, once per mark, and a class average that counts rows will count them twice. So count before and after a join: are rows missing, or counted twice? Check the counts against what you know about the class.\n\nThen think about who reads the report. A parent needs their own child’s marks. The head teacher needs averages per class. A class teacher needs the list of pupils who missed the test. Nobody needs phone numbers and health notes in a marks report. A join can bring in every column of every table; a good report query selects only the columns its reader needs, and only their rows.",
+            "ar": "يضع الربط صفوفًا من جدولين جنبًا إلى جنب. فـ JOIN تسمّي الجدول الثاني، وON تقول كيف تتطابق الصفوف: فـ ⁦SELECT pupils.name, marks.mark FROM pupils JOIN marks ON marks.pupil_id = pupils.id⁩ تقرن كل درجة باسم صاحبها. والاسم محفوظ مرة واحدة في pupils، ويجلبه الربط حين يحتاج إليه تقرير.\n\nوJOIN وحدها ربط داخلي: تُبقي الصفوف المتطابقة فقط. فالتلميذ الذي لا درجة له يختفي من النتيجة ببساطة، دون خطأ أو تحذير، وهكذا قد يختفي تلميذان من تقرير طوال فصل دراسي كامل. أما ⁦LEFT JOIN⁩ فتُبقي كل صفوف الجدول الأول وتملأ الفجوات بـ NULL. ولإيجاد التلاميذ الذين لا درجات لهم، استعمل الربط اليساري وأبقِ الصفوف التي تكون فيها الدرجة ⁦IS NULL⁩: هذه قائمة من فاتهم الاختبار. (اكتب ⁦IS NULL⁩ لا ⁦= NULL⁩: فلا شيء يساوي قيمة فارغة.)\n\nوقد يضاعف الربط الصفوف أيضًا. فالتلميذ الذي أدّى اختبارًا وإعادة له درجتان، فيظهر مرتين، مرة لكل درجة، ويعدّه متوسط الصف الذي يعدّ الصفوف مرتين. فاعدد قبل الربط وبعده: هل هناك صفوف ناقصة، أم معدودة مرتين؟ وراجع الأعداد على ما تعرفه عن الصف.\n\nثم فكّر فيمن يقرأ التقرير. فوليّ الأمر يحتاج إلى درجات طفله. والمدير يحتاج إلى المتوسطات لكل صف. ومعلّم الصف يحتاج إلى قائمة التلاميذ الذين فاتهم الاختبار. ولا أحد يحتاج إلى أرقام الهواتف والملاحظات الصحية في تقرير درجات. فالربط يستطيع جلب كل أعمدة كل الجداول، أما استعلام التقرير الجيد فلا يختار إلا الأعمدة التي يحتاج إليها قارئه، وصفوفه هو فقط."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "JOIN … ON",
+                "ar": "⁦JOIN … ON⁩"
+              },
+              "def": {
+                "en": "Puts rows of two tables side by side where the keys match, such as marks.pupil_id = pupils.id.",
+                "ar": "تضع صفوف جدولين جنبًا إلى جنب حيث تتطابق المفاتيح، مثل ⁦marks.pupil_id = pupils.id⁩."
+              }
+            },
+            {
+              "term": {
+                "en": "Inner join",
+                "ar": "الربط الداخلي"
+              },
+              "def": {
+                "en": "Keeps only the rows that match; rows with no partner vanish silently.",
+                "ar": "يُبقي الصفوف المتطابقة فقط، وتختفي الصفوف التي لا شريك لها بصمت."
+              }
+            },
+            {
+              "term": {
+                "en": "LEFT JOIN",
+                "ar": "الربط اليساري ⁦LEFT JOIN⁩"
+              },
+              "def": {
+                "en": "Keeps every row of the first table and fills the gaps with NULL.",
+                "ar": "يُبقي كل صفوف الجدول الأول ويملأ الفجوات بـ NULL."
+              }
+            },
+            {
+              "term": {
+                "en": "IS NULL",
+                "ar": "⁦IS NULL⁩"
+              },
+              "def": {
+                "en": "The test for an empty value; = NULL never matches.",
+                "ar": "اختبار القيمة الفارغة، أما ⁦= NULL⁩ فلا تطابق أبدًا."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A report for parents’ evening goes to each family. What should it show?",
+            "ar": "تقرير لاجتماع أولياء الأمور يذهب إلى كل أسرة. ماذا يجب أن يعرض؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Name, class, every mark, phone and health notes",
+                "ar": "الاسم والصف وكل الدرجات والهاتف والملاحظات الصحية"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Their child’s name and their child’s marks",
+                "ar": "اسم طفلها ودرجاته"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Every pupil’s name and marks",
+                "ar": "أسماء كل التلاميذ ودرجاتهم"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Each family needs its own child’s name and marks, and nothing about other children. Phone numbers and health notes don’t belong in a marks report at all.",
+            "ar": "تحتاج كل أسرة إلى اسم طفلها ودرجاته، ولا شيء عن الأطفال الآخرين. أما أرقام الهواتف والملاحظات الصحية فلا مكان لها في تقرير درجات أصلًا."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p2",
+          "lang": "sql",
+          "prompt": {
+            "en": "Show each pupil’s name next to their maths mark from yesterday’s test, by joining pupils to marks on the pupil’s ID.",
+            "ar": "اعرض اسم كل تلميذ بجانب درجته في اختبار الرياضيات أمس، بربط pupils مع marks برقم التلميذ."
+          },
+          "setup": "CREATE TABLE pupils (id INTEGER PRIMARY KEY, name TEXT, class TEXT);\nINSERT INTO pupils VALUES (1, 'Amina', '6A'), (2, 'Tunde', '6A'), (3, 'Grace', '6B'), (4, 'Musa', '6B'), (5, 'Kofi', '6A'), (6, 'Lina', '6B'), (7, 'Chidi', '5A'), (8, 'Zara', '5A');\nCREATE TABLE marks (pupil_id INTEGER REFERENCES pupils(id), mark INTEGER);\nINSERT INTO marks VALUES (1, 14), (2, 9), (3, 17), (4, 8), (5, 15), (6, 11), (7, 12);",
+          "starter": "SELECT name, mark FROM pupils\nJOIN marks;",
+          "solution": "SELECT name, mark FROM pupils\nJOIN marks ON marks.pupil_id = pupils.id;",
+          "hints": [
+            {
+              "en": "Run it: 56 rows for 7 marks. Without ON, every pupil is paired with every mark.",
+              "ar": "شغّله: ٥٦ صفًّا لسبع درجات. فدون ON يُقرن كل تلميذ بكل درجة."
+            },
+            {
+              "en": "Add ON marks.pupil_id = pupils.id.",
+              "ar": "أضف ⁦ON marks.pupil_id = pupils.id⁩."
+            }
+          ],
+          "explain": {
+            "en": "ON says how rows match: a mark belongs to the pupil whose id equals its pupil_id. Without it, SQLite pairs all 8 pupils with all 7 marks: 56 rows of nonsense. With it, 7 rows; Zara, who has no mark, isn’t there, because this is an inner join.",
+            "ar": "تقول ON كيف تتطابق الصفوف: الدرجة تخصّ التلميذ الذي يساوي رقمُه id قيمةَ pupil_id فيها. ودونها تقرن SQLite التلاميذ الثمانية بالدرجات السبع: ٥٦ صفًّا بلا معنى. ومعها ٧ صفوف، وزارا التي لا درجة لها ليست بينها، لأن هذا ربط داخلي."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p3",
+          "prompt": {
+            "en": "A LEFT JOIN keeps every row of the first table, with NULL where there is no match.",
+            "ar": "يُبقي الربط اليساري ⁦LEFT JOIN⁩ كل صفوف الجدول الأول، مع NULL حيث لا تطابق."
+          },
+          "answer": true,
+          "explain": {
+            "en": "That’s the difference from an inner join: no pupil vanishes. Their missing mark shows as NULL, which you can then look for with IS NULL.",
+            "ar": "هذا هو الفرق عن الربط الداخلي: لا يختفي أي تلميذ، وتظهر درجته الناقصة NULL، فتستطيع بعد ذلك البحث عنها بـ ⁦IS NULL⁩."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: for each join, compare COUNT(*), COUNT(mark) and AVG(mark). Which join keeps every pupil? Why does the average stay the same when rows are added? And which pupil would be counted twice in a class average?",
+            "ar": "جرّب: قارن في كل ربط بين ⁦COUNT(*)⁩ و⁦COUNT(mark)⁩ و⁦AVG(mark)⁩. أيّ ربط يُبقي كل التلاميذ؟ ولماذا يبقى المتوسط كما هو حين تُضاف صفوف؟ وأيّ تلميذ سيُعدّ مرتين في متوسط الصف؟"
+          },
+          "tool": "join"
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "sql",
+          "prompt": {
+            "en": "Who missed yesterday’s maths test? Show the names of the pupils who have no mark.",
+            "ar": "مَن فاته اختبار الرياضيات أمس؟ اعرض أسماء التلاميذ الذين لا درجات لهم."
+          },
+          "setup": "CREATE TABLE pupils (id INTEGER PRIMARY KEY, name TEXT, class TEXT);\nINSERT INTO pupils VALUES (1, 'Amina', '6A'), (2, 'Tunde', '6A'), (3, 'Grace', '6B'), (4, 'Musa', '6B'), (5, 'Kofi', '6A'), (6, 'Lina', '6B'), (7, 'Chidi', '5A'), (8, 'Zara', '5A');\nCREATE TABLE marks (pupil_id INTEGER REFERENCES pupils(id), mark INTEGER);\nINSERT INTO marks VALUES (1, 14), (2, 9), (3, 17), (4, 8), (5, 15), (6, 11), (7, 12);",
+          "starter": "SELECT name FROM pupils\nJOIN marks ON marks.pupil_id = pupils.id\nWHERE mark IS NULL;",
+          "solution": "SELECT name FROM pupils\nLEFT JOIN marks ON marks.pupil_id = pupils.id\nWHERE mark IS NULL;",
+          "hints": [
+            {
+              "en": "Run it: no rows. An inner join has already dropped the pupils with no mark.",
+              "ar": "شغّله: لا صفوف. فالربط الداخلي أسقط بالفعل التلاميذ الذين لا درجات لهم."
+            },
+            {
+              "en": "Change JOIN to LEFT JOIN.",
+              "ar": "غيّر JOIN إلى ⁦LEFT JOIN⁩."
+            }
+          ],
+          "explain": {
+            "en": "The inner join keeps only pupils with a mark, so none of them has a NULL mark: no rows. LEFT JOIN keeps every pupil, gives Zara a NULL mark, and WHERE mark IS NULL picks her out.",
+            "ar": "يُبقي الربط الداخلي التلاميذ الذين لهم درجات فقط، فلا أحد منهم درجته NULL: لا صفوف. أما ⁦LEFT JOIN⁩ فتُبقي كل التلاميذ، وتعطي زارا درجة NULL، فتلتقطها ⁦WHERE mark IS NULL⁩."
+          }
+        },
+        {
+          "type": "parsons",
+          "id": "p5",
+          "lang": "sql",
+          "prompt": {
+            "en": "A report for the head teacher: each class’s average mark, rounded to 1 decimal place, in class order. Put the lines in order, leaving out the one the head doesn’t need.",
+            "ar": "تقرير للمدير: متوسط درجات كل صف، مقرّبًا إلى منزلة عشرية واحدة، بترتيب الصفوف. رتّب الأسطر، واترك السطر الذي لا يحتاج إليه المدير."
+          },
+          "lines": [
+            "SELECT pupils.class, ROUND(AVG(marks.mark), 1)",
+            "FROM pupils",
+            "JOIN marks ON marks.pupil_id = pupils.id",
+            "GROUP BY pupils.class",
+            "ORDER BY pupils.class;"
+          ],
+          "distractors": [
+            "SELECT pupils.name, pupils.class, marks.mark"
+          ],
+          "explain": {
+            "en": "SQL needs its clauses in this order: SELECT, FROM, JOIN … ON, GROUP BY, ORDER BY. The head needs one average per class, not every pupil’s name and mark, so the report selects only the class and its average.",
+            "ar": "تحتاج SQL إلى أجزائها بهذا الترتيب: SELECT، ثم FROM، ثم JOIN … ON، ثم ⁦GROUP BY⁩، ثم ⁦ORDER BY⁩. والمدير يحتاج إلى متوسط واحد لكل صف، لا إلى اسم كل تلميذ ودرجته، فلا يختار التقرير إلا الصف ومتوسطه."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you do?",
+            "ar": "ماذا تفعل؟"
+          },
+          "who": {
+            "en": "Mr Joseph, computer studies",
+            "ar": "أ. جوزيف، معلّم مادة الحاسوب"
+          },
+          "initial": {
+            "en": "J",
+            "ar": "ج"
+          },
+          "situation": {
+            "en": "The head teacher asks Mr Joseph to join every table (pupils, marks, attendance, health notes and parents’ phones) into one big spreadsheet and share it with all the staff, “so everyone has everything”.",
+            "ar": "يطلب المدير من أ. جوزيف أن يربط كل الجداول (التلاميذ، والدرجات، والحضور، والملاحظات الصحية، وهواتف الأهل) في جدول بيانات كبير واحد، ويشاركه مع كل الموظفين، «ليكون لدى الجميع كل شيء»."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "Build it and share it, as asked.",
+                "ar": "يبنيه ويشاركه كما طُلب."
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Every member of staff, and anyone they forward it to, would see every child’s health notes and family phones. One lost laptop or forwarded file would expose the whole school.",
+                "ar": "سيرى كل موظف، وكل من يعيد إليه الملف، الملاحظات الصحية لكل طفل وهواتف أسرته. وحاسوب محمول واحد مفقود أو ملف واحد معاد إرساله سيكشف المدرسة كلها."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "Offer one report per reader: averages for the head, class lists for teachers, health notes only for the nurse.",
+                "ar": "يقترح تقريرًا لكل قارئ: المتوسطات للمدير، وقوائم الصفوف للمعلّمين، والملاحظات الصحية للممرّضة فقط."
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Each person gets what their job needs from the same database, and nothing more. The data stays in one place, and a report is just a query away.",
+                "ar": "يحصل كل شخص من قاعدة البيانات نفسها على ما يحتاج إليه عمله، لا أكثر. وتبقى البيانات في مكان واحد، والتقرير ليس إلا استعلامًا."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "Refuse to share any reports at all.",
+                "ar": "يرفض مشاركة أي تقارير أصلًا."
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Staff do need data to teach and to care for pupils. The answer isn’t no data, but the right data for each reader.",
+                "ar": "الموظفون يحتاجون فعلًا إلى البيانات للتدريس ورعاية التلاميذ. والحل ليس منع البيانات، بل البيانات المناسبة لكل قارئ."
+              }
+            }
+          ],
+          "explain": {
+            "en": "Give each reader the report their role needs from one database, and nothing more.",
+            "ar": "أعطِ كل قارئ التقرير الذي يحتاجه دوره من قاعدة بيانات واحدة، ولا شيء أكثر."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Pick one report your school makes. Who reads it, and which columns could it leave out?",
+            "ar": "اختر تقريرًا تصنعه مدرستك. مَن يقرؤه، وأيّ الأعمدة يمكن أن يستغني عنها؟"
+          },
+          "placeholder": {
+            "en": "For example: “The class list on the notice board shows dates of birth. Nobody reading it needs them.”",
+            "ar": "مثلًا: «قائمة الصف على لوحة الإعلانات تعرض تواريخ الميلاد، ولا أحد ممن يقرؤها يحتاج إليها.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A report for one reader",
+            "ar": "مشروع: تقرير لقارئ واحد"
+          },
+          "task": {
+            "en": "Make column cards: name, class, marks, attendance, phone, address, health notes, date of birth. In groups, pupils sort the cards into what a parent, the school nurse and the head teacher each need. Discuss the columns that nobody needs, and the ones only one reader should see. Then, with your class or on your own, write (on paper or in SQL) the report query for one reader, selecting only their columns.",
+            "ar": "اصنع بطاقات أعمدة: الاسم، والصف، والدرجات، والحضور، والهاتف، والعنوان، والملاحظات الصحية، وتاريخ الميلاد. ويصنّف التلاميذ في مجموعات البطاقات حسب ما يحتاج إليه كلٌّ من وليّ الأمر وممرّضة المدرسة والمدير. وناقشوا الأعمدة التي لا يحتاج إليها أحد، والتي يجب ألّا يراها إلا قارئ واحد. ثم اكتب مع صفّك أو وحدك (على الورق أو بلغة SQL) استعلام التقرير لقارئ واحد، لا يختار إلا أعمدته."
+          },
+          "deliverable": {
+            "en": "A photo of the three piles of cards, and two sentences: which column nobody needed, and the SELECT line of your report for one reader.",
+            "ar": "صورة لكومات البطاقات الثلاث، وجملتان: أيّ عمود لم يحتج إليه أحد، وسطر SELECT في تقريرك لقارئ واحد."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Pupils could: say what each reader of a report needs, and why.",
+                "ar": "تمكّن التلاميذ من: قول ما يحتاج إليه كل قارئ للتقرير، ولماذا."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: find columns that no report needs to show.",
+                "ar": "تمكّن التلاميذ من: إيجاد الأعمدة التي لا يحتاج أي تقرير إلى عرضها."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: explain how an inner join can make pupils vanish.",
+                "ar": "تمكّن التلاميذ من: شرح كيف يمكن أن يُخفي الربط الداخلي تلاميذ."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Joining tables for reports",
+            "ar": "ربط الجداول لإعداد التقارير"
+          },
+          "note": {
+            "en": "Data engineering · Level 3 · Lesson 4",
+            "ar": "هندسة البيانات، المستوى ٣، الدرس ٤"
+          },
+          "narration": {
+            "en": "Two pupils vanished from a report, and nobody noticed for a term.",
+            "ar": "اختفى تلميذان من تقرير، ولم يلاحظ أحد طوال فصل دراسي."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Join tables with JOIN … ON.",
+              "Choose an inner or a left join, and find who’s missing.",
+              "Write reports that show only what each reader needs."
+            ],
+            "ar": [
+              "نربط الجداول بـ JOIN … ON.",
+              "نختار الربط الداخلي أو اليساري، ونجد الناقصين.",
+              "نكتب تقارير لا تعرض إلا ما يحتاج إليه كل قارئ."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Inner joins drop rows with no match.",
+              "LEFT JOIN … IS NULL finds who’s missing.",
+              "A report shows only what its reader needs."
+            ],
+            "ar": [
+              "الربط الداخلي يُسقط الصفوف التي لا تطابق لها.",
+              "⁦LEFT JOIN⁩ … ⁦IS NULL⁩ تجد الناقصين.",
+              "التقرير لا يعرض إلا ما يحتاج إليه قارئه."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "A report for one reader",
+            "ar": "تقرير لقارئ واحد"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Who reads our reports?",
+              "Teach (8 min): Inner and left joins.",
+              "Sort (12 min): Column cards for three readers.",
+              "Write (10 min): One reader’s query.",
+              "Wrap-up (5 min): What did nobody need?"
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): مَن يقرأ تقاريرنا؟",
+              "الشرح (٨ دقائق): الربط الداخلي واليساري.",
+              "التصنيف (١٢ دقيقة): بطاقات الأعمدة لثلاثة قرّاء.",
+              "الكتابة (١٠ دقائق): استعلام قارئ واحد.",
+              "الختام (٥ دقائق): ماذا لم يحتج إليه أحد؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): List on the board the reports the school makes and who reads each one.",
+              "Teach (8 min): With two small tables on the board, show an inner join (Zara vanishes) and a left join (Zara with an empty mark).",
+              "Sort (12 min): Groups sort the column cards into what a parent, the nurse and the head need, and put aside the cards nobody needs.",
+              "Write (10 min): Each group writes the SELECT for one reader’s report, with only that reader’s columns and rows.",
+              "Wrap-up (5 min): Ask which columns nobody needed, and whether the school should keep collecting them. Then give the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اكتب على السبّورة التقارير التي تصنعها المدرسة ومن يقرأ كلًّا منها.",
+              "الشرح (٨ دقائق): بجدولين صغيرين على السبّورة، اعرض ربطًا داخليًا (تختفي زارا) وربطًا يساريًا (زارا بدرجة فارغة).",
+              "التصنيف (١٢ دقيقة): تصنّف المجموعات بطاقات الأعمدة حسب ما يحتاج إليه وليّ الأمر والممرّضة والمدير، وتضع جانبًا البطاقات التي لا يحتاج إليها أحد.",
+              "الكتابة (١٠ دقائق): تكتب كل مجموعة سطر SELECT لتقرير قارئ واحد، بأعمدة ذلك القارئ وصفوفه فقط.",
+              "الختام (٥ دقائق): اسأل: أيّ الأعمدة لم يحتج إليها أحد، وهل يجب أن تستمر المدرسة في جمعها؟ ثم وزّع بطاقة الخروج."
+            ]
+          },
+          "note": {
+            "en": "Use made-up tables on the board. The discussion of health notes can be sensitive: keep it general, about kinds of data, not about any real pupil.",
+            "ar": "استعمل جداول خيالية على السبّورة. وقد يكون النقاش عن الملاحظات الصحية حساسًا: أبقِه عامًّا، عن أنواع البيانات، لا عن أي تلميذ حقيقي."
+          },
+          "narration": {
+            "en": "Who reads it, and what do they really need?",
+            "ar": "مَن يقرؤه، وماذا يحتاج إليه فعلًا؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why did Zara vanish from the inner join?",
+              "How would you find every pupil who missed a test?",
+              "Which columns should never be in a marks report?"
+            ],
+            "ar": [
+              "لماذا اختفت زارا من الربط الداخلي؟",
+              "كيف تجد كل تلميذ فاته اختبار؟",
+              "أيّ الأعمدة يجب ألّا تكون في تقرير درجات أبدًا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write the SELECT and FROM lines of a report for parents, and say which join you’d use and why."
+            ],
+            "ar": [
+              "اكتب سطرَي SELECT وFROM لتقرير لأولياء الأمور، وقل أيّ ربط ستستعمل ولماذا."
+            ]
+          },
+          "narration": {
+            "en": "Join on a key, and show each reader only what they need.",
+            "ar": "اربط بالمفتاح، ولا تعرض لكل قارئ إلا ما يحتاج إليه."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Joining tables for reports",
+            "ar": "شرائح: ربط الجداول لإعداد التقارير"
+          },
+          "pages": 6,
+          "base": "data-3-1-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: Joining tables for reports",
+            "ar": "خطة الدرس وورقة العمل: ربط الجداول لإعداد التقارير"
+          },
+          "pages": 3,
+          "base": "data-3-1-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-3-1-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.3",
+        "DATA.4"
+      ]
+    },
+    {
+      "id": "data-3-1-check",
+      "title": {
+        "en": "Databases and SQL for school records: unit check",
+        "ar": "قواعد البيانات ولغة SQL لسجلّات المدرسة: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Write one real question about your school as a SQL query (on paper is fine), and say who would read its answer and which columns they need.",
+        "ar": "اكتب سؤالًا حقيقيًا واحدًا عن مدرستك استعلامًا بلغة SQL (على الورق يكفي)، وقل مَن سيقرأ إجابته وأيّ الأعمدة يحتاج إليها."
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "In a school database, where should each class teacher’s phone number be stored?",
+            "ar": "في قاعدة بيانات مدرسية، أين يجب أن يُحفظ رقم هاتف معلّم كل صف؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Once, in the classes table",
+                "ar": "مرة واحدة، في جدول الصفوف"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "In every pupil’s row",
+                "ar": "في صف كل تلميذ"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "In every mark row",
+                "ar": "في كل صف من صفوف الدرجات"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Store each fact once: the phone belongs to the class. Pupils point to their class, and a change happens in one place.",
+            "ar": "احفظ كل معلومة مرة واحدة: فالهاتف يخصّ الصف. ويشير التلاميذ إلى صفّهم، ويحدث التغيير في مكان واحد."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q2",
+          "prompt": {
+            "en": "Match each part of SQL to its job.",
+            "ar": "صِل كل جزء من SQL بعمله."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "SELECT",
+                "ar": "SELECT"
+              },
+              "right": {
+                "en": "Which columns come back",
+                "ar": "أيّ الأعمدة تعود"
+              }
+            },
+            {
+              "left": {
+                "en": "WHERE",
+                "ar": "WHERE"
+              },
+              "right": {
+                "en": "Which rows come back",
+                "ar": "أيّ الصفوف تعود"
+              }
+            },
+            {
+              "left": {
+                "en": "GROUP BY",
+                "ar": "⁦GROUP BY⁩"
+              },
+              "right": {
+                "en": "One row per group",
+                "ar": "صف لكل مجموعة"
+              }
+            },
+            {
+              "left": {
+                "en": "HAVING",
+                "ar": "HAVING"
+              },
+              "right": {
+                "en": "Which groups come back",
+                "ar": "أيّ المجموعات تعود"
+              }
+            }
+          ],
+          "explain": {
+            "en": "SELECT picks columns, WHERE picks rows before grouping, GROUP BY makes the groups, and HAVING picks groups by their summaries.",
+            "ar": "تختار SELECT الأعمدة، وتختار WHERE الصفوف قبل التجميع، وتصنع ⁦GROUP BY⁩ المجموعات، وتختار HAVING المجموعات بملخّصاتها."
+          }
+        },
+        {
+          "type": "order",
+          "id": "q3",
+          "prompt": {
+            "en": "Put the parts of a query in the order SQL needs them.",
+            "ar": "رتّب أجزاء الاستعلام بالترتيب الذي تحتاج إليه SQL."
+          },
+          "steps": [
+            {
+              "en": "SELECT",
+              "ar": "SELECT"
+            },
+            {
+              "en": "FROM",
+              "ar": "FROM"
+            },
+            {
+              "en": "WHERE",
+              "ar": "WHERE"
+            },
+            {
+              "en": "GROUP BY",
+              "ar": "⁦GROUP BY⁩"
+            },
+            {
+              "en": "ORDER BY",
+              "ar": "⁦ORDER BY⁩"
+            },
+            {
+              "en": "LIMIT",
+              "ar": "LIMIT"
+            }
+          ],
+          "explain": {
+            "en": "A query always reads: SELECT columns FROM a table WHERE rows match, GROUP BY a column, ORDER BY a column, LIMIT a number of rows.",
+            "ar": "يُقرأ الاستعلام دائمًا هكذا: SELECT للأعمدة، وFROM للجدول، وWHERE للصفوف المطابقة، و⁦GROUP BY⁩ لعمود، و⁦ORDER BY⁩ لعمود، وLIMIT لعدد من الصفوف."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "q4",
+          "lang": "sql",
+          "prompt": {
+            "en": "This should list 6B’s pupils, but returns nothing. Which line is wrong?",
+            "ar": "يجب أن يسرد هذا الاستعلام تلاميذ ٦ب، لكنه لا يعيد شيئًا. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "SELECT name\nFROM pupils\nWHERE class = '6b';",
+          "line": 3,
+          "fix": "WHERE class = '6B';",
+          "explain": {
+            "en": "= on text is exact, so '6b' doesn’t match '6B'. The query ran without an error, so check answers against what you know.",
+            "ar": "المساواة = على النصوص دقيقة، فلا تطابق ⁦'6b'⁩ القيمة ⁦'6B'⁩. وقد عمل الاستعلام دون خطأ، فراجع الإجابات على ما تعرفه."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q5",
+          "prompt": {
+            "en": "A class has 30 pupils; 2 missed the test, so their marks are NULL. What do COUNT(*) and COUNT(mark) return for the class?",
+            "ar": "في صف ٣٠ تلميذًا، فات اثنين منهم الاختبار فدرجاتهما NULL. ماذا تعيد ⁦COUNT(*)⁩ و⁦COUNT(mark)⁩ لهذا الصف؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "30 and 28",
+                "ar": "30 و28"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "28 and 28",
+                "ar": "28 و28"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "30 and 30",
+                "ar": "30 و30"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "COUNT(*) counts every row; COUNT(mark) skips NULLs. The difference, 2, is exactly the missing marks.",
+            "ar": "تعدّ ⁦COUNT(*)⁩ كل الصفوف، وتتخطّى ⁦COUNT(mark)⁩ قيم NULL. والفرق، ٢، هو بالضبط الدرجات الناقصة."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q6",
+          "prompt": {
+            "en": "WHERE COUNT(*) > 30 keeps only the classes with more than 30 pupils.",
+            "ar": "تُبقي ⁦WHERE COUNT(*) > 30⁩ الصفوف التي فيها أكثر من ٣٠ تلميذًا فقط."
+          },
+          "answer": false,
+          "explain": {
+            "en": "WHERE works on rows before they’re counted, so it can’t use COUNT. Filtering groups needs HAVING COUNT(*) > 30.",
+            "ar": "تعمل WHERE على الصفوف قبل عدّها، فلا تستطيع استعمال COUNT. أما تصفية المجموعات فتحتاج إلى ⁦HAVING COUNT(*) > 30⁩."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q7",
+          "prompt": {
+            "en": "After an inner join of pupils and marks, which of these can happen? Choose all that apply.",
+            "ar": "بعد ربط داخلي بين التلاميذ والدرجات، أيّ مما يلي قد يحدث؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A pupil with no mark disappears",
+                "ar": "يختفي تلميذ لا درجة له"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A pupil with two marks appears twice",
+                "ar": "يظهر مرتين تلميذ له درجتان"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A pupil with no mark appears with a zero",
+                "ar": "يظهر تلميذ لا درجة له بدرجة صفر"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "The query shows a warning about missing pupils",
+                "ar": "يعرض الاستعلام تحذيرًا عن التلاميذ الناقصين"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b"
+          ],
+          "explain": {
+            "en": "An inner join keeps only matches, so unmatched pupils vanish silently, with no zero and no warning, and each match makes a row, so two marks make two rows.",
+            "ar": "يُبقي الربط الداخلي المتطابقات فقط، فيختفي غير المتطابقين بصمت، دون صفر ودون تحذير، وكل تطابق يصنع صفًّا، فالدرجتان تصنعان صفّين."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "q8",
+          "lang": "sql",
+          "prompt": {
+            "en": "Fill the gaps: the names of the pupils who have no mark.",
+            "ar": "املأ الفراغات: أسماء التلاميذ الذين لا درجات لهم."
+          },
+          "code": [
+            "SELECT name FROM pupils\n",
+            {
+              "blank": 0
+            },
+            " marks ON marks.pupil_id = pupils.id\nWHERE mark ",
+            {
+              "blank": 1
+            },
+            ";"
+          ],
+          "answers": [
+            "LEFT JOIN",
+            "IS NULL"
+          ],
+          "distractors": [
+            "JOIN",
+            "= NULL"
+          ],
+          "explain": {
+            "en": "LEFT JOIN keeps every pupil, with NULL where there’s no mark, and IS NULL picks those rows. An inner JOIN would already have dropped them, and = NULL never matches anything.",
+            "ar": "تُبقي ⁦LEFT JOIN⁩ كل التلاميذ، مع NULL حيث لا درجة، وتلتقط ⁦IS NULL⁩ تلك الصفوف. أما JOIN الداخلية فكانت ستُسقطهم مسبقًا، و⁦= NULL⁩ لا تطابق أي شيء أبدًا."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q9",
+          "prompt": {
+            "en": "Complete the sentences.",
+            "ar": "أكمل الجمل."
+          },
+          "sentence": {
+            "en": [
+              "A ",
+              {
+                "blank": 0
+              },
+              " key picks out one row of its table. A ",
+              {
+                "blank": 1
+              },
+              " key points to a row in another table. ",
+              {
+                "blank": 2
+              },
+              " means empty: nothing was recorded."
+            ],
+            "ar": [
+              "يحدّد المفتاح ",
+              {
+                "blank": 0
+              },
+              " صفًّا واحدًا في جدوله. ويشير المفتاح ",
+              {
+                "blank": 1
+              },
+              " إلى صف في جدول آخر. وتعني ",
+              {
+                "blank": 2
+              },
+              " الفراغ: لم يُسجَّل شيء."
+            ]
+          },
+          "bank": {
+            "en": [
+              "primary",
+              "zero",
+              "total",
+              "foreign",
+              "NULL"
+            ],
+            "ar": [
+              "الأساسي",
+              "صفر",
+              "المجموع",
+              "الأجنبي",
+              "NULL"
+            ]
+          },
+          "answers": {
+            "en": [
+              "primary",
+              "foreign",
+              "NULL"
+            ],
+            "ar": [
+              "الأساسي",
+              "الأجنبي",
+              "NULL"
+            ]
+          },
+          "explain": {
+            "en": "Primary keys identify rows, foreign keys link tables, and NULL marks a missing value, which is not the same as zero.",
+            "ar": "المفاتيح الأساسية تحدّد الصفوف، والأجنبية تربط الجداول، وNULL تدلّ على قيمة ناقصة، وهي ليست الصفر."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q10",
+          "prompt": {
+            "en": "What should a marks report for the head teacher show?",
+            "ar": "ماذا يجب أن يعرض تقرير الدرجات للمدير؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Each class’s average mark",
+                "ar": "متوسط درجات كل صف"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Every pupil’s marks, phone and health notes",
+                "ar": "درجات كل تلميذ وهاتفه وملاحظاته الصحية"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Nothing: marks are private",
+                "ar": "لا شيء: الدرجات خاصة"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The head needs to compare classes, so averages per class answer the question. Phones and health notes don’t belong in a marks report, and the right summary isn’t private.",
+            "ar": "يحتاج المدير إلى المقارنة بين الصفوف، فالمتوسطات لكل صف تجيب عن سؤاله. أما الهواتف والملاحظات الصحية فلا مكان لها في تقرير درجات، والملخّص المناسب ليس خاصًّا."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Databases and SQL for school records: review",
+            "ar": "قواعد البيانات ولغة SQL لسجلّات المدرسة: مراجعة"
+          },
+          "note": {
+            "en": "Data engineering · Level 3 · Unit check",
+            "ar": "هندسة البيانات، المستوى ٣، اختبار الوحدة"
+          },
+          "narration": {
+            "en": "Let’s look back at the whole unit and see what stuck.",
+            "ar": "لنراجع الوحدة كلها ونرَ ما الذي رسخ في أذهاننا."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "From sheets to a database",
+              "Asking questions: SELECT, WHERE, ORDER BY",
+              "Counts and averages: GROUP BY",
+              "Joining tables for reports"
+            ],
+            "ar": [
+              "من الجداول إلى قاعدة البيانات",
+              "طرح الأسئلة: SELECT وWHERE و⁦ORDER BY⁩",
+              "العدّ والمتوسطات: ⁦GROUP BY⁩",
+              "ربط الجداول لإعداد التقارير"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "Store each fact once; keys link tables",
+              "SELECT columns, WHERE rows; check the answer",
+              "GROUP BY one row per group; NULL is skipped",
+              "Left joins keep everyone; reports show only what’s needed"
+            ],
+            "ar": [
+              "احفظ كل معلومة مرة واحدة، والمفاتيح تربط الجداول",
+              "SELECT للأعمدة، وWHERE للصفوف، وراجع الإجابة",
+              "⁦GROUP BY⁩ صف لكل مجموعة، وتُتخطّى NULL",
+              "الربط اليساري يُبقي الجميع، والتقارير تعرض الضروري فقط"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Team quiz",
+            "ar": "مسابقة الفرق"
+          },
+          "bullets": {
+            "en": [
+              "Teams (2 min): Make teams of four.",
+              "Quiz (20 min): Read each question; teams agree on one answer.",
+              "Explain (10 min): One team explains each answer.",
+              "Wrap-up (8 min): The hardest question goes on the board."
+            ],
+            "ar": [
+              "الفرق (دقيقتان): كوّنوا فرقًا من أربعة.",
+              "المسابقة (٢٠ دقيقة): اقرأ كل سؤال، ويتّفق كل فريق على إجابة.",
+              "الشرح (١٠ دقائق): يشرح فريق كل إجابة.",
+              "الختام (٨ دقائق): أصعب سؤال على السبّورة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Teams (2 min): Make teams of four and give each team a sheet of paper for its answers.",
+              "Quiz (20 min): Read each question aloud from the quiz sheet; each team agrees on one answer and writes it down.",
+              "Explain (10 min): Reveal each answer and ask one team to explain why it’s right, using an example from the unit.",
+              "Wrap-up (8 min): Write the question most teams got wrong on the board, and work through it together."
+            ],
+            "ar": [
+              "الفرق (دقيقتان): كوّنوا فرقًا من أربعة، وأعطِ كل فريق ورقة لإجاباته.",
+              "المسابقة (٢٠ دقيقة): اقرأ كل سؤال بصوت عالٍ من ورقة الاختبار، ويتّفق كل فريق على إجابة واحدة ويكتبها.",
+              "الشرح (١٠ دقائق): اكشف كل إجابة، واطلب من أحد الفرق أن يشرح سبب صحّتها بمثال من الوحدة.",
+              "الختام (٨ دقائق): اكتب على السبّورة السؤال الذي أخطأت فيه أغلب الفرق، وحلّوه معًا."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which school record would you move into a database first?",
+              "Which query would save you the most time?",
+              "Who reads your reports, and what do they need?"
+            ],
+            "ar": [
+              "أيّ سجلّ مدرسي ستنقله إلى قاعدة بيانات أولًا؟",
+              "أيّ استعلام سيوفّر عليك أكثر وقت؟",
+              "مَن يقرأ تقاريرك، وماذا يحتاج؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One query I will write this week, and who will read its answer."
+            ],
+            "ar": [
+              "استعلام واحد سأكتبه هذا الأسبوع، ومن سيقرأ إجابته."
+            ]
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Databases and SQL for school records: unit check",
+            "ar": "شرائح: قواعد البيانات ولغة SQL لسجلّات المدرسة: اختبار الوحدة"
+          },
+          "pages": 6,
+          "base": "data-3-1-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Review plan and quiz sheet: Databases and SQL for school records: unit check",
+            "ar": "خطة المراجعة وورقة الاختبار: قواعد البيانات ولغة SQL لسجلّات المدرسة: اختبار الوحدة"
+          },
+          "pages": 2,
+          "base": "data-3-1-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "DATA.3",
+        "DATA.1",
+        "DATA.2",
+        "DATA.4",
+        "DC.1.1",
+        "DC.1.2"
+      ]
+    }
+  ]
+}

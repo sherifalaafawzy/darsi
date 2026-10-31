@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
 import { storage } from "../platform";
-import type { Audience, Track } from "../content/types";
+import type { Audience, Stage, Track } from "../content/types";
 
 /** unitId, track and competencies go to the cloud progress doc (admins' summaries); entries saved before cloud sync lack them. */
 export interface LessonResult { done: true; accuracy: number; xp: number; seconds: number; completedAt: string; unitId?: string; track?: Track; competencies?: string[] }
@@ -16,6 +16,8 @@ export interface AppState {
   teach?: "primary" | "secondary" | "university";
   /** Teacher or student (onboarding, or Me); courses for the other audience don't show. School accounts follow their role. */
   audience?: Audience;
+  /** Where a student studies (onboarding, or Me): their placement check and Home start at that stage's level. */
+  stage?: Stage;
   /** The learner's tracks: Home shows one of them at a time (`track`); none chosen means every track on offer. */
   tracks: Track[];
   track?: Track;

@@ -1,0 +1,3321 @@
+{
+  "id": "agents-3-1",
+  "track": "agents",
+  "level": 3,
+  "title": {
+    "en": "How agents work: the loop, tools and memory",
+    "ar": "كيف يعمل الوكلاء: الحلقة والأدوات والذاكرة"
+  },
+  "summary": {
+    "en": "Open the box with Darsi Tiny on your phone: the one text an agent’s model reads and writes, how it picks a tool and fills in its details, what fits in its memory, and how it learns a new tool, and what it forgets.",
+    "ar": "افتح الصندوق مع «درسي الصغير» على هاتفك: النص الواحد الذي يقرؤه نموذج الوكيل ويكتبه، وكيف يختار أداة ويملأ تفاصيلها، وما يتّسع له في ذاكرته، وكيف يتعلّم أداة جديدة، وماذا ينسى."
+  },
+  "lessons": [
+    {
+      "id": "agents-3-1-1",
+      "title": {
+        "en": "Inside the loop",
+        "ar": "داخل الحلقة"
+      },
+      "minutes": 17,
+      "tryTomorrow": {
+        "en": "Write one agent conversation on a long paper strip with your class: the model’s parts (plan, call, answer) in blue, the app’s parts (tools line, request, result) in green. Then ask: which colour can make mistakes, and where would the app check?",
+        "ar": "اكتب مع صفّك محادثة وكيل واحدة على شريط ورق طويل: أجزاء النموذج (الخطة والاستدعاء والجواب) بالأزرق، وأجزاء التطبيق (سطر الأدوات والطلب والنتيجة) بالأخضر. ثم اسأل: أيّ اللونين قد يخطئ، وأين يتحقّق التطبيق؟"
+      },
+      "materials": {
+        "en": [
+          "A long strip of paper (or A4 sheets taped together)",
+          "Blue and green pens or chalk",
+          "A request card, such as “What is 6B’s first lesson tomorrow?”, and the class timetable"
+        ],
+        "ar": [
+          "شريط طويل من الورق (أو أوراق A4 ملصقة معًا)",
+          "أقلام أو طباشير بالأزرق والأخضر",
+          "بطاقة طلب، مثل: «ما الحصة الأولى في جدول 6B غدًا؟»، وجدول حصص الصف"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Inside the loop",
+            "ar": "داخل الحلقة"
+          },
+          "src": null,
+          "duration": 210,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "One long text",
+                "ar": "نص واحد طويل"
+              }
+            },
+            {
+              "at": 19.2,
+              "atBy": {
+                "en": 19.2,
+                "ar": 16.6
+              },
+              "label": {
+                "en": "Markers, and who writes what",
+                "ar": "العلامات، ومَن يكتب ماذا"
+              }
+            },
+            {
+              "at": 54.7,
+              "atBy": {
+                "en": 54.7,
+                "ar": 51.7
+              },
+              "label": {
+                "en": "The loop, step by step",
+                "ar": "الحلقة خطوة بخطوة"
+              }
+            },
+            {
+              "at": 117.6,
+              "atBy": {
+                "en": 117.6,
+                "ar": 111
+              },
+              "label": {
+                "en": "The loop in code, and its stop",
+                "ar": "الحلقة بالكود، ونهايتها"
+              }
+            },
+            {
+              "at": 177.1,
+              "atBy": {
+                "en": 177.1,
+                "ar": 171
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "After Darsi Tiny writes a weather call, who writes the result into the text?",
+                "ar": "بعد أن يكتب «درسي الصغير» استدعاءً لأداة الطقس، مَن يكتب النتيجة في النص؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Darsi Tiny, from what it learned",
+                    "ar": "«درسي الصغير»، مما تعلّمه"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "The app, from the weather tool",
+                    "ar": "التطبيق، من أداة الطقس"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Nobody: the answer comes next",
+                    "ar": "لا أحد: يأتي الجواب مباشرة"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "The app runs the tool and adds its result. The model stops after a call and waits, so it never invents a result.",
+                "ar": "يشغّل التطبيق الأداة ويضيف نتيجتها إلى النص، أما النموذج فيتوقّف بعد الاستدعاء وينتظر. ولو كتب النموذج النتيجة بنفسه لكانت بيانات مختلَقة."
+              }
+            },
+            "at": 103.52,
+            "atBy": {
+              "en": 103.52,
+              "ar": 96.09
+            }
+          },
+          "transcript": {
+            "en": "A colleague asked me: where does an agent keep its plan, its tool calls and its memory? The answer surprises people. It’s all one long text. Let’s open it up. Today: inside the loop, one text at a time. Darsi Tiny reads one text, top to bottom. Small markers split it into parts: the tools that are on, your request, its plan, its call, the result. Each marker is a single token, and nobody can fake one by typing it. The model writes three kinds of part: the plan, the call and the answer. The app writes everything else: the tools line, your request and every result. After a call, the model stops and waits. So the loop is the app, adding to one text. It sends the text so far, and the model writes a call. The app runs the tool and adds the result. Then it sends the text again, until the model answers. Ask for the trip from Kafi to Dala, and the text grows twice. First a route call, and its result: seventy kilometres. Then a weather call for Dala, and its result. Only then does Darsi Tiny write the answer. Quick check! After Darsi Tiny writes a weather call, who writes the result into the text? The app, from the tool. Darsi Tiny was trained to stop after a call and wait. A model that wrote its own result would be inventing data, so a good app never allows it. As code, the loop is only a few lines. Here the model is scripted: a stand-in that returns what a model would write. The code asks for the next part, and stops at an answer. But what if the model never answers? It could call the same tool again and again, and the loop would run forever, using battery and data. So real agents have a step limit, then stop and tell the person. In the app, open What Darsi Tiny sees, then press One step. Watch the text grow: plan, call, result, answer. Then run the trip from Kafi to Dala, and count the calls. Your turn. My agent keeps calling the weather tool, and never answers. What should the app have? A step limit, so the loop stops and tells a person. Remember: it’s all one text, with markers. The model writes plans, calls and answers, and the app adds the results. And every loop needs a stop. Try it in class tomorrow: write one agent conversation on a long paper strip. Model parts in blue, app parts in green. Then ask: which colour can make mistakes, and where would the app check?",
+            "ar": "زميل سألني: الوكيل بيحتفظ بخطته وطلبات الأدوات وذاكرته فين؟ الإجابة بتفاجئ ناس كتير. كله نص واحد طويل. يلا نفتحه. النهارده: جوه الحلقة، نص واحد بيكبر. «درسي الصغير» بيقرا نص واحد، من أوله لآخره. علامات صغيرة بتقسّمه أجزاء: الأدوات الشغالة، وطلبك، وخطته، وطلب الأداة، والنتيجة. كل علامة توكن واحد، ومحدش يقدر يزوّرها بإنه يكتبها. النموذج بيكتب تلات أنواع من الأجزاء: الخطة، وطلب الأداة، والجواب. والتطبيق بيكتب كل الباقي: سطر الأدوات، وطلبك، وكل نتيجة. وبعد طلب الأداة، النموذج بيقف ويستنى. يبقى الحلقة هي التطبيق وهو بيزوّد على نص واحد. يبعت النص لحد دلوقتي، والنموذج يكتب طلب أداة. التطبيق يشغّل الأداة ويضيف النتيجة. وبعدين يبعت النص تاني، لحد ما النموذج يجاوب. اطلب الرحلة من كافي لدالا، والنص هيكبر مرتين. الأول طلب لأداة الطريق، ونتيجته: سبعين كيلومتر. وبعدين طلب لأداة الطقس في دالا، ونتيجته. وبعد كده بس «درسي الصغير» يكتب الجواب. سؤال سريع! بعد ما «درسي الصغير» يكتب طلب لأداة الطقس، مين اللي بيكتب النتيجة في النص؟ التطبيق، من الأداة. «درسي الصغير» اتدرب إنه يقف بعد طلب الأداة ويستنى. ولو النموذج كتب النتيجة بنفسه يبقى بيألّف بيانات، فالتطبيق الكويس عمره ما يسمح بكده. لو كتبناها كود، الحلقة كام سطر بس. والنموذج هنا متبرمج: بديل بيرجّع اللي النموذج كان هيكتبه. الكود بيطلب الجزء الجاي، ويقف عند الجواب. بس لو النموذج عمره ما جاوب؟ ممكن يطلب نفس الأداة تاني وتالت، والحلقة تفضل شغالة على طول، وتصرف بطارية وباقة. علشان كده الوكلاء الحقيقيين ليهم حد لعدد الخطوات، وبعده يقفوا ويقولوا للشخص. في التطبيق، افتح «اللي بيشوفه درسي الصغير»، ودوس «خطوة واحدة». اتفرج على النص وهو بيكبر: خطة، طلب، نتيجة، جواب. وبعدين شغّل الرحلة من كافي لدالا، وعدّ الطلبات. دورك. الوكيل بتاعي فضل يطلب أداة الطقس، ومش بيجاوب أبدًا. التطبيق كان المفروض يبقى فيه إيه؟ حد لعدد الخطوات، علشان الحلقة تقف وتقول لحد. افتكر: كله نص واحد، بعلامات. النموذج بيكتب الخطط وطلبات الأدوات والأجوبة، والتطبيق بيضيف النتايج. وكل حلقة لازم يبقى ليها وقفة. جرّبها في الفصل بكرة: اكتبوا محادثة وكيل واحدة على شريط ورق طويل. أجزاء النموذج بالأزرق، وأجزاء التطبيق بالأخضر. وبعدين اسأل: أنهي لون ممكن يغلط، والتطبيق يراجع فين؟"
+          },
+          "sources": {
+            "en": "/media/agents-3-1-1/video-en.mp4",
+            "ar": "/media/agents-3-1-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-3-1-1/captions-en.vtt",
+            "ar": "/media/agents-3-1-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-3-1-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-3-1-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-3-1-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-3-1-1/light/audio/en.opus",
+              "manifest.json": "/media/agents-3-1-1/light/manifest.json",
+              "scenes.json": "/media/agents-3-1-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-3-1-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-3-1-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 452,
+              "ar": 442
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "One text, read and written in turns",
+            "ar": "نص واحد يُقرأ ويُكتب بالتناوب"
+          },
+          "body": {
+            "en": "Inside an agent there is no hidden notebook for plans or memories: there is one text. Darsi Tiny reads it from top to bottom every time it writes. Markers split it into parts: the tools that are on, the person’s request, the model’s plan, its tool call, the tool’s result and the answer. Each marker is a single token, and text that people type, or that tools return, can never become a marker, so nobody can fake a call by typing one.\n\nThe model writes only three kinds of part: a one-line plan, a tool call (a tool’s name and its details, such as the weather tool with the place Kafi and the day tomorrow) and an answer. Everything else is written by the app: the tools line, your request and every result. Darsi Tiny was trained to stop straight after a call and wait; it never writes a result itself. A result written by a model would be invented data, and a well-built app never lets that happen.\n\nSo the loop is the app adding to one text. It sends the text so far; the model writes a call; the app runs the tool and adds the result; it sends the text again, until the model writes an answer. The trip from Kafi to Dala goes round twice: a route call (70 km), then a weather call for Dala, then the answer. Written as code, the loop is a few lines. When we write it on paper, or in Python without a real model, we use a scripted model: a stand-in that returns what a model would write, so that we can see the loop itself.\n\nEvery loop needs a stop. Normally the answer ends it. But a model can call the same tool again and again, or never reach an answer, and the loop would run on, using battery, data and time. Real agents add a step limit (for example, five calls): when it is reached, the app stops and tells the person. The moment between turns is also where the app can check a call, or ask a person, before anything happens.",
+            "ar": "لا يوجد داخل الوكيل دفتر خفيّ للخطط أو الذكريات: هناك نص واحد. يقرؤه «درسي الصغير» من أوله إلى آخره في كل مرة يكتب فيها. وتقسّمه علامات إلى أجزاء: الأدوات المفعّلة، وطلب الشخص، وخطة النموذج، واستدعاؤه للأداة، ونتيجة الأداة، والجواب. وكل علامة رمز واحد، والنص الذي يكتبه الناس أو تعيده الأدوات لا يمكن أن يصبح علامة، فلا يستطيع أحد أن يزوّر استدعاءً بكتابته.\n\nولا يكتب النموذج إلا ثلاثة أنواع من الأجزاء: خطة من سطر واحد، واستدعاء أداة (اسمها وتفاصيلها، كأداة الطقس مع المكان كافي واليوم غدًا)، وجوابًا. أما الباقي فيكتبه التطبيق: سطر الأدوات، وطلبك، وكل نتيجة. وقد دُرّب «درسي الصغير» على أن يتوقّف مباشرة بعد الاستدعاء وينتظر، فلا يكتب النتيجة بنفسه أبدًا. فالنتيجة التي يكتبها نموذج بيانات مختلَقة، والتطبيق المُتقَن لا يسمح بذلك أبدًا.\n\nإذن فالحلقة هي التطبيق وهو يضيف إلى نص واحد: يرسل النص حتى الآن، فيكتب النموذج استدعاءً، فيشغّل التطبيق الأداة ويضيف النتيجة، ثم يرسل النص من جديد، حتى يكتب النموذج جوابًا. والرحلة من كافي إلى دالا تدور مرتين: استدعاء لأداة الطريق (٧٠ كم)، ثم استدعاء لأداة الطقس في دالا، ثم الجواب. وإذا كُتبت الحلقة بالكود فهي بضعة أسطر. وحين نكتبها على الورق، أو بلغة Python دون نموذج حقيقي، نستعمل نموذجًا مُبرمَجًا: بديلًا يعيد ما كان النموذج سيكتبه، لنرى الحلقة نفسها.\n\nولكل حلقة نهاية. فالجواب ينهيها عادةً، لكن النموذج قد يستدعي الأداة نفسها مرة بعد مرة، أو لا يصل إلى جواب أبدًا، فتستمر الحلقة وتستهلك البطارية والبيانات والوقت. ولذلك يضيف الوكلاء الحقيقيون حدًّا لعدد الخطوات (خمسة استدعاءات مثلًا): فإذا بلغه توقّف التطبيق وأخبر الشخص. واللحظة التي بين الأدوار هي أيضًا المكان الذي يستطيع فيه التطبيق أن يفحص الاستدعاء، أو يستأذن إنسانًا، قبل أن يحدث أي شيء."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Marker",
+                "ar": "العلامة"
+              },
+              "def": {
+                "en": "A single token that splits an agent’s text into parts: tools, request, plan, call, result, answer. Typed text can never become one.",
+                "ar": "رمز واحد يقسّم نص الوكيل إلى أجزاء: الأدوات، والطلب، والخطة، والاستدعاء، والنتيجة، والجواب. ولا يمكن لنص مكتوب أن يصبح علامة."
+              }
+            },
+            {
+              "term": {
+                "en": "Scripted model",
+                "ar": "النموذج المُبرمَج"
+              },
+              "def": {
+                "en": "A stand-in for a model in code or on paper: it returns the plan and the call a real model would write, so the loop can be tested.",
+                "ar": "بديل عن النموذج في الكود أو على الورق: يعيد الخطة والاستدعاء اللذين كان النموذج الحقيقي سيكتبهما، لنختبر الحلقة."
+              }
+            },
+            {
+              "term": {
+                "en": "Step limit",
+                "ar": "حدّ الخطوات"
+              },
+              "def": {
+                "en": "The most tool calls an agent may make for one request; when it is reached, the app stops and tells the person.",
+                "ar": "أكبر عدد من استدعاءات الأدوات مسموح به لطلب واحد؛ فإذا بُلغ توقّف التطبيق وأخبر الشخص."
+              }
+            },
+            {
+              "term": {
+                "en": "Context",
+                "ar": "السياق"
+              },
+              "def": {
+                "en": "Everything the model can see when it writes: the whole text so far, up to the size of its window.",
+                "ar": "كل ما يراه النموذج حين يكتب: النص كله حتى الآن، في حدود حجم نافذته."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "An agent keeps calling the weather tool and never answers. What should the app have?",
+            "ar": "يظلّ وكيل يستدعي أداة الطقس ولا يجيب أبدًا. ما الذي كان ينبغي أن يكون في التطبيق؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A bigger model",
+                "ar": "نموذج أكبر"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A step limit that stops the loop and tells a person",
+                "ar": "حدّ لعدد الخطوات يوقف الحلقة ويُخبر إنسانًا"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A faster phone",
+                "ar": "هاتف أسرع"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "A step limit stops a loop that would run forever, and hands the problem to a person.",
+            "ar": "حدّ لعدد الخطوات يوقف حلقة كانت ستدور بلا نهاية، ويُسلّم الأمر إلى إنسان. أما النموذج الأكبر أو الهاتف الأسرع فلا يضمنان أن تتوقّف الحلقة."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p2",
+          "prompt": {
+            "en": "Match each marker to what follows it in Darsi Tiny’s text.",
+            "ar": "صِل كل علامة بما يأتي بعدها في نص «درسي الصغير»."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "<|tools|>",
+                "ar": "⁦<|tools|>⁩"
+              },
+              "right": {
+                "en": "The tools that are on",
+                "ar": "الأدوات المفعّلة"
+              }
+            },
+            {
+              "left": {
+                "en": "<|plan|>",
+                "ar": "⁦<|plan|>⁩"
+              },
+              "right": {
+                "en": "One sentence: what it will do",
+                "ar": "جملة واحدة: ما سيفعله"
+              }
+            },
+            {
+              "left": {
+                "en": "<|call|>",
+                "ar": "⁦<|call|>⁩"
+              },
+              "right": {
+                "en": "A tool’s name and its details",
+                "ar": "اسم الأداة وتفاصيلها"
+              }
+            },
+            {
+              "left": {
+                "en": "<|result|>",
+                "ar": "⁦<|result|>⁩"
+              },
+              "right": {
+                "en": "What the tool returned, added by the app",
+                "ar": "ما أعادته الأداة، ويضيفه التطبيق"
+              }
+            },
+            {
+              "left": {
+                "en": "<|answer|>",
+                "ar": "⁦<|answer|>⁩"
+              },
+              "right": {
+                "en": "The reply to the person",
+                "ar": "الردّ على الشخص"
+              }
+            }
+          ],
+          "explain": {
+            "en": "The tools line comes first, then the request; the model writes a plan, then a call; the app adds the result after the call marker; the answer ends the turn. It is all one text.",
+            "ar": "يأتي سطر الأدوات أولًا ثم الطلب، ويكتب النموذج خطة ثم استدعاءً، ويضيف التطبيق النتيجة بعد الاستدعاء، ثم يُنهي الجوابُ الدور. وكل ذلك نص واحد."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: pick “What's the weather in Kafi tomorrow?”, open “What Darsi Tiny sees” and press One step. Watch the one text grow: the plan and the call from the model, the result from the app, then the answer. Then run the trip from Kafi to Dala and count the calls before the answer. Answer three different requests to finish. The first run downloads Darsi Tiny once (2.8 MB).",
+            "ar": "جرّب: اختر «ما حالة الطقس في كافي غدًا؟»، وافتح «ما يراه درسي الصغير»، ثم اضغط «خطوة واحدة». لاحظ النص الواحد وهو يكبر: الخطة والاستدعاء من النموذج، والنتيجة من التطبيق، ثم الجواب. ثم شغّل الرحلة من كافي إلى دالا، وعُدّ الاستدعاءات قبل الجواب. أنهِ المختبر بثلاثة طلبات مختلفة. يُنزَّل «درسي الصغير» مرة واحدة في أول تشغيل (٢٫٨ ميغابايت)."
+          },
+          "tool": "agentloop"
+        },
+        {
+          "type": "parsons",
+          "id": "p3",
+          "lang": "python",
+          "prompt": {
+            "en": "Put the app’s loop in order. Here model() is a scripted stand-in that returns what a model would write. The loop must stop at an answer before running any tool, and print the answer at the end.",
+            "ar": "رتّب حلقة التطبيق. الدالة ⁦model()⁩ هنا بديل مُبرمَج يعيد ما كان النموذج سيكتبه. يجب أن تتوقّف الحلقة عند الجواب قبل تشغيل أي أداة، وأن تطبع الجواب في النهاية."
+          },
+          "lines": [
+            "text = request",
+            "while True:",
+            "    part = model(text)",
+            "    if is_answer(part):",
+            "        break",
+            "    result = run_tool(part)",
+            "    text = text + part + result",
+            "print(part)"
+          ],
+          "distractors": [
+            "    result = model(part)"
+          ],
+          "explain": {
+            "en": "The model writes the next part first. If it is the answer, the loop stops before any tool runs. Otherwise the app runs the tool and adds the call and its result to the text, then goes round again. The extra line has the model write its own result: that would be invented data.",
+            "ar": "يكتب النموذج الجزء التالي أولًا. فإن كان جوابًا توقّفت الحلقة قبل تشغيل أي أداة، وإلا شغّل التطبيق الأداة وأضاف الاستدعاء ونتيجته إلى النص، ثم دار مرة أخرى. أما السطر الزائد فيجعل النموذج يكتب النتيجة بنفسه، وهذه بيانات مختلَقة."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p4",
+          "prompt": {
+            "en": "Which parts of an agent’s text does the model write? Choose all that apply.",
+            "ar": "أيّ أجزاء نص الوكيل يكتبها النموذج؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "The plan",
+                "ar": "الخطة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The tool call",
+                "ar": "استدعاء الأداة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The tool’s result",
+                "ar": "نتيجة الأداة"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "The answer",
+                "ar": "الجواب"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "The tools line",
+                "ar": "سطر الأدوات"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "The model writes the plan, the call and the answer. The app writes the tools line, adds the person’s request and runs the tool to get each result, so a result can never be made up by the model.",
+            "ar": "يكتب النموذج الخطة والاستدعاء والجواب. أما التطبيق فيكتب سطر الأدوات، ويضيف طلب الشخص، ويشغّل الأداة ليحصل على كل نتيجة، فلا يمكن أن يختلق النموذج نتيجة."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "This loop is meant to stop after five calls, but it never stops if the model keeps calling tools. Which line is the mistake?",
+            "ar": "يُفترض أن تتوقّف هذه الحلقة بعد خمسة استدعاءات، لكنها لا تتوقّف أبدًا إن ظلّ النموذج يستدعي الأدوات. في أيّ سطر الخطأ؟"
+          },
+          "code": "text = request\nsteps = 0\nwhile steps < 5:\n    steps = 0\n    part = model(text)\n    if is_answer(part):\n        break\n    text = text + part + run_tool(part)",
+          "line": 4,
+          "fix": "    steps = steps + 1",
+          "explain": {
+            "en": "Line 4 sets the counter back to 0 on every turn, so steps < 5 is always true and the loop can run forever. It should count up: steps = steps + 1. Then, after five calls, the loop ends and the app can tell the person.",
+            "ar": "السطر ٤ يعيد العدّاد إلى الصفر في كل دورة، فيبقى الشرط ⁦steps < 5⁩ صحيحًا دائمًا وقد تدور الحلقة بلا نهاية. والصواب أن يزيد العدّاد: ⁦steps = steps + 1⁩، فتنتهي الحلقة بعد خمسة استدعاءات ويستطيع التطبيق أن يخبر الشخص."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of a task you might give an agent at school. Where in its loop would you want the app to stop and check, or ask you?",
+            "ar": "فكّر في مهمة قد تعطيها لوكيل في المدرسة. في أيّ موضع من حلقته تريد أن يتوقّف التطبيق ويتحقّق، أو يسألك؟"
+          },
+          "placeholder": {
+            "en": "For example: “Before any message to parents is sent, and whenever it has made more than three calls for one question.”",
+            "ar": "مثلًا: «قبل إرسال أي رسالة إلى أولياء الأمور، وكلما تجاوز ثلاثة استدعاءات لسؤال واحد.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: One long text",
+            "ar": "مشروع: نص واحد طويل"
+          },
+          "task": {
+            "en": "Tape paper into a long strip on the board or the floor. With your class, write one agent conversation on it, part by part, as Darsi Tiny would: the tools line, a request (“What is 6B’s first lesson tomorrow?”), the plan, the call, the result from the timetable, the answer. Pupils write the model’s parts in blue and the app’s parts in green. Then add a second request that needs two tools, and let the strip grow. Finally, ask: which colour can make mistakes, and where would you put a check or a step limit?",
+            "ar": "ألصق أوراقًا لتصنع شريطًا طويلًا على السبّورة أو الأرض. واكتب عليه مع صفّك محادثة وكيل واحدة، جزءًا بعد جزء، كما يكتبها «درسي الصغير»: سطر الأدوات، ثم الطلب («ما الحصة الأولى في جدول 6B غدًا؟»)، ثم الخطة، ثم الاستدعاء، ثم النتيجة من الجدول، ثم الجواب. يكتب الطلاب أجزاء النموذج بالأزرق وأجزاء التطبيق بالأخضر. ثم أضيفوا طلبًا ثانيًا يحتاج إلى أداتين، ودعوا الشريط يكبر. وفي النهاية اسأل: أيّ اللونين قد يخطئ، وأين نضع فحصًا أو حدًّا لعدد الخطوات؟"
+          },
+          "deliverable": {
+            "en": "A photo of the strip (no faces needed), and two sentences: what your pupils noticed about who writes what, and where they put the checks.",
+            "ar": "صورة للشريط (لا حاجة إلى ظهور الوجوه)، وجملتان: ما الذي لاحظه طلابك عمّن يكتب ماذا، وأين وضعوا الفحوص."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Pupils could: label each part as written by the model or by the app.",
+                "ar": "تمكّن الطلاب من: تمييز كل جزء بأنه من كتابة النموذج أو التطبيق."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: explain why the model must never write a tool’s result.",
+                "ar": "تمكّن الطلاب من: شرح لماذا يجب ألّا يكتب النموذج نتيجة الأداة أبدًا."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: say where a check or a step limit belongs in the loop.",
+                "ar": "تمكّن الطلاب من: تحديد موضع الفحص أو حدّ الخطوات في الحلقة."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Inside the loop",
+            "ar": "داخل الحلقة"
+          },
+          "note": {
+            "en": "AI agents · Level 3 · Lesson 1",
+            "ar": "وكلاء الذكاء الاصطناعي، المستوى ٣، الدرس ١"
+          },
+          "narration": {
+            "en": "Where does an agent keep its plan and its memory?",
+            "ar": "أين يحتفظ الوكيل بخطته وذاكرته؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Read an agent’s conversation as one text with markers.",
+              "Say who writes each part: the model or the app.",
+              "Explain why every loop needs a stop."
+            ],
+            "ar": [
+              "نقرأ محادثة الوكيل نصًّا واحدًا تقسّمه علامات.",
+              "نحدّد مَن يكتب كل جزء: النموذج أم التطبيق.",
+              "نشرح لماذا تحتاج كل حلقة إلى نهاية."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "It’s all one text: tools, request, plan, call, result, answer.",
+              "The model writes plans, calls and answers; the app adds the results.",
+              "The loop stops at an answer, or at a step limit."
+            ],
+            "ar": [
+              "كل شيء نص واحد: الأدوات، والطلب، والخطة، والاستدعاء، والنتيجة، والجواب.",
+              "النموذج يكتب الخطط والاستدعاءات والأجوبة، والتطبيق يضيف النتائج.",
+              "تتوقّف الحلقة عند الجواب، أو عند حدّ الخطوات."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "One long text",
+            "ar": "نص واحد طويل"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Where does an agent keep its plan?",
+              "Teach (10 min): The markers, and who writes what.",
+              "One long text (15 min): A conversation on a strip, in two colours.",
+              "Check it (5 min): Which colour can make mistakes?",
+              "Wrap-up (5 min): Where does the loop stop? Then the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): أين يحتفظ الوكيل بخطته؟",
+              "الشرح (١٠ دقائق): العلامات، ومَن يكتب ماذا.",
+              "نص واحد طويل (١٥ دقيقة): محادثة على شريط، بلونين.",
+              "التحقّق (٥ دقائق): أيّ اللونين قد يخطئ؟",
+              "الختام (٥ دقائق): أين تتوقّف الحلقة؟ ثم بطاقة الخروج."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Ask: when an agent plans a trip in two steps, where does it keep the first step’s answer? Collect ideas, then reveal: in one long text that grows.",
+              "Teach (10 min): Write the six markers on the board (tools, user, plan, call, result, answer). Explain that the model writes the plan, the call and the answer, the app writes the rest, and the model stops after a call and waits.",
+              "One long text (15 min): On a paper strip, the class writes one conversation for “What is 6B’s first lesson tomorrow?”, part by part: model parts in blue, app parts in green. Then add the trip from Kafi to Dala, which needs two calls.",
+              "Check it (5 min): Ask which colour can make mistakes (blue: the model) and where the app could check a call before the green result is written.",
+              "Wrap-up (5 min): Ask what would happen if the model never wrote an answer, and agree on a step limit. Then give the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اسأل: حين يخطّط الوكيل لرحلة من خطوتين، أين يحتفظ بجواب الخطوة الأولى؟ اجمع الأفكار، ثم اكشف الجواب: في نص واحد طويل يكبر.",
+              "الشرح (١٠ دقائق): اكتب العلامات الست على السبّورة (الأدوات، المستخدم، الخطة، الاستدعاء، النتيجة، الجواب). ووضّح أن النموذج يكتب الخطة والاستدعاء والجواب، وأن التطبيق يكتب الباقي، وأن النموذج يتوقّف بعد الاستدعاء وينتظر.",
+              "نص واحد طويل (١٥ دقيقة): يكتب الصف على شريط ورق محادثة واحدة للطلب «ما الحصة الأولى في جدول 6B غدًا؟»، جزءًا بعد جزء: أجزاء النموذج بالأزرق، وأجزاء التطبيق بالأخضر. ثم أضيفوا الرحلة من كافي إلى دالا، وهي تحتاج إلى استدعاءين.",
+              "التحقّق (٥ دقائق): اسأل: أيّ اللونين قد يخطئ؟ (الأزرق: النموذج.) وأين يستطيع التطبيق أن يفحص الاستدعاء قبل أن تُكتب النتيجة الخضراء؟",
+              "الختام (٥ دقائق): اسأل: ماذا يحدث لو لم يكتب النموذج جوابًا أبدًا؟ واتفقوا على حدّ لعدد الخطوات. ثم وزّع بطاقة الخروج."
+            ]
+          },
+          "note": {
+            "en": "Prepare a long paper strip (or A4 sheets taped together), blue and green pens or chalk, and the class timetable on the board. No phones are needed.",
+            "ar": "جهّز شريط ورق طويلًا (أو أوراق A4 ملصقة معًا)، وأقلامًا أو طباشير بالأزرق والأخضر، وجدول الحصص على السبّورة. لا حاجة إلى هواتف."
+          },
+          "narration": {
+            "en": "Blue for the model, green for the app: one text that grows, turn by turn.",
+            "ar": "الأزرق للنموذج والأخضر للتطبيق: نص واحد يكبر دورًا بعد دور."
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why is it safer that only the app runs tools and writes results?",
+              "What could go wrong in a loop with no step limit?",
+              "Where in the loop would you put a check for a message to parents?"
+            ],
+            "ar": [
+              "لماذا يكون أكثر أمانًا أن يشغّل التطبيق وحده الأدوات ويكتب النتائج؟",
+              "ما الذي قد يحدث خطأً في حلقة بلا حدّ للخطوات؟",
+              "في أيّ موضع من الحلقة تضع فحصًا لرسالة إلى أولياء الأمور؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write the six parts of an agent’s text in order, and circle the ones the model writes."
+            ],
+            "ar": [
+              "اكتب أجزاء نص الوكيل الستة بالترتيب، وضع دائرة حول ما يكتبه النموذج منها."
+            ]
+          },
+          "narration": {
+            "en": "One text, two writers: the model writes, the app runs the tools and adds the results.",
+            "ar": "نص واحد وكاتبان: النموذج يكتب، والتطبيق يشغّل الأدوات ويضيف النتائج."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Inside the loop",
+            "ar": "شرائح: داخل الحلقة"
+          },
+          "pages": 6,
+          "base": "agents-3-1-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: Inside the loop",
+            "ar": "خطة الدرس وورقة العمل: داخل الحلقة"
+          },
+          "pages": 3,
+          "base": "agents-3-1-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-3-1-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.1",
+        "T.AF.D"
+      ]
+    },
+    {
+      "id": "agents-3-1-2",
+      "title": {
+        "en": "How it picks a tool",
+        "ar": "كيف يختار أداته"
+      },
+      "minutes": 17,
+      "tryTomorrow": {
+        "en": "Play “Same request, new words”: one pupil is the agent and may only act on wordings on a pattern card. Classmates ask for the same thing in five ways. Count which wordings it understands and which it gets wrong, then write the class’s own checks.",
+        "ar": "العب مع طلابك لعبة «الطلب نفسه بكلمات جديدة»: طالب يمثّل الوكيل ولا يتصرّف إلا بالصياغات المكتوبة على بطاقة الأنماط. ويطلب زملاؤه الشيء نفسه بخمس صياغات. عُدّوا الصياغات التي يفهمها والتي يخطئ فيها، ثم اكتبوا فحوص الصف الخاصة."
+      },
+      "materials": {
+        "en": [
+          "Request-pattern cards: three or four fixed wordings the pupil “agent” understands",
+          "The list of the school’s classes on the board",
+          "Paper slips for the calls"
+        ],
+        "ar": [
+          "بطاقات أنماط الطلبات: ثلاث صياغات ثابتة أو أربع يفهمها الطالب «الوكيل»",
+          "قائمة فصول المدرسة على السبّورة",
+          "قصاصات ورق للاستدعاءات"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "How it picks a tool",
+            "ar": "كيف يختار أداته"
+          },
+          "src": null,
+          "duration": 203,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Copying the wrong words",
+                "ar": "نسخ الكلمات الخطأ"
+              }
+            },
+            {
+              "at": 23.3,
+              "atBy": {
+                "en": 23.3,
+                "ar": 20.7
+              },
+              "label": {
+                "en": "Picking and copying",
+                "ar": "الاختيار والنسخ"
+              }
+            },
+            {
+              "at": 68.6,
+              "atBy": {
+                "en": 68.6,
+                "ar": 64.1
+              },
+              "label": {
+                "en": "How often it slips",
+                "ar": "كم مرة يخطئ"
+              }
+            },
+            {
+              "at": 131.1,
+              "atBy": {
+                "en": 131.1,
+                "ar": 125.6
+              },
+              "label": {
+                "en": "Checks, and the lab",
+                "ar": "الفحص، والمختبر"
+              }
+            },
+            {
+              "at": 171.3,
+              "atBy": {
+                "en": 171.3,
+                "ar": 161.3
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Why does a new way of asking make Darsi Tiny slip more often?",
+                "ar": "لماذا تجعل الطريقة الجديدة في السؤال «درسي الصغير» يخطئ أكثر؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "It learned patterns of wording, and a new wording fits them less well",
+                    "ar": "تعلّم أنماطًا في الصياغة، والصياغة الجديدة تطابقها أقل"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "It needs more time to think about new wordings",
+                    "ar": "يحتاج إلى وقت أطول ليفكّر في الصياغات الجديدة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Its tools change when the wording changes",
+                    "ar": "تتغيّر أدواته حين تتغيّر الصياغة"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "It learned patterns from the wordings in its training, so a new wording fits them less well: 96–98% right falls to about 78–80%.",
+                "ar": "تعلّم أنماطًا من الصياغات التي تدرّب عليها، فتطابقها الصياغة الجديدة أقل: تنخفض الإجابات الصحيحة من نحو ٩٧٪ إلى نحو ٧٩٪. ولا تتغيّر أدواته، ولا يحتاج إلى وقت أطول."
+              }
+            },
+            "at": 97.17,
+            "atBy": {
+              "en": 97.17,
+              "ar": 92.48
+            }
+          },
+          "transcript": {
+            "en": "I asked an agent to explain the term malware. It looked up “the term malware”, not “malware”! So how does a model choose a tool, and why does it slip? Today: how an agent picks a tool, and fills in the details. Before your request, the app writes a tools line: the names of the tools that are on. The model reads that line and your words, and nothing else. From them, it picks one tool, or none. Each tool needs details, like a place and a day. The model copies them from your words into the call, so Kafi stays Kafi. Days and times go in a fixed form that the tool can read. The details in a call are called its arguments. Each tool has its own: the weather needs a place and a day, a reminder needs its text and a time. When one is missing, a good agent asks. How good is Darsi Tiny? With wordings it was trained on, it gets the tool and every argument right ninety-six to ninety-eight times in a hundred. With new wordings, about seventy-eight to eighty. That’s roughly one slip in five. Quick check! Why does a new way of asking make Darsi Tiny slip more often? It learned patterns of wording. A small model has seen each kind of request in a few dozen forms, and a new form fits them less well. Big models have seen far more, so they slip less, but they still slip. Here are real slips from the lab. Asked about class 9Z, which doesn’t exist, it wrote 9C, a class it knows. And the capital of France, asked one way, sent it to the glossary instead of saying it can’t. So the app checks every call before it runs. Is the tool on? Did each name come from your words? Is the time a real time? A few lines of code catch these slips. In the app, switch the weather tool off and ask about it. Ask what 9Z has tomorrow, and read the check under the call. Then ask about France, in two ways. Your turn. I asked for a reminder at eight, and the call says nine. What should the app do? Stop it, and ask me again: nine isn’t what I said. Remember: the model reads the tools line and your words. It copies details into arguments, and new wordings slip more. So the app checks every call. Try it in class tomorrow: one pupil plays the agent, with a card of request patterns. Classmates ask for the same thing in five ways. Which wordings make the agent slip?",
+            "ar": "طلبت من وكيل يشرح مصطلح البرمجيات الخبيثة. دوّر على «مصطلح البرمجيات الخبيثة»، مش «البرمجيات الخبيثة»! طب النموذج بيختار الأداة إزاي، وليه بيغلط؟ النهارده: الوكيل بيختار أداته إزاي، وبيملا التفاصيل إزاي. قبل طلبك، التطبيق بيكتب سطر الأدوات: أسامي الأدوات الشغالة. النموذج بيقرا السطر ده وكلامك، ومفيش حاجة تانية. ومنهم، بيختار أداة واحدة، أو ولا أداة. كل أداة محتاجة تفاصيل، زي المكان واليوم. النموذج بينقلها من كلامك لطلب الأداة، فكافي تفضل كافي. والأيام والمواعيد بتتكتب بشكل ثابت الأداة تقدر تقراه. التفاصيل اللي في الطلب بنسميها «المُدخلات». كل أداة ليها مدخلاتها: الطقس محتاج مكان ويوم، والتذكير محتاج نصه وميعاد. ولو واحدة ناقصة، الوكيل الكويس بيسأل. طب «درسي الصغير» شاطر قد إيه؟ مع صيغ اتدرب عليها، بيجيب الأداة وكل المدخلات صح من ستة وتسعين لتمانية وتسعين مرة من مية. ومع صيغ جديدة، حوالي تمانية وسبعين لتمانين. يعني تقريبًا غلطة من كل خمسة. سؤال سريع! ليه الطريقة الجديدة في السؤال بتخلّي «درسي الصغير» يغلط أكتر؟ هو اتعلم أنماط في طريقة الكلام. النموذج الصغير شاف كل نوع طلب بكام عشرة شكل، والشكل الجديد مش بيطابق الأنماط دي قوي. والنماذج الكبيرة شافت أكتر بكتير، فبتغلط أقل، بس برضه بتغلط. دي غلطات حقيقية من المعمل. لما اتسأل عن فصل 9Z، وهو مش موجود، كتب 9C، فصل يعرفه. وعاصمة فرنسا، لما اتسألت بطريقة معينة، ودّته للقاموس بدل ما يقول إنه مش قادر. علشان كده التطبيق بيراجع كل طلب قبل ما يتنفذ. الأداة شغالة؟ كل اسم جه من كلامك؟ الميعاد ميعاد حقيقي؟ كام سطر كود بيمسكوا غلطات زي دي. في التطبيق، اقفل أداة الطقس واسأل عنه. اسأل 9Z عندها إيه بكرة، واقرا المراجعة اللي تحت الطلب. وبعدين اسأل عن فرنسا، بطريقتين. دورك. طلبت تذكير الساعة تمانية، والطلب مكتوب فيه تسعة. التطبيق يعمل إيه؟ يوقفه، ويسألني تاني: تسعة مش اللي أنا قلته. افتكر: النموذج بيقرا سطر الأدوات وكلامك. بينقل التفاصيل للمدخلات، والصيغ الجديدة بتغلط أكتر. فالتطبيق بيراجع كل طلب. جرّبها في الفصل بكرة: تلميذ يمثّل الوكيل، ومعاه كارت فيه أنماط الطلبات. وزمايله يطلبوا نفس الحاجة بخمس طرق. أنهي صيغ بتخلّي الوكيل يغلط؟"
+          },
+          "sources": {
+            "en": "/media/agents-3-1-2/video-en.mp4",
+            "ar": "/media/agents-3-1-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-3-1-2/captions-en.vtt",
+            "ar": "/media/agents-3-1-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-3-1-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-3-1-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-3-1-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-3-1-2/light/audio/en.opus",
+              "manifest.json": "/media/agents-3-1-2/light/manifest.json",
+              "scenes.json": "/media/agents-3-1-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-3-1-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-3-1-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 441,
+              "ar": 415
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Picking a tool, copying the details",
+            "ar": "اختيار الأداة ونسخ التفاصيل"
+          },
+          "body": {
+            "en": "Before your request, the app writes a tools line: the names of the tools that are switched on. The model reads that line and your words, and nothing else. From them it decides: call one tool, ask for something that is missing, or say it can’t. A good agent says so when a tool is off (“the weather tool is turned off”) and says “I can’t” when no tool fits, such as booking a bus ticket.\n\nThen it fills in the tool’s arguments: the details the tool needs. The weather needs a place and a day; a reminder needs its text and a time; the timetable needs a class and a day. The model copies names, places and message text from your words, word for word, and writes days and times in the tool’s fixed form (eight o’clock tomorrow becomes “tomorrow 08:00”). When an argument is missing, as in “What’s the weather tomorrow?”, it should ask: “Which village?”.\n\nHow often is it right? With wordings like those it was trained on, Darsi Tiny gets the tool and every argument right 96–98% of the time, even with names it never saw. With new wordings, 78–80%: about one slip in five. It learned patterns of wording, and a new wording fits them less well. Its slips are real: asked about class 9Z, which doesn’t exist, it wrote 9C; asked to “explain the term malware”, it looked up “the term malware”; asked for the capital of France in one wording, it tried the glossary instead of saying it can’t. Big models have seen far more text and slip less often, but they slip too.\n\nSo the app checks every call before the tool runs. Is the tool on? Did every name and number come from the person’s words or an earlier result? Does every argument have the right shape (25:00 is not a time)? A few lines of code catch most slips, and the call goes back to the person instead of running. Checks like these don’t need a clever model: they are simple rules that never guess.",
+            "ar": "قبل طلبك يكتب التطبيق سطر الأدوات: أسماء الأدوات المفعّلة. ويقرأ النموذج هذا السطر وكلماتك، ولا شيء غيرهما. ومنهما يقرّر: أن يستدعي أداة واحدة، أو يسأل عن شيء ناقص، أو يقول إنه لا يستطيع. والوكيل الجيد يقول ذلك حين تكون الأداة متوقفة («أداة الطقس متوقفة»)، ويقول «لا أستطيع» حين لا تناسب الطلبَ أيُّ أداة، كحجز تذكرة حافلة.\n\nثم يملأ مُدخلات الأداة: التفاصيل التي تحتاجها. فالطقس يحتاج إلى مكان ويوم، والتذكير إلى نصه ووقته، والجدول إلى فصل ويوم. وينسخ النموذج الأسماء والأماكن ونص الرسائل من كلماتك حرفيًّا، ويكتب الأيام والأوقات بالشكل الثابت الذي تفهمه الأداة (الثامنة صباح الغد تصبح «tomorrow 08:00»). وحين ينقص أحد المُدخلات، كما في «كيف الطقس غدًا؟»، ينبغي أن يسأل: «أيّ قرية؟».\n\nفكم مرة يصيب؟ مع صياغات تشبه ما تدرّب عليه، يختار «درسي الصغير» الأداة ويملأ كل مُدخلاتها بشكل صحيح في ٩٦٪ إلى ٩٨٪ من المرات، حتى مع أسماء لم يرَها قط. ومع الصياغات الجديدة تنخفض النسبة إلى ٧٨٪ إلى ٨٠٪: أي نحو خطأ واحد من كل خمسة. فقد تعلّم أنماطًا في الصياغة، والصياغة الجديدة تطابقها أقل. وأخطاؤه حقيقية: سُئل عن الفصل ⁦9Z⁩، وهو غير موجود، فكتب ⁦9C⁩؛ وطُلب منه أن «يشرح مصطلح البرمجيات الخبيثة» فبحث عن «مصطلح البرمجيات الخبيثة»؛ وسُئل عن عاصمة فرنسا بصياغة معيّنة فجرّب القاموس بدل أن يقول إنه لا يستطيع. أما النماذج الكبيرة فقد رأت نصوصًا أكثر بكثير، فتخطئ أقل، لكنها تخطئ أيضًا.\n\nلذلك يفحص التطبيق كل استدعاء قبل أن تعمل الأداة: هل الأداة مفعّلة؟ هل جاء كل اسم ورقم من كلمات الشخص أو من نتيجة سابقة؟ هل لكل مُدخل الشكل الصحيح (فالساعة 25:00 ليست وقتًا)؟ وتكفي بضعة أسطر من الكود لاكتشاف معظم الأخطاء، فيعود الاستدعاء إلى الشخص بدل أن يُنفَّذ. ولا تحتاج هذه الفحوص إلى نموذج ذكي: فهي قواعد بسيطة لا تخمّن أبدًا."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Tools line",
+                "ar": "سطر الأدوات"
+              },
+              "def": {
+                "en": "The list of tools that are on, written by the app at the top of the text. The model can call only these.",
+                "ar": "قائمة الأدوات المفعّلة، يكتبها التطبيق في أعلى النص، ولا يستطيع النموذج أن يستدعي غيرها."
+              }
+            },
+            {
+              "term": {
+                "en": "Argument",
+                "ar": "المُدخَل (argument)"
+              },
+              "def": {
+                "en": "A detail a tool needs, such as the place and the day for the weather.",
+                "ar": "تفصيل تحتاجه الأداة، مثل المكان واليوم في حالة الطقس."
+              }
+            },
+            {
+              "term": {
+                "en": "Trained and new wordings",
+                "ar": "الصياغات المدرَّب عليها والجديدة"
+              },
+              "def": {
+                "en": "Ways of asking that the model saw in training, and ways it didn’t. It is right less often with new ones.",
+                "ar": "طرق السؤال التي رآها النموذج في التدريب، وطرق لم يرَها. ويصيب أقل مع الجديدة."
+              }
+            },
+            {
+              "term": {
+                "en": "Argument check",
+                "ar": "فحص المُدخلات"
+              },
+              "def": {
+                "en": "Code that checks a call before the tool runs: the tool is on, every name came from the request, every detail has the right shape.",
+                "ar": "كود يفحص الاستدعاء قبل أن تعمل الأداة: الأداة مفعّلة، وكل اسم جاء من الطلب، ولكل تفصيل الشكل الصحيح."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "You asked for a reminder at eight, and the call says nine. What should the app do?",
+            "ar": "طلبتَ تذكيرًا في الساعة الثامنة، والاستدعاء يقول التاسعة. ماذا يجب أن يفعل التطبيق؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Run it: nine is close enough",
+                "ar": "ينفّذه: فالتاسعة قريبة بما يكفي"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Stop it, and ask you again",
+                "ar": "يوقفه، ويسألك من جديد"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Run it, and fix it later if needed",
+                "ar": "ينفّذه، ثم يصحّحه لاحقًا عند الحاجة"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Nine never appeared in your words, so the call is a slip. The app should stop it before it runs, and ask you again.",
+            "ar": "لم تَرِد «التاسعة» في كلامك، فالاستدعاء خطأ في النسخ. ويجب أن يوقفه التطبيق قبل أن يُنفَّذ، ويسألك من جديد."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p2",
+          "prompt": {
+            "en": "Match each request to what a good agent should do.",
+            "ar": "صِل كل طلب بما ينبغي أن يفعله الوكيل الجيد."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "“What’s the weather in Kafi tomorrow?”",
+                "ar": "«ما حالة الطقس في كافي غدًا؟»"
+              },
+              "right": {
+                "en": "Call the weather tool with Kafi and tomorrow",
+                "ar": "يستدعي أداة الطقس مع كافي وغدًا"
+              }
+            },
+            {
+              "left": {
+                "en": "The same request, with the weather tool off",
+                "ar": "الطلب نفسه، وأداة الطقس متوقفة"
+              },
+              "right": {
+                "en": "Say that the weather tool is turned off",
+                "ar": "يقول إن أداة الطقس متوقفة"
+              }
+            },
+            {
+              "left": {
+                "en": "“Book a bus ticket to the city.”",
+                "ar": "«احجز تذكرة حافلة إلى المدينة.»"
+              },
+              "right": {
+                "en": "Say “I can’t”: no tool does this",
+                "ar": "يقول «لا أستطيع»: لا توجد أداة لذلك"
+              }
+            },
+            {
+              "left": {
+                "en": "“What’s the weather tomorrow?”",
+                "ar": "«كيف الطقس غدًا؟»"
+              },
+              "right": {
+                "en": "Ask which village",
+                "ar": "يسأل: أيّ قرية؟"
+              }
+            }
+          ],
+          "explain": {
+            "en": "An agent reads the tools line and your words: it calls a tool when one fits, says so when the tool is off, says “I can’t” when none fits, and asks when a detail is missing instead of guessing.",
+            "ar": "يقرأ الوكيل سطر الأدوات وكلماتك: فيستدعي أداة حين تناسب الطلب، ويقول ذلك حين تكون الأداة متوقفة، ويقول «لا أستطيع» حين لا تناسبه أيّ أداة، ويسأل حين ينقص تفصيل بدل أن يخمّن."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "p3",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete the check so that the timetable tool runs only for a real class that the person actually typed.",
+            "ar": "أكمل الفحص لكي لا تعمل أداة الجدول إلا لفصل موجود كتبه الشخص فعلًا."
+          },
+          "code": [
+            "CLASSES = [\"6A\", \"6B\", \"7A\"]\ncls = call[\"class\"]\nif cls ",
+            {
+              "blank": 0
+            },
+            " CLASSES:\n    print(\"Stop: unknown class\")\nelif cls not in ",
+            {
+              "blank": 1
+            },
+            ":\n    print(\"Stop: not in your words\")\nelse:\n    print(\"Run the timetable tool\")"
+          ],
+          "answers": [
+            "not in",
+            "request"
+          ],
+          "distractors": [
+            "in",
+            "answer",
+            "result"
+          ],
+          "explain": {
+            "en": "First the class must exist: if it is not in CLASSES, stop. Then it must appear in the person’s own words, or the model copied it wrongly (9Z became 9C). Only then does the tool run.",
+            "ar": "يجب أولًا أن يكون الفصل موجودًا: فإن لم يكن في CLASSES فتوقّف. ثم يجب أن يرد في كلمات الشخص نفسه، وإلا فقد نسخه النموذج خطأً (⁦9Z⁩ صار ⁦9C⁩). وبعد ذلك فقط تعمل الأداة."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: ask “What's the weather in Kafi tomorrow?”, then switch the weather tool off and ask again. Ask “What does 9Z have tomorrow?” and read the check under the call. Then compare “What's the capital of France?” with “What is the capital of France?”. Seeing three of the four outcomes (used a tool, tool off, can’t, asked) finishes the lab.",
+            "ar": "جرّب: اسأل «ما حالة الطقس في كافي غدًا؟»، ثم أوقف أداة الطقس واسأل مجددًا. واسأل «ماذا لدى ⁦9Z⁩ غدًا؟» واقرأ الفحص تحت الاستدعاء. ثم قارن «ما عاصمة فرنسا؟» بصياغة أخرى للسؤال نفسه. يكتمل المختبر حين ترى ثلاثًا من النتائج الأربع (استعمل أداة، أداة متوقفة، لا أستطيع، سأل)."
+          },
+          "tool": "tools"
+        },
+        {
+          "type": "choice",
+          "id": "p4",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "request = \"What does 9Z have tomorrow?\"\ncall = {\"class\": \"9C\", \"day\": \"tomorrow\"}\nif call[\"class\"] in request:\n    print(\"run\")\nelse:\n    print(\"stop\")"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "run",
+                "ar": "run"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "stop",
+                "ar": "stop"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "9C",
+                "ar": "9C"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "“9C” appears nowhere in the request, so the check prints stop. That is exactly the slip Darsi Tiny makes with 9Z, caught before the tool runs.",
+            "ar": "لا يرد «9C» في أي مكان من الطلب، فيطبع الفحص stop. وهذا بالضبط الخطأ الذي يقع فيه «درسي الصغير» مع ⁦9Z⁩، وقد اكتُشف قبل أن تعمل الأداة."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p5",
+          "prompt": {
+            "en": "Which of these should the app check before it runs a call? Choose all that apply.",
+            "ar": "أيّ مما يلي ينبغي أن يفحصه التطبيق قبل تنفيذ الاستدعاء؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "The tool is switched on",
+                "ar": "الأداة مفعّلة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Every name and number came from the request or an earlier result",
+                "ar": "كل اسم ورقم جاء من الطلب أو من نتيجة سابقة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Every argument has the right shape, such as a real time",
+                "ar": "لكل مُدخل الشكل الصحيح، كوقت حقيقي"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "The model sounded confident",
+                "ar": "بدا النموذج واثقًا"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "The call is longer than the request",
+                "ar": "الاستدعاء أطول من الطلب"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "These three rules catch the slips small models make: a tool that is off, a copied name that was never typed, and a detail in the wrong shape. How confident the model sounds, or how long the call is, tells you nothing.",
+            "ar": "هذه القواعد الثلاث تكشف أخطاء النماذج الصغيرة: أداة متوقفة، واسم منسوخ لم يُكتب قط، وتفصيل بشكل خاطئ. أما ثقة النموذج أو طول الاستدعاء فلا يخبرانك بشيء."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p6",
+          "prompt": {
+            "en": "Darsi Tiny picks the right tool and details about as often with new wordings as with wordings it was trained on.",
+            "ar": "يختار «درسي الصغير» الأداة والتفاصيل الصحيحة بالقدر نفسه تقريبًا مع الصياغات الجديدة ومع الصياغات التي تدرّب عليها."
+          },
+          "answer": false,
+          "explain": {
+            "en": "With trained wordings it is right 96–98% of the time; with new wordings, 78–80%. It learned patterns of wording, so new ways of asking need more checking.",
+            "ar": "يصيب في ٩٦٪ إلى ٩٨٪ من المرات مع الصياغات التي تدرّب عليها، وفي ٧٨٪ إلى ٨٠٪ مع الصياغات الجديدة. فقد تعلّم أنماطًا في الصياغة، ولذلك تحتاج طرق السؤال الجديدة إلى فحص أكثر."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of how your pupils or colleagues would ask an agent for something. Which of their wordings might it misread, and what would you want the app to check?",
+            "ar": "فكّر في الطريقة التي قد يطلب بها طلابك أو زملاؤك شيئًا من وكيل. أيّ صياغاتهم قد يسيء فهمها، وما الذي تريد أن يفحصه التطبيق؟"
+          },
+          "placeholder": {
+            "en": "For example: “Class names like ‘Form 2 East’ written as ‘F2E’. I’d want the app to check every class against the school list.”",
+            "ar": "مثلًا: «أسماء الفصول مكتوبة اختصارًا. أريد أن يفحص التطبيق كل فصل بمقارنته بقائمة المدرسة.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Same request, new words",
+            "ar": "مشروع: الطلب نفسه بكلمات جديدة"
+          },
+          "task": {
+            "en": "Write three or four fixed request patterns on a card, such as “What does [class] have on [day]?”. One pupil is the agent and may only act on requests that match a pattern; anything else gets “I don’t understand”. Classmates ask for the same thing in five different ways, and the class records which wordings worked. Then hide a slip: the “agent” copies a class name wrongly on purpose, and the class must catch it before the “tool” (a pupil with the timetable) answers. Finish by writing the class’s own three checks.",
+            "ar": "اكتب على بطاقة ثلاثة أنماط ثابتة للطلبات أو أربعة، مثل: «ماذا لدى [الفصل] يوم [اليوم]؟». يمثّل طالب الوكيل، ولا يتصرّف إلا بالطلبات التي تطابق نمطًا، وأيّ طلب آخر يلقى «لا أفهم». ويطلب زملاؤه الشيء نفسه بخمس صياغات مختلفة، ويسجّل الصف الصياغات التي نجحت. ثم أخفِ خطأً: ينسخ «الوكيل» اسم فصل خطأً عن قصد، وعلى الصف أن يكتشفه قبل أن تجيب «الأداة» (طالب معه الجدول). واختموا بكتابة فحوص الصف الثلاثة الخاصة."
+          },
+          "deliverable": {
+            "en": "A photo of the class’s list of wordings and checks (no faces needed), and two sentences: which wordings failed, and which check caught the slip.",
+            "ar": "صورة لقائمة الصف بالصياغات والفحوص (لا حاجة إلى ظهور الوجوه)، وجملتان: أيّ الصياغات فشلت، وأيّ فحص اكتشف الخطأ."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Pupils could: explain why new wordings fail more often.",
+                "ar": "تمكّن الطلاب من: شرح لماذا تفشل الصياغات الجديدة أكثر."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: spot a detail in a call that wasn’t in the request.",
+                "ar": "تمكّن الطلاب من: اكتشاف تفصيل في الاستدعاء لم يرد في الطلب."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: write a simple check that stops a wrong call.",
+                "ar": "تمكّن الطلاب من: كتابة فحص بسيط يوقف استدعاءً خاطئًا."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "How it picks a tool",
+            "ar": "كيف يختار أداته"
+          },
+          "note": {
+            "en": "AI agents · Level 3 · Lesson 2",
+            "ar": "وكلاء الذكاء الاصطناعي، المستوى ٣، الدرس ٢"
+          },
+          "narration": {
+            "en": "How does an agent choose a tool, and why does it slip?",
+            "ar": "كيف يختار الوكيل أداته، ولماذا يخطئ؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Explain how a model picks a tool from the tools line and the request.",
+              "Compare trained and new wordings, and say why new ones slip more.",
+              "Write checks that stop a wrong call before it runs."
+            ],
+            "ar": [
+              "نشرح كيف يختار النموذج أداة من سطر الأدوات والطلب.",
+              "نقارن الصياغات المدرَّب عليها بالجديدة، ونشرح لماذا تخطئ الجديدة أكثر.",
+              "نكتب فحوصًا توقف الاستدعاء الخاطئ قبل تنفيذه."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "The model reads only the tools line and your words.",
+              "It copies details into arguments: 96–98% right with trained wordings, 78–80% with new ones.",
+              "The app checks every call: tool on, words from the request, the right shape."
+            ],
+            "ar": [
+              "لا يقرأ النموذج إلا سطر الأدوات وكلماتك.",
+              "ينسخ التفاصيل إلى المُدخلات: يصيب في ٩٦٪ إلى ٩٨٪ مع الصياغات المدرَّب عليها، وفي ٧٨٪ إلى ٨٠٪ مع الجديدة.",
+              "يفحص التطبيق كل استدعاء: الأداة مفعّلة، والكلمات من الطلب، والشكل صحيح."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Same request, new words",
+            "ar": "الطلب نفسه بكلمات جديدة"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Ask a classmate the time in three ways.",
+              "Teach (8 min): The tools line, arguments and slips.",
+              "Same request (15 min): A pupil agent with a pattern card.",
+              "Catch the slip (7 min): Spot a wrongly copied class name.",
+              "Wrap-up (5 min): Write our three checks, then the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اسأل زميلك عن الوقت بثلاث صياغات.",
+              "الشرح (٨ دقائق): سطر الأدوات والمُدخلات والأخطاء.",
+              "الطلب نفسه (١٥ دقيقة): طالب وكيل معه بطاقة أنماط.",
+              "اكتشف الخطأ (٧ دقائق): اسم فصل منسوخ خطأً.",
+              "الختام (٥ دقائق): نكتب فحوصنا الثلاثة، ثم بطاقة الخروج."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Pairs ask each other the time in three different ways. Point out that people understand all of them; a small model may not.",
+              "Teach (8 min): Draw the tools line on the board and one call with its arguments. Share the numbers: 96–98% right with trained wordings, 78–80% with new ones, and the real slips (9Z became 9C; “the term malware”).",
+              "Same request (15 min): One pupil is the agent with a card of three or four request patterns; anything else gets “I don’t understand”. Classmates ask for the same thing in five ways, and the class tallies which worked.",
+              "Catch the slip (7 min): The “agent” writes a call with a class name copied wrongly on purpose. Before the “tool” answers, the class checks the call against the request and the class list on the board.",
+              "Wrap-up (5 min): Agree on three checks for every call (tool on, words from the request, the right shape). Then give the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): يسأل كل زميلين أحدهما الآخر عن الوقت بثلاث صياغات مختلفة. ووضّح أن الناس يفهمونها كلها، وقد لا يفهمها نموذج صغير.",
+              "الشرح (٨ دقائق): ارسم سطر الأدوات على السبّورة واستدعاءً واحدًا بمُدخلاته. وشارك الأرقام: الإصابة في ٩٦٪ إلى ٩٨٪ مع الصياغات المدرَّب عليها، وفي ٧٨٪ إلى ٨٠٪ مع الجديدة، والأخطاء الحقيقية (⁦9Z⁩ صار ⁦9C⁩؛ «مصطلح البرمجيات الخبيثة»).",
+              "الطلب نفسه (١٥ دقيقة): يمثّل طالب الوكيل ومعه بطاقة فيها ثلاثة أنماط للطلبات أو أربعة، وأيّ طلب آخر يلقى «لا أفهم». ويطلب زملاؤه الشيء نفسه بخمس صياغات، ويعدّ الصف ما نجح منها.",
+              "اكتشف الخطأ (٧ دقائق): يكتب «الوكيل» استدعاءً فيه اسم فصل منسوخ خطأً عن قصد. وقبل أن تجيب «الأداة» يفحص الصف الاستدعاء بمقارنته بالطلب وبقائمة الفصول على السبّورة.",
+              "الختام (٥ دقائق): اتفقوا على ثلاثة فحوص لكل استدعاء (الأداة مفعّلة، والكلمات من الطلب، والشكل صحيح). ثم وزّع بطاقة الخروج."
+            ]
+          },
+          "note": {
+            "en": "Prepare a pattern card with three or four fixed wordings, the list of the school’s classes on the board, and paper slips for the calls. No phones are needed.",
+            "ar": "جهّز بطاقة أنماط فيها ثلاث صياغات ثابتة أو أربع، وقائمة فصول المدرسة على السبّورة، وقصاصات ورق للاستدعاءات. لا حاجة إلى هواتف."
+          },
+          "narration": {
+            "en": "Same request, five wordings: which ones does our agent understand?",
+            "ar": "الطلب نفسه بخمس صياغات: أيّها يفهمه وكيلنا؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why might an agent understand one wording and not another?",
+              "Which slips would matter most at our school?",
+              "Why is a simple rule a good checker?"
+            ],
+            "ar": [
+              "لماذا قد يفهم الوكيل صياغة ولا يفهم أخرى؟",
+              "أيّ الأخطاء أخطر في مدرستنا؟",
+              "لماذا تكون القاعدة البسيطة فاحصًا جيدًا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one request in two wordings, and one check the app should make before the tool runs."
+            ],
+            "ar": [
+              "اكتب طلبًا واحدًا بصياغتين، وفحصًا واحدًا ينبغي أن يجريه التطبيق قبل أن تعمل الأداة."
+            ]
+          },
+          "narration": {
+            "en": "The model picks a tool from your words; the app checks the call before anything runs.",
+            "ar": "النموذج يختار الأداة من كلماتك، والتطبيق يفحص الاستدعاء قبل أي تنفيذ."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: How it picks a tool",
+            "ar": "شرائح: كيف يختار أداته"
+          },
+          "pages": 6,
+          "base": "agents-3-1-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: How it picks a tool",
+            "ar": "خطة الدرس وورقة العمل: كيف يختار أداته"
+          },
+          "pages": 3,
+          "base": "agents-3-1-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-3-1-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.1",
+        "T.AF.D",
+        "DC.1.2"
+      ]
+    },
+    {
+      "id": "agents-3-1-3",
+      "title": {
+        "en": "Memory: the context window",
+        "ar": "الذاكرة: نافذة السياق"
+      },
+      "minutes": 16,
+      "tryTomorrow": {
+        "en": "Play “The ten-word window”: build a story on the board, one word per pupil, but keep only the last ten words and rub out the rest. Then ask about the beginning: what does the class still know, and what has fallen out?",
+        "ar": "العب مع طلابك لعبة «نافذة الكلمات العشر»: ابنوا قصة على السبّورة، كلمةً لكل طالب، لكن أبقوا آخر عشر كلمات فقط وامسحوا الباقي. ثم اسأل عن البداية: ماذا ما زال الصف يعرف، وماذا سقط؟"
+      },
+      "materials": {
+        "en": [
+          "Board and chalk, and a duster",
+          "A story starter, such as “On the way to the market, Amina saw…”",
+          "A corner of the board for short notes"
+        ],
+        "ar": [
+          "السبّورة والطباشير، وممحاة",
+          "بداية قصة، مثل: «في الطريق إلى السوق، رأت أمينة…»",
+          "ركن من السبّورة للملاحظات القصيرة"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Memory: the context window",
+            "ar": "الذاكرة: نافذة السياق"
+          },
+          "src": null,
+          "duration": 203,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A forgotten “tomorrow”",
+                "ar": "«غدًا» المنسيّة"
+              }
+            },
+            {
+              "at": 17.9,
+              "atBy": {
+                "en": 17.9,
+                "ar": 15.3
+              },
+              "label": {
+                "en": "The context window",
+                "ar": "نافذة السياق"
+              }
+            },
+            {
+              "at": 63.2,
+              "atBy": {
+                "en": 63.2,
+                "ar": 62.1
+              },
+              "label": {
+                "en": "What stays, what goes",
+                "ar": "ما يبقى وما يذهب"
+              }
+            },
+            {
+              "at": 125.1,
+              "atBy": {
+                "en": 125.1,
+                "ar": 120
+              },
+              "label": {
+                "en": "Privacy, and the lab",
+                "ar": "الخصوصية، والمختبر"
+              }
+            },
+            {
+              "at": 172.4,
+              "atBy": {
+                "en": 172.4,
+                "ar": 167.8
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "The app drops the oldest turns. You say yes to the agent’s question, and it greets you. Why?",
+                "ar": "يُسقط التطبيق أقدم الأدوار. تجيب بـ«نعم» عن سؤال الوكيل، فيحيّيك. لماذا؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "It was being polite",
+                    "ar": "كان يتصرّف بلطف"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "The question had fallen out of the window",
+                    "ar": "كان السؤال قد سقط من النافذة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "It didn’t hear the yes",
+                    "ar": "لم يسمع «نعم»"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "The question had fallen out, so a lone yes meant nothing to it. Dropping the oldest turns loses the start of a task first.",
+                "ar": "كان السؤال قد سقط من النافذة، فلم تعنِ «نعم» وحدها شيئًا للنموذج. وإسقاط أقدم الأدوار يُضيّع بداية المهمة أولًا."
+              }
+            },
+            "at": 94.79,
+            "atBy": {
+              "en": 94.79,
+              "ar": 91.96
+            }
+          },
+          "transcript": {
+            "en": "I told the agent which village, and it gave me today’s weather. I had asked about tomorrow, three messages earlier! It had simply forgotten. Where did my words go? Today: an agent’s memory, and why it forgets. A model has no memory of its own between turns. Each time, the app hands it the text so far, and it reads it all again. The most it can read at once is called its context window. Darsi Tiny’s window holds three hundred and eighty-four tokens, about three or four requests. Big cloud models read about one hundred and twenty-eight thousand. Bigger windows forget less, but every request costs more time and money. When the text is longer than the window, something has to go. Whatever falls out, the model never sees again. It isn’t hidden somewhere: for the model, it’s gone. The app decides what stays. Keep everything, and the window fills: the fourth answer is cut off. Drop the oldest turns, and the start of a task can vanish. Or keep short notes: what was asked, and what was answered. Quick check! The app drops the oldest turns. I said yes to the agent’s question, and it just greeted me. Why? The question had fallen out. Without it, a lone yes means nothing, so Darsi Tiny treated it as a greeting. That’s the risk of dropping the oldest turns: the start of a task goes first. Notes are the smart middle way. A finished request keeps only the question and the answer; its tool calls and results go. In the lab, with notes, all seven messages work in the same window. Memory is also a privacy question. Whatever stays in the window, or in saved notes, the model can repeat. So keep pupils’ names and marks out, and start a new conversation for each task. In the app, send the messages with Keep everything, and watch the window fill. Then try Drop the oldest at one hundred and twenty-eight tokens, and say yes. Last, keep notes, and see all seven work. Your turn. A colleague pastes thirty pupils’ reports into one chat with a small agent, then asks about the first pupil. What might go wrong? The first reports may have fallen out, so the answer could be made up. Remember: the window is the model’s only memory. What falls out is gone. And the app chooses what stays. Try it in class tomorrow: play the ten-word window. Tell a story on the board, one word each, but rub out all but the last ten words. Then ask about the beginning: who still remembers it?",
+            "ar": "قلت للوكيل اسم القرية، وإداني طقس النهارده. وأنا كنت سألت عن بكرة، قبلها بتلات رسايل! هو ببساطة نسي. كلامي راح فين؟ النهارده: ذاكرة الوكيل، وليه بينسى. النموذج مالوش ذاكرة خاصة بيه بين الأدوار. كل مرة، التطبيق بيديله النص لحد دلوقتي، وهو بيقراه كله من الأول. وأقصى حاجة يقدر يقراها مرة واحدة اسمها «نافذة السياق». نافذة «درسي الصغير» بتشيل تلتمية أربعة وتمانين توكن، يعني حوالي تلات أو أربع طلبات. والنماذج الكبيرة في السحابة بتقرا حوالي مية تمانية وعشرين ألف. النافذة الأكبر بتنسى أقل، بس كل طلب بياخد وقت وفلوس أكتر. لما النص يبقى أطول من النافذة، لازم حاجة تطلع. وأي حاجة تقع برّه، النموذج عمره ما يشوفها تاني. هي مش متخبية في حتة: بالنسبة للنموذج، راحت. التطبيق هو اللي بيقرر إيه اللي يفضل. احتفظ بكل حاجة، والنافذة تتملي: الجواب الرابع يتقطع. ارمي الأدوار الأقدم، وبداية المهمة ممكن تختفي. أو احتفظ بملاحظات قصيرة: اتسأل إيه، واتجاوب إيه. سؤال سريع! التطبيق بيرمي الأدوار الأقدم. قلت «أيوه» على سؤال الوكيل، وهو قعد يسلّم عليّا. ليه؟ السؤال كان وقع برّه. ومن غيره، «أيوه» لوحدها ملهاش معنى، فـ«درسي الصغير» اعتبرها سلام. ودي مشكلة رمي الأدوار الأقدم: بداية المهمة هي اللي بتروح الأول. الملاحظات هي الحل الوسط الذكي. الطلب اللي خلص بيفضل منه السؤال والجواب بس، وطلبات الأدوات ونتايجها بتمشي. وفي المعمل، بالملاحظات، الرسايل السبعة كلها بتشتغل في نفس النافذة. الذاكرة كمان مسألة خصوصية. أي حاجة فاضلة في النافذة، أو في ملاحظات محفوظة، النموذج ممكن يكررها. فخلّي أسامي التلاميذ ودرجاتهم برّه، وابدأ محادثة جديدة لكل مهمة. في التطبيق، ابعت الرسايل بـ«احتفظ بكل شيء»، واتفرج على النافذة وهي بتتملي. وبعدين جرّب «أسقِط الأقدم» على مية تمانية وعشرين توكن، وقول «نعم». وفي الآخر، احتفظ بملاحظات، وشوف السبعة كلهم شغالين. دورك. زميلة حطّت تقارير تلاتين تلميذ في محادثة واحدة مع وكيل صغير، وبعدين سألت عن أول تلميذ. إيه اللي ممكن يحصل غلط؟ أول تقارير ممكن تكون وقعت برّه، فالجواب ممكن يبقى متألّف. افتكر: النافذة هي الذاكرة الوحيدة للنموذج. اللي بيقع بيروح. والتطبيق هو اللي بيختار إيه يفضل. جرّبها في الفصل بكرة: العبوا «نافذة العشر كلمات». احكوا حكاية على السبورة، كل واحد كلمة، بس امسحوا كل حاجة إلا آخر عشر كلمات. وبعدين اسألوا عن البداية: مين لسه فاكرها؟"
+          },
+          "sources": {
+            "en": "/media/agents-3-1-3/video-en.mp4",
+            "ar": "/media/agents-3-1-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-3-1-3/captions-en.vtt",
+            "ar": "/media/agents-3-1-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-3-1-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-3-1-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-3-1-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-3-1-3/light/audio/en.opus",
+              "manifest.json": "/media/agents-3-1-3/light/manifest.json",
+              "scenes.json": "/media/agents-3-1-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-3-1-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-3-1-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 450,
+              "ar": 442
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "The context window: a model’s only memory",
+            "ar": "نافذة السياق: الذاكرة الوحيدة للنموذج"
+          },
+          "body": {
+            "en": "A language model has no memory of its own between turns. Each time it writes, the app hands it the whole text so far (the tools line, the conversation, the calls and the results), and it reads it all again. The most it can read at once is its context window, counted in tokens. Darsi Tiny’s window is 384 tokens: about three or four requests. Big cloud models read about 128,000 tokens (a typical figure), so a chat rarely fills them, but every token they read costs time and money.\n\nWhen the text no longer fits, something has to go, and whatever falls out of the window is gone: the model can’t look it up, because for the model it no longer exists. The app decides what stays. Keep everything, and the window fills up: in the memory lab, the fourth answer is cut off and then nothing more fits. Drop the oldest turns, and the start of a task goes first: with a 128-token window, a “yes” reached Darsi Tiny after its question had fallen out, so it answered with a greeting, and “Dala” got today’s weather because “tomorrow” had fallen out.\n\nKeeping short notes is the middle way: a finished request keeps only what was asked and what was answered, and its tool calls and results go. In the lab, with notes, all seven messages work in the same 384 tokens. Starting a new conversation for a new task is often the simplest fix of all.\n\nMemory is also a privacy question. Whatever stays in the window, or in notes an app saves, the model can repeat in a later answer. Keep pupils’ names, marks, health and family details out of long conversations unless a school rule allows them, start afresh for each task, and check any answer about something said long ago against the original.",
+            "ar": "ليس للنموذج اللغوي ذاكرة خاصة به بين الأدوار. ففي كل مرة يكتب، يعطيه التطبيق النص كله حتى الآن (سطر الأدوات، والمحادثة، والاستدعاءات، والنتائج)، فيقرؤه كله من جديد. وأقصى ما يستطيع قراءته في المرة الواحدة هو نافذة السياق، وتُقاس بالرموز. ونافذة «درسي الصغير» ٣٨٤ رمزًا: أي نحو ثلاثة طلبات أو أربعة. أما النماذج الكبيرة في السحابة فتقرأ نحو ١٢٨٬٠٠٠ رمز (رقم معتاد)، فنادرًا ما تمتلئ نافذتها بمحادثة، لكن كل رمز تقرؤه يكلّف وقتًا ومالًا.\n\nوحين لا يعود النص يتّسع، لا بدّ أن يخرج شيء، وما يسقط من النافذة يضيع: فلا يستطيع النموذج أن يبحث عنه، لأنه بالنسبة إليه لم يعد موجودًا. والتطبيق هو الذي يقرّر ما يبقى. فإن احتفظ بكل شيء امتلأت النافذة: ففي مختبر الذاكرة ينقطع الجواب الرابع، ثم لا يتّسع شيء بعده. وإن أسقط أقدم الأدوار ضاعت بداية المهمة أولًا: فمع نافذة من ١٢٨ رمزًا وصلت «نعم» إلى «درسي الصغير» بعد أن سقط سؤاله، فأجاب بتحية؛ وحصلت «دالا» على طقس اليوم لأن كلمة «غدًا» كانت قد سقطت.\n\nوالاحتفاظ بملاحظات قصيرة هو الحلّ الوسط: فالطلب المنتهي لا يبقى منه إلا ما سُئل وما أُجيب، وتذهب استدعاءات الأدوات ونتائجها. وفي المختبر تنجح الرسائل السبع كلها بالملاحظات في الرموز الـ٣٨٤ نفسها. وكثيرًا ما يكون بدء محادثة جديدة لكل مهمة جديدة أبسط حلّ على الإطلاق.\n\nوالذاكرة مسألة خصوصية أيضًا. فكل ما يبقى في النافذة، أو في ملاحظات يحفظها التطبيق، يستطيع النموذج أن يكرّره في جواب لاحق. فأبعِد أسماء الطلاب ودرجاتهم وأحوالهم الصحية والعائلية عن المحادثات الطويلة ما لم تسمح بذلك قاعدة في المدرسة، وابدأ من جديد في كل مهمة، وتحقّق من أي جواب عن شيء قيل منذ زمن بمقارنته بالأصل."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Context window",
+                "ar": "نافذة السياق"
+              },
+              "def": {
+                "en": "The most text a model can read at once, counted in tokens: its only memory in a conversation.",
+                "ar": "أكبر قدر من النص يستطيع النموذج قراءته في المرة الواحدة، ويُقاس بالرموز: وهو ذاكرته الوحيدة في المحادثة."
+              }
+            },
+            {
+              "term": {
+                "en": "Token",
+                "ar": "الرمز (token)"
+              },
+              "def": {
+                "en": "A small piece of text that a model reads and writes; 384 tokens are about three or four short requests.",
+                "ar": "قطعة صغيرة من النص يقرؤها النموذج ويكتبها؛ و٣٨٤ رمزًا تعادل نحو ثلاثة طلبات قصيرة أو أربعة."
+              }
+            },
+            {
+              "term": {
+                "en": "Dropping old turns",
+                "ar": "إسقاط الأدوار القديمة"
+              },
+              "def": {
+                "en": "Removing the oldest parts of a conversation so that the rest fits; the start of a task is lost first.",
+                "ar": "حذف أقدم أجزاء المحادثة ليتّسع الباقي؛ فتضيع بداية المهمة أولًا."
+              }
+            },
+            {
+              "term": {
+                "en": "Notes",
+                "ar": "الملاحظات"
+              },
+              "def": {
+                "en": "A short record of what was asked and answered, kept instead of the whole exchange.",
+                "ar": "سجلّ قصير لما سُئل وما أُجيب، يُحتفظ به بدل التبادل كاملًا."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A colleague pastes thirty pupils’ reports into one chat with a small agent, then asks about the first pupil. What might go wrong?",
+            "ar": "تلصق زميلة تقارير ثلاثين طالبًا في محادثة واحدة مع وكيل صغير، ثم تسأل عن الطالب الأول. ما الذي قد يحدث خطأً؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Nothing: agents remember everything",
+                "ar": "لا شيء: الوكلاء يتذكّرون كل شيء"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The first reports may have fallen out, so the answer could be made up",
+                "ar": "ربما سقطت التقارير الأولى من النافذة، فقد يكون الجواب مختلَقًا"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The agent will refuse to read reports",
+                "ar": "سيرفض الوكيل قراءة التقارير"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "The first reports may no longer be in the window, and the model can’t know what it never saw. Pupils’ reports also don’t belong in a long chat without a school rule.",
+            "ar": "ربما لم تعد التقارير الأولى في النافذة، والنموذج لا يعرف ما لم يرَه، فقد يختلق جوابًا. ثم إن تقارير الطلاب لا مكان لها في محادثة طويلة دون قاعدة تضعها المدرسة."
+          }
+        },
+        {
+          "type": "order",
+          "id": "p2",
+          "prompt": {
+            "en": "Put in order what happened in the memory lab with “Drop the oldest” and a small window.",
+            "ar": "رتّب ما حدث في مختبر الذاكرة مع «أسقِط الأقدم» ونافذة صغيرة."
+          },
+          "steps": [
+            {
+              "en": "You ask: “What’s the weather tomorrow?”",
+              "ar": "تسأل: «كيف الطقس غدًا؟»"
+            },
+            {
+              "en": "Darsi Tiny asks back: “Which village?”",
+              "ar": "يسألك «درسي الصغير»: «أيّ قرية؟»"
+            },
+            {
+              "en": "The app drops the oldest turns to make room",
+              "ar": "يُسقط التطبيق أقدم الأدوار ليُفسح مكانًا"
+            },
+            {
+              "en": "Your question, with “tomorrow” in it, falls out",
+              "ar": "يسقط سؤالك، وفيه كلمة «غدًا»"
+            },
+            {
+              "en": "You reply “Dala”, and it gives today’s weather",
+              "ar": "تجيب «دالا»، فيعطيك طقس اليوم"
+            }
+          ],
+          "explain": {
+            "en": "The question came first, so it was the first to fall out when the app made room. When “Dala” arrived, “tomorrow” was no longer in the window, so the model used today.",
+            "ar": "جاء السؤال أولًا، فكان أول ما سقط حين أفسح التطبيق مكانًا. وحين وصلت «دالا» لم تعد كلمة «غدًا» في النافذة، فاستعمل النموذج اليوم."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: with “Keep everything”, send the messages one by one and watch the window bar fill until an answer is cut off. Start again with “Drop the oldest” and the window at 128 tokens, and see what happens when you say yes. Then try “Keep notes” at 384: all seven messages work. A turn falling out, and a turn finished with notes, complete the lab.",
+            "ar": "جرّب: مع «احتفظ بكل شيء» أرسل الرسائل واحدة بعد الأخرى، وراقب شريط النافذة يمتلئ حتى ينقطع جواب. ثم ابدأ من جديد مع «أسقِط الأقدم» والنافذة على ١٢٨ رمزًا، وانظر ماذا يحدث حين تقول «نعم». ثم جرّب «احتفظ بملاحظات» على ٣٨٤: تنجح الرسائل السبع كلها. يكتمل المختبر حين يسقط دور من النافذة، وحين ينتهي دور بالملاحظات."
+          },
+          "tool": "memory"
+        },
+        {
+          "type": "match",
+          "id": "p3",
+          "prompt": {
+            "en": "Match each way of handling a full window to what happens.",
+            "ar": "صِل كل طريقة للتعامل مع النافذة الممتلئة بما يحدث."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Keep everything",
+                "ar": "الاحتفاظ بكل شيء"
+              },
+              "right": {
+                "en": "The window fills, and the fourth answer is cut off",
+                "ar": "تمتلئ النافذة، وينقطع الجواب الرابع"
+              }
+            },
+            {
+              "left": {
+                "en": "Drop the oldest",
+                "ar": "إسقاط الأقدم"
+              },
+              "right": {
+                "en": "The start of a task can fall out first",
+                "ar": "قد تسقط بداية المهمة أولًا"
+              }
+            },
+            {
+              "left": {
+                "en": "Keep notes",
+                "ar": "الاحتفاظ بملاحظات"
+              },
+              "right": {
+                "en": "Finished requests keep only the question and the answer",
+                "ar": "لا يبقى من الطلبات المنتهية إلا السؤال والجواب"
+              }
+            },
+            {
+              "left": {
+                "en": "Start a new conversation",
+                "ar": "بدء محادثة جديدة"
+              },
+              "right": {
+                "en": "The window is empty again, and nothing carries over",
+                "ar": "تفرغ النافذة من جديد، ولا ينتقل إليها شيء"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each choice trades memory for room: everything fills up, dropping loses the start, notes keep what matters in fewer tokens, and a new conversation starts clean.",
+            "ar": "كل خيار يقايض الذاكرة بالمساحة: الاحتفاظ بكل شيء يملأ النافذة، والإسقاط يُضيّع البداية، والملاحظات تحفظ المهم برموز أقل، والمحادثة الجديدة تبدأ نظيفة."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "p4",
+          "prompt": {
+            "en": "This app keeps notes. What does it keep from a finished request?",
+            "ar": "يحتفظ هذا التطبيق بملاحظات. ماذا يحفظ من الطلب المنتهي؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "def note(turn):\n    return {\"asked\": turn[\"request\"],\n            \"answered\": turn[\"answer\"]}"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Everything, including the tool calls and results",
+                "ar": "كل شيء، ومنه استدعاءات الأدوات ونتائجها"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Only the question and the answer",
+                "ar": "السؤال والجواب فقط"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Only the tool’s result",
+                "ar": "نتيجة الأداة فقط"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "The note keeps two things: what was asked (the request) and what was answered. The calls and results are dropped, which is why notes take far fewer tokens.",
+            "ar": "تحفظ الملاحظة شيئين: ما سُئل (الطلب) وما أُجيب. أما الاستدعاءات والنتائج فتُحذف، ولذلك تحتاج الملاحظات إلى رموز أقل بكثير."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p5",
+          "prompt": {
+            "en": "When part of a conversation falls out of the context window, the model can still look it up later if it needs it.",
+            "ar": "حين يسقط جزء من المحادثة من نافذة السياق، يستطيع النموذج أن يبحث عنه لاحقًا إن احتاج إليه."
+          },
+          "answer": false,
+          "explain": {
+            "en": "The window is the model’s only memory: what falls out is gone for it. If something matters, the app must keep it, for example in a short note, or the person must give it again.",
+            "ar": "النافذة هي ذاكرة النموذج الوحيدة، فما يسقط منها يضيع بالنسبة إليه. فإن كان الأمر مهمًّا وجب على التطبيق أن يحفظه، في ملاحظة قصيرة مثلًا، أو على الشخص أن يعيده."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you suggest?",
+            "ar": "ماذا تقترح؟"
+          },
+          "who": {
+            "en": "Ms Amina Bello, primary teacher",
+            "ar": "أ. أمينة بيلو، معلّمة المرحلة الابتدائية"
+          },
+          "initial": {
+            "en": "A",
+            "ar": "أ"
+          },
+          "situation": {
+            "en": "Amina wants an agent to help write end-of-term comments. Her plan: paste every pupil’s marks and notes into one long chat at the start of the week, then ask for the comments one by one.",
+            "ar": "تريد أمينة أن يساعدها وكيل في كتابة ملاحظات نهاية الفصل الدراسي. وخطتها: أن تلصق درجات كل الطلاب وملاحظاتها عنهم في محادثة واحدة طويلة في بداية الأسبوع، ثم تطلب الملاحظات واحدة بعد الأخرى."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Fine: it will remember them all week.”",
+                "ar": "«لا بأس: سيتذكّرها طوال الأسبوع.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "A long chat overflows a small window, and the start drops out first. And the chat now holds every pupil’s marks in one place: a privacy risk if the agent or its service keeps it.",
+                "ar": "المحادثة الطويلة تفيض عن النافذة الصغيرة، وتسقط بدايتها أولًا. ثم إن المحادثة صارت تجمع درجات كل الطلاب في مكان واحد، وهذا خطر على الخصوصية إن احتفظ بها الوكيل أو الخدمة."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“One pupil per conversation, initials instead of names, and check every comment against the marks.”",
+                "ar": "«طالب واحد في كل محادثة، والأحرف الأولى بدل الأسماء، وتحقّقي من كل ملاحظة بمقارنتها بالدرجات.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Short, focused conversations keep what matters in the window and put less personal data in one place. Checking against the marks catches anything invented.",
+                "ar": "المحادثات القصيرة المركّزة تُبقي المهم في النافذة، وتجمع بيانات شخصية أقل في مكان واحد. والمقارنة بالدرجات تكشف أي شيء مختلَق."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Ask it to summarise everything first, then trust the summary.”",
+                "ar": "«اطلبي منه أن يلخّص كل شيء أولًا، ثم ثقي بالملخّص.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "A summary is a kind of note, which helps, but it can drop or change details. Check it against the original marks before you use it.",
+                "ar": "الملخّص نوع من الملاحظات، وهذا مفيد، لكنه قد يُسقط تفاصيل أو يغيّرها. فتحقّقي منه بمقارنته بالدرجات الأصلية قبل استعماله."
+              }
+            }
+          ]
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of a long task you might do with an agent, such as planning a term. What would you keep in short notes, and what would you never put in the conversation?",
+            "ar": "فكّر في مهمة طويلة قد تنجزها مع وكيل، كتخطيط فصل دراسي. ما الذي ستحفظه في ملاحظات قصيرة، وما الذي لن تضعه في المحادثة أبدًا؟"
+          },
+          "placeholder": {
+            "en": "For example: “I’d keep the unit headings as notes, and never paste pupils’ names or marks.”",
+            "ar": "مثلًا: «سأحفظ عناوين الوحدات ملاحظات، ولن ألصق أسماء الطلاب أو درجاتهم أبدًا.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: The ten-word window",
+            "ar": "مشروع: نافذة الكلمات العشر"
+          },
+          "task": {
+            "en": "Write a story starter on the board, such as “On the way to the market, Amina saw…”. Pupils add one word each. The rule: only the last ten words may stay on the board, so after each new word, rub out the oldest. After twenty words, ask about the beginning: who was in the story, and where were they going? Then play a second round in which one pupil keeps “notes”: a short line in a corner of the board with the most important facts. Compare the two rounds, and link them to an agent’s context window.",
+            "ar": "اكتب بداية قصة على السبّورة، مثل: «في الطريق إلى السوق، رأت أمينة…». ويضيف كل طالب كلمة. والقاعدة: لا يبقى على السبّورة إلا آخر عشر كلمات، فبعد كل كلمة جديدة امسح أقدم كلمة. وبعد عشرين كلمة اسأل عن البداية: مَن كان في القصة، وإلى أين كانوا ذاهبين؟ ثم العبوا جولة ثانية يحتفظ فيها طالب بـ«ملاحظات»: سطر قصير في ركن السبّورة فيه أهم الحقائق. وقارنوا بين الجولتين، واربطوا ذلك بنافذة سياق الوكيل."
+          },
+          "deliverable": {
+            "en": "A photo of the board with the notes (no faces needed), and two sentences: what your pupils forgot, and how the notes helped.",
+            "ar": "صورة للسبّورة مع الملاحظات (لا حاجة إلى ظهور الوجوه)، وجملتان: ما الذي نسيه طلابك، وكيف ساعدت الملاحظات."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Pupils could: explain that only the words in the window are remembered.",
+                "ar": "تمكّن الطلاب من: شرح أن الكلمات التي في النافذة وحدها هي التي تُتذكَّر."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: say what was lost when the oldest words were rubbed out.",
+                "ar": "تمكّن الطلاب من: تحديد ما ضاع حين مُسحت أقدم الكلمات."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: choose short notes that keep what matters.",
+                "ar": "تمكّن الطلاب من: اختيار ملاحظات قصيرة تحفظ المهم."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Memory: the context window",
+            "ar": "الذاكرة: نافذة السياق"
+          },
+          "note": {
+            "en": "AI agents · Level 3 · Lesson 3",
+            "ar": "وكلاء الذكاء الاصطناعي، المستوى ٣، الدرس ٣"
+          },
+          "narration": {
+            "en": "Why does an agent forget what you told it?",
+            "ar": "لماذا ينسى الوكيل ما قلته له؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Explain the context window: a model’s only memory.",
+              "Predict what an agent forgets when the window fills.",
+              "Choose what to keep: short notes, fewer turns, or a new conversation."
+            ],
+            "ar": [
+              "نشرح نافذة السياق: الذاكرة الوحيدة للنموذج.",
+              "نتوقّع ما ينساه الوكيل حين تمتلئ النافذة.",
+              "نختار ما نحتفظ به: ملاحظات قصيرة، أو أدوارًا أقل، أو محادثة جديدة."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "The model reads the whole text again every time, up to its window.",
+              "Darsi Tiny: 384 tokens; big cloud models: about 128,000.",
+              "What falls out is gone; short notes keep what matters, and keep pupils’ data out."
+            ],
+            "ar": [
+              "يقرأ النموذج النص كله من جديد في كل مرة، في حدود نافذته.",
+              "«درسي الصغير»: ٣٨٤ رمزًا، والنماذج الكبيرة في السحابة: نحو ١٢٨٬٠٠٠.",
+              "ما يسقط يضيع؛ والملاحظات القصيرة تحفظ المهم، وأبعِد بيانات الطلاب."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "The ten-word window",
+            "ar": "نافذة الكلمات العشر"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): What did I say at the start of the lesson?",
+              "Teach (8 min): The context window, and what falls out.",
+              "Ten-word window (15 min): A story where only ten words stay.",
+              "Notes (7 min): Play again, keeping short notes.",
+              "Wrap-up (5 min): Link it to agents, then the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): ماذا قلتُ في بداية الدرس؟",
+              "الشرح (٨ دقائق): نافذة السياق، وما يسقط منها.",
+              "نافذة الكلمات العشر (١٥ دقيقة): قصة لا يبقى منها إلا عشر كلمات.",
+              "الملاحظات (٧ دقائق): نلعب مرة أخرى ونحتفظ بملاحظات قصيرة.",
+              "الختام (٥ دقائق): نربط اللعبة بالوكلاء، ثم بطاقة الخروج."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Ask pupils to repeat, word for word, the first thing you said in the lesson. Most can give the gist but not the words: memory has limits.",
+              "Teach (8 min): Explain that a model reads the whole text again every time, but only as much as fits its window (Darsi Tiny: 384 tokens; big cloud models: about 128,000). What falls out is gone.",
+              "Ten-word window (15 min): Write a story starter. Pupils add one word each; after each word, rub out the oldest so only ten stay. After twenty words, ask about the beginning.",
+              "Notes (7 min): Play again, with one pupil keeping a short line of key facts in a corner of the board. Ask the same questions and compare.",
+              "Wrap-up (5 min): Ask what an app should keep for an agent, and what it should never keep (pupils’ private details). Then give the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اطلب من الطلاب أن يكرّروا حرفيًّا أول ما قلته في الدرس. سيذكر معظمهم المعنى لا الكلمات: فللذاكرة حدود.",
+              "الشرح (٨ دقائق): وضّح أن النموذج يقرأ النص كله من جديد في كل مرة، لكن بقدر ما يتّسع في نافذته فقط («درسي الصغير»: ٣٨٤ رمزًا، والنماذج الكبيرة في السحابة: نحو ١٢٨٬٠٠٠). وما يسقط يضيع.",
+              "نافذة الكلمات العشر (١٥ دقيقة): اكتب بداية قصة. ويضيف كل طالب كلمة، وبعد كل كلمة امسح أقدمها فلا يبقى إلا عشر. وبعد عشرين كلمة اسأل عن البداية.",
+              "الملاحظات (٧ دقائق): العبوا مرة أخرى، ويحتفظ طالب بسطر قصير من الحقائق المهمة في ركن السبّورة. واطرح الأسئلة نفسها وقارن.",
+              "الختام (٥ دقائق): اسأل: ما الذي ينبغي أن يحتفظ به التطبيق للوكيل، وما الذي يجب ألّا يحتفظ به أبدًا (البيانات الخاصة بالطلاب)؟ ثم وزّع بطاقة الخروج."
+            ]
+          },
+          "note": {
+            "en": "You only need the board, chalk and a duster. Choose a story starter about a place your pupils know.",
+            "ar": "لا تحتاج إلا إلى السبّورة والطباشير وممحاة. واختر بداية قصة عن مكان يعرفه طلابك."
+          },
+          "narration": {
+            "en": "Only ten words stay. What will we still remember at the end?",
+            "ar": "لا تبقى إلا عشر كلمات. ماذا سنتذكّر في النهاية؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "When has a long chat with an agent gone wrong for you?",
+              "What should never go into a conversation with an agent?",
+              "Why might a new conversation be the best fix?"
+            ],
+            "ar": [
+              "متى أخطأ وكيل معك في محادثة طويلة؟",
+              "ما الذي يجب ألّا يدخل أبدًا في محادثة مع وكيل؟",
+              "لماذا قد تكون المحادثة الجديدة أفضل حل؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "In one sentence, explain why an agent forgot something, and one way to stop it."
+            ],
+            "ar": [
+              "اشرح في جملة واحدة لماذا نسي الوكيل شيئًا، وطريقة واحدة لمنع ذلك."
+            ]
+          },
+          "narration": {
+            "en": "The window is the model’s only memory: keep conversations short, and keep what matters in notes.",
+            "ar": "النافذة هي الذاكرة الوحيدة للنموذج: اجعل المحادثات قصيرة، واحفظ المهم في ملاحظات."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Memory: the context window",
+            "ar": "شرائح: الذاكرة: نافذة السياق"
+          },
+          "pages": 6,
+          "base": "agents-3-1-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: Memory: the context window",
+            "ar": "خطة الدرس وورقة العمل: الذاكرة: نافذة السياق"
+          },
+          "pages": 3,
+          "base": "agents-3-1-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-3-1-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.1",
+        "T.AF.D",
+        "DC.4.2"
+      ]
+    },
+    {
+      "id": "agents-3-1-4",
+      "title": {
+        "en": "Teaching it a new tool",
+        "ar": "تعليمه أداة جديدة"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Teach your class a new hand signal, then test the old ones too. Do it once with practice of the old signals mixed in, and once without, and tally which signals the class still gets right. Then link it to fine-tuning: test the old and the new.",
+        "ar": "علّم صفّك إشارة يد جديدة، ثم اختبر الإشارات القديمة أيضًا. افعل ذلك مرة مع التمرّن على الإشارات القديمة، ومرة دونه، وعُدّ الإشارات التي ما زال الصف يتقنها. ثم اربط ذلك بالضبط الدقيق: اختبر القديم والجديد."
+      },
+      "materials": {
+        "en": [
+          "Two or three class signals pupils already know (hand up, clap twice…)",
+          "A new signal to teach, such as a hand on the head for “quiet, please”",
+          "A tally on the board: old signals and the new one, right or wrong"
+        ],
+        "ar": [
+          "إشارتان أو ثلاث يعرفها الطلاب (رفع اليد، التصفيق مرتين…)",
+          "إشارة جديدة للتعليم، مثل وضع اليد على الرأس لتعني «هدوءًا من فضلكم»",
+          "جدول عدّ على السبّورة: الإشارات القديمة والجديدة، صحيحة أو خاطئة"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Teaching it a new tool",
+            "ar": "تعليمه أداة جديدة"
+          },
+          "src": null,
+          "duration": 217,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A bus question",
+                "ar": "سؤال عن الحافلة"
+              }
+            },
+            {
+              "at": 22.8,
+              "atBy": {
+                "en": 22.8,
+                "ar": 20.1
+              },
+              "label": {
+                "en": "Fine-tuning",
+                "ar": "الضبط الدقيق"
+              }
+            },
+            {
+              "at": 56.9,
+              "atBy": {
+                "en": 56.9,
+                "ar": 54.4
+              },
+              "label": {
+                "en": "Learning, and forgetting",
+                "ar": "التعلّم والنسيان"
+              }
+            },
+            {
+              "at": 122.5,
+              "atBy": {
+                "en": 122.5,
+                "ar": 116.3
+              },
+              "label": {
+                "en": "When it’s worth it",
+                "ar": "متى يستحق"
+              }
+            },
+            {
+              "at": 186.6,
+              "atBy": {
+                "en": 186.6,
+                "ar": 176.3
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "It learned the bus tool, but forgot the weather. What would you mix into the training?",
+                "ar": "تعلّم أداة الحافلة لكنه نسي الطقس. ماذا ستخلط مع التدريب؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "More bus examples",
+                    "ar": "أمثلة أكثر عن الحافلة"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Some old conversations it already knew",
+                    "ar": "بعض المحادثات القديمة التي كان يعرفها"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Nothing: just train for longer",
+                    "ar": "لا شيء: يكفي أن يتدرّب مدة أطول"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Practising old conversations alongside the new examples keeps the old skills: with 48 mixed in, all 8 came back.",
+                "ar": "التمرّن على محادثات قديمة إلى جانب الأمثلة الجديدة يحفظ المهارات القديمة: فمع ٤٨ محادثة ممزوجة عادت المهارات الثماني كلها."
+              }
+            },
+            "at": 102.86,
+            "atBy": {
+              "en": 102.86,
+              "ar": 97.24
+            }
+          },
+          "transcript": {
+            "en": "Our school wants the agent to answer bus questions. But Darsi Tiny has never heard of a bus tool. Ask when the next bus leaves Kafi, and it looks Kafi up in the glossary! Can we teach it? Today: teaching an agent a new tool, and what it forgets. There are three ways to change what an agent does. Write a clearer instruction. Describe a new tool, which big models can often use. Or change the model itself, from examples: that’s fine-tuning. Fine-tuning means training a model a little more, on new examples. Its numbers shift until its answers match the examples. On your phone, only Darsi Tiny’s top layer learns, from sixteen conversations, in fifteen steps. In the lab, we teach it a bus tool, in English and Arabic. Before, it got none of eight bus questions right. After, seven of eight, even for villages it never saw. Then we tested its old skills: weather, routes, sums. Before teaching, eight of eight. After, with only new examples, one of eight. It learned the bus, and forgot nearly everything else. Quick check! It learned the bus tool, but forgot the weather. What would you mix into the training? Some old conversations. Practising old skills alongside the new one keeps them. With sixteen mixed in, old skills come back to five of eight, and with forty-eight, all eight. But the bus drops to five of eight: there’s always a trade-off. Fine-tuning takes time: on a laptop, from under a minute to over two; on an old phone, about three to eleven minutes. And it can change behaviour you didn’t aim at, even refusals. So test again, every time. So when should you fine-tune? Try a clearer instruction first, then a tool with a check in code. Fine-tune only with good examples, a test set for old and new skills, and someone to check it. In the app, ask about a bus first. Teach it with forty-eight old conversations mixed in, then test it. Then teach it again with none, and test the old skills. Your turn. A colleague fine-tunes the agent on her own examples, and the new answers look great. What should she do before the class uses it? Test old skills and safety too, before anyone relies on it. Remember: fine-tuning changes a model’s numbers from examples. It can forget what it knew, so mix old examples in. And test both, every time. Try it in class tomorrow: teach a new hand signal for quiet, then test the old signals too. Do it once with practice of the old ones, and once without. Which way did the class forget?",
+            "ar": "مدرستنا عايزة الوكيل يجاوب على أسئلة الأتوبيس. بس «درسي الصغير» عمره ما سمع عن أداة أتوبيس. اسأله الأتوبيس الجاي من كافي إمتى، يدوّر على كافي في القاموس! نقدر نعلّمه؟ النهارده: إزاي نعلّم الوكيل أداة جديدة، وبينسى إيه. فيه تلات طرق تغيّر بيها اللي الوكيل بيعمله. اكتب تعليمات أوضح. اوصف أداة جديدة، والنماذج الكبيرة غالبًا تقدر تستخدمها. أو غيّر النموذج نفسه، من أمثلة: وده اسمه الضبط الدقيق. الضبط الدقيق معناه إننا ندرّب النموذج شوية كمان، على أمثلة جديدة. أرقامه بتتحرك لحد ما إجاباته تطابق الأمثلة. وعلى موبايلك، الطبقة العليا بس من «درسي الصغير» هي اللي بتتعلم، من ستاشر محادثة، في خمستاشر خطوة. في المعمل، بنعلّمه أداة أتوبيس، بالإنجليزي والعربي. قبل التعليم، مجابش ولا سؤال صح من التمانية بتوع الأتوبيس. وبعده، سبعة من تمانية، حتى لقرى عمره ما شافها. وبعدين اختبرنا مهاراته القديمة: الطقس، والطرق، والحساب. قبل التعليم، تمانية من تمانية. وبعد التعليم بالأمثلة الجديدة بس، واحدة من تمانية. اتعلم الأتوبيس، ونسي تقريبًا كل حاجة تانية. سؤال سريع! اتعلم أداة الأتوبيس، بس نسي الطقس. تخلط إيه مع التدريب؟ شوية محادثات قديمة. التمرين على المهارات القديمة مع الجديدة بيحفظها. بستاشر محادثة، المهارات القديمة بترجع لخمسة من تمانية، وبتمانية وأربعين، التمانية كلهم. بس الأتوبيس بينزل لخمسة من تمانية: دايمًا فيه مقايضة. الضبط الدقيق بياخد وقت: على اللابتوب، من أقل من دقيقة لأكتر من دقيقتين، وعلى موبايل قديم، حوالي من تلات لحداشر دقيقة. وممكن يغيّر سلوك مكنتش قاصده، حتى الرفض. فاختبر تاني، كل مرة. طب إمتى نعمل ضبط دقيق؟ جرّب تعليمات أوضح الأول، وبعدين أداة ومعاها مراجعة بالكود. واعمل ضبط دقيق بس لو معاك أمثلة كويسة، واختبار للمهارات القديمة والجديدة، وحد يراجعها. في التطبيق، اسأل عن الأتوبيس الأول. علّمه وإنت خالط تمانية وأربعين محادثة قديمة، وبعدين اختبره. وبعدين علّمه تاني من غير ولا واحدة، واختبر المهارات القديمة. دورك. زميلة عملت ضبط دقيق للوكيل على أمثلتها، والإجابات الجديدة شكلها ممتاز. تعمل إيه قبل ما الفصل يستخدمه؟ تختبر المهارات القديمة والأمان كمان، قبل ما حد يعتمد عليه. افتكر: الضبط الدقيق بيغيّر أرقام النموذج من الأمثلة. وممكن ينسى اللي كان عارفه، فاخلط أمثلة قديمة. واختبر الاتنين، كل مرة. جرّبها في الفصل بكرة: علّم إشارة إيد جديدة للهدوء، وبعدين اختبر الإشارات القديمة كمان. مرة مع تمرين على القديم، ومرة من غيره. في أنهي مرة الفصل نسي؟"
+          },
+          "sources": {
+            "en": "/media/agents-3-1-4/video-en.mp4",
+            "ar": "/media/agents-3-1-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-3-1-4/captions-en.vtt",
+            "ar": "/media/agents-3-1-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-3-1-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-3-1-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-3-1-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-3-1-4/light/audio/en.opus",
+              "manifest.json": "/media/agents-3-1-4/light/manifest.json",
+              "scenes.json": "/media/agents-3-1-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-3-1-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-3-1-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 477,
+              "ar": 458
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Fine-tuning: learning, and forgetting",
+            "ar": "الضبط الدقيق: التعلّم والنسيان"
+          },
+          "body": {
+            "en": "There are three ways to change what an agent does. Write a clearer instruction. Give it a new tool: big models can often use a tool from its description alone (Darsi Tiny, which knows only its ten tools, can’t). Or change the model itself from examples: that is fine-tuning. Fine-tuning trains the model a little more, so that its numbers shift until its answers match the examples.\n\nIn the teach lab you fine-tune Darsi Tiny on the phone: a new bus tool, taught from 16 example conversations (8 in each language) in 15 training steps; only its top layer learns. Before, it gets 0 of 8 bus questions right (asked when the next bus leaves Kafi, it looks Kafi up in the glossary), and 8 of 8 questions on its old skills. After training on the new examples alone, it gets 7 of 8 bus questions right, even for villages it never saw, but only 1 of 8 on its old skills. It learned the bus and forgot nearly everything else: this is called catastrophic forgetting.\n\nMixing old conversations into the training protects old skills. With 16 mixed in: bus 7 of 8, old skills 5 of 8. With 48: bus 5 of 8, old skills 8 of 8. There is a trade-off, and it costs time: from 38 seconds to 2 minutes 16 seconds on a laptop, and about 3 to 11 minutes on an old phone. Fine-tuning also changes behaviour you didn’t aim at, including refusals and asking before acting, so the safety checks need testing again too.\n\nSo fine-tune last, not first. Try a clearer instruction, then a tool with a check in code. Fine-tune only with good examples, a test set for old and new skills, someone to check the results and a way to switch back. In the lab, the result (1.6 MB) stays on the phone that made it, and you can switch it on and off.",
+            "ar": "هناك ثلاث طرق لتغيير ما يفعله الوكيل. أن تكتب تعليمات أوضح. أو أن تعطيه أداة جديدة: فالنماذج الكبيرة تستطيع غالبًا أن تستعمل أداة من وصفها وحده (أما «درسي الصغير»، الذي لا يعرف إلا أدواته العشر، فلا يستطيع). أو أن تغيّر النموذج نفسه بالأمثلة: وهذا هو الضبط الدقيق. فالضبط الدقيق يدرّب النموذج قليلًا بعد، فتتغيّر أرقامه حتى تطابق إجاباته الأمثلة.\n\nوفي مختبر التعليم تضبط «درسي الصغير» على الهاتف: أداة جديدة للحافلة، يتعلّمها من ١٦ محادثة مثالًا (٨ بكل لغة) في ١٥ خطوة تدريب، ولا تتعلّم إلا طبقته العليا. وقبل التعليم لا يصيب في أيٍّ من أسئلة الحافلة الثمانية (فإذا سُئل متى تغادر الحافلة التالية كافي بحث عن «كافي» في القاموس)، ويصيب في ٨ من ٨ أسئلة عن مهاراته القديمة. وبعد التدريب على الأمثلة الجديدة وحدها يصيب في ٧ من ٨ أسئلة عن الحافلة، حتى لقرى لم يرَها قط، لكنه لا يصيب إلا في ١ من ٨ من مهاراته القديمة. فقد تعلّم الحافلة ونسي كل شيء آخر تقريبًا: وهذا ما يُسمّى النسيان الكارثي.\n\nوخلط محادثات قديمة بالتدريب يحمي المهارات القديمة. فمع ١٦ محادثة ممزوجة: الحافلة ٧ من ٨، والمهارات القديمة ٥ من ٨. ومع ٤٨: الحافلة ٥ من ٨، والمهارات القديمة ٨ من ٨. فهناك مقايضة، ولها كلفة من الوقت: من ٣٨ ثانية إلى دقيقتين و١٦ ثانية على حاسوب محمول، ونحو ٣ إلى ١١ دقيقة على هاتف قديم. ثم إن الضبط الدقيق يغيّر سلوكًا لم تقصده، ومنه الرفض والاستئذان قبل التصرّف، فيجب أن تُختبر فحوص الأمان من جديد أيضًا.\n\nلذلك اجعل الضبط الدقيق آخر الحلول لا أولها. جرّب تعليمات أوضح، ثم أداة يرافقها فحص في الكود. ولا تلجأ إلى الضبط الدقيق إلا ومعك أمثلة جيدة، ومجموعة اختبار للمهارات القديمة والجديدة، وشخص يراجع النتائج، وطريقة للعودة إلى النموذج الأصلي. وفي المختبر تبقى النتيجة (١٫٦ ميغابايت) على الهاتف الذي أنتجها، ويمكنك تشغيلها وإيقافها."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Fine-tuning",
+                "ar": "الضبط الدقيق"
+              },
+              "def": {
+                "en": "Training a model a little more on new examples, so that its numbers shift towards them.",
+                "ar": "تدريب النموذج قليلًا بعد على أمثلة جديدة، فتتغيّر أرقامه نحوها."
+              }
+            },
+            {
+              "term": {
+                "en": "Catastrophic forgetting",
+                "ar": "النسيان الكارثي"
+              },
+              "def": {
+                "en": "When a model trained on new examples loses skills it had before.",
+                "ar": "حين يفقد نموذج دُرّب على أمثلة جديدة مهارات كانت لديه."
+              }
+            },
+            {
+              "term": {
+                "en": "Replay",
+                "ar": "التمرّن على القديم (replay)"
+              },
+              "def": {
+                "en": "Mixing old examples into fine-tuning so that the model keeps its old skills.",
+                "ar": "خلط أمثلة قديمة بالضبط الدقيق ليحتفظ النموذج بمهاراته القديمة."
+              }
+            },
+            {
+              "term": {
+                "en": "Trade-off",
+                "ar": "المقايضة"
+              },
+              "def": {
+                "en": "Gaining one thing by giving up some of another: here, the new tool against the old skills.",
+                "ar": "كسب شيء بالتنازل عن شيء من غيره: وهنا الأداة الجديدة مقابل المهارات القديمة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A colleague fine-tunes the agent on her own examples, and the new answers look great. What should she do before the class uses it?",
+            "ar": "تضبط زميلة الوكيل ضبطًا دقيقًا على أمثلتها، فتبدو إجاباته الجديدة ممتازة. ماذا عليها أن تفعل قبل أن يستعمله الصف؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Use it: the new answers look great",
+                "ar": "تستعمله: فالإجابات الجديدة ممتازة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Test its old skills and its safety too",
+                "ar": "تختبر مهاراته القديمة وسلوكه الآمن أيضًا"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Fine-tune it again, for longer",
+                "ar": "تعيد الضبط الدقيق مدة أطول"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Fine-tuning can quietly break old skills and refusals. Test old and new, and the safety checks, before anyone relies on it.",
+            "ar": "قد يُفسد الضبط الدقيق المهارات القديمة والرفض دون أن ينتبه أحد. فاختبر القديم والجديد وسلوك الأمان قبل أن يعتمد عليه أحد."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p2",
+          "prompt": {
+            "en": "Match each way of teaching the bus tool to what the test showed.",
+            "ar": "صِل كل طريقة لتعليم أداة الحافلة بما أظهره الاختبار."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Before teaching",
+                "ar": "قبل التعليم"
+              },
+              "right": {
+                "en": "Bus 0 of 8; old skills 8 of 8",
+                "ar": "الحافلة ٠ من ٨، والقديم ٨ من ٨"
+              }
+            },
+            {
+              "left": {
+                "en": "No old conversations mixed in",
+                "ar": "دون خلط محادثات قديمة"
+              },
+              "right": {
+                "en": "Bus 7 of 8; old skills 1 of 8",
+                "ar": "الحافلة ٧ من ٨، والقديم ١ من ٨"
+              }
+            },
+            {
+              "left": {
+                "en": "16 old conversations mixed in",
+                "ar": "خلط ١٦ محادثة قديمة"
+              },
+              "right": {
+                "en": "Bus 7 of 8; old skills 5 of 8",
+                "ar": "الحافلة ٧ من ٨، والقديم ٥ من ٨"
+              }
+            },
+            {
+              "left": {
+                "en": "48 old conversations mixed in",
+                "ar": "خلط ٤٨ محادثة قديمة"
+              },
+              "right": {
+                "en": "Bus 5 of 8; old skills 8 of 8",
+                "ar": "الحافلة ٥ من ٨، والقديم ٨ من ٨"
+              }
+            }
+          ],
+          "explain": {
+            "en": "New examples alone teach the bus but wipe out old skills. The more old conversations are mixed in, the more old skills stay, at some cost to the new tool: a trade-off you only see if you test both.",
+            "ar": "الأمثلة الجديدة وحدها تعلّمه الحافلة لكنها تمحو المهارات القديمة. وكلما زادت المحادثات القديمة الممزوجة بقيت مهارات قديمة أكثر، مع شيء من الخسارة في الأداة الجديدة: مقايضة لا تراها إلا إذا اختبرت الاثنين."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: first ask about a bus before teaching, and see what Darsi Tiny does. Then teach the bus tool with 48 old conversations mixed in, and test both the bus questions and the old skills. If you have time, teach again with none mixed in and compare. One full run, taught and tested, finishes the lab. On an old phone a run takes several minutes (the lab shows the time left), so plug the phone in if you can.",
+            "ar": "جرّب: اسأل أولًا عن حافلة قبل التعليم، وانظر ماذا يفعل «درسي الصغير». ثم علّمه أداة الحافلة مع خلط ٤٨ محادثة قديمة، واختبر أسئلة الحافلة والمهارات القديمة معًا. وإن كان لديك وقت فعلّمه من جديد دون أي محادثة قديمة، وقارن. يكتمل المختبر بتشغيل كامل يُعلَّم ويُختبر. وعلى الهاتف القديم يستغرق التشغيل عدة دقائق (يعرض المختبر الوقت المتبقي)، فاشحن الهاتف إن استطعت."
+          },
+          "tool": "teach"
+        },
+        {
+          "type": "fill",
+          "id": "p3",
+          "prompt": {
+            "en": "Complete the sentences.",
+            "ar": "أكمل الجمل."
+          },
+          "sentence": {
+            "en": [
+              "Fine-tuning changes a model’s ",
+              {
+                "blank": 0
+              },
+              " from examples. With no old examples mixed in, it can ",
+              {
+                "blank": 1
+              },
+              " its old skills. So always test the old skills and the ",
+              {
+                "blank": 2
+              },
+              " one."
+            ],
+            "ar": [
+              "يغيّر الضبط الدقيق ",
+              {
+                "blank": 0
+              },
+              " النموذج انطلاقًا من الأمثلة. ودون خلط أمثلة قديمة قد ",
+              {
+                "blank": 1
+              },
+              " مهاراته القديمة. لذلك اختبر دائمًا المهارات القديمة والمهارة ",
+              {
+                "blank": 2
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "numbers",
+              "forget",
+              "new",
+              "words",
+              "tools",
+              "improve"
+            ],
+            "ar": [
+              "أرقام",
+              "ينسى",
+              "الجديدة",
+              "كلمات",
+              "أدوات",
+              "يحسّن"
+            ]
+          },
+          "answers": {
+            "en": [
+              "numbers",
+              "forget",
+              "new"
+            ],
+            "ar": [
+              "أرقام",
+              "ينسى",
+              "الجديدة"
+            ]
+          },
+          "explain": {
+            "en": "Fine-tuning shifts the model’s numbers towards the examples. Without old examples it can forget (old skills fell from 8 of 8 to 1 of 8), so you test the old skills and the new one every time.",
+            "ar": "يغيّر الضبط الدقيق أرقام النموذج نحو الأمثلة. ودون أمثلة قديمة قد ينسى (فقد هبطت المهارات القديمة من ٨ من ٨ إلى ١ من ٨)، ولذلك تختبر المهارات القديمة والجديدة في كل مرة."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "After fine-tuning, a model keeps all its old skills, because it only learned something new.",
+            "ar": "بعد الضبط الدقيق يحتفظ النموذج بكل مهاراته القديمة، لأنه لم يتعلّم إلا شيئًا جديدًا."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Learning shifts the same numbers that held the old skills. Taught the bus tool with new examples alone, Darsi Tiny fell from 8 of 8 old skills to 1 of 8. It can also lose refusals or asking first, so test them again.",
+            "ar": "التعلّم يغيّر الأرقام نفسها التي كانت تحمل المهارات القديمة. فحين تعلّم «درسي الصغير» أداة الحافلة بالأمثلة الجديدة وحدها هبط من ٨ من ٨ في مهاراته القديمة إلى ١ من ٨. وقد يفقد أيضًا الرفض أو الاستئذان، فاختبرهما من جديد."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p5",
+          "prompt": {
+            "en": "What do you suggest?",
+            "ar": "ماذا تقترح؟"
+          },
+          "who": {
+            "en": "Mr Joseph Mwangi, computer studies teacher",
+            "ar": "أ. جوزيف موانغي، معلّم الحاسوب"
+          },
+          "initial": {
+            "en": "J",
+            "ar": "ج"
+          },
+          "situation": {
+            "en": "The school wants its agent to understand room codes like “Lab 2” and “Hall B”. A colleague says: “Let’s fine-tune it tonight on twenty examples I’ll write, and use it tomorrow.”",
+            "ar": "تريد المدرسة أن يفهم وكيلها رموز القاعات مثل «Lab 2» و«Hall B». فيقول زميل: «لنضبطه الليلة ضبطًا دقيقًا على عشرين مثالًا سأكتبها، ونستعمله غدًا.»"
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Great: twenty examples is plenty. Use it tomorrow.”",
+                "ar": "«ممتاز: عشرون مثالًا تكفي. استعملوه غدًا.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Twenty examples may teach the codes and quietly break old skills or refusals. Without a test of the old and the new, nobody will know until a pupil finds out.",
+                "ar": "قد تعلّمه عشرون مثالًا الرموز، وتُفسد في صمت مهاراته القديمة أو رفضه. ودون اختبار للقديم والجديد لن يعرف أحد حتى يكتشف ذلك طالب."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“First, could a clearer instruction or a rooms tool do it?”",
+                "ar": "«أولًا: هل تكفي تعليمات أوضح أو أداة للقاعات؟»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Often a tool that looks up room codes, with a check in code, is enough and changes nothing else in the model. Fine-tune only if that fails.",
+                "ar": "كثيرًا ما تكفي أداة تبحث عن رموز القاعات، يرافقها فحص في الكود، ولا تغيّر شيئًا آخر في النموذج. ولا تلجأ إلى الضبط الدقيق إلا إن لم يكفِ ذلك."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“If we fine-tune, let’s mix in old conversations and test the old skills and refusals first.”",
+                "ar": "«إن ضبطناه فلنخلط محادثات قديمة، ونختبر المهارات القديمة والرفض أولًا.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Mixing old examples in protects old skills, and a test set run before and after shows what changed. That is the safe way to fine-tune.",
+                "ar": "خلط الأمثلة القديمة يحمي المهارات القديمة، ومجموعة اختبار تُشغَّل قبل الضبط وبعده تُظهر ما تغيّر. وهذه هي الطريقة الآمنة للضبط الدقيق."
+              }
+            }
+          ]
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Is there something you would want your school’s agent to learn? Would a clearer instruction or a tool be enough, or would it need fine-tuning, and how would you test it?",
+            "ar": "هل هناك شيء تريد أن يتعلّمه وكيل مدرستك؟ هل تكفي تعليمات أوضح أو أداة، أم يحتاج إلى ضبط دقيق، وكيف ستختبره؟"
+          },
+          "placeholder": {
+            "en": "For example: “Our room codes. A rooms tool with a check would do; I’d only fine-tune with a test of old and new requests.”",
+            "ar": "مثلًا: «رموز قاعاتنا. تكفي أداة للقاعات يرافقها فحص، ولن أضبطه إلا مع اختبار للطلبات القديمة والجديدة.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Old and new",
+            "ar": "مشروع: القديم والجديد"
+          },
+          "task": {
+            "en": "Pick two or three signals your class already knows, and teach a new one (for example, a hand on the head means “quiet, please”). Round one: practise only the new signal, then test all the signals and tally the answers on the board. Another day, round two: teach a different new signal, but mix in practice of the old signals, then test again. Compare the tallies with your pupils, and link them to Darsi Tiny: with no old examples it forgot nearly everything else, and with 48 mixed in it kept them all. Be honest with pupils that people forget far less than a tiny model; the idea is the same.",
+            "ar": "اختر إشارتين أو ثلاثًا يعرفها صفّك، وعلّمهم إشارة جديدة (مثلًا: اليد على الرأس تعني «هدوءًا من فضلكم»). في الجولة الأولى تمرّنوا على الإشارة الجديدة وحدها، ثم اختبروا كل الإشارات وسجّلوا الإجابات في جدول عدّ على السبّورة. وفي يوم آخر، في الجولة الثانية، علّمهم إشارة جديدة أخرى، لكن اخلط معها التمرّن على الإشارات القديمة، ثم اختبروا من جديد. وقارن الجدولين مع طلابك، واربطهما بـ«درسي الصغير»: فدون أمثلة قديمة نسي كل شيء آخر تقريبًا، ومع خلط ٤٨ احتفظ بها كلها. وكن صادقًا مع طلابك: فالناس ينسون أقل بكثير من نموذج صغير، لكن الفكرة واحدة."
+          },
+          "deliverable": {
+            "en": "A photo of the two tallies (no faces needed), and two sentences: what your pupils noticed, and how it helped them understand fine-tuning.",
+            "ar": "صورة لجدولَي العدّ (لا حاجة إلى ظهور الوجوه)، وجملتان: ما الذي لاحظه طلابك، وكيف ساعدهم ذلك على فهم الضبط الدقيق."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Pupils could: explain that learning something new can make you forget something old.",
+                "ar": "تمكّن الطلاب من: شرح أن تعلّم شيء جديد قد يُنسي شيئًا قديمًا."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: say why practising old skills alongside new ones helps.",
+                "ar": "تمكّن الطلاب من: شرح لماذا يفيد التمرّن على القديم مع الجديد."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Pupils could: explain why you test both the old and the new.",
+                "ar": "تمكّن الطلاب من: شرح لماذا نختبر القديم والجديد معًا."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Teaching it a new tool",
+            "ar": "تعليمه أداة جديدة"
+          },
+          "note": {
+            "en": "AI agents · Level 3 · Lesson 4",
+            "ar": "وكلاء الذكاء الاصطناعي، المستوى ٣، الدرس ٤"
+          },
+          "narration": {
+            "en": "Can we teach an agent something new, without it forgetting?",
+            "ar": "هل نستطيع أن نعلّم الوكيل شيئًا جديدًا دون أن ينسى؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Today we will",
+            "ar": "سنتعلّم اليوم"
+          },
+          "bullets": {
+            "en": [
+              "Explain fine-tuning: learning from examples.",
+              "Explain forgetting, and why mixing old examples in helps.",
+              "Decide when to fine-tune, and how to test the result."
+            ],
+            "ar": [
+              "نشرح الضبط الدقيق: التعلّم من الأمثلة.",
+              "نشرح النسيان، ولماذا يفيد خلط الأمثلة القديمة.",
+              "نقرّر متى نلجأ إلى الضبط الدقيق، وكيف نختبر النتيجة."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Fine-tuning shifts a model’s numbers from examples (16 examples, 15 steps on the phone).",
+              "New examples alone made it forget: old skills fell from 8 of 8 to 1; with 48 old ones mixed in, 8 of 8.",
+              "Try instructions and tools first; fine-tune with a test of old and new."
+            ],
+            "ar": [
+              "يغيّر الضبط الدقيق أرقام النموذج بالأمثلة (١٦ مثالًا و١٥ خطوة على الهاتف).",
+              "الأمثلة الجديدة وحدها جعلته ينسى: هبطت مهاراته القديمة من ٨ من ٨ إلى ١؛ ومع خلط ٤٨ قديمة بقيت ٨ من ٨.",
+              "جرّب التعليمات والأدوات أولًا، واضبط النموذج مع اختبار للقديم والجديد."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Old and new",
+            "ar": "القديم والجديد"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Show the class signals they already know.",
+              "Teach (8 min): Fine-tuning, forgetting and mixing old in.",
+              "Round one (10 min): Teach a new signal alone, then test all.",
+              "Compare (10 min): Tally old and new on the board.",
+              "Wrap-up (7 min): Plan round two with practice mixed in; exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض إشارات الصف التي يعرفونها.",
+              "الشرح (٨ دقائق): الضبط الدقيق والنسيان وخلط القديم.",
+              "الجولة الأولى (١٠ دقائق): علّم إشارة جديدة وحدها، ثم اختبر الكل.",
+              "المقارنة (١٠ دقائق): عُدّوا القديم والجديد على السبّورة.",
+              "الختام (٧ دقائق): خطّطوا للجولة الثانية مع التمرّن على القديم، ثم بطاقة الخروج."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): Show two or three signals the class already knows; pupils respond to each.",
+              "Teach (8 min): Explain fine-tuning with Darsi Tiny’s numbers: the bus tool from 16 examples; old skills fell from 8 of 8 to 1 of 8 without old examples, and stayed at 8 of 8 with 48 mixed in.",
+              "Round one (10 min): Teach a new signal (a hand on the head for “quiet, please”) and practise only that one. Then test every signal, old and new, in a random order.",
+              "Compare (10 min): Tally right and wrong answers for old and new signals on the board. Discuss honestly: people forget far less than a tiny model, but practice still matters.",
+              "Wrap-up (7 min): Plan round two for another day, with the old signals practised alongside a new one. Then give the exit ticket."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض إشارتين أو ثلاثًا يعرفها الصف، ويستجيب الطلاب لكل منها.",
+              "الشرح (٨ دقائق): اشرح الضبط الدقيق بأرقام «درسي الصغير»: أداة الحافلة من ١٦ مثالًا؛ هبطت المهارات القديمة من ٨ من ٨ إلى ١ من ٨ دون أمثلة قديمة، وبقيت ٨ من ٨ مع خلط ٤٨.",
+              "الجولة الأولى (١٠ دقائق): علّم إشارة جديدة (اليد على الرأس تعني «هدوءًا من فضلكم») وتمرّنوا عليها وحدها. ثم اختبروا كل الإشارات، القديمة والجديدة، بترتيب عشوائي.",
+              "المقارنة (١٠ دقائق): عُدّوا الإجابات الصحيحة والخاطئة للإشارات القديمة والجديدة على السبّورة. وناقشوا بصدق: الناس ينسون أقل بكثير من نموذج صغير، لكن التمرّن يبقى مهمًّا.",
+              "الختام (٧ دقائق): خطّطوا للجولة الثانية في يوم آخر، يُتمرَّن فيها على الإشارات القديمة مع إشارة جديدة. ثم وزّع بطاقة الخروج."
+            ]
+          },
+          "note": {
+            "en": "No phones needed: just signals the class knows, one new signal and a tally on the board. If you have a phone, run the teach lab before class to see the real numbers yourself.",
+            "ar": "لا حاجة إلى هواتف: يكفي إشارات يعرفها الصف، وإشارة جديدة، وجدول عدّ على السبّورة. وإن كان معك هاتف فشغّل مختبر التعليم قبل الحصة لترى الأرقام الحقيقية بنفسك."
+          },
+          "narration": {
+            "en": "Learn something new, then check: do we still know the old?",
+            "ar": "تعلّم شيئًا جديدًا، ثم تحقّق: هل ما زلنا نعرف القديم؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "When have you learned something new and forgotten something old?",
+              "What would you test before letting pupils use a fine-tuned agent?",
+              "Why might a tool be better than fine-tuning for our school’s room codes?"
+            ],
+            "ar": [
+              "متى تعلّمت شيئًا جديدًا ونسيت شيئًا قديمًا؟",
+              "ما الذي ستختبره قبل أن تسمح للطلاب باستعمال وكيل ضُبط ضبطًا دقيقًا؟",
+              "لماذا قد تكون الأداة أفضل من الضبط الدقيق لرموز قاعات مدرستنا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name one thing fine-tuning can break, and how you would check for it."
+            ],
+            "ar": [
+              "اذكر شيئًا واحدًا قد يُفسده الضبط الدقيق، وكيف ستتحقّق منه."
+            ]
+          },
+          "narration": {
+            "en": "Teach a little, test a lot: old skills and new.",
+            "ar": "علّم قليلًا واختبر كثيرًا: المهارات القديمة والجديدة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Teaching it a new tool",
+            "ar": "شرائح: تعليمه أداة جديدة"
+          },
+          "pages": 6,
+          "base": "agents-3-1-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lesson plan and worksheet: Teaching it a new tool",
+            "ar": "خطة الدرس وورقة العمل: تعليمه أداة جديدة"
+          },
+          "pages": 2,
+          "base": "agents-3-1-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للصف أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-3-1-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.3",
+        "T.AF.D",
+        "T.PL.D"
+      ]
+    },
+    {
+      "id": "agents-3-1-check",
+      "title": {
+        "en": "How agents work: the loop, tools and memory: unit check",
+        "ar": "كيف يعمل الوكلاء: الحلقة والأدوات والذاكرة: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Pick the activity from this unit your class needs most (the paper strip, the new wordings, the ten-word window or the new signal), run it this week, and tell a colleague how it went.",
+        "ar": "اختر من هذه الوحدة النشاط الذي يحتاجه صفّك أكثر (الشريط الورقي، أو الصياغات الجديدة، أو نافذة الكلمات العشر، أو الإشارة الجديدة)، ونفّذه هذا الأسبوع، وأخبر زميلًا كيف سار."
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "In an agent’s text, who writes each tool’s result?",
+            "ar": "في نص الوكيل، مَن يكتب نتيجة كل أداة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "The model, from what it learned",
+                "ar": "النموذج، مما تعلّمه"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The app, from the tool",
+                "ar": "التطبيق، من الأداة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The person who asked",
+                "ar": "الشخص الذي سأل"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "The model writes plans, calls and answers, then stops after a call. The app runs the tool and adds its result, so a result is never made up by the model.",
+            "ar": "يكتب النموذج الخطط والاستدعاءات والأجوبة، ثم يتوقّف بعد الاستدعاء. أما التطبيق فيشغّل الأداة ويضيف نتيجتها، فلا يختلق النموذج نتيجة أبدًا."
+          }
+        },
+        {
+          "type": "order",
+          "id": "q2",
+          "prompt": {
+            "en": "Put the app’s loop in order.",
+            "ar": "رتّب حلقة التطبيق."
+          },
+          "steps": [
+            {
+              "en": "Send the text so far to the model",
+              "ar": "يرسل النص حتى الآن إلى النموذج"
+            },
+            {
+              "en": "The model writes a tool call",
+              "ar": "يكتب النموذج استدعاء أداة"
+            },
+            {
+              "en": "Check the call",
+              "ar": "يفحص الاستدعاء"
+            },
+            {
+              "en": "Run the tool and add its result",
+              "ar": "يشغّل الأداة ويضيف نتيجتها"
+            },
+            {
+              "en": "Send the text again, until the model answers",
+              "ar": "يرسل النص من جديد، حتى يجيب النموذج"
+            }
+          ],
+          "explain": {
+            "en": "The app sends the text, the model writes a call, the app checks it before anything runs, then runs the tool and adds the result, and goes round again until an answer.",
+            "ar": "يرسل التطبيق النص، فيكتب النموذج استدعاءً، فيفحصه التطبيق قبل أي تنفيذ، ثم يشغّل الأداة ويضيف النتيجة، ويدور مرة أخرى حتى يأتي الجواب."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q3",
+          "prompt": {
+            "en": "A call that copies a class name wrongly can safely run, because the tool will report an error anyway.",
+            "ar": "يمكن تنفيذ استدعاء نسخ اسم فصل خطأً بأمان، لأن الأداة ستُبلغ عن خطأ على أي حال."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Not every slip gives an error: a wrong class that exists returns the wrong lesson, and a reminder or message just acts. The app should check every call before the tool runs.",
+            "ar": "ليس كل خطأ يعطي رسالة خطأ: ففصل خاطئ موجود يعيد حصة خاطئة، والتذكير أو الرسالة ينفَّذان ببساطة. لذلك يجب أن يفحص التطبيق كل استدعاء قبل أن تعمل الأداة."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q4",
+          "prompt": {
+            "en": "Match each slip to the check that catches it.",
+            "ar": "صِل كل خطأ بالفحص الذي يكشفه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "9Z written as 9C",
+                "ar": "⁦9Z⁩ كُتب ⁦9C⁩"
+              },
+              "right": {
+                "en": "Every name must come from the request",
+                "ar": "يجب أن يأتي كل اسم من الطلب"
+              }
+            },
+            {
+              "left": {
+                "en": "A reminder at 25:00",
+                "ar": "تذكير في الساعة 25:00"
+              },
+              "right": {
+                "en": "Every detail must have the right shape",
+                "ar": "يجب أن يكون لكل تفصيل الشكل الصحيح"
+              }
+            },
+            {
+              "left": {
+                "en": "A call to a tool that is switched off",
+                "ar": "استدعاء أداة متوقفة"
+              },
+              "right": {
+                "en": "The tool must be on",
+                "ar": "يجب أن تكون الأداة مفعّلة"
+              }
+            },
+            {
+              "left": {
+                "en": "A reminder set after the timetable said “no school”",
+                "ar": "تذكير ضُبط بعد أن قال الجدول «لا دراسة»"
+              },
+              "right": {
+                "en": "No step before it may have failed",
+                "ar": "يجب ألّا تكون خطوة سابقة قد فشلت"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each is one of the simple rules of a checker in code: names from the person’s words, the right shape, tools that are on, and no building on a failed step.",
+            "ar": "كلٌّ منها قاعدة من قواعد الفاحص البسيطة في الكود: الأسماء من كلمات الشخص، والشكل الصحيح، والأدوات المفعّلة، وعدم البناء على خطوة فاشلة."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q5",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "steps = 0\nwhile steps < 5:\n    steps = steps + 1\nprint(steps)"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "4",
+                "ar": "4"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "5",
+                "ar": "5"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Nothing: it never stops",
+                "ar": "لا شيء: لا يتوقّف أبدًا"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "steps goes up by one each time round: 1, 2, 3, 4, 5. When it reaches 5, steps < 5 is false and the loop stops, so it prints 5. That counter is a step limit.",
+            "ar": "يزيد steps واحدًا في كل دورة: ١، ٢، ٣، ٤، ٥. وحين يبلغ ٥ يصبح الشرط ⁦steps < 5⁩ خاطئًا فتتوقّف الحلقة، فيطبع 5. وهذا العدّاد هو حدّ الخطوات."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q6",
+          "prompt": {
+            "en": "Which are true about an agent’s context window? Choose all that apply.",
+            "ar": "أيّ مما يلي صحيح عن نافذة سياق الوكيل؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "It is the model’s only memory in a conversation",
+                "ar": "هي ذاكرة النموذج الوحيدة في المحادثة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "What falls out of it is gone for the model",
+                "ar": "ما يسقط منها يضيع بالنسبة إلى النموذج"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Darsi Tiny’s holds 384 tokens",
+                "ar": "نافذة «درسي الصغير» تتّسع لـ٣٨٤ رمزًا"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Big cloud models never forget anything",
+                "ar": "النماذج الكبيرة في السحابة لا تنسى شيئًا أبدًا"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "The model can look up turns that fell out",
+                "ar": "يستطيع النموذج أن يبحث عن الأدوار التي سقطت"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "The window is the only memory, and what falls out is gone. Darsi Tiny’s holds 384 tokens; big models read about 128,000, so they forget less, but they still have a limit and can’t look up what fell out.",
+            "ar": "النافذة هي الذاكرة الوحيدة، وما يسقط منها يضيع. ونافذة «درسي الصغير» ٣٨٤ رمزًا، والنماذج الكبيرة تقرأ نحو ١٢٨٬٠٠٠ فتنسى أقل، لكن لها حدًّا أيضًا، ولا تستطيع أن تبحث عمّا سقط."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q7",
+          "prompt": {
+            "en": "Complete the sentences about the teach lab.",
+            "ar": "أكمل الجملتين عن مختبر التعليم."
+          },
+          "sentence": {
+            "en": [
+              "With no old conversations mixed in, Darsi Tiny learned the bus tool but kept only ",
+              {
+                "blank": 0
+              },
+              " of 8 old skills. With 48 mixed in, it kept ",
+              {
+                "blank": 1
+              },
+              " of 8."
+            ],
+            "ar": [
+              "دون خلط محادثات قديمة، تعلّم «درسي الصغير» أداة الحافلة لكنه لم يحتفظ إلا بـ",
+              {
+                "blank": 0
+              },
+              " من ٨ من مهاراته القديمة. ومع خلط ٤٨ احتفظ بـ",
+              {
+                "blank": 1
+              },
+              " من ٨."
+            ]
+          },
+          "bank": {
+            "en": [
+              "1",
+              "8",
+              "5",
+              "0"
+            ],
+            "ar": [
+              "١",
+              "٨",
+              "٥",
+              "٠"
+            ]
+          },
+          "answers": {
+            "en": [
+              "1",
+              "8"
+            ],
+            "ar": [
+              "١",
+              "٨"
+            ]
+          },
+          "explain": {
+            "en": "New examples alone made it forget: old skills fell from 8 of 8 to 1 of 8. Mixing 48 old conversations in kept all 8, while the bus tool scored 5 of 8: a trade-off.",
+            "ar": "الأمثلة الجديدة وحدها جعلته ينسى: هبطت المهارات القديمة من ٨ من ٨ إلى ١ من ٨. وخلط ٤٨ محادثة قديمة حفظها كلها (٨ من ٨)، بينما أصاب في ٥ من ٨ من أسئلة الحافلة: إنها مقايضة."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q8",
+          "prompt": {
+            "en": "A step limit stops a loop in which the model keeps calling tools and never answers.",
+            "ar": "يوقف حدُّ الخطوات حلقةً يظلّ فيها النموذج يستدعي الأدوات ولا يجيب أبدًا."
+          },
+          "answer": true,
+          "explain": {
+            "en": "After a fixed number of calls the app stops the loop and tells the person, instead of running forever and using up battery, data and time.",
+            "ar": "بعد عدد محدّد من الاستدعاءات يوقف التطبيق الحلقة ويخبر الشخص، بدل أن تدور بلا نهاية وتستهلك البطارية والبيانات والوقت."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q9",
+          "prompt": {
+            "en": "The school wants its agent to understand room codes like “Lab 2”. What should come first?",
+            "ar": "تريد المدرسة أن يفهم وكيلها رموز القاعات مثل «Lab 2». بماذا نبدأ؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Fine-tune it tonight on twenty examples",
+                "ar": "نضبطه الليلة ضبطًا دقيقًا على عشرين مثالًا"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Try a clearer instruction or a room-codes tool, with a check in code",
+                "ar": "نجرّب تعليمات أوضح أو أداة لرموز القاعات، يرافقها فحص في الكود"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Switch to a bigger cloud model",
+                "ar": "ننتقل إلى نموذج أكبر في السحابة"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "An instruction or a tool changes nothing else in the model. Fine-tuning comes last, with old examples mixed in and a test of old and new skills, because it can make the model forget.",
+            "ar": "التعليمات أو الأداة لا تغيّر شيئًا آخر في النموذج. أما الضبط الدقيق فيأتي أخيرًا، مع خلط أمثلة قديمة واختبار للمهارات القديمة والجديدة، لأنه قد يجعل النموذج ينسى."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "q10",
+          "lang": "python",
+          "prompt": {
+            "en": "This loop should stop as soon as the model answers. Which line is the mistake?",
+            "ar": "يجب أن تتوقّف هذه الحلقة فور أن يجيب النموذج. في أيّ سطر الخطأ؟"
+          },
+          "code": "for step in range(5):\n    part = model(text)\n    if is_answer(part):\n        continue\n    text = text + part + run_tool(part)",
+          "line": 4,
+          "fix": "        break",
+          "explain": {
+            "en": "continue skips to the next turn instead of leaving the loop, so the model is asked again after it has already answered. break ends the loop at the answer.",
+            "ar": "تنتقل continue إلى الدورة التالية بدل الخروج من الحلقة، فيُسأل النموذج من جديد بعد أن أجاب. أما break فتُنهي الحلقة عند الجواب."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "How agents work: the loop, tools and memory: review",
+            "ar": "كيف يعمل الوكلاء: الحلقة والأدوات والذاكرة: مراجعة"
+          },
+          "note": {
+            "en": "AI agents · Level 3 · Unit check",
+            "ar": "وكلاء الذكاء الاصطناعي، المستوى ٣، اختبار الوحدة"
+          },
+          "narration": {
+            "en": "Let’s look back at how agents work, and check what stuck.",
+            "ar": "لنراجع كيف يعمل الوكلاء، ونتحقّق ممّا رسخ."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Inside the loop",
+              "How it picks a tool",
+              "Memory: the context window",
+              "Teaching it a new tool"
+            ],
+            "ar": [
+              "داخل الحلقة",
+              "كيف يختار أداته",
+              "الذاكرة: نافذة السياق",
+              "تعليمه أداة جديدة"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "It’s all one text: the model writes plans, calls and answers; the app adds results",
+              "The model picks a tool from the tools line and your words, and copies details, with slips",
+              "The context window is its only memory: what falls out is gone",
+              "Fine-tuning teaches new skills but can make it forget: test old and new"
+            ],
+            "ar": [
+              "كل شيء نص واحد: النموذج يكتب الخطط والاستدعاءات والأجوبة، والتطبيق يضيف النتائج",
+              "يختار النموذج أداة من سطر الأدوات وكلماتك، وينسخ التفاصيل، مع أخطاء",
+              "نافذة السياق ذاكرته الوحيدة: ما يسقط منها يضيع",
+              "الضبط الدقيق يعلّم مهارات جديدة لكنه قد يُنسي: اختبر القديم والجديد"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Team quiz",
+            "ar": "مسابقة الفرق"
+          },
+          "bullets": {
+            "en": [
+              "Make teams of four",
+              "Read each question aloud; teams agree on one answer",
+              "Reveal the answer and ask one team to explain why",
+              "Write the hardest question on the board for tomorrow"
+            ],
+            "ar": [
+              "كوّن فرقًا من أربعة",
+              "اقرأ كل سؤال بصوت عالٍ، ويتّفق كل فريق على إجابة واحدة",
+              "اكشف الإجابة واطلب من أحد الفرق أن يشرح السبب",
+              "اكتب أصعب سؤال على السبّورة ليوم الغد"
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which idea will you use first with your class?",
+              "Which of Darsi Tiny’s mistakes surprised you most?",
+              "What would you check before trusting an agent at school?"
+            ],
+            "ar": [
+              "أيّ فكرة ستستعملها أولًا مع صفّك؟",
+              "أيّ أخطاء «درسي الصغير» فاجأك أكثر؟",
+              "ما الذي ستتحقّق منه قبل أن تثق بوكيل في المدرسة؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One thing I now understand about how agents work, and how I’ll explain it to my pupils"
+            ],
+            "ar": [
+              "شيء واحد صرت أفهمه عن طريقة عمل الوكلاء، وكيف سأشرحه لطلابي"
+            ]
+          },
+          "narration": {
+            "en": "One text, a picked tool, a small window, and careful teaching: test everything.",
+            "ar": "نص واحد، وأداة مختارة، ونافذة صغيرة، وتعليم حذر: اختبر كل شيء."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: How agents work: the loop, tools and memory, review",
+            "ar": "شرائح: كيف يعمل الوكلاء: الحلقة والأدوات والذاكرة، مراجعة"
+          },
+          "pages": 6,
+          "base": "agents-3-1-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Review plan and quiz sheet: How agents work: the loop, tools and memory",
+            "ar": "خطة المراجعة وورقة الاختبار: كيف يعمل الوكلاء: الحلقة والأدوات والذاكرة"
+          },
+          "pages": 2,
+          "base": "agents-3-1-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "AGT.1",
+        "T.AF.D",
+        "DC.1.2",
+        "DC.4.2",
+        "AGT.3",
+        "T.PL.D"
+      ]
+    }
+  ]
+}

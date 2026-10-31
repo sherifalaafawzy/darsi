@@ -1,12 +1,20 @@
 /** Labs: hands-on apps that really compute on the phone. Each app lives in labs/apps/<id>/ (meta.ts + index.tsx). */
-export type Track = "ai" | "iot" | "cyber";
+/** Labs belong to the built-in tracks (content/tracks.ts). */
+export type Track = "ai" | "iot" | "cyber" | "code" | "data" | "agents" | "opt" | "aisec" | "data-science";
+export const LAB_TRACKS: Track[] = ["ai", "iot", "cyber", "code", "data", "agents", "opt", "aisec", "data-science"];
 /** Labs text is always written in both languages (a LocalText that requires Arabic too). */
 export type LocalStr = { en: string; ar: string } & Partial<Record<string, string>>;
 
 export type CategoryId =
   | "ai-learning" | "ai-networks" | "ai-vision" | "ai-language" | "ai-decisions" | "ai-use"
   | "iot-sensors" | "iot-electronics" | "iot-automation"
-  | "cyber-accounts" | "cyber-threats" | "cyber-crypto" | "cyber-privacy";
+  | "cyber-accounts" | "cyber-threats" | "cyber-crypto" | "cyber-privacy"
+  | "code-basics" | "code-algorithms"
+  | "data-tables" | "data-pipelines"
+  | "agents-how" | "agents-practice"
+  | "opt-models" | "opt-search"
+  | "aisec-apps" | "aisec-models"
+  | "ds-explore" | "ds-models";
 
 export interface LabMeta {
   /** Same as the folder name; also what a lesson's `lab` step stores. */

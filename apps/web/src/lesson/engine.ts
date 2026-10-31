@@ -1,4 +1,5 @@
-import { GRADED, pickList, type GradedStep, type Lesson, type Step } from "../content/types";
+import { GRADED, pickList, type CodeLang, type GradedStep, type Lesson, type RobotBlock, type Step } from "../content/types";
+import { runRobot } from "../content/robot";
 
 /** Answer payloads per step type. */
 export type Answer =
@@ -9,9 +10,18 @@ export type Answer =
   | { kind: "order"; order: number[] } // original indices in the order the teacher placed them
   | { kind: "fill"; words: Record<number, string> }
   | { kind: "type"; text: string }
-  | { kind: "hotspot"; found: string[] };
+  | { kind: "hotspot"; found: string[] }
+  | { kind: "code"; passed: boolean } // the tests' verdict, from the sandbox
+  | { kind: "parsons"; lines: string[] } // in the learner's order, each with its indent (4 spaces per level)
+  | { kind: "codefill"; tokens: Record<number, string> }
+  | { kind: "bug"; line: number }
+  | { kind: "blocks"; program: RobotBlock[] };
 
-const norm = (s: string) => s.normalize("NFKC").trim().toLowerCase().replace(/[ً-ْـ]/g, "").replace(/\s+/g, " ");
+/** A Parsons line in place: the same text and, in Python, the same indent. */
+const sameLine = (want: string, got: string | undefined, lang: CodeLang) => got !== undefined && want.trim() === got.trim()
+  && (lang !== "python" || want.length - want.trimStart().length === got.length - got.trimStart().length);
+// Direction marks and isolates (around code in Arabic text, scripts/lib/isolates.mjs) are invisible: never part of an answer.
+const norm = (s: string) => s.normalize("NFKC").replace(/[‎‏⁦-⁩]/g, "").trim().toLowerCase().replace(/[ً-ْـ]/g, "").replace(/\s+/g, " ");
 
 /** Pure grading function — shared by the app and the tests. */
 export function grade(step: GradedStep, a: Answer, lang: string): boolean {
@@ -24,6 +34,11 @@ export function grade(step: GradedStep, a: Answer, lang: string): boolean {
     case "fill": { const ans = pickList(step.answers, lang); return a.kind === "fill" && ans.every((w, i) => a.words[i] === w); }
     case "type": return a.kind === "type" && pickList(step.accept, lang).concat(step.accept.en).some((x) => norm(x) === norm(a.text));
     case "hotspot": return a.kind === "hotspot" && step.spots.every((s) => a.found.includes(s.id));
+    case "code": return a.kind === "code" && a.passed;
+    case "parsons": return a.kind === "parsons" && a.lines.length === step.lines.length && step.lines.every((l, i) => sameLine(l, a.lines[i], step.lang));
+    case "codefill": return a.kind === "codefill" && step.answers.every((w, i) => a.tokens[i] === w);
+    case "bug": return a.kind === "bug" && a.line === step.line;
+    case "blocks": return a.kind === "blocks" && a.program.length <= step.maxBlocks && runRobot(step.world, a.program).outcome === "goal";
   }
 }
 

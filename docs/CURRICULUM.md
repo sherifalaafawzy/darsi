@@ -86,7 +86,7 @@ Each track's own plan (course and lesson titles, objectives, the Labs app and co
 In Lesson Studio (`H:\htdocs\lessonstudio\content\darsi\`), following its `README.md` and the 12 storyboards already there
 (`source/AI-1-1-2.json` is a good model):
 
-- **`source/<ID>.json`:** `id`, `track` (ai, cyber or iot), `level`, `unit` {number, title}, `lesson` {number, title, subtitle,
+- **`source/<ID>.json`:** `id`, `track` (ai, cyber, iot, code, data, agents, opt or aisec), `level`, `unit` {number, title}, `lesson` {number, title, subtitle,
   minutes, format}, and `video`:
   - `title`, `length` (2:30 to 3:30), `cast`, `chapters` (4–5);
   - 12–15 `scenes`, each with beat, start, end, visual, animation, `on_screen_text`, voice, narration and icons;

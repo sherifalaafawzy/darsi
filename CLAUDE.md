@@ -186,7 +186,38 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
       - In ai-3-1-4 and ai-4-1-4, the video's second question repeats the first practice question.
       - Student slide titles differ by track.
       - The Lesson Studio gaps are listed in TECHNICAL.md "Known gaps".
-    - **Next (planned, approved, not started):** five more tracks (programming, data engineering, AI agents, optimization, AI security), code exercises run in a sandbox on the phone, students' levels as school stages (ages 9–12 up to university), and a tiny model of our own for agents. The plan is `velvet-mapping-key.md` in the user's Claude plans folder.
+19. In progress (2026-10-28, uncommitted): **five more tracks** (programming `code`, data engineering `data`, AI agents `agents`, optimization `opt`, AI security `aisec`), code exercises run in a sandbox on the phone, students' levels as school stages (ages 9–12 up to university), and Darsi Tiny, a tiny model of our own for agents. The plan is `velvet-mapping-key.md` in the user's Claude plans folder.
+    - **Done:** the platform (8 built-in tracks, stages, two-way placement, the code steps `code`/`parsons`/`codefill`/`bug`/`blocks` in a sandboxed MicroPython and SQLite, Darsi's small OR-Tools, the virtual board; TECHNICAL.md "Code on the phone"); Darsi Tiny (`tools/tinylm/`, `src/tinylm/`; TECHNICAL.md "Darsi Tiny"); 48 new Labs apps, 47 for the five tracks plus the IoT board (96 in all; hand-over for agents and AI security in `docs/curriculum/labs-agents-aisec.md`).
+    - **Checked together:** web 689 tests, `tsc`, `lint:css`, e2e 30/30 on a private build, startup 4 files (171.4 KB gzipped), precache 44 files with no lab, code or model chunk; the 17 new agents and security labs pressed through at 360 px in both languages, with the model generating.
+    - **Courses, paused 2026-10-28 at the user's request:**
+      - Five background agents, one per track, write the 40 courses into `content/units/<track>-*.json`, with storyboards in Lesson Studio and placement questions in `content/placement/<track>.json`. That folder gets merged into `placement.json` at the end.
+      - Narration runs one track at a time, behind a lock folder (`locks/narrate` in the session's scratch folder).
+      - Where they stopped:
+        - agents: all 8 written, not narrated;
+        - opt: 8 written, placement and review left;
+        - aisec: 7 of 8;
+        - code: 20 of 32 storyboards, 1 unit;
+        - data: 32 storyboards, no units (its drafts in the C: scratch folder were lost in a disk cleanup).
+      - Until they finish, `tests/units.test.ts` fails on their courses (no videos or kits yet). Every other test passes.
+    - **Lesson Studio upgrade, done 2026-10-28** while the courses were paused:
+      - Science elements (equations, plots, neural networks trained for real, model architectures, tables) in a lazy kit;
+      - `design.json` bodies for them;
+      - a `code` scene;
+      - the five new tracks in the converter;
+      - fixed right-to-left runs ("9Z", "2-opt", "x ≤ 10").
+      - Re-vendored into Darsi: startup is still 4 files and e2e passes 30/30.
+    - **Technology packs, done 2026-10-29** (the user asked for them before the courses resumed):
+      - code, data, iot, network and opt packs for Lesson Studio videos, each a lazy file of 10.7–13.9 KB;
+      - the studio edits them generically;
+      - Darsi vendors them (`lessonstudio-pack-<id>.js`, not precached) and saves the ones a course needs when it's downloaded (`prefetchLightPacks`).
+    - **Arabic inline code:** code and formulas in Arabic course text sit in invisible left-to-right isolates. `node scripts/isolate-code.mjs --fix <unit>` works them out afresh (it also mends half-isolated code from older rules), `tests/units.test.ts` checks them, and the engine ignores them in typed answers. The rules are in TECHNICAL.md "Languages and right-to-left".
+    - **Courses resumed 2026-10-29.** The brief is `H:\htdocs\lessonstudio\out\course-brief.md`; the narration lock is `H:/htdocs/lessonstudio/out/locks/narrate`. Each track narrates in turn with a script that releases the lock when it finishes.
+      - **data: done 2026-10-29.** 8 courses with 36 code steps; all 32 lessons voiced and rendered; units test 56/56; seeded to the emulators and one lesson per course checked in the browser at 375 px in both languages. Placement in `content/placement/data.json`, not merged yet.
+      - **opt: done 2026-10-29.** 8 courses (code steps from level 2 and s3; the s1 course has the robot `blocks` and no typing); all 32 lessons voiced and rendered; units test 56/56; seeded to the emulators and one lesson per course checked at 375 px in both languages. Placement in `content/placement/opt.json`, not merged yet. Its working files are in `H:\tmp\darsi-opt` (unit fragments that rebuild the unit files; after a rebuild run import-media, then isolate-code).
+      - aisec narrating since 08:37; code and agents queued.
+      - **Shared items the tracks reported, open:** the converter's templates draw text under the layout check's 32 px line (title kicker 26 px, quiz 26–32, card labels 27, compare items 30, chart values 24–26), so every lesson has the same font errors; the `knapsack` pack squeezes its built-in truck's rows in the narrow layout; students' worksheets with code spill onto a nearly empty third page; code lines of 45–63 characters in levels 3–4 scroll sideways in the phone editor.
+    - **Open, the user's call:** on upright phones, video text renders at 7–9 px, because canvas scenes are drawn on a 1280-wide stage. The choices are portrait layouts for canvas scenes, or bigger text only.
+    - **Next:** the courses finish, then the old tracks' stage and code pass, merge the placement files, then publish and deploy.
 9. Not started: the security review. The user asked for static scanning of the rules, functions and client, plus a pentest of the deployed URL with `H:\htdocs\pentest-lab` (allowlist-gated; add only darsi-f0685 hosts). It is deferred until the code is finished.
 
 ### Firebase project (live): darsi-f0685

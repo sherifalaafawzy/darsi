@@ -1,0 +1,3415 @@
+{
+  "id": "opt-s4",
+  "track": "opt",
+  "level": 4,
+  "audience": "students",
+  "title": {
+    "en": "Operations research: LP, MIP, CP, OR-Tools modelling, heuristics",
+    "ar": "بحوث العمليات: البرمجة الخطية والصحيحة وبالقيود، والنمذجة بـ OR-Tools، والطرق التقريبية"
+  },
+  "summary": {
+    "en": "The field behind airline schedules, supply chains and hospital rosters, on your phone: linear programs and the simplex method, integer programs and branch and bound, constraint programming with CP-SAT, local search and the optimality gap, and the trade-offs a modeller must make in the open. You write and run real OR-Tools models in Python.",
+    "ar": "العلم الذي يقف وراء جداول الطيران وسلاسل الإمداد ومناوبات المستشفيات، على هاتفك: البرامج الخطية وطريقة السمبلكس، والبرامج الصحيحة والتفريع والتحديد، والبرمجة بالقيود مع CP-SAT، والبحث المحلي وفجوة الأمثلية، والموازنات التي يجب أن يجريها صانع النموذج علنًا. ستكتب نماذج OR-Tools حقيقية بلغة بايثون وتشغّلها."
+  },
+  "lessons": [
+    {
+      "id": "opt-s4-1",
+      "title": {
+        "en": "Linear programming and the simplex method",
+        "ar": "البرمجة الخطية وطريقة السمبلكس"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Write the garden as a linear program in GLOP and solve it (290). Then add one pupil-hour and, separately, one bed of land, and check that the profit rises by 5 and by 25. Which limit would you pay for, and up to what price?",
+        "ar": "اكتب الحديقة برنامجًا خطيًا في GLOP وحُلّه (٢٩٠). ثم أضف ساعة واحدة من عمل الطلاب، ثم على حدة حوضًا واحدًا من الأرض، وتحقّق من أن الربح يرتفع ٥ ثم ٢٥. أيّ القيود ستدفع لتوسيعه، وحتى أيّ سعر؟"
+      },
+      "materials": {
+        "en": [
+          "Your phone, or a computer with Colab",
+          "Graph paper and a ruler"
+        ],
+        "ar": [
+          "هاتفك، أو حاسوب مع Colab",
+          "ورق رسم بياني ومسطرة"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Linear programming and the simplex method",
+            "ar": "البرمجة الخطية وطريقة السمبلكس"
+          },
+          "src": null,
+          "duration": 265,
+          "sizeMB": 1.5,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A method from 1947",
+                "ar": "طريقة من عام ١٩٤٧"
+              }
+            },
+            {
+              "at": 27.1,
+              "atBy": {
+                "en": 27.1,
+                "ar": 24.9
+              },
+              "label": {
+                "en": "Standard form and corners",
+                "ar": "الصيغة القياسية والزوايا"
+              }
+            },
+            {
+              "at": 69.6,
+              "atBy": {
+                "en": 69.6,
+                "ar": 64.8
+              },
+              "label": {
+                "en": "The simplex walk",
+                "ar": "مسار السمبلكس"
+              }
+            },
+            {
+              "at": 124.4,
+              "atBy": {
+                "en": 124.4,
+                "ar": 118.7
+              },
+              "label": {
+                "en": "Duality and shadow prices",
+                "ar": "الثنائية وأسعار الظل"
+              }
+            },
+            {
+              "at": 233.4,
+              "atBy": {
+                "en": 233.4,
+                "ar": 220.9
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A linear program’s best value is reached at two neighbouring corners. What does that tell you?",
+                "ar": "تتحقّق أفضل قيمة لبرنامج خطي عند زاويتين متجاورتين. ماذا يعني ذلك؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "There’s a mistake in the model",
+                    "ar": "في النموذج خطأ"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Every point on the edge between them is optimal too",
+                    "ar": "كل نقطة على الضلع بينهما مثلى أيضًا"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Only those two corners are optimal",
+                    "ar": "هاتان الزاويتان وحدهما مثليان"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "If two neighbouring corners give the same best value, the goal line is parallel to the edge joining them, so it touches the whole edge at once. Every point on that edge is optimal: the LP has many optimal solutions, and a solver returns one of them.",
+                "ar": "إذا أعطت زاويتان متجاورتان أفضل قيمة نفسها، فخط الهدف موازٍ للضلع الذي يصل بينهما، فيلمس الضلع كله دفعة واحدة. وكل نقطة على هذا الضلع مثلى: فللبرنامج الخطي حلول مثلى كثيرة، ويُرجع برنامج الحل واحدًا منها."
+              }
+            },
+            "at": 124.39,
+            "atBy": {
+              "en": 124.39,
+              "ar": 118.66
+            }
+          },
+          "transcript": {
+            "en": "In nineteen forty-seven, George Dantzig wanted to plan military supplies at the least cost. His method now plans airline crews, refineries and hospital meals, and it runs on your phone. Let’s see why it works. Today: linear programming, and how the simplex method finds the best corner. A linear program has continuous variables, linear limits and a linear goal. In standard form: maximise c times x, subject to A x at most b, and x at least zero. The school garden is one: thirty x plus forty y, under limits on land, water and hours. Each limit cuts the plane in half, and the plans that keep them all form a convex polygon. A linear goal is a family of parallel lines. Slide it as far as you can, and the last point it touches is a corner. Simplex walks from corner to neighbouring corner, improving the goal each time, and stops when no neighbour is better. Because the polygon is convex, that corner is the best of all. In the garden: from the origin to six bean beds, then to three tomato and five bean beds, a profit of two hundred and ninety. In the worst case, simplex visits exponentially many corners, but in practice it’s fast. Interior-point methods cut through the middle, in polynomial time. GLOP, in Google’s OR-Tools, is a simplex solver. Quick check! A linear program’s best value is reached at two neighbouring corners. What does that tell you? Every point on the edge between them is optimal too. Now the second big idea: every linear program has a twin, its dual, whose variables are prices for the limits. A limit’s shadow price is how much the best goal improves if that limit grows by one. In the garden, one more pupil-hour is worth five, one more bed of land twenty-five, and water nothing, because three cans are spare. That’s complementary slackness: a limit with room to spare has a price of zero. Solvers report these dual values: in OR-Tools, ask each constraint for its dual value. Solving again with the limit one larger gives the same five. The diet problem was one of the first linear programs. The cheapest school lunch costs forty-one coins, with energy and iron met exactly. Protein comes free, so its shadow price is zero. In OR-Tools, the whole model is a few lines. Make a solver, add the variables and the limits, set the goal, and GLOP solves it. The same program runs unchanged in Colab. In the app, build a school lunch, then press find the cheapest. Read the corners the simplex method visited, and which needs are met exactly. Your turn. In the cheapest lunch, protein comes to twenty-three grams against a need of twenty. What is protein’s shadow price? Zero: a limit with room to spare costs nothing. Remember: the feasible set is convex, and the best is at a corner. Simplex walks from corner to corner. And shadow prices tell you what each limit is worth. Try it yourself: write the garden as a linear program in GLOP. Then add one hour, solve again, and check that the profit rises by five.",
+            "ar": "سنة ألف تسعمية سبعة وأربعين، جورج دانتزيج كان عايز يخطّط إمدادات الجيش بأقل تكلفة. طريقته النهارده بتخطّط أطقم الطيران، ومعامل التكرير، ووجبات المستشفيات، وبتشتغل على موبايلك. يلا نشوف بتشتغل ليه. النهارده: البرمجة الخطية، وإزاي طريقة السمبلكس بتلاقي أحسن زاوية. البرنامج الخطي فيه متغيّرات متصلة، وقيود خطية، وهدف خطي. وفي الصيغة القياسية: كبّر c في x، بشرط إن A في x أقل من أو تساوي b، وx أكبر من أو تساوي صفر. وجنينة المدرسة مثال: تلاتين x زائد أربعين y، بقيود على الأرض والمية والساعات. كل قيد بيقسم المستوى نصّين، والخطط اللي بتلتزم بيهم كلهم بتعمل مضلّع محدّب. والهدف الخطي مجموعة خطوط متوازية. زقّه لأبعد ما تقدر، وآخر نقطة يلمسها هتبقى زاوية. السمبلكس بيمشي من زاوية للزاوية اللي جنبها، وكل مرة بيحسّن الهدف، وبيقف لما مفيش جارة أحسن. ولأن المضلّع محدّب، الزاوية دي هي الأحسن خالص. وفي الجنينة: من نقطة الصفر لست أحواض فاصوليا، وبعدين لتلات أحواض طماطم وخمسة فاصوليا، بربح ميتين وتسعين. في أوحش الحالات، السمبلكس بيزور عدد زوايا بيكبر أُسّيًا، لكن في الواقع هو سريع. وطرق النقطة الداخلية بتقطع من النص، في وقت كثيرة حدود. وGLOP، اللي في OR-Tools بتاعة جوجل، بيشتغل بالسمبلكس. سؤال سريع! أحسن قيمة لبرنامج خطي بتتحقق عند زاويتين جنب بعض. ده يقولّك إيه؟ كل نقطة على الضلع اللي بينهم مثالية برضه. ودلوقتي الفكرة الكبيرة التانية: كل برنامج خطي ليه توأم، اسمه المسألة الثنائية، ومتغيّراتها أسعار للقيود. وسعر الظل لقيد معيّن هو قد إيه أحسن هدف بيتحسّن لو القيد زاد واحد. في الجنينة، ساعة زيادة من التلاميذ تساوي خمسة، وحوض أرض زيادة خمسة وعشرين، والمية ولا حاجة، لأن فيه تلات جرادل فاضلين. ودي اسمها «التراخي المتمّم»: القيد اللي فيه فائض سعره صفر. وبرامج الحل بتطلّع القيم الثنائية دي: في OR-Tools اسأل كل قيد عن قيمته الثنائية. ولو حلّيت تاني بالقيد أكبر بواحد، هتطلع نفس الخمسة. مسألة الغذا كانت من أوائل البرامج الخطية. أرخص غدا مدرسي بيكلّف واحد وأربعين عملة، والطاقة والحديد متغطّيين بالظبط. والبروتين بييجي ببلاش، فسعر الظل بتاعه صفر. في OR-Tools، النموذج كله كام سطر. اعمل سولفر، وزوّد المتغيّرات والقيود، وحدّد الهدف، وGLOP بيحلّه. ونفس البرنامج بيشتغل زي ما هو على Colab. في التطبيق، ركّب غدا للمدرسة، وبعدين دوس على «دوّر على الأرخص». واقرا الزوايا اللي زارتها طريقة السمبلكس، وأنهي احتياجات اتغطّت بالظبط. دورك. في أرخص غدا، البروتين بيوصل لتلاتة وعشرين جرام، والمطلوب عشرين. سعر الظل للبروتين كام؟ صفر: القيد اللي فيه فائض مبيكلّفش حاجة. افتكر: المنطقة الممكنة محدّبة، والأحسن في زاوية. والسمبلكس بيمشي من زاوية لزاوية. وأسعار الظل بتقولّك كل قيد يساوي كام. جرّبها بنفسك: اكتب الجنينة كبرنامج خطي في GLOP. وبعدين زوّد ساعة، وحلّ تاني، واتأكد إن الربح زاد خمسة."
+          },
+          "sources": {
+            "en": "/media/opt-s4-1/video-en.mp4",
+            "ar": "/media/opt-s4-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/opt-s4-1/captions-en.vtt",
+            "ar": "/media/opt-s4-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/opt-s4-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/opt-s4-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/opt-s4-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/opt-s4-1/light/audio/en.opus",
+              "manifest.json": "/media/opt-s4-1/light/manifest.json",
+              "scenes.json": "/media/opt-s4-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/opt-s4-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/opt-s4-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 573,
+              "ar": 540
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Linear programs, corners and prices",
+            "ar": "البرامج الخطية والزوايا والأسعار"
+          },
+          "body": {
+            "en": "A linear program (LP) has continuous variables, linear constraints and a linear objective. In standard form it reads: maximise cᵀx subject to Ax ≤ b and x ≥ 0, where x are the decisions, A and b the limits and c the value of each decision. The school garden is a small one: x tomato beds and y bean beds, maximise 30x + 40y, with land x + y ≤ 8, water 2x + y ≤ 14 and pupils’ hours x + 3y ≤ 18.\n\nEach linear constraint keeps one side of a line (in higher dimensions, a hyperplane), so the feasible region, the plans that keep every limit, is a convex polyhedron: the segment between any two feasible plans is feasible. The objective is a family of parallel lines; pushed as far as it will go, it last touches the region at a corner (a vertex), or along a whole edge when two corners tie. So if an LP has an optimum, one is at a corner. The garden’s corners are (0, 0), (7, 0), (6, 2), (3, 5) and (0, 6), and the best is (3, 5), with 290.\n\nThe simplex method, published by George Dantzig in 1947, walks from corner to neighbouring corner, each time improving the objective, and stops when no neighbour is better; by convexity that corner is optimal. Picking the variable with the largest gain first, the garden goes from (0, 0) to (0, 6) and then (3, 5). In the worst case simplex can visit exponentially many corners (Klee and Minty built such examples in 1972), but in practice it is fast, which is why it remains the workhorse; interior-point methods, from 1984, cross the inside of the region in polynomial time. GLOP, the linear solver in Google’s OR-Tools, is a simplex solver; others include HiGHS, CPLEX and Gurobi, which solve LPs with millions of variables.\n\nEvery LP has a dual whose variables are prices for the constraints. A constraint’s dual value, or shadow price, is how much the best objective improves when its right-hand side grows by one. In the garden, an extra pupil-hour is worth 5, an extra bed of land 25 and extra water 0. Strong duality says the prices value the limits at exactly the best profit: 8 × 25 + 18 × 5 + 14 × 0 = 290. Complementary slackness says a constraint with slack (water: 11 cans used of 14) has price zero, and a variable used in the optimum earns exactly what its resources cost. A shadow price holds over a range: hours are worth 5 each from 18 up to 24, where the best plan reaches (0, 8) with 320; beyond that, more hours add nothing.\n\nSolvers report dual values directly: in OR-Tools, each constraint’s dual_value(), on the phone too. You can also find one yourself, as an economist would: solve again with the limit one unit larger and subtract. Reading the prices is often worth more than the plan itself: they say which limit to relax, and which spending would be wasted.",
+            "ar": "للبرنامج الخطي متغيّرات متصلة، وقيود خطية، ودالة هدف خطية. وصيغته القياسية: كبّر cᵀx بشرط ⁦Ax ≤ b⁩ و⁦x ≥ 0⁩، حيث x القرارات، وA وb القيود، وc قيمة كل قرار. وحديقة المدرسة برنامج صغير منها: x أحواض الطماطم وy أحواض الفاصولياء، كبّر ⁦30x + 40y⁩، مع قيد الأرض ⁦x + y ≤ 8⁩، والماء ⁦2x + y ≤ 14⁩، وساعات الطلاب ⁦x + 3y ≤ 18⁩.\n\nكل قيد خطي يُبقي جانبًا واحدًا من خط (وفي أبعاد أعلى، من مستوٍ فائق)، لذلك فالمنطقة الممكنة، أي الخطط التي تلتزم بكل القيود، متعدّد سطوح محدّب: القطعة الواصلة بين أي خطتين ممكنتين ممكنة أيضًا. ودالة الهدف عائلة من الخطوط المتوازية، وحين تُدفع إلى أبعد ما يمكن تلمس المنطقة أخيرًا عند زاوية (رأس)، أو على امتداد ضلع كامل حين تتعادل زاويتان. فإن كان للبرنامج الخطي حل أمثل، فأحد حلوله المثلى في زاوية. وزوايا الحديقة (٠، ٠) و(٧، ٠) و(٦، ٢) و(٣، ٥) و(٠، ٦)، وأفضلها (٣، ٥) بربح ٢٩٠.\n\nأما طريقة السمبلكس، التي نشرها جورج دانتزيج عام ١٩٤٧، فتمشي من زاوية إلى زاوية مجاورة، وتحسّن الهدف في كل مرة، وتتوقّف حين لا تكون أي زاوية مجاورة أفضل، وبفضل التحدّب تكون تلك الزاوية هي المثلى. وإذا اختيرت أولًا المتغيّرة صاحبة أكبر مكسب، تنتقل الحديقة من (٠، ٠) إلى (٠، ٦) ثم إلى (٣، ٥). وقد تزور السمبلكس في أسوأ الحالات عددًا أُسّيًا من الزوايا (بنى كلي ومينتي أمثلة كهذه عام ١٩٧٢)، لكنها سريعة في الواقع، ولهذا تبقى الأداة الأساسية، أما طرق النقطة الداخلية، منذ ١٩٨٤، فتعبر داخل المنطقة في وقت كثيرة حدود. وGLOP، برنامج الحل الخطي في OR-Tools من Google، برنامج سمبلكس، ومن البرامج الأخرى HiGHS وCPLEX وGurobi، وهي تحلّ برامج خطية فيها ملايين المتغيّرات.\n\nلكل برنامج خطي برنامج ثنائي متغيّراته أسعار للقيود. والقيمة الثنائية لقيد، أو سعر الظل، هي مقدار تحسّن أفضل قيمة للهدف حين يزيد طرفه الأيمن وحدة واحدة. ففي الحديقة، قيمة الساعة الإضافية من عمل الطلاب ٥، والحوض الإضافي من الأرض ٢٥، والماء الإضافي صفر. وتقول الثنائية القوية إن الأسعار تقيّم القيود بأفضل ربح تمامًا: ٨ × ٢٥ + ١٨ × ٥ + ١٤ × ٠ = ٢٩٠. ويقول مبدأ التراخي المتمّم إن القيد الذي فيه فائض (الماء: يُستعمل ١١ دلوًا من ١٤) سعره صفر، وإن المتغيّر المستعمل في الحل الأمثل يربح بالضبط ما تكلّفه موارده. ويصحّ سعر الظل ضمن مدى: فقيمة كل ساعة ٥ من ١٨ ساعة حتى ٢٤، حيث تصل أفضل خطة إلى (٠، ٨) بربح ٣٢٠، وبعد ذلك لا تضيف الساعات الإضافية شيئًا.\n\nتُعطي برامج الحل القيم الثنائية مباشرة: ففي OR-Tools تعطيها ⁦dual_value()⁩ لكل قيد، على الهاتف أيضًا. ويمكنك كذلك أن تجدها بنفسك كما يفعل الاقتصادي: أعِد الحل بعد زيادة القيد وحدة واحدة واطرح. وقراءة الأسعار كثيرًا ما تكون أثمن من الخطة نفسها: فهي تخبرك أيّ القيود يستحق التوسيع، وأيّ إنفاق سيضيع هدرًا."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Linear program (LP)",
+                "ar": "البرنامج الخطي"
+              },
+              "def": {
+                "en": "Continuous variables, linear constraints and a linear objective: maximise cᵀx subject to Ax ≤ b, x ≥ 0.",
+                "ar": "متغيّرات متصلة وقيود خطية ودالة هدف خطية: كبّر cᵀx بشرط ⁦Ax ≤ b⁩ و⁦x ≥ 0⁩."
+              }
+            },
+            {
+              "term": {
+                "en": "Feasible region",
+                "ar": "المنطقة الممكنة"
+              },
+              "def": {
+                "en": "All plans that keep every constraint. For an LP it is convex, so an optimum lies at a corner.",
+                "ar": "كل الخطط التي تلتزم بكل القيود. وهي محدّبة في البرنامج الخطي، لذا يقع الحل الأمثل في زاوية."
+              }
+            },
+            {
+              "term": {
+                "en": "Simplex method",
+                "ar": "طريقة السمبلكس"
+              },
+              "def": {
+                "en": "Moves from corner to better neighbouring corner until none is better (Dantzig, 1947).",
+                "ar": "تنتقل من زاوية إلى زاوية مجاورة أفضل حتى لا توجد زاوية أفضل (دانتزيج، ١٩٤٧)."
+              }
+            },
+            {
+              "term": {
+                "en": "Shadow price (dual value)",
+                "ar": "سعر الظل (القيمة الثنائية)"
+              },
+              "def": {
+                "en": "How much the best objective improves per extra unit of a constraint, within a range.",
+                "ar": "مقدار تحسّن أفضل قيمة للهدف لكل وحدة إضافية من القيد، ضمن مدى معيّن."
+              }
+            },
+            {
+              "term": {
+                "en": "Complementary slackness",
+                "ar": "التراخي المتمّم"
+              },
+              "def": {
+                "en": "A constraint with room to spare at the optimum has a shadow price of zero.",
+                "ar": "القيد الذي فيه فائض عند الحل الأمثل سعر ظله صفر."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "In the cheapest school lunch (40.97 coins), energy and iron are met exactly, while protein comes to 23 g against a need of 20 g. What is protein’s shadow price?",
+            "ar": "في أرخص غداء مدرسي (٤٠٫٩٧ قطعة نقدية)، تُلبّى الطاقة والحديد بالضبط، بينما يبلغ البروتين ٢٣ غرامًا والمطلوب ٢٠ غرامًا. ما سعر الظل للبروتين؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Zero: the limit has room to spare",
+                "ar": "صفر: في القيد فائض"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "3: the spare grams",
+                "ar": "٣: الغرامات الفائضة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "41: the cost of lunch",
+                "ar": "٤١: كلفة الغداء"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Complementary slackness: a limit with slack has a dual value of zero. Asking for 21 g of protein instead of 20 changes nothing, because the plate already gives 23 g. Energy and iron, met exactly, are the limits with non-zero prices.",
+            "ar": "التراخي المتمّم: القيد الذي فيه فائض قيمته الثنائية صفر. فطلب ٢١ غرامًا من البروتين بدل ٢٠ لا يغيّر شيئًا، لأن الطبق يعطي ٢٣ غرامًا أصلًا. أما الطاقة والحديد، المستوفيان بالضبط، فهما القيدان اللذان سعرهما ليس صفرًا."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "p2",
+          "lang": "python",
+          "prompt": {
+            "en": "Find the shadow price of pupils’ hours yourself by solving twice, then compare it with the constraint’s dual_value(). Complete the program so it prints how much one extra hour adds.",
+            "ar": "جِد سعر الظل لساعات الطلاب بنفسك بالحل مرتين، ثم قارنه بقيمة ⁦dual_value()⁩ للقيد. أكمل البرنامج ليطبع ما تضيفه ساعة إضافية واحدة."
+          },
+          "code": [
+            "def best(hours):\n    s = pywraplp.Solver.CreateSolver(\"GLOP\")\n    x = s.NumVar(0, 10, \"tomato\")\n    y = s.NumVar(0, 10, \"beans\")\n    s.Add(x + y <= 8)\n    s.Add(2 * x + y <= 14)\n    s.Add(x + 3 * y <= ",
+            {
+              "blank": 0
+            },
+            ")\n    s.",
+            {
+              "blank": 1
+            },
+            "(30 * x + 40 * y)\n    s.Solve()\n    return s.Objective().Value()\nprint(best(",
+            {
+              "blank": 2
+            },
+            ") - best(18))"
+          ],
+          "answers": [
+            "hours",
+            "Maximize",
+            "19"
+          ],
+          "distractors": [
+            "18",
+            "Minimize",
+            "17"
+          ],
+          "explain": {
+            "en": "The hours limit uses the argument, the goal is a profit to maximise, and best(19) − best(18) is the gain from one more hour: 295 − 290 = 5.0. The hours constraint’s dual_value() gives the same 5, on the phone and in Colab.",
+            "ar": "يستعمل قيد الساعات المعامل hours، والهدف ربح يُعظَّم، و⁦best(19) − best(18)⁩ هو مكسب ساعة إضافية: ٢٩٥ − ٢٩٠ = 5.0. وتعطي ⁦dual_value()⁩ لقيد الساعات القيمة ٥ نفسها، على الهاتف وفي Colab."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p3",
+          "prompt": {
+            "en": "The simplex method checks every corner of the feasible region before it stops.",
+            "ar": "تفحص طريقة السمبلكس كل زوايا المنطقة الممكنة قبل أن تتوقّف."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It stops at the first corner with no better neighbour. Because the feasible region is convex, such a corner is the global optimum, so most corners are never visited. The garden needs two moves: (0, 0) to (0, 6) to (3, 5).",
+            "ar": "إنها تتوقّف عند أول زاوية لا تكون أي زاوية مجاورة لها أفضل منها. ولأن المنطقة الممكنة محدّبة، فهذه الزاوية هي الحل الأمثل العام، لذلك لا تُزار معظم الزوايا أبدًا. وتحتاج الحديقة إلى حركتين: من (٠، ٠) إلى (٠، ٦) إلى (٣، ٥)."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "tool": "diet",
+          "prompt": {
+            "en": "Try it: press “Serve the usual plate” and see which need fails, then “Find the cheapest (simplex)” and read the corners it visited and which needs are met exactly. Raise “Most portions of one food” to 3, then 4: how does the cost fall, and why do groundnuts keep hitting the cap?",
+            "ar": "جرّب: اضغط «قدّم الطبق المعتاد» وانظر أيّ الاحتياجات لا يُلبّى، ثم «جِد الأرخص (السمبلكس)» واقرأ الزوايا التي زارها والاحتياجات المستوفاة بالضبط. ارفع «أكبر عدد من حصص طعام واحد» إلى ٣ ثم ٤: كيف تنخفض الكلفة، ولماذا يبلغ الفول السوداني الحد الأعلى في كل مرة؟"
+          }
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "Solve the diet problem with GLOP: six foods (price, kcal, protein g, iron mg per portion), at most 2 portions of each. Add the three needs as limits and the cost as the goal, then run it.",
+            "ar": "حُلّ مسألة الحِمية باستخدام GLOP: ستة أطعمة (السعر، والسعرات، والبروتين بالغرام، والحديد بالملّيغرام لكل حصة)، وحصّتان على الأكثر من كل طعام. أضف الاحتياجات الثلاثة قيودًا والكلفة هدفًا، ثم شغّل البرنامج."
+          },
+          "starter": "from ortools.linear_solver import pywraplp\nfood = {\"rice\": (15, 260, 5, 0.4), \"beans\": (20, 230, 15, 4),\n        \"egg\": (12, 75, 6, 0.9), \"milk\": (18, 150, 8, 0.1),\n        \"greens\": (10, 40, 5, 6), \"nuts\": (8, 170, 7, 0.6)}\nneed = [700, 20, 5]   # kcal, g protein, mg iron\ns = pywraplp.Solver.CreateSolver(\"GLOP\")\nx = {f: s.NumVar(0, 2, f) for f in food}\n# the three needs as limits, then the cost as the goal\ns.Solve()\nprint(round(s.Objective().Value(), 2))\n",
+          "solution": "from ortools.linear_solver import pywraplp\nfood = {\"rice\": (15, 260, 5, 0.4), \"beans\": (20, 230, 15, 4),\n        \"egg\": (12, 75, 6, 0.9), \"milk\": (18, 150, 8, 0.1),\n        \"greens\": (10, 40, 5, 6), \"nuts\": (8, 170, 7, 0.6)}\nneed = [700, 20, 5]   # kcal, g protein, mg iron\ns = pywraplp.Solver.CreateSolver(\"GLOP\")\nx = {f: s.NumVar(0, 2, f) for f in food}\nfor k in range(3):\n    s.Add(sum(food[f][k + 1] * x[f] for f in food) >= need[k])\ns.Minimize(sum(food[f][0] * x[f] for f in food))\ns.Solve()\nprint(round(s.Objective().Value(), 2))\n",
+          "tests": [
+            {
+              "output": "40.97",
+              "hint": {
+                "en": "The cheapest lunch costs 40.97 coins. Did you minimise the cost?",
+                "ar": "يكلّف أرخص غداء ٤٠٫٩٧ قطعة نقدية. هل جعلت الكلفة أصغر ما يمكن؟"
+              }
+            },
+            {
+              "check": "t = [sum(food[f][k + 1] * x[f].solution_value() for f in food) for k in range(3)]\nassert all(t[k] >= need[k] - 1e-6 for k in range(3)), \"Every need must be met\"",
+              "hint": {
+                "en": "Each need is a limit: the sum over foods of nutrient × portions must be at least the need.",
+                "ar": "كل احتياج قيد: مجموع العنصر × الحصص على كل الأطعمة يجب ألّا يقل عن الاحتياج."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "Nutrient k of food f is food[f][k + 1]; its price is food[f][0].",
+              "ar": "العنصر k في الطعام f هو ⁦food[f][k + 1]⁩، وسعره ⁦food[f][0]⁩."
+            },
+            {
+              "en": "for k in range(3): s.Add(sum(food[f][k + 1] * x[f] for f in food) >= need[k]), then s.Minimize(sum(food[f][0] * x[f] for f in food)).",
+              "ar": "⁦for k in range(3): s.Add(sum(food[f][k + 1] * x[f] for f in food) >= need[k])⁩، ثم ⁦s.Minimize(sum(food[f][0] * x[f] for f in food))⁩."
+            }
+          ],
+          "explain": {
+            "en": "Three ≥ constraints and a minimised cost give 40.97 coins: about 1.3 cups of rice, 0.55 cups of greens and 2 handfuls of groundnuts. Energy and iron are binding; protein (23.2 g) has slack, so its shadow price is zero. Each constraint’s dual_value() gives its shadow price, here on the phone and in Colab alike, where the same program runs unchanged on Google’s OR-Tools.",
+            "ar": "ثلاثة قيود من نوع ≥ وكلفة تُصغَّر تعطي ٤٠٫٩٧ قطعة نقدية: نحو ١٫٣ كوب من الأرز، و٠٫٥٥ كوب من الخضار، وحفنتين من الفول السوداني. والطاقة والحديد قيدان مقيِّدان، أما البروتين (٢٣٫٢ غرام) ففيه فائض، فسعر ظله صفر. وتعطي ⁦dual_value()⁩ لكل قيد سعر ظله، هنا على الهاتف وفي Colab على السواء، حيث يعمل البرنامج نفسه دون تغيير على OR-Tools من Google."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each term to its meaning.",
+            "ar": "صِل كل مصطلح بمعناه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Feasible region",
+                "ar": "المنطقة الممكنة"
+              },
+              "right": {
+                "en": "Every plan that keeps all constraints: a convex set",
+                "ar": "كل خطة تلتزم بكل القيود: مجموعة محدّبة"
+              }
+            },
+            {
+              "left": {
+                "en": "Binding constraint",
+                "ar": "القيد المقيِّد"
+              },
+              "right": {
+                "en": "Met exactly at the optimum",
+                "ar": "مستوفى بالضبط عند الحل الأمثل"
+              }
+            },
+            {
+              "left": {
+                "en": "Dual value",
+                "ar": "القيمة الثنائية"
+              },
+              "right": {
+                "en": "The gain from one more unit of a constraint",
+                "ar": "المكسب من وحدة إضافية من القيد"
+              }
+            },
+            {
+              "left": {
+                "en": "Interior-point method",
+                "ar": "طريقة النقطة الداخلية"
+              },
+              "right": {
+                "en": "Crosses the inside of the region, in polynomial time",
+                "ar": "تعبر داخل المنطقة، في وقت كثيرة حدود"
+              }
+            }
+          ],
+          "explain": {
+            "en": "The feasible region is where the answer can be; binding constraints shape it at the optimum; dual values price those constraints; interior-point methods are the polynomial-time alternative to the simplex walk.",
+            "ar": "المنطقة الممكنة هي حيث يمكن أن تكون الإجابة، والقيود المقيِّدة تحدّد شكلها عند الحل الأمثل، والقيم الثنائية تسعّر تلك القيود، وطرق النقطة الداخلية بديل مسار السمبلكس في وقت كثيرة حدود."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you recommend?",
+            "ar": "بماذا توصي؟"
+          },
+          "who": {
+            "en": "Ms Hoda, manager at a food bank where you volunteer",
+            "ar": "السيدة هدى، مديرة بنك طعام تتطوّع فيه"
+          },
+          "initial": {
+            "en": "H",
+            "ar": "ه"
+          },
+          "situation": {
+            "en": "Your LP says the cheapest food parcel that meets every need has 0.37 tins of beans and no cooking oil. Ms Hoda wants to send it to 2,000 families tomorrow.",
+            "ar": "يقول برنامجك الخطي إن أرخص طرد غذائي يلبّي كل الاحتياجات فيه ٠٫٣٧ علبة من الفاصولياء ولا زيت طبخ فيه. وتريد السيدة هدى إرساله إلى ٢٠٠٠ أسرة غدًا."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Send it: the LP proved it’s optimal.”",
+                "ar": "«أرسليه: فقد أثبت البرنامج الخطي أنه الأمثل.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Optimal for the model, but nobody can pack 0.37 of a tin, and families can’t cook without oil. The model is missing whole units and a rule about what a usable parcel contains.",
+                "ar": "إنه الأمثل للنموذج، لكن أحدًا لا يستطيع تعبئة ٠٫٣٧ من علبة، والأسر لا تستطيع الطبخ دون زيت. فالنموذج تنقصه الوحدات الكاملة وقاعدة عمّا يجعل الطرد صالحًا للاستعمال."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Let me add whole tins and a usable-parcel rule, check it with two families, then we send it.”",
+                "ar": "«دعيني أضيف العلب الكاملة وقاعدة للطرد الصالح، وأتحقّق منه مع أسرتين، ثم نرسله.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Whole tins turn the LP into an integer program (next lesson), the new rule fixes the oil, and families catch anything else. The cost rises a little; the parcel works.",
+                "ar": "تحوّل العلب الكاملة البرنامج الخطي إلى برنامج بالأعداد الصحيحة (الدرس القادم)، وتُصلح القاعدة الجديدة مسألة الزيت، وتلتقط الأسر أي شيء آخر. ترتفع الكلفة قليلًا، ويصبح الطرد صالحًا."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Round 0.37 down to zero tins.”",
+                "ar": "«قرّبي ٠٫٣٧ إلى صفر علب.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Rounding can break a constraint: without those beans the parcel may no longer meet the protein or iron need. Rounding is not the same as solving with whole numbers.",
+                "ar": "قد يكسر التقريب قيدًا: فمن دون تلك الفاصولياء قد لا يلبّي الطرد احتياج البروتين أو الحديد. والتقريب ليس كالحل بالأعداد الصحيحة."
+              }
+            }
+          ],
+          "explain": {
+            "en": "Optimal for the model isn’t usable in practice: add whole units and the missing rule, then check with real users.",
+            "ar": "الأمثل للنموذج ليس صالحًا للاستعمال بالضرورة: أضف الوحدات الكاملة والقاعدة الناقصة، ثم تحقّق مع المستعملين الحقيقيين."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of a decision you know (a budget, a timetable, a farm plot) that could be an LP. Which limit would you expect to have the highest shadow price, and why?",
+            "ar": "فكّر في قرار تعرفه (ميزانية، أو جدول، أو قطعة أرض زراعية) يمكن أن يكون برنامجًا خطيًا. أيّ القيود تتوقّع أن يكون سعر ظله الأعلى، ولماذا؟"
+          },
+          "placeholder": {
+            "en": "For example: “Our society’s stall: the hours volunteers can give will be worth the most; we always have spare table space.”",
+            "ar": "مثلًا: «كشك جمعيتنا: ستكون الساعات التي يعطيها المتطوعون الأعلى قيمة، فلدينا دائمًا مساحة فائضة على الطاولات.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Model a real decision as an LP and read its prices",
+            "ar": "مشروع: صغ قرارًا حقيقيًا برنامجًا خطيًا واقرأ أسعاره"
+          },
+          "task": {
+            "en": "Choose a real decision with 2 to 6 continuous variables: a stall or canteen menu, a farm plot, a weekly study plan. Write the variables with units, the constraints and the objective; solve it with GLOP on your phone or in Colab. Then find each constraint’s shadow price by solving again with it one unit larger, say which constraints bind, and over what range you’d expect the prices to hold. Finish with what the model ignores.",
+            "ar": "اختر قرارًا حقيقيًا فيه من ٢ إلى ٦ متغيّرات متصلة: قائمة كشك أو مقصف، أو قطعة أرض زراعية، أو خطة مذاكرة أسبوعية. اكتب المتغيّرات بوحداتها، والقيود، ودالة الهدف، وحُلّه باستخدام GLOP على هاتفك أو في Colab. ثم جِد سعر الظل لكل قيد بإعادة الحل بعد زيادته وحدة واحدة، وبيّن أيّ القيود مقيِّدة، وعلى أيّ مدى تتوقّع أن تصحّ الأسعار. واختم بما يتجاهله النموذج."
+          },
+          "deliverable": {
+            "en": "Your model (code or written form), the optimal plan, a table of shadow prices with the binding constraints marked, and half a page interpreting them.",
+            "ar": "نموذجك (برنامجًا أو مكتوبًا)، والخطة المثلى، وجدول أسعار الظل مع تمييز القيود المقيِّدة، ونصف صفحة تفسّرها."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: write a decision in standard form with units.",
+                "ar": "أستطيع: كتابة قرار في الصيغة القياسية مع الوحدات."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: solve it with GLOP and find shadow prices with dual_value() and check them by re-solving.",
+                "ar": "أستطيع: حلّه باستخدام GLOP وإيجاد أسعار الظل بـ⁦dual_value()⁩ والتحقّق منها بإعادة الحل."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: explain which limits bind and what the prices mean for the decision.",
+                "ar": "أستطيع: شرح أيّ القيود مقيِّدة وماذا تعني الأسعار للقرار."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Linear programming and the simplex method",
+            "ar": "البرمجة الخطية وطريقة السمبلكس"
+          },
+          "narration": {
+            "en": "Why is the best plan always at a corner, and what is each limit worth?",
+            "ar": "لماذا تقع أفضل خطة دائمًا في زاوية، وما قيمة كل قيد؟"
+          },
+          "note": {
+            "en": "Optimization · Level 4 · Lesson 1",
+            "ar": "الحلول المثلى، المستوى ٤، الدرس ١"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Write a decision as a linear program in standard form.",
+              "Explain why the simplex method walks from corner to corner.",
+              "Read binding constraints and shadow prices, and solve an LP with GLOP."
+            ],
+            "ar": [
+              "تكتب قرارًا برنامجًا خطيًا في الصيغة القياسية.",
+              "تشرح لماذا تمشي طريقة السمبلكس من زاوية إلى زاوية.",
+              "تقرأ القيود المقيِّدة وأسعار الظل، وتحلّ برنامجًا خطيًا باستخدام GLOP."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "Convex region: an optimum sits at a corner",
+              "Simplex: better neighbour after better neighbour",
+              "Shadow price: the gain from one more unit",
+              "Slack constraint: price zero"
+            ],
+            "ar": [
+              "منطقة محدّبة: الحل الأمثل في زاوية",
+              "السمبلكس: جارة أفضل بعد جارة أفضل",
+              "سعر الظل: مكسب وحدة إضافية",
+              "قيد فيه فائض: سعره صفر"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: The garden on graph paper",
+            "ar": "النشاط: الحديقة على ورق الرسم البياني"
+          },
+          "bullets": {
+            "en": [
+              "Draw (8 min): Plot the three garden limits.",
+              "Corners (6 min): Find and score every corner.",
+              "Walk (4 min): Follow the simplex path.",
+              "Prices (7 min): Move the hours line out by one."
+            ],
+            "ar": [
+              "الرسم (٨ دقائق): ارسم قيود الحديقة الثلاثة.",
+              "الزوايا (٦ دقائق): جِد كل زاوية واحسب ربحها.",
+              "المسار (٤ دقائق): تتبّع مسار السمبلكس.",
+              "الأسعار (٧ دقائق): أزِح خط الساعات وحدة واحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Draw (8 min): On graph paper, x across and y up, 0 to 10. Draw x + y = 8, 2x + y = 14 and x + 3y = 18, and shade the side that keeps all three.",
+              "Corners (6 min): Mark the corners (0, 0), (7, 0), (6, 2), (3, 5) and (0, 6) and work out 30x + 40y at each. The best is 290 at (3, 5).",
+              "Walk (4 min): Start at (0, 0). Move along an edge to a better neighbour each time; check that you can’t improve once you reach (3, 5).",
+              "Prices (7 min): Redraw the hours line as x + 3y = 19 and find the new corner, (2.5, 5.5), worth 295: the shadow price is 5. Do the same with land (x + y = 9): 315, worth 25. Why is water worth nothing?"
+            ],
+            "ar": [
+              "الرسم (٨ دقائق): على ورق الرسم البياني، x أفقيًا وy عموديًا، من ٠ إلى ١٠. ارسم ⁦x + y = 8⁩ و⁦2x + y = 14⁩ و⁦x + 3y = 18⁩، وظلّل الجهة التي تلتزم بالثلاثة.",
+              "الزوايا (٦ دقائق): حدّد الزوايا (٠، ٠) و(٧، ٠) و(٦، ٢) و(٣، ٥) و(٠، ٦)، واحسب ⁦30x + 40y⁩ عند كل منها. والأفضل ٢٩٠ عند (٣، ٥).",
+              "المسار (٤ دقائق): ابدأ من (٠، ٠). انتقل على ضلع إلى جارة أفضل في كل مرة، وتحقّق من أنك لا تستطيع التحسين بعد الوصول إلى (٣، ٥).",
+              "الأسعار (٧ دقائق): أعِد رسم خط الساعات ⁦x + 3y = 19⁩، وجِد الزاوية الجديدة (٢٫٥، ٥٫٥) وقيمتها ٢٩٥: سعر الظل ٥. وافعل الشيء نفسه مع الأرض ⁦(x + y = 9)⁩: ٣١٥، بقيمة ٢٥. لماذا لا قيمة للماء؟"
+            ]
+          },
+          "note": {
+            "en": "No graph paper? Use squared exercise-book paper, one square per bed. Check your corners against the lab “The best plan is at a corner”.",
+            "ar": "لا ورق رسم بياني؟ استعمل ورق دفتر مربعات، مربع لكل حوض. وتحقّق من زواياك بمختبر «أفضل خطة في زاوية»."
+          },
+          "narration": {
+            "en": "Which corner wins, and what would one more hour buy?",
+            "ar": "أيّ زاوية تفوز، وماذا ستشتري ساعة إضافية؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why does convexity let simplex stop without checking every corner?",
+              "What does a zero shadow price tell a manager?",
+              "When would you choose an interior-point method over simplex?"
+            ],
+            "ar": [
+              "لماذا يسمح التحدّب للسمبلكس بالتوقّف دون فحص كل الزوايا؟",
+              "ماذا يخبر سعر الظل الصفري المدير؟",
+              "متى تختار طريقة النقطة الداخلية بدل السمبلكس؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Check yourself",
+            "ar": "تحقّق من نفسك"
+          },
+          "bullets": {
+            "en": [
+              "Explain in two sentences why an extra can of water adds nothing to the garden’s profit."
+            ],
+            "ar": [
+              "اشرح في جملتين لماذا لا يضيف دلو ماء إضافي شيئًا إلى ربح الحديقة."
+            ]
+          },
+          "narration": {
+            "en": "Read the answer, and the prices of its limits.",
+            "ar": "اقرأ الإجابة، وأسعار قيودها أيضًا."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Linear programming and the simplex method",
+            "ar": "شرائح للمراجعة: البرمجة الخطية وطريقة السمبلكس"
+          },
+          "pages": 6,
+          "base": "opt-s4-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Linear programming and the simplex method",
+            "ar": "ورقة النشاط: البرمجة الخطية وطريقة السمبلكس"
+          },
+          "pages": 3,
+          "base": "opt-s4-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/opt-s4-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "OPT.2",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "opt-s4-2",
+      "title": {
+        "en": "Integer programs and branch and bound",
+        "ar": "البرمجة بالأعداد الصحيحة والتفريع والتحديد"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Model the field trip in SCIP with the 300-coin booking fee (1,650). Then change the fee and find where the answer flips from three buses back to two buses and a minibus. Explain the flip point in one sentence.",
+        "ar": "صُغ الرحلة الميدانية في SCIP مع رسوم الحجز البالغة ٣٠٠ قطعة نقدية (١٦٥٠). ثم غيّر الرسوم وجِد النقطة التي تنقلب عندها الإجابة من ثلاث حافلات إلى حافلتين وحافلة صغيرة. واشرح نقطة الانقلاب في جملة واحدة."
+      },
+      "materials": {
+        "en": [
+          "Your phone, or a computer with Colab",
+          "Paper for drawing a branch-and-bound tree"
+        ],
+        "ar": [
+          "هاتفك، أو حاسوب مع Colab",
+          "ورق لرسم شجرة التفريع والتحديد"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Integer programs and branch and bound",
+            "ar": "البرمجة بالأعداد الصحيحة والتفريع والتحديد"
+          },
+          "src": null,
+          "duration": 240,
+          "sizeMB": 1.4,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "2.13 buses?",
+                "ar": "٢٫١٣ حافلة؟"
+              }
+            },
+            {
+              "at": 25.2,
+              "atBy": {
+                "en": 25.2,
+                "ar": 25.9
+              },
+              "label": {
+                "en": "Relax, then round?",
+                "ar": "إرخاء، ثم تقريب؟"
+              }
+            },
+            {
+              "at": 61.1,
+              "atBy": {
+                "en": 61.1,
+                "ar": 59.9
+              },
+              "label": {
+                "en": "Branch and bound",
+                "ar": "التفريع والتحديد"
+              }
+            },
+            {
+              "at": 139.7,
+              "atBy": {
+                "en": 139.7,
+                "ar": 134.6
+              },
+              "label": {
+                "en": "Hard, yet solved",
+                "ar": "صعبة، ومع ذلك تُحلّ"
+              }
+            },
+            {
+              "at": 207.8,
+              "atBy": {
+                "en": 207.8,
+                "ar": 205
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A minimisation’s relaxation costs 1,000; the best whole-number plan so far costs 1,200. What do you know about the true best?",
+                "ar": "كلفة الإرخاء في نموذج للتصغير ١٠٠٠، وأفضل خطة بأعداد صحيحة حتى الآن كلفتها ١٢٠٠. ماذا تعرف عن أفضل حل حقيقي؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "It is exactly 1,000",
+                    "ar": "أنه ١٠٠٠ بالضبط"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "It is between 1,000 and 1,200",
+                    "ar": "أنه بين ١٠٠٠ و١٢٠٠"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "It is more than 1,200",
+                    "ar": "أنه أكثر من ١٢٠٠"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "For a minimisation, the LP relaxation allows more plans, so its cost (1,000) is a lower bound on any whole-number plan. The best plan found so far (1,200) is an upper bound. The true optimum lies between them; the gap, (1,200 − 1,000) ÷ 1,200 ≈ 17%, says how far from proven you are.",
+                "ar": "في مسألة تصغير، يسمح الإرخاء الخطي بخطط أكثر، فتكون كلفته (١٠٠٠) حدًّا أدنى لأي خطة بأعداد صحيحة. وأفضل خطة وُجدت حتى الآن (١٢٠٠) حدّ أعلى. ويقع الحل الأمثل الحقيقي بينهما، والفجوة، (١٢٠٠ − ١٠٠٠) ÷ ١٢٠٠ ≈ ١٧٪، تخبرك ببُعدك عن الإثبات."
+              }
+            },
+            "at": 139.74,
+            "atBy": {
+              "en": 139.74,
+              "ar": 134.57
+            }
+          },
+          "transcript": {
+            "en": "Sixty-four people for the field trip. A minibus seats fourteen for three hundred coins; a bus seats thirty for five hundred and fifty. The linear program says: hire two point one three buses. Try telling that to the bus company. Today: integer programs, and how branch and bound finds whole-number answers. Drop the whole-number rule and you get the LP relaxation: one thousand one hundred and seventy-three coins. No whole-number plan can be cheaper, because the relaxation allows more plans, so it’s a bound. But its answer can’t be used as it is. Round down to two buses, and four people stay behind. Round up to three buses, and it costs sixteen hundred and fifty. The best whole-number plan is neither: two buses and a minibus, fourteen hundred. Branch and bound searches cleverly. Pick a variable with a fraction, like two point one three buses, and split: at most two buses, or at least three. Each branch is a linear program again. Bound: once you hold a whole-number plan, any branch whose relaxation already costs more is cut off unexplored. The three-bus branch costs at least sixteen fifty, more than the fourteen hundred we have, so it’s pruned. Solvers prove the best this way, often without visiting most of the tree. While it runs, a solver reports two numbers: the best plan so far, and the best bound. The gap between them says how far from proven you are. Here it starts at about sixteen percent, and at zero, the plan is optimal. Quick check! A cost-minimising model’s relaxation costs one thousand, and the best whole-number plan found so far costs twelve hundred. What do you know about the true best? It lies somewhere between the two. In general, integer programming is NP-hard: nobody knows a method that is fast on every problem. Yet solvers like SCIP, HiGHS, Gurobi and CP-SAT solve real problems with huge numbers of variables, thanks to good bounds, cutting planes and heuristics. Yes-or-no variables model logic. To charge a booking fee only if you hire any minibus, add a yes-or-no variable, book, and the limit: minibuses at most ten times book. If book is zero, no minibus; if it’s one, up to ten. In the app, open the truck load model. Change the capacity, add a rule of your own, and watch how the solver’s answer changes. Your turn. The minibus company adds a three-hundred-coin booking fee. Are two buses and a minibus still the cheapest? No: with the fee it costs seventeen hundred, so three buses at sixteen fifty win. Remember: the relaxation gives a bound, and rounding can fail. Branch and bound splits on fractions and prunes what can’t win. And the gap tells you how close to proven you are. Try it yourself: model the trip in SCIP, with the booking fee. Then change the fee, and find the fee at which the answer flips.",
+            "ar": "أربعة وستين واحد رايحين الرحلة الميدانية. الميني باص بياخد أربعتاشر بتلتمية عملة، والأتوبيس بياخد تلاتين بخمسمية وخمسين. والبرنامج الخطي بيقول: أجّر اتنين فاصلة واحد تلاتة أتوبيس. جرّب تقول كده لشركة الأتوبيسات. النهارده: البرامج بالأعداد الصحيحة، وإزاي التفريع والتحديد بيلاقي إجابات بأرقام صحيحة. شيل شرط الأرقام الصحيحة، يطلع لك الإرخاء الخطي: ألف ومية تلاتة وسبعين عملة. مفيش خطة بأرقام صحيحة ممكن تبقى أرخص منه، لأن الإرخاء بيسمح بخطط أكتر، يبقى ده حد أدنى. بس إجابته مينفعش تتاخد زي ما هي. قرّب لتحت لاتنين أتوبيس، يفضل أربعة من غير مكان. قرّب لفوق لتلاتة، يكلّف ألف وستمية وخمسين. وأحسن خطة بأرقام صحيحة ولا ده ولا ده: أتوبيسين وميني باص، بألف وأربعمية. التفريع والتحديد بيدوّر بذكاء. اختار متغيّر فيه كسر، زي اتنين فاصلة واحد تلاتة أتوبيس، وقسّم: أتوبيسين على الأكتر، أو تلاتة على الأقل. وكل فرع بيبقى برنامج خطي من تاني. التحديد: أول ما يبقى معاك خطة بأرقام صحيحة، أي فرع الإرخاء بتاعه أغلى منها بيتقطع من غير ما تدخله. فرع التلات أتوبيسات أقل حاجة فيه ألف وستمية وخمسين، أكتر من الألف وأربعمية اللي معانا، فبيتقطع. وبرامج الحل بتثبت الأحسن بالطريقة دي، وغالبًا من غير ما تزور أغلب الشجرة. وهو شغّال، السولفر بيطلّع رقمين: أحسن خطة لحد دلوقتي، وأحسن حد أدنى. والفجوة بينهم بتقولّك إنت بعيد قد إيه عن الإثبات. هنا بتبدأ من حوالي ستاشر في المية، ولما توصل صفر، تبقى الخطة هي المُثلى. سؤال سريع! نموذج بيصغّر التكلفة، الإرخاء بتاعه بألف، وأحسن خطة بأرقام صحيحة لقيناها لحد دلوقتي بألف ومتين. تعرف إيه عن أحسن حل حقيقي؟ هو في حتة بين الاتنين. وبشكل عام، البرمجة بالأعداد الصحيحة مسألة من النوع اللي اسمه «NP-hard»: محدش يعرف طريقة سريعة على كل المسائل. ومع ذلك، برامج حل زي SCIP وHiGHS وGurobi وCP-SAT بتحل مسائل حقيقية فيها أعداد ضخمة من المتغيّرات، بفضل حدود كويسة، وقطوع، وطرق تقريبية. متغيّرات «أيوه أو لأ» بتمثّل المنطق. علشان تدفع رسوم حجز بس لو أجّرت أي ميني باص، زوّد متغيّر أيوه أو لأ اسمه book، والقيد: عدد الميني باصات على الأكتر عشرة في book. لو book بصفر، مفيش ميني باص، ولو بواحد، لحد عشرة. في التطبيق، افتح نموذج حمولة العربية. غيّر الحمولة القصوى، وزوّد قاعدة من عندك، وشوف إجابة السولفر بتتغيّر إزاي. دورك. شركة الميني باص زوّدت رسوم حجز تلتمية عملة. هل أتوبيسين وميني باص لسه الأرخص؟ لأ: مع الرسوم بتكلّف ألف وسبعمية، فالتلات أتوبيسات بألف وستمية وخمسين بتكسب. افتكر: الإرخاء بيدّيك حد أدنى، والتقريب ممكن يفشل. والتفريع والتحديد بيقسّم على الكسور وبيقطع اللي مش هيكسب. والفجوة بتقولّك إنت قريب قد إيه من الإثبات. جرّبها بنفسك: اعمل نموذج الرحلة في SCIP، بالرسوم. وبعدين غيّر الرسوم، ودوّر على الرسوم اللي عندها الإجابة بتتقلب."
+          },
+          "sources": {
+            "en": "/media/opt-s4-2/video-en.mp4",
+            "ar": "/media/opt-s4-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/opt-s4-2/captions-en.vtt",
+            "ar": "/media/opt-s4-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/opt-s4-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/opt-s4-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/opt-s4-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/opt-s4-2/light/audio/en.opus",
+              "manifest.json": "/media/opt-s4-2/light/manifest.json",
+              "scenes.json": "/media/opt-s4-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/opt-s4-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/opt-s4-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 526,
+              "ar": 527
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Whole numbers, bounds and the search tree",
+            "ar": "الأعداد الصحيحة والحدود وشجرة البحث"
+          },
+          "body": {
+            "en": "Many decisions come in whole units or yes/no choices: buses, teachers, tins, whether to open a room. A mixed-integer program (MIP) is a linear program in which some variables must be integers. That small change makes a big difference. Take 64 people, a minibus seating 14 for 300 coins and a bus seating 30 for 550. The LP says 2.13 buses for 1,173.33 coins. Rounding down leaves 4 people behind; rounding up to 3 buses costs 1,650; the best whole-number plan, 2 buses and a minibus at 1,400, is neither.\n\nDropping the integer rule gives the LP relaxation. Because it allows more plans, its optimum is a bound: for a minimisation, no integer plan can cost less than 1,173.33. Branch and bound turns this into a search. Solve the relaxation; if a variable is fractional (2.13 buses), branch: one subproblem adds “at most 2 buses”, the other “at least 3”. Each branch is again an LP. Whenever you find an integer plan (the incumbent), prune every branch whose relaxation is already no better: the 3-bus branch costs at least 1,650, worse than 1,400, so it is never explored. The search ends when no branch can beat the incumbent, which proves it optimal.\n\nWhile it runs, a solver reports the incumbent and the best bound. The relative gap, (incumbent − bound) ÷ incumbent, starts here at about 16% and falls to 0 at proof. Real solvers add cutting planes (constraints that slice off fractional corners without losing integer plans), presolve and heuristics that find good incumbents early. Integer programming is NP-hard in general: no known method is fast on every instance, and some small ones are very hard. Yet SCIP, HiGHS, CPLEX, Gurobi and CP-SAT routinely solve industrial models with huge numbers of variables, usually stopped at a time limit or a target gap.\n\nInteger variables also model logic. A yes/no variable b with small ≤ 10 × b says “no minibus unless booked”; adding 300 × b to the cost charges the booking fee only when b = 1. This is a big-M constraint (here M = 10, the most minibuses you would ever hire). Keep M as small as is safe: a huge M gives weak relaxations and slow searches. With the fee, 2 buses and a minibus cost 1,700, so 3 buses at 1,650 win; the answer flips when the fee passes 250.",
+            "ar": "كثير من القرارات يأتي بوحدات كاملة أو باختيارات «نعم أو لا»: الحافلات، والمعلمون، والعلب، وفتح غرفة أو عدم فتحها. والبرنامج الصحيح المختلط برنامج خطي يجب أن تكون بعض متغيّراته أعدادًا صحيحة. وهذا التغيير الصغير يُحدث فرقًا كبيرًا. خذ ٦٤ شخصًا، وحافلة صغيرة تتّسع لـ ١٤ مقابل ٣٠٠ قطعة نقدية، وحافلة تتّسع لـ ٣٠ مقابل ٥٥٠. يقول البرنامج الخطي: ٢٫١٣ حافلة بكلفة ١١٧٣٫٣٣. والتقريب إلى أسفل يترك ٤ أشخاص بلا مكان، والتقريب إلى ثلاث حافلات يكلّف ١٦٥٠، أما أفضل خطة بأعداد صحيحة، حافلتان وحافلة صغيرة بكلفة ١٤٠٠، فليست هذه ولا تلك.\n\nإسقاط شرط الأعداد الصحيحة يعطي الإرخاء الخطي. ولأنه يسمح بخطط أكثر، فقيمته المثلى حدّ: ففي مسألة تصغير، لا يمكن لأي خطة صحيحة أن تكلّف أقل من ١١٧٣٫٣٣. والتفريع والتحديد يحوّل هذا إلى بحث. حُلّ الإرخاء، فإن كان أحد المتغيّرات كسرًا (٢٫١٣ حافلة) ففرّع: مسألة فرعية تضيف «حافلتان على الأكثر»، وأخرى «ثلاث على الأقل». وكل فرع برنامج خطي من جديد. وكلما وجدت خطة صحيحة (الحل الحالي الأفضل)، فاقطع كل فرع ليس إرخاؤه أفضل منها: ففرع الحافلات الثلاث يكلّف ١٦٥٠ على الأقل، وهي أسوأ من ١٤٠٠، فلا يُستكشف أبدًا. وينتهي البحث حين لا يستطيع أي فرع أن يتفوّق على الحل الحالي، وهذا يُثبت أنه الأمثل.\n\nوأثناء العمل، يعرض برنامج الحل الحل الحالي الأفضل وأفضل حدّ. والفجوة النسبية، (الحل الحالي − الحد) ÷ الحل الحالي، تبدأ هنا عند نحو ١٦٪ وتنزل إلى صفر عند الإثبات. وتضيف برامج الحل الحقيقية مستويات قاطعة (قيودًا تقتطع الزوايا الكسرية دون أن تخسر أي خطة صحيحة)، ومعالجة مسبقة، وطرقًا تقريبية تجد حلولًا جيدة مبكرًا. والبرمجة بالأعداد الصحيحة مسألة صعبة حسابيًا (NP-hard) بشكل عام: لا توجد طريقة معروفة سريعة على كل الحالات، وبعض الحالات الصغيرة صعب جدًا. ومع ذلك تحلّ SCIP وHiGHS وCPLEX وGurobi وCP-SAT بانتظام نماذج صناعية فيها أعداد هائلة من المتغيّرات، وغالبًا ما تُوقَف عند حدٍّ زمني أو فجوة مستهدفة.\n\nوتنمذج المتغيّرات الصحيحة المنطقَ أيضًا. فالمتغيّر b من نوع «نعم أو لا» مع ⁦small ≤ 10 × b⁩ يقول «لا حافلة صغيرة دون حجز»، وإضافة ⁦300 × b⁩ إلى الكلفة تفرض رسوم الحجز فقط حين ⁦b = 1⁩. وهذا قيد «M الكبير» (هنا ⁦M = 10⁩، أكبر عدد من الحافلات الصغيرة قد تستأجره). واجعل M أصغر ما يمكن بأمان: فـ M الضخم يعطي إرخاءات ضعيفة وبحثًا بطيئًا. ومع الرسوم تكلّف حافلتان وحافلة صغيرة ١٧٠٠، فتفوز ثلاث حافلات بـ ١٦٥٠، وتنقلب الإجابة حين تتجاوز الرسوم ٢٥٠."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Mixed-integer program (MIP)",
+                "ar": "البرنامج الصحيح المختلط"
+              },
+              "def": {
+                "en": "A linear program in which some variables must take whole-number values.",
+                "ar": "برنامج خطي يجب أن تأخذ بعض متغيّراته قيمًا صحيحة."
+              }
+            },
+            {
+              "term": {
+                "en": "LP relaxation",
+                "ar": "الإرخاء الخطي"
+              },
+              "def": {
+                "en": "The same model without the whole-number rule. Its optimum bounds the integer optimum.",
+                "ar": "النموذج نفسه دون شرط الأعداد الصحيحة. وقيمته المثلى حدّ للقيمة المثلى الصحيحة."
+              }
+            },
+            {
+              "term": {
+                "en": "Branch and bound",
+                "ar": "التفريع والتحديد"
+              },
+              "def": {
+                "en": "Split on a fractional variable, solve each branch’s relaxation, and prune branches that can’t beat the best plan found.",
+                "ar": "التقسيم عند متغيّر كسري، وحلّ إرخاء كل فرع، وقطع الفروع التي لا يمكن أن تتفوّق على أفضل خطة وُجدت."
+              }
+            },
+            {
+              "term": {
+                "en": "Optimality gap",
+                "ar": "فجوة الأمثلية"
+              },
+              "def": {
+                "en": "(best plan − best bound) ÷ best plan: how far from proven optimal you are.",
+                "ar": "(أفضل خطة − أفضل حد) ÷ أفضل خطة: مقدار بُعدك عن إثبات الأمثلية."
+              }
+            },
+            {
+              "term": {
+                "en": "Big-M constraint",
+                "ar": "قيد M الكبير"
+              },
+              "def": {
+                "en": "Links a yes/no variable to a quantity, such as x ≤ M × b, so x can be positive only when b = 1.",
+                "ar": "يربط متغيّرًا من نوع «نعم أو لا» بكمية، مثل ⁦x ≤ M × b⁩، فلا تكون x موجبة إلا حين ⁦b = 1⁩."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "64 people; a minibus seats 14 for 300 coins and a bus 30 for 550. Without fees the best plan is 2 buses and 1 minibus (1,400). The minibus company now charges a 300-coin booking fee if you hire any minibus. What is the best plan now?",
+            "ar": "٦٤ شخصًا، والحافلة الصغيرة تتّسع لـ ١٤ مقابل ٣٠٠ قطعة نقدية، والحافلة لـ ٣٠ مقابل ٥٥٠. ومن دون رسوم تكون أفضل خطة حافلتين وحافلة صغيرة (١٤٠٠). والآن تفرض شركة الحافلات الصغيرة رسوم حجز قدرها ٣٠٠ قطعة نقدية إن استأجرت أي حافلة صغيرة. ما أفضل خطة الآن؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Still 2 buses and 1 minibus (1,400)",
+                "ar": "ما زالت حافلتان وحافلة صغيرة (١٤٠٠)"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Three buses, 1,650: with the fee the old plan costs 1,700",
+                "ar": "ثلاث حافلات بـ ١٦٥٠: فمع الرسوم تكلّف الخطة القديمة ١٧٠٠"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Hire five minibuses instead",
+                "ar": "استأجر خمس حافلات صغيرة بدلًا منها"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "The fee is a fixed cost, modelled with a yes/no variable. Two buses and a minibus now cost 1,100 + 300 + 300 = 1,700; three buses cost 1,650 and need no minibus, so they win. The answer flips when the fee passes 250.",
+            "ar": "الرسوم كلفة ثابتة تُنمذَج بمتغيّر «نعم أو لا». فحافلتان وحافلة صغيرة تكلّف الآن ١١٠٠ + ٣٠٠ + ٣٠٠ = ١٧٠٠، وثلاث حافلات تكلّف ١٦٥٠ ولا تحتاج إلى حافلة صغيرة، فتفوز. وتنقلب الإجابة حين تتجاوز الرسوم ٢٥٠."
+          }
+        },
+        {
+          "type": "parsons",
+          "id": "p2",
+          "lang": "python",
+          "prompt": {
+            "en": "Put the lines of a branch-and-bound search for a knapsack in order. bound(i, room) is an optimistic estimate of what loads i onwards could still add. Explore taking a load before skipping it.",
+            "ar": "رتّب أسطر بحث بالتفريع والتحديد لمسألة حقيبة الظهر. الدالة ⁦bound(i, room)⁩ تقدير متفائل لما يمكن أن تضيفه الحمولات من i فصاعدًا. استكشف أخذ الحمولة قبل تخطّيها."
+          },
+          "lines": [
+            "def search(i, room, value):",
+            "    global best",
+            "    best = max(best, value)",
+            "    if i == n or value + bound(i, room) <= best:",
+            "        return",
+            "    w, v = items[i]",
+            "    if w <= room:",
+            "        search(i + 1, room - w, value + v)",
+            "    search(i + 1, room, value)"
+          ],
+          "distractors": [
+            "    best = min(best, value)",
+            "        search(i + 1, room + w, value - v)"
+          ],
+          "explain": {
+            "en": "Record the value reached so far, then prune: stop at the end of the list, or when even the optimistic bound can’t beat the best. Only then read the next load, branch on taking it (if it fits) and on skipping it.",
+            "ar": "سجّل القيمة التي وصلت إليها، ثم اقطع: توقّف عند نهاية القائمة، أو حين لا يستطيع حتى الحد المتفائل أن يتفوّق على الأفضل. وبعد ذلك فقط اقرأ الحمولة التالية، وفرّع على أخذها (إن اتّسعت) وعلى تخطّيها."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p3",
+          "prompt": {
+            "en": "In a minimisation problem, the LP relaxation’s cost can never be higher than the cost of the best whole-number plan.",
+            "ar": "في مسألة تصغير، لا يمكن أبدًا أن تكون كلفة الإرخاء الخطي أعلى من كلفة أفضل خطة بأعداد صحيحة."
+          },
+          "answer": true,
+          "explain": {
+            "en": "Every whole-number plan is also allowed in the relaxation, so the relaxation’s minimum is at most the integer minimum: 1,173.33 against 1,400 for the trip. That is why it is a bound.",
+            "ar": "كل خطة بأعداد صحيحة مسموح بها أيضًا في الإرخاء، لذلك لا تزيد أصغر كلفة في الإرخاء على أصغر كلفة صحيحة: ١١٧٣٫٣٣ مقابل ١٤٠٠ في الرحلة. ولهذا هو حدّ."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "tool": "modeller",
+          "prompt": {
+            "en": "Try it: choose the “Truck load” example and press Run (65 points: desks and books). Change capacity to 1100 and run again (75). Then put capacity back to 1000 and add `model.add(take[3] == 1)` before the solver, so the water filter must go: what does that rule cost in points?",
+            "ar": "جرّب: اختر مثال «حمولة الشاحنة» واضغط «شغّل» (٦٥ نقطة: المقاعد والكتب). غيّر capacity إلى 1100 وشغّل من جديد (٧٥). ثم أعِد capacity إلى 1000 وأضف `⁦model.add(take[3] == 1)⁩` قبل برنامج الحل، فيصبح مرشّح الماء إلزاميًا: كم تكلّف هذه القاعدة من النقاط؟"
+          }
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "The minibus company now charges a 300-coin booking fee if you hire any minibus. Add a yes/no variable `book`, a limit so minibuses need a booking (at most 10 when booked), and the fee in the cost. What does the trip cost now?",
+            "ar": "تفرض شركة الحافلات الصغيرة الآن رسوم حجز قدرها ٣٠٠ قطعة نقدية إن استأجرت أي حافلة صغيرة. أضف متغيّرًا من نوع «نعم أو لا» اسمه `book`، وقيدًا يجعل الحافلات الصغيرة تحتاج إلى حجز (١٠ على الأكثر عند الحجز)، والرسوم في الكلفة. كم تكلّف الرحلة الآن؟"
+          },
+          "starter": "from ortools.linear_solver import pywraplp\ns = pywraplp.Solver.CreateSolver(\"SCIP\")\nsmall = s.IntVar(0, 10, \"minibuses\")\nbig = s.IntVar(0, 10, \"buses\")\ns.Add(14 * small + 30 * big >= 64)\ns.Minimize(300 * small + 550 * big)\ns.Solve()\nprint(int(s.Objective().Value()))\n",
+          "solution": "from ortools.linear_solver import pywraplp\ns = pywraplp.Solver.CreateSolver(\"SCIP\")\nsmall = s.IntVar(0, 10, \"minibuses\")\nbig = s.IntVar(0, 10, \"buses\")\nbook = s.BoolVar(\"book\")\ns.Add(14 * small + 30 * big >= 64)\ns.Add(small <= 10 * book)\ns.Minimize(300 * small + 550 * big + 300 * book)\ns.Solve()\nprint(int(s.Objective().Value()))\n",
+          "tests": [
+            {
+              "output": "1650",
+              "hint": {
+                "en": "Without the fee the program prints 1400. With the fee, three buses (1,650) beat two buses and a minibus (1,700).",
+                "ar": "من دون الرسوم يطبع البرنامج 1400. ومع الرسوم تتفوّق ثلاث حافلات (١٦٥٠) على حافلتين وحافلة صغيرة (١٧٠٠)."
+              }
+            },
+            {
+              "check": "assert 14 * small.solution_value() + 30 * big.solution_value() >= 64, \"Everyone needs a seat\"\nassert abs(big.solution_value() - 3) < 1e-6 and small.solution_value() < 1e-6, \"Three buses and no minibus\"",
+              "hint": {
+                "en": "Charge the fee only when booked: + 300 * book in the cost, and small <= 10 * book.",
+                "ar": "افرض الرسوم عند الحجز فقط: + ⁦300 * book⁩ في الكلفة، و⁦small <= 10 * book⁩."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "book = s.BoolVar(\"book\") makes a 0/1 variable.",
+              "ar": "السطر ⁦book = s.BoolVar(\"book\")⁩ يُنشئ متغيّرًا قيمته ٠ أو ١."
+            },
+            {
+              "en": "s.Add(small <= 10 * book): no minibus unless booked. Then add 300 * book to the Minimize line.",
+              "ar": "⁦s.Add(small <= 10 * book)⁩: لا حافلة صغيرة دون حجز. ثم أضف ⁦300 * book⁩ إلى سطر Minimize."
+            }
+          ],
+          "explain": {
+            "en": "The big-M limit small <= 10 * book lets minibuses be hired only when book = 1, and 300 * book charges the fee exactly then. Two buses and a minibus now cost 1,700, so three buses at 1,650 win. The same program runs unchanged on Google’s OR-Tools in Colab, where SCIP also handles models with thousands of such variables.",
+            "ar": "قيد M الكبير ⁦small <= 10 * book⁩ لا يسمح باستئجار حافلات صغيرة إلا حين ⁦book = 1⁩، و⁦300 * book⁩ يفرض الرسوم في هذه الحالة تحديدًا. وتكلّف حافلتان وحافلة صغيرة الآن ١٧٠٠، فتفوز ثلاث حافلات بـ ١٦٥٠. والبرنامج نفسه يعمل دون تغيير على OR-Tools من Google في Colab، حيث يتعامل SCIP أيضًا مع نماذج فيها آلاف المتغيّرات من هذا النوع."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p5",
+          "prompt": {
+            "en": "Which of these decisions need whole-number or yes/no variables? Choose all that apply.",
+            "ar": "أيّ هذه القرارات يحتاج إلى متغيّرات صحيحة أو من نوع «نعم أو لا»؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "How many buses to hire",
+                "ar": "كم حافلة نستأجر"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Whether to open a new tutoring centre",
+                "ar": "هل نفتح مركزًا جديدًا للدروس"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Kilograms of rice to buy for the canteen",
+                "ar": "كم كيلوغرامًا من الأرز نشتري للمقصف"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Which lecturer invigilates which exam",
+                "ar": "أيّ محاضر يراقب أيّ امتحان"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "Litres of water for the garden each week",
+                "ar": "عدد لترات الماء للحديقة كل أسبوع"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Buses come whole, opening a centre is yes or no, and assigning a lecturer to an exam is a yes/no choice for each pair. Rice in kilograms and water in litres can be fractions, so continuous variables are fine and keep the model fast.",
+            "ar": "الحافلات تأتي كاملة، وفتح مركز قرار «نعم أو لا»، وتعيين محاضر لامتحان اختيار «نعم أو لا» لكل زوج. أما الأرز بالكيلوغرام والماء باللتر فيمكن أن يكونا كسورًا، فتكفي المتغيّرات المتصلة، وتُبقي النموذج سريعًا."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you tell your group?",
+            "ar": "ماذا تقول لمجموعتك؟"
+          },
+          "who": {
+            "en": "Tarek, your project partner",
+            "ar": "طارق، زميلك في المشروع"
+          },
+          "initial": {
+            "en": "T",
+            "ar": "ط"
+          },
+          "situation": {
+            "en": "Your MIP for allocating exam rooms has run for a minute and reports a gap of 3%. Tarek wants to drop it and just round the LP relaxation instead, “to save time”.",
+            "ar": "يعمل نموذجكم الصحيح المختلط لتوزيع قاعات الامتحانات منذ دقيقة، ويُظهر فجوة قدرها ٣٪. ويريد طارق أن يتركه ويقرّب الإرخاء الخطي بدلًا منه، «لتوفير الوقت»."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Rounding the LP is faster, let’s do that.”",
+                "ar": "«تقريب الإرخاء أسرع، لنفعل ذلك.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Rounding can break constraints (a room double-booked, people without a seat) or miss the best by far, and you would have no gap to show how good it is.",
+                "ar": "قد يكسر التقريب القيود (قاعة محجوزة مرتين، أو أشخاص بلا مقاعد) أو يبتعد كثيرًا عن الأفضل، ولن تكون لديك فجوة تبيّن مدى جودته."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“A 3% gap is a guarantee. Let’s take this plan, report the gap, and set a time limit next time.”",
+                "ar": "«فجوة ٣٪ ضمان. لنأخذ هذه الخطة، ونذكر الفجوة، ونحدّد حدًّا زمنيًا في المرة القادمة.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "The plan is feasible and provably within 3% of the best. Reporting the gap is exactly how professionals present a MIP answer.",
+                "ar": "الخطة ممكنة، ومُثبَت أنها ضمن ٣٪ من الأفضل. وذكر الفجوة هو بالضبط الطريقة التي يعرض بها المحترفون إجابة برنامج صحيح مختلط."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Let it run all week until the gap is zero.”",
+                "ar": "«دعه يعمل الأسبوع كله حتى تصبح الفجوة صفرًا.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Closing the last few percent can take far longer than finding the plan. Unless 3% matters a lot, the time is better spent checking the plan with the exams office.",
+                "ar": "قد يستغرق إغلاق آخر بضعة في المئة وقتًا أطول بكثير من إيجاد الخطة. وما لم تكن ٣٪ مهمة جدًا، فالأفضل صرف الوقت في مراجعة الخطة مع مكتب الامتحانات."
+              }
+            }
+          ],
+          "explain": {
+            "en": "A reported gap is a guarantee: take the feasible plan, report the gap, and set a time limit.",
+            "ar": "الفجوة المعلنة ضمان: خذ الخطة الممكنة، وأعلن الفجوة، وحدّد مهلة زمنية."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Where have you seen a decision rounded when it should have been solved with whole numbers? What went wrong, or might have?",
+            "ar": "أين رأيت قرارًا قُرّب مع أنه كان ينبغي أن يُحلّ بأعداد صحيحة؟ ما الذي ساء، أو كان يمكن أن يسوء؟"
+          },
+          "placeholder": {
+            "en": "For example: “Our society ordered 2 crates of drinks because 1.6 rounded up, but we never checked that 1 crate and 6 bottles was cheaper.”",
+            "ar": "مثلًا: «طلبت جمعيتنا صندوقين من المشروبات لأن ١٫٦ قُرّبت إلى أعلى، ولم نتحقّق قط من أن صندوقًا و٦ زجاجات كان أرخص.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A small MIP with a fixed cost",
+            "ar": "مشروع: برنامج صحيح مختلط صغير بكلفة ثابتة"
+          },
+          "task": {
+            "en": "Pick a real decision with whole units and at least one fixed cost: hiring tables and chairs from two shops that charge delivery, choosing which of three sites to open for a tutoring programme, or buses for an event. Model it in SCIP (on your phone or in Colab). Solve the LP relaxation too (GLOP), and compare: the relaxation’s bound, what rounding it would give, and the true integer optimum. Then change the fixed cost and find where the decision flips.",
+            "ar": "اختر قرارًا حقيقيًا فيه وحدات كاملة وكلفة ثابتة واحدة على الأقل: استئجار طاولات وكراسٍ من محلّين يطلبان أجرة توصيل، أو اختيار أيّ المواقع الثلاثة يُفتح لبرنامج دروس، أو حافلات لفعالية. صُغه في SCIP (على هاتفك أو في Colab). وحُلّ الإرخاء الخطي أيضًا (GLOP)، وقارن: حدّ الإرخاء، وما يعطيه تقريبه، والحل الصحيح الأمثل الحقيقي. ثم غيّر الكلفة الثابتة وجِد أين ينقلب القرار."
+          },
+          "deliverable": {
+            "en": "Your model, a table comparing the relaxation, the rounded plan and the integer optimum (with the gap), and the fixed cost at which the decision flips.",
+            "ar": "نموذجك، وجدول يقارن الإرخاء والخطة المقرّبة والحل الصحيح الأمثل (مع الفجوة)، والكلفة الثابتة التي ينقلب عندها القرار."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: model whole units and a fixed cost with a yes/no variable.",
+                "ar": "أستطيع: نمذجة وحدات كاملة وكلفة ثابتة بمتغيّر من نوع «نعم أو لا»."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: explain why the relaxation is a bound and why rounding can fail.",
+                "ar": "أستطيع: شرح لماذا يكون الإرخاء حدًّا، ولماذا قد يفشل التقريب."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: report an integer answer with its gap.",
+                "ar": "أستطيع: عرض إجابة صحيحة مع فجوتها."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Integer programs and branch and bound",
+            "ar": "البرمجة بالأعداد الصحيحة والتفريع والتحديد"
+          },
+          "narration": {
+            "en": "You can’t hire 2.13 buses. So how do solvers find the best whole-number plan?",
+            "ar": "لا يمكنك استئجار ٢٫١٣ حافلة. فكيف تجد برامج الحل أفضل خطة بأعداد صحيحة؟"
+          },
+          "note": {
+            "en": "Optimization · Level 4 · Lesson 2",
+            "ar": "الحلول المثلى، المستوى ٤، الدرس ٢"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Explain why rounding an LP can fail, and why the relaxation is a bound.",
+              "Follow branch and bound: branch, bound, prune, and the gap.",
+              "Model whole units and a fixed cost in SCIP."
+            ],
+            "ar": [
+              "تشرح لماذا قد يفشل تقريب البرنامج الخطي، ولماذا يكون الإرخاء حدًّا.",
+              "تتتبّع التفريع والتحديد: التفريع، والحد، والقطع، والفجوة.",
+              "تنمذج وحدات كاملة وكلفة ثابتة في SCIP."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "Relaxation: a bound, not an answer",
+              "Branch on a fraction; prune what can’t win",
+              "Gap = (best − bound) ÷ best",
+              "Yes/no variables model logic and fixed costs"
+            ],
+            "ar": [
+              "الإرخاء: حدّ، لا إجابة",
+              "فرّع على الكسر، واقطع ما لا يمكن أن يفوز",
+              "الفجوة = (الأفضل − الحد) ÷ الأفضل",
+              "متغيّرات «نعم أو لا» تنمذج المنطق والكلفة الثابتة"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: The bus tree by hand",
+            "ar": "النشاط: شجرة الحافلات يدويًا"
+          },
+          "bullets": {
+            "en": [
+              "Root (5 min): Solve the relaxation: 2.13 buses.",
+              "Branch (8 min): At most 2 buses, or at least 3.",
+              "Prune (7 min): Find 1,400; cut the 3-bus branch.",
+              "Fee (5 min): Add the booking fee and redo."
+            ],
+            "ar": [
+              "الجذر (٥ دقائق): حُلّ الإرخاء: ٢٫١٣ حافلة.",
+              "التفريع (٨ دقائق): حافلتان على الأكثر، أو ثلاث على الأقل.",
+              "القطع (٧ دقائق): جِد ١٤٠٠، واقطع فرع الحافلات الثلاث.",
+              "الرسوم (٥ دقائق): أضف رسوم الحجز وأعِد الحل."
+            ]
+          },
+          "details": {
+            "en": [
+              "Root (5 min): The cheapest cost per seat is the bus (550 ÷ 30 ≈ 18.3 against 300 ÷ 14 ≈ 21.4), so the relaxation uses buses only: 64 ÷ 30 = 2.13 buses, 1,173.33 coins. Write it at the top of a tree.",
+              "Branch (8 min): Draw two children: “at most 2 buses” and “at least 3 buses”. In the first, 2 buses seat 60, and the relaxation adds 4 ÷ 14 ≈ 0.29 of a minibus: about 1,186. In the second, 3 buses cost 1,650.",
+              "Prune (7 min): Keep branching the first child on the minibus (at least 1). You reach 2 buses and 1 minibus, 1,400, a whole plan. The 3-bus branch can’t beat it (1,650), so cross it out without exploring it.",
+              "Fee (5 min): Add a 300-coin booking fee for any minibus. Recompute: 2 buses + 1 minibus = 1,700, so 3 buses (1,650) win. At what fee does the answer flip? (250.)"
+            ],
+            "ar": [
+              "الجذر (٥ دقائق): أرخص كلفة للمقعد في الحافلة (٥٥٠ ÷ ٣٠ ≈ ١٨٫٣ مقابل ٣٠٠ ÷ ١٤ ≈ ٢١٫٤)، لذلك لا يستعمل الإرخاء إلا الحافلات: ٦٤ ÷ ٣٠ = ٢٫١٣ حافلة، بكلفة ١١٧٣٫٣٣. اكتبه في أعلى الشجرة.",
+              "التفريع (٨ دقائق): ارسم فرعين: «حافلتان على الأكثر» و«ثلاث حافلات على الأقل». في الأول تتّسع حافلتان لـ ٦٠، ويضيف الإرخاء ٤ ÷ ١٤ ≈ ٠٫٢٩ من حافلة صغيرة: نحو ١١٨٦. وفي الثاني تكلّف ثلاث حافلات ١٦٥٠.",
+              "القطع (٧ دقائق): تابع تفريع الفرع الأول على الحافلة الصغيرة (واحدة على الأقل). ستصل إلى حافلتين وحافلة صغيرة، بكلفة ١٤٠٠، وهي خطة صحيحة. ولا يستطيع فرع الحافلات الثلاث أن يتفوّق عليها (١٦٥٠)، فاشطبه دون استكشافه.",
+              "الرسوم (٥ دقائق): أضف رسوم حجز قدرها ٣٠٠ قطعة نقدية لأي حافلة صغيرة. وأعِد الحساب: حافلتان وحافلة صغيرة = ١٧٠٠، فتفوز ثلاث حافلات (١٦٥٠). عند أيّ رسوم تنقلب الإجابة؟ (٢٥٠.)"
+            ]
+          },
+          "note": {
+            "en": "Work in pairs: one draws the tree, the other checks each relaxation. Then run the same model in the lesson’s code step and compare.",
+            "ar": "اعملوا في أزواج: يرسم أحدكما الشجرة، ويتحقّق الآخر من كل إرخاء. ثم شغّلا النموذج نفسه في خطوة البرمجة في الدرس وقارنا."
+          },
+          "narration": {
+            "en": "Which branch can you cut without ever looking inside it?",
+            "ar": "أيّ فرع تستطيع قطعه دون أن تنظر داخله أبدًا؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why can rounding an LP answer break a constraint?",
+              "Why does a smaller big-M make branch and bound faster?",
+              "When is a 3% gap good enough, and who decides?"
+            ],
+            "ar": [
+              "لماذا قد يكسر تقريب إجابة البرنامج الخطي قيدًا؟",
+              "لماذا يجعل M الكبير الأصغر التفريع والتحديد أسرع؟",
+              "متى تكون فجوة ٣٪ كافية، ومَن يقرّر ذلك؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Check yourself",
+            "ar": "تحقّق من نفسك"
+          },
+          "bullets": {
+            "en": [
+              "A relaxation costs 900 and your best plan 1,000. Write the gap, and what it promises."
+            ],
+            "ar": [
+              "كلفة الإرخاء ٩٠٠ وأفضل خطة لديك ١٠٠٠. اكتب الفجوة، وما الذي تَعِد به."
+            ]
+          },
+          "narration": {
+            "en": "Whole numbers are harder; bounds make them solvable.",
+            "ar": "الأعداد الصحيحة أصعب، والحدود تجعلها قابلة للحل."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Integer programs and branch and bound",
+            "ar": "شرائح للمراجعة: البرمجة بالأعداد الصحيحة والتفريع والتحديد"
+          },
+          "pages": 6,
+          "base": "opt-s4-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Integer programs and branch and bound",
+            "ar": "ورقة النشاط: البرمجة بالأعداد الصحيحة والتفريع والتحديد"
+          },
+          "pages": 3,
+          "base": "opt-s4-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/opt-s4-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "OPT.2",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "opt-s4-3",
+      "title": {
+        "en": "Constraint programming: propagation and search",
+        "ar": "البرمجة بالقيود: الانتشار والبحث"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Write the 4 × 4 sudoku in CP-SAT, boxes and all. Then remove one given and count the solutions with a solution callback (solver.parameters.enumerate_all_solutions = True). How many givens can you remove before the puzzle has more than one answer?",
+        "ar": "اكتب السودوكو ٤ × ٤ في CP-SAT، بالمربعات كلها. ثم احذف رقمًا معطى واحدًا وعُدّ الحلول بدالة استدعاء للحلول ⁦(solver.parameters.enumerate_all_solutions = True)⁩. كم رقمًا معطى تستطيع أن تحذف قبل أن يصبح للغز أكثر من حل؟"
+      },
+      "materials": {
+        "en": [
+          "Your phone, or a computer with Colab",
+          "A printed 4 × 4 or 9 × 9 sudoku and a pencil"
+        ],
+        "ar": [
+          "هاتفك، أو حاسوب مع Colab",
+          "سودوكو مطبوع ٤ × ٤ أو ٩ × ٩ وقلم رصاص"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Constraint programming: propagation and search",
+            "ar": "البرمجة بالقيود: الانتشار والبحث"
+          },
+          "src": null,
+          "duration": 252,
+          "sizeMB": 1.5,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "13,528 guesses, or 4",
+                "ar": "١٣٬٥٢٨ تخمينًا، أو ٤"
+              }
+            },
+            {
+              "at": 22.5,
+              "atBy": {
+                "en": 22.5,
+                "ar": 20.5
+              },
+              "label": {
+                "en": "Domains and propagation",
+                "ar": "المجالات والانتشار"
+              }
+            },
+            {
+              "at": 61.8,
+              "atBy": {
+                "en": 61.8,
+                "ar": 58.3
+              },
+              "label": {
+                "en": "Search and global constraints",
+                "ar": "البحث والقيود الشاملة"
+              }
+            },
+            {
+              "at": 130.3,
+              "atBy": {
+                "en": 130.3,
+                "ar": 124.8
+              },
+              "label": {
+                "en": "Infeasible is a proof",
+                "ar": "«غير ممكن» إثبات"
+              }
+            },
+            {
+              "at": 219,
+              "atBy": {
+                "en": 219,
+                "ar": 210.2
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Two exam slots are left, and three exams all clash with each other. What does an all-different constraint do?",
+                "ar": "بقي موعدان للامتحانات، وثلاثة امتحانات تتعارض كلها فيما بينها. ماذا يفعل قيد «كلها مختلفة»؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Picks two of the three",
+                    "ar": "يختار اثنين من الثلاثة"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Fails at once: three exams can’t fit in two slots",
+                    "ar": "يفشل فورًا: لا تتّسع ثلاثة امتحانات لموعدين"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Waits until search reaches them",
+                    "ar": "ينتظر حتى يصل إليها البحث"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "All-different reasons about the whole group: three variables whose domains together hold only two values can never all differ (the pigeonhole principle). So propagation fails immediately, with no search. Separate not-equal rules, each looking at one pair, would only discover this by searching.",
+                "ar": "يفكّر قيد «كلها مختلفة» في المجموعة كلها: ثلاثة متغيّرات لا تحوي مجالاتها معًا إلا قيمتين لا يمكن أن تختلف كلها أبدًا (مبدأ برج الحمام). لذلك يفشل الانتشار فورًا، دون بحث. أما قواعد «لا يساوي» المنفصلة، التي ترى كلٌّ منها زوجًا واحدًا، فلا تكتشف ذلك إلا بالبحث."
+              }
+            },
+            "at": 130.29,
+            "atBy": {
+              "en": 130.29,
+              "ar": 124.84
+            }
+          },
+          "transcript": {
+            "en": "A hard sudoku. Plain backtracking needs thirteen thousand five hundred and twenty-eight guesses. A constraint solver needs four. Same puzzle, same rules: so what’s the difference? Today: constraint programming, with domains, propagation and search. In constraint programming, every variable has a domain: the values still possible. A sudoku cell starts with one to nine; an exam starts with every slot. Constraints remove values that can’t be part of any solution. That removal is propagation. Place a five, and five vanishes from its row, its column and its box. A cell left with one value takes it, and the change spreads. In the lab’s hard sudoku, propagation alone fills fifty-one cells without a single guess. When propagation stops, search guesses, but cleverly. Fail first: choose the variable with the fewest values left, because that’s where a wrong guess shows up soonest. After each guess, propagate again; at a dead end, undo and try the next value. Global constraints carry a whole pattern at once. All-different over nine cells knows more than thirty-six separate not-equal rules: if three cells share only two values, it fails straight away. CP-SAT has others for routes, schedules and tables. In CP-SAT, a four-by-four sudoku takes a few lines. Every row and every column is all-different, and so is every box. Quick check! Only two exam slots are left, and three exams all clash with each other. What does an all-different constraint do? It fails at once: three exams can’t fit in two slots. And when every branch fails, the solver has proved there is no solution, so INFEASIBLE is a proof, not a shrug. In the exam lab, three slots are the fewest, because Omar’s three exams all clash. Many problems have symmetry: swap two exam slots, or two identical buses, and you get the same plan again. Breaking it, for example by saying slot one is used before slot two, can cut the search many times over. Google’s CP-SAT mixes three ideas: propagation from constraint programming, clause learning from SAT solvers, which remember why a branch failed, and linear relaxations. It has won the MiniZinc Challenge again and again, and it’s what most OR-Tools users reach for first. In the app, solve sudokus three ways: propagate then guess, propagate only, and plain backtracking. Count the guesses each one needs. Your turn. Propagation stops with three empty cells: one has two candidates, the other two have three. Which cell does fail-first search guess in? The one with two: fewest values, so a wrong guess fails fastest. Remember: domains shrink by propagation, and search guesses fail-first and undoes dead ends. Global constraints prune more. And INFEASIBLE is a proof. Try it yourself: write the four-by-four sudoku in CP-SAT, boxes and all. Then remove one given, and count the solutions with a solution callback.",
+            "ar": "سودوكو صعبة. الرجوع خطوة البسيط محتاج تلتاشر ألف وخمسمية تمانية وعشرين تخمين. وبرنامج حلّ القيود محتاج أربعة. نفس اللغز ونفس القواعد: طب إيه الفرق؟ النهارده: البرمجة بالقيود، بالمجالات والانتشار والبحث. في البرمجة بالقيود، كل متغيّر ليه مجال: القيم اللي لسه ممكنة. خانة السودوكو بتبدأ من واحد لتسعة، والامتحان بيبدأ بكل المواعيد. والقيود بتشيل القيم اللي مينفعش تبقى جزء من أي حل. الشطب ده اسمه الانتشار. حط خمسة، والخمسة بتختفي من الصف والعمود والمربع بتوعها. والخانة اللي يفضل فيها قيمة واحدة بتاخدها، والتغيير بينتشر. وفي سودوكو المعمل الصعبة، الانتشار لوحده بيملا واحد وخمسين خانة من غير ولا تخمين. لما الانتشار يقف، البحث بيخمّن، بس بذكاء. «الفشل أولًا»: اختار المتغيّر اللي فاضله أقل قيم، لأن هناك التخمين الغلط بيبان أسرع. وبعد كل تخمين، انشر تاني، ولو وصلت لطريق مسدود، ارجع وجرّب القيمة اللي بعدها. القيود الشاملة بتشيل نمط كامل مرة واحدة. قيد «كلهم مختلفين» على تسع خانات بيعرف أكتر من ستة وتلاتين قاعدة «مش متساويين» لوحدهم: لو تلات خانات بيتشاركوا في قيمتين بس، بيفشل على طول. وCP-SAT عنده قيود تانية للطرق والجداول والمواعيد. في CP-SAT، السودوكو أربعة في أربعة بتاخد كام سطر. كل صف وكل عمود «كلهم مختلفين»، وكمان كل مربع. سؤال سريع! فاضل ميعادين امتحانات بس، وفيه تلات امتحانات كلهم متعارضين مع بعض. قيد «كلهم مختلفين» هيعمل إيه؟ بيفشل على طول: تلات امتحانات مينفعش يدخلوا في ميعادين. ولما كل الفروع تفشل، يبقى السولفر أثبت إن مفيش حل، يعني INFEASIBLE إثبات، مش هزّة كتف. وفي معمل الامتحانات، تلات مواعيد هي الأقل، لأن امتحانات عمر التلاتة كلهم متعارضين. مسائل كتير فيها تماثل: بدّل ميعادين امتحانات، أو أتوبيسين زي بعض، تلاقي نفس الخطة تاني. وكسر التماثل ده، مثلًا إنك تقول الميعاد الأول بيتستخدم قبل التاني، ممكن يقلّل البحث أضعاف كتيرة. CP-SAT بتاع جوجل بيخلط تلات أفكار: الانتشار من البرمجة بالقيود، والتعلّم من برامج حل SAT، اللي بتفتكر الفرع فشل ليه، والإرخاءات الخطية. وكسب مسابقة MiniZinc مرة ورا مرة، وهو أول حاجة أغلب مستخدمي OR-Tools بيروحوا لها. في التطبيق، حلّ السودوكو بتلات طرق: انتشار وبعدين تخمين، وانتشار بس، والرجوع البسيط. وعدّ التخمينات اللي كل طريقة محتاجاها. دورك. الانتشار وقف وفيه تلات خانات فاضية: واحدة فيها مرشّحين، والاتنين التانيين فيهم تلاتة. البحث بطريقة «الفشل أولًا» هيخمّن في أنهي خانة؟ اللي فيها اتنين: أقل قيم، فالتخمين الغلط بيفشل أسرع. افتكر: المجالات بتصغر بالانتشار، والبحث بيخمّن «الفشل أولًا» وبيرجع من الطرق المسدودة. والقيود الشاملة بتقطع أكتر. وINFEASIBLE إثبات. جرّبها بنفسك: اكتب السودوكو أربعة في أربعة في CP-SAT، بالمربعات كمان. وبعدين شيل رقم من المعطيات، وعدّ الحلول بدالة «سولوشن كولباك»."
+          },
+          "sources": {
+            "en": "/media/opt-s4-3/video-en.mp4",
+            "ar": "/media/opt-s4-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/opt-s4-3/captions-en.vtt",
+            "ar": "/media/opt-s4-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/opt-s4-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/opt-s4-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/opt-s4-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/opt-s4-3/light/audio/en.opus",
+              "manifest.json": "/media/opt-s4-3/light/manifest.json",
+              "scenes.json": "/media/opt-s4-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/opt-s4-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/opt-s4-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 558,
+              "ar": 541
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Domains, propagation, search and proof",
+            "ar": "المجالات والانتشار والبحث والإثبات"
+          },
+          "body": {
+            "en": "Constraint programming (CP) describes a problem by variables, the domain of values each can still take, and constraints between them, and then searches. A sudoku cell has the domain 1 to 9; an exam has every slot; a lesson has every period. Unlike LP, constraints need not be linear: all-different, “if this then that”, a route that visits every stop once.\n\nThe engine of CP is propagation. Each constraint removes values that cannot belong to any solution, and every removal may let another constraint remove more, until nothing changes: a fixpoint. Place a 5 and it leaves its row, column and box; a cell left with one candidate takes it, and so on. Propagation never removes a value a solution needs, so it is always safe, but on its own it may stop short: in the lab’s hard 9 × 9 sudoku it fills 51 cells and then stalls.\n\nThen search takes over. It picks a variable, tries a value, propagates again, and undoes the choice at a dead end (backtracking). Good search strategies matter enormously. Fail-first chooses the variable with the smallest domain, where a wrong guess is caught soonest; with it, propagation plus search solves the hard sudoku with 4 guesses, where plain backtracking without propagation needs 13,528. Breaking symmetry, for example requiring slot 1 to be used before slot 2 when slots are interchangeable, stops the search from exploring copies of the same plan.\n\nGlobal constraints capture a whole pattern. All-different over nine cells propagates far more than its 36 pairwise “not equal” constraints: if three cells share only two values between them, it fails at once (the pigeonhole principle). Solvers also offer constraints for circuits (routes), no-overlap and cumulative (schedules with durations and capacities) and tables of allowed combinations.\n\nWhen every branch fails, the solver has proved that no solution exists: INFEASIBLE is a proof, not a guess. If it simply runs out of time it reports UNKNOWN (or FEASIBLE, with a solution it cannot yet prove best). When a real model is infeasible, find a small set of conflicting rules, by removing or softening them one at a time, and take the conflict to the people who own those rules.\n\nGoogle’s CP-SAT combines CP propagation with clause learning from SAT solvers (it remembers why a branch failed, so it never fails that way again), linear relaxations and several search strategies running in parallel. It has won many gold medals in the MiniZinc Challenge, the yearly competition of constraint solvers, and it is the solver most OR-Tools users try first for timetables, rosters and scheduling.",
+            "ar": "تصف البرمجة بالقيود المسألة بمتغيّرات، ومجال القيم التي ما زال كل منها يستطيع أن يأخذها، وقيود بينها، ثم تبحث. فمجال خانة السودوكو من ١ إلى ٩، وللامتحان كل المواعيد، وللدرس كل الحصص. وخلافًا للبرمجة الخطية، لا يلزم أن تكون القيود خطية: «كلها مختلفة»، و«إذا كان هذا فذاك»، ومسار يزور كل محطة مرة واحدة.\n\nمحرّك البرمجة بالقيود هو الانتشار. فكل قيد يحذف القيم التي لا يمكن أن تنتمي إلى أي حل، وكل حذف قد يسمح لقيد آخر بأن يحذف المزيد، حتى لا يتغيّر شيء: نقطة ثابتة. ضع ٥ فتختفي من صفها وعمودها ومربعها، والخانة التي يبقى فيها مرشّح واحد تأخذه، وهكذا. ولا يحذف الانتشار أبدًا قيمة يحتاج إليها حل، فهو آمن دائمًا، لكنه وحده قد يتوقّف قبل النهاية: ففي سودوكو المختبر الصعب ٩ × ٩ يملأ ٥١ خانة ثم يتوقّف.\n\nعندها يتولّى البحث الأمر. فيختار متغيّرًا، ويجرّب قيمة، وينشر من جديد، ويتراجع عن الاختيار عند الطريق المسدود (التراجع). واستراتيجيات البحث الجيدة مهمة جدًا. فطريقة «الفشل أولًا» تختار المتغيّر صاحب أصغر مجال، حيث يُكتشف التخمين الخاطئ أسرع، ومعها يحلّ الانتشار والبحث السودوكو الصعب بـ ٤ تخمينات، بينما يحتاج التراجع البسيط دون انتشار إلى ١٣٬٥٢٨. وكسر التماثل، مثل اشتراط استعمال الموعد ١ قبل الموعد ٢ حين تكون المواعيد قابلة للتبادل، يمنع البحث من استكشاف نسخ من الخطة نفسها.\n\nوالقيود الشاملة تلتقط نمطًا كاملًا. فقيد «كلها مختلفة» على تسع خانات ينشر أكثر بكثير من قيوده الثنائية الستة والثلاثين «لا يساوي»: فإن تشاركت ثلاث خانات في قيمتين فقط، فشل فورًا (مبدأ برج الحمام). وتقدّم برامج الحل أيضًا قيودًا للدوائر (المسارات)، ولعدم التداخل والتراكم (جداول فيها مُدد وسعات)، ولجداول التركيبات المسموح بها.\n\nوحين تفشل كل الفروع، يكون برنامج الحل قد أثبت أنه لا يوجد حل: فـ INFEASIBLE إثبات لا تخمين. أما إذا نفد وقته فيُعلن UNKNOWN (أو FEASIBLE، مع حل لا يستطيع بعدُ إثبات أنه الأفضل). وحين يكون نموذج حقيقي مستحيلًا، جِد مجموعة صغيرة من القواعد المتعارضة، بحذفها أو تليينها واحدة تلو الأخرى، واعرض التعارض على أصحاب هذه القواعد.\n\nويجمع CP-SAT من Google بين انتشار البرمجة بالقيود وتعلّم الشروط من برامج حل SAT (فهو يتذكّر لماذا فشل فرع، فلا يفشل بالطريقة نفسها ثانية)، والإرخاءات الخطية، وعدة استراتيجيات بحث تعمل بالتوازي. وقد فاز بميداليات ذهبية كثيرة في مسابقة MiniZinc، المسابقة السنوية لبرامج حلّ القيود، وهو البرنامج الذي يجرّبه أولًا معظم مستخدمي OR-Tools للجداول والمناوبات والجدولة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Domain",
+                "ar": "المجال"
+              },
+              "def": {
+                "en": "The values a variable can still take during the search.",
+                "ar": "القيم التي ما زال المتغيّر يستطيع أن يأخذها أثناء البحث."
+              }
+            },
+            {
+              "term": {
+                "en": "Propagation",
+                "ar": "الانتشار"
+              },
+              "def": {
+                "en": "Constraints removing values that can’t be in any solution, repeated until nothing changes.",
+                "ar": "حذف القيود للقيم التي لا يمكن أن تكون في أي حل، مكرّرًا حتى لا يتغيّر شيء."
+              }
+            },
+            {
+              "term": {
+                "en": "Fail-first",
+                "ar": "الفشل أولًا"
+              },
+              "def": {
+                "en": "A search rule: branch on the variable with the fewest values left.",
+                "ar": "قاعدة بحث: التفريع على المتغيّر صاحب أقل عدد من القيم الباقية."
+              }
+            },
+            {
+              "term": {
+                "en": "Global constraint",
+                "ar": "القيد الشامل"
+              },
+              "def": {
+                "en": "One constraint over many variables (all-different, circuit, no-overlap) that propagates more than its pieces.",
+                "ar": "قيد واحد على متغيّرات كثيرة (كلها مختلفة، والدائرة، وعدم التداخل) ينشر أكثر من أجزائه."
+              }
+            },
+            {
+              "term": {
+                "en": "Symmetry breaking",
+                "ar": "كسر التماثل"
+              },
+              "def": {
+                "en": "Extra constraints that remove copies of the same plan, such as interchangeable slots.",
+                "ar": "قيود إضافية تحذف نسخ الخطة نفسها، كالمواعيد القابلة للتبادل."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Three empty cells: one has two candidates, two have three. Where does fail-first search guess?",
+            "ar": "ثلاث خانات فارغة: في واحدة مرشّحان، وفي اثنتين ثلاثة. أين يخمّن البحث بطريقة «الفشل أولًا»؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "In the cell with two candidates",
+                "ar": "في الخانة ذات المرشّحين"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "In the first cell in reading order",
+                "ar": "في أول خانة بالترتيب"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "In one of the cells with three",
+                "ar": "في إحدى الخانتين ذواتي الثلاثة"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Fail-first chooses the variable with the smallest domain. With two candidates, a guess is right half the time, and when it’s wrong propagation usually shows the dead end quickly, so the search tree stays small.",
+            "ar": "تختار طريقة «الفشل أولًا» المتغيّر صاحب أصغر مجال. فمع مرشّحين يصحّ التخمين في نصف المرات، وحين يخطئ يكشف الانتشار عادةً الطريق المسدود بسرعة، فتبقى شجرة البحث صغيرة."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p2",
+          "prompt": {
+            "en": "Which statements about propagation are true? Choose all that apply.",
+            "ar": "أيّ العبارات عن الانتشار صحيحة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "It removes values that can’t be part of any solution",
+                "ar": "يحذف القيم التي لا يمكن أن تكون جزءًا من أي حل"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "It never removes a value that a solution needs",
+                "ar": "لا يحذف أبدًا قيمة يحتاج إليها حل"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "On its own it always solves the problem",
+                "ar": "يحلّ المسألة دائمًا وحده"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "All-different can remove values that pairwise ≠ rules miss",
+                "ar": "يستطيع قيد «كلها مختلفة» حذف قيم تفوت القيود الثنائية «لا يساوي»"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "It picks the most likely value and moves on",
+                "ar": "يختار القيمة الأرجح ويمضي"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Propagation is safe deduction: it removes only impossible values, so no solution is lost, and global constraints deduce more than their pieces. It doesn’t guess (that’s search) and alone it can stall, as the hard sudoku does at 51 cells.",
+            "ar": "الانتشار استنتاج آمن: لا يحذف إلا القيم المستحيلة، فلا يضيع أي حل، والقيود الشاملة تستنتج أكثر من أجزائها. وهو لا يخمّن (هذا عمل البحث)، وقد يتوقّف وحده، كما يتوقّف السودوكو الصعب عند ٥١ خانة."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p3",
+          "lang": "python",
+          "prompt": {
+            "en": "This 4 × 4 sudoku model has rows and columns, but the solver’s grid breaks the 2 × 2 boxes. Add an all-different constraint for each box inside the loop.",
+            "ar": "في نموذج السودوكو ٤ × ٤ هذا صفوف وأعمدة، لكن الشبكة التي يعطيها برنامج الحل تخالف المربعات ٢ × ٢. أضف داخل الحلقة قيد «كلها مختلفة» لكل مربع."
+          },
+          "starter": "from ortools.sat.python import cp_model\ng = [[1, 0, 0, 0], [0, 0, 3, 0], [0, 4, 0, 0], [0, 0, 0, 2]]\nm = cp_model.CpModel()\nc = [[m.new_int_var(v or 1, v or 4, \"\") for v in r] for r in g]\nfor i in range(4):\n    m.add_all_different(c[i])\n    m.add_all_different([row[i] for row in c])\ns = cp_model.CpSolver()\nprint(s.status_name(s.solve(m)))\nprint([[s.value(v) for v in r] for r in c])\n",
+          "solution": "from ortools.sat.python import cp_model\ng = [[1, 0, 0, 0], [0, 0, 3, 0], [0, 4, 0, 0], [0, 0, 0, 2]]\nm = cp_model.CpModel()\nc = [[m.new_int_var(v or 1, v or 4, \"\") for v in r] for r in g]\nfor i in range(4):\n    m.add_all_different(c[i])\n    m.add_all_different([row[i] for row in c])\n    m.add_all_different([c[i // 2 * 2 + r][i % 2 * 2 + q]\n                         for r in (0, 1) for q in (0, 1)])\ns = cp_model.CpSolver()\nprint(s.status_name(s.solve(m)))\nprint([[s.value(v) for v in r] for r in c])\n",
+          "tests": [
+            {
+              "check": "grid = [[s.value(v) for v in r] for r in c]\nassert all(sorted(r) == [1, 2, 3, 4] for r in grid), \"Each row needs 1 to 4\"\nassert all(sorted(col) == [1, 2, 3, 4] for col in zip(*grid)), \"Each column needs 1 to 4\"\nassert grid[0][0] == 1 and grid[1][2] == 3 and grid[2][1] == 4 and grid[3][3] == 2, \"Keep the givens\"",
+              "hint": {
+                "en": "Keep the row and column constraints as they are.",
+                "ar": "أبقِ قيود الصفوف والأعمدة كما هي."
+              }
+            },
+            {
+              "check": "grid = [[s.value(v) for v in r] for r in c]\nboxes = [[grid[a + r][b + q] for r in (0, 1) for q in (0, 1)] for a in (0, 2) for b in (0, 2)]\nassert all(sorted(x) == [1, 2, 3, 4] for x in boxes), \"Each 2 x 2 box needs 1 to 4\"",
+              "hint": {
+                "en": "Box i starts at row i // 2 * 2 and column i % 2 * 2, and has four cells.",
+                "ar": "يبدأ المربع i عند الصف ⁦i // 2 * 2⁩ والعمود ⁦i % 2 * 2⁩، وفيه أربع خانات."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "The loop runs i = 0 to 3, one box each: top-left, top-right, bottom-left, bottom-right.",
+              "ar": "تمرّ الحلقة على i من ٠ إلى ٣، مربع لكل قيمة: أعلى اليسار، وأعلى اليمين، وأسفل اليسار، وأسفل اليمين."
+            },
+            {
+              "en": "m.add_all_different([c[i // 2 * 2 + r][i % 2 * 2 + q] for r in (0, 1) for q in (0, 1)])",
+              "ar": "⁦m.add_all_different([c[i // 2 * 2 + r][i % 2 * 2 + q] for r in (0, 1) for q in (0, 1)])⁩"
+            }
+          ],
+          "explain": {
+            "en": "Givens are fixed through their domains (v or 1, v or 4), and three families of all-different constraints do the rest. Without the boxes the solver found a grid that keeps rows and columns but not the boxes; with them, the only solution is [[1, 3, 2, 4], [4, 2, 3, 1], [2, 4, 1, 3], [3, 1, 4, 2]]. The same model runs unchanged on Google’s OR-Tools in Colab, and a 9 × 9 one needs only the numbers changed.",
+            "ar": "تُثبَّت الأرقام المعطاة عبر مجالاتها (v or 1، ⁦v or 4⁩)، وتتولّى ثلاث عائلات من قيود «كلها مختلفة» الباقي. ومن دون المربعات وجد برنامج الحل شبكة تحترم الصفوف والأعمدة دون المربعات، ومعها يصبح الحل الوحيد ⁦[[1, 3, 2, 4], [4, 2, 3, 1], [2, 4, 1, 3], [3, 1, 4, 2]]⁩. والنموذج نفسه يعمل دون تغيير على OR-Tools من Google في Colab، ولا يحتاج سودوكو ٩ × ٩ إلا إلى تغيير الأرقام."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "tool": "sudoku",
+          "prompt": {
+            "en": "Try it: pick “9 × 9 hard” with “Propagate only” and press Run: it stops with 51 digits placed. Switch to “Propagate, then guess” (4 guesses), then “Plain backtracking” (13,528). Finally pick “17 givens” and try plain backtracking: it gives up after 100,000 guesses, while propagation needs none. What does that tell you about where a solver’s speed comes from?",
+            "ar": "جرّب: اختر «٩ × ٩ صعب» مع «انتشار فقط» واضغط «شغّل»: يتوقّف وقد وُضع ٥١ رقمًا. انتقل إلى «انتشار ثم تخمين» (٤ تخمينات)، ثم «التراجع البسيط» (١٣٬٥٢٨). وأخيرًا اختر «١٧ رقمًا معطى» وجرّب التراجع البسيط: يستسلم بعد ١٠٠٬٠٠٠ تخمين، بينما لا يحتاج الانتشار إلى أي تخمين. ماذا يخبرك ذلك عن مصدر سرعة برنامج الحل؟"
+          }
+        },
+        {
+          "type": "bug",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "This eight-queens model should stop any two queens sharing a column or a diagonal (q[i] is the column of the queen in row i), but the solver puts all eight on one diagonal. Which line is wrong?",
+            "ar": "ينبغي أن يمنع نموذج الملكات الثماني هذا أي ملكتين من التشارك في عمود أو قطر (⁦q[i]⁩ عمود الملكة في الصف i)، لكن برنامج الحل يضع الثماني كلها على قطر واحد. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "from ortools.sat.python import cp_model\nn = 8\nm = cp_model.CpModel()\nq = [m.new_int_var(0, n - 1, \"q%d\" % i) for i in range(n)]\nm.add_all_different(q)\nm.add_all_different([q[i] + i for i in range(n)])\nm.add_all_different([q[i] - 1 for i in range(n)])\ns = cp_model.CpSolver()\ns.solve(m)",
+          "line": 7,
+          "fix": "m.add_all_different([q[i] - i for i in range(n)])",
+          "explain": {
+            "en": "q[i] − 1 is all-different exactly when q[i] is, so line 7 repeats line 5 and one family of diagonals goes unprotected; q = 0, 1, …, 7 puts every queen on it. The fix is q[i] − i: queens on the same down-right diagonal share that value.",
+            "ar": "تكون ⁦q[i] − 1⁩ مختلفة كلها تمامًا حين تكون ⁦q[i]⁩ كذلك، فيكرّر السطر ٧ السطر ٥، وتبقى عائلة من الأقطار دون حماية، فالقيم ⁦q = 0⁩، 1، …، 7 تضع كل الملكات عليها. والإصلاح ⁦q[i] − i⁩: فالملكات على القطر النازل نفسه تتشارك هذه القيمة."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p5",
+          "prompt": {
+            "en": "If CP-SAT reports INFEASIBLE, it may just have run out of time, and a solution might still exist.",
+            "ar": "إذا أعلن CP-SAT أن النتيجة INFEASIBLE، فقد يكون وقته نفد فقط، وقد يكون هناك حل مع ذلك."
+          },
+          "answer": false,
+          "explain": {
+            "en": "INFEASIBLE means the search proved that no solution exists. A solver that runs out of time reports UNKNOWN, or FEASIBLE if it found a solution it can’t yet prove best.",
+            "ar": "تعني INFEASIBLE أن البحث أثبت عدم وجود حل. أما برنامج الحل الذي ينفد وقته فيُعلن UNKNOWN، أو FEASIBLE إن وجد حلًا لا يستطيع بعدُ إثبات أنه الأفضل."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you do?",
+            "ar": "ماذا تفعل؟"
+          },
+          "who": {
+            "en": "Dr Nadia, head of the nursing roster at a teaching hospital where you intern",
+            "ar": "د. نادية، رئيسة جدول التمريض في مستشفى جامعي تتدرّب فيه"
+          },
+          "initial": {
+            "en": "N",
+            "ar": "ن"
+          },
+          "situation": {
+            "en": "Your CP-SAT model for next month’s night shifts reports INFEASIBLE. Dr Nadia says: “The solver must be broken. Just remove all the rules and run it again.”",
+            "ar": "يُعلن نموذجك في CP-SAT لنوبات الليل في الشهر القادم أن النتيجة INFEASIBLE. وتقول د. نادية: «لا بد أن برنامج الحل معطّل. احذف كل القواعد وشغّله من جديد.»"
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "Remove all the rules and run it again",
+                "ar": "أحذف كل القواعد وأشغّله من جديد"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "You’ll get a roster, but one that may break rest rules nurses rely on. The solver wasn’t broken: it proved the rules can’t all hold together.",
+                "ar": "ستحصل على جدول، لكنه قد يخالف قواعد الراحة التي يعتمد عليها الممرضون. فبرنامج الحل لم يكن معطّلًا: لقد أثبت أن القواعد لا يمكن أن تتحقّق كلها معًا."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "Find the smallest set of rules that clash, and take that choice to Dr Nadia",
+                "ar": "أجد أصغر مجموعة من القواعد المتعارضة، وأعرض هذا الاختيار على د. نادية"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Removing or softening rules one at a time shows, say, that “two nights off after three nights” clashes with the staffing level in week 2. Now the people who own those rules can decide which gives.",
+                "ar": "يُظهر حذف القواعد أو تليينها واحدة تلو الأخرى، مثلًا، أن «ليلتي راحة بعد ثلاث ليال» تتعارض مع عدد الموظفين في الأسبوع الثاني. والآن يستطيع أصحاب هذه القواعد أن يقرّروا أيّها يتنازل."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "Give the solver a longer time limit",
+                "ar": "أعطي برنامج الحل حدًّا زمنيًا أطول"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "INFEASIBLE is already a proof: more time can’t find a roster that doesn’t exist. Time limits help with UNKNOWN, not with INFEASIBLE.",
+                "ar": "INFEASIBLE إثبات أصلًا: فلن يجد الوقت الإضافي جدولًا غير موجود. والحدود الزمنية تفيد مع UNKNOWN، لا مع INFEASIBLE."
+              }
+            }
+          ],
+          "explain": {
+            "en": "INFEASIBLE is a proof: find the smallest set of clashing rules and take that choice to the people who own them.",
+            "ar": "⁦INFEASIBLE⁩ برهان: جد أصغر مجموعة قواعد متعارضة واعرض هذا الخيار على أصحابها."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of a scheduling problem you know (a timetable, a sports fixture list, a rota). Which constraint would you model as a global constraint, and which symmetry could you break?",
+            "ar": "فكّر في مسألة جدولة تعرفها (جدول دراسي، أو جدول مباريات، أو مناوبات). أيّ قيد ستنمذجه قيدًا شاملًا، وأيّ تماثل تستطيع كسره؟"
+          },
+          "placeholder": {
+            "en": "For example: “Our five-a-side league: each round, all-different over the pitches; the rounds are interchangeable, so fix who plays whom in round 1.”",
+            "ar": "مثلًا: «دوري خماسيات كرة القدم عندنا: في كل جولة «كلها مختلفة» على الملاعب، والجولات قابلة للتبادل، فثبّت مَن يلعب مع مَن في الجولة الأولى.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A timetable or roster in CP-SAT",
+            "ar": "مشروع: جدول أو مناوبات في CP-SAT"
+          },
+          "task": {
+            "en": "Model a small real schedule in CP-SAT: tutoring sessions for a student society, a sports league, or lab bookings for a course (10 to 40 variables). Use at least one global constraint, one fairness rule (for example, nobody gets the worst slot twice) and one symmetry-breaking constraint. Run it on your phone and, if you can, in Colab with the real OR-Tools. Then make it infeasible on purpose by adding a rule, and show how you found the clash.",
+            "ar": "صُغ في CP-SAT جدولًا حقيقيًا صغيرًا: جلسات دروس لجمعية طلابية، أو دوريًا رياضيًا، أو حجوزات معمل لمقرّر (من ١٠ إلى ٤٠ متغيّرًا). استعمل قيدًا شاملًا واحدًا على الأقل، وقاعدة عدالة واحدة (مثلًا: لا يحصل أحد على أسوأ موعد مرتين)، وقيدًا واحدًا لكسر التماثل. شغّله على هاتفك، وإن استطعت في Colab مع OR-Tools الحقيقي. ثم اجعله مستحيلًا عمدًا بإضافة قاعدة، وبيّن كيف وجدت التعارض."
+          },
+          "deliverable": {
+            "en": "Your model, the schedule it found, a note on the fairness and symmetry constraints, and the infeasible case with the rules that clash.",
+            "ar": "نموذجك، والجدول الذي وجده، وملاحظة عن قيدَي العدالة والتماثل، والحالة المستحيلة مع القواعد المتعارضة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: model a schedule with domains and global constraints.",
+                "ar": "أستطيع: نمذجة جدول بالمجالات والقيود الشاملة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: explain propagation, fail-first search and symmetry breaking in my model.",
+                "ar": "أستطيع: شرح الانتشار والبحث «الفشل أولًا» وكسر التماثل في نموذجي."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: diagnose an INFEASIBLE model by finding the rules that clash.",
+                "ar": "أستطيع: تشخيص نموذج INFEASIBLE بإيجاد القواعد المتعارضة."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Constraint programming: propagation and search",
+            "ar": "البرمجة بالقيود: الانتشار والبحث"
+          },
+          "narration": {
+            "en": "Why does a solver need 4 guesses where brute force needs thousands?",
+            "ar": "لماذا يحتاج برنامج الحل إلى ٤ تخمينات حيث تحتاج القوة الغاشمة إلى الآلاف؟"
+          },
+          "note": {
+            "en": "Optimization · Level 4 · Lesson 3",
+            "ar": "الحلول المثلى، المستوى ٤، الدرس ٣"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Describe a problem with domains and constraints, and propagate by hand.",
+              "Explain fail-first search, global constraints and symmetry breaking.",
+              "Model a puzzle in CP-SAT, and read what INFEASIBLE proves."
+            ],
+            "ar": [
+              "تصف مسألة بالمجالات والقيود، وتنشر يدويًا.",
+              "تشرح البحث «الفشل أولًا» والقيود الشاملة وكسر التماثل.",
+              "تنمذج لغزًا في CP-SAT، وتقرأ ما تُثبته INFEASIBLE."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "Propagation: safe deduction to a fixpoint",
+              "Search: fail-first, undo dead ends",
+              "Global constraints prune more than their pieces",
+              "INFEASIBLE is a proof; UNKNOWN is not"
+            ],
+            "ar": [
+              "الانتشار: استنتاج آمن حتى نقطة ثابتة",
+              "البحث: الفشل أولًا، والتراجع عن الطرق المسدودة",
+              "القيود الشاملة تقطع أكثر من أجزائها",
+              "INFEASIBLE إثبات، وUNKNOWN ليست كذلك"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Be the solver",
+            "ar": "النشاط: كن برنامج الحل"
+          },
+          "bullets": {
+            "en": [
+              "Propagate (8 min): Write candidates and cross out.",
+              "Fail-first (7 min): Guess where the fewest remain.",
+              "Count (5 min): Compare your guesses with a partner’s.",
+              "Model (5 min): Write the same rules as CP-SAT lines."
+            ],
+            "ar": [
+              "الانتشار (٨ دقائق): اكتب المرشّحين واشطب.",
+              "الفشل أولًا (٧ دقائق): خمّن حيث يبقى أقل عدد.",
+              "العدّ (٥ دقائق): قارن تخميناتك بتخمينات زميلك.",
+              "النمذجة (٥ دقائق): اكتب القواعد نفسها أسطرًا في CP-SAT."
+            ]
+          },
+          "details": {
+            "en": [
+              "Propagate (8 min): On a printed sudoku, pencil the candidates into each empty cell, then cross out every digit already in its row, column or box. Place any cell left with one candidate and repeat until nothing changes.",
+              "Fail-first (7 min): If you are stuck, choose the cell with the fewest candidates, guess, and propagate again. Mark each guess so you can undo it at a dead end.",
+              "Count (5 min): Compare with a partner who guessed in reading order instead. Who needed fewer guesses, and why?",
+              "Model (5 min): Write the rules as CP-SAT lines: a variable per cell with domain 1 to 9, all-different for each row, column and box. Run the 4 × 4 version in the code step."
+            ],
+            "ar": [
+              "الانتشار (٨ دقائق): على سودوكو مطبوع، اكتب بالقلم الرصاص المرشّحين في كل خانة فارغة، ثم اشطب كل رقم موجود في صفها أو عمودها أو مربعها. وضع أي خانة بقي فيها مرشّح واحد، وكرّر حتى لا يتغيّر شيء.",
+              "الفشل أولًا (٧ دقائق): إن علقت، فاختر الخانة صاحبة أقل عدد من المرشّحين، وخمّن، وانشر من جديد. وضع علامة على كل تخمين لتتراجع عنه عند الطريق المسدود.",
+              "العدّ (٥ دقائق): قارن بزميل خمّن بترتيب القراءة بدلًا من ذلك. مَن احتاج إلى تخمينات أقل، ولماذا؟",
+              "النمذجة (٥ دقائق): اكتب القواعد أسطرًا في CP-SAT: متغيّر لكل خانة مجاله من ١ إلى ٩، و«كلها مختلفة» لكل صف وعمود ومربع. وشغّل نسخة ٤ × ٤ في خطوة البرمجة."
+            ]
+          },
+          "note": {
+            "en": "Any sudoku from a newspaper works. A pencil and an eraser make undoing guesses easy.",
+            "ar": "أي سودوكو من صحيفة يصلح. والقلم الرصاص والممحاة يجعلان التراجع عن التخمينات سهلًا."
+          },
+          "narration": {
+            "en": "How many guesses did you need when you crossed out first?",
+            "ar": "كم تخمينًا احتجت حين بدأت بالشطب أولًا؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why is fail-first a good rule, even though it guesses where you are least sure?",
+              "Which real problems have symmetry worth breaking?",
+              "How would you explain an INFEASIBLE roster to the people who wrote its rules?"
+            ],
+            "ar": [
+              "لماذا تكون «الفشل أولًا» قاعدة جيدة، مع أنها تخمّن حيث تكون أقل يقينًا؟",
+              "أيّ المسائل الحقيقية فيها تماثل يستحق الكسر؟",
+              "كيف تشرح جدول مناوبات INFEASIBLE للذين كتبوا قواعده؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Check yourself",
+            "ar": "تحقّق من نفسك"
+          },
+          "bullets": {
+            "en": [
+              "Explain in two sentences why all-different is stronger than its 36 pairwise rules."
+            ],
+            "ar": [
+              "اشرح في جملتين لماذا يكون قيد «كلها مختلفة» أقوى من قيوده الثنائية الستة والثلاثين."
+            ]
+          },
+          "narration": {
+            "en": "Cross out what can’t be; guess only when stuck.",
+            "ar": "اشطب المستحيل، ولا تخمّن إلا حين تعلق."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Constraint programming: propagation and search",
+            "ar": "شرائح للمراجعة: البرمجة بالقيود: الانتشار والبحث"
+          },
+          "pages": 6,
+          "base": "opt-s4-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Constraint programming: propagation and search",
+            "ar": "ورقة النشاط: البرمجة بالقيود: الانتشار والبحث"
+          },
+          "pages": 3,
+          "base": "opt-s4-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/opt-s4-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "OPT.3",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "opt-s4-4",
+      "title": {
+        "en": "Heuristics and trade-offs",
+        "ar": "الطرق التقريبية والموازنات"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Write 2-opt for a five-stop route in Python and check it against every possible route. Then add a limit on the longest ride for any passenger, solve again, and write one sentence on what the limit costs and who it protects.",
+        "ar": "اكتب تحسين ‎⁦2-opt⁩ لمسار من خمس محطات بلغة بايثون، وتحقّق منه بمقارنته بكل المسارات الممكنة. ثم أضف حدًّا لأطول رحلة لأي راكب، وأعِد الحل، واكتب جملة واحدة عن كلفة هذا الحد ومَن يحميه."
+      },
+      "materials": {
+        "en": [
+          "Your phone, or a computer with Colab",
+          "A local map with distances between five to ten places"
+        ],
+        "ar": [
+          "هاتفك، أو حاسوب مع Colab",
+          "خريطة محلية فيها المسافات بين خمسة إلى عشرة أماكن"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Heuristics and trade-offs",
+            "ar": "الطرق التقريبية والموازنات"
+          },
+          "src": null,
+          "duration": 251,
+          "sizeMB": 1.5,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Two thousand vans tonight",
+                "ar": "ألفا شاحنة الليلة"
+              }
+            },
+            {
+              "at": 25.3,
+              "atBy": {
+                "en": 25.3,
+                "ar": 26
+              },
+              "label": {
+                "en": "Build, then improve",
+                "ar": "ابنِ، ثم حسّن"
+              }
+            },
+            {
+              "at": 94.7,
+              "atBy": {
+                "en": 94.7,
+                "ar": 93.5
+              },
+              "label": {
+                "en": "Escaping and measuring",
+                "ar": "الهروب والقياس"
+              }
+            },
+            {
+              "at": 150.8,
+              "atBy": {
+                "en": 150.8,
+                "ar": 149.6
+              },
+              "label": {
+                "en": "Trade-offs in the open",
+                "ar": "الموازنات على الملأ"
+              }
+            },
+            {
+              "at": 217.7,
+              "atBy": {
+                "en": 217.7,
+                "ar": 214
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A heuristic finds a 105 km route; an LP bound says no route is shorter than 100 km. What’s the optimality gap?",
+                "ar": "وجدت طريقة تقريبية مسارًا طوله ١٠٥ كم، ويقول حدّ أدنى من البرمجة الخطية إنه لا يوجد مسار أقصر من ١٠٠ كم. ما فجوة الأمثلية؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "About 5%",
+                    "ar": "نحو ٥٪"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Exactly 5 km of error",
+                    "ar": "خطأ قدره ٥ كم بالضبط"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "0%: the route is optimal",
+                    "ar": "صفر: المسار هو الأمثل"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "The gap is (best found − bound) ÷ best found = (105 − 100) ÷ 105 ≈ 4.8%. The true optimum lies somewhere between 100 and 105 km, so at most 5 km could still be saved, and possibly nothing: the bound may not be tight.",
+                "ar": "الفجوة = (أفضل ما وُجد − الحد) ÷ أفضل ما وُجد = (١٠٥ − ١٠٠) ÷ ١٠٥ ≈ ٤٫٨٪. ويقع الحل الأمثل الحقيقي في مكان ما بين ١٠٠ و١٠٥ كم، لذلك لا يمكن توفير أكثر من ٥ كم، وربما لا شيء: فقد لا يكون الحد محكمًا."
+              }
+            },
+            "at": 139.69,
+            "atBy": {
+              "en": 139.69,
+              "ar": 138.83
+            }
+          },
+          "transcript": {
+            "en": "A delivery company plans routes for two thousand vans every night. Nobody proves those routes are the best, and nobody needs to. They’re good, fast and checked. Today: how, and what a modeller owes the people affected. Today: heuristics, local search, and the trade-offs a modeller makes. Routing is NP-hard: as the stops grow, every known exact method can take exponentially long. Twenty villages already give more than a billion billion round trips. So for big instances, we trade a proof for a good answer in time. Heuristics work in two stages. First build a plan fast, for example nearest neighbour: always drive to the closest stop not yet visited. Then improve it with local search: change it a little, and keep the changes that help. For routes, the classic small change is 2-opt: remove two roads, and reconnect by reversing the stretch between them. It removes every crossing. In the lab’s bus map, it takes nearest neighbour’s thirty-four point six kilometres down to twenty-eight point six, the best route. The heart of 2-opt is one line: reverse a slice. Keep the new route if the trip is shorter, and repeat until no swap helps. Local search stops at a local optimum, where no small change helps. Metaheuristics escape: annealing accepts some worse moves while hot, tabu search forbids undoing recent moves, and genetic algorithms mix good plans. In the seating lab, annealing finds the best plan two runs in three; hill climbing, one in four. Quick check! Your heuristic found a route of one hundred and five kilometres, and an LP bound says no route can be shorter than one hundred. What’s the optimality gap? About five percent: at most five kilometres could still be saved, and maybe none. A bound turns good into a measured promise. Real plans weigh several goals: total distance, the longest ride for any child, drivers’ hours. The shortest total can leave one village’s children on the bus for ninety minutes. Put the goals and the fairness limits in the model, and show the trade-off. In practice, OR-Tools’ routing library builds a first route, then improves it with guided local search within a time limit. Engineers test on past days, and keep a person able to override. Plans nobody can question don’t get trusted. In the app, seat twelve pupils with hill climbing and with annealing. Run each several times, and change the starting temperature. Your turn. Plan A is two kilometres shorter in total. Plan B is longer, but no child rides more than forty minutes. Which should the model pick? It depends on goals people agree, so show both, with their numbers. Remember: for hard problems, build, then improve. Escape local optima with metaheuristics, and measure the gap against a bound. And put fairness in the model, in the open. Try it yourself: write 2-opt for a five-stop route in Python, and check it against every possible route. Then add a limit on the longest ride, and see what it costs.",
+            "ar": "شركة توصيل بتخطّط طرق لألفين عربية كل ليلة. محدش بيثبت إن الطرق دي هي الأحسن، ومحدش محتاج. هي كويسة، وسريعة، ومتراجعة. النهارده: إزاي، وصاحب النموذج مدين بإيه للناس اللي يخصّهم الأمر. النهارده: الطرق التقريبية، والبحث المحلي، والموازنات اللي بيعملها صاحب النموذج. تخطيط الطرق مسألة «NP-hard»: كل ما المحطات تزيد، كل الطرق الدقيقة اللي نعرفها ممكن تاخد وقت بيكبر أُسّيًا. عشرين قرية بس بيدّوا أكتر من مليار مليار لفّة. فللمسائل الكبيرة، بنبدّل الإثبات بإجابة كويسة في الوقت. الطرق التقريبية بتشتغل على مرحلتين. الأول ابني خطة بسرعة، مثلًا «أقرب جار»: روح دايمًا لأقرب محطة لسه مزرتهاش. وبعدين حسّنها بالبحث المحلي: غيّر فيها حاجة صغيرة، وخلّي التغييرات اللي بتفيد. في الطرق، التغيير الصغير المشهور اسمه «تو أوبت»: شيل طريقين، ووصّل تاني بإنك تعكس الحتة اللي بينهم. وده بيشيل أي تقاطع. وفي خريطة الأتوبيس بتاعة المعمل، بينزّل أربعة وتلاتين فاصلة ستة كيلو بتوع أقرب جار لتمانية وعشرين فاصلة ستة، وده أحسن طريق. قلب الـ «تو أوبت» سطر واحد: اعكس حتة من القائمة. خلّي الطريق الجديد لو المشوار بقى أقصر، وكرّر لحد ما مفيش تبديل يفيد. البحث المحلي بيقف عند حل محلي، مفيش فيه تغيير صغير بيفيد. والطرق الفوقية بتهرب: التلدين بيقبل خطوات أوحش وهو سخن، والبحث المحرّم بيمنع الرجوع في خطوات لسه معمولة، والخوارزميات الجينية بتخلط خطط كويسة. وفي معمل القعدة، التلدين بيلاقي أحسن خطة مرتين من تلاتة، وتسلّق التل مرة من أربعة. سؤال سريع! الطريقة التقريبية بتاعتك لقت طريق مية وخمسة كيلو، والحد الأدنى من البرمجة الخطية بيقول مفيش طريق أقصر من مية. فجوة الأمثلية كام؟ حوالي خمسة في المية: أقصى حاجة ممكن تتوفّر خمسة كيلو، ويمكن ولا حاجة. والحد الأدنى بيحوّل «كويس» لوعد متقاس. الخطط الحقيقية بتوزن كذا هدف: المسافة كلها، وأطول مشوار لأي طفل، وساعات السواقين. والأقصر في المجموع ممكن يسيب عيال قرية واحدة في الأتوبيس تسعين دقيقة. حط الأهداف وحدود العدل جوّه النموذج، واعرض الموازنة. في الواقع، مكتبة الطرق في OR-Tools بتبني أول طريق، وبعدين بتحسّنه ببحث محلي موجَّه في حدود وقت معيّن. والمهندسين بيختبروا على أيام فاتت، ويخلّوا فيه شخص يقدر يغيّر الخطة. والخطط اللي محدش يقدر يسأل عنها محدش بيثق فيها. في التطبيق، قعّد اتناشر تلميذ بتسلّق التل وبالتلدين. شغّل كل واحد كذا مرة، وغيّر الحرارة اللي بيبدأ بيها. دورك. خطة A أقصر بكيلومترين في المجموع. وخطة B أطول، بس مفيش طفل بيركب أكتر من أربعين دقيقة. النموذج يختار أنهي؟ ده بيعتمد على أهداف الناس يتفقوا عليها، فاعرض الاتنين، بأرقامهم. افتكر: في المسائل الصعبة، ابني، وبعدين حسّن. واهرب من الحلول المحلية بالطرق الفوقية، وقيس الفجوة قصاد حد أدنى. وحط العدل في النموذج، قدّام الكل. جرّبها بنفسك: اكتب «تو أوبت» لطريق فيه خمس محطات ببايثون، وقارنه بكل الطرق الممكنة. وبعدين زوّد حد لأطول مشوار، وشوف بيكلّف قد إيه."
+          },
+          "sources": {
+            "en": "/media/opt-s4-4/video-en.mp4",
+            "ar": "/media/opt-s4-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/opt-s4-4/captions-en.vtt",
+            "ar": "/media/opt-s4-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/opt-s4-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/opt-s4-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/opt-s4-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/opt-s4-4/light/audio/en.opus",
+              "manifest.json": "/media/opt-s4-4/light/manifest.json",
+              "scenes.json": "/media/opt-s4-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/opt-s4-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/opt-s4-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 553,
+              "ar": 551
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Good answers to hard problems, and the choices behind them",
+            "ar": "إجابات جيدة لمسائل صعبة، والاختيارات التي تقف وراءها"
+          },
+          "body": {
+            "en": "Many real optimization problems are NP-hard: the travelling salesperson problem, vehicle routing, timetabling, most integer programs. In plain words, no method is known that solves every instance quickly, and most researchers believe none exists (that is the famous P versus NP question). The numbers grow brutally: a round trip through n stops has n! ÷ 2 orders, so 20 villages give about 1.2 × 10¹⁸ routes. Exact methods still solve many instances with clever bounds, but for big ones, every night, practitioners trade a proof of optimality for a good answer within a time limit.\n\nA heuristic usually works in two stages. A construction heuristic builds a plan fast: nearest neighbour drives to the closest unvisited stop each time. An improvement heuristic, or local search, then repeatedly makes a small change from a neighbourhood and keeps it if the plan gets better. For routes the classic neighbourhood is 2-opt: remove two edges and reconnect by reversing the stretch between them, which removes every crossing. In the lab’s bus map, nearest neighbour drives 34.6 km and three 2-opt moves bring it to 28.6 km, the best route there is; on other maps 2-opt stops short.\n\nLocal search stops at a local optimum, a plan no single move improves. Metaheuristics are strategies for escaping: simulated annealing accepts a worse move of size d with probability e^(−d/T) and slowly lowers the temperature T; tabu search forbids undoing recent moves; genetic algorithms combine parts of good plans; large neighbourhood search destroys part of a plan and rebuilds it with an exact solver. In the seating lab, hill climbing reaches the best known plan about one run in four, annealing about two in three.\n\nWithout a proof, measure. A lower bound (from an LP relaxation, or for routes a structure called a 1-tree) gives the optimality gap: a 105 km route against a bound of 100 km is within (105 − 100) ÷ 105 ≈ 4.8%. Some algorithms carry guarantees, such as Christofides’ method, never more than 1.5 times the optimum for routes with ordinary distances, but in practice local search usually does far better than its guarantee.\n\nFinally, real plans have several goals: total distance, the longest ride for any child, drivers’ hours, emissions. The shortest total can leave one village’s children on the bus for ninety minutes. A responsible modeller puts fairness limits in the model, shows the trade-offs with numbers, tests on past days, keeps a person able to override, and publishes how the plan is made. Google’s OR-Tools routing library follows this pattern: a first solution strategy, guided local search, and a time limit you choose.",
+            "ar": "كثير من مسائل الحلول المثلى الحقيقية صعبة حسابيًا (NP-hard): مسألة البائع المتجوّل، وتوجيه المركبات، والجدولة، ومعظم البرامج الصحيحة. وبكلمات بسيطة، لا تُعرف طريقة تحلّ كل حالاتها بسرعة، ويعتقد معظم الباحثين أنه لا توجد طريقة كهذه (وهذا هو سؤال P مقابل NP الشهير). والأعداد تنمو بقسوة: فلجولة تمرّ بـ n محطة ⁦n! ÷ 2⁩ ترتيبًا، فتعطي ٢٠ قرية نحو ١٫٢ × ١٠¹⁸ مسارًا. وما زالت الطرق الدقيقة تحلّ حالات كثيرة بحدود ذكية، لكن في المسائل الكبيرة، كل ليلة، يبدّل الممارسون إثبات الأمثلية بإجابة جيدة ضمن حدٍّ زمني.\n\nتعمل الطريقة التقريبية عادةً على مرحلتين. فالطريقة البنائية تبني خطة بسرعة: «أقرب جار» يتّجه كل مرة إلى أقرب محطة لم يزرها. ثم تُجري طريقة التحسين، أو البحث المحلي، تغييرًا صغيرًا من «جوار» الخطة مرة بعد مرة، وتُبقيه إن صارت الخطة أفضل. والجوار الكلاسيكي للمسارات هو ‎⁦2-opt⁩: احذف ضلعين، ثم صِل من جديد بعكس الجزء الواقع بينهما، فيزول كل تقاطع. ففي خريطة الحافلة في المختبر، يقطع «أقرب جار» ٣٤٫٦ كم، وتنزل به ثلاث حركات ‎⁦2-opt⁩ إلى ٢٨٫٦ كم، وهو أفضل مسار ممكن، وفي خرائط أخرى يتوقّف ‎⁦2-opt⁩ قبل الأفضل.\n\nيتوقّف البحث المحلي عند حل أمثل محلي، أي خطة لا تحسّنها حركة واحدة. والطرق الفوقية استراتيجيات للخروج منه: فالتلدين المحاكى يقبل حركة أسوأ بمقدار d باحتمال ⁦e^(−d/T)⁩ ويخفض درجة الحرارة T ببطء، والبحث المحرّم يمنع التراجع عن الحركات الأخيرة، والخوارزميات الجينية تجمع أجزاء من خطط جيدة، والبحث في الجوار الواسع يهدم جزءًا من الخطة ويعيد بناءه ببرنامج حل دقيق. وفي مختبر الجلوس، يصل تسلّق التل إلى أفضل خطة معروفة في نحو جولة من كل أربع، والتلدين في نحو جولتين من كل ثلاث.\n\nومن دون إثبات، قِس. فالحد الأدنى (من إرخاء خطي، أو في المسارات من بنية تُسمّى «الشجرة الواحدة») يعطي فجوة الأمثلية: فمسار طوله ١٠٥ كم مقابل حدّ قدره ١٠٠ كم يقع ضمن (١٠٥ − ١٠٠) ÷ ١٠٥ ≈ ٤٫٨٪. ولبعض الخوارزميات ضمانات، كطريقة كريستوفايدس التي لا تزيد أبدًا على ١٫٥ ضعف الأمثل في المسارات ذات المسافات العادية، لكن البحث المحلي يتفوّق عمليًا على ضمانه بكثير.\n\nوأخيرًا، للخطط الحقيقية أهداف عدة: المسافة الكلية، وأطول رحلة لأي طفل، وساعات السائقين، والانبعاثات. وقد يترك أقصر مجموع أطفالَ قرية واحدة في الحافلة تسعين دقيقة. والمنمذج المسؤول يضع حدود العدالة في النموذج، ويعرض الموازنات بالأرقام، ويختبر على أيام سابقة، ويُبقي شخصًا قادرًا على تعديل الخطة، وينشر طريقة صنعها. وتتبع مكتبة المسارات في OR-Tools من Google هذا النمط: استراتيجية للحل الأول، وبحث محلي موجَّه، وحدّ زمني تختاره أنت."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "NP-hard",
+                "ar": "صعبة حسابيًا (NP-hard)"
+              },
+              "def": {
+                "en": "No known method solves every instance quickly; time can grow exponentially with size.",
+                "ar": "لا تُعرف طريقة تحلّ كل الحالات بسرعة، وقد ينمو الوقت أُسّيًا مع الحجم."
+              }
+            },
+            {
+              "term": {
+                "en": "Local search and neighbourhood",
+                "ar": "البحث المحلي والجوار"
+              },
+              "def": {
+                "en": "Improving a plan by small moves from a set of nearby plans, such as 2-opt for routes.",
+                "ar": "تحسين خطة بحركات صغيرة من مجموعة خطط قريبة منها، مثل ‎⁦2-opt⁩ للمسارات."
+              }
+            },
+            {
+              "term": {
+                "en": "Local optimum",
+                "ar": "الحل الأمثل المحلي"
+              },
+              "def": {
+                "en": "A plan no single move in the neighbourhood improves.",
+                "ar": "خطة لا تحسّنها أي حركة واحدة في الجوار."
+              }
+            },
+            {
+              "term": {
+                "en": "Metaheuristic",
+                "ar": "الطريقة الفوقية"
+              },
+              "def": {
+                "en": "A strategy for escaping local optima: annealing, tabu search, genetic algorithms, large neighbourhood search.",
+                "ar": "استراتيجية للخروج من الحلول المثلى المحلية: التلدين، والبحث المحرّم، والخوارزميات الجينية، والبحث في الجوار الواسع."
+              }
+            },
+            {
+              "term": {
+                "en": "Optimality gap",
+                "ar": "فجوة الأمثلية"
+              },
+              "def": {
+                "en": "(best found − bound) ÷ best found: how much better any plan could still be, at most.",
+                "ar": "(أفضل ما وُجد − الحد) ÷ أفضل ما وُجد: أقصى ما يمكن أن تكون أي خطة أفضل به."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "You model the morning bus for five villages. Plan A is 2 km shorter in total, but one village’s children ride 70 minutes; in plan B, 2 km longer, no child rides more than 40 minutes. Which should the model pick?",
+            "ar": "تنمذج حافلة الصباح لخمس قرى. الخطة A أقصر بكيلومترين في مجموعها، لكن أطفال إحدى القرى يركبون ٧٠ دقيقة، وفي الخطة B، الأطول بكيلومترين، لا يركب أي طفل أكثر من ٤٠ دقيقة. أيّهما يختار النموذج؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A: the shortest is the goal",
+                "ar": "A: الأقصر هو الهدف"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "It depends on the agreed goals: show both and decide with those affected",
+                "ar": "يتوقّف ذلك على الأهداف المتفق عليها: اعرض الخطتين وقرّر مع المتأثرين"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "B, always",
+                "ar": "B دائمًا"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Neither plan beats the other on both goals, so the choice is a judgement about what matters: 2 km of fuel and driving time against 30 minutes for one village’s children. A modeller’s job is to show the trade-off with numbers and let the people affected (and those who pay) decide, ideally by agreeing a limit such as “nobody rides more than 45 minutes” in advance.",
+            "ar": "لا تتفوّق أيّ خطة على الأخرى في الهدفين معًا، فالاختيار حكم على ما هو مهم: كيلومتران من الوقود ووقت القيادة مقابل ٣٠ دقيقة لأطفال قرية واحدة. ومهمة صانع النموذج أن يعرض الموازنة بالأرقام، ويترك القرار للمتأثرين (ولمن يدفع)، والأفضل أن يتفقوا مسبقًا على حدّ مثل «لا يركب أحد أكثر من ٤٥ دقيقة»."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "p2",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete the program so it prints the optimality gap, in percent, of a 105 km route against a lower bound of 100 km.",
+            "ar": "أكمل البرنامج ليطبع فجوة الأمثلية بالنسبة المئوية لمسار طوله ١٠٥ كم مقابل حدّ أدنى قدره ١٠٠ كم."
+          },
+          "code": [
+            "found = 105   # km, the route the heuristic found\nbound = 100   # km, no route can be shorter\ngap = (found - ",
+            {
+              "blank": 0
+            },
+            ") / ",
+            {
+              "blank": 1
+            },
+            "\nprint(round(",
+            {
+              "blank": 2
+            },
+            " * gap, 1), \"%\")"
+          ],
+          "answers": [
+            "bound",
+            "found",
+            "100"
+          ],
+          "distractors": [
+            "0",
+            "10"
+          ],
+          "explain": {
+            "en": "The gap is (found − bound) ÷ found = 5 ÷ 105, printed as 4.8 %. At most 4.8% of the route could still be saved; if the bound isn’t tight, possibly nothing.",
+            "ar": "الفجوة = ⁦(found − bound) ÷ found⁩ = ٥ ÷ ١٠٥، وتُطبع 4.8 %. فلا يمكن توفير أكثر من ٤٫٨٪ من المسار، وإن لم يكن الحد محكمًا فربما لا شيء."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p3",
+          "prompt": {
+            "en": "2-opt always finds the shortest route if you let it run until no move helps.",
+            "ar": "يجد ‎⁦2-opt⁩ دائمًا أقصر مسار إذا تركته يعمل حتى لا تفيد أي حركة."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It stops at a local optimum: no single 2-opt move helps, but a better route may need a different kind of move. On the lab’s default map it reaches the best route; on other maps it stops short.",
+            "ar": "إنه يتوقّف عند حل أمثل محلي: لا تفيد أي حركة ‎⁦2-opt⁩ واحدة، لكن مسارًا أفضل قد يحتاج إلى نوع آخر من الحركات. ففي خريطة المختبر الافتراضية يصل إلى أفضل مسار، وفي خرائط أخرى يتوقّف قبله."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "tool": "anneal",
+          "prompt": {
+            "en": "Try it: with “Hill climbing”, press Run, then “Start again” and Run, five times, and record the final cost each time. Do the same with “Annealing”. Then set “Starting temperature” to 0.5 and to 6. Estimate how often each method reaches 37, and explain what the temperature controls.",
+            "ar": "جرّب: مع «تسلّق التل» اضغط «شغّل»، ثم «ابدأ من جديد» و«شغّل»، خمس مرات، وسجّل الكلفة النهائية في كل مرة. وافعل الشيء نفسه مع «التلدين». ثم اجعل «درجة الحرارة في البداية» ٠٫٥ ثم ٦. قدّر كم مرة تصل كل طريقة إلى ٣٧، واشرح ما الذي تتحكّم فيه درجة الحرارة."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "Five stops, distances in d, start route [0, 2, 1, 4, 3] (length 25). Fill in the 2-opt move: for each i < j, reverse the stretch r[i..j], and keep the new route if it is shorter.",
+            "ar": "خمس محطات، والمسافات في d، والمسار الأول ⁦[0, 2, 1, 4, 3]⁩ (طوله ٢٥). أكمل حركة ‎⁦2-opt⁩: لكل ⁦i < j⁩، اعكس الجزء ⁦r[i..j]⁩، وأبقِ المسار الجديد إن كان أقصر."
+          },
+          "starter": "d = [[0, 3, 7, 6, 4], [3, 0, 4, 7, 6], [7, 4, 0, 3, 5],\n     [6, 7, 3, 0, 2], [4, 6, 5, 2, 0]]\ndef length(r):\n    return sum(d[r[i - 1]][r[i]] for i in range(len(r)))\nr = [0, 2, 1, 4, 3]\nfor rounds in range(5):\n    for i in range(1, 4):\n        for j in range(i + 1, 5):\n            pass  # reverse r[i..j]; keep it if shorter\nprint(r, length(r))\n",
+          "solution": "d = [[0, 3, 7, 6, 4], [3, 0, 4, 7, 6], [7, 4, 0, 3, 5],\n     [6, 7, 3, 0, 2], [4, 6, 5, 2, 0]]\ndef length(r):\n    return sum(d[r[i - 1]][r[i]] for i in range(len(r)))\nr = [0, 2, 1, 4, 3]\nfor rounds in range(5):\n    for i in range(1, 4):\n        for j in range(i + 1, 5):\n            new = r[:i] + r[i:j + 1][::-1] + r[j + 1:]\n            if length(new) < length(r):\n                r = new\nprint(r, length(r))\n",
+          "tests": [
+            {
+              "check": "assert length(r) == 16, \"The best round trip here is 16\"",
+              "hint": {
+                "en": "Start: 25. Every kept move must make the trip shorter; the best is 16.",
+                "ar": "البداية: ٢٥. كل حركة تُبقى يجب أن تُقصّر الجولة، والأفضل ١٦."
+              }
+            },
+            {
+              "check": "assert sorted(r) == [0, 1, 2, 3, 4] and r[0] == 0, \"Visit every stop once, starting at 0\"",
+              "hint": {
+                "en": "Reverse only the middle part, r[i:j + 1]; keep r[:i] and r[j + 1:] as they are.",
+                "ar": "اعكس الجزء الأوسط فقط، ⁦r[i:j + 1]⁩، وأبقِ ⁦r[:i]⁩ و⁦r[j + 1:]⁩ كما هما."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "r[i:j + 1][::-1] is the stretch from i to j, reversed.",
+              "ar": "⁦r[i:j + 1][::-1]⁩ هو الجزء من i إلى j معكوسًا."
+            },
+            {
+              "en": "new = r[:i] + r[i:j + 1][::-1] + r[j + 1:], then if length(new) < length(r): r = new",
+              "ar": "⁦new = r[:i] + r[i:j + 1][::-1] + r[j + 1:]⁩، ثم ⁦if length(new) < length(r): r = new⁩"
+            }
+          ],
+          "explain": {
+            "en": "Reversing r[i..j] swaps two edges for two others. Keeping only shorter routes takes 25 down to 16, which a check of all 12 distinct round trips confirms is the best. On bigger maps 2-opt can stop at a local optimum, so measure the gap. The same program runs unchanged in Colab, where OR-Tools’ routing library does this, and more, for hundreds of stops.",
+            "ar": "عكس الجزء ⁦r[i..j]⁩ يبدّل ضلعين بضلعين آخرين. وإبقاء المسارات الأقصر فقط ينزل بالطول من ٢٥ إلى ١٦، ويؤكّد فحص الجولات المختلفة الاثنتي عشرة كلها أنه الأفضل. وفي الخرائط الأكبر قد يتوقّف ‎⁦2-opt⁩ عند حل أمثل محلي، فقِس الفجوة. والبرنامج نفسه يعمل دون تغيير في Colab، حيث تفعل مكتبة المسارات في OR-Tools هذا وأكثر لمئات المحطات."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each metaheuristic to its idea.",
+            "ar": "صِل كل طريقة فوقية بفكرتها."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Simulated annealing",
+                "ar": "التلدين المحاكى"
+              },
+              "right": {
+                "en": "Accepts some worse moves, less often as it cools",
+                "ar": "يقبل بعض الحركات الأسوأ، وأقل كلما برد"
+              }
+            },
+            {
+              "left": {
+                "en": "Tabu search",
+                "ar": "البحث المحرّم"
+              },
+              "right": {
+                "en": "Forbids undoing recent moves for a while",
+                "ar": "يمنع التراجع عن الحركات الأخيرة مدة من الزمن"
+              }
+            },
+            {
+              "left": {
+                "en": "Genetic algorithm",
+                "ar": "الخوارزمية الجينية"
+              },
+              "right": {
+                "en": "Combines parts of good plans",
+                "ar": "تجمع أجزاء من خطط جيدة"
+              }
+            },
+            {
+              "left": {
+                "en": "Multi-start",
+                "ar": "البدء المتعدد"
+              },
+              "right": {
+                "en": "Runs local search from many random starts",
+                "ar": "تشغّل البحث المحلي من بدايات عشوائية كثيرة"
+              }
+            }
+          ],
+          "explain": {
+            "en": "All four escape local optima in different ways: by accepting bad moves, by memory, by recombination, or by trying again elsewhere. In practice they are compared by the gap they reach in a fixed time.",
+            "ar": "تخرج الأربع من الحلول المثلى المحلية بطرق مختلفة: بقبول حركات سيئة، أو بالذاكرة، أو بإعادة التركيب، أو بالمحاولة من جديد في مكان آخر. وتُقارن عمليًا بالفجوة التي تبلغها في وقت محدّد."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you tell the client?",
+            "ar": "ماذا تقول للعميل؟"
+          },
+          "who": {
+            "en": "A logistics client of the start-up where you intern",
+            "ar": "عميل في مجال النقل لدى الشركة الناشئة التي تتدرّب فيها"
+          },
+          "initial": {
+            "en": "C",
+            "ar": "ع"
+          },
+          "situation": {
+            "en": "The client wants “the optimal route for our 300 stops, every morning, in 5 seconds”, and asks you to promise it in the contract.",
+            "ar": "يريد العميل «المسار الأمثل لمحطاتنا الثلاثمئة، كل صباح، في ٥ ثوانٍ»، ويطلب منك أن تَعِد بذلك في العقد."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“We’ll promise optimal; nobody will check.”",
+                "ar": "«سنَعِد بالأمثل، فلن يتحقّق أحد.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "Proving optimality for 300 stops in 5 seconds isn’t realistic. Promising it is dishonest, and the first audit will show it.",
+                "ar": "إثبات الأمثلية لثلاثمئة محطة في ٥ ثوانٍ غير واقعي. والوعد به غير أمين، وسيكشفه أول تدقيق."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“We’ll give a very good route in 5 seconds, report its gap to a bound, and agree limits such as the longest ride.”",
+                "ar": "«سنعطي مسارًا جيدًا جدًا في ٥ ثوانٍ، ونذكر فجوته إلى حدّ أدنى، ونتفق على حدود مثل أطول رحلة.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Honest and useful: the client sees how good each route is, and the limits they care about are in the model, not hoped for.",
+                "ar": "أمين ومفيد: يرى العميل مدى جودة كل مسار، وتكون الحدود التي تهمّه داخل النموذج، لا مجرد أمل."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“We’ll try every route on a bigger server.”",
+                "ar": "«سنجرّب كل المسارات على خادم أكبر.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "300 stops have about 300! ÷ 2 routes, a number with over 600 digits. No server can try them all, however big.",
+                "ar": "لثلاثمئة محطة نحو ⁦300! ÷ 2⁩ مسار، وهو رقم من أكثر من ٦٠٠ خانة. ولا يستطيع أي خادم أن يجرّبها كلها، مهما كبر."
+              }
+            }
+          ],
+          "explain": {
+            "en": "Promise what you can prove: a good route fast, its gap to a bound, and the limits the client cares about.",
+            "ar": "لا تعِد إلا بما تستطيع إثباته: مسار جيد بسرعة، وفجوته عن الحدّ، والقيود التي تهمّ العميل."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Where would you accept a good-enough answer with a measured gap, and where would you insist on a proof of the best? What decides it?",
+            "ar": "أين تقبل إجابة جيدة بما يكفي مع فجوة مقيسة، وأين تُصرّ على إثبات الأفضل؟ وما الذي يحسم ذلك؟"
+          },
+          "placeholder": {
+            "en": "For example: “A delivery route: good enough. A one-off national budget allocation: I’d want a proof, or at least a tiny gap, and the trade-offs shown.”",
+            "ar": "مثلًا: «مسار توصيل: الجيد بما يكفي يكفي. توزيع ميزانية وطنية لمرة واحدة: أريد إثباتًا، أو فجوة صغيرة جدًا على الأقل، مع عرض الموازنات.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Heuristic against exact, with a fairness limit",
+            "ar": "مشروع: الطريقة التقريبية مقابل الدقيقة، مع حدّ للعدالة"
+          },
+          "task": {
+            "en": "Take 7 to 9 real places near you (a school bus, a delivery round, a campus tour) and a table of distances or travel times. Implement nearest neighbour and 2-opt in Python, then find the true best route by trying every order (feasible at this size, in Colab if your phone is slow). Report the gap of each heuristic. Then add a limit on the longest ride for any passenger and find the best route that keeps it: what does fairness cost, and who gains?",
+            "ar": "خذ من ٧ إلى ٩ أماكن حقيقية قريبة منك (حافلة مدرسية، أو جولة توصيل، أو جولة في الحرم الجامعي) وجدولًا بالمسافات أو أوقات الطريق. نفّذ «أقرب جار» و‎⁦2-opt⁩ بلغة بايثون، ثم جِد أفضل مسار حقيقي بتجربة كل الترتيبات (ممكن بهذا الحجم، في Colab إن كان هاتفك بطيئًا). واذكر فجوة كل طريقة تقريبية. ثم أضف حدًّا لأطول رحلة لأي راكب، وجِد أفضل مسار يلتزم به: كم تكلّف العدالة، ومَن يستفيد؟"
+          },
+          "deliverable": {
+            "en": "Your code, a table of route lengths and gaps (nearest neighbour, 2-opt, exact, exact with the fairness limit), and half a page on the trade-off.",
+            "ar": "برنامجك، وجدول بأطوال المسارات وفجواتها («أقرب جار»، و‎⁦2-opt⁩، والدقيق، والدقيق مع حدّ العدالة)، ونصف صفحة عن الموازنة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: implement a construction heuristic and 2-opt, and measure their gaps.",
+                "ar": "أستطيع: تنفيذ طريقة بنائية و‎⁦2-opt⁩، وقياس فجوتيهما."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: explain why heuristics are used for NP-hard problems, and their limits.",
+                "ar": "أستطيع: شرح سبب استعمال الطرق التقريبية في المسائل الصعبة حسابيًا، وحدودها."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: model a fairness limit and report its cost openly.",
+                "ar": "أستطيع: نمذجة حدّ للعدالة وعرض كلفته علنًا."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Heuristics and trade-offs",
+            "ar": "الطرق التقريبية والموازنات"
+          },
+          "narration": {
+            "en": "When the best can’t be proved in time, how do you give an answer you can stand behind?",
+            "ar": "حين لا يمكن إثبات الأفضل في الوقت المتاح، كيف تعطي إجابة تستطيع أن تدافع عنها؟"
+          },
+          "note": {
+            "en": "Optimization · Level 4 · Lesson 4",
+            "ar": "الحلول المثلى، المستوى ٤، الدرس ٤"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Explain NP-hardness in plain words and why heuristics are used.",
+              "Implement 2-opt and compare metaheuristics for escaping local optima.",
+              "Measure the optimality gap and put fairness limits in the open."
+            ],
+            "ar": [
+              "تشرح الصعوبة الحسابية بكلمات بسيطة، ولماذا تُستعمل الطرق التقريبية.",
+              "تنفّذ ‎⁦2-opt⁩ وتقارن الطرق الفوقية للخروج من الحلول المحلية.",
+              "تقيس فجوة الأمثلية، وتضع حدود العدالة علنًا."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "Build fast, then improve with local search",
+              "Escape local optima: annealing, tabu, genetic",
+              "Gap = (found − bound) ÷ found",
+              "Several goals: show the trade-off with numbers"
+            ],
+            "ar": [
+              "ابنِ بسرعة، ثم حسّن بالبحث المحلي",
+              "اخرج من الحلول المحلية: التلدين، والمحرّم، والجينية",
+              "الفجوة = (ما وُجد − الحد) ÷ ما وُجد",
+              "أهداف عدة: اعرض الموازنة بالأرقام"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Route race",
+            "ar": "النشاط: سباق المسارات"
+          },
+          "bullets": {
+            "en": [
+              "Build (6 min): Nearest neighbour on a paper map.",
+              "Improve (8 min): Uncross with 2-opt moves.",
+              "Check (6 min): Compare with the best route.",
+              "Fair (5 min): Add a limit on the longest ride."
+            ],
+            "ar": [
+              "البناء (٦ دقائق): «أقرب جار» على خريطة ورقية.",
+              "التحسين (٨ دقائق): فكّ التقاطعات بحركات ‎⁦2-opt⁩.",
+              "التحقّق (٦ دقائق): قارن بأفضل مسار.",
+              "العدالة (٥ دقائق): أضف حدًّا لأطول رحلة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Build (6 min): Mark 7 places and a start on paper with distances. Build a route by always going to the nearest unvisited place, and add up its length.",
+              "Improve (8 min): Wherever two legs cross, reverse the stretch between them (a 2-opt move) and recompute. Stop when no move shortens the route.",
+              "Check (6 min): Run the lesson’s code or a brute-force search for the true best route, and compute your gap: (yours − best) ÷ yours.",
+              "Fair (5 min): Choose a limit on the longest ride from the start to any place. Does your route keep it? What would keeping it cost in total distance?"
+            ],
+            "ar": [
+              "البناء (٦ دقائق): حدّد على الورق ٧ أماكن ونقطة بداية مع المسافات. وابنِ مسارًا بالذهاب دائمًا إلى أقرب مكان لم تزره، واجمع طوله.",
+              "التحسين (٨ دقائق): حيثما تقاطع جزءان من المسار، اعكس الجزء الواقع بينهما (حركة ‎⁦2-opt⁩) وأعِد الحساب. وتوقّف حين لا تُقصّر أي حركة المسار.",
+              "التحقّق (٦ دقائق): شغّل برنامج الدرس أو بحثًا شاملًا لإيجاد أفضل مسار حقيقي، واحسب فجوتك: (مسارك − الأفضل) ÷ مسارك.",
+              "العدالة (٥ دقائق): اختر حدًّا لأطول رحلة من البداية إلى أي مكان. هل يلتزم مسارك به؟ وكم يكلّف الالتزام به من المسافة الكلية؟"
+            ]
+          },
+          "note": {
+            "en": "Use a real local map if you can; travel times work as well as distances. Work in pairs and swap routes to check each other’s sums.",
+            "ar": "استعمل خريطة محلية حقيقية إن استطعت، وأوقات الطريق تصلح كالمسافات. اعملوا في أزواج وتبادلوا المسارات ليتحقّق كلٌّ منكم من حسابات الآخر."
+          },
+          "narration": {
+            "en": "How close did your quick route get, and what did fairness cost?",
+            "ar": "إلى أيّ حد اقترب مسارك السريع، وكم كلّفت العدالة؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why do companies accept routes nobody has proved optimal?",
+              "Which metaheuristic would you try first for a timetable, and why?",
+              "Who should decide the longest acceptable ride on a school bus?"
+            ],
+            "ar": [
+              "لماذا تقبل الشركات مسارات لم يُثبت أحد أنها مثلى؟",
+              "أيّ طريقة فوقية ستجرّب أولًا لجدول دراسي، ولماذا؟",
+              "مَن ينبغي أن يقرّر أطول رحلة مقبولة في حافلة مدرسية؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Check yourself",
+            "ar": "تحقّق من نفسك"
+          },
+          "bullets": {
+            "en": [
+              "Your route is 52 km and a bound says 50 km. Write the gap, and one sentence a manager would understand."
+            ],
+            "ar": [
+              "طول مسارك ٥٢ كم، ويقول حدّ أدنى ٥٠ كم. اكتب الفجوة، وجملة واحدة يفهمها مدير."
+            ]
+          },
+          "narration": {
+            "en": "A good answer you can measure and explain beats a promise you can’t keep.",
+            "ar": "الإجابة الجيدة التي تستطيع قياسها وشرحها أفضل من وعد لا تستطيع الوفاء به."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Heuristics and trade-offs",
+            "ar": "شرائح للمراجعة: الطرق التقريبية والموازنات"
+          },
+          "pages": 6,
+          "base": "opt-s4-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Heuristics and trade-offs",
+            "ar": "ورقة النشاط: الطرق التقريبية والموازنات"
+          },
+          "pages": 3,
+          "base": "opt-s4-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/opt-s4-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "OPT.3",
+        "OPT.4"
+      ]
+    },
+    {
+      "id": "opt-s4-check",
+      "title": {
+        "en": "Operations research: unit check",
+        "ar": "بحوث العمليات: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Take one decision you care about (a society budget, a timetable, a delivery round) and decide which tool fits it: LP, MIP, CP-SAT or a heuristic. Write the model’s variables, constraints and objective in one paragraph, and say what you would report besides the answer: binding limits, the gap, the trade-offs.",
+        "ar": "خذ قرارًا يهمّك (ميزانية جمعية، أو جدولًا، أو جولة توصيل) وقرّر أيّ الأدوات تناسبه: البرمجة الخطية، أو الصحيحة المختلطة، أو CP-SAT، أو طريقة تقريبية. اكتب في فقرة واحدة متغيّرات النموذج وقيوده ودالة هدفه، وقل ما الذي ستعرضه إلى جانب الإجابة: القيود المقيِّدة، والفجوة، والموازنات."
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "Why does a linear program with an optimum always have one at a corner of the feasible region?",
+            "ar": "لماذا يكون للبرنامج الخطي الذي له حل أمثل دائمًا حلٌّ أمثل في زاوية من المنطقة الممكنة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "The region is convex and the objective is linear",
+                "ar": "لأن المنطقة محدّبة ودالة الهدف خطية"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Solvers only look at corners",
+                "ar": "لأن برامج الحل لا تنظر إلا إلى الزوايا"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Corners always have whole-number values",
+                "ar": "لأن قيم الزوايا أعداد صحيحة دائمًا"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "The constraints are all equalities",
+                "ar": "لأن القيود كلها مساواة"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "A linear objective is a family of parallel lines; pushed as far as it can go over a convex region, it last touches a vertex (or a whole edge containing vertices). That is why simplex only needs to move between corners.",
+            "ar": "دالة الهدف الخطية عائلة من الخطوط المتوازية، وحين تُدفع إلى أبعد ما يمكن فوق منطقة محدّبة تلمس أخيرًا رأسًا (أو ضلعًا كاملًا فيه رؤوس). ولهذا لا تحتاج السمبلكس إلا إلى التنقّل بين الزوايا."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "For a minimisation MIP, the LP relaxation gives an upper bound on the optimal cost.",
+            "ar": "في برنامج صحيح مختلط للتصغير، يعطي الإرخاء الخطي حدًّا أعلى للكلفة المثلى."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It gives a lower bound: the relaxation allows every integer plan and more, so its minimum can only be lower or equal (1,173.33 against 1,400 for the trip). The incumbent, the best integer plan found, is the upper bound.",
+            "ar": "إنه يعطي حدًّا أدنى: فالإرخاء يسمح بكل خطة صحيحة وأكثر، فلا يمكن أن تكون أصغر كلفة فيه إلا أقل أو مساوية (١١٧٣٫٣٣ مقابل ١٤٠٠ في الرحلة). أما أفضل خطة صحيحة وُجدت فهي الحد الأعلى."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q3",
+          "prompt": {
+            "en": "Match each method to the problem it suits best.",
+            "ar": "صِل كل طريقة بالمسألة التي تناسبها أكثر من غيرها."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Simplex (GLOP)",
+                "ar": "السمبلكس (GLOP)"
+              },
+              "right": {
+                "en": "The diet problem with fractional portions",
+                "ar": "مسألة الحِمية بحصص كسرية"
+              }
+            },
+            {
+              "left": {
+                "en": "Branch and bound (SCIP)",
+                "ar": "التفريع والتحديد (SCIP)"
+              },
+              "right": {
+                "en": "Whole buses with a booking fee",
+                "ar": "حافلات كاملة مع رسوم حجز"
+              }
+            },
+            {
+              "left": {
+                "en": "CP-SAT",
+                "ar": "CP-SAT"
+              },
+              "right": {
+                "en": "Exam slots with all-different rules",
+                "ar": "مواعيد امتحانات بقيود «كلها مختلفة»"
+              }
+            },
+            {
+              "left": {
+                "en": "2-opt local search",
+                "ar": "البحث المحلي ‎⁦2-opt⁩"
+              },
+              "right": {
+                "en": "A 300-stop delivery route by morning",
+                "ar": "مسار توصيل من ٣٠٠ محطة قبل الصباح"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Continuous linear models suit simplex; whole numbers and fixed costs suit MIP; logical and combinatorial rules suit CP-SAT; huge routing instances under a time limit suit local search, with a gap to show how good the answer is.",
+            "ar": "النماذج الخطية المتصلة تناسبها السمبلكس، والأعداد الصحيحة والكلف الثابتة تناسبها البرمجة الصحيحة المختلطة، والقواعد المنطقية والتوافقية يناسبها CP-SAT، وحالات المسارات الضخمة بحدٍّ زمني يناسبها البحث المحلي، مع فجوة تبيّن مدى جودة الإجابة."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q4",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "found, bound = 1400, 1173.33\ngap = (found - bound) / found\nprint(round(100 * gap))"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "16",
+                "ar": "16"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "19",
+                "ar": "19"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "84",
+                "ar": "84"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "(1,400 − 1,173.33) ÷ 1,400 ≈ 0.162, so it prints 16: the trip’s best plan was, at first sight, within 16% of the relaxation’s bound. Dividing by the bound instead would give 19, a different (and less common) definition.",
+            "ar": "(١٤٠٠ − ١١٧٣٫٣٣) ÷ ١٤٠٠ ≈ ٠٫١٦٢، فيطبع 16: كانت أفضل خطة للرحلة، في البداية، ضمن ١٦٪ من حدّ الإرخاء. والقسمة على الحد بدلًا من ذلك تعطي ١٩، وهو تعريف مختلف (وأقل شيوعًا)."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q5",
+          "prompt": {
+            "en": "Which statements about shadow prices are true? Choose all that apply.",
+            "ar": "أيّ العبارات عن أسعار الظل صحيحة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A binding constraint can have a non-zero shadow price",
+                "ar": "قد يكون للقيد المقيِّد سعر ظل غير صفري"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A constraint with slack has a shadow price of zero",
+                "ar": "سعر ظل القيد الذي فيه فائض صفر"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A shadow price holds for any change, however large",
+                "ar": "يصحّ سعر الظل لأي تغيير مهما كبر"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "In the garden, 8 × 25 + 18 × 5 + 14 × 0 equals the best profit, 290",
+                "ar": "في الحديقة، ٨ × ٢٥ + ١٨ × ٥ + ١٤ × ٠ يساوي أكبر ربح، ٢٩٠"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "Shadow prices tell you which variables must be whole numbers",
+                "ar": "تخبرك أسعار الظل أيّ المتغيّرات يجب أن تكون أعدادًا صحيحة"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Binding constraints carry the prices; slack ones are free (complementary slackness), and the prices value the limits at exactly the optimum (strong duality: 200 + 90 + 0 = 290). A price holds only within a range (hours are worth 5 from 18 to 24), and it says nothing about integrality.",
+            "ar": "تحمل القيود المقيِّدة الأسعار، والتي فيها فائض مجانية (التراخي المتمّم)، والأسعار تقيّم القيود بالقيمة المثلى تمامًا (الثنائية القوية: ٢٠٠ + ٩٠ + ٠ = ٢٩٠). ولا يصحّ السعر إلا ضمن مدى (قيمة الساعة ٥ من ١٨ إلى ٢٤)، ولا يقول شيئًا عن الأعداد الصحيحة."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q6",
+          "prompt": {
+            "en": "Complete the sentence.",
+            "ar": "أكمل الجملة."
+          },
+          "sentence": {
+            "en": [
+              "Branch and bound splits on a ",
+              {
+                "blank": 0
+              },
+              " variable and ",
+              {
+                "blank": 1
+              },
+              " every branch whose relaxation can’t beat the best plan found."
+            ],
+            "ar": [
+              "يقسّم التفريع والتحديد عند متغيّر ",
+              {
+                "blank": 0
+              },
+              "، و",
+              {
+                "blank": 1
+              },
+              " كل فرع لا يستطيع إرخاؤه أن يتفوّق على أفضل خطة وُجدت."
+            ]
+          },
+          "bank": {
+            "en": [
+              "fractional",
+              "prunes",
+              "integer",
+              "doubles"
+            ],
+            "ar": [
+              "كسري",
+              "يقطع",
+              "صحيح",
+              "يضاعف"
+            ]
+          },
+          "answers": {
+            "en": [
+              "fractional",
+              "prunes"
+            ],
+            "ar": [
+              "كسري",
+              "يقطع"
+            ]
+          },
+          "explain": {
+            "en": "A fractional value (2.13 buses) is where the relaxation breaks the integer rule, so that’s where to split; pruning branches that can’t win is what keeps the tree small.",
+            "ar": "القيمة الكسرية (٢٫١٣ حافلة) هي حيث يخالف الإرخاء شرط الأعداد الصحيحة، فهناك يكون التقسيم، وقطع الفروع التي لا يمكن أن تفوز هو ما يُبقي الشجرة صغيرة."
+          }
+        },
+        {
+          "type": "order",
+          "id": "q7",
+          "prompt": {
+            "en": "Put the steps of branch and bound in order.",
+            "ar": "رتّب خطوات التفريع والتحديد."
+          },
+          "steps": [
+            {
+              "en": "Solve the LP relaxation",
+              "ar": "حُلّ الإرخاء الخطي"
+            },
+            {
+              "en": "Pick a fractional variable and branch on it",
+              "ar": "اختر متغيّرًا كسريًا وفرّع عليه"
+            },
+            {
+              "en": "Solve each branch’s relaxation",
+              "ar": "حُلّ إرخاء كل فرع"
+            },
+            {
+              "en": "Prune branches that can’t beat the best plan found",
+              "ar": "اقطع الفروع التي لا تستطيع التفوّق على أفضل خطة وُجدت"
+            },
+            {
+              "en": "Stop when no branch can do better: the best plan is proved",
+              "ar": "توقّف حين لا يستطيع أي فرع أن يفعل أفضل: ثبت أن الخطة هي الأفضل"
+            }
+          ],
+          "explain": {
+            "en": "The relaxation gives the first bound; branching removes a fraction; each branch is bounded by its own relaxation; pruning compares bounds with the incumbent; when nothing is left open, the incumbent is optimal.",
+            "ar": "يعطي الإرخاء أول حدّ، والتفريع يزيل كسرًا، وكل فرع يحدّه إرخاؤه الخاص، والقطع يقارن الحدود بأفضل خطة وُجدت، وحين لا يبقى شيء مفتوح تكون هذه الخطة هي المثلى."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "q8",
+          "lang": "python",
+          "prompt": {
+            "en": "This exam-slot model should use as few slots as possible, but it always reports 1. Which line is wrong?",
+            "ar": "ينبغي أن يستعمل نموذج مواعيد الامتحانات هذا أقل عدد ممكن من المواعيد، لكنه يُعطي ١ دائمًا. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "slot = {e: model.new_int_var(1, 8, e) for e in exams}\nfor taken in pupils:\n    model.add_all_different([slot[e] for e in taken])\nlast = model.new_int_var(1, 8, \"last\")\nfor e in exams:\n    model.add(slot[e] >= last)\nmodel.minimize(last)",
+          "line": 6,
+          "fix": "    model.add(slot[e] <= last)",
+          "explain": {
+            "en": "last must be at least every exam’s slot, so that it equals the last slot used. With >=, last = 1 always satisfies the model, and minimising it says nothing about how many slots the exams really need.",
+            "ar": "يجب ألّا يقل last عن موعد أي امتحان، حتى يساوي آخر موعد مستعمل. ومع >= يحقّق ⁦last = 1⁩ النموذج دائمًا، وتصغيره لا يقول شيئًا عن عدد المواعيد التي تحتاج إليها الامتحانات فعلًا."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q9",
+          "prompt": {
+            "en": "Simulated annealing started at a very low temperature behaves much like hill climbing.",
+            "ar": "يتصرّف التلدين المحاكى الذي يبدأ بدرجة حرارة منخفضة جدًا تصرّفًا قريبًا من تسلّق التل."
+          },
+          "answer": true,
+          "explain": {
+            "en": "At low T, e^(−d/T) is almost zero for any worse move, so only improving moves are kept: hill climbing. In the seating lab, a starting temperature of 0.5 gets stuck much as hill climbing does.",
+            "ar": "عند T منخفضة تكون ⁦e^(−d/T)⁩ شبه صفر لأي حركة أسوأ، فلا يُبقى إلا التحسين: تسلّق التل. وفي مختبر الجلوس، تعلق درجة حرارة بدائية قدرها ٠٫٥ كما يعلق تسلّق التل."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "q10",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete the 2-opt move: reverse the stretch from i to j, and keep it if the route is shorter.",
+            "ar": "أكمل حركة ‎⁦2-opt⁩: اعكس الجزء من i إلى j، وأبقِه إن كان المسار أقصر."
+          },
+          "code": [
+            "new = r[:i] + r[i:j + 1][",
+            {
+              "blank": 0
+            },
+            "] + r[",
+            {
+              "blank": 1
+            },
+            ":]\nif length(new) ",
+            {
+              "blank": 2
+            },
+            " length(r):\n    r = new"
+          ],
+          "answers": [
+            "::-1",
+            "j + 1",
+            "<"
+          ],
+          "distractors": [
+            "::1",
+            "i",
+            ">"
+          ],
+          "explain": {
+            "en": "[::-1] reverses the slice, r[j + 1:] is the rest of the route after it, and < keeps only shorter routes. Two edges are swapped for two others, which removes a crossing.",
+            "ar": "يعكس [::-1] الجزء، و⁦r[j + 1:]⁩ بقية المسار بعده، و< لا يُبقي إلا المسارات الأقصر. فيُستبدل ضلعان بضلعين آخرين، فيزول تقاطع."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Operations research: review",
+            "ar": "بحوث العمليات: مراجعة"
+          },
+          "narration": {
+            "en": "Let’s look back at four ways to find the best plan, and check what stuck.",
+            "ar": "لنراجع أربع طرق لإيجاد أفضل خطة، ونتحقّق ممّا رسخ."
+          },
+          "note": {
+            "en": "Optimization · Level 4 · Unit check",
+            "ar": "الحلول المثلى، المستوى ٤، اختبار الوحدة"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Linear programming and the simplex method",
+              "Integer programs and branch and bound",
+              "Constraint programming: propagation and search",
+              "Heuristics and trade-offs"
+            ],
+            "ar": [
+              "البرمجة الخطية وطريقة السمبلكس",
+              "البرمجة بالأعداد الصحيحة والتفريع والتحديد",
+              "البرمجة بالقيود: الانتشار والبحث",
+              "الطرق التقريبية والموازنات"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "LP: corners, simplex and shadow prices",
+              "MIP: relaxations bound, branch and bound proves",
+              "CP: propagate, search fail-first; INFEASIBLE is a proof",
+              "Heuristics: build, improve, measure the gap, show the trade-offs"
+            ],
+            "ar": [
+              "البرمجة الخطية: الزوايا والسمبلكس وأسعار الظل",
+              "البرمجة الصحيحة: الإرخاء يحدّ، والتفريع والتحديد يُثبت",
+              "البرمجة بالقيود: انشر، وابحث «الفشل أولًا»، وINFEASIBLE إثبات",
+              "الطرق التقريبية: ابنِ، وحسّن، وقِس الفجوة، واعرض الموازنات"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Activity: Pick the tool",
+            "ar": "النشاط: اختر الأداة"
+          },
+          "bullets": {
+            "en": [
+              "Sort (6 min): Match ten problems to LP, MIP, CP or a heuristic.",
+              "Model (8 min): Write one in a paragraph.",
+              "Report (6 min): What would you report besides the answer?"
+            ],
+            "ar": [
+              "الفرز (٦ دقائق): وزّع عشر مسائل على الخطية والصحيحة والقيود والتقريبية.",
+              "النمذجة (٨ دقائق): اكتب واحدة منها في فقرة.",
+              "العرض (٦ دقائق): ماذا ستعرض إلى جانب الإجابة؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Sort (6 min): On cards: a canteen menu, buses for a trip, an exam timetable, a 300-stop delivery round, a farm plan, a hospital roster, a sudoku, choosing warehouse sites, a study plan, a sports league. Put each under LP, MIP, CP-SAT or heuristic, with one reason.",
+              "Model (8 min): Pick one card and write its variables (with units), constraints and objective in one paragraph.",
+              "Report (6 min): List what a decision-maker should see besides the plan: binding limits and shadow prices, the gap, the assumptions, and the trade-offs and fairness limits."
+            ],
+            "ar": [
+              "الفرز (٦ دقائق): على بطاقات: قائمة مقصف، وحافلات لرحلة، وجدول امتحانات، وجولة توصيل من ٣٠٠ محطة، وخطة مزرعة، ومناوبات مستشفى، وسودوكو، واختيار مواقع مخازن، وخطة مذاكرة، ودوري رياضي. ضع كلًّا منها تحت الخطية أو الصحيحة المختلطة أو CP-SAT أو التقريبية، مع سبب واحد.",
+              "النمذجة (٨ دقائق): اختر بطاقة واحدة واكتب متغيّراتها (بوحداتها) وقيودها ودالة هدفها في فقرة واحدة.",
+              "العرض (٦ دقائق): اكتب ما ينبغي أن يراه متخذ القرار إلى جانب الخطة: القيود المقيِّدة وأسعار الظل، والفجوة، والافتراضات، والموازنات وحدود العدالة."
+            ]
+          },
+          "note": {
+            "en": "Many problems fit more than one tool; the reason matters more than the label.",
+            "ar": "كثير من المسائل يناسبه أكثر من أداة، والسبب أهم من التصنيف."
+          },
+          "narration": {
+            "en": "Which tool fits, and what would you report besides the answer?",
+            "ar": "أيّ أداة تناسب، وماذا ستعرض إلى جانب الإجابة؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "When is a relaxation’s answer useful, even though it can’t be used as it is?",
+              "Why is INFEASIBLE good news for a modeller?",
+              "What does a responsible modeller owe the people affected by a plan?"
+            ],
+            "ar": [
+              "متى تكون إجابة الإرخاء مفيدة، مع أنها لا تُستعمل كما هي؟",
+              "لماذا تكون INFEASIBLE خبرًا جيدًا لصانع النموذج؟",
+              "بماذا يدين صانع النموذج المسؤول للمتأثرين بالخطة؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Check yourself",
+            "ar": "تحقّق من نفسك"
+          },
+          "bullets": {
+            "en": [
+              "Name one problem from your own life, the tool you’d use, and the one number you’d report besides the answer."
+            ],
+            "ar": [
+              "سمِّ مسألة من حياتك، والأداة التي ستستعملها، والرقم الواحد الذي ستعرضه إلى جانب الإجابة."
+            ]
+          },
+          "narration": {
+            "en": "Pick the right tool, and report what the answer is worth.",
+            "ar": "اختر الأداة المناسبة، واعرض قيمة الإجابة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Operations research: LP, MIP, CP, OR-Tools modelling, heuristics: unit check",
+            "ar": "شرائح للمراجعة: بحوث العمليات: البرمجة الخطية والصحيحة وبالقيود، والنمذجة بـ OR-Tools، والطرق التقريبية: اختبار الوحدة"
+          },
+          "pages": 6,
+          "base": "opt-s4-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Operations research: LP, MIP, CP, OR-Tools modelling, heuristics: unit check",
+            "ar": "ورقة النشاط: بحوث العمليات: البرمجة الخطية والصحيحة وبالقيود، والنمذجة بـ OR-Tools، والطرق التقريبية: اختبار الوحدة"
+          },
+          "pages": 2,
+          "base": "opt-s4-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "OPT.2",
+        "OPT.3",
+        "OPT.4",
+        "DC.3.4"
+      ]
+    }
+  ]
+}

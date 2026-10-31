@@ -1,0 +1,3285 @@
+{
+  "id": "agents-s2",
+  "track": "agents",
+  "level": 2,
+  "audience": "students",
+  "title": {
+    "en": "Working with an agent safely",
+    "ar": "العمل مع الوكيل بأمان"
+  },
+  "summary": {
+    "en": "Use AI agents with your eyes open: see the loop inside, check what an agent did, decide what it may do without asking, and protect your data and your data bundle. Your first lines of Python show how the checks work.",
+    "ar": "استعمل وكلاء الذكاء الاصطناعي وعيناك مفتوحتان: انظر إلى الحلقة في داخلها، وتحقّق مما فعله الوكيل، وقرّر ما يُسمح له بفعله دون أن يسألك، واحمِ بياناتك وباقة الإنترنت لديك. وستُريك أولى أسطرك بلغة Python كيف تعمل هذه الفحوص."
+  },
+  "lessons": [
+    {
+      "id": "agents-s2-1",
+      "title": {
+        "en": "Inside an agent",
+        "ar": "داخل الوكيل"
+      },
+      "minutes": 15,
+      "tryTomorrow": {
+        "en": "Write down three things you asked a phone or an app to do this week. For each one, decide: only talk, or a tool? Then write the tool call it might have made, with a name and details.",
+        "ar": "اكتب ثلاثة أشياء طلبتها من هاتف أو تطبيق هذا الأسبوع. وقرّر لكلٍّ منها: هل كانت كلامًا فقط، أم استُعملت فيها أداة؟ ثم اكتب استدعاء الأداة الذي ربما كتبه، باسمٍ وتفاصيل."
+      },
+      "materials": {
+        "en": [
+          "Paper and a pen",
+          "A timetable, a bus timetable or a weather forecast (from the radio, TV or a newspaper)",
+          "A friend or someone at home to play the tool"
+        ],
+        "ar": [
+          "ورقة وقلم",
+          "جدول حصص، أو جدول مواعيد حافلات، أو نشرة طقس (من الإذاعة أو التلفاز أو صحيفة)",
+          "صديق أو أحد أفراد أسرتك ليؤدّي دور الأداة"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Inside an agent",
+            "ar": "داخل الوكيل"
+          },
+          "src": null,
+          "duration": 203,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A puzzle",
+                "ar": "لغز"
+              }
+            },
+            {
+              "at": 20,
+              "atBy": {
+                "en": 20,
+                "ar": 18.4
+              },
+              "label": {
+                "en": "Talk, or act?",
+                "ar": "يتكلّم أم يفعل؟"
+              }
+            },
+            {
+              "at": 54.7,
+              "atBy": {
+                "en": 54.7,
+                "ar": 52.9
+              },
+              "label": {
+                "en": "Reading a tool call",
+                "ar": "قراءة استدعاء الأداة"
+              }
+            },
+            {
+              "at": 111.5,
+              "atBy": {
+                "en": 111.5,
+                "ar": 107
+              },
+              "label": {
+                "en": "Two tools and a loop",
+                "ar": "أداتان وحلقة"
+              }
+            },
+            {
+              "at": 170,
+              "atBy": {
+                "en": 170,
+                "ar": 162.3
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Who writes the tool call, and who actually runs the tool?",
+                "ar": "مَن يكتب استدعاء الأداة، ومَن يشغّل الأداة فعلًا؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "The model writes it; the app runs it",
+                    "ar": "النموذج يكتبه، والتطبيق يشغّله"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "The app writes it; the model runs it",
+                    "ar": "التطبيق يكتبه، والنموذج يشغّله"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "The model writes it and runs it too",
+                    "ar": "النموذج يكتبه ويشغّله أيضًا"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "The model only writes text, including the call. The app runs the tool, so the app sees every call and can check it first.",
+                "ar": "لا يكتب النموذج إلا نصًّا، ومنه الاستدعاء. أما الأداة فيشغّلها التطبيق، ولذلك يرى التطبيق كل استدعاء ويستطيع أن يفحصه قبل تشغيله."
+              }
+            },
+            "at": 98.95,
+            "atBy": {
+              "en": 98.95,
+              "ar": 93.49
+            }
+          },
+          "transcript": {
+            "en": "Here’s a puzzle from our computer club. A chatbot gave Zainab a bus time that was totally wrong. Her phone’s assistant set her alarm perfectly. What’s the difference? Today: what’s inside an AI agent, and how to read what it does. A chatbot is a language model that only writes text back. It guesses likely words, so it can sound sure and still be wrong. An agent can also use tools: small programs like a timetable, the weather or an alarm. An agent works in a loop. You make a request, and the model writes a short plan, then a tool call. The app runs the tool and adds the result. Then the model answers, or calls another tool. Here’s a real call from Darsi Tiny, a small model on your phone. I asked about the weather in Kafi tomorrow. It wrote the tool’s name, weather, then the details in curly brackets: the place and the day. The model can’t run the tool: it only writes text. The app runs it and adds the result: sunny, thirty-five degrees, a ten percent chance of rain. Then the model answers from that result. Quick check! Who writes the tool call, and who actually runs the tool? The model writes the call, and the app runs it. So the app sees every call before anything happens. That’s where checks can go, and you’ll write some in this course. Some jobs need two tools. Ask about a trip from Kafi to Dala tomorrow. Darsi Tiny calls the route tool first: seventy kilometres. Then it calls the weather tool for Dala, and gives one answer with both. In Python, an app’s loop can be short. Here a list stands in for the model’s replies, because there’s no model inside our code. The loop runs a tool for each call, and stops at the answer. In the app, choose a request and press One step until it answers. Try the trip to Dala and count the tools. Then open What Darsi Tiny sees: the whole conversation is one text. Your turn. On the trip to Dala, how many tools does Darsi Tiny call before it answers? Two: route, then weather. Remember: an agent is a model in a loop with tools. A call is a tool’s name and its details. The model writes, and the app runs the tools. Try it yourself: list three things you asked a phone or an app to do this week. For each one, was it only talk, or did it use a tool? Then write the call it might have made, with a name and details.",
+            "ar": "عندي لغز من نادي الكمبيوتر بتاعنا. شات بوت قال لزينب ميعاد أتوبيس غلط خالص. لكن مساعد الموبايل بتاعها ظبط المنبه مظبوط تمامًا. إيه الفرق؟ النهارده: إيه اللي جوه الوكيل الذكي، وإزاي تقرا هو بيعمل إيه. الشات بوت نموذج لغوي بيرد بكلام مكتوب وبس. بيخمّن كلام محتمل، فممكن يبان واثق ويطلع غلط برضه. أما الوكيل الذكي فيقدر كمان يستخدم أدوات: برامج صغيرة زي جدول الحصص، أو الطقس، أو المنبه. الوكيل بيشتغل في حلقة. إنت تطلب، والنموذج يكتب خطة قصيرة، وبعدين طلب أداة. التطبيق يشغّل الأداة ويضيف النتيجة. وبعدين النموذج يجاوب، أو يطلب أداة تانية. ده طلب حقيقي من «درسي الصغير»، نموذج صغير على موبايلك. سألته عن الجو في كافي بكرة. كتب اسم الأداة، weather، وبعدين التفاصيل بين قوسين معقوفين: المكان واليوم. النموذج مش بيقدر يشغّل الأداة: هو بيكتب كلام وبس. التطبيق يشغّلها ويضيف النتيجة: مشمس، خمسة وتلاتين درجة، واحتمال مطر عشرة في المية. وبعدين النموذج يجاوب من النتيجة دي. سؤال سريع! مين بيكتب طلب الأداة، ومين فعلًا بيشغّل الأداة؟ النموذج بيكتب الطلب، والتطبيق بيشغّله. يبقى التطبيق بيشوف كل طلب قبل ما أي حاجة تحصل. وهنا بالظبط نقدر نحط فحص، وإنت هتكتب شوية منه في الكورس ده. فيه مهام محتاجة أداتين. اسأل عن رحلة من كافي لدالا بكرة. «درسي الصغير» يطلب أداة الطريق الأول: سبعين كيلو. وبعدين يطلب أداة الطقس لدالا، ويديك جواب واحد فيه الاتنين. ببايثون، حلقة التطبيق ممكن تبقى قصيرة. هنا فيه قايمة واقفة مكان ردود النموذج، لأن مفيش نموذج جوه الكود بتاعنا. الحلقة بتشغّل أداة مع كل طلب، وبتقف عند الجواب. في التطبيق، اختار طلب ودوس «خطوة واحدة» لحد ما يجاوب. جرّب الرحلة لدالا وعِدّ الأدوات. وبعدين افتح «اللي بيشوفه درسي الصغير»: المحادثة كلها نص واحد. دورك. في الرحلة لدالا، «درسي الصغير» بيطلب كام أداة قبل ما يجاوب؟ اتنين: الطريق، وبعدين الطقس. افتكر: الوكيل نموذج في حلقة ومعاه أدوات. الطلب هو اسم الأداة وتفاصيلها. النموذج بيكتب، والتطبيق بيشغّل الأدوات. جرّبها بنفسك: اكتب تلات حاجات طلبتها من موبايل أو تطبيق الأسبوع ده. كل واحدة فيهم، كانت كلام وبس، ولا استخدمت أداة؟ وبعدين اكتب الطلب اللي ممكن يكون عمله، باسم وتفاصيل."
+          },
+          "sources": {
+            "en": "/media/agents-s2-1/video-en.mp4",
+            "ar": "/media/agents-s2-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-s2-1/captions-en.vtt",
+            "ar": "/media/agents-s2-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-s2-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-s2-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-s2-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-s2-1/light/audio/en.opus",
+              "manifest.json": "/media/agents-s2-1/light/manifest.json",
+              "scenes.json": "/media/agents-s2-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-s2-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-s2-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 435,
+              "ar": 416
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "The loop inside every agent",
+            "ar": "الحلقة داخل كل وكيل"
+          },
+          "body": {
+            "en": "A chatbot is a language model that writes text back to you. It guesses likely words one small piece at a time, so it can sound sure of itself and still be wrong. An AI agent is a language model that can also use tools: small programs such as a timetable, a weather service, a calculator or an alarm.\n\nAn agent works in a loop. You make a request. The model writes a short plan, then a tool call: the tool’s name followed by its details in curly brackets, such as weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}. The details are written in a format called JSON: a name in quotes, a colon, then its value. The app around the model reads the call, runs the tool and adds the tool’s result to the conversation. Then the model reads the result and writes its answer, or calls another tool first. A trip from Kafi to Dala, for example, takes two calls: the route (70 km), then the weather in Dala.\n\nThe model never runs anything itself: it only writes text. That is good news, because the app sees every call before anything happens. The app is where checks can go: is this the right tool, are these the right details, did a person say yes? In this course you will read calls, check them and write a few checks of your own in Python.\n\nThe agent in the Labs is Darsi Tiny, a small language model that runs on your phone, with ten tools in a made-up school world. Your Python programs can’t run a model (the code area on your phone has no model inside), so in code a short list stands in for the model’s replies. That is honest, and it is also how real apps are tested.",
+            "ar": "روبوت الدردشة نموذج لغوي يردّ عليك بنص مكتوب. فهو يخمّن كلمات محتملة قطعةً صغيرة تلو الأخرى، ولذلك قد يبدو واثقًا من نفسه ويكون مخطئًا مع ذلك. أما وكيل الذكاء الاصطناعي فنموذج لغوي يستطيع أيضًا أن يستعمل أدوات: برامج صغيرة مثل جدول الحصص، أو خدمة الطقس، أو آلة حاسبة، أو منبّه.\n\nيعمل الوكيل في حلقة. تكتب أنت طلبًا، فيكتب النموذج خطة قصيرة، ثم استدعاءً للأداة: اسم الأداة متبوعًا بتفاصيلها بين قوسين معقوفين، مثل ⁦weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}⁩. وتُكتب التفاصيل بصيغة تُسمّى JSON: اسم بين علامتي تنصيص، ثم نقطتان، ثم قيمته. ويقرأ التطبيقُ المحيط بالنموذج الاستدعاءَ، ويشغّل الأداة، ويضيف نتيجتها إلى المحادثة. ثم يقرأ النموذج النتيجة ويكتب جوابه، أو يستدعي أداة أخرى أولًا. فالرحلة من كافي إلى دالا مثلًا تحتاج إلى استدعاءين: الطريق (٧٠ كم)، ثم الطقس في دالا.\n\nلا يشغّل النموذج أي شيء بنفسه، بل يكتب نصًّا فحسب. وهذا خبر جيد، لأن التطبيق يرى كل استدعاء قبل أن يحدث أي شيء. ففي التطبيق يمكن أن نضع الفحوص: هل هذه هي الأداة الصحيحة؟ وهل هذه هي التفاصيل الصحيحة؟ وهل وافق إنسان؟ وفي هذه الدورة ستقرأ الاستدعاءات، وتفحصها، وتكتب بعض الفحوص بنفسك بلغة Python.\n\nالوكيل في المختبرات هو «درسي الصغير»، وهو نموذج لغوي صغير يعمل على هاتفك، وله عشر أدوات في عالم مدرسي خيالي. أما برامجك بلغة Python فلا تستطيع تشغيل نموذج (فمساحة الكود في هاتفك لا نموذج فيها)، ولذلك تقوم في الكود قائمةٌ قصيرة مقام ردود النموذج. وهذا صادق، وهو أيضًا الطريقة التي تُختبر بها التطبيقات الحقيقية."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "AI agent",
+                "ar": "وكيل الذكاء الاصطناعي"
+              },
+              "def": {
+                "en": "A language model in a loop with tools: it plans, calls tools, reads their results and answers.",
+                "ar": "نموذج لغوي يعمل في حلقة مع أدوات: يخطّط، ويستدعي الأدوات، ويقرأ نتائجها، ثم يجيب."
+              }
+            },
+            {
+              "term": {
+                "en": "Tool call",
+                "ar": "استدعاء الأداة"
+              },
+              "def": {
+                "en": "The text a model writes to ask for a tool: the tool’s name, then its details.",
+                "ar": "النص الذي يكتبه النموذج ليطلب أداة: اسم الأداة، ثم تفاصيلها."
+              }
+            },
+            {
+              "term": {
+                "en": "Result",
+                "ar": "النتيجة"
+              },
+              "def": {
+                "en": "What the tool gives back. The app adds it to the conversation, and the model answers from it.",
+                "ar": "ما تعيده الأداة. يضيفه التطبيق إلى المحادثة، ويجيب النموذج منه."
+              }
+            },
+            {
+              "term": {
+                "en": "JSON",
+                "ar": "JSON"
+              },
+              "def": {
+                "en": "A way of writing details: each name in quotes with its value, inside curly brackets.",
+                "ar": "طريقة لكتابة التفاصيل: كل اسم بين علامتي تنصيص ومعه قيمته، داخل قوسين معقوفين."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "On the trip from Kafi to Dala, how many tools does Darsi Tiny call before it answers?",
+            "ar": "في رحلة من كافي إلى دالا، كم أداة يستدعي «درسي الصغير» قبل أن يجيب؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "One",
+                "ar": "أداة واحدة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Two",
+                "ar": "أداتين"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Five",
+                "ar": "خمس أدوات"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "The route tool first (70 km), then the weather tool for Dala, and then one answer with both.",
+            "ar": "يستدعي أداة الطريق أولًا (٧٠ كم)، ثم أداة الطقس لدالا، ثم يكتب جوابًا واحدًا فيه الأمران."
+          }
+        },
+        {
+          "type": "order",
+          "id": "p2",
+          "prompt": {
+            "en": "Put the agent loop in order.",
+            "ar": "رتّب حلقة الوكيل."
+          },
+          "steps": [
+            {
+              "en": "You make a request",
+              "ar": "تكتب طلبًا"
+            },
+            {
+              "en": "The model writes a plan",
+              "ar": "يكتب النموذج خطة"
+            },
+            {
+              "en": "The model writes a tool call",
+              "ar": "يكتب النموذج استدعاء الأداة"
+            },
+            {
+              "en": "The app runs the tool and adds the result",
+              "ar": "يشغّل التطبيق الأداة ويضيف النتيجة"
+            },
+            {
+              "en": "The model answers from the result",
+              "ar": "يجيب النموذج من النتيجة"
+            }
+          ],
+          "explain": {
+            "en": "The model plans before it calls a tool. Only the app can run the tool and add the result, and only then can the model answer from it.",
+            "ar": "يخطّط النموذج قبل أن يستدعي الأداة، والتطبيق وحده يستطيع تشغيل الأداة وإضافة النتيجة، وبعد ذلك فقط يستطيع النموذج أن يجيب منها."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "p3",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "call = 'weather{\"place\":\"Kafi\"}'\nname = call.split(\"{\")[0]\nprint(name)"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "weather",
+                "ar": "weather"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Kafi",
+                "ar": "Kafi"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "place",
+                "ar": "place"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "split(\"{\") cuts the call at the curly bracket, and [0] takes the first piece: the tool’s name, weather. The details (place and Kafi) are in the second piece.",
+            "ar": "تقطع ⁦split(\"{\")⁩ الاستدعاء عند القوس المعقوف، وتأخذ ⁦[0]⁩ القطعة الأولى: اسم الأداة weather. أما التفاصيل (place وKafi) ففي القطعة الثانية."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: pick “What’s the weather in Kafi tomorrow?” and press One step until it answers: the plan, the call, the result (written by the app) and the answer. Then run the trip from Kafi to Dala and count the tool calls. Open “What Darsi Tiny sees” and find the call inside the text. Answer three different requests to finish. The first run downloads Darsi Tiny once (2.8 MB).",
+            "ar": "جرّب: اختر «ما حالة الطقس في كافي غدًا؟» واضغط «خطوة واحدة» حتى يجيب: الخطة، ثم الاستدعاء، ثم النتيجة (يكتبها التطبيق)، ثم الجواب. ثم شغّل الرحلة من كافي إلى دالا وعُدّ استدعاءات الأدوات. وافتح «ما يراه درسي الصغير» وابحث عن الاستدعاء داخل النص. أنهِ المختبر بثلاثة طلبات مختلفة. يُنزَّل «درسي الصغير» مرة واحدة في أول تشغيل (٢٫٨ ميغابايت)."
+          },
+          "tool": "agentloop"
+        },
+        {
+          "type": "parsons",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "This app’s loop uses a scripted list in place of a real model. Put the lines in order (with their indents) so it runs a tool for each call and stops at the answer.",
+            "ar": "تستعمل حلقة هذا التطبيق قائمة مكتوبة مسبقًا بدل نموذج حقيقي. رتّب الأسطر (مع إزاحتها) لكي تشغّل أداة مع كل استدعاء، وتتوقّف عند الجواب."
+          },
+          "lines": [
+            "replies = [\"call\", \"call\", \"answer\"]",
+            "for reply in replies:",
+            "    if reply == \"answer\":",
+            "        print(\"Done: answer\")",
+            "        break",
+            "    print(\"App runs a tool\")"
+          ],
+          "distractors": [
+            "    print(\"Model runs a tool\")"
+          ],
+          "explain": {
+            "en": "First the list, then the loop. Inside it, the if checks for the answer and break stops the loop; otherwise the app runs a tool. The model never runs tools, so “Model runs a tool” doesn’t belong.",
+            "ar": "القائمة أولًا، ثم الحلقة. وفي داخلها تفحص if هل وصل الجواب، وتوقف break الحلقة، وإلا يشغّل التطبيق أداة. والنموذج لا يشغّل الأدوات أبدًا، فسطر «Model runs a tool» لا مكان له."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each part of the trip from Kafi to Dala to what it was.",
+            "ar": "صِل كل جزء من الرحلة من كافي إلى دالا بما كان عليه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Plan",
+                "ar": "الخطة"
+              },
+              "right": {
+                "en": "“First the route, then the weather.”",
+                "ar": "«أولًا الطريق، ثم الطقس.»"
+              }
+            },
+            {
+              "left": {
+                "en": "First tool call",
+                "ar": "الاستدعاء الأول"
+              },
+              "right": {
+                "en": "route, from Kafi to Dala",
+                "ar": "أداة الطريق، من كافي إلى دالا"
+              }
+            },
+            {
+              "left": {
+                "en": "First result",
+                "ar": "النتيجة الأولى"
+              },
+              "right": {
+                "en": "70 km",
+                "ar": "٧٠ كم"
+              }
+            },
+            {
+              "left": {
+                "en": "Answer",
+                "ar": "الجواب"
+              },
+              "right": {
+                "en": "“From Kafi to Dala: 70 km… Tomorrow in Dala: partly cloudy…”",
+                "ar": "«من كافي إلى دالا: ٧٠ كم… وغدًا في دالا: غائم جزئيًا…»"
+              }
+            }
+          ],
+          "explain": {
+            "en": "The plan names the steps, each call names a tool and its details, each result comes back from the app, and the answer uses both results.",
+            "ar": "تذكر الخطة الخطوات، ويذكر كل استدعاء أداة وتفاصيلها، وتعود كل نتيجة من التطبيق، ويستعمل الجواب النتيجتين معًا."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p6",
+          "prompt": {
+            "en": "In an agent, the language model runs the tools itself.",
+            "ar": "في الوكيل، يشغّل النموذج اللغوي الأدوات بنفسه."
+          },
+          "answer": false,
+          "explain": {
+            "en": "The model only writes text, including the tool call. The app runs the tool and adds the result, which is why the app can check a call before anything happens.",
+            "ar": "لا يكتب النموذج إلا نصًّا، ومنه استدعاء الأداة. أما التطبيق فيشغّل الأداة ويضيف النتيجة، ولهذا يستطيع التطبيق أن يفحص الاستدعاء قبل أن يحدث أي شيء."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of an app on your phone that does things for you. What tools might it use, and what would you want to see before it acts?",
+            "ar": "فكّر في تطبيق على هاتفك يفعل أشياء من أجلك. ما الأدوات التي قد يستعملها، وما الذي تريد أن تراه قبل أن يتصرّف؟"
+          },
+          "placeholder": {
+            "en": "For example: “My map app uses a route tool and a traffic tool. I’d like to see the route before it starts guiding me.”",
+            "ar": "مثلًا: «يستعمل تطبيق الخرائط عندي أداة للطريق وأداة للازدحام. وأودّ أن أرى الطريق قبل أن يبدأ في إرشادي.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Be the agent",
+            "ar": "مشروع: كن أنت الوكيل"
+          },
+          "task": {
+            "en": "Play an agent with a friend at school, or with someone at home. You need a timetable, a bus timetable or a weather forecast. One of you is the model, the other is the tool. The tool asks three questions out loud, such as “When is our maths lesson on Monday?”. For each one, the model writes a plan and a tool call on paper (for example timetable{\"class\":\"6B\",\"day\":\"monday\"}), and hands it over without saying the answer. The tool writes the result from the timetable. Then the model answers using only that result. Swap roles for the last question.",
+            "ar": "العب دور الوكيل مع صديق في المدرسة، أو مع أحد أفراد أسرتك. تحتاج إلى جدول حصص، أو جدول مواعيد حافلات، أو نشرة طقس. أحدكما هو النموذج، والآخر هو الأداة. تطرح الأداة ثلاثة أسئلة بصوت عالٍ، مثل: «متى حصة الرياضيات يوم الاثنين؟». ولكل سؤال يكتب النموذج على ورقة خطةً واستدعاءً للأداة (مثل ⁦timetable{\"class\":\"6B\",\"day\":\"monday\"}⁩)، ويسلّمه دون أن يقول الجواب. فتكتب الأداة النتيجة من الجدول. ثم يجيب النموذج مستعملًا تلك النتيجة وحدها. وتبادلا الدورين في السؤال الأخير."
+          },
+          "deliverable": {
+            "en": "A photo of your three calls and results (no faces, no personal details), and one sentence: what surprised you about being the model?",
+            "ar": "صورة للاستدعاءات الثلاثة ونتائجها (دون وجوه ودون بيانات شخصية)، وجملة واحدة: ما الذي فاجأك حين كنت النموذج؟"
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: describe the loop: request, plan, call, result, answer.",
+                "ar": "أستطيع: وصف الحلقة: الطلب، فالخطة، فالاستدعاء، فالنتيجة، فالجواب."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: write a tool call with a name and its details.",
+                "ar": "أستطيع: كتابة استدعاء أداة باسمها وتفاصيلها."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: explain why the answer must come from the result.",
+                "ar": "أستطيع: شرح لماذا يجب أن يأتي الجواب من النتيجة."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Inside an agent",
+            "ar": "داخل الوكيل"
+          },
+          "note": {
+            "en": "AI agents · Lower secondary · Lesson 1",
+            "ar": "وكلاء الذكاء الاصطناعي، المرحلة الإعدادية، الدرس ١"
+          },
+          "narration": {
+            "en": "What really happens inside an AI agent?",
+            "ar": "ماذا يحدث فعلًا داخل وكيل الذكاء الاصطناعي؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Describe the agent loop.",
+              "Read a tool call: its name and its details.",
+              "Put a short Python loop in order."
+            ],
+            "ar": [
+              "تصف حلقة الوكيل.",
+              "تقرأ استدعاء الأداة: اسمها وتفاصيلها.",
+              "ترتّب أسطر حلقة قصيرة بلغة Python."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "An agent is a language model in a loop with tools.",
+              "A tool call is a tool’s name plus its details.",
+              "The model writes; the app runs the tools, and can check first."
+            ],
+            "ar": [
+              "الوكيل نموذج لغوي يعمل في حلقة مع أدوات.",
+              "استدعاء الأداة هو اسمها مع تفاصيلها.",
+              "النموذج يكتب، والتطبيق يشغّل الأدوات ويستطيع أن يفحص أولًا."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Be the agent",
+            "ar": "كن أنت الوكيل"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (3 min): Talk, or act? Sort five apps.",
+              "Write (7 min): Turn three requests into tool calls.",
+              "Play (7 min): One of you is the model, one the tool.",
+              "Check (3 min): Did each answer come from the result?"
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): يتكلّم أم يفعل؟ صنّف خمسة تطبيقات.",
+              "الكتابة (٧ دقائق): حوّل ثلاثة طلبات إلى استدعاءات أدوات.",
+              "اللعب (٧ دقائق): أحدكما النموذج والآخر الأداة.",
+              "التحقّق (٣ دقائق): هل جاء كل جواب من النتيجة؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (3 min): List five apps you or your family use. Next to each, write “talk” if it only writes text back, or “act” if it does something, such as setting an alarm or finding a route.",
+              "Write (7 min): Choose three requests, such as “What’s the weather in our town tomorrow?”. For each, write the tool call: the tool’s name, then the details in curly brackets.",
+              "Play (7 min): With a partner, one of you is the model and the other the tool. The model hands over each call without saying the answer; the tool writes the result from a timetable or forecast; the model answers from that result only.",
+              "Check (3 min): Read your answers again. Did each one use the result, or did the model guess? Swap roles and play one more round."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): اكتب خمسة تطبيقات تستعملها أنت أو أسرتك. واكتب بجانب كلٍّ منها «يتكلّم» إن كان يردّ بنص فقط، أو «يفعل» إن كان يفعل شيئًا، كضبط منبّه أو إيجاد طريق.",
+              "الكتابة (٧ دقائق): اختر ثلاثة طلبات، مثل: «ما حالة الطقس في بلدتنا غدًا؟». واكتب لكلٍّ منها استدعاء الأداة: اسم الأداة، ثم التفاصيل بين قوسين معقوفين.",
+              "اللعب (٧ دقائق): مع زميل، يكون أحدكما النموذج والآخر الأداة. يسلّم النموذج كل استدعاء دون أن يقول الجواب، وتكتب الأداة النتيجة من جدول أو نشرة طقس، ثم يجيب النموذج من تلك النتيجة وحدها.",
+              "التحقّق (٣ دقائق): اقرأ أجوبتكما مرة أخرى. هل استعمل كلٌّ منها النتيجة، أم خمّن النموذج؟ تبادلا الدورين والعبا جولة أخرى."
+            ]
+          },
+          "note": {
+            "en": "You only need paper, a pen, and a timetable or a weather forecast. No phone is needed.",
+            "ar": "لا تحتاج إلا إلى ورقة وقلم، وجدول حصص أو نشرة طقس. ولا حاجة إلى هاتف."
+          },
+          "narration": {
+            "en": "Be the model: write the call, and answer only from the result.",
+            "ar": "كن أنت النموذج: اكتب الاستدعاء، وأجب من النتيجة وحدها."
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which apps on your phone are agents, and which only talk?",
+              "Why is it useful that the app, not the model, runs the tools?",
+              "What would you want to check before an agent acts for you?"
+            ],
+            "ar": [
+              "أيّ التطبيقات على هاتفك وكلاء، وأيّها يتكلّم فقط؟",
+              "لماذا يفيدنا أن يشغّل التطبيقُ الأدوات، لا النموذج؟",
+              "ما الذي تريد أن تتحقّق منه قبل أن يتصرّف وكيل نيابةً عنك؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one tool call for a request of your own: the tool’s name and its details."
+            ],
+            "ar": [
+              "اكتب استدعاء أداة واحدًا لطلب من عندك: اسم الأداة وتفاصيلها."
+            ]
+          },
+          "narration": {
+            "en": "Tonight, find one app that acts for you, and write the call it might make.",
+            "ar": "الليلة، ابحث عن تطبيق واحد يتصرّف نيابةً عنك، واكتب الاستدعاء الذي ربما يكتبه."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Inside an agent",
+            "ar": "شرائح للمراجعة: داخل الوكيل"
+          },
+          "pages": 6,
+          "base": "agents-s2-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Inside an agent",
+            "ar": "ورقة النشاط: داخل الوكيل"
+          },
+          "pages": 3,
+          "base": "agents-s2-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-s2-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.1",
+        "S.TA.U",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "agents-s2-2",
+      "title": {
+        "en": "Check what it did",
+        "ar": "تحقّق مما فعله"
+      },
+      "minutes": 16,
+      "tryTomorrow": {
+        "en": "Next time an app or an agent does something for you, check what it actually did: the day, the time, the names. Write down one slip you find, and the rule that would have caught it.",
+        "ar": "في المرة القادمة التي يفعل فيها تطبيق أو وكيل شيئًا من أجلك، تحقّق مما فعله فعلًا: اليوم، والوقت، والأسماء. واكتب هفوة واحدة تجدها، والقاعدة التي كانت ستكشفها."
+      },
+      "materials": {
+        "en": [
+          "Paper cards or slips, and a pen",
+          "Five made-up requests, written out (for example: “Remind me to feed the goats at 6:00”)",
+          "A friend or family member to play the agent"
+        ],
+        "ar": [
+          "بطاقات أو قصاصات ورق، وقلم",
+          "خمسة طلبات خيالية مكتوبة (مثل: «ذكّرني بإطعام الماعز الساعة ٦:٠٠»)",
+          "صديق أو أحد أفراد أسرتك ليؤدّي دور الوكيل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Check what it did",
+            "ar": "تحقّق مما فعله"
+          },
+          "src": null,
+          "duration": 214,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Class 9Z",
+                "ar": "الفصل 9Z"
+              }
+            },
+            {
+              "at": 22.9,
+              "atBy": {
+                "en": 22.9,
+                "ar": 20.6
+              },
+              "label": {
+                "en": "Sure, but wrong",
+                "ar": "واثق لكنه مخطئ"
+              }
+            },
+            {
+              "at": 52.5,
+              "atBy": {
+                "en": 52.5,
+                "ar": 49.1
+              },
+              "label": {
+                "en": "Checking a call",
+                "ar": "فحص الاستدعاء"
+              }
+            },
+            {
+              "at": 123,
+              "atBy": {
+                "en": 123,
+                "ar": 113.9
+              },
+              "label": {
+                "en": "Failed steps and a check in code",
+                "ar": "خطوات فاشلة وفحص في الكود"
+              }
+            },
+            {
+              "at": 183.5,
+              "atBy": {
+                "en": 183.5,
+                "ar": 172.3
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "You asked for a reminder to tidy the library. The call says “tisums the library”. What should happen?",
+                "ar": "طلبت تذكيرًا بترتيب المكتبة، فجاء الاستدعاء بعبارة «tisums the library». ماذا يجب أن يحدث؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Run it: it’s nearly right",
+                    "ar": "يُنفَّذ: فهو قريب من الصواب"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Stop it: that word isn’t in your request",
+                    "ar": "يُوقَف: فهذه الكلمة ليست في طلبك"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Run it twice to be sure",
+                    "ar": "يُنفَّذ مرتين للتأكد"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Every word in a call must come from your request or a tool’s result. “Tisums” comes from neither, so the checker stops it before it runs.",
+                "ar": "يجب أن تأتي كل كلمة في الاستدعاء من طلبك أو من نتيجة أداة. وكلمة «tisums» لا تأتي من أيّ منهما، فيوقف المدقّق الاستدعاء قبل تشغيله."
+              }
+            },
+            "at": 107.24,
+            "atBy": {
+              "en": 107.24,
+              "ar": 97.84
+            }
+          },
+          "transcript": {
+            "en": "I asked an agent what class 9Z has tomorrow. There is no class 9Z in our school! It still looked something up and answered politely. So what did it actually do? Today: how to check what an agent did, before you trust it. Here’s the call Darsi Tiny wrote. Look closely: the class says 9C, not 9Z. It has seen names like 9C far more often, so it copied the wrong one. Small models copy names and words wrongly. Once, “tidy” came out as “tisums”. New wordings trip them up too: about four in five right. And they never say they’re unsure. So, checking an agent means comparing its call with your request. Is it the right tool? Did every name and number come from your words, or from a tool’s result? If not, stop it before it runs. Our checker has five rules, written in code. The tool must be switched on. Details need the right shape, so twenty-five o’clock fails. Names must come from you or a result. No earlier step may have failed, and a person says yes to any action. Quick check! You asked for a reminder to tidy the library. The call says “tisums the library”. What should happen? Stop it. That word isn’t in your request or in any result, so the checker stops the call. Then you ask again, in other words. The checker doesn’t need to be clever: strict rules never guess. Checks matter for two-step jobs too. Ask for 6B’s first lesson on Saturday, with a reminder. The timetable says: no school. Darsi Tiny sets a reminder anyway, because it never checks a result before using it. A rule like this takes only a few lines of Python. The program asks: is this detail in the request? If it isn’t, it stops and says why. You’ll fill in a check like this after the video. In the app, Darsi Tiny plans and a checker of five rules reviews each call. Send the weather request: it passes. Then ask what 9Z has tomorrow, and watch the checker stop it. Turn the checker off, and try again. Your turn. Darsi Tiny wants to set a reminder for twenty-five o’clock. Which rule stops it? The shape rule: there’s no twenty-five o’clock. Remember: an agent can be wrong and still sound sure. Check the call against your request. Simple rules in code stop slips before anything runs. Try it yourself: next time an app does something for you, look at what it actually did. Did it use your words exactly? Write down one slip you find, and the rule that would have caught it.",
+            "ar": "سألت وكيل ذكي فصل 9Z عنده إيه بكرة. مفيش فصل اسمه 9Z في مدرستنا أصلًا! ومع كده دوّر على حاجة وجاوب بأدب. طب هو عمل إيه بالظبط؟ النهارده: إزاي تراجع الوكيل عمل إيه، قبل ما تثق فيه. ده الطلب اللي كتبه «درسي الصغير». بص كويس: الفصل مكتوب 9C، مش 9Z. هو شاف أسامي زي 9C أكتر بكتير، فنقل الاسم الغلط. النماذج الصغيرة بتنقل الأسامي والكلمات غلط. مرة كلمة «رتّب» طلعت كلمة مالهاش معنى. والصيغ الجديدة بتلخبطها كمان: حوالي أربعة من خمسة صح. وعمرها ما بتقول إنها مش متأكدة. يبقى فحص الوكيل معناه إنك تقارن طلبه بطلبك إنت. هي دي الأداة الصح؟ كل اسم ورقم جه من كلامك، ولا من نتيجة أداة؟ لو لأ، وقّفه قبل ما يشتغل. المدقق بتاعنا فيه خمس قواعد، مكتوبة في الكود. الأداة لازم تكون شغالة. والتفاصيل لازم تبقى بالشكل الصح، فالساعة خمسة وعشرين مرفوضة. والأسامي لازم تيجي منك أو من نتيجة. ومفيش خطوة قبلها تكون فشلت، وأي فعل لازم إنسان يوافق عليه. سؤال سريع! طلبت تذكير إنك ترتّب المكتبة. والطلب مكتوب فيه كلمة مالهاش معنى بدل «رتّب». المفروض يحصل إيه؟ وقّفه. الكلمة دي مش في طلبك ولا في أي نتيجة، فالمدقق بيوقّف الطلب. وبعدين تسأل تاني، بكلام تاني. والمدقق مش محتاج يكون ذكي: القواعد الصارمة عمرها ما بتخمّن. الفحص مهم في المهام اللي بخطوتين كمان. اطلب أول حصة لسادسة ب يوم السبت، مع تذكير. الجدول بيقول: مفيش مدرسة. و«درسي الصغير» بيظبط التذكير برضه، لأنه عمره ما بيراجع النتيجة قبل ما يستخدمها. قاعدة زي دي محتاجة كام سطر بايثون بس. البرنامج بيسأل: التفصيلة دي موجودة في الطلب؟ لو مش موجودة، بيقف ويقول ليه. وإنت هتكمّل فحص زي ده بعد الفيديو. في التطبيق، «درسي الصغير» بيخطّط، ومدقق بخمس قواعد بيراجع كل طلب. ابعت طلب الطقس: هيعدّي. وبعدين اسأل 9Z عنده إيه بكرة، وشوف المدقق وهو بيوقّفه. اقفل المدقق، وجرّب تاني. دورك. «درسي الصغير» عايز يظبط تذكير الساعة خمسة وعشرين. أنهي قاعدة بتوقّفه؟ قاعدة الشكل: مفيش ساعة خمسة وعشرين. افتكر: الوكيل ممكن يغلط ويبان واثق برضه. قارن الطلب بطلبك إنت. والقواعد البسيطة في الكود بتوقّف الغلطات قبل ما أي حاجة تشتغل. جرّبها بنفسك: المرة الجاية لما تطبيق يعملك حاجة، بص هو عمل إيه بالظبط. استخدم كلامك زي ما هو؟ اكتب غلطة واحدة تلاقيها، والقاعدة اللي كانت هتمسكها."
+          },
+          "sources": {
+            "en": "/media/agents-s2-2/video-en.mp4",
+            "ar": "/media/agents-s2-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-s2-2/captions-en.vtt",
+            "ar": "/media/agents-s2-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-s2-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-s2-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-s2-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-s2-2/light/audio/en.opus",
+              "manifest.json": "/media/agents-s2-2/light/manifest.json",
+              "scenes.json": "/media/agents-s2-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-s2-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-s2-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 467,
+              "ar": 441
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Check the call, not the confidence",
+            "ar": "افحص الاستدعاء، لا الثقة"
+          },
+          "body": {
+            "en": "An agent can be wrong and still sound completely sure. Darsi Tiny, the small model in the Labs, gets the right tool and every detail right 96–98% of the time with wordings it was trained on, but only about 78–80% of the time with new wordings: about four in five. Its slips are real. Asked what class 9Z has tomorrow (there is no 9Z), it called the timetable for 9C, because it had seen names like 9C far more often. Asked for a reminder to tidy the library, it once wrote “tisums the library”. And it never says it isn’t sure.\n\nSo don’t judge an agent by how sure it sounds: check what it did. Compare its call with your request. Is it the right tool? Did every name and number come from your words, or from a tool’s result? Does each detail have the right shape, such as a time between 00:00 and 23:59, or a class that exists? If any answer is no, stop the call before it runs, and ask again in other words.\n\nSteps can fail, too. Asked for 6B’s first lesson on Saturday and a reminder about it, Darsi Tiny got “no school” back from the timetable, and set a reminder anyway, “6B: 6B”, because it never checks a result before building on it.\n\nApps catch these slips with a checker: a few strict rules, written in code, that look at every call before it runs. The checker in the Labs has five rules: the tool is switched on; every detail has the right shape; every name and number came from your words or a result; no step before it failed; and a person said yes to any action. A checker doesn’t need to be clever. Strict rules never guess, and a person decides the rest.",
+            "ar": "قد يخطئ الوكيل وهو يبدو واثقًا تمامًا. فـ«درسي الصغير»، النموذج الصغير في المختبرات، يختار الأداة الصحيحة ويكتب كل تفاصيلها صحيحة في ٩٦–٩٨٪ من المرات مع الصيغ التي تدرّب عليها، لكن في نحو ٧٨–٨٠٪ فقط مع الصيغ الجديدة: أي نحو أربع مرات من كل خمس. وهفواته حقيقية: فحين سُئل عمّا لدى الفصل 9Z غدًا (ولا يوجد فصل 9Z)، استدعى جدول الفصل 9C، لأنه رأى أسماء مثل 9C أكثر بكثير. وحين طُلب منه تذكير بترتيب المكتبة، كتب مرة «tisums the library». ولا يقول أبدًا إنه غير متأكد.\n\nلذلك لا تحكم على الوكيل بمقدار ثقته، بل تحقّق مما فعله. قارن استدعاءه بطلبك: هل هذه هي الأداة الصحيحة؟ وهل جاء كل اسم ورقم من كلامك، أو من نتيجة أداة؟ وهل لكل تفصيل الشكل الصحيح، كوقت بين 00:00 و23:59، أو فصل موجود فعلًا؟ فإن كان الجواب «لا» عن أيٍّ منها، فأوقف الاستدعاء قبل أن يُنفَّذ، واسأل مرة أخرى بكلمات أخرى.\n\nوقد تفشل الخطوات أيضًا. فحين طُلب منه موعد الحصة الأولى للفصل 6B يوم السبت وتذكير بها، أعاد الجدول «لا توجد مدرسة»، ومع ذلك ضبط «درسي الصغير» تذكيرًا بعنوان «6B: 6B»، لأنه لا يتحقّق أبدًا من النتيجة قبل أن يبني عليها.\n\nوتكشف التطبيقات هذه الهفوات بمدقّق: بضع قواعد صارمة مكتوبة في الكود، تنظر في كل استدعاء قبل تنفيذه. وللمدقّق في المختبرات خمس قواعد: أن تكون الأداة مفعّلة، وأن يكون لكل تفصيل الشكل الصحيح، وأن يأتي كل اسم ورقم من كلامك أو من نتيجة، وألا تكون خطوة سابقة قد فشلت، وأن يوافق إنسان على أي فعل. ولا يحتاج المدقّق إلى أن يكون ذكيًا: فالقواعد الصارمة لا تخمّن أبدًا، والإنسان يقرّر الباقي."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Slip",
+                "ar": "الهفوة"
+              },
+              "def": {
+                "en": "A small mistake in a call, such as a name copied wrongly (9Z became 9C) or a word made up.",
+                "ar": "خطأ صغير في الاستدعاء، كاسم نُقل خطأً (صار 9Z هو 9C) أو كلمة مختلَقة."
+              }
+            },
+            {
+              "term": {
+                "en": "New wording",
+                "ar": "الصيغة الجديدة"
+              },
+              "def": {
+                "en": "A way of asking that the model never saw in training. It gets these right less often.",
+                "ar": "طريقة في السؤال لم يرها النموذج في تدريبه، ويصيب فيها مرات أقل."
+              }
+            },
+            {
+              "term": {
+                "en": "Right shape",
+                "ar": "الشكل الصحيح"
+              },
+              "def": {
+                "en": "A detail that could be real: a time from 00:00 to 23:59, a class that exists.",
+                "ar": "تفصيل يمكن أن يكون حقيقيًا: وقت بين 00:00 و23:59، أو فصل موجود."
+              }
+            },
+            {
+              "term": {
+                "en": "Checker",
+                "ar": "المدقّق"
+              },
+              "def": {
+                "en": "Strict rules in code that look at every call before it runs, and stop the bad ones.",
+                "ar": "قواعد صارمة في الكود تنظر في كل استدعاء قبل تنفيذه، وتوقف الخاطئ منها."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Darsi Tiny wants to set a reminder for 25:00. Which rule stops it?",
+            "ar": "يريد «درسي الصغير» أن يضبط تذكيرًا في الساعة 25:00. أيّ قاعدة توقفه؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "The tool must be switched on",
+                "ar": "يجب أن تكون الأداة مفعّلة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Every detail needs the right shape",
+                "ar": "يجب أن يكون لكل تفصيل الشكل الصحيح"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "No earlier step may have failed",
+                "ar": "يجب ألا تكون خطوة سابقة قد فشلت"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "A time runs from 00:00 to 23:59, so 25:00 doesn’t have the right shape, and the checker stops it.",
+            "ar": "الوقت يكون من 00:00 إلى 23:59، فالساعة 25:00 ليست بالشكل الصحيح، ولذلك يوقفها المدقّق."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p2",
+          "prompt": {
+            "en": "This program prints True.",
+            "ar": "يطبع هذا البرنامج True."
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "request = \"What does 9Z have tomorrow?\"\nprint(\"9C\" in request)"
+          },
+          "answer": false,
+          "explain": {
+            "en": "\"9C\" in request asks whether the text 9C is in the request. The request says 9Z, so it prints False: exactly the check that would catch Darsi Tiny’s slip.",
+            "ar": "يسأل ⁦\"9C\" in request⁩ هل النص 9C موجود في الطلب. والطلب فيه 9Z، فيطبع False: وهذا بالضبط هو الفحص الذي يكشف هفوة «درسي الصغير»."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which of these should stop a call before it runs? Choose all that apply.",
+            "ar": "أيّ مما يلي يجب أن يوقف الاستدعاء قبل تنفيذه؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A name in the call that isn’t in your request or any result",
+                "ar": "اسم في الاستدعاء ليس في طلبك ولا في أي نتيجة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A reminder for 25:00",
+                "ar": "تذكير في الساعة 25:00"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The step before it failed (“no school”)",
+                "ar": "فشل الخطوة التي قبله («لا توجد مدرسة»)"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "The weather tool for a weather question",
+                "ar": "أداة الطقس لسؤال عن الطقس"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "The agent sounds very confident",
+                "ar": "يبدو الوكيل واثقًا جدًا"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "A name from nowhere, a detail with the wrong shape and a failed step before it are all reasons to stop. The right tool for the question is fine, and sounding confident proves nothing either way.",
+            "ar": "الاسم الذي لا مصدر له، والتفصيل ذو الشكل الخاطئ، وفشل خطوة سابقة، كلها أسباب للإيقاف. أما الأداة المناسبة للسؤال فلا مشكلة فيها، والثقة في الكلام لا تثبت شيئًا."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: send “What’s the weather in Kafi tomorrow?”: the checker passes it and the runner runs it. Then send “What does 9Z have tomorrow?” and the library reminder: which rule stops each one? Turn the checker off and send them again, and see what gets through. To finish, the checker must stop a bad call, and an action must run after your OK.",
+            "ar": "جرّب: أرسل «ما حالة الطقس في كافي غدًا؟»: يمرّره المدقّق ويشغّله المنفّذ. ثم أرسل «ماذا لدى 9Z غدًا؟» وطلب التذكير بترتيب المكتبة: أيّ قاعدة توقف كلًّا منهما؟ ثم أوقف المدقّق وأرسلهما مرة أخرى، وانظر ماذا يمرّ. ولإنهاء المختبر، يجب أن يوقف المدقّق استدعاءً خاطئًا، وأن يُنفَّذ فعلٌ بعد موافقتك."
+          },
+          "tool": "team"
+        },
+        {
+          "type": "codefill",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete the check: stop if the detail isn’t in the request, otherwise say OK.",
+            "ar": "أكمل الفحص: أوقف إن لم يكن التفصيل في الطلب، وإلا فاكتب OK."
+          },
+          "code": [
+            "request = \"What does 9Z have tomorrow?\"\ndetail = \"9C\"\nif detail ",
+            {
+              "blank": 0
+            },
+            " in request:\n    ",
+            {
+              "blank": 1
+            },
+            "(\"Stop:\", detail)\nelse:\n    print(\"OK\")"
+          ],
+          "answers": [
+            "not",
+            "print"
+          ],
+          "distractors": [
+            "and",
+            "input"
+          ],
+          "explain": {
+            "en": "not in is true when the detail can’t be found in the request, so the program prints “Stop: 9C”. print shows the message; input would wait for someone to type.",
+            "ar": "تكون not in صحيحة حين لا يوجد التفصيل في الطلب، فيطبع البرنامج «Stop: 9C». وتعرض print الرسالة، أما input فتنتظر أن يكتب أحد شيئًا."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p5",
+          "prompt": {
+            "en": "What do you tell Musa?",
+            "ar": "ماذا تقول لموسى؟"
+          },
+          "who": {
+            "en": "Musa, your classmate",
+            "ar": "موسى، زميلك في الصف"
+          },
+          "initial": {
+            "en": "M",
+            "ar": "م"
+          },
+          "situation": {
+            "en": "Musa asked an agent to remind him about the maths test on Thursday. It answered: “Done! Reminder set: maths test, Tuesday 08:00.” He’s happy and is about to close the app.",
+            "ar": "طلب موسى من وكيل أن يذكّره باختبار الرياضيات يوم الخميس. فأجاب: «تم! ضُبط التذكير: اختبار الرياضيات، الثلاثاء الساعة ٠٨:٠٠». وهو سعيد ويوشك أن يغلق التطبيق."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“It said Done, so it’s fine.”",
+                "ar": "«قال تم، فالأمر على ما يرام.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "“Done” only means the reminder was set, not that it was set right. Musa would be reminded two days early, and might miss the real day.",
+                "ar": "كلمة «تم» تعني أن التذكير ضُبط، لا أنه ضُبط صحيحًا. فسيُذكَّر موسى قبل الموعد بيومين، وقد يفوته اليوم الحقيقي."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Look at the day: it says Tuesday, but you asked for Thursday. Fix it.”",
+                "ar": "«انظر إلى اليوم: مكتوب الثلاثاء، وأنت طلبت الخميس. صحّحه.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Comparing the action with the request catches the slip. Thursday was in Musa’s words; Tuesday came from nowhere, just like 9C.",
+                "ar": "مقارنة الفعل بالطلب تكشف الهفوة: فالخميس كان في كلام موسى، أما الثلاثاء فلا مصدر له، تمامًا مثل 9C."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Ask the agent if it’s sure.”",
+                "ar": "«اسأل الوكيل هل هو متأكد.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "It will probably say yes: agents don’t know when they’re wrong. Checking the reminder yourself is faster and safer.",
+                "ar": "سيقول غالبًا نعم: فالوكلاء لا يعرفون متى يخطئون. وفحصك للتذكير بنفسك أسرع وأكثر أمانًا."
+              }
+            }
+          ]
+        },
+        {
+          "type": "match",
+          "id": "p6",
+          "prompt": {
+            "en": "Match each slip to the checker’s rule that stops it.",
+            "ar": "صِل كل هفوة بقاعدة المدقّق التي توقفها."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "9Z became 9C",
+                "ar": "صار 9Z هو 9C"
+              },
+              "right": {
+                "en": "Every name comes from your words or a result",
+                "ar": "كل اسم يأتي من كلامك أو من نتيجة"
+              }
+            },
+            {
+              "left": {
+                "en": "A reminder for 25:00",
+                "ar": "تذكير في الساعة 25:00"
+              },
+              "right": {
+                "en": "Every detail has the right shape",
+                "ar": "لكل تفصيل الشكل الصحيح"
+              }
+            },
+            {
+              "left": {
+                "en": "A reminder after “no school”",
+                "ar": "تذكير بعد «لا توجد مدرسة»"
+              },
+              "right": {
+                "en": "No step before it failed",
+                "ar": "لم تفشل خطوة قبله"
+              }
+            },
+            {
+              "left": {
+                "en": "A message sent without asking",
+                "ar": "رسالة أُرسلت دون سؤال"
+              },
+              "right": {
+                "en": "A person says yes to any action",
+                "ar": "يوافق إنسان على أي فعل"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each rule is simple and strict, and each catches a different kind of slip before anything runs.",
+            "ar": "كل قاعدة بسيطة وصارمة، وكلٌّ منها تكشف نوعًا مختلفًا من الهفوات قبل أن يُنفَّذ أي شيء."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "When did an app, a website or a person sound very sure and turn out to be wrong? What would have helped you check?",
+            "ar": "متى بدا لك تطبيق أو موقع أو شخص واثقًا جدًا ثم تبيّن أنه مخطئ؟ وما الذي كان سيساعدك على التحقّق؟"
+          },
+          "placeholder": {
+            "en": "For example: “A map said the road was open, but it was flooded. I could have asked someone who had just come that way.”",
+            "ar": "مثلًا: «قالت الخريطة إن الطريق مفتوح، لكنه كان غارقًا بالمياه. كان بإمكاني أن أسأل شخصًا جاء من ذلك الطريق للتو.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: The checker game",
+            "ar": "مشروع: لعبة المدقّق"
+          },
+          "task": {
+            "en": "Play with friends at school or with your family. Write five requests on cards, such as “Remind me to feed the goats tomorrow at 6:00”. The “agent” writes a call for each one, and secretly puts a slip in two of them: a name changed, a time like 25:00, a wrong day. The “checker” uses the five rules to decide, for each call: pass or stop, and which rule. Then swap roles.",
+            "ar": "العب مع أصدقائك في المدرسة أو مع أسرتك. اكتب خمسة طلبات على بطاقات، مثل: «ذكّرني بإطعام الماعز غدًا الساعة ٦:٠٠». يكتب «الوكيل» استدعاءً لكل طلب، ويضع سرًّا هفوة في اثنين منها: اسمًا مغيَّرًا، أو وقتًا مثل 25:00، أو يومًا خاطئًا. ويستعمل «المدقّق» القواعد الخمس ليقرّر في كل استدعاء: يمرّ أم يتوقف، وبأيّ قاعدة. ثم تبادلا الدورين."
+          },
+          "deliverable": {
+            "en": "A photo of your cards (no faces, no personal details), with “pass” or “stop” and the rule written on each, and one sentence: which slip was hardest to spot?",
+            "ar": "صورة لبطاقاتك (دون وجوه ودون بيانات شخصية)، مكتوب على كلٍّ منها «يمرّ» أو «يتوقف» والقاعدة، وجملة واحدة: أيّ هفوة كان اكتشافها أصعب؟"
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: explain why an agent can sound sure and still be wrong.",
+                "ar": "أستطيع: شرح لماذا قد يبدو الوكيل واثقًا ويكون مخطئًا."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: compare a call with the request, name by name.",
+                "ar": "أستطيع: مقارنة الاستدعاء بالطلب، اسمًا اسمًا."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: name the rule that stops a slip.",
+                "ar": "أستطيع: تسمية القاعدة التي توقف الهفوة."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Check what it did",
+            "ar": "تحقّق مما فعله"
+          },
+          "note": {
+            "en": "AI agents · Lower secondary · Lesson 2",
+            "ar": "وكلاء الذكاء الاصطناعي، المرحلة الإعدادية، الدرس ٢"
+          },
+          "narration": {
+            "en": "How do you know what an agent really did?",
+            "ar": "كيف تعرف ما فعله الوكيل فعلًا؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Explain why an agent can be wrong and still sound sure.",
+              "Check a call against the request, name by name.",
+              "Use simple rules to stop slips before anything runs."
+            ],
+            "ar": [
+              "تشرح لماذا قد يخطئ الوكيل وهو يبدو واثقًا.",
+              "تقارن الاستدعاء بالطلب، اسمًا اسمًا.",
+              "تستعمل قواعد بسيطة لإيقاف الهفوات قبل أن يُنفَّذ شيء."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "Sounding sure is not the same as being right.",
+              "Every name and number must come from your words or a tool’s result.",
+              "Strict rules in code catch slips; a person decides the rest."
+            ],
+            "ar": [
+              "أن يبدو واثقًا لا يعني أنه مصيب.",
+              "يجب أن يأتي كل اسم ورقم من كلامك أو من نتيجة أداة.",
+              "القواعد الصارمة في الكود تكشف الهفوات، والإنسان يقرّر الباقي."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "The checker game",
+            "ar": "لعبة المدقّق"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (3 min): Recall the five checker rules.",
+              "Write (7 min): Five requests, five calls, two hidden slips.",
+              "Check (7 min): Swap and decide: pass or stop?",
+              "Share (3 min): Which slip was hardest to spot?"
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): تذكّر قواعد المدقّق الخمس.",
+              "الكتابة (٧ دقائق): خمسة طلبات وخمسة استدعاءات وهفوتان مخفيّتان.",
+              "الفحص (٧ دقائق): تبادلوا وقرّروا: يمرّ أم يتوقف؟",
+              "المشاركة (٣ دقائق): أيّ هفوة كان اكتشافها أصعب؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (3 min): Without looking, write the five rules: tool on, right shape, names from you or a result, no failed step before, a person says yes to actions.",
+              "Write (7 min): Write five requests on cards and a call for each. Hide a slip in two of the calls: a name changed, a time like 25:00 or a wrong day.",
+              "Check (7 min): Swap cards with a partner. For each call, write “pass” or “stop”, and the rule that stops it.",
+              "Share (3 min): Check each other’s answers. Which slip did nobody spot, and which rule would have caught it?"
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): اكتب القواعد الخمس دون أن تنظر: الأداة مفعّلة، والشكل الصحيح، والأسماء منك أو من نتيجة، ولم تفشل خطوة قبله، ويوافق إنسان على الأفعال.",
+              "الكتابة (٧ دقائق): اكتب خمسة طلبات على بطاقات، واستدعاءً لكلٍّ منها. وأخفِ هفوة في استدعاءين: اسمًا مغيَّرًا، أو وقتًا مثل 25:00، أو يومًا خاطئًا.",
+              "الفحص (٧ دقائق): تبادل البطاقات مع زميلك. واكتب لكل استدعاء «يمرّ» أو «يتوقف»، والقاعدة التي توقفه.",
+              "المشاركة (٣ دقائق): راجعا إجابات بعضكما. أيّ هفوة لم يكتشفها أحد، وأيّ قاعدة كانت ستكشفها؟"
+            ]
+          },
+          "note": {
+            "en": "Use only made-up names and requests. Paper and a pen are enough.",
+            "ar": "استعمل أسماء وطلبات خيالية فقط. ويكفيك ورق وقلم."
+          },
+          "narration": {
+            "en": "Hide a slip, then catch it: which rule stops it?",
+            "ar": "أخفِ هفوة، ثم اكشفها: أيّ قاعدة توقفها؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why can’t an agent tell you when it’s wrong?",
+              "Which of the five rules would you trust most, and why?",
+              "When should a person check, even if the rules pass?"
+            ],
+            "ar": [
+              "لماذا لا يستطيع الوكيل أن يخبرك متى يخطئ؟",
+              "أيّ القواعد الخمس تثق بها أكثر، ولماذا؟",
+              "متى يجب أن يتحقّق إنسان، حتى لو مرّت القواعد كلها؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one slip an agent might make, and the rule that would stop it."
+            ],
+            "ar": [
+              "اكتب هفوة واحدة قد يرتكبها وكيل، والقاعدة التي توقفها."
+            ]
+          },
+          "narration": {
+            "en": "This week, check one thing an app did for you: the day, the time, the names.",
+            "ar": "هذا الأسبوع، تحقّق من شيء واحد فعله تطبيق من أجلك: اليوم، والوقت، والأسماء."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Check what it did",
+            "ar": "شرائح للمراجعة: تحقّق مما فعله"
+          },
+          "pages": 6,
+          "base": "agents-s2-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Check what it did",
+            "ar": "ورقة النشاط: تحقّق مما فعله"
+          },
+          "pages": 3,
+          "base": "agents-s2-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-s2-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.2",
+        "S.HM.U",
+        "DC.1.2"
+      ]
+    },
+    {
+      "id": "agents-s2-3",
+      "title": {
+        "en": "Ask before it acts",
+        "ar": "اسأل قبل أن يتصرّف"
+      },
+      "minutes": 16,
+      "tryTomorrow": {
+        "en": "Open the settings of one app on your phone, with the owner’s permission. Find one thing it may do without asking, such as posting or using your location, and switch it to ask first, or off.",
+        "ar": "افتح إعدادات تطبيق واحد على هاتفك، بإذن صاحبه. وابحث عن شيء يستطيع أن يفعله دون أن يسألك، كالنشر أو استعمال موقعك، واجعله يسألك أولًا، أو أوقفه."
+      },
+      "materials": {
+        "en": [
+          "Twelve small cards with an action on each (for example: “check the weather”, “send a message to the class group”, “share a friend’s photo”)",
+          "Four labels: Read only, Ask first, Allowed, Never",
+          "A phone, only if you have one, for its settings (with the owner’s permission)"
+        ],
+        "ar": [
+          "اثنتا عشرة بطاقة صغيرة على كلٍّ منها فعل (مثل: «معرفة الطقس»، «إرسال رسالة إلى مجموعة الصف»، «مشاركة صورة صديق»)",
+          "أربع لافتات: القراءة فقط، اسأل أولًا، مسموح، أبدًا",
+          "هاتف، إن كان لديك، لفتح إعداداته (بإذن صاحبه)"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Ask before it acts",
+            "ar": "اسأل قبل أن يتصرّف"
+          },
+          "src": null,
+          "duration": 210,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A message nearly sent",
+                "ar": "رسالة كادت تُرسَل"
+              }
+            },
+            {
+              "at": 20.6,
+              "atBy": {
+                "en": 20.6,
+                "ar": 19
+              },
+              "label": {
+                "en": "Reading and acting",
+                "ar": "القراءة والتصرّف"
+              }
+            },
+            {
+              "at": 58.8,
+              "atBy": {
+                "en": 58.8,
+                "ar": 56.3
+              },
+              "label": {
+                "en": "Asking first",
+                "ar": "السؤال أولًا"
+              }
+            },
+            {
+              "at": 120,
+              "atBy": {
+                "en": 120,
+                "ar": 113.7
+              },
+              "label": {
+                "en": "A check in code",
+                "ar": "فحص في الكود"
+              }
+            },
+            {
+              "at": 178.5,
+              "atBy": {
+                "en": 178.5,
+                "ar": 170.6
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Darsi Tiny asked to send a message, and you replied. Where should the app check that you really said yes?",
+                "ar": "طلب «درسي الصغير» إرسال رسالة، فرددت عليه. أين يجب أن يتحقّق التطبيق من أنك وافقت فعلًا؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "In the model: it remembers",
+                    "ar": "في النموذج: فهو يتذكّر"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "In the app’s code, before the tool runs",
+                    "ar": "في كود التطبيق، قبل أن تعمل الأداة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Nowhere: it asked, so it’s fine",
+                    "ar": "لا حاجة إلى ذلك: فقد سأل"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Asking first is learned behaviour and can fail. Code checks the yes every time, before the message can be sent.",
+                "ar": "السؤال أولًا سلوك تعلّمه النموذج، وقد يفشل. أما الكود فيتحقّق من الموافقة في كل مرة، قبل أن يمكن إرسال الرسالة."
+              }
+            },
+            "at": 105.4,
+            "atBy": {
+              "en": 105.4,
+              "ar": 100.27
+            }
+          },
+          "transcript": {
+            "en": "An agent nearly sent a message to every parent in my class. It said the school trip was cancelled. It wasn’t! Luckily, it asked me first. Today: why an agent must ask before it acts, and how to check in code. Some things an agent does only read: the weather, a timetable, a library search. Others change the world: sending a message, booking, paying, deleting. Reading can’t do much harm. Acting can, and you can’t always undo it. So apps give each action a permission level. Read only: it may look, but not act. Ask first: it must show you the action and wait for your yes. Allowed: it may act alone, for small, safe things. Here’s Darsi Tiny with a message for Mrs Mensah. It doesn’t send it straight away. It shows you the exact message and asks for a yes or a no. Only after a yes does it call the send message tool. But asking first is learned, and learned behaviour can fail. Type only “Yes, send it” in Arabic, with nothing before it. Darsi Tiny makes up a message and tries to send it, though nobody was asked. Quick check! Darsi Tiny asked to send a message, and you replied. Where should the app check that you really said yes? In the app’s code, before the tool runs. Code doesn’t forget, and isn’t fooled by wording. If no one was asked, the app blocks the message. And it keeps a record of what was sent. Here’s the check in Python. The app reads your reply. Only if it is exactly yes does it send. Anything else, even a maybe, means not sent. Some things an agent should never do, even with a yes. Never give it your password, or let it into your accounts. Never let it share a friend’s private details. And never let it send something you haven’t read. In the app, choose Ask first and message Mrs Mensah: say no, then yes. Then turn the code check off, choose Allowed, and send “Yes, send it” alone. Turn the check on again, and it’s blocked. Your turn. A study app’s agent wants to post your homework photo to the class group. What should you do first? Read exactly what it will post, then decide. Remember: reading is low risk, but acting needs your yes. A model’s asking can fail, so the app checks in code. And some things are never allowed. Try it yourself: open the settings of one app on your phone. Find one thing it may do without asking, such as posting or using your location. Switch it to ask first, or off.",
+            "ar": "وكيل ذكي كان هيبعت رسالة لكل أولياء الأمور في فصلي. كان كاتب إن رحلة المدرسة اتلغت. وهي ما اتلغتش! الحمد لله إنه سألني الأول. النهارده: ليه الوكيل لازم يسأل قبل ما يعمل حاجة، وإزاي نفحص ده في الكود. فيه حاجات الوكيل بيعملها بس بيقرا فيها: الطقس، الجدول، البحث في المكتبة. وحاجات تانية بتغيّر الدنيا: يبعت رسالة، يحجز، يدفع، يمسح. القراية مش بتأذي كتير. لكن الفعل ممكن يأذي، ومش دايمًا تقدر ترجّعه. علشان كده التطبيقات بتدي كل فعل مستوى إذن. قراية بس: يبص، بس ما يعملش. يسأل الأول: لازم يوريك الفعل ويستنى موافقتك. مسموح: يعمل لوحده، في الحاجات الصغيرة والآمنة. ده «درسي الصغير» ومعاه رسالة للأستاذة مينسا. مش بيبعتها على طول. بيوريك الرسالة بالظبط وبيستنى منك آه أو لأ. وبعد الآه بس، بيطلب أداة إرسال الرسالة. بس السؤال الأول ده حاجة اتعلّمها، والحاجة المتعلّمة ممكن تفشل. اكتب «نعم، أرسلها» بس، من غير أي حاجة قبلها. «درسي الصغير» هيألّف رسالة ويحاول يبعتها، مع إن محدش اتسأل حاجة. سؤال سريع! «درسي الصغير» طلب يبعت رسالة، وإنت رديت. التطبيق المفروض يتأكد فين إنك فعلًا قلت آه؟ في كود التطبيق، قبل ما الأداة تشتغل. الكود مش بينسى، ومش بيتضحك عليه بالكلام. لو محدش اتسأل، التطبيق بيمنع الرسالة. وبيحتفظ بسجل باللي اتبعت. ده الفحص ببايثون. التطبيق بيقرا ردك. لو الرد yes بالظبط بس، بيبعت. أي حاجة تانية، حتى لو «يمكن»، يبقى ما اتبعتش. فيه حاجات الوكيل عمره ما يعملها، حتى لو وافقت. ما تديهوش الباسورد بتاعك أبدًا، وما تدخّلوش حساباتك. وما تخليهوش ينشر حاجات صاحبك الخاصة. وما تخليهوش يبعت حاجة إنت ما قريتهاش. في التطبيق، اختار «يسأل الأول» وابعت رسالة للأستاذة مينسا: قول لأ، وبعدين آه. وبعدين اقفل فحص الكود، واختار «مسموح»، وابعت «نعم، أرسلها» لوحدها. رجّع الفحص تاني، وهتلاقيها اتمنعت. دورك. وكيل في تطبيق مذاكرة عايز ينشر صورة واجبك على جروب الفصل. تعمل إيه الأول؟ اقرا بالظبط هو هينشر إيه، وبعدين قرّر. افتكر: القراية خطرها قليل، لكن الفعل محتاج موافقتك. وسؤال النموذج ممكن يفشل، فالتطبيق بيفحص في الكود. وفيه حاجات عمرها ما تبقى مسموحة. جرّبها بنفسك: افتح إعدادات تطبيق واحد على موبايلك. دوّر على حاجة واحدة يقدر يعملها من غير ما يسأل، زي إنه ينشر أو يستخدم مكانك. خليه يسأل الأول، أو اقفلها."
+          },
+          "sources": {
+            "en": "/media/agents-s2-3/video-en.mp4",
+            "ar": "/media/agents-s2-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-s2-3/captions-en.vtt",
+            "ar": "/media/agents-s2-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-s2-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-s2-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-s2-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-s2-3/light/audio/en.opus",
+              "manifest.json": "/media/agents-s2-3/light/manifest.json",
+              "scenes.json": "/media/agents-s2-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-s2-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-s2-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 458,
+              "ar": 441
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Read freely, act only with a yes",
+            "ar": "اقرأ بحرية، ولا تتصرّف إلا بموافقة"
+          },
+          "body": {
+            "en": "Some things an agent does only read: the weather, a timetable, a library search. Others change the world: sending a message, posting a photo, booking, paying or deleting. Reading can’t do much harm. Acting can, and you can’t always undo it: a message sent to a whole class group stays sent.\n\nSo apps give each action a permission level. Read only: the agent may look but not act. Ask first: it must show you exactly what it will do and wait for your yes. Allowed: it may act on its own, which suits only small, safe actions. And some things are never allowed, even with a yes: giving it your password, letting it into your accounts, sharing a friend’s private details, or sending something you haven’t read.\n\nDarsi Tiny learned to ask first. Asked to send a message to Mrs Mensah, it shows the exact message and asks you to reply yes or no, and only after a yes does it call its send_message tool. But learned behaviour can fail. Type only «نعم، أرسلها.» (“Yes, send it.”) with nothing before it, and Darsi Tiny makes up a message and tries to send it, though nobody was asked anything.\n\nThat is why the app checks the approval in its own code, before any tool runs. Code doesn’t forget and isn’t fooled by wording: if no one was asked, or the reply wasn’t a clear yes, the message is blocked. A good app also keeps a record of every action, so a person can see what was done. In this lesson you’ll write a check like that in Python.",
+            "ar": "بعض ما يفعله الوكيل قراءةٌ فقط: الطقس، والجدول، والبحث في المكتبة. وبعضه يغيّر العالم: إرسال رسالة، أو نشر صورة، أو حجز، أو دفع، أو حذف. والقراءة لا تسبّب ضررًا كبيرًا، أما التصرّف فقد يضرّ، ولا يمكن التراجع عنه دائمًا: فالرسالة التي تُرسل إلى مجموعة الصف كلها تبقى مُرسلة.\n\nلذلك تعطي التطبيقات كل فعل مستوى إذن. القراءة فقط: ينظر الوكيل ولا يتصرّف. اسأل أولًا: يجب أن يريك بالضبط ما سيفعله، وأن ينتظر موافقتك. مسموح: يتصرّف وحده، وهذا لا يناسب إلا الأفعال الصغيرة الآمنة. وهناك أشياء لا تُسمح أبدًا، حتى مع الموافقة: أن تعطيه كلمة مرورك، أو تُدخله إلى حساباتك، أو يشارك تفاصيل صديقك الخاصة، أو يرسل شيئًا لم تقرأه.\n\nتعلّم «درسي الصغير» أن يسأل أولًا. فحين يُطلب منه إرسال رسالة إلى الأستاذة مينسا، يعرض الرسالة بالضبط ويطلب منك أن تردّ بنعم أو لا، ولا يستدعي أداة الإرسال send_message إلا بعد موافقتك. لكن السلوك المتعلَّم قد يفشل: اكتب «نعم، أرسلها.» وحدها دون أي شيء قبلها، فيختلق «درسي الصغير» رسالة ويحاول إرسالها، مع أن أحدًا لم يُسأل عن شيء.\n\nولهذا يتحقّق التطبيق من الموافقة في الكود الخاص به، قبل أن تعمل أي أداة. فالكود لا ينسى، ولا تخدعه الصياغة: فإن لم يُسأل أحد، أو لم يكن الرد موافقة واضحة، تُمنع الرسالة. والتطبيق الجيد يحتفظ أيضًا بسجلّ لكل فعل، ليرى الإنسان ما جرى. وفي هذا الدرس ستكتب فحصًا كهذا بلغة Python."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Permission level",
+                "ar": "مستوى الإذن"
+              },
+              "def": {
+                "en": "What an agent may do with an action: read only, ask first, or allowed.",
+                "ar": "ما يُسمح للوكيل بفعله: القراءة فقط، أو السؤال أولًا، أو التصرّف بحرية."
+              }
+            },
+            {
+              "term": {
+                "en": "Approval",
+                "ar": "الموافقة"
+              },
+              "def": {
+                "en": "A person’s clear yes to one exact action, given after reading it.",
+                "ar": "«نعم» واضحة من إنسان على فعل محدّد بعينه، بعد أن يقرأه."
+              }
+            },
+            {
+              "term": {
+                "en": "Action",
+                "ar": "الفعل"
+              },
+              "def": {
+                "en": "Something that changes the world, such as sending, posting, paying or deleting.",
+                "ar": "شيء يغيّر العالم، كالإرسال أو النشر أو الدفع أو الحذف."
+              }
+            },
+            {
+              "term": {
+                "en": "Record (log)",
+                "ar": "السجلّ"
+              },
+              "def": {
+                "en": "A list the app keeps of every action and who approved it.",
+                "ar": "قائمة يحتفظ بها التطبيق بكل فعل ومَن وافق عليه."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A study app’s agent wants to post your homework photo to the class group. What should you do first?",
+            "ar": "يريد وكيل في تطبيق للمذاكرة أن ينشر صورة واجبك في مجموعة الصف. ماذا تفعل أولًا؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Say yes: it asked politely",
+                "ar": "أوافق: فقد سأل بأدب"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Read exactly what it will post, then decide",
+                "ar": "أقرأ بالضبط ما سينشره، ثم أقرّر"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Give it your password so it’s faster",
+                "ar": "أعطيه كلمة المرور ليُسرع"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Posting is an action you can’t always undo. Read exactly what will be posted, and to whom, before you say yes.",
+            "ar": "النشر فعل لا يمكن التراجع عنه دائمًا. فاقرأ بالضبط ما سيُنشر، ولمن، قبل أن توافق. ولا تعطِ كلمة مرورك لأي وكيل."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p2",
+          "prompt": {
+            "en": "Match each action to the permission level it should have.",
+            "ar": "صِل كل فعل بمستوى الإذن المناسب له."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Find library books on volcanoes",
+                "ar": "البحث عن كتب البراكين في المكتبة"
+              },
+              "right": {
+                "en": "Read only",
+                "ar": "القراءة فقط"
+              }
+            },
+            {
+              "left": {
+                "en": "Send a message to your teacher",
+                "ar": "إرسال رسالة إلى معلّمك"
+              },
+              "right": {
+                "en": "Ask first",
+                "ar": "اسأل أولًا"
+              }
+            },
+            {
+              "left": {
+                "en": "Set an alarm for 6:30 tomorrow",
+                "ar": "ضبط منبّه للساعة ٦:٣٠ غدًا"
+              },
+              "right": {
+                "en": "Allowed",
+                "ar": "مسموح"
+              }
+            },
+            {
+              "left": {
+                "en": "Log in to your account with your password",
+                "ar": "الدخول إلى حسابك بكلمة مرورك"
+              },
+              "right": {
+                "en": "Never",
+                "ar": "أبدًا"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Reading can’t do much harm. A message to a person needs your yes first. A small, safe action you asked for can be allowed. Your password is never for an agent.",
+            "ar": "القراءة لا تسبّب ضررًا كبيرًا، والرسالة إلى شخص تحتاج إلى موافقتك أولًا، والفعل الصغير الآمن الذي طلبته يمكن أن يكون مسموحًا. أما كلمة مرورك فليست لأي وكيل أبدًا."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p3",
+          "lang": "python",
+          "prompt": {
+            "en": "The agent wants to send a message. Write the app’s check: read the person’s reply with input(). If it is exactly yes, print SENT. Otherwise, print NOT SENT.",
+            "ar": "يريد الوكيل إرسال رسالة. اكتب فحص التطبيق: اقرأ ردّ الشخص بـ ⁦input()⁩. إن كان yes بالضبط فاطبع SENT، وإلا فاطبع NOT SENT."
+          },
+          "starter": "reply = input(\"Send it? \")\nprint(\"SENT\")\n",
+          "solution": "reply = input(\"Send it? \")\nif reply == \"yes\":\n    print(\"SENT\")\nelse:\n    print(\"NOT SENT\")\n",
+          "tests": [
+            {
+              "input": [
+                "yes"
+              ],
+              "output": "SENT"
+            },
+            {
+              "input": [
+                "no"
+              ],
+              "output": "NOT SENT",
+              "hint": {
+                "en": "A no must never send. Use if and else.",
+                "ar": "الرفض يجب ألا يرسل أبدًا. استعمل if وelse."
+              }
+            },
+            {
+              "input": [
+                "maybe"
+              ],
+              "output": "NOT SENT",
+              "hint": {
+                "en": "Only an exact yes counts: “maybe” is not a yes.",
+                "ar": "لا يُحسب إلا yes بالضبط: «maybe» ليست موافقة."
+              }
+            }
+          ],
+          "hints": [
+            {
+              "en": "Compare the reply with \"yes\" using ==.",
+              "ar": "قارن الرد بـ ⁦\"yes\"⁩ باستعمال ==."
+            },
+            {
+              "en": "Put print(\"SENT\") under the if, and print(\"NOT SENT\") under else, each indented by 4 spaces.",
+              "ar": "ضع ⁦print(\"SENT\")⁩ تحت if، و⁦print(\"NOT SENT\")⁩ تحت else، وأزح كلًّا منهما ٤ مسافات."
+            }
+          ],
+          "explain": {
+            "en": "The check sends only when the person typed exactly yes. A no, a maybe or anything else is not an approval, so nothing is sent. Code makes this check the same way every time, whatever the model wrote.",
+            "ar": "يرسل الفحص فقط حين يكتب الشخص yes بالضبط. أما no أو maybe أو أي شيء آخر فليس موافقة، فلا يُرسل شيء. والكود يجري هذا الفحص بالطريقة نفسها في كل مرة، أيًّا كان ما كتبه النموذج."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "If the model asks before sending, the app doesn’t need its own check.",
+            "ar": "إن سأل النموذج قبل الإرسال، فلا يحتاج التطبيق إلى فحص خاص به."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Asking first is learned behaviour, and it can fail: «نعم، أرسلها.» on its own makes Darsi Tiny invent a message and try to send it. The app’s own check in code blocks that.",
+            "ar": "السؤال أولًا سلوك متعلَّم وقد يفشل: فعبارة «نعم، أرسلها.» وحدها تجعل «درسي الصغير» يختلق رسالة ويحاول إرسالها. والفحص الخاص بالتطبيق في الكود هو ما يمنع ذلك."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: choose “Ask first” and send the message to Mrs Mensah. Say no, then send it again and say yes. Then switch “Check the approval in code” off, choose “Allowed”, and send «نعم، أرسلها.» on its own: what happens? Switch the check on again and send it once more. Finish with one message sent after your yes and one action blocked.",
+            "ar": "جرّب: اختر «اسأل أولًا» وأرسل الرسالة إلى الأستاذة مينسا. قل لا، ثم أرسلها مرة أخرى وقل نعم. ثم أوقف «تحقّق من الموافقة في الكود»، واختر «مسموح»، وأرسل «نعم، أرسلها.» وحدها: ماذا يحدث؟ ثم شغّل الفحص مرة أخرى وأرسلها من جديد. أنهِ المختبر برسالة أُرسلت بعد موافقتك، وفعلٍ مُنع."
+          },
+          "tool": "approve"
+        },
+        {
+          "type": "bug",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "This app sends every time, even when the person says no. Which line is wrong?",
+            "ar": "يرسل هذا التطبيق في كل مرة، حتى حين يقول الشخص لا. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "model = \"Shall I send it? yes or no\"\nreply = input(\"Send it? \")\nif \"yes\" in model:\n    print(\"SENT\")\nelse:\n    print(\"NOT SENT\")",
+          "line": 3,
+          "fix": "if reply == \"yes\":",
+          "explain": {
+            "en": "Line 3 checks the model’s own question, which always contains the word yes (“yes or no”), so it always sends. The approval must come from the person’s reply, not from anything the model wrote.",
+            "ar": "يفحص السطر ٣ سؤال النموذج نفسه، وهو يحتوي دائمًا على كلمة yes («yes or no»)، فيرسل في كل مرة. والموافقة يجب أن تأتي من ردّ الشخص، لا من أي شيء كتبه النموذج."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "p6",
+          "prompt": {
+            "en": "The code check is on. You send «نعم، أرسلها.» (“Yes, send it.”) to Darsi Tiny with nothing before it, and it tries to send a message. What happens?",
+            "ar": "فحص الكود مفعّل. ترسل إلى «درسي الصغير» عبارة «نعم، أرسلها.» دون أي شيء قبلها، فيحاول إرسال رسالة. ماذا يحدث؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "It is sent: you said yes",
+                "ar": "تُرسل: فقد قلت نعم"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "It is blocked: no one was asked about this message",
+                "ar": "تُمنع: فلم يُسأل أحد عن هذه الرسالة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Darsi Tiny always refuses this by itself",
+                "ar": "يرفض «درسي الصغير» ذلك دائمًا من تلقاء نفسه"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Your “yes” wasn’t an answer to any question, and the message was made up. The app’s check sees that nobody was asked about this exact message, and blocks it. Without the check, it would have been sent.",
+            "ar": "لم تكن «نعم» جوابًا عن أي سؤال، والرسالة مختلَقة. فيرى فحص التطبيق أن أحدًا لم يُسأل عن هذه الرسالة بعينها، فيمنعها. ولولا الفحص لأُرسلت."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of an app or a game that once did something you didn’t expect, such as posting, buying or sharing. Which permission level should it have had?",
+            "ar": "فكّر في تطبيق أو لعبة فعلت مرة شيئًا لم تتوقّعه، كالنشر أو الشراء أو المشاركة. ما مستوى الإذن الذي كان يجب أن يكون لها؟"
+          },
+          "placeholder": {
+            "en": "For example: “A game posted my score to my friends. It should have been ask first.”",
+            "ar": "مثلًا: «نشرت لعبة نتيجتي لأصدقائي. كان يجب أن تسألني أولًا.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Permission check",
+            "ar": "مشروع: فحص الأذونات"
+          },
+          "task": {
+            "en": "At school or at home, write twelve actions an app or an agent might do on cards: some that only read (check the weather), some that act (send a message, post a photo, pay) and some that should never happen (share a password). With a friend or someone in your family, sort them under four labels: Read only, Ask first, Allowed, Never. Then, if you have a phone, open the settings of one app with the owner’s permission, find one thing it can do without asking, and change it to ask first or off.",
+            "ar": "في المدرسة أو في البيت، اكتب على بطاقات اثني عشر فعلًا قد يفعلها تطبيق أو وكيل: بعضها قراءة فقط (معرفة الطقس)، وبعضها تصرّف (إرسال رسالة، نشر صورة، دفع)، وبعضها يجب ألا يحدث أبدًا (مشاركة كلمة مرور). وصنّفها مع صديق أو أحد أفراد أسرتك تحت أربع لافتات: القراءة فقط، اسأل أولًا، مسموح، أبدًا. ثم، إن كان لديك هاتف، افتح إعدادات تطبيق واحد بإذن صاحبه، وابحث عن شيء يستطيع فعله دون أن يسأل، واجعله يسأل أولًا أو أوقفه."
+          },
+          "deliverable": {
+            "en": "A photo of your sorted cards (no faces, no personal details), and two sentences: which card you argued about, and what you changed in the settings.",
+            "ar": "صورة لبطاقاتك بعد تصنيفها (دون وجوه ودون بيانات شخصية)، وجملتان: أيّ بطاقة اختلفتما عليها، وما الذي غيّرته في الإعدادات."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: tell actions that only read from actions that change the world.",
+                "ar": "أستطيع: التمييز بين الأفعال التي تقرأ فقط والأفعال التي تغيّر العالم."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: give each action a permission level, and say why.",
+                "ar": "أستطيع: إعطاء كل فعل مستوى إذن، وذكر السبب."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: explain why the app must check a yes in code.",
+                "ar": "أستطيع: شرح لماذا يجب أن يتحقّق التطبيق من الموافقة في الكود."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Ask before it acts",
+            "ar": "اسأل قبل أن يتصرّف"
+          },
+          "note": {
+            "en": "AI agents · Lower secondary · Lesson 3",
+            "ar": "وكلاء الذكاء الاصطناعي، المرحلة الإعدادية، الدرس ٣"
+          },
+          "narration": {
+            "en": "When should an agent stop and ask you first?",
+            "ar": "متى يجب أن يتوقّف الوكيل ويسألك أولًا؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Sort actions into read only, ask first, allowed and never.",
+              "Read the exact action before you say yes.",
+              "Write a Python check that sends only after a yes."
+            ],
+            "ar": [
+              "تصنّف الأفعال: القراءة فقط، اسأل أولًا، مسموح، أبدًا.",
+              "تقرأ الفعل بالضبط قبل أن توافق.",
+              "تكتب فحصًا بلغة Python لا يرسل إلا بعد الموافقة."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "Reading is low risk; acting needs your yes.",
+              "A model’s asking is learned, and can fail.",
+              "The app checks the yes in code, and keeps a record."
+            ],
+            "ar": [
+              "القراءة خطرها قليل، والتصرّف يحتاج إلى موافقتك.",
+              "سؤال النموذج سلوك متعلَّم، وقد يفشل.",
+              "يتحقّق التطبيق من الموافقة في الكود، ويحتفظ بسجلّ."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Permission sort",
+            "ar": "تصنيف الأذونات"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (3 min): Name one action you could never undo.",
+              "Sort (7 min): Twelve action cards, four labels.",
+              "Argue (6 min): Agree on the hardest three cards.",
+              "Code (4 min): Trace the yes check on paper."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): اذكر فعلًا لا يمكن التراجع عنه أبدًا.",
+              "التصنيف (٧ دقائق): اثنتا عشرة بطاقة وأربع لافتات.",
+              "النقاش (٦ دقائق): اتفقوا على أصعب ثلاث بطاقات.",
+              "الكود (٤ دقائق): تتبّع فحص الموافقة على الورق."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (3 min): Think of one thing an app could do that you could never undo, such as a message to a whole group. Share it with a partner.",
+              "Sort (7 min): Put twelve action cards under four labels: Read only, Ask first, Allowed, Never.",
+              "Argue (6 min): Compare your sort with another pair. Pick the three cards you disagree about, and agree on a level for each, with a reason.",
+              "Code (4 min): On paper, follow the yes check for the replies yes, no and maybe. Write what it prints for each."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): فكّر في شيء قد يفعله تطبيق ولا يمكنك التراجع عنه أبدًا، كرسالة إلى مجموعة كاملة. وشارك زميلك به.",
+              "التصنيف (٧ دقائق): ضع اثنتي عشرة بطاقة أفعال تحت أربع لافتات: القراءة فقط، اسأل أولًا، مسموح، أبدًا.",
+              "النقاش (٦ دقائق): قارن تصنيفك بتصنيف زميلين آخرين. واختاروا ثلاث بطاقات اختلفتم عليها، واتفقوا على مستوى لكلٍّ منها مع ذكر السبب.",
+              "الكود (٤ دقائق): تتبّع على الورق فحص الموافقة للردود yes وno وmaybe، واكتب ما يطبعه في كل حالة."
+            ]
+          },
+          "note": {
+            "en": "Write the action cards before you start. Use only made-up names: never a real person’s message or photo.",
+            "ar": "اكتب بطاقات الأفعال قبل أن تبدأ. واستعمل أسماء خيالية فقط، ولا تستعمل أبدًا رسالة أو صورة لشخص حقيقي."
+          },
+          "narration": {
+            "en": "Read only, ask first, allowed or never: where does each card go?",
+            "ar": "القراءة فقط، أم اسأل أولًا، أم مسموح، أم أبدًا: أين تضع كل بطاقة؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which actions would you never let an agent do, even with a yes?",
+              "Why isn’t the model’s polite question enough?",
+              "What should an app’s record of actions show?"
+            ],
+            "ar": [
+              "ما الأفعال التي لن تسمح لوكيل بفعلها أبدًا، حتى مع موافقتك؟",
+              "لماذا لا يكفي سؤال النموذج المؤدّب؟",
+              "ماذا يجب أن يُظهر سجلّ الأفعال في التطبيق؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one action for each level: read only, ask first, allowed, never."
+            ],
+            "ar": [
+              "اكتب فعلًا واحدًا لكل مستوى: القراءة فقط، اسأل أولًا، مسموح، أبدًا."
+            ]
+          },
+          "narration": {
+            "en": "Tonight, make one app on your phone ask you first.",
+            "ar": "الليلة، اجعل تطبيقًا واحدًا على هاتفك يسألك أولًا."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Ask before it acts",
+            "ar": "شرائح للمراجعة: اسأل قبل أن يتصرّف"
+          },
+          "pages": 6,
+          "base": "agents-s2-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Ask before it acts",
+            "ar": "ورقة النشاط: اسأل قبل أن يتصرّف"
+          },
+          "pages": 3,
+          "base": "agents-s2-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-s2-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.2",
+        "S.ET.U",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "agents-s2-4",
+      "title": {
+        "en": "Your data, your bundle",
+        "ar": "بياناتك وباقتك"
+      },
+      "minutes": 16,
+      "tryTomorrow": {
+        "en": "Check how much data your phone used last month and on which apps. Then write your own three rules: what you’ll ask on the phone, what in the cloud, and what you’ll never type into any agent.",
+        "ar": "تحقّق من كمية البيانات التي استهلكها هاتفك في الشهر الماضي، وفي أيّ التطبيقات. ثم اكتب قواعدك الثلاث: ما الذي ستسأل عنه على الهاتف، وما الذي ستسأل عنه في السحابة، وما الذي لن تكتبه أبدًا لأي وكيل."
+      },
+      "materials": {
+        "en": [
+          "Your phone’s data usage screen, or a family phone’s with the owner’s permission",
+          "A notebook for a week’s data diary",
+          "A pen"
+        ],
+        "ar": [
+          "شاشة استهلاك البيانات في هاتفك، أو في هاتف العائلة بإذن صاحبه",
+          "دفتر لمذكّرات البيانات طوال أسبوع",
+          "قلم"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Your data, your bundle",
+            "ar": "بياناتك وباقتك"
+          },
+          "src": null,
+          "duration": 210,
+          "sizeMB": 1.3,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A bundle gone",
+                "ar": "باقة نفدت"
+              }
+            },
+            {
+              "at": 21.9,
+              "atBy": {
+                "en": 21.9,
+                "ar": 20.9
+              },
+              "label": {
+                "en": "Cloud or phone?",
+                "ar": "السحابة أم الهاتف؟"
+              }
+            },
+            {
+              "at": 74.7,
+              "atBy": {
+                "en": 74.7,
+                "ar": 72.1
+              },
+              "label": {
+                "en": "Working it out",
+                "ar": "لنحسبها"
+              }
+            },
+            {
+              "at": 118.2,
+              "atBy": {
+                "en": 118.2,
+                "ar": 114.9
+              },
+              "label": {
+                "en": "Your data travels",
+                "ar": "بياناتك تسافر"
+              }
+            },
+            {
+              "at": 176.7,
+              "atBy": {
+                "en": 176.7,
+                "ar": 173.5
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "You’re on a bus with no signal and want to ask an agent something. Which one can still answer?",
+                "ar": "أنت في حافلة بلا تغطية للشبكة، وتريد أن تسأل وكيلًا. أيّ وكيل يستطيع أن يجيب؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "A big model in the cloud",
+                    "ar": "نموذج كبير في السحابة"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "A small model on your phone",
+                    "ar": "نموذج صغير على هاتفك"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Neither of them",
+                    "ar": "لا هذا ولا ذاك"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "A model on your phone needs no signal and no data. It knows much less than a big cloud model, though.",
+                "ar": "لا يحتاج النموذج الذي على هاتفك إلى شبكة ولا إلى باقة بيانات، لكنه يعرف أقل بكثير من النموذج الكبير في السحابة."
+              }
+            },
+            "at": 101.18,
+            "atBy": {
+              "en": 101.18,
+              "ar": 97.51
+            }
+          },
+          "transcript": {
+            "en": "A student of mine used up her whole data bundle in a week. Not on videos: on chatting with an AI agent! Every question went to a big computer far away. Is there another way? Today: what an agent costs in data, money and privacy, and how to choose. Big agents run in the cloud: huge models on computers far away. Your question travels there and back over the network. Darsi Tiny is different: it runs on your phone, so nothing leaves it. Take one weather request. Darsi Tiny reads about sixty tokens and answers in about a second, with no data. A cloud model reads about two and a half thousand, since the tools are described every time. That’s about eighteen kilobytes, and five seconds on 2G. At twenty requests a day, a month of cloud requests is about eleven megabytes. Darsi Tiny’s one download is two point eight megabytes. After about a hundred and fifty requests, the cloud has used more. You can work this out in Python. Multiply the kilobytes for one request by the requests a day and the days. Then divide by a thousand for megabytes: ten point eight. Quick check! You’re on a bus with no signal, and you want to ask an agent something. Which one can still answer? The small model on your phone: it doesn’t need a signal. But remember what it can’t do. Darsi Tiny knows ten school tools and almost nothing else. A big cloud model knows far more, and that’s the trade. Cost isn’t only money. Whatever you type into a cloud agent leaves your phone and is stored on someone else’s computers. It may be kept, read by staff, or used to train the next model. So never type these into a cloud agent. Your passwords and codes. Your address, phone number or ID number. And other people’s private things: a friend’s photo, their marks, their secrets. In the app, run the weather request and note the tokens and the time. Switch to 2G and compare the cloud. Then set your data price and requests a day, and see a month. Your turn. You want help with your diary, which is full of private thoughts. Where is it safest to ask? On your phone, or not at all. Remember: cloud agents cost data, money and a signal, and your words leave the phone. Phone models are cheap and private, but know little. Never type passwords or others’ secrets. Try it yourself: check how much data your phone used last month, and on which apps. Guess how much went on one AI app. Then decide one thing you will never type into it.",
+            "ar": "طالبة عندي خلّصت باقة النت كلها في أسبوع. مش على فيديوهات: على الدردشة مع وكيل ذكي! كل سؤال كان بيروح لكمبيوتر كبير بعيد. طب فيه طريقة تانية؟ النهارده: الوكيل بيكلّف قد إيه في الباقة والفلوس والخصوصية، وإزاي تختار. الوكلاء الكبار بيشتغلوا في السحابة: نماذج ضخمة على كمبيوترات بعيدة. سؤالك بيسافر لهناك ويرجع على الشبكة. «درسي الصغير» مختلف: بيشتغل على موبايلك، فمفيش حاجة بتخرج منه. خد طلب طقس واحد. «درسي الصغير» بيقرا حوالي ستين توكن ويجاوب في حوالي ثانية، من غير نت. لكن نموذج السحابة بيقرا حوالي ألفين وخمسمية، لأن الأدوات بتتوصف له كل مرة. يعني حوالي تمنتاشر كيلو بايت، وخمس ثواني على شبكة الجيل التاني. لو عشرين طلب في اليوم، شهر طلبات للسحابة يبقى حوالي حداشر ميجا. و«درسي الصغير» بينزل مرة واحدة بس، اتنين ميجا وتمنية من عشرة. وبعد حوالي مية وخمسين طلب، السحابة تكون صرفت نت أكتر من كده. تقدر تحسبها ببايثون. اضرب الكيلو بايت بتاعة الطلب الواحد في عدد الطلبات في اليوم وفي عدد الأيام. وبعدين اقسم على ألف علشان تطلع بالميجا: عشرة وتمنية من عشرة. سؤال سريع! إنت في أتوبيس ومفيش شبكة، وعايز تسأل وكيل حاجة. أنهي واحد لسه يقدر يجاوب؟ النموذج الصغير اللي على موبايلك: مش محتاج شبكة. بس افتكر هو ما يقدرش يعمل إيه. «درسي الصغير» يعرف عشر أدوات مدرسية وتقريبًا مفيش حاجة غيرها. ونموذج السحابة الكبير يعرف أكتر بكتير، ودي المقايضة. التكلفة مش فلوس وبس. أي حاجة تكتبها لوكيل في السحابة بتخرج من موبايلك وبتتخزّن على كمبيوترات حد تاني. ممكن تتحفظ، أو يقراها موظفين، أو تتستخدم في تدريب النموذج الجاي. علشان كده ما تكتبش دول أبدًا لوكيل في السحابة. الباسوردات والأكواد بتاعتك. عنوانك، أو رقم موبايلك، أو رقمك القومي. وحاجات الناس التانية الخاصة: صورة صاحبك، ودرجاته، وأسراره. في التطبيق، شغّل طلب الطقس واكتب عدد التوكنز والوقت. غيّر للجيل التاني وقارن بالسحابة. وبعدين حط سعر باقتك وعدد الطلبات في اليوم، وشوف الشهر. دورك. عايز مساعدة في مذكراتك، وهي مليانة أفكار خاصة. أأمن مكان تسأل فيه فين؟ على موبايلك، أو ما تسألش خالص. افتكر: وكلاء السحابة بيكلّفوا باقة وفلوس وشبكة، وكلامك بيخرج من الموبايل. ونماذج الموبايل رخيصة وخاصة، بس بتعرف قليل. وعمرك ما تكتب باسورد أو أسرار حد تاني. جرّبها بنفسك: شوف موبايلك صرف قد إيه نت الشهر اللي فات، وعلى أنهي تطبيقات. خمّن قد إيه منه راح على تطبيق ذكاء اصطناعي واحد. وبعدين قرّر حاجة واحدة عمرك ما هتكتبها فيه."
+          },
+          "sources": {
+            "en": "/media/agents-s2-4/video-en.mp4",
+            "ar": "/media/agents-s2-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-s2-4/captions-en.vtt",
+            "ar": "/media/agents-s2-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-s2-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-s2-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-s2-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-s2-4/light/audio/en.opus",
+              "manifest.json": "/media/agents-s2-4/light/manifest.json",
+              "scenes.json": "/media/agents-s2-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-s2-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-s2-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 452,
+              "ar": 449
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "What an agent really costs",
+            "ar": "الكلفة الحقيقية للوكيل"
+          },
+          "body": {
+            "en": "Big AI agents run in the cloud: huge models on computers far away. Every question you type travels there and back over the network, so it needs a signal and uses your data bundle. Darsi Tiny is different: it is small enough to run on your phone, so once it is downloaded (2.8 MB, one time) it needs no data and no signal, and nothing you type leaves the phone.\n\nCompare one weather request. Darsi Tiny reads about 60 tokens and writes about 50 to 60, in about a second on an old phone. A big cloud model reads about 2,500 tokens, because the tools are described to it again at every step: that is about 18 KB of data and about 5 seconds over 2G, for under one US cent. At 20 requests a day, a month of cloud requests is about 11 MB. After about 150 requests, the cloud has used more data than Darsi Tiny’s single download.\n\nBut cost is a trade, not a race with one winner. Darsi Tiny knows ten school tools in a made-up world and almost nothing else. A big cloud model knows far more and can help with much harder questions. Choose for the job: small and on the phone for simple, private or offline tasks; big and in the cloud when you need what it knows, and you have the data, the money and the signal.\n\nYour words have a cost too. Whatever you type into a cloud agent leaves your phone and is stored on someone else’s computers. It may be kept, read by staff or used to train the next model. So never type your passwords or codes, your address, phone number or ID number, or other people’s private things, such as a friend’s photo, marks or secrets.",
+            "ar": "تعمل وكلاء الذكاء الاصطناعي الكبيرة في السحابة: نماذج ضخمة على حواسيب بعيدة. وكل سؤال تكتبه يسافر إلى هناك ويعود عبر الشبكة، فيحتاج إلى تغطية ويستهلك باقة بياناتك. أما «درسي الصغير» فمختلف: فهو صغير بما يكفي ليعمل على هاتفك، فبعد تنزيله (٢٫٨ ميغابايت، مرة واحدة) لا يحتاج إلى بيانات ولا إلى تغطية، ولا يخرج من الهاتف شيء مما تكتبه.\n\nقارن طلبًا واحدًا عن الطقس: يقرأ «درسي الصغير» نحو ٦٠ رمزًا (token) ويكتب نحو ٥٠ إلى ٦٠، في ثانية تقريبًا على هاتف قديم. أما النموذج الكبير في السحابة فيقرأ نحو ٢٥٠٠ رمز، لأن الأدوات تُوصف له من جديد في كل خطوة: أي نحو ١٨ كيلوبايت من البيانات، ونحو ٥ ثوانٍ على شبكة الجيل الثاني، بأقل من سنت أمريكي واحد. وبعشرين طلبًا في اليوم، يصل شهر من طلبات السحابة إلى نحو ١١ ميغابايت. وبعد نحو ١٥٠ طلبًا، تكون السحابة قد استهلكت بيانات أكثر من تنزيل «درسي الصغير» مرة واحدة.\n\nلكن الكلفة موازنة، لا سباق له فائز واحد. فـ«درسي الصغير» يعرف عشر أدوات مدرسية في عالم خيالي، ولا يكاد يعرف غيرها. أما النموذج الكبير في السحابة فيعرف أكثر بكثير، ويستطيع المساعدة في أسئلة أصعب بكثير. فاختر بحسب المهمة: الصغير على الهاتف للمهام البسيطة أو الخاصة أو حين لا تتوفّر شبكة، والكبير في السحابة حين تحتاج إلى ما يعرفه، وتتوفّر لك البيانات والمال والتغطية.\n\nولكلماتك كلفة أيضًا. فكل ما تكتبه لوكيل في السحابة يخرج من هاتفك ويُخزَّن على حواسيب جهة أخرى. وقد يُحتفظ به، أو يقرؤه موظفون، أو يُستعمل في تدريب النموذج القادم. لذلك لا تكتب أبدًا كلمات مرورك أو رموزك، ولا عنوانك أو رقم هاتفك أو رقم هويتك، ولا أشياء الآخرين الخاصة، كصورة صديق أو درجاته أو أسراره."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Cloud model",
+                "ar": "نموذج في السحابة"
+              },
+              "def": {
+                "en": "A big model on computers far away: every request travels over the network.",
+                "ar": "نموذج كبير على حواسيب بعيدة: كل طلب يسافر عبر الشبكة."
+              }
+            },
+            {
+              "term": {
+                "en": "On-device model",
+                "ar": "نموذج على الجهاز"
+              },
+              "def": {
+                "en": "A model that runs on your own phone: no data, no signal, nothing leaves it.",
+                "ar": "نموذج يعمل على هاتفك نفسه: لا بيانات ولا شبكة، ولا يخرج منه شيء."
+              }
+            },
+            {
+              "term": {
+                "en": "Data bundle",
+                "ar": "باقة البيانات"
+              },
+              "def": {
+                "en": "The amount of mobile data you pay for, counted in megabytes (MB) or gigabytes.",
+                "ar": "كمية بيانات الهاتف التي تدفع ثمنها، وتُقاس بالميغابايت أو الغيغابايت."
+              }
+            },
+            {
+              "term": {
+                "en": "Token",
+                "ar": "الرمز (token)"
+              },
+              "def": {
+                "en": "A small piece of text a model reads or writes. More tokens mean more data, time and money.",
+                "ar": "قطعة صغيرة من النص يقرؤها النموذج أو يكتبها. والرموز الأكثر تعني بيانات ووقتًا ومالًا أكثر."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "You want help with your diary, which is full of private thoughts. Where is it safest to ask?",
+            "ar": "تريد مساعدة في مذكّراتك، وهي مليئة بأفكار خاصة. أين يكون السؤال أكثر أمانًا؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A cloud chatbot: it knows more",
+                "ar": "روبوت دردشة في السحابة: فهو يعرف أكثر"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A model on your phone, or nobody",
+                "ar": "نموذج على هاتفك، أو لا أحد"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A cloud chatbot, in a new chat",
+                "ar": "روبوت دردشة في السحابة، في محادثة جديدة"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Whatever you type into a cloud chatbot leaves your phone, even in a new chat. Private thoughts stay on your phone, or with you.",
+            "ar": "كل ما تكتبه لروبوت دردشة في السحابة يخرج من هاتفك، حتى في محادثة جديدة. فلتبقَ الأفكار الخاصة على هاتفك، أو معك وحدك."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p2",
+          "prompt": {
+            "en": "Which of these should you never type into a cloud agent? Choose all that apply.",
+            "ar": "أيّ مما يلي لا يجوز أن تكتبه أبدًا لوكيل في السحابة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Your password",
+                "ar": "كلمة مرورك"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A friend’s exam marks",
+                "ar": "درجات صديقك في الامتحان"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A question about how volcanoes form",
+                "ar": "سؤال عن كيفية تكوّن البراكين"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Your home address",
+                "ar": "عنوان بيتك"
+              }
+            },
+            {
+              "id": "e",
+              "text": {
+                "en": "A fractions problem from your textbook",
+                "ar": "مسألة كسور من كتابك المدرسي"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Passwords, your address and other people’s private things should never leave your phone. A science question or a textbook problem is fine: it says nothing private about anyone.",
+            "ar": "كلمات المرور وعنوانك وأشياء الآخرين الخاصة يجب ألا تخرج من هاتفك أبدًا. أما سؤال علمي أو مسألة من الكتاب فلا بأس بهما: فهما لا يكشفان شيئًا خاصًّا عن أحد."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "p3",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete the program so it works out a month of cloud requests in megabytes.",
+            "ar": "أكمل البرنامج ليحسب بالميغابايت شهرًا من طلبات السحابة."
+          },
+          "code": [
+            "kb_each = 18\nper_day = 20\ndays = 30\nkb = kb_each ",
+            {
+              "blank": 0
+            },
+            " per_day * days\nprint(kb ",
+            {
+              "blank": 1
+            },
+            " 1000, \"MB\")"
+          ],
+          "answers": [
+            "*",
+            "/"
+          ],
+          "distractors": [
+            "+",
+            "-"
+          ],
+          "explain": {
+            "en": "Multiply 18 KB by 20 requests a day and by 30 days: 10,800 KB. Divide by 1,000 to get megabytes: it prints 10.8 MB, the “about 11 MB a month” from the lesson.",
+            "ar": "اضرب ١٨ كيلوبايت في ٢٠ طلبًا في اليوم وفي ٣٠ يومًا: ١٠٨٠٠ كيلوبايت. ثم اقسم على ١٠٠٠ لتحصل على الميغابايت: فيطبع 10.8 MB، أي «نحو ١١ ميغابايت في الشهر» كما في الدرس."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "p4",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "tiny = 2.8          # MB, once\ncloud = 18 / 1000   # MB a request\nprint(round(tiny / cloud))"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "156",
+                "ar": "156"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "0.018",
+                "ar": "0.018"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "28",
+                "ar": "28"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "One cloud request is 18 / 1000 = 0.018 MB, and 2.8 / 0.018 is about 156. So after about 150 requests, the cloud has used more data than downloading Darsi Tiny once (the lab, which measures more carefully, says about 150).",
+            "ar": "الطلب الواحد إلى السحابة ⁦18 / 1000 = 0.018⁩ ميغابايت، و⁦2.8 / 0.018⁩ نحو ١٥٦. أي أن السحابة تستهلك بعد نحو ١٥٠ طلبًا بيانات أكثر من تنزيل «درسي الصغير» مرة واحدة (والمختبر يقيس بدقة أكبر، فيقول نحو ١٥٠)."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: run “What’s the weather in Kafi tomorrow?” and note the tokens and the time on your phone. Switch the network to 2G: how long, and how much data, would a cloud model need? Then set your requests a day and the price of 1 GB where you live, and compare a month of the cloud with downloading Darsi Tiny once.",
+            "ar": "جرّب: شغّل «ما حالة الطقس في كافي غدًا؟» ولاحظ عدد الرموز والوقت على هاتفك. ثم اختر شبكة الجيل الثاني: كم من الوقت والبيانات يحتاج نموذج في السحابة؟ ثم اكتب عدد طلباتك في اليوم وسعر ١ غيغابايت في بلدك، وقارن شهرًا من السحابة بتنزيل «درسي الصغير» مرة واحدة."
+          },
+          "tool": "costs"
+        },
+        {
+          "type": "truefalse",
+          "id": "p5",
+          "prompt": {
+            "en": "A small model on your phone knows as much as a big cloud model.",
+            "ar": "يعرف النموذج الصغير على هاتفك بقدر ما يعرفه النموذج الكبير في السحابة."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Darsi Tiny knows ten school tools and almost nothing else; a big cloud model knows far more. The small one wins on data, cost, privacy and working offline, not on knowledge.",
+            "ar": "يعرف «درسي الصغير» عشر أدوات مدرسية ولا يكاد يعرف غيرها، أما النموذج الكبير في السحابة فيعرف أكثر بكثير. والصغير يتفوّق في البيانات والكلفة والخصوصية والعمل دون شبكة، لا في المعرفة."
+          }
+        },
+        {
+          "type": "scenario",
+          "id": "p6",
+          "prompt": {
+            "en": "What do you suggest?",
+            "ar": "ماذا تقترح؟"
+          },
+          "who": {
+            "en": "Leila, your friend",
+            "ar": "ليلى، صديقتك"
+          },
+          "initial": {
+            "en": "L",
+            "ar": "ل"
+          },
+          "situation": {
+            "en": "Leila wants to paste the last week of your class group’s chat, with everyone’s names and phone numbers, into a free cloud chatbot, to get a summary of who said what about the school trip.",
+            "ar": "تريد ليلى أن تلصق محادثة مجموعة صفّكم في الأسبوع الأخير، بأسماء الجميع وأرقام هواتفهم، في روبوت دردشة مجاني في السحابة، لتحصل على ملخّص لما قاله كل واحد عن الرحلة المدرسية."
+          },
+          "choices": [
+            {
+              "id": "a",
+              "label": {
+                "en": "“Fine: it’s only a summary.”",
+                "ar": "«لا بأس: إنه مجرد ملخّص.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "The whole chat, with names and numbers, would leave her phone and be stored on someone else’s computers, without anyone in the group agreeing.",
+                "ar": "ستخرج المحادثة كلها، بالأسماء والأرقام، من هاتفها وتُخزَّن على حواسيب جهة أخرى، دون أن يوافق أحد في المجموعة."
+              }
+            },
+            {
+              "id": "b",
+              "label": {
+                "en": "“Take out the names and numbers first, or ask the group before you share it.”",
+                "ar": "«احذفي الأسماء والأرقام أولًا، أو استأذني المجموعة قبل أن تشاركيها.»"
+              },
+              "tone": "good",
+              "consequence": {
+                "en": "Other people’s words and numbers aren’t hers to share. Without names, the summary still works; with the group’s permission, it’s their choice.",
+                "ar": "كلمات الآخرين وأرقامهم ليست ملكها لتشاركها. ودون الأسماء يبقى الملخّص مفيدًا، وبإذن المجموعة يصبح القرار قرارهم."
+              }
+            },
+            {
+              "id": "c",
+              "label": {
+                "en": "“Use your cousin’s phone instead.”",
+                "ar": "«استعملي هاتف ابن عمك بدلًا من ذلك.»"
+              },
+              "tone": "consider",
+              "consequence": {
+                "en": "A different phone changes nothing: the chat still goes to the same cloud, with the same names and numbers.",
+                "ar": "تغيير الهاتف لا يغيّر شيئًا: فالمحادثة تذهب إلى السحابة نفسها، بالأسماء والأرقام نفسها."
+              }
+            }
+          ]
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which AI apps do you or your family use? For each, would you rather it ran on the phone or in the cloud, and why?",
+            "ar": "ما تطبيقات الذكاء الاصطناعي التي تستعملها أنت أو أسرتك؟ وهل تفضّل أن يعمل كلٌّ منها على الهاتف أم في السحابة، ولماذا؟"
+          },
+          "placeholder": {
+            "en": "For example: “For homework questions the cloud knows more, but for my diary I’d want it on my phone, or not at all.”",
+            "ar": "مثلًا: «في أسئلة الواجبات تعرف السحابة أكثر، أما مذكّراتي فأريدها على هاتفي، أو لا أستعمل أي تطبيق لها.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: My data diary",
+            "ar": "مشروع: مذكّرات بياناتي"
+          },
+          "task": {
+            "en": "For one week, at home or at school, keep a diary each time you (or your family, with their permission) use an AI app: what you asked, whether it needed a signal, and whether you typed anything private. At the end of the week, check the phone’s data usage screen. Then write your own three rules: what you’ll ask a model on the phone, what you’ll ask in the cloud, and what you’ll never type into any agent.",
+            "ar": "طوال أسبوع، في البيت أو في المدرسة، دوّن في مذكّراتك كل مرة تستعمل فيها أنت (أو أسرتك، بإذنها) تطبيقًا للذكاء الاصطناعي: ماذا سألت، وهل احتاج إلى شبكة، وهل كتبت شيئًا خاصًّا. وفي نهاية الأسبوع، انظر إلى شاشة استهلاك البيانات في الهاتف. ثم اكتب قواعدك الثلاث: ما الذي ستسأل عنه نموذجًا على الهاتف، وما الذي ستسأل عنه في السحابة، وما الذي لن تكتبه أبدًا لأي وكيل."
+          },
+          "deliverable": {
+            "en": "Your three rules, and a short note on your week: how many requests, how much data, and one thing you decided not to type. No private details in the note.",
+            "ar": "قواعدك الثلاث، وملاحظة قصيرة عن أسبوعك: كم طلبًا، وكم من البيانات، وشيء واحد قرّرت ألا تكتبه. ودون أي تفاصيل خاصة في الملاحظة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "I can: compare a model on the phone with one in the cloud: data, money, signal, privacy.",
+                "ar": "أستطيع: المقارنة بين نموذج على الهاتف ونموذج في السحابة: البيانات، والمال، والشبكة، والخصوصية."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: work out a month’s data from the data per request.",
+                "ar": "أستطيع: حساب بيانات شهر من بيانات الطلب الواحد."
+              }
+            },
+            {
+              "criterion": {
+                "en": "I can: name what I will never type into a cloud agent.",
+                "ar": "أستطيع: ذكر ما لن أكتبه أبدًا لوكيل في السحابة."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Your data, your bundle",
+            "ar": "بياناتك وباقتك"
+          },
+          "note": {
+            "en": "AI agents · Lower secondary · Lesson 4",
+            "ar": "وكلاء الذكاء الاصطناعي، المرحلة الإعدادية، الدرس ٤"
+          },
+          "narration": {
+            "en": "What does an agent really cost you: data, money, or privacy?",
+            "ar": "ما الذي يكلّفك إياه الوكيل فعلًا: البيانات، أم المال، أم الخصوصية؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Compare a model on your phone with one in the cloud.",
+              "Work out a month’s data with a short program.",
+              "Decide what you will never type into a cloud agent."
+            ],
+            "ar": [
+              "تقارن بين نموذج على هاتفك ونموذج في السحابة.",
+              "تحسب بيانات شهر ببرنامج قصير.",
+              "تقرّر ما لن تكتبه أبدًا لوكيل في السحابة."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "Cloud agents cost data, money and a signal, and your words leave your phone.",
+              "Small models on the phone are cheap, private and offline, but know little.",
+              "Never type passwords, your address or other people’s private things."
+            ],
+            "ar": [
+              "وكلاء السحابة تكلّف بيانات ومالًا وتغطية، وكلماتك تخرج من هاتفك.",
+              "النماذج الصغيرة على الهاتف رخيصة وخاصة وتعمل دون شبكة، لكنها تعرف قليلًا.",
+              "لا تكتب أبدًا كلمات المرور أو عنوانك أو أشياء الآخرين الخاصة."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Phone or cloud?",
+            "ar": "الهاتف أم السحابة؟"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (3 min): How much data does your phone use a month?",
+              "Work it out (6 min): A month of cloud requests.",
+              "Sort (8 min): Ten questions: phone, cloud or never?",
+              "Rules (3 min): Write your own three rules."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): كم يستهلك هاتفك من البيانات في الشهر؟",
+              "الحساب (٦ دقائق): شهر من طلبات السحابة.",
+              "التصنيف (٨ دقائق): عشرة أسئلة: الهاتف أم السحابة أم أبدًا؟",
+              "القواعد (٣ دقائق): اكتب قواعدك الثلاث."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (3 min): Guess how much data your phone (or your family’s) uses in a month, then check the data usage screen if you can.",
+              "Work it out (6 min): One cloud request is about 18 KB. Work out a month at 5, 20 and 50 requests a day, and compare each with Darsi Tiny’s 2.8 MB, downloaded once.",
+              "Sort (8 min): Write ten questions you might ask an AI (homework, a diary entry, a friend’s photo, the weather). Sort each into: fine on the phone, fine in the cloud, or never type it.",
+              "Rules (3 min): Write your own three rules, and share one with a partner."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): خمّن كم يستهلك هاتفك (أو هاتف أسرتك) من البيانات في الشهر، ثم انظر إلى شاشة استهلاك البيانات إن استطعت.",
+              "الحساب (٦ دقائق): الطلب الواحد إلى السحابة نحو ١٨ كيلوبايت. احسب شهرًا بـ٥ و٢٠ و٥٠ طلبًا في اليوم، وقارن كلًّا منها بتنزيل «درسي الصغير» مرة واحدة (٢٫٨ ميغابايت).",
+              "التصنيف (٨ دقائق): اكتب عشرة أسئلة قد تسألها لذكاء اصطناعي (واجب، صفحة من مذكّراتك، صورة صديق، الطقس). وصنّف كلًّا منها: لا بأس به على الهاتف، أو لا بأس به في السحابة، أو لا يُكتب أبدًا.",
+              "القواعد (٣ دقائق): اكتب قواعدك الثلاث، وشارك زميلك بواحدة منها."
+            ]
+          },
+          "note": {
+            "en": "A phone helps but isn’t needed: the sums and the sorting work on paper. Never use anyone’s real private details as examples.",
+            "ar": "الهاتف مفيد لكنه ليس ضروريًا: فالحساب والتصنيف يصلحان على الورق. ولا تستعمل أبدًا التفاصيل الخاصة الحقيقية لأي شخص أمثلةً."
+          },
+          "narration": {
+            "en": "On the phone, in the cloud, or never: where does each question go?",
+            "ar": "على الهاتف، أم في السحابة، أم أبدًا: أين يذهب كل سؤال؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "When is a big cloud model worth its cost?",
+              "Why might a free AI app still cost you something?",
+              "What would you tell a younger student about typing into chatbots?"
+            ],
+            "ar": [
+              "متى يستحق النموذج الكبير في السحابة كلفته؟",
+              "لماذا قد يكلّفك تطبيق ذكاء اصطناعي مجاني شيئًا رغم ذلك؟",
+              "ماذا تقول لطالب أصغر منك عن الكتابة لروبوتات الدردشة؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one question you’d ask on the phone, one in the cloud, and one thing you’d never type."
+            ],
+            "ar": [
+              "اكتب سؤالًا واحدًا تسأله على الهاتف، وسؤالًا في السحابة، وشيئًا واحدًا لن تكتبه أبدًا."
+            ]
+          },
+          "narration": {
+            "en": "This week, keep your data diary, and keep private things off the cloud.",
+            "ar": "هذا الأسبوع، دوّن مذكّرات بياناتك، وأبعِد الأشياء الخاصة عن السحابة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Your data, your bundle",
+            "ar": "شرائح للمراجعة: بياناتك وباقتك"
+          },
+          "pages": 6,
+          "base": "agents-s2-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Your data, your bundle",
+            "ar": "ورقة النشاط: بياناتك وباقتك"
+          },
+          "pages": 2,
+          "base": "agents-s2-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-s2-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DC.4.2",
+        "S.ET.U",
+        "AGT.2"
+      ]
+    },
+    {
+      "id": "agents-s2-check",
+      "title": {
+        "en": "Working with an agent safely: unit check",
+        "ar": "العمل مع الوكيل بأمان: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Pick the habit from this unit you need most (reading the call, checking it against your words, saying yes only after reading, or keeping private things off the cloud) and use it every day this week.",
+        "ar": "اختر من هذه الوحدة العادة التي تحتاج إليها أكثر من غيرها (قراءة الاستدعاء، أو مقارنته بكلامك، أو الموافقة بعد القراءة فقط، أو إبعاد الأشياء الخاصة عن السحابة)، واستعملها كل يوم هذا الأسبوع."
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "What makes an AI agent different from a chatbot?",
+            "ar": "ما الذي يميّز وكيل الذكاء الاصطناعي من روبوت الدردشة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "It always gives the right answer",
+                "ar": "يعطي دائمًا الجواب الصحيح"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "It can use tools to act, not just write text",
+                "ar": "يستطيع أن يستعمل الأدوات ليتصرّف، لا أن يكتب نصًّا فقط"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "It never needs a person",
+                "ar": "لا يحتاج أبدًا إلى إنسان"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "It is always bigger",
+                "ar": "هو دائمًا أكبر حجمًا"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "An agent is a language model in a loop with tools: it can ask for a timetable, the weather or a message to be sent. It can still be wrong, and it still needs people in charge.",
+            "ar": "الوكيل نموذج لغوي يعمل في حلقة مع أدوات: فيستطيع أن يطلب الجدول أو الطقس أو إرسال رسالة. لكنه قد يخطئ مع ذلك، ويبقى في حاجة إلى إنسان صاحب قرار."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "A tool call is the tool’s name followed by its details.",
+            "ar": "استدعاء الأداة هو اسم الأداة متبوعًا بتفاصيلها."
+          },
+          "answer": true,
+          "explain": {
+            "en": "For example weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}: the name, weather, then the details in curly brackets, written as JSON.",
+            "ar": "مثل ⁦weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}⁩: الاسم weather، ثم التفاصيل بين قوسين معقوفين، مكتوبة بصيغة JSON."
+          }
+        },
+        {
+          "type": "order",
+          "id": "q3",
+          "prompt": {
+            "en": "Put the agent loop in order.",
+            "ar": "رتّب حلقة الوكيل."
+          },
+          "steps": [
+            {
+              "en": "Request",
+              "ar": "الطلب"
+            },
+            {
+              "en": "Plan",
+              "ar": "الخطة"
+            },
+            {
+              "en": "Tool call",
+              "ar": "استدعاء الأداة"
+            },
+            {
+              "en": "Result from the app",
+              "ar": "النتيجة من التطبيق"
+            },
+            {
+              "en": "Answer",
+              "ar": "الجواب"
+            }
+          ],
+          "explain": {
+            "en": "The model plans, writes a call, the app runs the tool and adds the result, and the model answers from it.",
+            "ar": "يخطّط النموذج، ويكتب الاستدعاء، ثم يشغّل التطبيق الأداة ويضيف النتيجة، ثم يجيب النموذج منها."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q4",
+          "prompt": {
+            "en": "Which of these should stop a call before it runs? Choose all that apply.",
+            "ar": "أيّ مما يلي يجب أن يوقف الاستدعاء قبل تنفيذه؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A class in the call that wasn’t in the request",
+                "ar": "فصل في الاستدعاء لم يكن في الطلب"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A time of 25:00",
+                "ar": "الوقت 25:00"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The agent sounds unsure",
+                "ar": "يبدو الوكيل غير متأكد"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "A message nobody approved",
+                "ar": "رسالة لم يوافق عليها أحد"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "A name from nowhere, a detail with the wrong shape and an action nobody approved all break a checker’s rules. How sure the agent sounds tells you nothing either way.",
+            "ar": "الاسم الذي لا مصدر له، والتفصيل ذو الشكل الخاطئ، والفعل الذي لم يوافق عليه أحد، كلها تخالف قواعد المدقّق. أما مقدار ثقة الوكيل في كلامه فلا يدلّ على شيء."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q5",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "call = 'route{\"from\":\"Kafi\",\"to\":\"Dala\"}'\nprint(call.split(\"{\")[0])"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "route",
+                "ar": "route"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Kafi",
+                "ar": "Kafi"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Dala",
+                "ar": "Dala"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "split(\"{\") cuts the call at the first curly bracket, and [0] is the piece before it: the tool’s name, route.",
+            "ar": "تقطع ⁦split(\"{\")⁩ الاستدعاء عند أول قوس معقوف، و⁦[0]⁩ هي القطعة التي قبله: اسم الأداة route."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q6",
+          "prompt": {
+            "en": "Match each action to its permission level.",
+            "ar": "صِل كل فعل بمستوى الإذن الخاص به."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Look up tomorrow’s timetable",
+                "ar": "معرفة جدول الغد"
+              },
+              "right": {
+                "en": "Read only",
+                "ar": "القراءة فقط"
+              }
+            },
+            {
+              "left": {
+                "en": "Post a photo to the class group",
+                "ar": "نشر صورة في مجموعة الصف"
+              },
+              "right": {
+                "en": "Ask first",
+                "ar": "اسأل أولًا"
+              }
+            },
+            {
+              "left": {
+                "en": "Hand over your password",
+                "ar": "تسليم كلمة مرورك"
+              },
+              "right": {
+                "en": "Never",
+                "ar": "أبدًا"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Reading is low risk; posting changes the world and needs your yes; a password is never for an agent.",
+            "ar": "القراءة خطرها قليل، والنشر يغيّر العالم ويحتاج إلى موافقتك، وكلمة المرور ليست لأي وكيل أبدًا."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "q7",
+          "lang": "python",
+          "prompt": {
+            "en": "Complete the check so the message is sent only after a yes.",
+            "ar": "أكمل الفحص لكي لا تُرسل الرسالة إلا بعد الموافقة."
+          },
+          "code": [
+            "reply = input(\"Send it? \")\nif reply ",
+            {
+              "blank": 0
+            },
+            " \"yes\":\n    print(\"SENT\")\nelse:\n    print(\"NOT SENT\")"
+          ],
+          "answers": [
+            "=="
+          ],
+          "distractors": [
+            "!=",
+            "="
+          ],
+          "explain": {
+            "en": "== compares the reply with \"yes\". != would send on everything except yes, and a single = assigns instead of comparing, which is an error in an if.",
+            "ar": "تقارن == الرد بـ ⁦\"yes\"⁩. أما != فترسل في كل حالة إلا yes، وعلامة = الواحدة تُسند قيمة بدل أن تقارن، وهذا خطأ في if."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q8",
+          "prompt": {
+            "en": "If an agent asks politely before sending, the app doesn’t need to check in code.",
+            "ar": "إن سأل الوكيل بأدب قبل الإرسال، فلا حاجة إلى أن يتحقّق التطبيق في الكود."
+          },
+          "answer": false,
+          "explain": {
+            "en": "A model’s asking is learned behaviour and can fail, as «نعم، أرسلها.» on its own shows. The defence is a check in code and a person’s yes.",
+            "ar": "سؤال النموذج سلوك متعلَّم وقد يفشل، كما تُظهر عبارة «نعم، أرسلها.» وحدها. والحماية الحقيقية فحص في الكود وموافقة إنسان."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q9",
+          "prompt": {
+            "en": "You have no signal and no data left. Which agent can still help with a simple timetable question?",
+            "ar": "لا تغطية لديك ولا بيانات متبقية. أيّ وكيل يستطيع مع ذلك أن يساعدك في سؤال بسيط عن الجدول؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A big model in the cloud",
+                "ar": "نموذج كبير في السحابة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A small model already on your phone",
+                "ar": "نموذج صغير موجود على هاتفك"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Neither",
+                "ar": "لا أحد منهما"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "A model on the phone needs no signal and no data once it is downloaded. A cloud model needs the network for every request.",
+            "ar": "النموذج الذي على الهاتف لا يحتاج إلى تغطية ولا إلى بيانات بعد تنزيله، أما نموذج السحابة فيحتاج إلى الشبكة في كل طلب."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "q10",
+          "lang": "python",
+          "prompt": {
+            "en": "This check should send only after a yes, but it sends after a no. Which line is wrong?",
+            "ar": "يجب أن يرسل هذا الفحص بعد الموافقة فقط، لكنه يرسل بعد الرفض. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "reply = input(\"Send it? \")\nif reply != \"yes\":\n    print(\"SENT\")\nelse:\n    print(\"NOT SENT\")",
+          "line": 2,
+          "fix": "if reply == \"yes\":",
+          "explain": {
+            "en": "!= means “is not”, so line 2 sends for every reply except yes. It should be == so that only an exact yes sends.",
+            "ar": "تعني != «لا يساوي»، فيرسل السطر ٢ مع كل رد إلا yes. والصحيح == لكي لا يرسل إلا yes بالضبط."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Working with an agent safely: review",
+            "ar": "العمل مع الوكيل بأمان: مراجعة"
+          },
+          "note": {
+            "en": "AI agents · Lower secondary · Unit check",
+            "ar": "وكلاء الذكاء الاصطناعي، المرحلة الإعدادية، اختبار الوحدة"
+          },
+          "narration": {
+            "en": "Let’s look back at the whole unit and check what stuck.",
+            "ar": "لنراجع الوحدة كلها ونتحقّق مما رسخ في أذهاننا."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Inside an agent",
+              "Check what it did",
+              "Ask before it acts",
+              "Your data, your bundle"
+            ],
+            "ar": [
+              "داخل الوكيل",
+              "تحقّق مما فعله",
+              "اسأل قبل أن يتصرّف",
+              "بياناتك وباقتك"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "An agent is a model in a loop with tools; the app runs them",
+              "Check the call against your words: sure isn’t right",
+              "Read, then say yes; the app checks the yes in code",
+              "Cloud agents cost data, money and privacy"
+            ],
+            "ar": [
+              "الوكيل نموذج في حلقة مع أدوات، والتطبيق هو من يشغّلها",
+              "قارن الاستدعاء بكلامك: الثقة لا تعني الصواب",
+              "اقرأ ثم وافق، والتطبيق يتحقّق من الموافقة في الكود",
+              "وكلاء السحابة تكلّف بيانات ومالًا وخصوصية"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Agent safety poster",
+            "ar": "ملصق أمان الوكيل"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (3 min): One habit from each lesson.",
+              "Plan (7 min): Four boxes, one per lesson.",
+              "Make (7 min): Draw and write your poster.",
+              "Share (3 min): Explain your most useful box."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): عادة واحدة من كل درس.",
+              "التخطيط (٧ دقائق): أربعة مربعات، مربع لكل درس.",
+              "الصنع (٧ دقائق): ارسم ملصقك واكتبه.",
+              "المشاركة (٣ دقائق): اشرح أنفع مربع في ملصقك."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (3 min): Write one habit from each of the four lessons, in your own words.",
+              "Plan (7 min): Divide a page into four boxes: the loop, checking a call, asking first, and data and cost.",
+              "Make (7 min): In each box, draw one picture and write one rule, such as “Read the call before it runs”.",
+              "Share (3 min): Show your poster to a partner, and explain the box you think will help you most."
+            ],
+            "ar": [
+              "التمهيد (٣ دقائق): اكتب بكلماتك عادة واحدة من كل درس من الدروس الأربعة.",
+              "التخطيط (٧ دقائق): قسّم صفحة إلى أربعة مربعات: الحلقة، وفحص الاستدعاء، والسؤال أولًا، والبيانات والكلفة.",
+              "الصنع (٧ دقائق): ارسم في كل مربع صورة واحدة واكتب قاعدة واحدة، مثل: «اقرأ الاستدعاء قبل تنفيذه».",
+              "المشاركة (٣ دقائق): اعرض ملصقك على زميلك، واشرح المربع الذي تظن أنه سيفيدك أكثر."
+            ]
+          },
+          "note": {
+            "en": "Paper and pens are enough. Use only made-up names in your examples.",
+            "ar": "يكفي الورق والأقلام. واستعمل أسماء خيالية فقط في أمثلتك."
+          },
+          "narration": {
+            "en": "Which rule on your poster will you use first?",
+            "ar": "أيّ قاعدة في ملصقك ستستعملها أولًا؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which habit from this unit will you keep?",
+              "What surprised you most about how agents make mistakes?",
+              "How would you explain asking first to a younger student?"
+            ],
+            "ar": [
+              "أيّ عادة من هذه الوحدة ستحافظ عليها؟",
+              "ما أكثر ما فاجأك في طريقة أخطاء الوكلاء؟",
+              "كيف تشرح فكرة السؤال أولًا لطالب أصغر منك؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "My most useful habit from this unit, and when I’ll use it."
+            ],
+            "ar": [
+              "أنفع عادة تعلّمتها في هذه الوحدة، ومتى سأستعملها."
+            ]
+          },
+          "narration": {
+            "en": "This week, teach one habit from this unit to someone younger.",
+            "ar": "هذا الأسبوع، علّم عادة واحدة من هذه الوحدة لشخص أصغر منك."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Working with an agent safely: unit check",
+            "ar": "شرائح للمراجعة: العمل مع الوكيل بأمان: اختبار الوحدة"
+          },
+          "pages": 6,
+          "base": "agents-s2-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Working with an agent safely: unit check",
+            "ar": "ورقة النشاط: العمل مع الوكيل بأمان: اختبار الوحدة"
+          },
+          "pages": 2,
+          "base": "agents-s2-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "AGT.1",
+        "S.TA.U",
+        "DC.3.4",
+        "AGT.2",
+        "S.HM.U",
+        "DC.1.2",
+        "S.ET.U",
+        "DC.4.2"
+      ]
+    }
+  ]
+}

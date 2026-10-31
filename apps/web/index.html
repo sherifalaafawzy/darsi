@@ -7,6 +7,7 @@
     <meta name="description" content="Five-minute lessons in AI, IoT and cyber security for teachers — in your own language, offline." />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/app-icons/apple-touch-icon-180.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>Darsi — درسي</title>
@@ -18,7 +19,35 @@
   </head>
   <body>
     <div id="root"></div>
-    <noscript>Darsi needs JavaScript to run.</noscript>
+    <!-- Shown only if the app never mounts (a browser too old to run even the legacy build). ES5, system fonts,
+         light colours: this has to paint when the bundles and the web fonts do not. -->
+    <div id="boot-fallback" hidden>
+      <div class="boot-fallback-card">
+        <h1 lang="en">Please update your browser</h1>
+        <p lang="en">Darsi needs a newer version of Chrome, or another browser.</p>
+        <h1 lang="ar" dir="rtl">من فضلك حدّث المتصفح</h1>
+        <p lang="ar" dir="rtl">درسي محتاج نسخة أحدث من كروم، أو متصفح تاني.</p>
+      </div>
+    </div>
+    <noscript>Darsi needs JavaScript to run. درسي محتاج جافاسكريبت عشان يشتغل.</noscript>
+    <style>
+      #boot-fallback { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 2; box-sizing: border-box; margin: 0; padding: 32px 20px; overflow: auto; background: #f2f2f2; color: #1e1a33; font-family: system-ui, "Segoe UI", Tahoma, sans-serif; font-size: 18px; line-height: 1.5; }
+      #boot-fallback[hidden] { display: none; }
+      .boot-fallback-card { max-width: 28em; margin: 10vh auto 0; }
+      #boot-fallback h1 { margin: 16px 0 8px; font-size: 22px; line-height: 1.3; color: #b43c0a; }
+      #boot-fallback p { margin: 0 0 8px; }
+    </style>
+    <script>
+      (function () {
+        var root = document.getElementById("root");
+        var box = document.getElementById("boot-fallback");
+        if (!root || !box) return;
+        function mounted() { return root.childNodes.length > 0; }
+        function tick() { box.hidden = mounted(); }
+        if (window.MutationObserver) new MutationObserver(tick).observe(root, { childList: true });
+        setTimeout(tick, 15000);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

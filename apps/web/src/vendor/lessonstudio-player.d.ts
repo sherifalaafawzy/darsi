@@ -21,3 +21,7 @@ export function createPlayer(host: HTMLElement, pkg: LightPackage, opts?: {
   orient?: Orient | "auto";
   onEvent?: (e: LightEvent) => void;
 }): LightPlayer;
+/** The technology packs a lesson's scenes.json needs: science (equations, plots, networks…), code, data, iot, network, opt. */
+export function packsUsed(scenes: unknown): string[];
+/** Loads packs ahead of time (a course saved for offline use). */
+export function prefetchPacks(ids: readonly string[]): Promise<void>;

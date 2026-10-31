@@ -1,0 +1,3397 @@
+{
+  "id": "data-s4",
+  "track": "data",
+  "level": 4,
+  "audience": "students",
+  "title": {
+    "en": "Data engineering",
+    "ar": "هندسة البيانات"
+  },
+  "summary": {
+    "en": "How data moves at scale: design schemas and pick formats, build ETL in Python and SQL that is safe to rerun, test data quality against contracts, and choose between batch and stream processing.",
+    "ar": "كيف تتحرّك البيانات على نطاق واسع: صمّم المخطّطات واختر الصيغ، وابنِ عمليات استخراج وتحويل وتحميل بلغتي Python وSQL آمنة عند إعادة التشغيل، واختبر جودة البيانات وفق العقود، واختر بين المعالجة بالدفعات والمعالجة المتدفّقة."
+  },
+  "lessons": [
+    {
+      "id": "data-s4-1",
+      "title": {
+        "en": "Schemas and formats",
+        "ar": "المخطّطات والصيغ"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Save the same small table as CSV and as JSON, and compare the file sizes. Then compress both. Which wins, and why?",
+        "ar": "احفظ الجدول الصغير نفسه بصيغة CSV وبصيغة JSON، وقارن حجمَي الملفين. ثم اضغطهما. أيّهما يفوز، ولماذا؟"
+      },
+      "materials": {
+        "en": [
+          "Your phone or a computer, for the Python steps",
+          "Optional: a computer with a spreadsheet app and a zip tool"
+        ],
+        "ar": [
+          "هاتفك أو حاسوب، لخطوات Python",
+          "اختياري: حاسوب فيه تطبيق جداول بيانات وأداة ضغط"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Schemas and formats",
+            "ar": "المخطّطات والصيغ"
+          },
+          "src": null,
+          "duration": 181,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "20,000 schools on 2G",
+                "ar": "٢٠٠٠٠ مدرسة على الجيل الثاني"
+              }
+            },
+            {
+              "at": 20.3,
+              "atBy": {
+                "en": 20.3,
+                "ar": 17.9
+              },
+              "label": {
+                "en": "A schema",
+                "ar": "المخطّط"
+              }
+            },
+            {
+              "at": 36.4,
+              "atBy": {
+                "en": 36.4,
+                "ar": 35.1
+              },
+              "label": {
+                "en": "Star schema",
+                "ar": "المخطّط النجمي"
+              }
+            },
+            {
+              "at": 52.2,
+              "atBy": {
+                "en": 52.2,
+                "ar": 50.4
+              },
+              "label": {
+                "en": "Rows or columns",
+                "ar": "صفوف أم أعمدة"
+              }
+            },
+            {
+              "at": 107.2,
+              "atBy": {
+                "en": 107.2,
+                "ar": 103.9
+              },
+              "label": {
+                "en": "Checking the schema",
+                "ar": "التحقّق من المخطّط"
+              }
+            },
+            {
+              "at": 118.7,
+              "atBy": {
+                "en": 118.7,
+                "ar": 114.5
+              },
+              "label": {
+                "en": "The lab",
+                "ar": "المختبر"
+              }
+            },
+            {
+              "at": 145.4,
+              "atBy": {
+                "en": 145.4,
+                "ar": 138.6
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 99.43,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Why is JSON bigger than CSV for the same table?",
+                "ar": "لماذا يكون JSON أكبر من CSV للجدول نفسه؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "It repeats every column’s name in every record",
+                    "ar": "يكرّر اسم كل عمود في كل سجلّ"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "It stores numbers as pictures",
+                    "ar": "يحفظ الأعداد صورًا"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "It can’t be compressed",
+                    "ar": "لا يمكن ضغطه"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "Every JSON record says \"date\":, \"class\": and the rest again; CSV names the columns once, in its header line.",
+                "ar": "كل سجلّ في JSON يكرّر ⁦\"date\"⁩: و⁦\"class\"⁩: وغيرهما، أما CSV فيسمّي الأعمدة مرة واحدة في سطر العناوين."
+              }
+            },
+            "atBy": {
+              "en": 99.43,
+              "ar": 95.12
+            }
+          },
+          "transcript": {
+            "en": "A ministry wants every school's daily attendance: twenty thousand schools, many on 2G. Sent as JSON, that's hours of airtime every day. Is there a better way? Today: designing schemas and choosing formats for data that moves. A schema is the shape of your data: its tables, columns, types and rules. Apps want it normalised, each fact stored once, for safe updates. Reports want it built for reading: a star. In a star schema, a fact table holds the events, like one row per pupil per day. Dimension tables describe them: the school, the class, the date. Reports join and summarise it quickly. Then the format. CSV and JSON store row by row, and JSON repeats every column name, so it's more than twice the size. Column formats, like Parquet, store each column together, so repeated values squeeze to almost nothing. A school's term of attendance: twenty-five thousand records. As JSON over 2G, nearly five minutes. Compressed, about thirteen seconds. By column and compressed, about six kilobytes. Quick check! Why is JSON bigger than CSV for the same table? It repeats every column name in every record. CSV says the names once, in the header. Data arriving from outside must match your schema. Parse each value to its type, and count what doesn't fit, instead of crashing or guessing. In the app, choose how much data, the format and the network, and compress it or not. Find the cheapest way to send a school's term over 2G. Your turn. A report needs the average attendance per class over a whole year. Which format reads the least data? A column format: it reads only the columns it needs. Remember: normalise for apps, and use a star for reports. Formats change the cost: JSON repeats names, and columns squeeze out repeats. And check every row against the schema as it arrives. Try it tomorrow: save the same small table as CSV and as JSON, and compare the file sizes. Then compress both. Which wins, and why?",
+            "ar": "وزارة عايزة الحضور اليومي لكل مدرسة: عشرين ألف مدرسة، كتير منهم على 2G. ولو اتبعت JSON، ده ساعات من الرصيد كل يوم. فيه طريقة أحسن؟ النهارده: تصميم المخططات واختيار الصيغ للبيانات اللي بتتنقل. المخطط هو شكل بياناتك: جداولها، وأعمدتها، وأنواعها، وقواعدها. التطبيقات عايزاه مطبّع، كل معلومة متخزّنة مرة، علشان التحديث يبقى آمن. والتقارير عايزاه متبني للقراية: على شكل نجمة. في المخطط النجمي، جدول الحقائق فيه الأحداث، زي صف لكل تلميذ في كل يوم. وجداول الأبعاد بتوصفها: المدرسة، والفصل، والتاريخ. والتقارير بتربطه وتلخّصه بسرعة. وبعدين الصيغة. CSV وJSON بيخزّنوا صف ورا صف، وJSON بيكرر اسم كل عمود، فحجمه بيبقى أكتر من الضعف. أما صيغ الأعمدة، زي Parquet، فبتخزّن كل عمود مع بعضه، فالقيم المتكررة بتتعصر لحاجة تقريبًا مش موجودة. حضور ترم لمدرسة: خمسة وعشرين ألف سجل. بصيغة JSON على 2G، حوالي خمس دقايق. ومضغوط، حوالي تلاتاشر ثانية. وبالأعمدة ومضغوط، حوالي ستة كيلوبايت. سؤال سريع! ليه JSON أكبر من CSV لنفس الجدول؟ بيكرر اسم كل عمود في كل سجل. أما CSV فبيقول الأسامي مرة واحدة، في أول سطر. البيانات اللي جاية من برّه لازم تطابق المخطط بتاعك. حوّل كل قيمة لنوعها، وعِدّ اللي ما ينفعش، بدل ما البرنامج يقع أو يخمّن. في التطبيق، اختار كمية البيانات، والصيغة، والشبكة، واضغطها أو لأ. ودوّر على أرخص طريقة تبعت بيها ترم مدرسة على 2G. دورك. تقرير محتاج متوسط الحضور لكل فصل على مدار سنة كاملة. أنهي صيغة بتقرا أقل بيانات؟ صيغة بالأعمدة: بتقرا الأعمدة اللي محتاجاها بس. افتكر: طبّع للتطبيقات، واستخدم النجمة للتقارير. والصيغة بتغيّر التكلفة: JSON بيكرر الأسامي، والأعمدة بتعصر التكرار. وافحص كل صف على المخطط وهو داخل. جرّبها بكرة: احفظ نفس الجدول الصغير CSV وJSON، وقارن حجم الملفين. وبعدين اضغط الاتنين. مين كسب، وليه؟"
+          },
+          "sources": {
+            "en": "/media/data-s4-1/video-en.mp4",
+            "ar": "/media/data-s4-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-s4-1/captions-en.vtt",
+            "ar": "/media/data-s4-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-s4-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-s4-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-s4-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-s4-1/light/audio/en.opus",
+              "manifest.json": "/media/data-s4-1/light/manifest.json",
+              "scenes.json": "/media/data-s4-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-s4-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-s4-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 386,
+              "ar": 366
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Schemas, stars and columns",
+            "ar": "المخطّطات والنجوم والأعمدة"
+          },
+          "body": {
+            "en": "A schema is the shape of your data: its tables, columns, types and rules. What it should look like depends on the job. Apps that update data all day want it normalised: each fact stored once, in tables linked by keys, so an update happens in one place and copies can’t disagree. Reports that read millions of rows want it shaped for reading.\n\nThat’s a star schema. A fact table in the middle holds the events, such as one row per pupil per school day, with keys and measures (present: 1 or 0). Dimension tables around it describe the events: the school (name, region), the class, the date (day, week, term). A report joins the fact table to the dimensions it needs and summarises: attendance by region by month. Names live in the dimensions, so the huge fact table holds only small numbers.\n\nThen choose a format. CSV and JSON store row by row; JSON repeats every column’s name in every record, so the same facts often take more than twice the space. Column formats, such as Parquet, store each column together, so a query reads only the columns it needs, and repeated values (the same date for 420 pupils) compress to almost nothing. A school’s term of attendance, 25,200 records, takes nearly 5 minutes to send as JSON over 2G; compressed, about 13 seconds; by column and compressed, about 6 KB. Across 20,000 schools, the format is the difference between hours of airtime and almost none.\n\nData arriving from outside must match your schema. Parse each value to its type, check it against the rules, and count the rows that don’t fit, with a reason, instead of crashing on the first bad row or silently guessing. A report of “9,996 rows loaded, 4 rejected: pupil not a number (2), present not 0 or 1 (2)” is a schema doing its job.",
+            "ar": "المخطّط شكل بياناتك: جداولها، وأعمدتها، وأنواعها، وقواعدها. وشكله المناسب يتوقّف على المهمة. فالتطبيقات التي تحدّث البيانات طوال اليوم تريدها مطبَّعة: كل معلومة محفوظة مرة واحدة، في جداول تربطها المفاتيح، فيحدث التحديث في مكان واحد ولا تختلف النسخ. أما التقارير التي تقرأ ملايين الصفوف فتريدها مصمّمة للقراءة.\n\nوهذا هو المخطّط النجمي. فجدول الحقائق في الوسط يحمل الأحداث، كصف لكل تلميذ في كل يوم دراسي، بمفاتيح ومقاييس (الحضور: ١ أو ٠). وحوله جداول الأبعاد التي تصف الأحداث: المدرسة (الاسم، والمنطقة)، والصف، والتاريخ (اليوم، والأسبوع، والفصل الدراسي). ويربط التقرير جدول الحقائق بالأبعاد التي يحتاج إليها ويلخّص: الحضور حسب المنطقة وحسب الشهر. والأسماء تعيش في الأبعاد، فلا يحمل جدول الحقائق الضخم إلا أعدادًا صغيرة.\n\nثم اختر الصيغة. فـ CSV وJSON تحفظان صفًّا صفًّا، ويكرّر JSON اسم كل عمود في كل سجلّ، فتأخذ الحقائق نفسها غالبًا أكثر من ضعف المساحة. أما الصيغ بالأعمدة، مثل Parquet، فتحفظ كل عمود معًا، فلا يقرأ الاستعلام إلا الأعمدة التي يحتاج إليها، والقيم المكرّرة (التاريخ نفسه لـ ٤٢٠ تلميذًا) تنضغط إلى ما يقارب لا شيء. فحضور فصل دراسي لمدرسة، أي ٢٥٢٠٠ سجلّ، يستغرق قرابة ٥ دقائق ليُرسَل بصيغة JSON على الجيل الثاني، ومضغوطًا نحو ١٣ ثانية، وبالأعمدة مضغوطًا نحو ٦ كيلوبايت. وعلى ٢٠٠٠٠ مدرسة تكون الصيغة الفرق بين ساعات من رصيد الاتصال وما يقارب لا شيء.\n\nوالبيانات القادمة من الخارج يجب أن تطابق مخطّطك. فحلّل كل قيمة إلى نوعها، وافحصها وفق القواعد، واعدد الصفوف التي لا تطابق مع السبب، بدل التوقّف عند أول صف معيب أو التخمين بصمت. فتقرير مثل «حُمّل ٩٩٩٦ صفًّا، ورُفض ٤: رقم التلميذ ليس عددًا (٢)، والحضور ليس ٠ أو ١ (٢)» هو مخطّط يؤدي عمله."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Normalised schema",
+                "ar": "المخطّط المطبَّع"
+              },
+              "def": {
+                "en": "Each fact stored once, in tables linked by keys: safe updates for apps.",
+                "ar": "كل معلومة محفوظة مرة واحدة في جداول تربطها المفاتيح: تحديثات آمنة للتطبيقات."
+              }
+            },
+            {
+              "term": {
+                "en": "Star schema",
+                "ar": "المخطّط النجمي"
+              },
+              "def": {
+                "en": "A fact table of events in the middle, with dimension tables that describe them: fast reports.",
+                "ar": "جدول حقائق للأحداث في الوسط، وحوله جداول أبعاد تصفها: تقارير سريعة."
+              }
+            },
+            {
+              "term": {
+                "en": "Column format",
+                "ar": "الصيغة بالأعمدة"
+              },
+              "def": {
+                "en": "Stores each column together (such as Parquet), so queries read only what they need and repeats compress well.",
+                "ar": "تحفظ كل عمود معًا (مثل Parquet)، فلا تقرأ الاستعلامات إلا ما تحتاج إليه، وينضغط التكرار جيدًا."
+              }
+            },
+            {
+              "term": {
+                "en": "Schema validation",
+                "ar": "التحقّق من المخطّط"
+              },
+              "def": {
+                "en": "Checking each incoming row’s types and rules, and counting the rows that don’t fit.",
+                "ar": "فحص أنواع كل صف قادم وقواعده، وعدّ الصفوف التي لا تطابق."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A report needs the average attendance per class over a year. Which format reads the least data?",
+            "ar": "تقرير يحتاج إلى متوسط الحضور لكل صف على مدى سنة. أيّ صيغة تقرأ أقل قدر من البيانات؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A column format: it reads only the columns it needs",
+                "ar": "صيغة بالأعمدة: تقرأ الأعمدة التي تحتاج إليها فقط"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "JSON, because it’s readable",
+                "ar": "JSON، لأنه مقروء"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "One uncompressed CSV file per day",
+                "ar": "ملف CSV غير مضغوط لكل يوم"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The query needs only the class and the status. A column format stores each column together, so it reads just those two, compressed; row formats must read every column of every row.",
+            "ar": "لا يحتاج الاستعلام إلا إلى الصف والحالة. والصيغة بالأعمدة تحفظ كل عمود معًا، فتقرأ هذين العمودين فقط، مضغوطين، أما صيغ الصفوف فيجب أن تقرأ كل أعمدة كل صف."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p2",
+          "prompt": {
+            "en": "Match each piece to its job.",
+            "ar": "صِل كل جزء بعمله."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Normalised schema",
+                "ar": "المخطّط المطبَّع"
+              },
+              "right": {
+                "en": "An app that updates data all day",
+                "ar": "تطبيق يحدّث البيانات طوال اليوم"
+              }
+            },
+            {
+              "left": {
+                "en": "Star schema",
+                "ar": "المخطّط النجمي"
+              },
+              "right": {
+                "en": "Reports over millions of rows",
+                "ar": "تقارير على ملايين الصفوف"
+              }
+            },
+            {
+              "left": {
+                "en": "Fact table",
+                "ar": "جدول الحقائق"
+              },
+              "right": {
+                "en": "One row per pupil per school day",
+                "ar": "صف لكل تلميذ في كل يوم دراسي"
+              }
+            },
+            {
+              "left": {
+                "en": "Dimension table",
+                "ar": "جدول الأبعاد"
+              },
+              "right": {
+                "en": "Each school’s name and region",
+                "ar": "اسم كل مدرسة ومنطقتها"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Normalise for writing, use a star for reading. In a star, the fact table holds the many small events and the dimensions hold the descriptions, once each.",
+            "ar": "طبّع من أجل الكتابة، واستعمل النجمة من أجل القراءة. ففي النجمة يحمل جدول الحقائق الأحداث الصغيرة الكثيرة، وتحمل الأبعاد الأوصاف، مرة واحدة لكلٍّ منها."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "p3",
+          "prompt": {
+            "en": "One attendance record, as JSON and as a CSV line. What does this program print?",
+            "ar": "سجلّ حضور واحد بصيغة JSON وسطرًا بصيغة CSV. ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "import json\nrow = {\"date\": \"2026-03-02\", \"class\": \"5A\", \"pupil\": 17, \"present\": 1}\nprint(len(json.dumps(row)), len(\"2026-03-02,5A,17,1\"))"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "64 18",
+                "ar": "64 18"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "18 64",
+                "ar": "18 64"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "18 18",
+                "ar": "18 18"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The JSON record spells out every column’s name with quotes, colons and spaces: 64 characters. The CSV line is just the values: 18. The names go once in the CSV header, not in every record.",
+            "ar": "يكتب سجلّ JSON اسم كل عمود بعلامات التنصيص والنقطتين والمسافات: ٦٤ حرفًا. أما سطر CSV فليس إلا القيم: ١٨. فالأسماء تُكتب مرة واحدة في عناوين CSV، لا في كل سجلّ."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: choose “A school, a term” and 2G. Find the cheapest of the six ways to send it, and the most expensive. How many times smaller is the cheapest? Then imagine 20,000 schools sending it every term.",
+            "ar": "جرّب: اختر «مدرسة، فصل دراسي» وشبكة الجيل الثاني. وجد أرخص الطرق الست لإرساله، وأغلاها. كم مرة يصغر الأرخص؟ ثم تخيّل ٢٠٠٠٠ مدرسة ترسله كل فصل دراسي."
+          },
+          "tool": "formats"
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "attendance.csv must match the schema: pupil is a whole number, and present is 0 or 1. valid(row) only checks the pupil so far. Add the check for present, so the program prints 6 good rows and 4 bad.",
+            "ar": "يجب أن يطابق attendance.csv المخطّط: pupil عدد صحيح، وpresent يساوي 0 أو 1. ولا تفحص ⁦valid(row)⁩ حتى الآن إلا رقم التلميذ. أضف فحص present، ليطبع البرنامج ٦ صفوف سليمة و٤ معيبة."
+          },
+          "starter": "import csv\ndef valid(row):\n    if not row[\"pupil\"].isdigit():\n        return False\n    return True\ncounts = {True: 0, False: 0}\nwith open(\"attendance.csv\") as f:\n    for row in csv.DictReader(f):\n        counts[valid(row)] += 1\nprint(counts[True], counts[False])\n",
+          "solution": "import csv\ndef valid(row):\n    if not row[\"pupil\"].isdigit():\n        return False\n    if row[\"present\"] not in (\"0\", \"1\"):\n        return False\n    return True\ncounts = {True: 0, False: 0}\nwith open(\"attendance.csv\") as f:\n    for row in csv.DictReader(f):\n        counts[valid(row)] += 1\nprint(counts[True], counts[False])\n",
+          "tests": [
+            {
+              "output": "6 4",
+              "hint": {
+                "en": "“yes” and “2” are not allowed values for present.",
+                "ar": "«yes» و«2» ليستا قيمتين مسموحًا بهما لـ present."
+              }
+            },
+            {
+              "check": "assert valid({\"date\": \"2026-03-02\", \"class\": \"5A\", \"pupil\": \"3\", \"present\": \"Y\"}) == False, \"present must be 0 or 1\""
+            }
+          ],
+          "files": [
+            {
+              "name": "attendance.csv",
+              "text": "date,class,pupil,present\n2026-03-02,5A,1,1\n2026-03-02,5A,2,0\n2026-03-02,5A,x7,1\n2026-03-02,5A,4,yes\n2026-03-02,5B,5,1\n2026-03-02,5B,,1\n2026-03-02,5B,7,2\n2026-03-02,5B,8,1\n2026-03-02,6A,9,0\n2026-03-02,6A,10,1\n"
+            }
+          ],
+          "hints": [
+            {
+              "en": "Add a second if before return True.",
+              "ar": "أضف if ثانية قبل ⁦return True⁩."
+            },
+            {
+              "en": "if row[\"present\"] not in (\"0\", \"1\"): return False",
+              "ar": "⁦if row[\"present\"] not in (\"0\", \"1\"): return False⁩"
+            }
+          ],
+          "explain": {
+            "en": "Each rule is one check that returns False. Two rows break the pupil rule (“x7” and an empty one) and two break the present rule (“yes” and “2”): 6 good, 4 bad, counted rather than crashing or guessing.",
+            "ar": "كل قاعدة فحص واحد يعيد False. صفّان يخالفان قاعدة التلميذ («x7» وصف فارغ)، وصفّان يخالفان قاعدة الحضور («yes» و«2»): ٦ سليمة و٤ معيبة، تُعدّ بدل التوقّف أو التخمين."
+          }
+        },
+        {
+          "type": "parsons",
+          "id": "p5",
+          "lang": "sql",
+          "prompt": {
+            "en": "Put the lines in order to create the star schema’s fact table, with its columns in this order: date_id, school_id, pupil_id, present.",
+            "ar": "رتّب الأسطر لإنشاء جدول الحقائق في المخطّط النجمي، بأعمدته بهذا الترتيب: date_id، ثم school_id، ثم pupil_id، ثم present."
+          },
+          "lines": [
+            "CREATE TABLE attendance_fact (",
+            "    date_id INTEGER REFERENCES dates(id),",
+            "    school_id INTEGER REFERENCES schools(id),",
+            "    pupil_id INTEGER REFERENCES pupils(id),",
+            "    present INTEGER",
+            ");"
+          ],
+          "distractors": [
+            "    school_name TEXT,"
+          ],
+          "explain": {
+            "en": "The fact table holds keys to its dimensions and one small measure per event. The school’s name lives once in the schools dimension; repeating it in billions of fact rows would waste space and drift.",
+            "ar": "يحمل جدول الحقائق مفاتيح أبعاده ومقياسًا صغيرًا واحدًا لكل حدث. أما اسم المدرسة فيعيش مرة واحدة في بُعد المدارس، وتكراره في مليارات صفوف الحقائق يهدر المساحة ويُحدث اختلافًا."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p6",
+          "prompt": {
+            "en": "A column format can work out average attendance per class while reading only the class and present columns.",
+            "ar": "تستطيع الصيغة بالأعمدة حساب متوسط الحضور لكل صف وهي لا تقرأ إلا عمودَي الصف والحضور."
+          },
+          "answer": true,
+          "explain": {
+            "en": "That’s the point of storing by column: a query reads the columns it needs and skips the rest, and each column compresses well because its values are alike.",
+            "ar": "هذه فائدة الحفظ بالأعمدة: يقرأ الاستعلام الأعمدة التي يحتاج إليها ويتخطّى الباقي، وينضغط كل عمود جيدًا لأن قيمه متشابهة."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of data you send or receive often (photos, messages, school results). What format is it in, and what does that cost on a slow or paid connection?",
+            "ar": "فكّر في بيانات ترسلها أو تستقبلها كثيرًا (صور، ورسائل، ونتائج مدرسية). بأيّ صيغة هي، وكم يكلّف ذلك على اتصال بطيء أو مدفوع؟"
+          },
+          "placeholder": {
+            "en": "For example: “Our school sends results as a big spreadsheet by email; as compressed CSV it would be a fraction of the size.”",
+            "ar": "مثلًا: «ترسل مدرستنا النتائج جدول بيانات كبيرًا بالبريد، وبصيغة CSV مضغوطة سيكون جزءًا صغيرًا من حجمه.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Size it and shape it",
+            "ar": "مشروع: قِس حجمه وصمّم شكله"
+          },
+          "task": {
+            "en": "Take a small table you can make up, such as a week of attendance for one class (one row per pupil per day). Save it as CSV and as JSON (by hand, in a spreadsheet or with Python’s csv and json modules), compress both, and record the four sizes. Then sketch a star schema for a whole district’s attendance: the fact table, three dimension tables and their keys. Explain which format you’d use to send it from schools on 2G, and why.",
+            "ar": "خذ جدولًا صغيرًا تستطيع تخيّله، كحضور صف واحد لأسبوع (صف لكل تلميذ في كل يوم). واحفظه بصيغة CSV وبصيغة JSON (باليد، أو في جدول بيانات، أو بوحدتي csv وjson في Python)، واضغطهما، وسجّل الأحجام الأربعة. ثم ارسم مخطّطًا نجميًا لحضور إدارة تعليمية كاملة: جدول الحقائق، وثلاثة جداول أبعاد ومفاتيحها. واشرح أيّ صيغة ستستعملها لإرساله من مدارس على الجيل الثاني، ولماذا."
+          },
+          "deliverable": {
+            "en": "Your four file sizes, your star schema sketch, and two sentences on the format you chose and why.",
+            "ar": "أحجام ملفاتك الأربعة، ورسم مخطّطك النجمي، وجملتان عن الصيغة التي اخترتها ولماذا."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "The four sizes are measured and compared fairly.",
+                "ar": "قيست الأحجام الأربعة وقورنت مقارنة عادلة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "The star schema has a fact table with keys to its dimensions.",
+                "ar": "في المخطّط النجمي جدول حقائق بمفاتيح إلى أبعاده."
+              }
+            },
+            {
+              "criterion": {
+                "en": "The format choice is justified by size, speed or cost.",
+                "ar": "اختيار الصيغة مبرّر بالحجم أو السرعة أو الكلفة."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Schemas and formats",
+            "ar": "المخطّطات والصيغ"
+          },
+          "note": {
+            "en": "Data engineering · Level 4 · Lesson 1",
+            "ar": "هندسة البيانات، المستوى ٤، الدرس ١"
+          },
+          "narration": {
+            "en": "20,000 schools on 2G, sending attendance every day. Which format?",
+            "ar": "٢٠٠٠٠ مدرسة على الجيل الثاني، ترسل الحضور كل يوم. بأيّ صيغة؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Choose a schema: normalised for apps, a star for reports.",
+              "Compare row and column formats and compression.",
+              "Parse and type a CSV, counting rows that break the schema."
+            ],
+            "ar": [
+              "تختار المخطّط: مطبَّعًا للتطبيقات، ونجميًا للتقارير.",
+              "تقارن صيغ الصفوف والأعمدة والضغط.",
+              "تحلّل ملف CSV وتحدّد أنواعه، وتعدّ الصفوف المخالفة للمخطّط."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "Normalise for writes; star for reads.",
+              "JSON repeats names; columns squeeze out repeats.",
+              "Count what doesn’t fit, with a reason."
+            ],
+            "ar": [
+              "طبّع للكتابة، والنجمة للقراءة.",
+              "JSON يكرّر الأسماء، والأعمدة تعصر التكرار.",
+              "اعدد ما لا يطابق، مع السبب."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Size it on paper",
+            "ar": "قِس الحجم على الورق"
+          },
+          "bullets": {
+            "en": [
+              "Write (4 min): three records, two ways",
+              "Scale (4 min): a term, a district",
+              "Star (6 min): sketch the schema",
+              "Decide (3 min): which format?"
+            ],
+            "ar": [
+              "الكتابة (٤ دقائق): ثلاثة سجلّات بطريقتين",
+              "التكبير (٤ دقائق): فصل دراسي، وإدارة",
+              "النجمة (٦ دقائق): ارسم المخطّط",
+              "القرار (٣ دقائق): أيّ صيغة؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Write (4 min): Write three attendance records as CSV lines and as JSON objects, and count the characters of each.",
+              "Scale (4 min): Multiply up to 25,200 records a school and 20,000 schools. How many megabytes is each format?",
+              "Star (6 min): Sketch a fact table and three dimensions for district attendance, with their keys.",
+              "Decide (3 min): Choose a format for sending and one for storing, and say why."
+            ],
+            "ar": [
+              "الكتابة (٤ دقائق): اكتب ثلاثة سجلّات حضور سطورًا بصيغة CSV وكائنات بصيغة JSON، واعدد أحرف كلٍّ منها.",
+              "التكبير (٤ دقائق): اضرب حتى ٢٥٢٠٠ سجلّ للمدرسة و٢٠٠٠٠ مدرسة. كم ميغابايت لكل صيغة؟",
+              "النجمة (٦ دقائق): ارسم جدول حقائق وثلاثة أبعاد لحضور الإدارة، بمفاتيحها.",
+              "القرار (٣ دقائق): اختر صيغة للإرسال وأخرى للحفظ، وقل لماذا."
+            ]
+          },
+          "note": {
+            "en": "Use made-up records. The point is the ratio between formats, not the exact bytes.",
+            "ar": "استعمل سجلّات خيالية. فالمهم النسبة بين الصيغ، لا عدد البايتات بالضبط."
+          },
+          "narration": {
+            "en": "Same facts, different shapes: how much does each cost?",
+            "ar": "الحقائق نفسها بأشكال مختلفة: كم يكلّف كلٌّ منها؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why does a star schema keep names out of the fact table?",
+              "When would you still choose JSON?",
+              "What should happen to a row that breaks the schema?"
+            ],
+            "ar": [
+              "لماذا يُبعد المخطّط النجمي الأسماء عن جدول الحقائق؟",
+              "متى قد تختار JSON مع ذلك؟",
+              "ماذا يجب أن يحدث لصف يخالف المخطّط؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name one table in a star schema for school attendance, and whether it’s a fact or a dimension."
+            ],
+            "ar": [
+              "سمِّ جدولًا واحدًا في مخطّط نجمي لحضور المدارس، وهل هو جدول حقائق أم بُعد."
+            ]
+          },
+          "narration": {
+            "en": "The format is the price: choose it on purpose.",
+            "ar": "الصيغة هي السعر: فاخترها عن قصد."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Schemas and formats",
+            "ar": "شرائح للمراجعة: المخطّطات والصيغ"
+          },
+          "pages": 6,
+          "base": "data-s4-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Schemas and formats",
+            "ar": "ورقة النشاط: المخطّطات والصيغ"
+          },
+          "pages": 3,
+          "base": "data-s4-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-s4-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.1",
+        "DATA.3",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "data-s4-2",
+      "title": {
+        "en": "ETL with Python and SQL",
+        "ar": "الاستخراج والتحويل والتحميل بلغتي Python وSQL"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Think of a job you repeat, like backing up your phone’s photos. What happens if it runs twice, or stops halfway? Redesign it so a rerun is always safe.",
+        "ar": "فكّر في مهمة تكرّرها، كنسخ صور هاتفك احتياطيًا. ماذا يحدث إن عملت مرتين، أو توقّفت في منتصفها؟ وأعد تصميمها لتكون إعادة تشغيلها آمنة دائمًا."
+      },
+      "materials": {
+        "en": [
+          "Your phone or a computer, for the Python and SQL steps",
+          "Paper, to sketch a pipeline"
+        ],
+        "ar": [
+          "هاتفك أو حاسوب، لخطوات Python وSQL",
+          "ورقة، لرسم خط بيانات"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "ETL with Python and SQL",
+            "ar": "الاستخراج والتحويل والتحميل بلغتي Python وSQL"
+          },
+          "src": null,
+          "duration": 181,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "152 out of 90",
+                "ar": "١٥٢ من ٩٠"
+              }
+            },
+            {
+              "at": 23.6,
+              "atBy": {
+                "en": 23.6,
+                "ar": 21
+              },
+              "label": {
+                "en": "ETL",
+                "ar": "ETL"
+              }
+            },
+            {
+              "at": 44.9,
+              "atBy": {
+                "en": 44.9,
+                "ar": 43
+              },
+              "label": {
+                "en": "Transform in Python",
+                "ar": "التحويل بلغة Python"
+              }
+            },
+            {
+              "at": 57,
+              "atBy": {
+                "en": 57,
+                "ar": 52.9
+              },
+              "label": {
+                "en": "Idempotent loads",
+                "ar": "التحميل متساوي الأثر"
+              }
+            },
+            {
+              "at": 93.9,
+              "atBy": {
+                "en": 93.9,
+                "ar": 88.6
+              },
+              "label": {
+                "en": "Incremental loads",
+                "ar": "التحميل التزايدي"
+              }
+            },
+            {
+              "at": 106.6,
+              "atBy": {
+                "en": 106.6,
+                "ar": 100.3
+              },
+              "label": {
+                "en": "Retries and logs",
+                "ar": "إعادة المحاولة والسجلّات"
+              }
+            },
+            {
+              "at": 124.3,
+              "atBy": {
+                "en": 124.3,
+                "ar": 117.8
+              },
+              "label": {
+                "en": "The lab",
+                "ar": "المختبر"
+              }
+            },
+            {
+              "at": 144.7,
+              "atBy": {
+                "en": 144.7,
+                "ar": 136
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 84.67,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A load appends rows, fails halfway, and is run again. What happens?",
+                "ar": "تحميل يضيف الصفوف، فشل في منتصفه، ثم شُغّل من جديد. ماذا يحدث؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "The rows loaded before the failure are counted twice",
+                    "ar": "تُعدّ الصفوف التي حُمّلت قبل الفشل مرتين"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Nothing: databases ignore copies",
+                    "ar": "لا شيء: قواعد البيانات تتجاهل النسخ"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "The second run fails too",
+                    "ar": "يفشل التشغيل الثاني أيضًا"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "Appending again writes the rows loaded before the failure a second time, unless the load is idempotent. That’s how 90 pupils became 152.",
+                "ar": "الإضافة مرة أخرى تكتب الصفوف التي حُمّلت قبل الفشل مرة ثانية، ما لم يكن التحميل متساوي الأثر. وهكذا صار ٩٠ تلميذًا ١٥٢."
+              }
+            },
+            "atBy": {
+              "en": 84.67,
+              "ar": 79.3
+            }
+          },
+          "transcript": {
+            "en": "The district dashboard said a hundred and fifty-two pupils came to our partner school on Monday. The school has ninety. The pipeline had failed, retried, and loaded two classes twice. Today: building extract, transform and load in Python and SQL, safe to run again. Extract reads raw data from its sources: files, forms, other databases. Transform cleans, types and reshapes it. Load writes it into the tables people query. Some teams load first and transform inside the database: that's ELT. Here's a transform in Python. Read the raw register, count the present pupils per class, and print one clean line for each class, in a fixed order. Loads must be idempotent: running them twice gives the same result as once. Delete the day's rows, then insert them again. Or use an upsert, which inserts new rows and updates the ones already there. Quick check! A load appends rows, fails halfway, and is run again. What happens? The rows loaded before the failure go in twice. That's exactly how ninety pupils became a hundred and fifty-two. Big sources aren't reloaded every night. An incremental load takes only what's new since the last run, using a watermark: the latest time already loaded. Runs fail, so retry passing faults automatically, and stop on bad data. Log every run: when, how many rows in and out, and what was set aside. The log is how you find out before the dashboard does. In the app, make a step fail and retry. Appending double-counts; replacing the day's rows stays at ninety however often it runs. Your turn. Which of these loads is idempotent? Delete, then insert: the same answer every time. Remember: extract, transform, load, or ELT. Make loads idempotent, with replace or upsert. Load incrementally with a watermark, and log every run. Try it tomorrow: think of a job you repeat, like backing up your phone's photos. What happens if it runs twice, or stops halfway? Redesign it so a rerun is always safe.",
+            "ar": "لوحة الإدارة قالت إن مية اتنين وخمسين تلميذ حضروا في المدرسة الشريكة لينا يوم الاتنين. والمدرسة فيها تسعين. خط البيانات كان فشل، وأعاد المحاولة، وحمّل فصلين مرتين. النهارده: نبني الاستخراج والتحويل والتحميل ببايثون وSQL، وآمن لو اتعاد. الاستخراج بيقرا البيانات الخام من مصادرها: ملفات، واستمارات، وقواعد بيانات تانية. والتحويل بينضّفها، ويحدد أنواعها، ويعيد تشكيلها. والتحميل بيكتبها في الجداول اللي الناس بتسأل منها. وفيه فرق بتحمّل الأول وتحوّل جوه قاعدة البيانات: ودي اسمها ELT. ده تحويل ببايثون. اقرا الكشف الخام، وعِدّ الحاضرين لكل فصل، واطبع سطر نضيف لكل فصل، بترتيب ثابت. التحميل لازم يبقى ثابت النتيجة: تشغيله مرتين يدّي نفس نتيجة مرة. امسح صفوف اليوم، وبعدين ضيفها تاني. أو استخدم upsert، اللي بيضيف الصفوف الجديدة ويحدّث الموجودة. سؤال سريع! تحميل بيضيف صفوف، فشل في النص، واتشغّل تاني. إيه اللي بيحصل؟ الصفوف اللي اتحمّلت قبل الفشل بتدخل مرتين. وده بالظبط اللي خلّى التسعين تلميذ يبقوا مية اتنين وخمسين. المصادر الكبيرة ما بتتحمّلش كلها كل ليلة. التحميل التزايدي بياخد الجديد بس من آخر تشغيل، باستخدام علامة ماية: آخر وقت اتحمّل فعلًا. التشغيلات بتفشل، فأعد المحاولة أوتوماتيك مع الأعطال العابرة، ووقّف مع البيانات الغلط. وسجّل كل تشغيل: إمتى، وكام صف دخل وخرج، وإيه اللي اتحط على جنب. والسجل هو اللي بيخلّيك تعرف قبل اللوحة ما تعرف. في التطبيق، خلّي خطوة تفشل وأعد المحاولة. الإضافة بتعدّ مرتين، واستبدال صفوف اليوم بيفضل تسعين مهما اشتغل. دورك. أنهي تحميل من دول ثابت النتيجة؟ امسح، وبعدين ضيف: نفس الإجابة كل مرة. افتكر: استخراج، وتحويل، وتحميل، أو ELT. خلّي التحميل ثابت النتيجة، بالاستبدال أو upsert. وحمّل تزايدي بعلامة ماية، وسجّل كل تشغيل. جرّبها بكرة: فكّر في حاجة بتكررها، زي إنك تاخد نسخة من صور موبايلك. إيه اللي بيحصل لو اشتغلت مرتين، أو وقفت في النص؟ وأعد تصميمها علشان الإعادة تبقى آمنة دايمًا."
+          },
+          "sources": {
+            "en": "/media/data-s4-2/video-en.mp4",
+            "ar": "/media/data-s4-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-s4-2/captions-en.vtt",
+            "ar": "/media/data-s4-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-s4-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-s4-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-s4-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-s4-2/light/audio/en.opus",
+              "manifest.json": "/media/data-s4-2/light/manifest.json",
+              "scenes.json": "/media/data-s4-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-s4-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-s4-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 389,
+              "ar": 367
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Extract, transform, load, safely",
+            "ar": "الاستخراج والتحويل والتحميل بأمان"
+          },
+          "body": {
+            "en": "Extract reads raw data from its sources: files, forms, APIs, other databases. Transform cleans, types and reshapes it: trim and normalise the codes, turn text into numbers, count or join. Load writes it into the tables people query. Some teams load the raw data first and transform it inside the database with SQL; that’s ELT. Either way, the steps run on a schedule, again and again.\n\nLoads must be idempotent: running them twice gives the same result as once. Pipelines fail halfway and get retried, and a load that only appends writes the first part twice: the district dashboard showed 152 pupils at a school of 90. Two safe patterns: delete the day’s rows and then insert them (in one transaction), or upsert, which inserts new rows and updates the ones already there by their key (in SQLite, INSERT … ON CONFLICT … DO UPDATE).\n\nBig sources aren’t reloaded every night. An incremental load takes only what’s new since the last run, using a watermark: the latest timestamp already loaded. Read the watermark, extract the newer rows, transform and load them, and only then save the new watermark. Save it too early, and a failed load loses those rows for good.\n\nRuns fail, so retry passing faults (a timeout, a dropped connection) automatically, a few times with a pause, and stop on bad data, setting the rows aside for a person. Log every run: when it started and ended, rows read, written and set aside, and why. The log, and an alert when a run fails or loads far fewer rows than usual, is how you find out before the dashboard’s readers do.",
+            "ar": "يقرأ الاستخراج البيانات الخام من مصادرها: ملفات، واستمارات، وواجهات برمجية، وقواعد بيانات أخرى. وينظّفها التحويل ويحدّد أنواعها ويعيد تشكيلها: يهذّب الرموز ويوحّدها، ويحوّل النصوص إلى أعداد، ويعدّ أو يربط. ويكتبها التحميل في الجداول التي يستعلم منها الناس. وبعض الفرق تحمّل البيانات الخام أولًا ثم تحوّلها داخل قاعدة البيانات بلغة SQL، وهذا يسمّى ELT. وفي الحالتين تعمل الخطوات وفق جدول زمني، مرة بعد مرة.\n\nويجب أن يكون التحميل متساوي الأثر: تشغيله مرتين يعطي النتيجة نفسها التي يعطيها تشغيله مرة. فخطوط البيانات تفشل في منتصفها وتُعاد محاولتها، والتحميل الذي يضيف فقط يكتب الجزء الأول مرتين: فأظهرت لوحة الإدارة ١٥٢ تلميذًا في مدرسة فيها ٩٠. وهناك نمطان آمنان: حذف صفوف اليوم ثم إدراجها (في معاملة واحدة)، أو الإدراج مع التحديث (upsert)، الذي يُدرج الصفوف الجديدة ويحدّث الموجودة بمفتاحها (في ⁦SQLite: INSERT⁩ … ⁦ON CONFLICT⁩ … ⁦DO UPDATE⁩).\n\nولا يُعاد تحميل المصادر الكبيرة كل ليلة. فالتحميل التزايدي يأخذ الجديد فقط منذ التشغيل الأخير، باستعمال علامة مائية: آخر وقت حُمّل بالفعل. فاقرأ العلامة، واستخرج الصفوف الأحدث منها، وحوّلها وحمّلها، وبعد ذلك فقط احفظ العلامة الجديدة. فإن حفظتها مبكرًا، ضاعت تلك الصفوف إلى الأبد إذا فشل التحميل.\n\nوالتشغيلات تفشل، فأعد محاولة الأخطاء العابرة (انتهاء المهلة، وانقطاع الاتصال) تلقائيًا، بضع مرات مع توقّف قصير، وتوقّف عند البيانات الخاطئة، واضعًا الصفوف جانبًا لشخص يراجعها. وسجّل كل تشغيل: متى بدأ وانتهى، والصفوف المقروءة والمكتوبة والموضوعة جانبًا، ولماذا. فالسجلّ، مع تنبيه حين يفشل تشغيل أو يحمّل صفوفًا أقل من المعتاد بكثير، هو طريقتك لتعرف قبل أن يعرف قرّاء اللوحة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "ETL and ELT",
+                "ar": "ETL وELT"
+              },
+              "def": {
+                "en": "Extract, transform, load; or load the raw data first and transform it inside the database.",
+                "ar": "استخراج ثم تحويل ثم تحميل، أو تحميل البيانات الخام أولًا وتحويلها داخل قاعدة البيانات."
+              }
+            },
+            {
+              "term": {
+                "en": "Idempotent load",
+                "ar": "التحميل متساوي الأثر"
+              },
+              "def": {
+                "en": "Gives the same table however many times it runs: delete-then-insert, or upsert.",
+                "ar": "يعطي الجدول نفسه مهما تكرّر تشغيله: حذف ثم إدراج، أو إدراج مع تحديث."
+              }
+            },
+            {
+              "term": {
+                "en": "Watermark",
+                "ar": "العلامة المائية"
+              },
+              "def": {
+                "en": "The latest timestamp already loaded; an incremental load takes only newer rows.",
+                "ar": "آخر وقت حُمّل بالفعل، ولا يأخذ التحميل التزايدي إلا الصفوف الأحدث منه."
+              }
+            },
+            {
+              "term": {
+                "en": "Run log",
+                "ar": "سجلّ التشغيل"
+              },
+              "def": {
+                "en": "Every run’s times, row counts and set-aside rows, with reasons.",
+                "ar": "أوقات كل تشغيل، وأعداد صفوفه، والصفوف الموضوعة جانبًا مع أسبابها."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Which load is idempotent?",
+            "ar": "أيّ تحميل متساوي الأثر؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Delete the day’s rows, then insert them",
+                "ar": "حذف صفوف اليوم ثم إدراجها"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Insert the day’s rows on every run",
+                "ar": "إدراج صفوف اليوم في كل تشغيل"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Insert, then remove duplicates by hand next week",
+                "ar": "الإدراج، ثم حذف المكرّر باليد الأسبوع القادم"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Clearing the day first means one run or five give the same table. Inserting on every run doubles it, and fixing by hand next week means a wrong dashboard all week.",
+            "ar": "مسح اليوم أولًا يعني أن تشغيلًا واحدًا أو خمسة تعطي الجدول نفسه. أما الإدراج في كل تشغيل فيضاعفه، والإصلاح باليد الأسبوع القادم يعني لوحة متابعة خاطئة طوال الأسبوع."
+          }
+        },
+        {
+          "type": "order",
+          "id": "p2",
+          "prompt": {
+            "en": "Put the steps of a nightly incremental load in order.",
+            "ar": "رتّب خطوات التحميل التزايدي الليلي."
+          },
+          "steps": [
+            {
+              "en": "Read the watermark: the last time loaded",
+              "ar": "اقرأ العلامة المائية: آخر وقت حُمّل"
+            },
+            {
+              "en": "Extract only the rows newer than it",
+              "ar": "استخرج الصفوف الأحدث منها فقط"
+            },
+            {
+              "en": "Transform: clean, type and count",
+              "ar": "حوّل: نظّف، وحدّد الأنواع، واعدد"
+            },
+            {
+              "en": "Load: delete the day’s rows, then insert",
+              "ar": "حمّل: احذف صفوف اليوم، ثم أدرج"
+            },
+            {
+              "en": "Save the new watermark and log the run",
+              "ar": "احفظ العلامة الجديدة وسجّل التشغيل"
+            }
+          ],
+          "explain": {
+            "en": "The watermark decides what to extract, so it comes first; it’s saved only after the load succeeds, so a failed run is simply repeated, and the delete-then-insert makes that repeat safe.",
+            "ar": "تقرّر العلامة المائية ما يُستخرج، فتأتي أولًا، ولا تُحفظ إلا بعد نجاح التحميل، فيُعاد التشغيل الفاشل ببساطة، ويجعل الحذف ثم الإدراج هذه الإعادة آمنة."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p3",
+          "lang": "python",
+          "prompt": {
+            "en": "The transform step. register.csv was typed by hand: some statuses are “ p” or “P ”, and one is “?”. Clean each status with strip() and upper(), count the P’s per class, set aside anything that isn’t P or A, and print: 5A 4, 5B 3, 6A 5, then aside 1.",
+            "ar": "خطوة التحويل. كُتب register.csv باليد: بعض الحالات «␣p» أو «P␣»، وواحدة «?». نظّف كل حالة بـ ⁦strip()⁩ و⁦upper()⁩، واعدد حرف P لكل صف، وضع جانبًا كل ما ليس P أو A، واطبع: ⁦5A 4⁩، و⁦5B 3⁩، و⁦6A 5⁩، ثم ⁦aside 1⁩."
+          },
+          "starter": "import csv\npresent, aside = {}, 0\nwith open(\"register.csv\") as f:\n    for row in csv.DictReader(f):\n        s = row[\"status\"]\n        if s == \"P\":\n            present[row[\"class\"]] = present.get(row[\"class\"], 0) + 1\nfor c in sorted(present):\n    print(c, present[c])\nprint(\"aside\", aside)\n",
+          "solution": "import csv\npresent, aside = {}, 0\nwith open(\"register.csv\") as f:\n    for row in csv.DictReader(f):\n        s = row[\"status\"].strip().upper()\n        if s not in (\"P\", \"A\"):\n            aside += 1\n        elif s == \"P\":\n            present[row[\"class\"]] = present.get(row[\"class\"], 0) + 1\nfor c in sorted(present):\n    print(c, present[c])\nprint(\"aside\", aside)\n",
+          "tests": [
+            {
+              "output": "5A 4\n5B 3\n6A 5\naside 1",
+              "hint": {
+                "en": "Clean the status before you compare it, and count what isn’t P or A.",
+                "ar": "نظّف الحالة قبل مقارنتها، واعدد ما ليس P أو A."
+              }
+            }
+          ],
+          "files": [
+            {
+              "name": "register.csv",
+              "text": "class,pupil,status\n5A,1,P\n5A,2, p\n5A,3,A\n5A,4,P\n5A,5,p\n5B,6,P\n5B,7,A\n5B,8,P\n5B,9,P \n6A,10,P\n6A,11,P\n6A,12,?\n6A,13,A\n6A,14,P\n6A,15,P\n6A,16,P\n"
+            }
+          ],
+          "hints": [
+            {
+              "en": "Run it first: 5A shows 2, because “ p” and “p” don’t equal “P”.",
+              "ar": "شغّله أولًا: يُظهر 5A الرقم 2، لأن «␣p» و«p» لا تساويان «P»."
+            },
+            {
+              "en": "s = row[\"status\"].strip().upper(), then if s not in (\"P\", \"A\"): aside += 1, elif s == \"P\": count it.",
+              "ar": "⁦s = row[\"status\"].strip().upper()⁩، ثم ⁦if s not in (\"P\", \"A\"): aside += 1⁩، و⁦elif s == \"P\"⁩: اعدده."
+            }
+          ],
+          "explain": {
+            "en": "Cleaning first turns “ p”, “p” and “P ” into P, so 5A has 4 present and 5B 3. The “?” is neither P nor A: it’s set aside to ask about, not counted as present or absent. sorted() keeps the output in a fixed order.",
+            "ar": "التنظيف أولًا يحوّل «␣p» و«p» و«P␣» إلى P، فيكون في ٥أ أربعة حاضرين وفي ٥ب ثلاثة. أما «?» فليست P ولا A: فتوضع جانبًا للسؤال عنها، ولا تُعدّ حضورًا ولا غيابًا. وتُبقي ⁦sorted()⁩ المخرجات بترتيب ثابت."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: with “Add the rows”, make Load fail, then Retry: how many pupils does the district’s table count? Switch to “Replace the day’s rows” and repeat, then press Run again twice. Finally make Transform fail: why does retrying not help?",
+            "ar": "جرّب: مع «أضف الصفوف»، اجعل «التحميل» يفشل، ثم «أعد المحاولة»: كم تلميذًا يعدّ جدول الإدارة؟ انتقل إلى «استبدل صفوف اليوم» وكرّر، ثم اضغط «شغّل مرة أخرى» مرتين. وأخيرًا اجعل «التحويل» يفشل: لماذا لا تفيد إعادة المحاولة؟"
+          },
+          "tool": "pipeline"
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "sql",
+          "prompt": {
+            "en": "Last night’s load failed after writing two of Monday’s classes into daily. Make the load idempotent: before inserting today’s rows, delete the Monday rows already in daily. The last line shows the totals per day: Fri 83 and Mon 84.",
+            "ar": "فشل تحميل البارحة بعد كتابة صفّين من صفوف الاثنين في daily. اجعل التحميل متساوي الأثر: قبل إدراج صفوف اليوم، احذف صفوف الاثنين الموجودة في daily. ويُظهر السطر الأخير المجاميع لكل يوم: Fri ‏83 وMon ‏84."
+          },
+          "setup": "CREATE TABLE today (day TEXT, class TEXT, present INTEGER);\nINSERT INTO today VALUES ('Mon', '5A', 28), ('Mon', '5B', 29), ('Mon', '6A', 27);\nCREATE TABLE daily (day TEXT, class TEXT, present INTEGER);\nINSERT INTO daily VALUES ('Fri', '5A', 27), ('Fri', '5B', 30), ('Fri', '6A', 26), ('Mon', '5A', 28), ('Mon', '5B', 29);",
+          "starter": "INSERT INTO daily SELECT * FROM today;\nSELECT day, SUM(present) FROM daily GROUP BY day ORDER BY day;",
+          "solution": "DELETE FROM daily WHERE day IN (SELECT day FROM today);\nINSERT INTO daily SELECT * FROM today;\nSELECT day, SUM(present) FROM daily GROUP BY day ORDER BY day;",
+          "hints": [
+            {
+              "en": "Run it: Monday says 141, because two classes are now in daily twice.",
+              "ar": "شغّله: يقول الاثنين ١٤١، لأن صفّين صارا في daily مرتين."
+            },
+            {
+              "en": "Start with DELETE FROM daily WHERE day = 'Mon'; (or WHERE day IN (SELECT day FROM today)).",
+              "ar": "ابدأ بالجملة ⁦DELETE FROM daily WHERE day = 'Mon'⁩، أو بشرط ⁦WHERE day IN (SELECT day FROM today)⁩."
+            }
+          ],
+          "explain": {
+            "en": "Deleting the day’s rows first clears what the failed run left, so the insert writes Monday exactly once: 84. Run the same three lines again and you still get 84: that’s idempotent. Friday, already loaded, isn’t touched.",
+            "ar": "حذف صفوف اليوم أولًا يمسح ما تركه التشغيل الفاشل، فيكتب الإدراج الاثنين مرة واحدة بالضبط: ٨٤. وشغّل الأسطر الثلاثة نفسها مرة أخرى تحصل على ٨٤ أيضًا: هذا هو التحميل متساوي الأثر. أما الجمعة المحمّلة مسبقًا فلا تُمَسّ."
+          }
+        },
+        {
+          "type": "parsons",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "Put the lines of an incremental load in order, so a failed load never loses rows.",
+            "ar": "رتّب أسطر التحميل التزايدي، لكي لا يُضيّع التحميل الفاشل أي صفوف أبدًا."
+          },
+          "lines": [
+            "watermark = read_watermark()",
+            "new = [r for r in rows if r[\"time\"] > watermark]",
+            "load(new)",
+            "save_watermark(max(r[\"time\"] for r in new))"
+          ],
+          "distractors": [
+            "new = rows"
+          ],
+          "explain": {
+            "en": "Read the watermark, keep only the newer rows, load them, and save the new watermark last. If load fails, the old watermark stays, so the next run picks the same rows up again. new = rows would reload everything every night.",
+            "ar": "اقرأ العلامة المائية، وأبقِ الصفوف الأحدث فقط، وحمّلها، واحفظ العلامة الجديدة أخيرًا. فإن فشل load بقيت العلامة القديمة، فيلتقط التشغيل التالي الصفوف نفسها مرة أخرى. أما ⁦new = rows⁩ فتعيد تحميل كل شيء كل ليلة."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p6",
+          "prompt": {
+            "en": "What should a pipeline’s run log record? Choose all that apply.",
+            "ar": "ماذا يجب أن يسجّل سجلّ تشغيل خط البيانات؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "When the run started and ended",
+                "ar": "متى بدأ التشغيل وانتهى"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "How many rows were read, written and set aside",
+                "ar": "كم صفًّا قُرئ وكُتب ووُضع جانبًا"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Why rows were set aside",
+                "ar": "لماذا وُضعت الصفوف جانبًا"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "A full copy of every pupil’s row",
+                "ar": "نسخة كاملة من صف كل تلميذ"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "Times, counts and reasons tell you what happened and where to look. Copying every row into the log doubles the data and spreads pupils’ details into one more place.",
+            "ar": "الأوقات والأعداد والأسباب تخبرك بما حدث وأين تبحث. أما نسخ كل صف في السجلّ فيضاعف البيانات وينشر بيانات التلاميذ في مكان إضافي."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of a job you or your family repeat on a schedule (a backup, a bill, a shopping list). What happens if it runs twice, or stops halfway?",
+            "ar": "فكّر في مهمة تكرّرها أنت أو أسرتك وفق جدول (نسخة احتياطية، أو فاتورة، أو قائمة تسوّق). ماذا يحدث إن تمّت مرتين، أو توقّفت في منتصفها؟"
+          },
+          "placeholder": {
+            "en": "For example: “If the photo backup runs twice, I get two copies of everything; it should skip photos it already has.”",
+            "ar": "مثلًا: «إن عمل النسخ الاحتياطي للصور مرتين حصلت على نسختين من كل شيء، والأصح أن يتخطّى الصور الموجودة.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A rerun-safe job",
+            "ar": "مشروع: مهمة آمنة عند إعادة التشغيل"
+          },
+          "task": {
+            "en": "Pick a repeated data job: a real one (a backup, a weekly results upload) or the school attendance pipeline from this lesson. Draw it as extract, transform and load. For each step, write what happens if it fails halfway and is run again. Redesign the load to be idempotent (delete-then-insert or upsert), add a watermark if the source is big, and write the five things its run log should record. If you can, build the transform and the load with the lesson’s Python and SQL.",
+            "ar": "اختر مهمة بيانات متكرّرة: حقيقية (نسخ احتياطي، أو رفع نتائج أسبوعي) أو خط بيانات الحضور المدرسي من هذا الدرس. وارسمها استخراجًا وتحويلًا وتحميلًا. واكتب لكل خطوة ماذا يحدث إن فشلت في منتصفها وأُعيد تشغيلها. وأعد تصميم التحميل ليكون متساوي الأثر (حذف ثم إدراج، أو إدراج مع تحديث)، وأضف علامة مائية إن كان المصدر كبيرًا، واكتب الأشياء الخمسة التي يجب أن يسجّلها سجلّ تشغيله. وإن استطعت، فابنِ التحويل والتحميل بلغتي Python وSQL من الدرس."
+          },
+          "deliverable": {
+            "en": "Your pipeline drawing with the failure notes, the redesigned load, and the five log fields.",
+            "ar": "رسم خط بياناتك مع ملاحظات الفشل، والتحميل المعاد تصميمه، وحقول السجلّ الخمسة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Every step says what a failure halfway would do.",
+                "ar": "تقول كل خطوة ماذا يفعل فشلها في المنتصف."
+              }
+            },
+            {
+              "criterion": {
+                "en": "The load is idempotent, and the watermark is saved after loading.",
+                "ar": "التحميل متساوي الأثر، والعلامة المائية تُحفظ بعد التحميل."
+              }
+            },
+            {
+              "criterion": {
+                "en": "The log records times, counts and reasons.",
+                "ar": "يسجّل السجلّ الأوقات والأعداد والأسباب."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "ETL with Python and SQL",
+            "ar": "الاستخراج والتحويل والتحميل بلغتي Python وSQL"
+          },
+          "note": {
+            "en": "Data engineering · Level 4 · Lesson 2",
+            "ar": "هندسة البيانات، المستوى ٤، الدرس ٢"
+          },
+          "narration": {
+            "en": "152 pupils at a school of 90. What did the pipeline do?",
+            "ar": "١٥٢ تلميذًا في مدرسة فيها ٩٠. ماذا فعل خط البيانات؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Build extract, transform, load.",
+              "Make loads idempotent: delete-then-insert, or upsert.",
+              "Load incrementally and log every run."
+            ],
+            "ar": [
+              "تبني الاستخراج والتحويل والتحميل.",
+              "تجعل التحميل متساوي الأثر: حذف ثم إدراج، أو إدراج مع تحديث.",
+              "تحمّل تزايديًا وتسجّل كل تشغيل."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "A rerun must give the same answer.",
+              "Save the watermark after the load.",
+              "Retry passing faults; set bad data aside."
+            ],
+            "ar": [
+              "يجب أن تعطي إعادة التشغيل الإجابة نفسها.",
+              "احفظ العلامة المائية بعد التحميل.",
+              "أعد محاولة الأخطاء العابرة، وضع البيانات الخاطئة جانبًا."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Break the pipeline",
+            "ar": "اكسر خط البيانات"
+          },
+          "bullets": {
+            "en": [
+              "Draw (4 min): ETL for attendance",
+              "Fail (5 min): stop it halfway",
+              "Fix (5 min): make it idempotent",
+              "Log (3 min): what would tell you?"
+            ],
+            "ar": [
+              "الرسم (٤ دقائق): ETL للحضور",
+              "الفشل (٥ دقائق): أوقفه في المنتصف",
+              "الإصلاح (٥ دقائق): اجعله متساوي الأثر",
+              "السجلّ (٣ دقائق): ما الذي سيخبرك؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Draw (4 min): Sketch the school attendance pipeline: sources, transform, district table, schedule.",
+              "Fail (5 min): For each step, write what’s left behind if it fails halfway, and what a plain rerun would do.",
+              "Fix (5 min): Rewrite the load as delete-then-insert or upsert, and decide where the watermark is saved.",
+              "Log (3 min): List what the run log needs so you’d spot last night’s failure in a minute."
+            ],
+            "ar": [
+              "الرسم (٤ دقائق): ارسم خط بيانات الحضور المدرسي: المصادر، والتحويل، وجدول الإدارة، والجدول الزمني.",
+              "الفشل (٥ دقائق): اكتب لكل خطوة ما يبقى إن فشلت في المنتصف، وماذا ستفعل إعادة التشغيل العادية.",
+              "الإصلاح (٥ دقائق): أعد كتابة التحميل حذفًا ثم إدراجًا أو إدراجًا مع تحديث، وقرّر أين تُحفظ العلامة المائية.",
+              "السجلّ (٣ دقائق): اكتب ما يحتاج إليه سجلّ التشغيل لتكتشف فشل البارحة في دقيقة."
+            ]
+          },
+          "note": {
+            "en": "The lab’s numbers (84 of 90, and 152 after a bad retry) make a good worked example.",
+            "ar": "أرقام المختبر (٨٤ من ٩٠، و١٥٢ بعد إعادة محاولة سيئة) مثال محلول جيد."
+          },
+          "narration": {
+            "en": "Break it halfway, then make the rerun safe.",
+            "ar": "اكسره في المنتصف، ثم اجعل إعادة التشغيل آمنة."
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why must the watermark be saved after the load?",
+              "When would you choose upsert over delete-then-insert?",
+              "Which failures should never be retried?"
+            ],
+            "ar": [
+              "لماذا يجب أن تُحفظ العلامة المائية بعد التحميل؟",
+              "متى تختار الإدراج مع التحديث بدل الحذف ثم الإدراج؟",
+              "أيّ الأخطاء يجب ألّا تُعاد محاولتها أبدًا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write the two SQL statements of an idempotent daily load."
+            ],
+            "ar": [
+              "اكتب جملتَي SQL لتحميل يومي متساوي الأثر."
+            ]
+          },
+          "narration": {
+            "en": "Make every load safe to run twice.",
+            "ar": "اجعل كل تحميل آمنًا إن عمل مرتين."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: ETL with Python and SQL",
+            "ar": "شرائح للمراجعة: الاستخراج والتحويل والتحميل بلغتي Python وSQL"
+          },
+          "pages": 6,
+          "base": "data-s4-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: ETL with Python and SQL",
+            "ar": "ورقة النشاط: الاستخراج والتحويل والتحميل بلغتي Python وSQL"
+          },
+          "pages": 3,
+          "base": "data-s4-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-s4-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.4",
+        "DATA.3",
+        "DC.3.4"
+      ]
+    },
+    {
+      "id": "data-s4-3",
+      "title": {
+        "en": "Data quality and contracts",
+        "ar": "جودة البيانات والعقود"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Write a data contract for a dataset you use, like your class timetable or a club’s results. List the columns, types and allowed values, and who fixes it when it’s wrong.",
+        "ar": "اكتب عقد بيانات لمجموعة بيانات تستعملها، كجدول حصصك أو نتائج نادٍ. واذكر الأعمدة والأنواع والقيم المسموح بها، ومن يصلحها حين تكون خاطئة."
+      },
+      "materials": {
+        "en": [
+          "Your phone or a computer, for the SQL and Python steps",
+          "Paper, for writing a contract"
+        ],
+        "ar": [
+          "هاتفك أو حاسوب، لخطوات SQL وPython",
+          "ورقة، لكتابة عقد"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Data quality and contracts",
+            "ar": "جودة البيانات والعقود"
+          },
+          "src": null,
+          "duration": 186,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Minus thirty millimetres",
+                "ar": "سالب ثلاثين مليمترًا"
+              }
+            },
+            {
+              "at": 19.7,
+              "atBy": {
+                "en": 19.7,
+                "ar": 17.5
+              },
+              "label": {
+                "en": "Sides of quality",
+                "ar": "جوانب الجودة"
+              }
+            },
+            {
+              "at": 36.8,
+              "atBy": {
+                "en": 36.8,
+                "ar": 33.8
+              },
+              "label": {
+                "en": "Tests as code",
+                "ar": "الاختبارات برمجةً"
+              }
+            },
+            {
+              "at": 50.6,
+              "atBy": {
+                "en": 50.6,
+                "ar": 46.4
+              },
+              "label": {
+                "en": "Data contracts",
+                "ar": "عقود البيانات"
+              }
+            },
+            {
+              "at": 90,
+              "atBy": {
+                "en": 90,
+                "ar": 84.5
+              },
+              "label": {
+                "en": "When a test fails",
+                "ar": "حين يفشل اختبار"
+              }
+            },
+            {
+              "at": 108.1,
+              "atBy": {
+                "en": 108.1,
+                "ar": 101.6
+              },
+              "label": {
+                "en": "Validating in Python",
+                "ar": "التحقّق بلغة Python"
+              }
+            },
+            {
+              "at": 121.6,
+              "atBy": {
+                "en": 121.6,
+                "ar": 112.8
+              },
+              "label": {
+                "en": "The lab",
+                "ar": "المختبر"
+              }
+            },
+            {
+              "at": 150.5,
+              "atBy": {
+                "en": 150.5,
+                "ar": 141.1
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 78.1,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Which test catches a mark for pupil 7, when there is no pupil 7?",
+                "ar": "أيّ اختبار يلتقط درجة للتلميذ ٧، ولا يوجد تلميذ رقمه ٧؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "A range test",
+                    "ar": "اختبار المدى"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "A referential integrity test",
+                    "ar": "اختبار سلامة المراجع"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "A freshness test",
+                    "ar": "اختبار الحداثة"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Every foreign key must point to a row that exists. The orphan mark fails the referential integrity test; a left join that finds NULL on the other side finds it.",
+                "ar": "يجب أن يشير كل مفتاح أجنبي إلى صف موجود. فالدرجة اليتيمة تفشل في اختبار سلامة المراجع، ويجدها ربط يساري يجد NULL في الجهة الأخرى."
+              }
+            },
+            "atBy": {
+              "en": 78.1,
+              "ar": 73.03
+            }
+          },
+          "transcript": {
+            "en": "A weather app showed minus thirty millimetres of rain at our school. Someone had typed a minus sign. It reached three other apps before anyone noticed. Today: data quality tests, contracts, and what to do when a test fails. Quality has several sides. Valid: the right type and range. Complete: nothing missing. Unique: no duplicates. Consistent: the tables agree. Timely: it arrived on time. Write each test as code that runs on every batch. In SQL, a test is a query that should return no rows: orphans, duplicates, values out of range. A data contract is an agreement between the team that produces data and the teams that use it. It names the columns, types and allowed values, how fresh the data must be, and who to call when it breaks. Quick check! Which test catches a mark for pupil seven, when there is no pupil seven? Referential integrity: every foreign key must point to a row that exists. A left join that finds NULL on the other side finds the orphans. Then decide what a failure does. Block the whole load when the problem is serious. Quarantine the bad rows when most of the batch is fine. Or alert and let it through, when a late report costs more than a slightly wrong one. In Python, check each row against the contract: is the mark a number, and in range? Collect the failures with their reasons, so the producer can fix them at the source. In the app, four weather clubs send daily batches with planted faults. Choose the checks and the action, and watch the rainfall report. Notice which faults no check catches. Your turn. A test fails on three rows out of ten thousand. Which response keeps the pipeline moving and the data honest? Quarantine them and alert the owner, so good data flows and the bad gets fixed. Remember: test quality as code, on every batch. Agree a contract with whoever produces the data. And choose block, quarantine or alert by what each failure costs. Try it tomorrow: write a data contract for a dataset you use, like your class timetable or a club's results. List the columns, types and allowed values, and who fixes it when it's wrong.",
+            "ar": "تطبيق طقس بيّن إن المطر في مدرستنا سالب تلاتين مليمتر. حد كان كتب علامة سالب بالغلط. ووصلت لتلات تطبيقات تانية قبل ما حد ياخد باله. النهارده: اختبارات جودة البيانات، والعقود، ونعمل إيه لما اختبار يفشل. الجودة ليها جوانب كتير. صالحة: النوع والمدى الصح. كاملة: مفيش حاجة ناقصة. فريدة: مفيش تكرار. متّسقة: الجداول متّفقة. في ميعادها: وصلت في وقتها. اكتب كل اختبار ككود بيشتغل على كل دفعة. في SQL، الاختبار استعلام المفروض ما يرجّعش ولا صف: يتامى، أو مكرر، أو قيم برّه المدى. عقد البيانات اتفاق بين الفريق اللي بينتج البيانات والفرق اللي بتستخدمها. بيحدد الأعمدة، والأنواع، والقيم المسموحة، والبيانات لازم تبقى جديدة لحد إمتى، ونكلّم مين لما تبوظ. سؤال سريع! أنهي اختبار بيمسك درجة للتلميذ رقم سبعة، والتلميذ رقم سبعة مش موجود أصلًا؟ سلامة المراجع: كل مفتاح أجنبي لازم يشاور على صف موجود. والربط اليساري اللي بيلاقي NULL في الناحية التانية بيلاقي اليتامى. وبعدين قرّر الفشل يعمل إيه. وقّف التحميل كله لما المشكلة تبقى خطيرة. واعزل الصفوف الغلط لما أغلب الدفعة تبقى سليمة. أو نبّه وعدّيها، لما التقرير المتأخر يكلّف أكتر من تقرير فيه غلطة صغيرة. في بايثون، افحص كل صف على العقد: الدرجة رقم، وفي المدى؟ واجمع اللي فشل مع أسبابه، علشان المنتج يصلّحه من المصدر. في التطبيق، أربع نوادي طقس بيبعتوا دفعات يومية فيها أخطاء متخبّية. اختار الفحوص والتصرف، واتفرّج على تقرير الأمطار. ولاحظ أنهي أخطاء محدش من الفحوص بيمسكها. دورك. اختبار فشل على تلات صفوف من عشرة آلاف. أنهي تصرف بيخلّي خط البيانات ماشي والبيانات صادقة؟ اعزلهم ونبّه صاحب البيانات، علشان السليم يعدّي والغلط يتصلّح. افتكر: اختبر الجودة بالكود، على كل دفعة. واتفق على عقد مع اللي بينتج البيانات. واختار التوقيف أو العزل أو التنبيه على حسب كل فشل بيكلّف قد إيه. جرّبها بكرة: اكتب عقد بيانات لبيانات بتستخدمها، زي جدول حصصك أو نتايج نادي. اكتب الأعمدة، والأنواع، والقيم المسموحة، ومين بيصلّحها لما تبقى غلط."
+          },
+          "sources": {
+            "en": "/media/data-s4-3/video-en.mp4",
+            "ar": "/media/data-s4-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-s4-3/captions-en.vtt",
+            "ar": "/media/data-s4-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-s4-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-s4-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-s4-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-s4-3/light/audio/en.opus",
+              "manifest.json": "/media/data-s4-3/light/manifest.json",
+              "scenes.json": "/media/data-s4-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-s4-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-s4-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 408,
+              "ar": 388
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Tests, contracts and failures",
+            "ar": "الاختبارات والعقود والفشل"
+          },
+          "body": {
+            "en": "Data quality has several sides. Valid: the right type and range (a mark is a number from 0 to 20). Complete: nothing required is missing. Unique: no duplicates of a key. Consistent: the tables agree, so every mark’s pupil exists (referential integrity). Timely: the data arrived when it should, and isn’t last week’s. A minus sign that becomes “−30 mm of rain” fails validity, and can reach three other apps before anyone notices.\n\nWrite each test as code that runs on every batch, before anyone uses the data. In SQL, a test is a query that should return no rows: values out of range, duplicate keys, and orphans, found with a LEFT JOIN to the parent table WHERE the parent’s id IS NULL. In Python, check each row against the rules and collect the failures with their reasons, so they can be fixed, not just counted.\n\nA data contract is an agreement between the team that produces data and the teams that use it. It names the columns, their types and allowed values, how fresh the data must be (“by 07:00 each school day”), what counts as a breaking change, and who to call when it breaks. With a contract, the tests aren’t one team’s opinion; they’re the agreement, written as code.\n\nThen decide what a failure does, by what it costs. Block the whole load when the problem is serious, such as a missing day or a wrong unit. Quarantine the bad rows when most of the batch is fine, and alert the producer. Or alert and let it through, when a late report costs more than a slightly wrong one. And remember: tests catch only the faults you wrote them for. Passing them means no known problem was found.",
+            "ar": "لجودة البيانات جوانب عدّة. الصلاحية: النوع والمدى الصحيحان (الدرجة عدد من ٠ إلى ٢٠). الاكتمال: لا ينقص شيء مطلوب. التفرّد: لا تكرار لأي مفتاح. الاتساق: تتفق الجداول، فيوجد صاحب كل درجة (سلامة المراجع). الحداثة: وصلت البيانات في موعدها، وليست بيانات الأسبوع الماضي. فإشارة سالب تحوّل القراءة إلى «−٣٠ مم من المطر» تفشل في الصلاحية، وقد تصل إلى ثلاثة تطبيقات أخرى قبل أن يلاحظ أحد.\n\nاكتب كل اختبار برمجةً تعمل على كل دفعة، قبل أن يستعمل أحد البيانات. ففي SQL يكون الاختبار استعلامًا يجب ألّا يعيد صفوفًا: قيم خارج المدى، ومفاتيح مكرّرة، وسجلّات يتيمة يجدها ⁦LEFT JOIN⁩ مع الجدول الأصل WHERE يكون رقم الأصل ⁦IS NULL⁩. وفي Python افحص كل صف وفق القواعد واجمع حالات الفشل مع أسبابها، لتُصلَح لا لتُعدّ فقط.\n\nوعقد البيانات اتفاق بين الفريق الذي ينتج البيانات والفرق التي تستعملها. فهو يسمّي الأعمدة وأنواعها وقيمها المسموح بها، ومدى حداثة البيانات المطلوبة («قبل ٠٧:٠٠ كل يوم دراسي»)، وما يُعدّ تغييرًا يكسر الاتفاق، ومن يُتّصل به حين ينكسر. ومع العقد لا تكون الاختبارات رأي فريق واحد، بل هي الاتفاق نفسه مكتوبًا برمجةً.\n\nثم قرّر ما يفعله الفشل، حسب كلفته. أوقف التحميل كله حين تكون المشكلة خطيرة، كيوم ناقص أو وحدة خاطئة. واعزل الصفوف المعيبة حين تكون أغلب الدفعة سليمة، ونبّه المنتِج. أو نبّه ومرّرها، حين يكلّف التقرير المتأخر أكثر من تقرير خاطئ قليلًا. وتذكّر: لا تلتقط الاختبارات إلا الأخطاء التي كتبتها من أجلها، واجتيازها يعني أنه لم تُكتشف أي مشكلة معروفة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Referential integrity",
+                "ar": "سلامة المراجع"
+              },
+              "def": {
+                "en": "Every foreign key points to a row that exists; an orphan breaks it.",
+                "ar": "يشير كل مفتاح أجنبي إلى صف موجود، والسجلّ اليتيم يخالفها."
+              }
+            },
+            {
+              "term": {
+                "en": "Data contract",
+                "ar": "عقد البيانات"
+              },
+              "def": {
+                "en": "An agreement on columns, types, allowed values, freshness and who fixes breaks.",
+                "ar": "اتفاق على الأعمدة والأنواع والقيم المسموح بها والحداثة ومن يصلح الأعطال."
+              }
+            },
+            {
+              "term": {
+                "en": "Quarantine",
+                "ar": "العزل"
+              },
+              "def": {
+                "en": "Setting failing rows aside, flagged, while the rest of the batch flows on.",
+                "ar": "وضع الصفوف الفاشلة جانبًا معلَّمة، بينما تمضي بقية الدفعة."
+              }
+            },
+            {
+              "term": {
+                "en": "Freshness",
+                "ar": "الحداثة"
+              },
+              "def": {
+                "en": "Whether data arrived on time and is recent enough to use.",
+                "ar": "هل وصلت البيانات في موعدها، وهل هي حديثة بما يكفي لاستعمالها."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A test fails on 3 rows out of 10,000. Which response keeps the pipeline moving and the data honest?",
+            "ar": "فشل اختبار على ٣ صفوف من ١٠٠٠٠. أيّ استجابة تُبقي خط البيانات يعمل والبيانات صادقة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Quarantine the 3 rows and alert the producer",
+                "ar": "عزل الصفوف الثلاثة وتنبيه المنتِج"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Block the whole load until next week",
+                "ar": "إيقاف التحميل كله حتى الأسبوع القادم"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Let them through and say nothing",
+                "ar": "تمريرها دون قول شيء"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "9,997 good rows flow on, and the 3 bad ones wait in quarantine, flagged, for the producer to fix at the source.",
+            "ar": "تمضي الصفوف السليمة الـ ٩٩٩٧، وتنتظر الثلاثة المعيبة في العزل، معلَّمة، ليصلحها المنتِج من مصدرها."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p2",
+          "prompt": {
+            "en": "Match each side of quality to a fault that breaks it.",
+            "ar": "صِل كل جانب من جوانب الجودة بخطأ يخالفه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Valid",
+                "ar": "الصلاحية"
+              },
+              "right": {
+                "en": "A mark of 25 out of 20",
+                "ar": "درجة ٢٥ من ٢٠"
+              }
+            },
+            {
+              "left": {
+                "en": "Unique",
+                "ar": "التفرّد"
+              },
+              "right": {
+                "en": "The same pupil’s mark loaded twice",
+                "ar": "درجة التلميذ نفسه محمّلة مرتين"
+              }
+            },
+            {
+              "left": {
+                "en": "Consistent",
+                "ar": "الاتساق"
+              },
+              "right": {
+                "en": "A mark for a pupil who doesn’t exist",
+                "ar": "درجة لتلميذ غير موجود"
+              }
+            },
+            {
+              "left": {
+                "en": "Timely",
+                "ar": "الحداثة"
+              },
+              "right": {
+                "en": "Monday’s file still missing on Wednesday",
+                "ar": "ملف الاثنين ما زال غائبًا يوم الأربعاء"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each side needs its own test: range for validity, a duplicate-key query for uniqueness, an orphan check for consistency, and a freshness check on arrival time.",
+            "ar": "كل جانب يحتاج إلى اختباره: المدى للصلاحية، واستعلام المفاتيح المكرّرة للتفرّد، وفحص السجلّات اليتيمة للاتساق، وفحص الحداثة على وقت الوصول."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p3",
+          "lang": "sql",
+          "prompt": {
+            "en": "A referential integrity test: find every mark whose pupil_id has no row in pupils. Show the pupil_id, subject and mark of each orphan.",
+            "ar": "اختبار سلامة المراجع: جد كل درجة ليس لـ pupil_id فيها صف في pupils. اعرض pupil_id والمادة والدرجة لكل سجلّ يتيم."
+          },
+          "setup": "CREATE TABLE pupils (id INTEGER PRIMARY KEY, name TEXT);\nINSERT INTO pupils VALUES (1, 'Amina'), (2, 'Tunde'), (3, 'Grace'), (4, 'Musa'), (5, 'Kofi'), (6, 'Lina');\nCREATE TABLE marks (pupil_id INTEGER, subject TEXT, mark INTEGER);\nINSERT INTO marks VALUES (1, 'maths', 14), (2, 'maths', 9), (7, 'maths', 12), (3, 'science', 16), (9, 'science', 11), (4, 'science', 10);",
+          "starter": "SELECT marks.pupil_id, subject, mark FROM marks\nJOIN pupils ON pupils.id = marks.pupil_id\nWHERE pupils.id IS NULL;",
+          "solution": "SELECT marks.pupil_id, subject, mark FROM marks\nLEFT JOIN pupils ON pupils.id = marks.pupil_id\nWHERE pupils.id IS NULL;",
+          "hints": [
+            {
+              "en": "The inner join has already dropped the marks with no pupil, so nothing is NULL.",
+              "ar": "أسقط الربط الداخلي مسبقًا الدرجات التي لا تلميذ لها، فلا شيء NULL."
+            },
+            {
+              "en": "Make it LEFT JOIN, so every mark stays and the missing pupil shows as NULL.",
+              "ar": "اجعله ⁦LEFT JOIN⁩، لتبقى كل الدرجات ويظهر التلميذ الناقص NULL."
+            }
+          ],
+          "explain": {
+            "en": "LEFT JOIN keeps every mark; where no pupil matches, pupils.id is NULL. The test returns the two orphans (pupils 7 and 9), so it fails, which is exactly what it should do. On clean data, it returns no rows.",
+            "ar": "تُبقي ⁦LEFT JOIN⁩ كل الدرجات، وحيث لا يطابق تلميذ تكون pupils.id قيمة NULL. فيعيد الاختبار السجلّين اليتيمين (التلميذين ٧ و٩)، أي يفشل، وهذا بالضبط ما يجب أن يفعله. أما على البيانات النظيفة فلا يعيد صفوفًا."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: four weather clubs send daily batches with planted faults. Find the smallest set of checks that keeps the report at four stations with sensible averages. Compare “Stop the batch”, “Set bad rows aside” and “Let it through, warn”: which loses good data, and which publishes bad?",
+            "ar": "جرّب: ترسل أربعة نوادٍ للطقس دفعات يومية فيها أخطاء مزروعة. جد أصغر مجموعة فحوص تُبقي التقرير على أربع محطات بمتوسطات معقولة. وقارن «أوقف الدفعة» و«ضع الصفوف المعيبة جانبًا» و«مرّرها مع تحذير»: أيّها يضيّع بيانات سليمة، وأيّها ينشر بيانات معيبة؟"
+          },
+          "tool": "quality"
+        },
+        {
+          "type": "code",
+          "id": "p4",
+          "lang": "python",
+          "prompt": {
+            "en": "The contract says: subject is maths or science, and mark is a whole number from 0 to 20. problems(row) returns a list of reasons a row breaks it, but it misses one rule. Fix it, so the program prints every failure with its line number.",
+            "ar": "يقول العقد: المادة maths أو science، والدرجة عدد صحيح من ٠ إلى ٢٠. وتعيد ⁦problems(row)⁩ قائمة بأسباب مخالفة الصف له، لكنها تُغفل قاعدة واحدة. أصلحها، ليطبع البرنامج كل فشل مع رقم سطره."
+          },
+          "starter": "import csv\nSUBJECTS = [\"maths\", \"science\"]\ndef problems(row):\n    out = []\n    if row[\"subject\"] not in SUBJECTS:\n        out.append(\"unknown subject\")\n    if not row[\"mark\"].isdigit():\n        out.append(\"mark not a number\")\n    return out\nwith open(\"marks.csv\") as f:\n    for n, row in enumerate(csv.DictReader(f), 2):\n        for p in problems(row):\n            print(\"line\", n, p)\n",
+          "solution": "import csv\nSUBJECTS = [\"maths\", \"science\"]\ndef problems(row):\n    out = []\n    if row[\"subject\"] not in SUBJECTS:\n        out.append(\"unknown subject\")\n    if not row[\"mark\"].isdigit():\n        out.append(\"mark not a number\")\n    elif int(row[\"mark\"]) > 20:\n        out.append(\"mark out of range\")\n    return out\nwith open(\"marks.csv\") as f:\n    for n, row in enumerate(csv.DictReader(f), 2):\n        for p in problems(row):\n            print(\"line\", n, p)\n",
+          "tests": [
+            {
+              "output": "line 3 unknown subject\nline 4 mark out of range\nline 5 mark not a number",
+              "hint": {
+                "en": "Line 4 has a mark of 25. Which rule should catch it?",
+                "ar": "في السطر ٤ درجة ٢٥. أيّ قاعدة يجب أن تلتقطها؟"
+              }
+            },
+            {
+              "check": "assert problems({\"pupil\": \"9\", \"subject\": \"maths\", \"mark\": \"21\"}) == [\"mark out of range\"], \"21 is out of range\""
+            }
+          ],
+          "files": [
+            {
+              "name": "marks.csv",
+              "text": "pupil,subject,mark\n1,maths,14\n2,art,12\n3,maths,25\n4,science,x\n5,science,18\n"
+            }
+          ],
+          "hints": [
+            {
+              "en": "The range rule is missing. Only check it when the mark is a number.",
+              "ar": "قاعدة المدى ناقصة. ولا تفحصها إلا حين تكون الدرجة عددًا."
+            },
+            {
+              "en": "elif int(row[\"mark\"]) > 20: out.append(\"mark out of range\")",
+              "ar": "⁦elif int(row[\"mark\"]) > 20: out.append(\"mark out of range\")⁩"
+            }
+          ],
+          "explain": {
+            "en": "Each rule in the contract becomes one check with a reason. The range check goes in an elif, after the number check, because int(\"x\") would crash. The output names the line and the reason, so the producer can fix it at the source.",
+            "ar": "تصير كل قاعدة في العقد فحصًا واحدًا مع سببه. ويوضع فحص المدى في elif بعد فحص العدد، لأن ⁦int(\"x\")⁩ ستتوقّف بخطأ. وتسمّي المخرجات السطر والسبب، ليستطيع المنتِج الإصلاح من المصدر."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "p5",
+          "lang": "python",
+          "prompt": {
+            "en": "This range test flags 9 as out of range, which it isn’t. Which line is wrong?",
+            "ar": "يلتقط اختبار المدى هذا الدرجة 9 على أنها خارج المدى، وهي ليست كذلك. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "for row in [{\"mark\": \"9\"}, {\"mark\": \"25\"}, {\"mark\": \"14\"}]:\n    if row[\"mark\"] > \"20\":\n        print(row[\"mark\"], \"out of range\")",
+          "line": 2,
+          "fix": "    if int(row[\"mark\"]) > 20:",
+          "explain": {
+            "en": "Comparing text compares letter by letter: \"9\" comes after \"2\", so \"9\" > \"20\" is true. Turn the mark into a number first; then 9 > 20 is false and only 25 is flagged.",
+            "ar": "مقارنة النصوص تكون حرفًا بحرف: ⁦\"9\"⁩ تأتي بعد ⁦\"2\"⁩، فتكون ⁦\"9\" > \"20\"⁩ صحيحة. فحوّل الدرجة إلى عدد أولًا، فتكون ⁦9 > 20⁩ خاطئة، ولا تُلتقط إلا 25."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "p6",
+          "prompt": {
+            "en": "The contract says the rain feed arrives by 07:00 with mm from 0 to 300. Today’s file arrived at 09:30, and every value is in range. Which test fails?",
+            "ar": "يقول العقد إن ملف الأمطار يصل قبل ٠٧:٠٠ بقيم من ٠ إلى ٣٠٠ مم. ووصل ملف اليوم في ٠٩:٣٠، وكل القيم ضمن المدى. أيّ اختبار يفشل؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Freshness",
+                "ar": "الحداثة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Range",
+                "ar": "المدى"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Uniqueness",
+                "ar": "التفرّد"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The values are fine, but the data is late: the freshness test fails. A report built at 07:00 would have used yesterday’s file, and nobody would know without that test.",
+            "ar": "القيم سليمة، لكن البيانات متأخرة: فيفشل اختبار الحداثة. فالتقرير المبني في ٠٧:٠٠ كان سيستعمل ملف البارحة، ولن يعرف أحد ذلك دون هذا الاختبار."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which dataset do you depend on that someone else produces (a timetable, results, a club list)? What would you put in its contract?",
+            "ar": "أيّ مجموعة بيانات تعتمد عليها ويُنتجها غيرك (جدول حصص، أو نتائج، أو قائمة نادٍ)؟ وماذا ستضع في عقدها؟"
+          },
+          "placeholder": {
+            "en": "For example: “The timetable: one row per class per period, room codes from the room list, published by Friday for the next week.”",
+            "ar": "مثلًا: «جدول الحصص: صف لكل صف دراسي في كل حصة، ورموز القاعات من قائمة القاعات، ويُنشر قبل الجمعة للأسبوع التالي.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Write a data contract",
+            "ar": "مشروع: اكتب عقد بيانات"
+          },
+          "task": {
+            "en": "Choose a dataset you use that someone else produces: a class timetable, a club’s results, a weather feed or the lesson’s marks file. Write its data contract: the columns with types and allowed values, the key, freshness, what counts as a breaking change, and who to contact. Then write at least three tests from the contract (as SQL queries that should return no rows, or Python checks), and decide for each whether a failure blocks, quarantines or alerts.",
+            "ar": "اختر مجموعة بيانات تستعملها ويُنتجها غيرك: جدول حصص صف، أو نتائج نادٍ، أو تغذية طقس، أو ملف الدرجات من الدرس. واكتب عقد بياناتها: الأعمدة بأنواعها وقيمها المسموح بها، والمفتاح، والحداثة، وما يُعدّ تغييرًا يكسر الاتفاق، ومن يُتّصل به. ثم اكتب ثلاثة اختبارات على الأقل من العقد (استعلامات SQL يجب ألّا تعيد صفوفًا، أو فحوصًا بلغة Python)، وقرّر لكلٍّ منها هل يوقف الفشل التحميل أم يعزل الصفوف أم ينبّه فقط."
+          },
+          "deliverable": {
+            "en": "Your one-page contract, your three tests, and one sentence per test on what a failure does and why.",
+            "ar": "عقدك في صفحة واحدة، واختباراتك الثلاثة، وجملة لكل اختبار عمّا يفعله الفشل ولماذا."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "The contract names columns, types, allowed values, the key and freshness.",
+                "ar": "يسمّي العقد الأعمدة والأنواع والقيم المسموح بها والمفتاح والحداثة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Each test follows from a rule in the contract.",
+                "ar": "ينبع كل اختبار من قاعدة في العقد."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Each failure action fits its cost.",
+                "ar": "يناسب إجراء كل فشل كلفته."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Data quality and contracts",
+            "ar": "جودة البيانات والعقود"
+          },
+          "note": {
+            "en": "Data engineering · Level 4 · Lesson 3",
+            "ar": "هندسة البيانات، المستوى ٤، الدرس ٣"
+          },
+          "narration": {
+            "en": "Minus thirty millimetres of rain reached three apps. Who should have stopped it?",
+            "ar": "وصلت «سالب ثلاثين مليمترًا» من المطر إلى ثلاثة تطبيقات. مَن كان يجب أن يوقفها؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Write quality tests as code: types, nulls, ranges, uniqueness, references, freshness.",
+              "Agree a data contract between producers and users.",
+              "Decide what a failed test does."
+            ],
+            "ar": [
+              "تكتب اختبارات الجودة برمجةً: الأنواع، والفراغات، والمدى، والتفرّد، والمراجع، والحداثة.",
+              "تتفق على عقد بيانات بين المنتِجين والمستعملين.",
+              "تقرّر ما يفعله الاختبار الفاشل."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "A test is a query that should return nothing.",
+              "The contract is the agreement, as code.",
+              "Block, quarantine or alert, by cost."
+            ],
+            "ar": [
+              "الاختبار استعلام يجب ألّا يعيد شيئًا.",
+              "العقد هو الاتفاق، مكتوبًا برمجةً.",
+              "أوقف، أو اعزل، أو نبّه، حسب الكلفة."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Contract and tests",
+            "ar": "العقد والاختبارات"
+          },
+          "bullets": {
+            "en": [
+              "Choose (3 min): a dataset",
+              "Contract (6 min): write the rules",
+              "Test (5 min): rules become tests",
+              "Decide (3 min): block, quarantine or alert?"
+            ],
+            "ar": [
+              "الاختيار (٣ دقائق): مجموعة بيانات",
+              "العقد (٦ دقائق): اكتب القواعد",
+              "الاختبار (٥ دقائق): القواعد تصير اختبارات",
+              "القرار (٣ دقائق): إيقاف أم عزل أم تنبيه؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Choose (3 min): Pick a dataset you depend on, produced by someone else.",
+              "Contract (6 min): Write the columns, types, allowed values, the key and the freshness rule.",
+              "Test (5 min): Turn three rules into tests that return the bad rows.",
+              "Decide (3 min): For each test, choose what a failure does, and why."
+            ],
+            "ar": [
+              "الاختيار (٣ دقائق): اختر مجموعة بيانات تعتمد عليها ويُنتجها غيرك.",
+              "العقد (٦ دقائق): اكتب الأعمدة والأنواع والقيم المسموح بها والمفتاح وقاعدة الحداثة.",
+              "الاختبار (٥ دقائق): حوّل ثلاث قواعد إلى اختبارات تعيد الصفوف المعيبة.",
+              "القرار (٣ دقائق): اختر لكل اختبار ما يفعله الفشل، ولماذا."
+            ]
+          },
+          "note": {
+            "en": "Swap contracts with a partner and try to write a row that breaks theirs but passes every test.",
+            "ar": "تبادل العقود مع زميل، وحاول أن تكتب صفًّا يخالف عقده لكنه يجتاز كل الاختبارات."
+          },
+          "narration": {
+            "en": "Write the agreement, then make it run on every batch.",
+            "ar": "اكتب الاتفاق، ثم اجعله يعمل على كل دفعة."
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why use a LEFT JOIN to find orphans?",
+              "When is quarantine better than blocking the load?",
+              "What can’t any test catch?"
+            ],
+            "ar": [
+              "لماذا نستعمل ⁦LEFT JOIN⁩ لإيجاد السجلّات اليتيمة؟",
+              "متى يكون العزل أفضل من إيقاف التحميل؟",
+              "ما الذي لا يستطيع أي اختبار التقاطه؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one rule of a data contract and the SQL test that checks it."
+            ],
+            "ar": [
+              "اكتب قاعدة واحدة من عقد بيانات، واختبار SQL الذي يفحصها."
+            ]
+          },
+          "narration": {
+            "en": "Test every batch, against the contract.",
+            "ar": "اختبر كل دفعة وفق العقد."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Data quality and contracts",
+            "ar": "شرائح للمراجعة: جودة البيانات والعقود"
+          },
+          "pages": 6,
+          "base": "data-s4-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Data quality and contracts",
+            "ar": "ورقة النشاط: جودة البيانات والعقود"
+          },
+          "pages": 3,
+          "base": "data-s4-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-s4-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.2",
+        "DATA.4",
+        "DC.1.2"
+      ]
+    },
+    {
+      "id": "data-s4-4",
+      "title": {
+        "en": "Batch and stream",
+        "ar": "الدفعات والتدفّق"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "List five systems you use, like bus times, exam results and a bank alert. For each one, decide: batch or stream, and why?",
+        "ar": "اكتب خمسة أنظمة تستعملها، كمواعيد الحافلات ونتائج الامتحانات وتنبيهات المصرف. وقرّر لكلٍّ منها: دفعات أم تدفّق، ولماذا؟"
+      },
+      "materials": {
+        "en": [
+          "Your phone or a computer, for the Python step",
+          "Paper, for the five systems"
+        ],
+        "ar": [
+          "هاتفك أو حاسوب، لخطوة Python",
+          "ورقة، للأنظمة الخمسة"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Batch and stream",
+            "ar": "الدفعات والتدفّق"
+          },
+          "src": null,
+          "duration": 177,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "The morning after",
+                "ar": "في الصباح التالي"
+              }
+            },
+            {
+              "at": 16.2,
+              "atBy": {
+                "en": 16.2,
+                "ar": 16
+              },
+              "label": {
+                "en": "Batch",
+                "ar": "الدفعات"
+              }
+            },
+            {
+              "at": 30.6,
+              "atBy": {
+                "en": 30.6,
+                "ar": 30.2
+              },
+              "label": {
+                "en": "Stream",
+                "ar": "التدفّق"
+              }
+            },
+            {
+              "at": 43.7,
+              "atBy": {
+                "en": 43.7,
+                "ar": 43.1
+              },
+              "label": {
+                "en": "Windows",
+                "ar": "النوافذ"
+              }
+            },
+            {
+              "at": 97,
+              "atBy": {
+                "en": 97,
+                "ar": 95.9
+              },
+              "label": {
+                "en": "Messy streams",
+                "ar": "تدفّقات فوضوية"
+              }
+            },
+            {
+              "at": 112.1,
+              "atBy": {
+                "en": 112.1,
+                "ar": 110.7
+              },
+              "label": {
+                "en": "Both together",
+                "ar": "الاثنان معًا"
+              }
+            },
+            {
+              "at": 123.4,
+              "atBy": {
+                "en": 123.4,
+                "ar": 121.3
+              },
+              "label": {
+                "en": "The lab",
+                "ar": "المختبر"
+              }
+            },
+            {
+              "at": 144.9,
+              "atBy": {
+                "en": 144.9,
+                "ar": 143.3
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 87.15,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A flood alert, or a monthly attendance report: which one needs a stream?",
+                "ar": "إنذار فيضان، أم تقرير حضور شهري: أيّهما يحتاج إلى التدفّق؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "The flood alert",
+                    "ar": "إنذار الفيضان"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "The monthly report",
+                    "ar": "التقرير الشهري"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Both, always",
+                    "ar": "كلاهما، دائمًا"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "Minutes matter for a flood, so it needs a stream. A monthly report is fine as a nightly batch: cheaper, simpler and easy to rerun.",
+                "ar": "الدقائق مهمة في الفيضان، فيحتاج إلى التدفّق. أما التقرير الشهري فتكفيه دفعة ليلية: أرخص، وأبسط، وسهلة الإعادة."
+              }
+            },
+            "atBy": {
+              "en": 87.15,
+              "ar": 86.03
+            }
+          },
+          "transcript": {
+            "en": "The river sensor by our school sends a reading every minute. If we processed it in a nightly batch, we'd learn about a flood the morning after. Today: batch and stream processing, and how to choose between them. Batch processing collects data and handles it together, on a schedule: every hour, or every night. It's simple, cheap and easy to rerun. But it's late by design. Stream processing handles each event as it arrives, within seconds. It's fast, but it runs all the time, and it must cope with late, missing and duplicated events. Streams are noisy: a splash, a boat's wake. So you average over a window, such as the last five readings. A bigger window hides more noise, but reacts later. On our river, one reading in the average gives three false alarms from splashes. Five gives one, from a boat's wake. With ten there are none, but the real alert is five minutes late; with thirty, fifteen minutes late. Quick check! A flood alert, or a monthly attendance report: which one needs a stream? The flood alert: minutes matter. The monthly report is fine as a nightly batch: cheaper, simpler, and easy to rerun. Real streams are messy. Events arrive late or out of order, so use the time they happened, not the time they arrived. And events can arrive twice, so make processing idempotent too. Many systems do both. A stream drives the alert now, and a nightly batch recomputes the day's numbers carefully, from everything that arrived. In the app, handle the river readings as a stream or in batches. Change the window and the batch size, and watch false alarms and delays trade off. Your turn. I make the averaging window bigger. What happens? Fewer false alarms, but later alerts: choose by what each one costs. Remember: batches are simple and late; streams are fast and always on. Windows tame noise and add delay. And many systems run both. Try it tomorrow: list five systems you use, like bus times, exam results and a bank alert. For each one, decide: batch or stream, and why?",
+            "ar": "حساس النهر اللي جنب مدرستنا بيبعت قراءة كل دقيقة. ولو عالجناها في دفعة كل ليلة، هنعرف بالفيضان تاني يوم الصبح. النهارده: المعالجة بالدفعات والمعالجة بالتدفّق، ونختار بينهم إزاي. المعالجة بالدفعات بتجمع البيانات وتعالجها مع بعض، بجدول مواعيد: كل ساعة، أو كل ليلة. هي بسيطة، ورخيصة، وسهل تعيدها. بس متأخرة من تصميمها. المعالجة بالتدفّق بتعالج كل حدث لحظة وصوله، في ثواني. هي سريعة، بس شغّالة طول الوقت، ولازم تتعامل مع أحداث متأخرة، وناقصة، ومتكررة. التدفّق فيه تشويش: رشة ماية، أو موجة مركب. فبناخد المتوسط على نافذة، زي آخر خمس قراءات. والنافذة الأكبر بتخبّي تشويش أكتر، بس بتستجيب متأخر. على نهرنا، قراءة واحدة في المتوسط بتدّي تلات إنذارات كاذبة من الرشّ. وخمسة بتدّي واحد، من موجة مركب. ومع عشرة مفيش، بس الإنذار الحقيقي بيتأخر خمس دقايق، ومع تلاتين، بيتأخر ربع ساعة. سؤال سريع! إنذار فيضان، ولا تقرير حضور شهري: أنهي واحد محتاج تدفّق؟ إنذار الفيضان: الدقايق فارقة. أما التقرير الشهري فكويس كدفعة كل ليلة: أرخص، وأبسط، وسهل تعيده. التدفّق الحقيقي فوضوي. الأحداث بتوصل متأخرة أو مش بالترتيب، فاستخدم وقت حدوثها، مش وقت وصولها. والأحداث ممكن توصل مرتين، فخلّي المعالجة ثابتة النتيجة كمان. أنظمة كتير بتعمل الاتنين. التدفّق بيشغّل الإنذار دلوقتي، ودفعة كل ليلة بتعيد حساب أرقام اليوم بعناية، من كل اللي وصل. في التطبيق، عالج قراءات النهر كتدفّق أو بدفعات. غيّر النافذة وحجم الدفعة، واتفرّج على الإنذارات الكاذبة والتأخير وهم بيتبادلوا. دورك. كبّرت نافذة المتوسط. إيه اللي بيحصل؟ إنذارات كاذبة أقل، بس الإنذار بيتأخر: اختار على حسب كل واحد بيكلّف قد إيه. افتكر: الدفعات بسيطة ومتأخرة، والتدفّق سريع وشغّال دايمًا. والنوافذ بتهدّي التشويش وبتزوّد التأخير. وأنظمة كتير بتشغّل الاتنين. جرّبها بكرة: اكتب خمس أنظمة بتستخدمها، زي مواعيد الأتوبيس، ونتايج الامتحانات، وتنبيه البنك. ولكل واحد، قرّر: دفعات ولا تدفّق، وليه؟"
+          },
+          "sources": {
+            "en": "/media/data-s4-4/video-en.mp4",
+            "ar": "/media/data-s4-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-s4-4/captions-en.vtt",
+            "ar": "/media/data-s4-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-s4-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-s4-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-s4-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-s4-4/light/audio/en.opus",
+              "manifest.json": "/media/data-s4-4/light/manifest.json",
+              "scenes.json": "/media/data-s4-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-s4-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-s4-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 380,
+              "ar": 376
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Late by design, or always on",
+            "ar": "متأخر عمدًا، أم يعمل دائمًا"
+          },
+          "body": {
+            "en": "Batch processing collects data and handles it together, on a schedule: every hour or every night. It’s simple, cheap and easy to rerun: if last night’s job failed, run it again. But it’s late by design. If the river sensor by the school were processed in a nightly batch, we’d learn about a flood the morning after.\n\nStream processing handles each event as it arrives, within seconds. It’s fast, but it runs all the time, costs more, and must cope with real-world mess. Streams are noisy: a splash or a boat’s wake can look like a flood for a minute. So you average over a window, such as the last five readings. A bigger window hides more noise but reacts later: on our river, 1 reading gives three false alarms, 5 gives one, 10 gives none but the real alert is 5 minutes late, and 30 is 15 minutes late. Batches every 60 minutes give no false alarms and only 3 wake-ups, but nearly an hour’s delay.\n\nReal streams are messy in other ways too. Events arrive late or out of order (a sensor reconnects and sends ten minutes at once), so use the time each event happened, not the time it arrived. Events can arrive twice, so make processing idempotent, keyed on the sensor and the time. And events can go missing, so alert when a sensor goes quiet.\n\nMany systems do both. A stream drives the alert now, with a small window and accepted noise, and a nightly batch recomputes the day’s numbers carefully from everything that arrived, late events included. Choose by what a late answer costs and what a false one costs: a flood warning, a fraud alert or a bus arrival time needs a stream; a monthly report, exam results or a payroll needs a careful batch.",
+            "ar": "تجمع المعالجة بالدفعات البيانات وتعالجها معًا وفق جدول زمني: كل ساعة أو كل ليلة. وهي بسيطة، ورخيصة، وسهلة الإعادة: فإن فشلت مهمة البارحة فشغّلها من جديد. لكنها متأخرة عمدًا. فلو عولج مستشعر النهر بجانب المدرسة بدفعة ليلية، لعرفنا بالفيضان في الصباح التالي.\n\nأما المعالجة المتدفّقة فتعالج كل حدث فور وصوله، في ثوانٍ. وهي سريعة، لكنها تعمل طوال الوقت، وتكلّف أكثر، ويجب أن تتعامل مع فوضى العالم الحقيقي. فالتدفّقات فيها تشويش: رذاذ أو موج قارب قد يبدو فيضانًا دقيقة واحدة. فتحسب المتوسط على نافذة، كآخر خمس قراءات. والنافذة الأكبر تُخفي تشويشًا أكثر لكنها تستجيب متأخرة: ففي نهرنا تعطي قراءة واحدة ثلاثة إنذارات كاذبة، وخمس قراءات إنذارًا واحدًا، وعشر لا شيء لكن الإنذار الحقيقي يتأخر ٥ دقائق، وثلاثون تتأخر ١٥ دقيقة. أما الدفعات كل ٦٠ دقيقة فلا تعطي إنذارات كاذبة ولا تستيقظ إلا ٣ مرات، لكنها تتأخر قرابة ساعة.\n\nوالتدفّقات الحقيقية فوضوية بطرق أخرى أيضًا. فالأحداث تصل متأخرة أو بغير ترتيبها (مستشعر يعود اتصاله فيرسل عشر دقائق دفعة واحدة)، فاستعمل وقت وقوع الحدث لا وقت وصوله. وقد تصل الأحداث مرتين، فاجعل المعالجة متساوية الأثر، بمفتاح من المستشعر والوقت. وقد تضيع الأحداث، فنبّه حين يصمت مستشعر.\n\nوأنظمة كثيرة تفعل الاثنين. فالتدفّق يقود الإنذار الآن، بنافذة صغيرة وتشويش مقبول، ودفعة ليلية تعيد حساب أرقام اليوم بعناية من كل ما وصل، بما فيه الأحداث المتأخرة. واختر حسب كلفة الإجابة المتأخرة وكلفة الإجابة الكاذبة: فإنذار الفيضان، وتنبيه الاحتيال، وموعد وصول الحافلة تحتاج إلى التدفّق، أما التقرير الشهري ونتائج الامتحانات والرواتب فتحتاج إلى دفعة متأنّية."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Batch processing",
+                "ar": "المعالجة بالدفعات"
+              },
+              "def": {
+                "en": "Handling data together on a schedule: simple, cheap, easy to rerun, and late.",
+                "ar": "معالجة البيانات معًا وفق جدول زمني: بسيطة، ورخيصة، وسهلة الإعادة، ومتأخرة."
+              }
+            },
+            {
+              "term": {
+                "en": "Stream processing",
+                "ar": "المعالجة المتدفّقة"
+              },
+              "def": {
+                "en": "Handling each event as it arrives: fast, always on, and messier.",
+                "ar": "معالجة كل حدث فور وصوله: سريعة، وتعمل دائمًا، وأكثر فوضى."
+              }
+            },
+            {
+              "term": {
+                "en": "Window",
+                "ar": "النافذة"
+              },
+              "def": {
+                "en": "The recent readings an average covers; bigger hides noise but reacts later.",
+                "ar": "القراءات الأخيرة التي يغطّيها المتوسط، والأكبر تُخفي التشويش لكنها تستجيب متأخرة."
+              }
+            },
+            {
+              "term": {
+                "en": "Event time",
+                "ar": "وقت الحدث"
+              },
+              "def": {
+                "en": "When an event happened, not when it arrived; late events are placed by it.",
+                "ar": "متى وقع الحدث لا متى وصل، وتوضع الأحداث المتأخرة حسبه."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "You make the averaging window bigger. What happens?",
+            "ar": "كبّرت نافذة المتوسط. ماذا يحدث؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Fewer false alarms, but later alerts",
+                "ar": "إنذارات كاذبة أقل، لكن الإنذارات تتأخر"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "More false alarms, and earlier alerts",
+                "ar": "إنذارات كاذبة أكثر، وإنذارات أبكر"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Nothing changes",
+                "ar": "لا يتغيّر شيء"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "More readings in the window smooth out splashes, but a real rise takes longer to lift the average above the line.",
+            "ar": "قراءات أكثر في النافذة تُخفي الرذاذ، لكن الارتفاع الحقيقي يحتاج إلى وقت أطول ليرفع المتوسط فوق الخط."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p2",
+          "prompt": {
+            "en": "Match each system to the processing it needs.",
+            "ar": "صِل كل نظام بنوع المعالجة الذي يحتاج إليه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "A flood warning",
+                "ar": "إنذار الفيضان"
+              },
+              "right": {
+                "en": "A stream: minutes matter",
+                "ar": "تدفّق: الدقائق مهمة"
+              }
+            },
+            {
+              "left": {
+                "en": "A monthly attendance report",
+                "ar": "تقرير الحضور الشهري"
+              },
+              "right": {
+                "en": "A nightly batch: cheap and easy to rerun",
+                "ar": "دفعة ليلية: رخيصة وسهلة الإعادة"
+              }
+            },
+            {
+              "left": {
+                "en": "A card fraud alert",
+                "ar": "تنبيه احتيال البطاقة"
+              },
+              "right": {
+                "en": "A stream: stop it before the next payment",
+                "ar": "تدفّق: أوقفه قبل الدفعة التالية"
+              }
+            },
+            {
+              "left": {
+                "en": "The year’s exam results",
+                "ar": "نتائج امتحانات السنة"
+              },
+              "right": {
+                "en": "A batch: once, carefully checked",
+                "ar": "دفعة: مرة واحدة، بمراجعة متأنّية"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Ask what a late answer costs. Floods and fraud can’t wait, so they stream; reports and results can, so a batch gives them more care for less money.",
+            "ar": "اسأل: كم تكلّف الإجابة المتأخرة؟ فالفيضانات والاحتيال لا تنتظر، فتحتاج إلى التدفّق، أما التقارير والنتائج فتنتظر، فتمنحها الدفعة عناية أكثر بكلفة أقل."
+          }
+        },
+        {
+          "type": "code",
+          "id": "p3",
+          "lang": "python",
+          "prompt": {
+            "en": "A moving-average alert. first_alert(readings, k) should return the first minute where the average of the last k readings (including that minute’s) is above 2.0 m. The window slice is off by one: fix it. With k = 1 the splash at minute 2 alarms; with k = 3 the alert comes at minute 8.",
+            "ar": "إنذار بالمتوسط المتحرّك. يجب أن تعيد ⁦first_alert(readings, k)⁩ أول دقيقة يكون فيها متوسط آخر k قراءات (بما فيها قراءة تلك الدقيقة) فوق ٢٫٠ م. لكن شريحة النافذة منحرفة بواحد: أصلحها. مع ⁦k = 1⁩ يُطلق رذاذ الدقيقة ٢ إنذارًا، ومع ⁦k = 3⁩ يأتي الإنذار في الدقيقة ٨."
+          },
+          "starter": "readings = [1.2, 1.3, 2.6, 1.3, 1.4, 1.6, 1.9, 2.1, 2.3, 2.4, 2.6]\ndef first_alert(readings, k):\n    for i in range(k - 1, len(readings)):\n        window = readings[i - k:i]\n        if sum(window) / k > 2.0:\n            return i\n    return None\n",
+          "solution": "readings = [1.2, 1.3, 2.6, 1.3, 1.4, 1.6, 1.9, 2.1, 2.3, 2.4, 2.6]\ndef first_alert(readings, k):\n    for i in range(k - 1, len(readings)):\n        window = readings[i - k + 1:i + 1]\n        if sum(window) / k > 2.0:\n            return i\n    return None\n",
+          "tests": [
+            {
+              "check": "assert first_alert(readings, 1) == 2, \"with one reading, the splash at minute 2 is an alarm\""
+            },
+            {
+              "check": "assert first_alert(readings, 3) == 8, \"with three readings, the alert comes at minute 8\"",
+              "hint": {
+                "en": "The window should end at minute i, so its slice ends at i + 1.",
+                "ar": "يجب أن تنتهي النافذة عند الدقيقة i، فتنتهي شريحتها عند ⁦i + 1⁩."
+              }
+            },
+            {
+              "check": "assert first_alert([1.0, 1.0, 1.0], 2) is None, \"no alert when the river stays low\""
+            }
+          ],
+          "hints": [
+            {
+              "en": "readings[i - k:i] leaves out minute i itself.",
+              "ar": "تُغفل ⁦readings[i - k:i]⁩ الدقيقة i نفسها."
+            },
+            {
+              "en": "The last k readings up to i are readings[i - k + 1:i + 1].",
+              "ar": "آخر k قراءات حتى i هي ⁦readings[i - k + 1:i + 1]⁩."
+            }
+          ],
+          "explain": {
+            "en": "A slice stops before its end index, so readings[i - k + 1:i + 1] is exactly the k readings ending at minute i. One reading alarms on the splash at minute 2; three readings ignore it but alert at minute 8, one minute after the river really crossed 2 m. That’s the window trade-off.",
+            "ar": "تتوقّف الشريحة قبل فهرس نهايتها، فتكون ⁦readings[i - k + 1:i + 1]⁩ بالضبط القراءات k التي تنتهي عند الدقيقة i. فقراءة واحدة تطلق إنذارًا عند رذاذ الدقيقة ٢، وثلاث قراءات تتجاهله لكنها تنذر في الدقيقة ٨، بعد دقيقة من تجاوز النهر مترين فعلًا. هذه هي مقايضة النافذة."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: stream with 1, 5, 10 and 30 readings in the average, and note the false alarms and the delay each time. Then try batches every 60 minutes. Which setting would you choose for the school’s flood warning, and what would you accept as the cost?",
+            "ar": "جرّب: شغّل التدفّق بقراءة واحدة ثم ٥ ثم ١٠ ثم ٣٠ في المتوسط، وسجّل الإنذارات الكاذبة والتأخير في كل مرة. ثم جرّب الدفعات كل ٦٠ دقيقة. أيّ إعداد ستختار لإنذار الفيضان في المدرسة، وأيّ كلفة ستقبل؟"
+          },
+          "tool": "stream"
+        },
+        {
+          "type": "choice",
+          "id": "p4",
+          "prompt": {
+            "en": "Three calm readings and one splash. What does this program print?",
+            "ar": "ثلاث قراءات هادئة ورذاذ واحد. ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "r = [1.0, 1.0, 4.0, 1.0]\nprint(sum(r[-3:]) / 3)"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "2.0",
+                "ar": "⁦2.0⁩"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "4.0",
+                "ar": "⁦4.0⁩"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "1.75",
+                "ar": "⁦1.75⁩"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "r[-3:] is the last three readings, 1.0, 4.0 and 1.0, and their average is 2.0. The splash read 4.0 on its own; the window halves its effect. A bigger window would shrink it more, and react later.",
+            "ar": "⁦r[-3:]⁩ هي آخر ثلاث قراءات، 1.0 و4.0 و1.0، ومتوسطها 2.0. فالرذاذ وحده قرأ 4.0، والنافذة خفّضت أثره إلى النصف. والنافذة الأكبر ستقلّصه أكثر، وتستجيب متأخرة."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p5",
+          "prompt": {
+            "en": "How should a stream cope with messy events? Choose all that apply.",
+            "ar": "كيف يجب أن يتعامل التدفّق مع الأحداث الفوضوية؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Use the time the event happened, not when it arrived",
+                "ar": "استعمال وقت وقوع الحدث لا وقت وصوله"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Make processing idempotent, because events can arrive twice",
+                "ar": "جعل المعالجة متساوية الأثر، لأن الأحداث قد تصل مرتين"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Alert when a sensor goes quiet",
+                "ar": "التنبيه حين يصمت مستشعر"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Drop any event that arrives late",
+                "ar": "إسقاط أي حدث يصل متأخرًا"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "Late events still happened, so place them by their event time instead of dropping them. Duplicates and silence are normal in streams, so plan for both.",
+            "ar": "الأحداث المتأخرة وقعت مع ذلك، فضعها حسب وقت وقوعها بدل إسقاطها. والتكرار والصمت أمران عاديان في التدفّقات، فخطّط لهما."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "p6",
+          "prompt": {
+            "en": "Many systems run a stream for alerts now and a nightly batch that recomputes the day carefully.",
+            "ar": "أنظمة كثيرة تشغّل تدفّقًا للإنذارات الآن ودفعة ليلية تعيد حساب اليوم بعناية."
+          },
+          "answer": true,
+          "explain": {
+            "en": "The stream answers fast and accepts a little noise; the batch, with every late event in, gives the careful numbers the reports use.",
+            "ar": "يجيب التدفّق بسرعة ويقبل قليلًا من التشويش، أما الدفعة، بعد وصول كل الأحداث المتأخرة، فتعطي الأرقام المتأنّية التي تستعملها التقارير."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Pick an app on your phone that tells you something “live” (a bus, a delivery, a score). What would it be like as a nightly batch? What would it cost to make it faster?",
+            "ar": "اختر تطبيقًا على هاتفك يخبرك بشيء «مباشر» (حافلة، أو توصيل، أو نتيجة مباراة). كيف سيكون لو كان دفعة ليلية؟ وكم سيكلّف جعله أسرع؟"
+          },
+          "placeholder": {
+            "en": "For example: “A bus tracker as a nightly batch would tell me tomorrow where the bus was today: useless.”",
+            "ar": "مثلًا: «متتبّع الحافلات بدفعة ليلية سيخبرني غدًا أين كانت الحافلة اليوم: بلا فائدة.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Batch or stream?",
+            "ar": "مشروع: دفعات أم تدفّق؟"
+          },
+          "task": {
+            "en": "List five data systems you use or know: bus times, exam results, a bank alert, a weather app, a school register. For each, decide batch, stream or both, and justify it by what a late answer costs and what a false one costs. Then, for one streaming system, choose a window size (as in the lab) and explain the trade-off you accept. If you can, run your first_alert function on readings you make up.",
+            "ar": "اكتب خمسة أنظمة بيانات تستعملها أو تعرفها: مواعيد الحافلات، ونتائج الامتحانات، وتنبيه مصرفي، وتطبيق طقس، وسجلّ حضور مدرسي. وقرّر لكلٍّ منها: دفعات، أم تدفّق، أم كلاهما، وبرّر ذلك بكلفة الإجابة المتأخرة وكلفة الإجابة الكاذبة. ثم اختر لنظام متدفّق واحد حجم نافذة (كما في المختبر)، واشرح المقايضة التي تقبلها. وإن استطعت، فشغّل الدالة first_alert على قراءات تتخيّلها."
+          },
+          "deliverable": {
+            "en": "Your table of five systems with batch, stream or both, and two sentences on the window you chose and why.",
+            "ar": "جدول أنظمتك الخمسة مع دفعات أو تدفّق أو كليهما، وجملتان عن النافذة التي اخترتها ولماذا."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Each choice is justified by the cost of late and false answers.",
+                "ar": "كل اختيار مبرّر بكلفة الإجابات المتأخرة والكاذبة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "At least one system uses both a stream and a batch, with reasons.",
+                "ar": "يستعمل نظام واحد على الأقل التدفّق والدفعات معًا، مع الأسباب."
+              }
+            },
+            {
+              "criterion": {
+                "en": "The window choice states its trade-off.",
+                "ar": "يذكر اختيار النافذة مقايضته."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Batch and stream",
+            "ar": "الدفعات والتدفّق"
+          },
+          "note": {
+            "en": "Data engineering · Level 4 · Lesson 4",
+            "ar": "هندسة البيانات، المستوى ٤، الدرس ٤"
+          },
+          "narration": {
+            "en": "A nightly batch would tell us about the flood the morning after.",
+            "ar": "الدفعة الليلية ستخبرنا بالفيضان في الصباح التالي."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lesson you will",
+            "ar": "في هذا الدرس سوف"
+          },
+          "bullets": {
+            "en": [
+              "Explain batch and stream processing and their trade-offs.",
+              "Tame noise with a moving window, and see the delay it adds.",
+              "Choose batch, stream or both for real systems."
+            ],
+            "ar": [
+              "تشرح المعالجة بالدفعات والمتدفّقة ومقايضاتهما.",
+              "تروّض التشويش بنافذة متحرّكة، وترى التأخير الذي تضيفه.",
+              "تختار الدفعات أو التدفّق أو كليهما لأنظمة حقيقية."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Key ideas",
+            "ar": "الأفكار الأساسية"
+          },
+          "bullets": {
+            "en": [
+              "Batches are simple and late; streams are fast and always on.",
+              "Bigger windows: fewer false alarms, later alerts.",
+              "Use event time, and expect duplicates."
+            ],
+            "ar": [
+              "الدفعات بسيطة ومتأخرة، والتدفّقات سريعة وتعمل دائمًا.",
+              "النوافذ الأكبر: إنذارات كاذبة أقل، وإنذارات متأخرة.",
+              "استعمل وقت الحدث، وتوقّع التكرار."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Human stream",
+            "ar": "التدفّق البشري"
+          },
+          "bullets": {
+            "en": [
+              "Readings (3 min): one a minute",
+              "Window 1 (3 min): alarm on every reading",
+              "Window 3 (5 min): average the last three",
+              "Decide (4 min): batch, stream or both?"
+            ],
+            "ar": [
+              "القراءات (٣ دقائق): قراءة كل دقيقة",
+              "النافذة ١ (٣ دقائق): إنذار على كل قراءة",
+              "النافذة ٣ (٥ دقائق): متوسط آخر ثلاث",
+              "القرار (٤ دقائق): دفعات أم تدفّق أم كلاهما؟"
+            ]
+          },
+          "details": {
+            "en": [
+              "Readings (3 min): One person reads out river levels one at a time, including two splashes.",
+              "Window 1 (3 min): Shout “alarm” whenever a single reading is above 2.0. How many false alarms?",
+              "Window 3 (5 min): Now alarm only when the average of the last three is above 2.0. Fewer false alarms, but when does the real alert come?",
+              "Decide (4 min): List five systems and decide for each, with the cost of a late and of a false answer."
+            ],
+            "ar": [
+              "القراءات (٣ دقائق): يقرأ شخص مستويات النهر واحدًا بعد آخر، وبينها رذاذان.",
+              "النافذة ١ (٣ دقائق): اصرخوا «إنذار» كلما كانت قراءة واحدة فوق ٢٫٠. كم إنذارًا كاذبًا؟",
+              "النافذة ٣ (٥ دقائق): أنذروا الآن فقط حين يكون متوسط آخر ثلاث فوق ٢٫٠. إنذارات كاذبة أقل، لكن متى يأتي الإنذار الحقيقي؟",
+              "القرار (٤ دقائق): اكتبوا خمسة أنظمة وقرّروا لكلٍّ منها، مع كلفة الإجابة المتأخرة والكاذبة."
+            ]
+          },
+          "note": {
+            "en": "Use the readings from the Python step, so the class can check its alerts against the code.",
+            "ar": "استعمل قراءات خطوة Python، ليتمكّن الصف من مقارنة إنذاراته بالبرنامج."
+          },
+          "narration": {
+            "en": "One reading or three: fewer false alarms, or a faster alert?",
+            "ar": "قراءة واحدة أم ثلاث: إنذارات كاذبة أقل، أم إنذار أسرع؟"
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why is a batch easy to rerun?",
+              "What did the bigger window cost us?",
+              "Why use the time an event happened, not when it arrived?"
+            ],
+            "ar": [
+              "لماذا تسهل إعادة تشغيل الدفعة؟",
+              "ماذا كلّفتنا النافذة الأكبر؟",
+              "لماذا نستعمل وقت وقوع الحدث لا وقت وصوله؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name one system that needs a stream and one that a batch serves better, with a reason each."
+            ],
+            "ar": [
+              "سمِّ نظامًا يحتاج إلى التدفّق وآخر تخدمه الدفعة أفضل، مع سبب لكلٍّ منهما."
+            ]
+          },
+          "narration": {
+            "en": "Choose by what late costs, and what false costs.",
+            "ar": "اختر حسب كلفة التأخير، وكلفة الخطأ."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Batch and stream",
+            "ar": "شرائح للمراجعة: الدفعات والتدفّق"
+          },
+          "pages": 6,
+          "base": "data-s4-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Batch and stream",
+            "ar": "ورقة النشاط: الدفعات والتدفّق"
+          },
+          "pages": 3,
+          "base": "data-s4-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-s4-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.4",
+        "DATA.2",
+        "DC.5.2"
+      ]
+    },
+    {
+      "id": "data-s4-check",
+      "title": {
+        "en": "Data engineering: unit check",
+        "ar": "هندسة البيانات: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Pick one dataset you know and design its whole path: the schema, the format, an idempotent load, three contract tests and batch or stream.",
+        "ar": "اختر مجموعة بيانات تعرفها وصمّم مسارها كاملًا: المخطّط، والصيغة، وتحميلًا متساوي الأثر، وثلاثة اختبارات من العقد، ودفعات أم تدفّق."
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "In a star schema, where does each school’s name belong?",
+            "ar": "في المخطّط النجمي، أين مكان اسم كل مدرسة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Once, in the schools dimension table",
+                "ar": "مرة واحدة، في جدول بُعد المدارس"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "In every row of the fact table",
+                "ar": "في كل صف من صفوف جدول الحقائق"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "In the run log",
+                "ar": "في سجلّ التشغيل"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Dimensions hold descriptions once; the fact table holds only keys and measures, so it stays small however many events it has.",
+            "ar": "تحمل الأبعاد الأوصاف مرة واحدة، ولا يحمل جدول الحقائق إلا المفاتيح والمقاييس، فيبقى صغيرًا مهما كثرت أحداثه."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "JSON is usually more than twice the size of CSV for the same table, because it repeats every column’s name.",
+            "ar": "يكون JSON عادةً أكبر من ضعف حجم CSV للجدول نفسه، لأنه يكرّر اسم كل عمود."
+          },
+          "answer": true,
+          "explain": {
+            "en": "Every JSON record spells out the column names again; CSV says them once in the header.",
+            "ar": "كل سجلّ في JSON يكتب أسماء الأعمدة من جديد، أما CSV فيقولها مرة واحدة في العناوين."
+          }
+        },
+        {
+          "type": "order",
+          "id": "q3",
+          "prompt": {
+            "en": "Put the steps of a safe nightly load in order.",
+            "ar": "رتّب خطوات التحميل الليلي الآمن."
+          },
+          "steps": [
+            {
+              "en": "Read the watermark",
+              "ar": "اقرأ العلامة المائية"
+            },
+            {
+              "en": "Extract the newer rows",
+              "ar": "استخرج الصفوف الأحدث"
+            },
+            {
+              "en": "Transform them",
+              "ar": "حوّلها"
+            },
+            {
+              "en": "Delete the day’s rows, then insert",
+              "ar": "احذف صفوف اليوم، ثم أدرج"
+            },
+            {
+              "en": "Save the new watermark and log",
+              "ar": "احفظ العلامة الجديدة وسجّل"
+            }
+          ],
+          "explain": {
+            "en": "The watermark decides what’s extracted and is saved last, after a successful load, so a failure simply reruns; delete-then-insert makes that rerun safe.",
+            "ar": "تقرّر العلامة المائية ما يُستخرج وتُحفظ أخيرًا بعد نجاح التحميل، فيُعاد الفشل ببساطة، ويجعل الحذف ثم الإدراج هذه الإعادة آمنة."
+          }
+        },
+        {
+          "type": "codefill",
+          "id": "q4",
+          "lang": "sql",
+          "prompt": {
+            "en": "Fill the gaps: an idempotent load of today’s rows.",
+            "ar": "املأ الفراغات: تحميل متساوي الأثر لصفوف اليوم."
+          },
+          "code": [
+            {
+              "blank": 0
+            },
+            " FROM daily WHERE day = 'Mon';\n",
+            {
+              "blank": 1
+            },
+            " INTO daily SELECT * FROM today;"
+          ],
+          "answers": [
+            "DELETE",
+            "INSERT"
+          ],
+          "distractors": [
+            "SELECT",
+            "UPDATE"
+          ],
+          "explain": {
+            "en": "Delete the day’s rows, then insert them again: one run or five leaves the same table.",
+            "ar": "احذف صفوف اليوم، ثم أدرجها من جديد: فتشغيل واحد أو خمسة يترك الجدول نفسه."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q5",
+          "prompt": {
+            "en": "Match each quality test to what it catches.",
+            "ar": "صِل كل اختبار جودة بما يلتقطه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Range",
+                "ar": "المدى"
+              },
+              "right": {
+                "en": "A mark of 25 out of 20",
+                "ar": "درجة ٢٥ من ٢٠"
+              }
+            },
+            {
+              "left": {
+                "en": "Referential integrity",
+                "ar": "سلامة المراجع"
+              },
+              "right": {
+                "en": "A mark for pupil 7 when there’s no pupil 7",
+                "ar": "درجة للتلميذ ٧ ولا يوجد تلميذ ٧"
+              }
+            },
+            {
+              "left": {
+                "en": "Freshness",
+                "ar": "الحداثة"
+              },
+              "right": {
+                "en": "Today’s file arriving at 09:30, not 07:00",
+                "ar": "ملف اليوم يصل في ٠٩:٣٠ لا ٠٧:٠٠"
+              }
+            },
+            {
+              "left": {
+                "en": "Uniqueness",
+                "ar": "التفرّد"
+              },
+              "right": {
+                "en": "The same reading loaded twice",
+                "ar": "القراءة نفسها محمّلة مرتين"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each test checks one side of quality; together they cover most of what a contract promises.",
+            "ar": "كل اختبار يفحص جانبًا واحدًا من الجودة، ومعًا تغطّي أغلب ما يعد به العقد."
+          }
+        },
+        {
+          "type": "bug",
+          "id": "q6",
+          "lang": "sql",
+          "prompt": {
+            "en": "This orphan test never returns a row, even when there are orphans. Which line is wrong?",
+            "ar": "لا يعيد اختبار السجلّات اليتيمة هذا أي صف أبدًا، حتى حين توجد سجلّات يتيمة. أيّ سطر فيه الخطأ؟"
+          },
+          "code": "SELECT marks.pupil_id\nFROM marks\nJOIN pupils ON pupils.id = marks.pupil_id\nWHERE pupils.id IS NULL;",
+          "line": 3,
+          "fix": "LEFT JOIN pupils ON pupils.id = marks.pupil_id",
+          "explain": {
+            "en": "An inner join drops the orphans before WHERE sees them, so the test always passes. LEFT JOIN keeps every mark and gives orphans a NULL pupil.",
+            "ar": "يُسقط الربط الداخلي السجلّات اليتيمة قبل أن تراها WHERE، فينجح الاختبار دائمًا. أما ⁦LEFT JOIN⁩ فتُبقي كل الدرجات وتعطي اليتيمة تلميذًا NULL."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q7",
+          "prompt": {
+            "en": "A test fails on 3 rows out of 10,000 in a daily batch. What’s usually the best response?",
+            "ar": "فشل اختبار على ٣ صفوف من ١٠٠٠٠ في دفعة يومية. ما الاستجابة الأفضل عادةً؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Quarantine the 3 rows and alert the producer",
+                "ar": "عزل الصفوف الثلاثة وتنبيه المنتِج"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Block the whole batch",
+                "ar": "إيقاف الدفعة كلها"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Delete the 3 rows quietly",
+                "ar": "حذف الصفوف الثلاثة بصمت"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Good data keeps flowing, and the bad rows wait, flagged, for a fix at the source. Deleting them quietly hides the problem.",
+            "ar": "تمضي البيانات السليمة، وتنتظر الصفوف المعيبة معلَّمة حتى تُصلَح من المصدر. أما حذفها بصمت فيُخفي المشكلة."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q8",
+          "prompt": {
+            "en": "Which of these need a stream rather than a nightly batch? Choose all that apply.",
+            "ar": "أيّ مما يلي يحتاج إلى التدفّق لا إلى دفعة ليلية؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A flood warning",
+                "ar": "إنذار الفيضان"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A card fraud alert",
+                "ar": "تنبيه احتيال البطاقة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The monthly attendance report",
+                "ar": "تقرير الحضور الشهري"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "The year’s exam results",
+                "ar": "نتائج امتحانات السنة"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b"
+          ],
+          "explain": {
+            "en": "Floods and fraud can’t wait; reports and results can, and a batch gives them more care for less cost.",
+            "ar": "الفيضانات والاحتيال لا تنتظر، أما التقارير والنتائج فتنتظر، وتمنحها الدفعة عناية أكثر بكلفة أقل."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q9",
+          "prompt": {
+            "en": "Complete the sentence.",
+            "ar": "أكمل الجملة."
+          },
+          "sentence": {
+            "en": [
+              "A bigger averaging window gives ",
+              {
+                "blank": 0
+              },
+              " false alarms, but the real alert comes ",
+              {
+                "blank": 1
+              },
+              "."
+            ],
+            "ar": [
+              "تعطي نافذة المتوسط الأكبر إنذارات كاذبة ",
+              {
+                "blank": 0
+              },
+              "، لكن الإنذار الحقيقي يأتي ",
+              {
+                "blank": 1
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "fewer",
+              "more",
+              "sooner",
+              "later"
+            ],
+            "ar": [
+              "أقل",
+              "أكثر",
+              "مبكرًا",
+              "متأخرًا"
+            ]
+          },
+          "answers": {
+            "en": [
+              "fewer",
+              "later"
+            ],
+            "ar": [
+              "أقل",
+              "متأخرًا"
+            ]
+          },
+          "explain": {
+            "en": "More readings smooth out the noise, so splashes stop alarming, but a real rise takes longer to lift the average.",
+            "ar": "القراءات الأكثر تُخفي التشويش، فيتوقّف الرذاذ عن إطلاق الإنذارات، لكن الارتفاع الحقيقي يحتاج إلى وقت أطول ليرفع المتوسط."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q10",
+          "prompt": {
+            "en": "What does this program print?",
+            "ar": "ماذا يطبع هذا البرنامج؟"
+          },
+          "snippet": {
+            "lang": "python",
+            "text": "print(\"9\" > \"20\")"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "True",
+                "ar": "True"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "False",
+                "ar": "False"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "An error",
+                "ar": "خطأ"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Text is compared letter by letter, and \"9\" comes after \"2\", so \"9\" > \"20\" is True. Turn values into numbers before range checks.",
+            "ar": "تُقارَن النصوص حرفًا بحرف، و⁦\"9\"⁩ تأتي بعد ⁦\"2\"⁩، فتكون ⁦\"9\" > \"20\"⁩ صحيحة True. فحوّل القيم إلى أعداد قبل فحوص المدى."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Data engineering: review",
+            "ar": "هندسة البيانات: مراجعة"
+          },
+          "note": {
+            "en": "Data engineering · Level 4 · Unit check",
+            "ar": "هندسة البيانات، المستوى ٤، اختبار الوحدة"
+          },
+          "narration": {
+            "en": "Let’s look back at the whole unit and see what stuck.",
+            "ar": "لنراجع الوحدة كلها ونرَ ما الذي رسخ في أذهاننا."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Schemas and formats",
+              "ETL with Python and SQL",
+              "Data quality and contracts",
+              "Batch and stream"
+            ],
+            "ar": [
+              "المخطّطات والصيغ",
+              "الاستخراج والتحويل والتحميل بلغتي Python وSQL",
+              "جودة البيانات والعقود",
+              "الدفعات والتدفّق"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "Normalise for apps, star for reports; the format is the price",
+              "Every load must be safe to rerun",
+              "Test against the contract; block, quarantine or alert",
+              "Choose batch or stream by what late and false cost"
+            ],
+            "ar": [
+              "طبّع للتطبيقات، والنجمة للتقارير، والصيغة هي السعر",
+              "يجب أن يكون كل تحميل آمنًا عند إعادة التشغيل",
+              "اختبر وفق العقد، وأوقف أو اعزل أو نبّه",
+              "اختر الدفعات أو التدفّق حسب كلفة التأخير والخطأ"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Team quiz",
+            "ar": "مسابقة الفرق"
+          },
+          "bullets": {
+            "en": [
+              "Teams (2 min): Make teams of four.",
+              "Quiz (15 min): Read each question; teams agree on one answer.",
+              "Explain (8 min): One team explains each answer."
+            ],
+            "ar": [
+              "الفرق (دقيقتان): كوّنوا فرقًا من أربعة.",
+              "المسابقة (١٥ دقيقة): اقرأ كل سؤال، ويتّفق كل فريق على إجابة.",
+              "الشرح (٨ دقائق): يشرح فريق كل إجابة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Teams (2 min): Make teams of four and give each team a sheet of paper for its answers.",
+              "Quiz (15 min): Read each question aloud; each team agrees on one answer and writes it down.",
+              "Explain (8 min): Reveal each answer and ask one team to explain why it’s right."
+            ],
+            "ar": [
+              "الفرق (دقيقتان): كوّنوا فرقًا من أربعة، وأعطِ كل فريق ورقة لإجاباته.",
+              "المسابقة (١٥ دقيقة): اقرأ كل سؤال بصوت عالٍ، ويتّفق كل فريق على إجابة واحدة ويكتبها.",
+              "الشرح (٨ دقائق): اكشف كل إجابة، واطلب من أحد الفرق أن يشرح سبب صحّتها."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which part of a pipeline fails most often, and why?",
+              "What would you put in a contract for data you depend on?",
+              "Which system you use should be a stream, and isn’t?"
+            ],
+            "ar": [
+              "أيّ جزء من خط البيانات يفشل أكثر، ولماذا؟",
+              "ماذا ستضع في عقد لبيانات تعتمد عليها؟",
+              "أيّ نظام تستعمله يجب أن يكون تدفّقًا، وليس كذلك؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One design decision I’d now make differently, and why."
+            ],
+            "ar": [
+              "قرار تصميم واحد سأتخذه الآن بطريقة مختلفة، ولماذا."
+            ]
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides to revise: Data engineering: unit check",
+            "ar": "شرائح للمراجعة: هندسة البيانات: اختبار الوحدة"
+          },
+          "pages": 6,
+          "base": "data-s4-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "Activity sheet: Data engineering: unit check",
+            "ar": "ورقة النشاط: هندسة البيانات: اختبار الوحدة"
+          },
+          "pages": 2,
+          "base": "data-s4-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "DATA.1",
+        "DATA.3",
+        "DATA.4",
+        "DATA.2",
+        "DC.3.4",
+        "DC.1.2",
+        "DC.5.2"
+      ]
+    }
+  ]
+}

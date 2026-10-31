@@ -7,7 +7,7 @@
  * The app ships no courses: `npm run seed` uploads these with the unit and publishes it (scripts/seed-content.mjs).
  *
  * Usage:  npm run kits            (all units, all languages)
- *         npm run kits -- ai-1-1  (one unit)
+ *         npm run kits -- ai-1-1 data-s2  (only these units)
  * Needs Chromium for the PDFs: run `npx playwright install chromium` once, or set CHROMIUM_PATH.
  */
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from "node:fs";
@@ -22,17 +22,24 @@ const DS = resolve(ROOT, "../../packages/design-system");
 const FONTS = pathToFileURL(join(DS, "assets/fonts")).href;
 const MARK_PNG = join(ROOT, "public/app-icons/app-icon-192.png");
 const LANGS = ["en", "ar"];
-const only = process.argv[2];
+const only = new Set(process.argv.slice(2).filter((a) => !a.startsWith("--")));
 
-const C = { ink: "1E1A33", muted: "5C5470", paper: "F2F2F2", kola: "FF6A2B", kolaSoft: "FFE2D2", kolaDeep: "B43C0A", line: "EAD9C4",
-  track: { ai: ["FFC53D", "FFF0C4", "7A5000"], iot: ["14B8A6", "CCF2EC", "065F56"], cyber: ["F04A7E", "FDD9E5", "A3123F"] } };
+const C = { ink: "1E1A33", muted: "5C5470", paper: "F2F2F2", kola: "FF6A2B", kolaSoft: "FFE2D2", kolaDeep: "B43C0A", line: "EAD9C4" };
+// Each built-in track's colour family (content/tracks.ts), from the design tokens: solid, soft, ink. Other tracks get slate.
+const TONES = { ai: "sunbird", iot: "lagoon", cyber: "hibiscus", code: "sky", data: "leaf", agents: "lilac", opt: "clay", aisec: "slate" };
+const TOKENS = Object.fromEntries(JSON.parse(readFileSync(join(DS, "src/tokens/tokens.json"), "utf8")).color.tokens.map((t) => [t.name, t.value.light.slice(1).toUpperCase()]));
+const trackColours = (track) => { const tone = TONES[track] ?? "slate"; return [TOKENS[tone], TOKENS[`${tone}-soft`], TOKENS[`${tone}-ink`]]; };
 const pick = (t, lang) => (t ? t[lang] ?? t.en : "");
 const pickList = (t, lang) => (t ? t[lang] ?? t.en : []);
 const digits = (n, lang) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en").format(n);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const UI = {
-  en: { footer: "Darsi · free to copy for your school", plan: "Lesson plan · for the teacher", sheet: "Worksheet · for pupils", goals: "Learning goals", activity: "Activity", discuss: "Discussion", exit: "Exit ticket", tomorrow: "Try it in class tomorrow", time: "Time", min: "min", materials: "Materials", materialsV: "Board, chalk, paper. No devices needed.", name: "Name", cls: "Class", date: "Date", tf: ["True", "False"], reflect: "In your own words", bank: "Word bank", unit: "Unit", lesson: "Lesson", sep: " · ", listSep: "; " },
-  ar: { footer: "درسي — يُسمح بنسخها لمدرستك مجانًا", plan: "خطة درس — للمعلم", sheet: "ورقة عمل — للطلاب", goals: "أهداف التعلّم", activity: "النشاط", discuss: "للنقاش", exit: "بطاقة الخروج", tomorrow: "جرّبها في الصف غدًا", time: "المدة", min: "دقيقة", materials: "المواد", materialsV: "سبّورة، طباشير، ورق. لا حاجة إلى أجهزة.", name: "الاسم", cls: "الصف", date: "التاريخ", tf: ["صح", "خطأ"], reflect: "بكلماتك", bank: "بنك الكلمات", unit: "الوحدة", lesson: "الدرس", sep: "، ", listSep: "، " },
+  en: { footer: "Darsi · free to copy for your school", plan: "Lesson plan · for the teacher", sheet: "Worksheet · for pupils", goals: "Learning goals", activity: "Activity", discuss: "Discussion", exit: "Exit ticket", tomorrow: "Try it in class tomorrow", time: "Time", min: "min", materials: "Materials", materialsV: "Board, chalk, paper. No devices needed.", name: "Name", cls: "Class", date: "Date", tf: ["True", "False"], reflect: "In your own words", bank: "Word bank", unit: "Unit", lesson: "Lesson", sep: " · ", listSep: "; ",
+    cParsons: "Number the lines in order (1, 2, 3…). Cross out any line that doesn’t belong.", cBug: "Circle the line with the mistake. Write it correctly:",
+    cWrite: "Write your program:", cRobot: "Cut out cards (↑ forward, ↶ turn left, ↷ turn right) and lay out a program that takes the robot to the ★. Write it here:" },
+  ar: { footer: "درسي — يُسمح بنسخها لمدرستك مجانًا", plan: "خطة درس — للمعلم", sheet: "ورقة عمل — للطلاب", goals: "أهداف التعلّم", activity: "النشاط", discuss: "للنقاش", exit: "بطاقة الخروج", tomorrow: "جرّبها في الصف غدًا", time: "المدة", min: "دقيقة", materials: "المواد", materialsV: "سبّورة، طباشير، ورق. لا حاجة إلى أجهزة.", name: "الاسم", cls: "الصف", date: "التاريخ", tf: ["صح", "خطأ"], reflect: "بكلماتك", bank: "بنك الكلمات", unit: "الوحدة", lesson: "الدرس", sep: "، ", listSep: "، ",
+    cParsons: "رقّم الأسطر بالترتيب (١، ٢، ٣…). اشطب أي سطر لا ينتمي إلى البرنامج.", cBug: "ضع دائرة حول السطر الذي فيه الخطأ، ثم اكتبه صحيحًا:",
+    cWrite: "اكتب برنامجك:", cRobot: "قصّ بطاقات (↑ إلى الأمام، ↶ استدر يسارًا، ↷ استدر يمينًا) ورتّب برنامجًا يوصل الروبوت إلى ★. اكتبه هنا:" },
 };
 // Students' courses (`audience: "students"`) are written to the student: their notes and sheet never speak to a teacher.
 const STUDENT_UI = {
@@ -49,7 +56,7 @@ const fit = (texts, base, room, min) => { const n = texts.join(" ").length; retu
 
 /* ---------------- PPTX ---------------- */
 function buildPptx(unit, lesson, lang) {
-  const rtl = lang === "ar", u = UI[lang], [trackC, trackSoft, trackInk] = C.track[unit.track];
+  const rtl = lang === "ar", u = UI[lang], [trackC, trackSoft, trackInk] = trackColours(unit.track);
   const pptx = new PptxGenJS();
   pptx.layout = "LAYOUT_WIDE"; // 13.33 × 7.5 in
   pptx.rtlMode = rtl;
@@ -102,7 +109,7 @@ h1,h2,h3{font-family:"Baloo 2","Baloo Bhaijaan 2",sans-serif;margin:0;line-heigh
 const MARK_SVG = `<svg viewBox="0 0 64 64"><path d="M14 4h36a10 10 0 0 1 10 10v28a10 10 0 0 1-10 10H26l-12 9v-9a10 10 0 0 1-10-10V14A10 10 0 0 1 14 4z" fill="#ff6a2b"/><path d="M32 13c1.6 7.4 4.6 10.4 12 12-7.4 1.6-10.4 4.6-12 12-1.6-7.4-4.6-10.4-12-12 7.4-1.6 10.4-4.6 12-12z" fill="#ffc53d"/><circle cx="46" cy="40" r="4" fill="#1e1a33"/></svg>`;
 
 function slidesHtml(unit, lesson, lang) {
-  const rtl = lang === "ar", u = UI[lang], [trackC, trackSoft, trackInk] = C.track[unit.track];
+  const rtl = lang === "ar", u = UI[lang], [trackC, trackSoft, trackInk] = trackColours(unit.track);
   const slides = lesson.slides.map((sl, i) => {
     const title = esc(pick(sl.title, lang)), note = esc(pick(sl.note, lang)), bullets = pickList(sl.bullets, lang).map(esc);
     const numbered = sl.layout === "activity" || sl.layout === "questions";
@@ -136,8 +143,24 @@ footer .m svg{width:.35in;height:.35in;display:block}footer .n{margin-inline-sta
 </style></head><body>${slides}</body></html>`;
 }
 
+/* The code steps on a worksheet (planHtml). */
+const CODE_TYPES = ["code", "parsons", "codefill", "bug", "blocks"];
+const codeBox = (text, numbered = false) => `<pre class="code" dir="ltr">${text.replace(/\n$/, "").split("\n").map((l, i) => `${numbered ? `<span class="ln">${i + 1}</span>` : ""}${esc(l)}`).join("\n")}</pre>`;
+/** The same shuffle every time for a step (worksheets are rebuilt), never the answer's own order. */
+function seeded(items, seed) {
+  let h = 2166136261; for (const c of seed) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  const a = items.slice();
+  for (let i = a.length - 1; i > 0; i--) { h = Math.imul(h ^ (h >>> 15), 2246822507); const j = (h >>> 0) % (i + 1); [a[i], a[j]] = [a[j], a[i]]; }
+  return a.join("\n") === items.join("\n") && a.length > 1 ? [...a.slice(1), a[0]] : a;
+}
+const ARROW = { N: "↑", E: "→", S: "↓", W: "←" };
+const robotGrid = (w) => `<table class="robot" dir="ltr">${Array.from({ length: w.rows }, (_, y) => `<tr>${Array.from({ length: w.cols }, (_, x) => {
+  const wall = (w.walls ?? []).some((p) => p.x === x && p.y === y);
+  return `<td class="${wall ? "wall" : ""}">${w.start.x === x && w.start.y === y ? ARROW[w.start.dir] : w.goal.x === x && w.goal.y === y ? "★" : ""}</td>`;
+}).join("")}</tr>`).join("")}</table>`;
+
 function planHtml(unit, lesson, lang) {
-  const rtl = lang === "ar", u = uiFor(unit, lang), [trackC] = C.track[unit.track];
+  const rtl = lang === "ar", u = uiFor(unit, lang), [trackC] = trackColours(unit.track);
   const bySlide = (layout) => lesson.slides.find((s) => s.layout === layout);
   const goals = bySlide("bullets"), act = bySlide("activity"), q = bySlide("questions"), ex = bySlide("exit"), titleSl = bySlide("title");
   const li = (sl) => pickList(sl?.bullets, lang).map((b) => `<li>${esc(b)}</li>`).join("");
@@ -148,15 +171,23 @@ function planHtml(unit, lesson, lang) {
   const mins = pickList(act?.bullets, "en").map((b) => Number(/\((\d+) min\)/.exec(b)?.[1]));
   const minutes = mins.length && mins.every((m) => m > 0) ? mins.reduce((a, b) => a + b, 0) : 45;
   const materials = lesson.materials ? pickList(lesson.materials, lang).map(esc).join(u.listSep) : u.materialsV;
-  const qs = lesson.steps.filter((s) => ["choice", "multi", "truefalse", "match", "order", "fill", "type"].includes(s.type)).slice(0, 5).map((s, k) => {
+  const qs = lesson.steps.filter((s) => ["choice", "multi", "truefalse", "match", "order", "fill", "type", ...CODE_TYPES].includes(s.type)).slice(0, 5).map((s, k) => {
     let body = "";
+    // The code steps on paper, for classes without devices: number the strips, fill the gaps, circle the bug, write the
+    // program, or walk the robot on the grid with cut-out cards.
+    if (s.type === "parsons") body = `<p class="how">${u.cParsons}</p><div class="order code-strips" dir="ltr">${seeded([...s.lines, ...(s.distractors ?? [])], s.id).map((x) => `<div><i></i><code>${esc(x.trim())}</code></div>`).join("")}</div>`;
+    if (s.type === "codefill") body = `<pre class="code" dir="ltr">${s.code.map((p) => (typeof p === "string" ? esc(p) : `<span class="gap"></span>`)).join("")}</pre><p class="bank"><b>${u.bank}:</b> <code dir="ltr">${seeded([...s.answers, ...(s.distractors ?? [])], s.id).map(esc).join("   ")}</code></p>`;
+    if (s.type === "bug") body = `<p class="how">${u.cBug}</p>${codeBox(s.code, true)}<div class="lines"><i></i></div>`;
+    if (s.type === "code") body = `${s.starter.trim() ? codeBox(s.starter) : ""}<p class="how">${u.cWrite}</p><div class="lines"><i></i><i></i><i></i><i></i></div>`;
+    if (s.type === "blocks") body = `${robotGrid(s.world)}<p class="how">${u.cRobot}</p><div class="lines"><i></i><i></i></div>`;
     if (s.type === "choice" || s.type === "multi") body = `<div class="opts">${s.options.map((o) => `<span><i class="${s.type === "multi" ? "sq" : ""}"></i>${esc(pick(o.text, lang))}</span>`).join("")}</div>`;
     if (s.type === "truefalse") body = `<div class="opts">${u.tf.map((x) => `<span><i></i>${x}</span>`).join("")}</div>`;
     if (s.type === "match") { const right = [...s.pairs].reverse(); body = `<div class="match">${s.pairs.map((p, j) => `<span class="b">${esc(pick(p.left, lang))}</span><span class="dots">• • • •</span><span class="b">${esc(pick(right[j].right, lang))}</span>`).join("")}</div>`; }
     if (s.type === "order") body = `<div class="order">${[...s.steps].reverse().map((x) => `<div><i></i>${esc(pick(x, lang))}</div>`).join("")}</div>`;
     if (s.type === "fill") { const parts = s.sentence[lang] ?? s.sentence.en; body = `<p class="fill">${parts.map((p) => (typeof p === "string" ? esc(p) : `<span class="gap"></span>`)).join("")}</p><p class="bank"><b>${u.bank}:</b> ${pickList(s.bank, lang).map(esc).join(u.sep)}</p>`; }
     if (s.type === "type") body = `<div class="lines"><i></i></div>`;
-    return `<div class="q"><h3><span class="qn">${n(k + 1)}</span>${esc(pick(s.prompt, lang))}</h3>${body}</div>`;
+    // A question's code ("What does this print?") comes before its answers.
+    return `<div class="q"><h3><span class="qn">${n(k + 1)}</span>${esc(pick(s.prompt, lang))}</h3>${s.snippet ? codeBox(s.snippet.text) : ""}${body}</div>`;
   }).join("");
   const reflect = lesson.steps.find((s) => s.type === "reflect");
   const head = (k, t) => `<div class="head">${MARK_SVG}<div><div class="kicker">${k}</div><h1>${t}</h1></div><div class="meta"><span class="chip">${esc(pick(titleSl?.note, lang))}</span></div></div>`;
@@ -179,6 +210,10 @@ ul,ol{margin:0;padding-inline-start:6mm}li{margin-bottom:1mm}${rtl ? "ol{list-st
 .order{display:grid;gap:1.5mm;margin-top:2mm}.order div{display:flex;gap:3mm;align-items:center}.order i{width:7mm;height:7mm;border:1.2pt solid #1e1a33;border-radius:1.5mm;flex:none}
 .fill{margin:2mm 0;font-size:11pt;line-height:2.2}.gap{display:inline-block;width:28mm;border-bottom:1.2pt solid #1e1a33;margin:0 1mm}.bank{margin:0;font-size:9pt;color:#5c5470}
 .lines i{display:block;height:8.5mm;border-bottom:.8pt solid #8a7560}
+.code{margin:2mm 0;padding:2mm 3mm;border:1pt solid #8a7560;border-radius:2mm;font:9.5pt/1.5 Consolas,"DejaVu Sans Mono",monospace;white-space:pre-wrap;direction:ltr;text-align:left}
+.code .ln{display:inline-block;width:6mm;color:#5c5470}.code .gap{width:18mm}.how{margin:1mm 0;font-size:9pt;color:#5c5470}
+.code-strips code{font:9.5pt Consolas,"DejaVu Sans Mono",monospace;white-space:pre}.bank code{font-family:Consolas,"DejaVu Sans Mono",monospace;white-space:pre-wrap}
+.robot{border-collapse:collapse;margin:2mm 0}.robot td{width:9mm;height:9mm;border:1pt solid #1e1a33;text-align:center;font-size:13pt}.robot td.wall{background:#5c5470}
 .foot{position:absolute;bottom:0;inset-inline:0;display:flex;justify-content:space-between;font-size:7.5pt;color:#5c5470;border-top:.6pt solid #c9b8a4;padding-top:2mm}
 </style></head><body>
 <section class="page">${head(u.plan, esc(pick(lesson.title, lang)))}
@@ -196,7 +231,8 @@ ${reflect ? `<div class="q"><h3><span class="qn">✎</span>${esc(pick(reflect.pr
 
 /* ---------------- run ---------------- */
 async function main() {
-  const units = readdirSync(CONTENT).filter((f) => f.endsWith(".json")).map((f) => JSON.parse(readFileSync(join(CONTENT, f), "utf8"))).filter((u) => !only || u.id === only);
+  const units = readdirSync(CONTENT).filter((f) => f.endsWith(".json")).map((f) => JSON.parse(readFileSync(join(CONTENT, f), "utf8"))).filter((u) => !only.size || only.has(u.id));
+  for (const id of only) if (!units.some((u) => u.id === id)) console.warn(`! No unit ${id} in content/units`);
   let chromium = null, browser = null;
   try { ({ chromium } = await import("playwright")); browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}); }
   catch (e) { console.warn(`! PDFs skipped — Chromium not available (${String(e.message).split("\n")[0]}).\n  Run: npx playwright install chromium   (or set CHROMIUM_PATH)`); }
