@@ -34,6 +34,22 @@ service firebase.storage {
         && request.resource.contentType.matches('image/(png|webp|jpeg)') && request.resource.size <= 100 * 1024;
       allow delete: if isSuper() || (inOrgS(orgId) && request.auth.token.role == 'orgAdmin');
     }
+    // Project evidence by course: submissions/{orgId|"none"}/{uid}/{unitId}/{file}. As below, plus read-only for
+    // university teachers a platform admin gave access to that course (Firestore courseAccess/{uid}.units).
+    function grantedS(unitId) {
+      return request.auth != null && firestore.exists(/databases/(default)/documents/courseAccess/$(request.auth.uid))
+        && unitId in firestore.get(/databases/(default)/documents/courseAccess/$(request.auth.uid)).data.units;
+    }
+    match /submissions/{orgId}/{uid}/{unitId}/{file} {
+      allow read: if request.auth != null && (request.auth.uid == uid
+        || request.auth.token.role == 'superadmin'
+        || (request.auth.token.orgId == orgId && request.auth.token.role in ['orgAdmin', 'teacher'])
+        || grantedS(unitId));
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*|application/pdf|video/mp4|audio/.*');
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
     // Project evidence: submissions/{orgId|"none"}/{uid}/{file}
     match /submissions/{orgId}/{uid}/{file} {
       allow read: if request.auth != null && (request.auth.uid == uid

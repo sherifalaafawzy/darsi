@@ -9,7 +9,7 @@ import { StoreProvider, useStore } from "./state/store";
 import { useCloudSync } from "./state/sync";
 import { useOrgBrand } from "./state/orgBrand";
 import { useAnalytics } from "./analytics/useAnalytics";
-import { configureContent, setOrgReader } from "./content/load";
+import { configureContent, loadCatalog, loadUnit, setOrgReader } from "./content/load";
 import { teachSync } from "./content/types";
 import { SettingsProvider, useLanguageReady } from "./content/settings";
 import { loadFirebase } from "./fb";
@@ -35,6 +35,10 @@ const AddPeople = lazy(() => import("./admin/AddPeople").then((m) => ({ default:
 const ImportPeople = lazy(() => import("./admin/AddPeople").then((m) => ({ default: m.ImportPeople })));
 const Teach = lazy(() => import("./admin/Teach").then((m) => ({ default: m.Teach })));
 const TeachPerson = lazy(() => import("./admin/Teach").then((m) => ({ default: m.TeachPerson })));
+const CourseResults = lazy(() => import("./results/CourseResults").then((m) => ({ default: m.CourseResults })));
+const CourseAccess = lazy(() => import("./results/CourseAccess").then((m) => ({ default: m.CourseAccess })));
+/** Course results and access get content loading from here (results/async.ts says why). */
+const CONTENT = { loadCatalog, loadUnit };
 const SuperAdmin = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.SuperAdmin })));
 const AnalyticsPage = lazy(() => import("./admin/Analytics").then((m) => ({ default: m.AnalyticsPage })));
 const OrgAnalytics = lazy(() => import("./admin/Analytics").then((m) => ({ default: m.OrgAnalytics })));
@@ -153,7 +157,9 @@ function Routed() {
             <Route path="teach/:uid" element={<TeachPerson />} />
           </Route>
           <Route element={<Allow roles={["superadmin"]} />}>
+            <Route path="results" element={<CourseResults content={CONTENT} />} />
             <Route path="super" element={<SuperAdmin />} />
+            <Route path="super/access" element={<CourseAccess content={CONTENT} />} />
             <Route path="super/analytics" element={<AnalyticsPage />} />
             <Route path="super/orgs/:orgId" element={<OrgAnalytics />} />
             <Route path="super/people/:uid" element={<PersonDetail back="/super/analytics" />} />

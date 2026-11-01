@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Icon, QuestionHeader } from "@darsi/design-system";
+import { Button, ChoiceCard, Icon, QuestionHeader } from "@darsi/design-system";
 import { loadFirebase } from "../fb";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n";
@@ -25,47 +25,95 @@ async function shrinkImage(file: File, max = 1280): Promise<Blob> {
   } catch { return file; }
 }
 
-/** A real classroom task. Evidence (text + optional photo/PDF) goes to Firestore/Storage for teacher review. */
+/** A draft kept on this phone, so work typed offline (or before a refresh) isn't lost. Files are picked again. */
+interface Draft { text: string; explain: string; ai: "" | "none" | "some"; aiHow: string }
+const EMPTY: Draft = { text: "", explain: "", ai: "", aiHow: "" };
+const draftKey = (lessonId: string, stepId: string) => `darsi-project-draft:${lessonId}:${stepId}`;
+export function readDraft(lessonId: string, stepId: string): Draft {
+  try { return { ...EMPTY, ...JSON.parse(localStorage.getItem(draftKey(lessonId, stepId)) ?? "{}") }; } catch { return EMPTY; }
+}
+const writeDraft = (lessonId: string, stepId: string, d: Draft | null) => {
+  try { if (d) localStorage.setItem(draftKey(lessonId, stepId), JSON.stringify(d)); else localStorage.removeItem(draftKey(lessonId, stepId)); } catch { /* storage full or blocked */ }
+};
+/** A final project takes up to this many files: photos, PDFs or voice notes. */
+export const MAX_FILES = 4;
+
+/**
+ * A real classroom task. Evidence (text + optional photos, PDFs or voice notes) goes to Firestore/Storage, where the
+ * student's teacher, and university teachers a platform admin gave access to the course, can see it. A track's final
+ * project (`final`) also asks the student to explain how it works in their own words and to say whether they used AI.
+ * Nothing here is graded.
+ */
 export function ProjectView({ step, lessonId, unitId, onReady, preview }: { step: ProjectStep; lessonId: string; unitId: string; onReady: (r: boolean) => void; preview?: boolean }) {
   const { t, L } = useI18n();
-  const { user, orgId } = useAuth();
-  const [text, setText] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [state, setState] = useState<"idle" | "sending" | "sent" | "error" | "later">("idle");
+  const { user, profile, orgId } = useAuth();
+  const [d, setD] = useState<Draft>(() => readDraft(lessonId, step.id));
+  const [files, setFiles] = useState<File[]>([]);
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error" | "later" | "offline">("idle");
   useEffect(() => { onReady(state === "sent" || state === "later"); }, [state, onReady]);
+  const edit = (patch: Partial<Draft>) => setD((x) => { const n = { ...x, ...patch }; writeDraft(lessonId, step.id, n); return n; });
+  const final = !!step.final;
+  const ready = !!d.text.trim() && (!final || (!!d.explain.trim() && (d.ai === "none" || (d.ai === "some" && !!d.aiHow.trim()))));
   const submit = async () => {
     if (!user) return;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) { setState("offline"); return; }
     setState("sending");
     try {
-      let fileUrl: string | null = null, fileName: string | null = null;
-      if (file) {
-        const [{ getDownloadURL, ref, uploadBytes }, s, body] = await Promise.all([import("firebase/storage"), loadFirebase().then((fb) => fb.storage()), shrinkImage(file)]);
-        const safe = file.name.replace(/[^\w.-]/g, "_"), jpeg = body !== file;
-        const r = ref(s, `submissions/${orgId ?? "none"}/${user.uid}/${lessonId}-${Date.now()}-${jpeg ? safe.replace(/\.\w+$/, "") + ".jpg" : safe}`);
-        await uploadBytes(r, body, { contentType: jpeg ? "image/jpeg" : file.type });
-        fileUrl = await getDownloadURL(r); fileName = file.name;
+      const sent: { url: string; name: string; type: string }[] = [];
+      if (files.length) {
+        const [{ getDownloadURL, ref, uploadBytes }, s] = await Promise.all([import("firebase/storage"), loadFirebase().then((fb) => fb.storage())]);
+        for (const file of files) {
+          const body = await shrinkImage(file);
+          const safe = file.name.replace(/[^\w.-]/g, "_"), jpeg = body !== file;
+          // One folder per course, so access to a course's projects can be granted (firebase/storage.rules).
+          const r = ref(s, `submissions/${orgId ?? "none"}/${user.uid}/${unitId}/${lessonId}-${Date.now()}-${jpeg ? safe.replace(/\.\w+$/, "") + ".jpg" : safe}`);
+          const type = jpeg ? "image/jpeg" : file.type;
+          await uploadBytes(r, body, { contentType: type });
+          sent.push({ url: await getDownloadURL(r), name: file.name, type });
+        }
       }
       const [{ db }, { addDoc, collection, serverTimestamp }] = await Promise.all([loadFirebase(), import("firebase/firestore")]);
-      await addDoc(collection(db, "users", user.uid, "submissions"), { lessonId, unitId, stepId: step.id, orgId: orgId ?? null, text, fileUrl, fileName, status: "submitted", createdAt: serverTimestamp() });
+      await addDoc(collection(db, "users", user.uid, "submissions"), {
+        lessonId, unitId, stepId: step.id, orgId: orgId ?? null, text: d.text, fileUrl: sent[0]?.url ?? null, fileName: sent[0]?.name ?? null,
+        ...(sent.length ? { files: sent } : {}), ...(final ? { final: true, explain: d.explain, aiUse: d.ai === "some" ? d.aiHow : "none", name: profile?.name ?? user.displayName ?? "" } : {}),
+        status: "submitted", createdAt: serverTimestamp(),
+      });
+      writeDraft(lessonId, step.id, null);
       setState("sent");
     } catch { setState("error"); }
   };
+  const pick = (list: FileList | null) => setFiles((x) => [...x, ...Array.from(list ?? [])].slice(0, final ? MAX_FILES : 1));
   return (
     <div className="stack">
-      <QuestionHeader type="reflect" icon="target" typeLabel={t("project.kicker")} prompt={L(step.prompt)} />
+      <QuestionHeader type="reflect" icon="target" typeLabel={t(final ? "project.finalKicker" : "project.kicker")} prompt={L(step.prompt)} />
       <div className="project-card">
         <p>{L(step.task)}</p>
         <p><strong>{t("project.deliver")}</strong> {L(step.deliverable)}</p>
-        <div><strong>{t("project.rubric")}</strong><ul>{step.rubric.map((r, i) => <li key={i}>{L(r.criterion)}</li>)}</ul></div>
+        <div><strong>{t(final ? "project.checklist" : "project.rubric")}</strong><ul>{step.rubric.map((r, i) => <li key={i}>{L(r.criterion)}</li>)}</ul></div>
       </div>
-      {state === "sent" ? <p className="notice ok"><Icon name="check" size={18} /> {t("project.sent")}</p> : <>
-        <label className="dr-field-label" htmlFor="evidence">{t("project.evidence")}</label>
-        <textarea id="evidence" className="dr-reflect-input" dir="auto" rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder={t("project.placeholder")} />
-        <label className="file-pick"><Icon name="image" size={20} /><span>{file ? file.name : t("project.attach")}</span>
-          <input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
+      {state === "sent" ? <p className="notice ok"><Icon name="check" size={18} /> {t(final ? "project.finalSent" : "project.sent")}</p> : <>
+        <label className="dr-field-label" htmlFor={`evidence-${step.id}`}>{t("project.evidence")}</label>
+        <textarea id={`evidence-${step.id}`} className="dr-reflect-input" dir="auto" rows={5} value={d.text} onChange={(e) => edit({ text: e.target.value })} placeholder={t("project.placeholder")} />
+        {final && <>
+          <label className="dr-field-label" htmlFor={`explain-${step.id}`}>{t("project.explain")}</label>
+          <textarea id={`explain-${step.id}`} className="dr-reflect-input" dir="auto" rows={5} value={d.explain} onChange={(e) => edit({ explain: e.target.value })} placeholder={t("project.explainHint")} />
+          <fieldset className="stack-sm project-ai">
+            <legend className="dr-field-label">{t("project.ai")}</legend>
+            <div role="radiogroup" className="stack-sm">
+              <ChoiceCard title={t("project.aiNone")} selected={d.ai === "none"} onClick={() => edit({ ai: "none" })} />
+              <ChoiceCard title={t("project.aiSome")} selected={d.ai === "some"} onClick={() => edit({ ai: "some" })} />
+            </div>
+            {d.ai === "some" && <textarea aria-label={t("project.aiHow")} className="dr-reflect-input" dir="auto" rows={3} value={d.aiHow} onChange={(e) => edit({ aiHow: e.target.value })} placeholder={t("project.aiHow")} />}
+          </fieldset>
+        </>}
+        <label className="file-pick"><Icon name="image" size={20} /><span>{files.length ? files.map((f) => f.name).join(t("common.sep")) : t(final ? "project.attachMany" : "project.attach")}</span>
+          <input type="file" multiple={final} accept={final ? "image/*,application/pdf,audio/*" : "image/*,application/pdf"} onChange={(e) => pick(e.target.files)} /></label>
+        {files.length > 0 && <Button size="sm" variant="ghost" onClick={() => setFiles([])}>{t("project.clearFiles")}</Button>}
+        {final && <p className="muted small">{t("project.draftKept")}</p>}
         {state === "error" && <p className="notice err">{t("project.error")}</p>}
+        {state === "offline" && <p className="notice">{t("project.offline")}</p>}
         <div className="row-gap">
-          <Button icon="check" disabled={!text.trim() || state === "sending" || !user || preview} loading={state === "sending"} onClick={submit}>{t("project.submit")}</Button>
+          <Button icon="check" disabled={!ready || state === "sending" || !user || preview} loading={state === "sending"} onClick={submit}>{t(final ? "project.finalSubmit" : "project.submit")}</Button>
           <Button variant="ghost" onClick={() => setState("later")}>{t("project.later")}</Button>
         </div>
         {!user && <p className="muted small">{t("project.guest")}</p>}

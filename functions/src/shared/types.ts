@@ -98,7 +98,11 @@ export interface LabStep extends Base { type: "lab"; tool: LabTool }
 /** A short reading: the concepts behind the lesson, with key terms. Paragraphs separated by blank lines. */
 export interface ReadStep extends Base { type: "read"; title: LocalText; body: LocalText; keyTerms?: { term: LocalText; def: LocalText }[] }
 /** A real-world task done in school, submitted as evidence and reviewed by a teacher or admin against a rubric. */
-export interface ProjectStep extends Base { type: "project"; task: LocalText; deliverable: LocalText; rubric: { criterion: LocalText }[] }
+export interface ProjectStep extends Base {
+  type: "project"; task: LocalText; deliverable: LocalText; rubric: { criterion: LocalText }[];
+  /** The track's final project: the student also explains how it works in their own words and declares any AI use. Not graded. */
+  final?: boolean;
+}
 
 /** One test of a Python program: what input() returns, then what the program must print and/or a check run after it. */
 export interface CodeTest {

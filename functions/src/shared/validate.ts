@@ -204,6 +204,7 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
       case "project": {
         text(s, "task"); text(s, "deliverable");
         const rubric = arr(s.rubric); minItems(rubric, "rubric", 1);
+        if (s.final !== undefined && typeof s.final !== "boolean") add("final", "badValue");
         rubric.forEach((r, i) => { if (!isObj(r)) add(`rubric.${i}`, "badValue"); else text(r, "criterion"); });
         break;
       }
