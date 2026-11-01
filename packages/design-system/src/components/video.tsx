@@ -57,8 +57,9 @@ const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(mi
 /**
  * Low-data player: 240p default, captions on, no autoplay, preload none. The timeline and the clock stay LTR
  * (time runs left to right, as on YouTube); the buttons follow the page, so Arabic puts Play on the right.
- * Full screen covers the player itself (so questions and captions stay on top); phones without the Fullscreen API on
- * elements (iPhone) get the player stretched over the page instead, turned sideways when the phone is upright.
+ * Full screen uses the Fullscreen API on the player. iPhone Chrome has no such API on elements: the video's own
+ * webkitEnterFullscreen() is used instead (playsinline keeps ordinary playback inline). If that is missing too, the
+ * player is fixed over the viewport. An upright phone in that fallback is turned sideways so the 16:9 picture fits.
  */
 /** In full screen, turn the phone to landscape where the browser allows it (Android Chrome); undone on exit. */
 let lockedLandscape = false;
@@ -71,6 +72,23 @@ function lockLandscape(on: boolean) {
 }
 
 interface CapItem { id: string; label: string; language: string }
+
+/** iOS (Chrome and Safari) fullscreens a video with these, not element.requestFullscreen. */
+type IOSVideo = HTMLVideoElement & {
+  webkitEnterFullscreen?: () => void;
+  webkitExitFullscreen?: () => void;
+};
+function enterIOSFullscreen(video: HTMLVideoElement | null): boolean {
+  const enter = video && (video as IOSVideo).webkitEnterFullscreen;
+  if (typeof enter !== "function") return false;
+  try { enter.call(video); return true; } catch { return false; }
+}
+/** Calls the iOS exit. Returns false when the page itself must clear the button (no method, or it threw). */
+function exitIOSFullscreen(video: HTMLVideoElement | null): boolean {
+  const exit = video && (video as IOSVideo).webkitExitFullscreen;
+  if (typeof exit !== "function") return false;
+  try { exit.call(video); return true; } catch { return false; }
+}
 
 function cueText(tt: TextTrack): string {
   return Array.from(tt.activeCues ?? []).map((c) => ("text" in c ? String((c as VTTCue).text) : "")).filter(Boolean).join("\n");
@@ -86,7 +104,7 @@ export function VideoPlayer(p: VideoPlayerProps) {
   const [cc, setCc] = useState(p.captions !== false);
   const [current, setCurrent] = useState(p.current ?? 0);
   const [rate, setRate] = useState(1);
-  const [full, setFull] = useState<"" | "api" | "page">("");
+  const [full, setFull] = useState<"" | "api" | "webkit" | "page">("");
   const [tall, setTall] = useState(false);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
@@ -177,15 +195,30 @@ export function VideoPlayer(p: VideoPlayerProps) {
     document.addEventListener("fullscreenchange", on);
     return () => document.removeEventListener("fullscreenchange", on);
   }, []);
+  // iOS fires these on the video itself (they do not bubble). The button follows them: native full screen hides our controls.
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    const begin = () => setFull("webkit");
+    const end = () => setFull((f) => (f === "webkit" ? "" : f));
+    v.addEventListener("webkitbeginfullscreen", begin);
+    v.addEventListener("webkitendfullscreen", end);
+    return () => {
+      v.removeEventListener("webkitbeginfullscreen", begin);
+      v.removeEventListener("webkitendfullscreen", end);
+    };
+  }, [src]);
   useEffect(() => {
     if (full !== "page") return;
-    const root = document.documentElement, before = root.style.overflow;
+    const root = document.documentElement, body = document.body;
+    const prevRoot = root.style.overflow, prevBody = body.style.overflow;
     root.style.overflow = "hidden";
+    body.style.overflow = "hidden";
     // On an upright phone the page-wide player is turned on its side, so the 16:9 video fills the screen.
     const turn = () => setTall(innerHeight > innerWidth);
     turn();
     addEventListener("resize", turn);
-    return () => { root.style.overflow = before; removeEventListener("resize", turn); };
+    return () => { root.style.overflow = prevRoot; body.style.overflow = prevBody; removeEventListener("resize", turn); };
   }, [full]);
   useEffect(() => {
     if (!playing || menu || volOpen || locked || scrubbing) {
@@ -256,10 +289,18 @@ export function VideoPlayer(p: VideoPlayerProps) {
     timers.current.flash = window.setTimeout(() => setFlash(""), 700);
   };
   const toggleFull = () => {
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else if (full === "page") setFull("");
-    else if (document.fullscreenEnabled && fig.current?.requestFullscreen) void fig.current.requestFullscreen().then(() => lockLandscape(true), () => setFull("page"));
-    else setFull("page");
+    const video = ref.current;
+    if (document.fullscreenElement) { void document.exitFullscreen(); return; }
+    if (full === "webkit") { if (!exitIOSFullscreen(video)) setFull(""); return; }
+    if (full === "page") { setFull(""); return; }
+    // iPhone Chrome: elements have no requestFullscreen. The video's own method is the native player; the fixed
+    // viewport is only for a browser with neither.
+    const elementApi = !!(document.fullscreenEnabled && fig.current && typeof fig.current.requestFullscreen === "function");
+    if (elementApi) {
+      void fig.current!.requestFullscreen().then(() => lockLandscape(true), () => { if (!enterIOSFullscreen(video)) setFull("page"); });
+      return;
+    }
+    if (!enterIOSFullscreen(video)) setFull("page");
   };
   const onKey = (e: ReactKeyboardEvent) => {
     const el = e.target as HTMLElement;
@@ -267,6 +308,7 @@ export function VideoPlayer(p: VideoPlayerProps) {
     if (e.key === "Escape") {
       if (menu) { setMenu(""); settingsBtn.current?.focus(); e.stopPropagation(); return; }
       if (volOpen) { setVolOpen(false); return; }
+      if (full === "webkit") { if (!exitIOSFullscreen(ref.current)) setFull(""); return; }
       if (full === "page") setFull("");
       return;
     }

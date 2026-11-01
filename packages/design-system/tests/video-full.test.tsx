@@ -13,6 +13,52 @@ interface FakeTrack {
   oncuechange: null | (() => void);
 }
 
+describe("VideoPlayer full screen on iPhone", () => {
+  const ios = HTMLVideoElement.prototype as HTMLVideoElement & { webkitEnterFullscreen?: () => void; webkitExitFullscreen?: () => void };
+  afterEach(() => {
+    delete ios.webkitEnterFullscreen;
+    delete ios.webkitExitFullscreen;
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+  });
+
+  it("keeps playback inline until full screen is asked for", () => {
+    render(<VideoPlayer title="t" duration={10} src="/v.mp4" />);
+    expect(document.querySelector("video")!.hasAttribute("playsinline")).toBe(true);
+  });
+
+  it("calls webkitEnterFullscreen when element full screen is missing, and the events drive the button", () => {
+    const enter = vi.fn();
+    const exit = vi.fn();
+    ios.webkitEnterFullscreen = enter;
+    ios.webkitExitFullscreen = exit;
+    const { container } = render(<VideoPlayer title="t" duration={10} src="/v.mp4" />);
+    fireEvent.click(screen.getByRole("button", { name: "Full screen" }));
+    expect(enter).toHaveBeenCalledOnce();
+    // Native full screen is the system player, not the fixed page.
+    expect(container.querySelector(".dr-video")!.classList.contains("is-full")).toBe(false);
+    const video = document.querySelector("video")!;
+    act(() => { video.dispatchEvent(new Event("webkitbeginfullscreen")); });
+    const leave = screen.getByRole("button", { name: "Exit full screen" });
+    expect(leave.getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(leave);
+    expect(exit).toHaveBeenCalledOnce();
+    act(() => { video.dispatchEvent(new Event("webkitendfullscreen")); });
+    expect(screen.getByRole("button", { name: "Full screen" }).getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("fixes the player over the viewport and locks scrolling when neither full screen API exists", () => {
+    const { container } = render(<VideoPlayer title="t" duration={10} src="/v.mp4" />);
+    fireEvent.click(screen.getByRole("button", { name: "Full screen" }));
+    const fig = container.querySelector(".dr-video")!;
+    expect(fig.classList.contains("is-full")).toBe(true);
+    expect(document.body.style.overflow).toBe("hidden");
+    fireEvent.keyDown(fig, { key: "Escape" });
+    expect(fig.classList.contains("is-full")).toBe(false);
+    expect(document.body.style.overflow).toBe("");
+  });
+});
+
 describe("VideoPlayer full screen without the Fullscreen API", () => {
   const screenOf = (w: number, h: number) => {
     Object.defineProperty(window, "innerWidth", { value: w, configurable: true });
