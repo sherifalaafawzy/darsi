@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AppBar, Button, EmptyState, Icon, trackClass, useTrackStyles } from "@darsi/design-system";
 import { useI18n } from "../i18n";
 import { useStore } from "../state/store";
+import { track } from "../analytics/track";
 import { onMeteredConnection } from "../platform";
 import { CATEGORIES, categoryOf } from "../labs/categories";
 import { LAB_METAS, LADDER, labMeta, nextLab } from "../labs/catalog";
@@ -140,6 +141,7 @@ export function LabApp() {
   const meta = labMeta(id);
   const next = nextLab(id);
   const trackStyle = useTrackStyles();
+  useEffect(() => { if (meta) track("lab_open", { lab: id }); }, [id, meta]);
   return (
     <>
       <AppBar title={meta ? L(meta.title) : t("lab.title")} onBack={() => nav("/labs")} backLabel={t("common.back")} />

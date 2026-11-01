@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import { Button, Icon, Mark, cx, type IconName } from "./primitives";
+import { BrandMark, Button, Icon, cx, type IconName } from "./primitives";
 import { dirFor } from "../locale";
 
 export interface AppBarProps { title: ReactNode; onBack?: () => void; backLabel?: string; actions?: ReactNode; floating?: boolean; }
 export function AppBar({ title, onBack, backLabel = "Back", actions, floating }: AppBarProps) {
   return (
     <header className={cx("dr-appbar", floating && "dr-floating-top")}>
-      {onBack ? <Button variant="ghost" iconOnly icon="back" onClick={onBack}>{backLabel}</Button> : <span className="dr-appbar-brand"><Mark size={32} /></span>}
+      {onBack ? <Button variant="ghost" iconOnly icon="back" onClick={onBack}>{backLabel}</Button> : <span className="dr-appbar-brand"><BrandMark size={32} /></span>}
       <h1 className="dr-appbar-title">{title}</h1>
       <div className="dr-appbar-actions">{actions}</div>
     </header>

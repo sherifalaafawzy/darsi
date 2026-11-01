@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { collection, doc, getDocs, limit, onSnapshot, orderBy, query, where, type QueryConstraint } from "firebase/firestore";
+import { collection, doc, documentId, getCountFromServer, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, where, type QueryConstraint } from "firebase/firestore";
 import { db } from "../firebase";
 import type { Org, Profile } from "../auth/types";
 
@@ -52,3 +52,69 @@ export function useBroadcasts(enabled: boolean): { data?: Broadcast[]; error?: E
 
 /** Days since an ISO date string, or Infinity. */
 export const daysSince = (iso?: string | null) => (iso ? (Date.now() - new Date(iso).getTime()) / 864e5 : Infinity);
+
+/* ---------- Platform analytics (/super/analytics; TECHNICAL.md "Analytics") ---------- */
+
+/** stats/overview as statsJob and refreshStats write it (functions/src/analyticsCore.ts `Overview`). */
+export interface OrgStats { name: string; country?: string; members: number; teachers: number; students: number; active7: number; active30: number; lessons: number; xp: number; avgAccuracy: number | null }
+export interface Overview {
+  at: string;
+  users: { total: number; byRole: Record<string, number>; new7: number; new30: number; active7: number; active30: number; withLessons: number };
+  lessons: number; xp: number; avgAccuracy: number | null; weeks: Record<string, number>;
+  orgs: Record<string, OrgStats>; orgsByStatus: Record<string, number>;
+}
+/** analytics/{yyyy-mm-dd}: the day's event counts from the collect function (nested maps of numbers). */
+export type DayCounts = { day: string } & { [k: string]: unknown };
+
+/** One read, again on reload(): admins' screens stay off live listeners too. */
+function useOnce<T>(load: (() => Promise<T>) | null, deps: unknown[]): { data?: T; error?: Error; reload: () => void } {
+  const [n, setN] = useState(0);
+  const [s, setS] = useState<{ data?: T; error?: Error }>({});
+  useEffect(() => {
+    if (!load) return;
+    let live = true;
+    Promise.resolve().then(load).then((data) => { if (live) setS({ data }); }, (error: Error) => { if (live) setS({ error }); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...deps, n]);
+  return { ...s, reload: useCallback(() => setN((x) => x + 1), []) };
+}
+
+export const useOverview = () => useOnce(async () => {
+  const s = await getDoc(doc(db, "stats", "overview"));
+  return s.exists() ? (s.data() as Overview) : null;
+}, []);
+
+export const dayKey = (d: Date) => d.toISOString().slice(0, 10);
+/** The last `days` days of event counts, oldest first (days without events are missing). */
+export const useDays = (days: number) => useOnce(async () => {
+  const from = dayKey(new Date(Date.now() - (days - 1) * 864e5));
+  const snap = await getDocs(query(collection(db, "analytics"), where(documentId(), ">=", from), orderBy(documentId())));
+  return snap.docs.map((d) => ({ ...d.data(), day: d.id }) as DayCounts);
+}, [days]);
+
+/** Phones that used Darsi today, in the last 7 days and in the last 30 (guests included), counted on the server. */
+export const useActiveDevices = () => useOnce(async () => {
+  const since = (n: number) => getCountFromServer(query(collection(db, "analyticsDevices"), where("last", ">=", dayKey(new Date(Date.now() - (n - 1) * 864e5)))))
+    .then((r) => r.data().count);
+  const [d1, d7, d30] = await Promise.all([since(1), since(7), since(30)]);
+  return { d1, d7, d30 };
+}, []);
+
+/** Accounts, most recently active first, or by name when searching (prefix, as typed). */
+export const usePeople = (search: string) => useOnce(async () => {
+  const s = search.trim();
+  const q = s
+    ? query(collection(db, "users"), orderBy("name"), where("name", ">=", s), where("name", "<=", `${s}`), limit(50))
+    : query(collection(db, "users"), orderBy("lastActive", "desc"), limit(50));
+  return (await getDocs(q)).docs.map((d) => ({ uid: d.id, ...d.data() }) as Profile);
+}, [search]);
+
+/** The Google Analytics stream collect forwards to (config/analytics), set on /super/analytics. */
+export interface GaConfig { measurementId: string; apiSecret: string }
+export const useGaConfig = () => useOnce(async () => {
+  const s = await getDoc(doc(db, "config", "analytics"));
+  return (s.exists() ? s.data() : { measurementId: "", apiSecret: "" }) as GaConfig;
+}, []);
+export const saveGaConfig = (uid: string, c: GaConfig) =>
+  setDoc(doc(db, "config", "analytics"), { measurementId: c.measurementId.trim(), apiSecret: c.apiSecret.trim(), updatedAt: serverTimestamp(), updatedBy: uid });

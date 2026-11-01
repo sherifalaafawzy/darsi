@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Button, Icon, Mark, ProgressBar, TrackChip, cx, trackClass, useTrackStyles, type Track } from "./primitives";
+import { BrandMark, Button, Icon, Mark, ProgressBar, TrackChip, cx, trackClass, useBrand, useTrackStyles, type Track } from "./primitives";
 
 export interface LessonCardProps { track: Track; title: string; meta?: string; progress?: number; offline?: boolean; offlineLabel?: string; trackLabel?: string; action?: ReactNode; }
 export function LessonCard({ track, title, meta, progress, offline, offlineLabel = "Offline ready", trackLabel, action }: LessonCardProps) {
@@ -88,14 +88,20 @@ export function LessonComplete({ title, subtitle, stats = [], tryTomorrow, tryLa
 export interface CertificateCardProps { track: Track; name: string; title: string; date: string; code: string; kicker?: string; trackLabel?: string; action?: ReactNode; }
 export function CertificateCard({ track, name, title, date, code, kicker = "Certificate of completion", trackLabel, action }: CertificateCardProps) {
   const style = useTrackStyles()(track);
+  const brand = useBrand();
   return (
     <article className={cx("dr-cert", trackClass(style))}>
       <div className="dr-cert-band" aria-hidden />
       <div className="dr-cert-body">
-        <div className="dr-cert-top"><Mark size={36} /><TrackChip track={track} solid>{trackLabel}</TrackChip></div>
+        <div className="dr-cert-top">
+          {/* An organization's certificate: its logo first, Darsi's mark beside it, and its name as the issuer. */}
+          <span className="dr-cert-marks"><BrandMark size={36} />{brand.logo && <Mark size={20} />}</span>
+          <TrackChip track={track} solid>{trackLabel}</TrackChip>
+        </div>
         <p className="dr-cert-kicker">{kicker}</p>
         <h3 className="dr-cert-name"><bdi>{name}</bdi></h3>
         <p className="dr-cert-title">{title}</p>
+        {brand.name && <p className="dr-cert-issuer"><bdi>{brand.name}</bdi></p>}
         <div className="dr-cert-foot"><span>{date}</span><span className="dr-cert-code">{code}</span></div>
       </div>
       {action && <div className="dr-cert-action">{action}</div>}

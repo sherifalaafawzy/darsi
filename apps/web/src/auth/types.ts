@@ -34,6 +34,8 @@ export interface Org {
   contact?: string;
   reason?: string;
   reviewNote?: string;
+  /** The org's logo (a Storage path under orgs/{id}/brand/) and its version, +1 per change (OrgBranding). */
+  brand?: { logo: string | null; v: number } | null;
   createdAt?: { seconds: number } | null;
   reviewedAt?: { seconds: number } | null;
 }

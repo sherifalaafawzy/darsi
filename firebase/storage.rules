@@ -27,6 +27,13 @@ service firebase.storage {
       allow create, update: if (isSuper() || (inOrgS(orgId) && request.auth.token.role == 'orgAdmin')) && mediaOk();
       allow delete: if isSuper() || (inOrgS(orgId) && request.auth.token.role == 'orgAdmin');
     }
+    // The org's logo (TECHNICAL.md "Organization branding"): shrunk on the admin's phone to ≤ 256 px before upload.
+    match /orgs/{orgId}/brand/{file} {
+      allow create, update: if (isSuper() || (inOrgS(orgId) && request.auth.token.role == 'orgAdmin'))
+        && file.matches('logo-[a-z0-9]{6,32}[.](png|webp|jpg)')
+        && request.resource.contentType.matches('image/(png|webp|jpeg)') && request.resource.size <= 100 * 1024;
+      allow delete: if isSuper() || (inOrgS(orgId) && request.auth.token.role == 'orgAdmin');
+    }
     // Project evidence: submissions/{orgId|"none"}/{uid}/{file}
     match /submissions/{orgId}/{uid}/{file} {
       allow read: if request.auth != null && (request.auth.uid == uid

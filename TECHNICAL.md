@@ -146,6 +146,7 @@ AuthProvider            Firebase user + custom claims {role, orgId}; claims are 
 | `/admin/content`, `/admin/content/:unitId` | `orgAdmin` | Course editor: units published for this organization's members only |
 | `/super/tracks` | `superadmin` | Tracks and levels for every unit (see [Tracks and levels](#tracks-and-levels)) |
 | `/super/languages`, `/super/languages/:code` | `superadmin` | Languages beyond English and Arabic: add, translate, publish (see [Languages and right-to-left](#languages-and-right-to-left)) |
+| `/super/analytics`, `/super/orgs/:orgId`, `/super/people/:uid` | `superadmin` | Platform analytics: every account and organization, usage from phones, the Google Analytics connection (see [Analytics](#analytics)) |
 
 Roles are `learner` (independent), `student`, `teacher`, `orgAdmin` and `superadmin`. They live in **Auth custom claims**, which only Cloud Functions set, and are mirrored to `users/{uid}` for the UI. When `users/{uid}` changes role or organization, AuthProvider refreshes the token so the security rules see the new claims.
 
@@ -269,7 +270,8 @@ users/{uid}                 name, email, username, role, orgId, group, teacherId
                             deviceId = the first 40 hex characters of sha256(token)
 pushTokens/{deviceId}       uid (the account the token belongs to now), at   ← Cloud Functions only
 orgs/{orgId}                name, type, country, city, size, contact, reason, status (pending | active | rejected),
-                            createdBy, inviteCodes {teacher, student}, memberCount, reviewNote, createdAt, reviewedAt
+                            createdBy, inviteCodes {teacher, student}, memberCount, reviewNote, createdAt, reviewedAt,
+                            brand {logo (Storage path under orgs/{orgId}/brand/) | null, v (+1 per change)}   ← its admins
 inviteCodes/{code}          orgId, role                      ← Cloud Functions only
 units/{unitId}              owner ("public" | orgId), title {en, ar}, track, level, lessonCount, lessons [{id, title}],
                             rev (int, +1 per save), updatedAt, updatedBy,
@@ -283,6 +285,14 @@ translations/{code}         code, native, english, dir, numerals, messages {key:
 broadcasts/{id}             title {en, ar}, body {en, ar}, link, audience {type: all | org | role, orgId?, role?},
                             sentBy, sentAt, results {en, ar} (FCM message id, or null on error)   ← sendBroadcast; platform admins read
 audit/{id}                  action, by, …, at                ← Cloud Functions write; platform admins read
+config/analytics            measurementId, apiSecret, updatedAt, updatedBy   ← platform admins (/super/analytics)
+stats/overview              at, users {total, byRole, new7, new30, active7, active30, withLessons}, lessons, xp,
+                            avgAccuracy, weeks, orgs {orgId: {name, country, members, teachers, students, active7,
+                            active30, lessons, xp, avgAccuracy}}, orgsByStatus   ← statsJob, refreshStats
+analytics/{yyyy-mm-dd}      day, n, off, ev {name: n}, role {role: {events, lessons}}, org {orgId: {events, lessons}},
+                            sessions {n, lang, role, aud, installed, offline}, lessons {n, track, unit, lang, acc, accN, sec},
+                            labs, downloads {n, mb}, screens, dev, devNew, devRole   ← collect (increments only)
+analyticsDevices/{id}       first, last (yyyy-mm-dd), role, lang, aud, org, inst   ← collect; id = the phone's random id
 ```
 
 `notify.hourUtc` is the UTC hour that equals `hourLocal` in `tz` today. `registerDevice` and `updateNotifyPrefs` recompute it, and `dailyNudges` rewrites it when daylight saving moves it. The notification queries are equality-only (`notify.on` + `notify.hourUtc`; `orgId` + `role`), so they need no composite index.
@@ -311,12 +321,16 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
   - Students and teachers never read drafts; learners get published units from Storage.
 - **`config/{doc}`** (platform settings): platform admins read; nobody writes from a client (`saveSettings` and `publishLanguage` do). Everyone else reads the published copy, `content/settings.json`.
 - **`translations/{code}`** (languages being added): platform admins only. The id must equal `code`, every save sets `rev` to exactly `rev + 1`, `published` is never written from a client, and a draft can be deleted only while unpublished.
+- **`orgs/{orgId}` branding:** its admins may change `name` (2–80 characters) and `brand`: only `logo` and `v`, and `logo` must be null or a file `orgs/{orgId}/brand/logo-<6–32 of [a-z0-9]>.(png|webp|jpg)` of that same org.
+- **`stats`, `analytics`, `analyticsDevices`:** platform admins read; nobody writes from a client (the functions do).
+- **`config/analytics`:** platform admins read and write it; `measurementId` must be empty or `G-…`, and only the listed keys are accepted.
 
 **Storage** (`firebase/storage.rules` on `darsi-f0685`):
 - `media/` and `kits/` are publicly readable and never writable from the client.
 - `submissions/{orgId|none}/{uid}/{file}` is created only by its owner: under 10 MB, images, PDF, mp4 or audio. It can be read by the owner, a platform admin, or that organization's admins and teachers.
 - `content/**` (public authored units) is readable by anyone, guests included. `orgs/{orgId}/**` is readable only by that organization's members and platform admins.
 - Media uploads go to `content/media/{unitId}/` (platform admins) and `orgs/{orgId}/media/{unitId}/` (that org's admins, platform admins): MP4 ≤ 60 MB, VTT ≤ 512 KB, PDF or PPTX ≤ 20 MB. No client ever writes the unit JSON or `catalog.json`; the functions do.
+- The org's logo goes to `orgs/{orgId}/brand/logo-<id>.(png|webp|jpg)` (its admins, platform admins): PNG, WebP or JPEG, ≤ 100 KB. Its members read it like the rest of `orgs/{orgId}/`.
 
 ### Cloud Functions (europe-west1)
 
@@ -346,8 +360,48 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 | `saveSettings` | callable | Platform admin only: saves the tracks list (see [Tracks and levels](#tracks-and-levels)) to `config/settings` and publishes `content/settings.json` |
 | `publishLanguage` | callable | Platform admin only: checks a saved language draft (`validateLanguage`), writes `content/i18n/{code}/v{n+1}.json`, lists the language in `config/settings` and `content/settings.json`, keeps the previous pack and deletes older ones |
 | `unpublishLanguage` | callable | Platform admin only: takes a language off the pickers and deletes its packs; people who chose it see English. The draft stays |
+| `collect` | HTTPS (`darsiai.org/api/collect`, a Hosting rewrite) | Phones' event batches: checks them, adds them to `analytics/{day}`, counts active phones in `analyticsDevices`, and forwards them to Google Analytics when `config/analytics` is set (see [Analytics](#analytics)). At most 3 instances, 30 requests a minute per address |
+| `statsJob` | scheduled, daily 02:30 UTC | Accounts and organizations from every user's summary into `stats/overview` |
+| `refreshStats` | callable | Platform admin only: the same, now (the Refresh button on /super/analytics) |
 
 Every role or organization change goes through these functions, which set the claims and write an `audit` entry. Clients can never grant themselves access. `functions/src/admin.ts` initializes the Admin SDK once and sets the region and instance cap for every function.
+
+## Organization branding
+
+An organization chooses its name and logo, and its members see them where the app shows Darsi's brand: the app bar on every screen, the nav rail (with a small "with Darsi" credit), certificates (the org's logo first, Darsi's mark beside it, the org as issuer), Me's account section and the browser tab's title.
+
+- **Editing:** `admin/OrgBranding.tsx`, on the org dashboard (/admin) and on a platform admin's org page (/super/orgs/:id). The logo is shrunk on the admin's device to at most 256 px, WebP where the browser can write it (PNG otherwise, transparency kept) and under 100 KB, then uploaded to `orgs/{orgId}/brand/logo-<random>.<ext>` with a one-year cache. Saving writes `name` and `brand {logo, v + 1}` and deletes the previous file.
+- **On members' phones:** `state/orgBrand.ts` (`useOrgBrand`, called by App) reads `orgs/{orgId}` once per sign-in, with no listener. The logo is fetched only when `brand.v` changed, and kept in the person's local store as a data: URL (`state.org`), so it shows offline and costs nothing after the first download. Leaving the org (or signing out) brings Darsi's look back.
+- **In the design system:** `BrandProvider` (App sets it from `state.org`), `useBrand` and `BrandMark` (the org's logo, or Darsi's mark). `AppBar` and `CertificateCard` use them, so screens need no changes.
+- **Not branded:** the installed app's name and icon (the web manifest is the same for everyone), the landing page, and the classroom kits (PDF/PPTX built ahead of time).
+
+## Analytics
+
+Two sources, both read with one-shot reads on `/super/analytics`:
+
+- **Accounts and organizations** (`stats/overview`): `statsJob` (daily) and `refreshStats` (the Refresh button) read every user's role, organization, dates and summary with a `select()`, and every organization. They count accounts, roles, new and active accounts (by `lastActive` or the last lesson), lessons, XP, the average score and lessons per ISO week, and for each active organization its members, teachers, students, activity, lessons and score. Pending and rejected organizations are only counted.
+- **Usage from phones** (`analytics/{day}`, `analyticsDevices`), guests included. Every phone queues events and sends them in batches to `collect`.
+
+**On the phone** (`analytics/track.ts`, startup code, no Firebase; `useAnalytics` in App):
+- `track()` adds an event to a queue in IndexedDB (`darsi:events`, at most 300) and never waits for the network. Events made offline carry `o: 1`.
+- A batch (at most 100 events) goes to `/api/collect` on the same site, gzipped with `CompressionStream` where available (`?z=1`). It is sent when 30 events have built up, when the app goes to the background (at most every 15 minutes), when the connection returns, and at once when someone signs in or out, so events go out as the account that made them. With Data saver or the browser's Save-Data, it waits for 100 events or a day. No timers, no polling. A failed send keeps the batch; one refused as malformed (400/413) is dropped.
+- Events: `session_start`, `screen_view` (the path's first part), `lesson_start`, `lesson_complete` (unit, lesson, track, score, seconds, XP), `lab_open`, `unit_download` (unit, MB), `onboarding_done`, `sign_up` and `sign_in` (method). None from the course editor's preview.
+- A batch says who sent it: a random id made on the phone (`darsi:device`), the role (`guest` without an account), audience, language, organization id and whether the app is installed. Never a name, email or answer. Me has a switch to stop it ("Share anonymous usage statistics"); switched off, the queue is emptied.
+- Cost: about 2 KB of startup JavaScript (gzipped). A batch of 30 events is about 1 KB gzipped, usually one request per session.
+
+**On the server** (`functions/src/analytics.ts`; the pure parts, tested, in `analyticsCore.ts`):
+- `parseBatch` keeps only known events and parameters (ids, short words, numbers clamped to a range) from the last 30 days.
+- `dailyCounts` adds them to `analytics/{yyyy-mm-dd}` with increments, so batches arriving together add up.
+- A phone's first batch of the day adds to `dev` (and `devNew` the first time ever). `analyticsDevices/{id}.last` gives active phones for 1, 7 and 30 days through count queries.
+- Organization figures from phones are what the phone says, so the dashboard takes members, activity and scores from `stats/overview` and uses the phones' counts only for the org's lessons-per-day chart.
+- **Google Analytics** (Firebase's web stream): once a platform admin sets the measurement ID and a Measurement Protocol API secret on /super/analytics (`config/analytics`), `collect` forwards each batch: 25 events per request, the last 72 hours only, the phone's random id as `client_id`, role, audience, language and installed as user properties, and `engagement_time_msec` so visits count as engaged. Every account type is forwarded, students included (the user's choice), with no personal data. The Firebase Analytics SDK (gtag) is not used: it would cost every phone about 50 KB, load Firebase for guests and lose events made offline.
+
+**The screen** (`admin/Analytics.tsx`, a lazy chunk with its own strings in `admin/strings/` and `styles/analytics.css`):
+- Tiles: active phones, accounts, active accounts, lessons, average score, organizations.
+- Bars per day for 30 days (active phones, lessons, visits), plus the offline and installed shares and downloads.
+- The top tracks, courses, labs, languages, roles and screens.
+- The organizations table, people (the 50 most recently active, or a name search), and the Google Analytics connection.
+- `/super/orgs/:id` has one organization's figures, its lessons per day, its branding and its people; `/super/people/:uid` is the person page.
 
 ## Content, lessons and kits
 

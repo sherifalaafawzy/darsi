@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { Button, QuizOption, MatchPairs, OrderSteps, FillBlank, TrueFalse, LanguagePicker, Switch, DarsiRoot, UnitPath, VideoPlayer, FactCheck, TrainClassifier,
-  TrackChip, TrackStylesProvider, ProgressBar, PlacementResult, TRACK_TONES, ICON_NAMES, BUILTIN_TRACK_STYLES } from "../src";
+  TrackChip, TrackStylesProvider, ProgressBar, PlacementResult, TRACK_TONES, ICON_NAMES, BUILTIN_TRACK_STYLES, AppBar, BrandProvider, CertificateCard } from "../src";
 import paths from "../src/icons/paths.json";
 import { approximateTokens, withTemperature, classify } from "../src/components/lab";
 import { applyLocale, dirFor, formatNumber } from "../src/locale";
@@ -202,5 +202,25 @@ describe("AI lab logic", () => {
     render(<FactCheck title="t" open="c" answer={[{ text: "Nile flows north to south", claim: { id: "c", verdict: "false", note: "Wrong — south to north." } }]} />);
     fireEvent.click(screen.getByRole("button", { name: "Wrong" }));
     expect(screen.getByText("Wrong — south to north.")).toBeTruthy();
+  });
+});
+
+describe("organization brand", () => {
+  const logo = "data:image/png;base64,iVBORw0KGgo=";
+  it("puts the org's logo in the app bar and on certificates, with its name as the issuer", () => {
+    const { container } = render(<BrandProvider logo={logo} name="Nile School">
+      <AppBar title="Home" /><CertificateCard track="ai" name="Amal" title="AI basics" date="1 Nov" code="X1" />
+    </BrandProvider>);
+    const imgs = container.querySelectorAll("img.dr-brand-logo");
+    expect(imgs.length).toBe(2);
+    expect(imgs[0].getAttribute("src")).toBe(logo);
+    expect(container.querySelector(".dr-cert .dr-mark")).toBeTruthy(); // Darsi's mark stays beside the org's logo
+    expect(screen.getByText("Nile School")).toBeTruthy();
+  });
+  it("shows Darsi's mark without a brand", () => {
+    const { container } = render(<><AppBar title="Home" /><CertificateCard track="ai" name="Amal" title="AI basics" date="1 Nov" code="X1" /></>);
+    expect(container.querySelector("img.dr-brand-logo")).toBeNull();
+    expect(container.querySelectorAll(".dr-mark").length).toBe(2);
+    expect(container.querySelector(".dr-cert-issuer")).toBeNull();
   });
 });

@@ -1,12 +1,14 @@
 import { lazy, Suspense, useEffect, type ReactElement } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useSearchParams } from "react-router-dom";
-import { applyLocale, EmptyState } from "@darsi/design-system";
+import { applyLocale, BrandProvider, EmptyState } from "@darsi/design-system";
 import { AuthProvider, useAuth } from "./auth/AuthProvider";
 import { Forgot, NotConfigured, SetPassword, SignIn, SignUp } from "./auth/AuthScreens";
 import type { Role } from "./auth/types";
 import { I18nProvider, useI18n } from "./i18n";
 import { StoreProvider, useStore } from "./state/store";
 import { useCloudSync } from "./state/sync";
+import { useOrgBrand } from "./state/orgBrand";
+import { useAnalytics } from "./analytics/useAnalytics";
 import { configureContent, setOrgReader } from "./content/load";
 import { SettingsProvider, useLanguageReady } from "./content/settings";
 import { loadFirebase } from "./fb";
@@ -33,6 +35,8 @@ const ImportPeople = lazy(() => import("./admin/AddPeople").then((m) => ({ defau
 const Teach = lazy(() => import("./admin/Teach").then((m) => ({ default: m.Teach })));
 const TeachPerson = lazy(() => import("./admin/Teach").then((m) => ({ default: m.TeachPerson })));
 const SuperAdmin = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.SuperAdmin })));
+const AnalyticsPage = lazy(() => import("./admin/Analytics").then((m) => ({ default: m.AnalyticsPage })));
+const OrgAnalytics = lazy(() => import("./admin/Analytics").then((m) => ({ default: m.OrgAnalytics })));
 // Course editor (platform and org admins): one "Cms" chunk, also kept out of the precache. It gets the lesson player
 // (for its preview) as a prop: importing it there would pull the player's lazy SDK loads into a shared chunk and
 // split the startup bundle. Org-only units are read through the SDK, which only signed-in members load.
@@ -79,11 +83,15 @@ function Routed() {
   configureContent({ orgId: user ? orgId : null, signedIn: Boolean(user || offlineUid) });
   useEffect(() => {
     applyLocale(state.lang, state.theme, dir); // an added language's direction is the one platform admins set
-    document.title = state.lang === "ar" ? "درسي — Darsi" : "Darsi — درسي";
-  }, [state.lang, state.theme, dir]);
+    // An organization's members see its name first, then Darsi's.
+    const darsi = state.lang === "ar" ? "درسي" : "Darsi";
+    document.title = state.org?.name ? `${state.org.name} — ${darsi}` : state.lang === "ar" ? "درسي — Darsi" : "Darsi — درسي";
+  }, [state.lang, state.theme, dir, state.org?.name]);
   // Certificates use the local name; start it from the account name.
   useEffect(() => { if (ready && profile?.name && !state.name) dispatch({ type: "set", patch: { name: profile.name } }); }, [ready, profile?.name, state.name, dispatch]);
   useCloudSync(user?.uid);
+  useOrgBrand(user?.uid, user ? orgId : null);
+  useAnalytics(); // a queue on the phone, sent in small batches (analytics/track.ts); no Firebase
   usePushRefresh(); // signed in and opted in on this phone only; guests never load messaging
   const langReady = useLanguageReady();
 
@@ -95,6 +103,7 @@ function Routed() {
   const account = (screen: ReactElement) => (user ? <SignedIn /> : configured ? screen : <NotConfigured />);
 
   return (
+    <BrandProvider logo={state.org?.logo} name={state.org?.name}>
     <Suspense fallback={<Loading />}>
     <Routes>
       <Route index element={inApp ? <Navigate to={homeFor(role)} replace /> : <Landing />} />
@@ -136,6 +145,9 @@ function Routed() {
           </Route>
           <Route element={<Allow roles={["superadmin"]} />}>
             <Route path="super" element={<SuperAdmin />} />
+            <Route path="super/analytics" element={<AnalyticsPage />} />
+            <Route path="super/orgs/:orgId" element={<OrgAnalytics />} />
+            <Route path="super/people/:uid" element={<PersonDetail back="/super/analytics" />} />
             <Route path="super/content" element={<ContentList />} />
             <Route path="super/content/:unitId" element={<UnitEditor Player={LessonPlayer} />} />
             <Route path="super/tracks" element={<TracksPage />} />
@@ -147,6 +159,7 @@ function Routed() {
       </Route>
     </Routes>
     </Suspense>
+    </BrandProvider>
   );
 }
 

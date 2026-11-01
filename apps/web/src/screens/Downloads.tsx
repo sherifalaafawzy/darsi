@@ -8,6 +8,7 @@ import { cacheUrls, onMeteredConnection, removeCached } from "../platform";
 import { CODE_STEPS } from "../content/types";
 import { prefetchCodeSteps } from "../code/loader";
 import { prefetchLightPacks } from "../lesson/LightLesson";
+import { track } from "../analytics/track";
 
 export function Downloads() {
   const { t, L, lang, num } = useI18n();
@@ -29,6 +30,7 @@ export function Downloads() {
       if (unit.lessons.some((l) => l.steps.some((s) => CODE_STEPS.has(s.type)))) await prefetchCodeSteps();
       await prefetchLightPacks(unit);
       dispatch({ type: "download", unit: id, on: true });
+      track("unit_download", { u: id, mb: Math.round(catalog?.units.find((u) => u.id === id)?.sizeMB ?? 0) });
     } catch { if (!ctl.signal.aborted) setErrors((e) => ({ ...e, [id]: true })); }
     finally { setProgress((p) => { const n = { ...p }; delete n[id]; return n; }); }
   };

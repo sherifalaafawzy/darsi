@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button, EmptyState, FeedbackSheet, LessonComplete, LessonTopBar } from "@darsi/design-system";
 import { loadUnit, useAsync } from "../content/load";
@@ -8,6 +8,7 @@ import { useStore } from "../state/store";
 import { grade, isGraded, LessonRun, type Answer } from "../lesson/engine";
 import { StepView } from "../lesson/StepView";
 import { speak } from "../lesson/speech";
+import { track as trackEvent } from "../analytics/track";
 
 export function LessonScreen() {
   const { unitId = "", lessonId = "" } = useParams();
@@ -38,12 +39,21 @@ export function LessonPlayer({ unitId, lesson, nextId, track, preview }: { unitI
   const [finished, setFinished] = useState<ReturnType<LessonRun["summary"]> | null>(null);
   const step = run.current;
 
+  // Not in the editor's preview: authors trying a lesson aren't learners.
+  useEffect(() => { if (!preview) trackEvent("lesson_start", { u: unitId, l: lesson.id, tr: track }); }, [preview, unitId, lesson.id, track]);
   const onAnswer = useCallback((a: Answer | null) => setAnswer(a), []);
   const onUngradedReady = useCallback((r: boolean) => setReady(r), []);
 
   const advance = () => {
     run.next(); setAnswer(null); setReady(false); setResult(null);
-    if (run.done) { const s = run.summary(); if (!preview) dispatch({ type: "completeLesson", id: lesson.id, result: { ...s, unitId, track, competencies: lesson.competencies } }); setFinished(s); }
+    if (run.done) {
+      const s = run.summary();
+      if (!preview) {
+        dispatch({ type: "completeLesson", id: lesson.id, result: { ...s, unitId, track, competencies: lesson.competencies } });
+        trackEvent("lesson_complete", { u: unitId, l: lesson.id, tr: track, acc: Math.round(s.accuracy * 100), sec: s.seconds, xp: s.xp });
+      }
+      setFinished(s);
+    }
     rerender();
     window.scrollTo({ top: 0 });
   };

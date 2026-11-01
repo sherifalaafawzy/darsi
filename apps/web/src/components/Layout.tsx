@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { BottomNav, ConnectionStatus, Icon, InstallPrompt, Mark, UpdateToast, type IconName } from "@darsi/design-system";
+import { BottomNav, BrandMark, ConnectionStatus, Icon, InstallPrompt, Mark, UpdateToast, type IconName } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import type { Role } from "../auth/types";
 import { useI18n, type MessageKey } from "../i18n";
@@ -26,7 +26,7 @@ export function accountLinks(role: Role, signedIn: boolean): NavItem[] {
   const links: NavItem[] = [];
   if (role === "orgAdmin") links.push({ path: "/admin", icon: "settings", key: "nav.admin" });
   if (role === "teacher" || role === "orgAdmin") links.push({ path: "/teach", icon: "chat", key: "nav.teach" });
-  if (role === "superadmin") links.push({ path: "/super", icon: "language", key: "nav.super" });
+  if (role === "superadmin") links.push({ path: "/super", icon: "language", key: "nav.super" }, { path: "/super/analytics", icon: "chart", key: "nav.analytics" });
   else links.push({ path: "/org", icon: "home", key: "nav.org" });
   // The course editor: platform admins publish for everyone, org admins for their own members.
   if (role === "superadmin" || role === "orgAdmin") links.push({ path: role === "superadmin" ? "/super/content" : "/admin/content", icon: "edit", key: "nav.content" });
@@ -62,7 +62,10 @@ export function Layout() {
   return (
     <div className="app-shell">
       <nav className="nav-rail" aria-label={t("nav.main")}>
-        <Link to="/learn" className="rail-brand" aria-label="Darsi"><Mark size={36} /><span>{lang === "ar" ? "درسي" : "Darsi"}</span></Link>
+        {/* An organization's members see its logo and name, with a small credit for Darsi under them. */}
+        {state.org?.name
+          ? <Link to="/learn" className="rail-brand is-org"><BrandMark size={36} /><span><bdi>{state.org.name}</bdi><small className="rail-credit"><Mark size={14} />{t("org.withDarsi")}</small></span></Link>
+          : <Link to="/learn" className="rail-brand" aria-label="Darsi"><Mark size={36} /><span>{lang === "ar" ? "درسي" : "Darsi"}</span></Link>}
         {tabs.map(railItem)}
         {extra.length > 0 && <><hr className="rail-sep" />{extra.map(railItem)}</>}
         {/* On phones Sign out is at the top of Me; on wide screens it is always here. */}

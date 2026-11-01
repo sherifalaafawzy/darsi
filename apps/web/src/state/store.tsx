@@ -36,7 +36,15 @@ export interface AppState {
   labsDone?: Record<string, true>;
   /** Chose "Continue without an account" (only meaningful in the guest store). */
   guest?: boolean;
+  /**
+   * The member's organization as the app shows it (state/orgBrand.ts): its name, and its logo as a small data: URL kept
+   * here so it shows offline and is downloaded again only when `v` changes. Absent for people without an organization.
+   */
+  org?: OrgBrand;
+  /** Anonymous usage statistics (analytics/track.ts); on unless switched off in Me. */
+  analytics?: boolean;
 }
+export interface OrgBrand { id: string; name: string; logo?: string; v: number }
 const browserLang = typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("ar") ? "ar" : "en";
 export const initialState: AppState = {
   version: 1, lang: browserLang, theme: "light", dataSaver: false, reminder: true, onboarded: false,

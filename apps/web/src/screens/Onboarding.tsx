@@ -7,6 +7,7 @@ import { loadPlacement, useAsync } from "../content/load";
 import { STAGES, type Audience, type Placement, type Stage, type Track } from "../content/types";
 import { useTracks } from "../content/settings";
 import { useMine } from "../content/mine";
+import { track } from "../analytics/track";
 import { grade, shuffled, type Answer } from "../lesson/engine";
 
 type Phase = "language" | "where" | "stage" | "tracks" | "time" | "offer" | "quiz" | "result";
@@ -26,7 +27,11 @@ export function Onboarding() {
   const stepOf = (p: Phase) => steps.indexOf(p) + 1;
   const [levels, setLevels] = useState<Partial<Record<Track, number>>>({});
   const set = (patch: Partial<AppState>) => dispatch({ type: "set", patch });
-  const finish = (lv: Partial<Record<Track, number>>) => { set({ onboarded: true, levels: lv }); nav("/learn", { replace: true }); };
+  const finish = (lv: Partial<Record<Track, number>>) => {
+    set({ onboarded: true, levels: lv });
+    track("onboarding_done", { a: state.audience ?? "teachers", n: state.tracks.length });
+    nav("/learn", { replace: true });
+  };
   const cont = (to: Phase, disabled = false) => <Button block iconEnd="next" disabled={disabled} onClick={() => setPhase(to)}>{t("common.continue")}</Button>;
 
   if (phase === "language") return (

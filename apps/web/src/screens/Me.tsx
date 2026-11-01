@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppBar, Button, CertificateCard, ChoiceCard, Icon, LanguagePicker, PlacementResult, Switch, TextField, TrackChip } from "@darsi/design-system";
+import { AppBar, BrandMark, Button, CertificateCard, ChoiceCard, Icon, LanguagePicker, PlacementResult, Switch, TextField, TrackChip } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import { displayLogin } from "../auth/api";
 import { accountLinks } from "../components/Layout";
@@ -41,6 +41,7 @@ export function Me() {
         <section>
           <Switch label={t("me.sunlight")} description={t("me.sunlightD")} checked={state.theme === "sunlight"} onChange={(on) => set({ theme: on ? "sunlight" : "light" })} />
           <Switch label={t("me.dataSaver")} description={t("me.dataSaverD")} checked={state.dataSaver} onChange={(on) => set({ dataSaver: on })} />
+          <Switch label={t("me.analytics")} description={t("me.analyticsD")} checked={state.analytics !== false} onChange={(on) => set({ analytics: on })} />
         </section>
         <NotificationsPanel />
         <TextField label={t("me.name")} hint={t("me.nameHint")} value={state.name} onChange={(e) => set({ name: e.target.value })} autoComplete="name" />
@@ -82,6 +83,7 @@ function Account() {
   const { t } = useI18n();
   const nav = useNavigate();
   const { user, profile, role, configured, signOut, offlineUid } = useAuth();
+  const org = useStore().state.org;
   if (!configured) return null;
   if (!user && offlineUid) return (
     <section className="panel stack" aria-labelledby="acct-h">
@@ -109,6 +111,7 @@ function Account() {
           <small dir="ltr">{displayLogin(user.email ?? "")}</small></span>
         <span className="pill">{t(`role.${role}` as "role.student")}</span>
       </div>
+      {org && <div className="person-link"><BrandMark size={36} /><span><strong><bdi>{org.name}</bdi></strong><small>{t("org.yourOrg")}</small></span></div>}
       <div className="row-gap">
         {accountLinks(role, true).map((l) => <Button key={l.path} variant="secondary" icon={l.icon} onClick={() => nav(l.path)}>{t(l.key)}</Button>)}
         {/* signOut first stops this phone getting the account's notifications (AuthProvider), as every Sign out button does. */}

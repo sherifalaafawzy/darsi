@@ -10,6 +10,7 @@ import { loadCatalog, loadUnit, useAsync } from "../content/load";
 import { daysSince, useMembers, useOrg } from "./data";
 import { lastActiveText } from "./PersonDetail";
 import { downloadBlob } from "./importer";
+import { OrgBranding } from "./OrgBranding";
 import "../styles/admin.css";
 
 /** Organization dashboard: stats, invite codes, capability coverage and the people table. */
@@ -42,7 +43,7 @@ export function AdminHome() {
   const exportCsv = () => {
     const head = [t("col.name"), t("col.login"), t("col.role"), t("col.group"), t("col.lessons"), t("col.xp"), t("col.accuracy"), t("col.last")];
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const lines = [head, ...rows.map((m) => [m.name, displayLogin(m.email), m.role, m.group ?? "", m.summary?.lessonsDone ?? 0, m.summary?.xp ?? 0, m.summary?.avgAccuracy != null ? Math.round(m.summary.avgAccuracy * 100) + "%" : "", m.summary?.lastActive ?? ""])].map((r) => r.map(esc).join(","));
+    const lines = [head, ...rows.map((m) => [m.name, displayLogin(m.email ?? ""), m.role, m.group ?? "", m.summary?.lessonsDone ?? 0, m.summary?.xp ?? 0, m.summary?.avgAccuracy != null ? Math.round(m.summary.avgAccuracy * 100) + "%" : "", m.summary?.lastActive ?? ""])].map((r) => r.map(esc).join(","));
     downloadBlob(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }), `darsi-${(org?.name ?? "org").replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "")}-people.csv`);
   };
   const copy = async (code: string) => { await navigator.clipboard?.writeText(code).catch(() => {}); setCopied(code); setTimeout(() => setCopied(""), 1500); };
@@ -78,6 +79,8 @@ export function AdminHome() {
           </section>
         </div>
 
+        {org && <OrgBranding org={org} />}
+
         <section className="panel">
           <div className="table-tools">
             <h3>{t("adm.people")}</h3>
@@ -110,8 +113,8 @@ export function PeopleTable({ rows, to }: { rows: Profile[]; to: (m: Profile) =>
         <thead><tr><th>{t("col.name")}</th><th>{t("col.role")}</th><th>{t("col.group")}</th><th className="num">{t("col.lessons")}</th><th className="num">{t("col.accuracy")}</th><th>{t("col.last")}</th></tr></thead>
         <tbody>{rows.map((m) => (
           <tr key={m.uid}>
-            <td data-label={t("col.name")}><Link to={to(m)} className="person-link"><span className="avatar sm" aria-hidden>{m.name.slice(0, 1)}</span><span><strong>{m.name}</strong><small dir="ltr">{displayLogin(m.email)}</small></span></Link>{m.mustChangePassword && <span className="pill-warn" role="img" aria-label={t("adm.firstSignIn")} title={t("adm.firstSignIn")}><Icon name="lock" size={14} /></span>}</td>
-            <td data-label={t("col.role")}>{t(`role.${m.role}` as "role.student")}</td>
+            <td data-label={t("col.name")}><Link to={to(m)} className="person-link"><span className="avatar sm" aria-hidden>{(m.name ?? "").slice(0, 1)}</span><span><strong>{m.name}</strong><small dir="ltr">{displayLogin(m.email ?? "")}</small></span></Link>{m.mustChangePassword && <span className="pill-warn" role="img" aria-label={t("adm.firstSignIn")} title={t("adm.firstSignIn")}><Icon name="lock" size={14} /></span>}</td>
+            <td data-label={t("col.role")}>{m.role ? t(`role.${m.role}` as "role.student") : "—"}</td>
             <td data-label={t("col.group")}>{m.group ?? "—"}</td>
             <td data-label={t("col.lessons")} className="num">{num(m.summary?.lessonsDone ?? 0)}</td>
             <td data-label={t("col.accuracy")} className="num">{m.summary?.lessonsDone ? num(m.summary.avgAccuracy, { style: "percent" }) : "—"}</td>

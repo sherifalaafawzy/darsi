@@ -20,6 +20,8 @@ export * from "./content.js";
 /** Platform settings: the tracks (and later the languages) that every unit and screen uses. */
 export { saveSettings } from "./settings.js";
 export { publishLanguage, unpublishLanguage } from "./languages.js";
+/** Analytics: phones' event batches (and Google Analytics), and the accounts and organizations overview. */
+export { collect, refreshStats, statsJob } from "./analytics.js";
 
 const MEMBER_ROLES: Role[] = ["student", "teacher", "orgAdmin"];
 

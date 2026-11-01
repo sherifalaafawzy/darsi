@@ -6,6 +6,7 @@ import { useI18n } from "../i18n";
 import { useStore } from "../state/store";
 import { api, loginToEmail } from "./api";
 import { createLearnerProfile, useAuth } from "./AuthProvider";
+import { track } from "../analytics/track";
 
 /** The SDK pieces these screens use, loaded on demand: the form shows at once, the SDK arrives while people type. */
 const authSdk = async () => {
@@ -46,7 +47,7 @@ export function SignIn() {
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setBusy(true); setErr("");
-    try { const { auth, signInWithEmailAndPassword } = await authSdk(); await signInWithEmailAndPassword(auth, loginToEmail(login), pw); nav("/learn", { replace: true }); }
+    try { const { auth, signInWithEmailAndPassword } = await authSdk(); await signInWithEmailAndPassword(auth, loginToEmail(login), pw); track("sign_in", { m: login.includes("@") ? "email" : "username" }); nav("/learn", { replace: true }); }
     catch (x) { setErr(errText(String((x as { code?: string }).code ?? x), t)); } finally { setBusy(false); }
   };
   return (
@@ -78,6 +79,7 @@ export function SignUp() {
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), pw);
       await fbUpdateProfile(cred.user, { displayName: name.trim() });
       await createLearnerProfile(cred.user.uid, { name: name.trim(), email: email.trim().toLowerCase(), lang });
+      track("sign_up", { m: "email" });
       nav(wantsOrg ? "/org?request=1" : "/learn", { replace: true });
     } catch (x) { setErr(errText(String((x as { code?: string }).code ?? x), t)); } finally { setBusy(false); }
   };
@@ -139,7 +141,9 @@ function GoogleButton({ next = "/learn" }: { next?: string }) {
           const { auth, db, signInWithPopup, GoogleAuthProvider } = await authSdk();
           const cred = await signInWithPopup(auth, new GoogleAuthProvider());
           const { doc, getDoc } = await import("firebase/firestore");
-          if (!(await getDoc(doc(db, "users", cred.user.uid))).exists()) await createLearnerProfile(cred.user.uid, { name: cred.user.displayName ?? "", email: (cred.user.email ?? "").toLowerCase(), lang });
+          const isNew = !(await getDoc(doc(db, "users", cred.user.uid))).exists();
+          if (isNew) await createLearnerProfile(cred.user.uid, { name: cred.user.displayName ?? "", email: (cred.user.email ?? "").toLowerCase(), lang });
+          track(isNew ? "sign_up" : "sign_in", { m: "google" });
           nav(next, { replace: true });
         } catch (x) { const code = String((x as { code?: string }).code ?? x); if (!quiet(code)) setErr(errText(code, t)); } finally { setBusy(false); }
       }}>{t("auth.google")}</Button>

@@ -51,3 +51,19 @@ export async function storageJSON(path: string): Promise<unknown> {
   const [{ getBytes, ref }, s] = await Promise.all([import("firebase/storage"), storage()]);
   return JSON.parse(new TextDecoder().decode(await getBytes(ref(s, path))));
 }
+
+/** A small image from Storage as a data: URL (an organization's logo, ≤ 100 KB), so it can be kept in the local store. */
+export async function storageDataUrl(path: string): Promise<string> {
+  const [{ getBlob, ref }, s] = await Promise.all([import("firebase/storage"), storage()]);
+  const got = await getBlob(ref(s, path), 100 * 1024);
+  // Some servers (the Storage emulator) answer octet-stream; the file's extension says what the image is.
+  const ext = path.split(".").pop();
+  const type = /^image\//.test(got.type) ? got.type : ext === "jpg" ? "image/jpeg" : `image/${ext}`;
+  const blob = got.type === type ? got : new Blob([got], { type });
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}

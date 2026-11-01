@@ -70,6 +70,21 @@ export function Mark({ size = 32 }: { size?: number }) {
   );
 }
 
+/**
+ * An organization's own look for its members: its logo (a small data: or https: image) and name. Wherever the app
+ * shows Darsi's mark as its brand (app bar, certificates), BrandMark shows the logo instead; no logo, Darsi's mark.
+ */
+export interface Brand { logo?: string | null; name?: string | null }
+const BrandCtx = createContext<Brand>({});
+export function BrandProvider({ logo, name, children }: Brand & { children: ReactNode }) {
+  return <BrandCtx.Provider value={{ logo, name }}>{children}</BrandCtx.Provider>;
+}
+export const useBrand = () => useContext(BrandCtx);
+export function BrandMark({ size = 32 }: { size?: number }) {
+  const { logo } = useBrand();
+  return logo ? <img className="dr-brand-logo" src={logo} alt="" width={size} height={size} decoding="async" /> : <Mark size={size} />;
+}
+
 export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> {
   /** primary = the one action the screen is for; secondary = alternatives; ghost = skip / cancel. */
   variant?: "primary" | "secondary" | "ghost";

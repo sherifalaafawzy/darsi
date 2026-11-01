@@ -97,6 +97,22 @@ service cloud.firestore {
     // Platform settings (tracks): platform admins read them in /super/tracks; only saveSettings writes them. Everyone
     // else reads the published copy, content/settings.json in Storage.
     match /config/{doc} { allow read: if isSuper(); allow write: if false; }
+    // The Google Analytics stream the collect function forwards events to (TECHNICAL.md "Analytics"): set on
+    // /super/analytics. The API secret only lets a server send events to that stream; platform admins alone read it.
+    match /config/analytics {
+      allow write: if isSuper() && request.resource.data.keys().hasOnly(['measurementId', 'apiSecret', 'updatedAt', 'updatedBy'])
+        && request.resource.data.measurementId is string && request.resource.data.measurementId.matches('(G-[A-Z0-9]{4,16})?')
+        && request.resource.data.apiSecret is string && request.resource.data.apiSecret.size() <= 100
+        && request.resource.data.updatedBy == request.auth.uid;
+    }
+
+    // Analytics (TECHNICAL.md "Analytics"), written only by Cloud Functions; platform admins read them on /super/analytics.
+    // stats/overview: accounts and organizations, from users/*.summary (statsJob). analytics/{yyyy-mm-dd}: event counts
+    // per day from the collect function. analyticsDevices/{id}: one per phone, first and last day seen (counted for
+    // active devices, guests included); analytics/{day}/… holds nothing a client reads.
+    match /stats/{doc} { allow read: if isSuper(); allow write: if false; }
+    match /analytics/{day} { allow read: if isSuper(); allow write: if false; }
+    match /analyticsDevices/{id} { allow read: if isSuper(); allow write: if false; }
 
     // Languages platform admins add (/super/languages): drafts of a language's UI strings. Only publishLanguage puts a
     // language in front of learners, and only it writes `published`. Every save bumps `rev`, as for units.
@@ -111,9 +127,17 @@ service cloud.firestore {
       allow delete: if isSuper() && resource.data.get('published', null) == null;
     }
 
+    // The org's own look (TECHNICAL.md "Organization branding"): its name, and `brand` {logo: a file under
+    // orgs/{orgId}/brand/ in Storage or null, v: +1 per change, so members' phones fetch the logo only when it changed}.
+    function brandOk(orgId) {
+      let b = request.resource.data.get('brand', null);
+      return request.resource.data.name is string && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 80
+        && (b == null || (b.keys().hasOnly(['logo', 'v']) && b.v is int
+          && (b.get('logo', null) == null || (b.logo is string && b.logo.matches('orgs/' + orgId + '/brand/logo-[a-z0-9]{6,32}[.](png|webp|jpg)')))));
+    }
     match /orgs/{orgId} {
       allow read: if inOrg(orgId) || isSuper() || (signedIn() && resource.data.createdBy == request.auth.uid);
-      allow update: if isOrgAdmin(orgId) && onlyChanges(['name', 'settings', 'country', 'city']);
+      allow update: if isOrgAdmin(orgId) && onlyChanges(['name', 'settings', 'country', 'city', 'brand']) && brandOk(orgId);
       allow update, delete: if isSuper();
       allow create: if false; // requests go through the requestOrg Cloud Function
     }

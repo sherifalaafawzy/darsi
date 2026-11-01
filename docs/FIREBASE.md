@@ -152,6 +152,36 @@ npm run seed
 - As an org admin: publish a unit. A student of that organization sees it; an independent learner doesn't.
 - Publish again: Storage holds `v2.json` and `v1.json`, and the catalog points at `v2`. **Unpublish** removes it from Home.
 
+## 8. Organization branding and analytics
+
+TECHNICAL.md "Organization branding" and "Analytics" have the design.
+
+### Deploy
+
+Deploy the Firestore and Storage rules, the functions (`collect`, `statsJob` and `refreshStats` are new) and then Hosting:
+
+```bash
+npm run build --prefix functions
+npx firebase deploy --only firestore,storage,functions
+npx firebase deploy --only hosting
+```
+
+The order matters. Hosting's `/api/collect` rewrite points at the `collect` function, and the deploy refuses a rewrite to a function that doesn't exist yet. Cloud Scheduler is already on (`dailyNudges`), so `statsJob` gets its own job: `firebase-schedule-statsJob-europe-west1`, daily at 02:30 UTC.
+
+### Connect Google Analytics (once)
+
+1. Firebase console → **Project settings → Integrations → Google Analytics** must be linked (the web app's config has a `measurementId`, `G-…`).
+2. In Google Analytics: **Admin → Data streams →** the web stream **→ Measurement Protocol API secrets → Create**. Copy the secret.
+3. On darsiai.org as a platform admin: **Analytics → Google Analytics**. The measurement ID is filled in from the app's config; paste the secret, **Save**. Batches go to Google Analytics within 10 minutes.
+
+Darsi's own counts work without this step. Without it, nothing leaves Firebase.
+
+### Check it works
+
+- **Analytics → Refresh now:** the tiles show the accounts and organizations, and "counted" shows the time.
+- On a phone, use the app, then switch to another app. In Firestore, `analytics/<today>` grows and `analyticsDevices` has the phone. In Google Analytics, **Reports → Realtime** shows the events within a minute or two (once connected).
+- As an org admin: **Admin → Your organization's look:** change the name, add a logo, **Save**. A member who opens Darsi sees the logo at the top of every screen and the name in the tab; their certificates show both.
+
 ## Local development with the emulators
 
 The Emulator Suite needs **JDK 21+**; firebase-tools 15 refuses older Java. Install a JDK 21 (a portable Temurin 21 JRE zip works: point `JAVA_HOME` and `PATH` at it for the one shell), then:
