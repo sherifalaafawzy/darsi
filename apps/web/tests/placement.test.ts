@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { BUILTIN_TRACKS } from "../src/content/tracks";
 import { AUDIENCES, type Placement } from "../src/content/types";
+import { placementBank } from "../src/screens/Onboarding";
 
 // The onboarding check (public/content/placement.json): every track it covers has three questions for each audience
 // and level, in English and Arabic, each with a right answer and an explanation.
@@ -10,8 +11,8 @@ const questions = placement.questions;
 const texts = (q: Placement["questions"][number]) => [q.prompt, q.explain, ...(q.type === "choice" ? q.options.map((o) => o.text) : [])];
 
 describe("placement.json", () => {
-  it("is version 4, with unique ids", () => {
-    expect(placement.version).toBe(4);
+  it("is version 5, with unique ids", () => {
+    expect(placement.version).toBe(5);
     expect(new Set(questions.map((q) => q.id)).size).toBe(questions.length);
   });
 
@@ -29,7 +30,7 @@ describe("placement.json", () => {
     for (const track of new Set(questions.map((q) => q.track))) {
       const levels = BUILTIN_TRACKS.find((t) => t.id === track)!.levels;
       for (const audience of AUDIENCES) for (let level = 1; level <= levels; level++) {
-        const n = questions.filter((q) => q.track === track && q.audience === audience && q.level === level).length;
+        const n = questions.filter((q) => !q.teach && q.track === track && q.audience === audience && q.level === level).length;
         expect(n, `${track} ${audience} level ${level}`).toBe(3);
       }
     }
@@ -44,6 +45,26 @@ describe("placement.json", () => {
         expect(ids.has(q.id), q.id).toBe(true);
         expect(q.track, q.id).toBe(track);
       }
+    }
+  });
+
+  it("has three university questions for teachers at the top level of every built-in track", () => {
+    for (const t of BUILTIN_TRACKS) {
+      const uni = questions.filter((q) => q.teach === "university" && q.track === t.id);
+      expect(uni.length, t.id).toBe(3);
+      for (const q of uni) { expect(q.audience, q.id).toBe("teachers"); expect(q.level, q.id).toBe(t.levels); }
+    }
+  });
+
+  it("asks university questions at the top level only of university teachers", () => {
+    const first = <T,>(q: T[]) => q;
+    for (const t of BUILTIN_TRACKS) {
+      const uni = placementBank(questions, t.id, "teachers", t.levels, first, true);
+      const school = placementBank(questions, t.id, "teachers", t.levels, first);
+      expect(uni[t.levels - 1].every((q) => q.teach === "university"), t.id).toBe(true);
+      expect(uni[t.levels - 1].length, t.id).toBe(2);
+      expect(school.flat().some((q) => q.teach), t.id).toBe(false);
+      expect(uni.slice(0, -1).flat().some((q) => q.teach), t.id).toBe(false);
     }
   });
 

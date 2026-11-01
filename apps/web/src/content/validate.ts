@@ -404,6 +404,7 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
   else if (!isNum(u.level) || !Number.isInteger(u.level) || u.level < 1 || u.level > maxLevel) add("level", "range", { min: 1, max: maxLevel });
   text(u, "title"); text(u, "summary");
   if (u.audience !== undefined && u.audience !== "teachers" && u.audience !== "students") add("audience", "badValue", { value: String(u.audience) });
+  if (u.teach !== undefined && u.teach !== "university") add("teach", "badValue", { value: String(u.teach) });
   if (byteSize(u) > MAX_UNIT_BYTES) add("", "tooLarge", { max: Math.round(MAX_UNIT_BYTES / 1000) });
   const lessons = arr(u.lessons);
   minItems(lessons, "lessons", 1);

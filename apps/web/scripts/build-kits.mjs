@@ -46,7 +46,12 @@ const STUDENT_UI = {
   en: { plan: "Lesson notes · for you", sheet: "Worksheet", exit: "Check yourself", tomorrow: "Try it this week", materialsV: "Paper and a pen. No device needed." },
   ar: { plan: "ملاحظات الدرس — لك", sheet: "ورقة عمل", exit: "تحقّق من نفسك", tomorrow: "جرّبها هذا الأسبوع", materialsV: "ورق وقلم. لا حاجة إلى جهاز." },
 };
-const uiFor = (unit, lang) => (unit.audience === "students" ? { ...UI[lang], ...STUDENT_UI[lang] } : UI[lang]);
+// University courses (`teach: "university"`) speak to a lecturer: lecture plan, seminar sheet, the next lecture.
+const UNI_UI = {
+  en: { plan: "Lecture plan · for the lecturer", sheet: "Seminar sheet · for students", tomorrow: "Try it in your next lecture", materialsV: "Projector or board, and the lecture slides." },
+  ar: { plan: "خطة المحاضرة، لعضو هيئة التدريس", sheet: "ورقة الحلقة النقاشية، للطلاب", tomorrow: "جرّبها في محاضرتك القادمة", materialsV: "جهاز عرض أو سبّورة، وشرائح المحاضرة." },
+};
+const uiFor = (unit, lang) => (unit.audience === "students" ? { ...UI[lang], ...STUDENT_UI[lang] } : unit.teach === "university" ? { ...UI[lang], ...UNI_UI[lang] } : UI[lang]);
 
 /**
  * Type size for a slide's text: the base size while it fits `room` characters, smaller as it grows (area goes with the
@@ -229,6 +234,40 @@ ${reflect ? `<div class="q"><h3><span class="qn">✎</span>${esc(pick(reflect.pr
 </body></html>`;
 }
 
+/* ---------------- University course pack ---------------- */
+const PACKS = resolve(ROOT, "../../content/packs");
+const PACK_UI = {
+  en: { kicker: "University course pack", outcomes: "Learning outcomes", syllabus: "14-week syllabus", week: "Week", topic: "Topic", work: "In class and out", slides: "Lecture slide outline", lecture: "Lecture", problems: "Problem set", solutions: "Solutions", lab: "Lab handout", goal: "Goal", steps: "Steps", deliver: "Hand in", rubric: "Assessment rubric", criterion: "Criterion", levels: ["Excellent", "Good", "Developing", "Not yet"], readings: "Reading list" },
+  ar: { kicker: "حزمة المقرر الجامعي", outcomes: "نواتج التعلّم", syllabus: "الخطة الدراسية في ١٤ أسبوعًا", week: "الأسبوع", topic: "الموضوع", work: "داخل القاعة وخارجها", slides: "مخطط شرائح المحاضرات", lecture: "المحاضرة", problems: "مجموعة المسائل", solutions: "الحلول", lab: "ورقة المعمل", goal: "الهدف", steps: "الخطوات", deliver: "المطلوب تسليمه", rubric: "معيار التقييم", criterion: "المعيار", levels: ["ممتاز", "جيد", "قيد التطور", "لم يتحقق بعد"], readings: "قائمة القراءات" },
+};
+function packHtml(unit, pack, lang) {
+  const rtl = lang === "ar", u = UI[lang], p = PACK_UI[lang], [trackC] = trackColours(unit.track), n = (k) => digits(k, lang);
+  const T = (x) => esc(pick(x, lang));
+  const head = (k, t) => `<div class="head">${MARK_SVG}<div><div class="kicker">${k}</div><h1>${t}</h1></div></div>`;
+  const foot = `<div class="foot"><span>${esc(u.footer)}</span><span>${T(unit.title)}</span></div>`;
+  const page = (k, body) => `<section class="page">${head(esc(p.kicker), k)}${body}${foot}</section>`;
+  return `<!doctype html><html lang="${lang}" dir="${rtl ? "rtl" : "ltr"}"><head><meta charset="utf-8"><style>${fontCss}
+@page{size:A4;margin:14mm 15mm 16mm}body{font-size:10pt;line-height:${rtl ? 1.7 : 1.45}}
+.page{position:relative;min-height:262mm;padding-bottom:10mm;page-break-after:always}.page:last-child{page-break-after:auto}
+.head{display:flex;align-items:center;gap:4mm;padding-bottom:3mm;border-bottom:1.2pt solid #1e1a33;border-top:3mm solid #${trackC};padding-top:3mm}.head svg{width:12mm;height:12mm;flex:none}
+.head h1{font-size:20pt;font-weight:800}.kicker{font-size:8.5pt;font-weight:700;color:#b43c0a}
+h2{font-size:13pt;font-weight:800;margin:5mm 0 2mm}h3{font-size:11pt;margin:3mm 0 1mm}
+ul,ol{margin:0;padding-inline-start:6mm}li{margin-bottom:1mm}${rtl ? "ol{list-style:arabic-indic}" : ""}
+table{width:100%;border-collapse:collapse;margin-top:2mm;font-size:9.5pt}th,td{border:.8pt solid #8a7560;padding:1.5mm 2mm;vertical-align:top;text-align:start}th{background:#fff1e4}
+.q{margin-top:3mm;break-inside:avoid}.sol{margin-top:2mm;break-inside:avoid;border-inline-start:2pt solid #${trackC};padding-inline-start:3mm}
+.intro{margin-top:4mm}.ref{margin-bottom:2mm}.ref i{color:#5c5470;font-style:normal}
+.foot{position:absolute;bottom:0;inset-inline:0;display:flex;justify-content:space-between;font-size:7.5pt;color:#5c5470;border-top:.6pt solid #c9b8a4;padding-top:2mm}
+</style></head><body>
+${page(T(unit.title), `<p class="intro">${T(pack.intro)}</p><h2>${p.outcomes}</h2><ol>${pack.outcomes.map((o) => `<li>${T(o)}</li>`).join("")}</ol>
+<h2>${p.syllabus}</h2><table><tr><th>${p.week}</th><th>${p.topic}</th><th>${p.work}</th></tr>${pack.syllabus.map((w, i) => `<tr><td>${n(i + 1)}</td><td>${T(w.topic)}</td><td>${T(w.work)}</td></tr>`).join("")}</table>`)}
+${page(p.slides, pack.slides.map((l, i) => `<h3>${p.lecture} ${n(i + 1)}: ${T(l.title)}</h3><ul>${l.bullets.map((b) => `<li>${T(b)}</li>`).join("")}</ul>`).join(""))}
+${page(p.problems, pack.problems.map((q, i) => `<div class="q"><b>${n(i + 1)}.</b> ${T(q.q)}</div>`).join("") + `<h2>${p.solutions}</h2>` + pack.problems.map((q, i) => `<div class="sol"><b>${n(i + 1)}.</b> ${T(q.a)}</div>`).join(""))}
+${page(`${p.lab}: ${T(pack.lab.title)}`, `<h2>${p.goal}</h2><p>${T(pack.lab.goal)}</p><h2>${p.steps}</h2><ol>${pack.lab.steps.map((x) => `<li>${T(x)}</li>`).join("")}</ol><h2>${p.deliver}</h2><p>${T(pack.lab.deliver)}</p>`)}
+${page(p.rubric, `<table><tr><th>${p.criterion}</th>${p.levels.map((l) => `<th>${l}</th>`).join("")}</tr>${pack.rubric.map((r) => `<tr><td><b>${T(r.name)}</b></td>${r.levels.map((l) => `<td>${T(l)}</td>`).join("")}</tr>`).join("")}</table>
+<h2>${p.readings}</h2>${pack.readings.map((r) => `<div class="ref" dir="ltr" style="text-align:${rtl ? "right" : "left"}">${esc(r.cite)}<br><i dir="${rtl ? "rtl" : "ltr"}">${T(r.note)}</i></div>`).join("")}`)}
+</body></html>`;
+}
+
 /* ---------------- run ---------------- */
 async function main() {
   const units = readdirSync(CONTENT).filter((f) => f.endsWith(".json")).map((f) => JSON.parse(readFileSync(join(CONTENT, f), "utf8"))).filter((u) => !only.size || only.has(u.id));
@@ -249,6 +288,16 @@ async function main() {
           await page.pdf({ path: join(dir, `${name}-${lang}.pdf`), printBackground: true, preferCSSPageSize: true, ...opts }); count++;
           (await import("node:fs")).rmSync(tmp);
         }
+      }
+    }
+    const packKit = lesson.kit?.find((k) => k.base?.endsWith("/course-pack"));
+    if (page && packKit && existsSync(join(PACKS, `${unit.id}.json`))) {
+      const pack = JSON.parse(readFileSync(join(PACKS, `${unit.id}.json`), "utf8"));
+      for (const lang of LANGS) {
+        const tmp = join(dir, `.course-pack-${lang}.html`); writeFileSync(tmp, packHtml(unit, pack, lang));
+        await page.goto(pathToFileURL(tmp).href); await page.evaluate(() => document.fonts.ready);
+        await page.pdf({ path: join(dir, `course-pack-${lang}.pdf`), printBackground: true, preferCSSPageSize: true, format: "A4" }); count++;
+        (await import("node:fs")).rmSync(tmp);
       }
     }
     console.log(`✓ ${lesson.id}`);

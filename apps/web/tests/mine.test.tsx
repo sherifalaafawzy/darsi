@@ -59,10 +59,27 @@ describe("audience and tracks", () => {
     const audience = (a: unknown) => validateUnit({ ...unit, audience: a }).filter((i) => i.at.field === "audience");
     expect(audience("students")).toEqual([]);
     expect(audience("parents")).toMatchObject([{ code: "badValue" }]);
+    const teach = (x: unknown) => validateUnit({ ...unit, teach: x }).filter((i) => i.at.field === "teach");
+    expect(teach("university")).toEqual([]);
+    expect(teach("school")).toMatchObject([{ code: "badValue" }]);
   });
 });
 
 describe("Home", () => {
+  it("pins university courses first for university teachers, and hides them from everyone else", async () => {
+    h.units = [entry("ai-t"), entry("ai-u1", { level: 4, teach: "university" })];
+    seed({ tracks: ["ai"], audience: "teachers", teach: "university" });
+    const a = show(<Home />);
+    await screen.findByRole("heading", { name: "Course ai-u1" });
+    const names = screen.getAllByRole("heading").map((x) => x.textContent).filter((x) => x?.startsWith("Course "));
+    expect(names.slice(0, 2)).toEqual(["Course ai-u1", "Course ai-t"]);
+    a.unmount();
+    seed({ tracks: ["ai"], audience: "teachers", teach: "secondary" });
+    show(<Home />);
+    expect(await screen.findByRole("heading", { name: "Course ai-t" })).toBeTruthy();
+    expect(screen.queryByText("Course ai-u1")).toBeNull();
+  });
+
   it("shows only the current track's courses for teachers, and switches track from the app bar", async () => {
     seed({ tracks: ["ai", "cyber"], audience: "teachers" });
     show(<Home />);

@@ -34,12 +34,16 @@ export function useMine() {
   const { t } = useI18n();
   const { visible, of, levelName } = useTracks();
   const audience = audienceFor(role, state.audience);
+  // Teachers who said they teach at a university also see the university courses, pinned first on Home.
+  const uni = audience === "teachers" && state.teach === "university";
   const stage = audience === "students" ? state.stage : undefined;
   const start = (track: Track) => startLevel(audience, stage, of(track).levels);
   const tracks = myTracks(state.tracks, visible);
   const ids = new Set(tracks.map((t) => t.id));
   return {
     audience,
+    /** A university teacher: university courses are theirs too. */
+    uni,
     fixed: audienceFixed(role),
     /** Where a student studies; undefined for teachers. */
     stage,
@@ -54,7 +58,7 @@ export function useMine() {
     tracks,
     active: activeTrack(state.track, tracks),
     /** A course for this learner: their audience, in one of their tracks. */
-    isMine: (u: Pick<CatalogEntry, "track" | "audience">) => audienceOf(u) === audience && ids.has(u.track),
+    isMine: (u: Pick<CatalogEntry, "track" | "audience" | "teach">) => audienceOf(u) === audience && ids.has(u.track) && (!u.teach || uni),
     setActive: (track: Track) => dispatch({ type: "set", patch: { track } }),
   };
 }

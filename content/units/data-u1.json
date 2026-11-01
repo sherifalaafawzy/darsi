@@ -1,0 +1,3142 @@
+{
+  "id": "data-u1",
+  "track": "data",
+  "level": 4,
+  "teach": "university",
+  "title": {
+    "en": "Teaching databases and data engineering at university",
+    "ar": "تدريس قواعد البيانات وهندسة البيانات في الجامعة"
+  },
+  "summary": {
+    "en": "A graduate-level course for university lecturers in databases and data engineering: the relational model and normalisation, B-tree indexing and query plans, transactions, isolation and distributed trade-offs, and data quality with the assessment of projects built on real datasets.",
+    "ar": "مقرر بمستوى الدراسات العليا لأساتذة الجامعات في قواعد البيانات وهندسة البيانات: النموذج العلائقي والتطبيع، وفهارس أشجار B وخطط الاستعلام، والمعاملات والعزل ومفاضلات التوزيع، وجودة البيانات وتقييم المشاريع المبنية على بيانات حقيقية."
+  },
+  "lessons": [
+    {
+      "id": "data-u1-1",
+      "title": {
+        "en": "The relational model and normalisation",
+        "ar": "النموذج العلائقي والتطبيع"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Give groups a flat enrolment spreadsheet; each performs one insert, one update and one delete and reports what went wrong, then derive the dependencies together.",
+        "ar": "أعطِ المجموعات جدول تسجيل مسطّحًا، فتجري كلٌّ منها إضافة وتحديثًا وحذفًا وتبلغ عمّا فسد، ثم استنتجوا الاعتماديات معًا."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "The relational model and normalisation",
+            "ar": "النموذج العلائقي والتطبيع"
+          },
+          "src": null,
+          "duration": 196,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "One big spreadsheet",
+                "ar": "جدول واحد كبير"
+              }
+            },
+            {
+              "at": 31.4,
+              "atBy": {
+                "en": 31.4,
+                "ar": 27.4
+              },
+              "label": {
+                "en": "Relations and keys",
+                "ar": "العلاقات والمفاتيح"
+              }
+            },
+            {
+              "at": 78.5,
+              "atBy": {
+                "en": 78.5,
+                "ar": 75.7
+              },
+              "label": {
+                "en": "Normal forms",
+                "ar": "الصيغ الطبيعية"
+              }
+            },
+            {
+              "at": 148.3,
+              "atBy": {
+                "en": 148.3,
+                "ar": 142.1
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 126.32,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A new lecturer can’t be stored until they have a student. Which anomaly?",
+                "ar": "لا يمكن تخزين محاضر جديد حتى يكون لديه طالب واحد على الأقل. أيّ شذوذ هذا؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Insertion",
+                    "ar": "الإضافة"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Deletion",
+                    "ar": "الحذف"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Update",
+                    "ar": "التحديث"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "Lecturer facts are trapped inside enrolment rows.",
+                "ar": "معلومات المحاضر محبوسة داخل صفوف التسجيل."
+              }
+            },
+            "atBy": {
+              "en": 126.32,
+              "ar": 121.62
+            }
+          },
+          "transcript": {
+            "en": "A student's course database keeps the lecturer's phone number on every enrolment row. The lecturer changes phones, half the rows are updated, and now the database disagrees with itself. Why did the design allow that? Today: Codd's relational model, how functional dependencies drive normalisation, and how to teach design so students stop building one giant table. Codd proposed storing data as relations: sets of tuples over named attributes. A key identifies each tuple uniquely. Queries describe what you want, not how to fetch it. A functional dependency says one set of attributes determines another. Lecturer determines phone. Student and course together determine grade. These dependencies, not intuition, tell us how to split tables. Phone depends on lecturer, which depends on course, not on the whole key. That transitive dependency breaks third normal form. Moving lecturer details to their own table removes the update anomaly. Third normal form and Boyce–Codd normal form remove most redundancy while keeping joins lossless. Analytical systems sometimes denormalise on purpose for speed. Students should know why, not just how. Students memorise normal-form definitions without seeing the point. Start instead with a broken table and ask them to insert, update and delete. Once they hit the anomalies, dependencies become the tool that fixes them. Quick check! A new lecturer cannot be stored until they have at least one enrolled student. Which anomaly is that? An insertion anomaly. Facts about lecturers are trapped inside enrolment rows. A separate lecturer table lets us record them independently. In the app, open the schema lab. Split a flat table into related tables and check that every fact is stored once. Your turn. A table holds course, lecturer and lecturer's office, keyed by course. Is it in third normal form? No: office depends on lecturer, a non-key attribute, so the dependency is transitive. Remember: keys identify, dependencies decide the split, and anomalies motivate the theory. Try it in your next lecture: give groups a flat enrolment spreadsheet. Ask each group to perform one insert, one update and one delete and report what went wrong. Then derive the dependencies together.",
+            "ar": "قاعدة بيانات المقررات بتاعة طالب بتحط رقم موبايل المحاضر في كل صف تسجيل. المحاضر غيّر رقمه، ونص الصفوف بس اتحدّثت، ودلوقتي القاعدة مختلفة مع نفسها. ليه التصميم سمح بكده؟ النهارده: النموذج العلائقي بتاع كود، وإزاي الاعتماديات الوظيفية بتقود التطبيع، وإزاي تدرّس التصميم بحيث الطلاب يبطّلوا يعملوا جدول واحد عملاق. كود اقترح إن البيانات تتخزن كعلاقات: مجموعات من الصفوف على خصائص ليها أسامي. والمفتاح بيحدد كل صف بشكل فريد. والاستعلامات بتوصف إنت عايز إيه، مش إزاي تجيبه. الاعتمادية الوظيفية بتقول إن مجموعة خصائص بتحدد مجموعة تانية. المحاضر بيحدد الرقم. والطالب والمقرر مع بعض بيحددوا الدرجة. والاعتماديات دي، مش الإحساس، هي اللي بتقولنا نقسم الجداول إزاي. الرقم معتمد على المحاضر، والمحاضر معتمد على المقرر، مش على المفتاح كله. والاعتمادية المتعدّية دي بتكسر الصيغة الطبيعية التالتة. ونقل بيانات المحاضر لجدول لوحده بيشيل شذوذ التحديث. الصيغة الطبيعية التالتة وصيغة بويس وكود بيشيلوا معظم التكرار ومع ذلك الربط بيفضل من غير فقد. والأنظمة التحليلية ساعات بتلغي التطبيع عن قصد علشان السرعة. والطلاب لازم يعرفوا ليه، مش إزاي بس. الطلاب بيحفظوا تعريفات الصيغ الطبيعية من غير ما يشوفوا الفايدة. ابدأ بدل كده بجدول بايظ واطلب منهم يضيفوا ويحدّثوا ويمسحوا. ولما يقابلوا الشذوذ، الاعتماديات بتبقى الأداة اللي بتصلّحه. سؤال سريع! محاضر جديد مايتخزّنش لحد ما يبقى عنده طالب واحد مسجّل على الأقل. ده أنهي شذوذ؟ شذوذ إضافة. المعلومات عن المحاضرين محبوسة جوّه صفوف التسجيل. وجدول منفصل للمحاضرين بيخلّينا نسجّلها لوحدها. في التطبيق، افتح معمل المخطط. قسّم جدول مسطّح لجداول مرتبطة وتأكد إن كل معلومة متخزّنة مرة واحدة. دورك. جدول فيه المقرر والمحاضر ومكتب المحاضر، ومفتاحه المقرر. هل هو في الصيغة الطبيعية التالتة؟ لأ: المكتب معتمد على المحاضر، وده مش مفتاح، فالاعتمادية متعدّية. افتكر: المفاتيح بتحدد، والاعتماديات بتقرر التقسيم، والشذوذ هو اللي بيبرّر النظرية. جرّبها في محاضرتك الجاية: ادّي المجموعات جدول تسجيل مسطّح. واطلب من كل مجموعة تعمل إضافة وتحديث ومسح واحد وتقول إيه اللي باظ. وبعدين استنتجوا الاعتماديات مع بعض."
+          },
+          "sources": {
+            "en": "/media/data-u1-1/video-en.mp4",
+            "ar": "/media/data-u1-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-u1-1/captions-en.vtt",
+            "ar": "/media/data-u1-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-u1-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-u1-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-u1-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-u1-1/light/audio/en.opus",
+              "manifest.json": "/media/data-u1-1/light/manifest.json",
+              "scenes.json": "/media/data-u1-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-u1-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-u1-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 427,
+              "ar": 410
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Relations, dependencies and design",
+            "ar": "العلاقات والاعتماديات والتصميم"
+          },
+          "body": {
+            "en": "Codd (1970) proposed representing data as relations, sets of tuples over named attributes, manipulated by a small algebra, independent of physical storage. A superkey is a set of attributes that determines every attribute; a candidate key is a minimal superkey. A functional dependency X → Y holds when tuples agreeing on X must agree on Y. Dependencies come from the meaning of the data, not from any particular instance.\n\nNormalisation decomposes relations to remove redundancy that causes update, insertion and deletion anomalies. Second normal form forbids non-key attributes depending on part of a key; third normal form forbids transitive dependencies of non-key attributes on the key; Boyce–Codd normal form requires every determinant to be a superkey. Good decompositions are lossless, so the original relation can be rebuilt by joins, and ideally dependency-preserving, which 3NF always allows and BCNF sometimes does not (Garcia-Molina, Ullman and Widom, Database Systems: The Complete Book; Silberschatz, Korth and Sudarshan, Database System Concepts).\n\nStudents frequently memorise normal-form definitions while designing by intuition, confuse keys with identifiers they happen to see, and treat normalisation as always good. Teaching from anomalies, by asking students to update and delete in a deliberately redundant table, motivates the theory; computing attribute closures by hand makes keys precise; and discussing deliberate denormalisation in analytical warehouses shows that design is a trade-off with a reason.",
+            "ar": "اقترح Codd (١٩٧٠) تمثيل البيانات علاقاتٍ، أي مجموعات من الصفوف على خصائص مسمّاة، تُعالج بجبر صغير، مستقلةً عن التخزين المادي. والمفتاح الفائق مجموعة خصائص تحدد كل الخصائص، والمفتاح المرشّح مفتاح فائق أدنى. وتتحقق الاعتمادية الوظيفية ⁦X → Y⁩ عندما يجب أن تتفق الصفوف المتفقة في X على Y. والاعتماديات تنبع من معنى البيانات لا من نسخة بعينها.\n\nويفكّك التطبيع العلاقات لإزالة التكرار الذي يسبب شذوذ التحديث والإضافة والحذف. فالصيغة الطبيعية الثانية تمنع اعتماد الخصائص غير المفتاحية على جزء من المفتاح، والثالثة تمنع الاعتماد المتعدّي للخصائص غير المفتاحية على المفتاح، وتشترط صيغة بويس وكود أن يكون كل محدِّد مفتاحًا فائقًا. والتفكيك الجيد بلا فقد، فيمكن إعادة بناء العلاقة الأصلية بالربط، ويحفظ الاعتماديات إن أمكن، وهو ما تتيحه 3NF دائمًا ولا تتيحه BCNF أحيانًا (Garcia-Molina وUllman وWidom، أنظمة قواعد البيانات: الكتاب الكامل؛ Silberschatz وKorth وSudarshan، مفاهيم أنظمة قواعد البيانات).\n\nوكثيرًا ما يحفظ الطلاب تعريفات الصيغ الطبيعية بينما يصمّمون بالحدس، ويخلطون بين المفاتيح والمعرّفات التي تصادفهم، ويعاملون التطبيع على أنه جيد دائمًا. والتدريس من الشذوذ، بأن تطلب من الطلاب التحديث والحذف في جدول متكرر عمدًا، يحفّز النظرية، وحساب انغلاق الخصائص يدويًا يجعل المفاتيح دقيقة، ومناقشة إلغاء التطبيع المقصود في مستودعات البيانات التحليلية تبيّن أن التصميم مفاضلة لها سبب."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Functional dependency",
+                "ar": "الاعتمادية الوظيفية"
+              },
+              "def": {
+                "en": "X → Y: rows equal on X are equal on Y.",
+                "ar": "⁦X → Y⁩: الصفوف المتساوية في X متساوية في Y."
+              }
+            },
+            {
+              "term": {
+                "en": "Candidate key",
+                "ar": "المفتاح المرشّح"
+              },
+              "def": {
+                "en": "A minimal set of attributes that determines all others.",
+                "ar": "أدنى مجموعة خصائص تحدد كل الخصائص الأخرى."
+              }
+            },
+            {
+              "term": {
+                "en": "Lossless decomposition",
+                "ar": "التفكيك بلا فقد"
+              },
+              "def": {
+                "en": "A split whose join exactly rebuilds the original.",
+                "ar": "تقسيم يعيد ربطه بناء الأصل بالضبط."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Course → lecturer → office, keyed by course. Is it in 3NF?",
+            "ar": "المقرر ← المحاضر ← المكتب، والمفتاح هو المقرر. هل الجدول في الصيغة الطبيعية الثالثة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Yes",
+                "ar": "نعم"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "No, the dependency is transitive",
+                "ar": "لا، فالاعتمادية متعدّية"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Only if office is unique",
+                "ar": "فقط إذا كان المكتب فريدًا"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Office depends on a non-key attribute.",
+            "ar": "يعتمد المكتب على خاصية ليست مفتاحًا."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Compute a closure.",
+            "ar": "احسب انغلاقًا."
+          },
+          "sentence": {
+            "en": [
+              "With A → B and B → C, the closure of {A} is {A, B, ",
+              {
+                "blank": 0
+              },
+              "}, so A is a ",
+              {
+                "blank": 1
+              },
+              " of R(A, B, C)."
+            ],
+            "ar": [
+              "مع ⁦A → B⁩ و⁦B → C⁩، يكون انغلاق ⁦{A}⁩ هو {A, B, ",
+              {
+                "blank": 0
+              },
+              "}، فـ A ",
+              {
+                "blank": 1
+              },
+              " للعلاقة ⁦R(A, B, C)⁩."
+            ]
+          },
+          "bank": {
+            "en": [
+              "C",
+              "D",
+              "dependency",
+              "key"
+            ],
+            "ar": [
+              "C",
+              "D",
+              "اعتمادية",
+              "مفتاح"
+            ]
+          },
+          "answers": {
+            "en": [
+              "C",
+              "key"
+            ],
+            "ar": [
+              "C",
+              "مفتاح"
+            ]
+          },
+          "explain": {
+            "en": "A determines B, and B determines C, so A determines every attribute.",
+            "ar": "يحدد A الخاصية B، وB تحدد C، فيحدد A كل الخصائص."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Enrol(student, course, grade, lecturer, phone) with course → lecturer → phone and key (student, course). Which are true? Choose all that apply.",
+            "ar": "⁦Enrol(student, course, grade, lecturer, phone)⁩ مع ⁦course → lecturer → phone⁩ والمفتاح ⁦(student, course)⁩. أيّها صحيح؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "It violates 2NF",
+                "ar": "تنتهك 2NF"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "It violates 3NF",
+                "ar": "تنتهك 3NF"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "It is in BCNF",
+                "ar": "إنها في BCNF"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Phone changes cause update anomalies",
+                "ar": "تغيير الهاتف يسبب شذوذ تحديث"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Lecturer depends on part of the key (course), breaking 2NF and hence 3NF and BCNF.",
+            "ar": "يعتمد المحاضر على جزء من المفتاح (course)، فتنكسر 2NF ومن ثم 3NF وBCNF."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: split a flat table into related tables and check that every fact is stored once.",
+            "ar": "جرّب: قسّم جدولًا مسطّحًا إلى جداول مترابطة وتحقق من تخزين كل معلومة مرة واحدة."
+          },
+          "tool": "schema"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "Every relation can be decomposed into BCNF while preserving all functional dependencies.",
+            "ar": "يمكن تفكيك كل علاقة إلى BCNF مع حفظ جميع الاعتماديات الوظيفية."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Lossless BCNF is always possible, but dependency preservation is not; 3NF guarantees both.",
+            "ar": "التفكيك بلا فقد إلى BCNF ممكن دائمًا، أما حفظ الاعتماديات فلا، و3NF تضمن الاثنين."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each normal form to what it forbids.",
+            "ar": "طابق كل صيغة طبيعية مع ما تمنعه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "1NF",
+                "ar": "1NF"
+              },
+              "right": {
+                "en": "Repeating groups and non-atomic values",
+                "ar": "المجموعات المتكررة والقيم غير الذرّية"
+              }
+            },
+            {
+              "left": {
+                "en": "2NF",
+                "ar": "2NF"
+              },
+              "right": {
+                "en": "Dependence on part of a key",
+                "ar": "الاعتماد على جزء من المفتاح"
+              }
+            },
+            {
+              "left": {
+                "en": "3NF",
+                "ar": "3NF"
+              },
+              "right": {
+                "en": "Transitive dependence on the key",
+                "ar": "الاعتماد المتعدّي على المفتاح"
+              }
+            },
+            {
+              "left": {
+                "en": "BCNF",
+                "ar": "BCNF"
+              },
+              "right": {
+                "en": "Any determinant that is not a superkey",
+                "ar": "أي محدِّد ليس مفتاحًا فائقًا"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each form tightens the one before.",
+            "ar": "كل صيغة تشدّد على التي قبلها."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Do your students meet anomalies before they meet normal-form definitions? What table could you break in class?",
+            "ar": "هل يلتقي طلابك بالشذوذ قبل تعريفات الصيغ الطبيعية؟ وأيّ جدول يمكنك كسره في القاعة؟"
+          },
+          "placeholder": {
+            "en": "For example: “No, definitions first. I’ll use the faculty’s own timetable spreadsheet.”",
+            "ar": "مثلًا: «لا، التعريفات أولًا. سأستخدم جدول مواعيد الكلية نفسه.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A design-from-anomalies assignment",
+            "ar": "مشروع: تكليف التصميم من الشذوذ"
+          },
+          "task": {
+            "en": "Design an assignment: students receive a realistic flat spreadsheet, document three anomalies, state the functional dependencies with justification from the domain, compute candidate keys by closure, decompose to 3NF and BCNF, show losslessness, and argue whether any denormalisation is justified for reporting. Include a rubric.",
+            "ar": "صمّم تكليفًا: يتسلّم الطلاب جدولًا مسطّحًا واقعيًا، ويوثّقون ثلاثة أنواع من الشذوذ، ويذكرون الاعتماديات الوظيفية مع تبرير من المجال، ويحسبون المفاتيح المرشّحة بالانغلاق، ويفكّكون إلى 3NF وBCNF، ويبيّنون عدم الفقد، ويناقشون هل يُبرَّر إلغاء التطبيع للتقارير. أرفق معيار تقييم."
+          },
+          "deliverable": {
+            "en": "The spreadsheet, the brief, a model answer and a rubric.",
+            "ar": "الجدول والوصف والإجابة النموذجية ومعيار التقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: identify anomalies and dependencies.",
+                "ar": "يستطيع الطلاب: تحديد الشذوذ والاعتماديات."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: compute keys by closure.",
+                "ar": "يستطيع الطلاب: حساب المفاتيح بالانغلاق."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: decompose losslessly and justify trade-offs.",
+                "ar": "يستطيع الطلاب: التفكيك بلا فقد وتبرير المفاضلات."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "The relational model and normalisation",
+            "ar": "النموذج العلائقي والتطبيع"
+          },
+          "note": {
+            "en": "Data engineering · University · Lecture 1",
+            "ar": "هندسة البيانات، الجامعة، المحاضرة ١"
+          },
+          "narration": {
+            "en": "A database that disagrees with itself.",
+            "ar": "قاعدة بيانات تخالف نفسها."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Use keys and dependencies.",
+              "Normalise to 3NF and BCNF.",
+              "Teach from anomalies."
+            ],
+            "ar": [
+              "نستخدم المفاتيح والاعتماديات.",
+              "نطبّع إلى 3NF وBCNF.",
+              "ندرّس من الشذوذ."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Dependencies decide the split.",
+              "Lossless joins.",
+              "Denormalise with a reason."
+            ],
+            "ar": [
+              "الاعتماديات تقرر التقسيم.",
+              "ربط بلا فقد.",
+              "ألغِ التطبيع لسبب."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Break it, then fix it",
+            "ar": "اكسره ثم أصلحه"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Spot the problem",
+              "Break (15 min): Anomalies.",
+              "Derive (15 min): Dependencies.",
+              "Fix (20 min): Decompose.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): ⁦Show the enrolment table with a lecturer's two phone numbers and ask which is right⁩.",
+              "الكسر (١٥ دقيقة): الشذوذ.",
+              "الاستنتاج (١٥ دقيقة): الاعتماديات.",
+              "الإصلاح (٢٠ دقيقة): التفكيك.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): اكتشف المشكلة",
+              "Break (15 min): Groups insert, update and delete in the flat table and list what fails.",
+              "Derive (15 min): State the dependencies and compute the key by closure.",
+              "Fix (20 min): Decompose to 3NF and check the join rebuilds the original.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض جدول التسجيل وفيه رقمان لهاتف المحاضر واسأل أيّهما الصحيح.",
+              "الكسر (١٥ دقيقة): تضيف المجموعات وتحدّث وتحذف في الجدول المسطّح وتسرد ما يفشل.",
+              "الاستنتاج (١٥ دقيقة): اذكر الاعتماديات واحسب المفتاح بالانغلاق.",
+              "الإصلاح (٢٠ دقيقة): فكّك إلى 3NF وتحقق من أن الربط يعيد بناء الأصل.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which anomaly appeared first?",
+              "Where did the dependencies come from?",
+              "When would you denormalise?"
+            ],
+            "ar": [
+              "أيّ شذوذ ظهر أولًا؟",
+              "من أين جاءت الاعتماديات؟",
+              "متى ستلغي التطبيع؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one functional dependency from a system you use."
+            ],
+            "ar": [
+              "اكتب اعتمادية وظيفية واحدة من نظام تستخدمه."
+            ]
+          },
+          "narration": {
+            "en": "Let dependencies decide the design.",
+            "ar": "دع الاعتماديات تقرر التصميم."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: The relational model and normalisation",
+            "ar": "شرائح المحاضرة: النموذج العلائقي والتطبيع"
+          },
+          "pages": 6,
+          "base": "data-u1-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: The relational model and normalisation",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: النموذج العلائقي والتطبيع"
+          },
+          "pages": 3,
+          "base": "data-u1-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-u1-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.1",
+        "DATA.2",
+        "T.PE.C"
+      ]
+    },
+    {
+      "id": "data-u1-2",
+      "title": {
+        "en": "Indexing and query processing",
+        "ar": "الفهارس ومعالجة الاستعلامات"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Load a million-row table and let pairs run one slow query; they read the plan, add one index, rerun it, and then measure how much slower inserts became.",
+        "ar": "حمّل جدولًا من مليون صف ودع كل زوجين يشغّلان استعلامًا بطيئًا، فيقرآن الخطة ويضيفان فهرسًا ويعيدان التشغيل، ثم يقيسان مقدار تباطؤ الإضافة."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Indexing and query processing",
+            "ar": "الفهارس ومعالجة الاستعلامات"
+          },
+          "src": null,
+          "duration": 195,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "The slow results page",
+                "ar": "صفحة النتائج البطيئة"
+              }
+            },
+            {
+              "at": 26.6,
+              "atBy": {
+                "en": 26.6,
+                "ar": 27.2
+              },
+              "label": {
+                "en": "B-trees",
+                "ar": "أشجار B"
+              }
+            },
+            {
+              "at": 71.6,
+              "atBy": {
+                "en": 71.6,
+                "ar": 72.3
+              },
+              "label": {
+                "en": "Reading query plans",
+                "ar": "قراءة خطط الاستعلام"
+              }
+            },
+            {
+              "at": 146,
+              "atBy": {
+                "en": 146,
+                "ar": 140.8
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 124.42,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "About 200 keys per node. Roughly how many levels for 8 million rows?",
+                "ar": "في كل عقدة نحو ٢٠٠ مفتاح. كم مستوى تقريبًا لثمانية ملايين صف؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "3",
+                    "ar": "3"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "23",
+                    "ar": "23"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "200",
+                    "ar": "200"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "200³ = 8,000,000.",
+                "ar": "⁦200³ = 8,000,000.⁩"
+              }
+            },
+            "atBy": {
+              "en": 124.42,
+              "ar": 121.27
+            }
+          },
+          "transcript": {
+            "en": "On results day, the student portal takes eight seconds to show one student's grades. The query is one line. After a single change, it takes three milliseconds. What changed? Today: why a query on a million rows can take seconds or milliseconds, how B-tree indexes work, and how to teach students to read a query plan. An index is a separate structure that maps key values to row locations. Without one, the database scans every row. With one, it jumps almost straight to the rows it needs. A B-tree keeps keys sorted in wide nodes, each holding hundreds of keys. Because the tree is so wide, it stays very shallow. A million rows need only three or four levels, so three or four page reads. The portal filtered grades by student ID, but only the grade ID was indexed. Every request scanned the whole table. One create index statement fixed it. Every index speeds some reads but slows every write, because it must be updated too. It also takes space. And an index on a column with only two values rarely helps, since the planner will scan anyway. Students often think indexes are magic or that more is always better. Give them a large table and have them run EXPLAIN before and after adding an index. Measuring both read and write time makes the trade-off concrete. Quick check! A B-tree holds about two hundred keys per node. Roughly how many levels does it need for eight million rows? Three: two hundred cubed is eight million. That is why indexed lookups stay fast as tables grow by orders of magnitude. In the app, open the index lab. Run the same lookup with and without an index and count how many rows each method touches. Your turn. A column holds only yes or no, evenly split. Will an index on it usually speed up a filter on that column? Usually not: half the rows match, so scanning is cheaper. Remember: B-trees stay shallow, every index costs writes and space, and EXPLAIN shows what the planner decided. Try it in your next lecture: load a million-row table and let pairs run one slow query. They read the plan, add one index and run it again. Then they measure how much slower inserts became.",
+            "ar": "في يوم النتيجة، بوابة الطلاب بتاخد تمن ثواني علشان تعرض درجات طالب واحد. والاستعلام سطر واحد. وبعد تغيير واحد بس، بياخد تلاتة مللي ثانية. إيه اللي اتغيّر؟ النهارده: ليه استعلام على مليون صف ممكن ياخد ثواني أو أجزاء من الثانية، وأشجار B بتشتغل إزاي، وإزاي تعلّم الطلاب يقروا خطة الاستعلام. الفهرس هيكل منفصل بيربط قيم المفتاح بأماكن الصفوف. من غيره، قاعدة البيانات بتمسح كل الصفوف. ومعاه، بتنط تقريبًا على طول للصفوف اللي محتاجاها. شجرة B بتخلّي المفاتيح مترتبة في عُقد عريضة، كل واحدة فيها مئات المفاتيح. ولأن الشجرة عريضة كده، بتفضل قليلة العمق جدًا. ومليون صف محتاجين تلات أو أربع مستويات بس، يعني تلات أو أربع قراءات صفحات. البوابة كانت بتفلتر الدرجات برقم الطالب، بس الفهرس كان على رقم الدرجة بس. فكل طلب كان بيمسح الجدول كله. وأمر create index واحد صلّحها. كل فهرس بيسرّع قراءات معينة بس بيبطّأ كل كتابة، لأنه لازم يتحدّث هو كمان. وبياخد مساحة كمان. والفهرس على عمود فيه قيمتين بس نادرًا ما بيفيد، لأن المخطِّط هيمسح الجدول برضه. الطلاب كتير بيفتكروا الفهارس سحر أو إن الأكتر دايمًا أحسن. ادّيهم جدول كبير وخلّيهم يشغّلوا EXPLAIN قبل وبعد إضافة فهرس. وقياس وقت القراءة والكتابة الاتنين بيخلّي المفاضلة ملموسة. سؤال سريع! شجرة B فيها حوالي ميتين مفتاح في كل عقدة. تقريبًا محتاجة كام مستوى لتمانية مليون صف؟ تلاتة: ميتين أس تلاتة بتساوي تمانية مليون. وده السبب إن البحث بالفهرس بيفضل سريع حتى لما الجداول تكبر أضعاف مضاعفة. في التطبيق، افتح معمل الفهرس. شغّل نفس البحث بفهرس ومن غيره وعدّ كل طريقة بتلمس كام صف. دورك. عمود فيه أيوه أو لأ بس، ومتقسّم بالنص. فهرس عليه عادةً هيسرّع الفلترة على العمود ده؟ غالبًا لأ: نص الصفوف بتطابق، فالمسح أرخص. افتكر: أشجار B بتفضل قليلة العمق، وكل فهرس بيكلّف كتابة ومساحة، وEXPLAIN بيوريك المخطِّط قرر إيه. جرّبها في محاضرتك الجاية: حمّل جدول فيه مليون صف وخلّي كل اتنين يشغّلوا استعلام بطيء. يقروا الخطة، ويضيفوا فهرس واحد ويشغّلوه تاني. وبعدين يقيسوا الإضافة بقت أبطأ قد إيه."
+          },
+          "sources": {
+            "en": "/media/data-u1-2/video-en.mp4",
+            "ar": "/media/data-u1-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-u1-2/captions-en.vtt",
+            "ar": "/media/data-u1-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-u1-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-u1-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-u1-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-u1-2/light/audio/en.opus",
+              "manifest.json": "/media/data-u1-2/light/manifest.json",
+              "scenes.json": "/media/data-u1-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-u1-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-u1-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 423,
+              "ar": 406
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Why some queries are fast",
+            "ar": "لماذا تكون بعض الاستعلامات سريعة"
+          },
+          "body": {
+            "en": "Databases store rows in fixed-size pages on disk or in memory, and the cost of a query is dominated by how many pages it reads. Without a suitable index, a selective lookup must scan every page. The B-tree (Bayer and McCreight, 1972), and its variant the B+-tree used by most relational systems, keeps keys sorted in wide nodes sized to a page; with a fan-out of a few hundred, a table of millions of rows needs only three or four levels, so a lookup reads a handful of pages, and leaf nodes linked in order support range scans (Comer, 1979).\n\nIndexes are not free. Every insert, update and delete must maintain each index, and each takes storage. Their value depends on selectivity: an index on a column where a predicate matches a large fraction of rows rarely helps, because random page reads cost more than a sequential scan. Composite indexes serve queries on a prefix of their columns, and covering indexes answer a query without touching the table.\n\nA cost-based optimiser, pioneered in System R (Selinger et al., 1979), estimates the cost of alternative plans from statistics and chooses one. Students learn query processing best by reading plans: running EXPLAIN before and after an index on a realistic table, comparing estimated and actual rows, and timing writes as well as reads. This replaces the common beliefs that indexes are magic, that more indexes are always better, and that the database executes SQL in the order it is written.",
+            "ar": "تخزّن قواعد البيانات الصفوف في صفحات ثابتة الحجم على القرص أو في الذاكرة، ويهيمن على تكلفة الاستعلام عدد الصفحات التي يقرؤها. فبدون فهرس مناسب يجب أن يمسح البحث الانتقائي كل الصفحات. وتحتفظ شجرة ⁦B (Bayer⁩ وMcCreight، ١٩٧٢)، وصيغتها ⁦B+⁩ المستخدمة في معظم الأنظمة العلائقية، بالمفاتيح مرتبة في عقد عريضة بحجم الصفحة، ومع تفرّع من بضع مئات يحتاج جدول من ملايين الصفوف إلى ثلاثة أو أربعة مستويات فقط، فيقرأ البحث بضع صفحات، وتدعم العقد الورقية المرتبطة بالترتيب مسح النطاقات (Comer، ١٩٧٩).\n\nوالفهارس ليست مجانية. فكل إضافة وتحديث وحذف يجب أن يحدّث كل فهرس، وكلٌّ منها يشغل مساحة. وتتوقف قيمتها على الانتقائية: فالفهرس على عمود يطابق فيه الشرط نسبة كبيرة من الصفوف نادرًا ما يفيد، لأن قراءة الصفحات العشوائية أغلى من المسح المتسلسل. وتخدم الفهارس المركّبة الاستعلامات على بادئة أعمدتها، وتجيب الفهارس الشاملة عن الاستعلام دون لمس الجدول.\n\nويقدّر المحسِّن القائم على التكلفة، الذي ابتكره نظام ⁦System R (Selinger⁩ وآخرون، ١٩٧٩)، تكلفة الخطط البديلة من الإحصاءات ويختار إحداها. ويتعلّم الطلاب معالجة الاستعلامات على أفضل وجه بقراءة الخطط: تشغيل EXPLAIN قبل الفهرس وبعده على جدول واقعي، ومقارنة الصفوف المقدّرة بالفعلية، وقياس زمن الكتابة كما القراءة. وهذا يستبدل المعتقدات الشائعة بأن الفهارس سحر، وأن المزيد منها أفضل دائمًا، وأن قاعدة البيانات تنفّذ SQL بترتيب كتابته."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "B+-tree",
+                "ar": "شجرة ⁦B+⁩"
+              },
+              "def": {
+                "en": "A balanced, wide tree of sorted keys with linked leaves.",
+                "ar": "شجرة متوازنة عريضة من المفاتيح المرتبة بأوراق مترابطة."
+              }
+            },
+            {
+              "term": {
+                "en": "Selectivity",
+                "ar": "الانتقائية"
+              },
+              "def": {
+                "en": "The fraction of rows a predicate matches.",
+                "ar": "نسبة الصفوف التي يطابقها الشرط."
+              }
+            },
+            {
+              "term": {
+                "en": "Query plan",
+                "ar": "خطة الاستعلام"
+              },
+              "def": {
+                "en": "The operations the optimiser chose to answer a query.",
+                "ar": "العمليات التي اختارها المحسِّن للإجابة عن الاستعلام."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A yes/no column, evenly split. Will an index usually speed a filter on it?",
+            "ar": "عمود قيمه نعم أو لا مناصفةً. هل يسرّع فهرس عليه عادةً التصفية به؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Yes, always",
+                "ar": "نعم دائمًا"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Usually not",
+                "ar": "غالبًا لا"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Only for writes",
+                "ar": "للكتابة فقط"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Half the rows match, so a scan is cheaper.",
+            "ar": "نصف الصفوف تطابق، فالمسح أرخص."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Estimate the depth.",
+            "ar": "قدّر العمق."
+          },
+          "sentence": {
+            "en": [
+              "With a fan-out of 100, a B+-tree over 10⁶ keys needs ",
+              {
+                "blank": 0
+              },
+              " levels; at 10⁸ keys it needs ",
+              {
+                "blank": 1
+              },
+              "."
+            ],
+            "ar": [
+              "مع تفرّع ١٠٠، تحتاج شجرة ⁦B+⁩ على 10⁶ مفتاح إلى ",
+              {
+                "blank": 0
+              },
+              " مستويات، وعلى 10⁸ مفتاح إلى ",
+              {
+                "blank": 1
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "3",
+              "6",
+              "8",
+              "4"
+            ],
+            "ar": [
+              "3",
+              "6",
+              "8",
+              "4"
+            ]
+          },
+          "answers": {
+            "en": [
+              "3",
+              "4"
+            ],
+            "ar": [
+              "3",
+              "4"
+            ]
+          },
+          "explain": {
+            "en": "100³ = 10⁶ and 100⁴ = 10⁸: a hundredfold growth adds one level.",
+            "ar": "⁦100³ = 10⁶⁩ و⁦100⁴ = 10⁸⁩: النمو مئة ضعف يضيف مستوى واحدًا."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "An index on (dept, year) exists. Which queries can use it efficiently? Choose all that apply.",
+            "ar": "يوجد فهرس على ⁦(dept, year)⁩. أيّ الاستعلامات تستخدمه بكفاءة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "WHERE dept = 'CS'",
+                "ar": "⁦WHERE dept = 'CS'⁩"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "WHERE dept = 'CS' AND year = 3",
+                "ar": "⁦WHERE dept = 'CS' AND year = 3⁩"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "WHERE year = 3",
+                "ar": "⁦WHERE year = 3⁩"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "WHERE dept = 'CS' AND year > 2",
+                "ar": "⁦WHERE dept = 'CS' AND year > 2⁩"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "A composite index serves a prefix of its columns; year alone is not a prefix.",
+            "ar": "يخدم الفهرس المركّب بادئة أعمدته، وyear وحدها ليست بادئة."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: run the same lookup with and without an index and count the rows each touches.",
+            "ar": "جرّب: شغّل البحث نفسه بفهرس ودونه وعدّ الصفوف التي يلمسها كلٌّ منهما."
+          },
+          "tool": "index"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "Adding indexes to every column is a safe way to make an application faster.",
+            "ar": "إضافة فهارس لكل عمود طريقة آمنة لتسريع التطبيق."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Each index slows writes and uses space; unselective indexes are ignored anyway.",
+            "ar": "كل فهرس يبطّئ الكتابة ويشغل مساحة، والفهارس غير الانتقائية تُتجاهل أصلًا."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each plan operation to when the optimiser prefers it.",
+            "ar": "طابق كل عملية في الخطة مع متى يفضّلها المحسِّن."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Sequential scan",
+                "ar": "المسح المتسلسل"
+              },
+              "right": {
+                "en": "The predicate matches most rows",
+                "ar": "الشرط يطابق معظم الصفوف"
+              }
+            },
+            {
+              "left": {
+                "en": "Index scan",
+                "ar": "مسح الفهرس"
+              },
+              "right": {
+                "en": "A selective predicate on an indexed column",
+                "ar": "شرط انتقائي على عمود مفهرس"
+              }
+            },
+            {
+              "left": {
+                "en": "Index-only scan",
+                "ar": "مسح الفهرس فقط"
+              },
+              "right": {
+                "en": "The index covers every needed column",
+                "ar": "الفهرس يغطي كل الأعمدة المطلوبة"
+              }
+            },
+            {
+              "left": {
+                "en": "Hash join",
+                "ar": "الربط بالتجزئة"
+              },
+              "right": {
+                "en": "Joining two large unsorted inputs on equality",
+                "ar": "ربط مدخلين كبيرين غير مرتبين بالتساوي"
+              }
+            }
+          ],
+          "explain": {
+            "en": "The optimiser picks by estimated cost, not by how SQL is written.",
+            "ar": "يختار المحسِّن حسب التكلفة المقدّرة لا حسب طريقة كتابة SQL."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Do your students ever see a table large enough for an index to matter? Where could you get one?",
+            "ar": "هل يرى طلابك جدولًا كبيرًا بما يكفي ليُحدث الفهرس فرقًا؟ ومن أين تحصل على واحد؟"
+          },
+          "placeholder": {
+            "en": "For example: “Never above a few hundred rows. I’ll generate a million synthetic enrolments.”",
+            "ar": "مثلًا: «لا يتجاوز بضع مئات من الصفوف. سأولّد مليون تسجيل اصطناعي.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A query-tuning lab",
+            "ar": "مشروع: معمل ضبط الاستعلامات"
+          },
+          "task": {
+            "en": "Design a lab on a synthetic table of at least a million rows: students run five slow queries, record the plans, propose one index per query with a selectivity argument, measure read speed-up and write slow-down, and recommend a final index set within a storage budget. Include the data generator and a rubric.",
+            "ar": "صمّم معملًا على جدول اصطناعي لا يقل عن مليون صف: يشغّل الطلاب خمسة استعلامات بطيئة، ويسجّلون الخطط، ويقترحون فهرسًا لكل استعلام مع حجة الانتقائية، ويقيسون تسريع القراءة وتباطؤ الكتابة، ويوصون بمجموعة فهارس نهائية ضمن ميزانية تخزين. أرفق مولّد البيانات ومعيار تقييم."
+          },
+          "deliverable": {
+            "en": "The generator, the handout, a model report and a rubric.",
+            "ar": "المولّد وورقة المعمل وتقرير نموذجي ومعيار التقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: read and interpret query plans.",
+                "ar": "يستطيع الطلاب: قراءة خطط الاستعلام وتفسيرها."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: justify an index by selectivity.",
+                "ar": "يستطيع الطلاب: تبرير الفهرس بالانتقائية."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: weigh read gains against write costs.",
+                "ar": "يستطيع الطلاب: موازنة مكاسب القراءة بتكاليف الكتابة."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Indexing and query processing",
+            "ar": "الفهارس ومعالجة الاستعلامات"
+          },
+          "note": {
+            "en": "Data engineering · University · Lecture 2",
+            "ar": "هندسة البيانات، الجامعة، المحاضرة ٢"
+          },
+          "narration": {
+            "en": "Eight seconds, then three milliseconds.",
+            "ar": "ثماني ثوانٍ، ثم ثلاثة أجزاء من الألف."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Explain B-tree indexes.",
+              "Reason about selectivity.",
+              "Read query plans."
+            ],
+            "ar": [
+              "نشرح فهارس أشجار B.",
+              "نستدل بالانتقائية.",
+              "نقرأ خطط الاستعلام."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Wide trees stay shallow.",
+              "Writes pay for reads.",
+              "EXPLAIN before and after."
+            ],
+            "ar": [
+              "الأشجار العريضة قليلة العمق.",
+              "الكتابة تدفع ثمن القراءة.",
+              "EXPLAIN قبل وبعد."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Tune one query",
+            "ar": "اضبط استعلامًا واحدًا"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Guess the cost",
+              "Explain (15 min): The slow plan.",
+              "Index (15 min): Add and compare.",
+              "Measure (20 min): Writes.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): Ask students how many rows a lookup by student ID reads in a million-row table.",
+              "الشرح (١٥ دقيقة): الخطة البطيئة.",
+              "الفهرسة (١٥ دقيقة): أضف وقارن.",
+              "القياس (٢٠ دقيقة): الكتابة.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): خمّن التكلفة",
+              "Explain (15 min): Pairs run EXPLAIN on a slow query and identify the scan.",
+              "Index (15 min): Add one index, rerun, and compare estimated and actual rows.",
+              "Measure (20 min): Time ten thousand inserts with and without the index.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اسأل الطلاب كم صفًا يقرأ البحث برقم الطالب في جدول من مليون صف.",
+              "الشرح (١٥ دقيقة): يشغّل كل زوجين EXPLAIN على استعلام بطيء ويحددان المسح.",
+              "الفهرسة (١٥ دقيقة): أضف فهرسًا وأعد التشغيل وقارن الصفوف المقدّرة بالفعلية.",
+              "القياس (٢٠ دقيقة): قِس زمن عشرة آلاف إضافة بالفهرس ودونه.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "How many pages did the index read?",
+              "When is a scan cheaper?",
+              "What did writes cost?"
+            ],
+            "ar": [
+              "كم صفحة قرأ الفهرس؟",
+              "متى يكون المسح أرخص؟",
+              "كم كلّفت الكتابة؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name one column in your system you would index and why."
+            ],
+            "ar": [
+              "سمِّ عمودًا في نظامك ستفهرسه ولماذا."
+            ]
+          },
+          "narration": {
+            "en": "Index for selective queries, and count the write cost.",
+            "ar": "فهرِس للاستعلامات الانتقائية واحسب تكلفة الكتابة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Indexing and query processing",
+            "ar": "شرائح المحاضرة: الفهارس ومعالجة الاستعلامات"
+          },
+          "pages": 6,
+          "base": "data-u1-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Indexing and query processing",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: الفهارس ومعالجة الاستعلامات"
+          },
+          "pages": 3,
+          "base": "data-u1-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-u1-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.2",
+        "DATA.3",
+        "T.PE.C"
+      ]
+    },
+    {
+      "id": "data-u1-3",
+      "title": {
+        "en": "Transactions and distributed data",
+        "ar": "المعاملات والبيانات الموزّعة"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Give two volunteers cards with the steps of two transactions; the class calls out an interleaving and records the final seat count, then add a lock and try again.",
+        "ar": "أعطِ متطوعَين بطاقات بخطوات معاملتين، فيقترح الفصل ترتيب تداخل ويسجّل عدد المقاعد النهائي، ثم أضف قفلًا وأعد المحاولة."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Transactions and distributed data",
+            "ar": "المعاملات والبيانات الموزّعة"
+          },
+          "src": null,
+          "duration": 189,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Two seats, one left",
+                "ar": "مقعدان والمتاح واحد"
+              }
+            },
+            {
+              "at": 27.4,
+              "atBy": {
+                "en": 27.4,
+                "ar": 26
+              },
+              "label": {
+                "en": "Transactions and isolation",
+                "ar": "المعاملات والعزل"
+              }
+            },
+            {
+              "at": 74.8,
+              "atBy": {
+                "en": 74.8,
+                "ar": 69.8
+              },
+              "label": {
+                "en": "Distributed trade-offs",
+                "ar": "مفاضلات التوزيع"
+              }
+            },
+            {
+              "at": 145.1,
+              "atBy": {
+                "en": 145.1,
+                "ar": 134.4
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 125.56,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Concurrent transactions saw each other’s half-done work. Which ACID property failed?",
+                "ar": "رأت معاملات متزامنة عمل بعضها غير المكتمل. أيّ خاصية في ACID فشلت؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Atomicity",
+                    "ar": "الذرّية"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Isolation",
+                    "ar": "العزل"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Durability",
+                    "ar": "الديمومة"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "The interleaving was the problem.",
+                "ar": "كانت المشكلة في التداخل."
+              }
+            },
+            "atBy": {
+              "en": 125.56,
+              "ar": 116.8
+            }
+          },
+          "transcript": {
+            "en": "Course registration opens. One seat is left in a popular elective, and two students click register in the same millisecond. Both get a confirmation. How did the system sell the same seat twice? Today: what a transaction guarantees, how isolation levels allow or prevent anomalies, and what changes when data lives on many machines. A transaction groups operations so they behave as one unit. ACID names its guarantees: atomicity, consistency, isolation and durability. Either everything commits, or nothing does. Both requests read one seat left. Both subtract one and write zero. Without proper isolation, each overwrites the other, and the count never shows minus one. One fix is an atomic conditional update that only succeeds while seats remain. Another is serializable isolation, which aborts one of the two transactions. Either way, exactly one student is enrolled. Databases offer weaker isolation levels for speed, such as read committed and snapshot isolation. Each permits some anomalies. Only serializable behaves as if transactions ran one at a time. When data is replicated and the network splits, a system must choose. It can stay available and risk inconsistent answers, or stay consistent and refuse some requests. That is the CAP trade-off, and students should argue it from real cases. Quick check! The double booking happened because concurrent transactions saw each other's half-finished work. Which ACID property failed? Isolation. Each transaction was atomic and durable on its own. The problem was how they interleaved. In the app, open the pipeline lab. Interleave two transactions step by step and see which orders produce a wrong result. Your turn. During a network partition, a bank's ledger must never show two different balances. What must it give up? Availability: some requests are refused until the partition heals. Remember: transactions are units of work, isolation levels trade anomalies for speed, and partitions force a choice. Try it in your next lecture: give two volunteers cards with the steps of two transactions. The class calls out an interleaving and records the final seat count. Then add a lock and try again.",
+            "ar": "التسجيل في المقررات فتح. فاضل كرسي واحد في مقرر اختياري مطلوب، وطالبين داسوا تسجيل في نفس المللي ثانية. والاتنين جالهم تأكيد. إزاي النظام باع نفس الكرسي مرتين؟ النهارده: المعاملة بتضمن إيه، وإزاي مستويات العزل بتسمح بالشذوذ أو تمنعه، وإيه اللي بيتغيّر لما البيانات تبقى على أجهزة كتير. المعاملة بتجمع العمليات بحيث تتصرف كوحدة واحدة. وACID بتسمّي ضماناتها: الذرّية والاتساق والعزل والديمومة. يا كل حاجة تتنفّذ، يا ولا حاجة. الطلبين قروا إن فاضل كرسي واحد. والاتنين طرحوا واحد وكتبوا صفر. ومن غير عزل مناسب، كل واحد بيكتب فوق التاني، والعدد عمره ما بيوصل لسالب واحد. تصليح منهم تحديث ذرّي مشروط بينجح بس طول ما فيه كراسي. والتاني العزل القابل للتسلسل، اللي بيلغي واحدة من المعاملتين. وفي الحالتين، طالب واحد بالظبط بيتسجّل. قواعد البيانات بتقدّم مستويات عزل أضعف علشان السرعة، زي read committed وsnapshot isolation. وكل واحد بيسمح بشذوذ معيّن. وserializable بس بيتصرف كأن المعاملات اتنفّذت واحدة واحدة. لما البيانات تبقى متكررة والشبكة تتقسم، النظام لازم يختار. يا يفضل متاح ويخاطر بإجابات مش متسقة، يا يفضل متسق ويرفض بعض الطلبات. ودي مفاضلة CAP، والطلاب لازم يناقشوها من حالات حقيقية. سؤال سريع! الحجز المزدوج حصل لأن المعاملات المتزامنة شافت شغل بعض اللي لسه ماخلصش. أنهي خاصية في ACID فشلت؟ العزل. كل معاملة كانت ذرّية ودايمة لوحدها. والمشكلة كانت في طريقة تداخلهم. في التطبيق، افتح معمل خط البيانات. داخل معاملتين خطوة خطوة وشوف أنهي ترتيب بيطلّع نتيجة غلط. دورك. وقت انقسام الشبكة، دفتر حسابات البنك لازم مايورّيش رصيدين مختلفين أبدًا. لازم يتنازل عن إيه؟ الإتاحة: بعض الطلبات بتترفض لحد ما الانقسام يتصلّح. افتكر: المعاملات وحدات شغل، ومستويات العزل بتبادل الشذوذ بالسرعة، والانقسام بيفرض اختيار. جرّبها في محاضرتك الجاية: ادّي اتنين متطوّعين كروت فيها خطوات معاملتين. والفصل يقول ترتيب تداخل ويسجّل عدد الكراسي في الآخر. وبعدين ضيف قفل وجرّبوا تاني."
+          },
+          "sources": {
+            "en": "/media/data-u1-3/video-en.mp4",
+            "ar": "/media/data-u1-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-u1-3/captions-en.vtt",
+            "ar": "/media/data-u1-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-u1-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-u1-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-u1-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-u1-3/light/audio/en.opus",
+              "manifest.json": "/media/data-u1-3/light/manifest.json",
+              "scenes.json": "/media/data-u1-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-u1-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-u1-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 412,
+              "ar": 388
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Correctness under concurrency and failure",
+            "ar": "الصحة في ظل التزامن والإخفاق"
+          },
+          "body": {
+            "en": "A transaction is a unit of work with the ACID guarantees: atomicity (all or nothing), consistency (integrity constraints hold), isolation (concurrent transactions do not interfere) and durability (committed results survive crashes), as formalised by Gray and Reuter (1993). The gold standard for isolation is serializability: the outcome equals some serial order. Two-phase locking and serializable snapshot isolation are common ways to achieve it.\n\nFor performance, systems default to weaker levels. Berenson et al. (1995) showed that the ANSI levels are ambiguous and that snapshot isolation, widely used, still permits write skew. Read committed permits lost updates and non-repeatable reads in many implementations. Students must learn to name the level their database actually uses, and to recognise the anomalies it allows, such as the classic double-booking of the last seat.\n\nWhen data is replicated across machines, network partitions are inevitable, and Brewer’s conjecture, proved by Gilbert and Lynch (2002), says a system cannot be both linearisably consistent and available during a partition. Real systems choose per operation, and the PACELC refinement adds that even without partitions they trade latency for consistency. Kleppmann’s Designing Data-Intensive Applications (2017) is an excellent bridge from theory to practice. Interleaving schedules by hand, then reproducing anomalies on a real database with two sessions, makes these ideas concrete.",
+            "ar": "المعاملة وحدة عمل بضمانات ACID: الذرّية (كل شيء أو لا شيء)، والاتساق (تبقى قيود السلامة متحققة)، والعزل (لا تتداخل المعاملات المتزامنة)، والديمومة (تصمد النتائج المثبتة أمام الأعطال)، كما صاغها Gray وReuter (١٩٩٣). والمعيار الذهبي للعزل هو قابلية التسلسل: أن تساوي النتيجة ترتيبًا تسلسليًا ما. والقفل على مرحلتين والعزل بلقطة قابلة للتسلسل طريقتان شائعتان لتحقيقه.\n\nومن أجل الأداء تستخدم الأنظمة افتراضيًا مستويات أضعف. وقد بيّن Berenson وآخرون (١٩٩٥) أن مستويات ANSI غامضة وأن العزل باللقطة، الواسع الاستخدام، ما زال يسمح بانحراف الكتابة. ويسمح read committed في تطبيقات كثيرة بالتحديث الضائع والقراءة غير القابلة للتكرار. ويجب أن يتعلّم الطلاب تسمية المستوى الذي تستخدمه قاعدة بياناتهم فعلًا، والتعرّف على الشذوذ الذي يسمح به، مثل الحجز المزدوج الكلاسيكي للمقعد الأخير.\n\nوعندما تتكرر البيانات عبر أجهزة متعددة يصبح انقسام الشبكة حتميًا، وتنص حدسية Brewer، التي برهنها Gilbert وLynch (٢٠٠٢)، على أن النظام لا يمكن أن يكون متسقًا خطيًا ومتاحًا معًا أثناء الانقسام. وتختار الأنظمة الحقيقية لكل عملية على حدة، ويضيف تحسين PACELC أنها حتى دون انقسام تبادل زمن الاستجابة بالاتساق. وكتاب Kleppmann تصميم التطبيقات كثيفة البيانات (٢٠١٧) جسر ممتاز من النظرية إلى التطبيق. والتداخل اليدوي للجداول الزمنية، ثم إعادة إنتاج الشذوذ على قاعدة بيانات حقيقية بجلستين، يجعل هذه الأفكار ملموسة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Serializability",
+                "ar": "قابلية التسلسل"
+              },
+              "def": {
+                "en": "Concurrent execution equivalent to some serial order.",
+                "ar": "تنفيذ متزامن يكافئ ترتيبًا تسلسليًا ما."
+              }
+            },
+            {
+              "term": {
+                "en": "Write skew",
+                "ar": "انحراف الكتابة"
+              },
+              "def": {
+                "en": "Two transactions read overlapping data and write disjoint rows, breaking a constraint.",
+                "ar": "معاملتان تقرآن بيانات متداخلة وتكتبان صفوفًا منفصلة فتكسران قيدًا."
+              }
+            },
+            {
+              "term": {
+                "en": "Network partition",
+                "ar": "انقسام الشبكة"
+              },
+              "def": {
+                "en": "Nodes that cannot communicate with each other.",
+                "ar": "عقد لا تستطيع التواصل فيما بينها."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "During a partition, a ledger must never show two balances. What does it give up?",
+            "ar": "أثناء انقسام الشبكة يجب ألا يُظهر دفتر الحسابات رصيدين مختلفين. عن ماذا يتنازل؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Consistency",
+                "ar": "الاتساق"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Availability",
+                "ar": "الإتاحة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Durability",
+                "ar": "الديمومة"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "It refuses some requests until the partition heals.",
+            "ar": "يرفض بعض الطلبات حتى يلتئم الانقسام."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Count the outcome.",
+            "ar": "احسب النتيجة."
+          },
+          "sentence": {
+            "en": [
+              "seats = 1. T1 and T2 both read 1, both write seats − 1 and enrol a student. Final seats = ",
+              {
+                "blank": 0
+              },
+              " and students enrolled = ",
+              {
+                "blank": 1
+              },
+              "."
+            ],
+            "ar": [
+              "⁦seats = 1⁩. تقرأ T1 وT2 القيمة 1، وتكتب كلٌّ منهما ⁦seats − 1⁩ وتسجّل طالبًا. المقاعد النهائية = ",
+              {
+                "blank": 0
+              },
+              " والطلاب المسجّلون = ",
+              {
+                "blank": 1
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "0",
+              "1",
+              "-1",
+              "2"
+            ],
+            "ar": [
+              "0",
+              "1",
+              "-1",
+              "2"
+            ]
+          },
+          "answers": {
+            "en": [
+              "0",
+              "2"
+            ],
+            "ar": [
+              "0",
+              "2"
+            ]
+          },
+          "explain": {
+            "en": "Each overwrote the other’s write: a lost update that hides the overbooking.",
+            "ar": "كتبت كلٌّ منهما فوق كتابة الأخرى: تحديث ضائع يخفي الحجز الزائد."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which prevent the double booking? Choose all that apply.",
+            "ar": "أيّها يمنع الحجز المزدوج؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "UPDATE … SET seats = seats − 1 WHERE seats > 0, checking rows affected",
+                "ar": "UPDATE … ⁦SET seats = seats − 1 WHERE seats > 0⁩ مع فحص عدد الصفوف المتأثرة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Serializable isolation with retry",
+                "ar": "عزل قابل للتسلسل مع إعادة المحاولة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "SELECT … FOR UPDATE before writing",
+                "ar": "SELECT … FOR UPDATE قبل الكتابة"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Reading the count twice",
+                "ar": "قراءة العدد مرتين"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "Reading twice does not stop the other transaction from interleaving.",
+            "ar": "القراءة مرتين لا تمنع المعاملة الأخرى من التداخل."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: interleave two transactions step by step and see which orders produce a wrong result.",
+            "ar": "جرّب: داخل معاملتين خطوة خطوة وانظر أيّ الترتيبات ينتج نتيجة خاطئة."
+          },
+          "tool": "pipeline"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "Snapshot isolation guarantees serializability.",
+            "ar": "يضمن العزل باللقطة قابلية التسلسل."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It permits write skew (Berenson et al., 1995); serializable snapshot isolation adds checks to prevent it.",
+            "ar": "يسمح بانحراف الكتابة (Berenson وآخرون، ١٩٩٥)، ويضيف العزل باللقطة القابل للتسلسل فحوصًا لمنعه."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each anomaly to the weakest level that prevents it in the ANSI model.",
+            "ar": "طابق كل شذوذ مع أضعف مستوى يمنعه في نموذج ANSI."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Dirty read",
+                "ar": "القراءة القذرة"
+              },
+              "right": {
+                "en": "Read committed",
+                "ar": "Read committed"
+              }
+            },
+            {
+              "left": {
+                "en": "Non-repeatable read",
+                "ar": "القراءة غير القابلة للتكرار"
+              },
+              "right": {
+                "en": "Repeatable read",
+                "ar": "Repeatable read"
+              }
+            },
+            {
+              "left": {
+                "en": "Phantom",
+                "ar": "السجل الشبح"
+              },
+              "right": {
+                "en": "Serializable",
+                "ar": "Serializable"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Real engines differ; always check your database’s documentation.",
+            "ar": "تختلف المحركات الحقيقية، فراجع دائمًا توثيق قاعدة بياناتك."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which isolation level does the database your students use default to, and have they ever seen it fail?",
+            "ar": "ما مستوى العزل الافتراضي في قاعدة البيانات التي يستخدمها طلابك، وهل رأوه يفشل يومًا؟"
+          },
+          "placeholder": {
+            "en": "For example: “Read committed in PostgreSQL. I’ll reproduce a lost update with two terminals.”",
+            "ar": "مثلًا: «Read committed في PostgreSQL. سأعيد إنتاج تحديث ضائع بطرفيتين.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A concurrency-anomalies lab",
+            "ar": "مشروع: معمل شذوذ التزامن"
+          },
+          "task": {
+            "en": "Design a lab with two database sessions: students reproduce a lost update, a non-repeatable read and write skew, record the isolation level for each, fix each with the smallest change, and write a one-page note on which guarantees a course-registration system needs during a network partition. Include scripts and a rubric.",
+            "ar": "صمّم معملًا بجلستي قاعدة بيانات: يعيد الطلاب إنتاج تحديث ضائع وقراءة غير قابلة للتكرار وانحراف كتابة، ويسجّلون مستوى العزل لكلٍّ منها، ويصلحون كلًّا منها بأصغر تغيير، ويكتبون ملاحظة من صفحة واحدة عن الضمانات التي يحتاجها نظام تسجيل المقررات أثناء انقسام الشبكة. أرفق النصوص البرمجية ومعيار تقييم."
+          },
+          "deliverable": {
+            "en": "Scripts, the handout, a model answer and a rubric.",
+            "ar": "النصوص البرمجية وورقة المعمل والإجابة النموذجية ومعيار التقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: reproduce and name concurrency anomalies.",
+                "ar": "يستطيع الطلاب: إعادة إنتاج شذوذ التزامن وتسميته."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: choose an isolation level or fix.",
+                "ar": "يستطيع الطلاب: اختيار مستوى عزل أو إصلاح."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: argue CAP trade-offs for a real system.",
+                "ar": "يستطيع الطلاب: مناقشة مفاضلات CAP لنظام حقيقي."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Transactions and distributed data",
+            "ar": "المعاملات والبيانات الموزّعة"
+          },
+          "note": {
+            "en": "Data engineering · University · Lecture 3",
+            "ar": "هندسة البيانات، الجامعة، المحاضرة ٣"
+          },
+          "narration": {
+            "en": "One seat, sold twice.",
+            "ar": "مقعد واحد بيع مرتين."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "State the ACID guarantees.",
+              "Recognise isolation anomalies.",
+              "Argue CAP trade-offs."
+            ],
+            "ar": [
+              "نذكر ضمانات ACID.",
+              "نتعرّف شذوذ العزل.",
+              "نناقش مفاضلات CAP."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "All or nothing.",
+              "Know your isolation level.",
+              "Partitions force a choice."
+            ],
+            "ar": [
+              "كل شيء أو لا شيء.",
+              "اعرف مستوى العزل.",
+              "الانقسام يفرض اختيارًا."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Interleave and fix",
+            "ar": "داخل وأصلح"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): How did it happen?",
+              "Act (15 min): Two transactions.",
+              "Reproduce (20 min): Two terminals.",
+              "Argue (15 min): CAP.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): Show both confirmation emails and ask pairs to explain the bug.",
+              "التمثيل (١٥ دقيقة): معاملتان.",
+              "إعادة الإنتاج (٢٠ دقيقة): طرفيتان.",
+              "النقاش (١٥ دقيقة): CAP.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): كيف حدث ذلك؟",
+              "Act (15 min): Two volunteers play T1 and T2 while the class calls out interleavings.",
+              "Reproduce (20 min): Pairs reproduce the lost update on a real database, then fix it.",
+              "Argue (15 min): Decide what registration and the library catalogue should do during a partition.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض رسالتي التأكيد واطلب من كل زوجين تفسير الخطأ.",
+              "التمثيل (١٥ دقيقة): يمثّل متطوعان T1 وT2 بينما يقترح الفصل ترتيبات التداخل.",
+              "إعادة الإنتاج (٢٠ دقيقة): يعيد كل زوجين إنتاج التحديث الضائع على قاعدة بيانات حقيقية ثم يصلحانه.",
+              "النقاش (١٥ دقيقة): قرّروا ما ينبغي أن يفعله التسجيل وفهرس المكتبة أثناء الانقسام.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which interleavings were safe?",
+              "What is your default isolation level?",
+              "Which system chose availability?"
+            ],
+            "ar": [
+              "أيّ الترتيبات كانت آمنة؟",
+              "ما مستوى العزل الافتراضي لديك؟",
+              "أيّ نظام اختار الإتاحة؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name one operation that must stay consistent during a partition."
+            ],
+            "ar": [
+              "سمِّ عملية يجب أن تبقى متسقة أثناء الانقسام."
+            ]
+          },
+          "narration": {
+            "en": "Isolation is a choice; make it deliberately.",
+            "ar": "العزل اختيار، فاتخذه عن قصد."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Transactions and distributed data",
+            "ar": "شرائح المحاضرة: المعاملات والبيانات الموزّعة"
+          },
+          "pages": 6,
+          "base": "data-u1-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Transactions and distributed data",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: المعاملات والبيانات الموزّعة"
+          },
+          "pages": 3,
+          "base": "data-u1-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-u1-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.3",
+        "DATA.4",
+        "T.PE.C"
+      ]
+    },
+    {
+      "id": "data-u1-4",
+      "title": {
+        "en": "Data quality and project assessment",
+        "ar": "جودة البيانات وتقييم المشاريع"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Hand out a public dataset with planted problems; groups write three quality checks, run them, and each presents and defends one cleaning decision.",
+        "ar": "وزّع مجموعة بيانات عامة فيها مشكلات مزروعة، فتكتب المجموعات ثلاثة فحوص جودة وتشغّلها، وتعرض كلٌّ منها قرار تنظيف واحدًا وتدافع عنه."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Data quality and project assessment",
+            "ar": "جودة البيانات وتقييم المشاريع"
+          },
+          "src": null,
+          "duration": 184,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "The report nobody trusted",
+                "ar": "التقرير الذي لم يصدّقه أحد"
+              }
+            },
+            {
+              "at": 27.9,
+              "atBy": {
+                "en": 27.9,
+                "ar": 27.9
+              },
+              "label": {
+                "en": "Dimensions of quality",
+                "ar": "أبعاد الجودة"
+              }
+            },
+            {
+              "at": 72.4,
+              "atBy": {
+                "en": 72.4,
+                "ar": 74
+              },
+              "label": {
+                "en": "Assessing data projects",
+                "ar": "تقييم مشاريع البيانات"
+              }
+            },
+            {
+              "at": 140.9,
+              "atBy": {
+                "en": 140.9,
+                "ar": 139.2
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 117.88,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Some students were loaded twice. Which quality dimension failed?",
+                "ar": "حُمّل بعض الطلاب مرتين. أيّ بُعد من أبعاد الجودة فشل؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Completeness",
+                    "ar": "الاكتمال"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Uniqueness",
+                    "ar": "التفرّد"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Timeliness",
+                    "ar": "التوقيت"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Each student and course pair should appear once.",
+                "ar": "ينبغي أن يظهر كل زوج من الطالب والمقرر مرة واحدة."
+              }
+            },
+            "atBy": {
+              "en": 117.88,
+              "ar": 115.72
+            }
+          },
+          "transcript": {
+            "en": "The faculty's enrolment report shows a hundred and twelve percent attendance in one course. The query was correct. The data was not: some students were loaded twice. Who should have caught it? Today: how bad data breaks good systems, how to test data like code, and how to assess student database projects built on real, messy datasets. Data quality means fitness for use. Common dimensions are completeness, validity, uniqueness, consistency, accuracy and timeliness. Each can be tested automatically. Write checks that run every time data is loaded. Keys must be unique, required fields not null, and values within range. A failing check stops the pipeline before the report is built. Better still, let the database refuse bad data. A primary key on student and course would have rejected the duplicate load. Constraints are quality checks the database enforces for free. Lineage records where each table came from and what transformed it. Datasheets describe how a dataset was collected and its known limits. Together they let someone else trust, or question, the numbers. Clean textbook datasets hide the hardest part of the job. Give students a real, messy public dataset. Grade the schema, the quality checks and a written account of every cleaning decision, not just the final queries. Quick check! Some students were loaded twice. Which quality dimension failed? Uniqueness. Each student and course pair should appear once. A uniqueness test or a primary key would have caught it at load time. In the app, open the quality lab. Run checks on a messy table, find the duplicates, gaps and impossible values, and decide how to handle each. Your turn. Two student projects return identical final answers. What best distinguishes the stronger one? The quality checks and the written justification of each cleaning decision. Remember: quality is testable, constraints enforce it, and documentation lets others trust the result. Try it in your next lecture: hand out a public dataset with planted problems. Groups write three quality checks and run them. Then each group presents one cleaning decision and defends it.",
+            "ar": "تقرير التسجيل بتاع الكلية بيقول إن الحضور في مقرر مية واتناشر في المية. والاستعلام كان صح. البيانات هي اللي ماكانتش: فيه طلاب اتحمّلوا مرتين. مين كان المفروض يمسكها؟ النهارده: إزاي البيانات الوحشة بتبوّظ الأنظمة الكويسة، وإزاي تختبر البيانات زي الكود، وإزاي تقيّم مشاريع قواعد البيانات بتاعة الطلاب المبنية على بيانات حقيقية ملخبطة. جودة البيانات معناها إنها صالحة للاستخدام. والأبعاد الشائعة هي الاكتمال والصلاحية والتفرّد والاتساق والدقة والتوقيت. وكل واحد ممكن يتختبر آليًا. اكتب فحوص بتشتغل كل مرة البيانات بتتحمّل. المفاتيح لازم تبقى فريدة، والخانات المطلوبة مش فاضية، والقيم في المدى. والفحص اللي بيفشل بيوقّف خط البيانات قبل ما التقرير يتعمل. والأحسن كمان، خلّي قاعدة البيانات ترفض البيانات الوحشة. مفتاح أساسي على الطالب والمقرر كان هيرفض التحميل المكرر. والقيود فحوص جودة قاعدة البيانات بتطبّقها ببلاش. النَّسَب بيسجّل كل جدول جه منين وإيه اللي غيّره. وأوراق البيانات بتوصف البيانات اتجمعت إزاي وحدودها المعروفة. والاتنين مع بعض بيخلّوا حد تاني يثق في الأرقام، أو يسأل عنها. البيانات النضيفة بتاعة الكتب بتخبّي أصعب جزء في الشغل. ادّي الطلاب بيانات عامة حقيقية ملخبطة. وقيّم المخطط وفحوص الجودة وشرح مكتوب لكل قرار تنظيف، مش الاستعلامات النهائية بس. سؤال سريع! فيه طلاب اتحمّلوا مرتين. أنهي بُعد من أبعاد الجودة فشل؟ التفرّد. كل زوج طالب ومقرر المفروض يظهر مرة واحدة. واختبار تفرّد أو مفتاح أساسي كان هيمسكها وقت التحميل. في التطبيق، افتح معمل الجودة. شغّل فحوص على جدول ملخبط، ولاقي المكرر والناقص والقيم المستحيلة، وقرّر هتتعامل مع كل واحدة إزاي. دورك. مشروعين لطلاب طلّعوا نفس الإجابات النهائية بالظبط. إيه أحسن حاجة تفرّق القوي فيهم؟ فحوص الجودة والشرح المكتوب لكل قرار تنظيف. افتكر: الجودة بتتختبر، والقيود بتفرضها، والتوثيق بيخلّي غيرك يثق في النتيجة. جرّبها في محاضرتك الجاية: وزّع بيانات عامة فيها مشاكل متحطوطة عن قصد. والمجموعات تكتب تلات فحوص جودة وتشغّلها. وبعدين كل مجموعة تعرض قرار تنظيف واحد وتدافع عنه."
+          },
+          "sources": {
+            "en": "/media/data-u1-4/video-en.mp4",
+            "ar": "/media/data-u1-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/data-u1-4/captions-en.vtt",
+            "ar": "/media/data-u1-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/data-u1-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/data-u1-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/data-u1-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/data-u1-4/light/audio/en.opus",
+              "manifest.json": "/media/data-u1-4/light/manifest.json",
+              "scenes.json": "/media/data-u1-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/data-u1-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/data-u1-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 400,
+              "ar": 394
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Fitness for use",
+            "ar": "الصلاحية للاستخدام"
+          },
+          "body": {
+            "en": "Data quality is best defined as fitness for use by data consumers (Wang and Strong, 1996), measured along dimensions such as completeness, validity, uniqueness, consistency, accuracy and timeliness. Most dimensions can be expressed as executable tests: uniqueness of keys, non-null required fields, values within domains, referential integrity between tables, and freshness of the latest load. Running such tests automatically on every load, and stopping the pipeline when they fail, treats data with the same discipline as code.\n\nWherever possible, the database itself should refuse bad data. Primary keys, foreign keys, NOT NULL and CHECK constraints are quality rules enforced at write time for free, and they document intent. Lineage, the record of which sources and transformations produced a table, lets analysts trace a suspicious number back to its origin. Datasheets for datasets (Gebru et al., 2021) document how data was collected, its intended uses and its known limits, which matters for fairness as well as correctness.\n\nTextbook datasets are clean, so students rarely practise the hardest part of real work. Projects on real, messy public datasets, such as government open-data portals, teach cleaning, validation and documentation. Assessment should therefore weight the schema and constraints, the quality checks, and a written log justifying each cleaning decision, alongside final queries, and should require a short datasheet. Wickham’s tidy data principles (2014) provide a shared vocabulary for structure.",
+            "ar": "أفضل تعريف لجودة البيانات أنها الصلاحية للاستخدام من جانب مستهلكيها (Wang وStrong، ١٩٩٦)، وتُقاس على أبعاد مثل الاكتمال والصلاحية والتفرّد والاتساق والدقة والتوقيت. ويمكن التعبير عن معظم الأبعاد اختباراتٍ قابلة للتنفيذ: تفرّد المفاتيح، وعدم خلو الحقول المطلوبة، ووقوع القيم داخل مجالاتها، والسلامة المرجعية بين الجداول، وحداثة آخر تحميل. وتشغيل هذه الاختبارات آليًا في كل تحميل، وإيقاف خط البيانات عند فشلها، يعامل البيانات بالانضباط نفسه الذي يُعامل به الكود.\n\nوكلما أمكن ينبغي أن ترفض قاعدة البيانات نفسها البيانات الرديئة. فالمفاتيح الأساسية والأجنبية وقيود NOT NULL وCHECK قواعد جودة تُفرض وقت الكتابة مجانًا، وتوثّق القصد. ويتيح النَّسَب، أي سجل المصادر والتحويلات التي أنتجت جدولًا، للمحللين تتبّع رقم مريب إلى أصله. وتوثّق أوراق البيانات (Gebru وآخرون، ٢٠٢١) كيف جُمعت البيانات واستخداماتها المقصودة وحدودها المعروفة، وهذا مهم للإنصاف كما للصحة.\n\nوبيانات الكتب المدرسية نظيفة، فنادرًا ما يتدرّب الطلاب على أصعب جزء في العمل الحقيقي. والمشاريع على بيانات عامة حقيقية غير مرتبة، مثل بوابات البيانات الحكومية المفتوحة، تعلّم التنظيف والتحقق والتوثيق. ولذلك ينبغي أن يزن التقييم المخطط والقيود وفحوص الجودة وسجلًا مكتوبًا يبرّر كل قرار تنظيف، إلى جانب الاستعلامات النهائية، وأن يشترط ورقة بيانات قصيرة. وتوفّر مبادئ Wickham للبيانات المرتبة (٢٠١٤) مفردات مشتركة للبنية."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Data quality dimension",
+                "ar": "بُعد جودة البيانات"
+              },
+              "def": {
+                "en": "A measurable aspect such as completeness or uniqueness.",
+                "ar": "جانب قابل للقياس مثل الاكتمال أو التفرّد."
+              }
+            },
+            {
+              "term": {
+                "en": "Lineage",
+                "ar": "النَّسَب"
+              },
+              "def": {
+                "en": "The record of sources and transformations behind a table.",
+                "ar": "سجل المصادر والتحويلات وراء جدول."
+              }
+            },
+            {
+              "term": {
+                "en": "Datasheet",
+                "ar": "ورقة البيانات"
+              },
+              "def": {
+                "en": "A document of how a dataset was collected and its limits.",
+                "ar": "وثيقة عن كيفية جمع البيانات وحدودها."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Two projects give identical answers. What best distinguishes the stronger one?",
+            "ar": "أعطى مشروعان الإجابات نفسها. ما الذي يميّز الأقوى على نحو أفضل؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Longer queries",
+                "ar": "استعلامات أطول"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Quality checks and justified cleaning",
+                "ar": "فحوص الجودة وتبرير التنظيف"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "More tables",
+                "ar": "جداول أكثر"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "The process shows whether the answers can be trusted.",
+            "ar": "تُظهر الطريقة هل تستحق الإجابات الثقة."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Write the check.",
+            "ar": "اكتب الفحص."
+          },
+          "sentence": {
+            "en": [
+              "To find duplicate enrolments: SELECT student_id, course FROM enrol GROUP BY student_id, course ",
+              {
+                "blank": 0
+              },
+              " COUNT(*) > 1; a clean table returns ",
+              {
+                "blank": 1
+              },
+              " rows."
+            ],
+            "ar": [
+              "لإيجاد التسجيلات المكررة: SELECT student_id, course FROM enrol GROUP BY student_id, course ",
+              {
+                "blank": 0
+              },
+              " ⁦COUNT(*) > 1⁩؛ ويعيد الجدول النظيف ",
+              {
+                "blank": 1
+              },
+              " صفًا."
+            ]
+          },
+          "bank": {
+            "en": [
+              "HAVING",
+              "WHERE",
+              "1",
+              "0"
+            ],
+            "ar": [
+              "HAVING",
+              "WHERE",
+              "1",
+              "0"
+            ]
+          },
+          "answers": {
+            "en": [
+              "HAVING",
+              "0"
+            ],
+            "ar": [
+              "HAVING",
+              "0"
+            ]
+          },
+          "explain": {
+            "en": "WHERE filters rows before grouping; HAVING filters groups.",
+            "ar": "تصفّي WHERE الصفوف قبل التجميع، وتصفّي HAVING المجموعات."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which are enforced by the database at write time? Choose all that apply.",
+            "ar": "أيّها تفرضه قاعدة البيانات وقت الكتابة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "PRIMARY KEY (student_id, course)",
+                "ar": "⁦PRIMARY KEY (student_id, course)⁩"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "CHECK (grade BETWEEN 0 AND 100)",
+                "ar": "⁦CHECK (grade BETWEEN 0 AND 100)⁩"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A datasheet describing collection",
+                "ar": "ورقة بيانات تصف الجمع"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "FOREIGN KEY (course) REFERENCES course",
+                "ar": "⁦FOREIGN KEY (course) REFERENCES course⁩"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "A datasheet documents; it does not enforce.",
+            "ar": "ورقة البيانات توثّق ولا تفرض."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: run checks on a messy table, find duplicates, gaps and impossible values, and decide how to handle each.",
+            "ar": "جرّب: شغّل فحوصًا على جدول غير مرتب، وجد المكرر والناقص والقيم المستحيلة، وقرّر كيف تعالج كلًّا منها."
+          },
+          "tool": "quality"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "Deleting every row with a missing value is always the safest cleaning decision.",
+            "ar": "حذف كل صف فيه قيمة مفقودة هو دائمًا أسلم قرار تنظيف."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It can bias results if values are not missing at random; decisions must be justified and recorded.",
+            "ar": "قد يحيّز النتائج إذا لم تكن القيم مفقودة عشوائيًا، ويجب تبرير القرارات وتسجيلها."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each problem to its quality dimension.",
+            "ar": "طابق كل مشكلة مع بُعد الجودة."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "A student loaded twice",
+                "ar": "طالب حُمّل مرتين"
+              },
+              "right": {
+                "en": "Uniqueness",
+                "ar": "التفرّد"
+              }
+            },
+            {
+              "left": {
+                "en": "A grade of 140",
+                "ar": "درجة 140"
+              },
+              "right": {
+                "en": "Validity",
+                "ar": "الصلاحية"
+              }
+            },
+            {
+              "left": {
+                "en": "Missing email addresses",
+                "ar": "عناوين بريد مفقودة"
+              },
+              "right": {
+                "en": "Completeness",
+                "ar": "الاكتمال"
+              }
+            },
+            {
+              "left": {
+                "en": "Last week’s enrolments not yet loaded",
+                "ar": "تسجيلات الأسبوع الماضي لم تُحمَّل"
+              },
+              "right": {
+                "en": "Timeliness",
+                "ar": "التوقيت"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Naming the dimension tells you which test to write.",
+            "ar": "تسمية البُعد تخبرك بالاختبار الذي تكتبه."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which real, messy public dataset could your students use next term, and what problems does it contain?",
+            "ar": "أيّ مجموعة بيانات عامة حقيقية غير مرتبة يمكن أن يستخدمها طلابك الفصل القادم، وما المشكلات التي فيها؟"
+          },
+          "placeholder": {
+            "en": "For example: “The national education statistics portal. Inconsistent school names and missing years.”",
+            "ar": "مثلًا: «بوابة إحصاءات التعليم الوطنية. أسماء مدارس غير متسقة وسنوات مفقودة.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A real-data database project",
+            "ar": "مشروع: مشروع قاعدة بيانات على بيانات حقيقية"
+          },
+          "task": {
+            "en": "Design a four-week team project on a real public dataset: teams design a normalised schema with constraints, write at least eight automated quality checks, keep a cleaning log justifying every decision, write a one-page datasheet, and answer five analytical questions. Write a rubric that weights process at least as much as final answers, plus peer assessment.",
+            "ar": "صمّم مشروعًا جماعيًا لمدة أربعة أسابيع على بيانات عامة حقيقية: تصمّم الفرق مخططًا مطبّعًا بقيود، وتكتب ثمانية فحوص جودة آلية على الأقل، وتحتفظ بسجل تنظيف يبرّر كل قرار، وتكتب ورقة بيانات من صفحة واحدة، وتجيب عن خمسة أسئلة تحليلية. اكتب معيار تقييم يزن الطريقة بقدر الإجابات النهائية على الأقل، مع تقييم الأقران."
+          },
+          "deliverable": {
+            "en": "The brief, a dataset shortlist, templates and a rubric.",
+            "ar": "الوصف وقائمة البيانات المقترحة والقوالب ومعيار التقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: write automated quality checks and constraints.",
+                "ar": "يستطيع الطلاب: كتابة فحوص جودة آلية وقيود."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: justify cleaning decisions.",
+                "ar": "يستطيع الطلاب: تبرير قرارات التنظيف."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: document a dataset’s origin and limits.",
+                "ar": "يستطيع الطلاب: توثيق أصل البيانات وحدودها."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Data quality and project assessment",
+            "ar": "جودة البيانات وتقييم المشاريع"
+          },
+          "note": {
+            "en": "Data engineering · University · Lecture 4",
+            "ar": "هندسة البيانات، الجامعة، المحاضرة ٤"
+          },
+          "narration": {
+            "en": "A hundred and twelve percent attendance.",
+            "ar": "حضور بنسبة مئة واثني عشر بالمئة."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Name quality dimensions.",
+              "Test and constrain data.",
+              "Assess real-data projects."
+            ],
+            "ar": [
+              "نسمّي أبعاد الجودة.",
+              "نختبر البيانات ونقيّدها.",
+              "نقيّم مشاريع البيانات الحقيقية."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Test every load.",
+              "Let constraints refuse.",
+              "Grade the process."
+            ],
+            "ar": [
+              "اختبر كل تحميل.",
+              "دع القيود ترفض.",
+              "قيّم الطريقة."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Clean a real dataset",
+            "ar": "نظّف بيانات حقيقية"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): What went wrong?",
+              "Check (20 min): Three tests.",
+              "Constrain (15 min): Schema.",
+              "Defend (15 min): One decision.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): ⁦Show the 112% report and ask students to list possible causes⁩.",
+              "الفحص (٢٠ دقيقة): ثلاثة اختبارات.",
+              "التقييد (١٥ دقيقة): المخطط.",
+              "الدفاع (١٥ دقيقة): قرار واحد.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): ما الخطأ؟",
+              "Check (20 min): Groups write and run three quality checks on the planted dataset.",
+              "Constrain (15 min): Add constraints that would have refused the bad rows.",
+              "Defend (15 min): Each group presents and defends one cleaning decision.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض تقرير ١١٢٪ واطلب من الطلاب سرد الأسباب المحتملة.",
+              "الفحص (٢٠ دقيقة): تكتب المجموعات ثلاثة فحوص جودة وتشغّلها على البيانات المزروعة.",
+              "التقييد (١٥ دقيقة): أضف قيودًا كانت سترفض الصفوف الرديئة.",
+              "الدفاع (١٥ دقيقة): تعرض كل مجموعة قرار تنظيف واحدًا وتدافع عنه.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which check found the most?",
+              "Which constraint was missing?",
+              "How will you grade the log?"
+            ],
+            "ar": [
+              "أيّ فحص وجد أكثر المشكلات؟",
+              "أيّ قيد كان مفقودًا؟",
+              "كيف ستقيّم السجل؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one quality check for a table you use."
+            ],
+            "ar": [
+              "اكتب فحص جودة واحدًا لجدول تستخدمه."
+            ]
+          },
+          "narration": {
+            "en": "Test data like code.",
+            "ar": "اختبر البيانات كما تختبر الكود."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Data quality and project assessment",
+            "ar": "شرائح المحاضرة: جودة البيانات وتقييم المشاريع"
+          },
+          "pages": 6,
+          "base": "data-u1-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Data quality and project assessment",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: جودة البيانات وتقييم المشاريع"
+          },
+          "pages": 3,
+          "base": "data-u1-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/data-u1-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DATA.4",
+        "T.AF.C",
+        "T.ET.C"
+      ]
+    },
+    {
+      "id": "data-u1-check",
+      "title": {
+        "en": "Teaching databases and data engineering at university: unit check",
+        "ar": "تدريس قواعد البيانات وهندسة البيانات في الجامعة: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Bring your real-data project brief and rubric to your next department meeting for review.",
+        "ar": "أحضر وصف مشروع البيانات الحقيقية ومعيار التقييم إلى اجتماع القسم القادم للمراجعة."
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "R(A, B, C) with A → B and B → C, key A. The highest normal form is",
+            "ar": "⁦R(A, B, C)⁩ مع ⁦A → B⁩ و⁦B → C⁩ والمفتاح A. أعلى صيغة طبيعية هي"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "2NF",
+                "ar": "2NF"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "3NF",
+                "ar": "3NF"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "BCNF",
+                "ar": "BCNF"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "B → C is transitive, so 3NF fails.",
+            "ar": "⁦B → C⁩ متعدّية، فتفشل 3NF."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q2",
+          "prompt": {
+            "en": "Compute the closure.",
+            "ar": "احسب الانغلاق."
+          },
+          "sentence": {
+            "en": [
+              "With A → B and B → C, {A}⁺ = {A, B, ",
+              {
+                "blank": 0
+              },
+              "}."
+            ],
+            "ar": [
+              "مع ⁦A → B⁩ و⁦B → C⁩، {⁦A}⁺ = {A, B⁩, ",
+              {
+                "blank": 0
+              },
+              "}."
+            ]
+          },
+          "bank": {
+            "en": [
+              "C",
+              "D",
+              "∅"
+            ],
+            "ar": [
+              "C",
+              "D",
+              "∅"
+            ]
+          },
+          "answers": {
+            "en": [
+              "C"
+            ],
+            "ar": [
+              "C"
+            ]
+          },
+          "explain": {
+            "en": "Apply the dependencies until nothing changes.",
+            "ar": "طبّق الاعتماديات حتى لا يتغيّر شيء."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q3",
+          "prompt": {
+            "en": "An index on a column always makes queries on it faster.",
+            "ar": "الفهرس على عمود يسرّع دائمًا الاستعلامات عليه."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Unselective predicates are cheaper as scans.",
+            "ar": "الشروط غير الانتقائية أرخص بالمسح."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q4",
+          "prompt": {
+            "en": "A B+-tree with fan-out 100 over 10⁶ keys has about",
+            "ar": "شجرة ⁦B+⁩ بتفرّع ١٠٠ على 10⁶ مفتاح لها نحو"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "3 levels",
+                "ar": "3 مستويات"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "6 levels",
+                "ar": "6 مستويات"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "20 levels",
+                "ar": "20 مستوى"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "100³ = 10⁶.",
+            "ar": "⁦100³ = 10⁶.⁩"
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q5",
+          "prompt": {
+            "en": "An index on (dept, year) helps which? Choose all that apply.",
+            "ar": "الفهرس على ⁦(dept, year)⁩ يفيد أيّها؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "dept = 'CS'",
+                "ar": "⁦dept = 'CS'⁩"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "dept = 'CS' AND year = 2",
+                "ar": "⁦dept = 'CS' AND year = 2⁩"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "year = 2",
+                "ar": "⁦year = 2⁩"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b"
+          ],
+          "explain": {
+            "en": "Only a prefix of the columns.",
+            "ar": "بادئة الأعمدة فقط."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q6",
+          "prompt": {
+            "en": "Two transactions overwrite each other’s seat count. This is",
+            "ar": "معاملتان تكتب كلٌّ منهما فوق عدد مقاعد الأخرى. هذا"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A lost update",
+                "ar": "تحديث ضائع"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A dirty read",
+                "ar": "قراءة قذرة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A phantom",
+                "ar": "سجل شبح"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "One write is lost.",
+            "ar": "تضيع إحدى الكتابتين."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q7",
+          "prompt": {
+            "en": "Snapshot isolation prevents write skew.",
+            "ar": "يمنع العزل باللقطة انحراف الكتابة."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It allows it; serializable is needed.",
+            "ar": "إنه يسمح به، والمطلوب serializable."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q8",
+          "prompt": {
+            "en": "During a partition, a system that refuses writes to stay consistent gives up",
+            "ar": "أثناء الانقسام، النظام الذي يرفض الكتابة ليبقى متسقًا يتنازل عن"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Availability",
+                "ar": "الإتاحة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Durability",
+                "ar": "الديمومة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Atomicity",
+                "ar": "الذرّية"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "CAP during a partition.",
+            "ar": "CAP أثناء الانقسام."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q9",
+          "prompt": {
+            "en": "Match each problem to its dimension.",
+            "ar": "طابق كل مشكلة مع بُعدها."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Duplicate rows",
+                "ar": "صفوف مكررة"
+              },
+              "right": {
+                "en": "Uniqueness",
+                "ar": "التفرّد"
+              }
+            },
+            {
+              "left": {
+                "en": "Grade of 140",
+                "ar": "درجة 140"
+              },
+              "right": {
+                "en": "Validity",
+                "ar": "الصلاحية"
+              }
+            },
+            {
+              "left": {
+                "en": "Missing values",
+                "ar": "قيم مفقودة"
+              },
+              "right": {
+                "en": "Completeness",
+                "ar": "الاكتمال"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Name it, then test it.",
+            "ar": "سمّه ثم اختبره."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q10",
+          "prompt": {
+            "en": "Best evidence of quality in a student data project:",
+            "ar": "أفضل دليل على الجودة في مشروع بيانات طلابي:"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Checks, constraints and a cleaning log",
+                "ar": "الفحوص والقيود وسجل التنظيف"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The number of tables",
+                "ar": "عدد الجداول"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The length of queries",
+                "ar": "طول الاستعلامات"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Process shows trustworthiness.",
+            "ar": "الطريقة تُظهر الجدارة بالثقة."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Teaching databases and data engineering at university: review",
+            "ar": "تدريس قواعد البيانات وهندسة البيانات في الجامعة: مراجعة"
+          },
+          "note": {
+            "en": "Data engineering · University · Unit check",
+            "ar": "هندسة البيانات، الجامعة، اختبار الوحدة"
+          },
+          "narration": {
+            "en": "Let’s look back at the whole course and see what stuck.",
+            "ar": "لنراجع المقرر كله ونرَ ما الذي رسخ."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Normalisation",
+              "Indexing",
+              "Transactions and CAP",
+              "Data quality"
+            ],
+            "ar": [
+              "التطبيع",
+              "الفهرسة",
+              "المعاملات وCAP",
+              "جودة البيانات"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "Dependencies decide",
+              "Writes pay for reads",
+              "Know your isolation level",
+              "Test data like code"
+            ],
+            "ar": [
+              "الاعتماديات تقرر",
+              "الكتابة تدفع ثمن القراءة",
+              "اعرف مستوى العزل",
+              "اختبر البيانات كالكود"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Peer-instruction review",
+            "ar": "مراجعة بالتعلّم من الأقران"
+          },
+          "bullets": {
+            "en": [
+              "Vote (10 min): Answer alone first.",
+              "Discuss (15 min): Convince your neighbour.",
+              "Explain (10 min): Model the reasoning.",
+              "Plan (5 min): Next week’s fix."
+            ],
+            "ar": [
+              "التصويت (١٠ دقائق): أجب منفردًا أولًا.",
+              "النقاش (١٥ دقيقة): أقنع زميلك.",
+              "الشرح (١٠ دقائق): اعرض طريقة التفكير.",
+              "التخطيط (٥ دقائق): علاج الأسبوع القادم."
+            ]
+          },
+          "details": {
+            "en": [
+              "Vote (10 min): Show each question; students answer alone and commit to an answer.",
+              "Discuss (15 min): Where answers split, pairs argue for two minutes and vote again.",
+              "Explain (10 min): Work through the questions most students missed, showing the reasoning step by step.",
+              "Plan (5 min): Note which misconception to revisit next week and how."
+            ],
+            "ar": [
+              "التصويت (١٠ دقائق): اعرض كل سؤال، ويجيب الطلاب منفردين ويلتزمون بإجابة.",
+              "النقاش (١٥ دقيقة): حيث تنقسم الإجابات، يتجادل كل زوجين دقيقتين ثم يصوّتان مرة أخرى.",
+              "الشرح (١٠ دقائق): حُلّ الأسئلة التي أخطأ فيها معظم الطلاب، مع عرض الاستدلال خطوة خطوة.",
+              "التخطيط (٥ دقائق): دوّن أيّ تصوّر خاطئ ستعود إليه الأسبوع القادم وكيف."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which misconception will you target first?",
+              "Which lab will you add?",
+              "Which real dataset will you use?"
+            ],
+            "ar": [
+              "أيّ تصوّر خاطئ ستستهدف أولًا؟",
+              "أيّ معمل ستضيف؟",
+              "أيّ بيانات حقيقية ستستخدم؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One change to my database course this term, and how I will know it worked."
+            ],
+            "ar": [
+              "تغيير في مقرر قواعد البيانات هذا الفصل الدراسي، وكيف سأعرف أنه نجح."
+            ]
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Teaching databases and data engineering at university: unit check",
+            "ar": "شرائح المحاضرة: تدريس قواعد البيانات وهندسة البيانات في الجامعة: اختبار الوحدة"
+          },
+          "pages": 6,
+          "base": "data-u1-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Review plan and quiz sheet: Teaching databases and data engineering at university: unit check",
+            "ar": "خطة المراجعة وورقة الاختبار: تدريس قواعد البيانات وهندسة البيانات في الجامعة: اختبار الوحدة"
+          },
+          "pages": 2,
+          "base": "data-u1-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "University course pack: syllabus, slide outline, problem set, lab, rubric and readings",
+            "ar": "حزمة المقرر الجامعي: الخطة الدراسية، ومخطط الشرائح، ومسائل، ومعمل، ومعايير التقييم، والقراءات"
+          },
+          "pages": 5,
+          "base": "data-u1-check/course-pack",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "DATA.1",
+        "DATA.2",
+        "DATA.3",
+        "DATA.4"
+      ]
+    }
+  ]
+}

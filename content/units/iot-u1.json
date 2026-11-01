@@ -1,0 +1,3160 @@
+{
+  "id": "iot-u1",
+  "track": "iot",
+  "level": 4,
+  "teach": "university",
+  "title": {
+    "en": "Teaching embedded and IoT systems at university",
+    "ar": "تدريس الأنظمة المدمجة وإنترنت الأشياء في الجامعة"
+  },
+  "summary": {
+    "en": "A graduate-level course for university lecturers in embedded and IoT systems: sampling theory and analogue-to-digital conversion, real-time scheduling and energy budgets, IoT protocols from MQTT and CoAP to LoRa and mesh, and how to design a scaffolded, safe and fairly assessed hardware capstone.",
+    "ar": "مقرر بمستوى الدراسات العليا لأساتذة الجامعات في الأنظمة المدمجة وإنترنت الأشياء: نظرية المعاينة وتحويل الإشارة التناظرية إلى رقمية، وجدولة الزمن الحقيقي وميزانيات الطاقة، وبروتوكولات إنترنت الأشياء من MQTT وCoAP إلى LoRa والشبكات المتشابكة، وكيفية تصميم مشروع تخرّج في الأجهزة متدرّج وآمن ومقيّم بعدل."
+  },
+  "lessons": [
+    {
+      "id": "iot-u1-1",
+      "title": {
+        "en": "Sampling, Nyquist and the ADC",
+        "ar": "المعاينة ونايكويست ومحوّل الإشارة"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Have pairs sample a signal generator at five rates on a microcontroller, predict each alias, then measure and plot it.",
+        "ar": "اطلب من كل زوج معاينة مولّد إشارة بخمسة معدّلات على متحكّم دقيق، وتوقّع كل تشويه، ثم قياسه ورسمه."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Sampling, Nyquist and the ADC",
+            "ar": "المعاينة ونايكويست ومحوّل الإشارة"
+          },
+          "src": null,
+          "duration": 175,
+          "sizeMB": 1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A heartbeat that lied",
+                "ar": "نبض كاذب"
+              }
+            },
+            {
+              "at": 23.1,
+              "atBy": {
+                "en": 23.1,
+                "ar": 20.6
+              },
+              "label": {
+                "en": "Sampling and aliasing",
+                "ar": "المعاينة والتشويه"
+              }
+            },
+            {
+              "at": 67.5,
+              "atBy": {
+                "en": 67.5,
+                "ar": 65.3
+              },
+              "label": {
+                "en": "Quantisation",
+                "ar": "التكميم"
+              }
+            },
+            {
+              "at": 134.2,
+              "atBy": {
+                "en": 134.2,
+                "ar": 130.6
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 111.97,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A sensor must capture up to 400 Hz. Lowest sampling rate that can work in theory?",
+                "ar": "يجب أن يلتقط حسّاس ترددات حتى ٤٠٠ هرتز. ما أقل معدّل معاينة يصلح نظريًا؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Just above 400 Hz",
+                    "ar": "أعلى قليلًا من ٤٠٠ هرتز"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Just above 800 Hz",
+                    "ar": "أعلى قليلًا من ٨٠٠ هرتز"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "4,000 Hz exactly",
+                    "ar": "٤٠٠٠ هرتز بالضبط"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "The rate must exceed twice the highest frequency, 2 × 400 = 800 Hz.",
+                "ar": "يجب أن يتجاوز المعدّل ضعف أعلى تردد، ⁦2 × 400 = 800⁩ هرتز."
+              }
+            },
+            "atBy": {
+              "en": 111.97,
+              "ar": 109.21
+            }
+          },
+          "transcript": {
+            "en": "My students built a pulse monitor that showed twelve beats a minute on a healthy volunteer. The circuit was fine. They were sampling a fast signal far too slowly. Today: how a sensor signal becomes numbers, why sampling too slowly invents fake frequencies, and how many bits you really need. An analogue to digital converter measures a voltage at regular instants. The sampling rate is how many measurements per second. Between samples, the converter sees nothing. Shannon's sampling theorem says a signal with no frequencies above B can be rebuilt exactly from samples taken faster than two B per second. Sample slower, and high frequencies fold down as fake low ones. That is aliasing. Mains hum is fifty hertz. Sampled sixty times a second, it appears as a slow ten hertz wave. Sampled at a thousand, it appears correctly as fifty. An n-bit converter splits its range into two to the n levels. A ten-bit converter on three point three volts has steps of about three millivolts. Each extra bit halves the step and adds about six decibels. Students treat sampling as a software setting. Show a spinning wheel under a strobe light, or a film of car wheels turning backwards. They see aliasing before they see the maths. Quick check! A vibration sensor must capture frequencies up to four hundred hertz. What is the lowest sampling rate that can work in theory? Just above eight hundred samples per second. In practice engineers sample several times faster and put an anti-aliasing filter in front of the converter. In the app, open the converter lab. Change the sampling rate and the number of bits, and watch the rebuilt signal improve or fall apart. Your turn. A twelve-bit converter has a reference of four point zero nine six volts. What is the size of one step? One millivolt, because two to the twelve is four thousand and ninety six. Remember: sample faster than twice the highest frequency, filter first, and each bit halves the step. Try it in your next lab: have pairs sample a signal generator at five rates on a microcontroller. They plot what they see and predict each alias before measuring it.",
+            "ar": "طلابي عملوا جهاز نبض طلّع اتناشر نبضة في الدقيقة على متطوع سليم. الدائرة كانت سليمة. هم كانوا بيعاينوا إشارة سريعة ببطء شديد. النهارده: إشارة الحسّاس بتتحوّل لأرقام إزاي، وليه المعاينة البطيئة بتخترع ترددات مزيّفة، ومحتاج كام بت فعلًا. محوّل الإشارة التناظرية لرقمية بيقيس الجهد في لحظات منتظمة. معدّل المعاينة هو عدد القياسات في الثانية. وبين العينات، المحوّل مش شايف حاجة. نظرية المعاينة بتاعة شانون بتقول إن الإشارة اللي مافيهاش ترددات فوق B ممكن تتبني تاني بالظبط من عينات أسرع من اتنين B في الثانية. لو عاينت أبطأ، الترددات العالية بتتطوي وتبان كأنها واطية مزيّفة. ده اسمه التشويه. طنين الكهربا خمسين هرتز. لو اتعاين ستين مرة في الثانية، بيظهر كموجة بطيئة عشرة هرتز. ولو اتعاين ألف مرة، بيظهر صح خمسين. المحوّل اللي فيه n بت بيقسّم مداه لاتنين أس n مستوى. محوّل عشرة بت على تلاتة وتلاتة من عشرة فولت خطوته حوالي تلاتة مللي فولت. وكل بت زيادة بينصّ الخطوة وبيزوّد حوالي ستة ديسيبل. الطلاب بيعاملوا المعاينة كإعداد في البرنامج. وريهم عجلة بتلف تحت ضوء متقطّع، أو فيلم فيه عجل عربيات بيلف لورا. هيشوفوا التشويه قبل ما يشوفوا الرياضيات. سؤال سريع! حسّاس اهتزاز لازم يلقط ترددات لحد أربعمية هرتز. أقل معدّل معاينة ممكن ينفع نظريًا كام؟ فوق تمنمية عينة في الثانية بشوية. وفي الواقع المهندسين بيعاينوا أسرع بكذا مرة وبيحطّوا مرشّح ضد التشويه قبل المحوّل. في التطبيق، افتح معمل المحوّل. غيّر معدّل المعاينة وعدد البتات، وشوف الإشارة المبنية تاني بتتحسّن ولا بتتفكك. دورك. محوّل اتناشر بت جهده المرجعي أربعة وستة وتسعين من ألف فولت. حجم الخطوة الواحدة كام؟ واحد مللي فولت، لأن اتنين أس اتناشر أربعة آلاف وستة وتسعين. افتكر: عاين أسرع من ضعف أعلى تردد، ورشّح الأول، وكل بت بينصّ الخطوة. جرّبها في معملك الجاي: خلّي كل اتنين يعاينوا مولّد إشارة بخمس معدّلات على متحكّم دقيق. يرسموا اللي شايفينه ويتوقّعوا كل تشويه قبل ما يقيسوه."
+          },
+          "sources": {
+            "en": "/media/iot-u1-1/video-en.mp4",
+            "ar": "/media/iot-u1-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/iot-u1-1/captions-en.vtt",
+            "ar": "/media/iot-u1-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/iot-u1-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/iot-u1-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/iot-u1-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/iot-u1-1/light/audio/en.opus",
+              "manifest.json": "/media/iot-u1-1/light/manifest.json",
+              "scenes.json": "/media/iot-u1-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/iot-u1-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/iot-u1-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 382,
+              "ar": 374
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "From a real signal to numbers",
+            "ar": "من إشارة حقيقية إلى أرقام"
+          },
+          "body": {
+            "en": "Shannon’s sampling theorem (1949) states that a signal band-limited to B hertz is determined exactly by samples taken at a rate fs > 2B. If the signal contains energy above fs/2, those components fold back and appear at |f − k × fs|, a false low frequency called an alias. Because aliasing cannot be undone after sampling, practical designs place an analogue anti-aliasing low-pass filter before the converter and sample several times faster than 2B (Lee and Seshia, Introduction to Embedded Systems).\n\nAn n-bit converter divides its reference range into 2ⁿ levels, so the step is V_ref/2ⁿ and the quantisation error is uniform within ±½ step. For a full-scale sine wave the signal-to-quantisation-noise ratio is about 6.02n + 1.76 dB. Real converters lose some of that to noise and non-linearity, expressed as the effective number of bits.\n\nStudents often treat the sampling rate as a software setting and are surprised when a sensor reports nonsense. Visual analogies, such as a wheel under a strobe or film of wheels that appear to turn backwards, followed by a lab where students predict aliases before measuring them, address that misconception directly.",
+            "ar": "تنص نظرية المعاينة عند Shannon (١٩٤٩) على أن الإشارة المحدودة النطاق بـ B هرتز تتحدد تمامًا بعينات مأخوذة بمعدّل ⁦fs > 2B⁩. فإذا احتوت الإشارة طاقة فوق ⁦fs/2⁩، ارتدّت تلك المكوّنات وظهرت عند ⁦|f − k × fs|⁩، وهو تردد منخفض زائف يسمى التشويه. ولأن التشويه لا يمكن إزالته بعد المعاينة، تضع التصاميم العملية مرشّحًا تناظريًا منخفض التمرير قبل المحوّل وتعاين أسرع من 2B بعدة مرات (Lee وSeshia، مقدمة في الأنظمة المدمجة).\n\nويقسّم المحوّل ذو n بت مدى جهده المرجعي إلى 2ⁿ مستوى، فتكون الخطوة ⁦V_ref/2ⁿ⁩ ويكون خطأ التكميم موزعًا بانتظام داخل ±½ خطوة. ولموجة جيبية بكامل المدى تبلغ نسبة الإشارة إلى ضوضاء التكميم نحو ⁦6.02n + 1.76⁩ ديسيبل. وتفقد المحوّلات الحقيقية جزءًا من ذلك بسبب الضوضاء وعدم الخطية، ويُعبّر عن ذلك بعدد البتات الفعلي.\n\nوكثيرًا ما يعامل الطلاب معدّل المعاينة إعدادًا برمجيًا ويُفاجؤون حين يعطي الحسّاس قراءات لا معنى لها. والتشبيهات المرئية، كعجلة تحت ضوء متقطّع أو فيلم لعجلات تبدو كأنها تدور للخلف، يليها معمل يتوقّع فيه الطلاب التشويه قبل قياسه، تعالج هذا التصور الخاطئ مباشرة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Nyquist rate",
+                "ar": "معدّل نايكويست"
+              },
+              "def": {
+                "en": "Twice the highest frequency; sampling must exceed it.",
+                "ar": "ضعف أعلى تردد، ويجب أن تتجاوزه المعاينة."
+              }
+            },
+            {
+              "term": {
+                "en": "Aliasing",
+                "ar": "التشويه"
+              },
+              "def": {
+                "en": "High frequencies appearing as false low ones after slow sampling.",
+                "ar": "ظهور الترددات العالية كترددات منخفضة زائفة بعد معاينة بطيئة."
+              }
+            },
+            {
+              "term": {
+                "en": "Quantisation step",
+                "ar": "خطوة التكميم"
+              },
+              "def": {
+                "en": "V_ref / 2ⁿ: the smallest voltage change an n-bit ADC resolves.",
+                "ar": "⁦V_ref / 2ⁿ⁩: أصغر تغيّر في الجهد يميّزه محوّل ذو n بت."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A 12-bit ADC has a 4.096 V reference. Size of one step?",
+            "ar": "محوّل ١٢ بت جهده المرجعي 4.096 فولت. ما حجم الخطوة الواحدة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "1 mV",
+                "ar": "1 مللي فولت"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "4 mV",
+                "ar": "4 مللي فولت"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "0.34 V",
+                "ar": "0.34 فولت"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "2¹² = 4,096 levels, so 4.096 V / 4,096 = 1 mV.",
+            "ar": "⁦2¹² = 4096⁩ مستوى، إذن 4.096 فولت / ⁦4096 = 1⁩ مللي فولت."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Work out the alias and the step.",
+            "ar": "احسب التشويه والخطوة."
+          },
+          "sentence": {
+            "en": [
+              "A 70 Hz tone sampled at 100 Hz appears at ",
+              {
+                "blank": 0
+              },
+              " Hz. A 10-bit ADC on 5.12 V has a step of ",
+              {
+                "blank": 1
+              },
+              " mV."
+            ],
+            "ar": [
+              "نغمة ٧٠ هرتز مُعاينة بـ ١٠٠ هرتز تظهر عند ",
+              {
+                "blank": 0
+              },
+              " هرتز. ومحوّل ١٠ بت على 5.12 فولت خطوته ",
+              {
+                "blank": 1
+              },
+              " مللي فولت."
+            ]
+          },
+          "bank": {
+            "en": [
+              "30",
+              "70",
+              "10",
+              "5"
+            ],
+            "ar": [
+              "30",
+              "70",
+              "10",
+              "5"
+            ]
+          },
+          "answers": {
+            "en": [
+              "30",
+              "5"
+            ],
+            "ar": [
+              "30",
+              "5"
+            ]
+          },
+          "explain": {
+            "en": "|70 − 100| = 30 Hz; 5.12 V / 1,024 = 5 mV.",
+            "ar": "⁦|70 − 100| = 30⁩ هرتز، و⁦5.12 / 1024 = 5⁩ مللي فولت."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which design choices prevent aliasing? Choose all that apply.",
+            "ar": "أيّ اختيارات التصميم تمنع التشويه؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "An analogue low-pass filter before the ADC",
+                "ar": "مرشّح تناظري منخفض التمرير قبل المحوّل"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Sampling well above twice the bandwidth",
+                "ar": "المعاينة بأعلى كثيرًا من ضعف النطاق"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A digital filter after sampling",
+                "ar": "مرشّح رقمي بعد المعاينة"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Using more ADC bits",
+                "ar": "استخدام بتات أكثر في المحوّل"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b"
+          ],
+          "explain": {
+            "en": "Once aliased, components are indistinguishable from real ones, so filtering must happen before sampling; more bits improve resolution, not bandwidth.",
+            "ar": "بعد التشويه لا يمكن تمييز المكوّنات عن الحقيقية، فيجب الترشيح قبل المعاينة، والبتات الإضافية تحسّن الدقة لا النطاق."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: lower the sampling rate until the rebuilt wave changes shape, then raise the bits and compare.",
+            "ar": "جرّب: اخفض معدّل المعاينة حتى يتغير شكل الموجة المعاد بناؤها، ثم زِد البتات وقارن."
+          },
+          "tool": "adc"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "Each extra bit of ADC resolution adds about 6 dB of signal-to-quantisation-noise ratio.",
+            "ar": "كل بت إضافي في دقة المحوّل يضيف نحو ٦ ديسيبل إلى نسبة الإشارة إلى ضوضاء التكميم."
+          },
+          "answer": true,
+          "explain": {
+            "en": "Halving the step halves the error amplitude, and 20 log₁₀ 2 ≈ 6.02 dB.",
+            "ar": "تنصيف الخطوة ينصّف سعة الخطأ، و⁦20 log₁₀ 2 ≈ 6.02⁩ ديسيبل."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each symptom to its likely cause.",
+            "ar": "طابق كل عرض مع سببه المرجّح."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "A steady, slow false wave on a fast signal",
+                "ar": "موجة بطيئة زائفة ثابتة على إشارة سريعة"
+              },
+              "right": {
+                "en": "Aliasing",
+                "ar": "التشويه"
+              }
+            },
+            {
+              "left": {
+                "en": "Readings move in visible stair-steps",
+                "ar": "القراءات تتحرك بدرجات سلّم واضحة"
+              },
+              "right": {
+                "en": "Too few bits",
+                "ar": "بتات قليلة"
+              }
+            },
+            {
+              "left": {
+                "en": "Random jitter of a few counts",
+                "ar": "تذبذب عشوائي ببضع وحدات"
+              },
+              "right": {
+                "en": "Electrical noise",
+                "ar": "ضوضاء كهربائية"
+              }
+            },
+            {
+              "left": {
+                "en": "Readings stuck at the maximum",
+                "ar": "القراءات عالقة عند القيمة العظمى"
+              },
+              "right": {
+                "en": "Input above the reference voltage",
+                "ar": "دخل أعلى من الجهد المرجعي"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Diagnosing from symptoms is the skill the lab should assess.",
+            "ar": "التشخيص من الأعراض هو المهارة التي ينبغي أن يقيّمها المعمل."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Where in your course do students choose a sampling rate? How would you make them justify it?",
+            "ar": "أين يختار طلابك معدّل المعاينة في مقررك؟ وكيف ستجعلهم يبرّرونه؟"
+          },
+          "placeholder": {
+            "en": "For example: “In the ECG project. They’ll write the signal bandwidth and filter cut-off first.”",
+            "ar": "مثلًا: «في مشروع تخطيط القلب. سيكتبون نطاق الإشارة وتردد قطع المرشّح أولًا.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: An aliasing lab",
+            "ar": "مشروع: معمل التشويه"
+          },
+          "task": {
+            "en": "Design a 2-hour lab: students sample a function-generator signal on a microcontroller at five rates, predict and measure each alias, add an RC anti-aliasing filter, and compare spectra. Include the handout, a wiring diagram, safety notes and a rubric.",
+            "ar": "صمّم معملًا مدته ساعتان: يعاين الطلاب إشارة مولّد دوال على متحكّم دقيق بخمسة معدّلات، ويتوقّعون كل تشويه ويقيسونه، ويضيفون مرشّح RC ضد التشويه، ويقارنون الأطياف. أرفق ورقة المعمل ومخطط التوصيل وملاحظات السلامة ومعيار تقييم."
+          },
+          "deliverable": {
+            "en": "The handout, a wiring diagram and a rubric.",
+            "ar": "ورقة المعمل ومخطط التوصيل ومعيار التقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: choose a sampling rate and justify it.",
+                "ar": "يستطيع الطلاب: اختيار معدّل معاينة وتبريره."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: predict an alias frequency.",
+                "ar": "يستطيع الطلاب: توقّع تردد التشويه."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: size ADC resolution for a sensor.",
+                "ar": "يستطيع الطلاب: تحديد دقة المحوّل المناسبة لحسّاس."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Sampling, Nyquist and the ADC",
+            "ar": "المعاينة ونايكويست ومحوّل الإشارة"
+          },
+          "note": {
+            "en": "IoT · University · Lecture 1",
+            "ar": "إنترنت الأشياء، الجامعة، المحاضرة ١"
+          },
+          "narration": {
+            "en": "Twelve beats a minute on a healthy volunteer?",
+            "ar": "اثنتا عشرة نبضة في الدقيقة لمتطوع سليم؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "State and apply the sampling theorem.",
+              "Predict aliases.",
+              "Size ADC resolution."
+            ],
+            "ar": [
+              "نذكر نظرية المعاينة ونطبّقها.",
+              "نتوقّع التشويه.",
+              "نحدّد دقة المحوّل."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "fs > 2B.",
+              "Filter before sampling.",
+              "step = V_ref / 2ⁿ."
+            ],
+            "ar": [
+              "⁦fs > 2B.⁩",
+              "رشّح قبل المعاينة.",
+              "الخطوة = ⁦V_ref / 2ⁿ⁩."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Predict the alias",
+            "ar": "توقّع التشويه"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Why backwards?",
+              "Teach (15 min): The theorem.",
+              "Predict (15 min): Five rates.",
+              "Measure (20 min): On hardware.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): Show a film clip of wheels that seem to spin backwards and ask students to explain it.",
+              "الشرح (١٥ دقيقة): النظرية.",
+              "التوقّع (١٥ دقيقة): خمسة معدّلات.",
+              "القياس (٢٠ دقيقة): على الأجهزة.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): لماذا للخلف؟",
+              "Teach (15 min): Show spectra before and after sampling and derive the folding rule.",
+              "Predict (15 min): Pairs predict the apparent frequency of a 70 Hz tone at five sampling rates.",
+              "Measure (20 min): Sample on a microcontroller, plot, and compare with predictions.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض مقطعًا لعجلات تبدو كأنها تدور للخلف واطلب من الطلاب تفسيره.",
+              "الشرح (١٥ دقيقة): اعرض الأطياف قبل المعاينة وبعدها واشتقّ قاعدة الارتداد.",
+              "التوقّع (١٥ دقيقة): يتوقّع كل زوج التردد الظاهر لنغمة ٧٠ هرتز عند خمسة معدّلات معاينة.",
+              "القياس (٢٠ دقيقة): عاين على متحكّم دقيق وارسم وقارن بالتوقعات.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which prediction failed, and why?",
+              "Why can’t software undo aliasing?",
+              "How many bits does your sensor need?"
+            ],
+            "ar": [
+              "أيّ توقّع فشل، ولماذا؟",
+              "لماذا لا يستطيع البرنامج إزالة التشويه؟",
+              "كم بتًا يحتاج حسّاسك؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Give the alias of a 90 Hz tone sampled at 100 Hz."
+            ],
+            "ar": [
+              "أعطِ تشويه نغمة ٩٠ هرتز مُعاينة بـ ١٠٠ هرتز."
+            ]
+          },
+          "narration": {
+            "en": "Sample faster than twice the highest frequency.",
+            "ar": "عاين أسرع من ضعف أعلى تردد."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Sampling, Nyquist and the ADC",
+            "ar": "شرائح المحاضرة: المعاينة ونايكويست ومحوّل الإشارة"
+          },
+          "pages": 6,
+          "base": "iot-u1-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Sampling, Nyquist and the ADC",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: المعاينة ونايكويست ومحوّل الإشارة"
+          },
+          "pages": 3,
+          "base": "iot-u1-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/iot-u1-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "IOT.1",
+        "DC.5.1",
+        "T.PE.C"
+      ]
+    },
+    {
+      "id": "iot-u1-2",
+      "title": {
+        "en": "Real-time and the power budget",
+        "ar": "الزمن الحقيقي وميزانية الطاقة"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Give each team a current meter and its own node; they measure active and sleep current, predict battery life and defend the number.",
+        "ar": "أعطِ كل فريق جهاز قياس تيار وعقدته الخاصة، فيقيسون تيار التشغيل والنوم ويتوقّعون عمر البطارية ويدافعون عن الرقم."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Real-time and the power budget",
+            "ar": "الزمن الحقيقي وميزانية الطاقة"
+          },
+          "src": null,
+          "duration": 190,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A sensor that died",
+                "ar": "حسّاس توقّف"
+              }
+            },
+            {
+              "at": 23,
+              "atBy": {
+                "en": 23,
+                "ar": 20.6
+              },
+              "label": {
+                "en": "The power budget",
+                "ar": "ميزانية الطاقة"
+              }
+            },
+            {
+              "at": 67.1,
+              "atBy": {
+                "en": 67.1,
+                "ar": 59.2
+              },
+              "label": {
+                "en": "Deadlines",
+                "ar": "المواعيد النهائية"
+              }
+            },
+            {
+              "at": 142.6,
+              "atBy": {
+                "en": 142.6,
+                "ar": 131
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 120.68,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A node draws 50 mA for 1 s every 100 s and almost nothing otherwise. Average current?",
+                "ar": "تسحب عقدة ٥٠ مللي أمبير لثانية كل ١٠٠ ثانية ولا شيء تقريبًا غير ذلك. ما متوسط تيارها؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "5 mA",
+                    "ar": "5 مللي أمبير"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "0.5 mA",
+                    "ar": "0.5 مللي أمبير"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "50 mA",
+                    "ar": "50 مللي أمبير"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Average = duty cycle × active current = 1/100 × 50 = 0.5 mA.",
+                "ar": "المتوسط = دورة التشغيل × تيار التشغيل = ⁦1/100 × 50 = 0.5⁩ مللي أمبير."
+              }
+            },
+            "atBy": {
+              "en": 120.68,
+              "ar": 108.68
+            }
+          },
+          "transcript": {
+            "en": "A student team promised a field sensor would run for a year on two AA cells. It died after nine days. The radio was never switched off. Today: how to budget energy with duty cycles, what real-time really means, and how to schedule tasks so deadlines are met. Battery life is capacity divided by average current. A device that sleeps most of the time has an average set by how long and how often it wakes. That fraction is the duty cycle. Awake at twenty milliamps for one second in sixty, and asleep at ten microamps otherwise, the average is about a third of a milliamp. Two thousand milliamp hours then last roughly eight months. In a typical LoRa sensor node, the radio uses most of the energy, even though it is on for a tiny fraction of the time. Sensing and the processor use far less. Real-time does not mean fast. It means every task finishes before its deadline. A hard real-time miss is a failure, like an airbag. A soft miss only lowers quality, like a dropped video frame. Give the shortest period the highest priority. Liu and Layland proved that n periodic tasks always meet their deadlines this way if total utilisation is below n times two to the one over n, minus one. For many tasks that tends to about sixty nine percent. Quick check! A node draws fifty milliamps for one second every hundred seconds and almost nothing otherwise. What is its average current? Half a milliamp: fifty times one in a hundred. So halving the wake time doubles battery life far more cheaply than a bigger battery. In the app, open the battery lab. Change how often the device wakes and how long the radio stays on, and watch the predicted battery life. Your turn. Two tasks: one needs one millisecond every four, the other needs two milliseconds every ten. Is the total utilisation under the rate-monotonic bound for two tasks, about eighty three percent? Yes: a quarter plus a fifth is forty five percent. Remember: battery life follows average current, the radio dominates, and real-time means meeting deadlines. Try it in your next lab: give each team a current meter and their own sensor node. They measure active and sleep current, then predict battery life and defend the number.",
+            "ar": "فريق طلاب وعد إن حسّاس ميداني هيشتغل سنة على بطاريتين AA. مات بعد تسع أيام. الراديو عمره ما اتقفل. النهارده: إزاي تعمل ميزانية للطاقة بدورات التشغيل، ويعني إيه زمن حقيقي فعلًا، وإزاي تجدول المهام علشان المواعيد تتحقق. عمر البطارية هو السعة مقسومة على متوسط التيار. الجهاز اللي نايم أغلب الوقت متوسطه بيتحدد بيصحى قد إيه وكل قد إيه. والنسبة دي اسمها دورة التشغيل. لو صاحي على عشرين مللي أمبير ثانية من كل ستين، ونايم على عشرة ميكرو أمبير الباقي، المتوسط حوالي تلت مللي أمبير. وألفين مللي أمبير ساعة كده تكفّي حوالي تمن شهور. في عقدة حسّاس LoRa عادية، الراديو بياخد أغلب الطاقة، مع إنه شغّال جزء صغير قوي من الوقت. القياس والمعالج بياخدوا أقل بكتير. الزمن الحقيقي مش معناه سريع. معناه إن كل مهمة تخلص قبل ميعادها. التأخير في الزمن الحقيقي الصارم فشل، زي الوسادة الهوائية. والتأخير المرن بيقلّل الجودة بس، زي فريم فيديو اتساب. ادّي أقصر دورة أعلى أولوية. ليو وليلاند أثبتوا إن n مهمة دورية دايمًا بتلحق مواعيدها بالطريقة دي لو إجمالي الاستخدام أقل من n في اتنين أس واحد على n، ناقص واحد. ولما المهام تكتر ده بيقرّب من تسعة وستين في المية. سؤال سريع! عقدة بتسحب خمسين مللي أمبير ثانية واحدة كل مية ثانية وتقريبًا ولا حاجة الباقي. متوسط تيارها كام؟ نص مللي أمبير: خمسين في واحد على مية. يعني تنصيف وقت الصحيان بيضاعف عمر البطارية بتكلفة أقل بكتير من بطارية أكبر. في التطبيق، افتح معمل البطارية. غيّر الجهاز بيصحى كل قد إيه والراديو بيفضل شغّال قد إيه، وشوف عمر البطارية المتوقّع. دورك. مهمتين: واحدة محتاجة مللي ثانية كل أربعة، والتانية محتاجة اتنين مللي ثانية كل عشرة. إجمالي الاستخدام أقل من حد الجدولة لمهمتين، حوالي تلاتة وتمانين في المية؟ أيوه: ربع زائد خُمس يبقى خمسة وأربعين في المية. افتكر: عمر البطارية ماشي مع متوسط التيار، والراديو هو الأكبر، والزمن الحقيقي يعني تلحق المواعيد. جرّبها في معملك الجاي: ادّي كل فريق جهاز قياس تيار وعقدة الحسّاس بتاعتهم. يقيسوا تيار الصحيان والنوم، وبعدين يتوقّعوا عمر البطارية ويدافعوا عن الرقم."
+          },
+          "sources": {
+            "en": "/media/iot-u1-2/video-en.mp4",
+            "ar": "/media/iot-u1-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/iot-u1-2/captions-en.vtt",
+            "ar": "/media/iot-u1-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/iot-u1-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/iot-u1-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/iot-u1-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/iot-u1-2/light/audio/en.opus",
+              "manifest.json": "/media/iot-u1-2/light/manifest.json",
+              "scenes.json": "/media/iot-u1-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/iot-u1-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/iot-u1-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 409,
+              "ar": 384
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Deadlines and duty cycles",
+            "ar": "المواعيد النهائية ودورات التشغيل"
+          },
+          "body": {
+            "en": "Battery life is capacity divided by average current. For a node that wakes for a fraction D of the time, I_avg = D × I_active + (1 − D) × I_sleep. Because the radio usually dominates active current, the most effective design levers are fewer and shorter transmissions, aggressive sleep modes, and local processing that sends summaries rather than raw data. Real cells also lose capacity to self-discharge, temperature and high pulse currents, so a measured budget with a safety margin beats a datasheet estimate.\n\nReal-time systems are judged by whether every task meets its deadline, not by average speed. In hard real-time systems a missed deadline is a failure; in soft ones it degrades quality. For independent periodic tasks with deadlines equal to periods, Liu and Layland (1973) proved that rate-monotonic priority assignment (shorter period, higher priority) meets all deadlines if utilisation U = Σ Cᵢ/Tᵢ ≤ n(2^(1/n) − 1), which falls towards ln 2 ≈ 0.69; earliest-deadline-first succeeds for any U ≤ 1.\n\nStudents tend to equate real-time with fast and to estimate power from datasheets alone. Labs in which they measure current with a meter or shunt, and timing with a logic analyser or GPIO toggles, replace both misconceptions with evidence.",
+            "ar": "عمر البطارية هو السعة مقسومة على متوسط التيار. ولعقدة تستيقظ جزءًا D من الوقت، يكون ⁦I_avg = D × I_active + (1 − D) × I_sleep⁩. ولأن الراديو يهيمن عادة على تيار التشغيل، فأنجع أدوات التصميم هي إرسالات أقل وأقصر، وأنماط نوم صارمة، ومعالجة محلية ترسل ملخصات بدل البيانات الخام. وتفقد الخلايا الحقيقية أيضًا سعتها بالتفريغ الذاتي والحرارة وتيارات النبض العالية، لذا فإن ميزانية مقيسة بهامش أمان أفضل من تقدير صحيفة البيانات.\n\nوتُقاس أنظمة الزمن الحقيقي بمدى التزام كل مهمة بموعدها، لا بالسرعة المتوسطة. ففي الأنظمة الصارمة يُعد تفويت الموعد فشلًا، وفي المرنة يخفض الجودة. وللمهام الدورية المستقلة التي مواعيدها تساوي دوراتها، أثبت Liu وLayland (١٩٧٣) أن إسناد الأولوية بالمعدّل الثابت (الدورة الأقصر أولوية أعلى) يلبّي كل المواعيد إذا كان الاستخدام ⁦U =⁩ Σ Cᵢ/Tᵢ ≤ ⁦n(2^(1/n) − 1)⁩، الذي يهبط نحو ⁦ln 2 ≈ 0.69⁩، أما جدولة الموعد الأقرب أولًا فتنجح لأي ⁦U ≤ 1⁩.\n\nويميل الطلاب إلى مساواة الزمن الحقيقي بالسرعة وتقدير الطاقة من صحائف البيانات وحدها. والمعامل التي يقيسون فيها التيار بجهاز قياس أو مقاوم تحويلة، والتوقيت بمحلّل منطقي أو بتبديل منافذ الدخل والخرج، تستبدل بكلا التصورين أدلة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Duty cycle",
+                "ar": "دورة التشغيل"
+              },
+              "def": {
+                "en": "The fraction of time a device is awake.",
+                "ar": "نسبة الوقت الذي يكون فيه الجهاز مستيقظًا."
+              }
+            },
+            {
+              "term": {
+                "en": "Hard real-time",
+                "ar": "الزمن الحقيقي الصارم"
+              },
+              "def": {
+                "en": "A system where a missed deadline counts as failure.",
+                "ar": "نظام يُعد فيه تفويت الموعد فشلًا."
+              }
+            },
+            {
+              "term": {
+                "en": "Utilisation",
+                "ar": "الاستخدام"
+              },
+              "def": {
+                "en": "U = Σ Cᵢ/Tᵢ, the share of processor time tasks need.",
+                "ar": "⁦U =⁩ Σ Cᵢ/Tᵢ، حصة وقت المعالج التي تحتاجها المهام."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Tasks (C = 1 ms, T = 4 ms) and (C = 2 ms, T = 10 ms). Under the 2-task RM bound of about 83%?",
+            "ar": "مهمتان (⁦C = 1⁩، ⁦T = 4⁩) و(⁦C = 2⁩، ⁦T = 10⁩) بالمللي ثانية. هل الاستخدام أقل من حد الجدولة لمهمتين (نحو ٨٣٪)؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Yes, U = 45%",
+                "ar": "نعم، ⁦U = 45%⁩"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "No, U = 120%",
+                "ar": "لا، ⁦U = 120%⁩"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Yes, U = 30%",
+                "ar": "نعم، ⁦U = 30%⁩"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "U = 1/4 + 2/10 = 0.45, well under 0.83.",
+            "ar": "⁦U = 1/4 + 2/10 = 0.45⁩، أقل بكثير من 0.83."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Work out the battery life.",
+            "ar": "احسب عمر البطارية."
+          },
+          "sentence": {
+            "en": [
+              "Active 30 mA for 2 s every 60 s, sleep ≈ 0. I_avg = ",
+              {
+                "blank": 0
+              },
+              " mA, so 2,000 mAh lasts ",
+              {
+                "blank": 1
+              },
+              " hours."
+            ],
+            "ar": [
+              "تشغيل 30 مللي أمبير لثانيتين كل 60 ثانية، والنوم ≈ 0. I_avg = ",
+              {
+                "blank": 0
+              },
+              " مللي أمبير، فتدوم 2000 مللي أمبير ساعة ",
+              {
+                "blank": 1
+              },
+              " ساعة."
+            ]
+          },
+          "bank": {
+            "en": [
+              "1",
+              "30",
+              "60",
+              "2000"
+            ],
+            "ar": [
+              "1",
+              "30",
+              "60",
+              "2000"
+            ]
+          },
+          "answers": {
+            "en": [
+              "1",
+              "2000"
+            ],
+            "ar": [
+              "1",
+              "2000"
+            ]
+          },
+          "explain": {
+            "en": "D = 2/60, so 30 × 2/60 = 1 mA, and 2,000 mAh / 1 mA = 2,000 h.",
+            "ar": "⁦D = 2/60⁩، إذن ⁦30 × 2/60 = 1⁩ مللي أمبير، و⁦2000 / 1 = 2000⁩ ساعة."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which changes extend battery life most for a radio sensor? Choose all that apply.",
+            "ar": "أيّ التغييرات تطيل عمر البطارية أكثر لحسّاس لاسلكي؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Send a daily summary instead of every reading",
+                "ar": "إرسال ملخص يومي بدل كل قراءة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Use the deepest sleep mode between readings",
+                "ar": "استخدام أعمق نمط نوم بين القراءات"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Shorten time-on-air by sending fewer bytes",
+                "ar": "تقصير زمن الإرسال بإرسال بايتات أقل"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Run the processor at full speed all the time",
+                "ar": "تشغيل المعالج بأقصى سرعة طوال الوقت"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "Radio time and sleep current dominate; a processor always at full speed wastes energy.",
+            "ar": "زمن الراديو وتيار النوم يهيمنان، والمعالج بأقصى سرعة دائمًا يهدر الطاقة."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: change the wake interval and radio on-time, and find the setting that reaches one year.",
+            "ar": "جرّب: غيّر فترة الاستيقاظ وزمن تشغيل الراديو، وحدّد الإعداد الذي يبلغ سنة."
+          },
+          "tool": "battery"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "A real-time system is one that runs as fast as possible.",
+            "ar": "نظام الزمن الحقيقي هو الذي يعمل بأسرع ما يمكن."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Real-time means predictable: every task meets its deadline. A slow but predictable system can be real-time.",
+            "ar": "الزمن الحقيقي يعني القابلية للتنبؤ: كل مهمة تلتزم بموعدها. والنظام البطيء القابل للتنبؤ قد يكون زمنًا حقيقيًا."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each task to its real-time class.",
+            "ar": "طابق كل مهمة مع فئتها في الزمن الحقيقي."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Airbag trigger",
+                "ar": "إطلاق الوسادة الهوائية"
+              },
+              "right": {
+                "en": "Hard",
+                "ar": "صارم"
+              }
+            },
+            {
+              "left": {
+                "en": "Video frame display",
+                "ar": "عرض إطار الفيديو"
+              },
+              "right": {
+                "en": "Soft",
+                "ar": "مرن"
+              }
+            },
+            {
+              "left": {
+                "en": "Pacemaker pulse",
+                "ar": "نبضة منظّم ضربات القلب"
+              },
+              "right": {
+                "en": "Hard",
+                "ar": "صارم"
+              }
+            },
+            {
+              "left": {
+                "en": "Weather dashboard refresh",
+                "ar": "تحديث لوحة الطقس"
+              },
+              "right": {
+                "en": "Soft",
+                "ar": "مرن"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Ask: is a late answer a wrong answer? If so, it is hard real-time.",
+            "ar": "اسأل: هل الإجابة المتأخرة إجابة خاطئة؟ إن كانت كذلك فهو زمن حقيقي صارم."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "How do your students currently estimate power? What would change if they had to measure it?",
+            "ar": "كيف يقدّر طلابك الطاقة حاليًا؟ وما الذي سيتغير لو اضطروا إلى قياسها؟"
+          },
+          "placeholder": {
+            "en": "For example: “From datasheets. A shunt and a scope would show the radio spikes.”",
+            "ar": "مثلًا: «من صحائف البيانات. مقاوم تحويلة ومذبذب سيُظهران قمم الراديو.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A measured power budget",
+            "ar": "مشروع: ميزانية طاقة مقيسة"
+          },
+          "task": {
+            "en": "Design a lab in which teams instrument their node with a shunt resistor or current meter, log active and sleep current, schedule three periodic tasks and verify the rate-monotonic bound, then predict battery life and compare with a 48-hour run. Include the handout, safety notes and a rubric.",
+            "ar": "صمّم معملًا تزوّد فيه الفرق عقدتها بمقاوم تحويلة أو جهاز قياس تيار، وتسجّل تيار التشغيل والنوم، وتجدول ثلاث مهام دورية وتتحقق من حد المعدّل الثابت، ثم تتوقّع عمر البطارية وتقارنه بتشغيل لمدة ٤٨ ساعة. أرفق ورقة المعمل وملاحظات السلامة ومعيار تقييم."
+          },
+          "deliverable": {
+            "en": "The handout, a measurement template and a rubric.",
+            "ar": "ورقة المعمل وقالب القياس ومعيار التقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: compute average current from a duty cycle.",
+                "ar": "يستطيع الطلاب: حساب متوسط التيار من دورة التشغيل."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: check schedulability with the RM bound.",
+                "ar": "يستطيع الطلاب: فحص قابلية الجدولة بحد المعدّل الثابت."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: compare predicted and measured battery life.",
+                "ar": "يستطيع الطلاب: مقارنة عمر البطارية المتوقع والمقيس."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Real-time and the power budget",
+            "ar": "الزمن الحقيقي وميزانية الطاقة"
+          },
+          "note": {
+            "en": "IoT · University · Lecture 2",
+            "ar": "إنترنت الأشياء، الجامعة، المحاضرة ٢"
+          },
+          "narration": {
+            "en": "A year on two AA cells, or nine days?",
+            "ar": "سنة على بطاريتين أم تسعة أيام؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Budget energy with duty cycles.",
+              "Define hard and soft real-time.",
+              "Check schedulability."
+            ],
+            "ar": [
+              "نضع ميزانية للطاقة بدورات التشغيل.",
+              "نعرّف الزمن الحقيقي الصارم والمرن.",
+              "نفحص قابلية الجدولة."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "life = capacity / I_avg.",
+              "The radio dominates.",
+              "Real-time means on time."
+            ],
+            "ar": [
+              "العمر = السعة / متوسط التيار.",
+              "الراديو يهيمن.",
+              "الزمن الحقيقي يعني في الموعد."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Measure, then schedule",
+            "ar": "قِس ثم جدول"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Where did the energy go?",
+              "Measure (20 min): Current.",
+              "Budget (15 min): Battery life.",
+              "Schedule (15 min): Three tasks.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): ⁦Show the nine-day node's current trace and ask students to find the problem⁩.",
+              "القياس (٢٠ دقيقة): التيار.",
+              "الميزانية (١٥ دقيقة): عمر البطارية.",
+              "الجدولة (١٥ دقيقة): ثلاث مهام.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): أين ذهبت الطاقة؟",
+              "Measure (20 min): Teams log active and sleep current on their node.",
+              "Budget (15 min): Compute I_avg and predicted life, then halve the wake time and recompute.",
+              "Schedule (15 min): Compute U for three tasks and test the rate-monotonic bound.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض منحنى تيار العقدة التي دامت تسعة أيام واطلب من الطلاب إيجاد المشكلة.",
+              "القياس (٢٠ دقيقة): تسجّل الفرق تيار التشغيل والنوم على عقدتها.",
+              "الميزانية (١٥ دقيقة): احسب متوسط التيار والعمر المتوقع، ثم نصّف زمن الاستيقاظ وأعد الحساب.",
+              "الجدولة (١٥ دقيقة): احسب U لثلاث مهام واختبر حد المعدّل الثابت.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "How far was the datasheet from your measurement?",
+              "Is your system hard or soft real-time?",
+              "What would you send less often?"
+            ],
+            "ar": [
+              "كم ابتعدت صحيفة البيانات عن قياسك؟",
+              "هل نظامك صارم أم مرن؟",
+              "ما الذي سترسله بتكرار أقل؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Compute the battery life of a node at 0.25 mA average on 1,000 mAh."
+            ],
+            "ar": [
+              "احسب عمر بطارية عقدة متوسط تيارها 0.25 مللي أمبير على 1000 مللي أمبير ساعة."
+            ]
+          },
+          "narration": {
+            "en": "Battery life follows average current.",
+            "ar": "عمر البطارية يتبع متوسط التيار."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Real-time and the power budget",
+            "ar": "شرائح المحاضرة: الزمن الحقيقي وميزانية الطاقة"
+          },
+          "pages": 6,
+          "base": "iot-u1-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Real-time and the power budget",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: الزمن الحقيقي وميزانية الطاقة"
+          },
+          "pages": 3,
+          "base": "iot-u1-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/iot-u1-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "IOT.3",
+        "DC.5.3",
+        "T.PE.C"
+      ]
+    },
+    {
+      "id": "iot-u1-3",
+      "title": {
+        "en": "IoT protocols: MQTT, CoAP and LoRa",
+        "ar": "بروتوكولات إنترنت الأشياء: MQTT وCoAP وLoRa"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Run a free MQTT broker on a laptop; each team publishes sensor readings to its own topic and subscribes to another team’s.",
+        "ar": "شغّل وسيط MQTT مجانيًا على حاسوب محمول، فتنشر كل فرقة قراءات حسّاسها على موضوعها وتشترك في موضوع فرقة أخرى."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "IoT protocols: MQTT, CoAP and LoRa",
+            "ar": "بروتوكولات إنترنت الأشياء: MQTT وCoAP وLoRa"
+          },
+          "src": null,
+          "duration": 194,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A farm with no Wi-Fi",
+                "ar": "مزرعة بلا واي فاي"
+              }
+            },
+            {
+              "at": 27.8,
+              "atBy": {
+                "en": 27.8,
+                "ar": 26.3
+              },
+              "label": {
+                "en": "Publish and subscribe",
+                "ar": "النشر والاشتراك"
+              }
+            },
+            {
+              "at": 81,
+              "atBy": {
+                "en": 81,
+                "ar": 74.9
+              },
+              "label": {
+                "en": "Range against rate",
+                "ar": "المدى مقابل السرعة"
+              }
+            },
+            {
+              "at": 153.3,
+              "atBy": {
+                "en": 153.3,
+                "ar": 145.9
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 130.22,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Temperature every 10 s; an occasional loss doesn’t matter. Which MQTT QoS?",
+                "ar": "يرسل حسّاس الحرارة كل ١٠ ثوانٍ، وفقدان قراءة أحيانًا لا يهم. أيّ مستوى جودة خدمة في MQTT أنسب؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "QoS 0",
+                    "ar": "المستوى 0"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "QoS 1",
+                    "ar": "المستوى 1"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "QoS 2",
+                    "ar": "المستوى 2"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "For frequent, replaceable readings, QoS 0 is enough; higher levels cost energy.",
+                "ar": "للقراءات المتكررة القابلة للاستبدال يكفي المستوى 0، والمستويات الأعلى تكلّف طاقة."
+              }
+            },
+            "atBy": {
+              "en": 130.22,
+              "ar": 123.52
+            }
+          },
+          "transcript": {
+            "en": "A cooperative asked us to monitor soil moisture across forty hectares. There is no Wi-Fi, no mains power, and the nearest mobile mast is eight kilometres away. Which network would you choose? Today: how publish and subscribe works, when to use MQTT or CoAP, and the trade-off between range, data rate and energy in LoRa and mesh networks. In MQTT, devices never talk to each other directly. A sensor publishes to a topic on a broker. Any client that subscribed to that topic receives the message. Senders and receivers stay decoupled. MQTT offers three delivery levels. Zero means at most once, with no acknowledgement. One means at least once, so duplicates are possible. Two means exactly once, at the cost of a four-step handshake. Typical ranges in open country: Bluetooth Low Energy tens of metres, Wi-Fi around a hundred, Zigbee mesh a few hundred per hop, and LoRa several kilometres, but at only a few kilobits per second. CoAP, defined in RFC seven two five two, brings a web-like request and response model to tiny devices over UDP. It suits sleepy nodes that are asked for readings, while MQTT suits streams of events. Protocol lectures become lists of acronyms. Instead, give teams a real brief with distance, power and data needs. Make them choose and justify a stack, then test it on hardware. Quick check! A sensor sends a temperature every ten seconds, and an occasional lost reading does not matter. Which MQTT quality of service fits best? Level zero. The next reading arrives in ten seconds, so acknowledgements would only cost energy. Save higher levels for commands, such as opening a valve. In the app, open the mesh lab. Place nodes across a field, remove one, and watch the messages find a new route to the gateway. Your turn. Forty hectares, no power, readings every fifteen minutes, a few bytes each. Which link fits best? LoRa, with one gateway. Remember: publish and subscribe decouples devices, choose the lowest quality of service that is safe, and trade data rate for range. Try it in your next lab: set up a free MQTT broker on a laptop. Each team publishes sensor readings to its own topic, and subscribes to another team's.",
+            "ar": "جمعية زراعية طلبت مننا نراقب رطوبة التربة على أربعين هكتار. مافيش واي فاي، ولا كهربا، وأقرب برج موبايل على بعد تمانية كيلو. هتختار أنهي شبكة؟ النهارده: النشر والاشتراك بيشتغل إزاي، وإمتى تستعمل MQTT أو CoAP، والموازنة بين المدى وسرعة البيانات والطاقة في LoRa والشبكات المتشابكة. في MQTT، الأجهزة عمرها ما بتكلّم بعض مباشرة. الحسّاس بينشر على موضوع عند وسيط. وأي عميل مشترك في الموضوع ده بيستلم الرسالة. المرسل والمستقبل بيفضلوا منفصلين. MQTT بيقدّم تلات مستويات توصيل. صفر يعني مرة واحدة على الأكتر، من غير تأكيد. واحد يعني مرة على الأقل، فممكن يحصل تكرار. واتنين يعني مرة واحدة بالظبط، بتكلفة مصافحة من أربع خطوات. المدى المعتاد في الأرض المفتوحة: البلوتوث منخفض الطاقة عشرات الأمتار، والواي فاي حوالي مية، وشبكة Zigbee كام مية متر لكل قفزة، وLoRa كذا كيلومتر، بس بسرعة كام كيلوبت في الثانية بس. CoAP، المعرّف في RFC سبعة اتنين خمسة اتنين، بيجيب نموذج طلب ورد زي الويب للأجهزة الصغيرة فوق UDP. بيناسب العقد النايمة اللي بتتسأل عن قراءات، وMQTT بيناسب تيارات الأحداث. محاضرات البروتوكولات بتبقى قوايم اختصارات. بدل كده، ادّي الفرق مهمة حقيقية فيها المسافة والطاقة واحتياج البيانات. خلّيهم يختاروا مجموعة بروتوكولات ويبرّروها، وبعدين يجرّبوها على أجهزة. سؤال سريع! حسّاس بيبعت درجة الحرارة كل عشر ثواني، وضياع قراءة كل فين وفين مش مهم. أنهي مستوى جودة خدمة في MQTT أنسب؟ المستوى صفر. القراءة الجاية جاية بعد عشر ثواني، فالتأكيدات هتكلّف طاقة بس. خلّي المستويات الأعلى للأوامر، زي فتح محبس. في التطبيق، افتح معمل الشبكة المتشابكة. حط عقد على الحقل، وشيل واحدة، وشوف الرسايل بتلاقي طريق جديد للبوابة. دورك. أربعين هكتار، مافيش كهربا، قراءات كل ربع ساعة، كام بايت كل مرة. أنهي وصلة أنسب؟ LoRa، ببوابة واحدة. افتكر: النشر والاشتراك بيفصل الأجهزة، واختار أقل مستوى جودة خدمة آمن، وبادل سرعة البيانات بالمدى. جرّبها في معملك الجاي: شغّل وسيط MQTT مجاني على لابتوب. كل فريق ينشر قراءات حسّاس على موضوعه، ويشترك في موضوع فريق تاني."
+          },
+          "sources": {
+            "en": "/media/iot-u1-3/video-en.mp4",
+            "ar": "/media/iot-u1-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/iot-u1-3/captions-en.vtt",
+            "ar": "/media/iot-u1-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/iot-u1-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/iot-u1-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/iot-u1-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/iot-u1-3/light/audio/en.opus",
+              "manifest.json": "/media/iot-u1-3/light/manifest.json",
+              "scenes.json": "/media/iot-u1-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/iot-u1-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/iot-u1-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 425,
+              "ar": 407
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Choosing how devices talk",
+            "ar": "اختيار طريقة تواصل الأجهزة"
+          },
+          "body": {
+            "en": "MQTT (OASIS standard, version 5.0, 2019) is a publish/subscribe protocol over TCP: clients publish messages to hierarchical topics on a broker, which forwards them to subscribers. Decoupling senders from receivers suits event streams and many-to-many data flows. Its three QoS levels trade delivery guarantees (at most once, at least once, exactly once) against messages and energy; retained messages and a last-will message help clients that join late or disconnect unexpectedly.\n\nCoAP (RFC 7252) offers a RESTful request/response model over UDP for constrained devices, with GET, PUT, POST and DELETE on resources, confirmable messages for reliability, and an observe option for push updates. It suits sleepy nodes that are queried for readings and integrates with HTTP through proxies.\n\nThe physical link sets the envelope: BLE and Wi-Fi offer high rates over short range; IEEE 802.15.4 meshes such as Zigbee and Thread extend range hop by hop; LoRaWAN reaches kilometres at a few kilobits per second under duty-cycle limits. Atzori, Iera and Morabito (2010) survey these architectures. Teaching with design briefs that specify distance, power and data needs makes students reason about trade-offs instead of memorising acronyms.",
+            "ar": "MQTT (معيار OASIS، الإصدار 5.0، ٢٠١٩) بروتوكول نشر واشتراك فوق TCP: ينشر العملاء رسائل على مواضيع هرمية لدى وسيط يمرّرها إلى المشتركين. وفصل المرسلين عن المستقبلين يناسب تيارات الأحداث وتدفقات البيانات من كثيرين إلى كثيرين. وتوازن مستويات جودة الخدمة الثلاثة بين ضمانات التسليم (مرة على الأكثر، مرة على الأقل، مرة بالضبط) وعدد الرسائل والطاقة، وتساعد الرسائل المحفوظة ورسالة الوصية العملاء الذين ينضمون متأخرين أو ينقطعون فجأة.\n\nويقدّم ⁦CoAP (RFC 7252)⁩ نموذج طلب واستجابة على نمط REST فوق UDP للأجهزة المحدودة، مع GET وPUT وPOST وDELETE على الموارد، ورسائل مؤكَّدة للموثوقية، وخيار المراقبة للتحديثات المدفوعة. وهو يناسب العقد النائمة التي تُسأل عن قراءات، ويتكامل مع HTTP عبر الوكلاء.\n\nوتحدد الوصلة المادية الإطار: يقدّم BLE وWi-Fi معدّلات عالية لمدى قصير، وتوسّع الشبكات المتشابكة بمعيار IEEE 802.15.4 مثل Zigbee وThread المدى قفزة بعد قفزة، ويصل LoRaWAN إلى كيلومترات ببضعة كيلوبتات في الثانية في ظل حدود دورة التشغيل. ويستعرض Atzori وIera وMorabito (٢٠١٠) هذه البنى. والتدريس بمهام تصميم تحدد المسافة والطاقة والحاجة إلى البيانات يجعل الطلاب يستدلّون على الموازنات بدل حفظ الاختصارات."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Broker",
+                "ar": "الوسيط"
+              },
+              "def": {
+                "en": "The MQTT server that routes published messages to subscribers.",
+                "ar": "خادم MQTT الذي يوجّه الرسائل المنشورة إلى المشتركين."
+              }
+            },
+            {
+              "term": {
+                "en": "QoS",
+                "ar": "جودة الخدمة"
+              },
+              "def": {
+                "en": "MQTT’s delivery guarantee level: 0, 1 or 2.",
+                "ar": "مستوى ضمان التسليم في MQTT: 0 أو 1 أو 2."
+              }
+            },
+            {
+              "term": {
+                "en": "LoRaWAN",
+                "ar": "LoRaWAN"
+              },
+              "def": {
+                "en": "A long-range, low-rate, low-power wide-area network.",
+                "ar": "شبكة واسعة بعيدة المدى منخفضة المعدّل والطاقة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "40 hectares, no power, a few bytes every 15 minutes. Which link?",
+            "ar": "٤٠ هكتارًا، بلا كهرباء، وبضعة بايتات كل ربع ساعة. أيّ وصلة أنسب؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Wi-Fi",
+                "ar": "⁦Wi-Fi⁩"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "LoRa",
+                "ar": "LoRa"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Bluetooth Low Energy",
+                "ar": "البلوتوث منخفض الطاقة"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "LoRa reaches kilometres on little energy, and the data need is tiny.",
+            "ar": "يصل LoRa إلى كيلومترات بطاقة قليلة، والحاجة إلى البيانات صغيرة."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Count the messages.",
+            "ar": "عُدّ الرسائل."
+          },
+          "sentence": {
+            "en": [
+              "One publish at QoS 1 needs ",
+              {
+                "blank": 0
+              },
+              " packets between client and broker; at QoS 2 it needs ",
+              {
+                "blank": 1
+              },
+              "."
+            ],
+            "ar": [
+              "يحتاج نشر واحد بالمستوى 1 إلى ",
+              {
+                "blank": 0
+              },
+              " حزمة بين العميل والوسيط، وبالمستوى 2 إلى ",
+              {
+                "blank": 1
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "2",
+              "1",
+              "3",
+              "4"
+            ],
+            "ar": [
+              "2",
+              "1",
+              "3",
+              "4"
+            ]
+          },
+          "answers": {
+            "en": [
+              "2",
+              "4"
+            ],
+            "ar": [
+              "2",
+              "4"
+            ]
+          },
+          "explain": {
+            "en": "QoS 1: PUBLISH + PUBACK. QoS 2: PUBLISH, PUBREC, PUBREL, PUBCOMP.",
+            "ar": "المستوى 1: PUBLISH وPUBACK. المستوى 2: PUBLISH وPUBREC وPUBREL وPUBCOMP."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which situations favour CoAP over MQTT? Choose all that apply.",
+            "ar": "أيّ الحالات تفضّل CoAP على MQTT؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A gateway queries sleepy nodes for readings on demand",
+                "ar": "بوابة تسأل عقدًا نائمة عن قراءات عند الطلب"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Devices must expose resources like a tiny web server",
+                "ar": "يجب أن تعرض الأجهزة موارد كخادم ويب صغير"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Many dashboards subscribe to the same stream",
+                "ar": "لوحات كثيرة تشترك في التيار نفسه"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "UDP is required to avoid TCP overhead",
+                "ar": "UDP مطلوب لتجنب أعباء TCP"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Request/response over UDP fits queried resources; many subscribers to one stream is MQTT’s strength.",
+            "ar": "الطلب والاستجابة فوق UDP يناسبان الموارد المسؤولة، أما المشتركون الكثيرون في تيار واحد فهي قوة MQTT."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: place nodes across a field, remove one, and check that messages reroute to the gateway.",
+            "ar": "جرّب: ضع عقدًا عبر حقل، واحذف واحدة، وتحقّق من أن الرسائل تجد طريقًا جديدًا إلى البوابة."
+          },
+          "tool": "mesh"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "LoRa’s long range comes at the cost of a low data rate.",
+            "ar": "يأتي المدى الطويل لـ LoRa على حساب معدّل بيانات منخفض."
+          },
+          "answer": true,
+          "explain": {
+            "en": "Spreading the signal over time improves sensitivity but cuts throughput to a few kbit/s.",
+            "ar": "توزيع الإشارة على الزمن يحسّن الحساسية لكنه يخفض الإنتاجية إلى بضعة كيلوبتات في الثانية."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each brief to the most suitable link.",
+            "ar": "طابق كل مهمة مع الوصلة الأنسب."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Wearable to phone, 2 m",
+                "ar": "جهاز يُلبس إلى هاتف، ٢ م"
+              },
+              "right": {
+                "en": "Bluetooth Low Energy",
+                "ar": "البلوتوث منخفض الطاقة"
+              }
+            },
+            {
+              "left": {
+                "en": "Camera streaming video indoors",
+                "ar": "كاميرا تبث فيديو داخل مبنى"
+              },
+              "right": {
+                "en": "Wi-Fi",
+                "ar": "⁦Wi-Fi⁩"
+              }
+            },
+            {
+              "left": {
+                "en": "Hundreds of lights in one building",
+                "ar": "مئات المصابيح في مبنى واحد"
+              },
+              "right": {
+                "en": "Zigbee or Thread mesh",
+                "ar": "شبكة Zigbee أو Thread متشابكة"
+              }
+            },
+            {
+              "left": {
+                "en": "Soil sensors over several km",
+                "ar": "حسّاسات تربة عبر عدة كيلومترات"
+              },
+              "right": {
+                "en": "LoRaWAN",
+                "ar": "LoRaWAN"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Distance, data rate and power together pick the link.",
+            "ar": "المسافة ومعدّل البيانات والطاقة معًا تحدد الوصلة."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "How do you teach networking in your IoT course now? Could a design brief replace a protocol lecture?",
+            "ar": "كيف تدرّس الشبكات في مقرر إنترنت الأشياء الآن؟ وهل يمكن لمهمة تصميم أن تحل محل محاضرة البروتوكولات؟"
+          },
+          "placeholder": {
+            "en": "For example: “Slides of the OSI stack. I’ll start with the farm brief instead.”",
+            "ar": "مثلًا: «شرائح لنموذج OSI. سأبدأ بمهمة المزرعة بدلًا منها.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A protocol design brief",
+            "ar": "مشروع: مهمة تصميم بروتوكول"
+          },
+          "task": {
+            "en": "Write three design briefs (a farm, a hospital ward, a smart building) with distance, power, latency and data needs. Teams choose a link and protocol for one, justify it in a page, build a two-node prototype with MQTT or CoAP, and measure latency and energy per message. Include the rubric.",
+            "ar": "اكتب ثلاث مهام تصميم (مزرعة، وجناح مستشفى، ومبنى ذكي) تحدد المسافة والطاقة والكمون والحاجة إلى البيانات. تختار الفرق وصلة وبروتوكولًا لإحداها، وتبرّره في صفحة، وتبني نموذجًا من عقدتين بـ MQTT أو CoAP، وتقيس الكمون والطاقة لكل رسالة. أرفق معيار التقييم."
+          },
+          "deliverable": {
+            "en": "Three briefs, a justification template and a rubric.",
+            "ar": "ثلاث مهام وقالب تبرير ومعيار تقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: choose a link from range, rate and power.",
+                "ar": "يستطيع الطلاب: اختيار وصلة من المدى والمعدّل والطاقة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: choose MQTT or CoAP and a QoS level.",
+                "ar": "يستطيع الطلاب: اختيار MQTT أو CoAP ومستوى جودة الخدمة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: measure latency and energy per message.",
+                "ar": "يستطيع الطلاب: قياس الكمون والطاقة لكل رسالة."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "IoT protocols: MQTT, CoAP and LoRa",
+            "ar": "بروتوكولات إنترنت الأشياء: MQTT وCoAP وLoRa"
+          },
+          "note": {
+            "en": "IoT · University · Lecture 3",
+            "ar": "إنترنت الأشياء، الجامعة، المحاضرة ٣"
+          },
+          "narration": {
+            "en": "Forty hectares, no Wi-Fi, no mains. Which network?",
+            "ar": "أربعون هكتارًا، بلا واي فاي ولا كهرباء. أيّ شبكة؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Explain publish/subscribe.",
+              "Choose MQTT, CoAP and a QoS.",
+              "Trade range against rate."
+            ],
+            "ar": [
+              "نشرح النشر والاشتراك.",
+              "نختار MQTT أو CoAP ومستوى الجودة.",
+              "نوازن المدى مقابل المعدّل."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Pub/sub decouples devices.",
+              "Lowest safe QoS.",
+              "LoRa: far but slow."
+            ],
+            "ar": [
+              "النشر والاشتراك يفصل الأجهزة.",
+              "أقل جودة خدمة آمنة.",
+              "LoRa: بعيد لكنه بطيء."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "A broker in the room",
+            "ar": "وسيط في القاعة"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Which network?",
+              "Set up (10 min): A broker.",
+              "Publish (20 min): Team topics.",
+              "Choose (20 min): A brief.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): Give the farm brief and ask teams to choose a network in two minutes.",
+              "الإعداد (١٠ دقائق): وسيط.",
+              "النشر (٢٠ دقيقة): مواضيع الفرق.",
+              "الاختيار (٢٠ دقيقة): مهمة.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): أيّ شبكة؟",
+              "Set up (10 min): Run a broker on a laptop and share its address.",
+              "Publish (20 min): Teams publish readings at QoS 0 and 1 and subscribe to another team.",
+              "Choose (20 min): Teams pick a link and protocol for one brief and present the trade-offs.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): قدّم مهمة المزرعة واطلب من الفرق اختيار شبكة في دقيقتين.",
+              "الإعداد (١٠ دقائق): شغّل وسيطًا على حاسوب محمول وشارك عنوانه.",
+              "النشر (٢٠ دقيقة): تنشر الفرق قراءات بالمستويين 0 و1 وتشترك في فرقة أخرى.",
+              "الاختيار (٢٠ دقيقة): تختار الفرق وصلة وبروتوكولًا لمهمة وتعرض الموازنات.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "When would you pay for QoS 2?",
+              "What breaks if the broker fails?",
+              "Which brief was hardest, and why?"
+            ],
+            "ar": [
+              "متى ستدفع ثمن المستوى 2؟",
+              "ما الذي يتعطل إذا فشل الوسيط؟",
+              "أيّ مهمة كانت الأصعب، ولماذا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Choose a link and QoS for a smoke alarm in a flat, and justify it."
+            ],
+            "ar": [
+              "اختر وصلة ومستوى جودة لإنذار دخان في شقة وبرّر ذلك."
+            ]
+          },
+          "narration": {
+            "en": "Choose the network from the brief.",
+            "ar": "اختر الشبكة من المهمة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: IoT protocols: MQTT, CoAP and LoRa",
+            "ar": "شرائح المحاضرة: بروتوكولات إنترنت الأشياء: MQTT وCoAP وLoRa"
+          },
+          "pages": 6,
+          "base": "iot-u1-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: IoT protocols: MQTT, CoAP and LoRa",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: بروتوكولات إنترنت الأشياء: MQTT وCoAP وLoRa"
+          },
+          "pages": 3,
+          "base": "iot-u1-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/iot-u1-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "IOT.2",
+        "DC.4.1",
+        "T.PL.C"
+      ]
+    },
+    {
+      "id": "iot-u1-4",
+      "title": {
+        "en": "Designing an IoT capstone",
+        "ar": "تصميم مشروع تخرّج في إنترنت الأشياء"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "List the skills your capstone needs, check that an earlier lab teaches each one, and add a lab for any that is missing.",
+        "ar": "اكتب المهارات التي يحتاجها مشروع التخرّج، وتحقّق من أن معملًا سابقًا يعلّم كلًّا منها، وأضف معملًا لأي مهارة ناقصة."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Designing an IoT capstone",
+            "ar": "تصميم مشروع تخرّج في إنترنت الأشياء"
+          },
+          "src": null,
+          "duration": 172,
+          "sizeMB": 1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Forty kits, one week",
+                "ar": "أربعون عدة في أسبوع"
+              }
+            },
+            {
+              "at": 24.2,
+              "atBy": {
+                "en": 24.2,
+                "ar": 23.3
+              },
+              "label": {
+                "en": "Scaffolded labs",
+                "ar": "معامل متدرّجة"
+              }
+            },
+            {
+              "at": 67,
+              "atBy": {
+                "en": 67,
+                "ar": 69
+              },
+              "label": {
+                "en": "Assessing hardware work",
+                "ar": "تقييم عمل الأجهزة"
+              }
+            },
+            {
+              "at": 131,
+              "atBy": {
+                "en": 131,
+                "ar": 129.5
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 109.28,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Why did half the teams stall in the first six weeks?",
+                "ar": "لماذا توقفت نصف الفرق في الأسابيع الستة الأولى؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "The kits were faulty",
+                    "ar": "كانت العُدد معطوبة"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "An open problem came before basic skills",
+                    "ar": "جاءت مشكلة مفتوحة قبل المهارات الأساسية"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "The capstone was too short",
+                    "ar": "كان المشروع قصيرًا"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Scaffolded labs should build skills before the open capstone.",
+                "ar": "ينبغي أن تبني المعامل المتدرّجة المهارات قبل المشروع المفتوح."
+              }
+            },
+            "atBy": {
+              "en": 109.28,
+              "ar": 108.7
+            }
+          },
+          "transcript": {
+            "en": "Last year our department bought forty development kits and set a capstone in week one. By week six, half the teams were still debugging their first blinking light. Today: how to sequence hardware labs into a capstone, keep them safe and affordable, and assess teams fairly with a rubric. Scaffolding means structured support that is removed step by step. Early labs give working code and one change to make. Later labs give a goal and a parts list. The capstone gives only a problem. One proven sequence: digital input and output, then sensors and the converter, then timers and interrupts, then low power, then networking. Each lab produces a part the capstone will reuse. Here is a fourteen-week split that worked: eight weeks of scaffolded labs, a week to propose, and five weeks of capstone with a midpoint demo. Keep labs at low voltage, and keep lithium cells charged only on proper chargers. Simulators let students test code before touching hardware, and shared kits with a checkout log keep costs down. A working demo can hide luck. Assess the engineering too: a requirements list, a measured power budget, a test log, and an individual reflection. Peer assessment helps spread marks fairly inside a team. Quick check! Why did half our teams stall in the first six weeks? They faced an open problem before they had the basic skills. The kits were fine. A scaffolded sequence of labs would have built those skills first. In the app, open the board lab. Wire a sensor and an output on a virtual board, and run it before anyone touches real hardware. Your turn. In a team of four, one student did almost nothing. Which evidence best supports adjusting individual marks? Structured peer assessment with the commit and test logs. Remember: scaffold before the capstone, keep labs safe and cheap, and assess the engineering as well as the demo. Try it this term: list the skills your capstone needs. Then check that an earlier lab teaches each one, and add a lab for any skill that is missing.",
+            "ar": "السنة اللي فاتت القسم اشترى أربعين عدة تطوير وادّى مشروع التخرّج في أول أسبوع. وفي الأسبوع السادس، نص الفرق كانت لسه بتصلّح أول لمبة بتنوّر وتطفي. النهارده: إزاي ترتّب معامل الأجهزة لحد مشروع التخرّج، وتخلّيها آمنة وبتكلفة معقولة، وتقيّم الفرق بعدل بمعيار تقييم. السقالة معناها دعم منظّم بيتشال خطوة خطوة. المعامل الأولى بتدّي كود شغّال وتغيير واحد يتعمل. والمعامل اللي بعدها بتدّي هدف وقايمة قطع. ومشروع التخرّج بيدّي مشكلة بس. تسلسل مجرّب: دخل وخرج رقمي، وبعدين الحسّاسات والمحوّل، وبعدين المؤقّتات والمقاطعات، وبعدين الطاقة المنخفضة، وبعدين الشبكات. وكل معمل بيطلّع جزء مشروع التخرّج هيستعمله تاني. ده تقسيم أربعتاشر أسبوع نجح: تمن أسابيع معامل متدرّجة، وأسبوع للمقترح، وخمس أسابيع لمشروع التخرّج فيهم عرض في النص. خلّي المعامل على جهد منخفض، وبطاريات الليثيوم تتشحن بس على شواحن مناسبة. والمحاكيات بتخلّي الطلاب يجرّبوا الكود قبل ما يلمسوا الأجهزة، والعدد المشتركة بسجل استلام بتقلّل التكلفة. العرض الشغّال ممكن يخبّي حظ. قيّم الهندسة كمان: قايمة متطلبات، وميزانية طاقة متقاسة، وسجل اختبارات، وتأمّل فردي. وتقييم الأقران بيساعد يوزّع الدرجات بعدل جوّه الفريق. سؤال سريع! ليه نص الفرق عندنا وقفت في أول ست أسابيع؟ واجهوا مشكلة مفتوحة قبل ما يبقى عندهم المهارات الأساسية. العدد كانت كويسة. تسلسل معامل متدرّج كان هيبني المهارات دي الأول. في التطبيق، افتح معمل اللوحة. وصّل حسّاس ومخرج على لوحة افتراضية، وشغّلها قبل ما حد يلمس أجهزة حقيقية. دورك. في فريق من أربعة، طالب واحد تقريبًا ماعملش حاجة. أنهي دليل بيدعم أحسن إننا نعدّل الدرجات الفردية؟ تقييم أقران منظّم مع سجلات الكود والاختبارات. افتكر: سقّل قبل مشروع التخرّج، وخلّي المعامل آمنة ورخيصة، وقيّم الهندسة مع العرض. جرّبها الترم ده: اكتب المهارات اللي مشروع التخرّج محتاجها. وبعدين اتأكد إن فيه معمل قبله بيعلّم كل واحدة، وضيف معمل لأي مهارة ناقصة."
+          },
+          "sources": {
+            "en": "/media/iot-u1-4/video-en.mp4",
+            "ar": "/media/iot-u1-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/iot-u1-4/captions-en.vtt",
+            "ar": "/media/iot-u1-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/iot-u1-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/iot-u1-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/iot-u1-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/iot-u1-4/light/audio/en.opus",
+              "manifest.json": "/media/iot-u1-4/light/manifest.json",
+              "scenes.json": "/media/iot-u1-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/iot-u1-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/iot-u1-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 380,
+              "ar": 377
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Labs, safety and rubrics",
+            "ar": "المعامل والسلامة ومعايير التقييم"
+          },
+          "body": {
+            "en": "Open-ended hardware projects motivate students, but novices facing an unstructured problem spend their time on configuration and debugging rather than learning. Scaffolding, structured support faded over time, resolves this: early labs supply working code and ask for one modification; later labs supply a goal and a parts list; the capstone supplies only a problem. A sequence of GPIO, sensors and ADC, timers and interrupts, low power and networking produces components the capstone reuses (Lee and Seshia describe a similar progression).\n\nSafety and cost are design constraints. Keep circuits at low voltage, charge lithium cells only with suitable chargers, require a short safety briefing, and use simulators so code is tested before hardware. Shared kits with a checkout log, and a small stock of spares, make a lab sustainable on a modest budget.\n\nA working demo can conceal luck or one student’s effort. Assess the engineering evidence: a requirements list, a measured power budget, a test log, version-control history, and an individual reflection. Structured peer assessment adjusts individual marks within teams. Constructive alignment (Biggs and Tang) ties each of these to a stated outcome, and an analytic rubric shared at the start tells teams what quality looks like.",
+            "ar": "تحفّز مشاريع الأجهزة المفتوحة الطلاب، لكن المبتدئين أمام مشكلة غير منظّمة يقضون وقتهم في الإعداد وإصلاح الأخطاء بدل التعلّم. ويحلّ ذلك التدرّج، أي الدعم المنظّم الذي يُسحب مع الوقت: تقدّم المعامل الأولى كودًا يعمل وتطلب تعديلًا واحدًا، وتقدّم المعامل اللاحقة هدفًا وقائمة قطع، ولا يقدّم مشروع التخرّج إلا مشكلة. وينتج تسلسل من منافذ الدخل والخرج، فالحسّاسات والمحوّل، فالمؤقتات والمقاطعات، فالطاقة المنخفضة، فالشبكات، مكوّنات يعيد المشروع استخدامها (ويصف Lee وSeshia تدرّجًا مشابهًا).\n\nوالسلامة والتكلفة قيود تصميم. أبقِ الدوائر على جهد منخفض، واشحن خلايا الليثيوم بشواحن مناسبة فقط، واشترط إحاطة قصيرة بالسلامة، واستخدم المحاكيات لاختبار الكود قبل الأجهزة. وتجعل العُدد المشتركة بسجل استلام، ومخزون صغير من القطع الاحتياطية، المعمل مستدامًا بميزانية متواضعة.\n\nوقد يخفي العرض العامل حظًا أو جهد طالب واحد. فقيّم الأدلة الهندسية: قائمة المتطلبات، وميزانية طاقة مقيسة، وسجل الاختبارات، وتاريخ التحكم في النسخ، وتأملًا فرديًا. ويعدّل تقييم الأقران المنظّم الدرجات الفردية داخل الفرق. ويربط التنسيق البنّاء (Biggs وTang) كلًّا من ذلك بناتج معلن، ويخبر معيار التقييم التحليلي المُشارك منذ البداية الفرقَ بشكل الجودة المطلوبة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Scaffolding",
+                "ar": "التدرّج بالدعم"
+              },
+              "def": {
+                "en": "Structured support that is removed step by step.",
+                "ar": "دعم منظّم يُسحب خطوة بخطوة."
+              }
+            },
+            {
+              "term": {
+                "en": "Peer assessment",
+                "ar": "تقييم الأقران"
+              },
+              "def": {
+                "en": "Team members rate each other’s contribution against criteria.",
+                "ar": "يقيّم أعضاء الفريق مساهمات بعضهم وفق معايير."
+              }
+            },
+            {
+              "term": {
+                "en": "Analytic rubric",
+                "ar": "معيار التقييم التحليلي"
+              },
+              "def": {
+                "en": "Separate criteria, each with described levels.",
+                "ar": "معايير منفصلة لكل منها مستويات موصوفة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "One of four teammates did almost nothing. Best evidence for adjusting marks?",
+            "ar": "لم يفعل أحد أعضاء فريق من أربعة شيئًا تقريبًا. ما أفضل دليل لتعديل الدرجات؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "The final demo",
+                "ar": "العرض النهائي"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Structured peer assessment plus commit and test logs",
+                "ar": "تقييم أقران منظّم مع سجلات الكود والاختبارات"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The lecturer’s impression",
+                "ar": "انطباع المحاضر"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Several independent records of contribution are fairer than one impression.",
+            "ar": "عدة سجلات مستقلة للمساهمة أعدل من انطباع واحد."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Plan the weeks.",
+            "ar": "خطّط للأسابيع."
+          },
+          "sentence": {
+            "en": [
+              "A 14-week module with 8 lab weeks and 1 proposal week leaves ",
+              {
+                "blank": 0
+              },
+              " weeks for the capstone. With a demo at the midpoint of the capstone, it falls about ",
+              {
+                "blank": 1
+              },
+              " of its weeks in."
+            ],
+            "ar": [
+              "مقرر من ١٤ أسبوعًا فيه ٨ أسابيع معامل وأسبوع للمقترح يترك ",
+              {
+                "blank": 0
+              },
+              " أسابيع للمشروع. ومع عرض في منتصف المشروع، يقع بعد نحو ",
+              {
+                "blank": 1
+              },
+              " من أسابيعه."
+            ]
+          },
+          "bank": {
+            "en": [
+              "5",
+              "6",
+              "4",
+              "2"
+            ],
+            "ar": [
+              "5",
+              "6",
+              "4",
+              "2"
+            ]
+          },
+          "answers": {
+            "en": [
+              "5",
+              "2"
+            ],
+            "ar": [
+              "5",
+              "2"
+            ]
+          },
+          "explain": {
+            "en": "14 − 8 − 1 = 5, and about halfway through 5 weeks is week 2 to 3.",
+            "ar": "١٤ − ٨ − ١ = ٥، ومنتصف ٥ أسابيع نحو الأسبوع الثاني أو الثالث."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which evidence should a capstone rubric assess beyond the demo? Choose all that apply.",
+            "ar": "أيّ الأدلة ينبغي أن يقيّمها معيار المشروع إلى جانب العرض؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A measured power budget",
+                "ar": "ميزانية طاقة مقيسة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A test log against requirements",
+                "ar": "سجل اختبارات مقابل المتطلبات"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Version-control history",
+                "ar": "تاريخ التحكم في النسخ"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "The price of the parts",
+                "ar": "سعر القطع"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "These show engineering process and individual contribution; part price says little about learning.",
+            "ar": "تُظهر هذه العملية الهندسية والمساهمة الفردية، أما سعر القطع فلا يقول الكثير عن التعلّم."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: wire a sensor and an output on the virtual board and run it before touching real hardware.",
+            "ar": "جرّب: وصّل حسّاسًا ومخرجًا على اللوحة الافتراضية وشغّلها قبل لمس الأجهزة الحقيقية."
+          },
+          "tool": "board"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "Giving the open capstone in week one maximises the time students spend learning.",
+            "ar": "تقديم المشروع المفتوح في الأسبوع الأول يزيد إلى أقصى حد الوقت الذي يقضيه الطلاب في التعلّم."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Without prior skills, early time goes on configuration and debugging; scaffolded labs first make capstone time productive.",
+            "ar": "دون مهارات سابقة يذهب الوقت المبكر في الإعداد وإصلاح الأخطاء، والمعامل المتدرّجة أولًا تجعل وقت المشروع منتجًا."
+          }
+        },
+        {
+          "type": "order",
+          "id": "p5",
+          "prompt": {
+            "en": "Put the lab sequence in order.",
+            "ar": "رتّب تسلسل المعامل."
+          },
+          "steps": [
+            {
+              "en": "Digital input and output",
+              "ar": "الدخل والخرج الرقمي"
+            },
+            {
+              "en": "Sensors and the ADC",
+              "ar": "الحسّاسات والمحوّل"
+            },
+            {
+              "en": "Timers and interrupts",
+              "ar": "المؤقتات والمقاطعات"
+            },
+            {
+              "en": "Low-power modes",
+              "ar": "أنماط الطاقة المنخفضة"
+            },
+            {
+              "en": "Networking",
+              "ar": "الشبكات"
+            }
+          ],
+          "explain": {
+            "en": "Each lab builds on the previous one and produces a part the capstone reuses.",
+            "ar": "كل معمل يبني على سابقه وينتج جزءًا يعيد المشروع استخدامه."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which skill do your capstone teams most often lack? Which earlier lab would build it?",
+            "ar": "أيّ مهارة تفتقدها فرق مشروع التخرّج لديك غالبًا؟ وأيّ معمل سابق سيبنيها؟"
+          },
+          "placeholder": {
+            "en": "For example: “Interrupts. I’ll add a debounced-button lab in week 4.”",
+            "ar": "مثلًا: «المقاطعات. سأضيف معمل زر مع إزالة الارتداد في الأسبوع الرابع.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A capstone kit",
+            "ar": "مشروع: حزمة مشروع التخرّج"
+          },
+          "task": {
+            "en": "Write your capstone package: a problem brief, the scaffolded lab sequence mapped to capstone skills, a safety sheet, a shared-kit checkout process, an analytic rubric with five criteria, and a peer-assessment form. Ask a colleague to review it against your outcomes.",
+            "ar": "اكتب حزمة مشروع التخرّج: وصف المشكلة، وتسلسل المعامل المتدرّجة مربوطًا بمهارات المشروع، وورقة السلامة، وإجراء استلام العُدد المشتركة، ومعيار تقييم تحليليًا بخمسة معايير، ونموذج تقييم الأقران. اطلب من زميل مراجعتها مقابل نواتجك."
+          },
+          "deliverable": {
+            "en": "The brief, lab map, safety sheet, rubric and peer form.",
+            "ar": "الوصف وخريطة المعامل وورقة السلامة ومعيار التقييم ونموذج الأقران."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: build skills in a scaffolded sequence.",
+                "ar": "يستطيع الطلاب: بناء المهارات في تسلسل متدرّج."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: work safely with hardware.",
+                "ar": "يستطيع الطلاب: العمل بأمان مع الأجهزة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: document engineering evidence.",
+                "ar": "يستطيع الطلاب: توثيق الأدلة الهندسية."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Designing an IoT capstone",
+            "ar": "تصميم مشروع تخرّج في إنترنت الأشياء"
+          },
+          "note": {
+            "en": "IoT · University · Lecture 4",
+            "ar": "إنترنت الأشياء، الجامعة، المحاضرة ٤"
+          },
+          "narration": {
+            "en": "Forty kits, and week six still blinking?",
+            "ar": "أربعون عدة، والأسبوع السادس ما زال يومض؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Scaffold a lab sequence.",
+              "Run labs safely and cheaply.",
+              "Assess teams fairly."
+            ],
+            "ar": [
+              "نتدرّج في تسلسل المعامل.",
+              "ننفّذ المعامل بأمان وبتكلفة قليلة.",
+              "نقيّم الفرق بعدل."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Skills before open problems.",
+              "Each lab feeds the capstone.",
+              "Grade evidence, not luck."
+            ],
+            "ar": [
+              "المهارات قبل المشكلات المفتوحة.",
+              "كل معمل يغذّي المشروع.",
+              "قيّم الدليل لا الحظ."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Map skills to labs",
+            "ar": "اربط المهارات بالمعامل"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): What stalled them?",
+              "List (10 min): Capstone skills.",
+              "Map (20 min): Skills to labs.",
+              "Draft (20 min): A rubric.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): Show the week-six progress chart and ask colleagues what they would change.",
+              "الحصر (١٠ دقائق): مهارات المشروع.",
+              "الربط (٢٠ دقيقة): المهارات بالمعامل.",
+              "الصياغة (٢٠ دقيقة): معيار تقييم.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): ما الذي أوقفهم؟",
+              "List (10 min): Colleagues list every skill their capstone needs.",
+              "Map (20 min): Map each skill to an earlier lab and mark gaps.",
+              "Draft (20 min): Write five criteria and four levels, including peer assessment.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض مخطط التقدّم في الأسبوع السادس واسأل الزملاء ماذا سيغيّرون.",
+              "الحصر (١٠ دقائق): يكتب الزملاء كل مهارة يحتاجها مشروعهم.",
+              "الربط (٢٠ دقيقة): اربط كل مهارة بمعمل سابق وحدّد الفجوات.",
+              "الصياغة (٢٠ دقيقة): اكتب خمسة معايير وأربعة مستويات، بما فيها تقييم الأقران.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which skill had no lab?",
+              "What is your biggest safety risk?",
+              "How will you spot a passenger in a team?"
+            ],
+            "ar": [
+              "أيّ مهارة بلا معمل؟",
+              "ما أكبر خطر للسلامة لديك؟",
+              "كيف ستكتشف عضوًا خاملًا في فريق؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name one lab you will add and the capstone skill it builds."
+            ],
+            "ar": [
+              "اذكر معملًا ستضيفه والمهارة التي يبنيها للمشروع."
+            ]
+          },
+          "narration": {
+            "en": "Build skills before the open problem.",
+            "ar": "ابنِ المهارات قبل المشكلة المفتوحة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Designing an IoT capstone",
+            "ar": "شرائح المحاضرة: تصميم مشروع تخرّج في إنترنت الأشياء"
+          },
+          "pages": 6,
+          "base": "iot-u1-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Designing an IoT capstone",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: تصميم مشروع تخرّج في إنترنت الأشياء"
+          },
+          "pages": 3,
+          "base": "iot-u1-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/iot-u1-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "T.PL.C",
+        "IOT.4",
+        "DC.5.3"
+      ]
+    },
+    {
+      "id": "iot-u1-check",
+      "title": {
+        "en": "Teaching embedded and IoT systems at university: unit check",
+        "ar": "تدريس الأنظمة المدمجة وإنترنت الأشياء في الجامعة: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Bring your capstone lab map and rubric to your next department meeting for review.",
+        "ar": "أحضر خريطة معامل المشروع ومعيار التقييم إلى اجتماع القسم القادم للمراجعة."
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "A signal has components up to 1 kHz. The minimum sampling rate is just above",
+            "ar": "إشارة مكوّناتها حتى ١ كيلوهرتز. أقل معدّل معاينة أعلى قليلًا من"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "2 kHz",
+                "ar": "2 كيلوهرتز"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "1 kHz",
+                "ar": "1 كيلوهرتز"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "500 Hz",
+                "ar": "500 هرتز"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "fs > 2B = 2 kHz.",
+            "ar": "⁦fs > 2B = 2⁩ كيلوهرتز."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q2",
+          "prompt": {
+            "en": "Find the alias.",
+            "ar": "أوجد التشويه."
+          },
+          "sentence": {
+            "en": [
+              "An 80 Hz tone sampled at 100 Hz appears at ",
+              {
+                "blank": 0
+              },
+              " Hz."
+            ],
+            "ar": [
+              "نغمة ٨٠ هرتز مُعاينة بـ ١٠٠ هرتز تظهر عند ",
+              {
+                "blank": 0
+              },
+              " هرتز."
+            ]
+          },
+          "bank": {
+            "en": [
+              "20",
+              "80",
+              "180"
+            ],
+            "ar": [
+              "20",
+              "80",
+              "180"
+            ]
+          },
+          "answers": {
+            "en": [
+              "20"
+            ],
+            "ar": [
+              "20"
+            ]
+          },
+          "explain": {
+            "en": "|80 − 100| = 20.",
+            "ar": "⁦|80 − 100| = 20.⁩"
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q3",
+          "prompt": {
+            "en": "A digital filter after sampling can remove aliasing.",
+            "ar": "يستطيع مرشّح رقمي بعد المعاينة إزالة التشويه."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Aliases are indistinguishable from real low frequencies after sampling.",
+            "ar": "لا يمكن تمييز التشويه عن الترددات المنخفضة الحقيقية بعد المعاينة."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q4",
+          "prompt": {
+            "en": "Active 40 mA for 1 s in 40, sleep ≈ 0. Average current:",
+            "ar": "تشغيل 40 مللي أمبير لثانية من كل 40، والنوم ≈ 0. متوسط التيار:"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "1 mA",
+                "ar": "1 مللي أمبير"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "40 mA",
+                "ar": "40 مللي أمبير"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "0.1 mA",
+                "ar": "0.1 مللي أمبير"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "40 × 1/40 = 1 mA.",
+            "ar": "⁦40 × 1/40 = 1⁩ مللي أمبير."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q5",
+          "prompt": {
+            "en": "Which are hard real-time? Choose all that apply.",
+            "ar": "أيّها زمن حقيقي صارم؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Airbag trigger",
+                "ar": "إطلاق الوسادة الهوائية"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Anti-lock braking",
+                "ar": "منع انغلاق الفرامل"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Music streaming",
+                "ar": "بث الموسيقى"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b"
+          ],
+          "explain": {
+            "en": "A late answer is a failure for both.",
+            "ar": "الإجابة المتأخرة فشل في كليهما."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q6",
+          "prompt": {
+            "en": "Match each MQTT QoS to its guarantee.",
+            "ar": "طابق كل مستوى جودة في MQTT مع ضمانه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "QoS 0",
+                "ar": "المستوى 0"
+              },
+              "right": {
+                "en": "At most once",
+                "ar": "مرة على الأكثر"
+              }
+            },
+            {
+              "left": {
+                "en": "QoS 1",
+                "ar": "المستوى 1"
+              },
+              "right": {
+                "en": "At least once",
+                "ar": "مرة على الأقل"
+              }
+            },
+            {
+              "left": {
+                "en": "QoS 2",
+                "ar": "المستوى 2"
+              },
+              "right": {
+                "en": "Exactly once",
+                "ar": "مرة بالضبط"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Higher guarantees cost more messages.",
+            "ar": "الضمانات الأعلى تكلّف رسائل أكثر."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q7",
+          "prompt": {
+            "en": "Soil sensors over 5 km, tiny data, no power. Best link:",
+            "ar": "حسّاسات تربة عبر ٥ كم، وبيانات قليلة، بلا كهرباء. أفضل وصلة:"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "LoRaWAN",
+                "ar": "LoRaWAN"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Wi-Fi",
+                "ar": "⁦Wi-Fi⁩"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "BLE",
+                "ar": "BLE"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Kilometres at low power and low rate.",
+            "ar": "كيلومترات بطاقة ومعدّل منخفضين."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q8",
+          "prompt": {
+            "en": "Check the schedule.",
+            "ar": "افحص الجدولة."
+          },
+          "sentence": {
+            "en": [
+              "Tasks (C = 2, T = 10) and (C = 3, T = 15) give U = ",
+              {
+                "blank": 0
+              },
+              " %."
+            ],
+            "ar": [
+              "المهمتان (⁦C = 2⁩، ⁦T = 10⁩) و(⁦C = 3⁩، ⁦T = 15⁩) تعطيان U = ",
+              {
+                "blank": 0
+              },
+              " ٪."
+            ]
+          },
+          "bank": {
+            "en": [
+              "40",
+              "20",
+              "50"
+            ],
+            "ar": [
+              "40",
+              "20",
+              "50"
+            ]
+          },
+          "answers": {
+            "en": [
+              "40"
+            ],
+            "ar": [
+              "40"
+            ]
+          },
+          "explain": {
+            "en": "0.2 + 0.2 = 0.4.",
+            "ar": "⁦0.2 + 0.2 = 0.4.⁩"
+          }
+        },
+        {
+          "type": "order",
+          "id": "q9",
+          "prompt": {
+            "en": "Put the capstone preparation in order.",
+            "ar": "رتّب التحضير لمشروع التخرّج."
+          },
+          "steps": [
+            {
+              "en": "Scaffolded labs",
+              "ar": "معامل متدرّجة"
+            },
+            {
+              "en": "Proposal",
+              "ar": "المقترح"
+            },
+            {
+              "en": "Midpoint demo",
+              "ar": "عرض منتصف المدة"
+            },
+            {
+              "en": "Final demo and defence",
+              "ar": "العرض والدفاع النهائيان"
+            }
+          ],
+          "explain": {
+            "en": "Skills first, then the open problem in stages.",
+            "ar": "المهارات أولًا، ثم المشكلة المفتوحة على مراحل."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q10",
+          "prompt": {
+            "en": "Best evidence of each student’s contribution in a team:",
+            "ar": "أفضل دليل على مساهمة كل طالب في فريق:"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Peer assessment plus logs",
+                "ar": "تقييم الأقران مع السجلات"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The final demo",
+                "ar": "العرض النهائي"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Attendance",
+                "ar": "الحضور"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Several independent records are fairer.",
+            "ar": "عدة سجلات مستقلة أعدل."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Teaching embedded and IoT systems at university: review",
+            "ar": "تدريس الأنظمة المدمجة وإنترنت الأشياء في الجامعة: مراجعة"
+          },
+          "note": {
+            "en": "IoT · University · Unit check",
+            "ar": "إنترنت الأشياء، الجامعة، اختبار الوحدة"
+          },
+          "narration": {
+            "en": "Let’s look back at the whole course and see what stuck.",
+            "ar": "لنراجع المقرر كله ونرَ ما الذي رسخ."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Sampling and the ADC",
+              "Real-time and power",
+              "Protocols",
+              "Capstone design"
+            ],
+            "ar": [
+              "المعاينة والمحوّل",
+              "الزمن الحقيقي والطاقة",
+              "البروتوكولات",
+              "تصميم مشروع التخرّج"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "fs > 2B",
+              "life = capacity / I_avg",
+              "Choose the link from the brief",
+              "Skills before open problems"
+            ],
+            "ar": [
+              "⁦fs > 2B⁩",
+              "العمر = السعة / متوسط التيار",
+              "اختر الوصلة من المهمة",
+              "المهارات قبل المشكلات المفتوحة"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Peer-instruction review",
+            "ar": "مراجعة بالتعلّم من الأقران"
+          },
+          "bullets": {
+            "en": [
+              "Vote (10 min): Answer alone first.",
+              "Discuss (15 min): Convince your neighbour.",
+              "Explain (10 min): Model the reasoning.",
+              "Plan (5 min): Next week’s fix."
+            ],
+            "ar": [
+              "التصويت (١٠ دقائق): أجب منفردًا أولًا.",
+              "النقاش (١٥ دقيقة): أقنع زميلك.",
+              "الشرح (١٠ دقائق): اعرض طريقة التفكير.",
+              "التخطيط (٥ دقائق): علاج الأسبوع القادم."
+            ]
+          },
+          "details": {
+            "en": [
+              "Vote (10 min): Show each question; students answer alone and commit to an answer.",
+              "Discuss (15 min): Where answers split, pairs argue for two minutes and vote again.",
+              "Explain (10 min): Work through the questions most students missed, showing the reasoning step by step.",
+              "Plan (5 min): Note which misconception to revisit next week and how."
+            ],
+            "ar": [
+              "التصويت (١٠ دقائق): اعرض كل سؤال، ويجيب الطلاب منفردين ويلتزمون بإجابة.",
+              "النقاش (١٥ دقيقة): حيث تنقسم الإجابات، يتجادل كل زوجين دقيقتين ثم يصوّتان مرة أخرى.",
+              "الشرح (١٠ دقائق): حُلّ الأسئلة التي أخطأ فيها معظم الطلاب، مع عرض الاستدلال خطوة خطوة.",
+              "التخطيط (٥ دقائق): دوّن أيّ تصوّر خاطئ ستعود إليه الأسبوع القادم وكيف."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which misconception will you target first?",
+              "Which lab will you add?",
+              "How will you change capstone assessment?"
+            ],
+            "ar": [
+              "أيّ تصور خاطئ ستستهدف أولًا؟",
+              "أيّ معمل ستضيف؟",
+              "كيف ستغيّر تقييم مشروع التخرّج؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One change to my IoT course this term, and how I will know it worked."
+            ],
+            "ar": [
+              "تغيير في مقرر إنترنت الأشياء هذا الفصل الدراسي، وكيف سأعرف أنه نجح."
+            ]
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Teaching embedded and IoT systems at university: unit check",
+            "ar": "شرائح المحاضرة: تدريس الأنظمة المدمجة وإنترنت الأشياء في الجامعة: اختبار الوحدة"
+          },
+          "pages": 6,
+          "base": "iot-u1-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Review plan and quiz sheet: Teaching embedded and IoT systems at university: unit check",
+            "ar": "خطة المراجعة وورقة الاختبار: تدريس الأنظمة المدمجة وإنترنت الأشياء في الجامعة: اختبار الوحدة"
+          },
+          "pages": 2,
+          "base": "iot-u1-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "University course pack: syllabus, slide outline, problem set, lab, rubric and readings",
+            "ar": "حزمة المقرر الجامعي: الخطة الدراسية، ومخطط الشرائح، ومسائل، ومعمل، ومعايير التقييم، والقراءات"
+          },
+          "pages": 5,
+          "base": "iot-u1-check/course-pack",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "IOT.1",
+        "IOT.2",
+        "IOT.3",
+        "T.PL.C"
+      ]
+    }
+  ]
+}

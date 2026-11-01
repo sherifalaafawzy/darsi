@@ -195,6 +195,32 @@ describe("YouTube-style video controls", () => {
     }
   });
 
+  it("seeks along the screen's height when the player is turned sideways (clientY, not clientX)", () => {
+    const height = window.innerHeight, width = window.innerWidth;
+    Object.defineProperty(window, "innerHeight", { configurable: true, value: 800 });
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 400 });
+    const turnedRect = () => ({ left: 0, top: 0, right: 8, bottom: 100, width: 8, height: 100, x: 0, y: 0, toJSON() { return {}; } });
+    try {
+      const { container } = player();
+      fireEvent.click(screen.getByRole("button", { name: "Full screen" }));
+      expect(container.querySelector(".dr-video")!.classList.contains("is-turned")).toBe(true);
+      const seek = screen.getByRole("slider", { name: "Seek" });
+      seek.getBoundingClientRect = turnedRect;
+      // clientX is the bar's thickness here; only clientY says how far along it the finger is.
+      fireEvent.pointerMove(seek, { clientX: 4, clientY: 25 });
+      expect(container.querySelector(".dr-video-preview")!.textContent).toBe("0:25");
+      fireEvent.pointerMove(seek, { clientX: 4, clientY: 60 });
+      expect(container.querySelector(".dr-video-preview")!.textContent).toBe("1:00");
+      // Right to left, the bar is turned the other way (rotate(-90deg)): it starts at the bottom.
+      document.documentElement.setAttribute("dir", "rtl");
+      fireEvent.pointerMove(seek, { clientX: 4, clientY: 25 });
+      expect(container.querySelector(".dr-video-preview")!.textContent).toBe("1:15");
+    } finally {
+      document.documentElement.removeAttribute("dir");
+      Object.defineProperty(window, "innerHeight", { configurable: true, value: height });
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
+    }
+  });
   it("keeps motion optional: the reduced-motion rule covers the player's fades", () => {
     const css = readFileSync(join(process.cwd(), "src/styles/components.css"), "utf8");
     expect(css).toContain("prefers-reduced-motion: reduce");

@@ -1,0 +1,3163 @@
+{
+  "id": "ds-u1",
+  "track": "data-science",
+  "level": 4,
+  "teach": "university",
+  "title": {
+    "en": "Teaching statistical learning at university",
+    "ar": "تدريس التعلّم الإحصائي في الجامعة"
+  },
+  "summary": {
+    "en": "A graduate-level course for university lecturers: sampling distributions and the bootstrap, the bias–variance trade-off and cross-validation, causal inference with DAGs and difference-in-differences, and how to design projects, labs and rubrics for a statistics or data-science module, with the common misconceptions behind each.",
+    "ar": "مقرر بمستوى الدراسات العليا لأساتذة الجامعات: توزيعات المعاينة والـ bootstrap، والموازنة بين التحيّز والتباين والتحقق المتقاطع، والاستدلال السببي بالمخططات السببية وطريقة الفروق في الفروق، وكيفية تصميم المشاريع والمعامل ومعايير التقييم لمقرر في الإحصاء أو علم البيانات، مع التصورات الخاطئة الشائعة وراء كل منها."
+  },
+  "lessons": [
+    {
+      "id": "ds-u1-1",
+      "title": {
+        "en": "Sampling distributions and the bootstrap",
+        "ar": "توزيعات المعاينة والـ bootstrap"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Before showing any formula, give pairs one dataset and ask them to resample it 200 times and plot the means; then ask them to predict the plot for a sample four times larger.",
+        "ar": "قبل عرض أي معادلة، أعطِ كل زوج من الطلاب مجموعة بيانات واحدة واطلب منهم إعادة السحب منها ٢٠٠ مرة ورسم المتوسطات، ثم اطلب منهم توقّع الرسم لعينة أكبر بأربع مرات."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Sampling distributions and the bootstrap",
+            "ar": "توزيعات المعاينة والـ bootstrap"
+          },
+          "src": null,
+          "duration": 188,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "One estimate, many samples",
+                "ar": "تقدير واحد وعينات كثيرة"
+              }
+            },
+            {
+              "at": 26.9,
+              "atBy": {
+                "en": 26.9,
+                "ar": 24
+              },
+              "label": {
+                "en": "Standard error",
+                "ar": "الخطأ المعياري"
+              }
+            },
+            {
+              "at": 74,
+              "atBy": {
+                "en": 74,
+                "ar": 70.9
+              },
+              "label": {
+                "en": "The bootstrap",
+                "ar": "الـ bootstrap"
+              }
+            },
+            {
+              "at": 143.8,
+              "atBy": {
+                "en": 143.8,
+                "ar": 137.2
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 119.37,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A 95% confidence interval for a mean is 60 to 68. Which statement is correct?",
+                "ar": "فترة ثقة ٩٥٪ للمتوسط من ٦٠ إلى ٦٨. أيّ عبارة صحيحة؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "There is a 95% chance the true mean is between 60 and 68",
+                    "ar": "احتمال أن يقع المتوسط الحقيقي بين ٦٠ و٦٨ هو ٩٥٪"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "About 95% of intervals made this way contain the true mean",
+                    "ar": "نحو ٩٥٪ من الفترات المبنية بهذه الطريقة تحوي المتوسط الحقيقي"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "95% of the data lie between 60 and 68",
+                    "ar": "٩٥٪ من البيانات تقع بين ٦٠ و٦٨"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "The 95% is a property of the procedure over repeated samples.",
+                "ar": "الـ ٩٥٪ خاصية للطريقة عبر عينات متكررة."
+              }
+            },
+            "atBy": {
+              "en": 119.37,
+              "ar": 111.84
+            }
+          },
+          "transcript": {
+            "en": "Every year my second-year students can recite the formula for a confidence interval. Then I ask what the ninety five percent refers to, and most say: the chance the true mean is inside this interval. Today: where a standard error comes from, how the bootstrap estimates it, and how to teach both without hand-waving. An estimate, such as a sample mean, is a random variable. Its sampling distribution is the spread of values it would take over all possible samples of the same size from the same population. The standard deviation of that distribution is the standard error. For a mean it is sigma over the square root of n, so four times the data only halves the error. The central limit theorem says the shape is close to normal for large n. We drew a thousand samples of thirty exam marks from a skewed population and plotted the means. The marks were skewed, but the means pile up in a near-normal hill around the true mean. In real research we have one sample, not a thousand. Efron's bootstrap resamples that one sample with replacement, recomputes the estimate many times, and uses the spread of those values as the standard error. Students meet the formula first and the idea never. Reverse that. Let them simulate many samples before any algebra, then derive sigma over root n to explain what they already saw. Quick check! A ninety five percent confidence interval for a mean is from sixty to sixty eight. Which statement is correct? The ninety five percent describes the method, not this one interval. Over many samples, about ninety five in a hundred intervals built this way would contain the true mean. In the app, open the sampling lab. Draw hundreds of samples, change the sample size, and watch the spread of the means shrink like one over root n. Your turn. A study has a standard error of four. How many times more data do we need to bring it down to two? Four times as much data. Remember: an estimate has a sampling distribution, its spread is the standard error, and the bootstrap estimates it from one sample. Try it in your next lecture: before showing any formula, give pairs a dataset and ask them to resample it two hundred times and plot the means. Then ask them to predict what happens when n is four times larger.",
+            "ar": "كل سنة طلاب سنة تانية عندي بيحفظوا معادلة فترة الثقة. وبعدين أسألهم الخمسة وتسعين في المية دي بتشير لإيه، وأغلبهم يقول: احتمال إن المتوسط الحقيقي جوّه الفترة دي. النهارده: الخطأ المعياري جاي منين، والـ bootstrap بيقدّره إزاي، وإزاي تدرّس الاتنين من غير كلام عايم. التقدير، زي متوسط العينة، متغيّر عشوائي. وتوزيع المعاينة بتاعه هو انتشار القيم اللي ممكن ياخدها على كل العينات الممكنة بنفس الحجم من نفس المجتمع. الانحراف المعياري للتوزيع ده اسمه الخطأ المعياري. وللمتوسط بيساوي سيجما على جذر n، يعني أربع أضعاف البيانات بتنصّ الخطأ بس. ونظرية النهاية المركزية بتقول إن الشكل بيقرّب من الطبيعي لما n تكبر. سحبنا ألف عينة من تلاتين درجة امتحان من مجتمع ملتوي ورسمنا المتوسطات. الدرجات كانت ملتوية، بس المتوسطات اتكوّمت في تلّ قريب من الطبيعي حوالين المتوسط الحقيقي. في البحث الحقيقي عندنا عينة واحدة، مش ألف. والـ bootstrap بتاع إفرون بيعيد السحب من العينة دي مع الإرجاع، ويحسب التقدير تاني مرات كتير، ويستعمل انتشار القيم دي كخطأ معياري. الطلاب بيقابلوا المعادلة الأول والفكرة أبدًا. اعكس ده. خلّيهم يعملوا محاكاة لعينات كتير قبل أي جبر، وبعدين يشتقّوا سيجما على جذر n علشان يفسّروا اللي شافوه فعلًا. سؤال سريع! فترة ثقة خمسة وتسعين في المية للمتوسط من ستين لتمانية وستين. أنهي جملة صح؟ الخمسة وتسعين في المية بتوصف الطريقة، مش الفترة دي بالذات. على عينات كتير، حوالي خمسة وتسعين من كل مية فترة متعمولة بالطريقة دي هتحتوي المتوسط الحقيقي. في التطبيق، افتح معمل العينات. اسحب مئات العينات، وغيّر حجم العينة، وشوف انتشار المتوسطات بيصغر زي واحد على جذر n. دورك. دراسة الخطأ المعياري بتاعها أربعة. محتاجين بيانات أكتر بكام مرة علشان ننزّله لاتنين؟ أربع أضعاف البيانات. افتكر: التقدير ليه توزيع معاينة، وانتشاره هو الخطأ المعياري، والـ bootstrap بيقدّره من عينة واحدة. جرّبها في محاضرتك الجاية: قبل ما تعرض أي معادلة، ادّي كل اتنين مجموعة بيانات واطلب منهم يعيدوا السحب منها ميتين مرة ويرسموا المتوسطات. وبعدين اسألهم يتوقّعوا إيه اللي هيحصل لما n تبقى أكبر أربع مرات."
+          },
+          "sources": {
+            "en": "/media/ds-u1-1/video-en.mp4",
+            "ar": "/media/ds-u1-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ds-u1-1/captions-en.vtt",
+            "ar": "/media/ds-u1-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ds-u1-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ds-u1-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ds-u1-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/ds-u1-1/light/audio/en.opus",
+              "manifest.json": "/media/ds-u1-1/light/manifest.json",
+              "scenes.json": "/media/ds-u1-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/ds-u1-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ds-u1-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 420,
+              "ar": 403
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Where a standard error comes from",
+            "ar": "من أين يأتي الخطأ المعياري"
+          },
+          "body": {
+            "en": "An estimator is a function of random data, so it is itself a random variable. Its sampling distribution is the distribution of its values over repeated samples of size n from the same population; the standard deviation of that distribution is the standard error. For the sample mean, SE = σ/√n, and the central limit theorem gives an approximately normal shape for large n whatever the population’s shape (Wasserman, 2004).\n\nIn practice we see one sample. Efron’s (1979) bootstrap treats that sample as a stand-in for the population: draw B resamples of size n with replacement, recompute the statistic on each, and use their standard deviation as the SE, or their 2.5th and 97.5th percentiles as a percentile interval. It works for medians, correlations and model coefficients where no tidy formula exists, but it cannot repair a biased sample, and it is unreliable for extremes such as the maximum.\n\nThe research on teaching is consistent: students who meet the formula first tend to read a 95% interval as a 95% chance that this interval holds μ. Simulation-first sequences, as recommended in the GAISE College Report (2016), let students see the long-run behaviour of the procedure before any algebra, and then the formula explains what they have already observed.",
+            "ar": "المقدِّر دالة في بيانات عشوائية، فهو نفسه متغيّر عشوائي. وتوزيع المعاينة له هو توزيع قيمه عبر عينات متكررة بحجم n من المجتمع نفسه، والانحراف المعياري لهذا التوزيع هو الخطأ المعياري. ولمتوسط العينة يكون ⁦SE =⁩ σ/√n، وتعطي نظرية النهاية المركزية شكلًا طبيعيًا تقريبًا عندما تكبر n أيًّا كان شكل المجتمع (Wasserman، ٢٠٠٤).\n\nوفي الواقع نرى عينة واحدة. ويعامل الـ bootstrap عند إفرون (١٩٧٩) هذه العينة بديلًا عن المجتمع: اسحب B عينة بحجم n مع الإرجاع، وأعد حساب الإحصاءة على كلٍّ منها، واستخدم انحرافها المعياري خطأً معياريًا، أو مئينيها ٢٫٥ و٩٧٫٥ فترةً مئينية. وهو يصلح للوسيط والارتباط ومعاملات النماذج حيث لا توجد معادلة مرتبة، لكنه لا يصلح عينة متحيزة، ولا يُعتمد عليه للقيم المتطرفة كالقيمة العظمى.\n\nوأبحاث التدريس متّسقة: الطلاب الذين يقابلون المعادلة أولًا يميلون إلى قراءة فترة ٩٥٪ على أنها احتمال ٩٥٪ أن تحوي هذه الفترة μ. أما تسلسل المحاكاة أولًا، كما يوصي تقرير GAISE الجامعي (٢٠١٦)، فيتيح للطلاب رؤية سلوك الطريقة على المدى الطويل قبل أي جبر، ثم تفسّر المعادلة ما لاحظوه بالفعل."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Sampling distribution",
+                "ar": "توزيع المعاينة"
+              },
+              "def": {
+                "en": "The distribution of an estimate over repeated samples of the same size.",
+                "ar": "توزيع تقدير ما عبر عينات متكررة بالحجم نفسه."
+              }
+            },
+            {
+              "term": {
+                "en": "Standard error",
+                "ar": "الخطأ المعياري"
+              },
+              "def": {
+                "en": "The standard deviation of an estimator’s sampling distribution.",
+                "ar": "الانحراف المعياري لتوزيع معاينة المقدِّر."
+              }
+            },
+            {
+              "term": {
+                "en": "Bootstrap",
+                "ar": "الـ bootstrap"
+              },
+              "def": {
+                "en": "Estimating a sampling distribution by resampling the data with replacement.",
+                "ar": "تقدير توزيع المعاينة بإعادة السحب من البيانات مع الإرجاع."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A study has a standard error of 4. How many times more data bring it down to 2?",
+            "ar": "خطأ معياري لدراسة يساوي ٤. كم ضعفًا من البيانات نحتاج ليصبح ٢؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Twice as much",
+                "ar": "الضعف"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Four times as much",
+                "ar": "أربعة أضعاف"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Eight times as much",
+                "ar": "ثمانية أضعاف"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "SE falls like 1/√n, so halving it needs four times the data.",
+            "ar": "يقلّ الخطأ المعياري بنسبة ⁦1/⁩√n، فتنصيفه يحتاج أربعة أضعاف البيانات."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Work out the standard errors.",
+            "ar": "احسب الأخطاء المعيارية."
+          },
+          "sentence": {
+            "en": [
+              "With σ = 12 and n = 36, SE = ",
+              {
+                "blank": 0
+              },
+              ". With n = 144, SE = ",
+              {
+                "blank": 1
+              },
+              "."
+            ],
+            "ar": [
+              "إذا كان σ = 12 و⁦n = 36⁩ فإن SE = ",
+              {
+                "blank": 0
+              },
+              ". وإذا كان ⁦n = 144⁩ فإن SE = ",
+              {
+                "blank": 1
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "2",
+              "4",
+              "0.5",
+              "1"
+            ],
+            "ar": [
+              "2",
+              "4",
+              "0.5",
+              "1"
+            ]
+          },
+          "answers": {
+            "en": [
+              "2",
+              "1"
+            ],
+            "ar": [
+              "2",
+              "1"
+            ]
+          },
+          "explain": {
+            "en": "12/√36 = 12/6 = 2; quadrupling n to 144 gives 12/12 = 1.",
+            "ar": "⁦12/⁩√⁦36 = 12/6 = 2⁩، ومضاعفة n أربع مرات إلى 144 تعطي ⁦12/12 = 1⁩."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "When is the plain percentile bootstrap a poor choice? Choose all that apply.",
+            "ar": "متى يكون الـ bootstrap المئيني البسيط اختيارًا ضعيفًا؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Estimating the maximum of a distribution",
+                "ar": "تقدير القيمة العظمى لتوزيع"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The sample was drawn only from volunteers",
+                "ar": "سُحبت العينة من المتطوعين فقط"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Estimating the SE of a median from n = 200",
+                "ar": "تقدير الخطأ المعياري للوسيط من ⁦n = 200⁩"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Observations are strongly dependent over time",
+                "ar": "المشاهدات مترابطة بقوة عبر الزمن"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Resampling can’t create values beyond the sample’s maximum, can’t fix a biased sample, and breaks time dependence unless you resample blocks; a median from 200 cases is a standard good use.",
+            "ar": "لا تستطيع إعادة السحب خلق قيم أكبر من أقصى قيمة في العينة، ولا تصلح عينة متحيزة، وتكسر الترابط الزمني ما لم تُسحب كتل، أما وسيط ٢٠٠ حالة فاستخدام جيد معتاد."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: draw hundreds of samples, change n from 10 to 40, and check that the spread of the means halves.",
+            "ar": "جرّب: اسحب مئات العينات، وغيّر n من ١٠ إلى ٤٠، وتحقّق من أن انتشار المتوسطات ينتصف."
+          },
+          "tool": "sampling"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "By the central limit theorem, a large sample from a skewed population is itself approximately normal.",
+            "ar": "وفق نظرية النهاية المركزية، تكون العينة الكبيرة من مجتمع ملتوٍ نفسها طبيعية تقريبًا."
+          },
+          "answer": false,
+          "explain": {
+            "en": "The CLT is about the sampling distribution of the mean; the data themselves stay skewed. This is one of the most common misreadings to target.",
+            "ar": "تتعلق النظرية بتوزيع معاينة المتوسط، أما البيانات نفسها فتبقى ملتوية. وهذه من أكثر القراءات الخاطئة شيوعًا التي ينبغي استهدافها."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each student statement to the misconception behind it.",
+            "ar": "طابق كل عبارة طالب مع التصور الخاطئ وراءها."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "“There’s a 95% chance μ is in my interval.”",
+                "ar": "«هناك احتمال ٩٥٪ أن تكون μ داخل فترتي.»"
+              },
+              "right": {
+                "en": "Probability attached to one fixed interval",
+                "ar": "نسبة الاحتمال إلى فترة واحدة ثابتة"
+              }
+            },
+            {
+              "left": {
+                "en": "“A bigger sample makes the data normal.”",
+                "ar": "«العينة الأكبر تجعل البيانات طبيعية.»"
+              },
+              "right": {
+                "en": "Confusing data with the sampling distribution",
+                "ar": "الخلط بين البيانات وتوزيع المعاينة"
+              }
+            },
+            {
+              "left": {
+                "en": "“Bootstrapping a million times fixes a small biased sample.”",
+                "ar": "«الـ bootstrap مليون مرة يصلح عينة صغيرة متحيزة.»"
+              },
+              "right": {
+                "en": "Resampling can’t add information",
+                "ar": "إعادة السحب لا تضيف معلومات"
+              }
+            },
+            {
+              "left": {
+                "en": "“SE and SD are the same thing.”",
+                "ar": "«الخطأ المعياري والانحراف المعياري شيء واحد.»"
+              },
+              "right": {
+                "en": "Spread of an estimate versus spread of the data",
+                "ar": "انتشار التقدير مقابل انتشار البيانات"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Naming the misconception lets you write a question that diagnoses it, rather than just marking the answer wrong.",
+            "ar": "تسمية التصور الخاطئ تتيح لك كتابة سؤال يشخّصه، بدل الاكتفاء بوضع علامة خطأ على الإجابة."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Where in your current module do students first meet a standard error? What would a simulation-first version of that session look like?",
+            "ar": "أين يقابل الطلاب الخطأ المعياري أول مرة في مقررك الحالي؟ وكيف ستبدو نسخة من تلك المحاضرة تبدأ بالمحاكاة؟"
+          },
+          "placeholder": {
+            "en": "For example: “Week 5, as a formula slide. I’d open with a resampling lab on the exam-marks data.”",
+            "ar": "مثلًا: «الأسبوع الخامس، كشريحة معادلات. سأبدأ بمعمل إعادة سحب على بيانات درجات الامتحان.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A simulation-first lab",
+            "ar": "مشروع: معمل يبدأ بالمحاكاة"
+          },
+          "task": {
+            "en": "Design a 90-minute lab for your module: students bootstrap a median and a correlation from a real dataset in Python or R, compare the bootstrap SE with the formula SE where one exists, and write a one-paragraph correct interpretation of their interval. Include the handout, the dataset and a 4-level rubric.",
+            "ar": "صمّم معملًا مدته ٩٠ دقيقة لمقررك: يطبّق الطلاب الـ bootstrap على وسيط ومعامل ارتباط من بيانات حقيقية بلغة Python أو R، ويقارنون الخطأ المعياري الناتج بالخطأ المعياري من المعادلة حين توجد، ويكتبون فقرة واحدة تفسّر فترتهم تفسيرًا صحيحًا. أرفق ورقة المعمل والبيانات ومعيار تقييم من ٤ مستويات."
+          },
+          "deliverable": {
+            "en": "The lab handout, the dataset and a rubric with four levels.",
+            "ar": "ورقة المعمل والبيانات ومعيار تقييم من أربعة مستويات."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: compute a bootstrap SE and percentile interval.",
+                "ar": "يستطيع الطلاب: حساب خطأ معياري بالـ bootstrap وفترة مئينية."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: explain what 95% confidence refers to.",
+                "ar": "يستطيع الطلاب: شرح ما تشير إليه ثقة ٩٥٪."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: say when the bootstrap fails.",
+                "ar": "يستطيع الطلاب: ذكر متى يفشل الـ bootstrap."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Sampling distributions and the bootstrap",
+            "ar": "توزيعات المعاينة والـ bootstrap"
+          },
+          "note": {
+            "en": "Data science · University · Lecture 1",
+            "ar": "علم البيانات، الجامعة، المحاضرة ١"
+          },
+          "narration": {
+            "en": "Ninety-five percent of what, exactly?",
+            "ar": "خمسة وتسعون بالمئة من ماذا بالضبط؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Define a sampling distribution and SE.",
+              "Use the bootstrap and know its limits.",
+              "Sequence teaching simulation-first."
+            ],
+            "ar": [
+              "نعرّف توزيع المعاينة والخطأ المعياري.",
+              "نستخدم الـ bootstrap ونعرف حدوده.",
+              "نرتّب التدريس بالمحاكاة أولًا."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Estimates vary from sample to sample.",
+              "SE = σ/√n.",
+              "Resampling can’t fix a biased sample."
+            ],
+            "ar": [
+              "التقديرات تختلف من عينة لأخرى.",
+              "الخطأ المعياري = σ/√n.",
+              "إعادة السحب لا تصلح عينة متحيزة."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Resample before you derive",
+            "ar": "أعد السحب قبل أن تشتقّ"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): What does 95% mean?",
+              "Simulate (20 min): 1,000 samples.",
+              "Derive (15 min): Explain the picture.",
+              "Bootstrap (15 min): One sample only.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): ⁦Ask students to write, alone, what a 95% confidence interval means; collect and sort the answers⁩.",
+              "المحاكاة (٢٠ دقيقة): ١٠٠٠ عينة.",
+              "الاشتقاق (١٥ دقيقة): فسّر الصورة.",
+              "الـ bootstrap (١٥ دقيقة): عينة واحدة فقط.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): ماذا تعني ٩٥٪؟",
+              "Simulate (20 min): Pairs draw 1,000 samples of n = 10 and n = 40 from a skewed population and plot the means.",
+              "Derive (15 min): Derive Var(x̄) = σ²/n on the board and check it against the two plots.",
+              "Bootstrap (15 min): Give one sample; students bootstrap the median and discuss when the method fails.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اطلب من الطلاب أن يكتبوا منفردين معنى فترة ثقة ٩٥٪، ثم اجمع الإجابات وصنّفها.",
+              "المحاكاة (٢٠ دقيقة): يسحب كل زوج ١٠٠٠ عينة بحجم ⁦n = 10⁩ و⁦n = 40⁩ من مجتمع ملتوٍ ويرسمون المتوسطات.",
+              "الاشتقاق (١٥ دقيقة): اشتقّ ⁦Var(x⁩̄) = σ²/n على السبّورة وقارنه بالرسمين.",
+              "الـ bootstrap (١٥ دقيقة): أعطِ عينة واحدة، فيطبّق الطلاب الـ bootstrap على الوسيط ويناقشون متى تفشل الطريقة.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which plot was narrower, and by how much?",
+              "Why can’t resampling fix a biased sample?",
+              "How will you assess interpretation, not just calculation?"
+            ],
+            "ar": [
+              "أيّ الرسمين أضيق، وبكم؟",
+              "لماذا لا تصلح إعادة السحب عينة متحيزة؟",
+              "كيف ستقيّم التفسير لا الحساب فقط؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one correct sentence interpreting a 95% confidence interval."
+            ],
+            "ar": [
+              "اكتب جملة واحدة صحيحة تفسّر فترة ثقة ٩٥٪."
+            ]
+          },
+          "narration": {
+            "en": "The 95% belongs to the method, not to one interval.",
+            "ar": "الـ ٩٥٪ تخص الطريقة لا فترة واحدة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Sampling distributions and the bootstrap",
+            "ar": "شرائح المحاضرة: توزيعات المعاينة والـ bootstrap"
+          },
+          "pages": 6,
+          "base": "ds-u1-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Sampling distributions and the bootstrap",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: توزيعات المعاينة والـ bootstrap"
+          },
+          "pages": 3,
+          "base": "ds-u1-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ds-u1-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DS.4",
+        "DS.1",
+        "T.PE.C"
+      ]
+    },
+    {
+      "id": "ds-u1-2",
+      "title": {
+        "en": "Bias, variance and cross-validation",
+        "ar": "التحيّز والتباين والتحقق المتقاطع"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Hand out two short notebooks, one with leakage and one without, and ask pairs to explain why their cross-validation scores differ before you say anything.",
+        "ar": "وزّع دفترين برمجيين قصيرين، أحدهما فيه تسريب والآخر لا، واطلب من كل زوج تفسير اختلاف درجات التحقق المتقاطع قبل أن تقول شيئًا."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Bias, variance and cross-validation",
+            "ar": "التحيّز والتباين والتحقق المتقاطع"
+          },
+          "src": null,
+          "duration": 199,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A perfect score",
+                "ar": "درجة كاملة"
+              }
+            },
+            {
+              "at": 27.1,
+              "atBy": {
+                "en": 27.1,
+                "ar": 24.7
+              },
+              "label": {
+                "en": "Bias and variance",
+                "ar": "التحيّز والتباين"
+              }
+            },
+            {
+              "at": 75.3,
+              "atBy": {
+                "en": 75.3,
+                "ar": 69.7
+              },
+              "label": {
+                "en": "Cross-validation",
+                "ar": "التحقق المتقاطع"
+              }
+            },
+            {
+              "at": 156.2,
+              "atBy": {
+                "en": 156.2,
+                "ar": 146.6
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 133.36,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Model A: training error 2, test error 20. Model B: training 12, test 14. Which do we choose?",
+                "ar": "النموذج A: خطأ التدريب ٢ والاختبار ٢٠. النموذج B: التدريب ١٢ والاختبار ١٤. أيّهما نختار؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Model A, it fits the data best",
+                    "ar": "النموذج A، فهو الأكثر توافقًا مع البيانات"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Model B, it has lower test error",
+                    "ar": "النموذج B، فخطأ اختباره أقل"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Either, training error is what counts",
+                    "ar": "أيّهما، فالمهم خطأ التدريب"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Choose on error for unseen data; A’s large gap signals high variance.",
+                "ar": "اختر بالخطأ على بيانات لم يرها النموذج، والفجوة الكبيرة في A علامة تباين مرتفع."
+              }
+            },
+            "atBy": {
+              "en": 133.36,
+              "ar": 125.17
+            }
+          },
+          "transcript": {
+            "en": "A student brought me a project with ninety nine percent accuracy. I asked one question: accuracy on what? It was the same data the model was trained on. On new data, it fell to sixty one. Today: the bias–variance trade-off, honest error estimates with cross-validation, and the leakage mistakes students make. For squared error, the expected error on a new point splits into three parts: bias squared, variance, and noise we can never remove. Simple models have high bias. Flexible models have high variance. As complexity grows, training error keeps falling, but test error falls and then rises again. The best model sits at the bottom of that U, not at the lowest training error. We fitted polynomials of degree one to fifteen to two hundred points. Test error was lowest at degree four. By degree fifteen the curve wiggled through every training point and missed new ones. Cross-validation estimates test error without wasting data. Split the data into k folds, train on k minus one, test on the one left out, and average over all k. Five or ten folds is the usual choice. The commonest student bug is leakage. They scale or select features on all the data, then split. The test fold has already shaped the model. Every preprocessing step must be fitted inside each training fold. Quick check! Model A has training error two and test error twenty. Model B has training error twelve and test error fourteen. Which should we choose, and why? Model B. The gap in model A between two and twenty is the signature of high variance. We judge models on data they have not seen. In the app, open the overfitting lab. Raise the model's complexity step by step and watch training error fall while test error turns back up. Your turn. A student standardises all the data, then runs five-fold cross-validation. Is the estimate honest? No, it leaks. Remember: error is bias plus variance plus noise, choose the bottom of the U, and fit every step inside the training fold. Try it in your next lecture: hand out two short notebooks, one with leakage and one without. Then ask pairs to find why their cross-validation scores differ before you explain.",
+            "ar": "طالب جابلي مشروع دقته تسعة وتسعين في المية. سألته سؤال واحد: دقة على إيه؟ كانت على نفس البيانات اللي الموديل اتدرّب عليها. وعلى بيانات جديدة، نزلت لواحد وستين. النهارده: الموازنة بين التحيّز والتباين، وتقدير الخطأ بأمانة بالتحقق المتقاطع، وأخطاء التسريب اللي الطلاب بيقعوا فيها. مع الخطأ التربيعي، الخطأ المتوقّع على نقطة جديدة بيتقسم لتلات أجزاء: مربع التحيّز، والتباين، والضوضاء اللي عمرنا ما نقدر نشيلها. الموديلات البسيطة تحيّزها عالي. والموديلات المرنة تباينها عالي. لما التعقيد بيزيد، خطأ التدريب بيفضل ينزل، بس خطأ الاختبار بينزل وبعدين يطلع تاني. أحسن موديل قاعد في قاع حرف U ده، مش عند أقل خطأ تدريب. ركّبنا كثيرات حدود من الدرجة واحد لخمستاشر على ميتين نقطة. خطأ الاختبار كان أقل حاجة عند الدرجة أربعة. وعند خمستاشر المنحنى كان بيتلوّى بين كل نقط التدريب ويفوّت الجديدة. التحقق المتقاطع بيقدّر خطأ الاختبار من غير ما يضيّع بيانات. قسّم البيانات لـ k طيّات، درّب على k ناقص واحد، واختبر على اللي فاضلة، وخد المتوسط على الـ k كلهم. خمسة أو عشرة هو الاختيار المعتاد. أشهر غلطة عند الطلاب هي التسريب. بيعملوا تحجيم أو اختيار للخصائص على كل البيانات، وبعدين يقسّموا. كده طيّة الاختبار شكّلت الموديل خلاص. كل خطوة معالجة لازم تتركّب جوّه كل طيّة تدريب. سؤال سريع! موديل A خطأ التدريب بتاعه اتنين وخطأ الاختبار عشرين. وموديل B خطأ التدريب اتناشر وخطأ الاختبار أربعتاشر. نختار أنهي، وليه؟ موديل B. الفرق في موديل A بين اتنين وعشرين هو علامة التباين العالي. إحنا بنحكم على الموديلات ببيانات ما شافتهاش. في التطبيق، افتح معمل الإفراط في التوافق. زوّد تعقيد الموديل خطوة خطوة وشوف خطأ التدريب بينزل وخطأ الاختبار بيرجع يطلع. دورك. طالب عمل توحيد لكل البيانات، وبعدين عمل تحقق متقاطع بخمس طيّات. التقدير ده أمين؟ لأ، فيه تسريب. افتكر: الخطأ تحيّز وتباين وضوضاء، اختار قاع الـ U، وركّب كل خطوة جوّه طيّة التدريب. جرّبها في محاضرتك الجاية: وزّع نوتبوكين قصيرين، واحد فيه تسريب وواحد من غيره. وبعدين اطلب من كل اتنين يلاقوا ليه درجات التحقق المتقاطع مختلفة قبل ما تشرح."
+          },
+          "sources": {
+            "en": "/media/ds-u1-2/video-en.mp4",
+            "ar": "/media/ds-u1-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ds-u1-2/captions-en.vtt",
+            "ar": "/media/ds-u1-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ds-u1-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ds-u1-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ds-u1-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/ds-u1-2/light/audio/en.opus",
+              "manifest.json": "/media/ds-u1-2/light/manifest.json",
+              "scenes.json": "/media/ds-u1-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/ds-u1-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ds-u1-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 434,
+              "ar": 411
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "The training score lies",
+            "ar": "درجة التدريب تكذب"
+          },
+          "body": {
+            "en": "For squared-error loss, the expected error at a new point decomposes as bias² + variance + irreducible noise (Hastie, Tibshirani and Friedman, 2009). Rigid models miss real structure (high bias); flexible models chase noise in the particular sample (high variance). Training error falls monotonically with flexibility, while test error traces a U, so the training score is not evidence of predictive skill.\n\nk-fold cross-validation estimates test error by rotating a held-out fold: train on k − 1 folds, score the remaining one, and average. Five or ten folds trade bias against the variance of the estimate well (James et al., ISLR). Use it to choose a model or tuning parameter, then report performance on a final test set that was never used for any choice; otherwise the reported score is optimistic.\n\nThe classroom failure is leakage: scaling, imputing or selecting features on the full data before splitting, or splitting rows of the same patient or student across folds. Teach preprocessing as part of the model, fitted inside each training fold, for example with a scikit-learn Pipeline, and make students state their unit of independence before they split.",
+            "ar": "مع دالة الخطأ التربيعي، يتحلّل الخطأ المتوقع عند نقطة جديدة إلى التحيّز² + التباين + ضوضاء لا يمكن إزالتها (Hastie وTibshirani وFriedman، ٢٠٠٩). فالنماذج الجامدة تفوّت بنية حقيقية (تحيّز مرتفع)، والنماذج المرنة تلاحق الضوضاء في العينة بعينها (تباين مرتفع). ويهبط خطأ التدريب باطّراد مع المرونة، بينما يرسم خطأ الاختبار حرف U، فدرجة التدريب ليست دليلًا على مهارة التنبؤ.\n\nويقدّر التحقق المتقاطع بـ k طيّة خطأ الاختبار بتدوير طيّة محجوزة: درّب على ⁦k − 1⁩ طيّة، وقيّم على الباقية، وخذ المتوسط. وتوازن خمس طيّات أو عشر بين التحيّز وتباين التقدير جيدًا (James وآخرون، ISLR). استخدمه لاختيار النموذج أو معامل الضبط، ثم أبلغ عن الأداء على مجموعة اختبار نهائية لم تُستخدم في أي اختيار، وإلا جاءت الدرجة المعلنة متفائلة.\n\nوالإخفاق الصفّي هو التسريب: التحجيم أو تعويض القيم المفقودة أو اختيار الخصائص على كامل البيانات قبل التقسيم، أو توزيع صفوف المريض أو الطالب نفسه على طيّات مختلفة. درّس المعالجة جزءًا من النموذج تُركَّب داخل كل طيّة تدريب، مثلًا باستخدام Pipeline في scikit-learn، واطلب من الطلاب تحديد وحدة الاستقلال قبل التقسيم."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Bias–variance trade-off",
+                "ar": "الموازنة بين التحيّز والتباين"
+              },
+              "def": {
+                "en": "Flexibility lowers bias but raises variance; test error is lowest in between.",
+                "ar": "المرونة تخفض التحيّز وترفع التباين، وخطأ الاختبار أقل ما يكون بينهما."
+              }
+            },
+            {
+              "term": {
+                "en": "k-fold cross-validation",
+                "ar": "التحقق المتقاطع بـ k طيّة"
+              },
+              "def": {
+                "en": "Averaging held-out error over k rotating folds.",
+                "ar": "متوسط الخطأ على طيّات محجوزة تدور k مرة."
+              }
+            },
+            {
+              "term": {
+                "en": "Leakage",
+                "ar": "التسريب"
+              },
+              "def": {
+                "en": "Information from test data reaching the model during training.",
+                "ar": "وصول معلومات من بيانات الاختبار إلى النموذج أثناء التدريب."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "A student standardises all the data, then runs 5-fold cross-validation. Is the estimate honest?",
+            "ar": "وحّد طالب مقاييس كل البيانات ثم أجرى تحققًا متقاطعًا بخمس طيّات. هل التقدير أمين؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Yes, scaling doesn’t use the labels",
+                "ar": "نعم، فالتوحيد لا يستخدم التصنيفات"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "No, the test folds leaked into the scaling",
+                "ar": "لا، تسرّبت طيّات الاختبار إلى التوحيد"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Yes, if k is at least 5",
+                "ar": "نعم، إذا كان k خمسة على الأقل"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Any statistic computed on the test fold leaks into the model.",
+            "ar": "أي إحصاءة تُحسب من طيّة الاختبار تتسرّب إلى النموذج."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Work out the cross-validation estimate.",
+            "ar": "احسب تقدير التحقق المتقاطع."
+          },
+          "sentence": {
+            "en": [
+              "Fold errors 10, 12, 8, 14, 11 give a 5-fold CV error of ",
+              {
+                "blank": 0
+              },
+              ". The final test set is used ",
+              {
+                "blank": 1
+              },
+              " times for choosing the model."
+            ],
+            "ar": [
+              "أخطاء الطيّات 10 و12 و8 و14 و11 تعطي خطأ تحقق متقاطع بخمس طيّات قدره ",
+              {
+                "blank": 0
+              },
+              ". وتُستخدم مجموعة الاختبار النهائية ",
+              {
+                "blank": 1
+              },
+              " مرة لاختيار النموذج."
+            ]
+          },
+          "bank": {
+            "en": [
+              "11",
+              "55",
+              "5",
+              "0"
+            ],
+            "ar": [
+              "11",
+              "55",
+              "5",
+              "0"
+            ]
+          },
+          "answers": {
+            "en": [
+              "11",
+              "0"
+            ],
+            "ar": [
+              "11",
+              "0"
+            ]
+          },
+          "explain": {
+            "en": "(10 + 12 + 8 + 14 + 11) / 5 = 11; the final test set is never used for choices, or its score becomes optimistic.",
+            "ar": "⁦(10 + 12 + 8 + 14 + 11) / 5 = 11⁩، ولا تُستخدم مجموعة الاختبار النهائية في أي اختيار، وإلا صارت درجتها متفائلة."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which of these leak information into a cross-validation estimate? Choose all that apply.",
+            "ar": "أيّ مما يلي يسرّب معلومات إلى تقدير التحقق المتقاطع؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Selecting the 20 most correlated features on all the data, then running CV",
+                "ar": "اختيار أكثر ٢٠ خاصية ارتباطًا على كل البيانات ثم إجراء التحقق"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Several rows per student, split randomly across folds",
+                "ar": "عدة صفوف لكل طالب موزعة عشوائيًا على الطيّات"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Fitting the scaler inside each training fold",
+                "ar": "تركيب التحجيم داخل كل طيّة تدريب"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Filling missing values with the mean of all rows first",
+                "ar": "ملء القيم المفقودة بمتوسط كل الصفوف أولًا"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Feature selection and imputation on all rows, and splitting one student’s rows across folds, all let test information in; scaling inside each fold is correct.",
+            "ar": "اختيار الخصائص وتعويض القيم على كل الصفوف، وتوزيع صفوف الطالب الواحد على الطيّات، كلها تُدخل معلومات الاختبار، أما التحجيم داخل كل طيّة فصحيح."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: raise the model’s complexity step by step and find where test error turns back up.",
+            "ar": "جرّب: ارفع تعقيد النموذج خطوة خطوة وحدّد أين يعود خطأ الاختبار إلى الارتفاع."
+          },
+          "tool": "overfit"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "Adding more training data mainly reduces a model’s variance, not its bias.",
+            "ar": "إضافة مزيد من بيانات التدريب تخفض تباين النموذج أساسًا لا تحيّزه."
+          },
+          "answer": true,
+          "explain": {
+            "en": "More data stabilises a flexible fit; a model that is too simple stays wrong however much data it sees.",
+            "ar": "تجعل البيانات الإضافية التوافق المرن أكثر استقرارًا، أما النموذج البسيط جدًا فيبقى مخطئًا مهما رأى من بيانات."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each symptom to its most likely cause.",
+            "ar": "طابق كل عرض مع سببه الأرجح."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Training and test error both high",
+                "ar": "خطأ التدريب والاختبار مرتفعان معًا"
+              },
+              "right": {
+                "en": "High bias",
+                "ar": "تحيّز مرتفع"
+              }
+            },
+            {
+              "left": {
+                "en": "Training error low, test error high",
+                "ar": "خطأ التدريب منخفض والاختبار مرتفع"
+              },
+              "right": {
+                "en": "High variance",
+                "ar": "تباين مرتفع"
+              }
+            },
+            {
+              "left": {
+                "en": "CV score far better than the later real-world score",
+                "ar": "درجة التحقق أفضل بكثير من الأداء الفعلي لاحقًا"
+              },
+              "right": {
+                "en": "Leakage",
+                "ar": "تسريب"
+              }
+            },
+            {
+              "left": {
+                "en": "CV error changes a lot between random splits",
+                "ar": "خطأ التحقق يتغير كثيرًا بين التقسيمات العشوائية"
+              },
+              "right": {
+                "en": "Too few data or folds",
+                "ar": "بيانات أو طيّات قليلة جدًا"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Asking students to diagnose from symptoms builds the judgement a formula test can’t reach.",
+            "ar": "مطالبة الطلاب بالتشخيص من الأعراض تبني الحكم الذي لا يصل إليه اختبار المعادلات."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Think of a student project you marked last year. Could leakage have inflated its score? How would your project brief prevent it now?",
+            "ar": "تذكّر مشروع طالب صحّحته العام الماضي. هل يمكن أن يكون التسريب قد ضخّم درجته؟ وكيف يمنعه وصف مشروعك الآن؟"
+          },
+          "placeholder": {
+            "en": "For example: “They imputed before splitting. I’ll require a Pipeline and a held-out test set.”",
+            "ar": "مثلًا: «عوّضوا القيم قبل التقسيم. سأشترط Pipeline ومجموعة اختبار محجوزة.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Find the leak",
+            "ar": "مشروع: اكتشف التسريب"
+          },
+          "task": {
+            "en": "Build a seminar exercise: three short notebooks on one public dataset, each with a different leak (feature selection, imputation, grouped rows), plus one correct version. Students must find each leak, fix it, and report the honest CV error. Write the answer key and a marking guide.",
+            "ar": "صمّم تمرينًا للحلقة النقاشية: ثلاثة دفاتر برمجية قصيرة على بيانات عامة واحدة، في كل منها تسريب مختلف (اختيار الخصائص، تعويض القيم، الصفوف المجمّعة)، ونسخة صحيحة واحدة. على الطلاب اكتشاف كل تسريب وإصلاحه والإبلاغ عن خطأ التحقق الأمين. اكتب مفتاح الإجابة ودليل التصحيح."
+          },
+          "deliverable": {
+            "en": "Four notebooks, an answer key and a marking guide.",
+            "ar": "أربعة دفاتر برمجية ومفتاح إجابة ودليل تصحيح."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: explain the bias–variance trade-off.",
+                "ar": "يستطيع الطلاب: شرح الموازنة بين التحيّز والتباين."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: run cross-validation correctly.",
+                "ar": "يستطيع الطلاب: إجراء التحقق المتقاطع إجراءً صحيحًا."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: find and fix leakage.",
+                "ar": "يستطيع الطلاب: اكتشاف التسريب وإصلاحه."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Bias, variance and cross-validation",
+            "ar": "التحيّز والتباين والتحقق المتقاطع"
+          },
+          "note": {
+            "en": "Data science · University · Lecture 2",
+            "ar": "علم البيانات، الجامعة، المحاضرة ٢"
+          },
+          "narration": {
+            "en": "Ninety-nine percent accuracy, on what?",
+            "ar": "دقة تسعة وتسعين بالمئة، على ماذا؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Decompose expected error.",
+              "Estimate error with cross-validation.",
+              "Prevent leakage in student work."
+            ],
+            "ar": [
+              "نحلّل الخطأ المتوقع.",
+              "نقدّر الخطأ بالتحقق المتقاطع.",
+              "نمنع التسريب في أعمال الطلاب."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Error = bias² + variance + noise.",
+              "Choose on unseen data.",
+              "Preprocess inside each fold."
+            ],
+            "ar": [
+              "الخطأ = تحيّز² + تباين + ضوضاء.",
+              "اختر على بيانات غير مرئية.",
+              "عالج داخل كل طيّة."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Find the leak",
+            "ar": "اكتشف التسريب"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Which model wins?",
+              "Teach (15 min): The U-curve.",
+              "Hunt (20 min): Three notebooks.",
+              "Fix (15 min): A pipeline.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): ⁦Show two models' training and test errors and ask students to vote, then reveal the real-world results⁩.",
+              "الشرح (١٥ دقيقة): منحنى U.",
+              "البحث (٢٠ دقيقة): ثلاثة دفاتر.",
+              "الإصلاح (١٥ دقيقة): Pipeline.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): أيّ نموذج يفوز؟",
+              "Teach (15 min): Derive the decomposition and fit polynomials of rising degree live.",
+              "Hunt (20 min): Pairs compare CV scores across the leaky and clean notebooks and find each leak.",
+              "Fix (15 min): Rewrite one notebook with a Pipeline and grouped folds, and compare the honest score.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض خطأ التدريب والاختبار لنموذجين واطلب من الطلاب التصويت، ثم اكشف النتائج الفعلية.",
+              "الشرح (١٥ دقيقة): اشتقّ التحليل وركّب كثيرات حدود بدرجات متزايدة مباشرة.",
+              "البحث (٢٠ دقيقة): يقارن كل زوج درجات التحقق بين الدفاتر المسرّبة والسليمة ويكتشفون كل تسريب.",
+              "الإصلاح (١٥ دقيقة): أعد كتابة دفتر واحد باستخدام Pipeline وطيّات مجمّعة، وقارن الدرجة الأمينة.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Why does training error always fall?",
+              "What is the unit of independence in your data?",
+              "How will your brief stop leakage?"
+            ],
+            "ar": [
+              "لماذا يهبط خطأ التدريب دائمًا؟",
+              "ما وحدة الاستقلال في بياناتك؟",
+              "كيف سيمنع وصف مشروعك التسريب؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name one leak and the line of code that fixes it."
+            ],
+            "ar": [
+              "اذكر تسريبًا واحدًا وسطر الكود الذي يصلحه."
+            ]
+          },
+          "narration": {
+            "en": "Judge every model on data it has not seen.",
+            "ar": "احكم على كل نموذج ببيانات لم يرها."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Bias, variance and cross-validation",
+            "ar": "شرائح المحاضرة: التحيّز والتباين والتحقق المتقاطع"
+          },
+          "pages": 6,
+          "base": "ds-u1-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Bias, variance and cross-validation",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: التحيّز والتباين والتحقق المتقاطع"
+          },
+          "pages": 3,
+          "base": "ds-u1-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ds-u1-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DS.3",
+        "DS.4",
+        "T.PE.C"
+      ]
+    },
+    {
+      "id": "ds-u1-3",
+      "title": {
+        "en": "Causal inference: DAGs and difference-in-differences",
+        "ar": "الاستدلال السببي: المخططات السببية والفروق في الفروق"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Give teams one news headline that claims a cause; ask them to draw the causal diagram and name one confounder the article ignored.",
+        "ar": "أعطِ كل فريق عنوان خبر يدّعي سببًا، واطلب منهم رسم المخطط السببي وتسمية متغير مربك واحد تجاهله المقال."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Causal inference: DAGs and difference-in-differences",
+            "ar": "الاستدلال السببي: المخططات السببية والفروق في الفروق"
+          },
+          "src": null,
+          "duration": 198,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Tutoring and grades",
+                "ar": "الدروس والدرجات"
+              }
+            },
+            {
+              "at": 26.1,
+              "atBy": {
+                "en": 26.1,
+                "ar": 22.2
+              },
+              "label": {
+                "en": "Confounders and DAGs",
+                "ar": "المتغيرات المربكة والمخططات"
+              }
+            },
+            {
+              "at": 77.9,
+              "atBy": {
+                "en": 77.9,
+                "ar": 69.4
+              },
+              "label": {
+                "en": "Difference-in-differences",
+                "ar": "الفروق في الفروق"
+              }
+            },
+            {
+              "at": 151.8,
+              "atBy": {
+                "en": 151.8,
+                "ar": 140.8
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 129.71,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Tutoring affects study hours, which affect grades. For the total effect of tutoring, adjust for study hours?",
+                "ar": "تؤثر الدروس في ساعات المذاكرة، وتؤثر الساعات في الدرجات. لتقدير الأثر الكلي للدروس، هل نعدّل على ساعات المذاكرة؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Yes, always adjust for more variables",
+                    "ar": "نعم، عدّل دائمًا على متغيرات أكثر"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "No, study hours are a mediator",
+                    "ar": "لا، ساعات المذاكرة متغير وسيط"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Yes, it removes confounding",
+                    "ar": "نعم، فهذا يزيل الإرباك"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Adjusting for a mediator blocks part of the effect you want.",
+                "ar": "التعديل على الوسيط يحجب جزءًا من الأثر المطلوب."
+              }
+            },
+            "atBy": {
+              "en": 129.71,
+              "ar": 115.53
+            }
+          },
+          "transcript": {
+            "en": "Our faculty found that students who used the tutoring centre had lower grades. A dean proposed closing it. Before anyone voted, I asked: who chooses to go to tutoring? Today: why correlation misleads, how a causal diagram tells you what to adjust for, and how difference-in-differences estimates an effect. A confounder causes both the treatment and the outcome. Here, prior struggle sends students to tutoring and also lowers grades. The raw comparison mixes the effect of tutoring with the effect of struggling. Pearl's causal diagrams make assumptions explicit. Arrows mean direct causes. To estimate an effect, block every back-door path by adjusting for confounders. But never adjust for a collider or a mediator. One department added tutoring in a new term; another did not. The first rose from sixty to seventy. The second rose from sixty two to sixty six anyway. Some of that rise would have happened without tutoring. Difference-in-differences subtracts the comparison group's change from the treated group's change. Ten minus four gives an effect of six points. It assumes both groups would have moved in parallel without the treatment. Students learn causal reasoning best when they must defend a decision. Give them a real policy question, ask them to draw the diagram first, and grade the assumptions they state, not only the number. Quick check! Tutoring affects study hours, and study hours affect grades. To estimate the total effect of tutoring on grades, should we adjust for study hours? No. Study hours are a mediator, part of how tutoring works. Adjusting for them removes some of the very effect we want to measure. In the app, open the scatter lab. Plot grade against tutoring hours, then colour points by prior grade and see how the trend changes within each group. Your turn. Treated group: from fifty to fifty eight. Comparison group: from fifty two to fifty five. What is the difference-in-differences estimate? Five points: eight minus three. Remember: draw the diagram, adjust for confounders but not mediators, and use a comparison group with parallel trends. Try it in your next lecture: give teams one news headline claiming a cause, ask them to draw the causal diagram. Then have them name one confounder the article ignored.",
+            "ar": "الكلية عندنا لقت إن الطلاب اللي بيروحوا مركز الدروس درجاتهم أقل. عميد اقترح نقفله. قبل ما حد يصوّت، سألت: مين اللي بيختار يروح الدروس؟ النهارده: ليه الارتباط بيضلّل، وإزاي المخطط السببي بيقولك تعدّل على إيه، وإزاي الفروق في الفروق بتقدّر الأثر. المتغير المربك بيسبب المعالجة والنتيجة مع بعض. هنا، التعثّر السابق بيودّي الطلاب للدروس وكمان بيقلّل الدرجات. المقارنة الخام بتخلط أثر الدروس بأثر التعثّر. المخططات السببية بتاعة بيرل بتخلّي الافتراضات واضحة. الأسهم معناها أسباب مباشرة. علشان تقدّر أثر، اقفل كل مسار خلفي بالتعديل على المتغيرات المربكة. بس عمرك ما تعدّل على متغير تصادم أو وسيط. قسم ضاف دروس في ترم جديد، وقسم تاني لأ. الأول طلع من ستين لسبعين. والتاني طلع من اتنين وستين لستة وستين برضه. جزء من الطلوع ده كان هيحصل من غير دروس. الفروق في الفروق بتطرح تغيّر مجموعة المقارنة من تغيّر المجموعة المعالَجة. عشرة ناقص أربعة يدّي أثر ست درجات. وده بيفترض إن المجموعتين كانوا هيمشوا بالتوازي من غير المعالجة. الطلاب بيتعلموا الاستدلال السببي أحسن لما يضطروا يدافعوا عن قرار. ادّيهم سؤال سياسة حقيقي، واطلب منهم يرسموا المخطط الأول، وقيّم الافتراضات اللي كتبوها، مش الرقم بس. سؤال سريع! الدروس بتأثر على ساعات المذاكرة، وساعات المذاكرة بتأثر على الدرجات. علشان نقدّر الأثر الكلي للدروس على الدرجات، نعدّل على ساعات المذاكرة؟ لأ. ساعات المذاكرة متغير وسيط، جزء من الطريقة اللي الدروس بتشتغل بيها. التعديل عليها بيشيل جزء من الأثر اللي إحنا عايزين نقيسه. في التطبيق، افتح معمل الانتشار. ارسم الدرجة قصاد ساعات الدروس، وبعدين لوّن النقط حسب الدرجة السابقة وشوف الاتجاه بيتغيّر إزاي جوّه كل مجموعة. دورك. المجموعة المعالَجة: من خمسين لتمانية وخمسين. ومجموعة المقارنة: من اتنين وخمسين لخمسة وخمسين. تقدير الفروق في الفروق كام؟ خمس درجات: تمانية ناقص تلاتة. افتكر: ارسم المخطط، وعدّل على المربكات مش الوسطاء، واستعمل مجموعة مقارنة باتجاهات متوازية. جرّبها في محاضرتك الجاية: ادّي كل فريق عنوان خبر بيدّعي سبب، واطلب منهم يرسموا المخطط السببي. وبعدين خلّيهم يسمّوا متغير مربك واحد المقال تجاهله."
+          },
+          "sources": {
+            "en": "/media/ds-u1-3/video-en.mp4",
+            "ar": "/media/ds-u1-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ds-u1-3/captions-en.vtt",
+            "ar": "/media/ds-u1-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ds-u1-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ds-u1-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ds-u1-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/ds-u1-3/light/audio/en.opus",
+              "manifest.json": "/media/ds-u1-3/light/manifest.json",
+              "scenes.json": "/media/ds-u1-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/ds-u1-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ds-u1-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 431,
+              "ar": 405
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "From correlation to cause",
+            "ar": "من الارتباط إلى السبب"
+          },
+          "body": {
+            "en": "A causal effect compares what happens to the same units with and without a treatment, one of which we never observe. Randomisation solves this by making groups comparable on average. Without it, a confounder that drives both treatment and outcome biases the raw comparison, and in extreme cases reverses it, as in Simpson’s paradox.\n\nPearl’s (2009) directed acyclic graphs make the assumptions explicit. The back-door criterion says: to estimate the effect of X on Y, adjust for a set of variables that blocks every back-door path from X to Y and contains no descendant of X. So adjust for confounders, but not for mediators (they carry the effect) or colliders (conditioning on them opens a spurious path).\n\nWith panel data, difference-in-differences subtracts the comparison group’s change from the treated group’s change, removing fixed group differences and common shocks (Angrist and Pischke, 2009). Its key assumption, parallel trends, cannot be proved, but pre-period trends can be inspected. In teaching, grade the stated diagram and assumptions as heavily as the estimate: that is where causal reasoning lives.",
+            "ar": "يقارن الأثر السببي ما يحدث للوحدات نفسها مع المعالجة ودونها، وإحدى الحالتين لا نراها أبدًا. ويحلّ التوزيع العشوائي ذلك بجعل المجموعات متكافئة في المتوسط. ومن دونه، يحيّز المتغير المربك الذي يؤثر في المعالجة والنتيجة معًا المقارنة الخام، وقد يعكسها في الحالات القصوى، كما في مفارقة سيمبسون.\n\nوتجعل المخططات اللادورية الموجّهة عند بيرل (٢٠٠٩) الافتراضات صريحة. ويقول معيار الباب الخلفي: لتقدير أثر X في Y، عدّل على مجموعة متغيرات تحجب كل مسار خلفي من X إلى Y ولا تحوي أي متغير ناتج عن X. فعدّل على المربكات، لا على الوسطاء (فهي تحمل الأثر) ولا على متغيرات التصادم (فالتكييف عليها يفتح مسارًا زائفًا).\n\nومع البيانات الطولية، تطرح طريقة الفروق في الفروق تغيّر مجموعة المقارنة من تغيّر المجموعة المعالَجة، فتزيل الفروق الثابتة بين المجموعتين والصدمات المشتركة (Angrist وPischke، ٢٠٠٩). وافتراضها الأساسي، الاتجاهات المتوازية، لا يمكن إثباته، لكن يمكن فحص الاتجاهات قبل المعالجة. وفي التدريس، قيّم المخطط والافتراضات المعلنة بقدر تقييم التقدير، ففيهما يكمن الاستدلال السببي."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Confounder",
+                "ar": "المتغير المربك"
+              },
+              "def": {
+                "en": "A common cause of the treatment and the outcome.",
+                "ar": "سبب مشترك للمعالجة والنتيجة."
+              }
+            },
+            {
+              "term": {
+                "en": "Back-door criterion",
+                "ar": "معيار الباب الخلفي"
+              },
+              "def": {
+                "en": "Adjust for variables that block every back-door path and are not caused by the treatment.",
+                "ar": "التعديل على متغيرات تحجب كل مسار خلفي ولا تنتج عن المعالجة."
+              }
+            },
+            {
+              "term": {
+                "en": "Parallel trends",
+                "ar": "الاتجاهات المتوازية"
+              },
+              "def": {
+                "en": "Without treatment, both groups would have changed by the same amount.",
+                "ar": "لولا المعالجة لتغيّرت المجموعتان بالمقدار نفسه."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Treated: 50 to 58. Comparison: 52 to 55. What is the DiD estimate?",
+            "ar": "المعالَجة: من ٥٠ إلى ٥٨. المقارنة: من ٥٢ إلى ٥٥. ما تقدير الفروق في الفروق؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "8 points",
+                "ar": "٨ درجات"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "5 points",
+                "ar": "٥ درجات"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "3 points",
+                "ar": "٣ درجات"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "(58 − 50) − (55 − 52) = 8 − 3 = 5.",
+            "ar": "⁦(58 − 50) − (55 − 52) = 8 − 3 = 5.⁩"
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Work out the difference-in-differences.",
+            "ar": "احسب الفروق في الفروق."
+          },
+          "sentence": {
+            "en": [
+              "Treated: 40 → 49. Comparison: 45 → 48. The treated change is ",
+              {
+                "blank": 0
+              },
+              ", the comparison change is ",
+              {
+                "blank": 1
+              },
+              ", so the effect is ",
+              {
+                "blank": 2
+              },
+              "."
+            ],
+            "ar": [
+              "المعالَجة: 40 ← 49. المقارنة: 45 ← 48. تغيّر المعالَجة ",
+              {
+                "blank": 0
+              },
+              "، وتغيّر المقارنة ",
+              {
+                "blank": 1
+              },
+              "، فالأثر ",
+              {
+                "blank": 2
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "9",
+              "4",
+              "12",
+              "3",
+              "6"
+            ],
+            "ar": [
+              "9",
+              "4",
+              "12",
+              "3",
+              "6"
+            ]
+          },
+          "answers": {
+            "en": [
+              "9",
+              "3",
+              "6"
+            ],
+            "ar": [
+              "9",
+              "3",
+              "6"
+            ]
+          },
+          "explain": {
+            "en": "49 − 40 = 9, 48 − 45 = 3, and 9 − 3 = 6 points, assuming parallel trends.",
+            "ar": "⁦49 − 40 = 9⁩، و⁦48 − 45 = 3⁩، و⁦9 − 3 = 6⁩ درجات، بافتراض الاتجاهات المتوازية."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "To estimate the effect of tutoring on grades, which should you adjust for? Choose all that apply.",
+            "ar": "لتقدير أثر الدروس في الدرجات، على أيّ المتغيرات تعدّل؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Prior grade, which affects both tutoring and grades",
+                "ar": "الدرجة السابقة، التي تؤثر في الدروس والدرجات"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Hours studied, which tutoring changes",
+                "ar": "ساعات المذاكرة، التي تغيّرها الدروس"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Year of study, which affects both",
+                "ar": "سنة الدراسة، التي تؤثر في الاثنين"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Being on the dean’s list, caused by both tutoring and grades",
+                "ar": "الإدراج في قائمة التفوّق، الناتج عن الدروس والدرجات"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "c"
+          ],
+          "explain": {
+            "en": "Prior grade and year are confounders; hours studied is a mediator and the dean’s list is a collider, so adjusting for either biases the estimate.",
+            "ar": "الدرجة السابقة وسنة الدراسة مربكان، وساعات المذاكرة وسيط، وقائمة التفوّق متغير تصادم، فالتعديل على أيّ منهما يحيّز التقدير."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: plot grade against tutoring hours, then compare the trend within each prior-grade group.",
+            "ar": "جرّب: ارسم الدرجة مقابل ساعات الدروس، ثم قارن الاتجاه داخل كل مجموعة من الدرجة السابقة."
+          },
+          "tool": "scatter"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "Parallel trends can be confirmed by checking that the two groups had similar trends before the treatment.",
+            "ar": "يمكن تأكيد الاتجاهات المتوازية بالتحقق من أن المجموعتين كان لهما اتجاهان متشابهان قبل المعالجة."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Similar pre-trends make the assumption more plausible, but it concerns what would have happened afterwards, which we never observe.",
+            "ar": "تجعل الاتجاهات المتشابهة قبل المعالجة الافتراض أكثر معقولية، لكنه يتعلق بما كان سيحدث بعدها، وهو ما لا نراه أبدًا."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each design to the threat it most directly addresses.",
+            "ar": "طابق كل تصميم مع التهديد الذي يعالجه مباشرة."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Randomised experiment",
+                "ar": "التجربة العشوائية"
+              },
+              "right": {
+                "en": "All confounding, measured or not",
+                "ar": "كل الإرباك، المقيس وغير المقيس"
+              }
+            },
+            {
+              "left": {
+                "en": "Adjusting for measured confounders",
+                "ar": "التعديل على المربكات المقيسة"
+              },
+              "right": {
+                "en": "Back-door paths through observed variables",
+                "ar": "المسارات الخلفية عبر المتغيرات المرصودة"
+              }
+            },
+            {
+              "left": {
+                "en": "Difference-in-differences",
+                "ar": "الفروق في الفروق"
+              },
+              "right": {
+                "en": "Fixed group differences and common shocks",
+                "ar": "الفروق الثابتة بين المجموعات والصدمات المشتركة"
+              }
+            },
+            {
+              "left": {
+                "en": "Drawing the DAG first",
+                "ar": "رسم المخطط أولًا"
+              },
+              "right": {
+                "en": "Hidden, unstated assumptions",
+                "ar": "الافتراضات الخفية غير المعلنة"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each design buys protection against a different threat; students should name which one their design leaves open.",
+            "ar": "كل تصميم يوفر حماية من تهديد مختلف، وعلى الطلاب تسمية التهديد الذي يتركه تصميمهم مفتوحًا."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which causal claim do your students meet most often in your field? What diagram would you ask them to draw for it?",
+            "ar": "ما الادعاء السببي الذي يقابله طلابك كثيرًا في مجالك؟ وأيّ مخطط ستطلب منهم رسمه له؟"
+          },
+          "placeholder": {
+            "en": "For example: “Online homework raises exam scores. I’d ask who chooses to do it.”",
+            "ar": "مثلًا: «الواجب الإلكتروني يرفع درجات الامتحان. سأسأل من يختار أداءه.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A causal case study",
+            "ar": "مشروع: دراسة حالة سببية"
+          },
+          "task": {
+            "en": "Write a two-week case-study assignment on a real public policy dataset: students draw a DAG, justify an adjustment set or a DiD design, estimate the effect in Python or R, check pre-trends, and write a one-page memo stating their assumptions and what could overturn the conclusion. Include a rubric that weights assumptions at least as much as the estimate.",
+            "ar": "اكتب تكليف دراسة حالة مدته أسبوعان على بيانات سياسة عامة حقيقية: يرسم الطلاب مخططًا سببيًا، ويبرّرون مجموعة التعديل أو تصميم الفروق في الفروق، ويقدّرون الأثر بلغة Python أو R، ويفحصون الاتجاهات السابقة، ويكتبون مذكرة من صفحة واحدة تذكر افتراضاتهم وما قد ينقض النتيجة. أرفق معيار تقييم يعطي الافتراضات وزنًا لا يقل عن وزن التقدير."
+          },
+          "deliverable": {
+            "en": "The assignment brief, the dataset link and a rubric.",
+            "ar": "وصف التكليف ورابط البيانات ومعيار التقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: draw and defend a causal diagram.",
+                "ar": "يستطيع الطلاب: رسم مخطط سببي والدفاع عنه."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: choose what to adjust for and what not to.",
+                "ar": "يستطيع الطلاب: اختيار ما يُعدَّل عليه وما لا يُعدَّل."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: estimate and question a DiD effect.",
+                "ar": "يستطيع الطلاب: تقدير أثر بالفروق في الفروق ومساءلته."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Causal inference: DAGs and difference-in-differences",
+            "ar": "الاستدلال السببي: المخططات السببية والفروق في الفروق"
+          },
+          "note": {
+            "en": "Data science · University · Lecture 3",
+            "ar": "علم البيانات، الجامعة، المحاضرة ٣"
+          },
+          "narration": {
+            "en": "Tutoring users score lower. Close the centre?",
+            "ar": "مستخدمو مركز الدروس درجاتهم أقل. هل نغلق المركز؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Spot confounding.",
+              "Choose an adjustment set from a DAG.",
+              "Estimate an effect with DiD."
+            ],
+            "ar": [
+              "نكتشف الإرباك.",
+              "نختار مجموعة التعديل من المخطط.",
+              "نقدّر الأثر بالفروق في الفروق."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Confounders bias raw gaps.",
+              "Never adjust for mediators or colliders.",
+              "DiD rests on parallel trends."
+            ],
+            "ar": [
+              "المربكات تحيّز الفروق الخام.",
+              "لا تعدّل على الوسطاء أو متغيرات التصادم.",
+              "تعتمد الفروق في الفروق على الاتجاهات المتوازية."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Draw it, then estimate it",
+            "ar": "ارسمه ثم قدّره"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Should we close it?",
+              "Teach (15 min): DAGs and back doors.",
+              "Draw (15 min): Your own case.",
+              "Estimate (20 min): DiD by hand.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): Show the tutoring-centre finding and ask students to vote, then ask who chooses to go.",
+              "الشرح (١٥ دقيقة): المخططات والأبواب الخلفية.",
+              "الرسم (١٥ دقيقة): حالتكم.",
+              "التقدير (٢٠ دقيقة): الفروق في الفروق يدويًا.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): هل نغلقه؟",
+              "Teach (15 min): Draw the tutoring DAG and mark confounders, mediators and colliders.",
+              "Draw (15 min): Teams draw a DAG for a headline claim and choose an adjustment set.",
+              "Estimate (20 min): Compute a DiD from a two-by-two table, then plot pre-trends and discuss whether they convince.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض نتيجة مركز الدروس واطلب من الطلاب التصويت، ثم اسأل من يختار الذهاب إليه.",
+              "الشرح (١٥ دقيقة): ارسم مخطط الدروس وحدّد المربكات والوسطاء ومتغيرات التصادم.",
+              "الرسم (١٥ دقيقة): ترسم الفرق مخططًا لادعاء من عنوان خبر وتختار مجموعة تعديل.",
+              "التقدير (٢٠ دقيقة): احسب الفروق في الفروق من جدول اثنين في اثنين، ثم ارسم الاتجاهات السابقة وناقش هل هي مقنعة.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "What would make you trust the tutoring estimate?",
+              "Why is a collider dangerous to adjust for?",
+              "How will you grade assumptions?"
+            ],
+            "ar": [
+              "ما الذي يجعلك تثق بتقدير أثر الدروس؟",
+              "لماذا يُعد التعديل على متغير تصادم خطرًا؟",
+              "كيف ستقيّم الافتراضات؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Draw a three-node DAG and say what you would adjust for."
+            ],
+            "ar": [
+              "ارسم مخططًا من ثلاث عقد وقل على ماذا ستعدّل."
+            ]
+          },
+          "narration": {
+            "en": "Draw the diagram before you trust the number.",
+            "ar": "ارسم المخطط قبل أن تثق بالرقم."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Causal inference: DAGs and difference-in-differences",
+            "ar": "شرائح المحاضرة: الاستدلال السببي: المخططات السببية والفروق في الفروق"
+          },
+          "pages": 6,
+          "base": "ds-u1-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Causal inference: DAGs and difference-in-differences",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: الاستدلال السببي: المخططات السببية والفروق في الفروق"
+          },
+          "pages": 3,
+          "base": "ds-u1-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ds-u1-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "DS.4",
+        "DS.2",
+        "T.ET.C"
+      ]
+    },
+    {
+      "id": "ds-u1-4",
+      "title": {
+        "en": "Designing a data-science module",
+        "ar": "تصميم مقرر في علم البيانات"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Take your module’s learning outcomes, underline each verb, and write next to it the assessment that measures it; any verb with nothing beside it needs a new task.",
+        "ar": "خذ نواتج التعلّم في مقررك، وضع خطًا تحت كل فعل، واكتب بجانبه التقييم الذي يقيسه، وأي فعل لا شيء بجانبه يحتاج مهمة جديدة."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Designing a data-science module",
+            "ar": "تصميم مقرر في علم البيانات"
+          },
+          "src": null,
+          "duration": 194,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A module that works",
+                "ar": "مقرر ناجح"
+              }
+            },
+            {
+              "at": 31.6,
+              "atBy": {
+                "en": 31.6,
+                "ar": 27.5
+              },
+              "label": {
+                "en": "Real projects",
+                "ar": "مشاريع حقيقية"
+              }
+            },
+            {
+              "at": 77.2,
+              "atBy": {
+                "en": 77.2,
+                "ar": 71.8
+              },
+              "label": {
+                "en": "Rubrics that teach",
+                "ar": "معايير تعلّم"
+              }
+            },
+            {
+              "at": 158.4,
+              "atBy": {
+                "en": 158.4,
+                "ar": 148.3
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 132.1,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "An outcome says students will justify a model choice; the only assessment is a timed formula test. Aligned?",
+                "ar": "ناتج تعلّم يقول إن الطلاب سيبرّرون اختيار نموذج، والتقييم الوحيد اختبار معادلات موقوت. هل هذا متّسق؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Yes, formulas underpin models",
+                    "ar": "نعم، فالمعادلات أساس النماذج"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "No, the test can’t see a justification",
+                    "ar": "لا، فالاختبار لا يرى التبرير"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Yes, if the test is hard enough",
+                    "ar": "نعم، إذا كان الاختبار صعبًا بما يكفي"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Assess the verb in the outcome, here with a written defence on real data.",
+                "ar": "قيّم الفعل الوارد في الناتج، وهنا بدفاع مكتوب على بيانات حقيقية."
+              }
+            },
+            "atBy": {
+              "en": 132.1,
+              "ar": 121.62
+            }
+          },
+          "transcript": {
+            "en": "My final exam was all calculations. My best students got top marks, then in their first internship they could not decide which analysis a real question needed. I had taught the tools, not the judgement. Today: how to align a statistics or data-science module, design real projects, require reproducible work, and grade it fairly with a rubric. Biggs calls it constructive alignment. Write the learning outcomes first, using verbs like analyse and justify. Then choose activities that practise those verbs, and assessments that measure them. The GAISE college report asks for real data and real questions. A good project starts from a question the student cares about, uses messy public data, and ends with a claim, its uncertainty, and its limits. Here is one way to spend fourteen weeks: four on inference, four on modelling, two on causal questions, and four on a staged project with a proposal, a draft and a final report. Require every submission to run from raw data to final figure with one command, in a notebook or script under version control. If a marker cannot rerun it, it is not finished. This also discourages copied results. Share the rubric when you set the project, not when you grade it. Describe each level in words a student can act on, and give feedback on the draft. Hattie and Timperley show feedback works when it says where to go next. Quick check! An outcome says students will justify the choice of a statistical model. The only assessment is a timed multiple choice test of formulas. Is this aligned? No. Justify is the verb, and a formula test cannot see a justification. A short written defence of a model choice on real data would measure it. In the app, open the histogram lab. Change the bin width on the same data and notice how the story changes. Use it to show students why every choice in an analysis must be justified. Your turn. When should students first see the project rubric? When the project is set. Remember: align outcomes, activities and assessment, use real projects, require reproducible work, and share the rubric early. Try it this week: take your module's learning outcomes, underline each verb, and next to it write the assessment that measures it. Any verb with nothing beside it needs a new task.",
+            "ar": "امتحاني النهائي كان كله حسابات. أحسن طلابي جابوا الدرجة النهائية، وبعدين في أول تدريب ليهم ماعرفوش يقرّروا أنهي تحليل السؤال الحقيقي محتاجه. كنت درّست الأدوات، مش الحكم. النهارده: إزاي تنسّق مقرر إحصاء أو علم بيانات، وتصمّم مشاريع حقيقية، وتطلب شغل قابل للتكرار، وتقيّمه بعدل بمعيار تقييم. بيجز بيسمّيه التنسيق البنّاء. اكتب نواتج التعلّم الأول، بأفعال زي يحلّل ويبرّر. وبعدين اختار أنشطة بتدرّب على الأفعال دي، وتقييمات بتقيسها. تقرير GAISE الجامعي بيطلب بيانات حقيقية وأسئلة حقيقية. المشروع الكويس بيبدأ من سؤال الطالب مهتم بيه، ويستعمل بيانات عامة ملخبطة، ويخلص بادّعاء، ودرجة عدم اليقين فيه، وحدوده. دي طريقة لتوزيع أربعتاشر أسبوع: أربعة للاستدلال، وأربعة للنمذجة، واتنين للأسئلة السببية، وأربعة لمشروع على مراحل فيه مقترح ومسودة وتقرير نهائي. اطلب إن كل تسليم يشتغل من البيانات الخام للرسم النهائي بأمر واحد، في نوتبوك أو سكريبت تحت التحكم في النسخ. لو المصحّح مقدرش يشغّله تاني، يبقى مش خلصان. وده كمان بيقلّل نسخ النتايج. شارك معيار التقييم وإنت بتدّي المشروع، مش وإنت بتصحّح. اوصف كل مستوى بكلام الطالب يقدر يتصرّف بيه، وادّي ملاحظات على المسودة. هاتي وتيمبرلي بيبيّنوا إن الملاحظات بتنفع لما تقول الخطوة الجاية إيه. سؤال سريع! ناتج تعلّم بيقول إن الطلاب هيبرّروا اختيار موديل إحصائي. والتقييم الوحيد امتحان اختيار من متعدد بوقت على المعادلات. ده متنسّق؟ لأ. يبرّر هو الفعل، وامتحان المعادلات مايقدرش يشوف تبرير. دفاع مكتوب قصير عن اختيار موديل على بيانات حقيقية هو اللي هيقيسه. في التطبيق، افتح معمل المدرّجات التكرارية. غيّر عرض الفئة على نفس البيانات ولاحظ القصة بتتغيّر إزاي. استعمله علشان توري الطلاب ليه كل اختيار في التحليل لازم يتبرّر. دورك. الطلاب يشوفوا معيار تقييم المشروع أول مرة إمتى؟ وقت ما المشروع يتدّي. افتكر: نسّق النواتج والأنشطة والتقييم، واستعمل مشاريع حقيقية، واطلب شغل قابل للتكرار، وشارك المعيار بدري. جرّبها الأسبوع ده: خد نواتج التعلّم بتاعة مقررك، وحط خط تحت كل فعل، وجنبه اكتب التقييم اللي بيقيسه. أي فعل مفيش جنبه حاجة محتاج مهمة جديدة."
+          },
+          "sources": {
+            "en": "/media/ds-u1-4/video-en.mp4",
+            "ar": "/media/ds-u1-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ds-u1-4/captions-en.vtt",
+            "ar": "/media/ds-u1-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ds-u1-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ds-u1-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ds-u1-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/ds-u1-4/light/audio/en.opus",
+              "manifest.json": "/media/ds-u1-4/light/manifest.json",
+              "scenes.json": "/media/ds-u1-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/ds-u1-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ds-u1-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 429,
+              "ar": 413
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Teach the judgement, not just the tools",
+            "ar": "علّم الحكم لا الأدوات فقط"
+          },
+          "body": {
+            "en": "Biggs and Tang’s constructive alignment starts from intended learning outcomes written with active verbs (analyse, justify, critique), then chooses teaching activities that practise those verbs and assessments that measure them. In data science the gap is usually between outcomes about judgement and exams about calculation; Anderson and Krathwohl’s revised taxonomy helps you check which level each task really reaches.\n\nThe GAISE College Report (2016) recommends teaching statistical thinking with real data, using technology, and fostering active learning; Freeman et al.'s (2014) meta-analysis found active learning cut failure rates in STEM courses substantially compared with lecturing alone. A staged project, with a proposal, a draft and a final report, gives students the iterative practice the field needs and gives you points to intervene.\n\nMake reproducibility a requirement, not a bonus: one command from raw data to every figure, under version control. Share a rubric when you set the project, describe each level in actionable terms, and give feedback on drafts that answers Hattie and Timperley’s (2007) three questions: where am I going, how am I going, and where to next?",
+            "ar": "يبدأ التنسيق البنّاء عند Biggs وTang من نواتج تعلّم مقصودة مكتوبة بأفعال نشطة (يحلّل، يبرّر، ينقد)، ثم يختار أنشطة تدريس تمارس تلك الأفعال وتقييمات تقيسها. وفي علم البيانات تقع الفجوة عادة بين نواتج تتعلق بالحكم وامتحانات تتعلق بالحساب، ويساعدك تصنيف Anderson وKrathwohl المنقّح على التحقق من المستوى الذي تبلغه كل مهمة فعلًا.\n\nويوصي تقرير GAISE الجامعي (٢٠١٦) بتدريس التفكير الإحصائي ببيانات حقيقية، واستخدام التقنية، وتشجيع التعلّم النشط، ووجد التحليل البعدي لـ Freeman وآخرين (٢٠١٤) أن التعلّم النشط خفّض نسب الرسوب في مقررات العلوم والتقنية بدرجة كبيرة مقارنة بالمحاضرة وحدها. ويمنح المشروع المرحلي، بمقترح ومسودة وتقرير نهائي، الطلاب الممارسة التكرارية التي يحتاجها المجال، ويمنحك نقاطًا للتدخل.\n\nواجعل قابلية التكرار شرطًا لا مكافأة: أمر واحد من البيانات الخام إلى كل رسم، تحت التحكم في النسخ. وشارك معيار التقييم عند التكليف بالمشروع، وصِف كل مستوى بعبارات قابلة للتنفيذ، وقدّم ملاحظات على المسودات تجيب عن أسئلة Hattie وTimperley (٢٠٠٧) الثلاثة: إلى أين أذهب، وكيف أتقدّم، وما الخطوة التالية؟"
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Constructive alignment",
+                "ar": "التنسيق البنّاء"
+              },
+              "def": {
+                "en": "Outcomes, activities and assessment all target the same verbs.",
+                "ar": "النواتج والأنشطة والتقييم تستهدف الأفعال نفسها."
+              }
+            },
+            {
+              "term": {
+                "en": "Reproducible analysis",
+                "ar": "التحليل القابل للتكرار"
+              },
+              "def": {
+                "en": "Anyone can rerun it from raw data to every result.",
+                "ar": "يستطيع أي شخص إعادة تشغيله من البيانات الخام إلى كل نتيجة."
+              }
+            },
+            {
+              "term": {
+                "en": "Analytic rubric",
+                "ar": "معيار التقييم التحليلي"
+              },
+              "def": {
+                "en": "Separate criteria, each with described levels.",
+                "ar": "معايير منفصلة، لكل منها مستويات موصوفة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "When should students first see the project rubric?",
+            "ar": "متى يرى الطلاب معيار تقييم المشروع أول مرة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "When the project is set",
+                "ar": "عند تكليفهم بالمشروع"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "With their final grade",
+                "ar": "مع درجتهم النهائية"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Never, to avoid gaming it",
+                "ar": "أبدًا، كي لا يتحايلوا عليه"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "A rubric shared early guides the work and sharpens draft feedback.",
+            "ar": "المعيار المُشارك مبكرًا يوجّه العمل ويجعل ملاحظات المسودة أدق."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Complete the weighting.",
+            "ar": "أكمل الأوزان."
+          },
+          "sentence": {
+            "en": [
+              "A module gives 40% to the project and 25% to labs. If the exam gets the rest, it is worth ",
+              {
+                "blank": 0
+              },
+              "%. If the project’s report is half its weight, the report is worth ",
+              {
+                "blank": 1
+              },
+              "%."
+            ],
+            "ar": [
+              "يعطي مقرر ٤٠٪ للمشروع و٢٥٪ للمعامل. إذا نال الامتحان الباقي فقيمته ",
+              {
+                "blank": 0
+              },
+              "٪. وإذا كان تقرير المشروع نصف وزنه فقيمة التقرير ",
+              {
+                "blank": 1
+              },
+              "٪."
+            ]
+          },
+          "bank": {
+            "en": [
+              "35",
+              "25",
+              "40",
+              "20"
+            ],
+            "ar": [
+              "٣٥",
+              "٢٥",
+              "٤٠",
+              "٢٠"
+            ]
+          },
+          "answers": {
+            "en": [
+              "35",
+              "20"
+            ],
+            "ar": [
+              "٣٥",
+              "٢٠"
+            ]
+          },
+          "explain": {
+            "en": "100 − 40 − 25 = 35, and half of 40 is 20.",
+            "ar": "١٠٠ − ٤٠ − ٢٥ = ٣٥، ونصف ٤٠ هو ٢٠."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which outcomes are written so they can be assessed? Choose all that apply.",
+            "ar": "أيّ النواتج مكتوبة بحيث يمكن تقييمها؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Justify the choice of a model for a given dataset",
+                "ar": "تبرير اختيار نموذج لبيانات معطاة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Understand regression",
+                "ar": "فهم الانحدار"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Critique the causal claim in a published study",
+                "ar": "نقد الادعاء السببي في دراسة منشورة"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Appreciate the role of data in society",
+                "ar": "تقدير دور البيانات في المجتمع"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "c"
+          ],
+          "explain": {
+            "en": "Justify and critique describe observable performance; understand and appreciate don’t say what a student would do to show it.",
+            "ar": "يبرّر وينقد يصفان أداءً قابلًا للملاحظة، أما يفهم ويقدّر فلا يذكران ما سيفعله الطالب لإظهار ذلك."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: change the bin width on the same data and note how the story shifts; use it to open a discussion on justifying analysis choices.",
+            "ar": "جرّب: غيّر عرض الفئة على البيانات نفسها ولاحظ كيف تتغيّر القصة، واستخدمه لفتح نقاش حول تبرير اختيارات التحليل."
+          },
+          "tool": "histogram"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "Requiring a reproducible notebook makes copying results from another group harder.",
+            "ar": "اشتراط دفتر برمجي قابل للتكرار يجعل نسخ النتائج من مجموعة أخرى أصعب."
+          },
+          "answer": true,
+          "explain": {
+            "en": "When every figure must rerun from raw data with the student’s own code, pasted results show up quickly.",
+            "ar": "حين يجب أن يُعاد كل رسم من البيانات الخام بكود الطالب نفسه، تنكشف النتائج الملصوقة بسرعة."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each piece of feedback to Hattie and Timperley’s question it answers.",
+            "ar": "طابق كل ملاحظة مع سؤال Hattie وTimperley الذي تجيب عنه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "“The goal is a defensible causal claim.”",
+                "ar": "«الهدف ادعاء سببي يمكن الدفاع عنه.»"
+              },
+              "right": {
+                "en": "Where am I going?",
+                "ar": "إلى أين أذهب؟"
+              }
+            },
+            {
+              "left": {
+                "en": "“Your DAG omits prior grade.”",
+                "ar": "«مخططك يغفل الدرجة السابقة.»"
+              },
+              "right": {
+                "en": "How am I going?",
+                "ar": "كيف أتقدّم؟"
+              }
+            },
+            {
+              "left": {
+                "en": "“Add prior grade and rerun the model.”",
+                "ar": "«أضف الدرجة السابقة وأعد تشغيل النموذج.»"
+              },
+              "right": {
+                "en": "Where to next?",
+                "ar": "ما الخطوة التالية؟"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Feedback that answers all three gives a student a goal, a diagnosis and an action.",
+            "ar": "الملاحظات التي تجيب عن الثلاثة تمنح الطالب هدفًا وتشخيصًا وإجراءً."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which assessment in your module rewards calculation where the outcome asks for judgement? What would you replace it with?",
+            "ar": "أيّ تقييم في مقررك يكافئ الحساب حيث يطلب الناتج الحكم؟ وبماذا ستستبدله؟"
+          },
+          "placeholder": {
+            "en": "For example: “The final exam. I’d swap two questions for a short data analysis memo.”",
+            "ar": "مثلًا: «الامتحان النهائي. سأستبدل سؤالين بمذكرة قصيرة لتحليل بيانات.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A 14-week module",
+            "ar": "مشروع: مقرر من ١٤ أسبوعًا"
+          },
+          "task": {
+            "en": "Redesign one data-science or statistics module: write 5 assessable outcomes, a 14-week schedule, a staged project brief on real public data, a reproducibility requirement, and an analytic rubric with four criteria and four levels. Ask a colleague to review the alignment table.",
+            "ar": "أعد تصميم مقرر واحد في علم البيانات أو الإحصاء: اكتب ٥ نواتج قابلة للتقييم، وجدولًا من ١٤ أسبوعًا، ووصف مشروع مرحلي على بيانات عامة حقيقية، وشرط قابلية التكرار، ومعيار تقييم تحليليًا بأربعة معايير وأربعة مستويات. اطلب من زميل مراجعة جدول التنسيق."
+          },
+          "deliverable": {
+            "en": "The outcomes, schedule, project brief, rubric and an alignment table.",
+            "ar": "النواتج والجدول ووصف المشروع ومعيار التقييم وجدول التنسيق."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: say which outcome each task assesses.",
+                "ar": "يستطيع الطلاب: ذكر الناتج الذي تقيسه كل مهمة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: produce reproducible analyses.",
+                "ar": "يستطيع الطلاب: إنتاج تحليلات قابلة للتكرار."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: use rubric feedback to improve a draft.",
+                "ar": "يستطيع الطلاب: استخدام ملاحظات المعيار لتحسين مسودة."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Designing a data-science module",
+            "ar": "تصميم مقرر في علم البيانات"
+          },
+          "note": {
+            "en": "Data science · University · Lecture 4",
+            "ar": "علم البيانات، الجامعة، المحاضرة ٤"
+          },
+          "narration": {
+            "en": "Top marks, but no judgement?",
+            "ar": "درجات عالية، لكن بلا حكم؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Align outcomes and assessment.",
+              "Design a staged, real project.",
+              "Write a rubric that teaches."
+            ],
+            "ar": [
+              "ننسّق النواتج والتقييم.",
+              "نصمّم مشروعًا مرحليًا حقيقيًا.",
+              "نكتب معيار تقييم يعلّم."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Assess the verbs you teach.",
+              "Real data, real questions.",
+              "One command reruns it all."
+            ],
+            "ar": [
+              "قيّم الأفعال التي تدرّسها.",
+              "بيانات حقيقية وأسئلة حقيقية.",
+              "أمر واحد يعيد كل شيء."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Align a module",
+            "ar": "نسّق مقررًا"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): What does your exam reward?",
+              "Teach (10 min): Alignment and GAISE.",
+              "Map (20 min): Outcomes to tasks.",
+              "Draft (20 min): A rubric.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): ⁦Ask colleagues to sort last year's exam questions into⁩ ‘calculate’ and ‘judge’.",
+              "الشرح (١٠ دقائق): التنسيق وGAISE.",
+              "الربط (٢٠ دقيقة): النواتج بالمهام.",
+              "الصياغة (٢٠ دقيقة): معيار تقييم.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): ماذا يكافئ امتحانك؟",
+              "Teach (10 min): Show an alignment table and the six GAISE recommendations.",
+              "Map (20 min): Pairs map their own module’s outcomes to its assessments and mark the gaps.",
+              "Draft (20 min): Write four criteria and four levels for a project, then swap and critique.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اطلب من الزملاء تصنيف أسئلة امتحان العام الماضي إلى «يحسب» و«يحكم».",
+              "الشرح (١٠ دقائق): اعرض جدول تنسيق وتوصيات GAISE الست.",
+              "الربط (٢٠ دقيقة): يربط كل زوج نواتج مقرره بتقييماته ويحدّد الفجوات.",
+              "الصياغة (٢٠ دقيقة): اكتب أربعة معايير وأربعة مستويات لمشروع، ثم تبادلوا وانقدوا.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which outcome has no assessment?",
+              "How will you check reproducibility at scale?",
+              "What feedback will the draft get?"
+            ],
+            "ar": [
+              "أيّ ناتج بلا تقييم؟",
+              "كيف ستتحقق من قابلية التكرار مع أعداد كبيرة؟",
+              "ما الملاحظات التي ستنالها المسودة؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one outcome with an active verb and the task that assesses it."
+            ],
+            "ar": [
+              "اكتب ناتجًا بفعل نشط والمهمة التي تقيسه."
+            ]
+          },
+          "narration": {
+            "en": "Teach the judgement, not just the tools.",
+            "ar": "علّم الحكم لا الأدوات فقط."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Designing a data-science module",
+            "ar": "شرائح المحاضرة: تصميم مقرر في علم البيانات"
+          },
+          "pages": 6,
+          "base": "ds-u1-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Designing a data-science module",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: تصميم مقرر في علم البيانات"
+          },
+          "pages": 3,
+          "base": "ds-u1-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ds-u1-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "T.PL.C",
+        "T.PE.C",
+        "DS.4"
+      ]
+    },
+    {
+      "id": "ds-u1-check",
+      "title": {
+        "en": "Teaching statistical learning at university: unit check",
+        "ar": "تدريس التعلّم الإحصائي في الجامعة: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Bring your redesigned alignment table to the next department meeting and ask one colleague to review it.",
+        "ar": "أحضر جدول التنسيق المعاد تصميمه إلى اجتماع القسم القادم واطلب من زميل مراجعته."
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "σ = 20 and n = 100. What is the standard error of the mean?",
+            "ar": "σ ⁦= 20⁩ و⁦n = 100⁩. ما الخطأ المعياري للمتوسط؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "2",
+                "ar": "2"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "0.2",
+                "ar": "⁦0.2⁩"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "20",
+                "ar": "20"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "10",
+                "ar": "10"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "20/√100 = 20/10 = 2.",
+            "ar": "⁦20/√100 = 20/10 = 2.⁩"
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "A 95% CI of 60–68 means P(60 < μ < 68) = 0.95.",
+            "ar": "فترة ثقة ٩٥٪ من ٦٠ إلى ٦٨ تعني أن ⁦P(60⁩ < μ < ⁦68) = 0.95⁩."
+          },
+          "answer": false,
+          "explain": {
+            "en": "The 95% describes the procedure over repeated samples, not this fixed interval.",
+            "ar": "الـ ٩٥٪ تصف الطريقة عبر عينات متكررة لا هذه الفترة الثابتة."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q3",
+          "prompt": {
+            "en": "Which are limits of the bootstrap? Choose all that apply.",
+            "ar": "أيّ مما يلي حدود للـ bootstrap؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "It cannot fix a biased sample",
+                "ar": "لا يصلح عينة متحيزة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "It is unreliable for the maximum",
+                "ar": "لا يُعتمد عليه للقيمة العظمى"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "It only works for the mean",
+                "ar": "يصلح للمتوسط فقط"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b"
+          ],
+          "explain": {
+            "en": "It works for many statistics, but it can’t create information the sample lacks.",
+            "ar": "يصلح لإحصاءات كثيرة، لكنه لا يخلق معلومات تفتقدها العينة."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q4",
+          "prompt": {
+            "en": "Work out the CV error.",
+            "ar": "احسب خطأ التحقق المتقاطع."
+          },
+          "sentence": {
+            "en": [
+              "Fold errors 6, 8, 7, 9, 10 give a CV error of ",
+              {
+                "blank": 0
+              },
+              "."
+            ],
+            "ar": [
+              "أخطاء الطيّات 6 و8 و7 و9 و10 تعطي خطأ تحقق قدره ",
+              {
+                "blank": 0
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "8",
+              "40",
+              "10"
+            ],
+            "ar": [
+              "8",
+              "40",
+              "10"
+            ]
+          },
+          "answers": {
+            "en": [
+              "8"
+            ],
+            "ar": [
+              "8"
+            ]
+          },
+          "explain": {
+            "en": "40 / 5 = 8.",
+            "ar": "⁦40 / 5 = 8.⁩"
+          }
+        },
+        {
+          "type": "order",
+          "id": "q5",
+          "prompt": {
+            "en": "Put a leak-free workflow in order.",
+            "ar": "رتّب سير عمل خاليًا من التسريب."
+          },
+          "steps": [
+            {
+              "en": "Hold out a final test set",
+              "ar": "احجز مجموعة اختبار نهائية"
+            },
+            {
+              "en": "Inside each CV fold, fit preprocessing and model",
+              "ar": "داخل كل طيّة، ركّب المعالجة والنموذج"
+            },
+            {
+              "en": "Choose the model by CV error",
+              "ar": "اختر النموذج بخطأ التحقق"
+            },
+            {
+              "en": "Report error once on the test set",
+              "ar": "أبلغ عن الخطأ مرة واحدة على مجموعة الاختبار"
+            }
+          ],
+          "explain": {
+            "en": "The test set is touched once, at the end; everything else happens inside folds.",
+            "ar": "تُلمس مجموعة الاختبار مرة واحدة في النهاية، وكل ما عدا ذلك يحدث داخل الطيّات."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q6",
+          "prompt": {
+            "en": "Match each variable to its role in the tutoring DAG.",
+            "ar": "طابق كل متغير مع دوره في مخطط الدروس."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Prior grade",
+                "ar": "الدرجة السابقة"
+              },
+              "right": {
+                "en": "Confounder",
+                "ar": "مربك"
+              }
+            },
+            {
+              "left": {
+                "en": "Hours studied",
+                "ar": "ساعات المذاكرة"
+              },
+              "right": {
+                "en": "Mediator",
+                "ar": "وسيط"
+              }
+            },
+            {
+              "left": {
+                "en": "Dean’s list",
+                "ar": "قائمة التفوّق"
+              },
+              "right": {
+                "en": "Collider",
+                "ar": "متغير تصادم"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Adjust only for the confounder.",
+            "ar": "عدّل على المربك فقط."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q7",
+          "prompt": {
+            "en": "Treated: 30 → 38. Comparison: 32 → 35. The DiD estimate is:",
+            "ar": "المعالَجة: 30 ← 38. المقارنة: 32 ← 35. تقدير الفروق في الفروق:"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "5",
+                "ar": "5"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "8",
+                "ar": "8"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "3",
+                "ar": "3"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "11",
+                "ar": "11"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "8 − 3 = 5.",
+            "ar": "⁦8 − 3 = 5.⁩"
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q8",
+          "prompt": {
+            "en": "Adding more data mainly lowers a model’s bias.",
+            "ar": "إضافة بيانات أكثر تخفض تحيّز النموذج أساسًا."
+          },
+          "answer": false,
+          "explain": {
+            "en": "More data mainly lowers variance; a too-simple model stays biased.",
+            "ar": "تخفض البيانات الإضافية التباين أساسًا، ويبقى النموذج البسيط جدًا متحيزًا."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q9",
+          "prompt": {
+            "en": "Which make a module better aligned? Choose all that apply.",
+            "ar": "أيّ مما يلي يحسّن تنسيق المقرر؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Outcomes with active, observable verbs",
+                "ar": "نواتج بأفعال نشطة قابلة للملاحظة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "An assessment for each outcome",
+                "ar": "تقييم لكل ناتج"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Sharing the rubric only after grading",
+                "ar": "مشاركة المعيار بعد التصحيح فقط"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b"
+          ],
+          "explain": {
+            "en": "Rubrics teach only when students can use them while working.",
+            "ar": "المعايير تعلّم فقط حين يستخدمها الطلاب أثناء العمل."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q10",
+          "prompt": {
+            "en": "A student’s CV accuracy is 95%, but on the final test set it is 70%. The most likely cause is:",
+            "ar": "دقة التحقق لطالب ٩٥٪، لكنها ٧٠٪ على مجموعة الاختبار النهائية. السبب الأرجح:"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Leakage or tuning on the test set",
+                "ar": "تسريب أو ضبط على مجموعة الاختبار"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Too much data",
+                "ar": "بيانات كثيرة جدًا"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Too few features",
+                "ar": "خصائص قليلة جدًا"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "A large optimistic gap points to information leaking into model choice.",
+            "ar": "الفجوة المتفائلة الكبيرة تشير إلى تسرّب معلومات إلى اختيار النموذج."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Teaching statistical learning at university: review",
+            "ar": "تدريس التعلّم الإحصائي في الجامعة: مراجعة"
+          },
+          "note": {
+            "en": "Data science · University · Unit check",
+            "ar": "علم البيانات، الجامعة، اختبار الوحدة"
+          },
+          "narration": {
+            "en": "Let’s look back at the whole course and see what stuck.",
+            "ar": "لنراجع المقرر كله ونرَ ما الذي رسخ."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Sampling and the bootstrap",
+              "Bias, variance and CV",
+              "Causal inference",
+              "Module design"
+            ],
+            "ar": [
+              "المعاينة والـ bootstrap",
+              "التحيّز والتباين والتحقق",
+              "الاستدلال السببي",
+              "تصميم المقرر"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "The 95% belongs to the method",
+              "Judge on unseen data",
+              "Draw the DAG first",
+              "Assess the verbs you teach"
+            ],
+            "ar": [
+              "الـ ٩٥٪ تخص الطريقة",
+              "احكم ببيانات غير مرئية",
+              "ارسم المخطط أولًا",
+              "قيّم الأفعال التي تدرّسها"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Peer-instruction review",
+            "ar": "مراجعة بالتعلّم من الأقران"
+          },
+          "bullets": {
+            "en": [
+              "Vote (10 min): Answer alone first.",
+              "Discuss (15 min): Convince your neighbour.",
+              "Explain (10 min): Model the reasoning.",
+              "Plan (5 min): Next week’s fix."
+            ],
+            "ar": [
+              "التصويت (١٠ دقائق): أجب منفردًا أولًا.",
+              "النقاش (١٥ دقيقة): أقنع زميلك.",
+              "الشرح (١٠ دقائق): اعرض طريقة التفكير.",
+              "التخطيط (٥ دقائق): علاج الأسبوع القادم."
+            ]
+          },
+          "details": {
+            "en": [
+              "Vote (10 min): Show each question; students answer alone and commit to an answer.",
+              "Discuss (15 min): Where answers split, pairs argue for two minutes and vote again.",
+              "Explain (10 min): Work through the questions most students missed, showing the reasoning step by step.",
+              "Plan (5 min): Note which misconception to revisit next week and how."
+            ],
+            "ar": [
+              "التصويت (١٠ دقائق): اعرض كل سؤال، ويجيب الطلاب منفردين ويلتزمون بإجابة.",
+              "النقاش (١٥ دقيقة): حيث تنقسم الإجابات، يتجادل كل زوجين دقيقتين ثم يصوّتان مرة أخرى.",
+              "الشرح (١٠ دقائق): حُلّ الأسئلة التي أخطأ فيها معظم الطلاب، مع عرض الاستدلال خطوة خطوة.",
+              "التخطيط (٥ دقائق): دوّن أيّ تصوّر خاطئ ستعود إليه الأسبوع القادم وكيف."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which misconception will you target first?",
+              "Which lab will you run this term?",
+              "Which assessment will you change?"
+            ],
+            "ar": [
+              "أيّ تصور خاطئ ستستهدف أولًا؟",
+              "أيّ معمل ستنفّذ هذا الفصل الدراسي؟",
+              "أيّ تقييم ستغيّر؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One change I will make to my module this term, and how I will know it worked."
+            ],
+            "ar": [
+              "تغيير سأجريه على مقرري هذا الفصل الدراسي، وكيف سأعرف أنه نجح."
+            ]
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Teaching statistical learning at university: unit check",
+            "ar": "شرائح المحاضرة: تدريس التعلّم الإحصائي في الجامعة: اختبار الوحدة"
+          },
+          "pages": 6,
+          "base": "ds-u1-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Review plan and quiz sheet: Teaching statistical learning at university: unit check",
+            "ar": "خطة المراجعة وورقة الاختبار: تدريس التعلّم الإحصائي في الجامعة: اختبار الوحدة"
+          },
+          "pages": 2,
+          "base": "ds-u1-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "University course pack: syllabus, slide outline, problem set, lab, rubric and readings",
+            "ar": "حزمة المقرر الجامعي: الخطة الدراسية، ومخطط الشرائح، ومسائل، ومعمل، ومعايير التقييم، والقراءات"
+          },
+          "pages": 8,
+          "base": "ds-u1-check/course-pack",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "DS.4",
+        "DS.3",
+        "T.PL.C",
+        "T.PE.C"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3155 @@
+{
+  "id": "agents-u1",
+  "track": "agents",
+  "level": 4,
+  "teach": "university",
+  "title": {
+    "en": "Teaching AI agents at university",
+    "ar": "تدريس وكلاء الذكاء الاصطناعي في الجامعة"
+  },
+  "summary": {
+    "en": "A graduate-level course for university lecturers in AI agents: rational agents, Markov decision processes and reward design, classical planning and tool-using language-model agents, rigorous evaluation with pass@k and confidence intervals, and safe, accountable agents with least privilege, human approval and governance.",
+    "ar": "مقرر بمستوى الدراسات العليا لأساتذة الجامعات في وكلاء الذكاء الاصطناعي: الوكلاء العقلانيون وعمليات ماركوف للقرار وتصميم المكافأة، والتخطيط الكلاسيكي ووكلاء النماذج اللغوية المستخدمة للأدوات، والتقييم الدقيق بـ pass@k وفترات الثقة، والوكلاء الآمنون القابلون للمساءلة بأقل صلاحية وموافقة الإنسان والحوكمة."
+  },
+  "lessons": [
+    {
+      "id": "agents-u1-1",
+      "title": {
+        "en": "Agents, environments and decisions",
+        "ar": "الوكلاء والبيئات والقرارات"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Give pairs a paper gridworld and ask them to write a reward for reaching the exit; swap rewards between pairs and let each find a loophole in the other’s design.",
+        "ar": "أعطِ كل زوجين عالم شبكة على الورق واطلب منهما كتابة مكافأة للوصول إلى المخرج، ثم بادلوا المكافآت ليجد كل زوج ثغرة في تصميم الآخر."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Agents, environments and decisions",
+            "ar": "الوكلاء والبيئات والقرارات"
+          },
+          "src": null,
+          "duration": 195,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "The robot that cheated",
+                "ar": "الروبوت الذي غشّ"
+              }
+            },
+            {
+              "at": 27,
+              "atBy": {
+                "en": 27,
+                "ar": 25.3
+              },
+              "label": {
+                "en": "Agents and environments",
+                "ar": "الوكلاء والبيئات"
+              }
+            },
+            {
+              "at": 79.3,
+              "atBy": {
+                "en": 79.3,
+                "ar": 74.9
+              },
+              "label": {
+                "en": "Decisions over time",
+                "ar": "القرارات عبر الزمن"
+              }
+            },
+            {
+              "at": 150.6,
+              "atBy": {
+                "en": 150.6,
+                "ar": 139.7
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 127.54,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Discount 0.5. A reward of 8 in three steps is worth now:",
+                "ar": "معامل الخصم 0.5. ما قيمة مكافأة 8 بعد ثلاث خطوات الآن؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "1",
+                    "ar": "1"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "4",
+                    "ar": "4"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "8",
+                    "ar": "8"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "0.5³ × 8 = 1.",
+                "ar": "⁦0.5³ × 8 = 1.⁩"
+              }
+            },
+            "atBy": {
+              "en": 127.54,
+              "ar": 117.01
+            }
+          },
+          "transcript": {
+            "en": "A student trains a cleaning agent rewarded for each piece of dirt it picks up. It learns to drop dirt and pick it up again, forever. The code has no bug. What went wrong? Today: the classical definition of an agent, how Markov decision processes model sequential choices, and why reward design is where student projects go wrong. An agent perceives its environment through sensors and acts on it through actuators. A rational agent chooses actions that maximise its expected performance measure. PEAS names the four things to specify: performance, environment, actuators and sensors. An MDP has states, actions, transition probabilities and rewards. A policy maps each state to an action. The goal is the policy that maximises expected discounted return. With a discount of zero point nine, a reward of ten arriving in two steps is worth eight point one now. Discounting makes sooner rewards worth more. It also keeps infinite sums finite. The agent optimises exactly the reward you wrote, not the goal you meant. Rewarding pickups instead of a clean room invites the loop. This is called specification gaming, and it happens in real systems. Students often think an agent understands its task. Give them a small gridworld and let them design the reward themselves. Then show them what their agent actually learned, and let them fix the reward. Quick check! With a discount of zero point five, what is a reward of eight, arriving in three steps, worth now? One: zero point five cubed is one eighth, and one eighth of eight is one. A low discount makes the agent short-sighted. In the app, open the agent loop lab. Watch an agent sense, decide and act, and change its reward to see how its behaviour changes. Your turn. Which reward best stops the cleaning agent from dropping and re-collecting dirt? Reward the state of the room, such as how clean it is, rather than each action. Remember: specify PEAS first, MDPs model sequential decisions, and the agent optimises exactly what you reward. Try it in your next lecture: give pairs a paper gridworld and ask them to write a reward for reaching the exit. Swap rewards between pairs, and let each pair find a loophole in the other's design.",
+            "ar": "طالب درّب وكيل تنضيف بياخد مكافأة على كل حتة وساخة بيلمّها. اتعلّم يرمي الوساخة ويلمّها تاني، على طول. والكود مافيهوش غلطة. إيه اللي باظ؟ النهارده: التعريف الكلاسيكي للوكيل، وإزاي عمليات ماركوف للقرار بتنمذج الاختيارات المتتالية، وليه تصميم المكافأة هو المكان اللي مشاريع الطلاب بتبوظ فيه. الوكيل بيدرك بيئته عن طريق الحساسات وبيأثر فيها عن طريق المشغّلات. والوكيل العقلاني بيختار الأفعال اللي بتعظّم مقياس الأداء المتوقع. وPEAS بيسمّي الأربع حاجات اللي لازم تتحدد: الأداء والبيئة والمشغّلات والحساسات. عملية ماركوف للقرار فيها حالات وأفعال واحتمالات انتقال ومكافآت. والسياسة بتربط كل حالة بفعل. والهدف هو السياسة اللي بتعظّم العائد المخصوم المتوقع. مع خصم صفر فاصل تسعة، مكافأة عشرة جاية بعد خطوتين قيمتها تمانية وواحد من عشرة دلوقتي. والخصم بيخلّي المكافآت الأقرب أغلى. وكمان بيخلّي المجاميع اللانهائية محدودة. الوكيل بيعظّم المكافأة اللي إنت كتبتها بالظبط، مش الهدف اللي إنت قصدته. ومكافأة اللمّ بدل الأوضة النضيفة بتفتح الباب للّفّة دي. وده اسمه التلاعب بالمواصفات، وبيحصل في أنظمة حقيقية. الطلاب كتير بيفتكروا إن الوكيل فاهم مهمته. ادّيهم عالم شبكة صغير وخلّيهم يصمّموا المكافأة بنفسهم. وبعدين ورّيهم الوكيل بتاعهم اتعلّم إيه فعلًا، وخلّيهم يصلّحوا المكافأة. سؤال سريع! مع خصم صفر فاصل خمسة، مكافأة تمانية جاية بعد تلات خطوات قيمتها كام دلوقتي؟ واحد: صفر فاصل خمسة أس تلاتة بيساوي تُمن، وتُمن التمانية واحد. والخصم القليل بيخلّي الوكيل قصير النظر. في التطبيق، افتح معمل حلقة الوكيل. شوف الوكيل بيحس ويقرر ويتصرف، وغيّر المكافأة بتاعته علشان تشوف سلوكه بيتغيّر إزاي. دورك. أنهي مكافأة أحسن حاجة تمنع وكيل التنضيف إنه يرمي الوساخة ويلمّها تاني؟ كافئ حالة الأوضة، يعني هي نضيفة قد إيه، مش كل فعل. افتكر: حدد PEAS الأول، وعمليات ماركوف بتنمذج القرارات المتتالية، والوكيل بيعظّم اللي إنت بتكافئه بالظبط. جرّبها في محاضرتك الجاية: ادّي كل اتنين عالم شبكة على ورق واطلب منهم يكتبوا مكافأة للوصول للمخرج. بدّلوا المكافآت بين الأزواج، وخلّي كل اتنين يلاقوا ثغرة في تصميم التانيين."
+          },
+          "sources": {
+            "en": "/media/agents-u1-1/video-en.mp4",
+            "ar": "/media/agents-u1-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-u1-1/captions-en.vtt",
+            "ar": "/media/agents-u1-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-u1-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-u1-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-u1-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-u1-1/light/audio/en.opus",
+              "manifest.json": "/media/agents-u1-1/light/manifest.json",
+              "scenes.json": "/media/agents-u1-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-u1-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-u1-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 425,
+              "ar": 400
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Rational agents and sequential decisions",
+            "ar": "الوكلاء العقلانيون والقرارات المتتالية"
+          },
+          "body": {
+            "en": "Russell and Norvig define an agent as anything that perceives its environment through sensors and acts on it through actuators, and a rational agent as one that selects actions expected to maximise its performance measure given its percepts and knowledge. Specifying a task by PEAS (performance, environment, actuators, sensors) and classifying the environment as fully or partially observable, deterministic or stochastic, episodic or sequential, and static or dynamic, determines which methods apply.\n\nSequential decisions under uncertainty are modelled as Markov decision processes: states S, actions A, transition probabilities P(s′ | s, a), rewards R and a discount γ in [0, 1). A policy π maps states to actions; its value is the expected discounted return. The Bellman equations relate a state’s value to its successors’, and value iteration and policy iteration compute optimal policies for small MDPs; reinforcement learning estimates them from experience (Sutton and Barto, 2018).\n\nThe reward is the specification. Agents optimise what is written, not what is meant, producing reward hacking and specification gaming, documented in many systems (Amodei et al., 2016; Krakovna et al., 2020). Students commonly anthropomorphise agents, assume they understand the goal, and reward actions rather than outcomes. Gridworld exercises in which students design rewards, observe the learned behaviour and repair the reward make this concrete, and connect directly to alignment questions for modern agents.",
+            "ar": "يعرّف Russell وNorvig الوكيل بأنه أي شيء يدرك بيئته عبر الحساسات ويؤثر فيها عبر المشغّلات، والوكيل العقلاني بأنه الذي يختار الأفعال المتوقع أن تعظّم مقياس أدائه بالنظر إلى مدركاته ومعرفته. وتحديد المهمة بـ PEAS (الأداء والبيئة والمشغّلات والحساسات) وتصنيف البيئة إلى قابلة للملاحظة كليًا أو جزئيًا، وحتمية أو عشوائية، وعرضية أو متتالية، وساكنة أو متغيرة، يحدد الطرق التي تنطبق.\n\nوتُنمذج القرارات المتتالية في ظل عدم اليقين بعمليات ماركوف للقرار: حالات S وأفعال A واحتمالات انتقال ⁦P(s⁩′ | s, a) ومكافآت R ومعامل خصم γ في ⁦[0, 1)⁩. وتربط السياسة π الحالات بالأفعال، وقيمتها العائد المخصوم المتوقع. وتربط معادلات بِلمان قيمة الحالة بقيم الحالات التالية، ويحسب تكرار القيمة وتكرار السياسة السياسات المثلى لعمليات ماركوف الصغيرة، ويقدّرها التعلّم المعزّز من الخبرة (Sutton وBarto، ٢٠١٨).\n\nوالمكافأة هي المواصفات. فالوكلاء يعظّمون المكتوب لا المقصود، فينتج اختراق المكافأة والتلاعب بالمواصفات، الموثّقان في أنظمة كثيرة (Amodei وآخرون، ٢٠١٦؛ Krakovna وآخرون، ٢٠٢٠). وكثيرًا ما يُضفي الطلاب صفات بشرية على الوكلاء، ويفترضون أنهم يفهمون الهدف، ويكافئون الأفعال بدل النتائج. وتمارين عوالم الشبكة التي يصمّم فيها الطلاب المكافآت ويلاحظون السلوك المتعلَّم ويصلحون المكافأة تجعل هذا ملموسًا، وتتصل مباشرة بأسئلة المواءمة للوكلاء الحديثين."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "PEAS",
+                "ar": "PEAS"
+              },
+              "def": {
+                "en": "Performance, environment, actuators, sensors.",
+                "ar": "الأداء والبيئة والمشغّلات والحساسات."
+              }
+            },
+            {
+              "term": {
+                "en": "Discounted return",
+                "ar": "العائد المخصوم"
+              },
+              "def": {
+                "en": "r₀ + γr₁ + γ²r₂ + …",
+                "ar": "⁦r₀ + γr₁ + γ²r₂ + …⁩"
+              }
+            },
+            {
+              "term": {
+                "en": "Specification gaming",
+                "ar": "التلاعب بالمواصفات"
+              },
+              "def": {
+                "en": "Satisfying the literal reward while missing the intended goal.",
+                "ar": "تحقيق المكافأة الحرفية مع إخطاء الهدف المقصود."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Which reward best stops the drop-and-collect loop?",
+            "ar": "أيّ مكافأة تمنع على نحو أفضل حلقة الرمي والجمع؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "More reward per pickup",
+                "ar": "مكافأة أكبر لكل التقاط"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Reward how clean the room is",
+                "ar": "مكافأة على مدى نظافة الغرفة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "No reward at all",
+                "ar": "لا مكافأة إطلاقًا"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Reward the outcome, not the action.",
+            "ar": "كافئ النتيجة لا الفعل."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Compute returns.",
+            "ar": "احسب العوائد."
+          },
+          "sentence": {
+            "en": [
+              "With γ = 0.9 and rewards 0, 0, 10, the return from the start is ",
+              {
+                "blank": 0
+              },
+              ". With γ = 0.5 it is ",
+              {
+                "blank": 1
+              },
+              "."
+            ],
+            "ar": [
+              "مع γ = 0.9 والمكافآت 0 و0 و10، يكون العائد من البداية ",
+              {
+                "blank": 0
+              },
+              ". ومع γ = 0.5 يكون ",
+              {
+                "blank": 1
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "8.1",
+              "10",
+              "5",
+              "2.5"
+            ],
+            "ar": [
+              "8.1",
+              "10",
+              "5",
+              "2.5"
+            ]
+          },
+          "answers": {
+            "en": [
+              "8.1",
+              "2.5"
+            ],
+            "ar": [
+              "8.1",
+              "2.5"
+            ]
+          },
+          "explain": {
+            "en": "0.9² × 10 = 8.1 and 0.5² × 10 = 2.5: a smaller γ makes distant rewards count less.",
+            "ar": "⁦0.9² × 10 = 8.1⁩ و⁦0.5² × 10 = 2.5⁩: كلما صغر γ قلّ وزن المكافآت البعيدة."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "A campus delivery robot. Which are correct PEAS entries? Choose all that apply.",
+            "ar": "روبوت توصيل في الحرم الجامعي. أيّها مدخلات PEAS صحيحة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Performance: on-time, undamaged deliveries",
+                "ar": "الأداء: توصيلات في الوقت وبلا تلف"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Environment: paths, people, weather",
+                "ar": "البيئة: الممرات والناس والطقس"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Sensors: the delivery schedule’s owner",
+                "ar": "الحساسات: صاحب جدول التوصيل"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Actuators: wheels and a locker door",
+                "ar": "المشغّلات: العجلات وباب الخزانة"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Sensors are cameras, lidar and GPS, not people.",
+            "ar": "الحساسات كاميرات وليدار وGPS لا أشخاص."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: watch an agent sense, decide and act, and change its reward to see how behaviour changes.",
+            "ar": "جرّب: راقب الوكيل وهو يحس ويقرر ويتصرف، وغيّر مكافأته لترى كيف يتغيّر السلوك."
+          },
+          "tool": "agentloop"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "If the reward function is implemented without bugs, the agent will pursue the designer’s intended goal.",
+            "ar": "إذا نُفّذت دالة المكافأة دون أخطاء، فسيسعى الوكيل إلى الهدف الذي قصده المصمّم."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Bug-free code can still specify the wrong objective; that is specification gaming.",
+            "ar": "قد يحدد كود خالٍ من الأخطاء هدفًا خاطئًا، وهذا هو التلاعب بالمواصفات."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each environment property to an example.",
+            "ar": "طابق كل خاصية بيئة مع مثال."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Partially observable",
+                "ar": "قابلة للملاحظة جزئيًا"
+              },
+              "right": {
+                "en": "Poker",
+                "ar": "البوكر"
+              }
+            },
+            {
+              "left": {
+                "en": "Stochastic",
+                "ar": "عشوائية"
+              },
+              "right": {
+                "en": "Driving in traffic",
+                "ar": "القيادة في الزحام"
+              }
+            },
+            {
+              "left": {
+                "en": "Episodic",
+                "ar": "عرضية"
+              },
+              "right": {
+                "en": "Classifying one image",
+                "ar": "تصنيف صورة واحدة"
+              }
+            },
+            {
+              "left": {
+                "en": "Fully observable and deterministic",
+                "ar": "قابلة للملاحظة كليًا وحتمية"
+              },
+              "right": {
+                "en": "Chess",
+                "ar": "الشطرنج"
+              }
+            }
+          ],
+          "explain": {
+            "en": "The environment’s properties decide which algorithms apply.",
+            "ar": "تحدد خصائص البيئة الخوارزميات التي تنطبق."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Where in your course do students design a reward or objective themselves, and do they ever see it fail?",
+            "ar": "أين يصمّم طلابك مكافأة أو هدفًا بأنفسهم في مقررك، وهل يرونه يفشل يومًا؟"
+          },
+          "placeholder": {
+            "en": "For example: “Never. I’ll add a gridworld lab where their reward is tested.”",
+            "ar": "مثلًا: «أبدًا. سأضيف معمل عالم شبكة تُختبر فيه مكافأتهم.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A reward-design lab",
+            "ar": "مشروع: معمل تصميم المكافأة"
+          },
+          "task": {
+            "en": "Design a lab: students specify PEAS for a small gridworld task, write a reward, train a tabular agent with value iteration or Q-learning, record what the agent actually does, identify any specification gaming, revise the reward, and write a short reflection linking their experience to documented cases. Include starter code and a rubric.",
+            "ar": "صمّم معملًا: يحدد الطلاب PEAS لمهمة صغيرة في عالم شبكة، ويكتبون مكافأة، ويدرّبون وكيلًا جدوليًا بتكرار القيمة أو Q-learning، ويسجّلون ما يفعله الوكيل فعلًا، ويحددون أي تلاعب بالمواصفات، ويعدّلون المكافأة، ويكتبون تأملًا قصيرًا يربط تجربتهم بالحالات الموثّقة. أرفق كود البداية ومعيار تقييم."
+          },
+          "deliverable": {
+            "en": "Starter code, the handout and a rubric.",
+            "ar": "كود البداية وورقة المعمل ومعيار التقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: specify a task with PEAS and an MDP.",
+                "ar": "يستطيع الطلاب: تحديد مهمة بـ PEAS وعملية ماركوف للقرار."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: compute discounted returns and values.",
+                "ar": "يستطيع الطلاب: حساب العوائد المخصومة والقيم."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: detect and repair specification gaming.",
+                "ar": "يستطيع الطلاب: اكتشاف التلاعب بالمواصفات وإصلاحه."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Agents, environments and decisions",
+            "ar": "الوكلاء والبيئات والقرارات"
+          },
+          "note": {
+            "en": "AI agents · University · Lecture 1",
+            "ar": "وكلاء الذكاء الاصطناعي، الجامعة، المحاضرة ١"
+          },
+          "narration": {
+            "en": "A cleaning robot that learned to make a mess.",
+            "ar": "روبوت تنظيف تعلّم أن يُحدث فوضى."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Specify agents with PEAS.",
+              "Model decisions as MDPs.",
+              "Design rewards carefully."
+            ],
+            "ar": [
+              "نحدد الوكلاء بـ PEAS.",
+              "ننمذج القرارات بعمليات ماركوف.",
+              "نصمّم المكافآت بعناية."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Rational, not intelligent.",
+              "Discount the future.",
+              "Reward outcomes."
+            ],
+            "ar": [
+              "عقلاني لا ذكي.",
+              "اخصم المستقبل.",
+              "كافئ النتائج."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Break the reward",
+            "ar": "اكسر المكافأة"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Find the bug",
+              "Specify (15 min): PEAS.",
+              "Hack (15 min): Swap and exploit.",
+              "Repair (20 min): Value iteration.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): ⁦Show the cleaning agent's loop and ask students where the bug is⁩.",
+              "التحديد (١٥ دقيقة): PEAS.",
+              "الاختراق (١٥ دقيقة): بادل واستغل.",
+              "الإصلاح (٢٠ دقيقة): تكرار القيمة.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): جد الخطأ",
+              "Specify (15 min): Pairs write PEAS and a reward for a gridworld exit task.",
+              "Hack (15 min): Swap rewards and find a policy that scores high without solving the task.",
+              "Repair (20 min): Fix the reward and compute two steps of value iteration by hand.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض حلقة وكيل التنظيف واسأل الطلاب أين الخطأ.",
+              "التحديد (١٥ دقيقة): يكتب كل زوجين PEAS ومكافأة لمهمة الخروج من عالم الشبكة.",
+              "الاختراق (١٥ دقيقة): بادلوا المكافآت وجدوا سياسة تحقق درجة عالية دون حل المهمة.",
+              "الإصلاح (٢٠ دقيقة): أصلحوا المكافأة واحسبوا خطوتين من تكرار القيمة يدويًا.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which loophole surprised you?",
+              "What does γ change?",
+              "How will you assess reward design?"
+            ],
+            "ar": [
+              "أيّ ثغرة فاجأتك؟",
+              "ماذا يغيّر γ؟",
+              "كيف ستقيّم تصميم المكافأة؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write a reward for a task you know and one way it could be gamed."
+            ],
+            "ar": [
+              "اكتب مكافأة لمهمة تعرفها وطريقة واحدة للتلاعب بها."
+            ]
+          },
+          "narration": {
+            "en": "The agent optimises exactly what you reward.",
+            "ar": "يعظّم الوكيل ما تكافئه بالضبط."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Agents, environments and decisions",
+            "ar": "شرائح المحاضرة: الوكلاء والبيئات والقرارات"
+          },
+          "pages": 6,
+          "base": "agents-u1-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Agents, environments and decisions",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: الوكلاء والبيئات والقرارات"
+          },
+          "pages": 3,
+          "base": "agents-u1-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-u1-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.1",
+        "T.PE.C"
+      ]
+    },
+    {
+      "id": "agents-u1-2",
+      "title": {
+        "en": "Planning and tool use with language models",
+        "ar": "التخطيط واستخدام الأدوات بالنماذج اللغوية"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Trace A* on a six-node campus map on the board, then show a ReAct transcript with one missing tool call and ask pairs to find the step where the agent should have acted.",
+        "ar": "تتبّع ⁦A*⁩ على خريطة حرم جامعي من ست عقد على السبّورة، ثم اعرض نص ReAct فيه استدعاء أداة مفقود واطلب من كل زوجين إيجاد الخطوة التي كان ينبغي أن يتصرف فيها الوكيل."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Planning and tool use with language models",
+            "ar": "التخطيط واستخدام الأدوات بالنماذج اللغوية"
+          },
+          "src": null,
+          "duration": 193,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "The made-up timetable",
+                "ar": "الجدول المختلَق"
+              }
+            },
+            {
+              "at": 27.9,
+              "atBy": {
+                "en": 27.9,
+                "ar": 27.3
+              },
+              "label": {
+                "en": "Classical planning",
+                "ar": "التخطيط الكلاسيكي"
+              }
+            },
+            {
+              "at": 74.3,
+              "atBy": {
+                "en": 74.3,
+                "ar": 71.5
+              },
+              "label": {
+                "en": "Reason, act, observe",
+                "ar": "فكّر، تصرّف، لاحظ"
+              }
+            },
+            {
+              "at": 150.2,
+              "atBy": {
+                "en": 150.2,
+                "ar": 142.9
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 126.07,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A* with a heuristic that sometimes overestimates. Is its plan guaranteed optimal?",
+                "ar": "تستخدم ⁦A*⁩ دالة تقدير تبالغ أحيانًا. هل خطتها مثالية بالضرورة؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Yes",
+                    "ar": "نعم"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "No",
+                    "ar": "لا"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Only on grids",
+                    "ar": "على الشبكات فقط"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Optimality needs an admissible heuristic.",
+                "ar": "تتطلب المثالية دالة تقدير مقبولة."
+              }
+            },
+            "atBy": {
+              "en": 126.07,
+              "ar": 119.65
+            }
+          },
+          "transcript": {
+            "en": "A student's assistant agent is asked for a free room on Tuesday. It confidently names a room that does not exist. It never called the booking tool it had. Why not? Today: how classical planners search for action sequences, how language-model agents interleave reasoning with tool calls, and how to teach students to build and debug both. Planning finds a sequence of actions that takes the world from a start state to a goal. Each action has preconditions and effects. A planner searches this space instead of guessing. A star search expands the node with the lowest cost so far plus estimated cost to go. If the estimate never overestimates, the plan it finds is optimal. Students can trace it by hand on a small map. A ReAct agent writes a thought, calls a tool, and reads the observation before its next step. Here it checks the booking system before answering. The answer is grounded in what the tool returned. A language model may answer from memory instead of calling a tool, especially if the tool's description is vague. Clear tool descriptions, explicit instructions, and checking every answer against a tool result all reduce this. Students now meet agents through language models and skip classical planning. Teach both. Search gives guarantees and a vocabulary of states and goals. Language-model agents give flexibility, and the classical ideas explain their failures. Quick check! A star uses a heuristic that sometimes overestimates the remaining cost. Is the plan it finds guaranteed to be optimal? No. Optimality needs an admissible heuristic, one that never overestimates. With an overestimate, A star may skip the best path. In the app, open the planner lab. Give an agent a goal and tools, watch its thought, action and observation steps, and spot where it should have used a tool. Your turn. Which change most directly stops the agent from inventing a room? Requiring the answer to come from a tool result, and checking it. Remember: planners search with heuristics, ReAct interleaves thought with tools, and answers should be grounded in observations. Try it in your next lecture: trace A star on a six-node campus map on the board. Then show a ReAct transcript with one missing tool call. Pairs find the step where the agent should have acted.",
+            "ar": "وكيل مساعد عمله طالب اتسأل على أوضة فاضية يوم التلات. وسمّى بثقة أوضة مش موجودة أصلًا. وعمره ما نادى أداة الحجز اللي كانت عنده. ليه؟ النهارده: إزاي المخطِّطات الكلاسيكية بتدوّر على تسلسل أفعال، وإزاي وكلاء النماذج اللغوية بيداخلوا التفكير مع استدعاء الأدوات، وإزاي تعلّم الطلاب يبنوا الاتنين ويصلّحوا أخطاءهم. التخطيط بيلاقي تسلسل أفعال بينقل العالم من حالة البداية للهدف. وكل فعل ليه شروط مسبقة ونتايج. والمخطِّط بيدوّر في المساحة دي بدل ما يخمّن. بحث A نجمة بيوسّع العقدة اللي عندها أقل تكلفة لحد دلوقتي زائد التكلفة المقدّرة الباقية. ولو التقدير عمره ما بيبالغ، الخطة اللي بيلاقيها بتبقى مثالية. والطلاب يقدروا يتتبّعوه باليد على خريطة صغيرة. وكيل ReAct بيكتب فكرة، وينادي أداة، ويقرا الملاحظة قبل الخطوة الجاية. وهنا بيراجع نظام الحجز قبل ما يرد. والإجابة مبنية على اللي الأداة رجّعته. النموذج اللغوي ممكن يرد من ذاكرته بدل ما ينادي أداة، خصوصًا لو وصف الأداة مش واضح. والأوصاف الواضحة للأدوات، والتعليمات الصريحة، ومراجعة كل إجابة على نتيجة أداة، كلهم بيقلّلوا ده. الطلاب دلوقتي بيقابلوا الوكلاء عن طريق النماذج اللغوية وبيفوّتوا التخطيط الكلاسيكي. درّس الاتنين. البحث بيدّي ضمانات ومفردات للحالات والأهداف. ووكلاء النماذج اللغوية بيدّوا مرونة، والأفكار الكلاسيكية بتفسّر إخفاقاتهم. سؤال سريع! A نجمة بيستخدم دالة تقدير ساعات بتبالغ في التكلفة الباقية. هل الخطة اللي بيلاقيها مضمون إنها مثالية؟ لأ. المثالية محتاجة دالة تقدير مقبولة، يعني عمرها ما تبالغ. ومع المبالغة، A نجمة ممكن يفوّت أحسن مسار. في التطبيق، افتح معمل المخطِّط. ادّي الوكيل هدف وأدوات، وشوف خطوات الفكرة والفعل والملاحظة، ولاقي المكان اللي كان المفروض يستخدم فيه أداة. دورك. أنهي تغيير أكتر حاجة بتمنع الوكيل مباشرةً إنه يألّف أوضة؟ إنك تشترط إن الإجابة تيجي من نتيجة أداة، وتراجعها. افتكر: المخطِّطات بتدوّر بدوال تقدير، وReAct بيداخل التفكير مع الأدوات، والإجابات لازم تتبني على الملاحظات. جرّبها في محاضرتك الجاية: تتبّع A نجمة على خريطة حرم جامعي فيها ست عُقد على السبّورة. وبعدين اعرض نص ReAct فيه استدعاء أداة ناقص. وكل اتنين يلاقوا الخطوة اللي كان المفروض الوكيل يتصرف فيها."
+          },
+          "sources": {
+            "en": "/media/agents-u1-2/video-en.mp4",
+            "ar": "/media/agents-u1-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-u1-2/captions-en.vtt",
+            "ar": "/media/agents-u1-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-u1-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-u1-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-u1-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-u1-2/light/audio/en.opus",
+              "manifest.json": "/media/agents-u1-2/light/manifest.json",
+              "scenes.json": "/media/agents-u1-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-u1-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-u1-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 422,
+              "ar": 412
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "From search to tool-using agents",
+            "ar": "من البحث إلى الوكلاء المستخدمين للأدوات"
+          },
+          "body": {
+            "en": "Classical planning represents states as sets of facts and actions by preconditions and effects, as in STRIPS (Fikes and Nilsson, 1971) and its successor PDDL. A plan is a sequence of actions transforming the initial state into one satisfying the goal. Heuristic search drives modern planners: A* (Hart, Nilsson and Raphael, 1968) expands nodes in order of f(n) = g(n) + h(n), and with an admissible heuristic that never overestimates, the first goal it expands is optimal. Relaxed-problem heuristics such as ignoring delete effects make planning practical at scale.\n\nLanguage-model agents plan differently. ReAct (Yao et al., 2023) interleaves free-text reasoning with actions such as tool calls, reading each observation before continuing; Toolformer and function-calling interfaces let models choose tools from descriptions. These agents are flexible but offer no completeness or optimality guarantees, may hallucinate instead of calling a tool, loop, or pursue a wrong subgoal. Clear tool schemas, explicit instructions to ground answers in tool results, step limits and output validation mitigate these failures.\n\nTeaching both traditions is valuable: classical planning provides a precise vocabulary of states, goals, preconditions and search, and explains the failures of language-model agents, such as acting without checking preconditions. Students should trace A* by hand, implement a small planner, and then build and debug a ReAct agent with logged transcripts, identifying where reasoning diverged from observations.",
+            "ar": "يمثّل التخطيط الكلاسيكي الحالات مجموعاتٍ من الحقائق والأفعالَ بشروطها المسبقة ونتائجها، كما في ⁦STRIPS (Fikes⁩ وNilsson، ١٩٧١) وخليفتها PDDL. والخطة تسلسل أفعال يحوّل الحالة الابتدائية إلى حالة تحقق الهدف. ويقود البحث الموجَّه المخطِّطات الحديثة: فـ ⁦A* (Hart⁩ وNilsson وRaphael، ١٩٦٨) يوسّع العقد بترتيب ⁦f(n) = g(n) + h(n)⁩، ومع دالة تقدير مقبولة لا تبالغ أبدًا يكون أول هدف يوسّعه مثاليًا. وتجعل دوال التقدير المبنية على مسائل مرخّاة، مثل تجاهل آثار الحذف، التخطيط عمليًا على نطاق واسع.\n\nأما وكلاء النماذج اللغوية فيخطّطون بطريقة مختلفة. فـ ⁦ReAct (Yao⁩ وآخرون، ٢٠٢٣) يداخل الاستدلال النصي الحر مع أفعال مثل استدعاء الأدوات، ويقرأ كل ملاحظة قبل المتابعة، وتتيح Toolformer وواجهات استدعاء الدوال للنماذج اختيار الأدوات من أوصافها. وهؤلاء الوكلاء مرنون لكنهم لا يقدّمون ضمانات اكتمال أو مثالية، وقد يختلقون بدل استدعاء الأداة، أو يدورون في حلقة، أو يسعون إلى هدف فرعي خاطئ. وتخفّف هذه الإخفاقات مخططاتُ أدوات واضحة، وتعليمات صريحة ببناء الإجابات على نتائج الأدوات، وحدود للخطوات، والتحقق من المخرجات.\n\nولتدريس المدرستين قيمة: فالتخطيط الكلاسيكي يوفّر مفردات دقيقة للحالات والأهداف والشروط المسبقة والبحث، ويفسّر إخفاقات وكلاء النماذج اللغوية، مثل التصرف دون التحقق من الشروط المسبقة. وينبغي أن يتتبّع الطلاب ⁦A*⁩ يدويًا، وينفّذوا مخطِّطًا صغيرًا، ثم يبنوا وكيل ReAct ويصلحوا أخطاءه بنصوص مسجّلة، محددين أين انحرف الاستدلال عن الملاحظات."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Admissible heuristic",
+                "ar": "دالة تقدير مقبولة"
+              },
+              "def": {
+                "en": "An estimate that never exceeds the true remaining cost.",
+                "ar": "تقدير لا يتجاوز أبدًا التكلفة الحقيقية المتبقية."
+              }
+            },
+            {
+              "term": {
+                "en": "ReAct",
+                "ar": "ReAct"
+              },
+              "def": {
+                "en": "Interleaving reasoning, tool actions and observations.",
+                "ar": "مداخلة الاستدلال وأفعال الأدوات والملاحظات."
+              }
+            },
+            {
+              "term": {
+                "en": "Grounding",
+                "ar": "الاستناد"
+              },
+              "def": {
+                "en": "Basing an answer on retrieved or observed data.",
+                "ar": "بناء الإجابة على بيانات مسترجعة أو ملاحظة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Which change most directly stops the agent inventing a room?",
+            "ar": "أيّ تغيير يمنع الوكيل مباشرةً من اختلاق قاعة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A bigger model",
+                "ar": "نموذج أكبر"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Require and check a tool result",
+                "ar": "اشتراط نتيجة أداة والتحقق منها"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A longer answer",
+                "ar": "إجابة أطول"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Ground the answer in what the tool returned.",
+            "ar": "ابنِ الإجابة على ما أعادته الأداة."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Expand A*.",
+            "ar": "وسّع ⁦A*⁩."
+          },
+          "sentence": {
+            "en": [
+              "Node X has g = 4 and h = 3; node Y has g = 2 and h = 6. A* expands ",
+              {
+                "blank": 0
+              },
+              " first because its f is ",
+              {
+                "blank": 1
+              },
+              "."
+            ],
+            "ar": [
+              "للعقدة X القيمتان ⁦g = 4⁩ و⁦h = 3⁩، وللعقدة Y القيمتان ⁦g = 2⁩ و⁦h = 6⁩. يوسّع ⁦A*⁩ العقدة ",
+              {
+                "blank": 0
+              },
+              " أولًا لأن f لها تساوي ",
+              {
+                "blank": 1
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "X",
+              "Y",
+              "8",
+              "7"
+            ],
+            "ar": [
+              "X",
+              "Y",
+              "8",
+              "7"
+            ]
+          },
+          "answers": {
+            "en": [
+              "X",
+              "7"
+            ],
+            "ar": [
+              "X",
+              "7"
+            ]
+          },
+          "explain": {
+            "en": "f(X) = 7 < f(Y) = 8.",
+            "ar": "⁦f(X) = 7 < f(Y) = 8.⁩"
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which reduce hallucinated answers in a tool-using agent? Choose all that apply.",
+            "ar": "أيّها يقلّل الإجابات المختلَقة لدى وكيل يستخدم الأدوات؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Clear, specific tool descriptions",
+                "ar": "أوصاف أدوات واضحة ومحددة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Instructions to answer only from tool results",
+                "ar": "تعليمات بالإجابة من نتائج الأدوات فقط"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Validating answers against tool output",
+                "ar": "التحقق من الإجابات مقابل مخرجات الأدوات"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Removing the step limit",
+                "ar": "إزالة حد الخطوات"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "Removing step limits invites loops; it does not ground answers.",
+            "ar": "إزالة حد الخطوات تفتح الباب للحلقات ولا تجعل الإجابات مستندة."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: give an agent a goal and tools, watch its steps, and spot where it should have used a tool.",
+            "ar": "جرّب: أعطِ الوكيل هدفًا وأدوات، وراقب خطواته، وحدد أين كان ينبغي أن يستخدم أداة."
+          },
+          "tool": "planner"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "A ReAct agent, like A* with an admissible heuristic, guarantees an optimal plan.",
+            "ar": "يضمن وكيل ReAct خطة مثالية، مثل ⁦A*⁩ بدالة تقدير مقبولة."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Language-model agents offer no optimality or completeness guarantees.",
+            "ar": "لا يقدّم وكلاء النماذج اللغوية ضمانات مثالية أو اكتمال."
+          }
+        },
+        {
+          "type": "order",
+          "id": "p5",
+          "prompt": {
+            "en": "Order one ReAct step.",
+            "ar": "رتّب خطوة ReAct واحدة."
+          },
+          "steps": [
+            {
+              "en": "Thought: what is needed",
+              "ar": "الفكرة: ما المطلوب"
+            },
+            {
+              "en": "Action: call a tool",
+              "ar": "الفعل: استدعاء أداة"
+            },
+            {
+              "en": "Observation: read the result",
+              "ar": "الملاحظة: قراءة النتيجة"
+            },
+            {
+              "en": "Answer or next thought",
+              "ar": "الإجابة أو الفكرة التالية"
+            }
+          ],
+          "explain": {
+            "en": "Reasoning is grounded by reading the observation before continuing.",
+            "ar": "يستند الاستدلال بقراءة الملاحظة قبل المتابعة."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Do your students learn classical search before they build language-model agents? What would they miss without it?",
+            "ar": "هل يتعلّم طلابك البحث الكلاسيكي قبل بناء وكلاء النماذج اللغوية؟ وماذا سيفوتهم بدونه؟"
+          },
+          "placeholder": {
+            "en": "For example: “No. They’d miss the idea of preconditions, which explains most of their agents’ failures.”",
+            "ar": "مثلًا: «لا. ستفوتهم فكرة الشروط المسبقة التي تفسّر معظم إخفاقات وكلائهم.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A planner-and-agent assignment",
+            "ar": "مشروع: تكليف المخطِّط والوكيل"
+          },
+          "task": {
+            "en": "Design a two-part assignment: first, students implement A* for a campus routing problem and prove their heuristic admissible; second, they build a ReAct agent with two tools for room booking, log every transcript, test it on twenty held-out requests, and classify each failure as hallucination, wrong tool, loop or wrong goal. Include a rubric.",
+            "ar": "صمّم تكليفًا من جزأين: أولًا ينفّذ الطلاب ⁦A*⁩ لمسألة توجيه في الحرم الجامعي ويبرهنون قبول دالة التقدير، وثانيًا يبنون وكيل ReAct بأداتين لحجز القاعات، ويسجّلون كل نص، ويختبرونه على عشرين طلبًا منفصلًا، ويصنّفون كل إخفاق إلى اختلاق أو أداة خاطئة أو حلقة أو هدف خاطئ. أرفق معيار تقييم."
+          },
+          "deliverable": {
+            "en": "The brief, starter code, the held-out requests and a rubric.",
+            "ar": "الوصف وكود البداية والطلبات المنفصلة ومعيار التقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: implement and justify heuristic search.",
+                "ar": "يستطيع الطلاب: تنفيذ البحث الموجَّه وتبريره."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: build a tool-using agent with logged traces.",
+                "ar": "يستطيع الطلاب: بناء وكيل يستخدم الأدوات بنصوص مسجّلة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: classify agent failures.",
+                "ar": "يستطيع الطلاب: تصنيف إخفاقات الوكيل."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Planning and tool use with language models",
+            "ar": "التخطيط واستخدام الأدوات بالنماذج اللغوية"
+          },
+          "note": {
+            "en": "AI agents · University · Lecture 2",
+            "ar": "وكلاء الذكاء الاصطناعي، الجامعة، المحاضرة ٢"
+          },
+          "narration": {
+            "en": "An assistant that invented a room.",
+            "ar": "مساعد اختلق قاعة."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Plan with A*.",
+              "Build ReAct agents.",
+              "Ground answers in tools."
+            ],
+            "ar": [
+              "نخطّط بـ ⁦A*⁩.",
+              "نبني وكلاء ReAct.",
+              "نبني الإجابات على الأدوات."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Admissible heuristics.",
+              "Thought, action, observation.",
+              "Check every answer."
+            ],
+            "ar": [
+              "دوال تقدير مقبولة.",
+              "فكرة وفعل وملاحظة.",
+              "تحقق من كل إجابة."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Search, then act",
+            "ar": "ابحث ثم تصرّف"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): What went wrong?",
+              "Trace (20 min): A*.",
+              "Debug (15 min): ReAct.",
+              "Compare (15 min): Guarantees.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): Show the invented-room transcript and ask what step is missing.",
+              "التتبّع (٢٠ دقيقة): ⁦A*⁩.",
+              "التصحيح (١٥ دقيقة): ReAct.",
+              "المقارنة (١٥ دقيقة): الضمانات.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): ما الخطأ؟",
+              "Trace (20 min): Pairs trace A* on a six-node map with the open list on paper.",
+              "Debug (15 min): Find the missing tool call in a ReAct transcript and rewrite the step.",
+              "Compare (15 min): List what A* guarantees that the agent does not.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض نص القاعة المختلَقة واسأل ما الخطوة المفقودة.",
+              "التتبّع (٢٠ دقيقة): يتتبّع كل زوجين ⁦A*⁩ على خريطة من ست عقد مع القائمة المفتوحة على الورق.",
+              "التصحيح (١٥ دقيقة): جد استدعاء الأداة المفقود في نص ReAct وأعد كتابة الخطوة.",
+              "المقارنة (١٥ دقيقة): اسرد ما يضمنه ⁦A*⁩ ولا يضمنه الوكيل.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "When is A* optimal?",
+              "Why did the agent skip the tool?",
+              "How will you grade transcripts?"
+            ],
+            "ar": [
+              "متى يكون ⁦A*⁩ مثاليًا؟",
+              "لماذا تجاوز الوكيل الأداة؟",
+              "كيف ستقيّم النصوص؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one instruction that grounds an agent’s answers."
+            ],
+            "ar": [
+              "اكتب تعليمة واحدة تجعل إجابات الوكيل مستندة."
+            ]
+          },
+          "narration": {
+            "en": "Ground every answer in an observation.",
+            "ar": "ابنِ كل إجابة على ملاحظة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Planning and tool use with language models",
+            "ar": "شرائح المحاضرة: التخطيط واستخدام الأدوات بالنماذج اللغوية"
+          },
+          "pages": 6,
+          "base": "agents-u1-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Planning and tool use with language models",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: التخطيط واستخدام الأدوات بالنماذج اللغوية"
+          },
+          "pages": 3,
+          "base": "agents-u1-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-u1-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.1",
+        "AGT.2",
+        "T.PE.C"
+      ]
+    },
+    {
+      "id": "agents-u1-3",
+      "title": {
+        "en": "Evaluating agents",
+        "ar": "تقييم الوكلاء"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Show two teams’ results, one inflated and one honest, without saying which; pairs list what each did and did not report, then vote on which they trust.",
+        "ar": "اعرض نتائج فريقين، إحداهما مضخّمة والأخرى أمينة، دون أن تقول أيّهما، فيسرد كل زوجين ما عرضه كل فريق وما لم يعرضه، ثم يصوّتون على النتيجة التي يثقون بها."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Evaluating agents",
+            "ar": "تقييم الوكلاء"
+          },
+          "src": null,
+          "duration": 206,
+          "sizeMB": 1.2,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Ninety percent, once",
+                "ar": "تسعون بالمئة، مرة واحدة"
+              }
+            },
+            {
+              "at": 30.2,
+              "atBy": {
+                "en": 30.2,
+                "ar": 26.4
+              },
+              "label": {
+                "en": "Measuring success",
+                "ar": "قياس النجاح"
+              }
+            },
+            {
+              "at": 84.9,
+              "atBy": {
+                "en": 84.9,
+                "ar": 78.7
+              },
+              "label": {
+                "en": "Honest evaluation",
+                "ar": "تقييم أمين"
+              }
+            },
+            {
+              "at": 163.1,
+              "atBy": {
+                "en": 163.1,
+                "ar": 150.3
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 140.07,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Single-attempt success is 0.2. What is pass@2?",
+                "ar": "احتمال النجاح في محاولة واحدة 0.2. كم تساوي pass@2؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "0.36",
+                    "ar": "⁦0.36⁩"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "0.4",
+                    "ar": "⁦0.4⁩"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "0.04",
+                    "ar": "⁦0.04⁩"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "1 − 0.8² = 0.36.",
+                "ar": "⁦1 − 0.8² = 0.36.⁩"
+              }
+            },
+            "atBy": {
+              "en": 140.07,
+              "ar": 126.81
+            }
+          },
+          "transcript": {
+            "en": "A student team reports that their coding agent solves ninety percent of tasks. When you rerun it, it solves sixty. They ran it once, on tasks they wrote while building it. What should they have done? Today: how to measure whether an agent works, what pass at k really means, and how to teach students to report results that others can trust. An evaluation runs an agent on a fixed set of tasks with an automatic check of success. The tasks must be separate from those used to build the agent. And because agents are random, it must be run more than once. pass at k is the probability that at least one of k attempts succeeds. If one attempt succeeds with probability p, pass at k is one minus one minus p, to the power k. It rewards retries, so report pass at one as well. On fifty tasks, a sixty percent success rate has a standard error of about seven points. So ninety and sixty may partly be noise and partly overfitting. Report the mean over several runs with an interval. Public benchmarks may already appear in a model's training data, which inflates scores. Agents can also game a weak checker, for example by editing the tests. Hold out fresh tasks and inspect failures and successes by hand. In student agent projects, grade the evaluation as seriously as the agent. Require a held-out task set, several runs, pass at one with an interval, and a short error analysis. A modest honest result should earn more than an inflated one. Quick check! An agent succeeds on a single attempt with probability zero point two. What is pass at two? Zero point three six: one minus zero point eight squared. Two tries nearly double the headline number, which is why pass at one matters. In the app, open the evals lab. Run an agent several times on the same tasks, watch the score move, and compare pass at one with pass at k. Your turn. Which result is most trustworthy for a student agent project? Pass at one averaged over five runs on held-out tasks, with an interval. Remember: separate test tasks, several runs, honest metrics, and read the transcripts. Try it in your next lecture: show two teams' results, one inflated and one honest, without saying which is which. Pairs list what each team did and did not report. Then vote on which result they trust.",
+            "ar": "فريق طلاب قال إن وكيل البرمجة بتاعهم بيحل تسعين في المية من المهام. ولما إنت شغّلته تاني، حل ستين. هم شغّلوه مرة واحدة، على مهام كتبوها وهم بيبنوه. كان المفروض يعملوا إيه؟ النهارده: إزاي تقيس الوكيل شغال ولا لأ، وpass@k معناها إيه بالظبط، وإزاي تعلّم الطلاب يقدّموا نتايج غيرهم يقدر يثق فيها. التقييم بيشغّل الوكيل على مجموعة مهام ثابتة مع فحص آلي للنجاح. والمهام لازم تبقى منفصلة عن اللي اتستخدمت في بناء الوكيل. ولأن الوكلاء عشوائيين، لازم يتشغّل أكتر من مرة. pass@k هي احتمال إن محاولة واحدة على الأقل من k تنجح. ولو المحاولة الواحدة بتنجح باحتمال p، تبقى pass@k هي واحد ناقص (واحد ناقص p) أس k. وهي بتكافئ إعادة المحاولة، فاعرض pass@1 كمان. على خمسين مهمة، معدل نجاح ستين في المية ليه خطأ معياري حوالي سبع نقط. يعني التسعين والستين ممكن يبقى جزء منهم ضوضاء وجزء فرط تعلّم. اعرض المتوسط على كذا تشغيلة مع فترة ثقة. المعايير العامة ممكن تكون موجودة أصلًا في بيانات تدريب النموذج، وده بينفخ الدرجات. والوكلاء كمان ممكن يتلاعبوا بفاحص ضعيف، مثلًا بإنهم يعدّلوا الاختبارات. احتفظ بمهام جديدة وراجع النجاح والفشل باليد. في مشاريع الوكلاء بتاعة الطلاب، قيّم التقييم بنفس جدية الوكيل. اشترط مجموعة مهام منفصلة، وكذا تشغيلة، وpass@1 مع فترة ثقة، وتحليل أخطاء قصير. والنتيجة المتواضعة الأمينة لازم تاخد أكتر من النتيجة المنفوخة. سؤال سريع! وكيل بينجح في المحاولة الواحدة باحتمال صفر فاصل اتنين. pass@2 كام؟ صفر فاصل تلاتة وستين: واحد ناقص صفر فاصل تمانية تربيع. ومحاولتين تقريبًا بيضاعفوا الرقم المعلن، وده السبب إن pass@1 مهمة. في التطبيق، افتح معمل التقييمات. شغّل الوكيل كذا مرة على نفس المهام، وشوف الدرجة بتتحرك، وقارن pass@1 بـ pass@k. دورك. أنهي نتيجة أجدر بالثقة في مشروع وكيل لطلاب؟ pass@1 متوسط خمس تشغيلات على مهام منفصلة، مع فترة ثقة. افتكر: مهام اختبار منفصلة، وكذا تشغيلة، ومقاييس أمينة، واقرا النصوص. جرّبها في محاضرتك الجاية: اعرض نتايج فريقين، واحدة منفوخة وواحدة أمينة، من غير ما تقول مين مين. وكل اتنين يكتبوا كل فريق عرض إيه وماعرضش إيه. وبعدين يصوّتوا يثقوا في أنهي نتيجة."
+          },
+          "sources": {
+            "en": "/media/agents-u1-3/video-en.mp4",
+            "ar": "/media/agents-u1-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-u1-3/captions-en.vtt",
+            "ar": "/media/agents-u1-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-u1-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-u1-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-u1-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-u1-3/light/audio/en.opus",
+              "manifest.json": "/media/agents-u1-3/light/manifest.json",
+              "scenes.json": "/media/agents-u1-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-u1-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-u1-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 447,
+              "ar": 416
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Measuring agents honestly",
+            "ar": "قياس الوكلاء بأمانة"
+          },
+          "body": {
+            "en": "An agent evaluation fixes a task set, an environment and an automatic success criterion, then runs the agent and reports a metric. Benchmarks such as HumanEval (Chen et al., 2021) and SWE-bench (Jimenez et al., 2024) popularised pass@k, the probability that at least one of k sampled attempts succeeds. With single-attempt success p, pass@k = 1 − (1 − p)ᵏ; Chen et al. give an unbiased estimator from n ≥ k samples with c successes, 1 − C(n − c, k)/C(n, k). Because pass@k rewards retries, pass@1 should always be reported alongside it.\n\nAgents are stochastic and task sets are small, so a single run is an anecdote. Report the mean over several runs with a confidence interval: for a success rate p̂ on n tasks, the standard error is about √(p̂(1 − p̂)/n), so on fifty tasks a 60% result has an interval of roughly ±14 points. Differences smaller than that may be noise. Evaluate on tasks held out from development; tuning prompts on the test set is overfitting. Public benchmarks may also leak into training data, inflating scores through contamination.\n\nWeak success checkers can be gamed, for example by an agent editing tests or exploiting a lenient string match, so evaluators must read transcripts of successes as well as failures and perform error analysis. In student projects, treat the evaluation as a graded deliverable: require a held-out set, several runs, pass@1 with an interval, a baseline, and a categorised error analysis, and reward honest modest results over inflated ones.",
+            "ar": "يثبّت تقييم الوكيل مجموعة مهام وبيئة ومعيار نجاح آليًا، ثم يشغّل الوكيل ويعرض مقياسًا. وقد نشرت معايير مثل ⁦HumanEval (Chen⁩ وآخرون، ٢٠٢١) و⁦SWE-bench (Jimenez⁩ وآخرون، ٢٠٢٤) مقياس pass@k، أي احتمال نجاح محاولة واحدة على الأقل من k محاولات. ومع احتمال نجاح المحاولة الواحدة p، تكون ⁦pass@k = 1 − (1 − p)⁩ᵏ، ويقدّم Chen وآخرون مقدّرًا غير متحيز من ⁦n ≥ k⁩ عينة فيها c نجاحًا هو ⁦1 − C(n − c, k)/C(n, k)⁩. ولأن pass@k تكافئ إعادة المحاولة، ينبغي دائمًا عرض pass@1 معها.\n\nوالوكلاء عشوائيون ومجموعات المهام صغيرة، فالتشغيلة الواحدة مجرد حكاية. اعرض المتوسط على عدة تشغيلات مع فترة ثقة: فلمعدل نجاح p̂ على n مهمة يكون الخطأ المعياري نحو √(p̂(⁦1 − p⁩̂)/n)، فعلى خمسين مهمة تكون فترة نتيجة ٦٠٪ نحو ±١٤ نقطة. والفروق الأصغر من ذلك قد تكون ضوضاء. وقيّم على مهام منفصلة عن التطوير، فضبط التعليمات على مجموعة الاختبار فرط تعلّم. وقد تتسرّب المعايير العامة أيضًا إلى بيانات التدريب فتنتفخ الدرجات بالتلوّث.\n\nويمكن التلاعب بفاحصات النجاح الضعيفة، كأن يعدّل الوكيل الاختبارات أو يستغل مطابقة نصية متساهلة، فيجب أن يقرأ المقيّمون نصوص النجاحات كما الإخفاقات ويجروا تحليل أخطاء. وفي مشاريع الطلاب، عامل التقييم على أنه مُخرج يُقيَّم: اشترط مجموعة منفصلة، وعدة تشغيلات، وpass@1 مع فترة ثقة، وخط أساس، وتحليل أخطاء مصنّفًا، وكافئ النتائج المتواضعة الأمينة على المضخّمة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "pass@k",
+                "ar": "⁦pass@k⁩"
+              },
+              "def": {
+                "en": "Probability that at least one of k attempts succeeds.",
+                "ar": "احتمال نجاح محاولة واحدة على الأقل من k."
+              }
+            },
+            {
+              "term": {
+                "en": "Held-out set",
+                "ar": "مجموعة منفصلة"
+              },
+              "def": {
+                "en": "Tasks never used while building the agent.",
+                "ar": "مهام لم تُستخدم أبدًا أثناء بناء الوكيل."
+              }
+            },
+            {
+              "term": {
+                "en": "Contamination",
+                "ar": "التلوّث"
+              },
+              "def": {
+                "en": "Benchmark items appearing in training data.",
+                "ar": "ظهور عناصر المعيار في بيانات التدريب."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Which result is most trustworthy for a student agent project?",
+            "ar": "أيّ نتيجة أجدر بالثقة في مشروع وكيل طلابي؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "pass@10 on development tasks",
+                "ar": "pass@10 على مهام التطوير"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Best of one run",
+                "ar": "أفضل تشغيلة واحدة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "pass@1 over 5 runs on held-out tasks",
+                "ar": "pass@1 على 5 تشغيلات بمهام منفصلة"
+              }
+            }
+          ],
+          "answer": "c",
+          "explain": {
+            "en": "Held-out, repeated and honest.",
+            "ar": "منفصلة ومتكررة وأمينة."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Compute the metrics.",
+            "ar": "احسب المقاييس."
+          },
+          "sentence": {
+            "en": [
+              "With p = 0.5, pass@3 = ",
+              {
+                "blank": 0
+              },
+              ". On 100 tasks at p̂ = 0.5, the standard error is ",
+              {
+                "blank": 1
+              },
+              "."
+            ],
+            "ar": [
+              "مع ⁦p = 0.5⁩، تكون pass@3 = ",
+              {
+                "blank": 0
+              },
+              ". وعلى ١٠٠ مهمة عند p̂ = 0.5، يكون الخطأ المعياري ",
+              {
+                "blank": 1
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "0.875",
+              "0.75",
+              "0.5",
+              "0.05"
+            ],
+            "ar": [
+              "0.875",
+              "0.75",
+              "0.5",
+              "0.05"
+            ]
+          },
+          "answers": {
+            "en": [
+              "0.875",
+              "0.05"
+            ],
+            "ar": [
+              "0.875",
+              "0.05"
+            ]
+          },
+          "explain": {
+            "en": "1 − 0.5³ = 0.875; √(0.25/100) = 0.05.",
+            "ar": "⁦1 − 0.5³ = 0.875⁩، و√⁦(0.25/100) = 0.05⁩."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which make an agent evaluation more trustworthy? Choose all that apply.",
+            "ar": "أيّها يجعل تقييم الوكيل أجدر بالثقة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Several runs with an interval",
+                "ar": "عدة تشغيلات مع فترة ثقة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Tasks held out from development",
+                "ar": "مهام منفصلة عن التطوير"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Reporting only the best run",
+                "ar": "عرض أفضل تشغيلة فقط"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Reading transcripts of successes",
+                "ar": "قراءة نصوص النجاحات"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Best-of reporting inflates results.",
+            "ar": "عرض الأفضل فقط يضخّم النتائج."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: run an agent several times on the same tasks, watch the score move, and compare pass@1 with pass@k.",
+            "ar": "جرّب: شغّل الوكيل عدة مرات على المهام نفسها، وراقب تحرك الدرجة، وقارن pass@1 بـ pass@k."
+          },
+          "tool": "evals"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "If agent A scores 62% and agent B 58% on 50 tasks in one run, A is clearly better.",
+            "ar": "إذا حقق الوكيل A نسبة ٦٢٪ والوكيل B نسبة ٥٨٪ على ٥٠ مهمة في تشغيلة واحدة، فـ A أفضل بوضوح."
+          },
+          "answer": false,
+          "explain": {
+            "en": "The interval is about ±14 points; a 4-point gap is within noise.",
+            "ar": "الفترة نحو ±١٤ نقطة، وفارق ٤ نقاط ضمن الضوضاء."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each threat to evaluation validity with its remedy.",
+            "ar": "طابق كل تهديد لصلاحية التقييم مع علاجه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Tuning on the test tasks",
+                "ar": "الضبط على مهام الاختبار"
+              },
+              "right": {
+                "en": "A held-out set",
+                "ar": "مجموعة منفصلة"
+              }
+            },
+            {
+              "left": {
+                "en": "Run-to-run randomness",
+                "ar": "العشوائية بين التشغيلات"
+              },
+              "right": {
+                "en": "Several runs and intervals",
+                "ar": "عدة تشغيلات وفترات ثقة"
+              }
+            },
+            {
+              "left": {
+                "en": "Agent edits the tests",
+                "ar": "الوكيل يعدّل الاختبارات"
+              },
+              "right": {
+                "en": "Protected checkers and transcript review",
+                "ar": "فاحصات محمية ومراجعة النصوص"
+              }
+            },
+            {
+              "left": {
+                "en": "Benchmark in training data",
+                "ar": "المعيار في بيانات التدريب"
+              },
+              "right": {
+                "en": "Fresh, unpublished tasks",
+                "ar": "مهام جديدة غير منشورة"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each remedy targets one threat.",
+            "ar": "كل علاج يستهدف تهديدًا واحدًا."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "How do your students currently report results from agent or model projects, and what would you require next term?",
+            "ar": "كيف يعرض طلابك حاليًا نتائج مشاريع الوكلاء أو النماذج، وماذا ستشترط الفصل القادم؟"
+          },
+          "placeholder": {
+            "en": "For example: “One number, one run. I’ll require five runs, an interval and an error analysis.”",
+            "ar": "مثلًا: «رقم واحد وتشغيلة واحدة. سأشترط خمس تشغيلات وفترة ثقة وتحليل أخطاء.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: An evaluation protocol for agent projects",
+            "ar": "مشروع: بروتوكول تقييم لمشاريع الوكلاء"
+          },
+          "task": {
+            "en": "Write the evaluation section of your agent-project brief: a held-out task set of at least thirty tasks written by staff, five runs per configuration, pass@1 with 95% intervals, a simple baseline, transcript review of ten successes and ten failures, and a categorised error table. Write the rubric so that rigour earns more marks than the headline score.",
+            "ar": "اكتب قسم التقييم في وصف مشروع الوكلاء: مجموعة مهام منفصلة من ثلاثين مهمة على الأقل يكتبها فريق التدريس، وخمس تشغيلات لكل إعداد، وpass@1 مع فترات ثقة ٩٥٪، وخط أساس بسيط، ومراجعة نصوص عشرة نجاحات وعشرة إخفاقات، وجدول أخطاء مصنّف. اكتب معيار التقييم بحيث تنال الدقة درجات أكثر من الرقم المعلن."
+          },
+          "deliverable": {
+            "en": "The protocol, the task set, a report template and a rubric.",
+            "ar": "البروتوكول ومجموعة المهام وقالب التقرير ومعيار التقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: compute pass@k and confidence intervals.",
+                "ar": "يستطيع الطلاب: حساب pass@k وفترات الثقة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: design held-out evaluations.",
+                "ar": "يستطيع الطلاب: تصميم تقييمات منفصلة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: write an honest error analysis.",
+                "ar": "يستطيع الطلاب: كتابة تحليل أخطاء أمين."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Evaluating agents",
+            "ar": "تقييم الوكلاء"
+          },
+          "note": {
+            "en": "AI agents · University · Lecture 3",
+            "ar": "وكلاء الذكاء الاصطناعي، الجامعة، المحاضرة ٣"
+          },
+          "narration": {
+            "en": "Ninety percent, then sixty.",
+            "ar": "تسعون بالمئة ثم ستون."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Define pass@k.",
+              "Quantify uncertainty.",
+              "Grade evaluation rigour."
+            ],
+            "ar": [
+              "نعرّف pass@k.",
+              "نقيس عدم اليقين.",
+              "نقيّم دقة التقييم."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Hold out the test.",
+              "Run it again.",
+              "Read the transcripts."
+            ],
+            "ar": [
+              "افصل الاختبار.",
+              "شغّله مرة أخرى.",
+              "اقرأ النصوص."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Audit an evaluation",
+            "ar": "دقّق تقييمًا"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Which would you trust?",
+              "Compute (15 min): pass@k.",
+              "Interval (15 min): Noise.",
+              "Audit (20 min): Two reports.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): Show two result tables and ask students which they believe.",
+              "الحساب (١٥ دقيقة): pass@k.",
+              "الفترة (١٥ دقيقة): الضوضاء.",
+              "التدقيق (٢٠ دقيقة): تقريران.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): بأيّهما تثق؟",
+              "Compute (15 min): Pairs compute pass@1 and pass@3 from a sample of runs.",
+              "Interval (15 min): Add 95% intervals and decide which differences are real.",
+              "Audit (20 min): List what each team’s report omits and rewrite one honestly.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض جدولي نتائج واسأل الطلاب أيّهما يصدّقون.",
+              "الحساب (١٥ دقيقة): يحسب كل زوجين pass@1 وpass@3 من عينة تشغيلات.",
+              "الفترة (١٥ دقيقة): أضف فترات ثقة ٩٥٪ وقرّر أيّ الفروق حقيقية.",
+              "التدقيق (٢٠ دقيقة): اسرد ما أغفله تقرير كل فريق وأعد كتابة أحدهما بأمانة.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "How wide was the interval?",
+              "Which omission mattered most?",
+              "How will you weight rigour?"
+            ],
+            "ar": [
+              "كم كان عرض الفترة؟",
+              "أيّ إغفال كان الأهم؟",
+              "كيف ستزن الدقة؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write the one sentence every agent result should include."
+            ],
+            "ar": [
+              "اكتب الجملة الواحدة التي يجب أن تتضمنها كل نتيجة وكيل."
+            ]
+          },
+          "narration": {
+            "en": "Report pass@1, several runs, an interval.",
+            "ar": "اعرض pass@1 وعدة تشغيلات وفترة ثقة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Evaluating agents",
+            "ar": "شرائح المحاضرة: تقييم الوكلاء"
+          },
+          "pages": 6,
+          "base": "agents-u1-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Evaluating agents",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: تقييم الوكلاء"
+          },
+          "pages": 3,
+          "base": "agents-u1-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-u1-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.2",
+        "AGT.3",
+        "T.AF.C"
+      ]
+    },
+    {
+      "id": "agents-u1-4",
+      "title": {
+        "en": "Safe, accountable agents",
+        "ar": "وكلاء آمنون وقابلون للمساءلة"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Give groups the tool list of a campus assistant agent; each fills a table of worst misuse, reversibility and control for every tool, then compare tables and agree approval rules.",
+        "ar": "أعطِ المجموعات قائمة أدوات وكيل مساعد للحرم الجامعي، فتملأ كلٌّ منها جدولًا بأسوأ سوء استخدام وإمكانية التراجع والتحكم لكل أداة، ثم قارنوا الجداول واتفقوا على قواعد الموافقة."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Safe, accountable agents",
+            "ar": "وكلاء آمنون وقابلون للمساءلة"
+          },
+          "src": null,
+          "duration": 192,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "The email that went to everyone",
+                "ar": "البريد الذي وصل إلى الجميع"
+              }
+            },
+            {
+              "at": 30.1,
+              "atBy": {
+                "en": 30.1,
+                "ar": 28.3
+              },
+              "label": {
+                "en": "Least privilege for agents",
+                "ar": "أقل صلاحية للوكلاء"
+              }
+            },
+            {
+              "at": 74.2,
+              "atBy": {
+                "en": 74.2,
+                "ar": 69.5
+              },
+              "label": {
+                "en": "Human approval and governance",
+                "ar": "موافقة الإنسان والحوكمة"
+              }
+            },
+            {
+              "at": 146.3,
+              "atBy": {
+                "en": 146.3,
+                "ar": 140.6
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 123.79,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "Read the timetable, draft a message, send to a list. Which needs approval?",
+                "ar": "يقرأ الجدول، ويكتب مسودة رسالة، ويرسلها إلى قائمة بريدية. أيّ فعل يحتاج موافقة إنسان؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Reading the timetable",
+                    "ar": "قراءة الجدول"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Drafting the message",
+                    "ar": "كتابة المسودة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Sending to the list",
+                    "ar": "الإرسال إلى القائمة"
+                  }
+                }
+              ],
+              "answer": "c",
+              "explain": {
+                "en": "It is irreversible and wide-reaching.",
+                "ar": "إنه لا رجعة فيه وواسع التأثير."
+              }
+            },
+            "atBy": {
+              "en": 123.79,
+              "ar": 119.29
+            }
+          },
+          "transcript": {
+            "en": "A student's department assistant was asked to remind one student about a deadline. It emailed all three thousand students, using the department's account. No one had to approve it. Who is responsible? Today: why agents that act need limits, how permissions and human approval keep them safe, and how to teach students to design accountable agent systems. Once an agent can send, buy or delete, its mistakes become actions in the world. Some actions are reversible and some are not. Safety design starts by sorting them. Give the agent only the tools and scopes its task needs. A reminder agent needs to email one student, not the whole list. Narrow, per-task permissions turn a disaster into a refused request. Route irreversible or wide-reaching actions through a human. The agent drafts the message and shows who will receive it. A person approves or rejects it, and the decision is logged. Frameworks such as the NIST AI Risk Management Framework ask teams to map, measure, manage and govern risks. For agents this means naming who is accountable, logging every action, and planning how to stop the system. Students tend to add safety at the end, if at all. Make every agent project begin with a short risk review. List each tool, its worst misuse, whether it is reversible, and what limit or approval applies. Quick check! The assistant can read the timetable, draft a message, and send it to a mailing list. Which action should need human approval? Sending to the list. Reading and drafting change nothing in the world. Sending is irreversible and reaches thousands of people. In the app, open the approvals lab. Decide which of the agent's actions to allow, limit or send for approval, and see what happens to each request. Your turn. Which design would have prevented the email to all three thousand students? A per-task recipient limit plus human approval for any bulk send. Remember: sort actions by reversibility, give least privilege, route risky actions to a person, and log everything. Try it in your next lecture: give groups the tool list of a campus assistant agent. Each group fills a table of worst misuse, reversibility and control for every tool. Then compare tables and agree on the approval rules.",
+            "ar": "مساعد القسم اللي عمله طالب اتطلب منه يفكّر طالب واحد بميعاد تسليم. فبعت إيميل لكل التلات آلاف طالب، من حساب القسم. ومحدش كان لازم يوافق. مين المسؤول؟ النهارده: ليه الوكلاء اللي بيتصرفوا محتاجين حدود، وإزاي الصلاحيات وموافقة الإنسان بتحافظ عليهم آمنين، وإزاي تعلّم الطلاب يصمّموا أنظمة وكلاء قابلة للمساءلة. أول ما الوكيل يقدر يبعت أو يشتري أو يمسح، أخطاؤه بتبقى أفعال في الدنيا. وفيه أفعال ممكن ترجع وفيه أفعال لأ. وتصميم الأمان بيبدأ بإنك تصنّفهم. ادّي الوكيل الأدوات والصلاحيات اللي مهمته محتاجاها بس. وكيل التذكير محتاج يبعت لطالب واحد، مش للقايمة كلها. والصلاحيات الضيقة لكل مهمة بتحوّل الكارثة لطلب مرفوض. عدّي الأفعال اللي ماترجعش أو اللي تأثيرها واسع على إنسان. الوكيل يكتب مسودة الرسالة ويورّي مين هيستلمها. وشخص يوافق أو يرفض، والقرار يتسجّل. أُطر زي إطار إدارة مخاطر الذكاء الاصطناعي من NIST بتطلب من الفرق إنهم يحددوا المخاطر ويقيسوها ويديروها ويحكموها. وبالنسبة للوكلاء ده معناه إنك تسمّي مين المسؤول، وتسجّل كل فعل، وتخطط إزاي توقّف النظام. الطلاب بيميلوا يضيفوا الأمان في الآخر، لو ضافوه أصلًا. خلّي كل مشروع وكيل يبدأ بمراجعة مخاطر قصيرة. اكتب كل أداة، وأسوأ سوء استخدام ليها، وهل ممكن يرجع، وأنهي حد أو موافقة بتنطبق عليها. سؤال سريع! المساعد يقدر يقرا الجدول، ويكتب مسودة رسالة، ويبعتها لقايمة بريدية. أنهي فعل لازم يحتاج موافقة إنسان؟ البعت للقايمة. القراية وكتابة المسودة مابيغيّروش حاجة في الدنيا. والبعت مابيرجعش وبيوصل لآلاف الناس. في التطبيق، افتح معمل الموافقات. قرّر أنهي أفعال الوكيل تسمح بيها أو تحددها أو تبعتها للموافقة، وشوف إيه اللي بيحصل لكل طلب. دورك. أنهي تصميم كان هيمنع الإيميل للتلات آلاف طالب؟ حد للمستلمين في كل مهمة زائد موافقة إنسان على أي بعت جماعي. افتكر: صنّف الأفعال حسب إمكانية الرجوع، وادّي أقل صلاحية، وعدّي الأفعال الخطرة على شخص، وسجّل كل حاجة. جرّبها في محاضرتك الجاية: ادّي المجموعات قايمة أدوات وكيل مساعد للحرم الجامعي. وكل مجموعة تملا جدول فيه أسوأ سوء استخدام وإمكانية الرجوع والتحكم لكل أداة. وبعدين قارنوا الجداول واتفقوا على قواعد الموافقة."
+          },
+          "sources": {
+            "en": "/media/agents-u1-4/video-en.mp4",
+            "ar": "/media/agents-u1-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/agents-u1-4/captions-en.vtt",
+            "ar": "/media/agents-u1-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/agents-u1-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/agents-u1-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/agents-u1-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/agents-u1-4/light/audio/en.opus",
+              "manifest.json": "/media/agents-u1-4/light/manifest.json",
+              "scenes.json": "/media/agents-u1-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/agents-u1-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/agents-u1-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 423,
+              "ar": 411
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Agents that act in the world",
+            "ar": "وكلاء يتصرفون في العالم"
+          },
+          "body": {
+            "en": "When agents can send messages, move money or change records, their errors become actions with consequences. Safe design begins by classifying each available action by reversibility, reach and sensitivity. The principle of least privilege (Saltzer and Schroeder, 1975) applies directly: grant only the tools and scopes a task requires, with per-task limits such as a maximum number of recipients, rather than broad standing access. Many deployed agents fail not because the model is malicious but because it was over-permissioned and misinterpreted an instruction.\n\nHuman oversight is the second layer. Irreversible or high-impact actions should require explicit approval, with the agent presenting exactly what it will do, to whom, and why. Approval must be meaningful: a reviewer flooded with requests rubber-stamps them, so approval should be reserved for actions that warrant it. Every action and decision should be logged with enough detail to reconstruct what happened, and there must be a way to pause or stop the system. Prompt injection, covered in AI security, can turn untrusted content into instructions, which is another reason not to rely on the model’s judgement alone.\n\nGovernance frameworks make these practices systematic. The NIST AI Risk Management Framework (2023) organises work into govern, map, measure and manage, and the EU AI Act sets obligations for higher-risk systems, including human oversight and record-keeping. For teaching, require every student agent project to begin with a risk review listing each tool, its worst plausible misuse, its reversibility, and the control applied, and assess that review alongside the code.",
+            "ar": "حين يستطيع الوكلاء إرسال الرسائل أو تحويل الأموال أو تغيير السجلات، تصبح أخطاؤهم أفعالًا لها عواقب. ويبدأ التصميم الآمن بتصنيف كل فعل متاح حسب إمكانية التراجع عنه ومدى وصوله وحساسيته. وينطبق مبدأ أقل صلاحية (Saltzer وSchroeder، ١٩٧٥) مباشرة: امنح فقط الأدوات والنطاقات التي تتطلبها المهمة، مع حدود لكل مهمة مثل أقصى عدد للمستلمين، بدل وصول دائم واسع. ويفشل كثير من الوكلاء المنشورين لا لأن النموذج خبيث بل لأنه مُنح صلاحيات زائدة وأساء تفسير تعليمة.\n\nوالإشراف البشري هو الطبقة الثانية. فينبغي أن تتطلب الأفعال التي لا رجعة فيها أو عالية الأثر موافقة صريحة، مع عرض الوكيل ما سيفعله بالضبط ولمن ولماذا. ويجب أن تكون الموافقة ذات معنى: فالمراجع الغارق في الطلبات يختمها دون تمعّن، لذا ينبغي أن تُحجز الموافقة للأفعال التي تستحقها. ويجب تسجيل كل فعل وقرار بتفصيل يكفي لإعادة بناء ما حدث، وأن توجد طريقة لإيقاف النظام مؤقتًا أو نهائيًا. ويمكن لحقن التعليمات، الذي يُدرَّس في أمن الذكاء الاصطناعي، أن يحوّل محتوى غير موثوق إلى تعليمات، وهذا سبب آخر لعدم الاعتماد على حكم النموذج وحده.\n\nوتجعل أُطر الحوكمة هذه الممارسات منهجية. فينظّم إطار NIST لإدارة مخاطر الذكاء الاصطناعي (٢٠٢٣) العمل في الحوكمة والتحديد والقياس والإدارة، ويفرض قانون الاتحاد الأوروبي للذكاء الاصطناعي التزامات على الأنظمة الأعلى خطرًا، منها الإشراف البشري وحفظ السجلات. وفي التدريس، اشترط أن يبدأ كل مشروع وكيل طلابي بمراجعة مخاطر تسرد كل أداة وأسوأ سوء استخدام معقول لها وإمكانية التراجع والضابط المطبّق، وقيّم هذه المراجعة إلى جانب الكود."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Least privilege",
+                "ar": "أقل صلاحية"
+              },
+              "def": {
+                "en": "Granting only the tools and scopes a task needs.",
+                "ar": "منح الأدوات والنطاقات التي تحتاجها المهمة فقط."
+              }
+            },
+            {
+              "term": {
+                "en": "Human in the loop",
+                "ar": "الإنسان في الحلقة"
+              },
+              "def": {
+                "en": "Requiring a person to approve selected actions.",
+                "ar": "اشتراط موافقة شخص على أفعال مختارة."
+              }
+            },
+            {
+              "term": {
+                "en": "Audit log",
+                "ar": "سجل التدقيق"
+              },
+              "def": {
+                "en": "A record of every action and decision.",
+                "ar": "سجل لكل فعل وقرار."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Which design would have prevented the email to all students?",
+            "ar": "أيّ تصميم كان سيمنع البريد إلى جميع الطلاب؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A friendlier prompt",
+                "ar": "تعليمات ألطف"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A recipient limit plus approval for bulk sends",
+                "ar": "حد للمستلمين وموافقة على الإرسال الجماعي"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A faster model",
+                "ar": "نموذج أسرع"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Limits and approval stop the action itself.",
+            "ar": "توقف الحدود والموافقة الفعل نفسه."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Set the limits.",
+            "ar": "اضبط الحدود."
+          },
+          "sentence": {
+            "en": [
+              "A reminder agent should send to at most ",
+              {
+                "blank": 0
+              },
+              " recipient per task, and any bulk send should need human ",
+              {
+                "blank": 1
+              },
+              "."
+            ],
+            "ar": [
+              "ينبغي أن يرسل وكيل التذكير إلى ",
+              {
+                "blank": 0
+              },
+              " مستلم كحد أقصى لكل مهمة، وأن يحتاج أي إرسال جماعي إلى ",
+              {
+                "blank": 1
+              },
+              " إنسان."
+            ]
+          },
+          "bank": {
+            "en": [
+              "1",
+              "all",
+              "review later",
+              "approval"
+            ],
+            "ar": [
+              "1",
+              "الجميع",
+              "مراجعة لاحقة",
+              "موافقة"
+            ]
+          },
+          "answers": {
+            "en": [
+              "1",
+              "approval"
+            ],
+            "ar": [
+              "1",
+              "موافقة"
+            ]
+          },
+          "explain": {
+            "en": "Scope the tool to the task and gate wide-reaching actions.",
+            "ar": "حدّد الأداة على قدر المهمة واضبط الأفعال واسعة التأثير بموافقة."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which actions should usually require human approval? Choose all that apply.",
+            "ar": "أيّ الأفعال ينبغي أن تتطلب عادةً موافقة إنسان؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Paying an invoice",
+                "ar": "دفع فاتورة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Deleting student records",
+                "ar": "حذف سجلات الطلاب"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Reading a public timetable",
+                "ar": "قراءة جدول عام"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Emailing the whole faculty",
+                "ar": "مراسلة الكلية كلها"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "Read-only access to public data changes nothing.",
+            "ar": "القراءة فقط لبيانات عامة لا تغيّر شيئًا."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: decide which agent actions to allow, limit or send for approval, and see what happens.",
+            "ar": "جرّب: قرّر أيّ أفعال الوكيل تسمح بها أو تحدّها أو ترسلها للموافقة، وانظر ماذا يحدث."
+          },
+          "tool": "approve"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "Requiring human approval for every action, including reads, makes an agent safest.",
+            "ar": "اشتراط موافقة إنسان على كل فعل، حتى القراءة، يجعل الوكيل أكثر أمانًا."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Flooded reviewers rubber-stamp; reserve approval for actions that warrant it.",
+            "ar": "المراجعون الغارقون يوافقون دون تمعّن، فاحجز الموافقة للأفعال التي تستحقها."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each control to the risk it addresses.",
+            "ar": "طابق كل ضابط مع الخطر الذي يعالجه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Least privilege",
+                "ar": "أقل صلاحية"
+              },
+              "right": {
+                "en": "An over-permissioned tool",
+                "ar": "أداة بصلاحيات زائدة"
+              }
+            },
+            {
+              "left": {
+                "en": "Approval gate",
+                "ar": "بوابة الموافقة"
+              },
+              "right": {
+                "en": "An irreversible action",
+                "ar": "فعل لا رجعة فيه"
+              }
+            },
+            {
+              "left": {
+                "en": "Audit log",
+                "ar": "سجل التدقيق"
+              },
+              "right": {
+                "en": "Unclear accountability",
+                "ar": "مساءلة غير واضحة"
+              }
+            },
+            {
+              "left": {
+                "en": "Stop switch",
+                "ar": "مفتاح الإيقاف"
+              },
+              "right": {
+                "en": "A runaway loop",
+                "ar": "حلقة خارجة عن السيطرة"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Layered controls cover different failures.",
+            "ar": "تغطي الضوابط المتعددة الطبقات إخفاقات مختلفة."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "If a student’s agent caused harm in a course project, who would be accountable under your current rules?",
+            "ar": "إذا تسبب وكيل طالب في ضرر في مشروع مقرر، فمن المسؤول بموجب قواعدك الحالية؟"
+          },
+          "placeholder": {
+            "en": "For example: “Unclear. I’ll require a named owner and a risk review for every project.”",
+            "ar": "مثلًا: «غير واضح. سأشترط مالكًا مسمّى ومراجعة مخاطر لكل مشروع.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A risk review for agent projects",
+            "ar": "مشروع: مراجعة مخاطر لمشاريع الوكلاء"
+          },
+          "task": {
+            "en": "Write a risk-review template that every student agent project must complete before building: each tool, its worst plausible misuse, reversibility, reach, and the control (scope limit, approval, logging or denial), plus a named accountable owner and a stop procedure. Apply it to one example project and write a rubric that weights the review.",
+            "ar": "اكتب قالب مراجعة مخاطر يجب أن يكمله كل مشروع وكيل طلابي قبل البناء: كل أداة، وأسوأ سوء استخدام معقول لها، وإمكانية التراجع، ومدى الوصول، والضابط (حد النطاق أو الموافقة أو التسجيل أو المنع)، مع مالك مسؤول مسمّى وإجراء إيقاف. طبّقه على مشروع مثال واكتب معيار تقييم يزن المراجعة."
+          },
+          "deliverable": {
+            "en": "The template, a worked example and a rubric.",
+            "ar": "القالب ومثال محلول ومعيار التقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: classify actions by reversibility and reach.",
+                "ar": "يستطيع الطلاب: تصنيف الأفعال حسب إمكانية التراجع والوصول."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: apply least privilege and approval gates.",
+                "ar": "يستطيع الطلاب: تطبيق أقل صلاحية وبوابات الموافقة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: assign accountability and stop procedures.",
+                "ar": "يستطيع الطلاب: تحديد المساءلة وإجراءات الإيقاف."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Safe, accountable agents",
+            "ar": "وكلاء آمنون وقابلون للمساءلة"
+          },
+          "note": {
+            "en": "AI agents · University · Lecture 4",
+            "ar": "وكلاء الذكاء الاصطناعي، الجامعة، المحاضرة ٤"
+          },
+          "narration": {
+            "en": "One reminder, three thousand emails.",
+            "ar": "تذكير واحد وثلاثة آلاف رسالة."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Classify agent actions.",
+              "Apply least privilege and approval.",
+              "Use governance frameworks."
+            ],
+            "ar": [
+              "نصنّف أفعال الوكيل.",
+              "نطبّق أقل صلاحية والموافقة.",
+              "نستخدم أُطر الحوكمة."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Sort by reversibility.",
+              "Approve the irreversible.",
+              "Log and name an owner."
+            ],
+            "ar": [
+              "صنّف حسب التراجع.",
+              "وافق على ما لا رجعة فيه.",
+              "سجّل وسمِّ مالكًا."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Review the risks",
+            "ar": "راجع المخاطر"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Who is responsible?",
+              "List (15 min): Tools.",
+              "Control (20 min): Limits and approval.",
+              "Govern (15 min): Accountability.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): Read the email incident and ask students to assign responsibility.",
+              "السرد (١٥ دقيقة): الأدوات.",
+              "الضبط (٢٠ دقيقة): الحدود والموافقة.",
+              "الحوكمة (١٥ دقيقة): المساءلة.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): من المسؤول؟",
+              "List (15 min): Groups list each tool of a campus assistant and its worst misuse.",
+              "Control (20 min): Assign a scope limit, approval, logging or denial to each tool.",
+              "Govern (15 min): Map the controls to NIST’s govern, map, measure and manage.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اقرأ حادثة البريد واطلب من الطلاب تحديد المسؤولية.",
+              "السرد (١٥ دقيقة): تسرد المجموعات كل أداة لمساعد الحرم الجامعي وأسوأ سوء استخدام لها.",
+              "الضبط (٢٠ دقيقة): حدد حدًا أو موافقة أو تسجيلًا أو منعًا لكل أداة.",
+              "الحوكمة (١٥ دقيقة): اربط الضوابط بوظائف NIST: الحوكمة والتحديد والقياس والإدارة.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which tool was riskiest?",
+              "Where would approval fatigue appear?",
+              "Who owns the agent?"
+            ],
+            "ar": [
+              "أيّ أداة كانت الأخطر؟",
+              "أين سيظهر إرهاق الموافقة؟",
+              "من يملك الوكيل؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name one tool you would deny an agent entirely."
+            ],
+            "ar": [
+              "سمِّ أداة واحدة ستمنعها عن الوكيل تمامًا."
+            ]
+          },
+          "narration": {
+            "en": "Limit, approve, log, and name an owner.",
+            "ar": "حدّد ووافق وسجّل وسمِّ مالكًا."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Safe, accountable agents",
+            "ar": "شرائح المحاضرة: وكلاء آمنون وقابلون للمساءلة"
+          },
+          "pages": 6,
+          "base": "agents-u1-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Safe, accountable agents",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: وكلاء آمنون وقابلون للمساءلة"
+          },
+          "pages": 3,
+          "base": "agents-u1-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/agents-u1-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "AGT.3",
+        "T.ET.C"
+      ]
+    },
+    {
+      "id": "agents-u1-check",
+      "title": {
+        "en": "Teaching AI agents at university: unit check",
+        "ar": "تدريس وكلاء الذكاء الاصطناعي في الجامعة: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Bring your agent-project risk review and evaluation protocol to your next department meeting for review.",
+        "ar": "أحضر مراجعة مخاطر مشروع الوكلاء وبروتوكول التقييم إلى اجتماع القسم القادم للمراجعة."
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "With γ = 0.9, a reward of 10 in two steps is worth now",
+            "ar": "مع γ ⁦= 0.9⁩، قيمة مكافأة 10 بعد خطوتين الآن"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "8.1",
+                "ar": "⁦8.1⁩"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "9",
+                "ar": "9"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "10",
+                "ar": "10"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "0.9² × 10.",
+            "ar": "⁦0.9² × 10.⁩"
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "A bug-free reward function guarantees the agent pursues the intended goal.",
+            "ar": "تضمن دالة مكافأة خالية من الأخطاء أن يسعى الوكيل إلى الهدف المقصود."
+          },
+          "answer": false,
+          "explain": {
+            "en": "Specification gaming exploits correct code with the wrong objective.",
+            "ar": "يستغل التلاعب بالمواصفات كودًا صحيحًا بهدف خاطئ."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q3",
+          "prompt": {
+            "en": "Expand A*.",
+            "ar": "وسّع ⁦A*⁩."
+          },
+          "sentence": {
+            "en": [
+              "g = 3, h = 5 gives f = ",
+              {
+                "blank": 0
+              },
+              "."
+            ],
+            "ar": [
+              "⁦g = 3⁩ و⁦h = 5⁩ تعطي f = ",
+              {
+                "blank": 0
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "8",
+              "15",
+              "2"
+            ],
+            "ar": [
+              "8",
+              "15",
+              "2"
+            ]
+          },
+          "answers": {
+            "en": [
+              "8"
+            ],
+            "ar": [
+              "8"
+            ]
+          },
+          "explain": {
+            "en": "f = g + h.",
+            "ar": "⁦f = g + h.⁩"
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q4",
+          "prompt": {
+            "en": "A* is guaranteed optimal when its heuristic is",
+            "ar": "يكون ⁦A*⁩ مثاليًا بالضرورة عندما تكون دالة التقدير"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Admissible",
+                "ar": "مقبولة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Large",
+                "ar": "كبيرة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Random",
+                "ar": "عشوائية"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "It never overestimates.",
+            "ar": "لا تبالغ أبدًا."
+          }
+        },
+        {
+          "type": "order",
+          "id": "q5",
+          "prompt": {
+            "en": "Order a ReAct step.",
+            "ar": "رتّب خطوة ReAct."
+          },
+          "steps": [
+            {
+              "en": "Thought",
+              "ar": "الفكرة"
+            },
+            {
+              "en": "Action",
+              "ar": "الفعل"
+            },
+            {
+              "en": "Observation",
+              "ar": "الملاحظة"
+            },
+            {
+              "en": "Answer",
+              "ar": "الإجابة"
+            }
+          ],
+          "explain": {
+            "en": "Observe before answering.",
+            "ar": "لاحظ قبل الإجابة."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q6",
+          "prompt": {
+            "en": "Compute pass@k.",
+            "ar": "احسب pass@k."
+          },
+          "sentence": {
+            "en": [
+              "With p = 0.5, pass@2 = ",
+              {
+                "blank": 0
+              },
+              "."
+            ],
+            "ar": [
+              "مع ⁦p = 0.5⁩، pass@2 = ",
+              {
+                "blank": 0
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "0.75",
+              "1",
+              "0.25"
+            ],
+            "ar": [
+              "0.75",
+              "1",
+              "0.25"
+            ]
+          },
+          "answers": {
+            "en": [
+              "0.75"
+            ],
+            "ar": [
+              "0.75"
+            ]
+          },
+          "explain": {
+            "en": "1 − 0.5².",
+            "ar": "⁦1 − 0.5².⁩"
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q7",
+          "prompt": {
+            "en": "Which improve evaluation validity? Choose all that apply.",
+            "ar": "أيّها يحسّن صلاحية التقييم؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Held-out tasks",
+                "ar": "مهام منفصلة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Several runs",
+                "ar": "عدة تشغيلات"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Best-run reporting",
+                "ar": "عرض أفضل تشغيلة"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b"
+          ],
+          "explain": {
+            "en": "Best-of inflates.",
+            "ar": "عرض الأفضل يضخّم."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q8",
+          "prompt": {
+            "en": "On 50 tasks at 60%, the 95% interval is about",
+            "ar": "على ٥٠ مهمة عند ٦٠٪، تكون فترة الثقة ٩٥٪ نحو"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "± 14 points",
+                "ar": "± ١٤ نقطة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "± 1 point",
+                "ar": "± نقطة واحدة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "± 50 points",
+                "ar": "± ٥٠ نقطة"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "1.96 × √(0.24/50) ≈ 0.14.",
+            "ar": "⁦1.96 × √(0.24/50) ≈ 0.14.⁩"
+          }
+        },
+        {
+          "type": "match",
+          "id": "q9",
+          "prompt": {
+            "en": "Match each control to its risk.",
+            "ar": "طابق كل ضابط مع خطره."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Least privilege",
+                "ar": "أقل صلاحية"
+              },
+              "right": {
+                "en": "Over-permissioned tool",
+                "ar": "أداة بصلاحيات زائدة"
+              }
+            },
+            {
+              "left": {
+                "en": "Approval gate",
+                "ar": "بوابة الموافقة"
+              },
+              "right": {
+                "en": "Irreversible action",
+                "ar": "فعل لا رجعة فيه"
+              }
+            },
+            {
+              "left": {
+                "en": "Audit log",
+                "ar": "سجل التدقيق"
+              },
+              "right": {
+                "en": "Unclear accountability",
+                "ar": "مساءلة غير واضحة"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Layer the controls.",
+            "ar": "نوّع طبقات الضوابط."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q10",
+          "prompt": {
+            "en": "Which action most needs human approval?",
+            "ar": "أيّ فعل يحتاج موافقة إنسان أكثر من غيره؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Emailing all students",
+                "ar": "مراسلة كل الطلاب"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Reading a timetable",
+                "ar": "قراءة جدول"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Drafting a reply",
+                "ar": "كتابة مسودة رد"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Irreversible and wide-reaching.",
+            "ar": "لا رجعة فيه وواسع التأثير."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Teaching AI agents at university: review",
+            "ar": "تدريس وكلاء الذكاء الاصطناعي في الجامعة: مراجعة"
+          },
+          "note": {
+            "en": "AI agents · University · Unit check",
+            "ar": "وكلاء الذكاء الاصطناعي، الجامعة، اختبار الوحدة"
+          },
+          "narration": {
+            "en": "Let’s look back at the whole course and see what stuck.",
+            "ar": "لنراجع المقرر كله ونرَ ما الذي رسخ."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Agents and MDPs",
+              "Planning and tools",
+              "Evaluation",
+              "Safety and governance"
+            ],
+            "ar": [
+              "الوكلاء وعمليات ماركوف",
+              "التخطيط والأدوات",
+              "التقييم",
+              "الأمان والحوكمة"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "Reward outcomes",
+              "Ground every answer",
+              "pass@1 with intervals",
+              "Limit, approve, log"
+            ],
+            "ar": [
+              "كافئ النتائج",
+              "ابنِ كل إجابة على أساس",
+              "pass@1 مع فترات ثقة",
+              "حدّد ووافق وسجّل"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Peer-instruction review",
+            "ar": "مراجعة بالتعلّم من الأقران"
+          },
+          "bullets": {
+            "en": [
+              "Vote (10 min): Answer alone first.",
+              "Discuss (15 min): Convince your neighbour.",
+              "Explain (10 min): Model the reasoning.",
+              "Plan (5 min): Next week’s fix."
+            ],
+            "ar": [
+              "التصويت (١٠ دقائق): أجب منفردًا أولًا.",
+              "النقاش (١٥ دقيقة): أقنع زميلك.",
+              "الشرح (١٠ دقائق): اعرض طريقة التفكير.",
+              "التخطيط (٥ دقائق): علاج الأسبوع القادم."
+            ]
+          },
+          "details": {
+            "en": [
+              "Vote (10 min): Show each question; students answer alone and commit to an answer.",
+              "Discuss (15 min): Where answers split, pairs argue for two minutes and vote again.",
+              "Explain (10 min): Work through the questions most students missed, showing the reasoning step by step.",
+              "Plan (5 min): Note which misconception to revisit next week and how."
+            ],
+            "ar": [
+              "التصويت (١٠ دقائق): اعرض كل سؤال، ويجيب الطلاب منفردين ويلتزمون بإجابة.",
+              "النقاش (١٥ دقيقة): حيث تنقسم الإجابات، يتجادل كل زوجين دقيقتين ثم يصوّتان مرة أخرى.",
+              "الشرح (١٠ دقائق): حُلّ الأسئلة التي أخطأ فيها معظم الطلاب، مع عرض الاستدلال خطوة خطوة.",
+              "التخطيط (٥ دقائق): دوّن أيّ تصوّر خاطئ ستعود إليه الأسبوع القادم وكيف."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which misconception will you target first?",
+              "Which lab will you add?",
+              "How will you assess agent projects?"
+            ],
+            "ar": [
+              "أيّ تصوّر خاطئ ستستهدف أولًا؟",
+              "أيّ معمل ستضيف؟",
+              "كيف ستقيّم مشاريع الوكلاء؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One change to my agents course this term, and how I will know it worked."
+            ],
+            "ar": [
+              "تغيير في مقرر الوكلاء هذا الفصل الدراسي، وكيف سأعرف أنه نجح."
+            ]
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Teaching AI agents at university: unit check",
+            "ar": "شرائح المحاضرة: تدريس وكلاء الذكاء الاصطناعي في الجامعة: اختبار الوحدة"
+          },
+          "pages": 6,
+          "base": "agents-u1-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Review plan and quiz sheet: Teaching AI agents at university: unit check",
+            "ar": "خطة المراجعة وورقة الاختبار: تدريس وكلاء الذكاء الاصطناعي في الجامعة: اختبار الوحدة"
+          },
+          "pages": 2,
+          "base": "agents-u1-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "University course pack: syllabus, slide outline, problem set, lab, rubric and readings",
+            "ar": "حزمة المقرر الجامعي: الخطة الدراسية، ومخطط الشرائح، ومسائل، ومعمل، ومعايير التقييم، والقراءات"
+          },
+          "pages": 5,
+          "base": "agents-u1-check/course-pack",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "AGT.1",
+        "AGT.2",
+        "AGT.3",
+        "T.ET.C"
+      ]
+    }
+  ]
+}

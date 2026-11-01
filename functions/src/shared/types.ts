@@ -219,17 +219,19 @@ export const stageLevel = (s: Stage) => STAGES.indexOf(s) + 1;
 export const AUDIENCES: Audience[] = ["teachers", "students"];
 /** A course's audience; courses without one are for teachers. */
 export const audienceOf = (u: { audience?: Audience }): Audience => u.audience ?? "teachers";
-export interface Unit { id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: Lesson[]; audience?: Audience }
+export interface Unit { id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: Lesson[]; audience?: Audience; teach?: "university" }
 export interface CatalogEntry {
   id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: number; sizeMB: number; available: boolean;
   /** Authored units (course editor): Storage path of the published JSON, its version, and who sees it ("public" or an orgId). */
   src?: string; version?: number; owner?: string;
   /** Set only for courses for students. */
   audience?: Audience;
+  /** Set only for university courses: Home shows them to university teachers only. */
+  teach?: "university";
 }
 export interface Catalog { version: number; units: CatalogEntry[] }
 /** The onboarding check (public/content/placement.json): per track and audience, questions for each level. */
-export interface Placement { version: 2; questions: Array<(ChoiceStep | TrueFalseStep) & { track: Track; audience: Audience; level: number }> }
+export interface Placement { version: 2; questions: Array<(ChoiceStep | TrueFalseStep) & { track: Track; audience: Audience; level: number; teach?: "university" }> }
 
 /** Pick the string for a language, falling back to English. */
 export const pick = (t: LocalText | undefined, lang: string): string => (t ? t[lang] ?? t.en : "");

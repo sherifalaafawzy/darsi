@@ -239,12 +239,16 @@ export function VideoPlayer(p: VideoPlayerProps) {
     setMuted(next === 0);
   };
   const toggleMute = () => setMuted((m) => { const next = !m; if (!next && volumeRef.current === 0) setVol(1); return next; });
-  const fromClient = (el: HTMLElement, client: number, along: "x" | "y") => {
+  /**
+   * Where a pointer is along a bar, 0 at its start and 1 at its end. In the turned (page-wide, upright phone) player the
+   * bars run down the screen (rotate(90deg)), or up it in right-to-left pages (rotate(-90deg)), so clientY counts there.
+   */
+  const fromPointer = (el: HTMLElement, e: { clientX: number; clientY: number }) => {
     const r = el.getBoundingClientRect();
-    const span = along === "x" ? r.width : r.height;
-    if (!span) return null;
-    const pos = along === "x" ? client - r.left : r.bottom - client;
-    return clamp(pos / span, 0, 1);
+    if (!(full === "page" && tall)) return r.width ? clamp((e.clientX - r.left) / r.width, 0, 1) : null;
+    if (!r.height) return null;
+    const rtl = !!fig.current?.parentElement?.closest('[dir="rtl"]');
+    return clamp((rtl ? r.bottom - e.clientY : e.clientY - r.top) / r.height, 0, 1);
   };
   const showFlash = (side: "back" | "fwd") => {
     setFlash(side);
@@ -307,8 +311,7 @@ export function VideoPlayer(p: VideoPlayerProps) {
     if (el.closest("button, a, input, .dr-video-chrome")) return;
     skipClick.current = true;
     const now = performance.now();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = rect.width ? (e.clientX - rect.left) / rect.width : 0.5;
+    const ratio = fromPointer(e.currentTarget, e) ?? 0.5;
     const side: "back" | "fwd" | "mid" = ratio < 0.4 ? "back" : ratio > 0.6 ? "fwd" : "mid";
     const prev = tapRef.current;
     if (prev && now - prev.t < 320 && side !== "mid" && prev.side === side) {
@@ -365,9 +368,9 @@ export function VideoPlayer(p: VideoPlayerProps) {
           <div className={cx("dr-video-scrub", (hover !== null || scrubbing) && "is-hot")} dir="ltr" role="slider" tabIndex={locked ? -1 : 0}
             aria-label={seekLabel} aria-valuemin={0} aria-valuemax={duration} aria-valuenow={Math.round(current)}
             aria-valuetext={`${formatVideoTime(current)} / ${formatVideoTime(duration)}`} aria-disabled={locked || undefined}
-            onPointerDown={locked ? undefined : (e) => { e.currentTarget.setPointerCapture?.(e.pointerId); setScrubbing(true); const ratio = fromClient(e.currentTarget, e.clientX, "x"); if (ratio !== null) seekTo(ratio * duration); }}
+            onPointerDown={locked ? undefined : (e) => { e.currentTarget.setPointerCapture?.(e.pointerId); setScrubbing(true); const ratio = fromPointer(e.currentTarget, e); if (ratio !== null) seekTo(ratio * duration); }}
             onPointerMove={locked ? undefined : (e) => {
-              const ratio = fromClient(e.currentTarget, e.clientX, "x");
+              const ratio = fromPointer(e.currentTarget, e);
               if (ratio === null) return;
               setHover(ratio * duration);
               if (e.currentTarget.hasPointerCapture?.(e.pointerId)) seekTo(ratio * duration);
@@ -394,8 +397,8 @@ export function VideoPlayer(p: VideoPlayerProps) {
                 </button>
                 <div className="dr-video-vol-slider" role="slider" tabIndex={locked ? -1 : 0} aria-label={volumeLabel}
                   aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((muted ? 0 : volume) * 100)} aria-valuetext={`${Math.round((muted ? 0 : volume) * 100)}%`}
-                  onPointerDown={(e) => { e.currentTarget.setPointerCapture?.(e.pointerId); const ratio = fromClient(e.currentTarget, e.clientX, "x"); if (ratio !== null) setVol(ratio); }}
-                  onPointerMove={(e) => { if (!e.currentTarget.hasPointerCapture?.(e.pointerId)) return; const ratio = fromClient(e.currentTarget, e.clientX, "x"); if (ratio !== null) setVol(ratio); }}>
+                  onPointerDown={(e) => { e.currentTarget.setPointerCapture?.(e.pointerId); const ratio = fromPointer(e.currentTarget, e); if (ratio !== null) setVol(ratio); }}
+                  onPointerMove={(e) => { if (!e.currentTarget.hasPointerCapture?.(e.pointerId)) return; const ratio = fromPointer(e.currentTarget, e); if (ratio !== null) setVol(ratio); }}>
                   <div className="dr-video-vol-track"><div className="dr-video-vol-fill" style={{ inlineSize: `${(muted ? 0 : volume) * 100}%` }} /></div>
                 </div>
               </div>

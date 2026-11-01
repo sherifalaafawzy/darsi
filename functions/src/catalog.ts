@@ -51,6 +51,8 @@ export function catalogEntry(unit: Unit, owner: Owner, version: number, jsonByte
     src: unitPath(owner, unit.id, version), version, owner,
     // Phones show teachers' and students' courses apart; teachers' courses (the default) carry no field.
     ...(unit.audience === "students" ? { audience: "students" as const } : {}),
+    // University courses carry `teach`, so phones show them to university teachers only.
+    ...(unit.teach === "university" ? { teach: "university" as const } : {}),
   };
 }
 

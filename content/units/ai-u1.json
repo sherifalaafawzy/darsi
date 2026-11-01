@@ -1,0 +1,3153 @@
+{
+  "id": "ai-u1",
+  "track": "ai",
+  "level": 4,
+  "teach": "university",
+  "title": {
+    "en": "Teaching machine learning at university",
+    "ar": "تدريس تعلّم الآلة في الجامعة"
+  },
+  "summary": {
+    "en": "A graduate-level course for university lecturers: learning as empirical risk minimisation and gradient descent, backpropagation, attention and transformers, and honest evaluation, with how to teach each idea, the misconceptions to expect, lab designs, and assessment that still works when students can use language models.",
+    "ar": "مقرر بمستوى الدراسات العليا لأساتذة الجامعات: التعلّم بوصفه تقليلًا للخطر التجريبي والانحدار التدريجي، والانتشار العكسي، والانتباه والمحوّلات، والتقييم الأمين للنماذج، مع طريقة تدريس كل فكرة، والتصورات الخاطئة المتوقعة، وتصميم المعامل، وتقييم يظل صالحًا حين يستطيع الطلاب استخدام النماذج اللغوية."
+  },
+  "lessons": [
+    {
+      "id": "ai-u1-1",
+      "title": {
+        "en": "Learning as optimisation",
+        "ar": "التعلّم كمسألة تحسين"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Give each pair the loss θ² and three learning rates; they take five steps by hand and plot them before you show any code.",
+        "ar": "أعطِ كل زوج الخسارة θ² وثلاثة معدّلات تعلّم، فيأخذون خمس خطوات يدويًا ويرسمونها قبل أن تعرض أي كود."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Learning as optimisation",
+            "ar": "التعلّم كمسألة تحسين"
+          },
+          "src": null,
+          "duration": 173,
+          "sizeMB": 1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A model that won’t learn",
+                "ar": "نموذج لا يتعلّم"
+              }
+            },
+            {
+              "at": 23.5,
+              "atBy": {
+                "en": 23.5,
+                "ar": 22.7
+              },
+              "label": {
+                "en": "Empirical risk",
+                "ar": "الخطر التجريبي"
+              }
+            },
+            {
+              "at": 65.7,
+              "atBy": {
+                "en": 65.7,
+                "ar": 66.8
+              },
+              "label": {
+                "en": "Gradient descent",
+                "ar": "الانحدار التدريجي"
+              }
+            },
+            {
+              "at": 131.7,
+              "atBy": {
+                "en": 131.7,
+                "ar": 129.5
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 107.74,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "The loss rises every step and then becomes nan. Most likely cause?",
+                "ar": "تزداد الخسارة في كل خطوة ثم تصبح nan. ما السبب الأرجح؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "The learning rate is too big",
+                    "ar": "معدّل التعلّم كبير جدًا"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Too little training data",
+                    "ar": "بيانات التدريب قليلة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "The model is too simple",
+                    "ar": "النموذج بسيط جدًا"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "A loss that grows each step signals a learning rate that is too big.",
+                "ar": "الخسارة التي تزداد في كل خطوة علامة على معدّل تعلّم كبير جدًا."
+              }
+            },
+            "atBy": {
+              "en": 107.74,
+              "ar": 106.88
+            }
+          },
+          "transcript": {
+            "en": "A student's first neural network printed a loss of nan after three steps. She had copied the code exactly. The only change was a learning rate of ten instead of a tenth. Today: learning as minimising a loss, how gradient descent does it, and why the learning rate trips students up. Supervised learning picks the parameters that minimise the average loss on the training data. That average is the empirical risk. We hope it tracks the true risk on new data. Gradient descent starts somewhere and repeatedly steps against the gradient. Theta becomes theta minus eta times the gradient. Eta, the learning rate, sets the step size. Here is the loss after fifty steps on the same problem. A tiny rate barely moves. A good rate reaches nearly zero. A rate that is too big bounces higher and higher. Real datasets are large, so we estimate the gradient from a small random batch. Stochastic gradient descent is noisy, but each step is cheap, and the noise can even help escape flat regions. Students often think the gradient points to the minimum. It only points uphill, locally. Plot a one-parameter loss, let students take steps by hand, and they discover overshooting themselves. Quick check! The loss rises every step and then becomes nan. What is the most likely cause? The learning rate is too big. Each step overshoots the valley and lands higher up, until the numbers overflow. Divide it by ten and try again. In the app, open the gradient lab. Pick a starting point, change the learning rate, and watch the steps converge, crawl or explode. Your turn. The loss is theta squared, theta is three, and the learning rate is a tenth. Where is theta after one step? At two point four, because the gradient is six. Remember: learning minimises empirical risk, gradient descent steps downhill, and the learning rate decides whether it works. Try it in your next lecture: give each pair the loss theta squared and three learning rates. They take five steps by hand and plot them, before you show any code.",
+            "ar": "أول شبكة عصبية لطالبة عندي طبعت خسارة nan بعد تلات خطوات. كانت ناقلة الكود بالظبط. التغيير الوحيد إن معدّل التعلّم كان عشرة بدل واحد على عشرة. النهارده: التعلّم كتقليل لدالة خسارة، والانحدار التدريجي بيعمل ده إزاي، وليه معدّل التعلّم بيوقّع الطلاب. التعلّم الموجّه بيختار المعاملات اللي بتقلّل متوسط الخسارة على بيانات التدريب. المتوسط ده اسمه الخطر التجريبي. وبنتمنى إنه يمشي مع الخطر الحقيقي على بيانات جديدة. الانحدار التدريجي بيبدأ من أي مكان وبيخطي عكس التدرّج مرة ورا مرة. ثيتا تبقى ثيتا ناقص إيتا في التدرّج. وإيتا، معدّل التعلّم، بيحدد حجم الخطوة. دي الخسارة بعد خمسين خطوة على نفس المسألة. المعدّل الصغير قوي بالكاد بيتحرك. والمعدّل الكويس بيوصل لقرب الصفر. والمعدّل الكبير زيادة بينطّ لفوق أكتر وأكتر. البيانات الحقيقية كبيرة، فبنقدّر التدرّج من دفعة صغيرة عشوائية. الانحدار التدريجي العشوائي فيه ضوضاء، بس كل خطوة رخيصة، والضوضاء ممكن كمان تساعد نهرب من المناطق المسطّحة. الطلاب كتير بيفتكروا إن التدرّج بيشاور على القاع. هو بيشاور لفوق بس، محليًا. ارسم خسارة بمعامل واحد، وخلّي الطلاب ياخدوا خطوات بإيديهم، وهيكتشفوا تجاوز القاع بنفسهم. سؤال سريع! الخسارة بتزيد كل خطوة وبعدين تبقى nan. إيه السبب الأرجح؟ معدّل التعلّم كبير زيادة. كل خطوة بتعدّي الوادي وتنزل أعلى، لحد ما الأرقام تفيض. اقسمه على عشرة وجرّب تاني. في التطبيق، افتح معمل التدرّج. اختار نقطة بداية، وغيّر معدّل التعلّم، وشوف الخطوات بتتقارب ولا بتزحف ولا بتنفجر. دورك. الخسارة ثيتا تربيع، وثيتا تلاتة، ومعدّل التعلّم واحد على عشرة. ثيتا هتبقى فين بعد خطوة واحدة؟ عند اتنين وأربعة من عشرة، لأن التدرّج ستة. افتكر: التعلّم بيقلّل الخطر التجريبي، والانحدار التدريجي بيخطي لتحت، ومعدّل التعلّم بيقرّر هينفع ولا لأ. جرّبها في محاضرتك الجاية: ادّي كل اتنين الخسارة ثيتا تربيع وتلات معدّلات تعلّم. ياخدوا خمس خطوات بإيديهم ويرسموها، قبل ما تعرض أي كود."
+          },
+          "sources": {
+            "en": "/media/ai-u1-1/video-en.mp4",
+            "ar": "/media/ai-u1-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-u1-1/captions-en.vtt",
+            "ar": "/media/ai-u1-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-u1-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-u1-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-u1-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-u1-1/light/audio/en.opus",
+              "manifest.json": "/media/ai-u1-1/light/manifest.json",
+              "scenes.json": "/media/ai-u1-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-u1-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-u1-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 375,
+              "ar": 375
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Learning is minimising a loss",
+            "ar": "التعلّم تقليل للخسارة"
+          },
+          "body": {
+            "en": "Supervised learning chooses parameters θ that minimise the empirical risk R̂(θ) = (1/n) Σ ℓ(f_θ(xᵢ), yᵢ), the average loss on the training set, as a proxy for the true risk on new data (Goodfellow, Bengio and Courville, 2016, ch. 5). Gradient descent iterates θ ← θ − η∇R̂(θ). For a convex loss with a suitable step size it converges to the minimum; for neural networks it finds good, not global, minima.\n\nThe learning rate η dominates behaviour. Too small and progress crawls; too large and each step overshoots, so the loss grows and overflows to nan. For the loss θ², the update is θ ← (1 − 2η)θ, which diverges when η > 1, a calculation students can do by hand. Stochastic gradient descent estimates ∇R̂ from a mini-batch: each step is noisy but cheap, so it reaches good solutions faster in wall-clock time.\n\nThe classic misconception is that the gradient points to the minimum. It points in the direction of steepest local ascent and says nothing about where the minimum lies. Students who first take steps by hand on a one-parameter loss build an accurate picture of overshooting and convergence, which then transfers to the high-dimensional case.",
+            "ar": "يختار التعلّم الموجّه المعاملات θ التي تقلّل الخطر التجريبي R̂(θ) = ⁦(1/n)⁩ Σ ℓ(f_θ(xᵢ), yᵢ)، أي متوسط الخسارة على مجموعة التدريب، بديلًا عن الخطر الحقيقي على بيانات جديدة (Goodfellow وBengio وCourville، ٢٠١٦، الفصل ٥). ويكرّر الانحدار التدريجي التحديث θ ← θ − η∇R̂(θ). ومع خسارة محدّبة وحجم خطوة مناسب يتقارب إلى القيمة الصغرى، أما في الشبكات العصبية فيجد قيمًا صغرى جيدة لا عالمية.\n\nويهيمن معدّل التعلّم η على السلوك. فإن كان صغيرًا جدًا زحف التقدّم، وإن كان كبيرًا جدًا تجاوزت كل خطوة القاع، فتكبر الخسارة وتفيض إلى nan. وللخسارة θ² يكون التحديث θ ← (⁦1 − 2⁩η)θ، الذي يتباعد حين η ⁦> 1⁩، وهو حساب يستطيع الطلاب إجراءه يدويًا. ويقدّر الانحدار التدريجي العشوائي ∇R̂ من دفعة صغيرة: كل خطوة فيها ضوضاء لكنها رخيصة، فيصل إلى حلول جيدة أسرع في الزمن الفعلي.\n\nوالتصور الخاطئ الكلاسيكي أن التدرّج يشير إلى القيمة الصغرى. وهو في الحقيقة يشير إلى اتجاه أشد صعود محلي ولا يقول شيئًا عن موضع القاع. والطلاب الذين يأخذون خطوات يدويًا على خسارة بمعامل واحد يبنون صورة دقيقة لتجاوز القاع والتقارب، تنتقل بعد ذلك إلى الحالة متعددة الأبعاد."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Empirical risk",
+                "ar": "الخطر التجريبي"
+              },
+              "def": {
+                "en": "The average loss on the training data.",
+                "ar": "متوسط الخسارة على بيانات التدريب."
+              }
+            },
+            {
+              "term": {
+                "en": "Learning rate",
+                "ar": "معدّل التعلّم"
+              },
+              "def": {
+                "en": "The step size η in gradient descent.",
+                "ar": "حجم الخطوة η في الانحدار التدريجي."
+              }
+            },
+            {
+              "term": {
+                "en": "Mini-batch",
+                "ar": "الدفعة الصغيرة"
+              },
+              "def": {
+                "en": "A random subset used to estimate the gradient cheaply.",
+                "ar": "مجموعة جزئية عشوائية تُستخدم لتقدير التدرّج بتكلفة قليلة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Loss θ², θ = 3, η = 0.1. Where is θ after one step?",
+            "ar": "الخسارة θ²، وθ ⁦= 3⁩، وη ⁦= 0.1⁩. أين تصبح θ بعد خطوة واحدة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "2.4",
+                "ar": "⁦2.4⁩"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "2.9",
+                "ar": "⁦2.9⁩"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "0",
+                "ar": "0"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The gradient is 2θ = 6, so θ = 3 − 0.1 × 6 = 2.4.",
+            "ar": "التدرّج 2θ ⁦= 6⁩، فتصبح θ = ⁦3 − 0.1 × 6 = 2.4⁩."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Take two gradient steps on the loss θ² with η = 0.25, starting at θ = 8.",
+            "ar": "خذ خطوتين من الانحدار التدريجي على الخسارة θ² مع η = 0.25، بدءًا من θ = 8."
+          },
+          "sentence": {
+            "en": [
+              "After step 1, θ = ",
+              {
+                "blank": 0
+              },
+              ". After step 2, θ = ",
+              {
+                "blank": 1
+              },
+              "."
+            ],
+            "ar": [
+              "بعد الخطوة ١ تصبح θ = ",
+              {
+                "blank": 0
+              },
+              ". وبعد الخطوة ٢ تصبح θ = ",
+              {
+                "blank": 1
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "4",
+              "6",
+              "0",
+              "2"
+            ],
+            "ar": [
+              "4",
+              "6",
+              "0",
+              "2"
+            ]
+          },
+          "answers": {
+            "en": [
+              "4",
+              "2"
+            ],
+            "ar": [
+              "4",
+              "2"
+            ]
+          },
+          "explain": {
+            "en": "The update is θ ← (1 − 2 × 0.25)θ = 0.5θ, so 8 → 4 → 2.",
+            "ar": "التحديث θ ← ⁦(1 − 2 × 0.25)⁩θ = 0.5θ، فتصبح 8 ← 4 ← 2."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "For the loss θ², which learning rates make gradient descent diverge? Choose all that apply.",
+            "ar": "للخسارة θ²، أيّ معدّلات التعلّم تجعل الانحدار التدريجي يتباعد؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "η = 1.5",
+                "ar": "⁦η = 1.5⁩"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "η = 0.4",
+                "ar": "⁦η = 0.4⁩"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "η = 1.1",
+                "ar": "⁦η = 1.1⁩"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "η = 0.9",
+                "ar": "⁦η = 0.9⁩"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "c"
+          ],
+          "explain": {
+            "en": "θ ← (1 − 2η)θ diverges when |1 − 2η| > 1, i.e. η > 1; at η = 0.9 it oscillates but still converges.",
+            "ar": "يتباعد θ ← (⁦1 − 2⁩η)θ حين ⁦|1 − 2⁩η| ⁦> 1⁩، أي η ⁦> 1⁩، وعند η ⁦= 0.9⁩ يتذبذب لكنه يتقارب."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: change the learning rate and starting point, and find the rate where the steps start to explode.",
+            "ar": "جرّب: غيّر معدّل التعلّم ونقطة البداية، وحدّد المعدّل الذي تبدأ عنده الخطوات في الانفجار."
+          },
+          "tool": "gradient"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "The negative gradient always points directly at the minimum of the loss.",
+            "ar": "يشير سالب التدرّج دائمًا مباشرة إلى القيمة الصغرى للخسارة."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It points in the direction of steepest local descent; on a long narrow valley that is nearly across the valley, not along it.",
+            "ar": "يشير إلى اتجاه أشد هبوط محلي، وفي وادٍ طويل ضيق يكون ذلك تقريبًا عرض الوادي لا طوله."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each loss curve to its likely cause.",
+            "ar": "طابق كل منحنى خسارة مع سببه المرجّح."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Loss falls very slowly and steadily",
+                "ar": "الخسارة تهبط ببطء شديد وثبات"
+              },
+              "right": {
+                "en": "Learning rate too small",
+                "ar": "معدّل تعلّم صغير جدًا"
+              }
+            },
+            {
+              "left": {
+                "en": "Loss grows, then becomes nan",
+                "ar": "الخسارة تكبر ثم تصبح nan"
+              },
+              "right": {
+                "en": "Learning rate too large",
+                "ar": "معدّل تعلّم كبير جدًا"
+              }
+            },
+            {
+              "left": {
+                "en": "Loss falls but jitters up and down",
+                "ar": "الخسارة تهبط لكنها تتذبذب صعودًا وهبوطًا"
+              },
+              "right": {
+                "en": "Small mini-batches",
+                "ar": "دفعات صغيرة"
+              }
+            },
+            {
+              "left": {
+                "en": "Training loss low, validation loss rising",
+                "ar": "خسارة التدريب منخفضة وخسارة التحقق ترتفع"
+              },
+              "right": {
+                "en": "Overfitting",
+                "ar": "إفراط في التوافق"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Reading loss curves is a diagnostic skill worth assessing directly.",
+            "ar": "قراءة منحنيات الخسارة مهارة تشخيصية تستحق التقييم المباشر."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Where do your students first meet gradient descent? What could they do by hand before they see code?",
+            "ar": "أين يقابل طلابك الانحدار التدريجي أول مرة؟ وماذا يمكنهم أن يفعلوا يدويًا قبل رؤية الكود؟"
+          },
+          "placeholder": {
+            "en": "For example: “Week 3. I’ll give them θ² and three learning rates on paper first.”",
+            "ar": "مثلًا: «الأسبوع الثالث. سأعطيهم θ² وثلاثة معدّلات تعلّم على الورق أولًا.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: An optimisation lab",
+            "ar": "مشروع: معمل التحسين"
+          },
+          "task": {
+            "en": "Design a 90-minute lab: students implement gradient descent and mini-batch SGD for logistic regression in NumPy, plot loss against steps for three learning rates and two batch sizes, and explain each curve. Provide starter code, the dataset, an answer key and a rubric.",
+            "ar": "صمّم معملًا مدته ٩٠ دقيقة: يبرمج الطلاب الانحدار التدريجي والانحدار العشوائي بدفعات صغيرة للانحدار اللوجستي في NumPy، ويرسمون الخسارة مقابل الخطوات لثلاثة معدّلات تعلّم وحجمي دفعة، ويفسّرون كل منحنى. وفّر كودًا مبدئيًا والبيانات ومفتاح إجابة ومعيار تقييم."
+          },
+          "deliverable": {
+            "en": "Starter code, a dataset, an answer key and a rubric.",
+            "ar": "كود مبدئي وبيانات ومفتاح إجابة ومعيار تقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: derive and implement a gradient update.",
+                "ar": "يستطيع الطلاب: اشتقاق تحديث التدرّج وبرمجته."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: diagnose a loss curve.",
+                "ar": "يستطيع الطلاب: تشخيص منحنى خسارة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: choose a learning rate and justify it.",
+                "ar": "يستطيع الطلاب: اختيار معدّل تعلّم وتبريره."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Learning as optimisation",
+            "ar": "التعلّم كمسألة تحسين"
+          },
+          "note": {
+            "en": "AI · University · Lecture 1",
+            "ar": "الذكاء الاصطناعي، الجامعة، المحاضرة ١"
+          },
+          "narration": {
+            "en": "Why did the loss turn into nan?",
+            "ar": "لماذا تحوّلت الخسارة إلى nan؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Frame learning as minimising empirical risk.",
+              "Run gradient descent and SGD.",
+              "Diagnose learning-rate problems."
+            ],
+            "ar": [
+              "نصوغ التعلّم تقليلًا للخطر التجريبي.",
+              "ننفّذ الانحدار التدريجي والعشوائي.",
+              "نشخّص مشكلات معدّل التعلّم."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "θ ← θ − η∇R̂.",
+              "Too big a step diverges.",
+              "The gradient is local, not a map."
+            ],
+            "ar": [
+              "⁦θ ← θ − η∇R̂.⁩",
+              "الخطوة الكبيرة جدًا تتباعد.",
+              "التدرّج محلي وليس خريطة."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Steps by hand",
+            "ar": "خطوات باليد"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Where is the minimum?",
+              "Derive (15 min): The update rule.",
+              "Step (15 min): Three rates.",
+              "Code (20 min): SGD.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): Show a 2-D loss contour and ask students to draw the gradient arrow at one point.",
+              "الاشتقاق (١٥ دقيقة): قاعدة التحديث.",
+              "الخطوات (١٥ دقيقة): ثلاثة معدّلات.",
+              "البرمجة (٢٠ دقيقة): الانحدار العشوائي.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): أين القيمة الصغرى؟",
+              "Derive (15 min): Derive the gradient of squared and logistic loss on the board.",
+              "Step (15 min): Pairs take five steps on θ² with η = 0.1, 0.5 and 1.2 and plot them.",
+              "Code (20 min): Implement mini-batch SGD and compare loss curves for two batch sizes.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض خطوط تساوي لخسارة ثنائية الأبعاد واطلب من الطلاب رسم سهم التدرّج عند نقطة.",
+              "الاشتقاق (١٥ دقيقة): اشتقّ تدرّج الخسارة التربيعية واللوجستية على السبّورة.",
+              "الخطوات (١٥ دقيقة): يأخذ كل زوج خمس خطوات على θ² مع η ⁦= 0.1⁩ و0.5 و1.2 ويرسمونها.",
+              "البرمجة (٢٠ دقيقة): برمج الانحدار العشوائي بدفعات صغيرة وقارن منحنيات الخسارة لحجمي دفعة.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "At which η did θ² diverge, and why?",
+              "Why does SGD jitter?",
+              "How will you assess curve reading?"
+            ],
+            "ar": [
+              "عند أيّ η تباعدت θ²، ولماذا؟",
+              "لماذا يتذبذب الانحدار العشوائي؟",
+              "كيف ستقيّم قراءة المنحنيات؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Sketch the loss curve for a learning rate that is too big, and label it."
+            ],
+            "ar": [
+              "ارسم منحنى الخسارة لمعدّل تعلّم كبير جدًا وسمّه."
+            ]
+          },
+          "narration": {
+            "en": "The learning rate decides whether learning works.",
+            "ar": "معدّل التعلّم يقرّر نجاح التعلّم."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Learning as optimisation",
+            "ar": "شرائح المحاضرة: التعلّم كمسألة تحسين"
+          },
+          "pages": 6,
+          "base": "ai-u1-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Learning as optimisation",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: التعلّم كمسألة تحسين"
+          },
+          "pages": 3,
+          "base": "ai-u1-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-u1-1/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "T.PE.C",
+        "DC.1.2",
+        "T.PL.C"
+      ]
+    },
+    {
+      "id": "ai-u1-2",
+      "title": {
+        "en": "Backpropagation",
+        "ar": "الانتشار العكسي"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Draw a three-node graph with real numbers; pairs compute every gradient by hand, then check against the framework’s answer.",
+        "ar": "ارسم شبكة من ثلاث عقد بأعداد حقيقية، فيحسب كل زوج كل التدرّجات يدويًا ثم يقارنونها بإجابة الإطار البرمجي."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Backpropagation",
+            "ar": "الانتشار العكسي"
+          },
+          "src": null,
+          "duration": 189,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Magic or maths?",
+                "ar": "سحر أم رياضيات؟"
+              }
+            },
+            {
+              "at": 25.3,
+              "atBy": {
+                "en": 25.3,
+                "ar": 22.1
+              },
+              "label": {
+                "en": "The chain rule",
+                "ar": "قاعدة السلسلة"
+              }
+            },
+            {
+              "at": 74.7,
+              "atBy": {
+                "en": 74.7,
+                "ar": 68.6
+              },
+              "label": {
+                "en": "Teaching it",
+                "ar": "تدريسها"
+              }
+            },
+            {
+              "at": 149.9,
+              "atBy": {
+                "en": 149.9,
+                "ar": 137.9
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 126.4,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "∂L/∂a = 2 and ∂a/∂w = 3. What is ∂L/∂w?",
+                "ar": "∂⁦L/⁩∂⁦a = 2⁩ و∂⁦a/⁩∂⁦w = 3⁩. كم تساوي ∂⁦L/⁩∂w؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "5",
+                    "ar": "5"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "6",
+                    "ar": "6"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "1.5",
+                    "ar": "⁦1.5⁩"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "By the chain rule, local derivatives multiply: 2 × 3 = 6.",
+                "ar": "بقاعدة السلسلة تُضرب المشتقات المحلية: ⁦2 × 3 = 6⁩."
+              }
+            },
+            "atBy": {
+              "en": 126.4,
+              "ar": 115.72
+            }
+          },
+          "transcript": {
+            "en": "I asked my class how a network with a million weights knows which ones to change. One student said: the framework does it. That answer is true. It is also the moment understanding stops. Today: how backpropagation computes every gradient in one backward pass, and how to make it concrete for students. A network is a chain of simple operations. The forward pass computes each value from inputs to loss. Backpropagation walks the same graph in reverse, applying the chain rule at each node. If the loss depends on a, and a depends on w, then the derivative of the loss with respect to w is the derivative with respect to a times the derivative of a with respect to w. Local derivatives multiply. With sigmoid units each local derivative is at most a quarter. Multiply ten of them and the gradient reaching the first layer is almost zero. That is why deep sigmoid networks learned so slowly. Rumelhart, Hinton and Williams showed in nineteen eighty six that one backward pass gives every gradient for about the cost of one forward pass. Without that, training large networks would be impossible. Cognitive load theory says novices drown in symbols. So start with a graph of three nodes and real numbers. Students compute the forward pass, then the backward pass, on paper. Only then generalise. Quick check! The derivative of the loss with respect to a is two, and the derivative of a with respect to w is three. What is the derivative of the loss with respect to w? Six. Two times three. That one multiplication, repeated at every node from the loss backwards, is all backpropagation does. In the app, open the backprop lab. Run one forward pass, then step the gradients backwards node by node and check each multiplication. Your turn. Why does the gradient shrink as it travels back through many sigmoid layers? Because each local derivative is at most a quarter, and they multiply. Remember: backprop is the chain rule on a graph, one backward pass gives every gradient, and small locals vanish. Try it in your next lecture: draw a three-node graph with real numbers on the board. Pairs compute every gradient by hand, then check against the framework's answer.",
+            "ar": "سألت الفصل إزاي شبكة فيها مليون وزن بتعرف تغيّر أنهي واحد. طالب قال: الإطار البرمجي بيعملها. الإجابة دي صح. وهي كمان اللحظة اللي الفهم بيقف عندها. النهارده: الانتشار العكسي بيحسب كل التدرّجات في مرور واحد لورا إزاي، وإزاي تخلّيه ملموس للطلاب. الشبكة سلسلة من عمليات بسيطة. المرور الأمامي بيحسب كل قيمة من المدخلات للخسارة. والانتشار العكسي بيمشي نفس الشبكة بالعكس، وبيطبّق قاعدة السلسلة عند كل عقدة. لو الخسارة معتمدة على a، وa معتمدة على w، يبقى مشتقة الخسارة بالنسبة لـ w هي المشتقة بالنسبة لـ a مضروبة في مشتقة a بالنسبة لـ w. المشتقات المحلية بتتضرب في بعض. مع وحدات sigmoid كل مشتقة محلية أقصاها ربع. اضرب عشرة منهم والتدرّج اللي بيوصل لأول طبقة بيبقى تقريبًا صفر. وده ليه الشبكات العميقة بـ sigmoid كانت بتتعلم ببطء. روملهارت وهينتون وويليامز بيّنوا سنة ألف تسعمية ستة وتمانين إن مرور واحد لورا بيدّي كل التدرّجات بتكلفة قريبة من مرور واحد لقدّام. من غير ده، تدريب الشبكات الكبيرة كان هيبقى مستحيل. نظرية العبء المعرفي بتقول إن المبتدئين بيغرقوا في الرموز. فابدأ بشبكة من تلات عقد وأرقام حقيقية. الطلاب يحسبوا المرور الأمامي، وبعدين العكسي، على الورق. وبعد كده بس عمّم. سؤال سريع! مشتقة الخسارة بالنسبة لـ a اتنين، ومشتقة a بالنسبة لـ w تلاتة. مشتقة الخسارة بالنسبة لـ w كام؟ ستة. اتنين في تلاتة. الضرب ده، متكرر عند كل عقدة من الخسارة لورا، هو كل اللي الانتشار العكسي بيعمله. في التطبيق، افتح معمل الانتشار العكسي. شغّل مرور واحد لقدّام، وبعدين امشي بالتدرّجات لورا عقدة عقدة واتأكد من كل عملية ضرب. دورك. ليه التدرّج بيصغر وهو راجع لورا في طبقات sigmoid كتير؟ لأن كل مشتقة محلية أقصاها ربع، وبيتضربوا في بعض. افتكر: الانتشار العكسي هو قاعدة السلسلة على شبكة، ومرور واحد لورا بيدّي كل التدرّجات، والمحليات الصغيرة بتتلاشى. جرّبها في محاضرتك الجاية: ارسم شبكة من تلات عقد بأرقام حقيقية على السبّورة. كل اتنين يحسبوا كل التدرّجات بإيديهم، وبعدين يقارنوا بإجابة الإطار البرمجي."
+          },
+          "sources": {
+            "en": "/media/ai-u1-2/video-en.mp4",
+            "ar": "/media/ai-u1-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-u1-2/captions-en.vtt",
+            "ar": "/media/ai-u1-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-u1-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-u1-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-u1-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-u1-2/light/audio/en.opus",
+              "manifest.json": "/media/ai-u1-2/light/manifest.json",
+              "scenes.json": "/media/ai-u1-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-u1-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-u1-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 417,
+              "ar": 394
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "The chain rule, at scale",
+            "ar": "قاعدة السلسلة على نطاق واسع"
+          },
+          "body": {
+            "en": "A neural network is a composition of simple differentiable operations, best drawn as a computational graph. The forward pass evaluates each node from inputs to loss and caches intermediate values. Backpropagation then traverses the graph in reverse, multiplying each node’s local derivative by the upstream gradient: ∂L/∂w = ∂L/∂a ⋅ ∂a/∂w. Rumelhart, Hinton and Williams (1986) showed that this yields every partial derivative for roughly the cost of one forward pass, which is what makes training large networks feasible.\n\nBecause gradients are products of local derivatives, their size depends on depth. A sigmoid’s derivative is at most 0.25, so after ten layers the gradient can shrink by a factor of a million; this vanishing-gradient problem motivated ReLU activations, careful initialisation, normalisation and residual connections (Goodfellow et al., 2016, ch. 6 and 8).\n\nStudents often treat backprop as either magic or as a page of indices. Sweller’s (1988) cognitive load theory suggests why: novices cannot hold notation and concept at once. Worked examples with three nodes and concrete numbers, followed by a gradient check against finite differences, build the concept before the matrix notation.",
+            "ar": "الشبكة العصبية تركيب من عمليات بسيطة قابلة للاشتقاق، وأفضل ما تُرسم به شبكة حسابية. يحسب المرور الأمامي كل عقدة من المدخلات إلى الخسارة ويحفظ القيم الوسيطة. ثم يجتاز الانتشار العكسي الشبكة بالعكس، ضاربًا المشتقة المحلية لكل عقدة في التدرّج القادم من الأعلى: ∂⁦L/⁩∂⁦w =⁩ ∂⁦L/⁩∂a ⋅ ∂⁦a/⁩∂w. وبيّن Rumelhart وHinton وWilliams (١٩٨٦) أن هذا يعطي كل المشتقات الجزئية بتكلفة تقارب مرورًا أماميًا واحدًا، وهو ما يجعل تدريب الشبكات الكبيرة ممكنًا.\n\nولأن التدرّجات حواصل ضرب لمشتقات محلية، يعتمد حجمها على العمق. فمشتقة sigmoid لا تتجاوز 0.25، لذا قد يصغر التدرّج بعد عشر طبقات بمعامل مليون، وقد دفعت مشكلة التدرّج المتلاشي هذه إلى دوال ReLU، والتهيئة المدروسة، والتطبيع، والوصلات المتبقية (Goodfellow وآخرون، ٢٠١٦، الفصلان ٦ و٨).\n\nوكثيرًا ما يعامل الطلاب الانتشار العكسي إما سحرًا أو صفحة من الرموز السفلية. وتفسّر نظرية العبء المعرفي عند Sweller (١٩٨٨) السبب: لا يستطيع المبتدئون حمل الرموز والمفهوم معًا. فالأمثلة المحلولة بثلاث عقد وأعداد ملموسة، يتبعها فحص للتدرّج بالفروق المحدودة، تبني المفهوم قبل صيغة المصفوفات."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Computational graph",
+                "ar": "الشبكة الحسابية"
+              },
+              "def": {
+                "en": "Nodes are operations, edges carry values forward and gradients back.",
+                "ar": "العقد عمليات، والحواف تنقل القيم إلى الأمام والتدرّجات إلى الخلف."
+              }
+            },
+            {
+              "term": {
+                "en": "Vanishing gradient",
+                "ar": "التدرّج المتلاشي"
+              },
+              "def": {
+                "en": "Gradients shrinking towards zero as they pass back through many layers.",
+                "ar": "تدرّجات تصغر نحو الصفر وهي تعود عبر طبقات كثيرة."
+              }
+            },
+            {
+              "term": {
+                "en": "Gradient check",
+                "ar": "فحص التدرّج"
+              },
+              "def": {
+                "en": "Comparing backprop’s gradient with a finite-difference estimate.",
+                "ar": "مقارنة تدرّج الانتشار العكسي بتقدير بالفروق المحدودة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Why does the gradient shrink back through many sigmoid layers?",
+            "ar": "لماذا يصغر التدرّج عائدًا عبر طبقات sigmoid كثيرة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Each local derivative is ≤ 0.25 and they multiply",
+                "ar": "كل مشتقة محلية ≤ 0.25 وتُضرب معًا"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The learning rate is too small",
+                "ar": "معدّل التعلّم صغير"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Early layers have fewer weights",
+                "ar": "الطبقات الأولى أوزانها أقل"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "A product of many numbers below 0.25 quickly approaches zero.",
+            "ar": "حاصل ضرب أعداد كثيرة أقل من 0.25 يقترب من الصفر بسرعة."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Backpropagate through L = (wx − y)² with w = 2, x = 3, y = 4.",
+            "ar": "انشر عكسيًا عبر ⁦L = (wx − y)²⁩ مع ⁦w = 2⁩ و⁦x = 3⁩ و⁦y = 4⁩."
+          },
+          "sentence": {
+            "en": [
+              "The residual wx − y = ",
+              {
+                "blank": 0
+              },
+              ", and ∂L/∂w = 2(wx − y)x = ",
+              {
+                "blank": 1
+              },
+              "."
+            ],
+            "ar": [
+              "البقية ⁦wx − y⁩ = ",
+              {
+                "blank": 0
+              },
+              "، و∂⁦L/⁩∂⁦w = 2(wx − y)x⁩ = ",
+              {
+                "blank": 1
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "2",
+              "6",
+              "4",
+              "12"
+            ],
+            "ar": [
+              "2",
+              "6",
+              "4",
+              "12"
+            ]
+          },
+          "answers": {
+            "en": [
+              "2",
+              "12"
+            ],
+            "ar": [
+              "2",
+              "12"
+            ]
+          },
+          "explain": {
+            "en": "wx − y = 6 − 4 = 2; ∂L/∂w = 2 × 2 × 3 = 12.",
+            "ar": "⁦wx − y = 6 − 4 = 2⁩، و∂⁦L/⁩∂⁦w = 2 × 2 × 3 = 12⁩."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which help gradients survive many layers? Choose all that apply.",
+            "ar": "أيّ مما يلي يساعد التدرّجات على البقاء عبر طبقات كثيرة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "ReLU activations",
+                "ar": "دوال ReLU"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Residual connections",
+                "ar": "الوصلات المتبقية"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Careful initialisation",
+                "ar": "التهيئة المدروسة"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "Adding more sigmoid layers",
+                "ar": "إضافة طبقات sigmoid أكثر"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "ReLU has derivative 1 where active, residual paths add an identity route, and good initialisation keeps signals near unit scale.",
+            "ar": "مشتقة ReLU تساوي 1 حين تنشط، والوصلات المتبقية تضيف مسار هوية، والتهيئة الجيدة تُبقي الإشارات قرب الحجم الواحد."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: run one forward pass, then step the gradients back node by node and check each product.",
+            "ar": "جرّب: شغّل مرورًا أماميًا واحدًا، ثم انقل التدرّجات للخلف عقدة عقدة وتحقّق من كل حاصل ضرب."
+          },
+          "tool": "backprop"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "Computing all gradients by backpropagation costs roughly as much as one forward pass, not one pass per weight.",
+            "ar": "حساب كل التدرّجات بالانتشار العكسي يكلّف تقريبًا مثل مرور أمامي واحد، لا مرورًا لكل وزن."
+          },
+          "answer": true,
+          "explain": {
+            "en": "Reverse-mode differentiation reuses the cached forward values, so its cost is a small constant times the forward pass.",
+            "ar": "يعيد الاشتقاق العكسي استخدام القيم الأمامية المحفوظة، فتكلفته مضاعف صغير ثابت لتكلفة المرور الأمامي."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each student error to the misconception behind it.",
+            "ar": "طابق كل خطأ طالب مع التصور الخاطئ وراءه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Adds local gradients instead of multiplying",
+                "ar": "يجمع التدرّجات المحلية بدل ضربها"
+              },
+              "right": {
+                "en": "Misreads the chain rule",
+                "ar": "قراءة خاطئة لقاعدة السلسلة"
+              }
+            },
+            {
+              "left": {
+                "en": "Forgets to sum gradients where a value is used twice",
+                "ar": "ينسى جمع التدرّجات حيث تُستخدم قيمة مرتين"
+              },
+              "right": {
+                "en": "Ignores fan-out in the graph",
+                "ar": "إغفال التفرّع في الشبكة"
+              }
+            },
+            {
+              "left": {
+                "en": "Thinks backprop updates the weights",
+                "ar": "يظن أن الانتشار العكسي يحدّث الأوزان"
+              },
+              "right": {
+                "en": "Confuses gradients with the optimiser",
+                "ar": "الخلط بين التدرّجات والمحسِّن"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each error points to a specific worked example you can add.",
+            "ar": "كل خطأ يشير إلى مثال محلول محدد يمكنك إضافته."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "How do you currently teach backpropagation? Where could a concrete three-node example replace notation?",
+            "ar": "كيف تدرّس الانتشار العكسي حاليًا؟ وأين يمكن لمثال ملموس من ثلاث عقد أن يحل محل الرموز؟"
+          },
+          "placeholder": {
+            "en": "For example: “I start with matrix calculus. I’ll begin with one neuron and numbers.”",
+            "ar": "مثلًا: «أبدأ بحساب المصفوفات. سأبدأ بعصبون واحد وأعداد.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: A micrograd lab",
+            "ar": "مشروع: معمل micrograd"
+          },
+          "task": {
+            "en": "Design a two-week assignment in which students build a tiny scalar autograd engine (add, multiply, tanh), train a two-layer network on a toy dataset, and verify every gradient with finite differences. Include starter code, tests and a rubric that rewards the gradient check.",
+            "ar": "صمّم تكليفًا مدته أسبوعان يبني فيه الطلاب محرّك اشتقاق تلقائي صغيرًا للقيم المفردة (جمع، ضرب، tanh)، ويدرّبون شبكة من طبقتين على بيانات تجريبية، ويتحقّقون من كل تدرّج بالفروق المحدودة. أرفق كودًا مبدئيًا واختبارات ومعيار تقييم يكافئ فحص التدرّج."
+          },
+          "deliverable": {
+            "en": "Starter code, unit tests and a rubric.",
+            "ar": "كود مبدئي واختبارات وحدة ومعيار تقييم."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: backpropagate through a small graph by hand.",
+                "ar": "يستطيع الطلاب: النشر العكسي عبر شبكة صغيرة يدويًا."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: implement reverse-mode autodiff.",
+                "ar": "يستطيع الطلاب: برمجة الاشتقاق التلقائي العكسي."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: verify gradients numerically.",
+                "ar": "يستطيع الطلاب: التحقق من التدرّجات عدديًا."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Backpropagation",
+            "ar": "الانتشار العكسي"
+          },
+          "note": {
+            "en": "AI · University · Lecture 2",
+            "ar": "الذكاء الاصطناعي، الجامعة، المحاضرة ٢"
+          },
+          "narration": {
+            "en": "How does a million-weight network know what to change?",
+            "ar": "كيف تعرف شبكة بمليون وزن ما الذي تغيّره؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Draw a network as a graph.",
+              "Backpropagate by hand.",
+              "Explain vanishing gradients."
+            ],
+            "ar": [
+              "نرسم الشبكة شبكةً حسابية.",
+              "ننشر عكسيًا يدويًا.",
+              "نفسّر التدرّجات المتلاشية."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Local gradients multiply.",
+              "One backward pass gives all gradients.",
+              "Check gradients numerically."
+            ],
+            "ar": [
+              "التدرّجات المحلية تُضرب.",
+              "مرور عكسي واحد يعطي كل التدرّجات.",
+              "افحص التدرّجات عدديًا."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Three nodes, real numbers",
+            "ar": "ثلاث عقد وأعداد حقيقية"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Who changes the weights?",
+              "Model (15 min): A worked example.",
+              "Practise (20 min): A neuron by hand.",
+              "Check (15 min): Finite differences.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): Ask students to explain in one sentence how a network decides which weights to change.",
+              "النمذجة (١٥ دقيقة): مثال محلول.",
+              "التدريب (٢٠ دقيقة): عصبون يدويًا.",
+              "الفحص (١٥ دقيقة): الفروق المحدودة.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): من يغيّر الأوزان؟",
+              "Model (15 min): Work forward and backward through a three-node graph with numbers on the board.",
+              "Practise (20 min): Pairs backpropagate through one sigmoid neuron with squared loss.",
+              "Check (15 min): Compare each hand gradient with (L(w + h) − L(w − h)) / 2h in code.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اطلب من الطلاب أن يشرحوا في جملة واحدة كيف تقرّر الشبكة أيّ الأوزان تغيّر.",
+              "النمذجة (١٥ دقيقة): احسب أمامًا وخلفًا عبر شبكة من ثلاث عقد بأعداد على السبّورة.",
+              "التدريب (٢٠ دقيقة): ينشر كل زوج عكسيًا عبر عصبون sigmoid واحد مع خسارة تربيعية.",
+              "الفحص (١٥ دقيقة): قارن كل تدرّج يدوي بـ ⁦(L(w + h) − L(w − h)) / 2h⁩ في الكود.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Where did your hand gradient differ from the check?",
+              "Why do residual connections help?",
+              "What should students derive, and what can they import?"
+            ],
+            "ar": [
+              "أين اختلف تدرّجك اليدوي عن الفحص؟",
+              "لماذا تساعد الوصلات المتبقية؟",
+              "ما الذي يجب أن يشتقّه الطلاب، وما الذي يمكنهم استيراده؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Backpropagate through y = (2w)² at w = 1."
+            ],
+            "ar": [
+              "انشر عكسيًا عبر ⁦y = (2w)²⁩ عند ⁦w = 1⁩."
+            ]
+          },
+          "narration": {
+            "en": "Backprop is the chain rule on a graph.",
+            "ar": "الانتشار العكسي قاعدة السلسلة على شبكة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Backpropagation",
+            "ar": "شرائح المحاضرة: الانتشار العكسي"
+          },
+          "pages": 6,
+          "base": "ai-u1-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Backpropagation",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: الانتشار العكسي"
+          },
+          "pages": 3,
+          "base": "ai-u1-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-u1-2/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "T.PE.C",
+        "DC.1.2",
+        "T.HM.C"
+      ]
+    },
+    {
+      "id": "ai-u1-3",
+      "title": {
+        "en": "Attention and transformers",
+        "ar": "الانتباه والمحوّلات"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Give pairs three 2-D query and key vectors; they compute scores, softmax and output by hand, then compare with three lines of NumPy.",
+        "ar": "أعطِ كل زوج ثلاثة متجهات استعلام ومفتاح ثنائية الأبعاد، فيحسبون الدرجات وsoftmax والخرج يدويًا ثم يقارنون بثلاثة أسطر من NumPy."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Attention and transformers",
+            "ar": "الانتباه والمحوّلات"
+          },
+          "src": null,
+          "duration": 188,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Which word matters?",
+                "ar": "أيّ كلمة تهم؟"
+              }
+            },
+            {
+              "at": 25.3,
+              "atBy": {
+                "en": 25.3,
+                "ar": 23.2
+              },
+              "label": {
+                "en": "Queries, keys, values",
+                "ar": "الاستعلامات والمفاتيح والقيم"
+              }
+            },
+            {
+              "at": 67.5,
+              "atBy": {
+                "en": 67.5,
+                "ar": 64.4
+              },
+              "label": {
+                "en": "Teaching transformers",
+                "ar": "تدريس المحوّلات"
+              }
+            },
+            {
+              "at": 143.1,
+              "atBy": {
+                "en": 143.1,
+                "ar": 135.5
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 119.7,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "The key dimension d is 64. By what do we divide the raw attention scores?",
+                "ar": "بُعد المفتاح ⁦d = 64⁩. على أيّ عدد نقسم درجات الانتباه الخام؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "64",
+                    "ar": "64"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "8",
+                    "ar": "8"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "2",
+                    "ar": "2"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "√64 = 8 keeps the scores’ variance near 1.",
+                "ar": "√⁦64 = 8⁩ يُبقي تباين الدرجات قرب 1."
+              }
+            },
+            "atBy": {
+              "en": 119.7,
+              "ar": 112.07
+            }
+          },
+          "transcript": {
+            "en": "Take the sentence: the student put the laptop in the bag because it was full. What does it refer to? People answer instantly. Older language models often guessed the laptop. Today: scaled dot-product attention, why it is divided by the square root of d, and how to teach the transformer without drowning students. Attention lets every token build its new representation as a weighted average of all the tokens. The weights say how relevant each other token is. So it can look straight at the bag. Each token makes three vectors. Its query asks what it needs, each key says what a token offers, and values carry the content. Scores are queries times keys, divided by root d, then softmax. Here are one head's attention weights from it to the other nouns. Most of the weight goes to bag. The student and the laptop get little. If query and key entries have variance one, their dot product has variance d. Large scores push softmax into saturation, where gradients vanish. Dividing by root d keeps the variance near one. Vaswani and colleagues' diagram has too much in it for a first lecture. Start with one head, three tokens and two dimensions. Students compute the scores by hand, then you add heads, layers and positions. Quick check! The key dimension d is sixty four. By what number do we divide the raw attention scores? Eight, the square root of sixty four. Without it, scores would have a standard deviation near eight and softmax would almost always pick one token. In the app, open the attention lab. Type a sentence, pick a word, and see which words it attends to. Change the sentence and watch the weights move. Your turn. Attention alone treats its inputs as a set. What does the transformer add so word order matters? Positional encodings. Remember: attention is a weighted average, scores are queries times keys over root d, and position must be added. Try it in your next lecture: give pairs three two-dimensional query and key vectors. They compute the scores, the softmax and the output by hand, then compare with three lines of NumPy.",
+            "ar": "خد الجملة دي: الطالب حط اللابتوب في الشنطة لأنها كانت مليانة. الضمير راجع على إيه؟ الناس بتجاوب في ثانية. وموديلات اللغة القديمة كانت كتير بتخمّن اللابتوب. النهارده: الانتباه بالضرب النقطي المقيّس، وليه بيتقسم على جذر d، وإزاي تدرّس المحوّل من غير ما تغرّق الطلاب. الانتباه بيخلّي كل رمز يبني تمثيله الجديد كمتوسط موزون لكل الرموز. الأوزان بتقول كل رمز تاني مهم قد إيه. فيقدر يبص على الشنطة على طول. كل رمز بيعمل تلات متّجهات. الاستعلام بيسأل هو محتاج إيه، وكل مفتاح بيقول الرمز بيقدّم إيه، والقيم بتشيل المحتوى. الدرجات هي الاستعلامات في المفاتيح، مقسومة على جذر d، وبعدين softmax. دي أوزان الانتباه لرأس واحد من الضمير للأسماء التانية. أغلب الوزن رايح للشنطة. والطالب واللابتوب واخدين حاجة قليلة. لو عناصر الاستعلام والمفتاح تباينها واحد، يبقى الضرب النقطي بتاعهم تباينه d. الدرجات الكبيرة بتدفع softmax للتشبّع، واللي فيه التدرّجات بتتلاشى. القسمة على جذر d بتخلّي التباين قريب من واحد. رسمة فاسواني وزمايله فيها حاجات كتير قوي على أول محاضرة. ابدأ برأس واحد، وتلات رموز، وبعدين اتنين أبعاد. الطلاب يحسبوا الدرجات بإيديهم، وبعدين إنت تضيف الرؤوس والطبقات والمواضع. سؤال سريع! بُعد المفتاح d أربعة وستين. بنقسم درجات الانتباه الخام على كام؟ تمانية، جذر أربعة وستين. من غيرها، الدرجات هيبقى انحرافها المعياري قريب من تمانية وsoftmax تقريبًا دايمًا هيختار رمز واحد. في التطبيق، افتح معمل الانتباه. اكتب جملة، واختار كلمة، وشوف بتنتبه لأنهي كلمات. غيّر الجملة وشوف الأوزان بتتحرك. دورك. الانتباه لوحده بيعامل المدخلات كمجموعة. المحوّل بيضيف إيه علشان ترتيب الكلام يفرق؟ ترميزات الموضع. افتكر: الانتباه متوسط موزون، والدرجات هي الاستعلامات في المفاتيح على جذر d، والموضع لازم يتضاف. جرّبها في محاضرتك الجاية: ادّي كل اتنين تلات متّجهات استعلام ومفتاح ببعدين. يحسبوا الدرجات وsoftmax والخرج بإيديهم، وبعدين يقارنوا بتلات سطور NumPy."
+          },
+          "sources": {
+            "en": "/media/ai-u1-3/video-en.mp4",
+            "ar": "/media/ai-u1-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-u1-3/captions-en.vtt",
+            "ar": "/media/ai-u1-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-u1-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-u1-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-u1-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-u1-3/light/audio/en.opus",
+              "manifest.json": "/media/ai-u1-3/light/manifest.json",
+              "scenes.json": "/media/ai-u1-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-u1-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-u1-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 410,
+              "ar": 383
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "softmax(QKᵀ/√d)V",
+            "ar": "⁦softmax(QKᵀ/√d)V⁩"
+          },
+          "body": {
+            "en": "Scaled dot-product attention (Vaswani et al., 2017) lets each token compute its new representation as a weighted average of value vectors, with weights given by softmax(QKᵀ/√d). Queries, keys and values are learned linear projections of the token embeddings. Multi-head attention runs several such maps in parallel so different heads can capture different relations, such as syntax and coreference.\n\nThe 1/√d factor is not cosmetic. If the entries of q and k are independent with variance 1, then q⋅k has variance d. Large scores push softmax towards a one-hot output where its gradient is nearly zero, so training stalls; dividing by √d restores unit variance. Because attention is permutation-equivariant, transformers add positional encodings to inject order. Self-attention costs O(n²) in sequence length, which explains context-length limits.\n\nThe original architecture diagram overwhelms first-time learners. A sequence that starts with one head on three tokens in two dimensions, computed by hand, then adds the softmax temperature, multiple heads, residual connections, layer norm and position, keeps cognitive load manageable and makes later reading of the paper possible.",
+            "ar": "يتيح الانتباه بالضرب النقطي المقيّس (Vaswani وآخرون، ٢٠١٧) لكل رمز أن يحسب تمثيله الجديد متوسطًا موزونًا لمتجهات القيم، بأوزان تعطيها ⁦softmax(QK⁩ᵀ/√d). والاستعلامات والمفاتيح والقيم إسقاطات خطية متعلَّمة لتمثيلات الرموز. ويشغّل الانتباه متعدد الرؤوس عدة خرائط من هذا النوع بالتوازي كي تلتقط الرؤوس المختلفة علاقات مختلفة، كالنحو وعودة الضمير.\n\nوالمعامل ⁦1/⁩√d ليس تجميليًا. فإذا كانت عناصر q وk مستقلة بتباين 1، فإن q⋅k تباينه d. والدرجات الكبيرة تدفع softmax نحو خرج أحادي الموضع يكاد تدرّجه ينعدم، فيتوقف التدريب، والقسمة على √d تعيد التباين إلى 1. ولأن الانتباه متكافئ مع التبديل، تضيف المحوّلات ترميزات الموضع لإدخال الترتيب. وتكلّف آلية الانتباه الذاتي ⁦O(n²)⁩ في طول التسلسل، ما يفسّر حدود طول السياق.\n\nويرهق مخطط البنية الأصلي المتعلمين الجدد. أما التسلسل الذي يبدأ برأس واحد على ثلاثة رموز ببعدين، محسوبًا يدويًا، ثم يضيف حرارة softmax والرؤوس المتعددة والوصلات المتبقية وتطبيع الطبقة والموضع، فيُبقي العبء المعرفي محتملًا ويجعل قراءة الورقة لاحقًا ممكنة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Query, key, value",
+                "ar": "الاستعلام والمفتاح والقيمة"
+              },
+              "def": {
+                "en": "Learned projections: what a token seeks, offers and passes on.",
+                "ar": "إسقاطات متعلَّمة: ما يطلبه الرمز وما يقدّمه وما ينقله."
+              }
+            },
+            {
+              "term": {
+                "en": "Multi-head attention",
+                "ar": "الانتباه متعدد الرؤوس"
+              },
+              "def": {
+                "en": "Several attention maps in parallel, concatenated.",
+                "ar": "عدة خرائط انتباه متوازية تُضم معًا."
+              }
+            },
+            {
+              "term": {
+                "en": "Positional encoding",
+                "ar": "ترميز الموضع"
+              },
+              "def": {
+                "en": "A signal added to embeddings so order affects attention.",
+                "ar": "إشارة تُضاف إلى التمثيلات كي يؤثر الترتيب في الانتباه."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Attention alone treats inputs as a set. What makes word order matter?",
+            "ar": "الانتباه وحده يعامل المدخلات مجموعةً. ما الذي يجعل ترتيب الكلمات مهمًا؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "More attention heads",
+                "ar": "رؤوس انتباه أكثر"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Positional encodings",
+                "ar": "ترميزات الموضع"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A larger vocabulary",
+                "ar": "مفردات أكبر"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Position information is added to each token’s embedding.",
+            "ar": "تُضاف معلومات الموضع إلى تمثيل كل رمز."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Compute one attention row. A query scores the three keys 2, 0 and 0 after scaling.",
+            "ar": "احسب صفًا واحدًا للانتباه. يعطي استعلام المفاتيح الثلاثة الدرجات 2 و0 و0 بعد التقييس."
+          },
+          "sentence": {
+            "en": [
+              "With e² ≈ 7.4, the softmax weight on the first key is about ",
+              {
+                "blank": 0
+              },
+              " %, and on each of the others about ",
+              {
+                "blank": 1
+              },
+              " %."
+            ],
+            "ar": [
+              "مع ⁦e² ≈ 7.4⁩، يكون وزن softmax على المفتاح الأول نحو ",
+              {
+                "blank": 0
+              },
+              " ٪، وعلى كل من الآخرين نحو ",
+              {
+                "blank": 1
+              },
+              " ٪."
+            ]
+          },
+          "bank": {
+            "en": [
+              "79",
+              "50",
+              "33",
+              "11"
+            ],
+            "ar": [
+              "79",
+              "50",
+              "33",
+              "11"
+            ]
+          },
+          "answers": {
+            "en": [
+              "79",
+              "11"
+            ],
+            "ar": [
+              "79",
+              "11"
+            ]
+          },
+          "explain": {
+            "en": "7.4 / (7.4 + 1 + 1) ≈ 0.79, and 1 / 9.4 ≈ 0.11 each.",
+            "ar": "⁦7.4 / (7.4 + 1 + 1) ≈ 0.79⁩، و⁦1 / 9.4 ≈ 0.11⁩ لكل منهما."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which statements about self-attention are true? Choose all that apply.",
+            "ar": "أيّ العبارات عن الانتباه الذاتي صحيحة؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Its cost grows with the square of sequence length",
+                "ar": "تكلفته تنمو مع مربع طول التسلسل"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Without position information it ignores word order",
+                "ar": "من دون معلومات الموضع يتجاهل ترتيب الكلمات"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Each head’s weights in a row sum to 1",
+                "ar": "أوزان كل رأس في الصف مجموعها 1"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "It needs recurrence to see distant tokens",
+                "ar": "يحتاج التكرار ليرى الرموز البعيدة"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "Every token attends to every token directly, so no recurrence is needed; softmax rows sum to 1; cost is O(n²).",
+            "ar": "كل رمز ينتبه لكل رمز مباشرة، فلا حاجة للتكرار، وصفوف softmax مجموعها 1، والتكلفة ⁦O(n²)⁩."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: type a sentence with a pronoun, pick it, and see where it attends; then change one noun.",
+            "ar": "جرّب: اكتب جملة فيها ضمير، واختره، وانظر إلى أين ينتبه، ثم غيّر اسمًا واحدًا."
+          },
+          "tool": "attention"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "Dividing by √d is mainly there to make the computation faster.",
+            "ar": "القسمة على √d موجودة أساسًا لتسريع الحساب."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It keeps score variance near 1 so softmax does not saturate and gradients keep flowing.",
+            "ar": "تُبقي تباين الدرجات قرب 1 كي لا تتشبّع softmax وتستمر التدرّجات في التدفق."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each component to its job.",
+            "ar": "طابق كل مكوّن مع وظيفته."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Positional encoding",
+                "ar": "ترميز الموضع"
+              },
+              "right": {
+                "en": "Injects word order",
+                "ar": "يُدخل ترتيب الكلمات"
+              }
+            },
+            {
+              "left": {
+                "en": "Multiple heads",
+                "ar": "الرؤوس المتعددة"
+              },
+              "right": {
+                "en": "Capture different relations",
+                "ar": "تلتقط علاقات مختلفة"
+              }
+            },
+            {
+              "left": {
+                "en": "Residual connection",
+                "ar": "الوصلة المتبقية"
+              },
+              "right": {
+                "en": "Keeps gradients flowing in deep stacks",
+                "ar": "تُبقي التدرّجات متدفقة في الطبقات العميقة"
+              }
+            },
+            {
+              "left": {
+                "en": "Causal mask",
+                "ar": "القناع السببي"
+              },
+              "right": {
+                "en": "Stops a token seeing future tokens",
+                "ar": "يمنع الرمز من رؤية الرموز اللاحقة"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Introducing these one at a time, each solving a visible problem, is the sequence that keeps load manageable.",
+            "ar": "تقديمها واحدًا تلو الآخر، كلٌّ يحل مشكلة ظاهرة، هو التسلسل الذي يُبقي العبء محتملًا."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "What is the minimum a student must compute by hand before using a transformer library in your course?",
+            "ar": "ما الحد الأدنى الذي يجب أن يحسبه الطالب يدويًا قبل استخدام مكتبة محوّلات في مقررك؟"
+          },
+          "placeholder": {
+            "en": "For example: “One attention row with three tokens, then a causal mask.”",
+            "ar": "مثلًا: «صف انتباه واحد بثلاثة رموز، ثم قناع سببي.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: Attention from scratch",
+            "ar": "مشروع: الانتباه من الصفر"
+          },
+          "task": {
+            "en": "Design a lab where students implement single-head and multi-head attention in NumPy, verify it against a library on random inputs, visualise attention maps for a short sentence with a pretrained model, and write a one-page critique of what attention maps can and cannot explain. Include tests and a rubric.",
+            "ar": "صمّم معملًا يبرمج فيه الطلاب انتباهًا برأس واحد ومتعدد الرؤوس في NumPy، ويتحقّقون منه مقابل مكتبة على مدخلات عشوائية، ويعرضون خرائط الانتباه لجملة قصيرة بنموذج مدرّب مسبقًا، ويكتبون نقدًا من صفحة واحدة لما تستطيع خرائط الانتباه تفسيره وما لا تستطيع. أرفق اختبارات ومعيار تقييم."
+          },
+          "deliverable": {
+            "en": "Code, tests, attention maps and the critique.",
+            "ar": "الكود والاختبارات وخرائط الانتباه والنقد."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: compute attention by hand and in code.",
+                "ar": "يستطيع الطلاب: حساب الانتباه يدويًا وبالكود."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: explain the √d scaling.",
+                "ar": "يستطيع الطلاب: شرح التقييس بـ √d."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: critique attention as explanation.",
+                "ar": "يستطيع الطلاب: نقد الانتباه بوصفه تفسيرًا."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Attention and transformers",
+            "ar": "الانتباه والمحوّلات"
+          },
+          "note": {
+            "en": "AI · University · Lecture 3",
+            "ar": "الذكاء الاصطناعي، الجامعة، المحاضرة ٣"
+          },
+          "narration": {
+            "en": "What does “it” refer to?",
+            "ar": "إلى ماذا يعود الضمير؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Compute scaled dot-product attention.",
+              "Explain √d and position.",
+              "Sequence the transformer for novices."
+            ],
+            "ar": [
+              "نحسب الانتباه بالضرب النقطي المقيّس.",
+              "نشرح √d والموضع.",
+              "نرتّب تدريس المحوّل للمبتدئين."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Attention is a weighted average.",
+              "÷√d prevents saturation.",
+              "One head by hand first."
+            ],
+            "ar": [
+              "الانتباه متوسط موزون.",
+              "÷√d يمنع التشبّع.",
+              "رأس واحد يدويًا أولًا."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "One head by hand",
+            "ar": "رأس واحد يدويًا"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Which noun?",
+              "Compute (20 min): A 3-token head.",
+              "Break (10 min): Remove √d.",
+              "Build (20 min): Add the parts.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): Show the laptop-and-bag sentence and ask students how they resolved “it”.",
+              "الحساب (٢٠ دقيقة): رأس بثلاثة رموز.",
+              "التجربة (١٠ دقائق): احذف √d.",
+              "البناء (٢٠ دقيقة): أضف الأجزاء.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): أيّ اسم؟",
+              "Compute (20 min): Pairs compute QKᵀ, scale, softmax and the weighted values for three 2-D tokens.",
+              "Break (10 min): Repeat with d = 512 random vectors without scaling and look at the weights.",
+              "Build (20 min): Add heads, a residual path and positions, each with the problem it solves.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض جملة الحاسوب والحقيبة واسأل الطلاب كيف حدّدوا مرجع الضمير.",
+              "الحساب (٢٠ دقيقة): يحسب كل زوج QKᵀ والتقييس وsoftmax والقيم الموزونة لثلاثة رموز ثنائية الأبعاد.",
+              "التجربة (١٠ دقائق): كرّر مع متجهات عشوائية ⁦d = 512⁩ دون تقييس وانظر إلى الأوزان.",
+              "البناء (٢٠ دقيقة): أضف الرؤوس ومسارًا متبقيًا والمواضع، كلٌّ مع المشكلة التي يحلّها.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "What happened to the weights without √d?",
+              "Can attention maps explain a prediction?",
+              "Which part will you teach last?"
+            ],
+            "ar": [
+              "ماذا حدث للأوزان دون √d؟",
+              "هل تستطيع خرائط الانتباه تفسير تنبؤ؟",
+              "أيّ جزء ستدرّسه أخيرًا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write softmax(QKᵀ/√d)V and label what each letter means."
+            ],
+            "ar": [
+              "اكتب ⁦softmax(QK⁩ᵀ/√⁦d)V⁩ وبيّن معنى كل حرف."
+            ]
+          },
+          "narration": {
+            "en": "Each token takes a weighted average of all the others.",
+            "ar": "كل رمز يأخذ متوسطًا موزونًا لكل الرموز الأخرى."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Attention and transformers",
+            "ar": "شرائح المحاضرة: الانتباه والمحوّلات"
+          },
+          "pages": 6,
+          "base": "ai-u1-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Attention and transformers",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: الانتباه والمحوّلات"
+          },
+          "pages": 3,
+          "base": "ai-u1-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-u1-3/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "T.PE.C",
+        "DC.1.2",
+        "T.PL.C"
+      ]
+    },
+    {
+      "id": "ai-u1-4",
+      "title": {
+        "en": "Evaluating models and assessing students",
+        "ar": "تقييم النماذج وتقييم الطلاب"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Add a ten-minute oral defence to your next project: each student explains one error their model makes and one design choice they would change.",
+        "ar": "أضف دفاعًا شفويًا مدته عشر دقائق إلى مشروعك القادم: يشرح كل طالب خطأً واحدًا يرتكبه نموذجه واختيار تصميم واحدًا كان سيغيّره."
+      },
+      "materials": {
+        "en": [
+          "Projector or board",
+          "The lecture slides and the seminar sheet from the kit",
+          "Phones or laptops with Darsi, for the lab"
+        ],
+        "ar": [
+          "جهاز عرض أو سبّورة",
+          "شرائح المحاضرة وورقة الحلقة النقاشية من الحزمة",
+          "هواتف أو حواسيب فيها دَرسي، للمعمل"
+        ]
+      },
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Evaluating models and assessing students",
+            "ar": "تقييم النماذج وتقييم الطلاب"
+          },
+          "src": null,
+          "duration": 187,
+          "sizeMB": 1.1,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A leaderboard win",
+                "ar": "فوز في لوحة الترتيب"
+              }
+            },
+            {
+              "at": 25.9,
+              "atBy": {
+                "en": 25.9,
+                "ar": 26
+              },
+              "label": {
+                "en": "Honest evaluation",
+                "ar": "التقييم الأمين"
+              }
+            },
+            {
+              "at": 71.6,
+              "atBy": {
+                "en": 71.6,
+                "ar": 69.4
+              },
+              "label": {
+                "en": "Assessment in the LLM era",
+                "ar": "التقييم في عصر النماذج اللغوية"
+              }
+            },
+            {
+              "at": 143.7,
+              "atBy": {
+                "en": 143.7,
+                "ar": 138.6
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 119.7,
+            "question": {
+              "type": "choice",
+              "id": "cp",
+              "prompt": {
+                "en": "A team chose its best model of 40 by test score. Is that score honest?",
+                "ar": "اختار فريق أفضل نموذج من ٤٠ بدرجة الاختبار. هل هذه الدرجة أمينة؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Yes, the test set was never trained on",
+                    "ar": "نعم، فلم يُدرَّب على الاختبار"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "No, choosing on test makes it optimistic",
+                    "ar": "لا، الاختيار على الاختبار يجعلها متفائلة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Yes, if the test set is large",
+                    "ar": "نعم، إذا كانت مجموعة الاختبار كبيرة"
+                  }
+                }
+              ],
+              "answer": "b",
+              "explain": {
+                "en": "Choosing on test turns it into a validation set, so its score is biased upwards.",
+                "ar": "الاختيار على الاختبار يحوّله إلى مجموعة تحقق، فتنحاز درجته إلى الأعلى."
+              }
+            },
+            "atBy": {
+              "en": 119.7,
+              "ar": 114.61
+            }
+          },
+          "transcript": {
+            "en": "Our best team topped the course leaderboard by a wide margin. Then we noticed they had tuned forty models on the test set. Their final score measured their persistence, not their model. Today: how models are evaluated honestly, how to document them, and how to assess machine learning students when they can use language models. Honest evaluation uses three splits. Train fits the weights, validation chooses the model and settings, and test is opened once, at the end. Every peek at test makes its score more optimistic. With one percent positives, a model that always says no is ninety nine percent accurate and useless. Report precision, recall and calibration, and break results down by subgroup. This classifier has ninety one percent recall overall. Split by group, it is ninety four percent for one and seventy two for the other. The average hid the gap. Mitchell and colleagues proposed model cards: a short document with intended use, training data, metrics by subgroup, and known limits. Asking students to write one makes evaluation a habit. Students can generate working code in seconds. So assess what a model cannot do for them. Use oral defences of their own notebooks, require an error analysis on their data, and grade the process. Quick check! A team chose its best model by test score, out of forty. Is that test score an honest estimate of performance on new data? No. Picking the maximum of forty noisy scores selects luck as well as skill. The test set has become a validation set, and they need a fresh one. In the app, open the overfitting lab. Watch validation error as complexity rises, then ask students where they would stop, and why the test set must stay closed. Your turn. Fraud is one transaction in a thousand. A model flags nothing and scores ninety nine point nine percent accuracy. Which metric exposes it? Recall, which is zero. Remember: open the test set once, report metrics by subgroup, write a model card, and assess what language models cannot do for students. Try it this term: add a ten minute oral defence to your next project. Ask each student to explain one error their model makes and one design choice they would change.",
+            "ar": "أحسن فريق عندنا كان الأول في لوحة ترتيب المقرر بفرق كبير. وبعدين لاحظنا إنهم ظبطوا أربعين موديل على مجموعة الاختبار. درجتهم النهائية كانت بتقيس إصرارهم، مش الموديل بتاعهم. النهارده: الموديلات بتتقيّم بأمانة إزاي، وإزاي نوثّقها، وإزاي نقيّم طلاب تعلّم الآلة وهم يقدروا يستعملوا الموديلات اللغوية. التقييم الأمين بيستعمل تلات تقسيمات. التدريب بيركّب الأوزان، والتحقق بيختار الموديل والإعدادات، والاختبار بيتفتح مرة واحدة، في الآخر. كل بصّة على الاختبار بتخلّي درجته متفائلة أكتر. لو الحالات الإيجابية واحد في المية، موديل بيقول لأ على طول دقته تسعة وتسعين في المية ومالوش لازمة. اذكر الدقة الإيجابية والاستدعاء والمعايرة، وقسّم النتايج حسب المجموعات الفرعية. المصنّف ده استدعاؤه واحد وتسعين في المية إجمالًا. ولما نقسّم حسب المجموعة، بيبقى أربعة وتسعين لواحدة واتنين وسبعين للتانية. المتوسط كان مخبّي الفرق. ميتشل وزمايلها اقترحوا بطاقات الموديل: وثيقة قصيرة فيها الاستخدام المقصود، وبيانات التدريب، والمقاييس حسب المجموعات، والحدود المعروفة. لما تطلب من الطلاب يكتبوا واحدة، التقييم بيبقى عادة. الطلاب يقدروا يولّدوا كود شغّال في ثواني. فقيّم الحاجة اللي الموديل مايقدرش يعملها بدالهم. استعمل دفاع شفوي عن النوتبوك بتاعهم، واطلب تحليل أخطاء على بياناتهم، وقيّم الطريقة. سؤال سريع! فريق اختار أحسن موديل بدرجة الاختبار، من أربعين. درجة الاختبار دي تقدير أمين للأداء على بيانات جديدة؟ لأ. لما تختار أعلى درجة من أربعين درجة فيها ضوضاء، بتختار حظ مع المهارة. مجموعة الاختبار بقت مجموعة تحقق، ومحتاجين واحدة جديدة. في التطبيق، افتح معمل الإفراط في التوافق. راقب خطأ التحقق والتعقيد بيزيد، وبعدين اسأل الطلاب هيقفوا فين، وليه مجموعة الاختبار لازم تفضل مقفولة. دورك. الاحتيال عملية واحدة من كل ألف. موديل مابيعلّمش على أي حاجة ودقته تسعة وتسعين وتسعة من عشرة في المية. أنهي مقياس بيكشفه؟ الاستدعاء، وهو صفر. افتكر: افتح الاختبار مرة واحدة، واذكر المقاييس حسب المجموعات، واكتب بطاقة موديل، وقيّم الحاجة اللي الموديلات اللغوية ماتقدرش تعملها بدل الطلاب. جرّبها الترم ده: ضيف دفاع شفوي عشر دقايق لمشروعك الجاي. اطلب من كل طالب يشرح غلطة واحدة الموديل بتاعه بيعملها واختيار تصميم واحد كان هيغيّره."
+          },
+          "sources": {
+            "en": "/media/ai-u1-4/video-en.mp4",
+            "ar": "/media/ai-u1-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-u1-4/captions-en.vtt",
+            "ar": "/media/ai-u1-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-u1-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-u1-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-u1-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-u1-4/light/audio/en.opus",
+              "manifest.json": "/media/ai-u1-4/light/manifest.json",
+              "scenes.json": "/media/ai-u1-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-u1-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-u1-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 412,
+              "ar": 410
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Honest numbers, honest assessment",
+            "ar": "أرقام أمينة وتقييم أمين"
+          },
+          "body": {
+            "en": "A model’s reported score is only meaningful if the data behind it played no part in building the model. Use a training set to fit, a validation set or cross-validation to choose architectures and hyperparameters, and a test set opened once. Selecting the best of many models by test score introduces selection bias, the same winner’s curse seen on public leaderboards. Leakage through duplicated records, future information or preprocessing on all the data is the most common error in student projects.\n\nAccuracy hides failure on rare classes and on subgroups. Report precision, recall, calibration and confusion matrices, disaggregated by relevant groups. Mitchell et al. (2019) proposed model cards that document intended use, evaluation data, disaggregated metrics, ethical considerations and caveats; requiring one per project turns evaluation into a habit rather than an afterthought.\n\nGenerative models can now write much of a typical ML assignment. Assessment that still measures learning targets what a tool cannot do on the student’s behalf: oral defences of their own notebook, error analysis on data they collected, design rationales, and graded process artefacts such as experiment logs. Be explicit about permitted tool use, and align tasks with outcomes as Biggs and Tang recommend.",
+            "ar": "لا تكون درجة النموذج المعلنة ذات معنى إلا إذا لم يكن للبيانات التي وراءها أي دور في بناء النموذج. استخدم مجموعة تدريب للتركيب، ومجموعة تحقق أو تحققًا متقاطعًا لاختيار البنى والمعاملات الفائقة، ومجموعة اختبار تُفتح مرة واحدة. واختيار الأفضل من نماذج كثيرة بدرجة الاختبار يُدخل تحيّز الاختيار، وهي لعنة الفائز ذاتها التي تُرى في لوحات الترتيب العامة. والتسريب عبر السجلات المكررة أو معلومات المستقبل أو المعالجة على كل البيانات هو أكثر الأخطاء شيوعًا في مشاريع الطلاب.\n\nوتخفي الدقة الإخفاق في الفئات النادرة والمجموعات الفرعية. فاذكر الدقة الإيجابية والاستدعاء والمعايرة ومصفوفات الالتباس، مفصّلة حسب المجموعات ذات الصلة. واقترحت Mitchell وزملاؤها (٢٠١٩) بطاقات النموذج التي توثّق الاستخدام المقصود، وبيانات التقييم، والمقاييس المفصّلة، والاعتبارات الأخلاقية، والتحفظات، واشتراط بطاقة لكل مشروع يجعل التقييم عادة لا فكرة لاحقة.\n\nوتستطيع النماذج التوليدية الآن كتابة جزء كبير من تكليف معتاد في تعلّم الآلة. والتقييم الذي يظل يقيس التعلّم يستهدف ما لا تستطيع الأداة فعله نيابة عن الطالب: الدفاع الشفوي عن دفتره البرمجي، وتحليل الأخطاء على بيانات جمعها، ومبررات التصميم، ومخرجات العملية المقيّمة كسجلات التجارب. وكن صريحًا بشأن الاستخدام المسموح للأدوات، ونسّق المهام مع النواتج كما يوصي Biggs وTang."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Selection bias",
+                "ar": "تحيّز الاختيار"
+              },
+              "def": {
+                "en": "Optimism from choosing the best of many noisy scores.",
+                "ar": "التفاؤل الناتج عن اختيار الأفضل من درجات كثيرة فيها ضوضاء."
+              }
+            },
+            {
+              "term": {
+                "en": "Model card",
+                "ar": "بطاقة النموذج"
+              },
+              "def": {
+                "en": "A short document of a model’s use, data, metrics by group and limits.",
+                "ar": "وثيقة قصيرة لاستخدام النموذج وبياناته ومقاييسه حسب المجموعة وحدوده."
+              }
+            },
+            {
+              "term": {
+                "en": "Recall",
+                "ar": "الاستدعاء"
+              },
+              "def": {
+                "en": "TP / (TP + FN): the share of real positives found.",
+                "ar": "⁦TP / (TP + FN)⁩: نسبة الحالات الإيجابية الحقيقية المكتشفة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "p1",
+          "prompt": {
+            "en": "Fraud is 1 in 1,000. A model flags nothing and has 99.9% accuracy. Which metric exposes it?",
+            "ar": "الاحتيال ١ من كل ١٠٠٠. نموذج لا يعلّم أي حالة ودقته ٩٩٫٩٪. أيّ مقياس يكشفه؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Accuracy",
+                "ar": "الدقة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Recall",
+                "ar": "الاستدعاء"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Training loss",
+                "ar": "خسارة التدريب"
+              }
+            }
+          ],
+          "answer": "b",
+          "explain": {
+            "en": "Recall is 0 because it catches none of the fraud.",
+            "ar": "الاستدعاء صفر لأنه لا يلتقط أي احتيال."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "p2",
+          "prompt": {
+            "en": "Work out the metrics. A model makes 40 positive predictions; 30 are right. There were 60 real positives.",
+            "ar": "احسب المقاييس. يقدّم نموذج ٤٠ تنبؤًا إيجابيًا، منها ٣٠ صحيحة. وكانت هناك ٦٠ حالة إيجابية حقيقية."
+          },
+          "sentence": {
+            "en": [
+              "Precision = ",
+              {
+                "blank": 0
+              },
+              " %. Recall = ",
+              {
+                "blank": 1
+              },
+              " %."
+            ],
+            "ar": [
+              "الدقة الإيجابية = ",
+              {
+                "blank": 0
+              },
+              " ٪. الاستدعاء = ",
+              {
+                "blank": 1
+              },
+              " ٪."
+            ]
+          },
+          "bank": {
+            "en": [
+              "75",
+              "30",
+              "60",
+              "50"
+            ],
+            "ar": [
+              "٧٥",
+              "٣٠",
+              "٦٠",
+              "٥٠"
+            ]
+          },
+          "answers": {
+            "en": [
+              "75",
+              "50"
+            ],
+            "ar": [
+              "٧٥",
+              "٥٠"
+            ]
+          },
+          "explain": {
+            "en": "Precision = 30/40 = 75%; recall = 30/60 = 50%.",
+            "ar": "الدقة الإيجابية = ٣٠/٤٠ = ٧٥٪، والاستدعاء = ٣٠/٦٠ = ٥٠٪."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "p3",
+          "prompt": {
+            "en": "Which assessment designs still measure a student’s own understanding when language models are allowed? Choose all that apply.",
+            "ar": "أيّ تصاميم التقييم تظل تقيس فهم الطالب الخاص حين يُسمح بالنماذج اللغوية؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "An oral defence of their notebook",
+                "ar": "دفاع شفوي عن دفتره البرمجي"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Error analysis on data they collected",
+                "ar": "تحليل أخطاء على بيانات جمعها"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A take-home task to code a standard classifier",
+                "ar": "مهمة منزلية لبرمجة مصنِّف معياري"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "A graded experiment log",
+                "ar": "سجل تجارب مقيَّم"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "d"
+          ],
+          "explain": {
+            "en": "A standard take-home coding task can be completed by a tool; the others need the student’s own reasoning about their own work.",
+            "ar": "يمكن لأداة إنجاز مهمة البرمجة المنزلية المعيارية، أما البقية فتحتاج استدلال الطالب الخاص حول عمله."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Try it: watch validation error as complexity rises, and decide where to stop without touching the test set.",
+            "ar": "جرّب: راقب خطأ التحقق مع ازدياد التعقيد، وقرّر أين تتوقف دون لمس مجموعة الاختبار."
+          },
+          "tool": "overfit"
+        },
+        {
+          "type": "truefalse",
+          "id": "p4",
+          "prompt": {
+            "en": "A model card should report metrics broken down by relevant subgroups.",
+            "ar": "ينبغي أن تذكر بطاقة النموذج المقاييس مفصّلة حسب المجموعات الفرعية ذات الصلة."
+          },
+          "answer": true,
+          "explain": {
+            "en": "Disaggregated evaluation is central to model cards because averages can hide large gaps.",
+            "ar": "التقييم المفصّل محوري في بطاقات النموذج لأن المتوسطات قد تخفي فجوات كبيرة."
+          }
+        },
+        {
+          "type": "match",
+          "id": "p5",
+          "prompt": {
+            "en": "Match each project flaw to the evidence that would reveal it.",
+            "ar": "طابق كل عيب في مشروع مع الدليل الذي يكشفه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Tuned on the test set",
+                "ar": "ضُبط على مجموعة الاختبار"
+              },
+              "right": {
+                "en": "Score drops on a fresh held-out set",
+                "ar": "تنخفض الدرجة على مجموعة محجوزة جديدة"
+              }
+            },
+            {
+              "left": {
+                "en": "Duplicate records across splits",
+                "ar": "سجلات مكررة عبر التقسيمات"
+              },
+              "right": {
+                "en": "Near-identical rows found in train and test",
+                "ar": "صفوف شبه متطابقة في التدريب والاختبار"
+              }
+            },
+            {
+              "left": {
+                "en": "Fails a subgroup",
+                "ar": "يفشل في مجموعة فرعية"
+              },
+              "right": {
+                "en": "Metrics disaggregated by group",
+                "ar": "مقاييس مفصّلة حسب المجموعة"
+              }
+            },
+            {
+              "left": {
+                "en": "Student can’t explain the code",
+                "ar": "الطالب لا يستطيع شرح الكود"
+              },
+              "right": {
+                "en": "An oral defence",
+                "ar": "دفاع شفوي"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each check is cheap to build into a rubric.",
+            "ar": "كل فحص سهل الإدراج في معيار التقييم."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which of your current ML assessments could a language model complete? What would you change first?",
+            "ar": "أيّ تقييمات تعلّم الآلة الحالية لديك يمكن لنموذج لغوي إنجازها؟ وماذا ستغيّر أولًا؟"
+          },
+          "placeholder": {
+            "en": "For example: “The weekly coding labs. I’ll add a five-minute viva on one cell.”",
+            "ar": "مثلًا: «معامل البرمجة الأسبوعية. سأضيف مناقشة شفوية من خمس دقائق على خلية واحدة.»"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: An honest ML project",
+            "ar": "مشروع: مشروع تعلّم آلة أمين"
+          },
+          "task": {
+            "en": "Write a staged project brief for your ML course: a proposal, a validation protocol fixed before modelling, a single final test-set evaluation, a model card with disaggregated metrics, an explicit policy on language-model use, and a ten-minute oral defence. Include the rubric and the defence questions.",
+            "ar": "اكتب وصف مشروع مرحلي لمقرر تعلّم الآلة لديك: مقترح، وبروتوكول تحقق مثبّت قبل النمذجة، وتقييم نهائي واحد على مجموعة الاختبار، وبطاقة نموذج بمقاييس مفصّلة، وسياسة صريحة لاستخدام النماذج اللغوية، ودفاع شفوي مدته عشر دقائق. أرفق معيار التقييم وأسئلة الدفاع."
+          },
+          "deliverable": {
+            "en": "The brief, the rubric, the model-card template and the defence questions.",
+            "ar": "الوصف ومعيار التقييم وقالب بطاقة النموذج وأسئلة الدفاع."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Students can: evaluate a model without leakage.",
+                "ar": "يستطيع الطلاب: تقييم نموذج دون تسريب."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: document a model in a model card.",
+                "ar": "يستطيع الطلاب: توثيق نموذج في بطاقة نموذج."
+              }
+            },
+            {
+              "criterion": {
+                "en": "Students can: defend design choices orally.",
+                "ar": "يستطيع الطلاب: الدفاع عن اختيارات التصميم شفويًا."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Evaluating models and assessing students",
+            "ar": "تقييم النماذج وتقييم الطلاب"
+          },
+          "note": {
+            "en": "AI · University · Lecture 4",
+            "ar": "الذكاء الاصطناعي، الجامعة، المحاضرة ٤"
+          },
+          "narration": {
+            "en": "Top of the leaderboard, but what did it measure?",
+            "ar": "الأول في لوحة الترتيب، لكن ماذا قاس؟"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this lecture",
+            "ar": "في هذه المحاضرة"
+          },
+          "bullets": {
+            "en": [
+              "Evaluate without leakage.",
+              "Report beyond accuracy.",
+              "Assess learning when LLMs are allowed."
+            ],
+            "ar": [
+              "نقيّم دون تسريب.",
+              "نتجاوز الدقة في التقارير.",
+              "نقيّم التعلّم حين يُسمح بالنماذج اللغوية."
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Remember",
+            "ar": "تذكّر"
+          },
+          "bullets": {
+            "en": [
+              "Open the test set once.",
+              "Disaggregate metrics.",
+              "Assess reasoning, not output."
+            ],
+            "ar": [
+              "افتح مجموعة الاختبار مرة واحدة.",
+              "فصّل المقاييس.",
+              "قيّم الاستدلال لا الناتج."
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Audit a project",
+            "ar": "راجع مشروعًا"
+          },
+          "bullets": {
+            "en": [
+              "Warm-up (5 min): Who really won?",
+              "Teach (10 min): Splits and metrics.",
+              "Audit (20 min): A flawed project.",
+              "Redesign (20 min): The assessment.",
+              "Wrap-up (5 min): One-minute paper."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): Show a leaderboard where the winner tuned on test and ask students what the score means.",
+              "الشرح (١٠ دقائق): التقسيمات والمقاييس.",
+              "المراجعة (٢٠ دقيقة): مشروع معيب.",
+              "إعادة التصميم (٢٠ دقيقة): التقييم.",
+              "الختام (٥ دقائق): ورقة الدقيقة الواحدة."
+            ]
+          },
+          "details": {
+            "en": [
+              "Warm-up (5 min): من فاز فعلًا؟",
+              "Teach (10 min): Show the three splits and a confusion matrix on imbalanced data.",
+              "Audit (20 min): Teams audit a sample project for leakage, metric choice and subgroup gaps.",
+              "Redesign (20 min): Rewrite one assignment so a language model cannot complete it alone.",
+              "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+            ],
+            "ar": [
+              "التمهيد (٥ دقائق): اعرض لوحة ترتيب ضبط فيها الفائز على الاختبار واسأل الطلاب ماذا تعني الدرجة.",
+              "الشرح (١٠ دقائق): اعرض التقسيمات الثلاثة ومصفوفة التباس على بيانات غير متوازنة.",
+              "المراجعة (٢٠ دقيقة): تراجع الفرق مشروعًا نموذجيًا بحثًا عن التسريب واختيار المقياس وفجوات المجموعات.",
+              "إعادة التصميم (٢٠ دقيقة): أعد كتابة تكليف واحد بحيث لا يستطيع نموذج لغوي إنجازه وحده.",
+              "الختام (٥ دقائق): يكتب الطلاب أكثر نقطة غامضة في المحاضرة وسؤالًا واحدًا، واقرأها قبل الأسبوع القادم."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "What leak did you find?",
+              "Which metric would you require?",
+              "What is your policy on LLM use?"
+            ],
+            "ar": [
+              "أيّ تسريب وجدت؟",
+              "أيّ مقياس ستشترط؟",
+              "ما سياستك في استخدام النماذج اللغوية؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Write one oral-defence question for your next ML project."
+            ],
+            "ar": [
+              "اكتب سؤال دفاع شفوي واحدًا لمشروع تعلّم الآلة القادم."
+            ]
+          },
+          "narration": {
+            "en": "Grade the reasoning, not the output.",
+            "ar": "قيّم الاستدلال لا الناتج."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Evaluating models and assessing students",
+            "ar": "شرائح المحاضرة: تقييم النماذج وتقييم الطلاب"
+          },
+          "pages": 6,
+          "base": "ai-u1-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Lecture plan and seminar sheet: Evaluating models and assessing students",
+            "ar": "خطة المحاضرة وورقة الحلقة النقاشية: تقييم النماذج وتقييم الطلاب"
+          },
+          "pages": 3,
+          "base": "ai-u1-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, for class or WhatsApp)",
+            "ar": "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-u1-4/video-{lang}"
+        }
+      ],
+      "competencies": [
+        "T.ET.C",
+        "T.PL.C",
+        "DC.1.2"
+      ]
+    },
+    {
+      "id": "ai-u1-check",
+      "title": {
+        "en": "Teaching machine learning at university: unit check",
+        "ar": "تدريس تعلّم الآلة في الجامعة: اختبار الوحدة"
+      },
+      "minutes": 10,
+      "tryTomorrow": {
+        "en": "Bring one revised ML assignment and its rubric to your next department meeting.",
+        "ar": "أحضر تكليفًا معدّلًا في تعلّم الآلة ومعيار تقييمه إلى اجتماع القسم القادم."
+      },
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "Loss θ², θ = 5, η = 0.1. After one step, θ =",
+            "ar": "الخسارة θ²، وθ ⁦= 5⁩، وη ⁦= 0.1⁩. بعد خطوة واحدة θ ="
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "4",
+                "ar": "4"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "4.9",
+                "ar": "⁦4.9⁩"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "3",
+                "ar": "3"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "0",
+                "ar": "0"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "θ − η⋅2θ = 5 − 1 = 4.",
+            "ar": "⁦θ − η⋅2θ = 5 − 1 = 4.⁩"
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "The negative gradient points directly at the minimum.",
+            "ar": "يشير سالب التدرّج مباشرة إلى القيمة الصغرى."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It points in the steepest local descent direction only.",
+            "ar": "يشير إلى اتجاه أشد هبوط محلي فقط."
+          }
+        },
+        {
+          "type": "fill",
+          "id": "q3",
+          "prompt": {
+            "en": "Apply the chain rule.",
+            "ar": "طبّق قاعدة السلسلة."
+          },
+          "sentence": {
+            "en": [
+              "∂L/∂a = 4 and ∂a/∂w = 0.5, so ∂L/∂w = ",
+              {
+                "blank": 0
+              },
+              "."
+            ],
+            "ar": [
+              "∂⁦L/⁩∂⁦a = 4⁩ و∂⁦a/⁩∂⁦w = 0.5⁩، إذن ∂⁦L/⁩∂w = ",
+              {
+                "blank": 0
+              },
+              "."
+            ]
+          },
+          "bank": {
+            "en": [
+              "2",
+              "4.5",
+              "8"
+            ],
+            "ar": [
+              "2",
+              "4.5",
+              "8"
+            ]
+          },
+          "answers": {
+            "en": [
+              "2"
+            ],
+            "ar": [
+              "2"
+            ]
+          },
+          "explain": {
+            "en": "4 × 0.5 = 2.",
+            "ar": "⁦4 × 0.5 = 2.⁩"
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q4",
+          "prompt": {
+            "en": "Which reduce vanishing gradients? Choose all that apply.",
+            "ar": "أيّ مما يلي يقلّل التدرّجات المتلاشية؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "ReLU",
+                "ar": "ReLU"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Residual connections",
+                "ar": "الوصلات المتبقية"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Deeper sigmoid stacks",
+                "ar": "طبقات sigmoid أعمق"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b"
+          ],
+          "explain": {
+            "en": "Both keep local derivatives near 1 along some path.",
+            "ar": "كلاهما يُبقي المشتقات المحلية قرب 1 على مسار ما."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q5",
+          "prompt": {
+            "en": "d = 256. Raw attention scores are divided by",
+            "ar": "⁦d = 256⁩. تُقسم درجات الانتباه الخام على"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "16",
+                "ar": "16"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "256",
+                "ar": "256"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "8",
+                "ar": "8"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "√256 = 16.",
+            "ar": "⁦√256 = 16.⁩"
+          }
+        },
+        {
+          "type": "match",
+          "id": "q6",
+          "prompt": {
+            "en": "Match each transformer part to its job.",
+            "ar": "طابق كل جزء من المحوّل مع وظيفته."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Positional encoding",
+                "ar": "ترميز الموضع"
+              },
+              "right": {
+                "en": "Word order",
+                "ar": "ترتيب الكلمات"
+              }
+            },
+            {
+              "left": {
+                "en": "Causal mask",
+                "ar": "القناع السببي"
+              },
+              "right": {
+                "en": "No peeking ahead",
+                "ar": "منع النظر إلى الأمام"
+              }
+            },
+            {
+              "left": {
+                "en": "Multiple heads",
+                "ar": "الرؤوس المتعددة"
+              },
+              "right": {
+                "en": "Different relations",
+                "ar": "علاقات مختلفة"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Each part solves one visible problem.",
+            "ar": "كل جزء يحل مشكلة ظاهرة واحدة."
+          }
+        },
+        {
+          "type": "order",
+          "id": "q7",
+          "prompt": {
+            "en": "Put an honest evaluation in order.",
+            "ar": "رتّب تقييمًا أمينًا."
+          },
+          "steps": [
+            {
+              "en": "Split off a test set",
+              "ar": "افصل مجموعة اختبار"
+            },
+            {
+              "en": "Tune on validation folds",
+              "ar": "اضبط على طيّات التحقق"
+            },
+            {
+              "en": "Pick the final model",
+              "ar": "اختر النموذج النهائي"
+            },
+            {
+              "en": "Score once on the test set",
+              "ar": "قيّم مرة واحدة على الاختبار"
+            }
+          ],
+          "explain": {
+            "en": "The test set is touched once, at the end.",
+            "ar": "تُلمس مجموعة الاختبار مرة واحدة في النهاية."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q8",
+          "prompt": {
+            "en": "A model with 99% accuracy can have 0% recall.",
+            "ar": "يمكن لنموذج دقته ٩٩٪ أن يكون استدعاؤه ٠٪."
+          },
+          "answer": true,
+          "explain": {
+            "en": "With 1% positives, predicting all negative gives exactly that.",
+            "ar": "مع ١٪ حالات إيجابية، التنبؤ بالسلبي دائمًا يعطي ذلك بالضبط."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q9",
+          "prompt": {
+            "en": "Which best assesses a student’s own understanding of their ML project?",
+            "ar": "أيّ مما يلي يقيّم فهم الطالب الخاص لمشروعه أفضل؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "An oral defence of their notebook",
+                "ar": "دفاع شفوي عن دفتره البرمجي"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The final accuracy alone",
+                "ar": "الدقة النهائية وحدها"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Code length",
+                "ar": "طول الكود"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "A defence probes reasoning a tool cannot supply.",
+            "ar": "يسبر الدفاع استدلالًا لا تستطيع أداة تقديمه."
+          }
+        },
+        {
+          "type": "multi",
+          "id": "q10",
+          "prompt": {
+            "en": "What belongs in a model card? Choose all that apply.",
+            "ar": "ما الذي ينتمي إلى بطاقة النموذج؟ اختر كل ما ينطبق."
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Intended use",
+                "ar": "الاستخدام المقصود"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Metrics by subgroup",
+                "ar": "المقاييس حسب المجموعة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Known limitations",
+                "ar": "الحدود المعروفة"
+              }
+            },
+            {
+              "id": "d",
+              "text": {
+                "en": "The team’s leaderboard rank",
+                "ar": "ترتيب الفريق في لوحة الترتيب"
+              }
+            }
+          ],
+          "answers": [
+            "a",
+            "b",
+            "c"
+          ],
+          "explain": {
+            "en": "Model cards document use, data, disaggregated metrics and caveats.",
+            "ar": "توثّق بطاقات النموذج الاستخدام والبيانات والمقاييس المفصّلة والتحفظات."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Teaching machine learning at university: review",
+            "ar": "تدريس تعلّم الآلة في الجامعة: مراجعة"
+          },
+          "note": {
+            "en": "AI · University · Unit check",
+            "ar": "الذكاء الاصطناعي، الجامعة، اختبار الوحدة"
+          },
+          "narration": {
+            "en": "Let’s look back at the whole course and see what stuck.",
+            "ar": "لنراجع المقرر كله ونرَ ما الذي رسخ."
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "In this unit",
+            "ar": "في هذه الوحدة"
+          },
+          "bullets": {
+            "en": [
+              "Optimisation",
+              "Backpropagation",
+              "Attention",
+              "Evaluation and assessment"
+            ],
+            "ar": [
+              "التحسين",
+              "الانتشار العكسي",
+              "الانتباه",
+              "تقييم النماذج والطلاب"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The big ideas",
+            "ar": "الأفكار الكبرى"
+          },
+          "bullets": {
+            "en": [
+              "The learning rate decides",
+              "Local gradients multiply",
+              "÷√d prevents saturation",
+              "Test once; grade reasoning"
+            ],
+            "ar": [
+              "معدّل التعلّم يقرّر",
+              "التدرّجات المحلية تُضرب",
+              "÷√d يمنع التشبّع",
+              "اختبر مرة وقيّم الاستدلال"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Peer-instruction review",
+            "ar": "مراجعة بالتعلّم من الأقران"
+          },
+          "bullets": {
+            "en": [
+              "Vote (10 min): Answer alone first.",
+              "Discuss (15 min): Convince your neighbour.",
+              "Explain (10 min): Model the reasoning.",
+              "Plan (5 min): Next week’s fix."
+            ],
+            "ar": [
+              "التصويت (١٠ دقائق): أجب منفردًا أولًا.",
+              "النقاش (١٥ دقيقة): أقنع زميلك.",
+              "الشرح (١٠ دقائق): اعرض طريقة التفكير.",
+              "التخطيط (٥ دقائق): علاج الأسبوع القادم."
+            ]
+          },
+          "details": {
+            "en": [
+              "Vote (10 min): Show each question; students answer alone and commit to an answer.",
+              "Discuss (15 min): Where answers split, pairs argue for two minutes and vote again.",
+              "Explain (10 min): Work through the questions most students missed, showing the reasoning step by step.",
+              "Plan (5 min): Note which misconception to revisit next week and how."
+            ],
+            "ar": [
+              "التصويت (١٠ دقائق): اعرض كل سؤال، ويجيب الطلاب منفردين ويلتزمون بإجابة.",
+              "النقاش (١٥ دقيقة): حيث تنقسم الإجابات، يتجادل كل زوجين دقيقتين ثم يصوّتان مرة أخرى.",
+              "الشرح (١٠ دقائق): حُلّ الأسئلة التي أخطأ فيها معظم الطلاب، مع عرض الاستدلال خطوة خطوة.",
+              "التخطيط (٥ دقائق): دوّن أيّ تصوّر خاطئ ستعود إليه الأسبوع القادم وكيف."
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Let’s discuss",
+            "ar": "لنتناقش"
+          },
+          "bullets": {
+            "en": [
+              "Which misconception will you target first?",
+              "Which lab will you add?",
+              "How will you change assessment?"
+            ],
+            "ar": [
+              "أيّ تصور خاطئ ستستهدف أولًا؟",
+              "أيّ معمل ستضيف؟",
+              "كيف ستغيّر التقييم؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "One change to my ML course this term, and the evidence I will collect."
+            ],
+            "ar": [
+              "تغيير واحد في مقرر تعلّم الآلة هذا الفصل الدراسي، والدليل الذي سأجمعه."
+            ]
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Lecture slides: Teaching machine learning at university: unit check",
+            "ar": "شرائح المحاضرة: تدريس تعلّم الآلة في الجامعة: اختبار الوحدة"
+          },
+          "pages": 6,
+          "base": "ai-u1-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Review plan and quiz sheet: Teaching machine learning at university: unit check",
+            "ar": "خطة المراجعة وورقة الاختبار: تدريس تعلّم الآلة في الجامعة: اختبار الوحدة"
+          },
+          "pages": 2,
+          "base": "ai-u1-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "worksheet",
+          "title": {
+            "en": "University course pack: syllabus, slide outline, problem set, lab, rubric and readings",
+            "ar": "حزمة المقرر الجامعي: الخطة الدراسية، ومخطط الشرائح، ومسائل، ومعمل، ومعايير التقييم، والقراءات"
+          },
+          "pages": 5,
+          "base": "ai-u1-check/course-pack",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ],
+      "competencies": [
+        "T.PE.C",
+        "T.PL.C",
+        "T.ET.C",
+        "DC.1.2"
+      ]
+    }
+  ]
+}

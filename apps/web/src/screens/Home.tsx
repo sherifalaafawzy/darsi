@@ -20,10 +20,12 @@ export function Home() {
   const nav = useNavigate();
   const [menu, setMenu] = useState(false);
   // One of the learner's tracks at a time, and only courses for their audience, starting at the learner's level.
-  const units = (catalog?.units ?? []).filter((u) => u.track === mine.active && audienceOf(u) === mine.audience);
+  // University courses only for university teachers, and pinned above the rest.
+  const units = (catalog?.units ?? []).filter((u) => u.track === mine.active && audienceOf(u) === mine.audience && (!u.teach || mine.uni));
+  const pinned = units.filter((u) => u.teach);
   const name = mine.active ? tracks.name(mine.active) : "";
   const level = mine.active ? mine.levelOf(mine.active) : 1;
-  const { current, later, earlier } = startAt(units, level);
+  const { current, later, earlier } = startAt(units.filter((u) => !u.teach), level);
   const block = (u: CatalogEntry) => (u.available ? <UnitBlock key={u.id} entry={u} current={u.level === level} /> : <LockedUnit key={u.id} entry={u} />);
   return (
     <>
@@ -37,11 +39,11 @@ export function Home() {
         {catalog && !units.length && <EmptyState icon="learn"
           title={mine.audience === "students" ? t("home.emptyStudents", { track: name }) : t("home.emptyTrack", { track: name })} body={t("home.emptyTrackBody")}
           action={<Button size="sm" variant="secondary" icon="settings" onClick={() => nav("/tracks")}>{t("tracks.manage")}</Button>} />}
-        {[...current, ...later].map(block)}
+        {[...pinned, ...current, ...later].map(block)}
         {/* Nothing at or above the learner's level yet: say so, and show the earlier courses open. */}
-        {!current.length && !later.length && earlier.length > 0 && <p className="notice">{t("home.noneAtLevel", { level: mine.levelName(mine.active!, level), track: name })}</p>}
+        {!pinned.length && !current.length && !later.length && earlier.length > 0 && <p className="notice">{t("home.noneAtLevel", { level: mine.levelName(mine.active!, level), track: name })}</p>}
         {earlier.length > 0 && (
-          <details className="earlier" open={!current.length && !later.length}>
+          <details className="earlier" open={!pinned.length && !current.length && !later.length}>
             <summary className="earlier-summary">{t("home.earlier", { n: earlier.length })}</summary>
             <div className="stack-lg">{earlier.map(block)}</div>
           </details>

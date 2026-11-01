@@ -110,9 +110,16 @@ export function placementNext(s: PlaceState, ok: boolean, top: number): { level:
   return { state: { level: s.level - 1, asked: 0, dir: "down" } };
 }
 const randomly = <T,>(items: T[]) => items.map((x) => [Math.random(), x] as const).sort((a, b) => a[0] - b[0]).map(([, x]) => x);
-/** One track's questions for one audience: two per level (picked at random, so checking again asks others). */
-export const placementBank = (questions: PQ[], track: Track, audience: Audience, top: number, pick: (q: PQ[]) => PQ[] = randomly): PQ[][] =>
-  Array.from({ length: top }, (_, i) => pick(questions.filter((q) => q.track === track && q.audience === audience && q.level === i + 1)).slice(0, 2));
+/**
+ * One track's questions for one audience: two per level (picked at random, so checking again asks others). University
+ * teachers get the university questions at the top level; nobody else sees them.
+ */
+export const placementBank = (questions: PQ[], track: Track, audience: Audience, top: number, pick: (q: PQ[]) => PQ[] = randomly, uni = false): PQ[][] =>
+  Array.from({ length: top }, (_, i) => {
+    const at = questions.filter((q) => q.track === track && q.audience === audience && q.level === i + 1);
+    const forUni = uni && i + 1 === top ? at.filter((q) => q.teach === "university") : [];
+    return pick(forUni.length ? forUni : at.filter((q) => !q.teach)).slice(0, 2);
+  });
 
 /**
  * The placement check for the learner's tracks (or only `tracks`), for their audience. Tracks without questions start
@@ -124,7 +131,7 @@ export function PlacementQuiz({ tracks: only, onDone, onClose }: { tracks?: Trac
   const mine = useMine();
   const { data } = useAsync(loadPlacement, []);
   const list = only ?? mine.tracks.map((x) => x.id);
-  const banks = useMemo(() => (data ? Object.fromEntries(list.map((tr) => [tr, placementBank(data.questions, tr, mine.audience, tracks.of(tr).levels)])) : null),
+  const banks = useMemo(() => (data ? Object.fromEntries(list.map((tr) => [tr, placementBank(data.questions, tr, mine.audience, tracks.of(tr).levels, undefined, mine.uni)])) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [data]);
   // Only tracks with questions at the level the check starts from.
