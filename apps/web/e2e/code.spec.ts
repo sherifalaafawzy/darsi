@@ -11,7 +11,9 @@ async function onboard(page: Page) {
   await page.getByRole("button", { name: /Continue without an account/ }).click();
   await page.getByRole("radio", { name: /English/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("radio").first().click();
+  await page.getByRole("radio").first().click(); // a teacher
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("radio").first().click(); // teaching at a primary school
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("checkbox").first().click();
   await page.getByRole("button", { name: "Continue" }).click();

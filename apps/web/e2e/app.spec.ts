@@ -9,7 +9,9 @@ async function onboard(page: Page, lang: "English" | "العربية" = "English
   await page.getByRole("button", { name: /Continue without an account|المتابعة دون حساب/ }).click();
   await page.getByRole("radio", { name: new RegExp(lang) }).click();
   await page.getByRole("button", { name: /Continue|متابعة/ }).click();
-  await page.getByRole("radio").first().click();
+  await page.getByRole("radio").first().click(); // a teacher
+  await page.getByRole("button", { name: /Continue|متابعة/ }).click();
+  await page.getByRole("radio").first().click(); // teaching at a primary school
   await page.getByRole("button", { name: /Continue|متابعة/ }).click();
   await page.getByRole("checkbox").first().click();
   await page.getByRole("button", { name: /Continue|متابعة/ }).click();
