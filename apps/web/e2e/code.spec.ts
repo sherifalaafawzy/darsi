@@ -18,6 +18,18 @@ async function onboard(page: Page) {
   await page.getByRole("radio").nth(1).click();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: /Start from the beginning/ }).click();
+  // The test reloads next, and a reload can beat the store's async save: wait until IndexedDB has it.
+  await page.waitForFunction(() => new Promise<boolean>((done) => {
+    const open = indexedDB.open("keyval-store");
+    open.onerror = () => done(false);
+    open.onsuccess = () => {
+      const db = open.result;
+      if (!db.objectStoreNames.contains("keyval")) return (db.close(), done(false));
+      const get = db.transaction("keyval").objectStore("keyval").get("darsi:state");
+      get.onsuccess = () => (db.close(), done(get.result?.onboarded === true));
+      get.onerror = () => (db.close(), done(false));
+    };
+  }));
 }
 const editor = (page: Page) => page.getByRole("textbox", { name: "Your code" });
 const output = (page: Page) => page.getByRole("region", { name: "Output" });

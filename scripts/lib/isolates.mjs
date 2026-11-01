@@ -12,11 +12,13 @@ const ARABIC = /[؀-ۿ]/;
 
 // Left-to-right runs: Latin words, numbers, codes and small formulas, across spaces and operators. A word may open with
 // brackets, quotes or an operator glued to it (=SUM, >=5), or be a short quoted symbol ("?", ",") or string ("Stopped: ").
-// A string literal inside a word keeps its spaces: input("Mark? ").
+// A string literal inside a word keeps its spaces: input("Mark? "). After the first word an empty container is a word
+// too, so the comma in TOOLS.get(agent, []) doesn't end the run.
 const CHARS = "A-Za-z0-9._\\-/:@#'’\"%+×*=<>≤≥≠–−^()\\[\\]{},⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺ⁿⁱ°₀₁₂₃₄₅₆₇₈₉!?|&$";
 const LITERAL = `"[^"\\n؀-ۿ]{1,40}"`;
 const WORD = `(?:${LITERAL}|[(\\[{°"'=<>≤≥|.]*[A-Za-z0-9_$]|'[^'\\s؀-ۿ]{1,8}')(?:${LITERAL}|[${CHARS}_])*`;
-const RUN = new RegExp(`${WORD}(?:(?:\\s*(?:[=<>≤≥≠≈±+\\-−×÷⋅*/^–→!%]+|&&|\\|\\|)\\s*|\\s*[,;:]\\s+|\\s+)${WORD})*`, "g");
+const NEXT = `(?:${WORD}|(?:\\(\\)|\\[\\]|\\{\\})[${CHARS}_]*)`;
+const RUN = new RegExp(`${WORD}(?:(?:\\s*(?:[=<>≤≥≠≈±+\\-−×÷⋅*/^–→!%]+|&&|\\|\\|)\\s*|\\s*[,;:]\\s+|\\s+)${NEXT})*`, "g");
 // A run needs an isolate when it holds brackets, quotes or operators (a plain word or number is laid out fine), or when
 // it starts with a number joined to a word: after Arabic, "2-opt" shows as "opt-2".
 const CODEY = /[()[\]{}"'=+*/<>#%×÷−≤≥≠≈^→|]|^[0-9][0-9.,]*[-–][A-Za-z]/;

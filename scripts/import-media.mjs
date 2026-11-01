@@ -26,7 +26,7 @@ if (!units.length) { console.error("Usage: node scripts/import-media.mjs <unit>�
 
 const plain = (s) => String(s ?? "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/\s+/g, " ").trim();
 const KIT_TITLE = {
-  teachers: { en: "The lesson video (240p, for class or WhatsApp)", ar: "فيديو الدرس (بدقة 240p، للصف أو لواتساب)" },
+  teachers: { en: "The lesson video (240p, for class or WhatsApp)", ar: "فيديو الدرس (بدقة 240p، للفصل أو لواتساب)" },
   students: { en: "The lesson video (240p, to watch again or share)", ar: "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)" },
 };
 

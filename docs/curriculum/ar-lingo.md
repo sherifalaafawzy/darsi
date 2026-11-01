@@ -29,7 +29,8 @@ Both registers use the same word for the same concept. A learner who hears "ال
 | Row in a table | **صف** | فصل |
 | School desk (a pupil's) | **التختة** (ar-EG narration; the normal Egyptian word), **المقعد** (MSA course text) | المكتب (a teacher's or office desk), التخت (a bed), الترابيزة |
 | Teacher's or office desk | **المكتب** | التختة |
-| LED | **لمبة LED** (ar-EG), **مصباح LED** (MSA) | الصمام الضوئي (a photodiode) |
+| LED | **لمبة LED** or **الليد** (ar-EG; both are normal Egyptian), **مصباح LED** (MSA) | الصمام الضوئي (a photodiode) |
+| School grade (a year group) | **الصف** with its number (الصف الخامس), as Egyptian schools name them | فصل (a class or a term) |
 | Label (a name given to an example) | **تسمية** | تصنيف |
 | Classification (the task) | **تصنيف** | تسمية |
 | Histogram bin / category range | **فئة** | فئات (when it means a bin) |
@@ -57,12 +58,23 @@ Both registers use the same word for the same concept. A learner who hears "ال
 | Greedy, as a noun in narration and on screen (opt) | **الطريقة الجشعة** / **القاعدة الجشعة** | «الجشع», «الجشعة» alone |
 | Greedy | **الجشع** in a technical sentence; the button: **عبّئ بالطريقة الجشعة** | المنصف, الشاذة |
 | Trade-off | **موازنة** | مقايضة |
-| Overfitting | **الإفراط في التخصيص** | الحفظ الزائد |
+| Overfitting | **الإفراط في التوفيق** (the common Arabic ML term; used across ds) | الحفظ الزائد, الإفراط في التخصيص |
+| Categories (kinds of things, not histogram bins) | **أنواع** | فئات |
+| Precision (classification metric) | **الدقة الإيجابية** in course text, with "precision" once | الضبطية |
 | Pass mark | **درجة النجاح** | حد النجاح |
 | Heat | **الحرارة** | السخونة (for a sensor value) |
 | Rule of thumb | **قاعدة عامة** | قاعدة ذهبية |
 | Struggle (the effort that is the learning, ai-4-1-4) | **المجهود** (narration and MSA) | التعب |
 | Leaf (of a plant), in narration | **ورق النبات** / **ورقة** with its noun nearby | الورق alone (reads as paper) |
+| Grade / year group (Primary 4, Grade 8, "across year groups") | **الصف** with its number or ordinal (الصف الرابع الابتدائي، الصف ٥، أ. أوكافور، علوم الصف الثامن) | الفصل الرابع (reads as chapter or term four). Added in the 2026-11-01 sweep: a school year is not a group of pupils, so it keeps the standard Arabic name; a group of pupils (your class, 6B) is **فصل** |
+| A class, spelled out | **فصل** | فصل دراسي (that is a school term); the old «صف دراسي» becomes plain «فصل» |
+| Pupils' desks, plural (ar-EG) | **التختات** | التخت (a bed) |
+| Threshold (AI decisions, the threshold lab «الأخطاء والحدود») | **الحد**, as in IoT; the lab's button is «انتقل إلى أفضل حد» | العتبة. Added 2026-11-01 so ai and iot, which share the lab, say the same word |
+| Underfitting | **نقص التوفيق** (pairs with الإفراط في التوفيق) | نقص المطابقة |
+| Data labelling (the job) | **تسمية البيانات** | تصنيف البيانات (that is the task) |
+| LED, defined once in full | **مصباح LED (أي الصمام الثنائي الباعث للضوء)** | الصمام الضوئي |
+| Tidy (spaces, names) vs sort | **نظّف** (the clean lab's «نظّف المسافات») | رتّب, which means sort elsewhere |
+| Odd one out (the poison lab's button) | **«اعثر على الأمثلة الشاذّة»** | «اعثر على الشاذّة» (a bare adjective) |
 
 Canonical names (the same name in the English and the Arabic, spelled the same way everywhere):
 
