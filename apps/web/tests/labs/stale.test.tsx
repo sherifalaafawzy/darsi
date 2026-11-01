@@ -52,9 +52,7 @@ describe("a lab chunk that fails to load", () => {
   it("hosting answers 404 for a missing chunk instead of the app page", () => {
     const fb = JSON.parse(readFileSync(resolve(process.cwd(), "../../firebase.json"), "utf8"));
     const rw = fb.hosting.rewrites.find((r: { destination: string }) => r.destination === "/index.html");
-    const re = new RegExp(rw.regex);
-    expect(re.test("/assets/lab-neuron-OLD.js")).toBe(false);
-    expect(re.test("/lib/x.js")).toBe(false);
-    expect(re.test("/learn/ai-3-1")).toBe(true);
+    // Firebase globs (RE2 has no lookahead, so a negated glob): every path except /assets/** and /lib/** gets the app.
+    expect(rw.source).toBe("!/@(assets|lib)/**");
   });
 });
