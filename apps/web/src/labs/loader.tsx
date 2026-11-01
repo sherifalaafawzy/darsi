@@ -24,6 +24,29 @@ const lazyLab = (id: string) => {
   return lazies.get(id)!;
 };
 
+/**
+ * After a deploy, a phone still running the previous version asks for that version's lab chunk, which the site no
+ * longer has. Online, that is the cause: take the waiting new version (or reload) instead of blaming the connection.
+ */
+export async function reloadForUpdate() {
+  const sw = typeof navigator !== "undefined" ? navigator.serviceWorker : undefined;
+  const reg = await sw?.getRegistration().catch(() => undefined);
+  if (sw && reg) {
+    await reg.update().catch(() => {});
+    if (reg.waiting) { sw.addEventListener("controllerchange", () => location.reload(), { once: true }); reg.waiting.postMessage({ type: "SKIP_WAITING" }); return; }
+  }
+  location.reload();
+}
+
+/** What shows when a lab's chunk fails: offline, it isn't saved yet; online, this copy of Darsi is out of date. */
+export function LabMissing({ retry }: { retry: () => void }) {
+  const { t } = useI18n();
+  const online = typeof navigator === "undefined" || navigator.onLine !== false;
+  return online
+    ? <EmptyState tone="offline" title={t("labs.outdated")} action={<Button size="sm" icon="sync" onClick={() => { void reloadForUpdate(); }}>{t("pwa.reload")}</Button>} />
+    : <EmptyState tone="offline" title={t("labs.notSaved")} action={<Button size="sm" icon="sync" onClick={retry}>{t("common.retry")}</Button>} />;
+}
+
 /** A failed chunk (offline, never opened) shows a calm message with Retry instead of breaking the screen. */
 class LabBoundary extends Component<{ id: string; fallback: (retry: () => void) => ReactNode; children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -38,9 +61,7 @@ export function LabEmbed({ id, embedded, onDone }: { id: string; embedded?: bool
   if (!meta || !hasLab(id)) return <p className="notice">{t("labs.unknown")}</p>;
   const App = lazyLab(id);
   return (
-    <LabBoundary key={id} id={id} fallback={(retry) => (
-      <EmptyState tone="offline" title={t("labs.notSaved")} action={<Button size="sm" icon="sync" onClick={retry}>{t("common.retry")}</Button>} />
-    )}>
+    <LabBoundary key={id} id={id} fallback={(retry) => <LabMissing retry={retry} />}>
       <Suspense fallback={<div className="loading" aria-busy="true" />}><App meta={meta} embedded={embedded} onDone={onDone} /></Suspense>
     </LabBoundary>
   );
