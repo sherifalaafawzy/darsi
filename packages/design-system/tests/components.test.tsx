@@ -113,9 +113,10 @@ describe("shell & settings", () => {
     expect(screen.getByRole("button", { name: "Two" })).toHaveProperty("disabled", true);
     expect(screen.getByRole("button", { name: "One" }).getAttribute("aria-current")).toBe("step");
   });
-  it("Video control bar stays LTR", () => {
+  it("Video timeline and clock stay LTR", () => {
     const { container } = render(<div dir="rtl"><VideoPlayer title="t" duration={100} /></div>);
-    expect(container.querySelector(".dr-video-bar")?.getAttribute("dir")).toBe("ltr");
+    expect(container.querySelector(".dr-video-scrub")?.getAttribute("dir")).toBe("ltr");
+    expect(container.querySelector(".dr-video-time")?.getAttribute("dir")).toBe("ltr");
   });
 });
 
@@ -134,10 +135,12 @@ describe("VideoPlayer controls", () => {
 
   it("CC shows and hides the real caption track", () => {
     player();
-    fireEvent.click(screen.getByRole("button", { name: "Captions" }));
+    // On: the track stays hidden so the player can place the line itself. Off: the track is disabled.
     expect(track.mode).toBe("hidden");
     fireEvent.click(screen.getByRole("button", { name: "Captions" }));
-    expect(track.mode).toBe("showing");
+    expect(track.mode).toBe("disabled");
+    fireEvent.click(screen.getByRole("button", { name: "Captions" }));
+    expect(track.mode).toBe("hidden");
   });
 
   it("seeks with the keyboard and reports the new time", () => {
@@ -150,10 +153,12 @@ describe("VideoPlayer controls", () => {
     expect(seek.getAttribute("aria-valuenow")).toBe("100");
   });
 
-  it("steps through speeds", () => {
+  it("sets the speed from the settings menu", () => {
     player();
-    fireEvent.click(screen.getByRole("button", { name: "Speed: 1×" }));
-    expect(screen.getByRole("button", { name: "Speed: 1.25×" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /Playback speed/ }));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "1.25×" }));
+    expect(document.querySelector("video")!.playbackRate).toBe(1.25);
   });
 
   it("goes full screen over the page where the Fullscreen API is missing, and Escape leaves", () => {

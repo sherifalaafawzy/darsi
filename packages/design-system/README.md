@@ -81,6 +81,6 @@ Budget: install ≤ 2 MB including fonts for one script; a lesson ≤ 300 KB; fi
 ## Known limits
 
 - The AI-lab tools run on pre-written examples and transparent toy logic (word-overlap classifier, approximate tokens). That is deliberate — they work offline and never show unreviewed AI output — but they are teaching models, not real ones.
-- `VideoPlayer` is a lightweight shell around `<video>`: wire seeking, quality switching and checkpoint timing to your player logic or an HLS library.
+- `VideoPlayer` plays an MP4 with YouTube-style controls (seek, volume, captions, speed, full screen) and no extra runtime. Checkpoint questions pause the video; pass translated labels for each locale. The timeline and the clock stay left to right.
 - Default strings are English; pass translated labels for every locale you ship.
 - QR codes in the PDF templates are placeholders.

@@ -3,7 +3,7 @@ import {
   FillBlank, HotspotImage, ImageChoice, MatchPairs, OrderSteps, QuestionHeader, QuizOption, Reflection, ScenarioCard, TextField, TrueFalse, VideoPlayer, Button,
 } from "@darsi/design-system";
 import { captionsFor, lightLang, pickList, timeIn, videoSrc, type Step, type VideoStep, type ChoiceStep, type TrueFalseStep } from "../content/types";
-import { useI18n, type MessageKey } from "../i18n";
+import { languageOf, useI18n, type MessageKey } from "../i18n";
 import { Art } from "../components/Art";
 import { LabEmbed } from "../labs/loader";
 import { ProjectView } from "./ProjectView";
@@ -202,6 +202,9 @@ function VideoStepView({ step, onReady }: { step: VideoStep; onReady: () => void
   const { t, L, lang, num } = useI18n();
   const [failed, setFailed] = useState(false);
   const src = videoSrc(step, lang), captions = captionsFor(step, lang);
+  const capMap = step.captions ?? {};
+  const capCodes = Object.keys(capMap).filter((code) => capMap[code]);
+  const capOrder = captions && capCodes.includes(captions.lang) ? [captions.lang, ...capCodes.filter((code) => code !== captions.lang)] : capCodes;
   // The light lesson (Lesson Studio) plays first when it has this language; the MP4 is a choice, and the fallback.
   const pl = canPlayLight() ? lightLang(step, lang) : null;
   const [mode, setMode] = useState<"light" | "video">(pl ? "light" : "video");
@@ -278,14 +281,17 @@ function VideoStepView({ step, onReady }: { step: VideoStep; onReady: () => void
         poster={poster} src={playable ? src! : undefined} duration={step.duration} title={L(step.title)}
         meta={[fmt(step.duration), "240p", `${num(step.sizeMB, { maximumFractionDigits: 1 })} MB`].join(t("common.sep"))}
         chapters={step.chapters?.map((c) => ({ at: timeIn(c, videoLang), label: L(c.label) }))} questionsAt={step.checkpoint ? [timeIn(step.checkpoint, videoLang)] : []}
-        tracks={captions ? <track kind="captions" srcLang={captions.lang} src={captions.src} default /> : undefined}
-        crossOrigin={[src, captions?.src].some((u) => u && new URL(u, location.href).origin !== location.origin) ? "anonymous" : undefined}
+        tracks={capOrder.length ? capOrder.map((code) => <track key={code} kind="captions" srcLang={code} label={languageOf(code).native} src={capMap[code]!} default={code === captions?.lang} />) : undefined}
+        crossOrigin={[src, ...capOrder.map((code) => capMap[code])].some((u) => u && new URL(u, location.href).origin !== location.origin) ? "anonymous" : undefined}
         checkpoint={playable && !reading && checkpointOpen && !cpDone ? question : undefined} checkpointLabel={t("lesson.pause")}
         onTimeUpdate={(sec) => { if (step.checkpoint && cpResult === null && sec >= timeIn(step.checkpoint, videoLang)) setCheckpointOpen(true); }}
         onError={() => { setFailed(true); setShowTranscript(true); }}
         actions={<Button size="sm" variant="ghost" icon="file" onClick={() => setShowTranscript((x) => !x)}>{t("lesson.transcript")}</Button>}
-        playLabel={t("video.play")} pauseLabel={t("video.pause")} captionsLabel={t("video.captions")} seekLabel={t("video.seek")}
-        speedLabel={t("video.speed")} fullscreenLabel={t("video.fullscreen")} exitFullscreenLabel={t("video.exitFullscreen")}
+        playLabel={t("video.play")} pauseLabel={t("video.pause")} captionsLabel={t("video.captions")} captionsOffLabel={t("video.captionsOff")}
+        seekLabel={t("video.seek")} speedLabel={t("video.speed")} speedNormalLabel={t("video.speedNormal")}
+        fullscreenLabel={t("video.fullscreen")} exitFullscreenLabel={t("video.exitFullscreen")}
+        muteLabel={t("video.mute")} unmuteLabel={t("video.unmute")} volumeLabel={t("video.volume")}
+        settingsLabel={t("video.settings")} loadingLabel={t("video.loading")}
       />
       {!playable && <p className="muted small">{t("lesson.noVideo")}</p>}
       {pl && switchTo}
