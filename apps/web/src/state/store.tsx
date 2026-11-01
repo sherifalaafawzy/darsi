@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
 import { storage } from "../platform";
-import type { Audience, Stage, Track } from "../content/types";
+import { teachStage, type Audience, type Stage, type TeachPlace, type Track } from "../content/types";
 
 /** unitId, track and competencies go to the cloud progress doc (admins' summaries); entries saved before cloud sync lack them. */
 export interface LessonResult { done: true; accuracy: number; xp: number; seconds: number; completedAt: string; unitId?: string; track?: Track; competencies?: string[] }
@@ -13,7 +13,8 @@ export interface AppState {
   dataSaver: boolean;
   reminder: boolean;
   onboarded: boolean;
-  teach?: "primary" | "secondary" | "university";
+  /** Where a teacher teaches. Legacy "secondary" is rewritten to lower secondary when the store loads. */
+  teach?: TeachPlace;
   /** Teacher or student (onboarding, or Me); courses for the other audience don't show. School accounts follow their role. */
   audience?: Audience;
   /** Where a student studies (onboarding, or Me): their placement check and Home start at that stage's level. */
@@ -93,10 +94,16 @@ export function mergeRemote(s: AppState, progress: Record<string, LessonResult> 
   return p === s.progress && w === s.weeks && n === s.notes && at === s.notesAt ? s : { ...s, progress: p, weeks: w, notes: n, notesAt: at };
 }
 
+/** Keep `teach` as one of the four stages. The old "secondary" (ages 12–18) becomes lower secondary. */
+function withTeach(s: AppState): AppState {
+  const teach = teachStage(s.teach);
+  return teach === s.teach ? s : { ...s, teach };
+}
+
 function reducer(s: AppState, a: Action): AppState {
   switch (a.type) {
-    case "hydrate": return { ...initialState, ...a.state };
-    case "set": return { ...s, ...a.patch };
+    case "hydrate": return withTeach({ ...initialState, ...a.state });
+    case "set": return withTeach({ ...s, ...a.patch });
     case "completeLesson": {
       const wk = isoWeek(); const first = !s.progress[a.id];
       return { ...s, progress: { ...s.progress, [a.id]: { done: true, completedAt: new Date().toISOString(), ...a.result } }, weeks: first ? { ...s.weeks, [wk]: (s.weeks[wk] ?? 0) + 1 } : s.weeks };

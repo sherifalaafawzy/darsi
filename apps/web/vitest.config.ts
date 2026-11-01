@@ -6,6 +6,9 @@ import { defineConfig } from "vitest/config";
 const designSystem = fileURLToPath(new URL("../../packages/design-system/src/index.ts", import.meta.url));
 
 export default defineConfig({
-  resolve: { alias: [{ find: /^@darsi\/design-system$/, replacement: designSystem }] },
+  resolve: { alias: [
+    { find: /^@darsi\/design-system$/, replacement: designSystem },
+    { find: "virtual:pwa-register", replacement: fileURLToPath(new URL("./tests/stubs/pwa-register.ts", import.meta.url)) },
+  ] },
   test: { environment: "jsdom", globals: true, include: ["tests/**/*.test.{ts,tsx}"] },
 });

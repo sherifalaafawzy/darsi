@@ -1,4 +1,4 @@
-import type { Track } from "../content/types";
+import type { TeachPlace, Track } from "../content/types";
 export type Role = "learner" | "student" | "teacher" | "orgAdmin" | "superadmin";
 export interface Summary { lessonsDone: number; xp: number; avgAccuracy: number; lastActive: string | null; competencies: Record<string, number>; units: Record<string, number> }
 export interface Profile {
@@ -11,7 +11,8 @@ export interface Profile {
   group?: string | null;
   teacherId?: string | null;
   lang?: string;
-  teach?: "primary" | "secondary" | "university";
+  /** Where this teacher teaches. Stored on users/{uid}; the rules already allow `teach` and do not constrain its value. */
+  teach?: TeachPlace;
   tracks?: Track[];
   weeklyLessons?: number;
   levels?: Partial<Record<Track, number>>;

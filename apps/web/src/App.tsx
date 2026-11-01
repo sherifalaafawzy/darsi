@@ -8,6 +8,7 @@ import { I18nProvider, useI18n } from "./i18n";
 import { StoreProvider, useStore } from "./state/store";
 import { useCloudSync } from "./state/sync";
 import { configureContent, setOrgReader } from "./content/load";
+import { teachSync } from "./content/types";
 import { SettingsProvider, useLanguageReady } from "./content/settings";
 import { loadFirebase } from "./fb";
 import { usePushRefresh } from "./notify/usePushRefresh";
@@ -73,7 +74,7 @@ const homeFor = (role: Role) => (role === "orgAdmin" ? "/admin" : role === "supe
 
 function Routed() {
   const { state, ready, dispatch } = useStore();
-  const { user, profile, role, orgId, configured, offlineUid } = useAuth();
+  const { user, profile, role, orgId, configured, offlineUid, updateProfile } = useAuth();
   const { t, dir } = useI18n();
   // Before any screen asks for the catalog: org members also see their org's published units.
   configureContent({ orgId: user ? orgId : null, signedIn: Boolean(user || offlineUid) });
@@ -83,6 +84,14 @@ function Routed() {
   }, [state.lang, state.theme, dir]);
   // Certificates use the local name; start it from the account name.
   useEffect(() => { if (ready && profile?.name && !state.name) dispatch({ type: "set", patch: { name: profile.name } }); }, [ready, profile?.name, state.name, dispatch]);
+  // Where a teacher teaches lives in the guest store, and on users/{uid}.teach once they are signed in.
+  // updateProfile loads Firestore only when it is called, and it returns immediately without a user.
+  useEffect(() => {
+    if (!ready || !user) return;
+    const plan = teachSync(state.teach, profile?.teach, profile != null);
+    if (plan.pull) dispatch({ type: "set", patch: { teach: plan.pull } });
+    if (plan.push) void updateProfile({ teach: plan.push });
+  }, [ready, user, profile, state.teach, dispatch, updateProfile]);
   useCloudSync(user?.uid);
   usePushRefresh(); // signed in and opted in on this phone only; guests never load messaging
   const langReady = useLanguageReady();
