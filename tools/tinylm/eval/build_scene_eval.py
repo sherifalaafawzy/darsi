@@ -370,12 +370,60 @@ PACK_TOPICS = [
      ["اشرح لي الاستعلام", "كيف يعمل استعلام SQL؟", "ما هو الاستعلام في قواعد البيانات؟", "ما هو الجدول المرتّب؟", "اشرح لي الجدول المرتب", "اشرح SELECT و WHERE و ORDER BY في SQL"]),
 ]
 
+PACK_CANON = {
+    "neuron": ("an artificial neuron", "خلية عصبية اصطناعية"),
+    "neural-network": ("a neural network", "شبكة عصبية"),
+    "mlp": ("a multi-layer perceptron (MLP)", "شبكة MLP متعددة الطبقات"),
+    "cnn": ("a convolutional neural network (CNN)", "شبكة CNN التفافية"),
+    "rnn": ("a recurrent neural network (RNN)", "شبكة RNN متكررة"),
+    "transformer": ("a Transformer and self-attention", "المحوّل والانتباه الذاتي"),
+    "gpt": ("a language model and next-token prediction", "النموذج اللغوي وتوقّع الرمز التالي"),
+    "agent": ("an AI agent that uses tools", "وكيل ذكاء اصطناعي يستخدم الأدوات"),
+    "rag": ("retrieval-augmented generation (RAG)", "التوليد المعزّز بالاسترجاع RAG"),
+    "autoencoder": ("an autoencoder", "المُرمِّز التلقائي"),
+    "gan": ("a generative adversarial network (GAN)", "شبكة GAN التوليدية"),
+    "resnet": ("a residual network and skip connection", "الشبكة المتبقية ووصلة الاختصار"),
+    "descent": ("gradient descent", "الانحدار التدريجي"),
+    "loss": ("a training loss curve", "منحنى خسارة التدريب"),
+    "fit": ("a classifier and its decision boundary", "المصنِّف والحد الفاصل"),
+    "gates": ("logic gates and truth tables", "البوابات المنطقية وجدول الحقيقة"),
+    "bits": ("binary numbers and bits", "النظام الثنائي والبتات"),
+    "sensor": ("a temperature sensor with two thresholds", "حساس الحرارة ذو العتبتين"),
+    "adc": ("an analog-to-digital converter (ADC)", "المحوّل التناظري إلى رقمي ADC"),
+    "loop": ("a programming loop", "الحلقة في البرمجة"),
+    "flow": ("an algorithm with an if/else branch", "خوارزمية فيها تفرّع شرطي"),
+    "search": ("binary search", "البحث الثنائي"),
+    "packet": ("HTTPS encryption", "تشفير HTTPS"),
+    "seq": ("phishing, two-factor authentication, and guardrails", "التصيّد والتحقق بخطوتين وحواجز الحماية"),
+    "query": ("a SQL query and tidy table", "استعلام SQL والجدول المرتّب"),
+}
+
 
 def build_pack_concepts(lang: str) -> list[dict]:
     ar = lang == "ar"
     items: list[dict] = []
     for topic_id, want_kinds, preset, en_words, ar_words, en_qs, ar_qs in PACK_TOPICS:
-        qs = ar_qs if ar else en_qs
+        en_term, ar_term = PACK_CANON[topic_id]
+        term = ar_term if ar else en_term
+        qs = (
+            [
+                f"فسّر {term} لمبتدئ.",
+                f"اشرح {term} بصورة متحركة.",
+                f"ماذا يحدث داخل {term}؟",
+                f"وضّح كيف يعمل {term} خطوة بخطوة.",
+                f"أنا جديد على {term}؛ اجعله واضحًا.",
+                f"علّمني {term} باستخدام رسم متحرك.",
+            ]
+            if ar else
+            [
+                f"Give me a beginner-friendly explanation of {term}.",
+                f"Walk me through {term} with a picture.",
+                f"What happens inside {term}?",
+                f"Show how {term} works step by step.",
+                f"I'm new to {term}; make it concrete.",
+                f"Use an animation to teach me {term}.",
+            ]
+        )
         words = ar_words if ar else en_words
         for i, q in enumerate(qs):
             item: dict = {
@@ -418,24 +466,36 @@ def build_course_concepts(lang: str) -> list[dict]:
                     seen_terms.add(key)
                     by_track.setdefault(track, []).append((term, defin, uid))
 
+    # Deliberately different from course_data.py's training templates.
     en_ways = [
-        "What is {name}?",
-        "Can you explain {name}?",
-        "I don't understand {name}.",
-        "What does {name} mean?",
-        "Teach me {name}.",
+        "In simple words, explain {name}.",
+        "How would you teach {name} to a beginner?",
+        "Help me understand the idea of {name}.",
+        "Could you walk me through {name}?",
+        "Why does {name} matter?",
     ]
     ar_ways = [
-        "ما هو {name}؟",
-        "اشرح لي {name}",
-        "لا أفهم {name}",
-        "ما معنى {name}؟",
-        "علّمني {name}",
+        "فسّر {name} بكلمات بسيطة.",
+        "كيف تشرح {name} لمبتدئ؟",
+        "ساعدني على فهم فكرة {name}.",
+        "اشرح {name} خطوة بخطوة.",
+        "لماذا يعد {name} مهمًا؟",
     ]
     ways = ar_ways if ar else en_ways
 
     items: list[dict] = []
     tracks = sorted(by_track.keys())
+    track_kinds = {
+        "ai": ["net", "arch", "plot"],
+        "iot": ["signal", "gates", "bits", "arch"],
+        "cyber": ["packet", "seq", "arch"],
+        "code": ["trace", "flow", "search", "sort", "arch"],
+        "data": ["query", "arch"],
+        "opt": ["graph", "bag", "arch"],
+        "agents": ["arch", "seq"],
+        "aisec": ["seq", "arch", "plot"],
+        "ds": ["plot", "arch"],
+    }
     # Pick terms round-robin across all 9 tracks and across the 5 question ways until we have 200 distinct questions
     idx = 0
     round_n = 0
@@ -451,7 +511,6 @@ def build_course_concepts(lang: str) -> list[dict]:
             q = ways[w_idx].format(name=term)
             if any(x["q"] == q for x in items):
                 continue
-            spec = spec_for_question(q)
             # Extract content words (>= 4 chars) from the gold definition
             words = [w for w in re.findall(r"\w+", defin) if len(w) >= 4][:6]
             idx += 1
@@ -464,7 +523,8 @@ def build_course_concepts(lang: str) -> list[dict]:
                 "term": term,
                 "gold": defin,
                 "unit_id": uid,
-                "want_kinds": [spec["kind"]],
+                # Independent of the generator: acceptable Lesson Studio families for this curriculum track.
+                "want_kinds": track_kinds[tr],
                 "any_words": words,
             })
             added_any = True
@@ -484,11 +544,10 @@ def build_followups(lang: str, course_items: list[dict]) -> list[dict]:
     follow_en = ["I still don't understand. Explain it again.", "Tell me a bit more."]
     follow_ar = ["ما زلت لا أفهم. اشرح مرة أخرى.", "زدني قليلًا."]
     follows = follow_ar if ar else follow_en
-    plan = "أرسم المشهد على اللوحة، ثم أشرح الفكرة بوضوح." if ar else "Draw the scene on the canvas, then explain the idea in plain words."
 
     for i in range(50):
         base = course_items[i * 3 % len(course_items)]
-        spec1 = spec_for_question(base["q"])
+        spec1 = spec_for_question(base["q"], base["unit_id"])
         res1 = scene_result(spec1)
         f_q = follows[i % len(follows)]
         items.append({
@@ -498,14 +557,14 @@ def build_followups(lang: str, course_items: list[dict]) -> list[dict]:
             "lang": lang,
             "history": [
                 ["user", base["q"]],
-                ["plan", plan],
+                ["plan", spec1["kind"]],
                 ["call", "scene" + dumps(spec1)],
                 ["result", dumps(res1)],
                 ["answer", base["gold"]],
                 ["end", ""],
             ],
             "q": f_q,
-            "want_kinds": [spec1["kind"]],
+            "want_kinds": base["want_kinds"],
             "any_words": base["any_words"],
         })
     assert len(items) == 50

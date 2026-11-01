@@ -22,8 +22,8 @@ const S = {
     takeaway: "Every sensor reading is a little wrong. Reading more often costs battery and data; averaging hides noise but reacts later. Good IoT design balances the three for the job: a fan can wait a few minutes, a gas alarm cannot.",
   },
   ar: {
-    intro: "ميزان حرارة في الصف يشغّل المروحة حين تتجاوز الحرارة العتبة. الخط المتقطع هو الحرارة الحقيقية، والنقاط ما يقرؤه المستشعر. اجعله أرخص أو أكثر دقة أو أسرع، وراقب الأخطاء.",
-    chart: "الحرارة خلال اليوم الدراسي: الحقيقية (متقطع)، والقراءات (نقاط)، والمنعّمة (خط)، والعتبة (خط أفقي)", time: "الوقت", temp: "°س",
+    intro: "ميزان حرارة في الصف يشغّل المروحة حين تتجاوز الحرارة الحد. الخط المتقطع هو الحرارة الحقيقية، والنقاط ما يقرؤه المستشعر. اجعله أرخص أو أكثر دقة أو أسرع، وراقب الأخطاء.",
+    chart: "الحرارة خلال اليوم الدراسي: الحقيقية (متقطع)، والقراءات (نقاط)، والمنعّمة (خط)، والحد (خط أفقي)", time: "الوقت", temp: "°س",
     every: "اقرأ كل", min: (n: string) => `${n} دقيقة`, noise: "جودة المستشعر", good: "جيد", cheap: "رخيص", awful: "كثير التشويش",
     smooth: "خذ متوسط آخر", readingsN: (n: string, c: number) => (c === 1 ? "قراءة واحدة" : c === 2 ? "قراءتين" : c <= 10 ? `${n} قراءات` : `${n} قراءة`), threshold: "شغّل المروحة فوق",
     perDay: "القراءات في اليوم", falseAlerts: "إنذارات كاذبة", missed: "دقائق حر والمروحة متوقفة", fanOn: (times: string, t: string) => `اشتغلت المروحة ${times}: الساعة ${t}`, never: "لم تشتغل المروحة أبدًا.",

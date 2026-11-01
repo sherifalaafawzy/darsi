@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { compileQuestion, pictureHint } from "../../src/labs/apps/tutor/compile";
-import { bubble, expand, greedyBag, parseScene, sceneResult, shortest, specForTopic, specFromQuestion } from "../../src/labs/apps/tutor/expand";
+import { bubble, expand, greedyBag, parseScene, sceneResult, shortest, specForTopic, specFromCourse, specFromQuestion } from "../../src/labs/apps/tutor/expand";
 
 describe("scene JSON", () => {
   it("copies a typed map into Dijkstra's picture", () => {
@@ -70,6 +70,12 @@ describe("scene JSON", () => {
     expect((net.spec as { layers: number[] }).layers.length).toBeGreaterThanOrEqual(3);
     const customNet = expand(specFromQuestion("neural network with 3, 5, 2 layers")!);
     expect(customNet.spec).toEqual({ kind: "net", layers: [3, 5, 2] });
+    const spread = expand(specFromQuestion("Could you walk me through standard deviation?")!);
+    expect(spread.spec).toEqual({ kind: "plot", mode: "distribution" });
+    expect(spread.scene.content.elements[1]).toMatchObject({ type: "plot" });
+    expect(spread.line.en).toContain("standard deviation");
+    expect(specFromCourse("Please explain standard deviation to a beginner.")).toEqual({ kind: "plot", mode: "distribution" });
+    expect(specFromCourse("فسّر الانحراف المعياري بكلمات بسيطة.")).toEqual({ kind: "plot", mode: "distribution" });
   });
 
   it("asks for a real list when a sort has the wrong numbers", () => {

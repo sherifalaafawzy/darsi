@@ -41,19 +41,19 @@ def txt(node: object, lang: str) -> str:
     return ""
 
 
-def lead(text: str, n: int = 2) -> str:
-    """The first few sentences, so an answer fits the 384-token context."""
+def lead(text: str, n: int = 1) -> str:
+    """One crisp sentence so each turn minimizes tokens and fits 384 context easily."""
     parts: list[str] = []
     buf = ""
     for ch in text:
         buf += ch
-        if ch in ".!?؟" and len(buf.strip()) > 40:
+        if ch in ".!?؟" and len(buf.strip()) > 28:
             parts.append(buf.strip())
             buf = ""
             if len(parts) >= n:
                 break
     got = " ".join(parts) if parts else text.strip()
-    return got[:520].rsplit(" ", 1)[0] if len(got) > 520 else got
+    return got[:260].rsplit(" ", 1)[0] if len(got) > 260 else got
 
 
 def opt_text(opt: dict, lang: str) -> str:
@@ -61,7 +61,7 @@ def opt_text(opt: dict, lang: str) -> str:
 
 
 def plan_for(lang: str) -> str:
-    return "أرسم المشهد على اللوحة، ثم أشرح الفكرة بوضوح." if lang == "ar" else "Draw the scene on the canvas, then explain the idea in plain words."
+    return "none"
 
 
 def add(out: list[dict], lang: str, user: str, answer: str, unit_id: str = "") -> None:
@@ -71,16 +71,16 @@ def add(out: list[dict], lang: str, user: str, answer: str, unit_id: str = "") -
     low = user.rstrip(".؟?!").lower()
     if low in SKIP_PROMPT or any(p in low for p in ("this program", "this table", "what do you suggest", "complete the sentence", "البرنامج التالي", "ماذا تقترح", "أكمل الجمل")):
         return
-    spec = spec_for_question(user)
-    out.append(row(lang, spec["kind"], segs(user, plan_for(lang), dumps(spec), dumps(scene_result(spec)), answer)))
+    spec = spec_for_question(user, unit_id)
+    out.append(row(lang, spec["kind"], segs(user, spec["kind"], dumps(spec), dumps(scene_result(spec)), answer)))
 
 
 def dialogue(lang: str, turns: list[tuple[str, str]], unit_id: str = "") -> dict:
     """Two spoken turns: the person asks, sees the scene and explanation, then asks again."""
     parts: list[list[str]] = [["tools", "scene"]]
-    plan = plan_for(lang)
     first_q, _ = turns[0]
-    spec = spec_for_question(first_q)
+    spec = spec_for_question(first_q, unit_id)
+    plan = spec["kind"]
     res_str = dumps(scene_result(spec))
     spec_str = dumps(spec)
     for user, answer in turns:
@@ -96,32 +96,38 @@ def dialogue(lang: str, turns: list[tuple[str, str]], unit_id: str = "") -> dict
 
 
 def pair(text: str) -> tuple[str, str]:
-    both = lead(text, 2)
     one = lead(text, 1)
-    more = both[len(one):].strip() if both.startswith(one) else ""
-    return both, more
+    return one, ""
 
 
 def talk(out: list[dict], lang: str, name: str, answer: str, unit_id: str = "") -> None:
     """The same explanation, asked the way a person talks to a tutor, then once more."""
     name = name.strip()
-    both, more = pair(answer)
+    both, _ = pair(answer)
     if len(name) < 2 or len(both) < 8:
         return
     if lang == "ar":
-        asked = [name, f"ما هو {name}؟", f"اشرح لي {name}", f"لا أفهم {name}", f"علّمني {name}"]
+        asked = [
+            name, f"ما هو {name}؟", f"اشرح لي {name}", f"لا أفهم {name}", f"علّمني {name}",
+            f"ما معنى {name}؟", f"فسّر {name} بكلمات بسيطة.", f"كيف تشرح {name} لمبتدئ؟",
+            f"ساعدني على فهم فكرة {name}.", f"اشرح {name} خطوة بخطوة.", f"لماذا يعد {name} مهمًا؟",
+        ]
         again = "ما زلت لا أفهم. اشرح مرة أخرى."
         extra = "زدني قليلًا."
     else:
-        asked = [name.lower(), f"What is {name}?", f"Can you explain {name}?", f"I don't understand {name}.", f"Teach me {name}."]
+        asked = [
+            name.lower(), f"What is {name}?", f"Can you explain {name}?", f"I don't understand {name}.", f"Teach me {name}.",
+            f"What does {name} mean?", f"In simple words, explain {name}.", f"How would you teach {name} to a beginner?",
+            f"Help me understand the idea of {name}.", f"Could you walk me through {name}?", f"Why does {name} matter?",
+        ]
         if " " not in name and "(" not in name and len(name) > 2 and name[0].isupper() and name[1].islower():
             asked.append(f"What is a {name[0].lower()}{name[1:]}?")
         again = "I still don't understand. Explain it again."
         extra = "Tell me a bit more."
     for q in asked:
         add(out, lang, q, both, unit_id)
-    out.append(dialogue(lang, [(asked[1], both), (again, both)], unit_id))
-    out.append(dialogue(lang, [(asked[2], both), (extra, both)], unit_id))
+    out.append(dialogue(lang, [(asked[6], both), (again, both)], unit_id))
+    out.append(dialogue(lang, [(asked[7], both), (extra, both)], unit_id))
 
 
 def greetings() -> list[dict]:
@@ -133,72 +139,21 @@ def greetings() -> list[dict]:
         ("مرحبًا، هل تعلّمني؟", "مرحبًا. اسألني عن فكرة تقنية، وسأشرحها."),
         ("هل تساعدني على الفهم؟", "نعم. قل لي أي فكرة تريد أن تفهمها، واسأل مرة أخرى إن لم تتضح."),
     ]
-    return [row("en", "course", segs(q, plan_for("en"), None, None, a)) for q, a in en] + [
-        row("ar", "course", segs(q, plan_for("ar"), None, None, a)) for q, a in ar
+    return [row("en", "course", segs(q, "none", None, None, a)) for q, a in en] + [
+        row("ar", "course", segs(q, "none", None, None, a)) for q, a in ar
     ]
 
 
 def from_step(step: dict, lang: str, out: list[dict], unit_id: str = "") -> None:
-    kind = step.get("type")
-    prompt = txt(step.get("prompt"), lang)
-    explain = txt(step.get("explain"), lang)
-    if kind in ("choice", "image"):
-        picked = next((o for o in step.get("options") or [] if o.get("id") == step.get("answer")), None)
-        if picked and len(prompt) >= 12:
-            ans = opt_text(picked, lang)
-            add(out, lang, prompt, f"{ans}. {explain}" if explain else ans, unit_id)
+    if step.get("type") != "read":
         return
-    if kind == "multi":
-        want = set(step.get("answers") or [])
-        names = [opt_text(o, lang) for o in step.get("options") or [] if o.get("id") in want]
-        names = [n for n in names if n]
-        if names and len(prompt) >= 12:
-            sep = "، " if lang == "ar" else ", "
-            add(out, lang, prompt, (sep.join(names) + (". " + explain if explain else "")), unit_id)
-        return
-    if kind == "truefalse":
-        yes = "نعم" if lang == "ar" else "Yes"
-        no = "لا" if lang == "ar" else "No"
-        ans = yes if step.get("answer") else no
-        if len(prompt) >= 12:
-            add(out, lang, prompt, f"{ans}. {explain}" if explain else ans, unit_id)
-        return
-    if kind == "match":
-        pairs = []
-        for pair in step.get("pairs") or []:
-            left, right = txt(pair.get("left"), lang), txt(pair.get("right"), lang)
-            if left and right:
-                pairs.append(f"{left}: {right}")
-        if pairs and len(prompt) >= 12:
-            sep = "، " if lang == "ar" else ", "
-            add(out, lang, prompt, sep.join(pairs), unit_id)
-        return
-    if kind == "order":
-        steps = [txt(s, lang) for s in step.get("steps") or []]
-        steps = [s for s in steps if s]
-        if steps and len(prompt) >= 12:
-            add(out, lang, prompt, " ".join(f"{i}. {s}" for i, s in enumerate(steps, 1)), unit_id)
-        return
-    if kind == "scenario":
-        good = next((c for c in step.get("choices") or [] if c.get("tone") == "good"), None)
-        if good and len(prompt) >= 12:
-            ans = txt(good.get("label"), lang)
-            why = txt(good.get("consequence"), lang)
-            add(out, lang, prompt, f"{ans}. {why}" if why else ans, unit_id)
-        return
-    if kind == "read":
-        title = txt(step.get("title"), lang)
-        body = lead(txt(step.get("body"), lang), 2)
-        add(out, lang, f"اشرح: {title}" if lang == "ar" else f"Explain: {title}", body, unit_id)
-        talk(out, lang, title, body, unit_id)
-        for term in step.get("keyTerms") or []:
-            name, defin = txt(term.get("term"), lang), txt(term.get("def"), lang)
-            q = f"ما معنى {name}؟" if lang == "ar" else f"What does {name} mean?"
-            add(out, lang, q, defin, unit_id)
-            talk(out, lang, name, defin, unit_id)
-        return
-    if explain and len(prompt) > 12:
-        add(out, lang, prompt, explain, unit_id)
+    title = txt(step.get("title"), lang)
+    body = lead(txt(step.get("body"), lang), 1)
+    add(out, lang, f"اشرح: {title}" if lang == "ar" else f"Explain: {title}", body, unit_id)
+    talk(out, lang, title, body, unit_id)
+    for term in step.get("keyTerms") or []:
+        name, defin = txt(term.get("term"), lang), lead(txt(term.get("def"), lang), 1)
+        talk(out, lang, name, defin, unit_id)
 
 
 PACK_NAMES = {

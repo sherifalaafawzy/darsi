@@ -37,7 +37,11 @@ class TopTuner:
             p.requires_grad_(False)
         self.params = []
         for b in model.blocks[self.first:]:
-            for p in (b.attn_norm, b.wqkv.weight, b.wo.weight, b.ffn_norm, b.w1.weight, b.w2.weight):
+            ps = [b.attn_norm, b.wqkv.weight, b.wo.weight, b.ffn_norm, b.w1.weight]
+            if b.w3 is not None:
+                ps.append(b.w3.weight)
+            ps.append(b.w2.weight)
+            for p in ps:
                 p.requires_grad_(True)
                 self.params.append(p)
         model.norm.requires_grad_(True)
@@ -100,7 +104,9 @@ def fixture(a):
     picks = [bus_conv(world, rnd, lang, rnd.choice((BUS_EN if lang == "en" else BUS_AR)[:8]), rnd.choice(world["villages"])) for lang in ("en", "ar")]
     examples = [encode_conv(tok, c["segs"]) for c in picks]
     out = {"note": "tools/tinylm/finetune.py fixture: CPU float32, int8 base weights", "examples": [{"ids": i, "mask": m} for i, m in examples], "runs": []}
-    names = ["attnNorm", "wqkv", "wo", "ffnNorm", "w1", "w2"]
+    _, cfg = load(a.ckpt)
+    names = ["attnNorm", "wqkv", "wo", "ffnNorm", "w1"] + (["w3"] if cfg.activation == "swiglu" else []) + ["w2"]
+    per_block = len(names)
     for blocks in (1, 2):
         model, cfg = load(a.ckpt)
         tt = TopTuner(model, blocks)
@@ -110,7 +116,7 @@ def fixture(a):
         grads = []
         g = torch.Generator().manual_seed(blocks)
         for k, p in enumerate(tt.params):
-            name = "norm" if k == len(tt.params) - 1 else f"b{k // 6}.{names[k % 6]}"
+            name = "norm" if k == len(tt.params) - 1 else f"b{k // per_block}.{names[k % per_block]}"
             flat = p.grad.flatten()
             idx = torch.randint(0, flat.numel(), (48,), generator=g)
             grads.append({"name": name, "size": flat.numel(), "norm": float(flat.norm()), "idx": idx.tolist(), "values": b64(flat[idx])})

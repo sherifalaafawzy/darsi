@@ -5,6 +5,8 @@
  * the grammar are a new scene, so the courses are not a fixed set of pictures. This file runs the idea and fills a
  * Lesson Studio pack element. The player draws each frame from the clock. Limits keep the JSON inside 384 tokens.
  */
+import courseTerms from "./course-scenes.json";
+
 export type Lang = "en" | "ar";
 
 export type ArchPresetName = "mlp" | "cnn" | "rnn" | "transformer" | "gpt" | "agent" | "rag" | "autoencoder" | "gan" | "resnet";
@@ -20,7 +22,7 @@ export type SceneSpec =
   | { kind: "pattern"; a: number; b: number }
   | { kind: "net"; layers: number[]; w?: number[]; b?: number; in?: string[]; out?: string }
   | { kind: "arch"; preset?: ArchPresetName; steps?: string[]; title?: string }
-  | { kind: "plot"; mode: "descent" | "fit" | "loss"; start?: number }
+  | { kind: "plot"; mode: "descent" | "fit" | "loss" | "distribution"; start?: number }
   | { kind: "gates"; gate: "and" | "or" | "xor" | "not" }
   | { kind: "bits"; n: number; values: number[] }
   | { kind: "flow"; ask: string; yes: string; no: string }
@@ -127,7 +129,7 @@ function checkSpec(v: unknown): SceneSpec | null {
     return { kind: "arch", ...(preset ? { preset } : {}), ...(steps ? { steps } : {}), ...(title ? { title } : {}) };
   }
   if (o.kind === "plot") {
-    const mode = o.mode === "descent" || o.mode === "fit" || o.mode === "loss" ? o.mode : null;
+    const mode = o.mode === "descent" || o.mode === "fit" || o.mode === "loss" || o.mode === "distribution" ? o.mode : null;
     if (!mode) return null;
     const start = o.start === undefined ? undefined : num(o.start);
     if (o.start !== undefined && (start == null || start < 0 || start > 8)) return null;
@@ -826,6 +828,29 @@ function plotScene(spec: Extract<SceneSpec, { kind: "plot" }>, json: string): Bu
     };
     return built(spec, json, dur, line, tx("Loss drops as the model trains", "انخفاض الخسارة أثناء التدريب"), body, "steps");
   }
+  if (spec.mode === "distribution") {
+    const pts: [number, number][] = [[0, 0.1], [1, 0.3], [2, 0.8], [3, 1.8], [4, 3.5], [5, 4.6], [6, 3.5], [7, 1.8], [8, 0.8], [9, 0.3], [10, 0.1]];
+    const dur = 8;
+    const line = tx(
+      "The mean marks the centre at 5. The standard deviation is a typical distance from that centre: about 2 here, so most values lie between 3 and 7.",
+      "يحدّد المتوسط المركز عند 5. والانحراف المعياري مسافة معتادة عن المركز: نحو 2 هنا، لذلك تقع أغلب القيم بين 3 و7.",
+    );
+    const body = {
+      id: "plot", x: 64, y: 110, w: 1152, h: 548, type: "plot", xr: [0, 10], yr: [0, 5], grid: true,
+      xLabel: tx("Value", "القيمة"), yLabel: tx("How common", "مدى الشيوع"),
+      series: [
+        { kind: "area", pts, tone: "accent", label: tx("Distribution", "التوزيع") },
+        { kind: "vline", at: 5, tone: "ok", label: tx("Mean = 5", "المتوسط = 5") },
+        { kind: "vline", at: 3, tone: "accent2", label: tx("−1 standard deviation", "−1 انحراف معياري") },
+        { kind: "vline", at: 7, tone: "accent2", label: tx("+1 standard deviation", "+1 انحراف معياري") },
+      ],
+      anim: [
+        { prop: "reveal", keys: [{ at: 0.2, value: 0 }, { at: 2.0, value: 1, ease: "linear" }] },
+        { prop: "focus", keys: [{ at: 2.0, value: 1 }, { at: 4.0, value: 2 }, { at: 5.5, value: 3 }, { at: 7.0, value: 4 }] },
+      ],
+    };
+    return built(spec, json, dur, line, tx("Mean and standard deviation", "المتوسط والانحراف المعياري"), body, "lesson");
+  }
   const dots: [number, number][] = [[1.2, 3.2], [2.0, 3.6], [2.6, 2.9], [1.6, 2.4], [4.2, 1.2], [5.0, 1.8], [5.4, 0.9], [4.6, 2.1]];
   const cls = [0, 0, 0, 0, 1, 1, 1, 1];
   const params = [[0.1, 2.2], [-0.1, 2.6], [-0.3, 3.1], [-0.5, 3.7], [-0.65, 4.2], [-0.75, 4.5]];
@@ -1021,6 +1046,7 @@ export function specForTopic(topic: string, question: string): SceneSpec | null 
   if (kind === "descent") return { kind: "plot", mode: "descent", start: digits.find((x) => x <= 7) ?? n(0, 2, 0) };
   if (kind === "loss") return { kind: "plot", mode: "loss" };
   if (kind === "fit") return { kind: "plot", mode: "fit" };
+  if (kind === "distribution") return { kind: "plot", mode: "distribution" };
   if (kind === "gates") {
     const q = question.toLowerCase();
     const gate = /\bxor\b/.test(q) ? "xor" : /\bnot\b/.test(q) ? "not" : /\bor\b/.test(q) ? "or" : "and";
@@ -1093,6 +1119,7 @@ export function specFromQuestion(question: string): SceneSpec | null {
   const q = question.normalize("NFKC").toLowerCase().replace(/[ً-ٰٟـ]/g, "").replace(/[إأآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه");
   if (/gradient|descent|learning rate|slope|انحدار\s+تدريجي|الانحدار\s+التدريجي|معدل\s+التعلم/.test(q)) return specForTopic("descent", question);
   if (/loss|epoch|training curve|خساره|جوله\s+تدريب/.test(q)) return specForTopic("loss", question);
+  if (/\b(?:standard deviation|histogram|distribution|mean|median|mode|range|outlier|iqr|population|sample|margin of error)\b|انحراف\s+معياري|مدرج\s+تكراري|توزيع|متوسط|وسيط|منوال|مدي|قيمه\s+شاذه|مجتمع|عينه|هامش\s+الخطا/.test(q)) return specForTopic("distribution", question);
   if (/cnn|convolut|vision|pixel|filter|pooling|التفاف|تجميع|التفافيه|رؤيه|بكسل|الصور/.test(q)) return specForTopic("cnn", question);
   if (/rnn|recurrent|متكرره/.test(q)) return specForTopic("rnn", question);
   if (/transformer|self-attention|attention|انتباه|محول/.test(q) && !/تناظري/.test(q)) return specForTopic("transformer", question);
@@ -1101,7 +1128,7 @@ export function specFromQuestion(question: string): SceneSpec | null {
   if (/autoencoder|bottleneck|(?:ال)?ترميز\s+(?:ال)?تلقائي|(?:ال)?مرمز\s+(?:ال)?تلقائي/.test(q)) return specForTopic("autoencoder", question);
   if (/gan|discriminator|adversarial network|deepfake|تزييف|مولد|المميز/.test(q)) return specForTopic("gan", question);
   if (/resnet|residual|skip connection|وصله\s+الاختصار|(?:ال)?شبكه\s+(?:ال)?متبقيه|متبقيه/.test(q)) return specForTopic("resnet", question);
-  if (/\bmlp\b|multi-layer|متعدده\s+الطبقات/.test(q) || (/الطبقات\s+المخفيه/.test(q) && !/تعلم\s+عميق/.test(q))) return specForTopic("mlp", question);
+  if (/\bmlp\b|multi-layer|متعدده\s+الطبقات/.test(q) || (/الطبقات\s+المخفيه/.test(q) && !/(?:ال)?تعلم\s+(?:ال)?عميق/.test(q))) return specForTopic("mlp", question);
   if (/neuron|perceptron|activation|weight|bias|(?:ال)?خليه\s+(?:ال)?عصبيه|بيرسبترون|تفعيل|انحياز/.test(q) && !/network|شبكه/.test(q)) {
     return specForTopic("neuron", question);
   }
@@ -1140,4 +1167,35 @@ export function specFromQuestion(question: string): SceneSpec | null {
     return { kind: "arch", title: "How an AI model works", steps: ["Examples (data)", "Train weights", "Test on new data", "Prediction"] };
   }
   return null;
+}
+
+type CourseTerm = [term: string, track: string];
+const COURSE_TERMS = courseTerms as CourseTerm[];
+const courseNorm = (s: string) =>
+  ` ${s.normalize("NFKC").toLowerCase().replace(/[ً-ٰٟـ]/g, "").replace(/[إأآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/[^\p{L}\p{N}]+/gu, " ").trim()} `;
+
+/** A compact, answer-free index of authored course terms. The neural model still gets first chance to write the JSON;
+ * this chooses the allowed pack family and supplies the fallback when a 3M model does not recognize a fresh wording. */
+export function specFromCourse(question: string): SceneSpec | null {
+  const hay = courseNorm(question);
+  let found: CourseTerm | null = null;
+  for (const row of COURSE_TERMS) {
+    if (hay.includes(` ${row[0]} `)) { found = row; break; }
+  }
+  if (!found) return null;
+  // Let a named concept select a precise pack before using its curriculum track's general visual language.
+  const precise = specFromQuestion(`${question} ${found[0]}`);
+  if (precise) return precise;
+  switch (found[1]) {
+    case "a": return specForTopic("net", question);
+    case "i": return specForTopic("sensor", question);
+    case "c": return specForTopic("packet", question);
+    case "p": return specForTopic("loop", question);
+    case "d": return specForTopic("query", question);
+    case "o": return specForTopic("path", question);
+    case "g": return specForTopic("agent", question);
+    case "s": return specForTopic("guardrail", question);
+    case "x": return specForTopic("distribution", question);
+    default: return null;
+  }
 }

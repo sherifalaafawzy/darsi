@@ -8,7 +8,7 @@
  * markers). tools/tinylm/finetune.py is the PyTorch reference; tests/tinylm/finetune.test.ts compares the gradients.
  */
 import { buildPrompt, type Conversation } from "./format";
-import { gelu, matvec, ropeTables, TinyModel, type Block, type QMatrix, type TinyConfig, type TinyWeights } from "./model";
+import { gelu, matvec, ropeTables, silu, TinyModel, type Block, type QMatrix, type TinyConfig, type TinyWeights } from "./model";
 import { MARK, type Tokenizer } from "./tokenizer";
 
 /** A training sequence: `mask[t]` is 1 where the model should predict `ids[t]` (from position t − 1). */
@@ -35,8 +35,9 @@ export function exampleFrom(tok: Tokenizer, c: Conversation): Example {
 }
 
 type F32 = Float32Array;
-interface FBlock { attnNorm: F32; wqkv: F32; wo: F32; ffnNorm: F32; w1: F32; w2: F32 }
-const KEYS = ["attnNorm", "wqkv", "wo", "ffnNorm", "w1", "w2"] as const;
+interface FBlock { attnNorm: F32; wqkv: F32; wo: F32; ffnNorm: F32; w1: F32; w3?: F32; w2: F32 }
+const keysOf = (b: FBlock): (keyof FBlock)[] =>
+  ["attnNorm", "wqkv", "wo", "ffnNorm", "w1", ...(b.w3 ? ["w3" as const] : []), "w2"];
 
 export interface FineTuneOptions {
   /** How many top blocks learn (default 1; the rest stay frozen). */
@@ -105,7 +106,15 @@ function geluGrad(u: number): number {
   return 0.5 * (1 + t) + 0.5 * u * (1 - t * t) * GELU_C * (1 + 3 * 0.044715 * u * u);
 }
 
-interface Saved { T: number; x: F32; r1: F32; h1: F32; qkv: F32; P: F32; att: F32; x2: F32; r2: F32; h2: F32; u: F32; a: F32; out: F32 }
+function siluGrad(u: number): number {
+  const s = 1 / (1 + Math.exp(-u));
+  return s * (1 + u * (1 - s));
+}
+
+interface Saved {
+  T: number; x: F32; r1: F32; h1: F32; qkv: F32; P: F32; att: F32;
+  x2: F32; r2: F32; h2: F32; u: F32; gate?: F32; a: F32; out: F32;
+}
 
 export class FineTuner {
   readonly cfg: TinyConfig;
@@ -131,10 +140,19 @@ export class FineTuner {
     this.opts = { blocks: 1, lr: 1e-3, betas: [0.9, 0.999], eps: 1e-8, clip: 1, ...opts };
     const k = Math.max(1, Math.min(this.opts.blocks, this.cfg.layers));
     this.first = this.cfg.layers - k;
-    const fb = (b: Block): FBlock => ({ attnNorm: Float32Array.from(b.attnNorm), wqkv: deq(b.wqkv), wo: deq(b.wo), ffnNorm: Float32Array.from(b.ffnNorm), w1: deq(b.w1), w2: deq(b.w2) });
+    const fb = (b: Block): FBlock => ({
+      attnNorm: Float32Array.from(b.attnNorm), wqkv: deq(b.wqkv), wo: deq(b.wo),
+      ffnNorm: Float32Array.from(b.ffnNorm), w1: deq(b.w1),
+      ...(b.w3 ? { w3: deq(b.w3) } : {}), w2: deq(b.w2),
+    });
     this.blocks = w.blocks.slice(this.first).map(fb);
     this.norm = Float32Array.from(w.norm);
-    const zero = (b: FBlock): FBlock => ({ attnNorm: new Float32Array(b.attnNorm.length), wqkv: new Float32Array(b.wqkv.length), wo: new Float32Array(b.wo.length), ffnNorm: new Float32Array(b.ffnNorm.length), w1: new Float32Array(b.w1.length), w2: new Float32Array(b.w2.length) });
+    const zero = (b: FBlock): FBlock => ({
+      attnNorm: new Float32Array(b.attnNorm.length), wqkv: new Float32Array(b.wqkv.length),
+      wo: new Float32Array(b.wo.length), ffnNorm: new Float32Array(b.ffnNorm.length),
+      w1: new Float32Array(b.w1.length), ...(b.w3 ? { w3: new Float32Array(b.w3.length) } : {}),
+      w2: new Float32Array(b.w2.length),
+    });
     this.grads = { blocks: this.blocks.map(zero), norm: new Float32Array(this.norm.length) };
     this.m = this.params(this.grads).map((p) => new Float32Array(p.length));
     this.v = this.params(this.grads).map((p) => new Float32Array(p.length));
@@ -144,7 +162,7 @@ export class FineTuner {
 
   /** The learning tensors (or their gradients), in a fixed order: per block attnNorm, wqkv, wo, ffnNorm, w1, w2; then norm. */
   private params(src: { blocks: FBlock[]; norm: F32 } = { blocks: this.blocks, norm: this.norm }): F32[] {
-    return [...src.blocks.flatMap((b) => KEYS.map((k) => b[k])), src.norm];
+    return [...src.blocks.flatMap((b) => keysOf(b).map((k) => b[k] as F32)), src.norm];
   }
 
   /** Adds examples: runs each once through the frozen blocks. Returns how many targets they hold. */
@@ -181,10 +199,14 @@ export class FineTuner {
 
   private forwardBlock(b: FBlock, x: F32, T: number): Saved {
     const { dim, heads, ffn, eps } = this.cfg;
-    const hd = dim / heads, half = hd / 2, inv = 1 / Math.sqrt(hd);
-    const r1 = new Float32Array(T), h1 = new Float32Array(T * dim), qkv = new Float32Array(T * 3 * dim);
+    const kvHeads = this.cfg.kvHeads || heads;
+    const hd = dim / heads, kvDim = kvHeads * hd, qkvDim = dim + 2 * kvDim;
+    const group = heads / kvHeads, half = hd / 2, inv = 1 / Math.sqrt(hd);
+    const r1 = new Float32Array(T), h1 = new Float32Array(T * dim), qkv = new Float32Array(T * qkvDim);
     const P = new Float32Array(heads * T * T), att = new Float32Array(T * dim), x2 = new Float32Array(T * dim);
-    const r2 = new Float32Array(T), h2 = new Float32Array(T * dim), u = new Float32Array(T * ffn), a = new Float32Array(T * ffn);
+    const r2 = new Float32Array(T), h2 = new Float32Array(T * dim), u = new Float32Array(T * ffn);
+    const gate = b.w3 ? new Float32Array(T * ffn) : undefined;
+    const a = new Float32Array(T * ffn);
     const out = new Float32Array(T * dim);
     const norm = (src: F32, g: F32, r: F32, dst: F32) => {
       for (let t = 0; t < T; t++) {
@@ -195,20 +217,27 @@ export class FineTuner {
       }
     };
     norm(x, b.attnNorm, r1, h1);
-    mm(b.wqkv, 3 * dim, dim, h1, T, qkv);
-    for (let t = 0; t < T; t++) for (const off of [0, dim]) for (let hh = 0; hh < heads; hh++) for (let i = 0; i < half; i++) {
-      const j = t * 3 * dim + off + hh * hd + 2 * i, c = this.cos[t * half + i], s = this.sin[t * half + i];
+    mm(b.wqkv, qkvDim, dim, h1, T, qkv);
+    for (let t = 0; t < T; t++) for (let hh = 0; hh < heads; hh++) for (let i = 0; i < half; i++) {
+      const j = t * qkvDim + hh * hd + 2 * i, c = this.cos[t * half + i], s = this.sin[t * half + i];
+      const p = qkv[j], q = qkv[j + 1];
+      qkv[j] = p * c - q * s;
+      qkv[j + 1] = p * s + q * c;
+    }
+    for (let t = 0; t < T; t++) for (let hh = 0; hh < kvHeads; hh++) for (let i = 0; i < half; i++) {
+      const j = t * qkvDim + dim + hh * hd + 2 * i, c = this.cos[t * half + i], s = this.sin[t * half + i];
       const p = qkv[j], q = qkv[j + 1];
       qkv[j] = p * c - q * s;
       qkv[j + 1] = p * s + q * c;
     }
     for (let hh = 0; hh < heads; hh++) {
+      const kvh = Math.floor(hh / group);
       for (let t = 0; t < T; t++) {
-        const row = (hh * T + t) * T, qo = t * 3 * dim + hh * hd;
+        const row = (hh * T + t) * T, qo = t * qkvDim + hh * hd;
         let max = -Infinity;
         for (let s = 0; s <= t; s++) {
           let sum = 0;
-          const ko = s * 3 * dim + dim + hh * hd;
+          const ko = s * qkvDim + dim + kvh * hd;
           for (let j = 0; j < hd; j++) sum += qkv[qo + j] * qkv[ko + j];
           P[row + s] = sum * inv;
           if (P[row + s] > max) max = P[row + s];
@@ -217,7 +246,7 @@ export class FineTuner {
         for (let s = 0; s <= t; s++) { P[row + s] = Math.exp(P[row + s] - max); z += P[row + s]; }
         for (let s = 0; s <= t; s++) P[row + s] /= z;
         for (let s = 0; s <= t; s++) {
-          const p = P[row + s], vo = s * 3 * dim + 2 * dim + hh * hd;
+          const p = P[row + s], vo = s * qkvDim + dim + kvDim + kvh * hd;
           for (let j = 0; j < hd; j++) att[t * dim + hh * hd + j] += p * qkv[vo + j];
         }
       }
@@ -226,10 +255,15 @@ export class FineTuner {
     for (let i = 0; i < T * dim; i++) x2[i] += x[i];
     norm(x2, b.ffnNorm, r2, h2);
     mm(b.w1, ffn, dim, h2, T, u);
-    for (let i = 0; i < T * ffn; i++) a[i] = gelu(u[i]);
+    if (b.w3 && gate) {
+      mm(b.w3, ffn, dim, h2, T, gate);
+      for (let i = 0; i < T * ffn; i++) a[i] = silu(u[i]) * gate[i];
+    } else {
+      for (let i = 0; i < T * ffn; i++) a[i] = gelu(u[i]);
+    }
     mm(b.w2, dim, ffn, a, T, out);
     for (let i = 0; i < T * dim; i++) out[i] += x2[i];
-    return { T, x, r1, h1, qkv, P, att, x2, r2, h2, u, a, out };
+    return { T, x, r1, h1, qkv, P, att, x2, r2, h2, u, gate, a, out };
   }
 
   /** RMSNorm backward: dy is the gradient of (x · r · g); adds to dg and (if given) dx. */
@@ -252,47 +286,66 @@ export class FineTuner {
   private backBlock(b: FBlock, g: FBlock, s: Saved, dout: F32, wantDx: boolean): F32 | null {
     const { dim, heads, ffn } = this.cfg;
     const { T } = s;
-    const hd = dim / heads, half = hd / 2, inv = 1 / Math.sqrt(hd);
+    const kvHeads = this.cfg.kvHeads || heads;
+    const hd = dim / heads, kvDim = kvHeads * hd, qkvDim = dim + 2 * kvDim;
+    const group = heads / kvHeads, half = hd / 2, inv = 1 / Math.sqrt(hd);
     const dx2 = Float32Array.from(dout);
     const da = new Float32Array(T * ffn);
     mmBack(b.w2, dim, ffn, s.a, dout, T, g.w2, da);
-    for (let i = 0; i < T * ffn; i++) da[i] *= geluGrad(s.u[i]);
     const dh2 = new Float32Array(T * dim);
-    mmBack(b.w1, ffn, dim, s.h2, da, T, g.w1, dh2);
+    if (b.w3 && g.w3 && s.gate) {
+      const du = new Float32Array(T * ffn), dg = new Float32Array(T * ffn);
+      for (let i = 0; i < T * ffn; i++) {
+        du[i] = da[i] * s.gate[i] * siluGrad(s.u[i]);
+        dg[i] = da[i] * silu(s.u[i]);
+      }
+      mmBack(b.w1, ffn, dim, s.h2, du, T, g.w1, dh2);
+      mmBack(b.w3, ffn, dim, s.h2, dg, T, g.w3, dh2);
+    } else {
+      for (let i = 0; i < T * ffn; i++) da[i] *= geluGrad(s.u[i]);
+      mmBack(b.w1, ffn, dim, s.h2, da, T, g.w1, dh2);
+    }
     this.normBack(s.x2, s.r2, b.ffnNorm, dh2, T, g.ffnNorm, dx2);
     const datt = new Float32Array(T * dim);
     mmBack(b.wo, dim, dim, s.att, dx2, T, g.wo, datt);
-    const dqkv = new Float32Array(T * 3 * dim);
+    const dqkv = new Float32Array(T * qkvDim);
     const dP = new Float32Array(T);
     for (let hh = 0; hh < heads; hh++) {
+      const kvh = Math.floor(hh / group);
       for (let t = 0; t < T; t++) {
         const row = (hh * T + t) * T, ao = t * dim + hh * hd;
         let sum = 0;
         for (let u = 0; u <= t; u++) {
-          const vo = u * 3 * dim + 2 * dim + hh * hd, p = s.P[row + u];
+          const vo = u * qkvDim + dim + kvDim + kvh * hd, p = s.P[row + u];
           let d = 0;
           for (let j = 0; j < hd; j++) { d += datt[ao + j] * s.qkv[vo + j]; dqkv[vo + j] += p * datt[ao + j]; }
           dP[u] = d;
           sum += p * d;
         }
-        const qo = t * 3 * dim + hh * hd;
+        const qo = t * qkvDim + hh * hd;
         for (let u = 0; u <= t; u++) {
           const dS = s.P[row + u] * (dP[u] - sum) * inv;
           if (dS === 0) continue;
-          const ko = u * 3 * dim + dim + hh * hd;
+          const ko = u * qkvDim + dim + kvh * hd;
           for (let j = 0; j < hd; j++) { dqkv[qo + j] += dS * s.qkv[ko + j]; dqkv[ko + j] += dS * s.qkv[qo + j]; }
         }
       }
     }
     // Undo the rotation: rotate the q and k gradients back by the same angle.
-    for (let t = 0; t < T; t++) for (const off of [0, dim]) for (let hh = 0; hh < heads; hh++) for (let i = 0; i < half; i++) {
-      const j = t * 3 * dim + off + hh * hd + 2 * i, c = this.cos[t * half + i], sn = this.sin[t * half + i];
+    for (let t = 0; t < T; t++) for (let hh = 0; hh < heads; hh++) for (let i = 0; i < half; i++) {
+      const j = t * qkvDim + hh * hd + 2 * i, c = this.cos[t * half + i], sn = this.sin[t * half + i];
+      const p = dqkv[j], q = dqkv[j + 1];
+      dqkv[j] = p * c + q * sn;
+      dqkv[j + 1] = -p * sn + q * c;
+    }
+    for (let t = 0; t < T; t++) for (let hh = 0; hh < kvHeads; hh++) for (let i = 0; i < half; i++) {
+      const j = t * qkvDim + dim + hh * hd + 2 * i, c = this.cos[t * half + i], sn = this.sin[t * half + i];
       const p = dqkv[j], q = dqkv[j + 1];
       dqkv[j] = p * c + q * sn;
       dqkv[j + 1] = -p * sn + q * c;
     }
     const dh1 = new Float32Array(T * dim);
-    mmBack(b.wqkv, 3 * dim, dim, s.h1, dqkv, T, g.wqkv, dh1);
+    mmBack(b.wqkv, qkvDim, dim, s.h1, dqkv, T, g.wqkv, dh1);
     const dx = wantDx ? Float32Array.from(dx2) : null;
     this.normBack(s.x, s.r1, b.attnNorm, dh1, T, g.attnNorm, dx);
     return dx;
@@ -397,11 +450,19 @@ export class FineTuner {
 
   /** The model with the learned blocks quantized back to int8, ready for TinyModel and generation. */
   weights(): TinyWeights {
-    const { dim, ffn } = this.cfg;
+    const { dim, heads, ffn } = this.cfg;
+    const kvHeads = this.cfg.kvHeads || heads;
+    const qkvRows = dim + 2 * kvHeads * (dim / heads);
     const blocks = this.base.blocks.map((b, l) => {
       if (l < this.first) return b;
       const f = this.blocks[l - this.first];
-      return { attnNorm: Float32Array.from(f.attnNorm), wqkv: quantizeRows(f.wqkv, 3 * dim, dim), wo: quantizeRows(f.wo, dim, dim), ffnNorm: Float32Array.from(f.ffnNorm), w1: quantizeRows(f.w1, ffn, dim), w2: quantizeRows(f.w2, dim, ffn) };
+      return {
+        attnNorm: Float32Array.from(f.attnNorm), wqkv: quantizeRows(f.wqkv, qkvRows, dim),
+        wo: quantizeRows(f.wo, dim, dim), ffnNorm: Float32Array.from(f.ffnNorm),
+        w1: quantizeRows(f.w1, ffn, dim),
+        ...(f.w3 ? { w3: quantizeRows(f.w3, ffn, dim) } : {}),
+        w2: quantizeRows(f.w2, dim, ffn),
+      };
     });
     return { config: this.cfg, tok: this.base.tok, blocks, norm: Float32Array.from(this.norm) };
   }

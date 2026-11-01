@@ -25,7 +25,11 @@ const maxDiff = (a: Float32Array, b: Float32Array) => {
 describe("Darsi Tiny model", () => {
   it("is 2–4 M parameters and at most 3 MB gzipped", () => {
     const c = w.config;
-    const params = c.vocab * c.dim + c.layers * (4 * c.dim * c.dim + 2 * c.dim * c.ffn + 2 * c.dim) + c.dim;
+    const kvHeads = c.kvHeads || c.heads;
+    const kvDim = kvHeads * (c.dim / c.heads);
+    const attn = (c.dim + 2 * kvDim) * c.dim + c.dim * c.dim;
+    const mlp = (c.activation === "swiglu" ? 3 : 2) * c.dim * c.ffn;
+    const params = c.vocab * c.dim + c.layers * (attn + mlp + 2 * c.dim) + c.dim;
     expect(params).toBeGreaterThan(2e6);
     expect(params).toBeLessThan(4e6);
     expect(c.ctx).toBe(384);

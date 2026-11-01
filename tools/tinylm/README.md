@@ -1,11 +1,9 @@
 # Darsi Tiny
 
-The smallest language model that's useful for Darsi's AI-agent lessons: 2.94 M parameters, int8, 2.75 MB gzipped, run
-in plain TypeScript on old phones. It reads a request in English or Arabic, writes a short plan, calls one of ten
-simulated school tools, reads the result and answers. It asks when something is missing, asks for approval before
-sending a message, refuses harmful requests, and says "I can't" for anything its tools don't cover. Its job is to make
-an agent loop visible and to show, by contrast, why large models are large. It is not generally smart; see
-[MODEL_CARD.md](MODEL_CARD.md).
+Four on-device models, all using the same 2.938 M-parameter GQA + SwiGLU backbone: English and Arabic app models for
+the agent/security Labs, and English and Arabic teaching models that generate compact Lesson Studio scenes and explain
+them. Weights are int8 and the runtime is dependency-free TypeScript for old phones. A phone downloads only the
+language and job it uses. The original bilingual v1 model remains the fallback; see [MODEL_CARD.md](MODEL_CARD.md).
 
 | Here | What |
 |---|---|
@@ -18,6 +16,8 @@ an agent loop visible and to show, by contrast, why large models are large. It i
 | `bpe.py`, `tokenizer.json` | the byte-level BPE tokenizer (mirrored in `tokenizer.ts`), and the shipped one (committed: the v4 copy drills are made of its pieces) |
 | `model.py`, `train.py` | the transformer (mirrored in `model.ts`) and its training |
 | `evaluate.py` | gate 1: right tool and arguments, English and Arabic separately, on four test sets |
+| `scene_data.py`, `course_data.py` | teaching-model scene calls and real course concepts |
+| `eval/build_scene_eval.py`, `eval/check_scenes.py` | 600-case teaching eval per language |
 | `export.py` | `model.bin`, `tokenizer.json`, `world.json`, `replay.json`, `manifest.json` and the test fixtures |
 | `finetune.py` | fine-tuning the top blocks: the reference for `finetune.ts`, its fixture, and a demo |
 | `web/` | gate 2: a test page and `speed.mjs`, which times it in Chromium with the CPU throttled 6× |
@@ -45,8 +45,8 @@ cd apps/web && npx vitest run tests/tinylm && npx tsc --noEmit
 
 The speed check needs Playwright's Chromium, or `CHROMIUM_PATH` pointing at a `chrome.exe`.
 
-`data` writes the data the shipped model was trained on (`gen_data.py --round 3`, byte for byte). `--round 4` is the
-v4 experiment, which wasn't shipped (MODEL_CARD.md, "v4").
+The v1 reproduction still uses `gen_data.py --round 3`. The v2 app models use the latest round-5 data split by
+`split_lang.py`; each language has its own BPE. The teaching models use `scene_data.py` plus `course_data.py`.
 
 ## Trying a new model without replacing the shipped one
 
@@ -75,9 +75,9 @@ Then, in `apps/web`, run the tests with `TINYLM_LIB` and `TINYLM_FIXTURES` set t
   and ends after 5 s without work.
 - `format.ts`: `TOOLS`, `buildPrompt`, `renderPrompt`, `parseCall`, `readStep`.
 - `tools.ts`: `runTool(world, tool, args, lang)` over `world.json` (`fetchWorld()`).
-- The files are in `apps/web/public/lib/tinylm/v1/`. `lib/**` is already left out of the precache, and the `darsi-lib`
-  runtime cache keeps them once used. A new model must go in a new folder (`v2`): Hosting serves `/lib/**` as
-  immutable for a year.
+- The bilingual fallback is in `public/lib/tinylm/v1/`. The four v2 folders are `app/{en,ar}/v2/` and
+  `scene/{en,ar}/v2/`. `lib/**` is left out of the precache; `darsi-lib` keeps a model after its first use. Hosting
+  serves versioned library files as immutable for a year.
 
 ## Fine-tuning in the browser
 

@@ -67,7 +67,10 @@ def main() -> None:
     for name in ("model.bin", "tokenizer.json", "world.json", "replay.json"):
         b = open(os.path.join(a.public, name), "rb").read()
         files[name] = {"bytes": len(b), "gzip": len(gzip.compress(b, 9)), "sha256": hashlib.sha256(b).hexdigest()}
-    manifest = {"name": "Darsi Tiny scene", "version": 1, "params": model.params(), "config": cfg.to_dict(), "files": files}
+    manifest = {
+        "name": "Darsi Tiny teaching", "version": 2 if cfg.activation == "swiglu" else 1,
+        "params": model.params(), "config": cfg.to_dict(), "files": files,
+    }
     with open(os.path.join(a.public, "manifest.json"), "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=1)
     print(f"scene model {len(blob):,} bytes, gzip {files['model.bin']['gzip']:,} -> {a.public}")

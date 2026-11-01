@@ -10,8 +10,9 @@
  *   const r = await lm.generate(conv, { onToken: (t) => … });
  *   if (r.step.call) { const result = runTool(world, r.step.call.tool, r.step.call.args, "en"); … }
  *
- * The files live under /lib/tinylm/v1/: not precached, cache-first in darsi-lib once used. Only a Lab chunk may import
- * this folder; nothing on the startup path does, and nothing here imports Firebase.
+ * The bilingual fallback lives under /lib/tinylm/v1/; language-specific v2 models live under app/<lang>/v2 and
+ * scene/<lang>/v2. None is precached. Only a Lab chunk may import this folder; nothing on the startup path does,
+ * and nothing here imports Firebase.
  */
 import type { FineTuneOptions, StepResult } from "./finetune";
 import type { Conversation } from "./format";
@@ -37,8 +38,8 @@ export const TINYLM_BASE = "/lib/tinylm/v1/";
  * The two teaching models only write a compact scene. The phone expands it into a Lesson Studio pack and
  * the player draws every frame from the clock. They live at `teachBase(lang)`.
  */
-export const appBase = (lang: "en" | "ar") => `/lib/tinylm/app/${lang}/v1/`;
-export const teachBase = (lang: "en" | "ar") => `/lib/tinylm/scene/${lang}/v1/`;
+export const appBase = (lang: "en" | "ar") => `/lib/tinylm/app/${lang}/v2/`;
+export const teachBase = (lang: "en" | "ar") => `/lib/tinylm/scene/${lang}/v2/`;
 export const TEACH_FALLBACK = "/lib/tinylm/scene/v1/";
 
 /** The manifest (sizes, hashes, config): small, so the Lab can show the download size before downloading. */

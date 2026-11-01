@@ -25,6 +25,7 @@ const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? proces
 const lib = path.resolve(arg("--lib", path.join(root, "apps/web/public/lib")));
 const RATE = Number(arg("--rate", "6"));
 const OUT = arg("--out", path.join(root, "tools/tinylm/out/speed.json"));
+const QUICK = process.argv.includes("--quick");
 
 const dist = await mkdtemp(path.join(tmpdir(), "tinylm-speed-"));
 await build({ root: here, configFile: false, logLevel: "warn", build: { outDir: dist, emptyOutDir: true, target: "es2020" }, worker: { format: "es" } });
@@ -74,6 +75,7 @@ cdp.on("Target.attachedToTarget", async ({ sessionId, targetInfo }) => {
 // --fixtures: the reference.json that goes with --lib's model (export.py --fixtures); the shipped one by default.
 const fixtures = path.resolve(arg("--fixtures", path.join(root, "apps/web/tests/tinylm/fixtures")));
 const reference = JSON.parse(await readFile(path.join(fixtures, "reference.json"), "utf8")).cases;
+const manifest = JSON.parse(await readFile(path.join(lib, "tinylm/v1/manifest.json"), "utf8"));
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
 const report = { rate: RATE, chromium: browser.version(), date: new Date().toISOString() };
 
@@ -83,7 +85,7 @@ await cdp.send("Emulation.setCPUThrottlingRate", { rate: RATE });
 report.mainThrottled = await page.evaluate(() => window.tinyBench.main(6));
 report.parityThrottled = await page.evaluate((c) => window.tinyBench.parity(c), reference.map((c) => ({ prompt: c.prompt, generated: c.generated })));
 report.finetune = [];
-for (const blocks of [1, 2]) report.finetune.push(await page.evaluate((b) => window.tinyBench.finetune(b, 2), blocks));
+if (!QUICK) for (const blocks of [1, 2]) report.finetune.push(await page.evaluate((b) => window.tinyBench.finetune(b, 2), blocks));
 await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
 
 // The worker (Chromium can't throttle it, see above): streaming speed, ending when idle, stopping, fine-tuning.
@@ -92,7 +94,7 @@ await page.waitForTimeout(2500);
 report.workerEndedWhenIdle = !(await page.evaluate(() => window.tinyBench.running()));
 report.workerTargetsAfterIdle = (await cdp.send("Target.getTargets")).targetInfos.filter((t) => t.type === "worker").length;
 report.stop = await page.evaluate(() => window.tinyBench.stopTest());
-report.workerFinetune = await page.evaluate(() => window.tinyBench.workerFinetune());
+report.workerFinetune = QUICK ? null : await page.evaluate(() => window.tinyBench.workerFinetune());
 report.workerThrottle = workerThrottle;
 
 const rates = (runs) => runs.map((r) => r.tokPerSec);
@@ -104,6 +106,11 @@ report.summary = {
   workerMedianTokPerSec: median(rates(report.worker.runs)),
   workerThrottleApplied: workerThrottle.some((w) => w.reply?.result),
   parityThrottled: report.parityThrottled.every(Boolean),
+  kvCacheMiB: +(
+    manifest.config.layers * manifest.config.ctx *
+    ((manifest.config.kvHeads || manifest.config.heads) * (manifest.config.dim / manifest.config.heads)) * 2 * 4 /
+    2 ** 20
+  ).toFixed(3),
   gate2: Math.min(...rates(report.mainThrottled)) >= 30,
 };
 console.log(JSON.stringify(report.summary, null, 1));

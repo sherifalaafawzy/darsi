@@ -98,7 +98,10 @@ def main():
     ap.add_argument("--dim", type=int, default=192)
     ap.add_argument("--layers", type=int, default=6)
     ap.add_argument("--heads", type=int, default=6)
+    ap.add_argument("--kv-heads", type=int, default=0, help="K/V heads for GQA; 0 keeps one per query head (v1 MHA)")
     ap.add_argument("--ffn", type=int, default=640)
+    ap.add_argument("--activation", choices=("gelu", "swiglu"), default="gelu")
+    ap.add_argument("--ctx", type=int, default=384)
     ap.add_argument("--accum", type=int, default=1, help="split each batch into this many parts (less GPU memory, same result)")
     ap.add_argument("--checkpoint", action="store_true", help="recompute block activations in the backward pass (less memory)")
     a = ap.parse_args()
@@ -109,7 +112,10 @@ def main():
     np.random.seed(a.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     tok = Tokenizer.load(a.tok)
-    cfg = Config(vocab=tok.vocab, dim=a.dim, layers=a.layers, heads=a.heads, ffn=a.ffn)
+    cfg = Config(
+        vocab=tok.vocab, dim=a.dim, layers=a.layers, heads=a.heads, kvHeads=a.kv_heads,
+        ffn=a.ffn, activation=a.activation, ctx=a.ctx,
+    )
     tr = prepare(os.path.join(a.data, "train.jsonl"), tok, cfg.ctx, os.path.join(a.data, "train.npz"))
     va = prepare(os.path.join(a.data, "val.jsonl"), tok, cfg.ctx, os.path.join(a.data, "val.npz"))
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { usableAnswer } from "../../src/labs/apps/tutor";
 import { CONCEPTS, matchConcept, preferAnswer, sceneOf, seedAnswer } from "../../src/labs/apps/tutor/model";
 
 describe("text tutor", () => {
@@ -28,5 +29,14 @@ describe("text tutor", () => {
     expect(seeded.turns.at(-1)).toMatchObject({ role: "result" });
     expect(preferAnswer("I can't do that.", c.line.en)).toBe(c.line.en);
     expect(preferAnswer(c.line.en, c.line.en)).toBe(c.line.en);
+  });
+
+  it("never shows fluent-looking nonsense over a known scene explanation", () => {
+    const line = "A neuron multiplies its inputs by weights, adds a bias, and passes the sum through an activation.";
+    expect(usableAnswer("A neuron uses weights and a bias before its activation gives the output.", line, "en")).toBe(true);
+    expect(usableAnswer("A small circuit between a panel and a battery stops overcharging.", line, "en")).toBe(false);
+    expect(usableAnswer("تضرب الخلية المدخلات في الأوزان وتجمع الانحياز.", line, "en")).toBe(false);
+    const ar = "تضرب الخلية العصبية مدخلاتها في الأوزان، ثم تجمع الانحياز وتمرّر الناتج عبر دالة تنشيط.";
+    expect(usableAnswer("تستخدم الخلية الأوزان والانحياز ثم دالة تنشيط لإنتاج النتيجة.", ar, "ar")).toBe(true);
   });
 });

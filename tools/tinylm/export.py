@@ -47,7 +47,10 @@ FIXTURES = os.path.join(ROOT, "apps", "web", "tests", "tinylm", "fixtures")
 def tensor_order(cfg: Config):
     names = ["tok"]
     for i in range(cfg.layers):
-        names += [f"l{i}.attn_norm", f"l{i}.wqkv", f"l{i}.wo", f"l{i}.ffn_norm", f"l{i}.w1", f"l{i}.w2"]
+        names += [f"l{i}.attn_norm", f"l{i}.wqkv", f"l{i}.wo", f"l{i}.ffn_norm", f"l{i}.w1"]
+        if cfg.activation == "swiglu":
+            names += [f"l{i}.w3"]
+        names += [f"l{i}.w2"]
     return names + ["norm"]
 
 
@@ -136,6 +139,8 @@ def main():
     ap.add_argument("--data", default="out/data")
     ap.add_argument("--public", default=PUBLIC, help="where the phone's files go (a candidate model can go elsewhere first)")
     ap.add_argument("--fixtures", default=FIXTURES, help="where the test fixtures go")
+    ap.add_argument("--no-fixtures", action="store_true", help="export runtime files only (language-specific models)")
+    ap.add_argument("--name", default="Darsi Tiny")
     a = ap.parse_args()
     os.makedirs(a.public, exist_ok=True)
     os.makedirs(a.fixtures, exist_ok=True)
@@ -163,10 +168,12 @@ def main():
     for name in ("model.bin", "tokenizer.json", "world.json", "replay.json"):
         b = open(os.path.join(a.public, name), "rb").read()
         files[name] = {"bytes": len(b), "gzip": len(gzip.compress(b, 9)), "sha256": hashlib.sha256(b).hexdigest()}
-    manifest = {"name": "Darsi Tiny", "version": 1, "params": model.params(), "config": cfg.to_dict(), "files": files}
+    manifest = {"name": a.name, "version": 2 if cfg.activation == "swiglu" else 1, "params": model.params(), "config": cfg.to_dict(), "files": files}
     with open(os.path.join(a.public, "manifest.json"), "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=1)
     print(f"model.bin {len(blob):,} bytes, gzip {files['model.bin']['gzip']:,}; params {model.params():,}")
+    if a.no_fixtures:
+        return
 
     # Gate 3 fixtures: a few test prompts of each kind, both languages.
     q = load_int8(cfg, state).eval()

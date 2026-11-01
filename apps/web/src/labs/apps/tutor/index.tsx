@@ -9,7 +9,7 @@ import type { LabProps } from "../../types";
 import { runTurn } from "../agentloop/agent";
 import { Txt } from "../agentloop/lab-agents";
 import { compileQuestion, pictureHint } from "./compile";
-import { expand, parseScene, sceneResult, specForTopic, specFromQuestion } from "./expand";
+import { expand, parseScene, sceneResult, specForTopic, specFromCourse, specFromQuestion } from "./expand";
 import { CONCEPTS, matchConcept, norm } from "./model";
 import { PackStage, type StageScene } from "./stage";
 
@@ -64,6 +64,20 @@ function isHello(q: string): boolean {
     || n === "مرحبا" || n === "السلام عليكم" || n === "هل تعلمني" || n === "مرحبا هل تعلمني" || n === "هل تساعدني على الفهم";
 }
 
+/** A 3M model can choose a scene well and still garble an unfamiliar paraphrase. Never show that over a known-good
+ * explanation: accept its prose only when it stays in the UI language and carries enough of the scene's meaning. */
+export function usableAnswer(got: string, fallback: string, lang: "en" | "ar"): boolean {
+  const text = got.trim();
+  if (text.length < 16 || text.length > 500 || /nothing else|outside the|خارج المقررات/i.test(text)) return false;
+  const hasAr = /[\u0600-\u06ff]/.test(text);
+  if ((lang === "ar") !== hasAr) return false;
+  const words = (s: string) => new Set(norm(s).match(/[\p{L}\p{N}]+/gu)?.filter((w) => w.length >= 3) ?? []);
+  const want = words(fallback), have = words(text);
+  let overlap = 0;
+  for (const w of want) if (have.has(w)) overlap++;
+  return overlap >= Math.max(2, Math.ceil(want.size * 0.22));
+}
+
 const EXTRA_CHIPS = [
   { id: "neuron", term: { en: "neuron", ar: "خلية عصبية" } },
   { id: "model-net", term: { en: "neural network", ar: "شبكة عصبية" } },
@@ -115,7 +129,7 @@ export default function Tutor({ meta }: LabProps) {
       const built = expand(early);
       showBuilt(built);
       lastTopic.current = question;
-      thread.current = [{ role: "user", text: question }, { role: "plan", text: "Explain the picture." }, { role: "answer", text: built.line[uiLang] }];
+      thread.current = [{ role: "user", text: question }, { role: "plan", text: built.spec.kind }, { role: "answer", text: built.line[uiLang] }];
       setLog((m) => [...m, { who: "tiny", text: built.line[uiLang] }]);
       setBusy(false);
       return;
@@ -129,12 +143,14 @@ export default function Tutor({ meta }: LabProps) {
     }
     const follow = isFollowUp(question) && lastTopic.current ? `${lastTopic.current} (${log.length + 1})` : question;
     const conceptEarly = matchConcept(follow);
-    const made = specFromQuestion(follow) ?? (conceptEarly ? specForTopic(conceptEarly.id, follow) : null);
+    const direct = specFromQuestion(follow);
+    const courseHint = direct ? null : specFromCourse(follow);
+    const made = direct ?? (conceptEarly ? specForTopic(conceptEarly.id, follow) : null);
     if (made) {
       const built = expand(made);
       showBuilt(built);
       if (!isFollowUp(question)) lastTopic.current = question;
-      thread.current = [{ role: "user", text: question }, { role: "plan", text: "Explain the picture." }, { role: "answer", text: built.line[uiLang] }];
+      thread.current = [{ role: "user", text: question }, { role: "plan", text: built.spec.kind }, { role: "answer", text: built.line[uiLang] }];
       setLog((m) => [...m, { who: "tiny", text: built.line[uiLang] }]);
       setBusy(false);
       return;
@@ -148,31 +164,40 @@ export default function Tutor({ meta }: LabProps) {
         if (stopped.current) return;
         const { outs } = await runTurn(
           { tools: ["scene"], turns: thread.current },
-          (c, opts) => sceneLm.generate(c, { ...opts, maxTokens: 220 }),
+          (c, opts) => sceneLm.generate(c, { ...opts, maxTokens: 110 }),
           (call) => {
             const spec = call.tool === "scene" ? parseScene(JSON.stringify(call.args)) : null;
             const owned = compileQuestion(question);
-            if (!spec || (owned && JSON.stringify(spec) !== JSON.stringify(owned))) return { error: "bad scene" };
+            if (!spec || (owned && JSON.stringify(spec) !== JSON.stringify(owned)) || (courseHint && spec.kind !== courseHint.kind)) return { error: "bad scene" };
             showBuilt(expand(spec));
             return sceneResult(spec);
           },
-          { maxSteps: 4, stopped: () => stopped.current },
+          { maxSteps: 3, stopped: () => stopped.current },
         );
         const answer = outs.find((o) => o.kind === "answer");
         const modelText = answer && answer.kind === "answer" ? answer.text.trim() : "";
-        const refusal = /nothing else|outside the|أرسم أقصر طريق|خارج مقررات/i.test(modelText);
+        if (!played && courseHint) showBuilt(expand(courseHint));
         const said = played
-          ? (modelText.length >= 16 && !refusal ? modelText : played.line[uiLang])
+          ? (usableAnswer(modelText, played.line[uiLang], uiLang) ? modelText : played.line[uiLang])
           : s.none;
         if (played && !isFollowUp(question)) lastTopic.current = question;
         thread.current = played
-          ? [{ role: "user", text: question }, { role: "plan", text: "Explain the picture." }, { role: "answer", text: said }]
+          ? [{ role: "user", text: question }, { role: "plan", text: played.spec.kind }, { role: "answer", text: said }]
           : [];
         setLog((m) => [...m, { who: "tiny", text: said }]);
         done = true;
         return;
       } catch { /* no scene, so the tutor says what it can draw */ }
       finally { if (done || stopped.current) setBusy(false); }
+    }
+    if (courseHint) {
+      const built = expand(courseHint);
+      showBuilt(built);
+      lastTopic.current = question;
+      thread.current = [{ role: "user", text: question }, { role: "plan", text: "Explain the picture." }, { role: "answer", text: built.line[uiLang] }];
+      setLog((m) => [...m, { who: "tiny", text: built.line[uiLang] }]);
+      setBusy(false);
+      return;
     }
     setLog((m) => [...m, { who: "tiny", text: s.none }]);
     setBusy(false);

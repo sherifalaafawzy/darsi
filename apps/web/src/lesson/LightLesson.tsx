@@ -31,14 +31,25 @@ export async function prefetchLightPacks(unit: { lessons: { steps: { type: strin
   if (ids.size) await vendor.prefetchPacks([...ids]);
 }
 
+/** The video's shape the learner chose: landscape (16:9) unless they turned it to portrait. Kept on this phone. */
+export type VideoShape = "landscape" | "portrait";
+const SHAPE_KEY = "darsi.videoShape";
+export function videoShape(): VideoShape {
+  try { return localStorage.getItem(SHAPE_KEY) === "portrait" ? "portrait" : "landscape"; } catch { return "landscape"; }
+}
+export function saveVideoShape(shape: VideoShape): void {
+  try { localStorage.setItem(SHAPE_KEY, shape); } catch { /* private mode: this visit only */ }
+}
+
 /**
- * Upright phones get the portrait stage (9:16, easier to read than 16:9 at this width), as wide as fits between the
+ * Landscape (the default) is the 16:9 stage at full width. Portrait: upright phones get the portrait stage (9:16, easier to read than 16:9 at this width), as wide as fits between the
  * player's top and the Continue bar, with the player's controls (up to three rows at these widths, 9.5rem) and the
  * bar (6rem) below it. The title above takes one line or three, so this is measured, not guessed. Where that would be
  * under 12rem wide (short phones), the 16:9 stage at full width fits instead. Wider screens leave it to the player.
  */
-function fitStage(el: HTMLElement): Orient | "auto" {
+export function fitStage(el: HTMLElement, shape: VideoShape = "landscape"): Orient | "auto" {
   el.style.maxInlineSize = "";
+  if (shape === "landscape") return "landscape";
   if (typeof matchMedia !== "function" || !matchMedia("(orientation: portrait) and (max-width: 599px)").matches) return "auto";
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
   const top = (el.parentElement?.querySelector(".light-lesson") ?? el).getBoundingClientRect().top; // the poster's, while it shows
@@ -48,18 +59,23 @@ function fitStage(el: HTMLElement): Orient | "auto" {
   return "portrait";
 }
 
-export function LightLesson({ light, lang, poster, onEvent, onError }: {
-  light: Light; lang: string; poster: ReactNode; onEvent: (e: LightEvent) => void; onError: () => void;
+export function LightLesson({ light, lang, poster, onEvent, onError, shape = "landscape" }: {
+  light: Light; lang: string; poster: ReactNode; onEvent: (e: LightEvent) => void; onError: () => void; shape?: VideoShape;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const events = useRef(onEvent);
   events.current = onEvent;
+  const shapeRef = useRef(shape);
+  shapeRef.current = shape;
+  const live = useRef<LightPlayer | null>(null);
+  // Turning the video (landscape / portrait) keeps the player and its place.
+  useEffect(() => { if (live.current && host.current) live.current.setOrient(fitStage(host.current, shape)); }, [shape]);
   const [shown, setShown] = useState(false);
   useEffect(() => {
     let player: LightPlayer | null = null;
     let gone = false;
     // Turning the phone: measured again once the new size has settled.
-    const refit = () => setTimeout(() => { if (!gone && player && host.current) player.setOrient(fitStage(host.current)); }, 300);
+    const refit = () => setTimeout(() => { if (!gone && player && host.current) player.setOrient(fitStage(host.current, shapeRef.current)); }, 300);
     (async () => {
       const f = light.files;
       const [{ createPlayer }, manifest, scenes, timing] = await Promise.all([
@@ -72,12 +88,13 @@ export function LightLesson({ light, lang, poster, onEvent, onError }: {
       // Only this language: the teacher picks languages in Darsi, not inside the player.
       const one = { ...manifest, defaultLang: lang, languages: manifest.languages.filter((l) => l.code === lang) };
       player = createPlayer(host.current, { manifest: one, scenes, timing: { [lang]: timing }, resolve: (p) => f[p] ?? "" }, {
-        lang, captions: true, library: new URL("/lib/", location.origin).href, orient: fitStage(host.current), onEvent: (e) => events.current(e),
+        lang, captions: true, library: new URL("/lib/", location.origin).href, orient: fitStage(host.current, shapeRef.current), onEvent: (e) => events.current(e),
       });
+      live.current = player;
       setShown(true);
       addEventListener("orientationchange", refit);
     })().catch(() => { if (!gone) onError(); });
-    return () => { gone = true; removeEventListener("orientationchange", refit); player?.destroy(); };
+    return () => { gone = true; live.current = null; removeEventListener("orientationchange", refit); player?.destroy(); };
   }, [light, lang]);
   return <>{!shown && <div className="light-lesson light-wait">{poster}</div>}<div ref={host} className="light-lesson" /></>;
 }

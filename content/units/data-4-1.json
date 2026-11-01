@@ -58,7 +58,7 @@
               },
               "label": {
                 "en": "Three hours every Friday",
-                "ar": "ثلاث ساعات كل خميس"
+                "ar": "ثلاث ساعات كل جمعة"
               }
             },
             {
@@ -163,7 +163,7 @@
               "answer": "b",
               "explain": {
                 "en": "Replacing the day’s rows gives the same answer however many times the pipeline runs: it’s idempotent. Adding the rows again would count the classes written before the failure twice.",
-                "ar": "استبدال صفوف اليوم يعطي الإجابة نفسها مهما تكرّر تشغيل خط البيانات: إنه تشغيل متساوي الأثر. أما إضافة الصفوف مرة أخرى فتعدّ الصفوف الدراسية التي كُتبت قبل الفشل مرتين."
+                "ar": "استبدال صفوف اليوم يعطي الإجابة نفسها مهما تكرّر تشغيل خط البيانات: إنه تشغيل متساوي الأثر. أما إضافة الصفوف مرة أخرى فتعدّ الفصول التي كُتبت قبل الفشل مرتين."
               }
             },
             "atBy": {
@@ -217,7 +217,7 @@
           },
           "body": {
             "en": "A data pipeline is a set of steps that runs on its own, again and again. Extract reads the data where it lives: the class registers, the gauge readings, the exam sheet. Transform cleans and counts it. Load writes the result where the report reads it: the district’s table, the head’s dashboard. Put it on a schedule, every evening at six, and nobody copies anything by hand; the report is ready each morning, and it’s counted the same way every time.\n\nSteps fail. The connection drops halfway through, the database is busy, the disk is full, or a register says “?” instead of P or A. A good pipeline expects this. It retries passing faults, such as a dropped connection, a few times. But bad data won’t fix itself: retrying a “?” fails the same way every time, so the pipeline sets the row aside and tells a person.\n\nEvery run must be safe to repeat. That’s called idempotent: run it once or five times, and the answer is the same. A load that adds rows isn’t: if it fails after writing two classes and runs again, those two classes are written twice, and the report says 152 pupils came out of 90. A load that replaces the day’s rows (delete Monday, then write Monday) gives 90 however often it runs.\n\nFinally, log every run: when it ran, how many rows it read and wrote, what it set aside and why. Without a log, a missing report is a mystery; with one, you can see the failed step in a minute. The transform step is often only a few lines: in Python, read the register with csv, add one to a class’s count for every P, and print the counts in a fixed order.",
-            "ar": "خط البيانات مجموعة خطوات تعمل وحدها مرة بعد مرة. فالاستخراج يقرأ البيانات حيث تعيش: سجلّات الصفوف، وقراءات المقاييس، وورقة الامتحانات. والتحويل ينظّفها ويعدّها. والتحميل يكتب النتيجة حيث يقرؤها التقرير: جدول الإدارة، أو لوحة متابعة المدير. ثم ضعه على جدول زمني، كل مساء في السادسة، فلا ينسخ أحد شيئًا باليد، ويكون التقرير جاهزًا كل صباح، ويُعدّ بالطريقة نفسها في كل مرة.\n\nوالخطوات تفشل. فقد ينقطع الاتصال في المنتصف، أو تكون قاعدة البيانات مشغولة، أو القرص ممتلئًا، أو يكون في السجلّ «؟» بدل «ح» أو «غ». وخط البيانات الجيد يتوقّع ذلك. فهو يعيد محاولة الأخطاء العابرة، كانقطاع الاتصال، بضع مرات. لكن البيانات الخاطئة لا تصلح نفسها: فإعادة محاولة «؟» تفشل بالطريقة نفسها كل مرة، فيضع خط البيانات الصف جانبًا ويخبر شخصًا.\n\nويجب أن يكون كل تشغيل آمنًا عند تكراره، وهذا يسمّى التشغيل متساوي الأثر: شغّله مرة أو خمس مرات، تكن الإجابة واحدة. والتحميل الذي يضيف الصفوف ليس كذلك: فإن فشل بعد كتابة صفّين دراسيين ثم شُغّل من جديد، كُتب هذان الصفّان مرتين، فيقول التقرير إن ١٥٢ تلميذًا حضروا من ٩٠. أما التحميل الذي يستبدل صفوف اليوم (يحذف الاثنين ثم يكتب الاثنين) فيعطي ٩٠ مهما تكرّر.\n\nوأخيرًا، سجّل كل تشغيل: متى عمل، وكم صفًّا قرأ وكتب، وما الذي وضعه جانبًا ولماذا. فدون سجلّ يبقى التقرير الغائب لغزًا، ومع السجلّ ترى الخطوة الفاشلة في دقيقة. وخطوة التحويل كثيرًا ما تكون بضعة أسطر فقط: ففي Python اقرأ السجلّ بـ csv، وأضف واحدًا إلى عدد الصف لكل «P»، واطبع الأعداد بترتيب ثابت."
+            "ar": "خط البيانات مجموعة خطوات تعمل وحدها مرة بعد مرة. فالاستخراج يقرأ البيانات حيث تعيش: سجلّات الفصول، وقراءات المقاييس، وورقة الامتحانات. والتحويل ينظّفها ويعدّها. والتحميل يكتب النتيجة حيث يقرؤها التقرير: جدول الإدارة، أو لوحة متابعة المدير. ثم ضعه على جدول زمني، كل مساء في السادسة، فلا ينسخ أحد شيئًا باليد، ويكون التقرير جاهزًا كل صباح، ويُعدّ بالطريقة نفسها في كل مرة.\n\nوالخطوات تفشل. فقد ينقطع الاتصال في المنتصف، أو تكون قاعدة البيانات مشغولة، أو القرص ممتلئًا، أو يكون في السجلّ «؟» بدل P أو A. وخط البيانات الجيد يتوقّع ذلك. فهو يعيد محاولة الأخطاء العابرة، كانقطاع الاتصال، بضع مرات. لكن البيانات الخاطئة لا تصلح نفسها: فإعادة محاولة «؟» تفشل بالطريقة نفسها كل مرة، فيضع خط البيانات الصف جانبًا ويخبر شخصًا.\n\nويجب أن يكون كل تشغيل آمنًا عند تكراره، وهذا يسمّى التشغيل متساوي الأثر: شغّله مرة أو خمس مرات، تكن الإجابة واحدة. والتحميل الذي يضيف الصفوف ليس كذلك: فإن فشل بعد كتابة فصلين ثم شُغّل من جديد، كُتب هذان الفصلان مرتين، فيقول التقرير إن ١٥٢ تلميذًا حضروا من ٩٠. أما التحميل الذي يستبدل صفوف اليوم (يحذف الاثنين ثم يكتب الاثنين) فيعطي ٩٠ مهما تكرّر.\n\nوأخيرًا، سجّل كل تشغيل: متى عمل، وكم صفًّا قرأ وكتب، وما الذي وضعه جانبًا ولماذا. فدون سجلّ يبقى التقرير الغائب لغزًا، ومع السجلّ ترى الخطوة الفاشلة في دقيقة. وخطوة التحويل كثيرًا ما تكون بضعة أسطر فقط: ففي Python اقرأ السجلّ بـ csv، وأضف واحدًا إلى عدد الفصل لكل «P»، واطبع الأعداد بترتيب ثابت."
           },
           "keyTerms": [
             {
@@ -267,7 +267,7 @@
           "id": "p1",
           "prompt": {
             "en": "A register says “?” instead of P or A, and the transform step stops. Will a retry fix it?",
-            "ar": "في أحد السجلّات «؟» بدل «ح» أو «غ»، فتوقّفت خطوة التحويل. هل تصلحها إعادة المحاولة؟"
+            "ar": "في أحد السجلّات «؟» بدل P أو A، فتوقّفت خطوة التحويل. هل تصلحها إعادة المحاولة؟"
           },
           "options": [
             {
@@ -308,11 +308,11 @@
           "steps": [
             {
               "en": "Extract: read the three class registers",
-              "ar": "الاستخراج: قراءة سجلّات الصفوف الثلاثة"
+              "ar": "الاستخراج: قراءة سجلّات الفصول الثلاثة"
             },
             {
               "en": "Transform: count the pupils present in each class",
-              "ar": "التحويل: عدّ الحاضرين في كل صف"
+              "ar": "التحويل: عدّ الحاضرين في كل فصل"
             },
             {
               "en": "Load: replace today’s rows in the district’s table",
@@ -334,7 +334,7 @@
           "lang": "python",
           "prompt": {
             "en": "The transform step. register.csv has one row per pupil: class, pupil number and P (present) or A (away). Fix the program so it counts only the pupils present in each class, printed in class order: 5A 4, 5B 3, 6A 5.",
-            "ar": "خطوة التحويل. في register.csv صف لكل تلميذ: الصف، ورقم التلميذ، وP (حاضر) أو A (غائب). أصلح البرنامج ليعدّ الحاضرين فقط في كل صف، مطبوعين بترتيب الصفوف: ⁦5A 4⁩، و⁦5B 3⁩، و⁦6A 5⁩."
+            "ar": "خطوة التحويل. في register.csv صف لكل تلميذ: الفصل، ورقم التلميذ، وP (حاضر) أو A (غائب). أصلح البرنامج ليعدّ الحاضرين فقط في كل فصل، مطبوعين بترتيب الفصول: ⁦5A 4⁩، و⁦5B 3⁩، و⁦6A 5⁩."
           },
           "starter": "import csv\npresent = {}\nwith open(\"register.csv\") as f:\n    for row in csv.DictReader(f):\n        c = row[\"class\"]\n        present[c] = present.get(c, 0) + 1\nfor c in sorted(present):\n    print(c, present[c])\n",
           "solution": "import csv\npresent = {}\nwith open(\"register.csv\") as f:\n    for row in csv.DictReader(f):\n        if row[\"status\"] == \"P\":\n            c = row[\"class\"]\n            present[c] = present.get(c, 0) + 1\nfor c in sorted(present):\n    print(c, present[c])\n",
@@ -343,7 +343,7 @@
               "output": "5A 4\n5B 3\n6A 5",
               "hint": {
                 "en": "The starter counts every pupil, present or away. Count a row only when its status is P.",
-                "ar": "يعدّ البرنامج الأول كل تلميذ، حاضرًا أو غائبًا. لا تعدّ الصف إلا حين تكون حالته P."
+                "ar": "يعدّ الكود المبدئي كل تلميذ، حاضرًا أو غائبًا. لا تعدّ الصف إلا حين تكون حالته P."
               }
             }
           ],
@@ -365,7 +365,7 @@
           ],
           "explain": {
             "en": "present.get(c, 0) + 1 adds one to the class’s count, starting from 0 the first time. Counting only the rows with P gives 4, 3 and 5. The dictionary keeps classes in the order it first met them, which may not be class order, so sorted() prints them in a fixed order every run.",
-            "ar": "تضيف ⁦present.get(c, 0) + 1⁩ واحدًا إلى عدد الصف، بدءًا من 0 في المرة الأولى. وعدّ الصفوف التي فيها P فقط يعطي ٤ و٣ و٥. ويحفظ القاموس الصفوف بترتيب ظهورها أول مرة، وقد لا يكون ترتيب الصفوف، لذلك تطبعها ⁦sorted()⁩ بترتيب ثابت في كل تشغيل."
+            "ar": "تضيف ⁦present.get(c, 0) + 1⁩ واحدًا إلى عدد الفصل، بدءًا من 0 في المرة الأولى. وعدّ الصفوف التي فيها P فقط يعطي ٤ و٣ و٥. ويحفظ القاموس الفصول بترتيب ظهورها أول مرة، وقد لا يكون ترتيب الفصول، لذلك تطبعها ⁦sorted()⁩ بترتيب ثابت في كل تشغيل."
           }
         },
         {
@@ -444,7 +444,7 @@
             {
               "left": {
                 "en": "Load failed after writing two classes",
-                "ar": "فشل التحميل بعد كتابة صفّين"
+                "ar": "فشل التحميل بعد كتابة فصلين"
               },
               "right": {
                 "en": "Run again: replacing the day’s rows makes it safe",
@@ -529,7 +529,7 @@
           },
           "narration": {
             "en": "Three hours every Friday, and one class counted twice.",
-            "ar": "ثلاث ساعات كل خميس، وصف عُدّ مرتين."
+            "ar": "ثلاث ساعات كل جمعة، وفصل عُدّ مرتين."
           }
         },
         {
@@ -604,7 +604,7 @@
               "التمهيد (٥ دقائق): اسأل: كيف يُجمع تقرير الحضور الأسبوعي في المدرسة اليوم، ومن يجمعه، وكم يستغرق؟",
               "الشرح (٨ دقائق): ارسم الخطوات الثلاث وجدولًا زمنيًا على السبّورة. واشرح الأخطاء العابرة والبيانات الخاطئة، ولماذا يستبدل التحميل صفوف اليوم.",
               "التشغيل (١٢ دقيقة): تقرأ مجموعة ثلاثة سجلّات خيالية بصوت عالٍ، وتعدّ مجموعة الحاضرين لكل صف، وتكتب مجموعة الأعداد على السبّورة. وضع «؟» في أحد السجلّات.",
-              "الفشل (١٠ دقائق): أوقفوا الكاتبين بعد صفّين، ثم شغّلوا من جديد. أضيفوا الصفوف أولًا، ثم جرّبوا مسح صفوف اليوم أولًا. أيّهما يعطي المجموع الصحيح؟",
+              "الفشل (١٠ دقائق): أوقفوا الكاتبين بعد فصلين، ثم شغّلوا من جديد. أضيفوا الصفوف أولًا، ثم جرّبوا مسح صفوف اليوم أولًا. أيّهما يعطي المجموع الصحيح؟",
               "الختام (٥ دقائق): اتفقوا على ما يجب أن يقوله سجلّ التشغيل، بما في ذلك «؟». ثم وزّع بطاقة الخروج."
             ]
           },
@@ -710,7 +710,7 @@
       "minutes": 18,
       "tryTomorrow": {
         "en": "Ask your pupils to write checks for their own class data: a mark must be from 0 to 20, every pupil appears once. Then test the checks on a made-up sheet with planted mistakes.",
-        "ar": "اطلب من تلاميذك كتابة فحوص لبيانات صفّهم: الدرجة يجب أن تكون من ٠ إلى ٢٠، وكل تلميذ يظهر مرة واحدة. ثم اختبروا الفحوص على ورقة خيالية فيها أخطاء مزروعة."
+        "ar": "اطلب من تلاميذك كتابة فحوص لبيانات فصلهم: الدرجة يجب أن تكون من ٠ إلى ٢٠، وكل تلميذ يظهر مرة واحدة. ثم اختبروا الفحوص على ورقة خيالية فيها أخطاء مزروعة."
       },
       "materials": {
         "en": [
@@ -906,8 +906,8 @@
             "ar": "الفحوص، وما يفعله الفشل"
           },
           "body": {
-            "en": "A check is a rule the data must pass before anyone uses it. In range: rain from 0 to 300 mm, a mark from 0 to 20. Not empty: every reading has a value. Unique: one reading per station per day, one row per pupil. Allowed values: only the stations, classes or codes we know. Some checks compare: do the class counts add up to the school’s roll? Did today’s batch arrive at all? Is the date this week, and not last year?\n\nIn SQL, write each check as a query that finds the bad rows. If it returns nothing, the check passes; if it returns rows, those are your problems, with their details. WHERE mm < 0 OR mm > 300 finds impossible amounts; WHERE mm IS NULL finds the gaps; GROUP BY station, day HAVING COUNT(*) > 1 finds repeats; and a left join to the list of stations finds names that aren’t on it. Run them on every batch, before the report.\n\nThen decide what a failure does. Stop the batch, and lose the good data with the bad. Set the bad rows aside, and let the rest through. Or warn, and let everything through. Choose by what a wrong report costs: a flood warning can’t wait, but a termly return can be held for a day. And fix problems at their source: send the reading back to the club that took it, so tomorrow’s batch is right. Cleaning the same mistake every week means nobody has fixed it.\n\nChecks only catch what you thought of. A reading of 12 mm when it really rained 20 passes every check: it’s in range, not empty, unique and from a known station. So also compare each station with its neighbours, look at the chart, and when every check passes, say what is true: no known problem was found.",
-            "ar": "الفحص قاعدة يجب أن تجتازها البيانات قبل أن يستعملها أحد. ضمن المدى: المطر من ٠ إلى ٣٠٠ مم، والدرجة من ٠ إلى ٢٠. غير فارغ: لكل قراءة قيمة. دون تكرار: قراءة واحدة لكل محطة في اليوم، وصف واحد لكل تلميذ. قيم مسموح بها: المحطات أو الصفوف أو الرموز التي نعرفها فقط. وبعض الفحوص تقارن: هل يساوي مجموع أعداد الصفوف عدد تلاميذ المدرسة؟ هل وصلت دفعة اليوم أصلًا؟ هل التاريخ من هذا الأسبوع لا من العام الماضي؟\n\nوفي SQL اكتب كل فحص استعلامًا يجد الصفوف المعيبة. فإن لم يُعِد شيئًا نجح الفحص، وإن أعاد صفوفًا فتلك مشكلاتك بتفاصيلها. فـ ⁦WHERE mm < 0 OR mm > 300⁩ تجد الكميات المستحيلة، و⁦WHERE mm IS NULL⁩ تجد الفجوات، و⁦GROUP BY station, day HAVING COUNT(*) > 1⁩ تجد التكرار، والربط اليساري مع قائمة المحطات يجد الأسماء التي ليست فيها. وشغّلها على كل دفعة، قبل التقرير.\n\nثم قرّر ما يفعله الفشل. أوقف الدفعة، فتضيع البيانات السليمة مع المعيبة. أو ضع الصفوف المعيبة جانبًا، ومرّر الباقي. أو حذّر، ومرّر كل شيء. واختر حسب كلفة التقرير الخاطئ: فإنذار الفيضان لا ينتظر، أما التقرير الفصلي فيمكن تأخيره يومًا. وأصلح المشكلات من مصدرها: أعد القراءة إلى النادي الذي أخذها، لتصحّ دفعة الغد. فتنظيف الخطأ نفسه كل أسبوع يعني أن أحدًا لم يصلحه.\n\nولا تلتقط الفحوص إلا ما فكّرت فيه. فقراءة ١٢ مم والمطر الحقيقي ٢٠ تجتاز كل الفحوص: فهي ضمن المدى، وغير فارغة، وغير مكرّرة، ومن محطة معروفة. فقارن أيضًا كل محطة بجاراتها، وانظر إلى الرسم، وحين تنجح كل الفحوص فقل الحقيقة: لم تُكتشف أي مشكلة معروفة."
+            "en": "A check is a rule the data must pass before anyone uses it. In range: rain from 0 to 300 mm, a mark from 0 to 20. Not empty: every reading has a value. Unique: one reading per station per day, one row per pupil. Allowed values: only the stations, classes or codes we know. Some checks compare: do the class counts add up to the school’s roll? Did today’s batch arrive at all? Is the date this week, and not last year?\n\nIn SQL, write each check as a query that finds the bad rows. If it returns nothing, the check passes; if it returns rows, those are your problems, with their details. WHERE mm < 0 OR mm > 300 finds amounts outside the range; WHERE mm IS NULL finds the gaps; GROUP BY station, day HAVING COUNT(*) > 1 finds repeats; and a left join to the list of stations finds names that aren’t on it. Run them on every batch, before the report.\n\nThen decide what a failure does. Stop the batch, and lose the good data with the bad. Set the bad rows aside, and let the rest through. Or warn, and let everything through. Choose by what a wrong report costs: a flood warning can’t wait, but a termly return can be held for a day. And fix problems at their source: send the reading back to the club that took it, so tomorrow’s batch is right. Cleaning the same mistake every week means nobody has fixed it.\n\nChecks only catch what you thought of. A reading of 12 mm when it really rained 20 passes every check: it’s in range, not empty, unique and from a known station. So also compare each station with its neighbours, look at the chart, and when every check passes, say what is true: no known problem was found.",
+            "ar": "الفحص قاعدة يجب أن تجتازها البيانات قبل أن يستعملها أحد. ضمن المدى: المطر من ٠ إلى ٣٠٠ مم، والدرجة من ٠ إلى ٢٠. غير فارغ: لكل قراءة قيمة. دون تكرار: قراءة واحدة لكل محطة في اليوم، وصف واحد لكل تلميذ. قيم مسموح بها: المحطات أو الفصول أو الرموز التي نعرفها فقط. وبعض الفحوص تقارن: هل يساوي مجموع أعداد الفصول عدد تلاميذ المدرسة؟ هل وصلت دفعة اليوم أصلًا؟ هل التاريخ من هذا الأسبوع لا من العام الماضي؟\n\nوفي SQL اكتب كل فحص استعلامًا يجد الصفوف المعيبة. فإن لم يُعِد شيئًا نجح الفحص، وإن أعاد صفوفًا فتلك مشكلاتك بتفاصيلها. فـ ⁦WHERE mm < 0 OR mm > 300⁩ تجد الكميات الخارجة عن المدى، و⁦WHERE mm IS NULL⁩ تجد الفجوات، و⁦GROUP BY station, day HAVING COUNT(*) > 1⁩ تجد التكرار، والربط اليساري مع قائمة المحطات يجد الأسماء التي ليست فيها. وشغّلها على كل دفعة، قبل التقرير.\n\nثم قرّر ما يفعله الفشل. أوقف الدفعة، فتضيع البيانات السليمة مع المعيبة. أو ضع الصفوف المعيبة جانبًا، ومرّر الباقي. أو حذّر، ومرّر كل شيء. واختر حسب كلفة التقرير الخاطئ: فإنذار الفيضان لا ينتظر، أما التقرير الفصلي فيمكن تأخيره يومًا. وأصلح المشكلات من مصدرها: أعد القراءة إلى النادي الذي أخذها، لتصحّ دفعة الغد. فتنظيف الخطأ نفسه كل أسبوع يعني أن أحدًا لم يصلحه.\n\nولا تلتقط الفحوص إلا ما فكّرت فيه. فقراءة ١٢ مم والمطر الحقيقي ٢٠ تجتاز كل الفحوص: فهي ضمن المدى، وغير فارغة، وغير مكرّرة، ومن محطة معروفة. فقارن أيضًا كل محطة بجاراتها، وانظر إلى الرسم، وحين تنجح كل الفحوص فقل الحقيقة: لم تُكتشف أي مشكلة معروفة."
           },
           "keyTerms": [
             {
@@ -916,8 +916,8 @@
                 "ar": "فحص المدى"
               },
               "def": {
-                "en": "A value must lie between a lowest and a highest possible value, such as 0 to 300 mm.",
-                "ar": "يجب أن تقع القيمة بين أدنى قيمة ممكنة وأعلاها، مثل ٠ إلى ٣٠٠ مم."
+                "en": "A value must lie between the lowest and highest values that make sense here, such as 0 to 300 mm for a day’s rain at our stations.",
+                "ar": "يجب أن تقع القيمة بين أدنى قيمة وأعلى قيمة معقولتين هنا، مثل ٠ إلى ٣٠٠ مم لمطر يوم في محطاتنا."
               }
             },
             {
@@ -994,7 +994,7 @@
           "lang": "sql",
           "prompt": {
             "en": "A range check as a query: find every reading outside 0 to 300 mm. Show the station, the day and the amount.",
-            "ar": "فحص المدى استعلامًا: جد كل قراءة خارج المدى من ٠ إلى ٣٠٠ مم. اعرض المحطة واليوم والكمية."
+            "ar": "فحص المدى استعلامًا: ابحث عن كل قراءة خارج المدى من ٠ إلى ٣٠٠ مم. اعرض المحطة واليوم والكمية."
           },
           "setup": "CREATE TABLE rain (station TEXT, day TEXT, mm REAL);\nINSERT INTO rain VALUES ('Hilltop', 'Mon', 12), ('Riverside', 'Mon', 999), ('Market', 'Mon', 0), ('Lakeside', 'Mon', 8),\n  ('Hilltop', 'Tue', 15), ('Riverside', 'Tue', 14), ('Market', 'Tue', -3), ('Lakeside', 'Tue', NULL),\n  ('Hilltop', 'Wed', 16), ('Hilltop', 'Wed', 16), ('Riverside', 'Wed', 11), ('Hiltop', 'Wed', 9), ('Lakeside', 'Wed', 10);",
           "starter": "SELECT station, day, mm FROM rain\nWHERE mm > 300;",
@@ -1002,7 +1002,7 @@
           "hints": [
             {
               "en": "The starter finds the 999, but a reading can also be too low.",
-              "ar": "يجد البرنامج الأول ٩٩٩، لكن القراءة قد تكون منخفضة جدًّا أيضًا."
+              "ar": "يجد الاستعلام المبدئي ٩٩٩، لكن القراءة قد تكون منخفضة جدًّا أيضًا."
             },
             {
               "en": "WHERE mm < 0 OR mm > 300",
@@ -1064,8 +1064,8 @@
             "c"
           ],
           "explain": {
-            "en": "A range check catches only impossible amounts, here 999 and -3. A repeat needs the uniqueness check, an empty value the not-empty check, and a believable typo needs a person comparing with neighbours.",
-            "ar": "لا يلتقط فحص المدى إلا الكميات المستحيلة، وهي هنا ٩٩٩ و-٣. أما التكرار فيحتاج إلى فحص عدم التكرار، والقيمة الفارغة إلى فحص «غير فارغ»، والخطأ المعقول إلى شخص يقارن بالمحطات المجاورة."
+            "en": "A range check catches only amounts outside the range, here 999 and -3. A repeat needs the uniqueness check, an empty value the not-empty check, and a believable typo needs a person comparing with neighbours.",
+            "ar": "لا يلتقط فحص المدى إلا الكميات الخارجة عن المدى، وهي هنا ٩٩٩ و-٣. أما التكرار فيحتاج إلى فحص عدم التكرار، والقيمة الفارغة إلى فحص «غير فارغ»، والخطأ المعقول إلى شخص يقارن بالمحطات المجاورة."
           }
         },
         {
@@ -1083,7 +1083,7 @@
           "lang": "sql",
           "prompt": {
             "en": "A uniqueness check: find every station and day that has more than one reading. Show the station, the day and how many readings it has.",
-            "ar": "فحص عدم التكرار: جد كل محطة ويوم فيهما أكثر من قراءة واحدة. اعرض المحطة واليوم وعدد القراءات."
+            "ar": "فحص عدم التكرار: ابحث عن كل محطة ويوم فيهما أكثر من قراءة واحدة. اعرض المحطة واليوم وعدد القراءات."
           },
           "setup": "CREATE TABLE rain (station TEXT, day TEXT, mm REAL);\nINSERT INTO rain VALUES ('Hilltop', 'Mon', 12), ('Riverside', 'Mon', 999), ('Market', 'Mon', 0), ('Lakeside', 'Mon', 8),\n  ('Hilltop', 'Tue', 15), ('Riverside', 'Tue', 14), ('Market', 'Tue', -3), ('Lakeside', 'Tue', NULL),\n  ('Hilltop', 'Wed', 16), ('Hilltop', 'Wed', 16), ('Riverside', 'Wed', 11), ('Hiltop', 'Wed', 9), ('Lakeside', 'Wed', 10);",
           "starter": "SELECT station, day, COUNT(*) FROM rain\nGROUP BY station, day;",
@@ -1091,7 +1091,7 @@
           "hints": [
             {
               "en": "The starter counts every group. A check should return only the bad ones.",
-              "ar": "يعدّ البرنامج الأول كل مجموعة، أما الفحص فيجب ألّا يعيد إلا المعيبة."
+              "ar": "يعدّ الاستعلام المبدئي كل مجموعة، أما الفحص فيجب ألّا يعيد إلا المعيبة."
             },
             {
               "en": "Add HAVING COUNT(*) > 1.",
@@ -1202,7 +1202,7 @@
           },
           "task": {
             "en": "Take a week of real or made-up data your school uses (marks, attendance or rain readings). With your data team or a class, write five checks: in range, not empty, unique, allowed values and one comparison (such as counts adding up to the roll). For each, decide what a failure does and who fixes the source. Run the checks by hand or in SQL, and write down what each one found.",
-            "ar": "خذ أسبوعًا من بيانات حقيقية أو خيالية تستعملها مدرستك (درجات، أو حضور، أو قراءات أمطار). واكتب مع فريق البيانات أو مع صف خمسة فحوص: ضمن المدى، وغير فارغ، ودون تكرار، وقيم مسموح بها، وفحص مقارنة واحد (كأن يساوي مجموع الأعداد عدد تلاميذ المدرسة). وقرّر لكلٍّ منها ما يفعله الفشل ومن يصلح المصدر. ثم طبّق الفحوص باليد أو بلغة SQL، واكتب ما وجده كلٌّ منها."
+            "ar": "خذ أسبوعًا من بيانات حقيقية أو خيالية تستعملها مدرستك (درجات، أو حضور، أو قراءات أمطار). واكتب مع فريق البيانات أو مع فصل خمسة فحوص: ضمن المدى، وغير فارغ، ودون تكرار، وقيم مسموح بها، وفحص مقارنة واحد (كأن يساوي مجموع الأعداد عدد تلاميذ المدرسة). وقرّر لكلٍّ منها ما يفعله الفشل ومن يصلح المصدر. ثم طبّق الفحوص باليد أو بلغة SQL، واكتب ما وجده كلٌّ منها."
           },
           "deliverable": {
             "en": "Your five checks (as rules or SQL queries) with what each found, and two sentences: which failure you chose to stop the batch for, and one problem no check could catch.",
@@ -1301,7 +1301,7 @@
             "ar": [
               "التمهيد (٥ دقائق): ماذا قد يخطئ في ورقة درجات؟",
               "الشرح (٨ دقائق): أنواع الفحوص.",
-              "الكتابة (١٠ دقائق): فحوص صفّنا.",
+              "الكتابة (١٠ دقائق): فحوص فصلنا.",
               "الاختبار (١٢ دقيقة): جدوا الأخطاء المزروعة.",
               "الختام (٥ دقائق): ماذا لم يلتقطه أي فحص؟"
             ]
@@ -1315,7 +1315,7 @@
               "Wrap-up (5 min): Reveal the believable mistake no check caught, and discuss how a person would notice it. Then give the exit ticket."
             ],
             "ar": [
-              "التمهيد (٥ دقائق): اطلب من التلاميذ تعداد الأخطاء التي قد تحويها ورقة درجات: درجة ٢٥، وفراغ، وتلميذ مرتين، وصف غير موجود.",
+              "التمهيد (٥ دقائق): اطلب من التلاميذ تعداد الأخطاء التي قد تحويها ورقة درجات: درجة ٢٥، وفراغ، وتلميذ مرتين، وفصل غير موجود.",
               "الشرح (٨ دقائق): حوّل كل خطأ إلى فحص. واعرض فحصًا واحدًا استعلامًا بلغة SQL يعيد الصفوف المعيبة.",
               "الكتابة (١٠ دقائق): تكتب المجموعات أربعة فحوص لدرجات صفّها، كلٌّ منها قاعدة واحدة واضحة.",
               "الاختبار (١٢ دقيقة): أعطِ كل مجموعة ورقة خيالية فيها خمسة أخطاء مزروعة، أحدها معقول. وتطبّق المجموعات فحوصها وتسجّل ما وجدته وما فاتها.",
@@ -1424,7 +1424,7 @@
       "minutes": 18,
       "tryTomorrow": {
         "en": "Play “Guess who” with a made-up pupil: give one fact at a time (her class, her age, her bus stop, her sports team). After how many facts can the class tell who she is?",
-        "ar": "العبوا «خمّن مَن» بتلميذة خيالية: أعطِ معلومة واحدة في كل مرة (صفّها، وعمرها، وموقف حافلتها، وفريقها الرياضي). بعد كم معلومة يستطيع الصف أن يعرف مَن هي؟"
+        "ar": "العبوا «خمّن مَن» بتلميذة خيالية: أعطِ معلومة واحدة في كل مرة (صفّها، وعمرها، وموقف حافلتها، وفريقها الرياضي). بعد كم معلومة يستطيع الفصل أن يعرف مَن هي؟"
       },
       "materials": {
         "en": [
@@ -1632,7 +1632,7 @@
           },
           "body": {
             "en": "Start with roles, not people. A class teacher sees her own class’s marks and attendance. The head sees the whole school. A parent sees their own child. The nurse sees health notes. The district sees summaries. Each role gets only what its job needs: that’s least privilege. Write it as an access table, with the records down the side, the roles across the top, and in each cell “full”, “summary” or “none”, and check it against what each system really allows.\n\nShare summaries, not rows, whenever you can. A class average answers the district’s question without a single name. But small groups give people away: “in 6B, one pupil has a disability and failed maths” is not a statistic, it’s a person, and everyone at the school knows who. So never publish a count or an average for a group of fewer than five pupils. Report it at school level, merge it with another group, or leave it out. In SQL, GROUP BY makes the averages and HAVING COUNT(*) >= 5 drops the small groups.\n\nReplacing names with numbers is a start, not the end. It’s called pseudonymisation: whoever holds the list of numbers can bring the names back, so the list must be kept apart and locked. And ordinary facts can do it too. In a well-known study, date of birth, sex and postcode alone picked out 87% of people in the United States. In a school, a class, an age and one detail, such as a bus stop or a sports team, can be enough.\n\nSo before data leaves the school, ask three questions. Who will read it, and what does their role need? Could any row, or any small group, point at one child? And what else is already known (a class photo, a team list, a newsletter) that could be put next to it? The law agrees: data protection laws such as Kenya’s (2019), Nigeria’s (2023), Egypt’s (Law 151 of 2020) and South Africa’s POPIA ask for the least data for the purpose, and extra care for children.",
-            "ar": "ابدأ بالأدوار لا بالأشخاص. فمعلّمة الصف ترى درجات صفّها وحضوره. والمدير يرى المدرسة كلها. ووليّ الأمر يرى طفله. والممرّضة ترى الملاحظات الصحية. والإدارة ترى الملخّصات. فيحصل كل دور على ما يحتاج إليه عمله فقط، وهذا مبدأ أقل صلاحية ممكنة. واكتبه جدول صلاحيات: السجلّات على الجانب، والأدوار في الأعلى، وفي كل خانة «كامل» أو «ملخّص» أو «لا شيء»، وراجعه على ما يسمح به كل نظام فعلًا.\n\nشارك الملخّصات لا الصفوف كلما استطعت. فمتوسط الصف يجيب عن سؤال الإدارة دون اسم واحد. لكن المجموعات الصغيرة تكشف أصحابها: «في ٦ب تلميذ واحد ذو إعاقة رسب في الرياضيات» ليست إحصاءً، بل إنسان، والمدرسة كلها تعرف مَن هو. فلا تنشر أبدًا عددًا أو متوسطًا لمجموعة فيها أقل من خمسة تلاميذ. بل اذكره على مستوى المدرسة، أو ادمجه مع مجموعة أخرى، أو احذفه. وفي SQL تصنع ⁦GROUP BY⁩ المتوسطات، وتُسقط ⁦HAVING COUNT(*) >= 5⁩ المجموعات الصغيرة.\n\nواستبدال الأسماء بالأرقام بداية لا نهاية. ويسمّى هذا الترميز بأسماء مستعارة: فمن يملك قائمة الأرقام يستطيع إعادة الأسماء، فيجب أن تُحفظ القائمة منفصلة ومقفلة. والمعلومات العادية تستطيع ذلك أيضًا. ففي دراسة مشهورة، كان تاريخ الميلاد والجنس والرمز البريدي وحدها كافية لتحديد ٨٧٪ من الناس في الولايات المتحدة. وفي المدرسة قد يكفي الصف والعمر وتفصيل واحد، كموقف حافلة أو فريق رياضي.\n\nفقبل أن تغادر البيانات المدرسة، اطرح ثلاثة أسئلة. مَن سيقرؤها، وماذا يحتاج دوره؟ هل يمكن أن يشير أي صف، أو أي مجموعة صغيرة، إلى طفل واحد؟ وماذا يُعرف أصلًا (صورة الصف، وقائمة الفريق، والنشرة المدرسية) مما يمكن وضعه بجانبها؟ والقانون يؤيّد ذلك: فقوانين حماية البيانات، ككينيا (٢٠١٩) ونيجيريا (٢٠٢٣) ومصر (القانون ١٥١ لسنة ٢٠٢٠) وPOPIA في جنوب أفريقيا، تطلب أقل قدر من البيانات للغرض، وعناية إضافية بالأطفال."
+            "ar": "ابدأ بالأدوار لا بالأشخاص. فمعلّمة الفصل ترى درجات فصلها وحضوره. والمدير يرى المدرسة كلها. ووليّ الأمر يرى طفله. والممرّضة ترى الملاحظات الصحية. والإدارة ترى الملخّصات. فيحصل كل دور على ما يحتاج إليه عمله فقط، وهذا مبدأ أقل صلاحية ممكنة. واكتبه جدول صلاحيات: السجلّات على الجانب، والأدوار في الأعلى، وفي كل خانة «كامل» أو «ملخّص» أو «لا شيء»، وراجعه على ما يسمح به كل نظام فعلًا.\n\nشارك الملخّصات لا الصفوف كلما استطعت. فمتوسط الفصل يجيب عن سؤال الإدارة دون اسم واحد. لكن المجموعات الصغيرة تكشف أصحابها: «في ٦ب تلميذ واحد ذو إعاقة رسب في الرياضيات» ليست إحصاءً، بل إنسان، والمدرسة كلها تعرف مَن هو. فلا تنشر أبدًا عددًا أو متوسطًا لمجموعة فيها أقل من خمسة تلاميذ. بل اذكره على مستوى المدرسة، أو ادمجه مع مجموعة أخرى، أو احذفه. وفي SQL تصنع ⁦GROUP BY⁩ المتوسطات، وتُسقط ⁦HAVING COUNT(*) >= 5⁩ المجموعات الصغيرة.\n\nواستبدال الأسماء بالأرقام بداية لا نهاية. ويسمّى هذا الترميز بأسماء مستعارة: فمن يملك قائمة الأرقام يستطيع إعادة الأسماء، فيجب أن تُحفظ القائمة منفصلة ومقفلة. والمعلومات العادية تستطيع ذلك أيضًا. ففي دراسة مشهورة، كان تاريخ الميلاد والجنس والرمز البريدي وحدها كافية لتحديد ٨٧٪ من الناس في الولايات المتحدة. وفي المدرسة قد يكفي الفصل والعمر وتفصيل واحد، كموقف حافلة أو فريق رياضي.\n\nفقبل أن تغادر البيانات المدرسة، اطرح ثلاثة أسئلة. مَن سيقرؤها، وماذا يحتاج دوره؟ هل يمكن أن يشير أي صف، أو أي مجموعة صغيرة، إلى طفل واحد؟ وماذا يُعرف أصلًا (صورة الصف، وقائمة الفريق، والنشرة المدرسية) مما يمكن وضعه بجانبها؟ والقانون يؤيّد ذلك: فقوانين حماية البيانات، ككينيا (٢٠١٩) ونيجيريا (٢٠٢٣) ومصر (القانون ١٥١ لسنة ٢٠٢٠) وPOPIA في جنوب أفريقيا، تطلب أقل قدر من البيانات للغرض، وعناية إضافية بالأطفال."
           },
           "keyTerms": [
             {
@@ -1710,7 +1710,7 @@
           "answer": "b",
           "explain": {
             "en": "That’s pseudonymisation, not anonymisation. Whoever holds the list of numbers can bring the names back, and a few ordinary facts, such as class, age and one detail, can do it too.",
-            "ar": "هذا ترميز بأسماء مستعارة، لا إخفاء للهوية. فمن يملك قائمة الأرقام يستطيع إعادة الأسماء، وبضع معلومات عادية، كالصف والعمر وتفصيل واحد، تستطيع ذلك أيضًا."
+            "ar": "هذا ترميز بأسماء مستعارة، لا إخفاء للهوية. فمن يملك قائمة الأرقام يستطيع إعادة الأسماء، وبضع معلومات عادية، كالفصل والعمر وتفصيل واحد، تستطيع ذلك أيضًا."
           }
         },
         {
@@ -1724,11 +1724,11 @@
             {
               "left": {
                 "en": "A class teacher",
-                "ar": "معلّمة الصف"
+                "ar": "معلّمة الفصل"
               },
               "right": {
                 "en": "Her own class’s marks and attendance",
-                "ar": "درجات صفّها وحضوره"
+                "ar": "درجات فصلها وحضوره"
               }
             },
             {
@@ -1773,7 +1773,7 @@
           "lang": "sql",
           "prompt": {
             "en": "The district’s report: each class’s number of pupils and average mark (to 1 decimal place), hiding any class with fewer than 5 pupils.",
-            "ar": "تقرير الإدارة: عدد تلاميذ كل صف ومتوسط درجاته (إلى منزلة عشرية واحدة)، مع إخفاء أي صف فيه أقل من ٥ تلاميذ."
+            "ar": "تقرير الإدارة: عدد تلاميذ كل فصل ومتوسط درجاته (إلى منزلة عشرية واحدة)، مع إخفاء أي فصل فيه أقل من ٥ تلاميذ."
           },
           "setup": "CREATE TABLE marks (class TEXT, pupil_id INTEGER, mark INTEGER);\nINSERT INTO marks VALUES ('6A', 1, 14), ('6A', 2, 9), ('6A', 3, 12), ('6A', 4, 16), ('6A', 5, 11), ('6A', 6, 13),\n  ('6B', 7, 17), ('6B', 8, 8), ('6B', 9, 10), ('6B', 10, 15), ('6B', 11, 12), ('6B', 12, 14), ('6B', 13, 11),\n  ('6C', 14, 6), ('6C', 15, 18), ('6C', 16, 9);",
           "starter": "SELECT class, COUNT(*), ROUND(AVG(mark), 1) FROM marks\nGROUP BY class;",
@@ -1790,7 +1790,7 @@
           ],
           "explain": {
             "en": "GROUP BY class makes the summaries; HAVING COUNT(*) >= 5 drops 6C, whose three pupils could be picked out. 6A (6 pupils) and 6B (7) stay. One line protects every child in a small class.",
-            "ar": "تصنع ⁦GROUP BY class⁩ الملخّصات، وتُسقط ⁦HAVING COUNT(*) >= 5⁩ الصف ٦ج الذي يمكن تمييز تلاميذه الثلاثة. ويبقى ٦أ (٦ تلاميذ) و٦ب (٧). فسطر واحد يحمي كل طفل في صف صغير."
+            "ar": "تصنع ⁦GROUP BY class⁩ الملخّصات، وتُسقط ⁦HAVING COUNT(*) >= 5⁩ الفصل ٦ج الذي يمكن تمييز تلاميذه الثلاثة. ويبقى ٦أ (٦ تلاميذ) و٦ب (٧). فسطر واحد يحمي كل طفل في فصل صغير."
           }
         },
         {
@@ -1798,7 +1798,7 @@
           "id": "lab",
           "prompt": {
             "en": "Try it: read Lina’s six posts as a stranger would, then choose who sees each one until the stranger learns nothing useful. Which two posts were harmless alone but risky together? The same happens when a report puts class, age and one detail side by side.",
-            "ar": "جرّب: اقرأ منشورات لينا الستة كما يقرؤها غريب، ثم اختر مَن يرى كلًّا منها حتى لا يعرف الغريب شيئًا مفيدًا. أيّ منشورين كانا بريئين وحدهما وخطيرين معًا؟ والشيء نفسه يحدث حين يضع تقرير الصف والعمر وتفصيلًا واحدًا جنبًا إلى جنب."
+            "ar": "جرّب: اقرأ منشورات لينا الستة كما يقرؤها غريب، ثم اختر مَن يرى كلًّا منها حتى لا يعرف الغريب شيئًا مفيدًا. أيّ منشورين كانا بريئين وحدهما وخطيرين معًا؟ والشيء نفسه يحدث حين يضع تقرير الفصل والعمر وتفصيلًا واحدًا جنبًا إلى جنب."
           },
           "tool": "footprint"
         },
@@ -1807,7 +1807,7 @@
           "id": "p4",
           "prompt": {
             "en": "A report query returns the row: 6B | hearing | 1 | 7.0. What’s the problem?",
-            "ar": "يعيد استعلام تقرير الصف: ⁦6B | hearing | 1 | 7.0⁩. ما المشكلة؟"
+            "ar": "يعيد استعلام للتقرير هذا الصف: ⁦6B | hearing | 1 | 7.0⁩. ما المشكلة؟"
           },
           "snippet": {
             "lang": "sql",
@@ -1825,7 +1825,7 @@
               "id": "b",
               "text": {
                 "en": "AVG gives the wrong answer for one row",
-                "ar": "تعطي AVG إجابة خاطئة لصف واحد"
+                "ar": "تعطي AVG إجابة خاطئة لفصل واحد"
               }
             },
             {
@@ -1852,7 +1852,7 @@
           "answer": false,
           "explain": {
             "en": "Harmless facts add up. A class, an age and a bus stop are each harmless, but together they can point at one child. Judge the combination, and what else is already known.",
-            "ar": "المعلومات البريئة تتجمّع. فالصف والعمر وموقف الحافلة كلٌّ منها بريء، لكنها معًا قد تشير إلى طفل واحد. فاحكم على اجتماعها، وعلى ما هو معروف أصلًا."
+            "ar": "المعلومات البريئة تتجمّع. فالفصل والعمر وموقف الحافلة كلٌّ منها بريء، لكنها معًا قد تشير إلى طفل واحد. فاحكم على اجتماعها، وعلى ما هو معروف أصلًا."
           }
         },
         {
@@ -2506,7 +2506,7 @@
           "hints": [
             {
               "en": "The starter lists every record. Each kind has its own keep_years, in the rules table.",
-              "ar": "يسرد البرنامج الأول كل السجلّات، ولكل نوع مدة keep_years الخاصة به في جدول rules."
+              "ar": "يسرد الاستعلام المبدئي كل السجلّات، ولكل نوع مدة keep_years الخاصة به في جدول rules."
             },
             {
               "en": "JOIN rules ON rules.kind = records.kind, then WHERE records.year + rules.keep_years < 2026.",
@@ -2743,7 +2743,7 @@
               "الشرح (٨ دقائق): اشرح قواعد مدة الاحتفاظ، والنسخ الاحتياطي ٣-٢-١ مع اختبار الاسترجاع، والصيغ المفتوحة، والحذف عن قصد.",
               "التصنيف (١٢ دقيقة): تأخذ المجموعات بطاقات السجلّات وتقرّر لكلٍّ منها كم يلزم، ولماذا، ومن يجب أن يحذفه.",
               "المقارنة (١٠ دقائق): قارنوا مدد المجموعات بالقواعد الحقيقية للوزارة أو المدرسة حيث وُجدت، وحيث لا توجد اتفقوا على واحدة.",
-              "الختام (٥ دقائق): اتفقوا على من سيسترجع ملفًّا من النسخة الاحتياطية هذا الفصل، ومتى. ثم وزّع بطاقة الخروج."
+              "الختام (٥ دقائق): اتفقوا على من سيسترجع ملفًّا من النسخة الاحتياطية هذا الفصل الدراسي، ومتى. ثم وزّع بطاقة الخروج."
             ]
           },
           "note": {
@@ -2922,7 +2922,7 @@
           "id": "q3",
           "prompt": {
             "en": "Retrying fixes a register that says “?” instead of P or A.",
-            "ar": "إعادة المحاولة تصلح سجلًّا فيه «؟» بدل «ح» أو «غ»."
+            "ar": "إعادة المحاولة تصلح سجلًّا فيه «؟» بدل P أو A."
           },
           "answer": false,
           "explain": {
@@ -3031,7 +3031,7 @@
           "id": "q7",
           "prompt": {
             "en": "Which are safe ways to share this term’s results with the district? Choose all that apply.",
-            "ar": "أيّ مما يلي طرق آمنة لمشاركة نتائج هذا الفصل مع الإدارة؟ اختر كل ما ينطبق."
+            "ar": "أيّ مما يلي طرق آمنة لمشاركة نتائج هذا الفصل الدراسي مع الإدارة؟ اختر كل ما ينطبق."
           },
           "options": [
             {
@@ -3059,7 +3059,7 @@
               "id": "d",
               "text": {
                 "en": "A class of three’s average next to its special needs",
-                "ar": "متوسط صف من ثلاثة تلاميذ بجانب احتياجاتهم الخاصة"
+                "ar": "متوسط فصل من ثلاثة تلاميذ بجانب احتياجاتهم الخاصة"
               }
             }
           ],
@@ -3078,7 +3078,7 @@
           "lang": "sql",
           "prompt": {
             "en": "Fill the gaps: averages per class, without any class of fewer than 5 pupils.",
-            "ar": "املأ الفراغات: المتوسطات لكل صف، دون أي صف فيه أقل من ٥ تلاميذ."
+            "ar": "املأ الفراغات: المتوسطات لكل فصل، دون أي فصل فيه أقل من ٥ تلاميذ."
           },
           "code": [
             "SELECT class, ROUND(AVG(mark), 1) FROM marks\nGROUP BY class\n",
@@ -3101,7 +3101,7 @@
           ],
           "explain": {
             "en": "HAVING filters the groups after they’re counted, and >= 5 keeps only classes of five or more. WHERE can’t use COUNT, and < 5 would keep only the small groups.",
-            "ar": "تصفّي HAVING المجموعات بعد عدّها، وتُبقي ⁦>= 5⁩ الصفوف التي فيها خمسة أو أكثر فقط. أما WHERE فلا تستطيع استعمال COUNT، و⁦< 5⁩ كانت ستُبقي المجموعات الصغيرة وحدها."
+            "ar": "تصفّي HAVING المجموعات بعد عدّها، وتُبقي ⁦>= 5⁩ الفصول التي فيها خمسة أو أكثر فقط. أما WHERE فلا تستطيع استعمال COUNT، و⁦< 5⁩ كانت ستُبقي المجموعات الصغيرة وحدها."
           }
         },
         {
@@ -3336,7 +3336,7 @@
               "One change I will propose to our head this term, and why."
             ],
             "ar": [
-              "تغيير واحد سأقترحه على مديرنا هذا الفصل، ولماذا."
+              "تغيير واحد سأقترحه على مديرنا هذا الفصل الدراسي، ولماذا."
             ]
           }
         }

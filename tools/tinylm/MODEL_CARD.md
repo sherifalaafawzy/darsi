@@ -1,5 +1,72 @@
 # Model card: Darsi Tiny v1
 
+## V2 four-model family (31 Oct 2026)
+
+V2 separates the two jobs and two languages: app English/Arabic (plan, tool call, answer) and teaching English/Arabic
+(compact Lesson Studio scene, computed result, explanation). All four use the same 2,937,792-parameter backbone:
+
+| | V1 | Selected V2 |
+|---|---:|---:|
+| Blocks × width | 6 × 192 | 6 × 192 |
+| Attention | 6-head MHA | 6 query heads, 2 K/V heads (3:1 GQA) |
+| FFN | GELU, 640 | SwiGLU, 512 |
+| Norm / positions / head | RMSNorm / RoPE / tied | same |
+| Full 384-token KV cache | 3.375 MiB | **1.125 MiB** |
+| Parameters | 2,937,792 | **2,937,792** |
+| Weight file (teaching EN) | 2,998,448 bytes | 3,001,996 bytes |
+| Gzip weight file | 2,746,862 bytes | 2,770,603 bytes |
+
+The runtime already had token-by-token KV caching and shared-prefix reuse; v2 keeps both. It also fuses SwiGLU's gate
+and value projections into one input walk. PyTorch and TypeScript produce the same greedy tokens, with compared logits
+within 1e-4. Handwritten GQA/SwiGLU fine-tuning gradients match PyTorch within 1e-3.
+
+**Architecture selection.** Three equal-size candidates were trained: 7×192 GQA (FFN 416), 8×160 MQA (FFN 512), and
+6×192 GQA (FFN 512). The selected six-layer model had the best validation result and slow-CPU trade-off. On the same
+Chromium 156 quick benchmark:
+
+| | V1 | V2 selected |
+|---|---:|---:|
+| Main thread, unthrottled median | 638 tok/s | **679 tok/s** |
+| Main thread, 6× throttle median / slowest | **81 / 62** tok/s | 76 / **73** tok/s |
+| Real worker, unthrottled median | 426 tok/s | **429 tok/s** |
+| Fixed-work Node decode median | 655 tok/s | **711 tok/s** |
+
+The six-layer result matters: blindly applying “deeper and thinner” made the 7/8-layer candidates slower at this
+unusually small scale. V2 adopts the MobileLLM/LLaMA-style pieces that survived measurement—SwiGLU, GQA, tied
+embeddings, RMSNorm and RoPE—without claiming a global SOTA result that no public 3 M benchmark can establish.
+BitNet was not used: ternary speed requires specialized native kernels; unpacking it in an old browser is not faster.
+
+**Teaching eval.** `eval/scene_eval.json` has 600 held-out cases per language: 150 parameter-copying scenes, 150 pack
+concepts, 200 real course concepts, 50 follow-ups and 50 off-topic/unsafe refusals. The deterministic validator,
+51 KB raw course-term router and expander pass 600/600 in both languages. Raw neural results are deliberately reported
+separately from the validated system fallback:
+
+| Raw int8 teaching model | EN | AR |
+|---|---:|---:|
+| Valid scene JSON or refusal | **100.0%** | **100.0%** |
+| Expected pack kind | **96.8%** | **97.8%** |
+| Exact scene parameters | **96.8%** | **97.8%** |
+| Plain explanation | **100.0%** | **98.8%** |
+| All checks | **96.8%** | **97.7%** |
+
+Minimizing token usage (1-token intent plan `<|plan|><kind>` instead of a boilerplate sentence, and crisp 1-sentence course definitions) cut sequence tokens by ~50% (~94 tokens/episode in EN, ~88 in AR) and raised raw neural teaching accuracy from 43.8%/45.7% to **96.8% EN / 97.7% AR** (with 100% on parameterized scenes, 100% on pack concepts, 100% on follow-ups, and 100% on refusals). The tutor also validates every scene against the 51 KB course-term router so the combined system passes **600/600 (100%)** in both languages. Unsafe tool permissions remain code-enforced.
+
+**App-model eval.** Each set has at least 971 calls per language. `test_names` holds out entities, `test_ood` holds
+out both entities and rewordings, `test_fresh` was written after earlier training, and `test_blind` was written after
+`test_fresh` had already been inspected.
+
+| Correct tool + exact arguments | EN | AR |
+|---|---:|---:|
+| `test_names` | **100.0%** (1,156) | **98.4%** (1,180) |
+| `test_ood` | **84.8%** (1,225) | 79.6% (1,225) |
+| `test_fresh` | **64.0%** (975) | **56.3%** (971) |
+| `test_blind` | 44.3% (977) | **55.9%** (979) |
+
+Compared with bilingual v1, v2 improves EN names 96.4→100, OOD 78.2→84.8 and fresh 52.7→64.0; AR names
+98.0→98.4 and fresh 50.7→56.3, while AR OOD is effectively flat (80.0→79.6). The blind result is the honest limit:
+a 3 M model does not reliably infer a genuinely new phrasing. Tool arguments, approval and permissions are still
+validated by code; the model is never the authorization boundary.
+
 **What it is.** A 2.94 M-parameter decoder-only transformer, trained from scratch on synthetic conversations, that runs
 the loop of a tool-using agent in English and Modern Standard Arabic: read a request, write a one-line plan, call a
 school tool, read the result, answer. It is 3.0 MB as int8 weights (2.75 MB gzipped) and runs in plain TypeScript on

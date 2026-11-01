@@ -8,7 +8,7 @@ import { Art } from "../components/Art";
 import { LabEmbed } from "../labs/loader";
 import { ProjectView } from "./ProjectView";
 import { grade, shuffled, type Answer } from "./engine";
-import { canPlayLight, LightLesson } from "./LightLesson";
+import { canPlayLight, LightLesson, saveVideoShape, videoShape, type VideoShape } from "./LightLesson";
 import { CodeBlock } from "../code/CodeBlock";
 import { CodeStepEmbed } from "../code/loader";
 
@@ -205,6 +205,9 @@ function VideoStepView({ step, onReady }: { step: VideoStep; onReady: () => void
   // The light lesson (Lesson Studio) plays first when it has this language; the MP4 is a choice, and the fallback.
   const pl = canPlayLight() ? lightLang(step, lang) : null;
   const [mode, setMode] = useState<"light" | "video">(pl ? "light" : "video");
+  // Landscape by default; the learner can turn the drawn video to portrait (kept on this phone).
+  const [shape, setShape] = useState<VideoShape>(videoShape);
+  const turn = () => { const next: VideoShape = shape === "landscape" ? "portrait" : "landscape"; saveVideoShape(next); setShape(next); };
   const light = mode === "light" && !!pl && !!step.light;
   // Times inside the video that plays: this language's own, or the English one when it falls back to English.
   const videoLang = step.sources?.[lang] ? lang : "en";
@@ -256,10 +259,11 @@ function VideoStepView({ step, onReady }: { step: VideoStep; onReady: () => void
         <QuestionHeader type="video" typeLabel={t("lesson.video")} prompt={L(step.title)} />
         {showTranscript ? null : (
           // The quick checks are asked inside the player: answering one, or reaching the end, lets the lesson go on.
-          <LightLesson light={step.light!} lang={pl!} poster={poster} onEvent={(e) => { if (e.type === "check" || e.type === "ended") ready(); }} onError={() => setMode("video")} />
+          <LightLesson light={step.light!} lang={pl!} poster={poster} shape={shape} onEvent={(e) => { if (e.type === "check" || e.type === "ended") ready(); }} onError={() => setMode("video")} />
         )}
         <div className="video-modes">
           <Button size="sm" variant="ghost" icon="file" onClick={() => setShowTranscript((x) => !x)}>{t("lesson.transcript")}</Button>
+          {!showTranscript && <Button size="sm" variant="ghost" icon="video" aria-pressed={shape === "portrait"} onClick={turn}>{t(shape === "landscape" ? "video.toPortrait" : "video.toLandscape")}</Button>}
           {playable && <Button size="sm" variant="ghost" icon="play" onClick={() => setMode("video")}>{t("lesson.asVideo", { mb: num(step.sizeMB, { maximumFractionDigits: 1 }) })}</Button>}
         </div>
         {showTranscript && <div className="transcript" dir="auto"><strong>{t("lesson.transcript")}</strong><p>{L(step.transcript)}</p></div>}

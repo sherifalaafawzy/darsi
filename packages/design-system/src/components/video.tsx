@@ -41,6 +41,16 @@ export const VIDEO_SPEEDS = [1, 1.25, 1.5, 0.75] as const;
  * Full screen covers the player itself (so questions and captions stay on top); phones without the Fullscreen API on
  * elements (iPhone) get the player stretched over the page instead.
  */
+/** In full screen, turn the phone to landscape where the browser allows it (Android Chrome); undone on exit. */
+let lockedLandscape = false;
+function lockLandscape(on: boolean) {
+  const so = (typeof screen !== "undefined" ? screen.orientation : undefined) as (ScreenOrientation & { lock?: (o: string) => Promise<void> }) | undefined;
+  try {
+    if (on && so?.lock) { lockedLandscape = true; void so.lock("landscape").catch(() => { lockedLandscape = false; }); }
+    else if (!on && lockedLandscape) { lockedLandscape = false; so?.unlock?.(); }
+  } catch { lockedLandscape = false; }
+}
+
 export function VideoPlayer(p: VideoPlayerProps) {
   const { title, meta, poster, src, tracks, duration, chapters = [], questionsAt = [], caption, checkpoint, checkpointLabel = "Pause and answer",
     quality = "240p", actions, playLabel = "Play", pauseLabel = "Pause", captionsLabel = "Captions", seekLabel = "Seek", speedLabel = "Speed",
@@ -50,6 +60,7 @@ export function VideoPlayer(p: VideoPlayerProps) {
   const [current, setCurrent] = useState(p.current ?? 0);
   const [rate, setRate] = useState(1);
   const [full, setFull] = useState<"" | "api" | "page">("");
+  const [tall, setTall] = useState(false);
   const ref = useRef<HTMLVideoElement>(null);
   const fig = useRef<HTMLElement>(null);
   const resume = useRef(false);
@@ -68,7 +79,10 @@ export function VideoPlayer(p: VideoPlayerProps) {
   useEffect(applyCaptions, [cc, src]);
   useEffect(() => { if (ref.current) ref.current.playbackRate = rate; }, [rate, src]);
   useEffect(() => {
-    const on = () => setFull((f) => (document.fullscreenElement === fig.current ? "api" : f === "api" ? "" : f));
+    const on = () => {
+      if (document.fullscreenElement !== fig.current) lockLandscape(false);
+      setFull((f) => (document.fullscreenElement === fig.current ? "api" : f === "api" ? "" : f));
+    };
     document.addEventListener("fullscreenchange", on);
     return () => document.removeEventListener("fullscreenchange", on);
   }, []);
@@ -76,7 +90,11 @@ export function VideoPlayer(p: VideoPlayerProps) {
     if (full !== "page") return;
     const root = document.documentElement, before = root.style.overflow;
     root.style.overflow = "hidden";
-    return () => { root.style.overflow = before; };
+    // On an upright phone the page-wide player is turned on its side, so the 16:9 video fills the screen.
+    const turn = () => setTall(innerHeight > innerWidth);
+    turn();
+    addEventListener("resize", turn);
+    return () => { root.style.overflow = before; removeEventListener("resize", turn); };
   }, [full]);
 
   const pct = duration ? Math.min(100, (current / duration) * 100) : 0;
@@ -100,12 +118,12 @@ export function VideoPlayer(p: VideoPlayerProps) {
   const toggleFull = () => {
     if (document.fullscreenElement) void document.exitFullscreen();
     else if (full === "page") setFull("");
-    else if (document.fullscreenEnabled && fig.current?.requestFullscreen) void fig.current.requestFullscreen().catch(() => setFull("page"));
+    else if (document.fullscreenEnabled && fig.current?.requestFullscreen) void fig.current.requestFullscreen().then(() => lockLandscape(true), () => setFull("page"));
     else setFull("page");
   };
   const locked = !!checkpoint;
   return (
-    <figure ref={fig} className={cx("dr-video", checkpoint ? "has-checkpoint" : undefined, full === "page" && "is-full")}
+    <figure ref={fig} className={cx("dr-video", checkpoint ? "has-checkpoint" : undefined, full === "page" && "is-full", full === "page" && tall && "is-turned")}
       onKeyDown={(e) => { if (e.key === "Escape" && full === "page") setFull(""); }}>
       <div className="dr-video-stage">
         {src ? (

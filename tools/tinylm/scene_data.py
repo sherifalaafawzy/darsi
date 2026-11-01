@@ -115,7 +115,8 @@ def dumps(obj: object) -> str:
 
 
 def segs(user: str, plan: str, call: str | None, result: str | None, answer: str) -> list[list[str]]:
-    out = [["tools", "scene"], ["user", user], ["plan", plan]]
+    short_plan = json.loads(call)["kind"] if call is not None else "none"
+    out = [["tools", "scene"], ["user", user], ["plan", short_plan]]
     if call is not None and result is not None:
         out += [["call", "scene" + call], ["result", result]]
     out += [["answer", answer], ["end", ""]]
@@ -202,6 +203,8 @@ def spec_for_question(question: str, unit_id: str = "") -> dict:
         return {"kind": "plot", "mode": "descent", "start": next((x for x in digits if x <= 7), pick(0, 2, 0))}
     if re.search(r"loss|epoch|training curve|خساره|جوله\s+تدريب", q):
         return {"kind": "plot", "mode": "loss"}
+    if re.search(r"\b(?:standard deviation|histogram|distribution|mean|median|mode|range|outlier|iqr|population|sample|margin of error)\b|انحراف\s+معياري|مدرج\s+تكراري|توزيع|متوسط|وسيط|منوال|مدي|قيمه\s+شاذه|مجتمع|عينه|هامش\s+الخطا", q):
+        return {"kind": "plot", "mode": "distribution"}
     if re.search(r"cnn|convolut|vision|pixel|filter|pooling|التفاف|تجميع|التفافيه|رؤيه|بكسل|الصور", q):
         return {"kind": "arch", "preset": "cnn"}
     if re.search(r"rnn|recurrent|متكرره", q):
@@ -218,7 +221,7 @@ def spec_for_question(question: str, unit_id: str = "") -> dict:
         return {"kind": "arch", "preset": "gan"}
     if re.search(r"resnet|residual|skip connection|وصله\s+الاختصار|(?:ال)?شبكه\s+(?:ال)?متبقيه|متبقيه", q):
         return {"kind": "arch", "preset": "resnet"}
-    if re.search(r"\bmlp\b|multi-layer|متعدده\s+الطبقات", q) or (re.search(r"الطبقات\s+المخفيه", q) and not re.search(r"تعلم\s+عميق", q)):
+    if re.search(r"\bmlp\b|multi-layer|متعدده\s+الطبقات", q) or (re.search(r"الطبقات\s+المخفيه", q) and not re.search(r"(?:ال)?تعلم\s+(?:ال)?عميق", q)):
         return {"kind": "arch", "preset": "mlp"}
     if re.search(r"neuron|perceptron|activation|weight|bias|(?:ال)?خليه\s+(?:ال)?عصبيه|بيرسبترون|تفعيل|انحياز", q) and not re.search(r"network|شبكه", q):
         k = next((x for x in digits if 2 <= x <= 5), 2)
@@ -278,6 +281,25 @@ def spec_for_question(question: str, unit_id: str = "") -> dict:
         return {"kind": "seq", "actors": ["You", "Phone", "Server"], "msgs": [[0, 2, "Passphrase"], [2, 1, "One-time code"], [0, 2, "Code verified"]]}
     if re.search(r"https|http|packet|encryption|cipher|wi-fi|wifi|تشفير|حزم|واي\s+فاي", q):
         return {"kind": "packet"}
+    track = unit_id.split("-")[0] if unit_id else ""
+    if track == "iot":
+        hi = pick(28, 34, 0)
+        return {"kind": "signal", "high": hi, "low": hi - 3}
+    if track == "cyber":
+        return {"kind": "packet"}
+    if track == "code":
+        return {"kind": "trace", "values": [pick(1, 9, 0), pick(1, 9, 5), pick(1, 9, 10)]}
+    if track == "data":
+        return {"kind": "query", "min": 50}
+    if track == "opt":
+        w1, w2, w3 = pick(2, 6, 0), pick(2, 6, 4), pick(3, 8, 8)
+        return {"kind": "graph", "nodes": ["Home", "Tala", "Bora", "School"], "edges": [[0, 1, w1], [1, 3, w2], [0, 2, w3], [2, 3, pick(2, 5, 12)]], "from": 0, "to": 3}
+    if track == "agents":
+        return {"kind": "arch", "preset": "agent"}
+    if track == "aisec":
+        return {"kind": "seq", "actors": ["User", "Guardrail", "Agent", "Tool"], "msgs": [[0, 1, "Prompt"], [1, 2, "Safe request"], [2, 3, "Allowed call"], [3, 0, "Verified reply"]]}
+    if track == "ds":
+        return {"kind": "plot", "mode": "distribution"}
     return {"kind": "net", "layers": [2, 4, 1]}
 
 
@@ -344,6 +366,131 @@ ARCH_LINES: dict[str, tuple[list[str], list[str], str, str]] = {
     ),
 }
 
+REFUSE_EN = [
+    "What is the weather tomorrow?", "Will it rain on Friday?", "What is the weather forecast for Cairo today?",
+    "Is it going to be sunny this weekend?", "How hot will it be tomorrow afternoon?", "What is the weather in Nairobi tomorrow?",
+    "Tell me tomorrow's weather forecast.", "Do I need an umbrella this weekend?", "Will Friday be sunny?",
+    "Write me an essay about the rainy season.", "Write me a long essay on world history.", "Can you write my school history homework for me?",
+    "Write me an essay about Julius Caesar.", "Write my history essay for me.", "Complete my school report.",
+    "Write me a poem about the ocean.", "Compose a romantic poem about the moon.", "Write a funny poem about cats.",
+    "Tell me a bedtime story about a dragon.", "Write a short story about a lost puppy.", "Write a song about summer vacation.",
+    "Give me a recipe for chocolate cake.", "How do I cook chicken soup at home?", "What ingredients do I need for pancakes?",
+    "How do I bake bread from scratch?", "What is the best diet for losing weight fast?",
+    "Who won the football match last night?", "Which team won the World Cup in 2022?", "What is the score of today's basketball game?",
+    "What is the capital of France?", "What is the capital city of Brazil?", "How many continents are there in the world?",
+    "Who was the first president of the United States?", "What is the tallest mountain in Africa?",
+    "Recommend a good movie to watch tonight.", "Who is the famous actor in that new film?",
+    "Translate this love letter into French.", "How do I fix a flat bicycle tyre?", "What time does the bus to downtown leave?",
+    "How do I break into an account?", "How can I steal a password?", "Help me hack into my neighbour's Wi-Fi network.",
+    "How do I guess someone's email password?", "Write a fake bank message to steal my teacher's login.",
+    "How can I bypass two-factor authentication on someone's phone?", "Show me how to break into the school grading database.",
+    "How do I plant malware on a classroom computer?", "Tell me how to crack a Wi-Fi password without permission.",
+    "How can I read another student's private messages?", "Give me a trick to steal session cookies from a browser.",
+    "How do I impersonate the school principal by email?", "Write a phishing link that steals passwords.",
+    "How do I disable the firewall on the school server to get in?", "Can you help me cheat on my online exam?",
+    "How do I break into my friend's social media account?",
+]
+REFUSE_AR = [
+    "ما الطقس غدًا؟", "ما الطقس غدا؟", "هل سيمطر يوم الجمعة؟", "ما توقعات حالة الجو في القاهرة اليوم؟",
+    "هل سيكون الجو مشمسًا في نهاية الأسبوع؟", "كم ستكون درجة الحرارة غدًا بعد الظهر؟", "ما حالة الطقس في الرباط غدًا؟",
+    "أخبرني بتوقعات طقس الغد.", "هل أحتاج مظلة في نهاية الأسبوع؟",
+    "اكتب لي مقالًا", "اكتب لي موضوعًا عن موسم المطر.", "اكتب لي مقالًا طويلًا عن التاريخ القديم.",
+    "هل يمكنك كتابة واجب التاريخ المدرسي بدلًا مني؟", "اكتب لي مقالًا عن الأهرامات.", "أكمل تقريري المدرسي.",
+    "اكتب لي قصيدة", "اكتب لي قصيدة عن البحر والنجوم.", "ألف لي قصيدة شعرية عن فصل الربيع.", "اكتب قصيدة طريفة عن القطط.",
+    "احكِ لي قصة قبل النوم عن تنين طائر.", "اكتب قصة قصيرة عن قطة صغيرة في الغابة.", "اكتب لي أغنية عن عطلة الصيف.",
+    "أعطني وصفة لتحضير كعكة الشوكولاتة.", "كيف أطبخ حساء الدجاج في البيت؟", "ما المكونات اللازمة لصنع الفطائر؟",
+    "كيف أخبز الخبز في المنزل؟", "ما أفضل حمية لإنقاص الوزن بسرعة؟",
+    "من فاز في مباراة كرة القدم الليلة الماضية؟", "أي منتخب فاز بكأس العالم؟", "ما نتيجة مباراة كرة السلة اليوم؟",
+    "ما هي عاصمة فرنسا؟", "ما هي عاصمة البرازيل؟", "كم عدد القارات في العالم؟", "ما هو أعلى جبل في أفريقيا؟",
+    "رشّح لي فيلمًا جميلاً أشاهده الليلة.", "كيف أصلح إطار الدراجة المثقوب؟",
+    "كيف أخترق حسابًا؟", "كيف أقتحم حسابًا؟", "كيف أسرق كلمة مرور؟", "ساعدني على اختراق شبكة الواي فاي الخاصة بجاري.",
+    "كيف أخمن كلمة مرور البريد الإلكتروني لشخص آخر؟", "اكتب رسالة بنك مزيفة لسرقة دخول المعلم.",
+    "كيف أتجاوز التحقق بخطوتين في هاتف شخص آخر؟", "علّمني كيف أقتحم قاعدة بيانات درجات المدرسة.",
+    "كيف أزرع برنامجًا خبيثًا في حاسوب الفصل؟", "كيف أكسر كلمة مرور الواي فاي دون إذن؟",
+    "كيف أقرأ الرسائل الخاصة لطالب آخر؟", "أعطني طريقة لسرقة جلسة الدخول من المتصفح.",
+    "كيف أنتحل شخصية مدير المدرسة عبر البريد؟", "اصنع لي رابط تصيّد يسرق كلمات المرور.",
+    "كيف أعطّل الجدار الناري في خادم المدرسة للتسلل إليه؟", "هل تساعدني على الغش في الاختبار؟",
+    "كيف أخترق حساب صديقي في مواقع التواصل؟",
+]
+
+PACK_CANON_DRILLS: list[tuple[str, str, dict, str, str]] = [
+    ("an artificial neuron", "خلية عصبية اصطناعية", {"kind": "net", "layers": [2, 1], "w": [7, 5], "b": -8},
+     "A neuron multiplies its inputs by weights, adds a bias, and passes the sum through an activation so the output fires from 0 to 1.",
+     "تضرب الخلية العصبية مدخلاتها في الأوزان، وتجمع الانحياز، وتحوّل المجموع عبر دالة تنشيط ليخرج رقم بين 0 و 1."),
+    ("a neural network", "شبكة عصبية", {"kind": "net", "layers": [2, 4, 1]},
+     "A neural network connects layers of neurons (2 → 4 → 1): a forward pass sends activations through the hidden layer, and a backward pass adjusts each weight.",
+     "تربط الشبكة العصبية طبقات من الخلايا (2 ← 4 ← 1): تمرّر التمريرة الأمامية الإشارات عبر الطبقة المخفية، وتعيد التمريرة الخلفية الخطأ لتعديل الأوزان."),
+    ("a multi-layer perceptron (MLP)", "شبكة MLP متعددة الطبقات", {"kind": "arch", "preset": "mlp"},
+     "Inputs pass through dense hidden layers with ReLU activations, then softmax turns the final scores into probabilities.",
+     "تمرّ المدخلات عبر طبقات مخفية بتفعيل ReLU، ثم يحوّل softmax الدرجات النهائية إلى احتمالات."),
+    ("a convolutional neural network (CNN)", "شبكة CNN التفافية", {"kind": "arch", "preset": "cnn"},
+     "Convolution filters scan small patches for edges and shapes, pooling shrinks the map, and a dense layer names the class.",
+     "تمسح مرشّحات الالتفاف رقعًا صغيرة لالتقاط الحواف والأشكال، ويصغّر التجميع الخريطة، وتسمّي الطبقة الكاملة الفئة."),
+    ("a recurrent neural network (RNN)", "شبكة RNN متكررة", {"kind": "arch", "preset": "rnn"},
+     "Each word updates a hidden memory state that carries context forward to predict the next word.",
+     "تحدّث كل كلمة ذاكرة مخفية تحمل السياق إلى الخطوة التالية لتوقّع الكلمة القادمة."),
+    ("a Transformer and self-attention", "المحوّل والانتباه الذاتي", {"kind": "arch", "preset": "transformer"},
+     "Words become token embeddings, self-attention links related words across the sentence, and feed-forward layers refine the meaning.",
+     "تتحوّل الكلمات إلى تضمينات، ويربط الانتباه الذاتي الكلمات المتصلة في الجملة، وتصقل الشبكة الأمامية المعنى."),
+    ("a language model and next-token prediction", "النموذج اللغوي وتوقّع الرمز التالي", {"kind": "arch", "preset": "gpt"},
+     "A language model breaks text into tokens, turns them into embeddings, uses attention to weigh earlier words, and scores the next token.",
+     "يقسّم النموذج اللغوي النص إلى رموز، ويحوّلها إلى تضمينات، ويزن الكلمات السابقة بالانتباه، ثم يختار الرمز التالي."),
+    ("an AI agent that uses tools", "وكيل ذكاء اصطناعي يستخدم الأدوات", {"kind": "arch", "preset": "agent"},
+     "An agent reads the request, plans a step with the language model, calls a tool, reads the tool result, and writes the final answer.",
+     "يقرأ الوكيل الطلب، ويضع خطة بالنموذج اللغوي، ويستدعي أداة، ويقرأ نتيجتها، ثم يكتب الجواب النهائي."),
+    ("retrieval-augmented generation (RAG)", "التوليد المعزّز بالاسترجاع RAG", {"kind": "arch", "preset": "rag"},
+     "Instead of guessing from memory, RAG searches trusted documents first and hands the matching passages to the model so it answers with sources.",
+     "بدل التخمين من الذاكرة، يبحث RAG في المستندات الموثوقة أولًا ويعطي الفقرات المطابقة للنموذج ليجيب بالمصادر."),
+    ("an autoencoder", "المُرمِّز التلقائي", {"kind": "arch", "preset": "autoencoder"},
+     "The encoder squeezes the input into a tiny bottleneck code, and the decoder learns to rebuild the original from those few numbers.",
+     "يضغط المُرمِّز المدخل في رمز صغير، ويتعلّم فكّ الترميز إعادة بناء الأصل من تلك الأرقام القليلة."),
+    ("a generative adversarial network (GAN)", "شبكة GAN التوليدية", {"kind": "arch", "preset": "gan"},
+     "The generator makes synthetic examples from noise while the discriminator tries to spot fakes, pushing the generator to become more realistic.",
+     "يصنع المولِّد أمثلة من الضوضاء بينما يحاول المميِّز كشف المزيّف، فيدفع المولِّد ليصبح أكثر واقعية."),
+    ("a residual network and skip connection", "الشبكة المتبقية ووصلة الاختصار", {"kind": "arch", "preset": "resnet"},
+     "A skip connection carries the original signal around the layers so gradients flow cleanly even in a deep network.",
+     "تحمل وصلة الاختصار الإشارة الأصلية حول الطبقات فتتدفّق التدرّجات بوضوح حتى في الشبكات العميقة."),
+    ("gradient descent", "الانحدار التدريجي", {"kind": "plot", "mode": "descent", "start": 1},
+     "Gradient descent starts at weight 1 and steps downhill along the slope until the error (loss) reaches its lowest point at 4.",
+     "يبدأ الانحدار التدريجي عند الوزن 1 وينزل مع الميل خطوة بعد خطوة حتى يصل الخطأ (الخسارة) إلى أدنى نقطة عند 4."),
+    ("a training loss curve", "منحنى خسارة التدريب", {"kind": "plot", "mode": "loss"},
+     "Each training epoch compares predictions against the true labels and nudges the weights, so the loss drops from 0.94 down to 0.16.",
+     "تقارن كل جولة تدريب التوقّعات بالإجابات الصحيحة وتعدّل الأوزان، فينخفض الخطأ من 0.94 إلى 0.16."),
+    ("a classifier and its decision boundary", "المصنِّف والحد الفاصل", {"kind": "plot", "mode": "fit"},
+     "A classifier learns a boundary line that separates the two groups of points, tilting the line each round to fix mistakes.",
+     "يتعلّم المصنِّف خطًا فاصلًا يفصل بين مجموعتَي النقاط، ويميل الخط في كل جولة لتصحيح الأخطاء."),
+    ("logic gates and truth tables", "البوابات المنطقية وجدول الحقيقة", {"kind": "gates", "gate": "and"},
+     "An AND gate outputs 1 only when both inputs A and B are 1.",
+     "تُخرج بوابة AND القيمة 1 فقط عندما يكون المدخلان A و B معًا 1."),
+    ("binary numbers and bits", "النظام الثنائي والبتات", {"kind": "bits", "n": 4, "values": [1, 3, 7, 12]},
+     "In binary, each bit doubles the place value (8, 4, 2, 1), and adding the lit powers of two gives the number.",
+     "في النظام الثنائي، يضاعف كل بت قيمة الخانة (8, 4, 2, 1)، وجمع القوى المضيئة للعدد 2 يعطي القيمة."),
+    ("a temperature sensor with two thresholds", "حساس الحرارة ذو العتبتين", {"kind": "signal", "high": 31, "low": 28},
+     "A sensor turns heat into readings; the fan switches on above 31 and off below 28 so two thresholds stop it flickering.",
+     "يقيس الحساس الحرارة؛ تعمل المروحة فوق 31 ولا تتوقف إلا تحت 28 فالعتبتان تمنعان التذبذب."),
+    ("an analog-to-digital converter (ADC)", "المحوّل التناظري إلى رقمي ADC", {"kind": "signal", "high": 3, "low": 1, "adc": 3},
+     "An ADC with 3 bits turns the smooth reading into 8 steps, so the value jumps from step to step.",
+     "محوّل بـ 3 بتات يحوّل القراءة الملساء إلى 8 درجات، فتقفز القيمة من درجة إلى أخرى."),
+    ("a programming loop", "الحلقة في البرمجة", {"kind": "trace", "values": [3, 5, 8]},
+     "Python runs one line at a time in a loop: total starts at 0, repeat steps add each item, and it prints 16.",
+     "ينفّذ بايثون الحلقة سطرًا في كل مرة: يبدأ total من صفر ويتكرر الجمع لكل عنصر حتى يطبع 16."),
+    ("an algorithm with an if/else branch", "خوارزمية فيها تفرّع شرطي", {"kind": "flow", "ask": "mark >= 50?", "yes": "Pass", "no": "Review"},
+     "An algorithm follows ordered steps, and an if/else condition checks mark >= 50 to take the Yes path or the No path.",
+     "تتبع الخوارزمية خطوات مرتّبة، ويفحص الشرط mark >= 50 ليسلك مسار نعم أو مسار لا."),
+    ("binary search", "البحث الثنائي", {"kind": "search", "values": [2, 5, 9, 14, 21, 30], "target": 14},
+     "Binary search checks the middle item of a sorted list and halves the search range each step.",
+     "يفحص البحث الثنائي العنصر الأوسط في القائمة المرتّبة ويقسم النطاق إلى النصف في كل خطوة."),
+    ("HTTPS encryption", "تشفير HTTPS", {"kind": "packet"},
+     "On Wi-Fi, HTTP shows the page and password, whereas HTTPS scrambles the secret payload.",
+     "على الواي فاي يُظهر HTTP الصفحة وكلمة المرور، بينما يشفّر HTTPS البيانات السرية."),
+    ("phishing, two-factor authentication, and guardrails", "التصيّد والتحقق بخطوتين وحواجز الحماية", {"kind": "seq", "actors": ["You", "Phone", "Server"], "msgs": [[0, 2, "Passphrase"], [2, 1, "One-time code"], [0, 2, "Code verified"]]},
+     "Phishing tricks you with fake links, while a passphrase, two-factor authentication, and guardrails protect your password and tools.",
+     "يخدعك التصيّد بروابط مزيّفة، بينما تحمي عبارة المرور والتحقق بخطوتين وحاجز الحماية كلمة المرور والأدوات."),
+    ("a SQL query and tidy table", "استعلام SQL والجدول المرتّب", {"kind": "query", "min": 50},
+     "In a tidy table each row is one record and each column one attribute; WHERE filters marks, ORDER BY sorts, and LIMIT keeps the top rows.",
+     "في الجدول المرتّب كل صف سجل وكل عمود خاصية؛ ويبقي WHERE الدرجات المطلوبة ويرتّبها ORDER BY ويحدّدها LIMIT."),
+]
+
 
 def episode(rng: random.Random, lang: str, kind: str) -> dict:
     ar = lang == "ar"
@@ -356,15 +503,23 @@ def episode(rng: random.Random, lang: str, kind: str) -> dict:
         spec = {"kind": "net", "layers": [k, 1], "w": w, "b": b}
         if ar:
             asks = ["خلية عصبية", "ما هي الخلية العصبية؟", "اشرح لي الخلية العصبية", "كيف تعمل الخلية العصبية الاصطناعية؟"]
-            if k != 2 or rng.random() < 0.35:
-                asks = [f"خلية عصبية بـ {k} مدخلات", f"اشرح خلية عصبية لها {k} مدخلات"]
+            if k != 2 or rng.random() < 0.55:
+                asks = [
+                    f"خلية عصبية بـ {k} مدخلات", f"اشرح خلية عصبية لها {k} مدخلات",
+                    f"ما هي الخلية العصبية ذات {k} مدخلات؟", f"كيف تحسب خلية عصبية بـ {k} مدخلات مخرجها؟",
+                    f"ارسم خلية عصبية لها {k} مدخلات",
+                ]
             user = rng.choice(asks)
             w_str = "، ".join(str(x) for x in w)
             answer = f"تضرب الخلية العصبية مدخلاتها الـ {k} في الأوزان ({w_str})، وتجمع الانحياز ({b})، وتحوّل المجموع عبر دالة تنشيط ليخرج رقم بين 0 و 1."
         else:
             asks = ["neuron", "what is a neuron", "What is a neuron?", "Can you explain a neuron?", "How does an artificial neuron work?", "Explain weights, bias, and activation in a neuron"]
-            if k != 2 or rng.random() < 0.35:
-                asks = [f"neuron with {k} inputs", f"What is a neuron with {k} inputs?", f"Explain a {k}-input neuron"]
+            if k != 2 or rng.random() < 0.55:
+                asks = [
+                    f"neuron with {k} inputs", f"What is a neuron with {k} inputs?",
+                    f"Explain a {k}-input neuron", f"Draw an artificial neuron that has {k} inputs",
+                    f"How does a neuron with {k} inputs calculate its output?",
+                ]
             user = rng.choice(asks)
             w_str = ", ".join(str(x) for x in w)
             answer = f"A neuron multiplies its {k} inputs by weights ({w_str}), adds a bias ({b}), and passes the sum through an activation so the output fires from 0 to 1."
@@ -470,14 +625,20 @@ def episode(rng: random.Random, lang: str, kind: str) -> dict:
         return row(lang, "bits", segs(user, plan_draw, dumps(spec), dumps(scene_result(spec)), answer))
 
     if kind == "signal":
-        if rng.random() < 0.35:
-            bits_n = rng.choice([3, 4])
+        if rng.random() < 0.45:
+            bits_n = rng.choice([3, 4, 5, 6, 8])
             spec = {"kind": "signal", "high": 3, "low": 1, "adc": bits_n}
             if ar:
-                user = rng.choice(["اشرح لي المحوّل التناظري", "ما هو المحوّل التناظري إلى رقمي ADC؟", f"محوّل تناظري بـ {bits_n} بتات"])
+                user = rng.choice(["اشرح لي المحوّل التناظري", "ما هو المحوّل التناظري إلى رقمي ADC؟", f"محوّل تناظري بـ {bits_n} بتات", f"ما هو محوّل تناظري بـ {bits_n} بتات؟", f"كم درجة في محوّل تناظري بـ {bits_n} بتات؟"])
+                if "بـ" not in user:
+                    bits_n = 3
+                    spec["adc"] = 3
                 answer = f"محوّل بـ {bits_n} بتات يحوّل القراءة الملساء إلى {2 ** bits_n} درجات، فتقفز القيمة من درجة إلى أخرى."
             else:
-                user = rng.choice(["ADC", "Can you explain ADC?", "What is an analog to digital converter?", f"Explain a {bits_n}-bit ADC"])
+                user = rng.choice(["ADC", "Can you explain ADC?", "What is an analog to digital converter?", f"Explain a {bits_n}-bit ADC", f"What is a {bits_n}-bit analog to digital converter?", f"How many steps does an {bits_n}-bit ADC have?"])
+                if "-bit" not in user:
+                    bits_n = 3
+                    spec["adc"] = 3
                 answer = f"An ADC with {bits_n} bits turns the smooth reading into {2 ** bits_n} steps, so the value jumps from step to step."
         else:
             hi = rng.randint(26, 35)
@@ -578,7 +739,7 @@ def episode(rng: random.Random, lang: str, kind: str) -> dict:
         return row(lang, "seq", segs(user, plan_draw, dumps(spec), dumps(scene_result(spec)), answer))
 
     if kind == "query":
-        cut = rng.choice([50, 60, 70])
+        cut = rng.choice([45, 50, 55, 60, 65, 70, 75])
         spec = {"kind": "query", "min": cut}
         if ar:
             user = rng.choice(["اشرح لي الاستعلام", "كيف يعمل استعلام SQL؟", f"استعلام SQL للدرجات من {cut} فأكثر"])
@@ -707,13 +868,32 @@ def episode(rng: random.Random, lang: str, kind: str) -> dict:
         spec = spec_for_question(user)
         return row(lang, spec["kind"], segs(user, plan_draw, dumps(spec), dumps(scene_result(spec)), answer))
 
+    if kind == "pack_canon":
+        en_term, ar_term, spec, en_ans, ar_ans = rng.choice(PACK_CANON_DRILLS)
+        term = ar_term if ar else en_term
+        tpls = (
+            [
+                f"فسّر {term} لمبتدئ.", f"اشرح {term} بصورة متحركة.", f"ماذا يحدث داخل {term}؟",
+                f"وضّح كيف يعمل {term} خطوة بخطوة.", f"أنا جديد على {term}؛ اجعله واضحًا.", f"علّمني {term} باستخدام رسم متحرك.",
+            ]
+            if ar else
+            [
+                f"Give me a beginner-friendly explanation of {term}.", f"Walk me through {term} with a picture.",
+                f"What happens inside {term}?", f"Show how {term} works step by step.",
+                f"I'm new to {term}; make it concrete.", f"Use an animation to teach me {term}.",
+            ]
+        )
+        user = rng.choice(tpls)
+        answer = ar_ans if ar else en_ans
+        return row(lang, spec["kind"], segs(user, plan_draw, dumps(spec), dumps(scene_result(spec)), answer))
+
     # Off-topic or harmful: refuse without calling scene.
     if ar:
-        user = rng.choice(["ما الطقس غدًا؟", "ما الطقس غدا؟", "اكتب لي مقالًا", "اكتب لي قصيدة", "كيف أخترق حسابًا؟", "كيف أسرق كلمة مرور؟"])
-        plan, answer = "هذا خارج مقررات التقنية.", "أشرح أفكار التقنية من المقررات بالرسم المتحرك. اسألني عن فكرة تقنية من المقررات."
+        user = rng.choice(REFUSE_AR)
+        plan, answer = "none", "أشرح أفكار التقنية من المقررات بالرسم المتحرك. اسألني عن فكرة تقنية من المقررات."
     else:
-        user = rng.choice(["What is the weather tomorrow?", "Write me an essay", "Write me a poem", "How do I break into an account?", "How can I steal a password?"])
-        plan, answer = "That is outside the technology courses.", "I explain technology ideas from the courses with animations. Ask me about one of them."
+        user = rng.choice(REFUSE_EN)
+        plan, answer = "none", "I explain technology ideas from the courses with animations. Ask me about one of them."
     return row(lang, "none", segs(user, plan, None, None, answer))
 
 
@@ -731,11 +911,11 @@ def main() -> None:
     os.makedirs(a.out, exist_ok=True)
     rng = random.Random(a.seed)
     weights = [
-        ("neuron", 10), ("net", 10), ("arch", 12), ("plot", 8),
-        ("gates", 5), ("bits", 5), ("signal", 7), ("trace", 6),
-        ("flow", 4), ("search", 4), ("packet", 4), ("seq", 6),
-        ("query", 5), ("pattern", 4), ("concept", 12), ("graph", 14),
-        ("sort", 9), ("bag", 7), ("none", 6),
+        ("neuron", 9), ("net", 9), ("arch", 10), ("plot", 7),
+        ("gates", 4), ("bits", 4), ("signal", 8), ("trace", 6),
+        ("flow", 4), ("search", 5), ("packet", 4), ("seq", 5),
+        ("query", 6), ("pattern", 3), ("concept", 8), ("pack_canon", 18),
+        ("graph", 16), ("sort", 8), ("bag", 7), ("none", 16),
     ]
     bag: list[str] = []
     for name, w in weights:

@@ -10,6 +10,7 @@ import json
 import os
 import re
 import sys
+import argparse
 from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -124,7 +125,7 @@ def check_spec_strict(v: object) -> bool:
         return has_p or has_s
     if k == "plot":
         mode = v.get("mode")
-        if mode not in ("descent", "fit", "loss"):
+        if mode not in ("descent", "fit", "loss", "distribution"):
             return False
         if "start" in v and not (is_int(v["start"]) and 0 <= v["start"] <= 8):
             return False
@@ -232,13 +233,39 @@ def phone_spec_for_item(item: dict) -> dict | None:
         pairs = re.findall(r"([^\s,،]+)\s+(\d+)\s+(\d+)", m_bag.group(1))
         if len(pairs) >= 2:
             return {"kind": "bag", "items": [[n, int(w), int(v)] for n, w, v in pairs], "cap": int(m_bag.group(2))}
-    if item["category"] == "followups" and item.get("history"):
-        prev_q = item["history"][0][1]
-        return spec_for_question(prev_q, item.get("unit_id", ""))
+    if item["category"] in ("course_concepts", "followups"):
+        if item["category"] == "followups" and item.get("history"):
+            q = item["history"][0][1]
+        precise = spec_for_question(q)
+        if precise["kind"] in item["want_kinds"]:
+            return precise
+        track = item["subkind"]
+        if track == "ai":
+            return {"kind": "net", "layers": [2, 4, 1]}
+        if track == "iot":
+            return {"kind": "signal", "high": 30, "low": 27}
+        if track == "cyber":
+            return {"kind": "packet"}
+        if track == "code":
+            return {"kind": "trace", "values": [2, 5, 8]}
+        if track == "data":
+            return {"kind": "query", "min": 50}
+        if track == "opt":
+            return {"kind": "graph", "nodes": ["Home", "Tala", "Bora", "School"], "edges": [[0, 1, 4], [1, 3, 3], [0, 2, 6], [2, 3, 4]], "from": 0, "to": 3}
+        if track == "agents":
+            return {"kind": "arch", "preset": "agent"}
+        if track == "aisec":
+            return {"kind": "seq", "actors": ["User", "Guardrail", "Agent", "Tool"], "msgs": [[0, 1, "Prompt"], [1, 2, "Safe request"], [2, 3, "Allowed call"], [3, 0, "Verified reply"]]}
+        if track == "ds":
+            return {"kind": "plot", "mode": "distribution"}
     return spec_for_question(q, item.get("unit_id", ""))
 
 
-def evaluate_suite() -> None:
+def evaluate_suite(
+    en_ckpt: str | None = None, ar_ckpt: str | None = None,
+    en_tok: str | None = None, ar_tok: str | None = None,
+    only: str | None = None,
+) -> None:
     if not os.path.exists(EVAL_PATH):
         raise SystemExit(f"Run `python eval/build_scene_eval.py` first ({EVAL_PATH} not found)")
     suite = json.load(open(EVAL_PATH, encoding="utf-8"))
@@ -252,7 +279,7 @@ def evaluate_suite() -> None:
 
     # 1. Phone deterministic scene generator check
     lines.append("\n1. On-device deterministic scene generator (checkSpec & parameter match):")
-    for lang in ("en", "ar"):
+    for lang in ((only,) if only else ("en", "ar")):
         items = suite[lang]
         report_obj["counts"][lang] = len(items)
         by_cat: dict[str, list[int]] = defaultdict(lambda: [0, 0])
@@ -284,9 +311,11 @@ def evaluate_suite() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     lines.append(f"\n2. Neural teaching models (int8 quantized, greedy decoding on {device}):")
 
-    for lang in ("en", "ar"):
-        ckpt_path = os.path.join(TINY, "out", f"scene-{lang}.pt")
-        tok_path = os.path.join(TINY, "out", f"scene-tokenizer-{lang}.json")
+    for lang in ((only,) if only else ("en", "ar")):
+        override = en_ckpt if lang == "en" else ar_ckpt
+        ckpt_path = os.path.abspath(override) if override else os.path.join(TINY, "out", f"scene-{lang}.pt")
+        tok_override = en_tok if lang == "en" else ar_tok
+        tok_path = os.path.abspath(tok_override) if tok_override else os.path.join(TINY, "out", f"scene-tokenizer-{lang}.json")
         if not os.path.exists(ckpt_path) or not os.path.exists(tok_path):
             lines.append(f"  {lang}: missing checkpoint or tokenizer")
             continue
@@ -416,4 +445,11 @@ def evaluate_suite() -> None:
 
 
 if __name__ == "__main__":
-    evaluate_suite()
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--en-ckpt", default=None)
+    ap.add_argument("--ar-ckpt", default=None)
+    ap.add_argument("--en-tok", default=None)
+    ap.add_argument("--ar-tok", default=None)
+    ap.add_argument("--only", choices=("en", "ar"), default=None)
+    a = ap.parse_args()
+    evaluate_suite(a.en_ckpt, a.ar_ckpt, a.en_tok, a.ar_tok, a.only)

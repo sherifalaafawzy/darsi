@@ -3,8 +3,8 @@
  * float32 activations, run one token at a time with a KV cache. Plain TypeScript, no libraries, no WebGPU.
  *
  * Architecture (tools/tinylm/model.py is the reference and must match it exactly): token embedding tied to the output
- * head, `layers` pre-norm blocks (RMSNorm → attention with rotary positions → residual; RMSNorm → GELU (tanh) MLP →
- * residual), a final RMSNorm. No biases. Rotary positions rotate interleaved pairs (x[2i], x[2i+1]).
+ * head, `layers` pre-norm blocks, a final RMSNorm, RoPE and no biases. V1 uses MHA + GELU. V2 uses GQA + SwiGLU;
+ * optional config fields keep old model.bin files byte-compatible.
  */
 
 export interface TinyConfig {
@@ -16,6 +16,10 @@ export interface TinyConfig {
   ctx: number;
   ropeBase: number;
   eps: number;
+  /** K/V heads for GQA. Missing or 0 means one per query head (v1 MHA). */
+  kvHeads?: number;
+  /** Missing means v1 GELU. */
+  activation?: "gelu" | "swiglu";
 }
 
 /** A weight matrix [rows × cols], row-major, stored as int8 with one scale per row: w[r][c] = q[r*cols+c] * scale[r]. */
@@ -33,6 +37,8 @@ export interface Block {
   wo: QMatrix;
   ffnNorm: Float32Array;
   w1: QMatrix;
+  /** SwiGLU's gate projection; absent in a v1 GELU block. */
+  w3?: QMatrix;
   w2: QMatrix;
 }
 
@@ -76,7 +82,12 @@ export function parseModel(buf: ArrayBuffer): TinyWeights {
   };
   const blocks: Block[] = [];
   for (let l = 0; l < config.layers; l++) {
-    blocks.push({ attnNorm: f32(`l${l}.attn_norm`), wqkv: q8(`l${l}.wqkv`), wo: q8(`l${l}.wo`), ffnNorm: f32(`l${l}.ffn_norm`), w1: q8(`l${l}.w1`), w2: q8(`l${l}.w2`) });
+    blocks.push({
+      attnNorm: f32(`l${l}.attn_norm`), wqkv: q8(`l${l}.wqkv`), wo: q8(`l${l}.wo`),
+      ffnNorm: f32(`l${l}.ffn_norm`), w1: q8(`l${l}.w1`),
+      ...(config.activation === "swiglu" ? { w3: q8(`l${l}.w3`) } : {}),
+      w2: q8(`l${l}.w2`),
+    });
   }
   return { config, tok: q8("tok"), blocks, norm: f32("norm") };
 }
@@ -98,6 +109,22 @@ export function matvec(m: QMatrix, x: Float32Array, y: Float32Array, accumulate 
   }
 }
 
+/** Two same-shaped projections over one input, used by SwiGLU. Sharing the input walk is faster than two calls. */
+export function matvecPair(a: QMatrix, b: QMatrix, x: Float32Array, ya: Float32Array, yb: Float32Array): void {
+  const { rows, cols } = a;
+  const aq = a.q, bq = b.q, as = a.scale, bs = b.scale;
+  for (let r = 0, p = 0; r < rows; r++) {
+    let a0 = 0, a1 = 0, a2 = 0, a3 = 0, b0 = 0, b1 = 0, b2 = 0, b3 = 0;
+    for (let c = 0; c < cols; c += 4, p += 4) {
+      const x0 = x[c], x1 = x[c + 1], x2 = x[c + 2], x3 = x[c + 3];
+      a0 += aq[p] * x0; a1 += aq[p + 1] * x1; a2 += aq[p + 2] * x2; a3 += aq[p + 3] * x3;
+      b0 += bq[p] * x0; b1 += bq[p + 1] * x1; b2 += bq[p + 2] * x2; b3 += bq[p + 3] * x3;
+    }
+    ya[r] = (a0 + a1 + a2 + a3) * as[r];
+    yb[r] = (b0 + b1 + b2 + b3) * bs[r];
+  }
+}
+
 export function rmsnorm(x: Float32Array, g: Float32Array, out: Float32Array, eps: number): void {
   let ss = 0;
   for (let i = 0; i < x.length; i++) ss += x[i] * x[i];
@@ -107,6 +134,7 @@ export function rmsnorm(x: Float32Array, g: Float32Array, out: Float32Array, eps
 
 const GELU_C = Math.sqrt(2 / Math.PI);
 export const gelu = (u: number) => 0.5 * u * (1 + Math.tanh(GELU_C * (u + 0.044715 * u * u * u)));
+export const silu = (u: number) => u / (1 + Math.exp(-u));
 
 /** cos/sin of every (position, pair) for rotary positions: [ctx × headDim/2]. */
 export function ropeTables(cfg: TinyConfig): { cos: Float32Array; sin: Float32Array } {
@@ -122,10 +150,13 @@ export function ropeTables(cfg: TinyConfig): { cos: Float32Array; sin: Float32Ar
   return { cos, sin };
 }
 
-/** Rotates the interleaved pairs of every head of x (length dim) for position p. */
-export function rope(x: Float32Array, off: number, p: number, cfg: TinyConfig, cos: Float32Array, sin: Float32Array): void {
+/** Rotates the interleaved pairs of `heads` heads in x for position p. */
+export function rope(
+  x: Float32Array, off: number, p: number, cfg: TinyConfig, cos: Float32Array, sin: Float32Array,
+  heads = cfg.heads,
+): void {
   const hd = cfg.dim / cfg.heads, half = hd / 2;
-  for (let h = 0; h < cfg.heads; h++) {
+  for (let h = 0; h < heads; h++) {
     for (let i = 0; i < half; i++) {
       const j = off + h * hd + 2 * i, c = cos[p * half + i], s = sin[p * half + i];
       const a = x[j], b = x[j + 1];
@@ -154,20 +185,25 @@ export class TinyModel {
   private readonly qkv: Float32Array;
   private readonly att: Float32Array;
   private readonly u: Float32Array;
+  private readonly gate: Float32Array;
   private readonly scores: Float32Array;
   readonly logits: Float32Array;
 
   constructor(w: TinyWeights) {
     this.w = w;
     const c = (this.cfg = w.config);
-    this.k = new Float32Array(c.layers * c.ctx * c.dim);
-    this.v = new Float32Array(c.layers * c.ctx * c.dim);
+    const kvHeads = c.kvHeads || c.heads;
+    if (c.dim % c.heads || c.heads % kvHeads) throw new Error("tinylm: invalid GQA configuration");
+    const kvDim = kvHeads * (c.dim / c.heads);
+    this.k = new Float32Array(c.layers * c.ctx * kvDim);
+    this.v = new Float32Array(c.layers * c.ctx * kvDim);
     ({ cos: this.cos, sin: this.sin } = ropeTables(c));
     this.x = new Float32Array(c.dim);
     this.h = new Float32Array(c.dim);
-    this.qkv = new Float32Array(3 * c.dim);
+    this.qkv = new Float32Array(c.dim + 2 * kvDim);
     this.att = new Float32Array(c.dim);
     this.u = new Float32Array(c.ffn);
+    this.gate = new Float32Array(c.ffn);
     this.scores = new Float32Array(c.ctx);
     this.logits = new Float32Array(c.vocab);
   }
@@ -182,12 +218,13 @@ export class TinyModel {
    * fine-tuning cache of frozen blocks; such a step must be truncated away before generating again).
    */
   step(id: number, logits = true, stopAfter?: number, hidden?: Float32Array): Float32Array {
-    const { cfg, w, x, h, qkv, att, u, scores, cos, sin } = this;
+    const { cfg, w, x, h, qkv, att, u, gate, scores, cos, sin } = this;
     const { dim, heads, ctx, eps } = cfg;
+    const kvHeads = cfg.kvHeads || heads;
     const p = this.tokens.length;
     if (p >= ctx) throw new Error("tinylm: context is full");
     if (id < 0 || id >= cfg.vocab) throw new Error(`tinylm: token ${id} out of range`);
-    const hd = dim / heads, inv = 1 / Math.sqrt(hd);
+    const hd = dim / heads, kvDim = kvHeads * hd, group = heads / kvHeads, inv = 1 / Math.sqrt(hd);
     // Embedding row, dequantized.
     const e = w.tok, s = e.scale[id];
     for (let i = 0, o = id * dim; i < dim; i++) x[i] = e.q[o + i] * s;
@@ -197,17 +234,17 @@ export class TinyModel {
       rmsnorm(x, b.attnNorm, h, eps);
       matvec(b.wqkv, h, qkv);
       rope(qkv, 0, p, cfg, cos, sin);
-      rope(qkv, dim, p, cfg, cos, sin);
-      const base = l * ctx * dim;
-      this.k.set(qkv.subarray(dim, 2 * dim), base + p * dim);
-      this.v.set(qkv.subarray(2 * dim, 3 * dim), base + p * dim);
+      rope(qkv, dim, p, cfg, cos, sin, kvHeads);
+      const base = l * ctx * kvDim;
+      this.k.set(qkv.subarray(dim, dim + kvDim), base + p * kvDim);
+      this.v.set(qkv.subarray(dim + kvDim, dim + 2 * kvDim), base + p * kvDim);
       const K = this.k, V = this.v;
       for (let hh = 0; hh < heads; hh++) {
-        const qo = hh * hd;
+        const qo = hh * hd, kvh = Math.floor(hh / group), kho = kvh * hd;
         let max = -Infinity;
         for (let t = 0; t <= p; t++) {
           let sum = 0;
-          const ko = base + t * dim + qo;
+          const ko = base + t * kvDim + kho;
           for (let j = 0; j < hd; j++) sum += qkv[qo + j] * K[ko + j];
           sum *= inv;
           scores[t] = sum;
@@ -217,14 +254,19 @@ export class TinyModel {
         for (let t = 0; t <= p; t++) { const ev = Math.exp(scores[t] - max); scores[t] = ev; z += ev; }
         for (let j = 0; j < hd; j++) att[qo + j] = 0;
         for (let t = 0; t <= p; t++) {
-          const a = scores[t] / z, vo = base + t * dim + qo;
+          const a = scores[t] / z, vo = base + t * kvDim + kho;
           for (let j = 0; j < hd; j++) att[qo + j] += a * V[vo + j];
         }
       }
       matvec(b.wo, att, x, true);
       rmsnorm(x, b.ffnNorm, h, eps);
-      matvec(b.w1, h, u);
-      for (let i = 0; i < u.length; i++) u[i] = gelu(u[i]);
+      if (b.w3) {
+        matvecPair(b.w1, b.w3, h, u, gate);
+        for (let i = 0; i < u.length; i++) u[i] = silu(u[i]) * gate[i];
+      } else {
+        matvec(b.w1, h, u);
+        for (let i = 0; i < u.length; i++) u[i] = gelu(u[i]);
+      }
       matvec(b.w2, u, x, true);
     }
     this.tokens.push(id);

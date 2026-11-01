@@ -1,7 +1,8 @@
 """Darsi Tiny in PyTorch: the reference for src/tinylm/model.ts (same architecture, same numbers).
 
-Decoder-only transformer: tied token embedding / output head, pre-norm blocks (RMSNorm → causal attention with rotary
-positions on interleaved pairs → residual; RMSNorm → GELU (tanh) MLP → residual), final RMSNorm, no biases.
+Version 1 is the shipped baseline: MHA + GELU. Version 2 adds the mobile-small-model recipe that is useful at this
+size: grouped-query attention and SwiGLU. Both keep tied embeddings, pre-norm RMSNorm, RoPE and no biases. Config
+defaults remain v1 so old checkpoints and model.bin files still load exactly.
 """
 from __future__ import annotations
 
@@ -24,9 +25,24 @@ class Config:
     ctx: int = 384
     ropeBase: float = 10000.0
     eps: float = 1e-5
+    # 0 means one K/V head per query head (the v1 MHA checkpoint). A divisor of heads enables GQA/MQA.
+    kvHeads: int = 0
+    # "gelu" is v1. "swiglu" adds a second input projection and uses SiLU(w1(x)) * w3(x).
+    activation: str = "gelu"
 
     def to_dict(self):
         return asdict(self)
+
+    @property
+    def n_kv_heads(self):
+        return self.kvHeads or self.heads
+
+    def check(self):
+        if self.dim % self.heads or self.heads % self.n_kv_heads:
+            raise ValueError("dim must divide by heads, and heads by kvHeads")
+        if self.activation not in ("gelu", "swiglu"):
+            raise ValueError("activation must be gelu or swiglu")
+        return self
 
 
 def rope_tables(cfg: Config, device=None):
@@ -56,32 +72,42 @@ class Block(nn.Module):
         super().__init__()
         self.cfg = cfg
         d = cfg.dim
+        hd = d // cfg.heads
+        kv_dim = cfg.n_kv_heads * hd
         self.attn_norm = nn.Parameter(torch.ones(d))
-        self.wqkv = nn.Linear(d, 3 * d, bias=False)
+        self.wqkv = nn.Linear(d, d + 2 * kv_dim, bias=False)
         self.wo = nn.Linear(d, d, bias=False)
         self.ffn_norm = nn.Parameter(torch.ones(d))
         self.w1 = nn.Linear(d, cfg.ffn, bias=False)
+        self.w3 = nn.Linear(d, cfg.ffn, bias=False) if cfg.activation == "swiglu" else None
         self.w2 = nn.Linear(cfg.ffn, d, bias=False)
 
     def forward(self, x, cos, sin):
         cfg = self.cfg
         B, T, d = x.shape
-        H, hd = cfg.heads, d // cfg.heads
+        H, HKV, hd = cfg.heads, cfg.n_kv_heads, d // cfg.heads
+        kv_dim = HKV * hd
         h = rmsnorm(x, self.attn_norm, cfg.eps)
-        q, k, v = self.wqkv(h).split(d, dim=-1)
+        q, k, v = self.wqkv(h).split((d, kv_dim, kv_dim), dim=-1)
         q = rope(q.view(B, T, H, hd), cos, sin).transpose(1, 2)
-        k = rope(k.view(B, T, H, hd), cos, sin).transpose(1, 2)
-        v = v.view(B, T, H, hd).transpose(1, 2)
+        k = rope(k.view(B, T, HKV, hd), cos, sin).transpose(1, 2)
+        v = v.view(B, T, HKV, hd).transpose(1, 2)
+        if HKV != H:
+            group = H // HKV
+            k = k.repeat_interleave(group, dim=1)
+            v = v.repeat_interleave(group, dim=1)
         a = F.scaled_dot_product_attention(q, k, v, is_causal=True)
         x = x + self.wo(a.transpose(1, 2).reshape(B, T, d))
         h = rmsnorm(x, self.ffn_norm, cfg.eps)
+        if self.w3 is not None:
+            return x + self.w2(F.silu(self.w1(h)) * self.w3(h))
         return x + self.w2(F.gelu(self.w1(h), approximate="tanh"))
 
 
 class TinyLM(nn.Module):
     def __init__(self, cfg: Config):
         super().__init__()
-        self.cfg = cfg
+        self.cfg = cfg.check()
         self.tok = nn.Embedding(cfg.vocab, cfg.dim)
         self.blocks = nn.ModuleList(Block(cfg) for _ in range(cfg.layers))
         self.norm = nn.Parameter(torch.ones(cfg.dim))
@@ -142,6 +168,8 @@ def int8_state(model: TinyLM):
         out[f"l{i}.wo"] = quantize_rows(b.wo.weight)
         out[f"l{i}.ffn_norm"] = b.ffn_norm.detach().float().cpu()
         out[f"l{i}.w1"] = quantize_rows(b.w1.weight)
+        if b.w3 is not None:
+            out[f"l{i}.w3"] = quantize_rows(b.w3.weight)
         out[f"l{i}.w2"] = quantize_rows(b.w2.weight)
     return out
 
@@ -159,5 +187,7 @@ def load_int8(cfg: Config, state: dict) -> TinyLM:
             b.wo.weight.copy_(deq(state[f"l{i}.wo"]))
             b.ffn_norm.copy_(state[f"l{i}.ffn_norm"])
             b.w1.weight.copy_(deq(state[f"l{i}.w1"]))
+            if b.w3 is not None:
+                b.w3.weight.copy_(deq(state[f"l{i}.w3"]))
             b.w2.weight.copy_(deq(state[f"l{i}.w2"]))
     return m

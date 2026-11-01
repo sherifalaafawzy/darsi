@@ -88,12 +88,31 @@ Two jobs, and a model per language for each. Every one is the same small network
 
 | Job | English | Arabic | What it writes |
 |---|---|---|---|
-| Apps (the agent and security labs) | `/lib/tinylm/app/en/v1/` | `/lib/tinylm/app/ar/v1/` | a plan, a tool call, an answer |
-| Teaching (the tutor) | `/lib/tinylm/scene/en/v1/` | `/lib/tinylm/scene/ar/v1/` | one compact scene |
+| Apps (the agent and security labs) | `/lib/tinylm/app/en/v2/` | `/lib/tinylm/app/ar/v2/` | a plan, a tool call, an answer |
+| Teaching (the tutor) | `/lib/tinylm/scene/en/v2/` | `/lib/tinylm/scene/ar/v2/` | a compact scene, then its explanation |
 
-The app models are the text-and-tool format above. They are used in the labs only after a held-out eval, scored
-separately in English and Arabic. Until those two folders exist, the labs keep the shipped bilingual model at
-`/lib/tinylm/v1/`.
+### Shared v2 backbone
+
+All four use exactly the same measured, mobile-oriented neural architecture; only the tokenizer, weights and training
+data differ:
+
+- 2,937,792 parameters; int8 row-wise weights; float32 activations and RMSNorm weights;
+- 3,000-token language-specific byte BPE; tied input/output embeddings; 384-token context;
+- 6 pre-norm decoder blocks, width 192;
+- 6 query heads × 32 dimensions, but only 2 K/V heads (3:1 GQA);
+- RoPE positions, base 10,000;
+- SwiGLU FFN, `192 → (512 gate + 512 value) → 192`;
+- no biases or dropout;
+- token-by-token KV cache with shared-prefix reuse; GQA makes the full cache 1.125 MiB instead of v1's 3.375 MiB;
+- fused dual projection for SwiGLU in the TypeScript runtime.
+
+This is the fastest candidate that kept the fixed 2.94 M-parameter budget in Darsi's browser measurements. It uses
+the MobileLLM/LLaMA-style small-model recipe (RMSNorm, RoPE, SwiGLU, tied embeddings and GQA). BitNet was rejected:
+sub-int8 speed needs specialized native kernels, and unpacking ternary weights in an old browser is not a speed win.
+The v1 MHA + GELU parser remains supported so saved labs and candidate comparisons still run.
+
+The app models use the text-and-tool format above. Each is evaluated separately in its own language before the loader
+selects v2; `/lib/tinylm/v1/` remains the bilingual fallback.
 
 ## The teaching model
 
@@ -112,13 +131,13 @@ is a new scene. The same limits as the phone's `parseScene`.
 <|end|>
 ```
 
-`kind` is `graph`, `sort`, `bag`, `signal` (a sensor curve or an ADC), `trace` (a short loop), `packet` (what HTTPS
-hides), `query` or `pattern`. A sort is `{"kind":"sort","values":[4,2,5,1]}`. A bag is
+`kind` is `graph`, `sort`, `bag`, `signal`, `trace`, `packet`, `query`, `pattern`, `net`, `arch`, `plot`, `gates`,
+`bits`, `flow`, `seq` or `search`. A sort is `{"kind":"sort","values":[4,2,5,1]}`. A bag is
 `{"kind":"bag","items":[["desks",4,4],["chalk",2,1]],"cap":8}`. Names and numbers are copied from the request.
 
-The phone loads the teaching model for the language on screen. The sentence next to the picture is written while the
-scene is expanded, so the model is not asked for a second explanation. A request that is not one of these scenes is
-refused.
+The phone validates the JSON, computes the scene's result and returns that result to the model. The model then writes
+the plain-language explanation; the expander's deterministic sentence is the fallback if that answer is invalid. A
+request outside the courses or a harmful request is refused without a scene call.
 
 ## Safety of the format itself
 
