@@ -208,13 +208,37 @@ export interface Lesson {
 /** Who a course is for: teachers (the default, and every course before audiences existed) or their students. */
 export type Audience = "teachers" | "students";
 /**
- * Where a student studies. Students' levels are school stages: Beginner is primary school (ages 9–12), Elementary lower
- * secondary (12–15), Intermediate upper secondary (15–18) and Advanced university (docs/CURRICULUM.md).
+ * A school stage. Course levels use the same order on every track: 1 Beginner is primary school (ages 9–12),
+ * 2 Elementary is lower secondary (12–15), 3 Intermediate is upper secondary (15–18), 4 Advanced is university.
+ * Students' courses are written for that stage. Teachers' courses are the same depths; a teacher starts at the
+ * level for where they teach. Units with `teach: "university"` are the extra university courses.
  */
 export type Stage = "primary" | "lower" | "upper" | "university";
 export const STAGES: Stage[] = ["primary", "lower", "upper", "university"];
 /** The level of a stage's courses: 1 for primary school … 4 for university. */
 export const stageLevel = (s: Stage) => STAGES.indexOf(s) + 1;
+/**
+ * Where a teacher teaches, as stored on the profile (`teach`). "secondary" is the old single 12–18 choice and is
+ * read as lower secondary, the start of that band.
+ */
+export type TeachPlace = Stage | "secondary";
+export function teachStage(teach: string | null | undefined): Stage | undefined {
+  if (teach === "secondary") return "lower";
+  return teach === "primary" || teach === "lower" || teach === "upper" || teach === "university" ? teach : undefined;
+}
+/**
+ * What to copy between this phone and `users/{uid}.teach`. Nothing until the profile has been read, so a guest
+ * (or a profile still loading) never writes. An empty phone takes the profile; a choice on the phone is written
+ * back. A legacy "secondary" is stored as lower secondary.
+ */
+export function teachSync(local: string | null | undefined, remote: string | null | undefined, profileReady: boolean): { pull?: Stage; push?: Stage } {
+  if (!profileReady) return {};
+  const here = teachStage(local);
+  const there = teachStage(remote);
+  if (!here && there) return remote === there ? { pull: there } : { pull: there, push: there };
+  if (here && here !== there) return { push: here };
+  return {};
+}
 export const AUDIENCES: Audience[] = ["teachers", "students"];
 /** A course's audience; courses without one are for teachers. */
 export const audienceOf = (u: { audience?: Audience }): Audience => u.audience ?? "teachers";

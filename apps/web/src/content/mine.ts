@@ -7,7 +7,7 @@ import { useI18n } from "../i18n";
 import type { Role } from "../auth/types";
 import { useStore } from "../state/store";
 import { useTracks } from "./settings";
-import { STAGES, audienceOf, stageLevel, type Audience, type CatalogEntry, type Stage, type Track, type TrackDef } from "./types";
+import { STAGES, audienceOf, stageLevel, teachStage, type Audience, type CatalogEntry, type Stage, type Track, type TrackDef } from "./types";
 
 /** School accounts are what their school made them; everyone else said so in onboarding (or Me). */
 export const audienceFor = (role: Role | null | undefined, chosen?: Audience): Audience =>
@@ -20,10 +20,10 @@ export function myTracks(chosen: Track[], visible: TrackDef[]): TrackDef[] {
   return mine.length ? mine : visible;
 }
 /**
- * Where a learner starts in a track before (or without) the placement check: students at their stage's level (on a
- * track with fewer levels, its top one), teachers at Beginner.
+ * Where a learner starts in a track before (or without) the placement check: the level of their school stage
+ * (where a student studies, or where a teacher teaches), capped at the track's top level. With no stage yet, Beginner.
  */
-export const startLevel = (audience: Audience, stage: Stage | undefined, levels: number) => (audience === "students" && stage ? Math.min(stageLevel(stage), levels) : 1);
+export const startLevel = (stage: Stage | undefined, levels: number) => (stage ? Math.min(stageLevel(stage), levels) : 1);
 
 /** The track Home shows: the one picked last, while it is still one of the learner's; else their first. */
 export const activeTrack = (current: Track | undefined, mine: TrackDef[]): Track | undefined => (mine.find((t) => t.id === current) ?? mine[0])?.id;
@@ -34,10 +34,10 @@ export function useMine() {
   const { t } = useI18n();
   const { visible, of, levelName } = useTracks();
   const audience = audienceFor(role, state.audience);
-  // Teachers who said they teach at a university also see the university courses, pinned first on Home.
-  const uni = audience === "teachers" && state.teach === "university";
-  const stage = audience === "students" ? state.stage : undefined;
-  const start = (track: Track) => startLevel(audience, stage, of(track).levels);
+  // Where they study (students) or teach (teachers). University teachers also see the university courses, pinned first.
+  const stage = audience === "students" ? state.stage : teachStage(state.teach);
+  const uni = audience === "teachers" && stage === "university";
+  const start = (track: Track) => startLevel(stage, of(track).levels);
   const tracks = myTracks(state.tracks, visible);
   const ids = new Set(tracks.map((t) => t.id));
   return {
@@ -45,7 +45,7 @@ export function useMine() {
     /** A university teacher: university courses are theirs too. */
     uni,
     fixed: audienceFixed(role),
-    /** Where a student studies; undefined for teachers. */
+    /** Where a student studies, or where a teacher teaches. */
     stage,
     startLevel: start,
     /** The learner's level in a track: from the placement check or their courses, else where they start. */

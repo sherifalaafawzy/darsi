@@ -18,10 +18,13 @@ vi.mock("../src/content/load", async (orig) => ({
 }));
 
 const { audienceFor, activeTrack, myTracks, useMine } = await import("../src/content/mine");
+const { teachSync } = await import("../src/content/types");
+const ar = (await import("../src/i18n/ar.json")).default;
 const { BUILTIN_TRACKS } = await import("../src/content/tracks");
 const { SettingsProvider } = await import("../src/content/settings");
 const { StoreProvider, initialState, useStore } = await import("../src/state/store");
 const { Home } = await import("../src/screens/Home");
+const { Me } = await import("../src/screens/Me");
 const { MyTracks } = await import("../src/screens/MyTracks");
 const { Onboarding, PlacementQuiz } = await import("../src/screens/Onboarding");
 const { startAt } = await import("../src/screens/Home");
@@ -74,10 +77,43 @@ describe("Home", () => {
     const names = screen.getAllByRole("heading").map((x) => x.textContent).filter((x) => x?.startsWith("Course "));
     expect(names.slice(0, 2)).toEqual(["Course ai-u1", "Course ai-t"]);
     a.unmount();
+    // The old "secondary" (ages 12–18) is lower secondary, which does not see university courses.
     seed({ tracks: ["ai"], audience: "teachers", teach: "secondary" });
-    show(<Home />);
+    let state = initialState;
+    show(<><Home /><Probe on={(s) => { state = s; }} /></>);
     expect(await screen.findByRole("heading", { name: "Course ai-t" })).toBeTruthy();
     expect(screen.queryByText("Course ai-u1")).toBeNull();
+    await waitFor(() => expect(state.teach).toBe("lower"));
+  });
+
+  it("starts a teacher at the level for where they teach, and keeps later courses in reach", async () => {
+    h.units = [1, 2, 3, 4].map((level) => entry(`ai-${level}`, { level })).concat(entry("ai-u1", { level: 4, teach: "university" }));
+    const headings = () => screen.getAllByRole("heading", { level: 2 }).map((x) => x.textContent);
+    seed({ tracks: ["ai"], audience: "teachers", teach: "primary" });
+    const primary = show(<Home />);
+    expect(await screen.findByText("Your level: Beginner")).toBeTruthy();
+    await waitFor(() => expect(headings()[0]).toBe("Course ai-1"));
+    expect(screen.queryByText("Course ai-u1")).toBeNull();
+    expect(screen.queryByText(/Earlier levels/)).toBeNull();
+    primary.unmount();
+    seed({ tracks: ["ai"], audience: "teachers", teach: "lower" });
+    const lower = show(<Home />);
+    expect(await screen.findByText("Your level: Elementary")).toBeTruthy();
+    await waitFor(() => expect(headings().slice(0, 2)).toEqual(["Course ai-2", "Course ai-3"]));
+    expect(screen.getByText("Earlier levels (1)")).toBeTruthy();
+    expect(screen.queryByText("Course ai-u1")).toBeNull();
+    lower.unmount();
+    seed({ tracks: ["ai"], audience: "teachers", teach: "upper" });
+    const upper = show(<Home />);
+    expect(await screen.findByText("Your level: Intermediate")).toBeTruthy();
+    await waitFor(() => expect(headings().slice(0, 2)).toEqual(["Course ai-3", "Course ai-4"]));
+    expect(screen.getByText("Earlier levels (2)")).toBeTruthy();
+    upper.unmount();
+    seed({ tracks: ["ai"], audience: "teachers", teach: "university" });
+    show(<Home />);
+    expect(await screen.findAllByText("Your level: Advanced")).toHaveLength(2);
+    await waitFor(() => expect(headings().slice(0, 2)).toEqual(["Course ai-u1", "Course ai-4"]));
+    expect(screen.getByText("Earlier levels (3)")).toBeTruthy();
   });
 
   it("shows only the current track's courses for teachers, and switches track from the app bar", async () => {
@@ -131,6 +167,37 @@ describe("My tracks", () => {
   });
 });
 
+describe("where a teacher teaches", () => {
+  it("names the four places in Arabic without a middot", () => {
+    for (const k of ["onb.teach", "onb.teachBody", "onb.teacherD", "me.teach", "onb.placementBody"] as const) {
+      expect(ar[k], k).toBeTruthy();
+      expect(ar[k], k).not.toContain("·");
+    }
+  });
+
+  it("copies a place onto an empty phone, writes a choice, and does nothing until the profile is read", () => {
+    expect(teachSync(undefined, "university", false)).toEqual({});
+    expect(teachSync("upper", undefined, false)).toEqual({});
+    expect(teachSync(undefined, "university", true)).toEqual({ pull: "university" });
+    expect(teachSync(undefined, "secondary", true)).toEqual({ pull: "lower", push: "lower" });
+    expect(teachSync("lower", "secondary", true)).toEqual({});
+    expect(teachSync("upper", "primary", true)).toEqual({ push: "upper" });
+    expect(teachSync("upper", "upper", true)).toEqual({});
+  });
+
+  it("lets a teacher change where they teach in Me", async () => {
+    seed({ tracks: ["ai"], audience: "teachers", teach: "primary" });
+    let state = initialState;
+    show(<><Me /><Probe on={(s) => { state = s; }} /></>);
+    expect(await screen.findByRole("heading", { name: "Where I teach" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Where I study" })).toBeNull();
+    await waitFor(() => expect(state.teach).toBe("primary"));
+    expect(screen.getByRole("radio", { name: /Primary school/ }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(screen.getByRole("radio", { name: /University or college/ }));
+    expect(state.teach).toBe("university");
+  });
+});
+
 describe("Onboarding", () => {
   it("asks teacher or student, and a student goes on to choose tracks", async () => {
     h.stored = { ...initialState, lang: "en" };
@@ -138,7 +205,8 @@ describe("Onboarding", () => {
     show(<><Onboarding /><Probe on={(s) => { state = s; }} /></>);
     fireEvent.click(await screen.findByRole("button", { name: "Continue" }));
     expect(screen.getByRole("heading", { name: "Who are you?" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("radio", { name: /Student/ }));
+    expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("radio", { name: /A student/ }));
     expect(state.audience).toBe("students");
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(screen.getByRole("heading", { name: "Where do you study?" })).toBeTruthy();
@@ -149,20 +217,38 @@ describe("Onboarding", () => {
     expect(screen.getByRole("heading", { name: "What do you want to learn?" })).toBeTruthy();
   });
 
-  it("asks a school's student accounts where they study, and teachers nothing", async () => {
-    h.role = "student";
+  it("asks a teacher where they teach, and will not continue until they choose", async () => {
     h.stored = { ...initialState, lang: "en" };
-    show(<Onboarding />);
+    let state = initialState;
+    show(<><Onboarding /><Probe on={(s) => { state = s; }} /></>);
     fireEvent.click(await screen.findByRole("button", { name: "Continue" }));
-    expect(screen.getByRole("heading", { name: "Where do you study?" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("radio", { name: /A teacher/ }));
+    expect(state.audience).toBe("teachers");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("heading", { name: "Where do you teach?" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Skip" })).toBeNull();
+    expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("radio", { name: /Lower secondary/ }));
+    expect(state.teach).toBe("lower");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("heading", { name: "What do you want to learn?" })).toBeTruthy();
   });
 
-  it("skips the question for a school's accounts", async () => {
+  it("asks a school's student accounts where they study, and its teachers where they teach", async () => {
+    h.role = "student";
+    h.stored = { ...initialState, lang: "en" };
+    const students = show(<Onboarding />);
+    fireEvent.click(await screen.findByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("heading", { name: "Where do you study?" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Who are you?" })).toBeNull();
+    students.unmount();
     h.role = "teacher";
     h.stored = { ...initialState, lang: "en" };
     show(<Onboarding />);
     fireEvent.click(await screen.findByRole("button", { name: "Continue" }));
-    expect(screen.getByRole("heading", { name: "What do you want to learn?" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Where do you teach?" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Who are you?" })).toBeNull();
+    expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
 
@@ -204,6 +290,17 @@ describe("starting at your level", () => {
     seed({ tracks: ["ai"], audience: "students", stage: "upper" });
     show(<Home />);
     expect(await screen.findByText("Your level: Intermediate · Upper secondary")).toBeTruthy();
+  });
+
+  it("starts a teacher at the level for where they teach", async () => {
+    seed({ tracks: ["ai"], audience: "teachers", teach: "upper" });
+    const done = vi.fn();
+    show(<PlacementQuiz tracks={["ai"]} onDone={done} />);
+    expect(await screen.findByText(/^ai teachers level 3 question/)).toBeTruthy();
+    await answer(false);
+    expect(screen.getByText(/^ai teachers level 2 question/)).toBeTruthy();
+    await answer(true); await answer(true);
+    expect(done).toHaveBeenCalledWith({ ai: 3 });
   });
 
   it("checks each of your tracks in turn, and \"I don't know yet\" ends a track", async () => {
