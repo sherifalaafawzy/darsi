@@ -4,12 +4,12 @@ import { Button, ChoiceCard, LanguagePicker, Mark, OnboardingStep, PlacementResu
 import { useI18n, useLanguages } from "../i18n";
 import { useStore, type AppState } from "../state/store";
 import { loadPlacement, useAsync } from "../content/load";
-import { STAGES, type Audience, type Placement, type Stage, type Track } from "../content/types";
+import { STAGES, teachStage, type Audience, type Placement, type Stage, type Track } from "../content/types";
 import { useTracks } from "../content/settings";
 import { useMine } from "../content/mine";
 import { grade, shuffled, type Answer } from "../lesson/engine";
 
-type Phase = "language" | "where" | "stage" | "tracks" | "time" | "offer" | "quiz" | "result";
+type Phase = "language" | "where" | "teach" | "stage" | "tracks" | "time" | "offer" | "quiz" | "result";
 const STAGE_ICON: Record<Stage, IconName> = { primary: "book", lower: "learn", upper: "target", university: "award" };
 export function Onboarding() {
   const nav = useNavigate();
@@ -18,11 +18,12 @@ export function Onboarding() {
   const { state, dispatch } = useStore();
   const [phase, setPhase] = useState<Phase>("language");
   const tracks = useTracks();
-  // School accounts are already a teacher or a student, so they skip "Who are you?". Students say where they study.
+  // School accounts are already a teacher or a student, so they skip "Who are you?".
+  // Every teacher then says where they teach, and every student where they study. Neither step can be skipped.
   const mine = useMine();
   const { fixed } = mine;
-  const teacher = mine.audience !== "students";
-  const steps: Phase[] = [...(fixed ? [] : ["where" as const]), ...(teacher ? [] : ["stage" as const]), "tracks", "time", "offer"];
+  const isStudent = fixed ? mine.audience === "students" : state.audience === "students";
+  const steps: Phase[] = [...(fixed ? [] : ["where" as const]), ...(isStudent ? ["stage" as const] : ["teach" as const]), "tracks", "time", "offer"];
   const stepOf = (p: Phase) => steps.indexOf(p) + 1;
   const [levels, setLevels] = useState<Partial<Record<Track, number>>>({});
   const set = (patch: Partial<AppState>) => dispatch({ type: "set", patch });
@@ -39,19 +40,29 @@ export function Onboarding() {
   );
   if (phase === "where") return (
     <main className="screen narrow">
-      <OnboardingStep step={stepOf("where")} total={steps.length} title={t("onb.where")} body={t("onb.whereBody")} primary={cont(teacher ? "tracks" : "stage", teacher && !state.teach)}
-        secondary={<Button block variant="ghost" onClick={() => setPhase("tracks")}>{t("common.skip")}</Button>}>
-        <ChoiceCard icon="profile" title={t("onb.primary")} description={t("onb.primaryD")} selected={teacher && state.teach === "primary"} onClick={() => set({ teach: "primary", audience: "teachers" })} />
-        <ChoiceCard icon="learn" title={t("onb.secondary")} description={t("onb.secondaryD")} selected={teacher && state.teach === "secondary"} onClick={() => set({ teach: "secondary", audience: "teachers" })} />
-        <ChoiceCard icon="award" title={t("onb.university")} selected={teacher && state.teach === "university"} onClick={() => set({ teach: "university", audience: "teachers" })} />
-        <ChoiceCard icon="book" title={t("onb.student")} description={t("onb.studentD")} selected={!teacher} onClick={() => set({ teach: undefined, audience: "students" })} />
+      <OnboardingStep step={stepOf("where")} total={steps.length} title={t("onb.where")} body={t("onb.whereBody")} primary={cont(state.audience === "students" ? "stage" : "teach", !state.audience)}>
+        <div role="radiogroup" aria-label={t("onb.where")}>
+          <ChoiceCard icon="profile" title={t("me.teacher")} description={t("onb.teacherD")} selected={state.audience === "teachers"} onClick={() => set({ audience: "teachers" })} />
+          <ChoiceCard icon="book" title={t("me.student")} description={t("onb.studentD")} selected={state.audience === "students"} onClick={() => set({ audience: "students", teach: undefined })} />
+        </div>
+      </OnboardingStep>
+    </main>
+  );
+  if (phase === "teach") return (
+    <main className="screen narrow">
+      <OnboardingStep step={stepOf("teach")} total={steps.length} title={t("onb.teach")} body={t("onb.teachBody")} primary={cont("tracks", !teachStage(state.teach))}>
+        <div role="radiogroup" aria-label={t("onb.teach")}>
+          {STAGES.map((st) => <ChoiceCard key={st} icon={STAGE_ICON[st]} title={t(`stage.${st}`)} description={t(`stage.${st}D`)} selected={teachStage(state.teach) === st} onClick={() => set({ teach: st, audience: "teachers" })} />)}
+        </div>
       </OnboardingStep>
     </main>
   );
   if (phase === "stage") return (
     <main className="screen narrow">
       <OnboardingStep step={stepOf("stage")} total={steps.length} title={t("onb.stage")} body={t("onb.stageBody")} primary={cont("tracks", !state.stage)}>
-        {STAGES.map((st) => <ChoiceCard key={st} icon={STAGE_ICON[st]} title={t(`stage.${st}`)} description={t(`stage.${st}D`)} selected={state.stage === st} onClick={() => set({ stage: st })} />)}
+        <div role="radiogroup" aria-label={t("onb.stage")}>
+          {STAGES.map((st) => <ChoiceCard key={st} icon={STAGE_ICON[st]} title={t(`stage.${st}`)} description={t(`stage.${st}D`)} selected={state.stage === st} onClick={() => set({ stage: st })} />)}
+        </div>
       </OnboardingStep>
     </main>
   );
@@ -96,7 +107,7 @@ type PQ = Placement["questions"][number];
 export interface PlaceState { level: number; asked: number; dir?: "up" | "down" }
 /**
  * After one answer. Each level asks two questions and is passed only with both right, so a wrong answer (or "I don't
- * know yet") is a miss. The check starts at the learner's level (Beginner for teachers, a student's school stage):
+ * know yet") is a miss. The check starts at the learner's level (their school stage: where they teach, or where they study):
  * - a pass moves up, until a level is missed (the learner starts there) or the top is passed (they start at the top);
  * - a miss at the start moves down, until a level is passed (they start one above it) or Beginner is missed.
  */
