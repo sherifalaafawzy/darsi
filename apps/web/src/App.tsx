@@ -9,7 +9,7 @@ import { StoreProvider, useStore } from "./state/store";
 import { useCloudSync } from "./state/sync";
 import { useOrgBrand } from "./state/orgBrand";
 import { useAnalytics } from "./analytics/useAnalytics";
-import { configureContent, setOrgReader } from "./content/load";
+import { configureContent, setOrgReader, storageUrl } from "./content/load";
 import { teachSync } from "./content/types";
 import { SettingsProvider, useLanguageReady } from "./content/settings";
 import { loadFirebase } from "./fb";
@@ -38,6 +38,10 @@ const TeachPerson = lazy(() => import("./admin/Teach").then((m) => ({ default: m
 const SuperAdmin = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.SuperAdmin })));
 const AnalyticsPage = lazy(() => import("./admin/Analytics").then((m) => ({ default: m.AnalyticsPage })));
 const OrgAnalytics = lazy(() => import("./admin/Analytics").then((m) => ({ default: m.OrgAnalytics })));
+const OrgReport = lazy(() => import("./admin/OrgReport").then((m) => ({ default: m.OrgReport })));
+const OrgsAdmin = lazy(() => import("./admin/OrgsAdmin").then((m) => ({ default: m.OrgsAdmin })));
+const PlansPage = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.PlansPage })));
+const Upgrade = lazy(() => import("./upgrade/Upgrade").then((m) => ({ default: m.Upgrade })));
 // Course editor (platform and org admins): one "Cms" chunk, also kept out of the precache. It gets the lesson player
 // (for its preview) as a prop: importing it there would pull the player's lazy SDK loads into a shared chunk and
 // split the startup bundle. Org-only units are read through the SDK, which only signed-in members load.
@@ -70,6 +74,9 @@ function Onboarded() {
 function SignedIn() {
   const [params] = useSearchParams();
   const { role } = useAuth();
+  // An invite code from sign-up (or an invite link): /org joins with it and says how it went.
+  const code = params.get("code");
+  if (code) return <Navigate to={`/org?code=${encodeURIComponent(code)}`} replace />;
   return <Navigate to={params.get("org") === "1" ? "/org?request=1" : homeFor(role)} replace />;
 }
 
@@ -140,9 +147,11 @@ function Routed() {
         <Route element={<Layout />}>
           <Route path="me" element={<Me />} />
           <Route path="org" element={<OrgScreen />} />
+          <Route path="upgrade" element={<Upgrade plansUrl={storageUrl("content/plans.json")} />} />
           <Route element={<Allow roles={["orgAdmin"]} />}>
             <Route path="admin" element={<AdminHome />} />
             <Route path="admin/people/:uid" element={<PersonDetail />} />
+            <Route path="admin/analytics" element={<OrgReport />} />
             <Route path="admin/add" element={<AddPeople />} />
             <Route path="admin/import" element={<ImportPeople />} />
             <Route path="admin/content" element={<ContentList />} />
@@ -151,11 +160,15 @@ function Routed() {
           <Route element={<Allow roles={["teacher", "orgAdmin"]} />}>
             <Route path="teach" element={<Teach />} />
             <Route path="teach/:uid" element={<TeachPerson />} />
+            <Route path="teach/analytics" element={<OrgReport mode="teacher" />} />
           </Route>
           <Route element={<Allow roles={["superadmin"]} />}>
             <Route path="super" element={<SuperAdmin />} />
             <Route path="super/analytics" element={<AnalyticsPage />} />
+            <Route path="super/orgs" element={<OrgsAdmin />} />
+            <Route path="super/plans" element={<PlansPage />} />
             <Route path="super/orgs/:orgId" element={<OrgAnalytics />} />
+            <Route path="super/orgs/:orgId/report" element={<OrgReport />} />
             <Route path="super/people/:uid" element={<PersonDetail back="/super/analytics" />} />
             <Route path="super/content" element={<ContentList />} />
             <Route path="super/content/:unitId" element={<UnitEditor Player={LessonPlayer} />} />

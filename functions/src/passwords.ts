@@ -16,11 +16,25 @@ export function generatePassword(length = 10): string {
   return chars.join("");
 }
 
-/** Short human-friendly invite code, e.g. "K7Q-2MXP". */
+/**
+ * Invite code: 12 characters from 32 with no look-alikes, in groups of 4 ("K7QP-2MXR-9DHA"), about 60 bits, so
+ * guessing one is hopeless (joinOrg also limits failed tries). Typed on phones, read aloud, or opened as a link.
+ */
 export function generateCode(): string {
   const set = UPPER + DIGIT;
   const pick = (k: number) => Array.from({ length: k }, () => set[randomInt(set.length)]).join("");
-  return `${pick(3)}-${pick(4)}`;
+  return `${pick(4)}-${pick(4)}-${pick(4)}`;
+}
+
+/**
+ * A typed code as it is stored: upper case, spaces and dashes ignored, regrouped. Codes made before 2026-11 have 7
+ * characters ("K7Q-2MXP") and keep working until an admin makes new ones. null: not a code at all.
+ */
+export function normalizeCode(input: unknown): string | null {
+  const s = typeof input === "string" ? input.toUpperCase().replace(/[^A-Z0-9]/g, "") : "";
+  if (s.length === 12) return `${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8)}`;
+  if (s.length === 7) return `${s.slice(0, 3)}-${s.slice(3)}`;
+  return null;
 }
 
 /** People without email log in with a username; Firebase Auth needs an email, so we map it to a hidden domain. */

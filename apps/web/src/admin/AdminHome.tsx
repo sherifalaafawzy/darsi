@@ -7,10 +7,12 @@ import type { Profile, Role } from "../auth/types";
 import { useI18n } from "../i18n";
 import { competency } from "../content/competencies";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
-import { daysSince, useMembers, useOrg } from "./data";
+import { daysSince, useInvites, useMembers, useOrg } from "./data";
 import { lastActiveText } from "./PersonDetail";
 import { downloadBlob } from "./importer";
 import { OrgBranding } from "./OrgBranding";
+import { SeatsPanel } from "./Super";
+import "./strings";
 import "../styles/admin.css";
 
 /** Organization dashboard: stats, invite codes, capability coverage and the people table. */
@@ -20,6 +22,7 @@ export function AdminHome() {
   const { orgId } = useAuth();
   const { data: org } = useOrg(orgId);
   const { data: members = [], error } = useMembers(orgId);
+  const invites = useInvites(orgId);
   const [q, setQ] = useState(""); const [roleF, setRoleF] = useState<Role | "">(""); const [sort, setSort] = useState<"name" | "lessons" | "last">("name");
   const [copied, setCopied] = useState("");
   const { data: units = [] } = useAsync(async () => { const c = await loadCatalog(); return Promise.all(c.units.filter((u) => u.available).map((u) => loadUnit(u.id))); }, []);
@@ -60,16 +63,28 @@ export function AdminHome() {
           <div className="tile"><span>{t("adm.accuracy")}</span><strong>{stats.acc == null ? "—" : num(stats.acc, { style: "percent" })}</strong></div>
         </section>
 
+        <section className="panel stack"><h3>{t("or.open")}</h3><p className="muted small">{t("or.openHint")}</p>
+          <div><Button icon="chart" onClick={() => nav("/admin/analytics")}>{t("or.open")}</Button></div></section>
+
         <div className="admin-cols">
           <section className="panel"><h3>{t("adm.codes")}</h3>
-            {org?.inviteCodes ? (["teacher", "student"] as const).map((r) => (
-              <div key={r} className="code-row">
-                <span>{r === "teacher" ? t("adm.teacherCode") : t("adm.studentCode")}</span>
-                <code dir="ltr">{org.inviteCodes![r]}</code>
-                <Button size="sm" variant="ghost" onClick={() => copy(org.inviteCodes![r])}>{copied === org.inviteCodes![r] ? t("adm.copied") : t("adm.copy")}</Button>
-                <Button size="sm" variant="ghost" icon="sync" onClick={() => api.regenerateInviteCode({ orgId: org.id, role: r })}>{t("adm.newCode")}</Button>
-              </div>
-            )) : <p className="muted">—</p>}
+            {/* Only admins can read the codes. A link opens sign-up with the code filled in. */}
+            {org && invites.data ? (["teacher", "student"] as const).map((r) => {
+              const code = invites.data?.[r];
+              if (!code) return null;
+              const link = `${location.origin}/signup?code=${code}`;
+              return (
+                <div key={r} className="code-row">
+                  <span>{r === "teacher" ? t("adm.teacherCode") : t("adm.studentCode")}</span>
+                  <code dir="ltr">{code}</code>
+                  <Button size="sm" variant="ghost" onClick={() => copy(code)}>{copied === code ? t("adm.copied") : t("adm.copy")}</Button>
+                  <Button size="sm" variant="ghost" icon="link" onClick={() => copy(link)}>{copied === link ? t("adm.copied") : t("inv.copyLink")}</Button>
+                  <Button size="sm" variant="ghost" icon="sync" onClick={() => { void api.regenerateInviteCode({ orgId: org.id, role: r }).then(invites.reload); }}>{t("adm.newCode")}</Button>
+                </div>
+              );
+            }) : <p className="muted">{invites.error ? invites.error.message : "…"}</p>}
+            {invites.data && [invites.data.teacher, invites.data.student].some((c) => c && c.length < 14) && <p className="muted small">{t("inv.shortCode")}</p>}
+            <p className="muted small">{t("inv.teacherWarn")}</p>
           </section>
           <section className="panel"><h3>{t("adm.coverage")}</h3><p className="muted small">{t("adm.coverageHint")}</p>
             {coverage.map((c) => (
@@ -79,6 +94,7 @@ export function AdminHome() {
           </section>
         </div>
 
+        {org && <SeatsPanel org={org} members={members} />}
         {org && <OrgBranding org={org} />}
 
         <section className="panel">

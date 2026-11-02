@@ -36,6 +36,7 @@ export function Me() {
       <AppBar title={t("me.title")} />
       <main className="screen narrow stack-lg">
         <Account />
+        <SuperCard />
         <section className="stack"><h2 className="section-title">{t("me.language")}</h2>
           <LanguagePicker label={t("me.language")} value={state.lang} onChange={(l) => set({ lang: l })} languages={languages} /></section>
         <section>
@@ -124,6 +125,21 @@ function Account() {
         {/* signOut first stops this phone getting the account's notifications (AuthProvider), as every Sign out button does. */}
         <Button variant="ghost" icon="close" onClick={() => { void signOut(); }}>{t("me.signOut")}</Button>
       </div>
+    </section>
+  );
+}
+
+/** Darsi Super: what you have, or a way to see it (/upgrade, a lazy chunk). */
+function SuperCard() {
+  const { t, locale } = useI18n();
+  const nav = useNavigate();
+  const { plan } = useAuth();
+  const active = plan && plan.until > Date.now() ? plan : null;
+  return (
+    <section className="panel stack" aria-labelledby="super-h">
+      <h2 id="super-h" className="section-title">{t("me.super")}</h2>
+      <p className="muted">{active ? t("me.superUntil", { date: new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(active.until) }) : t("me.superPitch")}</p>
+      <div><Button variant="secondary" icon="award" onClick={() => nav("/upgrade?from=me")}>{active ? t("me.superSee") : t("me.superCta")}</Button></div>
     </section>
   );
 }

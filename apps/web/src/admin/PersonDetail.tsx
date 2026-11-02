@@ -12,11 +12,16 @@ import { loadCatalog, loadUnit, useAsync } from "../content/load";
 import type { Unit } from "../content/types";
 import { useTracks } from "../content/settings";
 import { daysSince, useMembers, usePerson, useProgress, useSubmissions, type Submission } from "./data";
+import { bestFramework, FrameworkPicker, PersonStandards } from "./Standards";
+import { UserRolePanel } from "./OrgsAdmin";
+import { SuperGrantPanel } from "./Super";
+import { useDuration } from "./charts";
+import { framework, FRAMEWORKS } from "../content/standards";
 import "../styles/person.css";
 
 export function lastActiveText(iso: string | null | undefined, t: ReturnType<typeof useI18n>["t"]) {
   const d = daysSince(iso);
-  return d === Infinity ? t("adm.never") : d < 1 ? t("adm.today") : t("adm.daysAgo", { n: Math.floor(d) });
+  return d === Infinity ? t("adm.never") : d < 1 ? t("adm.today") : d < 2 ? t("adm.yesterday") : t("adm.daysAgo", { n: Math.floor(d) });
 }
 
 /** Capability profile: every competency the person has evidence for, grouped by framework. */
@@ -66,9 +71,15 @@ export function PersonDetail({ back = "/admin" }: { back?: string }) {
   const { data: units = [] } = useAsync(() => (catalog ? Promise.all(catalog.units.filter((u) => u.available).map((u) => loadUnit(u.id))) : Promise.resolve([] as Unit[])), [catalog]);
   const [msg, setMsg] = useState("");
   const [role, setRole] = useState<Role | "">("");
+  const [fwId, setFwId] = useState<string | null>(null);
+  const dur = useDuration();
   const isAdmin = myRole === "orgAdmin" || myRole === "superadmin";
   const lessonIndex = useMemo(() => Object.fromEntries(units.flatMap((u) => u.lessons.map((l) => [l.id, { unit: u, lesson: l }]))), [units]);
   const counts = useMemo(() => { const c: Record<string, number> = {}; progress.forEach((p) => (p.competencies ?? lessonIndex[p.lessonId]?.lesson.competencies ?? []).forEach((x) => { c[x] = (c[x] ?? 0) + 1; })); return c; }, [progress, lessonIndex]);
+  // The standards panel reads the person's own lessons, so it is right even before their summary gains these fields.
+  const compAcc = useMemo(() => { const a: Record<string, number> = {}; progress.forEach((p) => (p.competencies ?? lessonIndex[p.lessonId]?.lesson.competencies ?? []).forEach((x) => { a[x] = (a[x] ?? 0) + p.accuracy; })); return a; }, [progress, lessonIndex]);
+  const withEvidence = useMemo(() => (person ? { ...person, summary: { ...(person.summary ?? { lessonsDone: 0, xp: 0, avgAccuracy: 0, lastActive: null, units: {} }), competencies: counts, compAcc } } : null), [person, counts, compAcc]);
+  const shownFw = fwId ?? (withEvidence ? bestFramework(withEvidence, withEvidence.role === "student" ? "unesco-s" : "unesco-t") : "unesco-s");
 
   if (error) return <main className="screen"><EmptyState tone="error" title={t("err.title")} body={error.message} /></main>;
   if (!person) return <div className="loading" aria-busy="true" />;
@@ -92,11 +103,16 @@ export function PersonDetail({ back = "/admin" }: { back?: string }) {
             <div><dt>{t("col.xp")}</dt><dd>{num(progress.reduce((a, p) => a + (p.xp || 0), 0))}</dd></div>
             <div><dt>{t("col.accuracy")}</dt><dd>{progress.length ? num(progress.reduce((a, p) => a + p.accuracy, 0) / progress.length, { style: "percent" }) : "—"}</dd></div>
             <div><dt>{t("p.projects")}</dt><dd>{num(subs.length)}</dd></div>
+            <div><dt>{t("or.time")}</dt><dd>{dur(progress.reduce((a, p) => a + (p.seconds || 0), 0))}</dd></div>
           </dl>
         </section>
 
         <div className="person-cols">
           <section className="panel"><h3>{t("p.capabilities")}</h3><CapabilityProfile counts={counts} /></section>
+          <section className="panel stack"><h3>{t("or.personStandards")}</h3>
+            <FrameworkPicker value={shownFw} onChange={setFwId} />
+            <PersonStandards person={withEvidence!} fw={framework(shownFw) ?? FRAMEWORKS[0]} />
+          </section>
 
           <section className="panel"><h3>{t("p.courses")}</h3>
             {progress.length === 0 ? <p className="muted">{t("p.noCourses")}</p> : units.map((u) => {
@@ -117,6 +133,10 @@ export function PersonDetail({ back = "/admin" }: { back?: string }) {
         <section className="panel"><h3>{t("p.projects")}</h3>
           {subs.length === 0 ? <p className="muted">{t("p.noProjects")}</p> : subs.map((s) => <SubmissionCard key={s.id} uid={uid} sub={s} lessonTitle={L(lessonIndex[s.lessonId]?.lesson.title)} />)}
         </section>
+
+        {/* Platform admins: any role, any organization (OrgsAdmin.tsx). */}
+        {myRole === "superadmin" && <UserRolePanel person={person} />}
+        {myRole === "superadmin" && <SuperGrantPanel person={person} />}
 
         {isAdmin && person.orgId && (
           <section className="panel"><h3>{t("p.actions")}</h3>

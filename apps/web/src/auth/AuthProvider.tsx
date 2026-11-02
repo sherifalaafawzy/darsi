@@ -11,6 +11,8 @@ interface AuthState {
   /** Role and org from the ID token (authoritative for security rules). */
   role: Role;
   orgId: string | null;
+  /** Darsi Super from the ID token: the plan and when it ends (ms), or null (docs/SUPER.md). */
+  plan: { id: string; until: number } | null;
   loading: boolean;
   /**
    * The uid of a session saved on this device whose SDK could not load yet (offline, chunk not cached). Learning
@@ -25,7 +27,7 @@ interface AuthState {
   configured: boolean;
 }
 const Ctx = createContext<AuthState | null>(null);
-const LEARNER = { role: "learner" as Role, orgId: null as string | null };
+const LEARNER = { role: "learner" as Role, orgId: null as string | null, plan: null as { id: string; until: number } | null };
 
 /**
  * Firebase is loaded only when needed: at startup if a session is saved on this device, otherwise when an account
@@ -34,7 +36,7 @@ const LEARNER = { role: "learner" as Role, orgId: null as string | null };
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [claims, setClaims] = useState<{ role: Role; orgId: string | null }>(LEARNER);
+  const [claims, setClaims] = useState<{ role: Role; orgId: string | null; plan: { id: string; until: number } | null }>(LEARNER);
   const [loading, setLoading] = useState(firebaseReady);
   const [offlineUid, setOfflineUid] = useState<string | null>(null);
   const claimsRef = useRef(claims);
@@ -44,7 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const readClaims = useCallback(async (u: User, force = false) => {
     const r = await u.getIdTokenResult(force);
-    setClaims({ role: (r.claims.role as Role) ?? "learner", orgId: (r.claims.orgId as string) ?? null });
+    const until = Number(r.claims.planUntil) || 0;
+    setClaims({ role: (r.claims.role as Role) ?? "learner", orgId: (r.claims.orgId as string) ?? null, plan: typeof r.claims.plan === "string" && until ? { id: r.claims.plan, until } : null });
   }, []);
 
   /** Load the SDK once and subscribe to auth state. Resolves when the subscription is in place. */
@@ -63,7 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const p = { uid: u.uid, ...(snap.data() as Omit<Profile, "uid">) };
           setProfile(p);
           // Claims changed server-side (joined org, role change) → refresh the token so rules see it.
-          if ((p.role && p.role !== claimsRef.current.role) || (p.orgId ?? null) !== claimsRef.current.orgId) readClaims(u, true).catch(() => {});
+          // Darsi Super is mirrored on the profile too (planUntil), so a purchase or a seat refreshes the token the same way.
+          if ((p.role && p.role !== claimsRef.current.role) || (p.orgId ?? null) !== claimsRef.current.orgId
+            || (p.planUntil ?? null) !== (claimsRef.current.plan?.until ?? null)) readClaims(u, true).catch(() => {});
         } else setProfile(null);
         setLoading(false);
       }, () => setLoading(false));
@@ -95,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const value = useMemo<AuthState>(() => ({
-    user, profile, role: claims.role, orgId: claims.orgId, loading, offlineUid,
+    user, profile, role: claims.role, orgId: claims.orgId, plan: claims.plan, loading, offlineUid,
     ensureFirebase: start,
     refreshClaims: async () => { if (user) await readClaims(user, true); },
     updateProfile,

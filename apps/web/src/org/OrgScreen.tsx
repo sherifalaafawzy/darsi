@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppBar, Button, EmptyState, TextField } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
@@ -15,6 +15,7 @@ function errText(e: unknown, t: ReturnType<typeof useI18n>["t"]) {
   const code = String((e as { code?: string }).code ?? "");
   return code.endsWith("not-found") ? t("org.errCode")
     : code.endsWith("already-exists") ? t("org.errPending")
+    : code.endsWith("resource-exhausted") ? t("org.errTries")
     : code.endsWith("unavailable") || code.includes("network") ? t("auth.errNetwork")
     : (e as Error).message || t("auth.errGeneric");
 }
@@ -90,17 +91,28 @@ export function OrgScreen() {
 function JoinForm({ onJoined }: { onJoined: (r: { orgName: string; role: Role }) => void }) {
   const { t } = useI18n();
   const { refreshClaims } = useAuth();
-  const [code, setCode] = useState("");
+  const [params, setParams] = useSearchParams();
+  // From sign-up or an invite link (/org?code=…): filled in and tried once by itself.
+  const [code, setCode] = useState(params.get("code")?.toUpperCase() ?? "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const submit = async (e: FormEvent) => {
-    e.preventDefault(); setBusy(true); setErr("");
+  const join = async () => {
+    setBusy(true); setErr("");
     try {
       const r = await api.joinOrg({ code: code.trim() });
       onJoined(r);
       await refreshClaims();
     } catch (x) { setErr(errText(x, t)); } finally { setBusy(false); }
   };
+  const submit = (e: FormEvent) => { e.preventDefault(); void join(); };
+  const tried = useRef(false);
+  useEffect(() => {
+    if (tried.current || !params.get("code")) return;
+    tried.current = true;
+    setParams((p) => { const n = new URLSearchParams(p); n.delete("code"); return n; }, { replace: true });
+    void join();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <section className="panel">
       <form className="stack" onSubmit={submit}>

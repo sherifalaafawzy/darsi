@@ -9,8 +9,9 @@ import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions/v2";
 import { audit, auth, caller, db, str, type Role } from "./admin.js";
 import { alertOrgRequest } from "./notify.js";
-import { recentWeeks } from "./nudge.js";
-import { generateCode, generatePassword, isValidEmail, isValidUsername, suggestUsername, usernameToEmail } from "./passwords.js";
+import { summarize } from "./summary.js";
+import { writeClaims } from "./billing.js";
+import { generateCode, generatePassword, isValidEmail, isValidUsername, normalizeCode, suggestUsername, usernameToEmail } from "./passwords.js";
 
 export type { Role } from "./admin.js";
 /** Push notifications: device registration, announcements, review and staff alerts, daily nudges. */
@@ -22,6 +23,10 @@ export { saveSettings } from "./settings.js";
 export { publishLanguage, unpublishLanguage } from "./languages.js";
 /** Analytics: phones' event batches (and Google Analytics), and the accounts and organizations overview. */
 export { collect, refreshStats, statsJob } from "./analytics.js";
+/** Platform admins: organizations and anyone's role. */
+export { createOrg, deleteOrg, setUserRole, updateOrg } from "./platform.js";
+/** Darsi Super: plans, Super for people and organizations, and revenue (docs/SUPER.md). */
+export { checkRevenueEvent, fillSeats, grantCredits, grantSuper, onOrgLicence, onSubscriptionWrite, savePlans, setOrgLicence, setSeat } from "./billing.js";
 
 const MEMBER_ROLES: Role[] = ["student", "teacher", "orgAdmin"];
 
@@ -31,9 +36,11 @@ function requireOrgAdmin(req: CallableRequest, orgId: string) {
   if (c.role !== "orgAdmin" || c.orgId !== orgId) throw new HttpsError("permission-denied", "Only this organization's admins can do that.");
   return c;
 }
+/** Role and organization on the profile, then the claims (writeClaims keeps Darsi Super; a new organization means no seat yet). */
 async function setRole(uid: string, role: Role, orgId: string | null, extra: Record<string, unknown> = {}) {
-  await auth.setCustomUserClaims(uid, orgId ? { role, orgId } : { role });
-  await db.doc(`users/${uid}`).set({ role, orgId, ...extra, claimsUpdatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  const before = (await db.doc(`users/${uid}`).get()).get("orgId") ?? null;
+  await db.doc(`users/${uid}`).set({ role, orgId, ...extra, ...(before !== orgId ? { superSeat: false } : {}), claimsUpdatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  await writeClaims(uid, role, orgId);
 }
 
 /* ---------- Organizations ---------- */
@@ -67,7 +74,8 @@ export const reviewOrg = onCall(async (req) => {
   if (!approve) { await ref.update({ status: "rejected", reviewNote: str(req.data?.note, 500), reviewedAt: FieldValue.serverTimestamp() }); return { status: "rejected" }; }
   const codes = { teacher: generateCode(), student: generateCode() };
   await db.runTransaction(async (tx) => {
-    tx.update(ref, { status: "active", inviteCodes: codes, reviewedAt: FieldValue.serverTimestamp(), memberCount: FieldValue.increment(1) });
+    tx.update(ref, { status: "active", reviewedAt: FieldValue.serverTimestamp(), memberCount: FieldValue.increment(1) });
+    tx.set(invitesRef(orgId), codes);
     tx.set(db.doc(`inviteCodes/${codes.teacher}`), { orgId, role: "teacher" });
     tx.set(db.doc(`inviteCodes/${codes.student}`), { orgId, role: "student" });
   });
@@ -76,18 +84,39 @@ export const reviewOrg = onCall(async (req) => {
   return { status: "active", inviteCodes: codes };
 });
 
+/**
+ * An organization's invite codes: orgs/{orgId}/private/invites, which only its admins and platform admins can read.
+ * (Before 2026-11 they sat on the org document, which every member reads, so a student could see the teacher code.)
+ */
+const invitesRef = (orgId: string) => db.doc(`orgs/${orgId}/private/invites`);
+
+/** Failed join tries per account: 10 an hour, so codes can't be guessed by trying many. */
+const JOIN_TRIES = 10;
+async function joinTryFailed(uid: string) {
+  const ref = db.doc(`joinAttempts/${uid}`);
+  await db.runTransaction(async (tx) => {
+    const d = (await tx.get(ref)).data() as { n?: number; since?: number } | undefined;
+    const fresh = !d?.since || Date.now() - d.since > 3600e3;
+    tx.set(ref, { n: fresh ? 1 : (d?.n ?? 0) + 1, since: fresh ? Date.now() : d!.since });
+  });
+}
+
 /** Join an organization with an invite code (teacher or student code). */
 export const joinOrg = onCall(async (req) => {
   const c = caller(req);
   if (c.orgId) throw new HttpsError("failed-precondition", "You already belong to an organization.");
-  const code = str(req.data?.code, 20).toUpperCase();
-  const inv = await db.doc(`inviteCodes/${code}`).get();
-  if (!inv.exists) throw new HttpsError("not-found", "That code is not valid.");
+  const tries = (await db.doc(`joinAttempts/${c.uid}`).get()).data() as { n?: number; since?: number } | undefined;
+  if (tries?.since && Date.now() - tries.since < 3600e3 && (tries.n ?? 0) >= JOIN_TRIES) throw new HttpsError("resource-exhausted", "Too many wrong codes. Try again in an hour.");
+  const code = normalizeCode(req.data?.code);
+  const inv = code ? await db.doc(`inviteCodes/${code}`).get() : null;
+  if (!inv?.exists) { await joinTryFailed(c.uid); throw new HttpsError("not-found", "That code is not valid."); }
   const { orgId, role } = inv.data() as { orgId: string; role: Role };
   const org = await db.doc(`orgs/${orgId}`).get();
   if (org.get("status") !== "active") throw new HttpsError("failed-precondition", "This organization is not active.");
   await setRole(c.uid, role, orgId);
   await db.doc(`orgs/${orgId}`).update({ memberCount: FieldValue.increment(1) });
+  await db.doc(`joinAttempts/${c.uid}`).delete().catch(() => {});
+  await audit("joinOrg", c.uid, { orgId, role });
   return { orgId, role, orgName: org.get("name") };
 });
 
@@ -95,14 +124,18 @@ export const regenerateInviteCode = onCall(async (req) => {
   const orgId = str(req.data?.orgId), role = str(req.data?.role) as Role;
   requireOrgAdmin(req, orgId);
   if (role !== "teacher" && role !== "student") throw new HttpsError("invalid-argument", "role must be teacher or student");
-  const org = await db.doc(`orgs/${orgId}`).get();
-  const old = org.get(`inviteCodes.${role}`) as string | undefined;
+  const [org, priv] = await Promise.all([db.doc(`orgs/${orgId}`).get(), invitesRef(orgId).get()]);
+  const old = (priv.get(role) ?? org.get(`inviteCodes.${role}`)) as string | undefined;
   const code = generateCode();
   const batch = db.batch();
   if (old) batch.delete(db.doc(`inviteCodes/${old}`));
   batch.set(db.doc(`inviteCodes/${code}`), { orgId, role });
-  batch.update(org.ref, { [`inviteCodes.${role}`]: code });
+  // Both codes now live privately; an org document from before 2026-11 loses its readable copy.
+  const other = role === "teacher" ? "student" : "teacher";
+  batch.set(invitesRef(orgId), { [role]: code, ...(priv.get(other) || !org.get(`inviteCodes.${other}`) ? {} : { [other]: org.get(`inviteCodes.${other}`) }) }, { merge: true });
+  if (org.get("inviteCodes")) batch.update(org.ref, { inviteCodes: FieldValue.delete() });
   await batch.commit();
+  await audit("regenerateInviteCode", req.auth!.uid, { orgId, role });
   return { code };
 });
 
@@ -147,7 +180,7 @@ export const createMembers = onCall({ timeoutSeconds: 540, memory: "512MiB" }, a
     const password = m.password && String(m.password).length >= 8 ? String(m.password) : generatePassword(pwLen);
     try {
       const user = await auth.createUser({ email, password, displayName: name, emailVerified: false });
-      await auth.setCustomUserClaims(user.uid, { role, orgId });
+      await auth.setCustomUserClaims(user.uid, { role, orgId }); // a new account: no Super yet
       await db.doc(`users/${user.uid}`).set({
         name, email, username: username || null, role, orgId, group: str(m.group, 60) || null,
         teacherId: teacherIds[str(m.teacherEmail).toLowerCase()] ?? null, lang: str(m.lang, 8) || "en",
@@ -208,27 +241,13 @@ export const passwordChanged = onCall(async (req) => {
 /* ---------- Learning summary (what admins and teachers see) ---------- */
 
 /**
- * Recompute users/{uid}.summary whenever a lesson result is written: lessons, XP, competencies, last activity,
- * plus lessons per ISO week (UTC, the last 12 weeks) and lastLessonAt, which the daily nudges read.
+ * Recompute users/{uid}.summary whenever a lesson result is written (summarize: lessons, XP, accuracy, time, per track
+ * and per competency, last activity, lessons per ISO week for the last 12 weeks, and lastLessonAt for the nudges).
  */
 export const onProgressWrite = onDocumentWritten("users/{uid}/progress/{lessonId}", async (event) => {
   const uid = event.params.uid;
   const snap = await db.collection(`users/${uid}/progress`).get();
-  const competencies: Record<string, number> = {};
-  const units: Record<string, number> = {};
-  const completed: string[] = [];
-  let xp = 0, accSum = 0, last = "";
-  for (const d of snap.docs) {
-    const p = d.data();
-    xp += Number(p.xp) || 0; accSum += Number(p.accuracy) || 0;
-    if (typeof p.completedAt === "string") { completed.push(p.completedAt); if (p.completedAt > last) last = p.completedAt; }
-    if (p.unitId) units[p.unitId] = (units[p.unitId] ?? 0) + 1;
-    for (const code of (p.competencies as string[] | undefined) ?? []) competencies[code] = (competencies[code] ?? 0) + 1;
-  }
-  const summary = {
-    lessonsDone: snap.size, xp, avgAccuracy: snap.size ? accSum / snap.size : 0, lastActive: last || null, competencies, units,
-    weeks: recentWeeks(completed), lastLessonAt: last || null,
-  };
+  const summary = summarize(snap.docs.map((d) => d.data()));
   // mergeFields replaces each summary field whole, so weeks older than 12 are dropped instead of merged back in.
   await db.doc(`users/${uid}`).set({ summary }, { mergeFields: Object.keys(summary).map((k) => `summary.${k}`) });
 });

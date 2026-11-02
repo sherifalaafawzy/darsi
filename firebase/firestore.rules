@@ -114,6 +114,13 @@ service cloud.firestore {
     match /analytics/{day} { allow read: if isSuper(); allow write: if false; }
     match /analyticsDevices/{id} { allow read: if isSuper(); allow write: if false; }
 
+    // Darsi Super (docs/SUPER.md): only Cloud Functions write subscriptions and payments (the payment webhooks, grantSuper).
+    // A person reads their own subscription; platform admins read everything.
+    match /subscriptions/{uid} { allow read: if (signedIn() && request.auth.uid == uid) || isSuper(); allow write: if false; }
+    match /payments/{id} { allow read: if isSuper(); allow write: if false; }
+    // Tutor credits (the period's allowance and packs): read by their owner and platform admins; only the functions write them.
+    match /credits/{uid} { allow read: if (signedIn() && request.auth.uid == uid) || isSuper(); allow write: if false; }
+
     // Languages platform admins add (/super/languages): drafts of a language's UI strings. Only publishLanguage puts a
     // language in front of learners, and only it writes `published`. Every save bumps `rev`, as for units.
     match /translations/{code} {
@@ -140,10 +147,14 @@ service cloud.firestore {
       allow update: if isOrgAdmin(orgId) && onlyChanges(['name', 'settings', 'country', 'city', 'brand']) && brandOk(orgId);
       allow update, delete: if isSuper();
       allow create: if false; // requests go through the requestOrg Cloud Function
+      // Its invite codes: only its admins and platform admins read them (members must never see the teacher code);
+      // only the functions write them (reviewOrg, regenerateInviteCode).
+      match /private/{doc} { allow read: if isOrgAdmin(orgId) || isSuper(); allow write: if false; }
     }
 
-    // Invite codes and audit logs are handled only by Cloud Functions.
+    // Invite codes, failed join tries (joinOrg) and audit logs are handled only by Cloud Functions.
     match /inviteCodes/{code} { allow read, write: if false; }
+    match /joinAttempts/{uid} { allow read, write: if false; }
     // Which account a push token belongs to now (shared phones): registerDevice and unregisterDevice only.
     match /pushTokens/{deviceId} { allow read, write: if false; }
     match /audit/{id} { allow read: if isSuper(); allow write: if false; }

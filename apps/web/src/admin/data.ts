@@ -62,6 +62,8 @@ export interface Overview {
   users: { total: number; byRole: Record<string, number>; new7: number; new30: number; active7: number; active30: number; withLessons: number };
   lessons: number; xp: number; avgAccuracy: number | null; weeks: Record<string, number>;
   orgs: Record<string, OrgStats>; orgsByStatus: Record<string, number>;
+  /** Darsi Super (billingCore.superStats); absent in an overview counted before 2026-11. */
+  super?: { individuals: number; byPlan: Record<string, number>; bySource: Record<string, number>; orgs: number; seats: number; seatsUsed: number };
 }
 /** analytics/{yyyy-mm-dd}: the day's event counts from the collect function (nested maps of numbers). */
 export type DayCounts = { day: string } & { [k: string]: unknown };
@@ -118,3 +120,34 @@ export const useGaConfig = () => useOnce(async () => {
 }, []);
 export const saveGaConfig = (uid: string, c: GaConfig) =>
   setDoc(doc(db, "config", "analytics"), { measurementId: c.measurementId.trim(), apiSecret: c.apiSecret.trim(), updatedAt: serverTimestamp(), updatedBy: uid });
+
+/** The org's invite codes (orgs/{orgId}/private/invites; its admins only). Codes from before 2026-11 sit on the org itself. */
+export const useInvites = (orgId?: string | null) => useOnce(orgId ? async () => {
+  const [priv, org] = await Promise.all([getDoc(doc(db, "orgs", orgId, "private", "invites")), getDoc(doc(db, "orgs", orgId))]);
+  const old = org.get("inviteCodes") as { teacher?: string; student?: string } | undefined;
+  return { teacher: (priv.get("teacher") ?? old?.teacher) as string | undefined, student: (priv.get("student") ?? old?.student) as string | undefined };
+} : null, [orgId]);
+
+/** Every organization, newest first (platform admins: /super/orgs). One read, again on reload(). */
+export const useAllOrgs = () => useOnce(async () => (await getDocs(query(collection(db, "orgs"), orderBy("createdAt", "desc")))).docs.map((d) => ({ id: d.id, ...d.data() }) as Org), []);
+/** An account by its exact email or login (platform admins). */
+export const findByEmail = async (email: string) => (await getDocs(query(collection(db, "users"), where("email", "==", email.trim().toLowerCase()), limit(5)))).docs.map((d) => ({ uid: d.id, ...d.data() }) as Profile);
+/** Accounts whose name starts with what was typed (platform admins). */
+export const findByName = async (name: string) => (await getDocs(query(collection(db, "users"), orderBy("name"), where("name", ">=", name.trim()), where("name", "<=", `${name.trim()}`), limit(10)))).docs.map((d) => ({ uid: d.id, ...d.data() }) as Profile);
+
+/* ---------- Darsi Super (docs/SUPER.md) ---------- */
+export interface PlanDef { id: string; name: { en: string; ar: string }; kind: "individual" | "seat" | "credits"; period: "month" | "year"; prices: { EGP?: number; USD?: number }; credits: number; active: boolean }
+/** What a tutor credit costs Darsi at the provider (USD) and the EGP rate (functions/src/billingCore.ts Economics). */
+export interface Economics { usdPerCredit: number; egpPerUsd: number }
+/** config/plans as a platform admin saved them (the Plans page). */
+export const usePlansConfig = () => useOnce(async () => {
+  const s = await getDoc(doc(db, "config", "plans"));
+  return { plans: (s.get("plans") as PlanDef[] | undefined) ?? [], economics: (s.get("economics") as Economics | undefined) ?? null };
+}, []);
+/** A person's tutor credits (credits/{uid}). */
+export const useCredits = (uid?: string) => useOnce(uid ? async () => (await getDoc(doc(db, "credits", uid))).data() as { plan: number; planUntil: number; packs: number } | undefined : null, [uid]);
+/** A person's own subscription (theirs, or any for platform admins). */
+export const useSubscription = (uid?: string) => useOnce(uid ? async () => {
+  const s = await getDoc(doc(db, "subscriptions", uid));
+  return s.exists() ? (s.data() as { plan: string; status: string; currentPeriodEnd: number; source: string }) : null;
+} : null, [uid]);

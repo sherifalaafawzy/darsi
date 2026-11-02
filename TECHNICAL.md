@@ -140,15 +140,17 @@ AuthProvider            Firebase user + custom claims {role, orgId}; claims are 
 | `/learn`, `/lesson/:unit/:lesson`, `/downloads`, `/labs`, `/labs/:id`, `/kit`, `/tracks`, `/me` | signed in or guest | Behind the onboarding gate (language, "Who are you?" (teacher or student), where a teacher teaches or a student studies, tracks, weekly goal, placement). `/tracks` is My tracks. `/lab` (the old AI lab, linked from sent notifications) redirects to `/labs` |
 | `/org` | signed in | Join with an invite code, or request a new organization (`?request=1`) |
 | `/admin`, `/admin/people/:uid`, `/admin/add`, `/admin/import` | `orgAdmin` | Organization dashboard, person page, add people, Excel/CSV import |
-| `/teach`, `/teach/:uid` | `teacher`, `orgAdmin` | The teacher's assigned students |
+| `/admin/analytics` | `orgAdmin` | The organization's learning report: students and teachers against UNESCO, DigComp, ISTE and CSTA (see [Organization analytics](#organization-analytics)) |
+| `/teach`, `/teach/:uid`, `/teach/analytics` | `teacher`, `orgAdmin` | The teacher's assigned students, and the learning report for them |
 | `/super` | `superadmin` | Send announcements; approve or reject organization requests |
 | `/super/content`, `/super/content/:unitId` | `superadmin` | Course editor: units published for everyone (see [Authored content](#authored-content)) |
 | `/admin/content`, `/admin/content/:unitId` | `orgAdmin` | Course editor: units published for this organization's members only |
 | `/super/tracks` | `superadmin` | Tracks and levels for every unit (see [Tracks and levels](#tracks-and-levels)) |
 | `/super/languages`, `/super/languages/:code` | `superadmin` | Languages beyond English and Arabic: add, translate, publish (see [Languages and right-to-left](#languages-and-right-to-left)) |
+| `/super/orgs` | `superadmin` | Every organization; create one (see [Platform administration](#platform-administration)) |
 | `/super/analytics`, `/super/orgs/:orgId`, `/super/people/:uid` | `superadmin` | Platform analytics: every account and organization, usage from phones, the Google Analytics connection (see [Analytics](#analytics)) |
 
-Roles are `learner` (independent), `student`, `teacher`, `orgAdmin` and `superadmin`. They live in **Auth custom claims**, which only Cloud Functions set, and are mirrored to `users/{uid}` for the UI. When `users/{uid}` changes role or organization, AuthProvider refreshes the token so the security rules see the new claims.
+Roles are `learner` (independent), `student`, `teacher`, `orgAdmin` and `superadmin`. They live in **Auth custom claims** {role, orgId, and with Darsi Super plan and planUntil}, which only Cloud Functions set, and are mirrored to `users/{uid}` for the UI. When `users/{uid}` changes role or organization, AuthProvider refreshes the token so the security rules see the new claims.
 
 After sign-in, `homeFor(role)` sends org admins to `/admin` and platform admins to `/super`; everyone else goes to `/learn`. Staff routes skip the onboarding gate. Accounts created by an admin with `mustChangePassword` see the set-password screen before anything else.
 
@@ -258,7 +260,8 @@ Firebase's original default bucket, `darsi-f0685.firebasestorage.app`, was creat
 ```
 users/{uid}                 name, email, username, role, orgId, group, teacherId, lang, teach, tracks,
 │                           weeklyLessons, levels, mustChangePassword, active, lastActive, createdAt,
-│                           summary {lessonsDone, xp, avgAccuracy, lastActive, competencies, units,
+│                           plan, planUntil, planSource (subscription | org), superSeat   ← Cloud Functions only (Darsi Super)
+│                           summary {lessonsDone, xp, avgAccuracy, lastActive, competencies, compAcc, units, tracks, seconds,
 │                                    weeks {"2026-W43": n, … the last 12 ISO weeks, UTC}, lastLessonAt}   ← written by onProgressWrite
 │                           notify {on, hourLocal 0–23, hourUtc 0–23, tz (IANA), cats {reminders, reviews, staff, news},
 │                                   weeklyGoal 1–14, lastAutoAt?, comeback7At?, comeback21At?}         ← notification functions only
@@ -270,9 +273,18 @@ users/{uid}                 name, email, username, role, orgId, group, teacherId
                             deviceId = the first 40 hex characters of sha256(token)
 pushTokens/{deviceId}       uid (the account the token belongs to now), at   ← Cloud Functions only
 orgs/{orgId}                name, type, country, city, size, contact, reason, status (pending | active | rejected),
-                            createdBy, inviteCodes {teacher, student}, memberCount, reviewNote, createdAt, reviewedAt,
+                            createdBy, memberCount, reviewNote, createdAt, reviewedAt, demo? (scripts/demo-org.mjs),
                             brand {logo (Storage path under orgs/{orgId}/brand/) | null, v (+1 per change)}   ← its admins
+                            licence {plan, seats, until (ms)}   ← setOrgLicence and payments (Darsi Super)
+└─ private/invites          teacher, student (the codes)     ← Cloud Functions write; its admins and platform admins read
 inviteCodes/{code}          orgId, role                      ← Cloud Functions only
+joinAttempts/{uid}          n, since (ms)                    ← joinOrg: failed tries, 10 an hour
+subscriptions/{uid}         plan, status (active | canceled | expired | past_due), source (paymob | stripe | grant),
+                            currentPeriodEnd (ms), updatedAt   ← Cloud Functions only; the owner and platform admins read
+credits/{uid}               plan (this period's tutor credits), planUntil (ms), packs (never expire)   ← Cloud Functions only
+payments/{provider}_{ref}   provider, ref, kind (subscription | licence | credits), uid | orgId, plan, amount, currency,
+                            seats, status (paid | refunded), at, refundedAt   ← Cloud Functions only; platform admins read
+config/plans                plans [Plan], economics {usdPerCredit, egpPerUsd}, rev, updatedAt   ← savePlans (Darsi Super)
 units/{unitId}              owner ("public" | orgId), title {en, ar}, track, level, lessonCount, lessons [{id, title}],
                             rev (int, +1 per save), updatedAt, updatedBy,
                             published {version, rev, at, by, entry (its catalog.json entry)} | null   ← published: functions only
@@ -338,14 +350,14 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 |---|---|---|
 | `requestOrg` | callable | A signed-in person asks to register an organization (one pending request at a time). Platform admins get a staff alert; a failed alert never fails the request |
 | `reviewOrg` | callable | Platform admin approves (creates invite codes; the requester becomes its admin) or rejects with a note |
-| `joinOrg` | callable | Join an active organization with a teacher or student invite code |
-| `regenerateInviteCode` | callable | Org admin replaces a code; the old one stops working |
+| `joinOrg` | callable | Join an active organization with a teacher or student invite code (`normalizeCode`: case, spaces and dashes don't matter). 10 failed tries per account per hour, then `resource-exhausted` |
+| `regenerateInviteCode` | callable | Org admin replaces a code (12 characters, `XXXX-XXXX-XXXX`); the old one stops working. Moves an org's codes from before 2026-11 to `private/invites` |
 | `createMembers` | callable | Bulk accounts (up to 500 per call): random passwords with no look-alike characters, usernames for people without email, teacher assignment |
 | `setMemberRole` | callable | Org admin changes a member's role (never their own admin role) |
 | `resetMemberPassword` | callable | New random password; the person must choose their own at next sign-in |
 | `removeMember` | callable | Back to an independent learner; their learning record stays with them |
 | `passwordChanged` | callable | Clears the first-sign-in flag after the person picks a password |
-| `onProgressWrite` | Firestore trigger | Recomputes `users/{uid}.summary` (lessons, XP, accuracy, competencies, units, last activity, lessons per ISO week for the last 12 weeks, `lastLessonAt`) |
+| `onProgressWrite` | Firestore trigger | Recomputes `users/{uid}.summary` with `summarize` (`summary.ts`): lessons, XP, accuracy, time, per track, per competency (evidence and accuracy), units, last activity, lessons per ISO week for the last 12 weeks, `lastLessonAt` |
 | `registerDevice` | callable | Stores or refreshes this device's push token, sets `notify` (on, reminder hour, time zone, categories, weekly goal) and subscribes the token to its topics |
 | `unregisterDevice` | callable | Unsubscribes and deletes the device; with no devices left, `notify.on` becomes false |
 | `updateNotifyPrefs` | callable | Changes the reminder hour, time zone, categories or weekly goal, and re-applies topics on every device (the Announcements switch) |
@@ -361,6 +373,14 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 | `publishLanguage` | callable | Platform admin only: checks a saved language draft (`validateLanguage`), writes `content/i18n/{code}/v{n+1}.json`, lists the language in `config/settings` and `content/settings.json`, keeps the previous pack and deletes older ones |
 | `unpublishLanguage` | callable | Platform admin only: takes a language off the pickers and deletes its packs; people who chose it see English. The draft stays |
 | `collect` | HTTPS (`darsiai.org/api/collect`, a Hosting rewrite) | Phones' event batches: checks them, adds them to `analytics/{day}`, counts active phones in `analyticsDevices`, and forwards them to Google Analytics when `config/analytics` is set (see [Analytics](#analytics)). At most 3 instances, 30 requests a minute per address |
+| `createOrg`, `updateOrg`, `deleteOrg` | callable | Platform admins only: a new active organization (with private invite codes and optionally its admin), its details or status, or deleting it after its name is typed: members become learners, codes, its units and its files go |
+| `setUserRole` | callable | Platform admins only: any account's role and organization (students, teachers and org admins need an active organization; learners and platform admins have none). Moving orgs clears class and teacher and moves the member counts. Nobody changes their own role |
+| `savePlans` | callable | Platform admins only: the Darsi Super plans and economics, every price keeping at least 60% margin; publishes `content/plans.json` without the costs (see [Darsi Super](#darsi-super)) |
+| `grantSuper`, `grantCredits` | callable | Platform admins only: complimentary Super for some days (with the plan's credits), or extra credits into packs |
+| `setOrgLicence` | callable | Platform admins only: an organization's licence (plan, seats, days) |
+| `setSeat`, `fillSeats` | callable | The org's admins and platform admins: give or take one seat, or fill the free seats (teachers, then students) |
+| `checkRevenueEvent` | callable | Platform admins only: sends a sample `purchase` to Google Analytics' validation server |
+| `onSubscriptionWrite`, `onOrgLicence` | Firestore triggers | Rewrite the claims (`plan`, `planUntil`) when a subscription or an org licence changes |
 | `statsJob` | scheduled, daily 02:30 UTC | Accounts and organizations from every user's summary into `stats/overview` |
 | `refreshStats` | callable | Platform admin only: the same, now (the Refresh button on /super/analytics) |
 
@@ -374,6 +394,42 @@ An organization chooses its name and logo, and its members see them where the ap
 - **On members' phones:** `state/orgBrand.ts` (`useOrgBrand`, called by App) reads `orgs/{orgId}` once per sign-in, with no listener. The logo is fetched only when `brand.v` changed, and kept in the person's local store as a data: URL (`state.org`), so it shows offline and costs nothing after the first download. Leaving the org (or signing out) brings Darsi's look back.
 - **In the design system:** `BrandProvider` (App sets it from `state.org`), `useBrand` and `BrandMark` (the org's logo, or Darsi's mark). `AppBar` and `CertificateCard` use them, so screens need no changes.
 - **Not branded:** the installed app's name and icon (the web manifest is the same for everyone), the landing page, and the classroom kits (PDF/PPTX built ahead of time).
+
+## Organization analytics
+
+An organization's report on its students and teachers, against international standards. TECHNICAL.md's [Analytics](#analytics) is the platform's.
+
+- **Where:** `/admin/analytics` (org admins, a button on the dashboard and "Analytics" in the nav), `/super/orgs/:orgId/report` (platform admins) and `/teach/analytics` (a teacher, for their own students). One component, `admin/OrgReport.tsx` (`mode="teacher"`), a lazy chunk.
+- **Data:** `users/*.summary` only, which the member list already holds, so the report costs no extra reads. A teacher's report reads their students (`useMyStudents`) and their own profile, as the rules allow.
+- **The summary** (`functions/src/summary.ts`, shared by the trigger, `npm run resummarize` and the demo script) carries per competency the evidence (lessons) and the accuracy summed, per track the lessons, accuracy and time, and the total time. `npm run resummarize` rebuilds every summary after the fields change.
+- **Standards** (`content/standards.ts`): each framework is a list of items, each item the competency codes that give evidence for it.
+  - UNESCO AI competency frameworks for students and for teachers (2024), and DigComp 2.2: the lessons' own codes.
+  - ISTE Standards for Students (2016) and for Educators (2017), and the CSTA K–12 CS Standards (2017): Darsi's crosswalk at the level of their standards and core concepts. The screen says it is not an official alignment.
+  - Darsi strands: IoT and the newer tracks.
+  - A test checks every code exists and every UNESCO, DigComp and Darsi code appears somewhere.
+- **Strength** per person and item, from the lessons that count for it (`strength`): not yet, emerging (1), developing (2), secure (3+), with the average score on them.
+- **The report** (`admin/orgStats.ts`, pure and tested):
+  - Filters: students, teachers or everyone; class; teacher. Tiles: people and activity, lessons, average score, learning time.
+  - Status: on track, needs support (average under 60% over 3 lessons or more), inactive (nothing for 14 days), not started. Choosing one filters the people table.
+  - Lessons per week (12 weeks), the chosen framework's items (reached, strength bar, score), tracks, courses (started and completed), classes, and every person with their status and secure items.
+  - Org admins also get a Teachers table: each teacher's own learning (UNESCO for teachers) beside their students'. A teacher's own report shows their own learning instead.
+  - Export to Excel: summary, people (with their strength on each item), the framework's items, classes and courses.
+- **The person page** shows learning time and a standards panel; it opens on the framework with the most evidence for that person.
+- **Demo data:** `npm run demo-org` (`--emulator` locally) makes "Nile Valley Demo School" (`orgs/demo-school`, `demo: true`): an admin, 4 teachers and 48 students in 4 classes with 12 weeks of lessons from the real courses. It is the same on every run, and `--remove` deletes it. The admin's, a teacher's and a student's logins go to `.demo-org.local.json` (gitignored).
+
+## Platform administration
+
+Platform admins manage every organization and account (`admin/OrgsAdmin.tsx`, the functions in `functions/src/platform.ts`, all audited):
+- **/super/orgs:** every organization with its status and members, and "New organization" (name, type, country, city, and optionally its admin by email or username).
+- **An organization's page** (/super/orgs/:id), under "Manage this organization": its details (and "Make active" for a pending or rejected one); "Add a person" (any account by email, username or the start of the name, as student, teacher or org admin; someone in another organization moves); each member's role, or Remove (back to an independent learner); and deleting it after typing its name.
+- **A person's page** (/super/people/:uid): "Role and organization" sets any role, platform admin included, with the organization where the role needs one.
+
+## Invite codes
+
+- **Format:** 12 characters from 32 with no look-alikes, in groups of 4 (`K7QP-2MXR-9DHA`), about 60 bits. Codes from before 2026-11 (`K7Q-2MXP`) keep working until an admin makes new ones; the dashboard suggests it.
+- **Private:** `orgs/{orgId}/private/invites`, readable by the org's admins and platform admins only. They used to sit on the org document, which every member reads, so a student could see the teacher code. `npm run migrate-invites` moves them.
+- **Guessing:** `joinOrg` allows 10 failed tries per account per hour (`joinAttempts/{uid}`).
+- **Sign-up:** "Invite code (optional)". An invite link (`/signup?code=…`, "Copy invite link" on the dashboard) fills it in. The code stays in the address because signing up remounts the app; `SignedIn` (App.tsx) then sends the new account to `/org?code=…`, whose join form tries it once and shows the result, or the error with the code filled in. Google sign-up works the same way.
 
 ## Analytics
 
@@ -402,6 +458,41 @@ Two sources, both read with one-shot reads on `/super/analytics`:
 - The top tracks, courses, labs, languages, roles and screens.
 - The organizations table, people (the 50 most recently active, or a name search), and the Google Analytics connection.
 - `/super/orgs/:id` has one organization's figures, its lessons per day, its branding and its people; `/super/people/:uid` is the person page.
+
+## Darsi Super
+
+The paid tier: a live tutor for the courses (docs/SUPER.md has the plan and phases). Phase 0, the groundwork, is built; payments (phase 1) and the tutor (phase 2) are not. Server code is `functions/src/billing.ts`, with the pure parts, tested, in `billingCore.ts`.
+
+**Who has Super:**
+- Their own subscription (`subscriptions/{uid}`: plan, status, source `paymob`/`stripe`/`grant`, `currentPeriodEnd`), paid or cancelled but not yet ended; or a seat in their organization's licence (`orgs/{id}.licence` {plan, seats, until} and `users/{uid}.superSeat`). If both apply, the one that lasts longer counts (`entitlement`).
+- It goes into the custom claims beside role and organization: `{role, orgId, plan, planUntil}`. Every claims write goes through `writeClaims(uid, role, orgId)`, so a role change (`setRole`, `setUserRole`, `joinOrg`, deleting an org) keeps Super. `createMembers` still sets claims directly, because a new account has no plan. The profile mirrors it (`plan`, `planUntil`, `planSource`) for the admin screens.
+- `onSubscriptionWrite` and `onOrgLicence` (a licence change refreshes every seat holder) rewrite the claims. AuthProvider refreshes the token when the profile's `planUntil` differs from the claim's, and exposes `useAuth().plan`.
+- Changing organization clears `superSeat`.
+
+**Plans, credits and the margin:**
+- Platform admins edit the plans on /super/plans (`admin/Plans.tsx`; it loads with the SuperAdmin chunk, because a lazy route of its own split the startup bundle). `savePlans` stores `config/plans` {plans, economics} and publishes the active plans, without the costs, as `content/plans.json` for the Upgrade screen.
+- A plan is for one person (monthly or yearly), a seat in an organization (priced per seat), or a pack of extra credits (kind `credits`, for people who already have Super). Each has prices in EGP (Paymob) and USD (Stripe) and a number of tutor credits.
+- **Credits** (`credits/{uid}` {plan, planUntil, packs}): each paid period brings the plan's credits, and what was left of the last period lapses. Packs never expire. Spending takes the period's credits first (`spendCredits`).
+- **Economics** {usdPerCredit, egpPerUsd}: what one credit costs Darsi at the AI provider, and the exchange rate. The tutor will debit each call at its measured cost (`creditsForCost`, rounded up).
+- **The user's rule: at least 60% margin** (`MIN_MARGIN`). `validatePlans` refuses any price whose credits, all used, would cost the provider more than 40% of it: margin = 1 − credits × usdPerCredit ÷ price in USD. The page shows each price's margin as you type. The margin counts the AI provider's cost only, not payment fees or hosting.
+- Platform admins can give complimentary Super (`grantSuper`, days, never counted as revenue; it brings the plan's credits for those days) and extra credits (`grantCredits`, into packs) on a person's page.
+
+**Organizations:** `setOrgLicence` (platform admins: plan, seats, days) on the org page. Org admins give and take seats (`setSeat`, refused when all are taken) or fill the free ones (`fillSeats`: teachers first, then students; org admins get one only by hand) on their dashboard.
+
+**Payments and revenue** (phase 1 will call these from the Paymob and Stripe webhooks; nothing calls them from a phone):
+- `recordPayment` creates `payments/{provider}_{ref}` in a transaction, so a repeated webhook does nothing. A subscription is extended by a period from its current end; a pack adds credits; a licence is extended and keeps the larger seat count.
+- Each payment adds to `analytics/{day}.revenue.{EGP|USD}` {value, n} and the plan count, and is sent to Google Analytics as a GA4 `purchase` through the Measurement Protocol (`revenueEvent`): `transaction_id`, value, currency, affiliation (individual, organization or credits), the item (a licence is priced per seat), `client_id` from the phone when the checkout passes it, and `user_id` as a hash of the account id. `recordRefund` marks the payment, counts it in `refunds` and sends `refund`; access runs to the end of the period.
+- `checkRevenueEvent` (the Plans page) sends a sample purchase to Google's validation server, which records nothing.
+- `stats/overview.super` counts live subscriptions by plan and source, and licences with their seats and seats used. /super/analytics shows revenue for 30 days per currency and a Super tile.
+
+**Rules:** `subscriptions` and `credits` are readable by their owner and platform admins; `payments` by platform admins only. No client writes any of them.
+
+**On the phone:**
+- `/upgrade` (`upgrade/Upgrade.tsx`, a lazy chunk with its own strings, not precached, no Firebase) reads `content/plans.json` with a plain `fetch`, so guests see it too. App passes the address in (`plansUrl`): importing `content/load` from the chunk split the startup bundle. It shows EGP for Arabic or Egypt's time zone and USD otherwise (switchable), the per-period credits, licences for organizations, and packs only to people who have Super. Buying says "Payments open soon" until phase 1.
+- Me has a Darsi Super card (status, or "See Darsi Super").
+- Funnel events: `view_paywall` {from} and `begin_checkout` {plan, cur, prov}.
+
+**Checked (phase 0):** functions 113 tests (`billing.test.ts` 15), web 1201; 34/34 checks against the emulators (scratch script): the margin refusal, plans published without costs, grant → claims, mirror and credits, a role change keeping Super, the credits rules, licence and seat limits, `fillSeats`, idempotent payments, revenue counts, packs, refunds, payments readable only by platform admins, and the overview.
 
 ## Content, lessons and kits
 

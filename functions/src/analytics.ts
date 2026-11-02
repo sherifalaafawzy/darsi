@@ -13,6 +13,7 @@ import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { caller, db } from "./admin.js";
+import { superStats } from "./billingCore.js";
 import { dailyCounts, dayOf, measurementPayloads, overview, parseBatch, type Batch, type Counts, type OrgRow, type UserRow } from "./analyticsCore.js";
 
 /** Counts become increments, so batches arriving at the same moment add up instead of overwriting each other. */
@@ -22,7 +23,7 @@ function increments(c: Counts): Record<string, unknown> {
 
 /** The Google Analytics stream, as set on /super/analytics; re-read at most every 10 minutes per instance. */
 let ga: { at: number; mid: string; secret: string } | null = null;
-async function gaConfig() {
+export async function gaConfig() {
   if (ga && Date.now() - ga.at < 10 * 60e3) return ga;
   const d = (await db.doc("config/analytics").get()).data() ?? {};
   ga = { at: Date.now(), mid: typeof d.measurementId === "string" ? d.measurementId : "", secret: typeof d.apiSecret === "string" ? d.apiSecret : "" };
@@ -92,9 +93,10 @@ export const collect = onRequest({ maxInstances: 3, memory: "256MiB", timeoutSec
 
 /** Every account's role, organization, dates and summary (only those fields), and every organization. */
 async function buildOverview() {
-  const [users, orgs] = await Promise.all([
-    db.collection("users").select("role", "orgId", "createdAt", "lastActive", "summary.lessonsDone", "summary.xp", "summary.avgAccuracy", "summary.lastActive", "summary.weeks").get(),
-    db.collection("orgs").select("name", "status", "country", "memberCount").get(),
+  const [users, orgs, subs] = await Promise.all([
+    db.collection("users").select("role", "orgId", "createdAt", "lastActive", "superSeat", "summary.lessonsDone", "summary.xp", "summary.avgAccuracy", "summary.lastActive", "summary.weeks").get(),
+    db.collection("orgs").select("name", "status", "country", "memberCount", "licence").get(),
+    db.collection("subscriptions").get(),
   ]);
   const rows: UserRow[] = users.docs.map((d) => {
     const u = d.data(), s = (u.summary ?? {}) as Record<string, unknown>;
@@ -105,7 +107,9 @@ async function buildOverview() {
     };
   });
   const orgRows: OrgRow[] = orgs.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<OrgRow, "id">) }));
-  const o = overview(rows, orgRows);
+  const seatHolders: Record<string, number> = {};
+  for (const d of users.docs) if (d.get("superSeat") === true && d.get("orgId")) seatHolders[d.get("orgId")] = (seatHolders[d.get("orgId")] ?? 0) + 1;
+  const o = { ...overview(rows, orgRows), super: superStats(subs.docs.map((d) => d.data()), orgs.docs.map((d) => ({ id: d.id, licence: d.get("licence") })), seatHolders) };
   await db.doc("stats/overview").set(o);
   return o;
 }

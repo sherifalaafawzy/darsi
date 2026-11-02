@@ -236,6 +236,46 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
       - In the browser on the emulators: an org admin renamed the org and uploaded a logo (shrunk to a 4 KB WebP). A student of that org at 375 px saw it in the app bar, Me and the title. Signing out brought Darsi's look back. A platform admin refreshed and read /super/analytics in English and in Arabic at 375 px (no sideways scroll), and opened the org page.
     - **Still the user's:** create a Measurement Protocol API secret in Google Analytics and paste it on /super/analytics (docs/FIREBASE.md §8). Until then Darsi counts usage itself and forwards nothing.
     - **Also fixed on the way:** the e2e onboarding helpers now answer "Where do you teach?" (added by PR #4), and the functions' shared types copy was synced.
+21. Done and deployed (2026-11-02, uncommitted): **organization and teacher analytics against international standards, safer invite codes at sign-up, and a demo school.** The user asked that organizations see their students' analytics in full detail following UNESCO "and more", for a teachers' analytics part, for fake data online to test with, and for sign-up to take an invite code with a more secure key. TECHNICAL.md "Organization analytics" and "Invite codes", docs/FIREBASE.md §8.
+    - **Report:** `admin/OrgReport.tsx` at /admin/analytics, /super/orgs/:id/report and /teach/analytics (a teacher's own students plus their own learning). Status (on track, needs support, inactive, not started), weekly lessons, standards, tracks, courses, classes, a Teachers table for org admins, every person, and an Excel export. Everything from `users/*.summary`; no extra reads.
+    - **Standards:** `content/standards.ts`. UNESCO for students and teachers and DigComp 2.2 from the lessons' codes; ISTE (students, educators) and CSTA as Darsi's crosswalk, labelled as not official; Darsi strands.
+    - **Summary:** `functions/src/summary.ts` adds time, per-track figures and accuracy per competency; `npm run resummarize` rebuilds old ones.
+    - **Invite codes:** 12 characters (`XXXX-XXXX-XXXX`), private to admins (`orgs/{id}/private/invites`; they were readable by every member, so a student could see the teacher code), 10 failed tries per hour, an optional code at sign-up, and invite links (`/signup?code=…`). `npm run migrate-invites` moves the live ones; old short codes keep working until regenerated.
+    - **Demo school:** `npm run demo-org` (`--remove`): an admin, 4 teachers and 48 students in 4 classes, 12 weeks of lessons from the real courses. Logins in `.demo-org.local.json` (gitignored).
+    - **Checked:** web 1201, design system 48, functions 98, `tsc`, `lint:css`, e2e 30/30 on a private build, startup 4 files (180.6 KB gzipped; the report is a 4.5 KB lazy chunk). Emulators: 14/14 invite checks (private codes, normalising, the try limit, regenerating, the migration). Browser on the emulators: the demo admin's report (UNESCO and ISTE views, Teachers table, Excel export of 15 KB), a student's page, the demo teacher's /teach/analytics (her 12 students only), and a sign-up from an invite link that joined the demo school as a student.
+22. Done and deployed (2026-11-02, uncommitted): **platform admins manage organizations and roles.** The user asked that a platform admin can assign people to organizations, create, edit and delete organizations, make admins, and change anyone's role anywhere. TECHNICAL.md "Platform administration".
+    - **Server:** `functions/src/platform.ts`: `createOrg`, `updateOrg`, `deleteOrg` (type the name to confirm; members become learners) and `setUserRole` (any role; no one changes their own). All audited.
+    - **Client:** `admin/OrgsAdmin.tsx`: /super/orgs (list and create), "Manage this organization" on /super/orgs/:id, and "Role and organization" on /super/people/:uid. "Organizations" in the platform admin's nav.
+    - **Checked:** web 1201, functions 98, `tsc`, `lint:css`, e2e 30/30 on a private build, startup 4 files (180.7 KB). Emulators: 21/21 platform checks. Browser on the emulators: created an org with a demo teacher as its admin, added a demo student by name and changed her role, deleted the org by its name, and promoted a student from her person page.
+    - **Deployed 2026-11-02** with the user's go-ahead: functions (31; `createOrg`, `updateOrg`, `deleteOrg`, `setUserRole` new) and Hosting (`index-B0f3RxUg.js`). The four callables answer 401 UNAUTHENTICATED to anonymous calls. Not yet checked live with a platform-admin sign-in (the user's).
+23. Phase 0 done, not deployed (2026-11-02, uncommitted): **Darsi Super groundwork.** The user asked for a paid version, Super, "but first … well integrated with firebase analytics with right revenue". The tutor will be Gemini Live 3.8 (with or without a live avatar), able to call Lesson Studio for explainer videos while it talks, for paid accounts only, with a clear limit, more credits to buy, and **at least 60% margin on the tutor's calls**. docs/SUPER.md has the plan and phases; TECHNICAL.md "Darsi Super" has the design; docs/FIREBASE.md §9 has the deploy steps.
+    - **Server:** `functions/src/billing.ts`, with the pure parts in `billingCore.ts` (tested).
+      - Claims are {role, orgId, plan, planUntil}. Every claims write goes through `writeClaims`; the profile mirrors the plan.
+      - Plans with credits (`savePlans`, published as `content/plans.json` without costs). The margin check (`MIN_MARGIN`) uses `economics.usdPerCredit`.
+      - Credits in `credits/{uid}`: the period's allowance lapses, packs never expire.
+      - Also `grantSuper`, `grantCredits`, `setOrgLicence`, `setSeat`, `fillSeats` and `checkRevenueEvent`.
+      - `recordPayment` and `recordRefund` (idempotent; revenue in `analytics/{day}`; GA4 `purchase` and `refund` through the Measurement Protocol) wait for phase 1's webhooks.
+    - **Client:**
+      - /super/plans (`admin/Plans.tsx`, loaded with the SuperAdmin chunk) and /upgrade (`upgrade/Upgrade.tsx`, plain fetch, no Firebase).
+      - Super, credits, licence and seat panels (`admin/Super.tsx`); the Super card in Me; revenue and Super tiles on /super/analytics.
+    - **Startup, twice over:**
+      - Upgrade importing `content/load`, and the Plans page as a lazy route of its own while other staff chunks imported `admin/Super` statically, each split the startup bundle (7 files, then 5). App now passes `plansUrl` into Upgrade, and the Plans page loads through the SuperAdmin chunk.
+      - The new staff chunks (Analytics, OrgReport, OrgsAdmin, Super, Plans) and Upgrade are kept out of the precache.
+      - Type-check apps/web with `npx tsc --noEmit`: `tsc -b` writes .js files beside the sources, and Vite then builds those stale copies.
+    - **Also fixed:**
+      - Admin screens showed server errors with their first words cut off and " [400]" on the end.
+      - Upgrade's feature list put its icons on their own lines.
+      - The Arabic credit counts were wrong for hundreds (e.g. "٣٠٠ رصيدًا").
+      - The framework picker overflowed a 375 px person page.
+    - **Checked:**
+      - Unit tests: web 1201, functions 113. `tsc` and `lint:css` pass.
+      - e2e 30/30 on a private build. Startup is 4 files, 181.3 KB gzipped (180.7 before); the precache has 45 files.
+      - Emulators: 34/34 billing checks (scratch script).
+      - Browser on the emulators:
+        - /super/plans refused a 50% price with the server's message, then saved.
+        - /upgrade worked at 375 px in English and in Arabic, offering packs only after Super was given.
+        - The person page gave Super (300 credits) and 100 extra credits.
+    - **Next:** deploy phase 0 (the user's go-ahead). Then phase 1, the Paymob and Stripe checkouts and webhooks, which needs their accounts. Then phase 2, the tutor, which needs a Gemini API key and the relay-or-tokens choice.
 9. Not started: the security review. The user asked for static scanning of the rules, functions and client, plus a pentest of the deployed URL with `H:\htdocs\pentest-lab` (allowlist-gated; add only darsi-f0685 hosts). It is deferred until the code is finished.
 
 ### Firebase project (live): darsi-f0685
@@ -322,6 +362,10 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
   - The merged tree passed `tsc`, web 1195, functions 95, `lint:css` and e2e 30/30 on its own build; startup 4 files, 180.2 KB gzipped.
   - Checked live: `collect` answers 400 to junk and 405 to GET, directly and at darsiai.org/api/collect. A guest on darsiai.org (Pixel 7, Playwright) onboarded, opened a lab and went to the background: one batch, 204, no Firebase chunk, no errors, and `analytics/2026-11-01` counted it (1 new phone, 6 events).
   - Not yet checked live: the branding panel and /super/analytics, which need an org-admin and a platform-admin sign-in.
+- Deployed 2026-11-02 (item 21, from the working tree, uncommitted, with the user's go-ahead): Firestore rules, **all 27 Cloud Functions** and Hosting (`index-BoxxVJqw.js`); then `npm run migrate-invites` (2 of 2 organizations), `npm run resummarize` (5 accounts) and `npm run demo-org` (53 accounts).
+  - The Auth admin API with the personal application-default login needs a quota project: `demo-org.mjs` sets `GOOGLE_CLOUD_QUOTA_PROJECT` to the project for its own run.
+  - Checked live (Admin SDK): every organization's codes are in `private/invites` and none on the org document; 52 of the 53 demo accounts carry the new summary fields (the admin has no lessons). As a visitor, /signup?code=… fills the invite field with no errors.
+  - Not yet checked live: the report and the teacher view, which need the demo logins in `.demo-org.local.json` (the user's to try).
 - **Storage**: the app uses the bucket **`darsi-f0685` in europe-west1**, set by `VITE_FIREBASE_STORAGE_BUCKET` in `.env.local`. It is deploy target `main` with `firebase/storage.rules`.
   - The original default bucket `darsi-f0685.firebasestorage.app` (us-west1, never used) was deleted on 2026-10-25 and now returns 404 `NoSuchBucket`. Keep the `main` target: without one, `firebase deploy --only storage` aims at the project's default bucket, which no longer exists.
   - Checked live on 2026-10-25: media/kits are public, and submissions return 403 to anonymous requests.

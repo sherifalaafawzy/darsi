@@ -68,9 +68,13 @@ export function SignIn() {
 export function SignUp() {
   const { t, lang } = useI18n();
   const nav = useNavigate();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const wantsOrg = params.get("org") === "1";
   const [name, setName] = useState(""); const [email, setEmail] = useState(""); const [pw, setPw] = useState("");
+  // An invite code (typed, or from an invite link: /signup?code=…) stays in the address: signing up remounts the app,
+  // and SignedIn (App.tsx) then sends the new account to /org, which joins the organization with it.
+  const code = params.get("code") ?? "";
+  const setCode = (v: string) => setParams((p) => { const n = new URLSearchParams(p); if (v.trim()) n.set("code", v.toUpperCase()); else n.delete("code"); return n; }, { replace: true });
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setBusy(true); setErr("");
@@ -89,6 +93,8 @@ export function SignUp() {
         <TextField label={t("auth.name")} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required minLength={2} />
         <TextField label={t("auth.email")} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
         <TextField label={t("auth.password")} hint={t("auth.pwHint")} type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" required minLength={8} />
+        {!wantsOrg && <TextField label={t("auth.inviteCode")} hint={t("auth.inviteCodeHint")} value={code} onChange={(e) => setCode(e.target.value)}
+          dir="ltr" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={20} />}
         {err && <p className="notice err" role="alert">{err}</p>}
         <Button type="submit" block loading={busy}>{t("auth.create")}</Button>
       </form>

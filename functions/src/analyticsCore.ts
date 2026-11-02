@@ -4,7 +4,7 @@
  * organizations overview (`stats/overview`) built from users' summaries.
  */
 
-export const EVENTS = ["session_start", "screen_view", "lesson_start", "lesson_complete", "lab_open", "unit_download", "onboarding_done", "sign_up", "sign_in"] as const;
+export const EVENTS = ["session_start", "screen_view", "lesson_start", "lesson_complete", "lab_open", "unit_download", "onboarding_done", "sign_up", "sign_in", "view_paywall", "begin_checkout"] as const;
 export type EventName = (typeof EVENTS)[number];
 const ROLES = ["guest", "learner", "student", "teacher", "orgAdmin", "superadmin"];
 
@@ -31,6 +31,9 @@ const PARAMS: Record<EventName, Record<string, "id" | "screen" | "lang" | [numbe
   onboarding_done: { a: "id", n: [0, 20] },
   sign_up: { m: "id" },
   sign_in: { m: "id" },
+  // Darsi Super funnel (docs/SUPER.md §3): purchases themselves come from the payment webhooks, never from phones.
+  view_paywall: { from: "screen" },
+  begin_checkout: { plan: "id", cur: "id", prov: "id" },
 };
 
 const str = (v: unknown, re: RegExp) => (typeof v === "string" && re.test(v) ? v : undefined);

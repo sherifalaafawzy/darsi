@@ -176,11 +176,51 @@ The order matters. Hosting's `/api/collect` rewrite points at the `collect` func
 
 Darsi's own counts work without this step. Without it, nothing leaves Firebase.
 
+### After deploying the learning report and the new invite codes (2026-11)
+
+```bash
+npm run build --prefix functions
+npm run migrate-invites       # invite codes move off the org documents, which every member can read
+npm run resummarize           # every summary gains time, tracks and scores per competency
+npm run demo-org              # optional: "Nile Valley Demo School" with made-up people; --remove deletes it
+```
+
+The demo script writes the demo admin's, a teacher's and a student's logins to `.demo-org.local.json` (gitignored).
+
 ### Check it works
 
 - **Analytics → Refresh now:** the tiles show the accounts and organizations, and "counted" shows the time.
 - On a phone, use the app, then switch to another app. In Firestore, `analytics/<today>` grows and `analyticsDevices` has the phone. In Google Analytics, **Reports → Realtime** shows the events within a minute or two (once connected).
 - As an org admin: **Admin → Your organization's look:** change the name, add a logo, **Save**. A member who opens Darsi sees the logo at the top of every screen and the name in the tab; their certificates show both.
+
+## 9. Darsi Super (phase 0)
+
+docs/SUPER.md has the plan; TECHNICAL.md "Darsi Super" has the design. Phase 0 charges nothing: it adds the plans, credits, licences and the revenue path.
+
+### Deploy
+
+```bash
+npm run build --prefix functions
+npx firebase deploy --only firestore:rules,functions
+npx firebase deploy --only hosting
+```
+
+The rules add `subscriptions`, `credits` and `payments` (no client writes). Of the functions, `savePlans`, `grantSuper`, `grantCredits`, `setOrgLicence`, `setSeat`, `fillSeats`, `checkRevenueEvent`, `onSubscriptionWrite` and `onOrgLicence` are new; `setRole`, `joinOrg`, the platform functions and the stats changed. Nothing needs migrating: existing claims gain `plan` only when someone gets Super.
+
+### Set up once
+
+1. As a platform admin, open **Plans** (/super/plans).
+2. Under **Costs and margin**, enter what one tutor credit costs at the AI provider (USD) and the EGP rate. Until phase 2 measures Gemini Live's real cost, use an estimate; it can be changed later.
+3. Add the plans: for example a monthly and a yearly plan for one person, a seat for organizations, and a pack of extra credits. Each needs names in English and Arabic, a price in EGP and/or USD, and credits. Each price shows its margin; one under 60% can't be saved.
+4. **Save and publish.** The Super screen (`/upgrade`) shows the plans at once, to guests too.
+5. **Check the revenue event** sends a sample purchase to Google Analytics' validation server. It needs the Measurement Protocol API secret (§8).
+
+### Check it works
+
+- `/upgrade` in English and Arabic lists the plans in EGP (Arabic or Egypt's time zone) or USD.
+- On a person's page (/super/people/:uid), **Give Super** for 30 days: their Me shows Super, the credits show on the page, and `/upgrade` offers them packs.
+- On an organization's page, set a licence; on that organization's dashboard, **Give the free seats** gives seats to teachers, then students.
+- Analytics: the Super tile counts the grants; revenue stays at zero until phase 1 brings real payments.
 
 ## Local development with the emulators
 

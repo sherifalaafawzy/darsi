@@ -11,6 +11,9 @@ import { labMeta } from "../labs/catalog";
 import { saveGaConfig, useActiveDevices, useDays, useGaConfig, useMembers, useOrg, useOverview, usePeople, dayKey, type DayCounts, type Overview } from "./data";
 import { PeopleTable } from "./AdminHome";
 import { OrgBranding } from "./OrgBranding";
+import { OrgManage } from "./OrgsAdmin";
+import { LicencePanel, SeatsPanel } from "./Super";
+import { Bars, Ranked } from "./charts";
 import "../styles/admin.css";
 import "../styles/analytics.css";
 import "./strings";
@@ -33,38 +36,11 @@ function series(days: DayCounts[], path: string[], n = DAYS) {
   return Array.from({ length: n }, (_, i) => { const day = dayKey(new Date(Date.now() - (n - 1 - i) * 864e5)); return { day, v: by.get(day) ?? 0 }; });
 }
 
-/** Bars per day. Plain SVG (no chart library): the screen is a lazy chunk, and this is all it needs. */
-function Bars({ data, label }: { data: Array<{ day: string; v: number }>; label: string }) {
-  const { num: fmt, locale } = useI18n();
-  const max = Math.max(1, ...data.map((d) => d.v));
+/** The day series as bars, labelled with short dates. */
+function DayBars({ data, label }: { data: Array<{ day: string; v: number }>; label: string }) {
+  const { locale } = useI18n();
   const date = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" });
-  const W = data.length * 10, H = 60;
-  return (
-    <figure className="an-chart">
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={`${label}: ${fmt(data.reduce((a, d) => a + d.v, 0))}`}>
-        {data.map((d, i) => {
-          const h = d.v ? Math.max(1.5, (d.v / max) * (H - 2)) : 0;
-          return <rect key={d.day} className="an-bar" x={i * 10 + 1.5} y={H - h} width={7} height={h}><title>{`${date.format(new Date(d.day))}: ${fmt(d.v)}`}</title></rect>;
-        })}
-      </svg>
-      <figcaption className="an-axis"><span>{date.format(new Date(data[0].day))}</span><span>{label}{"  "}<strong>{fmt(max)}</strong></span><span>{date.format(new Date(data[data.length - 1].day))}</span></figcaption>
-    </figure>
-  );
-}
-
-/** A ranked list with a bar for each row's share of the largest. */
-function Ranked({ title, rows, name, empty }: { title: string; rows: Array<[string, number]>; name?: (k: string) => string; empty: string }) {
-  const { num: fmt } = useI18n();
-  const top = rows.slice(0, 8), max = Math.max(1, ...top.map((r) => r[1]));
-  return (
-    <section className="panel stack-sm"><h3>{title}</h3>
-      {top.length === 0 ? <p className="muted small">{empty}</p> : (
-        <ol className="an-ranked">{top.map(([k, v]) => (
-          <li key={k}><span className="an-name">{name ? name(k) : k}</span><span className="an-meter" aria-hidden><i style={{ inlineSize: `${Math.round((v / max) * 100)}%` }} /></span><span className="num">{fmt(v)}</span></li>
-        ))}</ol>
-      )}
-    </section>
-  );
+  return <Bars data={data.map((d) => ({ key: d.day, label: date.format(new Date(d.day)), v: d.v }))} label={label} />;
 }
 
 /** Platform analytics for platform admins (TECHNICAL.md "Analytics"). Every figure is one read; nothing is live. */
@@ -88,6 +64,7 @@ export function AnalyticsPage() {
     catch (e) { setRefreshErr((e as Error).message); } finally { setRefreshing(false); }
   };
   const lessons30 = sum(d, ["lessons", "n"]), accN = sum(d, ["lessons", "accN"]);
+  const revenue = (["EGP", "USD"] as const).map((c) => [c, sum(d, ["revenue", c, "value"])] as const).filter(([, v]) => v > 0);
   const events = sum(d, ["n"]), sessions = sum(d, ["sessions", "n"]);
   const share = (part: number, whole: number) => (whole ? fmt(part / whole, { style: "percent" }) : "—");
   const error = overview.error ?? days.error ?? devices.error;
@@ -109,6 +86,9 @@ export function AnalyticsPage() {
           <div className="tile"><span>{t("an.lessons")}</span><strong>{o ? fmt(o.lessons) : "…"}</strong><small>{t("an.lessons30", { n: lessons30 })}</small></div>
           <div className="tile"><span>{t("an.score")}</span><strong>{o?.avgAccuracy != null ? fmt(o.avgAccuracy, { style: "percent" }) : "—"}</strong><small>{accN ? t("an.score30", { pct: share(sum(d, ["lessons", "acc"]) / 100, accN) }) : ""}</small></div>
           <div className="tile"><span>{t("an.orgs")}</span><strong>{o ? fmt(o.orgsByStatus.active ?? 0) : "…"}</strong><small>{o ? t("an.orgsPending", { n: o.orgsByStatus.pending ?? 0 }) : ""}</small></div>
+          {/* Revenue from verified payments only (billing.recordPayment), per currency; never from phones. */}
+          <div className="tile"><span>{t("an.revenue")}</span><strong>{revenue.length ? revenue.map(([cur, v]) => new Intl.NumberFormat(locale, { style: "currency", currency: cur, maximumFractionDigits: 0 }).format(v)).join(t("common.sep")) : "—"}</strong><small>{t("an.revenueLine", { n: sum(d, ["revenue", "EGP", "n"]) + sum(d, ["revenue", "USD", "n"]), refunds: sum(d, ["refunds", "EGP", "n"]) + sum(d, ["refunds", "USD", "n"]) })}</small></div>
+          <div className="tile"><span>{t("an.superActive")}</span><strong>{o?.super ? fmt(o.super.individuals + o.super.seatsUsed) : "—"}</strong><small>{o?.super ? t("an.superLine", { individuals: o.super.individuals, seats: o.super.seatsUsed }) : ""}</small></div>
         </section>
 
         <section className="panel stack">
@@ -117,7 +97,7 @@ export function AnalyticsPage() {
               {(["dev", "lessons", "sessions"] as const).map((m) => <Button key={m} size="sm" variant={metric === m ? "primary" : "ghost"} aria-pressed={metric === m} onClick={() => setMetric(m)}>{t(`an.m.${m}`)}</Button>)}
             </div>
           </div>
-          <Bars data={series(d, metric === "dev" ? ["dev"] : [metric, "n"])} label={t(`an.m.${metric}`)} />
+          <DayBars data={series(d, metric === "dev" ? ["dev"] : [metric, "n"])} label={t(`an.m.${metric}`)} />
           <p className="muted small">{t("an.usage", { offline: share(sum(d, ["off"]), events), installed: share(sum(d, ["sessions", "installed"]), sessions), mb: Math.round(sum(d, ["downloads", "mb"])), downloads: sum(d, ["downloads", "n"]) })}</p>
         </section>
 
@@ -239,8 +219,12 @@ export function OrgAnalytics() {
           <div className="tile"><span>{t("an.lessons")}</span><strong>{s ? fmt(s.lessons) : "—"}</strong></div>
           <div className="tile"><span>{t("an.score")}</span><strong>{s?.avgAccuracy != null ? fmt(s.avgAccuracy, { style: "percent" }) : "—"}</strong></div>
         </section>
-        <section className="panel stack"><h3>{t("an.orgLessons30")}</h3><Bars data={lessons} label={t("an.m.lessons")} /></section>
+        <div><Button icon="chart" onClick={() => nav(`/super/orgs/${orgId}/report`)}>{t("or.open")}</Button></div>
+        <section className="panel stack"><h3>{t("an.orgLessons30")}</h3><DayBars data={lessons} label={t("an.m.lessons")} /></section>
         {org && <OrgBranding org={org} />}
+        {org && <LicencePanel org={org} />}
+        {org && <SeatsPanel org={org} members={members} />}
+        {org && <OrgManage org={org} members={members} onChanged={() => {}} />}
         <section className="panel stack"><h3>{t("adm.people")}</h3>
           {members.length ? <PeopleTable rows={members} to={(m) => `/super/people/${m.uid}`} /> : <p className="muted">{t("adm.noPeople")}</p>}
         </section>

@@ -11,7 +11,7 @@
 import { firebaseConfig, firebaseReady, functionsRegion, useEmulators } from "../firebase-config";
 import { storage } from "../platform";
 
-export type EventName = "session_start" | "screen_view" | "lesson_start" | "lesson_complete" | "lab_open" | "unit_download" | "onboarding_done" | "sign_up" | "sign_in";
+export type EventName = "session_start" | "screen_view" | "lesson_start" | "lesson_complete" | "lab_open" | "unit_download" | "onboarding_done" | "sign_up" | "sign_in" | "view_paywall" | "begin_checkout";
 type Params = Record<string, string | number>;
 interface Ev { n: EventName; t: number; p?: Params; o?: 1 }
 /** Who is using the app, as the server stores it: role ("guest" without an account), audience, language, org, installed. */
