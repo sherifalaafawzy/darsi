@@ -9,7 +9,7 @@ import { isolate, useI18n, useLanguages } from "../i18n";
 import { useStore } from "../state/store";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
 import { STAGES, teachStage, type Unit } from "../content/types";
-import { useTracks } from "../content/settings";
+import { useSuperOn, useTracks } from "../content/settings";
 import { useMine } from "../content/mine";
 import { share } from "../platform";
 import { useInstall } from "../pwa";
@@ -134,7 +134,9 @@ function SuperCard() {
   const { t, locale } = useI18n();
   const nav = useNavigate();
   const { plan } = useAuth();
+  const superOn = useSuperOn().on;
   const active = plan && plan.until > Date.now() ? plan : null;
+  if (!superOn) return null; // a platform admin turned Super off for everyone
   return (
     <section className="panel stack" aria-labelledby="super-h">
       <h2 id="super-h" className="section-title">{t("me.super")}</h2>

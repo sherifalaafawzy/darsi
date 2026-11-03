@@ -15,8 +15,8 @@ import { validateTracks } from "./shared/validate.js";
 export const SETTINGS = "config/settings";
 
 /**
- * Publishes content/settings.json from config/settings as it is now: the tracks (saveSettings) and the languages
- * (publishLanguage). Each writer changes only its own part of the document, then calls this.
+ * Publishes content/settings.json from config/settings as it is now: the tracks (saveSettings), the languages
+ * (publishLanguage) and whether Darsi Super is on (setSuperOn). Each writer changes only its own part of the document, then calls this.
  */
 export async function writeSettingsFile() {
   const s = await db.doc(SETTINGS).get();
@@ -24,7 +24,13 @@ export async function writeSettingsFile() {
     version: Number(s.get("rev")) || 0,
     tracks: mergeTracks(s.exists ? (s.get("tracks") as TrackDef[]) : null).map(({ builtIn: _b, ...t }) => t),
     languages: (s.get("languages") as LanguageDef[] | undefined) ?? [],
+    super: s.get("superOn") !== false,
   });
+}
+
+/** Darsi Super for the whole platform (setSuperOn, on /super/plans): on unless a platform admin turned it off. */
+export async function superOn(): Promise<boolean> {
+  return (await db.doc(SETTINGS).get()).get("superOn") !== false;
 }
 
 /** The tracks in use now: the saved list, with the built-in tracks always present. */

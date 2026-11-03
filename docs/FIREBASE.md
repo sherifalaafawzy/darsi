@@ -289,7 +289,9 @@ python -m venv .venv
 
 ## Local development with the emulators
 
-The Emulator Suite needs **JDK 21+**; firebase-tools 15 refuses older Java. Install a JDK 21 (a portable Temurin 21 JRE zip works: point `JAVA_HOME` and `PATH` at it for the one shell), then:
+**Everything at once, to test: `npm run local -- you@gmail.com`** (`scripts/local.mjs`). It starts the emulators (data kept in `.emulator-data/`, saved on Ctrl+C), publishes the courses on the first run, and serves the app as it ships, with its service worker, on http://localhost:4173, so it also works offline once loaded. "Continue with Google" opens the emulator's account picker: pick the address you gave, which is a platform admin with a year of Darsi Super. It adds sample plans (/super/plans), the tutor's voice relay (ws://localhost:8091), and a stand-in for Paymob and Stripe on port 4799 (`scripts/local/payments.mjs`) whose Pay button sends the emulator's webhooks a properly signed callback, so a purchase runs end to end with no money. The tutor answers for real through Vertex AI in darsi-f0685 (`config/tutor` in the emulator; set `engine` to `"agent"` there to try the agent), with your gcloud application-default login, billed to that project's billing account. When another program holds port 8080 (Laragon's nginx), Firestore moves to 8085 (`firebase.local.json`, gitignored). `--no-build` reuses the last build, `--fresh` starts from empty emulators. The emulator's own settings are `functions/.env.local` and `.secret.local` (test values only; created on the first run). A browser that ran an older local build shows the update toast once.
+
+To run the pieces yourself instead: the Emulator Suite needs **JDK 21+**; firebase-tools 15 refuses older Java. Install a JDK 21 (a portable Temurin 21 JRE zip works: point `JAVA_HOME` and `PATH` at it for the one shell), then:
 
 ```bash
 npm run build --prefix functions

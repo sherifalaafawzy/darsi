@@ -11,7 +11,7 @@ import { useOrgBrand } from "./state/orgBrand";
 import { useAnalytics } from "./analytics/useAnalytics";
 import { configureContent, setOrgReader, storageUrl } from "./content/load";
 import { teachSync } from "./content/types";
-import { SettingsProvider, useLanguageReady } from "./content/settings";
+import { SettingsProvider, useLanguageReady, useSuperOn } from "./content/settings";
 import { call, loadFirebase } from "./fb";
 import { usePushRefresh } from "./notify/usePushRefresh";
 import { Layout } from "./components/Layout";
@@ -151,7 +151,7 @@ function Routed() {
           <Route path="me" element={<Me />} />
           <Route path="org" element={<OrgScreen />} />
           <Route path="tutor" element={<Tutor relayUrl={import.meta.env.VITE_TUTOR_RELAY ?? ""} ask={call("tutorAsk")} status={call("tutorStatus")} Player={canPlayLight() ? LightLesson : null} />} />
-          <Route path="upgrade" element={<Upgrade plansUrl={storageUrl("content/plans.json")} startCheckout={call("startCheckout")} />} />
+          <Route path="upgrade" element={<UpgradeRoute />} />
           <Route element={<Allow roles={["orgAdmin"]} />}>
             <Route path="admin" element={<AdminHome />} />
             <Route path="admin/people/:uid" element={<PersonDetail />} />
@@ -190,6 +190,11 @@ function Routed() {
   );
 }
 
+/** /upgrade, told whether Darsi Super is on (the chunk can't import content/settings without splitting startup). */
+function UpgradeRoute() {
+  return <Upgrade plansUrl={storageUrl("content/plans.json")} startCheckout={call("startCheckout")} superOn={useSuperOn().on} />;
+}
+
 /**
  * The tutor on lesson screens: a floating button with the tutor's face, which opens the tutor beside the lesson. The
  * panel is the lazy tutor chunk, loaded on the first tap; moving to another lesson closes it (and any call).
@@ -198,8 +203,9 @@ function LessonTutor() {
   const { t } = useI18n();
   const at = useMatch("/lesson/:unitId/:lessonId")?.params;
   const [open, setOpen] = useState(false);
+  const superOn = useSuperOn().on;
   useEffect(() => setOpen(false), [at?.lessonId]);
-  if (!at?.unitId || !at.lessonId) return null;
+  if (!at?.unitId || !at.lessonId || !superOn) return null;
   return open
     ? <Suspense fallback={<TutorFab label={t("lesson.askTutor")} onOpen={() => {}} busy />}><TutorPanel unitId={at.unitId} lessonId={at.lessonId} onClose={() => setOpen(false)} relayUrl={import.meta.env.VITE_TUTOR_RELAY ?? ""} ask={call("tutorAsk")} status={call("tutorStatus")} Player={canPlayLight() ? LightLesson : null} /></Suspense>
     : <TutorFab label={t("lesson.askTutor")} onOpen={() => setOpen(true)} />;

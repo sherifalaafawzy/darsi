@@ -42,7 +42,7 @@ export interface LanguageDef {
   version?: number;
 }
 /** content/settings.json: what platform admins set up for everyone. `version` changes when the tracks are saved. */
-export interface Settings { version: number; tracks: TrackDef[]; languages?: LanguageDef[] }
+export interface Settings { version: number; tracks: TrackDef[]; languages?: LanguageDef[]; /** Darsi Super for everyone (setSuperOn); missing means on. */ super?: boolean }
 
 /** Code is always shown and written left to right, in every language. */
 export type CodeLang = "python" | "sql";

@@ -285,6 +285,7 @@ credits/{uid}               plan (this period's tutor credits), planUntil (ms), 
 payments/{provider}_{ref}   provider, ref, kind (subscription | licence | credits), uid | orgId, plan, amount, currency,
                             seats, status (paid | refunded), at, refundedAt   ← Cloud Functions only; platform admins read
 config/plans                plans [Plan], economics {usdPerCredit, egpPerUsd}, rev, updatedAt   ← savePlans (Darsi Super)
+config/settings.superOn     false turns Darsi Super off for everyone   ← setSuperOn
 checkouts/{id}              uid, orgId, kind, plan (copy), currency, amount, cents, seats, provider, clientId, providerId,
                             status (open | paid | failed), payments {ref: true}, createdAt, paidAt   ← startCheckout and the webhooks
 stripeSubs/{subscriptionId} checkout, at   ← stripeWebhook (renewals and cancelling find their checkout)
@@ -479,6 +480,7 @@ The paid tier: a live tutor for the courses (docs/SUPER.md has the plan and phas
 
 **Plans, credits and the margin:**
 - Platform admins edit the plans on /super/plans (`admin/Plans.tsx`; it loads with the SuperAdmin chunk, because a lazy route of its own split the startup bundle). `savePlans` stores `config/plans` {plans, economics} and publishes the active plans, without the costs, as `content/plans.json` for the Upgrade screen.
+- **The switch:** /super/plans starts with "Darsi Super for everyone", on or off (`setSuperOn`, platform admins). It is `config/settings.superOn` (missing means on), published as `super` in `content/settings.json`, which every phone already reads once per start; `useSuperOn()` (`content/settings.tsx`) remembers the last value in localStorage so a phone where it is off never flashes the tutor. Off: the tutor's button, the Me card and everything for sale on /upgrade are hidden (App passes `superOn` into Upgrade); `tutorConfig()` reports `on: false`, so `tutorAsk`, `tutorStatus` and the voice relay refuse with `tutor-closed`; `startCheckout` refuses with `super-off`. Subscriptions, credits and the webhooks are untouched, so payments already under way still complete and turning it on again gives everyone back what they had. The relay reads the switch only after it is redeployed with this code.
 - A plan is for one person (monthly or yearly), a seat in an organization (priced per seat), or a pack of extra credits (kind `credits`, for people who already have Super). Each has prices in EGP (Paymob) and USD (Stripe) and a number of tutor credits.
 - **Credits** (`credits/{uid}` {plan, planUntil, packs}): each paid period brings the plan's credits, and what was left of the last period lapses. Packs never expire. Spending takes the period's credits first (`spendCredits`).
 - **Economics** {usdPerCredit, egpPerUsd}: what one credit costs Darsi at the AI provider, and the exchange rate. The tutor will debit each call at its measured cost (`creditsForCost`, rounded up).

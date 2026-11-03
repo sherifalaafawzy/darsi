@@ -39,6 +39,7 @@ export const api = {
   deleteOrg: call<{ orgId: string; confirm: string }, { members: number; units: number }>("deleteOrg"),
   setUserRole: call<{ uid: string; role: Role; orgId?: string | null }, { ok: boolean }>("setUserRole"),
   // Darsi Super (functions/src/billing.ts).
+  setSuperOn: call<{ on: boolean }, { on: boolean }>("setSuperOn"),
   savePlans: call<{ plans: unknown[]; economics: { usdPerCredit: number; egpPerUsd: number } }, { rev: number }>("savePlans"),
   grantCredits: call<{ uid: string; credits: number }, { ok: boolean }>("grantCredits"),
   grantSuper: call<{ uid: string; days: number; plan?: string }, { ok: boolean }>("grantSuper"),

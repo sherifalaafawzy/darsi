@@ -44,7 +44,8 @@ const defaultCurrency = (lang: string): Cur => {
 
 type Checkout = (d: { plan: string; currency: Cur; seats?: number; clientId?: string | null }) => Promise<{ url: string }>;
 
-export function Upgrade({ plansUrl, startCheckout }: { plansUrl: string; startCheckout: Checkout }) {
+/** `superOn` false: a platform admin turned Darsi Super off for everyone, so nothing is offered for sale. */
+export function Upgrade({ plansUrl, startCheckout, superOn = true }: { plansUrl: string; startCheckout: Checkout; superOn?: boolean }) {
   const { t, lang, locale } = useI18n();
   const nav = useNavigate();
   const [params] = useSearchParams();
@@ -78,7 +79,7 @@ export function Upgrade({ plansUrl, startCheckout }: { plansUrl: string; startCh
       const { url } = await startCheckout({ plan: p.id, currency: cur, seats, clientId: await deviceId() });
       location.assign(url);
     } catch (e) {
-      setMsg(/payments-closed/.test(String((e as Error).message)) ? "soon" : "error");
+      setMsg(/payments-closed|super-off/.test(String((e as Error).message)) ? "soon" : "error");
       setBusy(null);
     }
   };
@@ -97,11 +98,12 @@ export function Upgrade({ plansUrl, startCheckout }: { plansUrl: string; startCh
         {done && !active && <div className="notice" role="status"><p>{t("up.done")}</p><Button size="sm" variant="secondary" icon="sync" onClick={() => refreshClaims().catch(() => {})}>{t("up.check")}</Button></div>}
         {active && <p className="notice ok">{t(profile?.planSource === "org" ? "up.haveOrg" : "up.have", { date: date.format(active.until) })}</p>}
 
-        <div className="row-gap" role="group" aria-label={t("up.currency")}>
+        {superOn && <div className="row-gap" role="group" aria-label={t("up.currency")}>
           {(["EGP", "USD"] as const).map((c) => <Button key={c} size="sm" variant={cur === c ? "primary" : "ghost"} aria-pressed={cur === c} onClick={() => setCur(c)}>{c}</Button>)}
-        </div>
+        </div>}
 
-        {error ? <div className="stack"><p className="notice err">{t(navigator.onLine === false ? "up.offline" : "up.loadError")}</p><div><Button size="sm" variant="secondary" icon="sync" onClick={retry}>{t("common.retry")}</Button></div></div>
+        {!superOn ? <p className="notice" role="status">{t("up.off")}</p>
+          : error ? <div className="stack"><p className="notice err">{t(navigator.onLine === false ? "up.offline" : "up.loadError")}</p><div><Button size="sm" variant="secondary" icon="sync" onClick={retry}>{t("common.retry")}</Button></div></div>
           : !plans ? <div className="loading" aria-busy="true" />
           : !own.length ? <p className="muted">{t("up.none")}</p>
           : own.map((p) => (
@@ -114,7 +116,7 @@ export function Upgrade({ plansUrl, startCheckout }: { plansUrl: string; startCh
                 : <div><Button variant="secondary" icon="profile" onClick={() => nav("/signup")}>{t("up.account")}</Button></div>}
             </section>
           ))}
-        {active && packs.length > 0 && <section className="panel stack" aria-labelledby="packs-h"><h3 id="packs-h">{t("up.more")}</h3>
+        {superOn && active && packs.length > 0 && <section className="panel stack" aria-labelledby="packs-h"><h3 id="packs-h">{t("up.more")}</h3>
           <p className="muted">{t("up.moreBody")}</p>
           {packs.map((p) => (
             <div key={p.id} className="row-gap"><span>{t("up.pack", { n: p.credits, price: money(p.prices[cur]!) })}</span><Button size="sm" variant="secondary" loading={busy === p.id} disabled={!!busy} onClick={() => buy(p)}>{t("up.buy")}</Button></div>
@@ -122,7 +124,7 @@ export function Upgrade({ plansUrl, startCheckout }: { plansUrl: string; startCh
         </section>}
         {msg && <p className={msg === "error" ? "notice err" : "notice"} role="status">{t(msg === "error" ? "up.payError" : "up.soon")}</p>}
 
-        {seats.length > 0 && <section className="panel stack"><h3>{t("up.orgs")}</h3>
+        {superOn && seats.length > 0 && <section className="panel stack"><h3>{t("up.orgs")}</h3>
           <p className="muted">{t("up.orgsBody")}</p>
           {seats.map((p) => <div key={p.id} className="stack-sm">
             <p>{name(p)}: <strong>{t("up.perSeat", { price: money(p.prices[cur]!) })}</strong></p>

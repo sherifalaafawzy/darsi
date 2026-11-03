@@ -11,6 +11,7 @@ import { defineSecret } from "firebase-functions/params";
 import { caller, db, str } from "./admin.js";
 import { creditsForCost, creditsLeft, spendCredits, type Credits, type Economics } from "./billingCore.js";
 import { catalogPath, type Owner } from "./catalog.js";
+import { superOn } from "./settings.js";
 import { bucket } from "./storage.js";
 import { askAgent, openSession } from "./agent.js";
 import { AGENT_PRICES, type AgentPrices } from "./agentCore.js";
@@ -33,8 +34,9 @@ export interface TutorConfig { backend: "vertex" | "gemini"; vertexProject: stri
 export const PROJECT = process.env.GCLOUD_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT ?? "";
 const DEFAULTS: TutorConfig = { backend: process.env.TUTOR_BACKEND === "gemini" ? "gemini" : "vertex", vertexProject: PROJECT, textLocation: "global", liveLocation: "us-central1", liveModel: "gemini-3.8-live", textModel: "gemini-3.5-flash-lite", voice: "Kore", live: LIVE_PRICES, text: TEXT_PRICES, maxMinutes: 14, on: true, engine: "direct", agentId: "", agentLocation: "europe-west1", agentAccount: "", agentPrices: AGENT_PRICES };
 export async function tutorConfig(): Promise<TutorConfig> {
-  const d = (await db.doc("config/tutor").get()).data() as Partial<TutorConfig> | undefined;
-  return { ...DEFAULTS, ...d, live: { ...LIVE_PRICES, ...d?.live }, text: { ...TEXT_PRICES, ...d?.text }, agentPrices: { ...AGENT_PRICES, ...d?.agentPrices } };
+  const [d, superIsOn] = await Promise.all([db.doc("config/tutor").get().then((x) => x.data() as Partial<TutorConfig> | undefined), superOn()]);
+  // Darsi Super turned off for everyone closes the tutor too (and the voice relay, which reads this).
+  return { ...DEFAULTS, ...d, on: (d?.on ?? DEFAULTS.on) && superIsOn, live: { ...LIVE_PRICES, ...d?.live }, text: { ...TEXT_PRICES, ...d?.text }, agentPrices: { ...AGENT_PRICES, ...d?.agentPrices } };
 }
 /** Whether the tutor can reach Google: Vertex needs only the service account; the Gemini API needs its key. */
 export const tutorReady = (cfg: TutorConfig) => cfg.on && (cfg.backend === "vertex" || (!!GEMINI_KEY.value() && GEMINI_KEY.value() !== "unset"));

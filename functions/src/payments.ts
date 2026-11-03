@@ -16,6 +16,7 @@ import { defineSecret, defineString } from "firebase-functions/params";
 import { caller, db, str } from "./admin.js";
 import { recordPayment, recordRefund } from "./billing.js";
 import type { Currency, PaymentRecord, Plan } from "./billingCore.js";
+import { superOn } from "./settings.js";
 import { checkoutAmount, formEncode, kindOf, paymobOutcome, providerFor, stripeSession, verifyPaymob, verifyStripe, type CheckoutKind } from "./paymentsCore.js";
 
 const PAYMOB_SECRET = defineSecret("PAYMOB_SECRET_KEY");
@@ -47,6 +48,7 @@ const real = (s: string) => s.trim() !== "" && s.trim() !== "unset";
  */
 export const startCheckout = onCall({ secrets: [PAYMOB_SECRET, STRIPE_SECRET] }, async (req) => {
   const c = caller(req);
+  if (!(await superOn())) throw new HttpsError("failed-precondition", "super-off");
   const plans = ((await db.doc("config/plans").get()).get("plans") as Plan[] | undefined) ?? [];
   const plan = plans.find((p) => p.id === str(req.data?.plan, 32) && p.active);
   if (!plan) throw new HttpsError("not-found", "No such plan.");

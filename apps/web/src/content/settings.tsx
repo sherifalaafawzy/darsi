@@ -1,5 +1,6 @@
 /**
- * What platform admins set up for everyone: the tracks (/super/tracks) and the languages (/super/languages). Starts
+ * What platform admins set up for everyone: the tracks (/super/tracks), the languages (/super/languages) and whether
+ * Darsi Super is on (/super/plans). Starts
  * from the built-in tracks and languages so nothing waits or flashes, then switches to content/settings.json when it
  * arrives (one network-first read per app start; the last copy offline). Also tells the design system each track's
  * colour and icon (TrackStylesProvider), and fetches the strings of a published language when someone picks it.
@@ -12,7 +13,12 @@ import { forgetSettings, loadLanguagePack, loadSettings } from "./load";
 import { BUILTIN_TRACKS, MAX_LEVELS, mergeTracks } from "./tracks";
 import type { TrackDef } from "./types";
 
-const Ctx = createContext<{ tracks: TrackDef[]; apply: (t: TrackDef[]) => void; langReady: boolean }>({ tracks: BUILTIN_TRACKS, apply: () => {}, langReady: true });
+const Ctx = createContext<{ tracks: TrackDef[]; apply: (t: TrackDef[]) => void; langReady: boolean; superOn: boolean; applySuper: (on: boolean) => void }>({ tracks: BUILTIN_TRACKS, apply: () => {}, langReady: true, superOn: true, applySuper: () => {} });
+
+/** Whether Darsi Super was on at the last read, so a phone where it is off doesn't flash the tutor button at start. */
+const SUPER = "darsi:superOn";
+const rememberedSuper = () => { try { return localStorage.getItem(SUPER) !== "0"; } catch { return true; } };
+const rememberSuper = (on: boolean) => { try { localStorage.setItem(SUPER, on ? "1" : "0"); } catch { /* private mode */ } };
 
 /**
  * The pack version each language was last loaded at, so the next start fetches it from the cache at once instead of
@@ -35,11 +41,17 @@ const PACK_WAIT_MS = 6000;
 
 export function SettingsProvider({ lang, children }: { lang: string; children: ReactNode }) {
   const [tracks, setTracks] = useState<TrackDef[]>(BUILTIN_TRACKS);
+  const [superOn, setSuperOn] = useState(rememberedSuper);
   const [settingsRead, setSettingsRead] = useState(false);
   useEffect(() => {
-    loadSettings().then((s) => { if (s?.tracks) setTracks(mergeTracks(s.tracks)); setLanguages(s?.languages); }).catch(() => {}).finally(() => setSettingsRead(true));
+    loadSettings().then((s) => {
+      if (s?.tracks) setTracks(mergeTracks(s.tracks));
+      setLanguages(s?.languages);
+      if (s) { setSuperOn(s.super !== false); rememberSuper(s.super !== false); }
+    }).catch(() => {}).finally(() => setSettingsRead(true));
   }, []);
   const apply = useCallback((t: TrackDef[]) => { forgetSettings(); setTracks(mergeTracks(t)); }, []);
+  const applySuper = useCallback((on: boolean) => { forgetSettings(); setSuperOn(on); rememberSuper(on); }, []);
 
   // The picked language's strings: built-in ones are always there; a published one is fetched (cache-first by version).
   const languages = useLanguages();
@@ -59,8 +71,14 @@ export function SettingsProvider({ lang, children }: { lang: string; children: R
   const langReady = builtIn || hasMessages(lang) || gaveUp === lang;
 
   const styles = useMemo(() => Object.fromEntries(tracks.map((t) => [t.id, { tone: t.tone, icon: t.icon } as TrackStyle])), [tracks]);
-  const value = useMemo(() => ({ tracks, apply, langReady }), [tracks, apply, langReady]);
+  const value = useMemo(() => ({ tracks, apply, langReady, superOn, applySuper }), [tracks, apply, langReady, superOn, applySuper]);
   return <Ctx.Provider value={value}><TrackStylesProvider styles={styles}>{children}</TrackStylesProvider></Ctx.Provider>;
+}
+
+/** Darsi Super for everyone (a platform admin's switch on /super/plans); `apply` after the switch is saved. */
+export function useSuperOn() {
+  const { superOn, applySuper } = useContext(Ctx);
+  return { on: superOn, apply: applySuper };
 }
 
 /** False while a published language's strings are on their way (App shows its loading screen, not English, meanwhile). */

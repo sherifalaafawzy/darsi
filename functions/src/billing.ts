@@ -13,6 +13,7 @@ import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/
 import { audit, auth, caller, db, str } from "./admin.js";
 import { gaConfig } from "./analytics.js";
 import { addPackCredits, claimsFor, entitlement, grantPlanCredits, periodDays, revenueEvent, validateEconomics, validatePlans, type Credits, type Licence, type PaymentRecord, type Plan, type Subscription } from "./billingCore.js";
+import { SETTINGS, writeSettingsFile } from "./settings.js";
 import { savePublicJson } from "./storage.js";
 
 /* ---------- Claims ---------- */
@@ -69,6 +70,20 @@ export const savePlans = onCall(async (req) => {
   await savePublicJson("content/plans.json", { version: rev, plans: list.filter((p) => p.active) });
   await audit("savePlans", c.uid, { count: list.length });
   return { rev };
+});
+
+/**
+ * Darsi Super on or off for everyone. Off, the tutor (typed and spoken) and new purchases refuse, and phones hide Super
+ * (content/settings.json); subscriptions, credits and payments already under way are kept, so turning it on again
+ * gives everyone back what they had.
+ */
+export const setSuperOn = onCall(async (req) => {
+  const c = requireSuper(req);
+  if (typeof req.data?.on !== "boolean") throw new HttpsError("invalid-argument", "on must be true or false.");
+  await db.doc(SETTINGS).set({ superOn: req.data.on, updatedAt: FieldValue.serverTimestamp(), updatedBy: c.uid }, { merge: true });
+  await writeSettingsFile();
+  await audit("setSuperOn", c.uid, { on: req.data.on });
+  return { on: req.data.on as boolean };
 });
 
 /** Complimentary Super for one person (days > 0), or taking it back (days 0). Never counted as revenue. */

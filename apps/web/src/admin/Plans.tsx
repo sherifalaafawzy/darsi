@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AppBar, Button, TextField } from "@darsi/design-system";
 import { api } from "../auth/api";
+import { useSuperOn } from "../content/settings";
 import { useI18n } from "../i18n";
 import { usePlansConfig, type Economics, type PlanDef } from "./data";
 import { message, Note, type Msg } from "./Super";
@@ -41,6 +42,7 @@ export function PlansPage() {
     <>
       <AppBar title={t("sp.title")} />
       <main className="screen wide stack-lg">
+        <SuperSwitch />
         <p className="muted">{t("sp.intro")}</p>
         {saved.error && <p className="notice err">{saved.error.message}</p>}
         <section className="panel stack" aria-labelledby="eco-h"><h3 id="eco-h">{t("sp.ecoTitle")}</h3>
@@ -84,6 +86,25 @@ export function PlansPage() {
         <RevenueCheck plans={saved.data?.plans ?? []} />
       </main>
     </>
+  );
+}
+
+/** The switch that turns Darsi Super on or off for the whole platform (setSuperOn). */
+function SuperSwitch() {
+  const { t } = useI18n();
+  const { on, apply } = useSuperOn();
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<Msg>(null);
+  const flip = async () => {
+    setBusy(true); setMsg(null);
+    try { const r = await api.setSuperOn({ on: !on }); apply(r.on); setMsg({ ok: true, text: t(r.on ? "sp.turnedOn" : "sp.turnedOff") }); } catch (e) { setMsg({ ok: false, text: message(e) }); } finally { setBusy(false); }
+  };
+  return (
+    <section className="panel stack" aria-labelledby="sw-h"><h3 id="sw-h">{t("sp.switchTitle")}</h3>
+      <p className={on ? "notice ok" : "notice"} role="status">{t(on ? "sp.switchOn" : "sp.switchOff")}</p>
+      <div><Button variant={on ? "secondary" : "primary"} icon={on ? "close" : "check"} loading={busy} aria-pressed={on} onClick={() => { void flip(); }}>{t(on ? "sp.turnOff" : "sp.turnOn")}</Button></div>
+      <Note msg={msg} />
+    </section>
   );
 }
 

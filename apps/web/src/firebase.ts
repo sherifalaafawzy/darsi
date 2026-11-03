@@ -22,7 +22,8 @@ export const db = initializeFirestore(app, { localCache: persistentLocalCache({ 
 
 if (useEmulators) {
   connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true });
-  connectFirestoreEmulator(db, host, 8080);
+  // npm run local moves Firestore off 8080 when something else holds that port.
+  connectFirestoreEmulator(db, host, Number(import.meta.env.VITE_FIRESTORE_EMULATOR_PORT) || 8080);
 }
 
 let fns: Promise<Functions> | null = null;
