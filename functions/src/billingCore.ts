@@ -101,7 +101,8 @@ export function spendCredits(c: Credits | undefined, n: number, now = Date.now()
   return { plan: (c.planUntil > now ? c.plan : 0) - fromPlan, planUntil: c.planUntil, packs: c.packs - (n - fromPlan) };
 }
 /** Credits for a call that cost Darsi `usd` at the provider, rounded up so a call never costs less than it should. */
-export const creditsForCost = (usd: number, eco: Economics) => Math.max(0, Math.ceil((usd / eco.usdPerCredit) * 100) / 100);
+// The tiny bit taken off first is floating-point error (0.0051 / 0.002 = 2.5500000000000003), not a discount.
+export const creditsForCost = (usd: number, eco: Economics) => Math.max(0, Math.ceil((usd / eco.usdPerCredit) * 100 - 1e-9) / 100);
 
 /** Days a plan period lasts. */
 export const periodDays = (p: Pick<Plan, "period">) => (p.period === "year" ? 365 : 30);
@@ -135,6 +136,8 @@ export interface PaymentRecord {
   uid?: string; orgId?: string; plan: Plan; amount: number; currency: Currency; seats?: number;
   /** The phone's random analytics id, passed through the checkout, so the purchase joins the sessions before it. */
   clientId?: string;
+  /** The checkout it pays for (checkouts/{id}), so a refund can find the plan and the buyer. */
+  checkout?: string;
 }
 
 /** The Measurement Protocol body for a purchase or a refund (GA4 ecommerce). */

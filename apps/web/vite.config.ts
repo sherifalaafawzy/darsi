@@ -105,6 +105,11 @@ const earlySw = (): Plugin => ({
 // hash in the URL changes sw.js whenever they change, so browsers install the update and never reuse a stale HTTP-cached copy.
 const pushSw = `push-sw.js?v=${createHash("sha256").update(readFileSync(new URL("./public/push-sw.js", import.meta.url))).digest("hex").slice(0, 10)}`;
 
+// The service worker answers every page from its precached index.html, with the headers Hosting sent when it was cached
+// (Permissions-Policy decides whether the tutor may use the microphone). Hosting's headers go into index.html's revision,
+// so changing them alone is a new version that installed phones fetch, even when the build is otherwise the same.
+const hostHeaders = createHash("sha256").update(JSON.stringify(JSON.parse(readFileSync(new URL("../../firebase.json", import.meta.url), "utf8")).hosting.headers)).digest("hex").slice(0, 10);
+
 export default defineConfig({
   plugins: [
     react(),
@@ -148,7 +153,7 @@ export default defineConfig({
         // Lesson content is tiny and precached; kits are cached when a unit is downloaded. Staff-only and first-visit
         // chunks (and exceljs, ~930 KB) are not precached, so a learner's install stays small; "darsi-chunks" caches them on first use.
         // firebase-* covers firebase-extra (Functions, Storage, Messaging) too.
-        globIgnores: ["kits/**", "lib/**", "push-sw.js", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin,firebase,Cms,competencies,Analytics,OrgReport,OrgsAdmin,Super,Plans,Upgrade}-*.{js,css}",
+        globIgnores: ["kits/**", "lib/**", "push-sw.js", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin,firebase,Cms,competencies,Analytics,OrgReport,OrgsAdmin,Super,Plans,Upgrade,Tutor}-*.{js,css}",
           // Each lab app (~5–20 KB) is cached when first opened, or all at once with "Save all labs for offline".
           "**/lab-*.js",
           // The code steps and their sandbox load with the first lesson that has code (or when such a unit is downloaded).
@@ -161,6 +166,7 @@ export default defineConfig({
           // The Chrome 61 build. Modern phones never request it; darsi-chunks keeps a copy once an old phone does.
           "**/*-legacy*"],
         navigateFallback: "/index.html",
+        manifestTransforms: [async (entries) => ({ manifest: entries.map((e) => (e.url === "index.html" ? { ...e, revision: `${e.revision}-${hostHeaders}` } : e)), warnings: [] })],
         // /__/ is Firebase Hosting's own (the sign-in helper page /__/auth/handler opens in the Google popup, since the
         // auth domain is the site's own). Answering it with the app made Google sign-in hang.
         navigateFallbackDenylist: [/^\/__\//],

@@ -9,7 +9,7 @@ The user's choices (2026-11-02):
 - **Paid only, with a clear limit:** the tutor is for Super accounts only. Each plan has a clear allowance of credits, and people can buy more.
 - **Margin:** at least 60% profit on the tutor's calls, and the tutor must be very efficient.
 
-Phase 0 is built (TECHNICAL.md "Darsi Super"). Nothing is charged yet.
+Phase 0 is built and deployed; phases 1 (payments) and 2 (the tutor) are built (TECHNICAL.md "Darsi Super"). Nothing is charged until the Paymob and Stripe keys are set, and the tutor opens when a Gemini key is set (docs/FIREBASE.md §9).
 
 ## 1. Plans, credits and entitlements
 
@@ -36,8 +36,9 @@ Phase 0 is built (TECHNICAL.md "Darsi Super"). Nothing is charged yet.
   - Renewals: Paymob's card subscriptions where available. Otherwise a prepaid period with a reminder before it ends (wallets and kiosks can't auto-renew).
 - **Stripe (USD and other currencies).** Stripe Checkout with Stripe Billing subscriptions.
   - The webhook `stripeWebhook` (signature-verified) handles `checkout.session.completed`, `invoice.paid`, `customer.subscription.updated/deleted` and `charge.refunded`.
+- **Built (phase 1):** `startCheckout`, `paymobWebhook` and `stripeWebhook`, tested against a local stand-in for both providers. Paymob payments are one period each for now; reminders before a prepaid period ends come later.
 - **Common to both:**
-  - `recordPayment` and `recordRefund` already exist and are tested (phase 0). A payment is stored once as `payments/{provider}_{ref}`, so a repeated webhook does nothing.
+  - `recordPayment` and `recordRefund` (phase 0) record every payment. A payment is stored once as `payments/{provider}_{ref}`, so a repeated webhook does nothing.
   - The phone never decides that someone has paid; only the verified webhooks do.
 - **Keys:** the Paymob and Stripe secret keys go into Secret Manager (`firebase functions:secrets:set`). Their public keys are build settings.
 - **The user's part:** open the Paymob and Stripe accounts, and enter the webhook addresses we give them.
@@ -60,7 +61,7 @@ Done in phase 0. Revenue goes through the Measurement Protocol **from the server
 **The connection, and why it goes through Darsi:**
 - The phone opens a WebSocket to a small relay on Cloud Run (europe-west1). The relay checks the Super claim and the credit balance, then opens the Live session with Google.
 - The relay reads the usage Google reports for each turn and debits credits at that measured cost. It warns the learner near the end of their credits and closes the session when they run out.
-- The other option is Google's ephemeral tokens: the phone talks to Google directly, which is cheaper to host. But Darsi can't see each turn's cost then, only a time limit, so the 60% margin can't be enforced exactly. **Recommended: the relay.** It's the user's call in phase 2.
+- The other option was Google's ephemeral tokens: the phone talks to Google directly, which is cheaper to host. But Darsi can't see each turn's cost then, only a time limit, so the 60% margin can't be enforced exactly. **Built: the relay** (2026-11-03).
 
 **With or without the avatar:**
 - **Voice only** is the default: least data, least battery.
@@ -136,8 +137,8 @@ Done in phase 0. Revenue goes through the Measurement Protocol **from the server
 | Phase | What | Needs from the user |
 |---|---|---|
 | 0 ✓ | Plans with credits and the 60% check, entitlements in the claims, org licences and seats, complimentary Super and credits, the Super screen, funnel events, `purchase`/`refund` from the server, revenue on /super/analytics | Prices on /super/plans; the Google Analytics API secret |
-| 1 | Paymob and Stripe checkouts and webhooks, renewals, refunds, receipts, licences bought online | Paymob and Stripe accounts (test keys first) |
-| 2 | The tutor: the Live relay, voice and text, course grounding with `search_course`, scope and language rules, credit metering, an eval of 100+ questions in both languages | A Gemini API key; relay or ephemeral tokens (§4); the measured cost per credit (§5) |
+| 1 ✓ | Paymob and Stripe checkouts and webhooks, Stripe renewals, refunds, licences bought online (built; reminders and receipts later) | Paymob and Stripe accounts (test keys first) |
+| 2 ✓ | The tutor: the Live relay, voice and text, course grounding with `search_course`, scope and language rules, credit metering, an eval of 104 questions in both languages (built; the eval runs once a key is set) | A Gemini API key; the measured cost per credit (§5) |
 | 3 | Understanding checks and the learner profile; the avatar | — |
-| 4 | Live explainers through Lesson Studio | — |
+| 4 (built) | Explainers through Lesson Studio: since 2026-11-03 the tutor is a Google ADK agent on Vertex AI Agent Runtime whose `make_explainer` writes Lesson Studio scenes, checked by Lesson Studio's validator and drawn by the light player; the voice tutor asks it too (TECHNICAL.md "Darsi Super") | Turning it on: `config/tutor.engine = "agent"` |
 | 5 | Launch: pricing tests, support, safety review, the security review of item 9 | — |

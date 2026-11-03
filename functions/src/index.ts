@@ -27,6 +27,11 @@ export { collect, refreshStats, statsJob } from "./analytics.js";
 export { createOrg, deleteOrg, setUserRole, updateOrg } from "./platform.js";
 /** Darsi Super: plans, Super for people and organizations, and revenue (docs/SUPER.md). */
 export { checkRevenueEvent, fillSeats, grantCredits, grantSuper, onOrgLicence, onSubscriptionWrite, savePlans, setOrgLicence, setSeat } from "./billing.js";
+/** Darsi Super payments: Paymob (EGP) and Stripe (USD) checkouts and their webhooks. */
+export { paymobWebhook, startCheckout, stripeWebhook } from "./payments.js";
+/** Darsi Super tutor: text answers and the balance (the voice relay is relay.ts, on Cloud Run). */
+export { tutorAsk, tutorStatus } from "./tutor.js";
+export { tutorSearch } from "./agent.js";
 
 const MEMBER_ROLES: Role[] = ["student", "teacher", "orgAdmin"];
 

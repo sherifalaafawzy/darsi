@@ -4,7 +4,7 @@
  *   in their organization's licence) is never lost. A trigger re-runs it when a subscription or a licence changes.
  * - Plans (config/plans, published as content/plans.json), complimentary Super, org licences and seats.
  * - recordPayment / recordRefund: the one path that turns a verified payment into Super, Darsi's revenue counts and a
- *   Google Analytics `purchase` (phase 1's Paymob and Stripe webhooks call it).
+ *   Google Analytics `purchase` (the Paymob and Stripe webhooks in payments.ts call it).
  */
 import { FieldValue } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
@@ -183,7 +183,7 @@ export async function recordPayment(p: PaymentRecord) {
   const now = Date.now();
   const fresh = await db.runTransaction(async (tx) => {
     if ((await tx.get(ref)).exists) return false;
-    tx.create(ref, { provider: p.provider, ref: p.ref, kind: p.kind, uid: p.uid ?? null, orgId: p.orgId ?? null, plan: p.plan.id, amount: p.amount, currency: p.currency, seats: p.seats ?? null, status: "paid", at: FieldValue.serverTimestamp() });
+    tx.create(ref, { provider: p.provider, ref: p.ref, kind: p.kind, uid: p.uid ?? null, orgId: p.orgId ?? null, plan: p.plan.id, amount: p.amount, currency: p.currency, seats: p.seats ?? null, checkout: p.checkout ?? null, status: "paid", at: FieldValue.serverTimestamp() });
     return true;
   });
   if (!fresh) return { duplicate: true };

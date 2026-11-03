@@ -193,9 +193,9 @@ The demo script writes the demo admin's, a teacher's and a student's logins to `
 - On a phone, use the app, then switch to another app. In Firestore, `analytics/<today>` grows and `analyticsDevices` has the phone. In Google Analytics, **Reports → Realtime** shows the events within a minute or two (once connected).
 - As an org admin: **Admin → Your organization's look:** change the name, add a logo, **Save**. A member who opens Darsi sees the logo at the top of every screen and the name in the tab; their certificates show both.
 
-## 9. Darsi Super (phase 0)
+## 9. Darsi Super
 
-docs/SUPER.md has the plan; TECHNICAL.md "Darsi Super" has the design. Phase 0 charges nothing: it adds the plans, credits, licences and the revenue path.
+docs/SUPER.md has the plan; TECHNICAL.md "Darsi Super" has the design. Phase 0 (deployed 2026-11-02) adds the plans, credits, licences and the revenue path. Phase 1 adds the Paymob and Stripe checkouts and webhooks; it charges nobody until their keys are set.
 
 ### Deploy
 
@@ -221,6 +221,71 @@ The rules add `subscriptions`, `credits` and `payments` (no client writes). Of t
 - On a person's page (/super/people/:uid), **Give Super** for 30 days: their Me shows Super, the credits show on the page, and `/upgrade` offers them packs.
 - On an organization's page, set a licence; on that organization's dashboard, **Give the free seats** gives seats to teachers, then students.
 - Analytics: the Super tile counts the grants; revenue stays at zero until phase 1 brings real payments.
+
+### Payments (phase 1)
+
+**Every functions deploy from phase 1 on needs these four secrets to exist.** They were created as `unset` on 2026-11-03, and the live settings file `functions/.env.darsi-f0685` was written then; a machine without that file must recreate it (step 2 below). Until you have the accounts, set them to `unset` (the checkout then says payments open soon):
+
+```bash
+npx firebase functions:secrets:set PAYMOB_SECRET_KEY
+npx firebase functions:secrets:set PAYMOB_HMAC_SECRET
+npx firebase functions:secrets:set STRIPE_SECRET_KEY
+npx firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
+```
+
+**Paymob (EGP).** Start with the test mode.
+1. In Paymob's dashboard, find the secret key, the public key and the HMAC secret (account settings), and the integration ids (payment integrations: card, and wallet if you want it).
+2. Set `PAYMOB_SECRET_KEY` and `PAYMOB_HMAC_SECRET` as above. Put the public key and the ids in `functions/.env.darsi-f0685` (gitignored; it also holds `PAYMOB_BASE`, `STRIPE_BASE` and `SITE_URL`, which a non-interactive deploy needs even though they have defaults):
+   ```
+   PAYMOB_PUBLIC_KEY=egy_pk_test_…
+   PAYMOB_INTEGRATIONS=1234567,7654321
+   ```
+3. For each integration, set the **Transaction processed callback** to `https://europe-west1-darsi-f0685.cloudfunctions.net/paymobWebhook`. Darsi also sends it with each payment, but Paymob honours that only for cards.
+
+**Stripe (USD).** Start with the test mode.
+1. **Developers → API keys:** the secret key goes in `STRIPE_SECRET_KEY`.
+2. **Developers → Webhooks → Add endpoint:** `https://europe-west1-darsi-f0685.cloudfunctions.net/stripeWebhook`, with the events `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `invoice.paid`, `charge.refunded` and `customer.subscription.deleted`. Its signing secret goes in `STRIPE_WEBHOOK_SECRET`.
+
+Then deploy the rules and functions (`npx firebase deploy --only firestore:rules,functions`) and Hosting.
+
+**Check it works (test mode):** buy the monthly plan in EGP with Paymob's test card, and in USD with Stripe's (`4242 4242 4242 4242`). Each should bring you back to the Super screen with Super active, add a row to `payments`, raise today's revenue on Analytics, and show a `purchase` in Google Analytics' realtime view. A refund from either dashboard marks the payment refunded. Switch to the live keys only after that.
+
+### The tutor (phase 2)
+
+**Where it runs:** Vertex AI in darsi-f0685, as the project's default compute service account (it has Editor, which includes `aiplatform.endpoints.predict`). The Vertex AI API is on. Vertex bills the project's Cloud billing account, so **GCP credits pay for the tutor only if darsi-f0685 is linked to the billing account that holds them** (Billing → Account management → change billing for the project).
+
+**The Gemini API key** (`GEMINI_API_KEY`, "Darsi tutor (Gemini)", restricted to the Generative Language API) exists only as a fallback (`config/tutor.backend = "gemini"`), billed from AI Studio's prepaid balance, which is empty. Every functions deploy still needs the secret to exist:
+
+```bash
+npx firebase functions:secrets:set GEMINI_API_KEY
+```
+
+**The voice relay** runs on Cloud Run beside the functions, with the same code:
+
+```bash
+npm run build --prefix functions
+gcloud run deploy darsi-tutor --source functions --region europe-west1 --project darsi-f0685 --account=sherifalaafawzy@gmail.com --set-build-env-vars GOOGLE_ENTRYPOINT="node lib/relay.js" --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest --set-env-vars TUTOR_ORIGINS=https://darsiai.org,GOOGLE_CLOUD_PROJECT=darsi-f0685 --allow-unauthenticated --timeout 900 --session-affinity --max-instances 3 --concurrency 40
+```
+
+`functions/.gcloudignore` keeps the local test keys out of the upload. Put the address it prints, as a WebSocket, in `apps/web/.env.local` before building Hosting: `VITE_TUTOR_RELAY=wss://darsi-tutor-….run.app/live`. Without it the tutor offers typing only.
+
+**The tutor agent** (`agent/`, Google ADK on Vertex AI Agent Runtime; TECHNICAL.md "Darsi Super"). It answers typed questions and makes explainers when `config/tutor.engine` is `"agent"`; the voice relay asks it for explainers too.
+
+```bash
+cd agent
+python -m venv .venv
+.venv/Scripts/python -m pip install -r requirements.txt pytest==8.4.2
+.venv/Scripts/python -m pytest tests                      # no Google calls
+.venv/Scripts/python deploy.py                            # first time: prints projects/…/reasoningEngines/<id>
+.venv/Scripts/python deploy.py --update <id>              # later versions, same id and sessions
+```
+
+- `deploy.py` uses the staging bucket `gs://darsi-f0685-agent` (europe-west1) and runs the agent as the compute service account, so it needs no new IAM grant. That account also signs the agent's course searches.
+- **Turning it on** (after the functions with `tutorSearch` are deployed): set `config/tutor` to `{engine: "agent", agentId: "<id>", agentLocation: "europe-west1", agentAccount: "836458657044-compute@developer.gserviceaccount.com"}`. `engine: "direct"` turns it off at once, with no deploy.
+- **The explainer checker** (`functions/vendor/lessonstudio-spec.js`) comes from Lesson Studio. After changing Lesson Studio's spec, run `node scripts/darsi/vendor-spec.mjs` there, then rebuild and redeploy the functions and the relay.
+- **Eval through the agent:** `node scripts/tutor-eval.mjs --engine agent --agent <id>`.
+
+**Before launch:** run the eval (`node scripts/tutor-eval.mjs`, on Vertex with your application-default login, about $0.15) and check it passes; then talk to the tutor for a few minutes on a phone and compare `tutorUsage` with the Gemini bill, to confirm the cost per credit on /super/plans.
 
 ## Local development with the emulators
 

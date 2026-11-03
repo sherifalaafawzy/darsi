@@ -138,6 +138,7 @@ function SuperCard() {
   return (
     <section className="panel stack" aria-labelledby="super-h">
       <h2 id="super-h" className="section-title">{t("me.super")}</h2>
+      {active && <p>{t("me.superTutor")}</p>}
       <p className="muted">{active ? t("me.superUntil", { date: new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(active.until) }) : t("me.superPitch")}</p>
       <div><Button variant="secondary" icon="award" onClick={() => nav("/upgrade?from=me")}>{active ? t("me.superSee") : t("me.superCta")}</Button></div>
     </section>

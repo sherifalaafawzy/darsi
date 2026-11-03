@@ -120,6 +120,9 @@ service cloud.firestore {
     match /payments/{id} { allow read: if isSuper(); allow write: if false; }
     // Tutor credits (the period's allowance and packs): read by their owner and platform admins; only the functions write them.
     match /credits/{uid} { allow read: if (signedIn() && request.auth.uid == uid) || isSuper(); allow write: if false; }
+    // Checkouts (what a payment must match) and Stripe subscriptions mapped to them: the payment functions only.
+    match /checkouts/{id} { allow read: if isSuper(); allow write: if false; }
+    match /stripeSubs/{id} { allow read, write: if false; }
 
     // Languages platform admins add (/super/languages): drafts of a language's UI strings. Only publishLanguage puts a
     // language in front of learners, and only it writes `published`. Every save bumps `rev`, as for units.

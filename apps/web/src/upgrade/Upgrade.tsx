@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { AppBar, Button, Icon } from "@darsi/design-system";
+import { AppBar, Button, Icon, TextField } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n";
-import { track } from "../analytics/track";
+import { deviceId, track } from "../analytics/track";
 import "./strings";
 
 /**
  * /upgrade: what Darsi Super adds and what it costs (docs/SUPER.md). A lazy chunk with no Firebase: the plans are the
  * public content/plans.json that savePlans publishes, read with a plain fetch, so guests can see them too. Buying
- * opens in phase 1 (Paymob for EGP, Stripe for cards); until then the buttons record the intent and say so.
- * App passes the plans address in: importing content/load from here split the startup bundle into seven files.
+ * opens the provider's page (Paymob for EGP, Stripe for USD) from the startCheckout callable; Super arrives with the
+ * verified webhook, and ?done= brings the buyer back here to refresh their token.
+ * App passes the plans address and the callable in: importing content/load from here split the startup bundle into
+ * seven files.
  */
 interface Plan { id: string; name: { en: string; ar: string }; kind: "individual" | "seat" | "credits"; period: "month" | "year"; prices: { EGP?: number; USD?: number }; credits: number }
 type Cur = "EGP" | "USD";
@@ -40,14 +42,25 @@ const defaultCurrency = (lang: string): Cur => {
   return lang === "ar" || tz === "Africa/Cairo" ? "EGP" : "USD";
 };
 
-export function Upgrade({ plansUrl }: { plansUrl: string }) {
+type Checkout = (d: { plan: string; currency: Cur; seats?: number; clientId?: string | null }) => Promise<{ url: string }>;
+
+export function Upgrade({ plansUrl, startCheckout }: { plansUrl: string; startCheckout: Checkout }) {
   const { t, lang, locale } = useI18n();
   const nav = useNavigate();
   const [params] = useSearchParams();
-  const { user, plan, profile } = useAuth();
+  const { user, plan, profile, role, refreshClaims } = useAuth();
   const { data: plans, error, retry } = usePlans(plansUrl);
   const [cur, setCur] = useState<Cur>(() => defaultCurrency(lang));
-  const [soon, setSoon] = useState(false);
+  const [msg, setMsg] = useState<"soon" | "error" | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [seatCount, setSeatCount] = useState(20);
+  const done = params.get("done");
+  // Back from the payment page: the webhook usually lands within seconds, so read the token again once, a little later.
+  useEffect(() => {
+    if (!done || !user) return;
+    const id = setTimeout(() => { refreshClaims().catch(() => {}); }, 4000);
+    return () => clearTimeout(id);
+  }, [done, user, refreshClaims]);
   useEffect(() => { track("view_paywall", { from: (params.get("from") ?? "direct").replace(/[^a-z_]/g, "").slice(0, 24) || "direct" }); }, [params]);
   const money = (n: number) => new Intl.NumberFormat(locale, { style: "currency", currency: cur, maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
   const name = (p: Plan) => (lang === "ar" ? p.name.ar : p.name.en);
@@ -58,9 +71,16 @@ export function Upgrade({ plansUrl }: { plansUrl: string }) {
   const active = plan && plan.until > Date.now() ? plan : null;
   const date = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
 
-  const buy = (p: Plan) => {
+  const buy = async (p: Plan, seats?: number) => {
     track("begin_checkout", { plan: p.id, cur, prov: cur === "EGP" ? "paymob" : "stripe" });
-    setSoon(true);
+    setBusy(p.id); setMsg(null);
+    try {
+      const { url } = await startCheckout({ plan: p.id, currency: cur, seats, clientId: await deviceId() });
+      location.assign(url);
+    } catch (e) {
+      setMsg(/payments-closed/.test(String((e as Error).message)) ? "soon" : "error");
+      setBusy(null);
+    }
   };
 
   return (
@@ -74,13 +94,14 @@ export function Upgrade({ plansUrl }: { plansUrl: string }) {
           </ul>
         </section>
 
+        {done && !active && <div className="notice" role="status"><p>{t("up.done")}</p><Button size="sm" variant="secondary" icon="sync" onClick={() => refreshClaims().catch(() => {})}>{t("up.check")}</Button></div>}
         {active && <p className="notice ok">{t(profile?.planSource === "org" ? "up.haveOrg" : "up.have", { date: date.format(active.until) })}</p>}
 
         <div className="row-gap" role="group" aria-label={t("up.currency")}>
           {(["EGP", "USD"] as const).map((c) => <Button key={c} size="sm" variant={cur === c ? "primary" : "ghost"} aria-pressed={cur === c} onClick={() => setCur(c)}>{c}</Button>)}
         </div>
 
-        {error ? <div className="stack"><p className="notice err">{t("up.offline")}</p><div><Button size="sm" variant="secondary" icon="sync" onClick={retry}>{t("common.retry")}</Button></div></div>
+        {error ? <div className="stack"><p className="notice err">{t(navigator.onLine === false ? "up.offline" : "up.loadError")}</p><div><Button size="sm" variant="secondary" icon="sync" onClick={retry}>{t("common.retry")}</Button></div></div>
           : !plans ? <div className="loading" aria-busy="true" />
           : !own.length ? <p className="muted">{t("up.none")}</p>
           : own.map((p) => (
@@ -89,21 +110,28 @@ export function Upgrade({ plansUrl }: { plansUrl: string }) {
               <p><strong>{t(p.period === "year" ? "up.perYear" : "up.perMonth", { price: money(p.prices[cur]!) })}</strong></p>
               <p className="muted small">{t(p.period === "year" ? "up.creditsYear" : "up.creditsMonth", { n: p.credits })}</p>
               {user
-                ? <div><Button onClick={() => buy(p)}>{t(cur === "EGP" ? "up.payPaymob" : "up.payStripe")}</Button></div>
+                ? <div><Button loading={busy === p.id} disabled={!!busy} onClick={() => buy(p)}>{t(cur === "EGP" ? "up.payPaymob" : "up.payStripe")}</Button></div>
                 : <div><Button variant="secondary" icon="profile" onClick={() => nav("/signup")}>{t("up.account")}</Button></div>}
             </section>
           ))}
         {active && packs.length > 0 && <section className="panel stack" aria-labelledby="packs-h"><h3 id="packs-h">{t("up.more")}</h3>
           <p className="muted">{t("up.moreBody")}</p>
           {packs.map((p) => (
-            <div key={p.id} className="row-gap"><span>{t("up.pack", { n: p.credits, price: money(p.prices[cur]!) })}</span><Button size="sm" variant="secondary" onClick={() => buy(p)}>{t("up.buy")}</Button></div>
+            <div key={p.id} className="row-gap"><span>{t("up.pack", { n: p.credits, price: money(p.prices[cur]!) })}</span><Button size="sm" variant="secondary" loading={busy === p.id} disabled={!!busy} onClick={() => buy(p)}>{t("up.buy")}</Button></div>
           ))}
         </section>}
-        {soon && <p className="notice" role="status">{t("up.soon")}</p>}
+        {msg && <p className={msg === "error" ? "notice err" : "notice"} role="status">{t(msg === "error" ? "up.payError" : "up.soon")}</p>}
 
         {seats.length > 0 && <section className="panel stack"><h3>{t("up.orgs")}</h3>
           <p className="muted">{t("up.orgsBody")}</p>
-          {seats.map((p) => <p key={p.id}>{name(p)}: <strong>{t("up.perSeat", { price: money(p.prices[cur]!) })}</strong></p>)}
+          {seats.map((p) => <div key={p.id} className="stack-sm">
+            <p>{name(p)}: <strong>{t("up.perSeat", { price: money(p.prices[cur]!) })}</strong></p>
+            {/* An organization's admin buys seats for a year; everyone else is pointed to them. */}
+            {role === "orgAdmin" && <div className="row-gap">
+              <TextField label={t("up.seatsField")} type="number" min={1} max={10000} value={seatCount} onChange={(e) => setSeatCount(Math.max(1, Math.min(10000, Math.round(Number(e.target.value)) || 1)))} dir="ltr" />
+              <Button loading={busy === p.id} disabled={!!busy} onClick={() => buy(p, seatCount)}>{t("up.buySeats", { price: money(p.prices[cur]! * seatCount) })}</Button>
+            </div>}
+          </div>)}
         </section>}
       </main>
     </>

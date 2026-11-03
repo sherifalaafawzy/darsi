@@ -11,7 +11,7 @@
 import { firebaseConfig, firebaseReady, functionsRegion, useEmulators } from "../firebase-config";
 import { storage } from "../platform";
 
-export type EventName = "session_start" | "screen_view" | "lesson_start" | "lesson_complete" | "lab_open" | "unit_download" | "onboarding_done" | "sign_up" | "sign_in" | "view_paywall" | "begin_checkout";
+export type EventName = "session_start" | "screen_view" | "lesson_start" | "lesson_complete" | "lab_open" | "unit_download" | "onboarding_done" | "sign_up" | "sign_in" | "view_paywall" | "begin_checkout" | "tutor_open" | "tutor_question";
 type Params = Record<string, string | number>;
 interface Ev { n: EventName; t: number; p?: Params; o?: 1 }
 /** Who is using the app, as the server stores it: role ("guest" without an account), audience, language, org, installed. */
@@ -111,4 +111,11 @@ export function configureAnalytics(o: { enabled: boolean; context: Context; data
 }
 
 /** For tests: forget everything held in memory. */
+/** This phone's random analytics id, for a checkout to pass to Google Analytics; null when sharing is switched off. */
+export async function deviceId(): Promise<string | null> {
+  if (!on) return null;
+  await load();
+  return device;
+}
+
 export function resetAnalytics() { on = false; queue = []; loaded = null; device = null; sending = false; lastSent = 0; }

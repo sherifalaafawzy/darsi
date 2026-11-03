@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, type ReactElement } from "react";
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useSearchParams } from "react-router-dom";
+import { lazy, Suspense, useEffect, useState, type ReactElement } from "react";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useMatch, useSearchParams } from "react-router-dom";
 import { applyLocale, BrandProvider, EmptyState } from "@darsi/design-system";
 import { AuthProvider, useAuth } from "./auth/AuthProvider";
 import { Forgot, NotConfigured, SetPassword, SignIn, SignUp } from "./auth/AuthScreens";
@@ -12,18 +12,19 @@ import { useAnalytics } from "./analytics/useAnalytics";
 import { configureContent, setOrgReader, storageUrl } from "./content/load";
 import { teachSync } from "./content/types";
 import { SettingsProvider, useLanguageReady } from "./content/settings";
-import { loadFirebase } from "./fb";
+import { call, loadFirebase } from "./fb";
 import { usePushRefresh } from "./notify/usePushRefresh";
 import { Layout } from "./components/Layout";
 import { Home } from "./screens/Home";
 import { LessonPlayer, LessonScreen } from "./screens/LessonScreen";
-import { setLightPlayer } from "./lesson/LightLesson";
+import { canPlayLight, LightLesson, setLightPlayer } from "./lesson/LightLesson";
 import { Onboarding } from "./screens/Onboarding";
 import { Kit } from "./screens/Kit";
 import { Downloads } from "./screens/Downloads";
 import { MyTracks } from "./screens/MyTracks";
 import { LabApp, Labs } from "./screens/Labs";
 import { Me } from "./screens/Me";
+import { TutorFab } from "./tutor/Fab";
 
 // Loaded on demand: learners never download or parse the landing page (after their first visit) or any staff screen.
 // vite.config.ts keeps these chunks out of the precache; the service worker caches each one the first time it is used.
@@ -42,6 +43,8 @@ const OrgReport = lazy(() => import("./admin/OrgReport").then((m) => ({ default:
 const OrgsAdmin = lazy(() => import("./admin/OrgsAdmin").then((m) => ({ default: m.OrgsAdmin })));
 const PlansPage = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.PlansPage })));
 const Upgrade = lazy(() => import("./upgrade/Upgrade").then((m) => ({ default: m.Upgrade })));
+const Tutor = lazy(() => import("./tutor/Tutor").then((m) => ({ default: m.Tutor })));
+const TutorPanel = lazy(() => import("./tutor/Tutor").then((m) => ({ default: m.TutorPanel })));
 // Course editor (platform and org admins): one "Cms" chunk, also kept out of the precache. It gets the lesson player
 // (for its preview) as a prop: importing it there would pull the player's lazy SDK loads into a shared chunk and
 // split the startup bundle. Org-only units are read through the SDK, which only signed-in members load.
@@ -147,7 +150,8 @@ function Routed() {
         <Route element={<Layout />}>
           <Route path="me" element={<Me />} />
           <Route path="org" element={<OrgScreen />} />
-          <Route path="upgrade" element={<Upgrade plansUrl={storageUrl("content/plans.json")} />} />
+          <Route path="tutor" element={<Tutor relayUrl={import.meta.env.VITE_TUTOR_RELAY ?? ""} ask={call("tutorAsk")} status={call("tutorStatus")} Player={canPlayLight() ? LightLesson : null} />} />
+          <Route path="upgrade" element={<Upgrade plansUrl={storageUrl("content/plans.json")} startCheckout={call("startCheckout")} />} />
           <Route element={<Allow roles={["orgAdmin"]} />}>
             <Route path="admin" element={<AdminHome />} />
             <Route path="admin/people/:uid" element={<PersonDetail />} />
@@ -181,8 +185,24 @@ function Routed() {
       </Route>
     </Routes>
     </Suspense>
+    <LessonTutor />
     </BrandProvider>
   );
+}
+
+/**
+ * The tutor on lesson screens: a floating button with the tutor's face, which opens the tutor beside the lesson. The
+ * panel is the lazy tutor chunk, loaded on the first tap; moving to another lesson closes it (and any call).
+ */
+function LessonTutor() {
+  const { t } = useI18n();
+  const at = useMatch("/lesson/:unitId/:lessonId")?.params;
+  const [open, setOpen] = useState(false);
+  useEffect(() => setOpen(false), [at?.lessonId]);
+  if (!at?.unitId || !at.lessonId) return null;
+  return open
+    ? <Suspense fallback={<TutorFab label={t("lesson.askTutor")} onOpen={() => {}} busy />}><TutorPanel unitId={at.unitId} lessonId={at.lessonId} onClose={() => setOpen(false)} relayUrl={import.meta.env.VITE_TUTOR_RELAY ?? ""} ask={call("tutorAsk")} status={call("tutorStatus")} Player={canPlayLight() ? LightLesson : null} /></Suspense>
+    : <TutorFab label={t("lesson.askTutor")} onOpen={() => setOpen(true)} />;
 }
 
 function WithI18n() {

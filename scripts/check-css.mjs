@@ -25,6 +25,8 @@ export const OWNERS = {
   base: { own: ["panel", "tiles", "tile", "ok", "err", "err-text", "row-gap", "icon-list", "icon-item", "form-grid", "span2", "file-pick", "avatar", "sm", "person-link", "pill", "pill-warn", "wide", "table-tools", "table-wrap", "data-table", "num", "no-print", "cap-code", "cap-label"] },
   layout: { own: ["app-shell", "app-main", "app-float", "nav-rail", "rail-brand", "rail-credit", "rail-item", "is-active", "rail-sep", "rail-signout", "nav-bottom"] },
   admin: { own: ["admin-cols", "code-row", "cov-row", "cov-bar", "req", "req-facts", "brand-row", "brand-preview", "po-found", "po-danger"] },
+  tutor: { own: ["tu-chat", "tu-me", "tu-tutor", "tu-hint", "tu-src", "tu-link", "tu-state", "tu-panel", "tu-panel-head", "tu-panel-title", "tu-panel-body", "tu-av", "tu-center", "tu-talk", "tu-modes", "tu-wide", "tu-explainer", "tu-explainer-title"], prefix: ["tu-"] },
+  "tutor-fab": { own: ["tutor-fab", "tf-face", "tf-mouth", "tf-eye", "tf-brows", "tf-blink"], prefix: ["tf-"] },
   analytics: { own: ["an-head", "an-chart", "an-bar", "an-axis", "an-grid", "an-ranked", "an-name", "an-meter"], prefix: ["or-"] },
   person: { own: ["person", "person-head", "person-stats", "person-cols", "cap-groups", "cap-group", "cap-row", "cap-meter", "cap-word", "course", "course-head", "done", "submission", "sub-text", "badge-ok", "status"], prefix: ["is-", "status-"] },
   people: { own: ["add-rows", "add-row", "map-grid", "map-row", "row-err", "slips", "slip"] },

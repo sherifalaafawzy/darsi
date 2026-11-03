@@ -59,8 +59,11 @@ export function fitStage(el: HTMLElement, shape: VideoShape = "landscape"): Orie
   return "portrait";
 }
 
-export function LightLesson({ light, lang, poster, onEvent, onError, shape = "landscape" }: {
-  light: Light; lang: string; poster: ReactNode; onEvent: (e: LightEvent) => void; onError: () => void; shape?: VideoShape;
+/** A package already in memory: the tutor agent's explainers (tutor/Explainer.tsx), one language, no audio. */
+export interface LightPkg { manifest: { defaultLang: string; languages: { code: string }[] }; scenes: unknown; timing: Record<string, unknown> }
+
+export function LightLesson({ light, pkg, lang, poster, onEvent, onError, shape = "landscape" }: {
+  light?: Light; pkg?: LightPkg; lang: string; poster: ReactNode; onEvent: (e: LightEvent) => void; onError: () => void; shape?: VideoShape;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const events = useRef(onEvent);
@@ -77,12 +80,12 @@ export function LightLesson({ light, lang, poster, onEvent, onError, shape = "la
     // Turning the phone: measured again once the new size has settled.
     const refit = () => setTimeout(() => { if (!gone && player && host.current) player.setOrient(fitStage(host.current, shapeRef.current)); }, 300);
     (async () => {
-      const f = light.files;
+      const f = light?.files ?? {};
       const [{ createPlayer }, manifest, scenes, timing] = await Promise.all([
         loadPlayer!(),
-        loadStoredJSON<{ defaultLang: string; languages: { code: string }[] }>(f["manifest.json"]!),
-        loadStoredJSON(f["scenes.json"]!),
-        loadStoredJSON(f[`timing/${lang}.json`]!),
+        pkg ? pkg.manifest : loadStoredJSON<LightPkg["manifest"]>(f["manifest.json"]!),
+        pkg ? pkg.scenes : loadStoredJSON(f["scenes.json"]!),
+        pkg ? pkg.timing[lang] : loadStoredJSON(f[`timing/${lang}.json`]!),
       ]);
       if (gone || !host.current) return;
       // Only this language: the teacher picks languages in Darsi, not inside the player.
@@ -95,6 +98,6 @@ export function LightLesson({ light, lang, poster, onEvent, onError, shape = "la
       addEventListener("orientationchange", refit);
     })().catch(() => { if (!gone) onError(); });
     return () => { gone = true; live.current = null; removeEventListener("orientationchange", refit); player?.destroy(); };
-  }, [light, lang]);
+  }, [light, pkg, lang]);
   return <>{!shown && <div className="light-lesson light-wait">{poster}</div>}<div ref={host} className="light-lesson" /></>;
 }

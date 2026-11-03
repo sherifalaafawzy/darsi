@@ -40,10 +40,13 @@ export const storage = () => (store ??= import("firebase/storage").then(({ getSt
   return s;
 }));
 
+// The tutor's answers can take an explainer and a repair turn (functions/src/agent.ts), longer than the SDK's 70 s.
+const SLOW: Record<string, number> = { tutorAsk: 180_000 };
+
 /** Typed callable helper; loads the Functions SDK on the first call. */
 export const call = <Req, Res>(name: string) => async (data: Req): Promise<Res> => {
   const [{ httpsCallable }, f] = await Promise.all([import("firebase/functions"), functions()]);
-  return (await httpsCallable<Req, Res>(f, name)(data)).data;
+  return (await httpsCallable<Req, Res>(f, name, SLOW[name] ? { timeout: SLOW[name] } : undefined)(data)).data;
 };
 
 /** A JSON file from Storage, read with the member's credentials (org-only course content: content/load.ts). */
