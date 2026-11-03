@@ -27,6 +27,22 @@ describe("the tutor agent's turns", () => {
     expect(readTurn([{ error_message: "quota" }]).error).toBe("quota");
   });
 
+  it("takes the answer from the text the tutor wrote before reply, not from text before another tool", () => {
+    const say = (...parts: Record<string, unknown>[]) => ({ author: "darsi_tutor", content: { parts } });
+    const t = readTurn([
+      say({ text: "Let me look." }, { function_call: { name: "make_explainer" } }),
+      say({ text: "Urgency rushes you " }, { text: "so you don't check." }, { function_call: { name: "reply" } }),
+      { author: "darsi_tutor", partial: true, content: { parts: [{ text: "Urgency rushes you" }] } }, // streamed copies don't count twice
+      { author: "darsi_tutor", content: { parts: [{ text: "thinking", thought: true }] } },
+      { author: "darsi_tutor", actions: { state_delta: { reply: { inScope: true, answer: "", sources: ["cyber-1-1-2/read"] } } } },
+    ]);
+    expect(t.reply).toEqual({ inScope: true, answer: "Urgency rushes you so you don't check.", sources: ["cyber-1-1-2/read"] });
+    // A turn that ends with its explainer (no reply) is in scope; askAgent words it from the explainer.
+    expect(readTurn([say({ function_call: { name: "make_explainer" } }), say({ function_response: { name: "make_explainer" } }, { text: '{"title":"How"}' }), ev({ explainer: { title: "How", scenes: [] } })]).reply).toEqual({ inScope: true, answer: "", sources: [] });
+    // An answer put in reply's own argument still wins (the older form).
+    expect(readTurn([say({ text: "ignored" }), ev({ reply: { inScope: false, answer: "Outside.", sources: [] } })]).reply?.answer).toBe("Outside.");
+  });
+
   it("charges tokens at 3.8 Flash prices plus the runtime's seconds", () => {
     // The measured explainer turn in Arabic: 10,670 in, 1,649 out, about 30 s.
     const usd = turnCost({ in: 10670, cached: 0, out: 1649, calls: 3 }, 30, AGENT_PRICES);
@@ -38,6 +54,9 @@ describe("the tutor agent's turns", () => {
   it("sends the question with the sections found for it, and asks for an explainer when the learner taps Show me", () => {
     expect(agentMessage("What is phishing?", "[s1] text", false)).toBe("What is phishing?\n\nSECTIONS THAT MAY HELP:\n[s1] text");
     expect(agentMessage("What is phishing?", "", true)).toMatch(/^The learner asked to see this explained: call make_explainer/);
+    // With nothing new found, the note says whether the search found anything at all, so the agent needn't search again.
+    expect(agentMessage("Capital of France?", "", false, false)).toContain("found nothing for this question");
+    expect(agentMessage("What is phishing?", "", false, true)).toContain("found nothing beyond the lesson material");
     expect(repairMessage(["scenes[2].content: badEdge"])).toContain("scenes[2].content: badEdge");
   });
 });

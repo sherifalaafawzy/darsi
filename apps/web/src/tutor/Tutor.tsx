@@ -21,7 +21,7 @@ import "../styles/tutor.css";
 type Source = { id: string; unitId: string; lessonId: string; stepId: string; lesson: string };
 type Pkg = Parameters<typeof ExplainerCard>[0]["pkg"];
 type Msg = { who: "me" | "tutor"; text: string; sources?: Source[]; credits?: number; q?: string; explainer?: Pkg; autoplay?: boolean };
-type Ask = (d: { unitId: string; lessonId: string | null; question: string; lang: string; history: { role: string; text: string }[]; sessionId?: string; show?: boolean }) => Promise<{ inScope: boolean; answer: string; sources: Source[]; credits: number; left: number; explainer?: Pkg | null; sessionId?: string }>;
+type Ask = (d: { unitId: string; lessonId: string | null; question: string; lang: string; history: { role: string; text: string }[]; sessionId?: string; show?: boolean; warm?: boolean }) => Promise<{ inScope: boolean; answer: string; sources: Source[]; credits: number; left: number; explainer?: Pkg | null; sessionId?: string }>;
 type Status = (d: Record<string, never>) => Promise<{ super: boolean; on: boolean; left: number; minute: number | null; maxMinutes: number; explainer?: number | null }>;
 type Talk = "off" | "connecting" | "listening" | "thinking" | "speaking";
 /** Player: the light player for explainers, from App (null where it isn't registered). */
@@ -96,7 +96,19 @@ function TutorBody({ relayUrl, ask, status, Player, unitId, lessonId, onLeave }:
   useEffect(() => {
     if (!user || !active) return;
     status({}).then((s) => { setInfo(s); setLeft(s.left); }, () => setErr("offline"));
-  }, [user, active, status]);
+  }, [user, active]); // eslint-disable-line react-hooks/exhaustive-deps -- App hands in a new `status` on every render
+  // Wakes the tutor while the learner reads the panel: the typed tutor loads the course and opens its session, the voice
+  // relay starts an instance. Both sleep when unused, and a cold start cost the first question or call 3–7 s.
+  const asked = useRef(0);
+  // Once per lesson and language (App hands in a new `ask` on every render, so it isn't a dependency).
+  useEffect(() => {
+    if (!user || !active) return;
+    const at = asked.current;
+    ask({ warm: true, unitId, lessonId, question: "", lang: tutorLang, history: [] })
+      .then((r) => { if (r.sessionId && asked.current === at) agentSession.current = r.sessionId; }, () => {});
+    // Phones saving data start in typing mode, so they don't wake the voice.
+    if (relayUrl && !saveData()) fetch(`${relayUrl.replace(/^ws/, "http").replace(/\/live$/, "/warm")}?u=${encodeURIComponent(unitId)}&l=${tutorLang}`, { mode: "no-cors" }).catch(() => {});
+  }, [user, active, unitId, lessonId, tutorLang]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => stopTalk(), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fail = (e: unknown) => {
@@ -119,6 +131,7 @@ function TutorBody({ relayUrl, ask, status, Player, unitId, lessonId, onLeave }:
     const history = msgs.filter((m) => m.text).slice(-6).map((m) => ({ role: m.who === "me" ? "user" : "tutor", text: m.text }));
     setMsgs((m) => [...m, { who: "me", text: show ? `${t("tu.showMe")}: ${q}` : q }]);
     track("tutor_question", { m: show ? "show" : "text" });
+    asked.current++; // a warm-up answering after this must not replace the session this question opens
     try {
       const a = await ask({ unitId, lessonId, question: q, lang: tutorLang, history, sessionId: agentSession.current || undefined, show });
       if (a.sessionId) agentSession.current = a.sessionId;

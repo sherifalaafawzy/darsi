@@ -17,11 +17,14 @@ def usage(p, c, t=0, cached=0):
     return SimpleNamespace(usage_metadata=SimpleNamespace(prompt_token_count=p, candidates_token_count=c, thoughts_token_count=t, cached_content_token_count=cached))
 
 
-def test_reply_stores_the_answer_for_this_turn_and_ends_it():
+def test_reply_ends_the_turn_with_scope_and_sources_the_answer_being_the_text_written_before_it():
     c = ctx()
-    assert tools.reply(True, "  Phishing pretends to be someone you trust. ", ["s1", "s2", "s3", "s4", "s5", "s6"], c) == "sent"
-    assert c.state["reply"] == {"inv": "inv-1", "inScope": True, "answer": "Phishing pretends to be someone you trust.", "sources": ["s1", "s2", "s3", "s4", "s5"]}
+    assert tools.reply(True, ["s1", "s2", "s3", "s4", "s5", "s6"], c) == "sent"
+    assert c.state["reply"] == {"inv": "inv-1", "inScope": True, "answer": "", "sources": ["s1", "s2", "s3", "s4", "s5"]}
     assert c.actions.skip_summarization is True
+    # An answer the model puts in the argument anyway is kept (the gateway prefers it to the text).
+    tools.reply(False, [], c, answer="  Outside your courses. ")
+    assert c.state["reply"]["answer"] == "Outside your courses."
 
 
 def test_usage_adds_up_within_a_turn_counts_thinking_as_output_and_restarts_each_turn():

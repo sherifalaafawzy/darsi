@@ -48,15 +48,16 @@ def search_course(query: str, tool_context: ToolContext) -> dict[str, Any]:
     return {"result": "\n\n".join(f"[{h['id']}] ({h['course']}: {h['lesson']})\n{h['text']}" for h in hits)}
 
 
-def reply(in_scope: bool, answer: str, sources: list[str], tool_context: ToolContext) -> str:
-    """Sends your answer to the learner. Call it exactly once, as your last step, every turn.
+def reply(in_scope: bool, sources: list[str], tool_context: ToolContext, answer: str = "") -> str:
+    """Ends your turn, after you have written your answer as text. Call it exactly once, as your last step, every turn.
 
     Args:
         in_scope: true only if the answer comes from the course material or search results.
-        answer: What the learner reads: two to four short sentences in their language.
         sources: The section ids (in brackets in the material) the answer used. Empty when out of scope.
+        answer: Leave empty: the learner reads the text you wrote before this call (it reaches them as you write it).
     """
-    tool_context.state["reply"] = {"inv": tool_context.invocation_id, "inScope": bool(in_scope), "answer": answer.strip(), "sources": list(sources)[:5]}
+    # The answer is normally the turn's streamed text, which the gateway collects; `answer` is only a fallback.
+    tool_context.state["reply"] = {"inv": tool_context.invocation_id, "inScope": bool(in_scope), "answer": (answer or "").strip(), "sources": list(sources)[:5]}
     tool_context.actions.skip_summarization = True  # the turn ends here; the gateway reads the reply from state
     return "sent"
 

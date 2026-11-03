@@ -300,6 +300,26 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
         - The eval through the agent passed 102/104 (two transient errors, right on a rerun), with a median of 4.4 s and $0.0048 a question.
         - English and Arabic explainers through the gateway passed Lesson Studio's checker and played at 375 px.
         - Not yet tried: voice `explain` in a real call, and any of it signed in with Super on the phone (the user's).
+    - **Speed (2026-11-03, uncommitted).** The user found the tutor "super slow" and asked to fix typing and talking. TECHNICAL.md "Darsi Super" has the details.
+      - **Measured:** Gemini Live answers about 1.3 s after the learner stops; the waits were cold starts (3–7 s) and 3.8 Flash itself (median 3.4–4.1 s, stalls of 29–55 s; Flash-Lite 0.9 s). The user chose to keep 3.8 Flash.
+      - **Done:**
+        - One model call per answer: text, then `reply`, and the gateway's search note.
+        - `make_explainer` ends the turn.
+        - `ANSWER_MS` is 12 s.
+        - The panel warms `tutorAsk` (`{warm: true}`: course, index and the agent's session) and the relay (`/warm`).
+        - The relay's setup runs side by side, and Live opens while the index builds.
+      - **Checked:** agent 12 tests, functions 142, web 1210 (`tests/tutor-warm.test.tsx`), `tsc`, e2e 30/30 on a private build, startup 4 files (182.5 KB). The relay locally: `/warm` 204, a bad token refused. Explainers through the gateway: English 14 s (was 30), Arabic 12–61 s.
+      - **The new agent** is `reasoningEngines/6058503682603876352`, deployed as a separate copy for testing; live still uses `7612245554046697472`.
+      - **Eval through the new agent:** 94/104 right, and no wrong answers. The other 10 were errors that live goes the direct way: 6 over 12 s, 3 quota refusals, 1 without `reply`. Median 4.0 s (was 4.4), 90th percentile 7.6 s (was 9.1), $0.40 (was $0.50).
+      - **Quota:** Agent Runtime allows 30 queries a minute per region for the whole project, and 10 writes. Each question is one query, and each opened panel one more. Past that, answers go the direct way. Raising it is a quota request in the console (the user's).
+      - **Deployed 2026-11-03** with the user's go-ahead:
+        - functions `tutorAsk`, `tutorStatus` and `tutorSearch`;
+        - relay revision `darsi-tutor-00005-6xz`;
+        - Hosting `index-DbMIP2cP.js`, built without the other session's uncommitted `public/lib/v1/cast/*_talking.svg` (the committed copies were put into `dist`, and the deploy used a config without the rebuild step);
+        - `config/tutor.agentId` → `6058503682603876352`.
+      - **Checked live:** the three functions answer 401 without an account; the relay's `/warm` gives 204 in 140 ms; the relay answers a bad token with `auth` and refuses other websites (401); darsiai.org serves the new build and the committed cast picture.
+      - The old agent `7612245554046697472` is still deployed (min 1 instance) as a way back: point `config/tutor.agentId` at it. Delete it once the new one has proved itself (the user's call).
+      - Not checked live: talking or typing signed in with Super (the user's).
     - **Next (was):** prepayment credits for darsi-f0685 in AI Studio (no longer needed with Vertex), then the eval, a short real voice test, deploying the relay and the functions, and the Paymob and Stripe test keys for a test purchase.
 9. Not started: the security review. The user asked for static scanning of the rules, functions and client, plus a pentest of the deployed URL with `H:\htdocs\pentest-lab` (allowlist-gated; add only darsi-f0685 hosts). It is deferred until the code is finished.
 

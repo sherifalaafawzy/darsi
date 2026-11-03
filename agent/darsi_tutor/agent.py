@@ -27,10 +27,11 @@ MODEL = os.environ.get("TUTOR_MODEL", "gemini-3.8-flash")
 model = Gemini(model=MODEL, client_kwargs={"enterprise": True, "location": os.environ.get("TUTOR_MODEL_LOCATION", "global")})
 
 HOW = """HOW YOU WORK:
-- The learner's message may come with SECTIONS THAT MAY HELP, found in their courses for this question. Use them like the course material.
-- If neither answers the question, call search_course before deciding it is outside the courses.
-- When the learner asks to be shown something, or when a process, a flow or a message is clearly easier to see than to read, call make_explainer with the topic and the key points from the material; then say in your answer that the explainer is ready to watch.
-- Finish every turn by calling reply exactly once. Out of scope: in_scope false, the answer one kind sentence, no sources."""
+- The learner's message comes with what a search of all their courses found for it (SECTIONS THAT MAY HELP, or a note that it found nothing more). Use the sections like the course material.
+- Only if a different word for the same idea might find it (a misspelt or translated term), call search_course with that word. Otherwise decide from what you have: a search found nothing means it is outside the courses.
+- When the learner asks to be shown something, or when a process, a flow or a message is clearly easier to see than to read, call make_explainer with the topic and the key points from the material. That ends your turn: the learner watches the explainer, so write nothing else.
+- Write nothing before calling search_course or make_explainer.
+- Then write your answer as plain text, two to four short sentences in the learner's language (it reaches them as you write it), and finish the turn by calling reply exactly once with in_scope and sources, leaving its answer empty. Out of scope: one kind sentence, in_scope false, no sources."""
 
 
 def _instruction(ctx: ReadonlyContext) -> str:
@@ -45,7 +46,8 @@ root_agent = LlmAgent(
     instruction=_instruction,
     # The explainer is a tool, not a sub-agent: as a sub-agent it was also offered as a hand-off target, and the model
     # used both (two explainers, 140 s). AgentTool forwards its state (the explainer, the usage) to this session.
-    tools=[search_course, reply, AgentTool(explainer.make(model))],
+    # It ends the turn: a model call after it only said "it's ready", and 3.8 Flash once took 55 s to start that.
+    tools=[search_course, reply, AgentTool(explainer.make(model), skip_summarization=True)],
     before_agent_callback=start_turn,
     after_model_callback=count_usage,
     generate_content_config=types.GenerateContentConfig(temperature=0.4, max_output_tokens=1500, thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.LOW)),

@@ -23,7 +23,20 @@ const LIVE = process.env.GEMINI_LIVE_URL ?? "wss://generativelanguage.googleapis
 const ORIGINS = (process.env.TUTOR_ORIGINS ?? "https://darsiai.org,http://localhost:5173").split(",");
 const IDLE_MS = 90_000;
 
-const server = createServer((req, res) => { res.writeHead(req.url === "/healthz" ? 200 : 404).end(req.url === "/healthz" ? "ok" : ""); });
+/**
+ * GET /warm?u=<unitId>&l=<lang>, sent by the phone when the tutor panel opens: it wakes an instance (Cloud Run scales
+ * to zero, and a cold start took 3 s), and warms the settings, Google's token and a public course's search index, so a
+ * call that follows starts at once. It reads nothing private and answers nothing. (Cloud Run reserves /healthz.)
+ */
+const server = createServer((req, res) => {
+  const url = new URL(req.url ?? "/", "http://relay");
+  if (url.pathname !== "/warm") { res.writeHead(404).end(); return; }
+  res.writeHead(204, { "Cache-Control": "no-store" }).end();
+  const lang = url.searchParams.get("l") === "ar" ? "ar" : "en";
+  void tutorConfig().then((cfg) => (cfg.backend === "vertex" ? googleToken() : null)).catch(() => null);
+  void loadUnit(String(url.searchParams.get("u") ?? "").slice(0, 64), null)
+    .then((unit) => unit && Promise.all([trackIndex(unit, null, lang), lang === "en" ? null : trackIndex(unit, null, "en")])).catch(() => null);
+});
 const wss = new WebSocketServer({ server, path: "/live", maxPayload: 64 * 1024, verifyClient: ({ origin }: { origin?: string }) => !origin || ORIGINS.includes(origin) });
 
 wss.on("connection", (phone: WebSocket) => {
@@ -75,27 +88,30 @@ wss.on("connection", (phone: WebSocket) => {
     if (m.type !== "hello" || uid) return;
     clearTimeout(helloWait);
 
-    const user = await auth.verifyIdToken(String(m.token ?? "")).catch(() => null);
+    // Side by side where they don't depend on each other: every step here is time the learner waits in silence.
+    const [user, cfg] = await Promise.all([auth.verifyIdToken(String(m.token ?? "")).catch(() => null), tutorConfig()]);
     if (!user) return fail("auth");
     if (!hasSuper(user)) return fail("no-super");
-    const cfg = await tutorConfig();
     cfgLive = cfg.live;
     if (!tutorReady(cfg)) return fail("tutor-closed");
-    if ((await balance(user.uid)) <= 0) return fail("no-credits");
     const orgId = (user.orgId as string | undefined) ?? null;
-    const unit = await loadUnit(String(m.unitId ?? "").slice(0, 64), orgId);
+    const [left, unit] = await Promise.all([balance(user.uid), loadUnit(String(m.unitId ?? "").slice(0, 64), orgId)]);
+    if (left <= 0) return fail("no-credits");
     if (!unit) return fail("no-course");
     uid = user.uid;
     const lang: TutorLang = m.lang === "ar" ? "ar" : "en";
     const lessonId = String(m.lessonId ?? "").slice(0, 80) || null;
     const lesson = unit.lessons.find((l) => l.id === lessonId);
-    const ix = await trackIndex(unit, orgId, lang), ixEn = lang === "en" ? null : await trackIndex(unit, orgId, "en");
+    // The search index is only needed when the tutor first searches, so Gemini's session opens while it builds.
+    const indexes = Promise.all([trackIndex(unit, orgId, lang), lang === "en" ? null : trackIndex(unit, orgId, "en")]);
+    indexes.catch(() => null); // a failure surfaces at the first search, not as an unhandled rejection
     const agentOn = cfg.engine === "agent" && !!cfg.agentId;
     let agentSession = "";
     const sys = instructions({ lang, course: unit.title[lang] ?? unit.title.en, lesson: lesson ? (lesson.title[lang] ?? lesson.title.en) : "", material: lessonMaterial(unit, lessonId, lang, 10000), voice: true, style: String(m.style ?? "").slice(0, 60), explain: agentOn });
     /** The explain tool: the tutor agent makes the explainer, the phone plays it, and the voice gets its scenes to talk through. */
     const explain = async (topic: string): Promise<string> => {
       try {
+        const [ix, ixEn] = await indexes;
         const r = await askAgent({ cfg, uid, orgId, unit, lessonId, lang, question: topic.slice(0, 600), show: true, sessionId: agentSession || undefined, ix, en: ixEn });
         agentSession = r.sessionId;
         agentUsd += r.usd;
@@ -124,7 +140,7 @@ wss.on("connection", (phone: WebSocket) => {
       let s: { setupComplete?: unknown; serverContent?: { modelTurn?: { parts?: { inlineData?: { data?: string } }[] }; interrupted?: boolean; turnComplete?: boolean; inputTranscription?: { text?: string }; outputTranscription?: { text?: string } }; toolCall?: { functionCalls?: { id: string; name: string; args?: { query?: string } }[] }; usageMetadata?: Usage; goAway?: unknown };
       try { s = JSON.parse(raw.toString("utf8")); } catch { return; }
       if (s.setupComplete) {
-        send({ type: "ready", left: await balance(uid) });
+        send({ type: "ready", left });
         idle = setInterval(() => { if (Date.now() - lastActive > IDLE_MS) end(); }, 15_000);
         cap = setTimeout(() => { send({ type: "error", code: "time" }); end(); }, cfg.maxMinutes * 60_000);
       }
@@ -149,7 +165,8 @@ wss.on("connection", (phone: WebSocket) => {
           if (gem?.readyState === WebSocket.OPEN) gem.send(JSON.stringify({ toolResponse: { functionResponses: [{ id: fc.id, name: fc.name, response: { result } }] } }));
           continue;
         }
-        const hits = fc.name === "search_course" ? searchBoth(ix, ixEn, String(fc.args?.query ?? ""), 3, unit.id) : [];
+        const [ix, ixEn] = await indexes.catch(() => [null, null] as const);
+        const hits = fc.name === "search_course" && ix ? searchBoth(ix, ixEn, String(fc.args?.query ?? ""), 3, unit.id) : [];
         send({ type: "sources", items: hits.map((h) => ({ id: h.s.id, unitId: h.s.unitId, lessonId: h.s.lessonId, stepId: h.s.stepId, lesson: h.s.lesson })) });
         gem!.send(JSON.stringify({ toolResponse: { functionResponses: [{ id: fc.id, name: fc.name, response: { result: hits.length ? hits.map((h) => `[${h.s.id}] (${h.s.course}: ${h.s.lesson})\n${h.s.text.slice(0, 2000)}`).join("\n\n") : "Nothing in the learner's courses covers this. It is outside the courses." } }] } }));
       }

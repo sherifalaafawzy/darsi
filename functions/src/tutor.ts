@@ -12,7 +12,7 @@ import { caller, db, str } from "./admin.js";
 import { creditsForCost, creditsLeft, spendCredits, type Credits, type Economics } from "./billingCore.js";
 import { catalogPath, type Owner } from "./catalog.js";
 import { bucket } from "./storage.js";
-import { askAgent } from "./agent.js";
+import { askAgent, openSession } from "./agent.js";
 import { AGENT_PRICES, type AgentPrices } from "./agentCore.js";
 import type { ExplainerPackage } from "./explainer.js";
 import { ANSWER_SCHEMA, LIVE_PRICES, TEXT_PRICES, audioCost, buildIndex, instructions, lessonMaterial, outside, searchBoth, sections, usageCost, type Index, type Prices, type TutorLang, type TutorUnit, type Usage } from "./tutorCore.js";
@@ -164,17 +164,24 @@ function finish(out: { inScope?: boolean; answer?: string; sources?: string[] },
 export const tutorAsk = onCall({ secrets: [GEMINI_KEY], memory: "512MiB", timeoutSeconds: 180, maxInstances: 10 }, async (req) => {
   const c = caller(req);
   if (!hasSuper(req.auth?.token)) throw new HttpsError("permission-denied", "The tutor comes with Darsi Super.");
-  const cfg = await tutorConfig();
+  const lang: TutorLang = req.data?.lang === "ar" ? "ar" : "en";
+  const orgId = c.orgId ?? null, lessonId = str(req.data?.lessonId, 80) || null, style = str(req.data?.style, 60);
+  const [cfg, left, unit] = await Promise.all([tutorConfig(), balance(c.uid), loadUnit(str(req.data?.unitId, 64), orgId)]);
   if (!tutorReady(cfg)) throw new HttpsError("failed-precondition", "tutor-closed");
-  if ((await balance(c.uid)) <= 0) throw new HttpsError("resource-exhausted", "no-credits");
+  // {warm: true} when the panel opens: this instance loads the course and its search index, and the agent's session is
+  // opened, so the first question waits for neither. Nothing is charged.
+  if (req.data?.warm === true) {
+    if (!unit) return { sessionId: "" };
+    await Promise.all([trackIndex(unit, orgId, lang), lang === "en" ? null : trackIndex(unit, orgId, "en")]);
+    const sessionId = cfg.engine === "agent" && cfg.agentId ? await openSession({ cfg, uid: c.uid, orgId, unit, lessonId, lang, style }).catch(() => "") : "";
+    return { sessionId };
+  }
+  if (left <= 0) throw new HttpsError("resource-exhausted", "no-credits");
   const question = str(req.data?.question, 1500);
   if (!question) throw new HttpsError("invalid-argument", "Ask a question.");
-  const lang: TutorLang = req.data?.lang === "ar" ? "ar" : "en";
-  const unit = await loadUnit(str(req.data?.unitId, 64), c.orgId ?? null);
   if (!unit) throw new HttpsError("not-found", "No such course.");
   const history = Array.isArray(req.data?.history) ? (req.data.history as { role: string; text: unknown }[]).slice(-6).map((h) => ({ role: h.role === "user" ? "user" as const : "tutor" as const, text: str(h.text, 1500) })) : [];
-  const orgId = c.orgId ?? null, lessonId = str(req.data?.lessonId, 80) || null, style = str(req.data?.style, 60);
-  const ix = await trackIndex(unit, orgId, lang), en = lang === "en" ? null : await trackIndex(unit, orgId, "en");
+  const [ix, en] = await Promise.all([trackIndex(unit, orgId, lang), lang === "en" ? null : trackIndex(unit, orgId, "en")]);
   let a: Answer | null = null, explainer: ExplainerPackage | null = null, sessionId = "";
   if (cfg.engine === "agent" && cfg.agentId) {
     try {
