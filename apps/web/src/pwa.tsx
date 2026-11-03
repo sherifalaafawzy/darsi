@@ -9,9 +9,27 @@ export function usePwaUpdate() {
     if (isNative() || import.meta.env.DEV) return;
     // immediate: don't wait for window "load" (fonts and images). The worker file itself is registered
     // from index.html at build time, before this chunk, so this only attaches the update prompt.
-    const updateSW = registerSW({ immediate: true, onNeedRefresh: () => setUpdate(() => () => updateSW(true)) });
+    registerSW({ immediate: true, onNeedRefresh: () => setUpdate(() => () => { void takeUpdate(); }) });
   }, []);
   return update;
+}
+
+/**
+ * Switch to the waiting new version and reload. workbox-window reloads only when the new worker takes control of this
+ * page, which never happens on a page the worker doesn't control (opened with a hard refresh while another tab or the
+ * installed app ran the old version), and the button did nothing. So: reload when it activates or takes control,
+ * after a few seconds whatever happens, and at once when nothing is waiting (another tab already switched).
+ */
+export async function takeUpdate(reg?: ServiceWorkerRegistration | null, wait = 4000) {
+  const sw = typeof navigator !== "undefined" ? navigator.serviceWorker : undefined;
+  let done = false;
+  const go = () => { if (!done) { done = true; location.reload(); } };
+  const waiting = (reg ?? (await sw?.getRegistration().catch(() => undefined)))?.waiting;
+  if (!sw || !waiting) return go();
+  sw.addEventListener("controllerchange", go, { once: true });
+  waiting.addEventListener("statechange", () => { if (waiting.state === "activated" || waiting.state === "redundant") go(); });
+  waiting.postMessage({ type: "SKIP_WAITING" });
+  setTimeout(go, wait);
 }
 
 interface BIPEvent extends Event { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> }

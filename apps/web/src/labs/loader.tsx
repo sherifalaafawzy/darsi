@@ -6,6 +6,7 @@
 import { Component, lazy, Suspense, type ComponentType, type LazyExoticComponent, type ReactNode } from "react";
 import { Button, EmptyState } from "@darsi/design-system";
 import { useI18n } from "../i18n";
+import { takeUpdate } from "../pwa";
 import { labMeta } from "./catalog";
 import type { LabProps } from "./types";
 
@@ -29,13 +30,9 @@ const lazyLab = (id: string) => {
  * longer has. Online, that is the cause: take the waiting new version (or reload) instead of blaming the connection.
  */
 export async function reloadForUpdate() {
-  const sw = typeof navigator !== "undefined" ? navigator.serviceWorker : undefined;
-  const reg = await sw?.getRegistration().catch(() => undefined);
-  if (sw && reg) {
-    await reg.update().catch(() => {});
-    if (reg.waiting) { sw.addEventListener("controllerchange", () => location.reload(), { once: true }); reg.waiting.postMessage({ type: "SKIP_WAITING" }); return; }
-  }
-  location.reload();
+  const reg = typeof navigator !== "undefined" ? await navigator.serviceWorker?.getRegistration().catch(() => undefined) : undefined;
+  await reg?.update().catch(() => {});
+  await takeUpdate(reg);
 }
 
 /** What shows when a lab's chunk fails: offline, it isn't saved yet; online, this copy of Darsi is out of date. */

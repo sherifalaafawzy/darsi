@@ -34,7 +34,7 @@ describe("a lab chunk that fails to load", () => {
 
   it("takes a waiting new version before reloading", async () => {
     const postMessage = vi.fn(); let onChange: (() => void) | undefined;
-    const reg = { update: vi.fn(async () => {}), waiting: { postMessage } };
+    const reg = { update: vi.fn(async () => {}), waiting: { postMessage, addEventListener: () => {} } };
     Object.defineProperty(navigator, "serviceWorker", { configurable: true, value: { getRegistration: async () => reg, addEventListener: (_: string, f: () => void) => { onChange = f; } } });
     await reloadForUpdate();
     expect(postMessage).toHaveBeenCalledWith({ type: "SKIP_WAITING" });
