@@ -123,6 +123,9 @@ function Account() {
       {org && <div className="person-link"><BrandMark size={36} /><span><strong><bdi>{org.name}</bdi></strong><small>{t("org.yourOrg")}</small></span></div>}
       <div className="row-gap">
         {accountLinks(role, true).map((l) => <Button key={l.path} variant="secondary" icon={l.icon} onClick={() => nav(l.path)}>{t(l.key)}</Button>)}
+        {/* University teachers: the courses a platform admin let them follow (read only). */}
+        {profile?.teach === "university" && <Button variant="secondary" icon="chart" onClick={() => nav("/results")}>{t("results.title")}</Button>}
+        {role === "superadmin" && <Button variant="secondary" icon="chart" onClick={() => nav("/super/access")}>{t("access.title")}</Button>}
         {/* signOut first stops this phone getting the account's notifications (AuthProvider), as every Sign out button does. */}
         <Button variant="ghost" icon="close" onClick={() => { void signOut(); }}>{t("me.signOut")}</Button>
       </div>

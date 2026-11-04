@@ -11,6 +11,14 @@ service cloud.firestore {
     function isTeacherOf(data) { return signedIn() && claims().role == 'teacher' && inOrg(data.orgId) && data.get('teacherId', null) == request.auth.uid; }
     function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
 
+    // Course access (PLAN.md in out/project-work): a platform admin lets a university teacher see the student results
+    // and project submissions of chosen courses, read only. courseAccess/{uid}.units lists those course ids.
+    function grantedUnits() {
+      return signedIn() && exists(/databases/$(database)/documents/courseAccess/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/courseAccess/$(request.auth.uid)).data.units : [];
+    }
+    function granted(unitId) { return unitId is string && unitId in grantedUnits(); }
+
     // Staff who may see a person's learning record.
     function canSee(uid, data) {
       return (signedIn() && request.auth.uid == uid) || isSuper() || isOrgAdmin(data.get('orgId', null)) || isTeacherOf(data);
@@ -96,6 +104,18 @@ service cloud.firestore {
       // Push tokens, one per device. Only Cloud Functions (registerDevice, unregisterDevice, the senders) touch them.
       match /devices/{deviceId} { allow read, write: if false; }
     }
+
+    // Course access: only platform admins grant or change it; the teacher reads their own grant.
+    match /courseAccess/{uid} {
+      allow read: if isSuper() || (signedIn() && request.auth.uid == uid);
+      allow create, update: if isSuper() && request.resource.data.keys().hasOnly(['units', 'name', 'email', 'grantedBy', 'updatedAt'])
+        && request.resource.data.units is list && request.resource.data.units.size() <= 50 && request.resource.data.grantedBy == request.auth.uid;
+      allow delete: if isSuper();
+    }
+    // Granted teachers read progress and submissions of their courses across all students (collection-group queries
+    // filtered on unitId), and never write them: no write rule here, and the per-user rules above don't name them.
+    match /{path=**}/progress/{lessonId} { allow read: if granted(resource.data.unitId); }
+    match /{path=**}/submissions/{subId} { allow read: if granted(resource.data.unitId); }
 
     // Announcements sent from /super: written by the sendBroadcast function, read by platform admins.
     match /broadcasts/{id} { allow read: if isSuper(); allow write: if false; }
