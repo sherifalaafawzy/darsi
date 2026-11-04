@@ -10,6 +10,7 @@ import { useStore } from "../state/store";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
 import { STAGES, teachStage, type Unit } from "../content/types";
 import { useSuperOn, useTracks } from "../content/settings";
+import { certCode } from "../content/cert";
 import { useMine } from "../content/mine";
 import { share } from "../platform";
 import { useInstall } from "../pwa";
@@ -70,7 +71,7 @@ export function Me() {
           {done.length === 0 && <p className="muted">{t("me.noCerts")}</p>}
           {done.map((u) => {
             const last = u.lessons.map((l) => state.progress[l.id]?.completedAt).sort().pop()!;
-            const code = `DRS-${u.id.toUpperCase()}-${(state.name || "T").length.toString(36).toUpperCase()}${new Date(last).getTime().toString(36).slice(-4).toUpperCase()}`;
+            const code = certCode(u.id, state.name, last);
             return <CertificateCard key={u.id} track={u.track} kicker={t("cert.kicker")} trackLabel={tracks.name(u.track)} name={state.name || "—"} title={L(u.title)} date={dateFmt.format(new Date(last))} code={code}
               action={<Button size="sm" variant="secondary" icon="share" onClick={() => share({ title: `${t("cert.kicker")}: ${L(u.title)}`, text: `${state.name} — ${code}` })}>{t("kit.share")}</Button>} />;
           })}

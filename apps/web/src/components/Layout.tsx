@@ -26,7 +26,7 @@ export function accountLinks(role: Role, signedIn: boolean): NavItem[] {
   const links: NavItem[] = [];
   if (role === "orgAdmin") links.push({ path: "/admin", icon: "settings", key: "nav.admin" }, { path: "/admin/analytics", icon: "chart", key: "nav.analytics" });
   if (role === "teacher" || role === "orgAdmin") links.push({ path: "/teach", icon: "chat", key: "nav.teach" });
-  if (role === "superadmin") links.push({ path: "/super", icon: "language", key: "nav.super" }, { path: "/super/analytics", icon: "chart", key: "nav.analytics" }, { path: "/super/orgs", icon: "home", key: "nav.orgs" }, { path: "/super/plans", icon: "award", key: "nav.plans" });
+  if (role === "superadmin") links.push({ path: "/super", icon: "language", key: "nav.super" }, { path: "/super/analytics", icon: "chart", key: "nav.analytics" }, { path: "/super/orgs", icon: "home", key: "nav.orgs" }, { path: "/super/projects", icon: "file", key: "nav.projects" }, { path: "/super/certificates", icon: "check", key: "nav.certificates" }, { path: "/super/plans", icon: "award", key: "nav.plans" });
   else links.push({ path: "/org", icon: "home", key: "nav.org" });
   // The course editor: platform admins publish for everyone, org admins for their own members.
   if (role === "superadmin" || role === "orgAdmin") links.push({ path: role === "superadmin" ? "/super/content" : "/admin/content", icon: "edit", key: "nav.content" });

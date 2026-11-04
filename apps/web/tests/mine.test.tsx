@@ -69,6 +69,33 @@ describe("audience and tracks", () => {
 });
 
 describe("Home", () => {
+  it("shows platform admins every course in a track, for teachers and for students, labelled", async () => {
+    h.role = "superadmin";
+    h.units = [entry("ai-t"), entry("ai-s", { audience: "students", level: 2 }), entry("ai-u1", { level: 4, teach: "university" }), entry("cyber-t")];
+    seed({ tracks: ["cyber"], audience: "teachers", track: "ai" });
+    let seen: ReturnType<typeof useMine> | null = null;
+    show(<><Home /><Probe on={(_, m) => { seen = m; }} /></>);
+    await screen.findByRole("heading", { name: "Course ai-s" });
+    await screen.findByRole("heading", { name: "Course ai-u1" });
+    expect(screen.getByRole("heading", { name: "Course ai-t" })).toBeTruthy();
+    expect(screen.getAllByText("For students").length).toBe(1);
+    expect(screen.getAllByText("For university teachers").length).toBe(1);
+    // Every track, whatever they picked; Kit and Downloads take every course.
+    expect(seen!.all).toBe(true);
+    expect(seen!.tracks.map((t) => t.id)).toEqual(BUILTIN_TRACKS.filter((t) => !t.hidden).map((t) => t.id));
+    expect(seen!.isMine(entry("iot-x", { audience: "students" }))).toBe(true);
+  });
+
+  it("keeps everyone else to their own audience and tracks", async () => {
+    seed({ tracks: ["cyber"], audience: "teachers" });
+    let seen: ReturnType<typeof useMine> | null = null;
+    show(<Probe on={(_, m) => { seen = m; }} />);
+    await waitFor(() => expect(seen).not.toBeNull());
+    expect(seen!.all).toBe(false);
+    expect(seen!.isMine(entry("cyber-x", { audience: "students" }))).toBe(false);
+    expect(seen!.isMine(entry("ai-x"))).toBe(false);
+  });
+
   it("pins university courses first for university teachers, and hides them from everyone else", async () => {
     h.units = [entry("ai-t"), entry("ai-u1", { level: 4, teach: "university" })];
     seed({ tracks: ["ai"], audience: "teachers", teach: "university" });

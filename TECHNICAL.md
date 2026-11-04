@@ -432,6 +432,13 @@ Platform admins manage every organization and account (`admin/OrgsAdmin.tsx`, th
 - **/super/orgs:** every organization with its status and members, and "New organization" (name, type, country, city, and optionally its admin by email or username).
 - **An organization's page** (/super/orgs/:id), under "Manage this organization": its details (and "Make active" for a pending or rejected one); "Add a person" (any account by email, username or the start of the name, as student, teacher or org admin; someone in another organization moves); each member's role, or Remove (back to an independent learner); and deleting it after typing its name.
 - **A person's page** (/super/people/:uid): "Role and organization" sets any role, platform admin included, with the organization where the role needs one.
+- **Everything learners see and make** (2026-11-04):
+  - **Every course:** `useMine().all` (`content/mine.ts`) gives platform admins every track and every course, for teachers, for students and for university teachers. Home lists a track's courses from Beginner up, each labelled with who it is for. Kit, Downloads and My tracks follow `isMine`.
+  - **/super/projects** (`admin/AllWork.tsx`, in the SuperAdmin chunk): every project anyone submitted, newest first. "Waiting for review" is the default, "All projects" the other view, 50 at a time. Reviewing uses the same card as a person's page (`admin/SubmissionCard.tsx`).
+    - It is a collection-group query on `submissions`. The rule `match /{path=**}/submissions/{subId}` allows reads only to platform admins.
+    - It needs the `submissions (status, createdAt desc)` collection-group index and a collection-group single-field index on `createdAt` (`firestore.indexes.json`).
+  - **/super/certificates:** everyone who finished a course, worked out from `users/*.summary.units` against the catalog's lesson counts. The 300 accounts with the most lessons are read first, with "Show more" for the rest.
+    - Opening a certificate reads that person's progress in the course for the finishing date. The card and its code are the ones the learner sees in Me (`content/cert.ts`).
 
 ## Invite codes
 

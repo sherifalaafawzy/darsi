@@ -16,6 +16,12 @@ service cloud.firestore {
       return (signedIn() && request.auth.uid == uid) || isSuper() || isOrgAdmin(data.get('orgId', null)) || isTeacherOf(data);
     }
 
+    // Every project, across accounts (platform admins: /super/projects). Reviewing still goes through the rule on
+    // users/{uid}/submissions below.
+    match /{path=**}/submissions/{subId} {
+      allow read: if isSuper();
+    }
+
     // Course editor (TECHNICAL.md "Authored content"). `owner` is "public" (platform admins publish for everyone) or an
     // orgId (that org's admins publish for its members). Drafts are edited here. Publishing, unpublishing and deleting a
     // published unit go through Cloud Functions, which alone write `published` and the Storage files learners read.

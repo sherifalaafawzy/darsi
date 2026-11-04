@@ -269,3 +269,4 @@ function RecentAnnouncements({ list, error, orgs }: { list?: Broadcast[]; error?
 
 // /super/plans loads with this chunk: as a lazy route of its own it split the startup bundle (CLAUDE.md "Keep the startup bundle in one file").
 export { PlansPage } from "./Plans";
+export { CertificatesPage, ProjectsPage } from "./AllWork";

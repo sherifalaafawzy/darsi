@@ -1,6 +1,7 @@
 /**
  * What one learner sees: courses for their audience (teachers or students) in the tracks they chose, one track on
- * Home at a time. Shared by Home, the track switcher, My tracks, Kit, Downloads, Me and the nav.
+ * Home at a time. Platform admins see every course: all tracks, for teachers and for students. Shared by Home, the
+ * track switcher, My tracks, Kit, Downloads, Me and the nav.
  */
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n";
@@ -38,10 +39,13 @@ export function useMine() {
   const stage = audience === "students" ? state.stage : teachStage(state.teach);
   const uni = audience === "teachers" && stage === "university";
   const start = (track: Track) => startLevel(stage, of(track).levels);
-  const tracks = myTracks(state.tracks, visible);
+  const all = role === "superadmin";
+  const tracks = all ? visible : myTracks(state.tracks, visible);
   const ids = new Set(tracks.map((t) => t.id));
   return {
     audience,
+    /** A platform admin: every course, whoever it is for. */
+    all,
     /** A university teacher: university courses are theirs too. */
     uni,
     fixed: audienceFixed(role),
@@ -58,7 +62,7 @@ export function useMine() {
     tracks,
     active: activeTrack(state.track, tracks),
     /** A course for this learner: their audience, in one of their tracks. */
-    isMine: (u: Pick<CatalogEntry, "track" | "audience" | "teach">) => audienceOf(u) === audience && ids.has(u.track) && (!u.teach || uni),
+    isMine: (u: Pick<CatalogEntry, "track" | "audience" | "teach">) => ids.has(u.track) && (all || (audienceOf(u) === audience && (!u.teach || uni))),
     setActive: (track: Track) => dispatch({ type: "set", patch: { track } }),
   };
 }

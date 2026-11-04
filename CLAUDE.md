@@ -327,6 +327,16 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - **Checked:** web 1216 tests (`tests/super-switch.test.tsx` new), functions 142, `tsc`, `lint:css`, startup 4 files.
       - On the local stack in the browser: the emulator's Google window lists the account and signs into it. The tutor answered for real (0.84 credits). The switch hid the button, the card and the plans, and the server refused typed, voice and checkout calls. Turning it back on restored them. A Paymob stand-in purchase added 500 credits. With the web server stopped, the app ran from its service worker.
     - **Deployed** with the user's go-ahead; see "Firebase project" below.
+25. Done and deployed (2026-11-04, uncommitted): **platform admins see every course, certificate and project.** The user asked that "super admins can see all courses and certificates and projects". TECHNICAL.md "Platform administration".
+    - Every course in the learner screens (`useMine().all`), labelled for teachers, students or university teachers.
+    - /super/projects: every project, to review.
+    - /super/certificates: every certificate earned, each openable.
+    - Both pages are in the nav.
+    - **Checked:**
+      - web 1221 tests (`tests/allwork.test.tsx` new, plus two in `mine.test.tsx`), `tsc`, `lint:css`.
+      - Startup 4 files (+0.25 KB gzipped). The SuperAdmin chunk is not precached.
+      - In the browser on the emulators, as a test admin with seeded data (removed after): the project listed with its learner, course and date, approved, and moved to "All projects". The certificate listed and opened with its date and code. Home showed all nine AI courses with their labels.
+    - **Deployed** with the user's go-ahead; see "Firebase project" below.
 9. Not started: the security review. The user asked for static scanning of the rules, functions and client, plus a pentest of the deployed URL with `H:\htdocs\pentest-lab` (allowlist-gated; add only darsi-f0685 hosts). It is deferred until the code is finished.
 
 ### Firebase project (live): darsi-f0685
@@ -454,6 +464,16 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
   3. Hosting (`index-DwaEjwe-.js`), built into `H:/tmp/darsi-deploy-dist` with the committed cast pictures, deployed with `H:/tmp/firebase.deploy.json` (no rebuild step). e2e 30/30 on that build; startup 4 files.
   - Checked live: `setSuperOn`, `tutorStatus` and `startCheckout` answer "Sign in first" to anonymous calls. The relay answers darsiai.org with `auth` for a bad token and refuses other websites (401). `content/settings.json` has no `super` yet, which means on. As a guest on darsiai.org after the update, the tutor button shows and no Firebase chunk loads.
   - Not checked live: flipping the switch, which needs a platform-admin sign-in (the user's, on /super/plans).
+- Deployed 2026-11-04 (item 25, every course, certificate and project for platform admins, uncommitted, with the user's go-ahead):
+  1. Firestore rules (the collection-group read of `submissions` for platform admins) and indexes: `submissions (status, createdAt desc)` collection-group, and `createdAt` single-field overrides. All READY within minutes. Two older field overrides in the project (one is `submissions.unitId`) aren't in the file and were kept: the CLI deletes them only with `--force`.
+  2. Hosting (`index-DlCIb8sn.js`).
+     - Built in the clean worktree `H:/tmp/darsi-deploy3`: commit 408f2958, plus this item's files, plus the other session's tutor edits that were already live (`Tutor.tsx`, `Explainer.tsx`, `tutor.css`, tutor strings, and only the `start` prop of `LightLesson.tsx`). Committed cast pictures.
+     - The running full-screen session's unfinished edits stayed out: the vendored player, `fitStage`, `lesson.css` and `videoshape.test.ts`.
+     - That copy passed `tsc`, web 1221 tests and e2e 30/30. Startup is 4 files.
+  - Checked live:
+    - Without an account, a collection-group query of `submissions` and a query of `users` by `summary.lessonsDone` both answer 403.
+    - As a returning guest on darsiai.org, the update toast's Reload moved them to the new build. Home showed their own courses, and no Firebase chunk loaded.
+  - Not checked live: the admin's Home, /super/projects and /super/certificates, which need a platform-admin sign-in (the user's).
 - **Storage**: the app uses the bucket **`darsi-f0685` in europe-west1**, set by `VITE_FIREBASE_STORAGE_BUCKET` in `.env.local`. It is deploy target `main` with `firebase/storage.rules`.
   - The original default bucket `darsi-f0685.firebasestorage.app` (us-west1, never used) was deleted on 2026-10-25 and now returns 404 `NoSuchBucket`. Keep the `main` target: without one, `firebase deploy --only storage` aims at the project's default bucket, which no longer exists.
   - Checked live on 2026-10-25: media/kits are public, and submissions return 403 to anonymous requests.

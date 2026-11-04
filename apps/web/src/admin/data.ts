@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { collection, doc, documentId, getCountFromServer, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, where, type QueryConstraint } from "firebase/firestore";
+import { collection, collectionGroup, doc, documentId, getCountFromServer, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, where, type QueryConstraint } from "firebase/firestore";
 import { db } from "../firebase";
 import type { Org, Profile } from "../auth/types";
 
@@ -111,6 +111,31 @@ export const usePeople = (search: string) => useOnce(async () => {
     : query(collection(db, "users"), orderBy("lastActive", "desc"), limit(50));
   return (await getDocs(q)).docs.map((d) => ({ uid: d.id, ...d.data() }) as Profile);
 }, [search]);
+
+/** A project with the account it belongs to (users/{uid}/submissions). */
+export interface AnySubmission extends Submission { uid: string }
+/** Every project anyone submitted, for platform admins: newest first, `waiting` only those not reviewed yet. */
+export const useAllSubmissions = (waiting: boolean, max: number) => useOnce(async () => {
+  const q = query(collectionGroup(db, "submissions"), ...(waiting ? [where("status", "==", "submitted")] : []), orderBy("createdAt", "desc"), limit(max));
+  return (await getDocs(q)).docs.map((d) => ({ ...d.data(), id: d.id, uid: d.ref.parent.parent!.id }) as AnySubmission);
+}, [waiting, max]);
+
+/** Accounts that finished at least one lesson, most lessons first (platform admins: the certificates page). */
+export const useLearners = (max: number) => useOnce(async () =>
+  (await getDocs(query(collection(db, "users"), where("summary.lessonsDone", ">", 0), orderBy("summary.lessonsDone", "desc"), limit(max)))).docs
+    .map((d) => ({ uid: d.id, ...d.data() }) as Profile), [max]);
+
+/** Some accounts' names, read once (the projects page names whose project each is). */
+export const useNames = (uids: string[]) => useOnce(uids.length ? async () => {
+  const docs = await Promise.all(uids.map((uid) => getDoc(doc(db, "users", uid))));
+  return Object.fromEntries(docs.map((d) => [d.id, (d.get("name") as string | undefined) ?? ""]));
+} : null, [uids.join(",")]);
+
+/** When someone finished a course: the time of their last lesson in it (ISO), or null. */
+export async function finishedAt(uid: string, unitId: string): Promise<string | null> {
+  const rows = await getDocs(query(collection(db, "users", uid, "progress"), where("unitId", "==", unitId)));
+  return rows.docs.map((d) => d.get("completedAt") as string | undefined).filter((x): x is string => typeof x === "string").sort().pop() ?? null;
+}
 
 /** The Google Analytics stream collect forwards to (config/analytics), set on /super/analytics. */
 export interface GaConfig { measurementId: string; apiSecret: string }

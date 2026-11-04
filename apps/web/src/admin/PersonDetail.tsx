@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { AppBar, Button, EmptyState, Icon, TrackChip } from "@darsi/design-system";
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthProvider";
@@ -11,7 +11,8 @@ import { COMPETENCIES, competency, strength } from "../content/competencies";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
 import type { Unit } from "../content/types";
 import { useTracks } from "../content/settings";
-import { daysSince, useMembers, usePerson, useProgress, useSubmissions, type Submission } from "./data";
+import { daysSince, useMembers, usePerson, useProgress, useSubmissions } from "./data";
+import { SubmissionCard } from "./SubmissionCard";
 import { bestFramework, FrameworkPicker, PersonStandards } from "./Standards";
 import { UserRolePanel } from "./OrgsAdmin";
 import { SuperGrantPanel } from "./Super";
@@ -161,28 +162,6 @@ export function PersonDetail({ back = "/admin" }: { back?: string }) {
         )}
       </main>
     </>
-  );
-}
-
-function SubmissionCard({ uid, sub, lessonTitle }: { uid: string; sub: Submission; lessonTitle: string }) {
-  const { t } = useI18n();
-  const { user, role } = useAuth();
-  const [fb, setFb] = useState(sub.feedback ?? "");
-  const canReview = role === "teacher" || role === "orgAdmin" || role === "superadmin";
-  const review = (status: "approved" | "revise") => updateDoc(doc(db, "users", uid, "submissions", sub.id), { status, feedback: fb, reviewedBy: user?.uid, reviewedAt: serverTimestamp() });
-  return (
-    <article className={`submission is-${sub.status}`}>
-      <header><strong>{lessonTitle}</strong><span className={`status status-${sub.status}`}>{t(`p.status.${sub.status}` as "p.status.submitted")}</span></header>
-      <p dir="auto" className="sub-text">{sub.text}</p>
-      {sub.fileUrl && <a href={sub.fileUrl} target="_blank" rel="noreferrer noopener"><Icon name="file" size={16} /> {sub.fileName ?? t("p.attachment")}</a>}
-      {canReview ? (
-        <div className="stack-sm">
-          <label className="dr-field-label" htmlFor={`fb-${sub.id}`}>{t("p.feedback")}</label>
-          <textarea id={`fb-${sub.id}`} className="dr-reflect-input" rows={2} dir="auto" value={fb} onChange={(e) => setFb(e.target.value)} />
-          <div className="row-gap"><Button size="sm" icon="check" onClick={() => review("approved")}>{t("p.approve")}</Button><Button size="sm" variant="secondary" onClick={() => review("revise")}>{t("p.revise")}</Button></div>
-        </div>
-      ) : sub.feedback ? <p className="notice" dir="auto">{sub.feedback}</p> : null}
-    </article>
   );
 }
 

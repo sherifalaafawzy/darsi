@@ -21,10 +21,11 @@ export function Home() {
   const [menu, setMenu] = useState(false);
   // One of the learner's tracks at a time, and only courses for their audience, starting at the learner's level.
   // University courses only for university teachers, and pinned above the rest.
-  const units = (catalog?.units ?? []).filter((u) => u.track === mine.active && audienceOf(u) === mine.audience && (!u.teach || mine.uni));
+  // Platform admins: every course in the track, for teachers and for students, from Beginner up.
+  const units = (catalog?.units ?? []).filter((u) => u.track === mine.active && (mine.all || (audienceOf(u) === mine.audience && (!u.teach || mine.uni))));
   const pinned = units.filter((u) => u.teach);
   const name = mine.active ? tracks.name(mine.active) : "";
-  const level = mine.active ? mine.levelOf(mine.active) : 1;
+  const level = mine.all ? 0 : mine.active ? mine.levelOf(mine.active) : 1;
   const { current, later, earlier } = startAt(units.filter((u) => !u.teach), level);
   const block = (u: CatalogEntry) => (u.available ? <UnitBlock key={u.id} entry={u} current={u.level === level} /> : <LockedUnit key={u.id} entry={u} />);
   return (
@@ -85,7 +86,8 @@ function UnitBlock({ entry, current }: { entry: CatalogEntry; current: boolean }
   return (
     <section className="unit" aria-labelledby={`u-${unit.id}`}>
       <div className="unit-head"><TrackChip track={unit.track} solid>{tracks.name(unit.track)}</TrackChip>
-        <span className="pill">{current ? t("home.yourLevel", { level: mine.levelName(entry.track, entry.level) }) : mine.levelName(entry.track, entry.level)}</span>{state.downloads[unit.id] && <span className="offline-badge"><Icon name="offline" size={16} />{t("home.offline")}</span>}</div>
+        <span className="pill">{current ? t("home.yourLevel", { level: mine.levelName(entry.track, entry.level) }) : mine.levelName(entry.track, entry.level)}</span>
+        {mine.all && <span className="pill">{t(entry.teach ? "home.forUni" : audienceOf(entry) === "students" ? "home.forStudents" : "home.forTeachers")}</span>}{state.downloads[unit.id] && <span className="offline-badge"><Icon name="offline" size={16} />{t("home.offline")}</span>}</div>
       <h2 className="unit-title" id={`u-${unit.id}`}>{L(unit.title)}</h2>
       <p className="muted">{L(unit.summary)}</p>
       {next ? (

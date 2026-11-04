@@ -25,7 +25,7 @@ export function MyTracks() {
   const [checking, setChecking] = useState<Track | null>(null);
   const [added, setAdded] = useState<Track | null>(null);
   const chosen = mine.tracks.map((x) => x.id);
-  const courses = (id: string) => (catalog?.units ?? []).filter((u) => u.track === id && u.available && audienceOf(u) === mine.audience).length;
+  const courses = (id: string) => (catalog?.units ?? []).filter((u) => u.track === id && u.available && (mine.all || audienceOf(u) === mine.audience)).length;
   const toggle = (id: string) => {
     const on = chosen.includes(id);
     if (on && chosen.length === 1) { setWarn(true); return; }

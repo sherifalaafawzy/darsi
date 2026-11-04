@@ -42,6 +42,8 @@ const OrgAnalytics = lazy(() => import("./admin/Analytics").then((m) => ({ defau
 const OrgReport = lazy(() => import("./admin/OrgReport").then((m) => ({ default: m.OrgReport })));
 const OrgsAdmin = lazy(() => import("./admin/OrgsAdmin").then((m) => ({ default: m.OrgsAdmin })));
 const PlansPage = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.PlansPage })));
+const ProjectsPage = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.ProjectsPage })));
+const CertificatesPage = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.CertificatesPage })));
 const Upgrade = lazy(() => import("./upgrade/Upgrade").then((m) => ({ default: m.Upgrade })));
 const Tutor = lazy(() => import("./tutor/Tutor").then((m) => ({ default: m.Tutor })));
 const TutorPanel = lazy(() => import("./tutor/Tutor").then((m) => ({ default: m.TutorPanel })));
@@ -171,6 +173,8 @@ function Routed() {
             <Route path="super/analytics" element={<AnalyticsPage />} />
             <Route path="super/orgs" element={<OrgsAdmin />} />
             <Route path="super/plans" element={<PlansPage />} />
+            <Route path="super/projects" element={<ProjectsPage />} />
+            <Route path="super/certificates" element={<CertificatesPage />} />
             <Route path="super/orgs/:orgId" element={<OrgAnalytics />} />
             <Route path="super/orgs/:orgId/report" element={<OrgReport />} />
             <Route path="super/people/:uid" element={<PersonDetail back="/super/analytics" />} />
