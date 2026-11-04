@@ -30,8 +30,9 @@ async function newSession(cfg: TutorConfig, uid: string, state: Record<string, u
 
 // How long a turn may take before the question goes the direct way. An answer is one 3.8 Flash call, usually 3–5 s, but
 // that model now and then takes 30 s to start (measured 2026-11-03), and the direct answer takes about a second.
-// An explainer takes 20–30 s. tutorAsk's own limit (180 s) leaves room for a repair turn and the direct answer.
-export const ANSWER_MS = 12_000, EXPLAINER_MS = 75_000;
+// Past 8 s the fast model answers instead of waiting out a stall. An explainer takes 20–30 s. tutorAsk's own limit
+// (180 s) leaves room for a repair turn and the direct answer.
+export const ANSWER_MS = 8_000, EXPLAINER_MS = 75_000;
 
 async function runTurn(cfg: TutorConfig, uid: string, sessionId: string, message: string, ms: number): Promise<AgentTurn & { seconds: number }> {
   const t0 = Date.now();

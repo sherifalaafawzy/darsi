@@ -126,7 +126,7 @@ export const SEARCH_TOOL = {
 /** The voice tutor's way to show something: the relay asks the tutor agent for an explainer and plays it on the phone. */
 export const EXPLAIN_TOOL = {
   name: "explain",
-  description: "Makes a short animated explainer (4 to 6 scenes) and plays it on the learner's screen. Use it when the learner asks to see something, or when a process, a flow or a message is easier to see than to hear. It takes about 20 seconds.",
+  description: "Draws a short animation on the learner's board. Call it only when the learner asks to see something. Say one short sentence that you will show it on the board, then stop: the pictures are drawn for you, and you are given the scenes to talk through. Do not call it for an ordinary answer. It takes about 20 seconds.",
   parameters: { type: "OBJECT", properties: { topic: { type: "STRING", description: "What to explain, with the key points from the course" } }, required: ["topic"] },
 };
 

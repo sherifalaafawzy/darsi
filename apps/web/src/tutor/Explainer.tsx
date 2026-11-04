@@ -22,7 +22,7 @@ export function ExplainerCard({ pkg, lang, autoplay = false, Player }: { pkg: Li
     <div className="tu-explainer stack-sm">
       <p className="tu-explainer-title"><span dir="auto">{title}</span> <span className="muted small">{t("tu.explainerLength", { n: num(secs) })}</span></p>
       {open
-        ? <Player pkg={pkg} lang={lang} poster={<p className="muted small">{t("tu.explainerLoading")}</p>} onEvent={() => {}} onError={() => setFailed(true)} />
+        ? <Player pkg={pkg} lang={lang} start poster={<p className="muted small">{t("tu.explainerLoading")}</p>} onEvent={() => {}} onError={() => setFailed(true)} />
         : <div><Button size="sm" icon="play" onClick={() => setOpen(true)}>{t("tu.watch")}</Button></div>}
     </div>
   );

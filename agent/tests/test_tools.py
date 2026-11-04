@@ -77,7 +77,7 @@ def test_the_agent_has_its_tools_and_the_explainer_as_a_tool():
 def test_instructions_are_a_function_so_course_code_with_braces_is_safe():
     rules = "COURSE MATERIAL:\nprint({'a': 1})"
     text = root_agent.instruction(SimpleNamespace(state={"tutor_rules": rules}))
-    assert text.startswith(rules) and "reply exactly once" in text
+    assert text.startswith(rules) and "reply exactly once" in text and "Do not call make_explainer" in text
 
 
 @pytest.mark.parametrize("template", ["title-hook", "steps", "flow", "message-mock", "quiz", "summary"])

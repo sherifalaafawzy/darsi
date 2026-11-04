@@ -102,8 +102,8 @@ def make(model) -> LlmAgent:
     return LlmAgent(
         name="make_explainer",
         model=model,
-        description=("Makes a short animated explainer (4 to 6 scenes) that plays on the learner's phone. Use it when the learner "
-                     "asks to be shown something, or when a process, a flow between people or machines, or a message is easier to see than to read."),
+        description=("Draws a short animated explainer (4 to 6 scenes) on the learner's board. Call it only after you have said you will "
+                     "show it on the board, and only when the learner asked to be shown."),
         instruction=_instruction,
         input_schema=ExplainerRequest,
         output_schema=Explainer,

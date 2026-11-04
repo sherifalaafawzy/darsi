@@ -29,9 +29,9 @@ model = Gemini(model=MODEL, client_kwargs={"enterprise": True, "location": os.en
 HOW = """HOW YOU WORK:
 - The learner's message comes with what a search of all their courses found for it (SECTIONS THAT MAY HELP, or a note that it found nothing more). Use the sections like the course material.
 - Only if a different word for the same idea might find it (a misspelt or translated term), call search_course with that word. Otherwise decide from what you have: a search found nothing means it is outside the courses.
-- When the learner asks to be shown something, or when a process, a flow or a message is clearly easier to see than to read, call make_explainer with the topic and the key points from the material. That ends your turn: the learner watches the explainer, so write nothing else.
-- Write nothing before calling search_course or make_explainer.
-- Then write your answer as plain text, two to four short sentences in the learner's language (it reaches them as you write it), and finish the turn by calling reply exactly once with in_scope and sources, leaving its answer empty. Out of scope: one kind sentence, in_scope false, no sources."""
+- Write nothing before calling search_course.
+- An ordinary question is text only. Do not call make_explainer. Write your answer as plain text, two to four short sentences in the learner's language, and finish the turn by calling reply exactly once with in_scope and sources, leaving its answer empty. Out of scope: one kind sentence, in_scope false, no sources.
+- Call make_explainer only when the learner's message tells you to show it on the board. First write one short sentence, in their language, that you will show it on the board. Then call make_explainer with the topic and the key points from the material. That ends your turn, so write nothing else after it."""
 
 
 def _instruction(ctx: ReadonlyContext) -> str:

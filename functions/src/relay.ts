@@ -108,20 +108,29 @@ wss.on("connection", (phone: WebSocket) => {
     const agentOn = cfg.engine === "agent" && !!cfg.agentId;
     let agentSession = "";
     const sys = instructions({ lang, course: unit.title[lang] ?? unit.title.en, lesson: lesson ? (lesson.title[lang] ?? lesson.title.en) : "", material: lessonMaterial(unit, lessonId, lang, 10000), voice: true, style: String(m.style ?? "").slice(0, 60), explain: agentOn });
-    /** The explain tool: the tutor agent makes the explainer, the phone plays it, and the voice gets its scenes to talk through. */
-    const explain = async (topic: string): Promise<string> => {
-      try {
-        const [ix, ixEn] = await indexes;
-        const r = await askAgent({ cfg, uid, orgId, unit, lessonId, lang, question: topic.slice(0, 600), show: true, sessionId: agentSession || undefined, ix, en: ixEn });
-        agentSession = r.sessionId;
-        agentUsd += r.usd;
-        if (!r.explainer) return "The explainer couldn't be made this time. Explain it in words instead.";
-        send({ type: "explainer", pkg: r.explainer });
-        return r.explainer.scenes.scenes.map((s, i) => `Scene ${i + 1}: ${(s.narration as Record<string, string>)[lang]}`).join("\n");
-      } catch (e) {
-        console.error("explain failed", String(e));
-        return "The explainer couldn't be made this time. Explain it in words instead.";
-      }
+    /** The explain tool. The phone shows the board at once and the tutor says it will draw there; the pictures are made
+     * in the background and start when they are ready, and the tutor is then given the scenes to talk through. */
+    const explain = (topic: string): string => {
+      send({ type: "board" });
+      void (async () => {
+        try {
+          const [ix, ixEn] = await indexes;
+          const r = await askAgent({ cfg, uid, orgId, unit, lessonId, lang, question: topic.slice(0, 600), show: true, sessionId: agentSession || undefined, ix, en: ixEn });
+          agentSession = r.sessionId;
+          agentUsd += r.usd;
+          if (closed) return;
+          const say = (text: string) => { if (gem?.readyState === WebSocket.OPEN) gem.send(JSON.stringify({ realtimeInput: { text } })); };
+          if (!r.explainer) { say("The pictures could not be drawn. Explain the topic in words now."); return; }
+          send({ type: "explainer", pkg: r.explainer });
+          const script = r.explainer.scenes.scenes.map((s, i) => `Scene ${i + 1}: ${(s.narration as Record<string, string>)[lang]}`).join("\n");
+          say(`The board is playing. Talk through these scenes now, in order, in the learner's language:\n${script}`);
+          void settle();
+        } catch (e) {
+          console.error("explain failed", String(e));
+          if (gem?.readyState === WebSocket.OPEN) gem.send(JSON.stringify({ realtimeInput: { text: "The pictures could not be drawn. Explain the topic in words now." } }));
+        }
+      })();
+      return "Say one short sentence, in the learner's language, that you will show this on the board. Then stop. Do not explain the topic yet.";
     };
 
     const vertex = cfg.backend === "vertex";
@@ -161,7 +170,7 @@ wss.on("connection", (phone: WebSocket) => {
       if (sc?.turnComplete) { send({ type: "turn" }); await settle(); }
       for (const fc of s.toolCall?.functionCalls ?? []) {
         if (fc.name === "explain") {
-          const result = await explain(String((fc.args as { topic?: string } | undefined)?.topic ?? ""));
+          const result = explain(String((fc.args as { topic?: string } | undefined)?.topic ?? ""));
           if (gem?.readyState === WebSocket.OPEN) gem.send(JSON.stringify({ toolResponse: { functionResponses: [{ id: fc.id, name: fc.name, response: { result } }] } }));
           continue;
         }

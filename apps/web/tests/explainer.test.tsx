@@ -19,7 +19,8 @@ describe("explainers in the tutor", () => {
   });
 
   it("waits for Watch when typing, then plays the package from memory, with nothing fetched", async () => {
-    const createPlayer = vi.fn(() => ({ play() {}, pause() {}, destroy() {}, setOrient() {}, ready: Promise.resolve() }));
+    const play = vi.fn();
+    const createPlayer = vi.fn(() => ({ play, pause() {}, destroy() {}, setOrient() {}, ready: Promise.resolve() }));
     setLightPlayer(async () => ({ createPlayer, packsUsed: () => [], prefetchPacks: async () => {} }) as never);
     const fetch = vi.fn();
     vi.stubGlobal("fetch", fetch);
@@ -28,6 +29,7 @@ describe("explainers in the tutor", () => {
     expect(createPlayer).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "شاهد" }));
     await waitFor(() => expect(createPlayer).toHaveBeenCalledOnce());
+    expect(play).toHaveBeenCalledOnce();
     const [, given, opts] = createPlayer.mock.calls[0] as unknown as [HTMLElement, { scenes: unknown; timing: Record<string, unknown> }, { lang: string; captions: boolean }];
     expect(given.scenes).toBe(pkg.scenes);
     expect(given.timing).toEqual({ ar: pkg.timing.ar });
@@ -37,10 +39,11 @@ describe("explainers in the tutor", () => {
   });
 
   it("starts by itself in a call, under the tutor's voice", async () => {
-    const createPlayer = vi.fn(() => ({ play() {}, pause() {}, destroy() {}, setOrient() {}, ready: Promise.resolve() }));
+    const play = vi.fn();
+    const createPlayer = vi.fn(() => ({ play, pause() {}, destroy() {}, setOrient() {}, ready: Promise.resolve() }));
     setLightPlayer(async () => ({ createPlayer, packsUsed: () => [], prefetchPacks: async () => {} }) as never);
     card(true);
-    await waitFor(() => expect(createPlayer).toHaveBeenCalledOnce());
+    await waitFor(() => expect(play).toHaveBeenCalledOnce());
     expect(screen.queryByRole("button", { name: "شاهد" })).toBeNull();
   });
 });

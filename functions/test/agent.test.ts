@@ -52,8 +52,9 @@ describe("the tutor agent's turns", () => {
   });
 
   it("sends the question with the sections found for it, and asks for an explainer when the learner taps Show me", () => {
-    expect(agentMessage("What is phishing?", "[s1] text", false)).toBe("What is phishing?\n\nSECTIONS THAT MAY HELP:\n[s1] text");
-    expect(agentMessage("What is phishing?", "", true)).toMatch(/^The learner asked to see this explained: call make_explainer/);
+    expect(agentMessage("What is phishing?", "[s1] text", false)).toBe("Answer in text only. Do not call make_explainer.\n\nWhat is phishing?\n\nSECTIONS THAT MAY HELP:\n[s1] text");
+    expect(agentMessage("What is phishing?", "", true)).toMatch(/^The learner asked to see this on the board/);
+    expect(agentMessage("What is phishing?", "", true)).toContain("call make_explainer");
     // With nothing new found, the note says whether the search found anything at all, so the agent needn't search again.
     expect(agentMessage("Capital of France?", "", false, false)).toContain("found nothing for this question");
     expect(agentMessage("What is phishing?", "", false, true)).toContain("found nothing beyond the lesson material");

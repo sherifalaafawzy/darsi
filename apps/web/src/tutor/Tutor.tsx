@@ -20,7 +20,7 @@ import "../styles/tutor.css";
  */
 type Source = { id: string; unitId: string; lessonId: string; stepId: string; lesson: string };
 type Pkg = Parameters<typeof ExplainerCard>[0]["pkg"];
-type Msg = { who: "me" | "tutor"; text: string; sources?: Source[]; credits?: number; q?: string; explainer?: Pkg; autoplay?: boolean };
+type Msg = { who: "me" | "tutor"; text: string; sources?: Source[]; credits?: number; q?: string; explainer?: Pkg; autoplay?: boolean; board?: "wait" | "play" };
 type Ask = (d: { unitId: string; lessonId: string | null; question: string; lang: string; history: { role: string; text: string }[]; sessionId?: string; show?: boolean; warm?: boolean }) => Promise<{ inScope: boolean; answer: string; sources: Source[]; credits: number; left: number; explainer?: Pkg | null; sessionId?: string }>;
 type Status = (d: Record<string, never>) => Promise<{ super: boolean; on: boolean; left: number; minute: number | null; maxMinutes: number; explainer?: number | null }>;
 type Talk = "off" | "connecting" | "listening" | "thinking" | "speaking";
@@ -121,6 +121,7 @@ function TutorBody({ relayUrl, ask, status, Player, unitId, lessonId, onLeave }:
     return !fresh && last?.who === who ? [...m.slice(0, -1), { ...last, text: last.text + text }] : [...m, { who, text }];
   });
   const leave = (to: string) => { stopTalk(); onLeave?.(); nav(to); };
+  const waitAt = (m: Msg[]) => { for (let i = m.length - 1; i >= 0; i--) if (m[i].board === "wait") return i; return -1; };
 
   /** A typed question, or (show) a request to see an earlier question explained. */
   const send = async (question?: string, show = false) => {
@@ -129,15 +130,26 @@ function TutorBody({ relayUrl, ask, status, Player, unitId, lessonId, onLeave }:
     if (!show) setDraft("");
     setErr(null); setBusy(true);
     const history = msgs.filter((m) => m.text).slice(-6).map((m) => ({ role: m.who === "me" ? "user" : "tutor", text: m.text }));
-    setMsgs((m) => [...m, { who: "me", text: show ? `${t("tu.showMe")}: ${q}` : q }]);
+    setMsgs((m) => show
+      ? [...m, { who: "me", text: q }, { who: "tutor", text: t("tu.onBoard"), board: "wait" }]
+      : [...m, { who: "me", text: q }]);
     track("tutor_question", { m: show ? "show" : "text" });
     asked.current++; // a warm-up answering after this must not replace the session this question opens
     try {
       const a = await ask({ unitId, lessonId, question: q, lang: tutorLang, history, sessionId: agentSession.current || undefined, show });
       if (a.sessionId) agentSession.current = a.sessionId;
-      setMsgs((m) => [...m, { who: "tutor", text: a.answer, sources: a.sources, credits: a.credits, q: a.inScope ? q : undefined, explainer: a.explainer ?? undefined }]);
+      setMsgs((m) => {
+        if (!show) return [...m, { who: "tutor", text: a.answer, sources: a.sources, credits: a.credits, q: a.inScope ? q : undefined, explainer: a.explainer ?? undefined }];
+        const at = waitAt(m);
+        if (at < 0) return m;
+        const next = m.slice();
+        next[at] = a.explainer
+          ? { ...m[at], explainer: a.explainer, autoplay: true, board: "play", sources: a.sources, credits: a.credits }
+          : { who: "tutor", text: a.answer, sources: a.sources, credits: a.credits, q: a.inScope ? q : undefined };
+        return next;
+      });
       setLeft(a.left);
-    } catch (e) { fail(e); } finally { setBusy(false); }
+    } catch (e) { setMsgs((m) => m.filter((x) => x.board !== "wait")); fail(e); } finally { setBusy(false); }
   };
 
   const startTalk = async () => {
@@ -166,7 +178,14 @@ function TutorBody({ relayUrl, ask, status, Player, unitId, lessonId, onLeave }:
       } else if (m.type === "heard" && m.text) { append("me", m.text, turnOpen); turnOpen = false; if (!speaker.speaking) setTalk("thinking"); }
       else if (m.type === "said" && m.text) append("tutor", m.text);
       else if (m.type === "sources" && m.items?.length) setMsgs((x) => [...x, { who: "tutor", text: "", sources: m.items }]);
-      else if (m.type === "explainer" && m.pkg) setMsgs((x) => [...x, { who: "tutor", text: "", explainer: m.pkg, autoplay: true }]);
+      else if (m.type === "board") setMsgs((x) => [...x, { who: "tutor", text: t("tu.onBoard"), board: "wait" }]);
+      else if (m.type === "explainer" && m.pkg) setMsgs((x) => {
+        const at = waitAt(x);
+        if (at < 0) return [...x, { who: "tutor", text: "", explainer: m.pkg, autoplay: true }];
+        const next = x.slice();
+        next[at] = { ...x[at], explainer: m.pkg, autoplay: true, board: "play" };
+        return next;
+      });
       else if (m.type === "interrupted") { speaker.clear(); setTalk("listening"); }
       else if (m.type === "turn") { turnOpen = true; setTimeout(() => !speaker.speaking && session.current && setTalk("listening"), 300); }
       else if (m.type === "credits") setLeft(m.left ?? null);
@@ -223,6 +242,7 @@ function TutorBody({ relayUrl, ask, status, Player, unitId, lessonId, onLeave }:
             {m.text && <p dir="auto">{m.text}</p>}
             {m.sources?.length ? <p className="tu-src small">{t("tu.from")}{" "}
               {m.sources.map((s, j) => <button key={s.id} type="button" className="tu-link" onClick={() => leave(`/lesson/${s.unitId}/${s.lessonId}`)}>{s.lesson}{j < m.sources!.length - 1 ? t("common.sep") : ""}</button>)}</p> : null}
+            {m.board === "wait" && !m.explainer && <div className="tu-board-wait" role="status"><p>{t("tu.drawing")}</p></div>}
             {m.explainer && <ExplainerCard pkg={m.explainer} lang={tutorLang} autoplay={m.autoplay} Player={Player} />}
             {m.credits ? <p className="muted small">{t("tu.used", { n: num(m.credits) })}</p> : null}
             {m.q && !m.explainer && info?.explainer ? <div><Button size="sm" variant="secondary" icon="play" disabled={busy} onClick={() => void send(m.q, true)}>{t("tu.showMe")}</Button> <span className="muted small">{t("tu.showCost", { n: num(info.explainer) })}</span></div> : null}
@@ -236,7 +256,6 @@ function TutorBody({ relayUrl, ask, status, Player, unitId, lessonId, onLeave }:
         <div className="stack-sm">
           <textarea className="dr-reflect-input" dir="auto" rows={3} value={draft} maxLength={1500} placeholder={t("tu.ask")} aria-label={t("tu.ask")} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(); } }} />
           <div><Button icon="next" loading={busy} disabled={!draft.trim()} onClick={() => void send()}>{t("tu.send")}</Button></div>
-          {busy && msgs[msgs.length - 1]?.text.startsWith(`${t("tu.showMe")}:`) && <p className="muted small" role="status">{t("tu.showing")}</p>}
         </div>
       )}
     </>)}

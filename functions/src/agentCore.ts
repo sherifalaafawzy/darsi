@@ -73,8 +73,12 @@ export function turnCost(u: AgentUsage | null, seconds: number, p: AgentPrices):
  * a note that it found nothing beyond the lesson, so the agent can answer or decline without searching again.
  */
 export function agentMessage(question: string, found: string, show: boolean, anyHits = !!found): string {
+  // An ordinary question is text only, so it stays one model call. Showing is the board: one sentence, then the explainer.
+  const lead = show
+    ? "The learner asked to see this on the board. Write one short sentence, in their language, that you will show it on the board, then call make_explainer. Do not explain the topic in text."
+    : "Answer in text only. Do not call make_explainer.";
   return [
-    show ? "The learner asked to see this explained: call make_explainer for it, then answer." : "",
+    lead,
     question,
     found ? `SECTIONS THAT MAY HELP:\n${found}` : anyHits ? "(A search of all the learner's courses found nothing beyond the lesson material.)" : "(A search of all the learner's courses found nothing for this question.)",
   ].filter(Boolean).join("\n\n");
