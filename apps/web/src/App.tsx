@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState, type ReactElement } from "react";
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useMatch, useSearchParams } from "react-router-dom";
-import { applyLocale, BrandProvider, EmptyState } from "@darsi/design-system";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useMatch, useNavigate, useSearchParams } from "react-router-dom";
+import { applyLocale, BrandProvider, Button, EmptyState } from "@darsi/design-system";
 import { AuthProvider, useAuth } from "./auth/AuthProvider";
 import { Forgot, NotConfigured, SetPassword, SignIn, SignUp } from "./auth/AuthScreens";
 import type { Role } from "./auth/types";
@@ -96,7 +96,7 @@ const homeFor = (role: Role) => (role === "orgAdmin" ? "/admin" : role === "supe
 function Routed() {
   const { state, ready, dispatch } = useStore();
   const { user, profile, role, orgId, configured, offlineUid, updateProfile } = useAuth();
-  const { t, dir } = useI18n();
+  const { dir } = useI18n();
   // Before any screen asks for the catalog: org members also see their org's published units.
   configureContent({ orgId: user ? orgId : null, signedIn: Boolean(user || offlineUid) });
   useEffect(() => {
@@ -192,7 +192,7 @@ function Routed() {
             <Route path="super/languages" element={<LanguagesPage />} />
             <Route path="super/languages/:code" element={<TranslatePage />} />
           </Route>
-          <Route path="*" element={<main className="screen"><EmptyState title={t("err.notFound")} /></main>} />
+          <Route path="*" element={<NotFound home={inApp ? homeFor(role) : "/"} />} />
         </Route>
       </Route>
     </Routes>
@@ -216,8 +216,9 @@ function LessonTutor() {
   const at = useMatch("/lesson/:unitId/:lessonId")?.params;
   const [open, setOpen] = useState(false);
   const superOn = useSuperOn().on;
+  const onboarded = useStore().state.onboarded; // a lesson link opened before onboarding shows onboarding, not a lesson
   useEffect(() => setOpen(false), [at?.lessonId]);
-  if (!at?.unitId || !at.lessonId || !superOn) return null;
+  if (!at?.unitId || !at.lessonId || !superOn || !onboarded) return null;
   return open
     ? <Suspense fallback={<TutorFab label={t("lesson.askTutor")} onOpen={() => {}} busy />}><TutorPanel unitId={at.unitId} lessonId={at.lessonId} onClose={() => setOpen(false)} relayUrl={import.meta.env.VITE_TUTOR_RELAY ?? ""} ask={call("tutorAsk")} status={call("tutorStatus")} Player={canPlayLight() ? LightLesson : null} /></Suspense>
     : <TutorFab label={t("lesson.askTutor")} onOpen={() => setOpen(true)} />;
@@ -240,4 +241,11 @@ function Scoped() {
 
 export function App() {
   return <AuthProvider><Scoped /></AuthProvider>;
+}
+
+/** An unknown address: say so, and offer the way back to where this person starts. */
+function NotFound({ home }: { home: string }) {
+  const { t } = useI18n();
+  const nav = useNavigate();
+  return <main className="screen"><EmptyState title={t("err.notFound")} action={<Button onClick={() => nav(home)}>{t("err.goHome")}</Button>} /></main>;
 }

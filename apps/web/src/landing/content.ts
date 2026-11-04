@@ -5,10 +5,10 @@ const t = (en: string, ar: string): L => ({ en, ar });
 export const landing = {
   nav: { approach: t("How it works", "كيف يعمل"), tracks: t("Tracks", "المسارات"), orgs: t("For organizations", "للمؤسسات"), standards: t("Standards", "المعايير"), faq: t("FAQ", "أسئلة شائعة"), language: t("Language", "اللغة"), signIn: t("Sign in", "تسجيل الدخول"), start: t("Start learning", "ابدأ التعلّم") },
   hero: {
-    kicker: t("AI · IoT · Cyber security — for teachers", "الذكاء الاصطناعي، إنترنت الأشياء، الأمن السيبراني — للمعلمين"),
+    kicker: t("AI, programming, data, IoT and cyber security — for teachers and their students", "الذكاء الاصطناعي والبرمجة والبيانات وإنترنت الأشياء والأمن السيبراني — للمعلمين وطلابهم"),
     title: t("Teachers who understand technology change a country.", "المعلم الذي يفهم التقنية يغيّر بلدًا."),
-    body: t("Darsi gives school and university teachers serious, practical training in AI, IoT and cyber security: short lessons with narrated videos, real projects in their own classrooms, and ready-to-teach slides and lesson plans — in their language, on any phone, even offline.",
-            "يقدّم «درسي» لمعلمي المدارس والجامعات تدريبًا جادًا وعمليًا في الذكاء الاصطناعي وإنترنت الأشياء والأمن السيبراني: دروس قصيرة مع فيديوهات مشروحة بالصوت، ومشاريع حقيقية في صفوفهم، وشرائح وخطط دروس جاهزة للتدريس — بلغتهم، على أي هاتف، وحتى دون اتصال."),
+    body: t("Darsi gives school and university teachers serious, practical training in AI, programming, data, IoT and cyber security, with courses for their students too: short lessons with narrated videos, real projects in their own classrooms, and ready-to-teach slides and lesson plans — in their language, on any phone, even offline.",
+            "يقدّم «درسي» لمعلمي المدارس والجامعات تدريبًا جادًا وعمليًا في الذكاء الاصطناعي والبرمجة والبيانات وإنترنت الأشياء والأمن السيبراني، مع دورات لطلابهم أيضًا: دروس قصيرة مع فيديوهات مشروحة بالصوت، ومشاريع حقيقية في صفوفهم، وشرائح وخطط دروس جاهزة للتدريس — بلغتهم، على أي هاتف، وحتى دون اتصال."),
     primary: t("Start learning", "ابدأ التعلّم"), secondary: t("Bring Darsi to your school", "اجلب «درسي» إلى مؤسستك"),
     proof: t("Works offline · Arabic and English · Designed for low-cost phones", "يعمل دون اتصال، بالعربية والإنجليزية، ومصمَّم للهواتف منخفضة التكلفة"),
   },
@@ -26,21 +26,27 @@ export const landing = {
     title: t("How Darsi works", "كيف يعمل «درسي»"),
     steps: [
       { title: t("Learn", "تعلّم"), text: t("10–12 minute lessons: a narrated animated video, a clear reading with key terms, and the ideas behind the tools — not just which button to press.", "دروس من ١٠ إلى ١٢ دقيقة: فيديو متحرّك مشروح بالصوت، وقراءة واضحة مع المصطلحات الأساسية، والأفكار التي تقف وراء الأدوات — لا مجرد الزر الذي تضغطه.") },
-      { title: t("Practise", "تدرّب"), text: t("13 question types — from spotting phishing in a real message to ordering how a model is trained — plus an AI lab to experiment with prompts, tokens and classifiers.", "١٣ نوعًا من الأسئلة — من اكتشاف التصيّد في رسالة حقيقية إلى ترتيب خطوات تدريب نموذج — إضافة إلى مختبر للتجربة على الطلبات والرموز والمصنّفات.") },
+      { title: t("Practise", "تدرّب"), text: t("Many kinds of questions — from spotting phishing in a real message to fixing a bug in real code that runs on your phone — plus 96 hands-on Labs apps: train a neural network, wire a sensor, crack a cipher, plan a delivery route.", "أنواع كثيرة من الأسئلة — من اكتشاف التصيّد في رسالة حقيقية إلى إصلاح خطأ في شيفرة حقيقية تعمل على هاتفك — إضافة إلى ٩٦ تطبيقًا عمليًا في «المختبرات»: درّب شبكة عصبية، وصِل مستشعرًا، وفُكّ شيفرة، وخطّط مسار توصيل.") },
       { title: t("Apply", "طبّق"), text: t("Every lesson ends with a project done in your own school: map the AI your pupils use, write prompts for a real lesson, draft your classroom AI policy. Teachers or admins review it against a rubric.", "ينتهي كل درس بمشروع تنفّذه في مدرستك: ارسم خريطة أدوات الذكاء الاصطناعي التي يستخدمها طلابك، اكتب طلبات لدرس حقيقي، صُغ سياسة صفّك لاستخدام الذكاء الاصطناعي. يراجعه معلم أو مشرف وفق معايير واضحة.") },
       { title: t("Teach", "علّم"), text: t("Download the lesson's slides as PDF or PowerPoint, the narrated video, and a lesson plan with a pupil worksheet — activities that work with chalk and paper.", "نزّل شرائح الدرس بصيغة PDF أو PowerPoint، والفيديو المشروح، وخطة درس مع ورقة عمل للطلاب — بأنشطة تعمل بالطباشير والورق.") },
       { title: t("Prove it", "أثبت ذلك"), text: t("Progress is mapped to international competency frameworks, so certificates and reports say exactly what a teacher can do.", "يرتبط التقدّم بأطر كفايات دولية، فتوضّح الشهادات والتقارير بدقة ما يستطيع المعلم فعله.") },
     ],
   },
   tracks: {
-    title: t("Three tracks, four levels", "ثلاثة مسارات، أربعة مستويات"),
-    levels: t("Level 1 Foundations → Level 2 Classroom use → Level 3 Build and evaluate → Level 4 Lead and create", "المستوى ١ الأساسيات ← المستوى ٢ الاستخدام في الصف ← المستوى ٣ البناء والتقييم ← المستوى ٤ القيادة والإبداع"),
+    title: t("Nine tracks, four levels, for teachers and students", "تسعة مسارات، أربعة مستويات، للمعلمين والطلاب"),
+    levels: t("Every track has a course per level, Beginner → Elementary → Intermediate → Advanced, for teachers and for their students, plus one for universities.", "لكل مسار دورة لكل مستوى، مبتدئ ← أساسي ← متوسط ← متقدم، للمعلمين ولطلابهم، ودورة للجامعات."),
     items: [
-      { track: "ai" as const, title: t("Artificial intelligence", "الذكاء الاصطناعي"), points: [t("How models learn, and why they fail", "كيف تتعلّم النماذج، ولماذا تخطئ"), t("Prompting for planning, feedback and differentiation", "كتابة الطلبات للتخطيط والتغذية الراجعة ومراعاة الفروق"), t("Bias, privacy, academic honesty", "التحيّز والخصوصية والنزاهة الأكاديمية"), t("Teaching pupils to train and test simple models", "تعليم الطلاب تدريب نماذج بسيطة واختبارها")] },
-      { track: "iot" as const, title: t("Internet of Things", "إنترنت الأشياء"), points: [t("Sensors, data and measurement", "المستشعرات والبيانات والقياس"), t("Low-cost builds: rain gauges, soil sensors, attendance counters", "مشاريع منخفضة التكلفة: مقاييس المطر، مستشعرات التربة، عدّادات الحضور"), t("Microcontrollers and simple programming", "المتحكّمات الدقيقة والبرمجة البسيطة"), t("Securing connected devices", "تأمين الأجهزة المتصلة")] },
-      { track: "cyber" as const, title: t("Cyber security", "الأمن السيبراني"), points: [t("Passwords, two-step verification, phishing", "كلمات المرور، والتحقّق بخطوتين، والتصيّد"), t("Protecting pupils' and school data", "حماية بيانات الطلاب والمدرسة"), t("Safe use of school WhatsApp groups and shared phones", "الاستخدام الآمن لمجموعات واتساب المدرسية والهواتف المشتركة"), t("Running a school incident plan", "تطبيق خطة المدرسة للتعامل مع الحوادث")] },
+      { track: "ai" as const, title: t("Artificial intelligence", "الذكاء الاصطناعي"), points: [t("How models learn, and why they fail", "كيف تتعلّم النماذج، ولماذا تخطئ"), t("Prompting for planning, feedback and differentiation", "كتابة الطلبات للتخطيط والتغذية الراجعة ومراعاة الفروق"), t("Bias, privacy, academic honesty", "التحيّز والخصوصية والنزاهة الأكاديمية")] },
+      { track: "iot" as const, title: t("Internet of Things", "إنترنت الأشياء"), points: [t("Sensors, data and measurement", "المستشعرات والبيانات والقياس"), t("Low-cost builds: rain gauges, soil sensors, attendance counters", "مشاريع منخفضة التكلفة: مقاييس المطر، مستشعرات التربة، عدّادات الحضور"), t("Securing connected devices", "تأمين الأجهزة المتصلة")] },
+      { track: "cyber" as const, title: t("Cyber security", "الأمن السيبراني"), points: [t("Passwords, two-step verification, phishing", "كلمات المرور، والتحقّق بخطوتين، والتصيّد"), t("Protecting pupils' and school data", "حماية بيانات الطلاب والمدرسة"), t("Running a school incident plan", "تطبيق خطة المدرسة للتعامل مع الحوادث")] },
+      { track: "code" as const, title: t("Programming", "البرمجة"), points: [t("From blocks to Python, run right on the phone", "من الكتل إلى بايثون، تعمل على الهاتف نفسه"), t("Reading, testing and fixing code", "قراءة الشيفرة واختبارها وإصلاحها"), t("Teaching programming without a computer lab", "تدريس البرمجة دون معمل حاسوب")] },
+      { track: "data" as const, title: t("Data engineering", "هندسة البيانات"), points: [t("Collecting and cleaning school data", "جمع بيانات المدرسة وتنظيفها"), t("Tables, SQL and pipelines", "الجداول وSQL وخطوط المعالجة"), t("Data quality and privacy", "جودة البيانات وخصوصيتها")] },
+      { track: "data-science" as const, title: t("Data science", "علم البيانات"), points: [t("Charts that tell the truth", "رسوم بيانية تقول الحقيقة"), t("Statistics and simple models", "الإحصاء والنماذج البسيطة"), t("Asking good questions of data", "طرح أسئلة جيدة على البيانات")] },
+      { track: "agents" as const, title: t("AI agents", "وكلاء الذكاء الاصطناعي"), points: [t("How agents plan, use tools and remember", "كيف يخطّط الوكلاء ويستخدمون الأدوات ويتذكّرون"), t("Keeping a person in charge", "إبقاء القرار في يد الإنسان"), t("Testing an agent before trusting it", "اختبار الوكيل قبل الوثوق به")] },
+      { track: "aisec" as const, title: t("AI security", "أمن الذكاء الاصطناعي"), points: [t("Prompt injection and data leaks", "حقن التعليمات وتسرّب البيانات"), t("Poisoned data and fooled models", "البيانات المسمومة والنماذج المخدوعة"), t("Safe AI rules for a school", "قواعد آمنة للذكاء الاصطناعي في المدرسة")] },
+      { track: "opt" as const, title: t("Optimization", "الحلول المثلى"), points: [t("Timetables, routes and fair duties", "الجداول والمسارات وتوزيع المهام بعدل"), t("From trial and error to solvers", "من التجربة والخطأ إلى أدوات الحل"), t("Choosing what to optimise, and for whom", "اختيار ما نحسّنه، ولمن")] },
     ],
-    note: t("Level 1 of the AI track is live today. IoT and Cyber security units are in production.", "المستوى الأول من مسار الذكاء الاصطناعي متاح الآن، ووحدات إنترنت الأشياء والأمن السيبراني قيد الإنتاج."),
+    note: t("Every course is in English and Arabic, with a voiced video for every lesson.", "كل دورة بالعربية والإنجليزية، ولكل درس فيديو مشروح بالصوت."),
   },
   real: {
     title: t("Built for real conditions", "مصمَّم للظروف الحقيقية"),
@@ -93,7 +99,7 @@ export const landing = {
     ],
   },
   cta: { title: t("Start with one lesson today.", "ابدأ بدرس واحد اليوم."), body: t("Ten minutes, your phone, your language.", "عشر دقائق، هاتفك، لغتك.") },
-  footer: t("technology training for teachers. Kits are free to copy for your school.", "تدريب تقني للمعلمين. يُسمح بنسخ الحقائب لمدرستك مجانًا."), // after "Darsi (درسي) — " (Landing.tsx)
+  footer: t("technology training for teachers and their students. Kits are free to copy for your school.", "تدريب تقني للمعلمين وطلابهم. يُسمح بنسخ الحقائب لمدرستك مجانًا."), // after "Darsi (درسي) — " (Landing.tsx)
   sources: [
     { label: "UNESCO (2024), Global report on teachers — via UN News", url: "https://news.un.org/en/node/1147067" },
     { label: "ITU (2025), Facts and Figures 2025", url: "https://www.itu.int/en/mediacentre/Pages/PR-2025-11-17-Facts-and-Figures.aspx" },

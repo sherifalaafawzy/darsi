@@ -7,8 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button, ProgressBar } from "@darsi/design-system";
 import { useI18n } from "../../../i18n";
-import { fetchManifest, fetchWorld, isDownloaded, runTool, TinyLM, type Conversation, type Lang, type ToolCall, type Turn, type World } from "../../../tinylm";
-import { useAppBase } from "../../../tinylm/base";
+import { fetchManifest, TINYLM_BASE, fetchWorld, isDownloaded, runTool, TinyLM, type Conversation, type Lang, type ToolCall, type Turn, type World } from "../../../tinylm";
 import { useS } from "../../kit/strings";
 import { nextOf, type Gen, type GenResult } from "./agent";
 
@@ -48,7 +47,10 @@ export const DOWNLOAD_FALLBACK = 2_746_862 + 10_746 + 15_720;
  * time; `gen` is the agent loop's model step, streaming what it writes into `live`.
  */
 export function useTiny() {
-  const base = useAppBase();
+  // The agents courses (their videos, readings and checks) teach this model's own slips, such as copying 9Z as 9C and
+  // the evals scoring 29/32. The newer per-language app models (tinylm/base.ts) no longer make them, so these labs
+  // stay on v1 until the lessons are rewritten around v2.
+  const base = TINYLM_BASE;
   const lm = useMemo(() => new TinyLM({ base }), [base]);
   const [state, setState] = useState<TinyState>("idle");
   const [progress, setProgress] = useState(0);

@@ -163,9 +163,10 @@ describe("Home", () => {
     upper.unmount();
     seed({ tracks: ["ai"], audience: "teachers", teach: "university" });
     show(<Home />);
-    expect(await screen.findAllByText("Your level: Advanced")).toHaveLength(2);
-    await waitFor(() => expect(headings().slice(0, 2)).toEqual(["Course ai-u1", "Course ai-4"]));
-    expect(screen.getByText("Earlier levels (3)")).toBeTruthy();
+    // At the top level a university teacher's level is their university course; the school courses fold away.
+    expect(await screen.findAllByText("Your level: Advanced")).toHaveLength(1);
+    await waitFor(() => expect(headings()[0]).toBe("Course ai-u1"));
+    expect(screen.getByText("Earlier levels (4)")).toBeTruthy();
   });
 
   it("shows only the current track's courses for teachers, and switches track from the app bar", async () => {

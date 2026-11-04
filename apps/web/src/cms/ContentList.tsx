@@ -88,13 +88,15 @@ export function ContentList() {
 
   return (
     <>
-      <AppBar title={t("cms.title.list")} actions={<>
-        {owner === "public" && <Button size="sm" variant="ghost" icon="settings" onClick={() => nav("/super/tracks")}>{t("cms.tracks.title")}</Button>}
-        {owner === "public" && <Button size="sm" variant="ghost" icon="language" onClick={() => nav("/super/languages")}>{t("cms.lang.title")}</Button>}
-        <Button size="sm" variant="secondary" icon="file" onClick={() => setPanel(panel === "import" ? "" : "import")}>{t("cms.import")}</Button>
-        <Button size="sm" icon="edit" onClick={() => setPanel(panel === "new" ? "" : "new")}>{t("cms.newUnit")}</Button>
-      </>} />
+      <AppBar title={t("cms.title.list")} />
       <main className="screen wide stack-lg ed">
+        {/* In the page, not the app bar: four buttons don't fit beside the title on a phone. */}
+        <div className="ed-toolbar">
+          <Button size="sm" icon="edit" onClick={() => setPanel(panel === "new" ? "" : "new")}>{t("cms.newUnit")}</Button>
+          <Button size="sm" variant="secondary" icon="file" onClick={() => setPanel(panel === "import" ? "" : "import")}>{t("cms.import")}</Button>
+          {owner === "public" && <Button size="sm" variant="ghost" icon="settings" onClick={() => nav("/super/tracks")}>{t("cms.tracks.title")}</Button>}
+          {owner === "public" && <Button size="sm" variant="ghost" icon="language" onClick={() => nav("/super/languages")}>{t("cms.lang.title")}</Button>}
+        </div>
         <p className="muted">{t(owner === "public" ? "cms.introPublic" : "cms.introOrg")}</p>
         {err && <p className="notice err" role="alert">{err}</p>}
         {msg && <p className={msg.ok ? "notice ok" : "notice err"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}

@@ -50,7 +50,7 @@ export function ProjectsPage() {
           const at = lessons.get(s.lessonId);
           return <SubmissionCard key={`${s.uid}/${s.id}`} uid={s.uid} sub={s} lessonTitle={at?.title ?? s.lessonId} onReviewed={subs.reload}
             who={<p className="muted small">
-              <Link to={`/super/people/${s.uid}`}>{names.data?.[s.uid] || t("aw.someone")}</Link>
+              <Link className="person-link" to={`/super/people/${s.uid}`}>{names.data?.[s.uid] || t("aw.someone")}</Link>
               {at && <>{t("common.sep")}{L(at.unit.title)}</>}
               {s.createdAt && <>{t("common.sep")}{date.format(new Date(s.createdAt.seconds * 1000))}</>}
             </p>} />;
@@ -96,7 +96,7 @@ export function CertificatesPage() {
         {(!learners.data || !catalog) && !fail && <div className="loading" aria-busy="true" />}
         {learners.data && catalog && (
           <section className="panel stack">
-            <input type="search" placeholder={t("aw.search")} aria-label={t("aw.search")} value={q} onChange={(e) => setQ(e.target.value)} />
+            <input className="search-input" type="search" placeholder={t("aw.search")} aria-label={t("aw.search")} value={q} onChange={(e) => setQ(e.target.value)} />
             {!rows.length && <p className="muted">{t("aw.noCerts")}</p>}
             {rows.map((r) => <CertRow key={`${r.uid}/${r.unit.id}`} row={r} trackLabel={tracks.name(r.unit.track)} />)}
             {learners.data.length === max && <div><Button variant="secondary" onClick={() => setMax(max + 300)}>{t("aw.more")}</Button></div>}
@@ -116,7 +116,7 @@ function CertRow({ row, trackLabel }: { row: Earned; trackLabel: string }) {
       <div className="row-gap">
         <TrackChip track={row.unit.track}>{trackLabel}</TrackChip>
         <strong>{L(row.unit.title)}</strong>
-        <Link to={`/super/people/${row.uid}`} dir="auto">{row.name || t("aw.someone")}</Link>
+        <Link className="person-link" to={`/super/people/${row.uid}`} dir="auto">{row.name || t("aw.someone")}</Link>
         <Button size="sm" variant="ghost" icon="award" aria-expanded={open} onClick={() => setOpen(!open)}>{t(open ? "aw.hide" : "aw.show")}</Button>
       </div>
       {open && error && <p className="notice err">{error.message}</p>}

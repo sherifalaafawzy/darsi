@@ -56,6 +56,8 @@ export function AnalyticsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshErr, setRefreshErr] = useState("");
   const o = overview.data ?? undefined, d = days.data ?? [];
+  // "…" while the overview loads; "—" once it is known that nothing has been counted yet (or it failed to load).
+  const none = overview.data === undefined && !overview.error ? "…" : "—";
   const unitName = (id: string) => { const u = catalog?.units.find((x) => x.id === id); return u ? L(u.title) : id; };
 
   const refresh = async () => {
@@ -81,11 +83,11 @@ export function AnalyticsPage() {
 
         <section className="tiles" aria-label={t("an.title")}>
           <div className="tile"><span>{t("an.phones")}</span><strong>{devices.data ? fmt(devices.data.d7) : "…"}</strong><small>{devices.data ? t("an.phonesMore", { today: devices.data.d1, month: devices.data.d30 }) : ""}</small></div>
-          <div className="tile"><span>{t("an.accounts")}</span><strong>{o ? fmt(o.users.total) : "…"}</strong><small>{o ? t("an.newWeek", { n: o.users.new7 }) : ""}</small></div>
-          <div className="tile"><span>{t("an.active")}</span><strong>{o ? fmt(o.users.active7) : "…"}</strong><small>{o ? t("an.activeMonth", { n: o.users.active30 }) : ""}</small></div>
-          <div className="tile"><span>{t("an.lessons")}</span><strong>{o ? fmt(o.lessons) : "…"}</strong><small>{t("an.lessons30", { n: lessons30 })}</small></div>
+          <div className="tile"><span>{t("an.accounts")}</span><strong>{o ? fmt(o.users.total) : none}</strong><small>{o ? t("an.newWeek", { n: o.users.new7 }) : ""}</small></div>
+          <div className="tile"><span>{t("an.active")}</span><strong>{o ? fmt(o.users.active7) : none}</strong><small>{o ? t("an.activeMonth", { n: o.users.active30 }) : ""}</small></div>
+          <div className="tile"><span>{t("an.lessons")}</span><strong>{o ? fmt(o.lessons) : none}</strong><small>{t("an.lessons30", { n: lessons30 })}</small></div>
           <div className="tile"><span>{t("an.score")}</span><strong>{o?.avgAccuracy != null ? fmt(o.avgAccuracy, { style: "percent" }) : "—"}</strong><small>{accN ? t("an.score30", { pct: share(sum(d, ["lessons", "acc"]) / 100, accN) }) : ""}</small></div>
-          <div className="tile"><span>{t("an.orgs")}</span><strong>{o ? fmt(o.orgsByStatus.active ?? 0) : "…"}</strong><small>{o ? t("an.orgsPending", { n: o.orgsByStatus.pending ?? 0 }) : ""}</small></div>
+          <div className="tile"><span>{t("an.orgs")}</span><strong>{o ? fmt(o.orgsByStatus.active ?? 0) : none}</strong><small>{o ? t("an.orgsPending", { n: o.orgsByStatus.pending ?? 0 }) : ""}</small></div>
           {/* Revenue from verified payments only (billing.recordPayment), per currency; never from phones. */}
           <div className="tile"><span>{t("an.revenue")}</span><strong>{revenue.length ? revenue.map(([cur, v]) => new Intl.NumberFormat(locale, { style: "currency", currency: cur, maximumFractionDigits: 0 }).format(v)).join(t("common.sep")) : "—"}</strong><small>{t("an.revenueLine", { n: sum(d, ["revenue", "EGP", "n"]) + sum(d, ["revenue", "USD", "n"]), refunds: sum(d, ["refunds", "EGP", "n"]) + sum(d, ["refunds", "USD", "n"]) })}</small></div>
           <div className="tile"><span>{t("an.superActive")}</span><strong>{o?.super ? fmt(o.super.individuals + o.super.seatsUsed) : "—"}</strong><small>{o?.super ? t("an.superLine", { individuals: o.super.individuals, seats: o.super.seatsUsed }) : ""}</small></div>
@@ -162,7 +164,7 @@ function People({ paged }: { paged?: boolean }) {
     <section className="panel stack">
       <div className="table-tools"><h3>{t("an.people")}</h3>
         <form className="row-gap" onSubmit={(e) => { e.preventDefault(); setSearch(q); }}>
-          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("an.searchName")} aria-label={t("an.searchName")} />
+          <input className="search-input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("an.searchName")} aria-label={t("an.searchName")} />
           <Button size="sm" variant="secondary" icon="search" type="submit">{t("an.search")}</Button>
         </form>
       </div>

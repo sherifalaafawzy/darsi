@@ -22,7 +22,7 @@ const DS_CSS = path.join(ROOT, "packages/design-system/dist/styles.css");
 
 /** Which stylesheet owns which classes. Add a class here when you add it to a screen. */
 export const OWNERS = {
-  base: { own: ["panel", "tiles", "tile", "ok", "err", "err-text", "row-gap", "icon-list", "icon-item", "form-grid", "span2", "file-pick", "avatar", "sm", "person-link", "pill", "pill-warn", "wide", "table-tools", "table-wrap", "data-table", "num", "no-print", "cap-code", "cap-label"] },
+  base: { own: ["panel", "tiles", "tile", "ok", "err", "err-text", "row-gap", "icon-list", "icon-item", "form-grid", "span2", "file-pick", "avatar", "sm", "person-link", "pill", "pill-warn", "wide", "table-tools", "search-input", "table-wrap", "data-table", "num", "no-print", "cap-code", "cap-label"] },
   layout: { own: ["app-shell", "app-main", "app-float", "nav-rail", "rail-brand", "rail-credit", "rail-item", "is-active", "rail-sep", "rail-signout", "nav-bottom"] },
   admin: { own: ["admin-cols", "code-row", "cov-row", "cov-bar", "req", "req-facts", "brand-row", "brand-preview", "po-found", "po-danger"] },
   tutor: { own: ["tu-chat", "tu-me", "tu-tutor", "tu-hint", "tu-src", "tu-link", "tu-state", "tu-panel", "tu-panel-head", "tu-panel-title", "tu-panel-body", "tu-av", "tu-center", "tu-talk", "tu-modes", "tu-wide", "tu-explainer", "tu-explainer-title"], prefix: ["tu-"] },

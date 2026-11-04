@@ -26,8 +26,12 @@ export function Home() {
   const pinned = units.filter((u) => u.teach);
   const name = mine.active ? tracks.name(mine.active) : "";
   const level = mine.all ? 0 : mine.active ? mine.levelOf(mine.active) : 1;
-  const { current, later, earlier } = startAt(units.filter((u) => !u.teach), level);
-  const block = (u: CatalogEntry) => (u.available ? <UnitBlock key={u.id} entry={u} current={u.level === level} /> : <LockedUnit key={u.id} entry={u} />);
+  const school = startAt(units.filter((u) => !u.teach), level);
+  // A university teacher at the top level: their university course is their level, and the school courses at that
+  // level (school leadership) fold away with the earlier ones.
+  const uniTop = mine.uni && pinned.length > 0 && !!mine.active && level >= tracks.of(mine.active).levels;
+  const { current, later, earlier } = uniTop ? { current: [], later: [], earlier: [...school.earlier, ...school.current, ...school.later] } : school;
+  const block = (u: CatalogEntry) => (u.available ? <UnitBlock key={u.id} entry={u} current={uniTop ? !!u.teach : u.level === level} /> : <LockedUnit key={u.id} entry={u} />);
   // A platform admin on "All tracks": every course, track by track.
   const everything = mine.all && !mine.active;
   return (
