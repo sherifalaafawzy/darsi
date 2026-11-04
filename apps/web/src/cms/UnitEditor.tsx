@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Component, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppBar, Button, EmptyState, Icon } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
@@ -6,20 +6,22 @@ import { COMPETENCIES } from "../content/competencies";
 import { usePack, useTracks } from "../content/settings";
 import { levelsByTrack } from "../content/tracks";
 import { labMeta } from "../labs/catalog";
-import { audienceOf, type KitFile, type KitFormat, type Lesson, type Slide, type Step, type Unit } from "../content/types";
-import { errorsOf, SLIDE_LAYOUTS, validateUnit, type Issue } from "../content/validate";
-import { I18nProvider, isolate, languageOf, useI18n, useLanguages, type MessageKey } from "../i18n";
+import { audienceOf, type Lesson, type Step, type Unit } from "../content/types";
+import { errorsOf, validateUnit, type Issue } from "../content/validate";
+import { I18nProvider, languageOf, useI18n, useLanguages, type MessageKey } from "../i18n";
 import type { LessonPlayer } from "../screens/LessonScreen";
 /** The lesson player, passed in by App (importing it here would split the startup bundle: see App.tsx). */
 type Player = typeof LessonPlayer;
 import { cmsApi, issuesOf } from "./api";
-import { copyLessonTo, createUnit, getUnit, listUnits, saveUnit, statusOf, type UnitMeta } from "./data";
-import { Items, LangName, LList, LText, Num, Sel, Upload } from "./fields";
-import { EditLangsProvider, langsIn, savedEditLangs, saveEditLangs, useEditLangs } from "./langs";
+import { createUnit, getUnit, saveUnit, statusOf, type UnitMeta } from "./data";
+import { LangName, LText, Num } from "./fields";
+import { EditLangsProvider, langsIn, savedEditLangs, saveEditLangs, savedLangView, saveLangView, type LangView } from "./langs";
 import { useHistory, useUndoKeys } from "./history";
 import { blankLesson, blankStep, copyLesson, copyStep, copyTitle, newLessonId, newStepId, withNewIds } from "./ids";
+import { Outline, StepIcon } from "./outline";
+import { CopyTo, Glance, GoCard, HereIssues, IssuesPanel, KitForm, LessonCards, LessonMore, PaneHead, SlidesForm, StepBoard, StepTypes } from "./panes";
 import { AudiencePicker, LevelPicker, TrackPicker } from "./pickers";
-import { STEP_LABEL, STEP_MENU, StepForm, type MediaCtx } from "./steps";
+import { STEP_LABEL, StepForm, type MediaCtx } from "./steps";
 import "../styles/editor.css";
 import "./strings";
 
@@ -27,7 +29,10 @@ const CODES = new Set(COMPETENCIES.map((c) => c.code));
 /** The shared validator only checks a lab id's shape; here we also know the Labs catalogue. */
 const unknownLabs = (u: Unit): Issue[] => u.lessons.flatMap((l, lesson) => l.steps.flatMap((s, step) =>
   s.type === "lab" && !labMeta(s.tool) ? [{ at: { lesson, step, field: "tool" }, code: "badValue" as const, level: "error" as const, params: { value: s.tool } }] : []));
-const LT = () => ({ en: "", ar: "" });
+/** Changes save by themselves this long after the last one. */
+const AUTOSAVE_MS = 3000;
+const LIVE_KEY = "darsi:editLive";
+const savedLive = () => { try { return localStorage.getItem(LIVE_KEY) !== "0"; } catch { return true; } };
 
 /** What the detail pane shows. Lessons and steps are picked by id, so moving them or undoing keeps the selection. */
 export type Sel =
@@ -42,17 +47,19 @@ function download(name: string, text: string) {
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type: "application/json" })); a.download = name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
 }
+const moveTo = <T,>(xs: T[], from: number, to: number) => { const n = [...xs]; const [x] = n.splice(from, 1); n.splice(to, 0, x); return n; };
 
 /**
- * /super/content/:unitId and /admin/content/:unitId. An outline of the unit (details, lessons, the open lesson's steps,
- * slides and kit, checks) beside the form for what's picked; on phones, one then the other. Edits stay in memory until
- * "Save draft" (no autosave timer), with undo for the last 50 changes. "Publish" saves, then asks the publishUnit
- * function to check the draft and put it live.
+ * /super/content/:unitId and /admin/content/:unitId. An outline of the unit beside the pane for what's picked (on
+ * phones, one then the other). Edits save themselves a few seconds after the last one (and before leaving), with undo
+ * for the last 50 changes. The author can see every language side by side or one at a time, and a step being edited
+ * plays live beside its form on wide screens. "Publish" saves, then asks the publishUnit function to check the draft
+ * and put it live.
  */
 export function UnitEditor({ Player }: { Player: Player }) {
   const { unitId = "" } = useParams();
   const nav = useNavigate();
-  const { t, L, num } = useI18n();
+  const { t, L, num, locale, lang: uiLang } = useI18n();
   const tracks = useTracks();
   const { user, role } = useAuth();
   const base = role === "superadmin" ? "/super/content" : "/admin/content";
@@ -60,18 +67,23 @@ export function UnitEditor({ Player }: { Player: Player }) {
   const hist = useHistory<Unit | null>(null);
   const unit = hist.value;
   const [saved, setSaved] = useState("");
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [saveErr, setSaveErr] = useState<"" | "conflict" | "failed">("");
   const [loadErr, setLoadErr] = useState("");
   const [busy, setBusy] = useState<"" | "save" | "publish" | "unpublish" | "delete" | "copy">("");
   const [msg, setMsg] = useState<Msg | null>(null);
   const [ask, setAsk] = useState<Ask>("");
   const [sel, setSel] = useState<Sel>({ kind: "unit" });
   const [pane, setPane] = useState<"outline" | "detail">("outline");
-  const [preview, setPreview] = useState<{ lesson: string; lang: string } | null>(null);
+  const [preview, setPreview] = useState<{ lesson: string; lang: string; at: number } | null>(null);
   const [editLangs, setEditLangs] = useState<string[]>(savedEditLangs);
-  const languages = useLanguages();
+  const [view, setView] = useState<LangView>(() => savedLangView(uiLang));
+  const [live, setLive] = useState(savedLive);
+  const [copying, setCopying] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
-    setMeta(null); setLoadErr(""); setMsg(null); setAsk(""); setSel({ kind: "unit" }); setPane("outline");
+    setMeta(null); setLoadErr(""); setMsg(null); setAsk(""); setSel({ kind: "unit" }); setPane("outline"); setSaveErr("");
     getUnit(unitId).then((r) => {
       if (!r) return setLoadErr(t("err.notFound"));
       setMeta(r.meta); hist.reset(r.unit); setSaved(JSON.stringify(r.unit));
@@ -87,13 +99,42 @@ export function UnitEditor({ Player }: { Player: Player }) {
     return () => removeEventListener("beforeunload", warn);
   }, [dirty]);
   useUndoKeys(hist.undo, hist.redo, !preview);
-  // Bring the form into view when something far down the outline is picked.
+  // Bring the pane into view when something far down the outline is picked.
   useEffect(() => { const el = document.getElementById("ed-detail"); if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: "start" }); }, [sel, pane]);
 
   // Checking runs on a deferred copy, so typing stays smooth on a slow laptop.
   const checked = useDeferredValue(unit);
   const issues = useMemo(() => (checked ? [...validateUnit(checked, { competencies: CODES, tracks: levelsByTrack(tracks.all), langs: editLangs }), ...unknownLabs(checked)] : []), [checked, tracks.all, editLangs]);
   const errors = errorsOf(issues);
+
+  /** Saves the draft. `quiet` (autosave) shows no message unless it fails. */
+  const save = useCallback(async (quiet = false): Promise<boolean> => {
+    if (!user || !unit || !meta) return false;
+    setBusy("save"); if (!quiet) setMsg(null);
+    try {
+      const r = await saveUnit(unit, meta.rev, user.uid);
+      if ("conflict" in r) { setSaveErr("conflict"); setMsg({ ok: false, text: t("cms.conflict") }); return false; }
+      setMeta((m) => (m ? { ...m, rev: r.rev, title: unit.title, track: unit.track, level: unit.level, lessonCount: unit.lessons.length } : m));
+      setSaved(JSON.stringify(unit)); setSavedAt(new Date()); setSaveErr("");
+      if (!quiet) setMsg({ ok: true, text: t("cms.saved") });
+      return true;
+    } catch (e) { setSaveErr("failed"); setMsg({ ok: false, text: (e as Error).message }); return false; }
+    finally { setBusy(""); }
+  }, [user, unit, meta, t]);
+  // Autosave: a few seconds after the last change, never while something else runs or after someone else saved.
+  const saveRef = useRef(save); saveRef.current = save;
+  useEffect(() => {
+    if (!dirty || busy || saveErr === "conflict") return;
+    const id = setTimeout(() => { void saveRef.current(true); }, AUTOSAVE_MS);
+    return () => clearTimeout(id);
+  }, [unit, dirty, busy, saveErr]);
+  // Leaving the tab (switching apps on a phone) saves at once; Ctrl+S saves now.
+  useEffect(() => {
+    const hide = () => { if (document.visibilityState === "hidden" && dirty && !busy && saveErr !== "conflict") void saveRef.current(true); };
+    const key = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); void saveRef.current(); } };
+    document.addEventListener("visibilitychange", hide); addEventListener("keydown", key);
+    return () => { document.removeEventListener("visibilitychange", hide); removeEventListener("keydown", key); };
+  }, [dirty, busy, saveErr]);
 
   if (loadErr) return <main className="screen"><EmptyState tone="error" title={t("err.title")} body={loadErr} action={<Button size="sm" onClick={() => nav(base)}>{t("common.back")}</Button>} /></main>;
   if (!unit || !meta) return <div className="loading" aria-busy="true" />;
@@ -102,17 +143,16 @@ export function UnitEditor({ Player }: { Player: Player }) {
   const li = "lesson" in sel ? unit.lessons.findIndex((l) => l.id === sel.lesson) : -1;
   const lesson = li >= 0 ? unit.lessons[li] : undefined;
   const si = sel.kind === "step" && lesson ? lesson.steps.findIndex((s) => s.id === sel.step) : -1;
-  const view: Sel = !("lesson" in sel) ? sel : !lesson ? { kind: "unit" } : sel.kind === "step" && si < 0 ? { kind: "lesson", lesson: lesson.id } : sel;
+  const view_: Sel = !("lesson" in sel) ? sel : !lesson ? { kind: "unit" } : sel.kind === "step" && si < 0 ? { kind: "lesson", lesson: lesson.id } : sel;
   const status = statusOf(meta);
   const media = (l: Lesson): MediaCtx => ({ owner: meta.owner, unitId: unit.id, lessonId: l.id });
 
-  const pick = (s: Sel) => { setSel(s); setPane("detail"); };
+  const pick = (s: Sel) => { setSel(s); setPane("detail"); setCopying(false); };
   /** One change. Typing in the same item merges into one undo step; anything else is its own. */
-  const edit = (u: Unit, group?: string) => { hist.set(u, group); setMsg(null); setAsk((a) => (a === "delete" || a === "unpublish" ? "" : a)); };
-  const typing = (u: Unit) => edit(u, JSON.stringify(view));
+  const edit = (u: Unit, group?: string) => { hist.set(u, group); setMsg((m) => (m && !m.ok ? m : null)); setAsk((a) => (a === "delete" || a === "unpublish" ? "" : a)); };
+  const typing = (u: Unit) => edit(u, JSON.stringify(view_));
   const withLessons = (ls: Lesson[]) => ({ ...unit, lessons: ls });
   const setLesson = (i: number, l: Lesson, group?: string) => edit(withLessons(unit.lessons.map((x, k) => (k === i ? l : x))), group);
-  const swap = <T,>(xs: T[], i: number, j: number) => { const n = [...xs]; [n[i], n[j]] = [n[j], n[i]]; return n; };
 
   const lessonOps = {
     insert: (at: number) => { const l = blankLesson(newLessonId(unit)); const ls = [...unit.lessons]; ls.splice(at, 0, l); edit(withLessons(ls)); pick({ kind: "lesson", lesson: l.id }); },
@@ -120,33 +160,24 @@ export function UnitEditor({ Player }: { Player: Player }) {
       const c = { ...copyLesson(unit.lessons[i], unit), title: copyTitle(unit.lessons[i].title) };
       const ls = [...unit.lessons]; ls.splice(i + 1, 0, c); edit(withLessons(ls)); pick({ kind: "lesson", lesson: c.id });
     },
-    move: (i: number, d: -1 | 1) => edit(withLessons(swap(unit.lessons, i, i + d))),
+    move: (from: number, to: number) => edit(withLessons(moveTo(unit.lessons, from, to))),
     remove: (i: number) => { edit(withLessons(unit.lessons.filter((_, k) => k !== i))); setSel({ kind: "unit" }); setMsg({ ok: true, text: t("cms.deletedLesson"), undo: true }); },
   };
   const stepOps = (i: number, l: Lesson) => {
     const setSteps = (steps: Step[]) => setLesson(i, { ...l, steps });
     return {
       insert: (type: Step["type"], at: number) => { const s = blankStep(type, newStepId(l, type)); const st = [...l.steps]; st.splice(at, 0, s); setSteps(st); pick({ kind: "step", lesson: l.id, step: s.id }); },
+      insertAt: (at: number) => pick({ kind: "add-step", lesson: l.id, at }),
       duplicate: (k: number) => { const c = copyStep(l.steps[k], l); const st = [...l.steps]; st.splice(k + 1, 0, c); setSteps(st); pick({ kind: "step", lesson: l.id, step: c.id }); },
-      move: (k: number, d: -1 | 1) => setSteps(swap(l.steps, k, k + d)),
+      move: (k: number, d: -1 | 1) => setSteps(moveTo(l.steps, k, k + d)),
+      moveTo: (from: number, to: number) => setSteps(moveTo(l.steps, from, to)),
       remove: (k: number) => { setSteps(l.steps.filter((_, j) => j !== k)); setSel({ kind: "lesson", lesson: l.id }); setMsg({ ok: true, text: t("cms.deletedStep"), undo: true }); },
+      open: (id: string) => pick({ kind: "step", lesson: l.id, step: id }),
     };
   };
 
-  const save = async (): Promise<boolean> => {
-    if (!user) return false;
-    setBusy("save"); setMsg(null);
-    try {
-      const r = await saveUnit(unit, meta.rev, user.uid);
-      if ("conflict" in r) { setMsg({ ok: false, text: t("cms.conflict") }); return false; }
-      setMeta({ ...meta, rev: r.rev, title: unit.title, track: unit.track, level: unit.level, lessonCount: unit.lessons.length });
-      setSaved(JSON.stringify(unit)); setMsg({ ok: true, text: t("cms.saved") });
-      return true;
-    } catch (e) { setMsg({ ok: false, text: (e as Error).message }); return false; }
-    finally { setBusy(""); }
-  };
   const publish = async () => {
-    if (dirty && !(await save())) return;
+    if (dirty && !(await save(true))) return;
     setBusy("publish"); setMsg(null);
     try {
       const { version } = await cmsApi.publishUnit({ unitId: unit.id });
@@ -177,7 +208,12 @@ export function UnitEditor({ Player }: { Player: Player }) {
       setMsg({ ok: true, text: t("cms.duplicated", { title: L(copy.title) || t("cms.untitled") }), open: copy.id });
     } catch (e) { setMsg({ ok: false, text: (e as Error).message }); } finally { setBusy(""); }
   };
-  const go = (path: string) => (dirty ? setAsk({ leave: path }) : nav(path));
+  /** Leaving saves first; only a save that fails asks. */
+  const go = async (path: string) => {
+    if (!dirty) return nav(path);
+    if (saveErr !== "conflict" && await save(true)) return nav(path);
+    setAsk({ leave: path });
+  };
 
   /** From the checks: open the place an issue points at. */
   const jump = (i: Issue) => {
@@ -189,120 +225,171 @@ export function UnitEditor({ Player }: { Player: Player }) {
     pick({ kind: "lesson", lesson: l.id });
   };
   const count = (f: (i: Issue) => boolean) => errors.filter(f).length;
+  const translate = (code: string) => { setView(code); saveLangView(code); };
+  const here = (f: (i: Issue) => boolean) => <HereIssues issues={issues.filter(f)} onTranslate={translate} />;
+  const lessonOf = (n: number) => t("cms.lessonOf", { n: num(n + 1), total: num(unit.lessons.length) });
 
   let detail: ReactNode;
-  if (view.kind === "unit") detail = (
+  let liveStep: Step | undefined;
+  if (view_.kind === "unit") detail = (
     <div className="stack-lg">
-      <h3 className="ed-h4">{t("cms.unitDetails")}</h3>
-      <LText label={t("cms.title")} value={unit.title} onChange={(title) => typing({ ...unit, title })} />
-      <LText label={t("cms.summary")} value={unit.summary} onChange={(summary) => typing({ ...unit, summary })} multiline rows={2} />
-      <TrackPicker value={unit.track} onChange={(track) => edit({ ...unit, track, level: Math.min(unit.level, tracks.of(track).levels) })} />
-      <LevelPicker track={unit.track} value={unit.level} onChange={(level) => edit({ ...unit, level })} />
-      <AudiencePicker value={audienceOf(unit)} onChange={(a) => edit({ ...unit, audience: a === "students" ? a : undefined })} />
-      <p className="muted small" dir="ltr"><span className="cap-code">{unit.id}</span></p>
-      <div className="stack">
-        <h4 className="ed-h4">{t("cms.unitActions")}</h4>
+      <Glance unit={unit} issues={issues} onChecks={() => pick({ kind: "checks" })} onTranslate={translate} />
+      {here((x) => x.at.lesson === undefined)}
+      <section className="stack-lg" aria-labelledby="ed-details-h">
+        <h3 id="ed-details-h" className="ed-h4">{t("cms.unitDetails")}</h3>
+        <LText label={t("cms.title")} value={unit.title} onChange={(title) => typing({ ...unit, title })} />
+        <LText label={t("cms.summary")} value={unit.summary} onChange={(summary) => typing({ ...unit, summary })} multiline rows={2} />
+        <TrackPicker value={unit.track} onChange={(track) => edit({ ...unit, track, level: Math.min(unit.level, tracks.of(track).levels) })} />
+        <LevelPicker track={unit.track} value={unit.level} onChange={(level) => edit({ ...unit, level })} />
+        <AudiencePicker value={audienceOf(unit)} onChange={(a) => edit({ ...unit, audience: a === "students" ? a : undefined })} />
+      </section>
+      <section className="stack" aria-labelledby="ed-lessons-h">
+        <h3 id="ed-lessons-h" className="ed-h4">{t("cms.lessons")}</h3>
+        <LessonCards unit={unit} errors={errors} onOpen={(id) => pick({ kind: "lesson", lesson: id })} onAdd={() => lessonOps.insert(unit.lessons.length)} />
+      </section>
+      <section className="stack ed-danger" aria-labelledby="ed-actions-h">
+        <h3 id="ed-actions-h" className="ed-h4">{t("cms.unitActions")}</h3>
         <div className="ed-toolbar">
           <Button size="sm" variant="secondary" icon="file" loading={busy === "copy"} disabled={!!busy} onClick={() => { void duplicate(); }}>{t("cms.duplicateUnit")}</Button>
           <Button size="sm" variant="ghost" icon="share" onClick={() => download(`${unit.id}.json`, JSON.stringify(unit, null, 1))}>{t("cms.export")}</Button>
           {meta.published && <Button size="sm" variant="ghost" loading={busy === "unpublish"} disabled={!!busy} onClick={() => setAsk("unpublish")}>{t("cms.unpublish")}</Button>}
           <Button size="sm" variant="ghost" icon="close" loading={busy === "delete"} disabled={!!busy} onClick={() => setAsk("delete")}>{t("cms.delete")}</Button>
         </div>
-      </div>
+        <p className="muted small" dir="ltr"><span className="cap-code">{unit.id}</span></p>
+      </section>
     </div>
   );
-  else if (view.kind === "checks") detail = <IssuesPanel issues={issues} unit={unit} onJump={jump} />;
+  else if (view_.kind === "checks") detail = <IssuesPanel issues={issues} unit={unit} onJump={jump} />;
   else if (lesson) {
     const ops = stepOps(li, lesson);
-    if (view.kind === "lesson") detail = (
-      <LessonDetail lesson={lesson} index={li} count={unit.lessons.length} onChange={(l) => setLesson(li, l, JSON.stringify(view))}
-        canPreview={count((x) => x.at.lesson === li) === 0} onPreview={(lang) => setPreview({ lesson: lesson.id, lang })}
-        onDuplicate={() => lessonOps.duplicate(li)} onMove={(d) => lessonOps.move(li, d)} onRemove={() => lessonOps.remove(li)}
-        copyTo={<CopyTo owner={meta.owner} unitId={unit.id} lesson={lesson} onDone={(text) => setMsg({ ok: true, text })} />} />
+    const group = JSON.stringify(view_);
+    const canPreview = count((x) => x.at.lesson === li) === 0 && lesson.steps.length > 0;
+    if (view_.kind === "lesson") detail = (
+      <div className="stack-lg">
+        <PaneHead title={lessonOf(li)}>
+          <Button size="sm" variant="secondary" icon="play" disabled={!canPreview} onClick={() => setPreview({ lesson: lesson.id, lang: view === "all" ? "en" : view, at: 0 })}>{t("cms.preview")}</Button>
+        </PaneHead>
+        <div className="ed-toolbar">
+          <Button size="sm" variant="ghost" icon="file" onClick={() => lessonOps.duplicate(li)}>{t("cms.duplicate")}</Button>
+          <Button size="sm" variant="ghost" icon="share" aria-expanded={copying} onClick={() => setCopying(!copying)}>{t("cms.copyTo")}</Button>
+          <span className="ed-tools ed-tools-end">
+            <Button size="sm" variant="ghost" iconOnly icon="up" disabled={li === 0} onClick={() => lessonOps.move(li, li - 1)}>{t("q.up")}</Button>
+            <Button size="sm" variant="ghost" iconOnly icon="down" disabled={li === unit.lessons.length - 1} onClick={() => lessonOps.move(li, li + 1)}>{t("q.down")}</Button>
+            <Button size="sm" variant="ghost" iconOnly icon="close" disabled={unit.lessons.length <= 1} onClick={() => lessonOps.remove(li)}>{t("cms.deleteLesson")}</Button>
+          </span>
+        </div>
+        {!canPreview && lesson.steps.length > 0 && <p className="muted small">{t("cms.previewBlocked")}</p>}
+        {copying && <CopyTo owner={meta.owner} unitId={unit.id} lesson={lesson} onDone={(text) => { setMsg({ ok: true, text }); setCopying(false); }} />}
+        {here((x) => x.at.lesson === li && x.at.step === undefined && x.at.slide === undefined && x.at.kit === undefined)}
+        <LText label={t("cms.title")} value={lesson.title} onChange={(title) => setLesson(li, { ...lesson, title }, group)} />
+        <div className="form-grid"><Num label={t("cms.minutes")} min={1} max={60} value={lesson.minutes} onChange={(minutes) => setLesson(li, { ...lesson, minutes }, group)} /></div>
+        <section className="stack" aria-labelledby="ed-steps-h">
+          <h4 id="ed-steps-h" className="ed-h4">{`${t("cms.steps")} (${num(lesson.steps.length)})`}</h4>
+          <StepBoard lesson={lesson} lessonIndex={li} errors={errors} ops={ops} />
+        </section>
+        <section className="stack" aria-labelledby="ed-class-h">
+          <h4 id="ed-class-h" className="ed-h4">{t("cms.classroom")}</h4>
+          <div className="ed-gos">
+            <GoCard icon="file" title={t("kit.slides")} body={t("cms.slidesCount", { n: num(lesson.slides.length) })} onClick={() => pick({ kind: "slides", lesson: lesson.id })} />
+            <GoCard icon="print" title={t("kit.title")} body={t("cms.filesCount", { n: num(lesson.kit.length) })} onClick={() => pick({ kind: "kit", lesson: lesson.id })} />
+          </div>
+        </section>
+        <details className="ed-more ed-fold" open={moreOpen} onToggle={(e) => setMoreOpen((e.target as HTMLDetailsElement).open)}>
+          <summary>{t("cms.moreAboutLesson")}</summary>
+          <LessonMore lesson={lesson} onChange={(l) => setLesson(li, l, group)} />
+        </details>
+      </div>
     );
-    else if (view.kind === "step") {
+    else if (view_.kind === "step") {
       const s = lesson.steps[si];
+      liveStep = s;
+      const stepErrs = count((x) => x.at.lesson === li && x.at.step === si);
       detail = (
         <div className="stack-lg">
-          <h3 className="ed-h4">{`${t("cms.step")} ${num(si + 1)}: ${t(STEP_LABEL[s.type])}`}</h3>
+          <PaneHead icon={<StepIcon type={s.type} size={22} />} title={`${t("cms.step")} ${num(si + 1)}: ${t(STEP_LABEL[s.type])}`} sub={t("cms.ofN", { n: num(lesson.steps.length) })} />
           <div className="ed-toolbar">
-            <Button size="sm" variant="ghost" icon="file" onClick={() => ops.duplicate(si)}>{t("cms.duplicate")}</Button>
-            <Button size="sm" variant="ghost" icon="up" disabled={si === 0} onClick={() => ops.move(si, -1)}>{t("q.up")}</Button>
-            <Button size="sm" variant="ghost" icon="down" disabled={si === lesson.steps.length - 1} onClick={() => ops.move(si, 1)}>{t("q.down")}</Button>
-            <Button size="sm" variant="ghost" icon="close" onClick={() => ops.remove(si)}>{t("cms.deleteStep")}</Button>
+            <Button size="sm" variant="secondary" icon="play" disabled={!canPreview} onClick={() => setPreview({ lesson: lesson.id, lang: view === "all" ? "en" : view, at: si })}>{t("cms.previewFrom")}</Button>
+            {!live && <Button size="sm" variant="ghost" icon="play" className="ed-wide-only" aria-pressed={false}
+              onClick={() => { setLive(true); try { localStorage.setItem(LIVE_KEY, "1"); } catch { /* private mode */ } }}>{t("cms.livePreview")}</Button>}
           </div>
-          <StepForm step={s} media={media(lesson)} onChange={(ns) => setLesson(li, { ...lesson, steps: lesson.steps.map((x, k) => (k === si ? ns : x)) }, JSON.stringify(view))} />
+          <div className="ed-toolbar ed-steptools">
+            <span className="ed-tools">
+              <Button size="sm" variant="ghost" iconOnly icon="back" disabled={si === 0} onClick={() => ops.open(lesson.steps[si - 1].id)}>{t("cms.prevStep")}</Button>
+              <Button size="sm" variant="ghost" iconOnly icon="next" disabled={si === lesson.steps.length - 1} onClick={() => ops.open(lesson.steps[si + 1].id)}>{t("cms.nextStep")}</Button>
+            </span>
+            <span className="ed-tools ed-tools-end">
+              <Button size="sm" variant="ghost" iconOnly icon="file" onClick={() => ops.duplicate(si)}>{t("cms.duplicate")}</Button>
+              <Button size="sm" variant="ghost" iconOnly icon="up" disabled={si === 0} onClick={() => ops.move(si, -1)}>{t("q.up")}</Button>
+              <Button size="sm" variant="ghost" iconOnly icon="down" disabled={si === lesson.steps.length - 1} onClick={() => ops.move(si, 1)}>{t("q.down")}</Button>
+              <Button size="sm" variant="ghost" iconOnly icon="close" onClick={() => ops.remove(si)}>{t("cms.deleteStep")}</Button>
+            </span>
+          </div>
+          {here((x) => x.at.lesson === li && x.at.step === si)}
+          <StepForm step={s} media={media(lesson)} onChange={(ns) => setLesson(li, { ...lesson, steps: lesson.steps.map((x, k) => (k === si ? ns : x)) }, group)} />
+          {stepErrs === 0 && si < lesson.steps.length - 1 && (
+            <div className="ed-next">
+              <Button size="sm" variant="secondary" iconEnd="next" onClick={() => ops.open(lesson.steps[si + 1].id)}>{t("cms.nextStepIs", { kind: t(STEP_LABEL[lesson.steps[si + 1].type]) })}</Button>
+            </div>
+          )}
         </div>
       );
-    } else if (view.kind === "add-step") detail = <StepTypes onPick={(type) => ops.insert(type, Math.min(view.at, lesson.steps.length))} />;
-    else if (view.kind === "slides") detail = <SlidesForm lesson={lesson} onChange={(l) => setLesson(li, l, JSON.stringify(view))} />;
-    else detail = <KitForm lesson={lesson} media={media(lesson)} onChange={(l) => setLesson(li, l, JSON.stringify(view))} />;
+    } else if (view_.kind === "add-step") detail = <StepTypes onPick={(type) => ops.insert(type, Math.min(view_.at, lesson.steps.length))} onCancel={() => pick({ kind: "lesson", lesson: lesson.id })} />;
+    else if (view_.kind === "slides") detail = (
+      <div className="stack-lg">
+        <PaneHead icon={<Icon name="file" size={22} />} title={t("kit.slides")} sub={lessonOf(li)} />
+        {here((x) => x.at.lesson === li && x.at.slide !== undefined)}
+        <SlidesForm lesson={lesson} onChange={(l) => setLesson(li, l, group)} />
+      </div>
+    );
+    else detail = (
+      <div className="stack-lg">
+        <PaneHead icon={<Icon name="print" size={22} />} title={t("kit.title")} sub={lessonOf(li)} />
+        {here((x) => x.at.lesson === li && x.at.kit !== undefined)}
+        <KitForm lesson={lesson} media={media(lesson)} onChange={(l) => setLesson(li, l, group)} />
+      </div>
+    );
   }
 
-  const here = (s: Sel) => JSON.stringify(s) === JSON.stringify(view);
-  const crumb = view.kind === "step" ? `${t("cms.step")} ${num(si + 1)}` : view.kind === "add-step" ? t("cms.addStep") : view.kind === "slides" ? t("kit.slides")
-    : view.kind === "kit" ? t("kit.title") : view.kind === "checks" ? t("cms.issues") : "";
-
-  const toggleLang = (code: string) => setEditLangs((cur) => { const next = cur.includes(code) ? cur.filter((c) => c !== code) : [...cur, code]; saveEditLangs(next); return next; });
-  const langChoices = [...new Set([...languages.map((l) => l.code), ...editLangs])];
+  const crumb = view_.kind === "step" ? `${t("cms.step")} ${num(si + 1)}` : view_.kind === "add-step" ? t("cms.addStep") : view_.kind === "slides" ? t("kit.slides")
+    : view_.kind === "kit" ? t("kit.title") : view_.kind === "checks" ? t("cms.issues") : "";
+  const toggleLang = (code: string) => setEditLangs((cur) => {
+    const next = cur.includes(code) ? cur.filter((c) => c !== code) : [...cur, code];
+    saveEditLangs(next);
+    if (!next.includes(code) && view === code) translate("all");
+    return next;
+  });
+  const shownLangs = ["en", ...editLangs.filter((c) => c !== "en")];
+  const missingIn = (code: string) => issues.filter((i) => i.code === "missingLang" && i.params?.lang === code).length;
+  const showLive = live && !!liveStep && !!lesson;
+  const time = savedAt ? new Intl.DateTimeFormat(locale, { timeStyle: "short" }).format(savedAt) : "";
+  const saveState = busy === "save" ? t("cms.saving") : saveErr ? t("cms.notSaved") : dirty ? t("cms.unsaved") : time ? t("cms.savedAt", { time }) : t("cms.allSaved");
 
   return (
-    <EditLangsProvider langs={editLangs}>
-      <AppBar title={L(unit.title) || t("cms.untitled")} onBack={() => go(base)} backLabel={t("common.back")}
+    <EditLangsProvider langs={editLangs} view={view}>
+      <AppBar title={L(unit.title) || t("cms.untitled")} onBack={() => { void go(base); }} backLabel={t("common.back")}
         actions={<span className={`ed-status is-${status}`}>{t(`cms.status.${status}` as MessageKey, { n: meta.published?.version ?? 0 })}</span>} />
       <main className="screen wide ed">
-        <div className={`ed-split is-${pane}`}>
-          <nav className="ed-outline" aria-label={t("cms.outline")}>
-            <Node on={here({ kind: "unit" })} badge={count((x) => x.at.lesson === undefined)} onClick={() => pick({ kind: "unit" })}><Icon name="settings" size={18} />{t("cms.unitDetails")}</Node>
-            <h4 className="ed-outline-h">{t("cms.lessons")}</h4>
-            <ol className="ed-tree">
-              {unit.lessons.map((l, i) => {
-                const open = lesson?.id === l.id;
-                return (
-                  <li key={l.id}>
-                    <Insert label={t("cms.insertLesson")} onClick={() => lessonOps.insert(i)} />
-                    <Node on={here({ kind: "lesson", lesson: l.id })} open={open} badge={count((x) => x.at.lesson === i)} onClick={() => pick({ kind: "lesson", lesson: l.id })}>
-                      <span className="cap-code" dir="ltr">{num(i + 1)}</span><span>{L(l.title) || t("cms.untitled")}</span>
-                    </Node>
-                    {open && (
-                      <ol className="ed-tree ed-tree-sub">
-                        {l.steps.map((s, k) => (
-                          <li key={`${s.id}-${k}`}>
-                            <Insert label={t("cms.insertStep")} onClick={() => pick({ kind: "add-step", lesson: l.id, at: k })} />
-                            <Node on={here({ kind: "step", lesson: l.id, step: s.id })} badge={count((x) => x.at.lesson === i && x.at.step === k)} onClick={() => pick({ kind: "step", lesson: l.id, step: s.id })}>
-                              <span className="cap-code" dir="ltr">{num(k + 1)}</span><span><strong>{t(STEP_LABEL[s.type])}</strong> <span className="muted">{L(s.prompt)}</span></span>
-                            </Node>
-                          </li>
-                        ))}
-                        <li><Node on={here({ kind: "add-step", lesson: l.id, at: l.steps.length })} onClick={() => pick({ kind: "add-step", lesson: l.id, at: l.steps.length })}><Icon name="edit" size={18} />{t("cms.addStep")}</Node></li>
-                        <li><Node on={here({ kind: "slides", lesson: l.id })} badge={count((x) => x.at.lesson === i && x.at.slide !== undefined)} onClick={() => pick({ kind: "slides", lesson: l.id })}>
-                          <Icon name="file" size={18} />{`${t("kit.slides")} (${num(l.slides.length)})`}</Node></li>
-                        <li><Node on={here({ kind: "kit", lesson: l.id })} badge={count((x) => x.at.lesson === i && x.at.kit !== undefined)} onClick={() => pick({ kind: "kit", lesson: l.id })}>
-                          <Icon name="print" size={18} />{`${t("kit.title")} (${num(l.kit.length)})`}</Node></li>
-                      </ol>
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-            <Button size="sm" variant="secondary" onClick={() => lessonOps.insert(unit.lessons.length)}>{t("cms.addLesson")}</Button>
-            <Node on={here({ kind: "checks" })} badge={errors.length} onClick={() => pick({ kind: "checks" })}><Icon name={errors.length ? "warning" : "check"} size={18} />{t("cms.issues")}</Node>
-            <fieldset className="ed-fieldset">
-              <legend className="ed-outline-h">{t("cms.langs")}</legend>
-              <div className="ed-filter">
-                {langChoices.map((code) => {
-                  const on = code === "en" || editLangs.includes(code);
-                  return <button key={code} type="button" className={`ed-chip${on ? " is-on" : ""}`} aria-pressed={on} disabled={code === "en"} onClick={() => toggleLang(code)}>
-                    <LangName name={languageOf(code).native} code={code} /></button>;
-                })}
-              </div>
-              <p className="muted small">{t("cms.langsHint")}</p>
-            </fieldset>
-          </nav>
+        {shownLangs.length > 1 && (
+          <div className="ed-head" role="group" aria-label={t("cms.view")}>
+            <span className="dr-field-label">{t("cms.view")}</span>
+            <button type="button" className={`ed-chip${view === "all" ? " is-on" : ""}`} aria-pressed={view === "all"} onClick={() => translate("all")}>{t("cms.view.all")}</button>
+            {shownLangs.map((code) => {
+              const n = code === "en" ? 0 : missingIn(code);
+              return (
+                <button key={code} type="button" className={`ed-chip${view === code ? " is-on" : ""}`} aria-pressed={view === code} onClick={() => translate(code)}>
+                  <LangName name={languageOf(code).native} code={code} />{n > 0 && <span className="ed-chip-n" aria-label={t("cms.toTranslate", { n: num(n) })}>{num(n)}</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <div className={`ed-split is-${pane}${showLive ? " has-live" : ""}`}>
+          <Outline unit={unit} view={view_} errors={errors} editLangs={editLangs} pick={pick} onInsertLesson={lessonOps.insert}
+            onMoveLesson={lessonOps.move} onMoveStep={(l, from, to) => stepOps(l, unit.lessons[l]).moveTo(from, to)} onToggleLang={toggleLang} />
 
           <section id="ed-detail" className="ed-detail" aria-label={t("cms.editing")}>
             <nav className="ed-crumbs" aria-label={t("cms.where")}>
-              <Button size="sm" variant="ghost" icon="back" className="ed-to-outline" onClick={() => setPane("outline")}>{t("cms.outline")}</Button>
+              <Button size="sm" variant="ghost" icon="back" className="ed-to-outline" onClick={() => { setPane("outline"); if (showLive) setLive(false); }}>{t("cms.outline")}</Button>
               <ol>
                 <li><button type="button" onClick={() => pick({ kind: "unit" })}>{L(unit.title) || t("cms.untitled")}</button></li>
                 {lesson && <li><Icon name="next" size={16} /><button type="button" onClick={() => pick({ kind: "lesson", lesson: lesson.id })}>{t("common.lessonN", { n: li + 1 })}</button></li>}
@@ -311,6 +398,9 @@ export function UnitEditor({ Player }: { Player: Player }) {
             </nav>
             <div key={hist.version} className="panel">{detail}</div>
           </section>
+
+          {showLive && <LivePreview Player={Player} unit={unit} lesson={lesson!} step={liveStep!} lang={view === "all" ? "en" : view}
+            blocked={count((x) => x.at.lesson === li && x.at.step === si) > 0} onClose={() => { setLive(false); try { localStorage.setItem(LIVE_KEY, "0"); } catch { /* private mode */ } }} />}
         </div>
       </main>
 
@@ -319,14 +409,19 @@ export function UnitEditor({ Player }: { Player: Player }) {
           <Button variant="ghost" iconOnly icon="undo" disabled={!hist.canUndo} onClick={hist.undo} title={`${t("cms.undo")} (Ctrl+Z)`}>{t("cms.undo")}</Button>
           <Button variant="ghost" iconOnly icon="redo" disabled={!hist.canRedo} onClick={hist.redo} title={`${t("cms.redo")} (Ctrl+Y)`}>{t("cms.redo")}</Button>
         </span>
-        <Button loading={busy === "save"} disabled={!!busy && busy !== "save"} variant={dirty ? "primary" : "secondary"} icon="check" onClick={() => { void save(); }}>{dirty ? t("cms.save") : t("cms.savedShort")}</Button>
-        <Button loading={busy === "publish"} disabled={!!busy || errors.length > 0} variant={dirty ? "secondary" : "primary"} icon="share" onClick={() => { void publish(); }}>{t("cms.publish")}</Button>
-        {errors.length > 0 && <button type="button" className="ed-link err-text" onClick={() => pick({ kind: "checks" })}>{t("cms.fixFirst", { n: errors.length })}</button>}
+        <span className={`ed-save${saveErr ? " is-error" : ""}`} title={t("cms.autosaveHint")}>{saveState}</span>
+        <span className="ed-bar-end">
+          {dirty && <Button size="sm" loading={busy === "save"} disabled={!!busy && busy !== "save"} variant="secondary" icon="check" title="Ctrl+S" onClick={() => { void save(); }}>{t("cms.save")}</Button>}
+          {errors.length > 0
+            ? <Button variant="secondary" icon="warning" onClick={() => pick({ kind: "checks" })}>{t("cms.fixFirst", { n: errors.length })}</Button>
+            : <Button loading={busy === "publish"} disabled={!!busy} icon="share" onClick={() => { void publish(); }}>{t("cms.publish")}</Button>}
+        </span>
         {msg && (
           <div className={msg.ok ? "notice ok ed-confirm" : "notice err ed-confirm"} role={msg.ok ? "status" : "alert"}>
             <span>{msg.text}</span>
             {msg.undo && <Button size="sm" variant="secondary" onClick={() => { hist.undo(); setMsg(null); }}>{t("cms.undo")}</Button>}
-            {msg.open && <Button size="sm" variant="secondary" onClick={() => go(`${base}/${msg.open}`)}>{t("cms.open")}</Button>}
+            {msg.open && <Button size="sm" variant="secondary" onClick={() => { void go(`${base}/${msg.open}`); }}>{t("cms.open")}</Button>}
+            <Button size="sm" variant="ghost" iconOnly icon="close" onClick={() => setMsg(null)}>{t("common.close")}</Button>
           </div>
         )}
         {ask === "delete" && <Confirm text={t("cms.deleteConfirm", { title: L(unit.title) || unit.id })}>
@@ -342,234 +437,69 @@ export function UnitEditor({ Player }: { Player: Player }) {
       </div>
 
       {preview && unit.lessons.find((l) => l.id === preview.lesson) && <Preview Player={Player} unit={unit} lesson={unit.lessons.find((l) => l.id === preview.lesson)!}
-        lang={preview.lang} onLang={(lang) => setPreview({ ...preview, lang })} onExit={() => setPreview(null)} />}
+        lang={preview.lang} at={preview.at} onLang={(lang) => setPreview({ ...preview, lang })} onExit={() => setPreview(null)} />}
     </EditLangsProvider>
   );
-}
-
-/** One line of the outline. */
-function Node({ on, open, badge = 0, onClick, children }: { on: boolean; open?: boolean; badge?: number; onClick: () => void; children: ReactNode }) {
-  const { num } = useI18n();
-  return (
-    <button type="button" className={`ed-node${on ? " is-on" : ""}`} aria-current={on ? "true" : undefined} aria-expanded={open} onClick={onClick}>
-      {children}{badge > 0 && <span className="ed-badge">{num(badge)}</span>}
-    </button>
-  );
-}
-
-/** "+" between two items of the outline: add one right here. */
-function Insert({ label, onClick }: { label: string; onClick: () => void }) {
-  return <button type="button" className="ed-insert" aria-label={label} title={label} onClick={onClick}><span aria-hidden>+</span></button>;
 }
 
 function Confirm({ text, children }: { text: string; children: ReactNode }) {
   return <div className="notice ed-confirm" role="alert"><span>{text}</span>{children}</div>;
 }
 
-function LessonDetail({ lesson: l, index, count, onChange, canPreview, onPreview, onDuplicate, onMove, onRemove, copyTo }: {
-  lesson: Lesson; index: number; count: number; onChange: (l: Lesson) => void; canPreview: boolean; onPreview: (lang: string) => void;
-  onDuplicate: () => void; onMove: (d: -1 | 1) => void; onRemove: () => void; copyTo: ReactNode;
-}) {
-  const { t, L, num, lang } = useI18n();
-  const [copying, setCopying] = useState(false);
-  const comps = l.competencies ?? [];
+/** Shows `fallback` instead of a preview that throws (a half-written step can be any shape). */
+class Guard extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? this.props.fallback : this.props.children; }
+}
+
+/**
+ * The step being edited, played as learners will see it, in a phone-sized frame beside the form (from 900 px). It
+ * starts again a moment after each change. The frame contains the player's fixed bars (it is their containing block).
+ */
+function LivePreview({ Player, unit, lesson, step, lang, blocked, onClose }: { Player: Player; unit: Unit; lesson: Lesson; step: Step; lang: string; blocked: boolean; onClose: () => void }) {
+  const { t } = useI18n();
+  const languages = useLanguages();
+  const [shownLang, setShownLang] = useState(lang);
+  useEffect(() => setShownLang(lang), [lang]);
+  usePack(shownLang);
+  const [shown, setShown] = useState(step);
+  useEffect(() => { const id = setTimeout(() => setShown(step), 400); return () => clearTimeout(id); }, [step]);
+  const one = useMemo(() => ({ ...lesson, steps: [shown] }), [lesson, shown]);
+  const key = `${JSON.stringify(shown)}-${shownLang}`;
+  const noop = useCallback(() => {}, []);
   return (
-    <div className="stack-lg">
-      <h3 className="ed-h4">{t("common.lessonN", { n: index + 1 })}</h3>
-      <div className="ed-toolbar">
-        <Button size="sm" variant="secondary" icon="play" disabled={!canPreview || !l.steps.length} onClick={() => onPreview(lang)}>{t("cms.preview")}</Button>
-        <Button size="sm" variant="ghost" icon="file" onClick={onDuplicate}>{t("cms.duplicate")}</Button>
-        <Button size="sm" variant="ghost" icon="share" aria-expanded={copying} onClick={() => setCopying(!copying)}>{t("cms.copyTo")}</Button>
-        <Button size="sm" variant="ghost" icon="up" disabled={index === 0} onClick={() => onMove(-1)}>{t("q.up")}</Button>
-        <Button size="sm" variant="ghost" icon="down" disabled={index === count - 1} onClick={() => onMove(1)}>{t("q.down")}</Button>
-        <Button size="sm" variant="ghost" icon="close" disabled={count <= 1} onClick={onRemove}>{t("cms.deleteLesson")}</Button>
+    <aside className="ed-live" aria-label={t("cms.livePreview")}>
+      <div className="ed-live-head">
+        <strong>{t("cms.livePreview")}</strong>
+        <span className="row-gap">
+          {languages.length > 1 && languages.map((l) => (
+            <button key={l.code} type="button" className={`ed-chip${l.code === shownLang ? " is-on" : ""}`} aria-pressed={l.code === shownLang} onClick={() => setShownLang(l.code)}>
+              <LangName name={l.native} code={l.code} /></button>
+          ))}
+          <Button size="sm" variant="ghost" iconOnly icon="close" onClick={onClose}>{t("cms.hidePreview")}</Button>
+        </span>
       </div>
-      {!canPreview && <p className="muted small">{t("cms.previewBlocked")}</p>}
-      {copying && copyTo}
-      <LText label={t("cms.title")} value={l.title} onChange={(title) => onChange({ ...l, title })} />
-      <div className="form-grid"><Num label={t("cms.minutes")} min={1} max={60} value={l.minutes} onChange={(minutes) => onChange({ ...l, minutes })} /></div>
-      <LText label={t("lesson.try")} hint={t("cms.tryHint")} value={l.tryTomorrow} onChange={(tryTomorrow) => onChange({ ...l, tryTomorrow })} multiline rows={2} />
-      <LList label={t("cms.materials")} hint={t("cms.materialsHint")} value={l.materials} rows={3}
-        onChange={(materials) => onChange({ ...l, materials: materials.en.length || Object.values(materials).some((v) => v?.length) ? materials : undefined })} />
-      <div className="stack-sm">
-        <span className="dr-field-label">{t("p.capabilities")}</span>
-        <div className="row-gap">
-          {comps.map((c) => <span key={c} className="pill"><span className="cap-code" dir="ltr">{c}</span>
-            <Button size="sm" variant="ghost" iconOnly icon="close" onClick={() => onChange({ ...l, competencies: comps.filter((x) => x !== c) })}>{t("cms.remove")}</Button></span>)}
+      <div className="ed-live-frame">
+        <div className="ed-live-scroll">
+          {blocked ? <p className="ed-live-note">{t("cms.liveBlocked")}</p> : (
+            <Guard key={key} fallback={<p className="ed-live-note">{t("cms.liveBlocked")}</p>}>
+              <I18nProvider lang={shownLang}>
+                <div dir={languageOf(shownLang).dir} lang={shownLang}>
+                  <Player key={key} unitId={unit.id} lesson={one} track={unit.track} preview={{ onExit: noop }} />
+                </div>
+              </I18nProvider>
+            </Guard>
+          )}
         </div>
-        <select className="dr-field-input" aria-label={t("cms.addCompetency")} value="" onChange={(e) => e.target.value && onChange({ ...l, competencies: [...comps, e.target.value] })}>
-          <option value="">{t("cms.addCompetency")}</option>
-          {COMPETENCIES.filter((c) => !comps.includes(c.code)).map((c) => <option key={c.code} value={c.code}>{`${c.code}: ${L(c.label)}${c.level ? ` — ${L(c.level)}` : ""}`}</option>)}
-        </select>
       </div>
-      <p className="muted small">{[t("cms.stepsCount", { n: num(l.steps.length) }), t("cms.slidesCount", { n: num(l.slides.length) })].join(t("common.sep"))}</p>
-    </div>
+      <p className="muted small">{t("cms.liveHint")}</p>
+    </aside>
   );
 }
 
-/** Copy the lesson into another unit of the same owner (saved there at once, as a normal draft save). */
-function CopyTo({ owner, unitId, lesson, onDone }: { owner: string; unitId: string; lesson: Lesson; onDone: (text: string) => void }) {
-  const { t, L } = useI18n();
-  const tracks = useTracks();
-  const { user } = useAuth();
-  const [units, setUnits] = useState<UnitMeta[] | null>(null);
-  const [target, setTarget] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
-  useEffect(() => {
-    listUnits(owner).then((u) => { const others = u.filter((x) => x.id !== unitId); setUnits(others); setTarget(others[0]?.id ?? ""); }).catch((e: Error) => setErr(e.message));
-  }, [owner, unitId]);
-  const copy = async () => {
-    if (!user || !target) return;
-    setBusy(true); setErr("");
-    try {
-      const r = await copyLessonTo(target, lesson, user.uid);
-      if (!r) setErr(t("err.notFound"));
-      else if ("conflict" in r) setErr(t("cms.copyConflict"));
-      else onDone(t("cms.copied", { title: L(r.title) || t("cms.untitled") }));
-    } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
-  };
-  return (
-    <div className="ed-item stack">
-      {!units ? (err ? null : <div className="loading" aria-busy="true" />) : !units.length ? <p className="muted">{t("cms.copyNone")}</p> : (
-        <>
-          <Sel label={t("cms.copyToPick")} value={target} onChange={setTarget}
-            options={units.map((u) => [u.id, `${L(u.title) || t("cms.untitled")} (${tracks.name(u.track)}${t("common.sep")}${tracks.levelName(u.track, u.level)})`] as const)} />
-          <p className="muted small">{t("cms.copyHint")}</p>
-          <div className="row-gap"><Button size="sm" loading={busy} onClick={() => { void copy(); }}>{t("cms.copyGo")}</Button></div>
-        </>
-      )}
-      {err && <p className="err-text" role="alert">{err}</p>}
-    </div>
-  );
-}
-
-/** "Add a step": every kind, with what it's for. */
-function StepTypes({ onPick }: { onPick: (type: Step["type"]) => void }) {
-  const { t } = useI18n();
-  return (
-    <div className="stack">
-      <h3 className="ed-h4">{t("cms.chooseStep")}</h3>
-      <div className="ed-types">
-        {STEP_MENU.map((type) => (
-          <button key={type} type="button" className="ed-type" onClick={() => onPick(type)}>
-            <strong>{t(STEP_LABEL[type])}</strong><span>{t(`cms.stepHint.${type}` as MessageKey)}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function SlidesForm({ lesson: l, onChange }: { lesson: Lesson; onChange: (l: Lesson) => void }) {
-  const { t, num } = useI18n();
-  return (
-    <div className="stack">
-      <h3 className="ed-h4">{t("kit.slides")}</h3>
-      <p className="muted small">{t("cms.slidesHint")}</p>
-      <Items<Slide> items={l.slides} itemLabel={(i, s) => `${num(i + 1)}: ${t(`cms.layout.${s.layout}` as MessageKey)}`} addLabel={t("cms.addSlide")} onChange={(slides) => onChange({ ...l, slides })}
-        add={() => ({ layout: l.slides.length ? "bullets" : "title", title: LT() })}
-        render={(s, set) => (
-          <div className="stack">
-            <Sel label={t("cms.layout")} value={s.layout} onChange={(layout) => set({ ...s, layout })} options={SLIDE_LAYOUTS.map((x) => [x, t(`cms.layout.${x}` as MessageKey)] as const)} />
-            <LText label={t("cms.title")} value={s.title} onChange={(title) => set({ ...s, title })} />
-            <LList label={t("cms.bullets")} hint={t("cms.onePerLine")} value={s.bullets} onChange={(bullets) => set({ ...s, bullets })} rows={3} />
-            {(s.layout === "activity" || s.details) && <LList label={t("cms.details")} hint={t("cms.detailsHint")} value={s.details} rows={5}
-              onChange={(details) => set({ ...s, details: Object.values(details).some((v) => v?.length) ? details : undefined })} />}
-            <LText label={t("cms.note")} value={s.note} onChange={(note) => set({ ...s, note })} multiline rows={2} />
-            <LText label={t("cms.narration")} hint={t("cms.narrationHint")} value={s.narration} onChange={(narration) => set({ ...s, narration })} multiline rows={2} />
-          </div>
-        )} />
-    </div>
-  );
-}
-
-const KIT_FORMATS: Record<"slides" | "lesson-plan", KitFormat[]> = { slides: ["pdf", "pptx"], "lesson-plan": ["pdf"] };
-
-/** Classroom kit files: uploaded per language and format. Built-in kits (from an imported unit) are kept as they are. */
-function KitForm({ lesson: l, onChange, media }: { lesson: Lesson; onChange: (l: Lesson) => void; media: MediaCtx }) {
-  const { t } = useI18n();
-  const langs = useEditLangs();
-  const add = (kind: "slides" | "lesson-plan") => onChange({ ...l, kit: [...l.kit, {
-    kind, pages: 1, formats: KIT_FORMATS[kind], urls: {},
-    title: kind === "slides" ? { en: "Slides", ar: "شرائح" } : { en: "Lesson plan", ar: "خطة الدرس" },
-  }] });
-  const setUrl = (k: KitFile, i: number, lang: string, fmt: KitFormat, url: string | null) => {
-    const byLang = { ...(k.urls?.[lang] ?? {}) };
-    if (url) byLang[fmt] = url; else delete byLang[fmt];
-    onChange({ ...l, kit: l.kit.map((x, n) => (n === i ? { ...k, urls: { ...k.urls, [lang]: byLang } } : x)) });
-  };
-  return (
-    <div className="stack">
-      <h3 className="ed-h4">{t("kit.title")}</h3>
-      <Items<KitFile> items={l.kit} itemLabel={(_, k) => t(k.kind === "slides" ? "kit.slides" : k.kind === "video" ? "kit.mp4" : "kit.plan")} onChange={(kit) => onChange({ ...l, kit })}
-        render={(k, set, i) => (
-          <div className="stack">
-            <LText label={t("cms.title")} value={k.title} onChange={(title) => set({ ...k, title })} />
-            <div className="form-grid"><Num label={t("cms.pages")} min={0} value={k.pages} onChange={(pages) => set({ ...k, pages })} /></div>
-            {k.urls ? (
-              <div className="ed-pair">
-                {langs.map((lng) => <div key={lng.code} className="stack">{k.formats.map((fmt) => fmt !== "mp4" && (
-                  <Upload key={fmt} label={<>{t(fmt === "pdf" ? "kit.pdf" : "kit.pptx")} (<LangName name={lng.name} code={lng.code} />)</>} kind={fmt} owner={media.owner} unitId={media.unitId}
-                    base={`${media.lessonId}_kit_${k.kind}_${lng.code}`} current={k.urls?.[lng.code]?.[fmt]}
-                    onDone={(url) => setUrl(k, i, lng.code, fmt, url)} onClear={() => setUrl(k, i, lng.code, fmt, null)} />
-                ))}</div>)}
-              </div>
-            ) : <p className="muted small" dir="ltr">{k.base ?? k.path}</p>}
-          </div>
-        )} />
-      <div className="row-gap">
-        <Button size="sm" variant="secondary" onClick={() => add("slides")}>{t("cms.addKitSlides")}</Button>
-        <Button size="sm" variant="secondary" onClick={() => add("lesson-plan")}>{t("cms.addKitPlan")}</Button>
-      </div>
-    </div>
-  );
-}
-
-/** Errors first, then warnings; each opens the place it points at. */
-function IssuesPanel({ issues, unit, onJump }: { issues: Issue[]; unit: Unit; onJump: (i: Issue) => void }) {
-  const { t, num } = useI18n();
-  const sorted = [...issues].sort((a, b) => (a.level === b.level ? 0 : a.level === "error" ? -1 : 1));
-  const where = (i: Issue) => {
-    const parts: string[] = [];
-    if (i.at.lesson !== undefined) parts.push(t("common.lessonN", { n: i.at.lesson + 1 }));
-    if (i.at.step !== undefined) { const s = unit.lessons[i.at.lesson ?? 0]?.steps[i.at.step]; parts.push(`${t("cms.step")} ${num(i.at.step + 1)}${s ? ` (${t(STEP_LABEL[s.type])})` : ""}`); }
-    if (i.at.slide !== undefined) parts.push(`${t("cms.slide")} ${num(i.at.slide + 1)}`);
-    if (i.at.kit !== undefined) parts.push(t("kit.title"));
-    if (!parts.length) parts.push(t("cms.unitDetails"));
-    return parts.join(" › ");
-  };
-  const nErr = errorsOf(issues).length, nWarn = issues.length - nErr;
-  // Missing translations can run to hundreds: one folded group per language, after everything else.
-  const langName = (code: unknown) => isolate(languageOf(String(code)).native);
-  const missing = new Map<string, Issue[]>();
-  for (const i of sorted) if (i.code === "missingLang") missing.set(String(i.params?.lang), [...(missing.get(String(i.params?.lang)) ?? []), i]);
-  const item = (i: Issue, k: number) => (
-    <li key={k}>
-      <button type="button" className={`ed-issue is-${i.level}`} onClick={() => onJump(i)}>
-        <span className="ed-where">{where(i)}{i.at.field && <> <code dir="ltr">{i.at.field}</code></>}</span>
-        <span>{t(`cms.issue.${i.code}` as MessageKey, { ...i.params, ...(i.params?.lang ? { lang: langName(i.params.lang) } : {}) })}</span>
-      </button>
-    </li>
-  );
-  const rest = sorted.filter((i) => i.code !== "missingLang");
-  return (
-    <div className="stack">
-      <h3 className="ed-h4">{t("cms.issues")}</h3>
-      <p className={nErr ? "notice err" : "notice ok"}>{nErr ? t("cms.errorsCount", { n: nErr }) : t("cms.noErrors")}{nWarn ? `${t("common.sep")}${t("cms.warningsCount", { n: nWarn })}` : ""}</p>
-      {rest.length > 0 && <ul className="ed-issues">{rest.slice(0, 200).map(item)}</ul>}
-      {[...missing].map(([code, list]) => (
-        <details key={code} className="ed-more">
-          <summary>{t("cms.issue.missingGroup", { lang: langName(code), n: list.length })}</summary>
-          <ul className="ed-issues">{list.slice(0, 200).map(item)}</ul>
-        </details>
-      ))}
-    </div>
-  );
-}
-
-/** The lesson as learners will play it, from the unsaved draft: nothing is recorded, submitted or synced. */
-function Preview({ Player, unit, lesson, lang, onLang, onExit }: { Player: Player; unit: Unit; lesson: Lesson; lang: string; onLang: (l: string) => void; onExit: () => void }) {
+/** The lesson as learners will play it, from the unsaved draft: nothing is recorded, submitted or synced. Any step can be opened. */
+function Preview({ Player, unit, lesson, lang, at, onLang, onExit }: { Player: Player; unit: Unit; lesson: Lesson; lang: string; at: number; onLang: (l: string) => void; onExit: () => void }) {
   const { t } = useI18n();
   const languages = useLanguages();
   usePack(lang); // an added language's interface strings, for the preview's buttons and labels
@@ -586,7 +516,7 @@ function Preview({ Player, unit, lesson, lang, onLang, onExit }: { Player: Playe
       </div>
       <I18nProvider lang={lang}>
         <div dir={dir} lang={lang} className="ed-preview-body">
-          <Player key={`${lesson.id}-${lang}`} unitId={unit.id} lesson={lesson} track={unit.track} preview={{ onExit }} />
+          <Player key={`${lesson.id}-${lang}`} unitId={unit.id} lesson={lesson} track={unit.track} preview={{ onExit }} explore={{ at }} />
         </div>
       </I18nProvider>
     </div>

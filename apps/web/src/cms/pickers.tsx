@@ -1,9 +1,9 @@
 /**
- * Track and level pickers for units: cards with each track's icon and colour, and one button per level of the chosen
+ * Track and level pickers for units: compact buttons with each track's icon and colour, and one button per level of the chosen
  * track (with the level's name when platform admins gave it one). Hidden tracks are offered too, marked, so editors can
  * prepare units before a track goes live.
  */
-import { ChoiceCard, type IconName } from "@darsi/design-system";
+import { Icon, type IconName } from "@darsi/design-system";
 import { useTracks } from "../content/settings";
 import { AUDIENCES, type Audience } from "../content/types";
 import { useI18n } from "../i18n";
@@ -17,13 +17,18 @@ export function TrackPicker({ value, onChange }: { value: string; onChange: (id:
     <fieldset className="ed-fieldset">
       <legend className="dr-field-label">{t("cms.track")}</legend>
       <div className="ed-trackpick" role="radiogroup" aria-label={t("cms.track")}>
-        {list.map((x) => (
-          <div key={x.id} className={`dr-tr dr-tr-${x.tone}`}>
-            <ChoiceCard icon={x.icon as IconName} title={tracks.name(x.id)} selected={value === x.id} onClick={() => onChange(x.id)}
-              description={!known && x.id === value ? t("cms.tracks.unknown")
-                : [t("cms.tracks.levelsCount", { n: num(x.levels) }), x.hidden ? t("cms.tracks.hidden") : ""].filter(Boolean).join(t("common.sep"))} />
-          </div>
-        ))}
+        {list.map((x) => {
+          const on = value === x.id;
+          const sub = !known && x.id === value ? t("cms.tracks.unknown")
+            : [t("cms.tracks.levelsCount", { n: num(x.levels) }), x.hidden ? t("cms.tracks.hidden") : ""].filter(Boolean).join(t("common.sep"));
+          return (
+            <button key={x.id} type="button" role="radio" aria-checked={on} className={`ed-trk dr-tr dr-tr-${x.tone}${on ? " is-on" : ""}`} onClick={() => onChange(x.id)}>
+              <span className="ed-trk-ico" aria-hidden><Icon name={x.icon as IconName} size={18} /></span>
+              <span className="ed-trk-text"><strong>{tracks.name(x.id)}</strong><span>{sub}</span></span>
+              {on && <Icon name="check" size={18} />}
+            </button>
+          );
+        })}
       </div>
     </fieldset>
   );

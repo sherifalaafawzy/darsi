@@ -170,7 +170,7 @@ describe("UnitEditor", () => {
     m.got = { meta: meta(u), unit: u };
     wrap(<UnitEditor />, "/super/content/ai-1", "/super/content/:unitId");
     fireEvent.click(await screen.findByRole("button", { name: "Fix the errors (1) to publish" }));
-    expect((screen.getByRole("button", { name: "Publish" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: "Publish" })).toBeNull(); // the bar offers the fix instead
     expect(await screen.findByText("Errors to fix before publishing: 1")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /The answer must be one of the options/ }));
     expect(await screen.findByLabelText("Correct answer")).toBeTruthy(); // the choice step's form is open
@@ -216,7 +216,7 @@ describe("UnitEditor", () => {
     const nav = await openEditor();
     fireEvent.click(within(nav).getByRole("button", { name: /Is it AI\?/ }));
     fireEvent.click(within(nav).getAllByRole("button", { name: "Add a step here" })[2]);
-    fireEvent.click(await screen.findByRole("button", { name: /^True or false/ }));
+    fireEvent.click(within(await screen.findByRole("region", { name: "Questions" })).getByRole("button", { name: /^True or false/ }));
     expect(screen.getByRole("heading", { name: "Step 3: True or false" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
     await waitFor(() => expect(m.data.saveUnit).toHaveBeenCalled());
@@ -271,17 +271,67 @@ describe("UnitEditor", () => {
     expect(await screen.findByText("Copied to Sensors.")).toBeTruthy();
   });
 
-  it("asks before leaving with unsaved changes", async () => {
+  it("saves before leaving, and asks only when that save fails", async () => {
     await openEditor();
     fireEvent.change(screen.getAllByLabelText(/Title/)[0], { target: { value: "Changed" } });
+    m.data.saveUnit.mockRejectedValueOnce(new Error("offline"));
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(await screen.findByText(/Leave without saving\?/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Stay here" }));
     expect(screen.queryByText(/Leave without saving\?/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    fireEvent.click(screen.getByRole("button", { name: "Leave without saving" }));
     expect(await screen.findByText("elsewhere")).toBeTruthy();
-    expect(m.data.saveUnit).not.toHaveBeenCalled();
+    expect(saved().title.en).toBe("Changed");
+  });
+
+  it("saves by itself a few seconds after the last change", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      await openEditor();
+      fireEvent.change(screen.getAllByLabelText(/Title/)[0], { target: { value: "Typed" } });
+      expect(screen.getByText("Saving soon…")).toBeTruthy();
+      await act(async () => { vi.advanceTimersByTime(3100); });
+      await waitFor(() => expect(m.data.saveUnit).toHaveBeenCalledTimes(1));
+      expect(saved().title.en).toBe("Typed");
+      expect(await screen.findByText(/Saved at/)).toBeTruthy();
+    } finally { vi.useRealTimers(); }
+  });
+
+  it("marks the right answer on the option itself", async () => {
+    const nav = await openEditor();
+    fireEvent.click(within(nav).getByRole("button", { name: /Is it AI\?/ }));
+    fireEvent.click(within(nav).getByRole("button", { name: /Choose one/ }));
+    const group = await screen.findByRole("radiogroup", { name: "Correct answer" });
+    const marks = within(group).getAllByRole("radio");
+    const right = marks.findIndex((r) => r.getAttribute("aria-checked") === "true");
+    const other = right === 0 ? 1 : 0;
+    fireEvent.click(marks[other]);
+    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    await waitFor(() => expect(m.data.saveUnit).toHaveBeenCalled());
+    const q = saved().lessons[0].steps.find((s) => s.type === "choice") as { answer: string; options: { id: string }[] };
+    expect(q.answer).toBe(q.options[other].id);
+  });
+
+  it("shows one language at a time, with the English to translate from", async () => {
+    await openEditor();
+    expect(screen.getAllByLabelText(/^Title/)).toHaveLength(2);
+    fireEvent.click(within(screen.getByRole("group", { name: "Languages on screen" })).getByRole("button", { name: "العربية" }));
+    const titles = screen.getAllByLabelText(/^Title/);
+    expect(titles).toHaveLength(1);
+    expect(titles[0].getAttribute("lang")).toBe("ar");
+    expect(screen.getAllByText("English:").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "Side by side" }));
+    expect(screen.getAllByLabelText(/^Title/)).toHaveLength(2);
+  });
+
+  it("lists a lesson's steps as cards and opens one", async () => {
+    const nav = await openEditor();
+    fireEvent.click(within(nav).getByRole("button", { name: /Is it AI\?/ }));
+    const board = (await screen.findByRole("heading", { name: /^Steps/ })).parentElement!;
+    fireEvent.click(within(board).getAllByRole("button", { name: /Choose one/ })[0]);
+    expect(await screen.findByRole("heading", { name: "Step 3: Choose one" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Next step" }));
+    expect(await screen.findByRole("heading", { name: /^Step 4:/ })).toBeTruthy();
   });
 
   it("previews the open lesson without recording anything", async () => {

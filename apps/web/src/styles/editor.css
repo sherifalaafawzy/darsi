@@ -21,9 +21,13 @@
 .ed-lesson, .ed-track { border-color: var(--line-strong); }
 .ed-lesson-body { padding-block-start: var(--space-2); border-block-start: 2px solid var(--line); }
 .ed-items > .dr-btn { justify-self: start; }
-.ed-item-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-inline-size: 0; }
+.ed-item-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); min-inline-size: 0; }
 .ed-item-head > strong { min-inline-size: 0; overflow-wrap: anywhere; }
 .ed-tools { display: flex; flex: none; gap: var(--space-1); }
+.ed-tools-end { margin-inline-start: auto; }
+/* A step's previous/next and its tools share one row, even on a 360px phone. */
+.ed-steptools { flex-wrap: nowrap; }
+.ed-steptools > .ed-tools { gap: 0; }
 
 /* Opens a lesson or a step: the whole title row is the button. */
 .ed-toggle { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-inline-size: 0; min-block-size: var(--tap-min);
@@ -57,7 +61,10 @@
 /* Save / publish, always in reach: above the floating bottom nav on phones, at the bottom of the screen on wide ones. */
 .ed-bar { position: sticky; inset-block-end: calc(var(--bottomnav-h) + env(safe-area-inset-bottom)); z-index: var(--z-banner);
   display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); box-sizing: border-box; max-inline-size: 1200px; margin-inline: auto;
-  padding: var(--space-3) var(--space-4); background: var(--surface); border-block-start: 2px solid var(--line-strong); }
+  padding: var(--space-2) var(--space-3); background: var(--surface); border-block-start: 2px solid var(--line-strong); }
+.ed-save { flex: 1 1 0; min-inline-size: 0; color: var(--ink-muted); font: var(--text-label); }
+.ed-save.is-error { color: var(--wrong); }
+.ed-bar-end { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); margin-inline-start: auto; }
 
 /* Unit list: filters, then one group per track (in the platform's order) of unit cards. */
 .ed-filters { display: grid; gap: var(--space-3); }
@@ -73,49 +80,159 @@
 .ed-unit-title { min-inline-size: 0; color: var(--ink); font: var(--text-heading); overflow-wrap: anywhere; }
 .ed-unit-lessons { margin: 0; padding-inline-start: var(--space-6); font: var(--text-caption); color: var(--ink); }
 
-/* Track and level pickers: the track's own colour on its card; levels as one row of round buttons. */
-.ed-trackpick { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-2); }
-.ed-trackpick .dr-tr .dr-choice-icon { background: var(--tr-soft); color: var(--tr-ink); }
-.ed-trackpick .dr-tr .dr-choice.is-selected .dr-choice-icon { background: var(--tr); color: var(--ink); }
+/* Track picker: compact buttons in the track's own colour. */
+.ed-trackpick { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: var(--space-2); }
+.ed-trk { display: flex; align-items: center; gap: var(--space-2); min-inline-size: 0; min-block-size: var(--tap-min); padding: var(--space-1) var(--space-2); background: var(--surface);
+  border: 2px solid var(--line); border-radius: var(--radius-md); color: var(--ink); font: var(--text-body); text-align: start; cursor: pointer; }
+.ed-trk:hover { border-color: var(--line-strong); }
+.ed-trk.is-on { border-color: var(--ink); background: var(--tr-soft); box-shadow: var(--shadow-press); }
+.ed-trk:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ed-trk-ico { display: grid; place-items: center; flex: none; inline-size: 32px; block-size: 32px; border-radius: 50%; background: var(--tr-soft); color: var(--tr-ink); }
+.ed-trk.is-on .ed-trk-ico { background: var(--tr); color: var(--ink); }
+.ed-trk-text { display: grid; flex: 1 1 auto; min-inline-size: 0; }
+.ed-trk-text > strong { overflow-wrap: anywhere; }
+.ed-trk-text > span { color: var(--ink-muted); font: var(--text-caption); }
 .ed-seg { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .ed-seg-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-inline-size: var(--tap-min); min-block-size: var(--tap-min); padding: var(--space-1) var(--space-3);
   background: var(--surface); border: 2px solid var(--line-strong); border-radius: var(--radius-pill); color: var(--ink); font: var(--text-body); cursor: pointer; }
 .ed-seg-btn.is-on { background: var(--kola); border-color: var(--ink); color: var(--on-kola); }
 
-/* Unit editor: the outline beside the form from 900px; on phones one at a time, the outline first. */
+/* Unit editor: the outline beside the pane from 900px; on phones one at a time, the outline first. */
+.ed-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-block-end: var(--space-3); }
+.ed-head > .dr-field-label { flex-basis: 100%; }
+.ed-chip-n { display: inline-flex; align-items: center; justify-content: center; min-inline-size: 22px; margin-inline-start: var(--space-1); padding: 0 var(--space-1);
+  border-radius: var(--radius-pill); background: var(--sunbird-soft); color: var(--ink); font: var(--text-caption); }
 .ed-split { display: grid; gap: var(--space-4); align-items: start; }
 .ed-split.is-detail .ed-outline, .ed-split.is-outline .ed-detail { display: none; }
 .ed-outline { display: grid; gap: var(--space-2); align-content: start; min-inline-size: 0; padding: var(--space-3); background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-lg); }
 .ed-outline > .dr-btn { justify-self: start; }
 .ed-outline-h { margin: var(--space-2) 0 0; color: var(--ink-muted); font: var(--text-label); }
+/* The unit itself, at the top of the outline. */
+.ed-course { display: grid; gap: var(--space-1); inline-size: 100%; padding: var(--space-3); background: var(--paper); border: 2px solid var(--line-strong); border-radius: var(--radius-md);
+  color: var(--ink); font: var(--text-body); text-align: start; cursor: pointer; }
+.ed-course > strong { font: var(--text-heading); overflow-wrap: anywhere; }
+.ed-course.is-on { background: var(--kola-soft); border-color: var(--ink); }
+.ed-course:hover { border-color: var(--ink); }
+.ed-course:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ed-course-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.ed-course-edit { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--ink-muted); font: var(--text-label); }
 .ed-tree { display: grid; margin: 0; padding: 0; list-style: none; min-inline-size: 0; }
-.ed-tree > li { min-inline-size: 0; }
+.ed-tree > li { min-inline-size: 0; border-block-start: 3px solid transparent; }
+.ed-tree > li.is-drop { border-block-start-color: var(--kola); }
 .ed-tree-sub { margin-inline-start: var(--space-3); padding-inline-start: var(--space-2); border-inline-start: 2px solid var(--line); }
 .ed-node { display: flex; align-items: center; gap: var(--space-2); inline-size: 100%; min-inline-size: 0; min-block-size: var(--tap-min); padding: var(--space-1) var(--space-2); background: none;
   border: 2px solid transparent; border-radius: var(--radius-sm); color: var(--ink); font: var(--text-body); text-align: start; cursor: pointer; }
-.ed-node > span:not(.ed-badge):not(.cap-code) { flex: 1 1 auto; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ed-node > .dr-icon { flex: none; }
+.ed-node-text { flex: 1 1 auto; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ed-node > .dr-icon, .ed-node > .ed-ico, .ed-node > .ed-num { flex: none; }
 .ed-node:hover { background: var(--surface-sunk); }
 .ed-node.is-on { background: var(--kola-soft); border-color: var(--ink); }
-/* "+" between items: a thin row with a quiet plus (always shown: touch screens have no hover). */
-.ed-insert { display: flex; align-items: center; justify-content: center; inline-size: 100%; block-size: 24px; padding: 0; background: none; border: 0; border-radius: var(--radius-sm);
-  color: var(--ink-muted); font: var(--text-label); cursor: pointer; }
-.ed-insert:hover, .ed-insert:focus-visible { background: var(--surface-sunk); color: var(--ink); }
-.ed-node:focus-visible, .ed-insert:focus-visible, .ed-type:focus-visible, .ed-seg-btn:focus-visible, .ed-chip:focus-visible, .ed-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ed-node.is-draggable { cursor: grab; }
+.ed-node-add { color: var(--ink-muted); font: var(--text-label); }
+.ed-num { display: inline-grid; place-items: center; min-inline-size: 24px; block-size: 24px; padding: 0 var(--space-1); border-radius: var(--radius-pill); background: var(--surface-sunk);
+  color: var(--ink); font: var(--text-label); }
+.ed-langs { margin-block-start: var(--space-2); }
+/* "+" between items: a thin row with a quiet plus (always there: touch screens have no hover). */
+.ed-insert { display: flex; align-items: center; justify-content: center; inline-size: 100%; block-size: 20px; padding: 0; background: none; border: 0; border-radius: var(--radius-sm);
+  color: var(--line-strong); font: var(--text-label); cursor: pointer; }
+.ed-insert:hover, .ed-insert:focus-visible { background: var(--kola-soft); color: var(--ink); }
+.ed-node:focus-visible, .ed-insert:focus-visible, .ed-type:focus-visible, .ed-seg-btn:focus-visible, .ed-chip:focus-visible, .ed-link:focus-visible,
+.ed-card:focus-visible, .ed-scard-main:focus-visible, .ed-go:focus-visible, .ed-tile:focus-visible, .ed-right:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .ed-detail { display: grid; gap: var(--space-3); min-inline-size: 0; }
 .ed-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-inline-size: 0; }
 .ed-crumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); min-inline-size: 0; margin: 0; padding: 0; list-style: none; }
 .ed-crumbs li { display: flex; align-items: center; gap: var(--space-1); min-inline-size: 0; color: var(--ink-muted); font: var(--text-label); }
 .ed-crumbs li > button { padding: var(--space-1); background: none; border: 0; border-radius: var(--radius-sm); color: var(--ink); font: var(--text-label); text-align: start; text-decoration: underline; overflow-wrap: anywhere; cursor: pointer; }
 .ed-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.ed-pane-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); min-inline-size: 0; }
+.ed-pane-title { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-inline-size: 0; }
+.ed-next { display: flex; justify-content: flex-end; padding-block-start: var(--space-3); border-block-start: 2px solid var(--line); }
+.ed-wide-only { display: none; }
+
+/* A step kind's icon, in its group's colour (watch and read, questions, code, do and reflect). */
+.ed-ico { display: inline-grid; place-items: center; flex: none; inline-size: 28px; block-size: 28px; border-radius: var(--radius-sm); background: var(--surface-sunk); color: var(--ink); }
+.ed-ico.is-watch { background: var(--lagoon-soft); color: var(--lagoon-ink); }
+.ed-ico.is-ask { background: var(--sunbird-soft); color: var(--sunbird-ink); }
+.ed-ico.is-code { background: var(--sky-soft); color: var(--sky-ink); }
+.ed-ico.is-do { background: var(--leaf-soft); color: var(--leaf-ink); }
+
+/* Step chooser: four groups of kinds, each a card with its icon. */
 .ed-types { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-2); }
-.ed-type { display: grid; gap: var(--space-1); min-block-size: var(--tap-min); padding: var(--space-3); background: var(--surface); border: 2px solid var(--line-strong); border-radius: var(--radius-md);
-  color: var(--ink); font: var(--text-body); text-align: start; cursor: pointer; }
+.ed-type { display: flex; align-items: flex-start; gap: var(--space-3); min-block-size: var(--tap-min); padding: var(--space-3); background: var(--surface); border: 2px solid var(--line-strong);
+  border-radius: var(--radius-md); color: var(--ink); font: var(--text-body); text-align: start; cursor: pointer; }
 .ed-type:hover { border-color: var(--ink); background: var(--surface-sunk); }
-.ed-type > span { color: var(--ink-muted); font: var(--text-caption); }
+.ed-type > span:last-child { display: grid; gap: var(--space-1); min-inline-size: 0; }
+.ed-type > span:last-child > span { color: var(--ink-muted); font: var(--text-caption); }
+
+/* The problems of the open pane, at its top. */
+.ed-here { display: grid; gap: var(--space-2); padding: var(--space-3); background: var(--sunbird-soft); border: 2px solid var(--sunbird-ink); border-radius: var(--radius-md); }
+.ed-here.is-error { background: var(--wrong-soft); border-color: var(--wrong); }
+.ed-here-h { display: flex; align-items: center; gap: var(--space-2); font: var(--text-label); }
+.ed-here ul { display: grid; gap: var(--space-1); margin: 0; padding-inline-start: var(--space-6); font: var(--text-body); }
+.ed-here code { color: var(--ink-muted); font: 13px/18px ui-monospace, Menlo, Consolas, monospace; }
+.ed-here-lang { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0; }
+
+/* The unit at a glance. */
+.ed-glance { display: grid; gap: var(--space-2); }
+.ed-glance-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.ed-tile { display: grid; gap: 2px; align-content: start; min-inline-size: 0; padding: var(--space-3); background: var(--paper); border: 2px solid var(--line); border-radius: var(--radius-md);
+  color: var(--ink-muted); font: var(--text-label); text-align: start; }
+.ed-tile > strong { display: flex; align-items: center; min-block-size: 32px; color: var(--ink); font: var(--text-title); }
+.ed-tile.is-error, .ed-tile.is-ok { color: var(--ink); cursor: pointer; }
+.ed-tile.is-error { background: var(--wrong-soft); border-color: var(--wrong); }
+.ed-tile.is-ok { background: var(--correct-soft); border-color: var(--correct); }
+.ed-glance-lang { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0; padding: var(--space-2) var(--space-3); background: var(--paper); border-radius: var(--radius-md); }
+.ed-glance-lang > span:first-child { font-weight: 700; }
+.ed-ok { color: var(--ink); font-weight: 700; }
+
+/* The unit's lessons as cards. */
+.ed-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ed-card { display: grid; gap: var(--space-2); align-content: start; inline-size: 100%; block-size: 100%; padding: var(--space-3); background: var(--surface); border: 2px solid var(--line-strong);
+  border-radius: var(--radius-md); color: var(--ink); font: var(--text-body); text-align: start; cursor: pointer; }
+.ed-card:hover { border-color: var(--ink); box-shadow: var(--shadow-press); }
+.ed-card-top { display: flex; align-items: flex-start; gap: var(--space-2); }
+.ed-card-top > strong { flex: 1 1 auto; min-inline-size: 0; overflow-wrap: anywhere; }
+.ed-strip { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.ed-strip > .ed-ico { inline-size: 22px; block-size: 22px; }
+
+/* A lesson's steps as a storyboard. */
+.ed-board { display: grid; margin: 0; padding: 0; list-style: none; }
+.ed-board > li:last-child { padding-block-start: var(--space-2); }
+.ed-scard { display: flex; align-items: center; gap: var(--space-1); min-inline-size: 0; padding-inline-end: var(--space-1); background: var(--surface); border: 2px solid var(--line-strong);
+  border-inline-start-width: 4px; border-radius: var(--radius-md); }
+.ed-scard.is-error { border-inline-start-color: var(--wrong); }
+.ed-scard-main { display: flex; flex: 1 1 auto; align-items: center; gap: var(--space-3); min-inline-size: 0; min-block-size: 56px; padding: var(--space-2) var(--space-3); background: none; border: 0;
+  border-radius: var(--radius-md); color: var(--ink); font: var(--text-body); text-align: start; cursor: pointer; }
+.ed-scard-main:hover { background: var(--surface-sunk); }
+.ed-scard-text { display: grid; flex: 1 1 auto; min-inline-size: 0; }
+.ed-scard-kind { color: var(--ink-muted); font: var(--text-label); }
+.ed-scard-sum { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ed-empty { display: grid; gap: var(--space-2); justify-items: start; padding: var(--space-4); border: 2px dashed var(--line-strong); border-radius: var(--radius-md); }
+.ed-empty > p { margin: 0; }
+.ed-gos { display: grid; gap: var(--space-2); }
+.ed-go { display: flex; align-items: center; gap: var(--space-3); inline-size: 100%; min-block-size: var(--tap-min); padding: var(--space-3); background: var(--surface); border: 2px solid var(--line-strong);
+  border-radius: var(--radius-md); color: var(--ink); font: var(--text-body); text-align: start; cursor: pointer; }
+.ed-go:hover { border-color: var(--ink); }
+.ed-go > span { display: grid; flex: 1 1 auto; min-inline-size: 0; }
+.ed-fold { padding-block-start: var(--space-2); border-block-start: 2px solid var(--line); }
+.ed-danger { padding-block-start: var(--space-4); border-block-start: 2px solid var(--line); }
+
+/* Forms: the English under a field being translated; "mark as right" on an option. */
+.ed-ref { margin: var(--space-1) 0 0; padding: var(--space-1) var(--space-2); background: var(--surface-sunk); border-radius: var(--radius-sm); color: var(--ink); font: var(--text-caption); overflow-wrap: anywhere; }
+.ed-ref > span { color: var(--ink-muted); font-weight: 700; }
+.ed-right { display: inline-flex; align-items: center; gap: var(--space-1); min-block-size: 40px; margin-inline-start: auto; padding: var(--space-1) var(--space-3); background: var(--surface);
+  border: 2px solid var(--line-strong); border-radius: var(--radius-pill); color: var(--ink-muted); font: var(--text-label); white-space: nowrap; cursor: pointer; }
+.ed-right.is-on { background: var(--correct-soft); border-color: var(--correct); color: var(--ink); }
 .ed-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .ed-confirm > span { flex: 1 1 16rem; min-inline-size: 0; }
 .ed-link { padding: 0; background: none; border: 0; font: var(--text-label); text-align: start; text-decoration: underline; cursor: pointer; }
+
+/* The step playing live beside its form (from 900px); the frame is the containing block for the player's fixed bars. */
+.ed-live { display: none; }
+.ed-live-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.ed-live-frame { position: relative; transform: translateZ(0); overflow: hidden; inline-size: 100%; block-size: calc(100vh - 230px); min-block-size: 420px; max-block-size: 760px;
+  background: var(--paper); border: 3px solid var(--ink); border-radius: 28px; box-shadow: var(--shadow-card); }
+.ed-live-scroll { block-size: 100%; overflow-y: auto; overscroll-behavior: contain; }
+.ed-live-note { margin: 0; padding: var(--space-6) var(--space-4); color: var(--ink-muted); font: var(--text-body); text-align: center; }
 
 /* Languages page: one card per UI string, with the English and Arabic for reference above the translation. */
 .ed-strings { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
@@ -150,12 +267,21 @@
 
 @media (min-width: 600px) {
   .ed-grid4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .ed-glance-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .ed-gos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ed-head > .dr-field-label { flex-basis: auto; margin-inline-end: var(--space-1); }
 }
 
 @media (min-width: 900px) {
   .ed-bar { inset-block-end: 0; }
-  .ed-split { grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); }
+  .ed-split { grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); }
   .ed-split.is-detail .ed-outline, .ed-split.is-outline .ed-detail { display: grid; }
   .ed-outline { position: sticky; inset-block-start: var(--space-3); max-block-size: calc(100vh - 120px); overflow-y: auto; }
   .ed-crumbs .ed-to-outline { display: none; }
+  .ed-wide-only { display: inline-flex; }
+  /* With the live preview, the form and the phone share the width; the outline is one tap away. */
+  .ed-split.has-live { grid-template-columns: minmax(0, 1fr) minmax(320px, 380px); }
+  .ed-split.has-live .ed-outline { display: none; }
+  .ed-split.has-live .ed-crumbs .ed-to-outline { display: inline-flex; }
+  .ed-live { position: sticky; inset-block-start: var(--space-3); display: grid; gap: var(--space-2); }
 }

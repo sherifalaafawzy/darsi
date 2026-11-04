@@ -3,6 +3,7 @@
  * lesson speak the same words. Fill-the-gaps is written as "A sensor turns [heat] into a [number]." per language.
  */
 import { useEffect, useState } from "react";
+import { Icon } from "@darsi/design-system";
 import { CODE_STEPS, GRADED, type ChoiceStep, type FillStep, type LocalText, type Step, type TrueFalseStep, type VideoStep } from "../content/types";
 import { ARTS } from "../content/validate";
 import { categoryOf } from "../labs/categories";
@@ -10,7 +11,7 @@ import { LAB_METAS, labMeta } from "../labs/catalog";
 import { useI18n, type MessageKey } from "../i18n";
 import { blankStep, nextLetter } from "./ids";
 import { Check, Items, LangName, LList, LText, Num, Sel, Text, Upload } from "./fields";
-import { useEditLangs } from "./langs";
+import { useEditLangs, useLangView } from "./langs";
 import { BlocksForm, BugForm, CodeFillForm, CodeForm, ParsonsForm, SnippetForm } from "./codeForms";
 
 export const STEP_LABEL: Record<Step["type"], MessageKey> = {
@@ -47,30 +48,43 @@ function Body({ step: s, onChange, media }: { step: Step; onChange: (s: Step) =>
     case "choice": case "multi": case "image": {
       const ids = s.options.map((o) => o.id);
       const optionLabel = (i: number) => `${t("cms.option")} ${ids[i]?.toUpperCase() ?? i + 1}`;
-      const answerSel = s.type !== "multi" && <Sel label={t("cms.answer")} value={s.answer} onChange={(answer) => onChange({ ...s, answer })}
-        options={s.options.map((o, i) => [o.id, `${optionLabel(i)}: ${("text" in o ? o.text : o.label).en || "…"}`] as const)} />;
+      const isRight = (id: string) => (s.type === "multi" ? s.answers.includes(id) : s.answer === id);
+      const mark = (id: string) => onChange(s.type === "multi"
+        ? { ...s, answers: s.answers.includes(id) ? s.answers.filter((a) => a !== id) : [...s.answers, id] }
+        : { ...s, answer: id });
       return (
-        <>
+        <div className="stack-sm" role={s.type === "multi" ? "group" : "radiogroup"} aria-label={t("cms.answer")}>
+          <p className="muted small">{t(s.type === "multi" ? "cms.markRightMulti" : "cms.markRight")}</p>
           <Items items={s.options as Array<(typeof s.options)[number]>} min={2} itemLabel={optionLabel} addLabel={t("cms.addOption")}
             onChange={(options) => onChange({ ...s, options } as Step)}
             add={() => (s.type === "image" ? { id: nextLetter(ids), label: LT(), art: "lamp" as const } : { id: nextLetter(ids), text: LT() })}
+            extra={(o) => (
+              <button type="button" role={s.type === "multi" ? "checkbox" : "radio"} aria-checked={isRight(o.id)} className={`ed-right${isRight(o.id) ? " is-on" : ""}`}
+                onClick={() => mark(o.id)}>
+                <Icon name={isRight(o.id) ? "check" : "cross"} size={16} /><span>{t(isRight(o.id) ? "cms.isRight" : "cms.isWrong")}</span>
+              </button>
+            )}
             render={(o, set) => "art" in o ? (
               <div className="stack">
                 <LText label={t("cms.label")} value={o.label} onChange={(label) => set({ ...o, label })} />
                 <Sel label={t("cms.picture")} value={o.art} onChange={(art) => set({ ...o, art })} options={ARTS.map((a) => [a, t(`cms.art.${a}` as MessageKey)] as const)} />
               </div>
-            ) : (
-              <div className="stack">
-                <LText label={t("cms.optionText")} value={(o as { text: LocalText }).text} onChange={(text) => set({ ...o, text })} />
-                {s.type === "multi" && <Check label={t("cms.correct")} checked={s.answers.includes(o.id)}
-                  onChange={(on) => onChange({ ...s, answers: on ? [...s.answers, o.id] : s.answers.filter((a) => a !== o.id) })} />}
-              </div>
-            )} />
-          {answerSel}
-        </>
+            ) : <LText label={t("cms.optionText")} value={(o as { text: LocalText }).text} onChange={(text) => set({ ...o, text })} />} />
+        </div>
       );
     }
-    case "truefalse": return <Sel label={t("cms.answer")} value={s.answer ? "true" : "false"} onChange={(v) => onChange({ ...s, answer: v === "true" })} options={[["true", t("q.true")], ["false", t("q.false")]]} />;
+    case "truefalse": return (
+      <div className="stack-sm">
+        <span className="dr-field-label" id={`tf-${s.id}`}>{t("cms.answer")}</span>
+        <div className="ed-seg" role="radiogroup" aria-labelledby={`tf-${s.id}`}>
+          {([true, false] as const).map((v) => (
+            <button key={String(v)} type="button" role="radio" aria-checked={s.answer === v} className={`ed-seg-btn${s.answer === v ? " is-on" : ""}`} onClick={() => onChange({ ...s, answer: v })}>
+              <Icon name={v ? "check" : "cross"} size={18} /><strong>{t(v ? "q.true" : "q.false")}</strong>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
     case "match": return <Items items={s.pairs} min={2} itemLabel={(i) => `${t("cms.pair")} ${i + 1}`} addLabel={t("cms.addPair")} onChange={(pairs) => onChange({ ...s, pairs })} add={() => ({ left: LT(), right: LT() })}
       render={(p, set) => <div className="stack"><LText label={t("cms.left")} value={p.left} onChange={(left) => set({ ...p, left })} /><LText label={t("cms.right")} value={p.right} onChange={(right) => set({ ...p, right })} /></div>} />;
     case "order": return (
@@ -113,7 +127,16 @@ function Body({ step: s, onChange, media }: { step: Step; onChange: (s: Step) =>
           render={(c, set) => (
             <div className="stack">
               <LText label={t("cms.optionText")} value={c.label} onChange={(label) => set({ ...c, label })} />
-              <Sel label={t("cms.tone")} value={c.tone} onChange={(tone) => set({ ...c, tone })} options={[["good", t("q.strong")], ["consider", t("q.think")]]} />
+              <div className="stack-sm">
+                <span className="dr-field-label">{t("cms.tone")}</span>
+                <div className="ed-seg" role="radiogroup" aria-label={t("cms.tone")}>
+                  {(["good", "consider"] as const).map((v) => (
+                    <button key={v} type="button" role="radio" aria-checked={c.tone === v} className={`ed-seg-btn${c.tone === v ? " is-on" : ""}`} onClick={() => set({ ...c, tone: v })}>
+                      <strong>{t(v === "good" ? "q.strong" : "q.think")}</strong>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <LText label={t("cms.consequence")} value={c.consequence} onChange={(consequence) => set({ ...c, consequence })} multiline rows={2} />
             </div>
           )} />
@@ -195,12 +218,14 @@ function FillLang({ lang, dir, name, step, onChange }: { lang: string; dir: "ltr
       : { ...step, sentence: { ...step.sentence, [lang]: p.sentence }, answers: { ...step.answers, [lang]: p.answers }, bank: { ...step.bank, [lang]: p.bank } });
   };
   const n = parseFill(text, extras).answers.length;
+  const { reference } = useLangView();
   return (
     <div className="stack">
       <div className="dr-field">
         <label className="dr-field-label" htmlFor={`fill-${step.id}-${lang}`}>{t("cms.sentence")}<span className="ed-lang"><LangName name={name} code={lang} /></span></label>
         <textarea id={`fill-${step.id}-${lang}`} className="dr-field-input" rows={3} dir={dir} lang={lang} value={text} onChange={(e) => apply(e.target.value, extras)} />
         <span className="dr-field-hint">{t("cms.blanks", { n })}</span>
+        {reference && lang !== "en" && <p className="ed-ref" dir="ltr" lang="en"><span>{t("cms.inEnglish")}</span> {toText(step, "en") || <em>{t("cms.emptyEnglish")}</em>}</p>}
       </div>
       <div className="dr-field">
         <label className="dr-field-label" htmlFor={`fillx-${step.id}-${lang}`}>{t("cms.extraWords")}<span className="ed-lang"><LangName name={name} code={lang} /></span></label>

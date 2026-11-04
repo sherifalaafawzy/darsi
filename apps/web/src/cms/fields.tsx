@@ -7,7 +7,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Button, ProgressBar, Switch } from "@darsi/design-system";
 import type { LocalList, LocalText } from "../content/types";
 import { useI18n } from "../i18n";
-import { useEditLangs, type EditLang } from "./langs";
+import { useEditLangs, useLangView, type EditLang } from "./langs";
 import { fits, MEDIA, uploadMedia, type MediaKind } from "./upload";
 
 /**
@@ -30,16 +30,28 @@ export function Field({ id, label, tag, hint, children }: { id: string; label: s
   );
 }
 
+/** The English of a text, under the field of the language being translated (language view). */
+function Ref({ text }: { text?: string }) {
+  const { t } = useI18n();
+  return <p className="ed-ref" dir="ltr" lang="en"><span>{t("cms.inEnglish")}</span> {text?.trim() ? text : <em>{t("cms.emptyEnglish")}</em>}</p>;
+}
+
 /** A LocalText: English (required, the fallback) and the other languages shown. */
 export function LText({ label, value, onChange, multiline, rows = 3, hint }: { label: string; value?: LocalText; onChange: (v: LocalText) => void; multiline?: boolean; rows?: number; hint?: string }) {
   const id = useId();
   const langs = useEditLangs();
+  const { reference } = useLangView();
   const v = value ?? { en: "" };
   return (
     <div className="ed-pair">
-      {langs.map((l) => {
+      {langs.map((l, i) => {
         const props = { id: `${id}-${l.code}`, className: "dr-field-input", dir: l.dir, lang: l.code, value: v[l.code] ?? "", onChange: (e: { target: { value: string } }) => onChange({ ...v, [l.code]: e.target.value }) };
-        return <Field key={l.code} id={props.id} label={label} tag={l} hint={l.code === "en" ? hint : undefined}>{multiline ? <textarea rows={rows} {...props} /> : <input {...props} />}</Field>;
+        return (
+          <Field key={l.code} id={props.id} label={label} tag={l} hint={i === 0 ? hint : undefined}>
+            {multiline ? <textarea rows={rows} {...props} /> : <input {...props} />}
+            {reference && l.code !== "en" && <Ref text={v.en} />}
+          </Field>
+        );
       })}
     </div>
   );
@@ -49,10 +61,12 @@ export function LText({ label, value, onChange, multiline, rows = 3, hint }: { l
 export function LList({ label, value, onChange, hint, rows = 4 }: { label: string; value?: LocalList; onChange: (v: LocalList) => void; hint?: string; rows?: number }) {
   const id = useId();
   const langs = useEditLangs();
-  return <div className="ed-pair">{langs.map((l) => <ListBox key={l.code} id={`${id}-${l.code}`} lang={l} label={label} hint={l.code === "en" ? hint : undefined} rows={rows}
-    items={value?.[l.code] ?? []} onChange={(items) => onChange({ ...(value ?? { en: [] }), [l.code]: items })} />)}</div>;
+  const { reference } = useLangView();
+  return <div className="ed-pair">{langs.map((l, i) => <ListBox key={l.code} id={`${id}-${l.code}`} lang={l} label={label} hint={i === 0 ? hint : undefined} rows={rows}
+    items={value?.[l.code] ?? []} onChange={(items) => onChange({ ...(value ?? { en: [] }), [l.code]: items })}
+    reference={reference && l.code !== "en" ? (value?.en ?? []).join(" / ") : undefined} />)}</div>;
 }
-function ListBox({ id, lang, label, hint, rows, items, onChange }: { id: string; lang: EditLang; label: string; hint?: string; rows: number; items: string[]; onChange: (v: string[]) => void }) {
+function ListBox({ id, lang, label, hint, rows, items, onChange, reference }: { id: string; lang: EditLang; label: string; hint?: string; rows: number; items: string[]; onChange: (v: string[]) => void; reference?: string }) {
   const [text, setText] = useState(items.join("\n"));
   const clean = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean);
   // Follow outside changes (moving items, importing) without fighting the typing.
@@ -60,6 +74,7 @@ function ListBox({ id, lang, label, hint, rows, items, onChange }: { id: string;
   return (
     <Field id={id} label={label} tag={lang} hint={hint}>
       <textarea id={id} className="dr-field-input" rows={rows} dir={lang.dir} lang={lang.code} value={text} onChange={(e) => { setText(e.target.value); onChange(clean(e.target.value)); }} />
+      {reference !== undefined && <Ref text={reference} />}
     </Field>
   );
 }
@@ -90,10 +105,10 @@ export function Check({ label, checked, onChange }: { label: string; checked: bo
   return <Switch id={useId()} label={label} checked={checked} onChange={onChange} />;
 }
 
-/** A list the author can add to, reorder and trim. Items are edited in place by `render`. */
-export function Items<T>({ items, onChange, render, add, addLabel, itemLabel, min = 0 }: {
+/** A list the author can add to, reorder and trim. Items are edited in place by `render`; `extra` adds a control to an item's head. */
+export function Items<T>({ items, onChange, render, add, addLabel, itemLabel, min = 0, extra }: {
   items: T[]; onChange: (v: T[]) => void; render: (item: T, set: (v: T) => void, i: number) => ReactNode;
-  add?: () => T; addLabel?: string; itemLabel: (i: number, item: T) => string; min?: number;
+  add?: () => T; addLabel?: string; itemLabel: (i: number, item: T) => string; min?: number; extra?: (item: T, i: number) => ReactNode;
 }) {
   const { t } = useI18n();
   const set = (i: number, v: T) => onChange(items.map((x, k) => (k === i ? v : x)));
@@ -104,6 +119,7 @@ export function Items<T>({ items, onChange, render, add, addLabel, itemLabel, mi
         <div key={i} className="ed-item">
           <div className="ed-item-head">
             <strong>{itemLabel(i, it)}</strong>
+            {extra?.(it, i)}
             <span className="ed-tools">
               <Button size="sm" variant="ghost" iconOnly icon="up" disabled={i === 0} onClick={() => move(i, -1)}>{t("q.up")}</Button>
               <Button size="sm" variant="ghost" iconOnly icon="down" disabled={i === items.length - 1} onClick={() => move(i, 1)}>{t("q.down")}</Button>
@@ -113,7 +129,7 @@ export function Items<T>({ items, onChange, render, add, addLabel, itemLabel, mi
           {render(it, (v) => set(i, v), i)}
         </div>
       ))}
-      {add && <Button size="sm" variant="secondary" onClick={() => onChange([...items, add()])}>{addLabel}</Button>}
+      {add && <Button size="sm" variant="secondary" icon="edit" onClick={() => onChange([...items, add()])}>{addLabel}</Button>}
     </div>
   );
 }
