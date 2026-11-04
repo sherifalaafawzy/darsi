@@ -34,30 +34,40 @@ service firebase.storage {
         && request.resource.contentType.matches('image/(png|webp|jpeg)') && request.resource.size <= 100 * 1024;
       allow delete: if isSuper() || (inOrgS(orgId) && request.auth.token.role == 'orgAdmin');
     }
-    // Project evidence by course: submissions/{orgId|"none"}/{uid}/{unitId}/{file}. As below, plus read-only for
-    // university teachers a platform admin gave access to that course (Firestore courseAccess/{uid}.units).
+    // Project evidence by course: submissions/{orgId|"none"}/{uid}/{unitId}/{file} (lesson/ProjectView.tsx). Only the
+    // person writes their own, into their own organization's folder; photos, PDFs, voice notes and short videos only
+    // (no SVG, whose scripts would run when opened), at most 10 MB, with the names the app gives them (L2).
+    // Readable by them, platform admins, their organization's admins, their own teacher, and university teachers a
+    // platform admin gave access to that course (Firestore courseAccess/{uid}.units).
     function grantedS(unitId) {
       return request.auth != null && firestore.exists(/databases/(default)/documents/courseAccess/$(request.auth.uid))
         && unitId in firestore.get(/databases/(default)/documents/courseAccess/$(request.auth.uid)).data.units;
     }
+    function evidenceOk() {
+      return request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp|gif|heic|heif)|application/pdf|video/mp4|audio/(mpeg|mp4|aac|x-m4a|m4a|ogg|opus|webm|wav|x-wav|wave|3gpp|3gpp2|amr|flac)');
+    }
+    function ownFolder(orgId, uid) {
+      return request.auth != null && request.auth.uid == uid && orgId == request.auth.token.get('orgId', 'none');
+    }
+    function teacherOfS(uid) {
+      return request.auth.token.role == 'teacher'
+        && firestore.get(/databases/(default)/documents/users/$(uid)).data.get('teacherId', null) == request.auth.uid;
+    }
+    function staffS(orgId, uid) {
+      return request.auth.token.role == 'superadmin'
+        || (request.auth.token.get('orgId', null) == orgId && (request.auth.token.role == 'orgAdmin' || teacherOfS(uid)));
+    }
     match /submissions/{orgId}/{uid}/{unitId}/{file} {
-      allow read: if request.auth != null && (request.auth.uid == uid
-        || request.auth.token.role == 'superadmin'
-        || (request.auth.token.orgId == orgId && request.auth.token.role in ['orgAdmin', 'teacher'])
-        || grantedS(unitId));
-      allow create: if request.auth != null && request.auth.uid == uid
-        && request.resource.size < 10 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*|application/pdf|video/mp4|audio/.*');
+      allow read: if request.auth != null && (request.auth.uid == uid || staffS(orgId, uid) || grantedS(unitId));
+      allow create: if ownFolder(orgId, uid) && evidenceOk()
+        && unitId.matches('[a-z0-9][a-z0-9-]{1,63}') && file.matches('[a-z0-9][a-z0-9-]{1,99}-[0-9]{10,16}-[A-Za-z0-9_.-]{1,240}');
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
-    // Project evidence: submissions/{orgId|"none"}/{uid}/{file}
+    // Project evidence from app versions before course folders: submissions/{orgId|"none"}/{uid}/{file}.
     match /submissions/{orgId}/{uid}/{file} {
-      allow read: if request.auth != null && (request.auth.uid == uid
-        || request.auth.token.role == 'superadmin'
-        || (request.auth.token.orgId == orgId && request.auth.token.role in ['orgAdmin', 'teacher']));
-      allow create: if request.auth != null && request.auth.uid == uid
-        && request.resource.size < 10 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*|application/pdf|video/mp4|audio/.*');
+      allow read: if request.auth != null && (request.auth.uid == uid || staffS(orgId, uid));
+      allow create: if ownFolder(orgId, uid) && evidenceOk() && file.matches('[A-Za-z0-9_.-]{1,240}');
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
   }

@@ -7,11 +7,11 @@ import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions/v2";
-import { audit, auth, caller, db, str, type Role } from "./admin.js";
+import { audit, auth, caller, db, freshCaller, str, type Role } from "./admin.js";
 import { alertOrgRequest } from "./notify.js";
-import { summarize } from "./summary.js";
+import { progressChanged } from "./progress.js";
 import { writeClaims } from "./billing.js";
-import { generateCode, generatePassword, isValidEmail, isValidUsername, normalizeCode, suggestUsername, usernameToEmail } from "./passwords.js";
+import { generateCode, generatePassword, isValidEmail, isValidUsername, normalizeCode, suggestUsername, USERNAME_DOMAIN, usernameToEmail } from "./passwords.js";
 
 export type { Role } from "./admin.js";
 /** Push notifications: device registration, announcements, review and staff alerts, daily nudges. */
@@ -24,7 +24,7 @@ export { publishLanguage, unpublishLanguage } from "./languages.js";
 /** Analytics: phones' event batches (and Google Analytics), and the accounts and organizations overview. */
 export { collect, refreshStats, statsJob } from "./analytics.js";
 /** Platform admins: organizations and anyone's role. */
-export { createOrg, deleteOrg, setUserRole, updateOrg } from "./platform.js";
+export { createOrg, deleteOrg, findAccount, setUserRole, updateOrg } from "./platform.js";
 /** Darsi Super: plans, Super for people and organizations, and revenue (docs/SUPER.md). */
 export { checkRevenueEvent, fillSeats, grantCredits, grantSuper, onOrgLicence, onSubscriptionWrite, savePlans, setOrgLicence, setSeat, setSuperOn } from "./billing.js";
 /** Darsi Super payments: Paymob (EGP) and Stripe (USD) checkouts and their webhooks. */
@@ -35,8 +35,9 @@ export { tutorSearch } from "./agent.js";
 
 const MEMBER_ROLES: Role[] = ["student", "teacher", "orgAdmin"];
 
-function requireOrgAdmin(req: CallableRequest, orgId: string) {
-  const c = caller(req);
+/** This organization's admins (or a platform admin), checked against the claims Auth holds now (freshCaller). */
+async function requireOrgAdmin(req: CallableRequest, orgId: string) {
+  const c = await freshCaller(req);
   if (c.role === "superadmin") return c;
   if (c.role !== "orgAdmin" || c.orgId !== orgId) throw new HttpsError("permission-denied", "Only this organization's admins can do that.");
   return c;
@@ -71,7 +72,7 @@ export const requestOrg = onCall(async (req) => {
 
 /** Super-admin approves or rejects an organization request. Approval makes the requester its first admin. */
 export const reviewOrg = onCall(async (req) => {
-  const c = caller(req);
+  const c = await freshCaller(req);
   if (c.role !== "superadmin") throw new HttpsError("permission-denied", "Super-admins only.");
   const orgId = str(req.data?.orgId), approve = req.data?.approve === true;
   const ref = db.doc(`orgs/${orgId}`); const org = await ref.get();
@@ -95,14 +96,21 @@ export const reviewOrg = onCall(async (req) => {
  */
 const invitesRef = (orgId: string) => db.doc(`orgs/${orgId}/private/invites`);
 
-/** Failed join tries per account: 10 an hour, so codes can't be guessed by trying many. */
+/**
+ * Join tries per account: 10 an hour, so codes can't be guessed by trying many. Each try is counted before the code is
+ * looked at, in a transaction, so parallel requests can't each read "9 so far" and all go ahead (L4); a try that
+ * joins clears the count.
+ */
 const JOIN_TRIES = 10;
-async function joinTryFailed(uid: string) {
+async function countJoinTry(uid: string) {
   const ref = db.doc(`joinAttempts/${uid}`);
-  await db.runTransaction(async (tx) => {
+  return db.runTransaction(async (tx) => {
     const d = (await tx.get(ref)).data() as { n?: number; since?: number } | undefined;
     const fresh = !d?.since || Date.now() - d.since > 3600e3;
-    tx.set(ref, { n: fresh ? 1 : (d?.n ?? 0) + 1, since: fresh ? Date.now() : d!.since });
+    const n = fresh ? 1 : (d?.n ?? 0) + 1;
+    if (n > JOIN_TRIES) return false;
+    tx.set(ref, { n, since: fresh ? Date.now() : d!.since });
+    return true;
   });
 }
 
@@ -110,11 +118,10 @@ async function joinTryFailed(uid: string) {
 export const joinOrg = onCall(async (req) => {
   const c = caller(req);
   if (c.orgId) throw new HttpsError("failed-precondition", "You already belong to an organization.");
-  const tries = (await db.doc(`joinAttempts/${c.uid}`).get()).data() as { n?: number; since?: number } | undefined;
-  if (tries?.since && Date.now() - tries.since < 3600e3 && (tries.n ?? 0) >= JOIN_TRIES) throw new HttpsError("resource-exhausted", "Too many wrong codes. Try again in an hour.");
+  if (!(await countJoinTry(c.uid))) throw new HttpsError("resource-exhausted", "Too many wrong codes. Try again in an hour.");
   const code = normalizeCode(req.data?.code);
   const inv = code ? await db.doc(`inviteCodes/${code}`).get() : null;
-  if (!inv?.exists) { await joinTryFailed(c.uid); throw new HttpsError("not-found", "That code is not valid."); }
+  if (!inv?.exists) throw new HttpsError("not-found", "That code is not valid.");
   const { orgId, role } = inv.data() as { orgId: string; role: Role };
   const org = await db.doc(`orgs/${orgId}`).get();
   if (org.get("status") !== "active") throw new HttpsError("failed-precondition", "This organization is not active.");
@@ -127,7 +134,7 @@ export const joinOrg = onCall(async (req) => {
 
 export const regenerateInviteCode = onCall(async (req) => {
   const orgId = str(req.data?.orgId), role = str(req.data?.role) as Role;
-  requireOrgAdmin(req, orgId);
+  await requireOrgAdmin(req, orgId);
   if (role !== "teacher" && role !== "student") throw new HttpsError("invalid-argument", "role must be teacher or student");
   const [org, priv] = await Promise.all([db.doc(`orgs/${orgId}`).get(), invitesRef(orgId).get()]);
   const old = (priv.get(role) ?? org.get(`inviteCodes.${role}`)) as string | undefined;
@@ -155,7 +162,7 @@ interface MemberResult { row: number; name: string; login: string; password?: st
  */
 export const createMembers = onCall({ timeoutSeconds: 540, memory: "512MiB" }, async (req): Promise<{ results: MemberResult[] }> => {
   const orgId = str(req.data?.orgId);
-  const by = requireOrgAdmin(req, orgId);
+  const by = await requireOrgAdmin(req, orgId);
   const org = await db.doc(`orgs/${orgId}`).get();
   if (org.get("status") !== "active") throw new HttpsError("failed-precondition", "Organization is not active.");
   const members: MemberInput[] = Array.isArray(req.data?.members) ? req.data.members : [];
@@ -164,12 +171,16 @@ export const createMembers = onCall({ timeoutSeconds: 540, memory: "512MiB" }, a
   const mustChange = req.data?.mustChangePassword !== false;
   const defaultRole: Role = MEMBER_ROLES.includes(req.data?.defaultRole) ? req.data.defaultRole : "student";
 
-  // Resolve teacher emails → uids within this org.
-  const teacherEmails = [...new Set(members.map((m) => str(m.teacherEmail).toLowerCase()).filter(Boolean))];
+  // Resolve teachers' emails (or username logins) → uids, through Auth: a profile's email is only what its owner typed
+  // (H1), Auth's is the account's. The account must be a teacher or admin of this org.
+  const teacherEmails = [...new Set(members.map((m) => str(m.teacherEmail).toLowerCase()).filter(Boolean))].slice(0, 200);
   const teacherIds: Record<string, string> = {};
   for (const e of teacherEmails) {
-    const q = await db.collection("users").where("orgId", "==", orgId).where("email", "==", e).limit(1).get();
-    if (!q.empty) teacherIds[e] = q.docs[0].id;
+    const login = e.includes("@") ? e : isValidUsername(e) ? usernameToEmail(e) : "";
+    const account = login ? await auth.getUserByEmail(login).catch(() => null) : null;
+    if (!account) continue;
+    const t = await db.doc(`users/${account.uid}`).get();
+    if (t.get("orgId") === orgId && (t.get("role") === "teacher" || t.get("role") === "orgAdmin")) teacherIds[e] = account.uid;
   }
 
   const results: MemberResult[] = [];
@@ -189,7 +200,7 @@ export const createMembers = onCall({ timeoutSeconds: 540, memory: "512MiB" }, a
       await db.doc(`users/${user.uid}`).set({
         name, email, username: username || null, role, orgId, group: str(m.group, 60) || null,
         teacherId: teacherIds[str(m.teacherEmail).toLowerCase()] ?? null, lang: str(m.lang, 8) || "en",
-        mustChangePassword: mustChange, createdAt: FieldValue.serverTimestamp(), createdBy: by.uid, active: true,
+        mustChangePassword: mustChange, passwordSetAt: Date.now(), createdAt: FieldValue.serverTimestamp(), createdBy: by.uid, active: true,
       });
       created++;
       results.push({ row: i + 1, name, login: username || email, password, uid: user.uid, status: "created" });
@@ -205,54 +216,76 @@ export const createMembers = onCall({ timeoutSeconds: 540, memory: "512MiB" }, a
 
 export const setMemberRole = onCall(async (req) => {
   const orgId = str(req.data?.orgId), uid = str(req.data?.uid), role = str(req.data?.role) as Role;
-  const by = requireOrgAdmin(req, orgId);
+  const by = await requireOrgAdmin(req, orgId);
   if (!MEMBER_ROLES.includes(role)) throw new HttpsError("invalid-argument", "Invalid role.");
+  // Nobody changes their own role (M2): a demoted admin holding an old token can't promote themselves back.
+  if (uid === by.uid) throw new HttpsError("failed-precondition", "You cannot change your own role.");
   const u = await db.doc(`users/${uid}`).get();
   if (u.get("orgId") !== orgId) throw new HttpsError("not-found", "Not a member of this organization.");
-  if (uid === by.uid && role !== "orgAdmin") throw new HttpsError("failed-precondition", "You cannot remove your own admin role.");
   await setRole(uid, role, orgId);
+  await audit("setMemberRole", by.uid, { orgId, uid, role, before: u.get("role") ?? null });
   return { ok: true };
 });
 
+/**
+ * A new password for a member, shown to their admin once. Only for logins the organization made (username accounts,
+ * `@users.darsi.app`, with nothing but a password): anyone who signs in with their own email or Google keeps sole
+ * control of their account (M4) and resets it themselves from the sign-in page.
+ */
 export const resetMemberPassword = onCall(async (req) => {
   const orgId = str(req.data?.orgId), uid = str(req.data?.uid);
-  requireOrgAdmin(req, orgId);
+  const by = await requireOrgAdmin(req, orgId);
+  if (uid === by.uid) throw new HttpsError("failed-precondition", "Change your own password from the sign-in page.");
   const u = await db.doc(`users/${uid}`).get();
   if (u.get("orgId") !== orgId) throw new HttpsError("not-found", "Not a member of this organization.");
+  const account = await auth.getUser(uid).catch(() => null);
+  const own = !account?.email?.endsWith(`@${USERNAME_DOMAIN}`) || account.providerData.some((p) => p.providerId !== "password");
+  if (own) throw new HttpsError("failed-precondition", "This person signs in with their own email or Google account, so only they can change its password: ask them to use \"Forgot password\" on the sign-in page.");
   const password = generatePassword(Number(req.data?.passwordLength) || 10);
   await auth.updateUser(uid, { password });
-  await u.ref.update({ mustChangePassword: true });
+  // The time the password was set, so passwordChanged can tell a real change from a flag cleared without one (I1).
+  await u.ref.update({ mustChangePassword: true, passwordSetAt: Date.now() });
+  await audit("resetMemberPassword", by.uid, { orgId, uid });
   return { password, login: u.get("username") || u.get("email") };
 });
 
 export const removeMember = onCall(async (req) => {
   const orgId = str(req.data?.orgId), uid = str(req.data?.uid);
-  const by = requireOrgAdmin(req, orgId);
+  const by = await requireOrgAdmin(req, orgId);
   if (uid === by.uid) throw new HttpsError("failed-precondition", "You cannot remove yourself.");
   const u = await db.doc(`users/${uid}`).get();
   if (u.get("orgId") !== orgId) throw new HttpsError("not-found", "Not a member of this organization.");
+  // setRole → writeClaims ends their sessions (they leave the organization), so no device keeps its access.
   await setRole(uid, "learner", null, { teacherId: null, group: null });
   await db.doc(`orgs/${orgId}`).update({ memberCount: FieldValue.increment(-1) });
+  await audit("removeMember", by.uid, { orgId, uid });
   return { ok: true };
 });
 
-/** Clear the first-login flag after the person picks their own password (they cannot set it back themselves). */
+/**
+ * Clears the first-login flag after the person picks their own password. Only this function clears it, and only once
+ * the account's password really changed after an admin set it (I1): Auth moves an account's "tokens valid after" time
+ * when its password changes, so that time must be later than when the admin's password was set.
+ */
 export const passwordChanged = onCall(async (req) => {
   const c = caller(req);
-  await db.doc(`users/${c.uid}`).set({ mustChangePassword: false }, { merge: true });
+  const [u, account] = await Promise.all([db.doc(`users/${c.uid}`).get(), auth.getUser(c.uid)]);
+  if (u.get("mustChangePassword") !== true) return { ok: true };
+  const setAt = Number(u.get("passwordSetAt")) || (u.get("createdAt")?.toMillis?.() as number | undefined) || 0;
+  const changedAt = account.tokensValidAfterTime ? Date.parse(account.tokensValidAfterTime) : 0;
+  // Whole seconds on Auth's side; a password changed in the same second as it was set is not a change anyone makes.
+  if (!(changedAt > setAt + 1000)) throw new HttpsError("failed-precondition", "Choose a new password first.");
+  await u.ref.set({ mustChangePassword: false }, { merge: true });
   return { ok: true };
 });
 
 /* ---------- Learning summary (what admins and teachers see) ---------- */
 
 /**
- * Recompute users/{uid}.summary whenever a lesson result is written (summarize: lessons, XP, accuracy, time, per track
- * and per competency, last activity, lessons per ISO week for the last 12 weeks, and lastLessonAt for the nudges).
+ * Keeps users/{uid}.summary up to date as lesson results arrive (progress.ts: a fixed few reads per write, only
+ * published lessons, competencies from the unit). The summary's fields are summarize's: lessons, XP, accuracy, time,
+ * per track and per competency, last activity, lessons per ISO week for the last 12 weeks, and lastLessonAt.
  */
-export const onProgressWrite = onDocumentWritten("users/{uid}/progress/{lessonId}", async (event) => {
-  const uid = event.params.uid;
-  const snap = await db.collection(`users/${uid}/progress`).get();
-  const summary = summarize(snap.docs.map((d) => d.data()));
-  // mergeFields replaces each summary field whole, so weeks older than 12 are dropped instead of merged back in.
-  await db.doc(`users/${uid}`).set({ summary }, { mergeFields: Object.keys(summary).map((k) => `summary.${k}`) });
+export const onProgressWrite = onDocumentWritten({ document: "users/{uid}/progress/{lessonId}", maxInstances: 20 }, async (event) => {
+  await progressChanged(event.params.uid, event.params.lessonId);
 });

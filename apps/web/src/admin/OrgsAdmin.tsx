@@ -19,8 +19,9 @@ const TYPES = ["school", "university", "ministry", "ngo", "company", "other"] as
 // The server's own words, without a "FirebaseError: " prefix or the SDK's " [400]" (they may contain ": ").
 const message = (e: unknown) => String((e as { message?: string }).message ?? e).replace(/^Firebase(?:Error)?:\s*/, "").replace(/\s*\[\d{3}\]$/, "");
 
-/** Find accounts by exact email (or username login) or by the start of their name. */
-async function findPeople(q: string): Promise<Profile[]> {
+/** Find accounts by exact email (or username login; through Auth, findAccount) or by the start of their name. */
+type Found = Profile & { emailVerified?: boolean; claimed?: number };
+async function findPeople(q: string): Promise<Found[]> {
   const s = q.trim();
   if (!s) return [];
   if (s.includes("@")) return findByEmail(s);
@@ -42,6 +43,7 @@ export function OrgsAdmin() {
       let adminUid: string | undefined;
       if (f.admin.trim()) {
         const found = await findPeople(f.admin);
+        if (found.length === 1 && (found[0].claimed ?? 0) > 1) throw new Error(t("acct.claimed"));
         if (found.length !== 1) throw new Error(t("po.adminNotFound"));
         adminUid = found[0].uid;
       }
@@ -93,7 +95,7 @@ export function OrgManage({ org, members, onChanged }: { org: Org; members: Prof
   const { t } = useI18n();
   const nav = useNavigate();
   const [d, setD] = useState({ name: org.name, type: org.type, country: org.country ?? "", city: org.city ?? "" });
-  const [q, setQ] = useState(""); const [found, setFound] = useState<Profile[] | null>(null);
+  const [q, setQ] = useState(""); const [found, setFound] = useState<Found[] | null>(null);
   const [role, setRole] = useState<Role>("student");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState("");
@@ -135,7 +137,9 @@ export function OrgManage({ org, members, onChanged }: { org: Org; members: Prof
           <ul className="po-found">{found.map((p) => (
             <li key={p.uid}>
               <span className="person-link"><span className="avatar sm" aria-hidden>{(p.name ?? "").slice(0, 1)}</span><span><strong><bdi>{p.name}</bdi></strong><small dir="ltr">{displayLogin(p.email ?? "")}</small></span></span>
-              <span className="muted small">{p.orgId === org.id ? t("po.already") : p.orgId ? t("po.inOther") : t(`role.${p.role ?? "learner"}` as "role.student")}</span>
+              <span className="muted small">{p.orgId === org.id ? t("po.already") : p.orgId ? t("po.inOther") : t(`role.${p.role ?? "learner"}` as "role.student")}
+                {p.emailVerified === false && !p.email?.endsWith("@users.darsi.app") && <>{t("common.sep")}{t("acct.unverified")}</>}
+                {(p.claimed ?? 0) > 1 && <>{t("common.sep")}{t("acct.claimed")}</>}</span>
               <Button size="sm" disabled={p.orgId === org.id && p.role === role} loading={busy === `add:${p.uid}`}
                 onClick={() => { void act(`add:${p.uid}`, () => api.setUserRole({ uid: p.uid, role, orgId: org.id }), t("po.added", { name: p.name, role: t(`role.${role}` as "role.student") })); }}>{t("po.addAs", { role: t(`role.${role}` as "role.student") })}</Button>
             </li>

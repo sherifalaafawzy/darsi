@@ -39,9 +39,13 @@ service cloud.firestore {
     // Org units get generated ids ("u" + 8), so they can never shadow a built-in or public unit.
     function idFits(owner, unitId) { return owner == 'public' || unitId.matches('u[a-z0-9]{8}'); }
 
+    function draftPath(unitId) { return /databases/$(database)/documents/unitDrafts/$(unitId); }
+    function unitPath(unitId) { return /databases/$(database)/documents/units/$(unitId); }
     match /units/{unitId} {
       allow read: if canEdit(resource.data.owner);
+      // A draft left behind by a deleted unit keeps its owner: nobody else can create the unit over it (L12).
       allow create: if canEdit(request.resource.data.owner) && idFits(request.resource.data.owner, unitId)
+        && (!existsAfter(draftPath(unitId)) || getAfter(draftPath(unitId)).data.owner == request.resource.data.owner)
         && request.resource.data.keys().hasOnly(['owner', 'title', 'track', 'level', 'audience', 'lessonCount', 'lessons', 'rev', 'updatedAt', 'updatedBy', 'published'])
         && request.resource.data.rev == 1 && request.resource.data.get('published', null) == null
         && request.resource.data.updatedBy == request.auth.uid;
@@ -54,6 +58,7 @@ service cloud.firestore {
     match /unitDrafts/{unitId} {
       allow read: if canEdit(resource.data.owner);
       allow create: if canEdit(request.resource.data.owner) && idFits(request.resource.data.owner, unitId)
+        && existsAfter(unitPath(unitId)) && getAfter(unitPath(unitId)).data.owner == request.resource.data.owner
         && request.resource.data.keys().hasOnly(['owner', 'rev', 'unit'])
         && request.resource.data.rev == 1 && request.resource.data.unit.id == unitId;
       allow update: if canEdit(resource.data.owner) && nextRev()
@@ -62,43 +67,111 @@ service cloud.firestore {
         && (!exists(/databases/$(database)/documents/units/$(unitId)) || get(/databases/$(database)/documents/units/$(unitId)).data.get('published', null) == null);
     }
 
+    // Profile fields a person may set on their own profile, with their types and sizes (L1). Only the fields a write
+    // changes are checked (`keys`), so an older profile with odd data can still be updated.
+    function profileOk(d, keys) {
+      return (!('name' in keys) || (d.name is string && d.name.size() <= 120))
+        && (!('lang' in keys) || (d.lang is string && d.lang.size() <= 16))
+        && (!('lastActive' in keys) || (d.lastActive is string && d.lastActive.size() <= 40))
+        && (!('prefs' in keys) || (d.prefs is map && d.prefs.size() <= 30))
+        && (!('teach' in keys) || (d.teach is string && d.teach.size() <= 24))
+        && (!('tracks' in keys) || (d.tracks is list && d.tracks.size() <= 30))
+        && (!('weeklyLessons' in keys) || (d.weeklyLessons is number && d.weeklyLessons >= 0 && d.weeklyLessons <= 100))
+        && (!('levels' in keys) || (d.levels is map && d.levels.size() <= 30));
+    }
+    // What an org admin changes on a member: class, teacher, active, name.
+    function memberOk(d, keys) {
+      return (!('name' in keys) || (d.name is string && d.name.size() <= 120))
+        && (!('group' in keys) || d.group == null || (d.group is string && d.group.size() <= 60))
+        && (!('teacherId' in keys) || d.teacherId == null || (d.teacherId is string && d.teacherId.size() <= 128))
+        && (!('active' in keys) || d.active is bool);
+    }
+
     match /users/{uid} {
       allow read: if canSee(uid, resource.data);
-      // Self-registration: an individual learner with no organization.
+      // Self-registration: an individual learner with no organization. The email is the account's own, as Auth knows
+      // it (H1): admins look people up by email, so nobody may claim another person's address.
       allow create: if signedIn() && request.auth.uid == uid
         && request.resource.data.role == 'learner'
         && request.resource.data.get('orgId', null) == null
-        && request.resource.data.keys().hasOnly(['name', 'email', 'username', 'lang', 'role', 'orgId', 'createdAt', 'lastActive', 'prefs', 'teach', 'tracks', 'weeklyLessons', 'levels', 'mustChangePassword'])
-        && request.resource.data.name is string && request.resource.data.name.size() <= 120;
-      // A person edits their own profile but never their role, organization, teacher, computed summary or
-      // notification settings (`notify`: the registerDevice/updateNotifyPrefs functions write it).
+        && request.resource.data.keys().hasOnly(['name', 'email', 'lang', 'role', 'orgId', 'createdAt', 'lastActive', 'prefs', 'teach', 'tracks', 'weeklyLessons', 'levels'])
+        && request.auth.token.email is string && request.resource.data.email == request.auth.token.email.lower()
+        && request.resource.data.name is string && request.resource.data.name.size() <= 120
+        && profileOk(request.resource.data, request.resource.data.keys());
+      // A person edits their own profile but never their email, role, organization, teacher, computed summary or
+      // notification settings (`notify`: the registerDevice/updateNotifyPrefs functions write it). The first-login
+      // flag (mustChangePassword) is cleared only by the passwordChanged function, after a real password change (I1).
       allow update: if signedIn() && request.auth.uid == uid
-        && onlyChanges(['name', 'lang', 'lastActive', 'prefs', 'teach', 'tracks', 'weeklyLessons', 'levels', 'mustChangePassword'])
-        && (!('mustChangePassword' in request.resource.data) || request.resource.data.mustChangePassword == false || resource.data.get('mustChangePassword', false) == true);
+        && onlyChanges(['name', 'lang', 'lastActive', 'prefs', 'teach', 'tracks', 'weeklyLessons', 'levels'])
+        && profileOk(request.resource.data, request.resource.data.diff(resource.data).affectedKeys());
       // Org admins organise their people (class/group, assigned teacher, active flag).
-      allow update: if isOrgAdmin(resource.data.get('orgId', null)) && onlyChanges(['group', 'teacherId', 'active', 'name']);
+      allow update: if isOrgAdmin(resource.data.get('orgId', null)) && onlyChanges(['group', 'teacherId', 'active', 'name'])
+        && memberOk(request.resource.data, request.resource.data.diff(resource.data).affectedKeys());
       allow update, delete: if isSuper();
 
+      // A lesson result (state/sync.ts progressDoc). Every field typed and bounded (H2): the summary trigger counts only
+      // published lessons and takes their unit, track and competencies from the unit itself (M1).
       match /progress/{lessonId} {
         allow read: if canSee(uid, get(/databases/$(database)/documents/users/$(uid)).data);
         allow create, update: if signedIn() && request.auth.uid == uid
+          && lessonId.matches('[a-z0-9][a-z0-9-]{1,99}') && request.resource.data.lessonId == lessonId
           && request.resource.data.keys().hasOnly(['lessonId', 'unitId', 'track', 'accuracy', 'xp', 'seconds', 'completedAt', 'competencies', 'attempts'])
           && request.resource.data.accuracy is number && request.resource.data.accuracy >= 0 && request.resource.data.accuracy <= 1
-          && request.resource.data.xp is int && request.resource.data.xp >= 0 && request.resource.data.xp <= 100;
+          && request.resource.data.xp is int && request.resource.data.xp >= 0 && request.resource.data.xp <= 100
+          && request.resource.data.get('seconds', 0) is int && request.resource.data.get('seconds', 0) >= 0 && request.resource.data.get('seconds', 0) <= 86400000
+          && request.resource.data.completedAt is string && request.resource.data.completedAt.size() <= 40
+          && request.resource.data.get('unitId', '') is string && request.resource.data.get('unitId', '').size() <= 64
+          && request.resource.data.get('track', '') is string && request.resource.data.get('track', '').size() <= 24
+          && request.resource.data.get('competencies', []) is list && request.resource.data.get('competencies', []).size() <= 30
+          && request.resource.data.get('attempts', 0) is int && request.resource.data.get('attempts', 0) >= 0 && request.resource.data.get('attempts', 0) <= 1000;
         allow delete: if false;
       }
 
+      // A project (lesson/ProjectView.tsx). Only these fields, typed and bounded; attachments only from this project's
+      // Storage, under the person's own folder; the organization is the person's own; nothing a reviewer sets (M8).
+      function storageFile(url) {
+        return url is string && url.size() <= 2000
+          && url.matches('(https://firebasestorage[.]googleapis[.]com|http://(127[.]0[.]0[.]1|localhost):9199)/v0/b/(darsi-f0685|demo-darsi[.]appspot[.]com)/o/submissions%2F[A-Za-z0-9_-]{1,128}%2F' + uid + '%2F[^/?#]{1,400}([?][^#]*)?');
+      }
+      function fileRefOk(f) {
+        return f is map && f.keys().hasOnly(['url', 'name', 'type']) && storageFile(f.url)
+          && f.get('name', '') is string && f.get('name', '').size() <= 200 && f.get('type', '') is string && f.get('type', '').size() <= 100;
+      }
+      function filesOk(fs) {
+        return fs is list && fs.size() <= 5
+          && (fs.size() < 1 || fileRefOk(fs[0])) && (fs.size() < 2 || fileRefOk(fs[1])) && (fs.size() < 3 || fileRefOk(fs[2]))
+          && (fs.size() < 4 || fileRefOk(fs[3])) && (fs.size() < 5 || fileRefOk(fs[4]));
+      }
+      function shortText(d, k, max) { return !(k in d) || (d[k] is string && d[k].size() <= max); }
       match /submissions/{subId} {
         allow read: if canSee(uid, get(/databases/$(database)/documents/users/$(uid)).data);
-        allow create: if signedIn() && request.auth.uid == uid && request.resource.data.status == 'submitted'
-          && request.resource.data.text is string && request.resource.data.text.size() <= 20000;
+        allow create: if signedIn() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['lessonId', 'unitId', 'stepId', 'orgId', 'text', 'fileUrl', 'fileName', 'files', 'final', 'explain', 'aiUse', 'name', 'status', 'createdAt'])
+          && request.resource.data.status == 'submitted'
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.get('orgId', null) == request.auth.token.get('orgId', null)
+          && request.resource.data.text is string && request.resource.data.text.size() <= 20000
+          && request.resource.data.lessonId is string && request.resource.data.lessonId.size() <= 100
+          && shortText(request.resource.data, 'unitId', 64) && shortText(request.resource.data, 'stepId', 60)
+          && shortText(request.resource.data, 'explain', 20000) && shortText(request.resource.data, 'aiUse', 5000) && shortText(request.resource.data, 'name', 120)
+          && (request.resource.data.get('fileUrl', null) == null || storageFile(request.resource.data.fileUrl))
+          && (request.resource.data.get('fileName', null) == null || (request.resource.data.fileName is string && request.resource.data.fileName.size() <= 200))
+          && (!('files' in request.resource.data) || filesOk(request.resource.data.files))
+          && (!('final' in request.resource.data) || request.resource.data.final is bool);
         // Teachers and org admins review: status, score and feedback only.
         allow update: if (isTeacherOf(get(/databases/$(database)/documents/users/$(uid)).data) || isOrgAdmin(resource.data.orgId) || isSuper())
-          && onlyChanges(['status', 'score', 'feedback', 'reviewedBy', 'reviewedAt']);
+          && onlyChanges(['status', 'score', 'feedback', 'reviewedBy', 'reviewedAt'])
+          && request.resource.data.status in ['submitted', 'approved', 'revise']
+          && shortText(request.resource.data, 'feedback', 5000)
+          && request.resource.data.get('reviewedBy', request.auth.uid) == request.auth.uid
+          && (!('score' in request.resource.data) || request.resource.data.score == null || request.resource.data.score is number);
       }
 
       match /notes/{lessonId} {
-        allow read, write: if signedIn() && request.auth.uid == uid;
+        allow read: if signedIn() && request.auth.uid == uid;
+        allow write: if signedIn() && request.auth.uid == uid
+          && (request.resource == null || (request.resource.data.keys().hasOnly(['text', 'updatedAt'])
+            && request.resource.data.text is string && request.resource.data.text.size() <= 50000));
       }
 
       // Push tokens, one per device. Only Cloud Functions (registerDevice, unregisterDevice, the senders) touch them.

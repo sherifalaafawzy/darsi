@@ -3,7 +3,7 @@ import { AppBar, Button, ChoiceCard, EmptyState, TextField } from "@darsi/design
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n";
 import { useLoad, type ContentLoader } from "./async";
-import { allGrants, findUser, removeGrant, saveGrant, type Grant } from "./data";
+import { allGrants, ClaimedEmail, findUser, removeGrant, saveGrant, type Grant } from "./data";
 import "../styles/admin.css";
 
 /**
@@ -18,7 +18,7 @@ export function CourseAccess({ content }: { content: ContentLoader }) {
   const grants = useLoad(() => (isSuper ? allGrants() : Promise.resolve([])), [isSuper, n]);
   const catalog = useLoad(() => content.loadCatalog(), []);
   const [email, setEmail] = useState("");
-  const [edit, setEdit] = useState<(Grant & { teach?: string }) | null>(null);
+  const [edit, setEdit] = useState<(Grant & { teach?: string; emailVerified?: boolean }) | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const titleOf = (id: string) => { const e = catalog.data?.units.find((u) => u.id === id); return e ? L(e.title) : id; };
   if (!isSuper) return <><AppBar title={t("access.title")} /><main className="screen"><EmptyState title={t("access.onlySuper")} /></main></>;
@@ -29,8 +29,8 @@ export function CourseAccess({ content }: { content: ContentLoader }) {
       const u = await findUser(email);
       if (!u) { setMsg({ ok: false, text: t("access.notFound") }); return; }
       const had = (grants.data ?? []).find((g) => g.uid === u.uid);
-      setEdit({ uid: u.uid, name: u.name, email: u.email, units: had?.units ?? [], teach: u.teach });
-    } catch (e) { setMsg({ ok: false, text: (e as Error).message }); }
+      setEdit({ uid: u.uid, name: u.name, email: u.email, units: had?.units ?? [], teach: u.teach, emailVerified: u.emailVerified });
+    } catch (e) { setMsg({ ok: false, text: e instanceof ClaimedEmail ? t("access.claimed") : (e as Error).message }); }
   };
   const save = async () => {
     if (!edit || !user) return;
@@ -56,6 +56,7 @@ export function CourseAccess({ content }: { content: ContentLoader }) {
           <section className="stack" aria-labelledby="acc-edit">
             <h2 id="acc-edit" className="section-title"><bdi>{edit.name || edit.email}</bdi></h2>
             {edit.teach !== "university" && <p className="notice">{t("access.notUni")}</p>}
+            {edit.emailVerified === false && <p className="notice">{t("access.unverified")} <bdi dir="ltr">{edit.email}</bdi></p>}
             <div className="stack-sm">
               {(catalog.data?.units ?? []).filter((u) => u.audience === "students").map((u) => (
                 <ChoiceCard key={u.id} multi title={L(u.title)} description={u.id} selected={edit.units.includes(u.id)} onClick={() => toggle(u.id)} />

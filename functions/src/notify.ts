@@ -9,7 +9,7 @@ import { logger } from "firebase-functions/v2";
 import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { audit, caller, db, messaging, str } from "./admin.js";
+import { audit, caller, db, freshCaller, messaging, str } from "./admin.js";
 import {
   broadcastCondition, isTopicPart, linkFor, message, tagFor, topicLang, topicsFor, webpush, wordingFor,
   type Audience, type Cat, type Kind, type Lang, type MessageVars,
@@ -262,7 +262,7 @@ export const updateNotifyPrefs = onCall(async (req) => {
 
 /** A platform admin's announcement, sent once per language to a topic condition, and logged. */
 export const sendBroadcast = onCall(async (req) => {
-  const c = caller(req);
+  const c = await freshCaller(req);
   if (c.role !== "superadmin") throw new HttpsError("permission-denied", "Super-admins only.");
   const d = (req.data ?? {}) as Record<string, Record<string, unknown> | undefined>;
   const title = { en: vText(d.title?.en, 60, "The English title"), ar: vText(d.title?.ar, 60, "The Arabic title") };

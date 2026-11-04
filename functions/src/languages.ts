@@ -5,7 +5,7 @@
  */
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
-import { audit, caller, db, str } from "./admin.js";
+import { audit, db, freshCaller, str } from "./admin.js";
 import { staleVersions } from "./catalog.js";
 import { SETTINGS, writeSettingsFile } from "./settings.js";
 import { bucket } from "./storage.js";
@@ -24,8 +24,8 @@ export function withLanguage(list: readonly LanguageDef[] | undefined, code: str
   return entry ? [...rest, entry] : rest;
 }
 
-function platformAdmin(req: CallableRequest) {
-  const c = caller(req);
+async function platformAdmin(req: CallableRequest) {
+  const c = await freshCaller(req);
   if (c.role !== "superadmin") throw new HttpsError("permission-denied", "Only platform admins can publish languages.");
   const code = str(req.data?.code, 20);
   if (!LANG_CODE.test(code)) throw new HttpsError("invalid-argument", "Not a language code.");
@@ -34,7 +34,7 @@ function platformAdmin(req: CallableRequest) {
 
 /** Checks the saved draft, writes content/i18n/{code}/v{n+1}.json, and lists the language for everyone. */
 export const publishLanguage = onCall(async (req) => {
-  const { c, code } = platformAdmin(req);
+  const { c, code } = await platformAdmin(req);
   const ref = db.doc(`translations/${code}`);
   const snap = await ref.get();
   if (!snap.exists) throw new HttpsError("not-found", "Save the language first.");
@@ -65,7 +65,7 @@ export const publishLanguage = onCall(async (req) => {
 
 /** Takes a language off the pickers. People who chose it see English; the draft stays, to publish again later. */
 export const unpublishLanguage = onCall(async (req) => {
-  const { c, code } = platformAdmin(req);
+  const { c, code } = await platformAdmin(req);
   const languages = await db.runTransaction(async (tx) => {
     const s = await tx.get(db.doc(SETTINGS));
     const list = withLanguage(s.get("languages") as LanguageDef[] | undefined, code, null);

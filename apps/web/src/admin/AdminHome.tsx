@@ -45,7 +45,8 @@ export function AdminHome() {
 
   const exportCsv = () => {
     const head = [t("col.name"), t("col.login"), t("col.role"), t("col.group"), t("col.lessons"), t("col.xp"), t("col.accuracy"), t("col.last")];
-    const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    // A cell starting with = + - @ (or a tab or return) would run as a formula in Excel: a leading ' keeps it text (L1).
+    const esc = (v: unknown) => { const s = String(v ?? ""); return `"${(/^[=+\-@\t\r]/.test(s) ? `'${s}` : s).replace(/"/g, '""')}"`; };
     const lines = [head, ...rows.map((m) => [m.name, displayLogin(m.email ?? ""), m.role, m.group ?? "", m.summary?.lessonsDone ?? 0, m.summary?.xp ?? 0, m.summary?.avgAccuracy != null ? Math.round(m.summary.avgAccuracy * 100) + "%" : "", m.summary?.lastActive ?? ""])].map((r) => r.map(esc).join(","));
     downloadBlob(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }), `darsi-${(org?.name ?? "org").replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "")}-people.csv`);
   };

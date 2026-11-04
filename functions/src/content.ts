@@ -5,7 +5,7 @@
  */
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
-import { audit, caller, db, str } from "./admin.js";
+import { audit, db, freshCaller, str } from "./admin.js";
 import { buildCatalog, canManage, catalogEntry, catalogPath, idAllowed, isOwner, mediaPrefix, staleVersions, unitPath, unitPrefix, type Owner } from "./catalog.js";
 import { loadTracks } from "./settings.js";
 import { bucket } from "./storage.js";
@@ -16,7 +16,7 @@ import { byteSize, errorsOf, UNIT_ID, validateUnit } from "./shared/validate.js"
 
 /** Loads units/{unitId} and checks that the caller may manage it. */
 async function target(req: CallableRequest) {
-  const c = caller(req);
+  const c = await freshCaller(req);
   const unitId = str(req.data?.unitId, 60);
   if (!UNIT_ID.test(unitId)) throw new HttpsError("invalid-argument", "unitId is required.");
   const meta = await db.doc(`units/${unitId}`).get();
@@ -69,6 +69,8 @@ export async function publishDraft(owner: Owner, unitId: string, by: string) {
   if (!meta.exists || meta.get("owner") !== owner) throw new HttpsError("not-found", "No such unit.");
   const c = { uid: by };
   const draft = await db.doc(`unitDrafts/${unitId}`).get();
+  // The draft must be this owner's too (L12): an org admin can't publish another owner's draft under their own unit.
+  if (!draft.exists || draft.get("owner") !== owner) throw new HttpsError("failed-precondition", "The unit's draft belongs to someone else.");
   const unit = draft.get("unit") as Unit | undefined;
   // The unit's track must be one platform admins set up, and its level must fit that track.
   const errors = errorsOf(validateUnit(unit, { tracks: levelsByTrack(await loadTracks()) }));

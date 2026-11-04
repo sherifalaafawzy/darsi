@@ -79,9 +79,12 @@ export function SignUp() {
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setBusy(true); setErr("");
     try {
-      const { auth, createUserWithEmailAndPassword, updateProfile: fbUpdateProfile } = await authSdk();
+      const { auth, createUserWithEmailAndPassword, sendEmailVerification, updateProfile: fbUpdateProfile } = await authSdk();
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), pw);
       await fbUpdateProfile(cred.user, { displayName: name.trim() });
+      // Admins see whether an account's email is verified before they give it access (H1); a failed send never blocks sign-up.
+      auth.languageCode = lang;
+      void sendEmailVerification(cred.user).catch(() => {});
       await createLearnerProfile(cred.user.uid, { name: name.trim(), email: email.trim().toLowerCase(), lang });
       track("sign_up", { m: "email" });
       nav(wantsOrg ? "/org?request=1" : "/learn", { replace: true });

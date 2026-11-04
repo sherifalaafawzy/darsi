@@ -38,22 +38,37 @@ export function paymobHmac(obj: unknown, secret: string) {
 export const verifyPaymob = (obj: unknown, hmac: string | undefined, secret: string) => !!hmac && !!secret && same(paymobHmac(obj, secret), hmac.toLowerCase());
 
 /**
- * What a Paymob transaction callback means. `reference` is our checkout id (sent as special_reference, returned as the
- * order's merchant_order_id). A refund or void names the original transaction, whose id is the payment's ref.
+ * What a Paymob transaction callback means, from its signed fields only (PAYMOB_FIELDS; M3 in the security review).
+ * `order` is Paymob's order id (signed): startCheckout stored which checkout that order belongs to, so the payment is
+ * matched through it. `reference` (our checkout id, sent as special_reference and returned as the order's
+ * merchant_order_id) is not signed: it is only checked against that match, never trusted on its own.
+ * A refund or void is acted on when the transaction itself says so (is_refunded, is_voided: signed). A separate refund
+ * transaction names its original in `parent_transaction`, which is not signed: it is only a lead, and the webhook asks
+ * Paymob for that transaction before it believes it was refunded.
  */
 export function paymobOutcome(obj: Record<string, unknown>):
-  | { type: "paid"; ref: string; reference: string; cents: number; currency: string }
+  | { type: "paid"; ref: string; order: string; reference: string; cents: number; currency: string }
   | { type: "refund"; ref: string }
+  | { type: "checkParent"; parent: string }
   | { type: "ignore"; why: string } {
   const id = String(obj.id ?? "");
+  const order = String(at(obj, "order.id") ?? "");
   const reference = String(at(obj, "order.merchant_order_id") ?? "");
   // Only a full refund or a void ends a payment; a partial refund is left to a platform admin.
-  if (obj.is_voided === true) return { type: "refund", ref: id };
-  if (obj.is_refunded === true) return Number(obj.refunded_amount_cents ?? obj.amount_cents) >= Number(obj.amount_cents) ? { type: "refund", ref: id } : { type: "ignore", why: "partial refund" };
-  if ((obj.is_refund === true || obj.is_void === true) && obj.parent_transaction) return { type: "refund", ref: String(obj.parent_transaction) };
+  if (obj.is_voided === true) return id ? { type: "refund", ref: id } : { type: "ignore", why: "no transaction" };
+  if (obj.is_refunded === true) return !id ? { type: "ignore", why: "no transaction" } : Number(obj.refunded_amount_cents ?? obj.amount_cents) >= Number(obj.amount_cents) ? { type: "refund", ref: id } : { type: "ignore", why: "partial refund" };
+  if ((obj.is_refund === true || obj.is_void === true) && /^\d{1,20}$/.test(String(obj.parent_transaction ?? ""))) return { type: "checkParent", parent: String(obj.parent_transaction) };
+  if (obj.is_refund === true || obj.is_void === true) return { type: "ignore", why: "refund without its original" };
   if (obj.success !== true || obj.pending === true) return { type: "ignore", why: obj.pending === true ? "pending" : "not successful" };
-  if (!id || !reference) return { type: "ignore", why: "no transaction or reference" };
-  return { type: "paid", ref: id, reference, cents: Number(obj.amount_cents), currency: String(obj.currency ?? "") };
+  if (!id || !order) return { type: "ignore", why: "no transaction or order" };
+  return { type: "paid", ref: id, order, reference, cents: Number(obj.amount_cents), currency: String(obj.currency ?? "") };
+}
+
+/** A transaction as Paymob returns it when asked (GET /api/acceptance/transactions/{id}): refunded or voided in full? */
+export function fullyRefunded(t: Record<string, unknown> | null | undefined) {
+  if (!t) return false;
+  if (t.is_voided === true) return true;
+  return t.is_refunded === true && Number(t.refunded_amount_cents ?? t.amount_cents) >= Number(t.amount_cents);
 }
 
 /* ---------- Stripe ---------- */

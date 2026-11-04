@@ -13,11 +13,11 @@ import { FieldValue } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { defineSecret, defineString } from "firebase-functions/params";
-import { caller, db, str } from "./admin.js";
+import { db, freshCaller, str } from "./admin.js";
 import { recordPayment, recordRefund } from "./billing.js";
 import type { Currency, PaymentRecord, Plan } from "./billingCore.js";
 import { superOn } from "./settings.js";
-import { checkoutAmount, formEncode, kindOf, paymobOutcome, providerFor, stripeSession, verifyPaymob, verifyStripe, type CheckoutKind } from "./paymentsCore.js";
+import { checkoutAmount, formEncode, fullyRefunded, kindOf, paymobOutcome, providerFor, stripeSession, verifyPaymob, verifyStripe, type CheckoutKind } from "./paymentsCore.js";
 
 const PAYMOB_SECRET = defineSecret("PAYMOB_SECRET_KEY");
 const PAYMOB_HMAC = defineSecret("PAYMOB_HMAC_SECRET");
@@ -47,7 +47,7 @@ const real = (s: string) => s.trim() !== "" && s.trim() !== "unset";
  * account; a pack needs Super already; seats are bought by an organization's admin for their organization.
  */
 export const startCheckout = onCall({ secrets: [PAYMOB_SECRET, STRIPE_SECRET] }, async (req) => {
-  const c = caller(req);
+  const c = await freshCaller(req);
   if (!(await superOn())) throw new HttpsError("failed-precondition", "super-off");
   const plans = ((await db.doc("config/plans").get()).get("plans") as Plan[] | undefined) ?? [];
   const plan = plans.find((p) => p.id === str(req.data?.plan, 32) && p.active);
@@ -82,9 +82,12 @@ export const startCheckout = onCall({ secrets: [PAYMOB_SECRET, STRIPE_SECRET] },
           redirection_url: `${site}/upgrade?done=${ref.id}`,
         }),
       });
-      const body = (await r.json().catch(() => ({}))) as { client_secret?: string; id?: string };
-      if (!r.ok || !body.client_secret) throw new Error(`Paymob ${r.status}`);
-      await ref.update({ providerId: body.id ?? null });
+      const body = (await r.json().catch(() => ({}))) as { client_secret?: string; id?: string; intention_order_id?: number | string };
+      // The order id is what Paymob signs in its callback, so the payment is matched to this checkout through it
+      // (paymobOrders/{order}); a checkout without one could never be matched safely.
+      const order = String(body.intention_order_id ?? "");
+      if (!r.ok || !body.client_secret || !/^\d{1,20}$/.test(order)) throw new Error(`Paymob ${r.status}${order ? "" : " (no order id)"}`);
+      await Promise.all([ref.update({ providerId: body.id ?? null, providerOrder: order }), db.doc(`paymobOrders/${order}`).set({ checkout: ref.id })]);
       return { url: `${PAYMOB_BASE.value()}/unifiedcheckout/?publicKey=${encodeURIComponent(PAYMOB_PUBLIC.value())}&clientSecret=${encodeURIComponent(body.client_secret)}` };
     }
     const s = await stripe<{ id: string; url: string }>("POST", "checkout/sessions", stripeSession({ checkout: ref.id, plan, cents: price.cents, seats: price.seats, site, email }));
@@ -123,15 +126,45 @@ async function refund(provider: "paymob" | "stripe", ref: string) {
 
 /* ---------- Paymob ---------- */
 
+/** The checkout a Paymob order belongs to (startCheckout wrote paymobOrders/{order}); the unsigned reference must agree. */
+async function paymobCheckout(order: string, reference: string): Promise<string | null> {
+  const map = await db.doc(`paymobOrders/${order}`).get();
+  const id = map.get("checkout") as string | undefined;
+  if (!id) return null;
+  if (reference && reference !== id) { logger.error("paymob: the order's reference names another checkout", { order, reference, checkout: id }); return null; }
+  return id;
+}
+/** Asks Paymob for a transaction (refunds name their original, unsigned): its own word on whether it was refunded. */
+async function paymobTransaction(id: string): Promise<Record<string, unknown> | null> {
+  const r = await fetch(`${PAYMOB_BASE.value()}/api/acceptance/transactions/${encodeURIComponent(id)}`, {
+    headers: { Authorization: `Token ${PAYMOB_SECRET.value()}` }, signal: AbortSignal.timeout(15000),
+  }).catch(() => null);
+  return r?.ok ? ((await r.json().catch(() => null)) as Record<string, unknown> | null) : null;
+}
+
 /** Paymob's "transaction processed" callback, signed with HMAC-SHA512 in ?hmac=. */
-export const paymobWebhook = onRequest({ secrets: [PAYMOB_HMAC], maxInstances: 5, memory: "256MiB" }, async (req, res) => {
+export const paymobWebhook = onRequest({ secrets: [PAYMOB_HMAC, PAYMOB_SECRET], maxInstances: 5, memory: "256MiB" }, async (req, res) => {
   if (req.method !== "POST") { res.status(405).end(); return; }
   const obj = (req.body?.obj ?? null) as Record<string, unknown> | null;
   if (!obj || !verifyPaymob(obj, String(req.query.hmac ?? ""), PAYMOB_HMAC.value())) { res.status(401).end(); return; }
   if (req.body?.type && req.body.type !== "TRANSACTION") { res.status(200).send("ignored"); return; }
   const o = paymobOutcome(obj);
-  const result = o.type === "paid" ? await pay(o.reference, "paymob", o.ref, o.cents, o.currency)
-    : o.type === "refund" ? await refund("paymob", o.ref) : o.why;
+  let result: string;
+  try {
+    if (o.type === "paid") {
+      const checkout = await paymobCheckout(o.order, o.reference);
+      result = checkout ? await pay(checkout, "paymob", o.ref, o.cents, o.currency) : "unknown order";
+    } else if (o.type === "refund") result = await refund("paymob", o.ref);
+    else if (o.type === "checkParent") {
+      const parent = await paymobTransaction(o.parent);
+      result = parent && String(parent.id ?? "") === o.parent && fullyRefunded(parent) ? await refund("paymob", o.parent) : "refund not confirmed by Paymob";
+    } else result = o.why;
+  } catch (e) {
+    // Paymob retries a failed callback; recordPayment and recordRefund make the retry safe.
+    logger.error("paymob webhook failed", { type: o.type, error: String(e) });
+    res.status(500).send("retry");
+    return;
+  }
   logger.info("paymob webhook", { type: o.type, result });
   res.status(200).send(result);
 });

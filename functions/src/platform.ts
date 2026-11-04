@@ -4,20 +4,15 @@
  * role anywhere, platform admin included. Roles live in Auth custom claims, so every change goes through here.
  */
 import { FieldValue } from "firebase-admin/firestore";
-import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
-import { audit, caller, db, str, type Role } from "./admin.js";
-import { generateCode } from "./passwords.js";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { audit, auth, db, freshCaller, requireSuper, str, type Role } from "./admin.js";
+import { generateCode, isValidEmail, isValidUsername, usernameToEmail } from "./passwords.js";
 import { bucket } from "./storage.js";
 import { writeClaims } from "./billing.js";
 
 const ROLES: Role[] = ["learner", "student", "teacher", "orgAdmin", "superadmin"];
 const IN_ORG: Role[] = ["student", "teacher", "orgAdmin"];
 
-function requireSuper(req: CallableRequest) {
-  const c = caller(req);
-  if (c.role !== "superadmin") throw new HttpsError("permission-denied", "Platform admins only.");
-  return c;
-}
 
 /** An organization's editable details, checked: name 2–120 characters, the rest short text. */
 function details(d: Record<string, unknown> | undefined, partial: boolean) {
@@ -45,7 +40,7 @@ export async function assign(uid: string, role: Role, orgId: string | null) {
 }
 
 export const createOrg = onCall(async (req) => {
-  const c = requireSuper(req);
+  const c = await requireSuper(req);
   const d = details(req.data, false);
   const codes = { teacher: generateCode(), student: generateCode() };
   const ref = db.collection("orgs").doc();
@@ -62,7 +57,7 @@ export const createOrg = onCall(async (req) => {
 });
 
 export const updateOrg = onCall(async (req) => {
-  const c = requireSuper(req);
+  const c = await requireSuper(req);
   const orgId = str(req.data?.orgId, 128);
   const ref = db.doc(`orgs/${orgId}`);
   if (!(await ref.get()).exists) throw new HttpsError("not-found", "No such organization.");
@@ -79,7 +74,7 @@ export const updateOrg = onCall(async (req) => {
  * codes stop working, and its own courses, logo and files go. The caller types its name to confirm.
  */
 export const deleteOrg = onCall({ timeoutSeconds: 300 }, async (req) => {
-  const c = requireSuper(req);
+  const c = await requireSuper(req);
   const orgId = str(req.data?.orgId, 128);
   const ref = db.doc(`orgs/${orgId}`);
   const org = await ref.get();
@@ -105,7 +100,7 @@ export const deleteOrg = onCall({ timeoutSeconds: 300 }, async (req) => {
  * platform admins have none. A platform admin can't change their own role (so nobody locks the platform out).
  */
 export const setUserRole = onCall(async (req) => {
-  const c = requireSuper(req);
+  const c = await requireSuper(req);
   const uid = str(req.data?.uid, 128), role = str(req.data?.role) as Role;
   if (!ROLES.includes(role)) throw new HttpsError("invalid-argument", "Invalid role.");
   if (uid === c.uid) throw new HttpsError("failed-precondition", "You cannot change your own role.");
@@ -119,4 +114,36 @@ export const setUserRole = onCall(async (req) => {
   const { before } = await assign(uid, role, orgId);
   await audit("setUserRole", c.uid, { uid, role, orgId, before });
   return { ok: true };
+});
+
+/**
+ * An account by its email or username login (H1): resolved through Auth, which knows the account's real email,
+ * never through users/{uid}.email, which only says what its owner typed. Shows whether that email is verified, and
+ * how many profiles claim it (more than one means someone typed another person's address before 2026-11; the screens
+ * then refuse to pick one). Platform admins find anyone; an org admin only their own members.
+ */
+export const findAccount = onCall(async (req) => {
+  const c = await freshCaller(req);
+  if (c.role !== "superadmin" && c.role !== "orgAdmin") throw new HttpsError("permission-denied", "Admins only.");
+  const raw = str(req.data?.login, 200).toLowerCase();
+  const email = raw.includes("@") ? raw : isValidUsername(raw) ? usernameToEmail(raw) : "";
+  if (!email || !isValidEmail(email)) return { account: null, profiles: 0 };
+  const [user, claimed] = await Promise.all([
+    auth.getUserByEmail(email).catch(() => null),
+    db.collection("users").where("email", "==", email).select().limit(5).get(),
+  ]);
+  const profile = user ? await db.doc(`users/${user.uid}`).get() : null;
+  if (c.role === "orgAdmin" && (!profile || profile.get("orgId") !== c.orgId)) return { account: null, profiles: 0 };
+  const ids = new Set(claimed.docs.map((d) => d.id));
+  if (user) ids.add(user.uid);
+  if (!user || !profile?.exists) return { account: null, profiles: ids.size - (user ? 1 : 0) };
+  return {
+    account: {
+      uid: user.uid, email: user.email ?? email, emailVerified: user.emailVerified, name: String(profile.get("name") ?? user.displayName ?? ""),
+      username: (profile.get("username") as string | null | undefined) ?? null, role: (profile.get("role") as string | undefined) ?? "learner",
+      orgId: (profile.get("orgId") as string | null | undefined) ?? null, teach: (profile.get("teach") as string | undefined) ?? null,
+      provider: user.providerData.map((p) => p.providerId).sort().join(",") || "password",
+    },
+    profiles: ids.size,
+  };
 });

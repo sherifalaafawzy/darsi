@@ -6,6 +6,7 @@ import { db } from "../firebase";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n";
 import type { Submission } from "./data";
+import { isEvidenceUrl } from "./evidence";
 
 /** A project and, for teachers and admins, its review (feedback, approve or ask for changes). */
 export function SubmissionCard({ uid, sub, lessonTitle, who, onReviewed }: { uid: string; sub: Submission; lessonTitle: string;
@@ -25,7 +26,7 @@ export function SubmissionCard({ uid, sub, lessonTitle, who, onReviewed }: { uid
       {/* Platform admins open the lesson at its project step. */}
       <header><strong>{role === "superadmin" && sub.unitId ? <Link to={`/lesson/${sub.unitId}/${sub.lessonId}?step=project`}>{lessonTitle}</Link> : lessonTitle}</strong><span className={`status status-${sub.status}`}>{t(`p.status.${sub.status}` as "p.status.submitted")}</span></header>
       <p dir="auto" className="sub-text">{sub.text}</p>
-      {sub.fileUrl && <a href={sub.fileUrl} target="_blank" rel="noreferrer noopener"><Icon name="file" size={16} /> {sub.fileName ?? t("p.attachment")}</a>}
+      {sub.fileUrl && isEvidenceUrl(sub.fileUrl) && <a href={sub.fileUrl} target="_blank" rel="noreferrer noopener"><Icon name="file" size={16} /> {sub.fileName ?? t("p.attachment")}</a>}
       {canReview ? (
         <div className="stack-sm">
           <label className="dr-field-label" htmlFor={`fb-${sub.id}`}>{t("p.feedback")}</label>

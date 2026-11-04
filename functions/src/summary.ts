@@ -46,3 +46,20 @@ export function summarize(rows: ProgressRow[], now: Date | number = Date.now()):
     competencies, compAcc, units, tracks, seconds: Math.round(seconds), weeks: recentWeeks(completed, now), lastLessonAt: last || null,
   };
 }
+
+/**
+ * One lesson result as the summary counts it (H2 and M1 in the security review): the numbers the person sent, typed and
+ * capped, with the course, track and competencies taken from the published unit, never from the phone.
+ */
+export function cleanRow(d: Record<string, unknown> | undefined, meta: { unitId: string; track: string; competencies: string[] }): ProgressRow | null {
+  if (!d) return null;
+  return {
+    accuracy: num(d.accuracy, 1), xp: num(d.xp, 100), seconds: num(d.seconds, 86400),
+    ...(typeof d.completedAt === "string" ? { completedAt: d.completedAt.slice(0, 40) } : {}),
+    unitId: meta.unitId, track: meta.track, competencies: meta.competencies,
+  };
+}
+/** Whether two rows count the same (a trigger delivered twice, or a write that changed nothing the summary uses). */
+// Firestore hands maps back with their keys sorted, so compare with sorted keys.
+const canon = (r: ProgressRow | null | undefined) => (r ? JSON.stringify(r, Object.keys(r).sort()) : "null");
+export const sameRow = (a: ProgressRow | null | undefined, b: ProgressRow | null | undefined) => canon(a) === canon(b);

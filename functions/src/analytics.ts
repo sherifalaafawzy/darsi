@@ -12,9 +12,12 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { caller, db } from "./admin.js";
+import { db, freshCaller } from "./admin.js";
 import { superStats } from "./billingCore.js";
-import { dailyCounts, dayOf, measurementPayloads, overview, parseBatch, type Batch, type Counts, type OrgRow, type UserRow } from "./analyticsCore.js";
+import { dailyCounts, dayOf, measurementPayloads, overview, parseBatch, sanitize, type Batch, type Counts, type Known, type OrgRow, type UserRow } from "./analyticsCore.js";
+import { catalogOf } from "./courses.js";
+import { loadLanguages, loadTracks } from "./settings.js";
+import { LAB_IDS } from "./shared/labs.js";
 
 /** Counts become increments, so batches arriving at the same moment add up instead of overwriting each other. */
 function increments(c: Counts): Record<string, unknown> {
@@ -51,12 +54,56 @@ async function countDevice(batch: Batch, day: string) {
   return { dev: 1, ...(snap.exists ? {} : { devNew: 1 }), devRole: { [role]: 1 } };
 }
 
-/** Requests per minute per address, per instance: enough for any real phone, a brake on anyone flooding it. */
+/**
+ * Requests per minute, per instance: per address and device (L6: the client's address is Hosting's fastly-client-ip,
+ * or the first x-forwarded-for hop), per address alone (a school's phones share one), and for the whole instance:
+ * the brake that holds even when someone makes up addresses and device ids.
+ */
 const seen = new Map<string, { at: number; n: number }>();
-function tooMany(ip: string) {
-  const now = Date.now(), s = seen.get(ip);
-  if (!s || now - s.at > 60e3) { if (seen.size > 5000) seen.clear(); seen.set(ip, { at: now, n: 1 }); return false; }
-  return ++s.n > 30;
+function over(key: string, max: number, now: number) {
+  const s = seen.get(key);
+  if (!s || now - s.at > 60e3) { if (seen.size > 20000) seen.clear(); seen.set(key, { at: now, n: 1 }); return false; }
+  return ++s.n > max;
+}
+let instance = { at: 0, n: 0 };
+export const LIMITS = { device: 12, address: 300, instance: 3000 };
+export function tooMany(ip: string, device: string, now = Date.now()) {
+  if (now - instance.at > 60e3) instance = { at: now, n: 0 };
+  if (++instance.n > LIMITS.instance) return true;
+  return over(`a:${ip}`, LIMITS.address, now) || over(`d:${ip}:${device}`, LIMITS.device, now);
+}
+export const clientIp = (h: Record<string, string | string[] | undefined>, fallback = "?") =>
+  String(h["fastly-client-ip"] ?? "").trim() || String(h["x-forwarded-for"] ?? "").split(",")[0].trim() || fallback;
+
+/** The ids counts may be kept under (sanitize), re-read at most every 10 minutes per instance. */
+let knownIds: { at: number; v: Promise<Known> } | null = null;
+const orgCatalogs = new Map<string, { at: number; ids: Promise<Set<string>> }>();
+function loadKnown(): Promise<Known> {
+  if (knownIds && Date.now() - knownIds.at < 10 * 60e3) return knownIds.v;
+  const v = (async (): Promise<Known> => {
+    const [pub, orgs, tracks, langs] = await Promise.all([catalogOf("public"), db.collection("orgs").where("status", "==", "active").select().get(), loadTracks(), loadLanguages()]);
+    return {
+      units: new Set(pub.map((u) => u.id)), labs: new Set(LAB_IDS), orgs: new Set(orgs.docs.map((d) => d.id)),
+      tracks: new Set(tracks.map((t) => t.id)), langs: new Set(["en", "ar", "und", ...langs.map((l) => l.code)]),
+    };
+  })();
+  knownIds = { at: Date.now(), v };
+  v.catch(() => { if (knownIds?.v === v) knownIds = null; });
+  return v;
+}
+/** The org's own course ids, for batches from its members. */
+function orgUnits(orgId: string): Promise<Set<string>> {
+  const hit = orgCatalogs.get(orgId);
+  if (hit && Date.now() - hit.at < 10 * 60e3) return hit.ids;
+  const ids = catalogOf(orgId).then((c) => new Set(c.map((u) => u.id)));
+  orgCatalogs.set(orgId, { at: Date.now(), ids });
+  ids.catch(() => orgCatalogs.delete(orgId));
+  return ids;
+}
+async function clean(batch: Batch): Promise<Batch> {
+  const k = await loadKnown();
+  const org = batch.ctx.org && k.orgs.has(batch.ctx.org) ? batch.ctx.org : null;
+  return sanitize(batch, org ? { ...k, units: new Set([...k.units, ...(await orgUnits(org))]) } : k);
 }
 
 export const collect = onRequest({ maxInstances: 3, memory: "256MiB", timeoutSeconds: 30, concurrency: 80 }, async (req, res) => {
@@ -64,7 +111,6 @@ export const collect = onRequest({ maxInstances: 3, memory: "256MiB", timeoutSec
   res.set("Access-Control-Allow-Origin", "*");
   if (req.method === "OPTIONS") { res.set("Access-Control-Allow-Methods", "POST").set("Access-Control-Allow-Headers", "Content-Type").status(204).end(); return; }
   if (req.method !== "POST") { res.status(405).end(); return; }
-  if (tooMany(String(req.ip ?? "?"))) { res.status(429).end(); return; }
   const raw = req.rawBody;
   if (!raw || raw.length > 64 * 1024) { res.status(413).end(); return; }
   const nowSec = Math.floor(Date.now() / 1000);
@@ -74,8 +120,10 @@ export const collect = onRequest({ maxInstances: 3, memory: "256MiB", timeoutSec
     const text = req.query.z === "1" ? gunzipSync(raw, { maxOutputLength: 512 * 1024 }).toString("utf8") : raw.toString("utf8");
     batch = parseBatch(JSON.parse(text), nowSec);
   } catch { res.status(400).end(); return; }
+  if (tooMany(clientIp(req.headers, String(req.ip ?? "?")), batch.ctx.d)) { res.status(429).end(); return; }
   if (!batch.events.length) { res.status(204).end(); return; }
   try {
+    batch = await clean(batch);
     const days = dailyCounts(batch);
     const latest = dayOf(Math.max(...batch.events.map((e) => e.t)));
     const device = await countDevice(batch, latest);
@@ -120,7 +168,7 @@ export const statsJob = onSchedule({ schedule: "30 2 * * *", timeZone: "UTC", ti
 });
 
 export const refreshStats = onCall({ timeoutSeconds: 300, memory: "512MiB" }, async (req) => {
-  if (caller(req).role !== "superadmin") throw new HttpsError("permission-denied", "Platform admins only.");
+  if ((await freshCaller(req)).role !== "superadmin") throw new HttpsError("permission-denied", "Platform admins only.");
   const o = await buildOverview();
   return { at: o.at };
 });

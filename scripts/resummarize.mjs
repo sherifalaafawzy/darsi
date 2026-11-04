@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Rebuilds every account's users/{uid}.summary from its progress docs, with the same code as the onProgressWrite
- * trigger (functions/src/summary.ts). Run it once after the summary gains fields (2026-11: time, tracks and scores
+ * trigger (functions/src/progress.ts), and the rows the trigger keeps (users/{uid}/private/summaryRows). Run it once after the summary gains fields (2026-11: time, tracks and scores
  * per competency), so people who haven't finished a lesson since still show full figures in the reports.
  *
  *   npm run resummarize -- --emulator     the local Emulator Suite
@@ -24,16 +24,16 @@ const { initializeApp, applicationDefault } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 initializeApp({ projectId, ...(emulator ? {} : { credential: applicationDefault() }) });
 const db = getFirestore();
-const { summarize } = await import(pathToFileURL(join(ROOT, "functions/lib/summary.js")).href);
+// The trigger's own code (functions/src/progress.ts): only published lessons count, with their unit's competencies, and
+// the counted rows are stored for the trigger to keep up to date.
+if (emulator) { process.env.FIREBASE_STORAGE_EMULATOR_HOST ??= "127.0.0.1:9199"; process.env.CONTENT_BUCKET ??= `${projectId}.appspot.com`; }
+const { rebuildSummary } = await import(pathToFileURL(join(ROOT, "functions/lib/progress.js")).href);
 
 const users = await db.collection("users").select().get();
 let done = 0, withLessons = 0;
 for (const u of users.docs) {
-  const progress = await u.ref.collection("progress").get();
-  const summary = summarize(progress.docs.map((d) => d.data()));
-  // As the trigger does: each summary field replaced whole.
-  await u.ref.set({ summary }, { mergeFields: Object.keys(summary).map((k) => `summary.${k}`) });
-  done++; if (progress.size) withLessons++;
+  if (await rebuildSummary(u.id)) withLessons++;
+  done++;
 }
 console.log(`Rebuilt ${done} summaries in ${projectId} (${withLessons} with lessons).`);
 process.exit(0);

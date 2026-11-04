@@ -4,12 +4,13 @@
  * (relay.ts, on Cloud Run). Every call checks Super and charges what it cost Darsi, at least, in credits.
  */
 import { applicationDefault } from "firebase-admin/app";
+import { randomBytes } from "node:crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import { caller, db, str } from "./admin.js";
-import { creditsForCost, creditsLeft, spendCredits, type Credits, type Economics } from "./billingCore.js";
+import { creditsForCost, creditsLeft, holdCredits, settleCredits, spendCredits, type Credits, type Economics, type Hold } from "./billingCore.js";
 import { catalogPath, type Owner } from "./catalog.js";
 import { superOn } from "./settings.js";
 import { bucket } from "./storage.js";
@@ -96,12 +97,21 @@ export async function trackIndex(unit: TutorUnit, orgId: string | null, lang: st
 export const hasSuper = (token: Record<string, unknown> | undefined) => Number(token?.planUntil) > Date.now();
 const day = () => new Date().toISOString().slice(0, 10);
 
+/** The day's tutor cost per person and for the platform. Bookkeeping: it never fails a call that was paid (H3). */
+async function countUsage(uid: string, usd: number, credits: number, mode: "text" | "voice") {
+  const inc = { usd: FieldValue.increment(usd), credits: FieldValue.increment(credits), [mode]: FieldValue.increment(1) };
+  await Promise.all([
+    db.doc(`tutorUsage/${uid}/days/${day()}`).set({ day: day(), ...inc }, { merge: true }),
+    db.doc(`analytics/${day()}`).set({ day: day(), tutor: inc }, { merge: true }),
+  ]).catch((e) => logger.error("tutor: usage not counted", { uid, error: String(e) }));
+}
+
 /**
  * Charges a call that cost Darsi `usd` at Google. Takes what's left if it was more than the balance (the call already
- * happened), and says so. Also counts the day's tutor cost per person and for the platform.
+ * happened), and says so (`short`: the credits it couldn't take). Also counts the day's tutor cost.
  */
-export async function charge(uid: string, usd: number, mode: "text" | "voice"): Promise<{ ok: boolean; credits: number; left: number }> {
-  if (usd <= 0) return { ok: true, credits: 0, left: await balance(uid) };
+export async function charge(uid: string, usd: number, mode: "text" | "voice"): Promise<{ ok: boolean; credits: number; left: number; short: number }> {
+  if (usd <= 0) return { ok: true, credits: 0, left: await balance(uid), short: 0 };
   const eco = await economics();
   const n = creditsForCost(usd, eco);
   const ref = db.doc(`credits/${uid}`);
@@ -110,15 +120,72 @@ export async function charge(uid: string, usd: number, mode: "text" | "voice"): 
     const have = creditsLeft(c);
     const next = spendCredits(c, Math.min(n, have));
     if (next) tx.set(ref, next);
-    return { ok: have >= n, left: Math.max(0, have - n) };
+    return { ok: have >= n, left: Math.max(0, have - n), short: Math.max(0, n - have) };
   });
-  const inc = { usd: FieldValue.increment(usd), credits: FieldValue.increment(n), [mode]: FieldValue.increment(1) };
-  await Promise.all([
-    db.doc(`tutorUsage/${uid}/days/${day()}`).set({ day: day(), ...inc }, { merge: true }),
-    db.doc(`analytics/${day()}`).set({ day: day(), tutor: inc }, { merge: true }),
-  ]);
-  return { ok: r.ok, credits: n, left: Math.round(r.left * 100) / 100 };
+  await countUsage(uid, usd, n, mode);
+  return { ok: r.ok, credits: n, left: Math.round(r.left * 100) / 100, short: Math.round(r.short * 100) / 100 };
 }
+
+/* ---------- Calls under way: credits held first, and a few at a time per person (M5) ---------- */
+
+/** tutorLeases/{uid}: the person's calls under way ({kind, until} by id) and their last warm-up; only the functions touch it. */
+const leasesRef = (uid: string) => db.doc(`tutorLeases/${uid}`);
+/** Calls at once per person: two typed (a question while the last answer is still coming), one spoken. */
+export const MAX_CALLS = { text: 2, voice: 1 } as const;
+type Lease = { kind: "text" | "voice"; until: number };
+
+/**
+ * Starts a call: within one transaction, checks the person has fewer than MAX_CALLS of this kind under way and holds
+ * `holdN` credits (all that's left, when less). Parallel calls therefore can't each see the same balance and overspend.
+ * Throws resource-exhausted "no-credits" or "busy".
+ */
+export async function startCall(uid: string, kind: "text" | "voice", holdN: number, ttlMs: number): Promise<{ id: string; hold: Hold }> {
+  const cRef = db.doc(`credits/${uid}`), lRef = leasesRef(uid);
+  return db.runTransaction(async (tx) => {
+    const [c, l] = await Promise.all([tx.get(cRef), tx.get(lRef)]);
+    const now = Date.now();
+    const live = Object.entries((l.get("calls") ?? {}) as Record<string, Lease>).filter(([, v]) => v && v.until > now);
+    if (live.filter(([, v]) => v.kind === kind).length >= MAX_CALLS[kind]) throw new HttpsError("resource-exhausted", "busy");
+    const h = holdCredits(c.data() as Credits | undefined, holdN, now);
+    if (!h) throw new HttpsError("resource-exhausted", "no-credits");
+    const id = randomBytes(8).toString("hex");
+    tx.set(cRef, h.next);
+    tx.set(lRef, { calls: Object.fromEntries([...live, [id, { kind, until: now + ttlMs }]]) }, { mergeFields: ["calls"] });
+    return { id, hold: h.hold };
+  });
+}
+
+/** Ends a call that cost `cost` credits: settles against what was held, gives back the rest, and frees its place. */
+export async function endCall(uid: string, id: string, hold: Hold, cost: number): Promise<{ charged: number; left: number; short: boolean }> {
+  const cRef = db.doc(`credits/${uid}`), lRef = leasesRef(uid);
+  return db.runTransaction(async (tx) => {
+    const [c, l] = await Promise.all([tx.get(cRef), tx.get(lRef)]);
+    const r = settleCredits(c.data() as Credits | undefined, hold, cost);
+    tx.set(cRef, r.next);
+    if (l.exists) tx.update(lRef, { [`calls.${id}`]: FieldValue.delete() });
+    return { charged: r.charged, left: Math.round(creditsLeft(r.next) * 100) / 100, short: r.short };
+  });
+}
+
+/** Credits a spoken minute costs (half the learner, half the tutor, plus the lesson re-read on a few turns): held while a call runs. */
+export async function minuteCredits(cfg: TutorConfig) {
+  return Math.max(0.01, creditsForCost(audioCost(30, 30, cfg.live) + (4 * 4000 * cfg.live.textIn) / 1e6, await economics()));
+}
+
+/** Credits held for a typed answer: about four times the usual cost (an answer with an explainer costs more). */
+async function textHold() { return Math.max(0.01, creditsForCost(0.03, await economics())); }
+
+/** At most one warm-up per person every 20 seconds (each one opens an Agent Runtime session, a shared quota). */
+async function mayWarm(uid: string) {
+  const ref = leasesRef(uid);
+  return db.runTransaction(async (tx) => {
+    const at = Number((await tx.get(ref)).get("warmAt")) || 0;
+    if (Date.now() - at < 20_000) return false;
+    tx.set(ref, { warmAt: Date.now() }, { mergeFields: ["warmAt"] });
+    return true;
+  });
+}
+
 export const balance = async (uid: string) => Math.round(creditsLeft((await db.doc(`credits/${uid}`).get()).data() as Credits | undefined) * 100) / 100;
 
 /* ---------- Text answers ---------- */
@@ -171,9 +238,9 @@ export const tutorAsk = onCall({ secrets: [GEMINI_KEY], memory: "512MiB", timeou
   const [cfg, left, unit] = await Promise.all([tutorConfig(), balance(c.uid), loadUnit(str(req.data?.unitId, 64), orgId)]);
   if (!tutorReady(cfg)) throw new HttpsError("failed-precondition", "tutor-closed");
   // {warm: true} when the panel opens: this instance loads the course and its search index, and the agent's session is
-  // opened, so the first question waits for neither. Nothing is charged.
+  // opened, so the first question waits for neither. Nothing is charged; it needs credits and is limited per person.
   if (req.data?.warm === true) {
-    if (!unit) return { sessionId: "" };
+    if (!unit || left <= 0 || !(await mayWarm(c.uid))) return { sessionId: "" };
     await Promise.all([trackIndex(unit, orgId, lang), lang === "en" ? null : trackIndex(unit, orgId, "en")]);
     const sessionId = cfg.engine === "agent" && cfg.agentId ? await openSession({ cfg, uid: c.uid, orgId, unit, lessonId, lang, style }).catch(() => "") : "";
     return { sessionId };
@@ -183,23 +250,32 @@ export const tutorAsk = onCall({ secrets: [GEMINI_KEY], memory: "512MiB", timeou
   if (!question) throw new HttpsError("invalid-argument", "Ask a question.");
   if (!unit) throw new HttpsError("not-found", "No such course.");
   const history = Array.isArray(req.data?.history) ? (req.data.history as { role: string; text: unknown }[]).slice(-6).map((h) => ({ role: h.role === "user" ? "user" as const : "tutor" as const, text: str(h.text, 1500) })) : [];
-  const [ix, en] = await Promise.all([trackIndex(unit, orgId, lang), lang === "en" ? null : trackIndex(unit, orgId, "en")]);
+  // Credits are held before the model is called and settled after, and only MAX_CALLS run at once per person (M5).
+  const call = await startCall(c.uid, "text", await textHold(), 200_000);
   let a: Answer | null = null, explainer: ExplainerPackage | null = null, sessionId = "";
-  if (cfg.engine === "agent" && cfg.agentId) {
-    try {
-      const r = await askAgent({ cfg, uid: c.uid, orgId, unit, lessonId, lang, question, style, sessionId: str(req.data?.sessionId, 128) || undefined, show: req.data?.show === true, ix, en });
-      a = finish(r.reply, { unit, lang, ix }, r.usd);
-      ({ explainer, sessionId } = r);
-    } catch (e) { logger.error("tutor agent failed, answering directly", { error: String(e) }); }
-  }
-  if (!a) {
-    try { a = await answer({ key: GEMINI_KEY.value(), cfg, unit, lessonId, ix, en, question, lang, history, style }); } catch (e) {
-      logger.error("tutorAsk failed", { error: String(e) });
-      throw new HttpsError("unavailable", "The tutor didn't answer. Try again in a minute.");
+  try {
+    const [ix, en] = await Promise.all([trackIndex(unit, orgId, lang), lang === "en" ? null : trackIndex(unit, orgId, "en")]);
+    if (cfg.engine === "agent" && cfg.agentId) {
+      try {
+        const r = await askAgent({ cfg, uid: c.uid, orgId, unit, lessonId, lang, question, style, sessionId: str(req.data?.sessionId, 128) || undefined, show: req.data?.show === true, ix, en });
+        a = finish(r.reply, { unit, lang, ix }, r.usd);
+        ({ explainer, sessionId } = r);
+      } catch (e) { logger.error("tutor agent failed, answering directly", { error: String(e) }); }
     }
+    if (!a) {
+      try { a = await answer({ key: GEMINI_KEY.value(), cfg, unit, lessonId, ix, en, question, lang, history, style }); } catch (e) {
+        logger.error("tutorAsk failed", { error: String(e) });
+        throw new HttpsError("unavailable", "The tutor didn't answer. Try again in a minute.");
+      }
+    }
+  } catch (e) {
+    await endCall(c.uid, call.id, call.hold, 0).catch((x) => logger.error("tutor: hold not released", { uid: c.uid, error: String(x) }));
+    throw e;
   }
-  const paid = await charge(c.uid, a.usd, "text");
-  return { inScope: a.inScope, answer: a.answer, sources: a.sources, explainer, sessionId, credits: paid.credits, left: paid.left };
+  const credits = creditsForCost(a.usd, await economics());
+  const paid = await endCall(c.uid, call.id, call.hold, credits);
+  await countUsage(c.uid, a.usd, credits, "text");
+  return { inScope: a.inScope, answer: a.answer, sources: a.sources, explainer, sessionId, credits: paid.charged, left: paid.left };
 });
 
 /** The balance, and roughly what a minute of talking costs in credits (for "about N minutes left"). */

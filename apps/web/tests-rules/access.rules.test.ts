@@ -7,7 +7,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import { collectionGroup, doc, getDoc, getDocs, query, setDoc, updateDoc, deleteDoc, where } from "firebase/firestore";
+import { collectionGroup, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, deleteDoc, where } from "firebase/firestore";
 import { getBytes, ref, uploadBytes } from "firebase/storage";
 
 let env: RulesTestEnvironment;
@@ -98,8 +98,9 @@ describe("without a grant", () => {
   });
   it("students still send their own work into the course folder", async () => {
     const me = env.authenticatedContext("s1", { role: "learner" });
-    await assertSucceeds(uploadBytes(ref(me.storage(), "submissions/none/s1/ai-s3/new.jpg"), new Uint8Array([1]), { contentType: "image/jpeg" }));
-    await assertFails(uploadBytes(ref(me.storage(), "submissions/none/s2/ai-s3/new.jpg"), new Uint8Array([1]), { contentType: "image/jpeg" }));
-    await assertSucceeds(setDoc(doc(me.firestore(), "users/s1/submissions/new"), { unitId: "ai-s3", lessonId: "ai-s3-cap", text: "x", status: "submitted", final: true }));
+    // Named as ProjectView names them: {lessonId}-{time}-{file}.
+    await assertSucceeds(uploadBytes(ref(me.storage(), "submissions/none/s1/ai-s3/ai-s3-cap-1730000000000-new.jpg"), new Uint8Array([1]), { contentType: "image/jpeg" }));
+    await assertFails(uploadBytes(ref(me.storage(), "submissions/none/s2/ai-s3/ai-s3-cap-1730000000000-new.jpg"), new Uint8Array([1]), { contentType: "image/jpeg" }));
+    await assertSucceeds(setDoc(doc(me.firestore(), "users/s1/submissions/new"), { unitId: "ai-s3", lessonId: "ai-s3-cap", stepId: "project", orgId: null, text: "x", fileUrl: null, fileName: null, status: "submitted", final: true, explain: "", aiUse: "none", name: "s1", createdAt: serverTimestamp() }));
   });
 });

@@ -94,26 +94,43 @@ export async function askAgent(o: SessionFor & { question: string; sessionId?: s
 /* ---------- The agent's course search ---------- */
 
 const verified = new Map<string, number>();
-/** The caller is the agent: a Google ID token for this address, from the agent's service account, still valid. */
-async function fromAgent(auth: string | undefined, cfg: TutorConfig): Promise<boolean> {
+const JWT = /^[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}$/;
+/** A JWT's claims, unverified: only to turn away junk before any read or call is spent on it. */
+function unverifiedClaims(t: string): { aud?: unknown; email?: unknown; exp?: unknown } | null {
+  try { return JSON.parse(Buffer.from(t.split(".")[1], "base64url").toString("utf8")) as Record<string, unknown>; } catch { return null; }
+}
+/** Google token checks per minute per instance: real traffic is one per agent token (they are cached), so more is a flood. */
+let checks = { at: 0, n: 0 };
+/**
+ * The caller is the agent: a Google ID token for this address, from the agent's service account, still valid. Cheap
+ * checks come first (L11): a token that isn't shaped like a JWT, isn't for this address or has expired costs nothing;
+ * only then are the settings read and Google asked.
+ */
+async function fromAgent(auth: string | undefined): Promise<boolean> {
   const t = auth?.startsWith("Bearer ") ? auth.slice(7) : "";
   if (!t) return false;
   if (process.env.FUNCTIONS_EMULATOR === "true" && t === "emulator") return true;
   const until = verified.get(t);
   if (until && until > Date.now()) return true;
+  if (!JWT.test(t) || t.length > 4096) return false;
+  const pre = unverifiedClaims(t);
+  if (!pre || pre.aud !== searchUrl() || !(Number(pre.exp) * 1000 > Date.now())) return false;
+  if (Date.now() - checks.at > 60_000) checks = { at: Date.now(), n: 0 };
+  if (++checks.n > 60) return false;
+  const cfg = await tutorConfig();
+  if (!cfg.agentAccount || pre.email !== cfg.agentAccount) return false;
   // Google checks the signature and expiry; we check it was made for this function, by the agent's account.
   const r = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(t)}`, { signal: AbortSignal.timeout(5000) }).catch(() => null);
   const i = (r?.ok ? await r.json() : {}) as { aud?: string; email?: string; email_verified?: string | boolean; exp?: string };
-  const ok = i.aud === searchUrl() && !!cfg.agentAccount && i.email === cfg.agentAccount && String(i.email_verified) === "true" && Number(i.exp) * 1000 > Date.now();
-  if (ok) verified.set(t, Number(i.exp) * 1000 - 60_000);
+  const ok = i.aud === searchUrl() && i.email === cfg.agentAccount && String(i.email_verified) === "true" && Number(i.exp) * 1000 > Date.now();
+  if (ok) { if (verified.size > 1000) verified.clear(); verified.set(t, Number(i.exp) * 1000 - 60_000); }
   return ok;
 }
 
 /** search_course for the agent: the same index and ranking as the direct tutor and the voice relay. */
 export const tutorSearch = onRequest({ memory: "512MiB", timeoutSeconds: 30, maxInstances: 10 }, async (req, res) => {
-  const cfg = await tutorConfig();
   if (req.method !== "POST") { res.status(405).end(); return; }
-  if (!(await fromAgent(req.headers.authorization, cfg))) { res.status(401).json({ error: "unauthenticated" }); return; }
+  if (!(await fromAgent(req.headers.authorization))) { res.status(401).json({ error: "unauthenticated" }); return; }
   const b = (req.body ?? {}) as { query?: unknown; unitId?: unknown; orgId?: unknown; lang?: unknown };
   const orgId = typeof b.orgId === "string" && b.orgId ? b.orgId.slice(0, 64) : null;
   const unit = await loadUnit(String(b.unitId ?? "").slice(0, 64), orgId);

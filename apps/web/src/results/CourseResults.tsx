@@ -1,3 +1,4 @@
+import { isEvidenceUrl } from "../admin/evidence";
 import { useMemo, useState } from "react";
 import { AppBar, EmptyState, Icon } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
@@ -94,7 +95,7 @@ function Course({ unitId, content }: { unitId: string; content: ContentLoader })
 
 function Work({ w, who, lesson }: { w: StudentWork; who: string; lesson: string }) {
   const { t, locale } = useI18n();
-  const files = w.files?.length ? w.files : w.fileUrl ? [{ url: w.fileUrl, name: w.fileName ?? t("p.attachment") }] : [];
+  const files = (w.files?.length ? w.files : w.fileUrl ? [{ url: w.fileUrl, name: w.fileName ?? t("p.attachment") }] : []).filter((f) => isEvidenceUrl(f.url));
   const when = w.createdAt ? new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(w.createdAt.seconds * 1000)) : "";
   return (
     <article className="submission">

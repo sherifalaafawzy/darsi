@@ -100,6 +100,59 @@ export function spendCredits(c: Credits | undefined, n: number, now = Date.now()
   const fromPlan = c.planUntil > now ? Math.min(c.plan, n) : 0;
   return { plan: (c.planUntil > now ? c.plan : 0) - fromPlan, planUntil: c.planUntil, packs: c.packs - (n - fromPlan) };
 }
+/**
+ * Credits held for a tutor call before it runs (M5 in the security review): at most `n`, or everything left when that is
+ * less, so parallel calls can't each pass a "some credits left" check and overspend. Settle returns what wasn't used.
+ * null: nothing left to hold.
+ */
+export interface Hold { fromPlan: number; fromPacks: number }
+export function holdCredits(c: Credits | undefined, n: number, now = Date.now()): { next: Credits; hold: Hold } | null {
+  const have = creditsLeft(c, now);
+  if (!c || have <= 0 || n <= 0) return null;
+  const take = Math.min(have, n);
+  const fromPlan = c.planUntil > now ? Math.min(c.plan, take) : 0;
+  return { next: { plan: (c.planUntil > now ? c.plan : 0) - fromPlan, planUntil: c.planUntil, packs: c.packs - (take - fromPlan) }, hold: { fromPlan, fromPacks: take - fromPlan } };
+}
+/**
+ * After the call: it cost `cost` credits. What was held beyond that goes back (to the packs first, then the plan, as
+ * it came); more than was held is taken from what's left, at most all of it. `short` says the call cost more than the
+ * balance allowed.
+ */
+export function settleCredits(c: Credits | undefined, hold: Hold, cost: number, now = Date.now()): { next: Credits; charged: number; short: boolean } {
+  const base: Credits = c ?? { plan: 0, planUntil: 0, packs: 0 };
+  const held = hold.fromPlan + hold.fromPacks;
+  const r2 = (x: number) => Math.round(x * 100) / 100;
+  if (cost <= held) {
+    let back = held - cost;
+    const toPacks = Math.min(back, hold.fromPacks); back -= toPacks;
+    const toPlan = base.planUntil > now ? back : 0;
+    return { next: { plan: r2(base.plan + toPlan), planUntil: base.planUntil, packs: r2(base.packs + toPacks) }, charged: r2(cost), short: false };
+  }
+  const extra = cost - held, have = creditsLeft(base, now), take = Math.min(extra, have);
+  const next = spendCredits(base, take, now) ?? base;
+  return { next: { plan: r2(next.plan), planUntil: next.planUntil, packs: r2(next.packs) }, charged: r2(held + take), short: take < extra };
+}
+
+/**
+ * What a full refund takes back (L7): a subscription loses the refunded period (ending now when nothing paid is left,
+ * with the period's credits), a pack its credits still unspent, a licence its period (removed when nothing is left).
+ */
+export function afterRefund(kind: "subscription" | "licence" | "credits", plan: Pick<Plan, "period" | "credits">,
+  o: { sub?: Subscription | null; credits?: Credits | null; licence?: Licence | null }, now = Date.now()): { sub?: Subscription; credits?: Credits; licence?: Licence | null } {
+  const period = periodDays(plan) * 864e5;
+  if (kind === "subscription") {
+    if (!o.sub) return {};
+    const end = Math.max(now, o.sub.currentPeriodEnd - period);
+    const over = end <= now;
+    const sub: Subscription = { ...o.sub, currentPeriodEnd: end, status: over ? "expired" : o.sub.status };
+    const credits = o.credits ? { ...o.credits, plan: over ? 0 : o.credits.plan, planUntil: Math.min(o.credits.planUntil, end) } : undefined;
+    return { sub, ...(credits ? { credits } : {}) };
+  }
+  if (kind === "credits") return o.credits ? { credits: { ...o.credits, packs: Math.max(0, o.credits.packs - plan.credits) } } : {};
+  if (!o.licence) return {};
+  const until = Math.max(now, o.licence.until - period);
+  return { licence: until <= now ? null : { ...o.licence, until } };
+}
 /** Credits for a call that cost Darsi `usd` at the provider, rounded up so a call never costs less than it should. */
 // The tiny bit taken off first is floating-point error (0.0051 / 0.002 = 2.5500000000000003), not a discount.
 export const creditsForCost = (usd: number, eco: Economics) => Math.max(0, Math.ceil((usd / eco.usdPerCredit) * 100 - 1e-9) / 100);

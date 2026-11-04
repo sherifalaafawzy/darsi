@@ -154,7 +154,9 @@ export function PersonDetail({ back = "/admin" }: { back?: string }) {
                 </select></label>}
             </div>
             <div className="row-gap">
-              <Button size="sm" variant="secondary" icon="sync" onClick={() => act(async () => { const r = await api.resetMemberPassword({ orgId: person.orgId!, uid }); setMsg(t("p.newPw", { login: displayLogin(r.login), pw: r.password })); })}>{t("p.resetPw")}</Button>
+              {/* Only logins the organization made (usernames); people with their own email or Google reset it themselves (M4). */}
+              {person.email?.endsWith("@users.darsi.app") ? <Button size="sm" variant="secondary" icon="sync" onClick={() => act(async () => { const r = await api.resetMemberPassword({ orgId: person.orgId!, uid }); setMsg(t("p.newPw", { login: displayLogin(r.login), pw: r.password })); })}>{t("p.resetPw")}</Button>
+                : <p className="muted small">{t("acct.ownLogin")}</p>}
               <Button size="sm" variant="ghost" icon="close" onClick={() => confirm(t("p.removeConfirm")) && act(async () => { await api.removeMember({ orgId: person.orgId!, uid }); nav(back); })}>{t("p.remove")}</Button>
             </div>
             {msg && <p className="notice" role="status" dir="auto">{msg}</p>}

@@ -5,6 +5,7 @@
  */
 import { collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, limit, query, serverTimestamp, setDoc, where } from "firebase/firestore";
 import { db } from "../firebase";
+import { call } from "../fb";
 
 export interface Grant { uid: string; units: string[]; name?: string; email?: string; grantedBy?: string }
 export interface ResultRow { uid: string; lessonId: string; accuracy: number; completedAt?: string }
@@ -38,10 +39,15 @@ export async function courseResults(unitId: string): Promise<{ results: ResultRo
 export async function allGrants(): Promise<Grant[]> {
   return (await getDocs(collection(db, "courseAccess"))).docs.map((d) => ({ uid: d.id, units: [], ...d.data() }) as Grant);
 }
-export async function findUser(email: string): Promise<{ uid: string; name: string; email: string; teach?: string } | null> {
-  const s = await getDocs(query(collection(db, "users"), where("email", "==", email.trim().toLowerCase()), limit(1)));
-  const d = s.docs[0];
-  return d ? ({ uid: d.id, ...d.data() } as { uid: string; name: string; email: string; teach?: string }) : null;
+/**
+ * The account with this email, as Auth knows it (findAccount on the server; H1 in the security review), with whether
+ * its email is verified. Refuses when more than one profile claims the email: one of them is not who they say.
+ */
+export class ClaimedEmail extends Error { constructor() { super("claimed"); } }
+export async function findUser(email: string): Promise<{ uid: string; name: string; email: string; teach?: string; emailVerified: boolean } | null> {
+  const { account, profiles } = await call<{ login: string }, { account: { uid: string; name: string; email: string; teach: string | null; emailVerified: boolean } | null; profiles: number }>("findAccount")({ login: email.trim().toLowerCase() });
+  if (profiles > 1) throw new ClaimedEmail();
+  return account ? { uid: account.uid, name: account.name, email: account.email, emailVerified: account.emailVerified, ...(account.teach ? { teach: account.teach } : {}) } : null;
 }
 export const saveGrant = (g: Grant, by: string) =>
   setDoc(doc(db, "courseAccess", g.uid), { units: g.units, name: g.name ?? "", email: g.email ?? "", grantedBy: by, updatedAt: serverTimestamp() });

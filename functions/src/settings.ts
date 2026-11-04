@@ -5,7 +5,7 @@
  */
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { audit, caller, db } from "./admin.js";
+import { audit, db, freshCaller } from "./admin.js";
 import { savePublicJson } from "./storage.js";
 import { trackConflicts } from "./trackRules.js";
 import { BUILTIN_TRACKS, mergeTracks } from "./shared/tracks.js";
@@ -33,6 +33,11 @@ export async function superOn(): Promise<boolean> {
   return (await db.doc(SETTINGS).get()).get("superOn") !== false;
 }
 
+/** The languages platform admins added and published (English and Arabic are always there). */
+export async function loadLanguages(): Promise<LanguageDef[]> {
+  return ((await db.doc(SETTINGS).get()).get("languages") as LanguageDef[] | undefined) ?? [];
+}
+
 /** The tracks in use now: the saved list, with the built-in tracks always present. */
 export async function loadTracks(): Promise<TrackDef[]> {
   const s = await db.doc(SETTINGS).get();
@@ -41,7 +46,7 @@ export async function loadTracks(): Promise<TrackDef[]> {
 
 /** Platform admins save the whole tracks list. `rev` is the version they edited; a newer one means someone else saved. */
 export const saveSettings = onCall(async (req) => {
-  const c = caller(req);
+  const c = await freshCaller(req);
   if (c.role !== "superadmin") throw new HttpsError("permission-denied", "Only platform admins can change tracks.");
   const issues = validateTracks(req.data?.tracks, BUILTIN_TRACKS.map((t) => t.id));
   if (issues.length) throw new HttpsError("invalid-argument", "The tracks have errors.", { issues: issues.slice(0, 20) });

@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { checkoutAmount, formEncode, kindOf, paymobHmac, paymobOutcome, providerFor, stripeSession, verifyPaymob, verifyStripe } from "../src/paymentsCore";
+import { checkoutAmount, formEncode, fullyRefunded, kindOf, paymobHmac, paymobOutcome, providerFor, stripeSession, verifyPaymob, verifyStripe } from "../src/paymentsCore";
 
 const monthly = { id: "super_monthly", name: { en: "Super monthly", ar: "سوبر شهري" }, kind: "individual" as const, period: "month" as const, prices: { EGP: 149, USD: 4.99 }, credits: 300, active: true };
 const seat = { ...monthly, id: "super_seat", kind: "seat" as const, period: "year" as const, prices: { USD: 20, EGP: 600 } };
@@ -43,14 +43,34 @@ describe("Paymob", () => {
     expect(verifyPaymob(txn, h, "")).toBe(false);
   });
   it("reads a payment, a refund, a void and what to ignore", () => {
-    expect(paymobOutcome(txn)).toEqual({ type: "paid", ref: "192036465", reference: "chk_abc123", cents: 14900, currency: "EGP" });
+    expect(paymobOutcome(txn)).toEqual({ type: "paid", ref: "192036465", order: "217503754", reference: "chk_abc123", cents: 14900, currency: "EGP" });
     expect(paymobOutcome({ ...txn, pending: true })).toEqual({ type: "ignore", why: "pending" });
     expect(paymobOutcome({ ...txn, success: false })).toEqual({ type: "ignore", why: "not successful" });
     expect(paymobOutcome({ ...txn, is_refunded: true, refunded_amount_cents: 14900 })).toEqual({ type: "refund", ref: "192036465" });
     expect(paymobOutcome({ ...txn, is_refunded: true, refunded_amount_cents: 5000 })).toEqual({ type: "ignore", why: "partial refund" });
     expect(paymobOutcome({ ...txn, is_voided: true })).toEqual({ type: "refund", ref: "192036465" });
-    expect(paymobOutcome({ ...txn, id: 99, is_refund: true, parent_transaction: 192036465 })).toEqual({ type: "refund", ref: "192036465" });
-    expect(paymobOutcome({ ...txn, order: { id: 1 } }).type).toBe("ignore");
+    expect(paymobOutcome({ ...txn, order: {} }).type).toBe("ignore");
+  });
+  it("matches a payment by the signed order id, never by the unsigned reference alone (M3)", () => {
+    // merchant_order_id isn't signed: changing it keeps the HMAC valid, so it can't be what picks the checkout.
+    const h = paymobHmac(txn, "s3cret");
+    const moved = { ...txn, order: { ...txn.order, merchant_order_id: "someone-elses-checkout" } };
+    expect(verifyPaymob(moved, h, "s3cret")).toBe(true);
+    expect(paymobOutcome(moved)).toMatchObject({ type: "paid", order: "217503754" });
+    // The order id is signed: changing it breaks the HMAC.
+    expect(verifyPaymob({ ...txn, order: { ...txn.order, id: 1 } }, h, "s3cret")).toBe(false);
+  });
+  it("believes a refund that names its original only after asking Paymob (M3)", () => {
+    // is_refund and parent_transaction aren't signed: a signed transaction with them added stays "valid".
+    const forged = { ...txn, is_refund: true, parent_transaction: 192036400 };
+    expect(verifyPaymob(forged, paymobHmac(txn, "s3cret"), "s3cret")).toBe(true);
+    expect(paymobOutcome(forged)).toEqual({ type: "checkParent", parent: "192036400" });
+    expect(paymobOutcome({ ...txn, is_refund: true })).toEqual({ type: "ignore", why: "refund without its original" });
+    expect(fullyRefunded({ id: 1, amount_cents: 14900, is_refunded: true, refunded_amount_cents: 14900 })).toBe(true);
+    expect(fullyRefunded({ id: 1, amount_cents: 14900, is_refunded: true, refunded_amount_cents: 100 })).toBe(false);
+    expect(fullyRefunded({ id: 1, amount_cents: 14900, is_voided: true })).toBe(true);
+    expect(fullyRefunded({ id: 1, amount_cents: 14900, is_refunded: false })).toBe(false);
+    expect(fullyRefunded(null)).toBe(false);
   });
 });
 

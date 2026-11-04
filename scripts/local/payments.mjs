@@ -30,7 +30,7 @@ function parseForm(text) {
 
 export async function startPayments({ secrets, functionsUrl, paymobHmac }) {
   const s = readEnv(secrets);
-  const paymob = new Map(), sessions = new Map(), invoices = new Map();
+  const paymob = new Map(), sessions = new Map(), invoices = new Map(), transactions = new Map();
   const post = (url, body, headers) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body }).then(async (r) => `${r.status} ${await r.text()}`);
 
   const server = http.createServer((req, res) => {
@@ -46,7 +46,8 @@ export async function startPayments({ secrets, functionsUrl, paymobHmac }) {
         if (req.method === "POST" && url.pathname === "/v1/intention/") {
           const b = JSON.parse(raw), secret = id("csec");
           paymob.set(secret, { ...b, id: id("int"), order: Math.floor(Math.random() * 1e9) });
-          return json(201, { id: paymob.get(secret).id, client_secret: secret });
+          // Like Paymob's: the intention's order id, which its callbacks sign (the functions match payments through it).
+          return json(201, { id: paymob.get(secret).id, client_secret: secret, intention_order_id: paymob.get(secret).order });
         }
         if (url.pathname === "/unifiedcheckout/") {
           const p = paymob.get(url.searchParams.get("clientSecret") ?? "");
@@ -61,10 +62,14 @@ export async function startPayments({ secrets, functionsUrl, paymobHmac }) {
           const obj = { id: Math.floor(Math.random() * 1e9), amount_cents: p.amount, created_at: new Date().toISOString(), currency: "EGP", error_occured: false, has_parent_transaction: false,
             integration_id: p.payment_methods?.[0] ?? 0, is_3d_secure: true, is_auth: false, is_capture: false, is_refunded: false, is_standalone_payment: true, is_voided: false,
             order: { id: p.order, merchant_order_id: p.special_reference }, owner: 1, pending: false, source_data: { pan: "2346", sub_type: "MasterCard", type: "card" }, success: true };
+          transactions.set(String(obj.id), obj);
           console.log(`  payments: Paymob → ${await post(`${functionsUrl}/paymobWebhook?hmac=${paymobHmac(obj, s.PAYMOB_HMAC_SECRET)}`, JSON.stringify({ type: "TRANSACTION", obj }))}`);
           paymob.delete(f.get("s"));
           return go(p.redirection_url);
         }
+        // Paymob's transaction inquiry: the webhook asks it before it believes a refund that names its original.
+        const tm = req.method === "GET" && url.pathname.match(/^\/api\/acceptance\/transactions\/(\d+)$/);
+        if (tm) { const t = transactions.get(tm[1]); return t ? json(200, t) : json(404, { detail: "Not found." }); }
         // Stripe: checkout sessions, their page, the signed event, and reading sessions and invoices back.
         if (req.method === "POST" && url.pathname === "/v1/checkout/sessions") {
           const b = parseForm(raw), li = b.line_items?.["0"] ?? {}, total = Number(li.price_data?.unit_amount ?? 0) * Number(li.quantity ?? 1);

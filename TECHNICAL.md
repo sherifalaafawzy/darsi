@@ -259,14 +259,16 @@ Firebase's original default bucket, `darsi-f0685.firebasestorage.app`, was creat
 ### Data model (Firestore)
 
 ```
-users/{uid}                 name, email, username, role, orgId, group, teacherId, lang, teach, tracks,
-│                           weeklyLessons, levels, mustChangePassword, active, lastActive, createdAt,
+users/{uid}                 name, email (= the account's Auth email, set once at sign-up), username, role, orgId, group,
+│                           teacherId, lang, teach, tracks, weeklyLessons, levels, mustChangePassword, passwordSetAt (ms;
+│                           when an admin set the password), active, lastActive, createdAt,
 │                           plan, planUntil, planSource (subscription | org), superSeat   ← Cloud Functions only (Darsi Super)
 │                           summary {lessonsDone, xp, avgAccuracy, lastActive, competencies, compAcc, units, tracks, seconds,
 │                                    weeks {"2026-W43": n, … the last 12 ISO weeks, UTC}, lastLessonAt}   ← written by onProgressWrite
 │                           notify {on, hourLocal 0–23, hourUtc 0–23, tz (IANA), cats {reminders, reviews, staff, news},
 │                                   weeklyGoal 1–14, lastAutoAt?, comeback7At?, comeback21At?}         ← notification functions only
 ├─ progress/{lessonId}      lessonId, unitId, track, accuracy (0–1), xp (int 0–100), seconds, completedAt (ISO), competencies[]
+├─ private/summaryRows      rows {lessonId: the row the summary counts}, at   ← onProgressWrite only; no client access
 ├─ notes/{lessonId}         text, updatedAt (ms)
 ├─ submissions/{id}         lessonId, unitId, stepId, orgId, text, fileUrl, fileName,
 │                           status (submitted | approved | revise), feedback, score, reviewedBy, reviewedAt, createdAt
@@ -277,9 +279,10 @@ orgs/{orgId}                name, type, country, city, size, contact, reason, st
                             createdBy, memberCount, reviewNote, createdAt, reviewedAt, demo? (scripts/demo-org.mjs),
                             brand {logo (Storage path under orgs/{orgId}/brand/) | null, v (+1 per change)}   ← its admins
                             licence {plan, seats, until (ms)}   ← setOrgLicence and payments (Darsi Super)
-└─ private/invites          teacher, student (the codes)     ← Cloud Functions write; its admins and platform admins read
+├─ private/invites          teacher, student (the codes)     ← Cloud Functions write; its admins and platform admins read
+└─ private/seats            at   ← setSeat and fillSeats hold it in their transaction, so seat changes run one at a time
 inviteCodes/{code}          orgId, role                      ← Cloud Functions only
-joinAttempts/{uid}          n, since (ms)                    ← joinOrg: failed tries, 10 an hour
+joinAttempts/{uid}          n, since (ms)                    ← joinOrg: tries (counted before the code is checked), 10 an hour
 subscriptions/{uid}         plan, status (active | canceled | expired | past_due), source (paymob | stripe | grant),
                             currentPeriodEnd (ms), updatedAt   ← Cloud Functions only; the owner and platform admins read
 credits/{uid}               plan (this period's tutor credits), planUntil (ms), packs (never expire)   ← Cloud Functions only
@@ -288,8 +291,11 @@ payments/{provider}_{ref}   provider, ref, kind (subscription | licence | credit
 config/plans                plans [Plan], economics {usdPerCredit, egpPerUsd}, rev, updatedAt   ← savePlans (Darsi Super)
 config/settings.superOn     false turns Darsi Super off for everyone   ← setSuperOn
 checkouts/{id}              uid, orgId, kind, plan (copy), currency, amount, cents, seats, provider, clientId, providerId,
+                            providerOrder (Paymob's order id, which its callbacks sign),
                             status (open | paid | failed), payments {ref: true}, createdAt, paidAt   ← startCheckout and the webhooks
 stripeSubs/{subscriptionId} checkout, at   ← stripeWebhook (renewals and cancelling find their checkout)
+paymobOrders/{orderId}      checkout   ← startCheckout; paymobWebhook matches a payment to its checkout through it
+tutorLeases/{uid}           calls {id: {kind text | voice, until}}, warmAt   ← the tutor's calls under way (startCall/endCall)
 config/tutor                liveModel, textModel, voice, live {prices}, text {prices}, maxMinutes, on   ← platform admins (optional)
 tutorUsage/{uid}/days/{day} usd, credits, text, voice (counts)   ← the tutor's charge; nobody reads it from a phone
 units/{unitId}              owner ("public" | orgId), title {en, ar}, track, level, lessonCount, lessons [{id, title}],
@@ -323,18 +329,19 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 **Firestore** (`firebase/firestore.rules`):
 - **`users/{uid}`:**
   - *Read:* the person, a platform admin, their organization's admins, and their assigned teacher.
-  - *Self-registration:* only as an independent `learner`, with a fixed list of fields.
-  - *Self-edits:* never role, organization, teacher, summary or `notify` (the notification settings go through the callables).
-  - *Org admins:* may change only group, teacher, active flag and name.
-- **`progress`:** written only by its owner. Only the listed keys are accepted, `accuracy` must be 0–1, and `xp` must be an integer 0–100. Nobody can delete it.
-- **`submissions`:** created by the owner with status `submitted`. Reviewed by the assigned teacher, the org admin or a platform admin, who can change only status, score, feedback and reviewer fields.
-- **`notes`:** the owner only.
+  - *Self-registration:* only as an independent `learner`, with a fixed list of fields, each typed and bounded, and `email` equal to the token's email in lower case (nobody can claim another person's address).
+  - *Self-edits:* never email, role, organization, teacher, summary, `notify` or `mustChangePassword` (only `passwordChanged` clears it). The fields a write changes are type- and size-checked (`profileOk`).
+  - *Org admins:* may change only group, teacher, active flag and name, typed (`memberOk`).
+- **`progress`:** written only by its owner, under its own `lessonId` (`[a-z0-9][a-z0-9-]{1,99}`). Only the listed keys, each typed and bounded: `accuracy` 0–1, `xp` an integer 0–100, `seconds` an integer up to 86,400,000, `completedAt` a string, `unitId` ≤ 64, `track` ≤ 24, `competencies` ≤ 30. Nobody can delete it. The summary counts only published lessons, with the unit's own course, track and competencies (`onProgressWrite`).
+- **`submissions`:** created by the owner with status `submitted`, `createdAt == request.time`, the token's own `orgId`, and only the fields `ProjectView` writes, typed and bounded. `fileUrl` and each `files[].url` must be a download link of this project's Storage (or the local emulator) under `submissions/<org>/<their uid>/`. No reviewer field can be set at creation. Reviewed by the assigned teacher, the org admin or a platform admin, who can change only status (submitted, approved or revise), score, feedback (≤ 5,000) and reviewer fields, as themselves.
+- **`notes`:** the owner only; `{text ≤ 50,000, updatedAt}`.
+- **`users/{uid}/private/…`, `paymobOrders`, `tutorLeases`:** no client access (functions only).
 - **`devices`** (push tokens) and **`pushTokens`** (their owners): no client access at all, not even the owner's.
 - **`orgs`:** readable by members, the requester and platform admins. Created only through `requestOrg`.
 - **`broadcasts`:** readable by platform admins; written only by `sendBroadcast`.
 - **`inviteCodes`:** no client access at all.
 - **`units` and `unitDrafts`** (course editor): `canEdit(owner)` is a platform admin, or that organization's admin for an org `owner`.
-  - *Create:* `idFits`: org units need a generated id (`u` + 8 characters, `[a-z0-9]`), so they can never shadow a built-in or public unit; `rev` starts at 1 and `published` must be null.
+  - *Create:* `idFits`: org units need a generated id (`u` + 8 characters, `[a-z0-9]`), so they can never shadow a built-in or public unit; `rev` starts at 1 and `published` must be null. A draft is created only beside a `units` doc of the same owner (the editor writes both in one batch), and a unit can't be created over another owner's draft. `publishDraft` also checks the draft's owner.
   - *Update:* `nextRev`: every save sets `rev` to exactly the stored `rev + 1`, so a second editor with a stale copy is refused instead of silently overwriting; `owner` and `published` can't change.
   - *Delete:* only while unpublished; `deleteUnit` handles published units.
   - Students and teachers never read drafts; learners get published units from Storage.
@@ -346,7 +353,7 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 
 **Storage** (`firebase/storage.rules` on `darsi-f0685`):
 - `media/` and `kits/` are publicly readable and never writable from the client.
-- `submissions/{orgId|none}/{uid}/{file}` is created only by its owner: under 10 MB, images, PDF, mp4 or audio. It can be read by the owner, a platform admin, or that organization's admins and teachers.
+- `submissions/{orgId|none}/{uid}/{unitId}/{file}` (and the older `submissions/{orgId|none}/{uid}/{file}`) is created only by its owner, in their own organization's folder (`none` without one): under 10 MB; JPEG, PNG, WebP, GIF or HEIC photos, PDF, MP4 or common audio (never SVG or HTML); named as `ProjectView` names files (`{lessonId}-{ms}-{name}`). It can be read by the owner, a platform admin, that organization's admins, the student's own teacher, and university teachers granted the course. (Download links carry their own token, so these read rules cover SDK reads only.)
 - `content/**` (public authored units) is readable by anyone, guests included. `orgs/{orgId}/**` is readable only by that organization's members and platform admins.
 - Media uploads go to `content/media/{unitId}/` (platform admins) and `orgs/{orgId}/media/{unitId}/` (that org's admins, platform admins): MP4 ≤ 60 MB, VTT ≤ 512 KB, PDF or PPTX ≤ 20 MB. No client ever writes the unit JSON or `catalog.json`; the functions do.
 - The org's logo goes to `orgs/{orgId}/brand/logo-<id>.(png|webp|jpg)` (its admins, platform admins): PNG, WebP or JPEG, ≤ 100 KB. Its members read it like the rest of `orgs/{orgId}/`.
@@ -357,14 +364,15 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 |---|---|---|
 | `requestOrg` | callable | A signed-in person asks to register an organization (one pending request at a time). Platform admins get a staff alert; a failed alert never fails the request |
 | `reviewOrg` | callable | Platform admin approves (creates invite codes; the requester becomes its admin) or rejects with a note |
-| `joinOrg` | callable | Join an active organization with a teacher or student invite code (`normalizeCode`: case, spaces and dashes don't matter). 10 failed tries per account per hour, then `resource-exhausted` |
+| `joinOrg` | callable | Join an active organization with a teacher or student invite code (`normalizeCode`: case, spaces and dashes don't matter). 10 tries per account per hour, counted in a transaction before the code is checked, then `resource-exhausted` |
 | `regenerateInviteCode` | callable | Org admin replaces a code (12 characters, `XXXX-XXXX-XXXX`); the old one stops working. Moves an org's codes from before 2026-11 to `private/invites` |
-| `createMembers` | callable | Bulk accounts (up to 500 per call): random passwords with no look-alike characters, usernames for people without email, teacher assignment |
-| `setMemberRole` | callable | Org admin changes a member's role (never their own admin role) |
-| `resetMemberPassword` | callable | New random password; the person must choose their own at next sign-in |
-| `removeMember` | callable | Back to an independent learner; their learning record stays with them |
-| `passwordChanged` | callable | Clears the first-sign-in flag after the person picks a password |
-| `onProgressWrite` | Firestore trigger | Recomputes `users/{uid}.summary` with `summarize` (`summary.ts`): lessons, XP, accuracy, time, per track, per competency (evidence and accuracy), units, last activity, lessons per ISO week for the last 12 weeks, `lastLessonAt` |
+| `createMembers` | callable | Bulk accounts (up to 500 per call): random passwords with no look-alike characters, usernames for people without email, teacher assignment (the teacher's email or login is resolved through Auth, and must be a teacher or admin of the org) |
+| `setMemberRole` | callable | Org admin changes a member's role (never their own) |
+| `resetMemberPassword` | callable | New random password, only for logins the org made (`@users.darsi.app`, password only); anyone with their own email or Google resets it themselves. The person must choose their own at next sign-in |
+| `removeMember` | callable | Back to an independent learner; their learning record stays with them, and their sessions end |
+| `passwordChanged` | callable | Clears the first-sign-in flag, only once Auth's "tokens valid after" time is later than when the admin set the password (a real change) |
+| `findAccount` | callable | Platform admins (anyone) and org admins (their members): an account by email or username, resolved through Auth, with `emailVerified` and how many profiles claim that email |
+| `onProgressWrite` | Firestore trigger | Keeps `users/{uid}.summary` up to date (`progress.ts`): a fixed few reads per write. Only published lessons the person can see count, with the unit's own course, track and competencies; the counted rows are kept in `users/{uid}/private/summaryRows`, and the summary is `summarize` (`summary.ts`) over them: lessons, XP, accuracy, time, per track, per competency (evidence and accuracy), units, last activity, lessons per ISO week for the last 12 weeks, `lastLessonAt` |
 | `registerDevice` | callable | Stores or refreshes this device's push token, sets `notify` (on, reminder hour, time zone, categories, weekly goal) and subscribes the token to its topics |
 | `unregisterDevice` | callable | Unsubscribes and deletes the device; with no devices left, `notify.on` becomes false |
 | `updateNotifyPrefs` | callable | Changes the reminder hour, time zone, categories or weekly goal, and re-applies topics on every device (the Announcements switch) |
@@ -379,22 +387,22 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 | `saveSettings` | callable | Platform admin only: saves the tracks list (see [Tracks and levels](#tracks-and-levels)) to `config/settings` and publishes `content/settings.json` |
 | `publishLanguage` | callable | Platform admin only: checks a saved language draft (`validateLanguage`), writes `content/i18n/{code}/v{n+1}.json`, lists the language in `config/settings` and `content/settings.json`, keeps the previous pack and deletes older ones |
 | `unpublishLanguage` | callable | Platform admin only: takes a language off the pickers and deletes its packs; people who chose it see English. The draft stays |
-| `collect` | HTTPS (`darsiai.org/api/collect`, a Hosting rewrite) | Phones' event batches: checks them, adds them to `analytics/{day}`, counts active phones in `analyticsDevices`, and forwards them to Google Analytics when `config/analytics` is set (see [Analytics](#analytics)). At most 3 instances, 30 requests a minute per address |
+| `collect` | HTTPS (`darsiai.org/api/collect`, a Hosting rewrite) | Phones' event batches: checks them, adds them to `analytics/{day}`, counts active phones in `analyticsDevices`, and forwards them to Google Analytics when `config/analytics` is set (see [Analytics](#analytics)). Counts only under ids Darsi knows (published courses, Labs apps, active organizations, tracks, languages, fixed screens; anything else is `other`), drops events more than 10 minutes ahead. At most 3 instances; per instance and minute 12 batches per address and device, 300 per address, 3,000 in all |
 | `createOrg`, `updateOrg`, `deleteOrg` | callable | Platform admins only: a new active organization (with private invite codes and optionally its admin), its details or status, or deleting it after its name is typed: members become learners, codes, its units and its files go |
 | `setUserRole` | callable | Platform admins only: any account's role and organization (students, teachers and org admins need an active organization; learners and platform admins have none). Moving orgs clears class and teacher and moves the member counts. Nobody changes their own role |
 | `savePlans` | callable | Platform admins only: the Darsi Super plans and economics, every price keeping at least 60% margin; publishes `content/plans.json` without the costs (see [Darsi Super](#darsi-super)) |
 | `grantSuper`, `grantCredits` | callable | Platform admins only: complimentary Super for some days (with the plan's credits), or extra credits into packs |
 | `setOrgLicence` | callable | Platform admins only: an organization's licence (plan, seats, days) |
-| `setSeat`, `fillSeats` | callable | The org's admins and platform admins: give or take one seat, or fill the free seats (teachers, then students) |
+| `setSeat`, `fillSeats` | callable | The org's admins and platform admins: give or take one seat, or fill the free seats (teachers, then students), in a transaction that holds `orgs/{orgId}/private/seats` |
 | `checkRevenueEvent` | callable | Platform admins only: sends a sample `purchase` to Google Analytics' validation server |
 | `startCheckout` | callable | Signed-in people: a checkout for a plan in EGP (Paymob) or USD (Stripe); returns the provider's page (see [Darsi Super](#darsi-super)) |
-| `paymobWebhook`, `stripeWebhook` | HTTPS | The providers' signed webhooks: payments, renewals, refunds and cancellations, each matched to its checkout |
-| `tutorAsk`, `tutorStatus` | callable | Darsi Super: a typed question to the tutor about a course (charged in credits), and the balance with the credits a spoken minute costs. The voice tutor is the relay on Cloud Run, not a function |
+| `paymobWebhook`, `stripeWebhook` | HTTPS | The providers' signed webhooks: payments, renewals, refunds and cancellations, each matched to its checkout. Paymob payments are matched through the signed order id (`paymobOrders`); a refund is believed from the transaction's own signed `is_refunded`/`is_voided`, or, for a refund that names its original, after asking Paymob for that original. A full refund takes back what it bought (the period, or a pack's unspent credits) |
+| `tutorAsk`, `tutorStatus` | callable | Darsi Super: a typed question to the tutor about a course (charged in credits), and the balance with the credits a spoken minute costs. Credits are held before the model is called and settled after; two typed calls at once per person (`busy` past that); `warm` needs credits and runs once per 20 s per person. The voice tutor is the relay on Cloud Run, not a function (one call at a time per person, a minute's credits held, Origin required, revoked tokens refused) |
 | `onSubscriptionWrite`, `onOrgLicence` | Firestore triggers | Rewrite the claims (`plan`, `planUntil`) when a subscription or an org licence changes |
 | `statsJob` | scheduled, daily 02:30 UTC | Accounts and organizations from every user's summary into `stats/overview` |
 | `refreshStats` | callable | Platform admin only: the same, now (the Refresh button on /super/analytics) |
 
-Every role or organization change goes through these functions, which set the claims and write an `audit` entry. Clients can never grant themselves access. `functions/src/admin.ts` initializes the Admin SDK once and sets the region and instance cap for every function.
+Every role or organization change goes through these functions, which set the claims and write an `audit` entry. Clients can never grant themselves access. A change that takes power away (a lower role, leaving or changing organization) also revokes the account's refresh tokens (`writeClaims`), and every privileged callable checks the claims Auth holds now (`freshCaller`), not the ones in the caller's token. `functions/src/admin.ts` initializes the Admin SDK once and sets the region and instance cap for every function.
 
 ## Organization branding
 
@@ -463,7 +471,8 @@ Two sources, both read with one-shot reads on `/super/analytics`:
 - Cost: about 2 KB of startup JavaScript (gzipped). A batch of 30 events is about 1 KB gzipped, usually one request per session.
 
 **On the server** (`functions/src/analytics.ts`; the pure parts, tested, in `analyticsCore.ts`):
-- `parseBatch` keeps only known events and parameters (ids, short words, numbers clamped to a range) from the last 30 days.
+- `parseBatch` keeps only known events and parameters (ids, short words, numbers clamped to a range) from the last 30 days, and never more than 10 minutes ahead.
+- `sanitize` then keeps a phone's ids only where Darsi knows them: published courses (public, and the org's own for its members), Labs apps (`functions/src/shared/labs.ts`, generated from the app's lab folders by `copy-shared.mjs`), active organizations, tracks, published languages and a fixed list of screens. Anything else counts as `other`, so the day's document can't be filled with made-up keys.
 - `dailyCounts` adds them to `analytics/{yyyy-mm-dd}` with increments, so batches arriving together add up.
 - A phone's first batch of the day adds to `dev` (and `devNew` the first time ever). `analyticsDevices/{id}.last` gives active phones for 1, 7 and 30 days through count queries.
 - Organization figures from phones are what the phone says, so the dashboard takes members, activity and scores from `stats/overview` and uses the phones' counts only for the org's lessons-per-day chart.
@@ -775,7 +784,7 @@ Every unit belongs to one **track** (AI, IoT, Cyber security, or one a platform 
 - **Design system:** a track's colours come from `dr-tr dr-tr-<tone>`, which sets `--tr`, `--tr-soft` and `--tr-ink`. Chips, progress bars, the unit path, certificates, placement results, page previews and download rows read those variables. Components still take a `track` id and resolve it through the provider (`useTrackStyles`, `trackClass`).
 - **Where tracks show up:**
   - **Onboarding** offers the visible tracks, then the placement check (`PlacementQuiz` in `screens/Onboarding.tsx`) for the learner's tracks and audience only. Per track it asks two questions per level (picked at random from three); both right passes a level, and a wrong answer or "I don't know yet" misses it (`placementNext`). It starts at the learner's school stage (where a teacher teaches, or where a student studies). From there a pass moves up until a level is missed (the learner starts there) or the top is passed, and a miss at the start moves down until a level is passed (the learner starts one above it) or Beginner is missed. A track without questions starts where the learner starts.
-  - **Stages:** levels are school stages: Beginner is primary school (ages 9–12), Elementary lower secondary (12–15), Intermediate upper secondary (15–18) and Advanced university. Onboarding asks students "Where do you study?" (school accounts too), saved as `state.stage`. It asks every teacher, including a school's teacher accounts, "Where do you teach?" (primary, lower secondary, upper secondary, or university). That is saved as `state.teach` (the same four values; the old `secondary` answer is read as lower secondary) and changeable in Me ("Where I teach"). `useMine()` gives `startLevel`, `levelOf` (the level, else the start) and `levelName`, which adds the stage for students on built-in tracks ("Intermediate · Upper secondary"). Home starts a teacher at that level and folds earlier courses under "Earlier levels"; courses tagged `teach: "university"` stay visible only to university teachers, pinned first. Tracks are not hidden: every track has a teacher course at each level. Guests keep `teach` in local storage. Signed-in teachers also store it on `users/{uid}.teach`, which the Firestore rules already allow with no value check, so this field needs no rules deploy. The copy runs from `App.tsx` through `updateProfile`, which loads Firestore only when there is a user.
+  - **Stages:** levels are school stages: Beginner is primary school (ages 9–12), Elementary lower secondary (12–15), Intermediate upper secondary (15–18) and Advanced university. Onboarding asks students "Where do you study?" (school accounts too), saved as `state.stage`. It asks every teacher, including a school's teacher accounts, "Where do you teach?" (primary, lower secondary, upper secondary, or university). That is saved as `state.teach` (the same four values; the old `secondary` answer is read as lower secondary) and changeable in Me ("Where I teach"). `useMine()` gives `startLevel`, `levelOf` (the level, else the start) and `levelName`, which adds the stage for students on built-in tracks ("Intermediate · Upper secondary"). Home starts a teacher at that level and folds earlier courses under "Earlier levels"; courses tagged `teach: "university"` stay visible only to university teachers, pinned first. At the top level, a university teacher's "Your level" is that university course, and the school course at that level (school leadership) folds under "Earlier levels". Tracks are not hidden: every track has a teacher course at each level. Guests keep `teach` in local storage. Signed-in teachers also store it on `users/{uid}.teach`, which the Firestore rules already allow with no value check, so this field needs no rules deploy. The copy runs from `App.tsx` through `updateProfile`, which loads Firestore only when there is a user.
   - `tests/placement.test.ts` checks `placement.json`: every track it covers has three questions per audience and level, in English and Arabic, with no "·".
   - **Levels have names:** the built-in tracks' `levelNames` are Beginner, Elementary, Intermediate and Advanced (`LEVEL_NAMES` in `content/tracks.ts`); `mergeTracks` keeps them for a built-in track saved without names.
   - **My tracks** shows each track's level with "Check my level" (the same check for that track only), and offers it when a track is added.
@@ -853,6 +862,23 @@ English and Arabic are built in (`BUILTIN_LANGUAGES` in `content/languages.ts`).
   - nothing Chrome 87 WebViews lack: nesting, `:has()`, container queries, `@layer`;
   - no bare element selectors.
 - **Breakpoints:** 600 px and 900 px only. Mobile-first. Tap targets are at least 48 px.
+
+## Security
+
+A static review on 2026-11-04 (3 High, 8 Medium, 12 Low) led to these changes. The report is in the session notes (`security-fixes.md`).
+
+- **Who is who (H1):** a profile's `email` is the account's Auth email, set once. Admins find people through `findAccount` (Auth), see whether the email is verified, and are refused when several profiles claim one email. Sign-up by email sends a verification email.
+- **Lesson results (H2, M1):** every progress field is typed and bounded; the summary trigger costs a fixed few reads per write and counts only published lessons, with the unit's own competencies.
+- **Analytics (H3):** `collect` keeps counts only under known ids, drops events more than 10 minutes ahead and limits per address, device and instance. The analytics writes in the tutor's charge and in `recordPayment`/`recordRefund` never fail the call or the webhook.
+- **Stale admin tokens (M2):** demotions and removals revoke sessions; privileged callables re-read the claims; nobody changes their own role.
+- **Payments (M3, L7):** Paymob payments are matched by the signed order id; refunds only from signed or re-fetched data; a full refund takes back what it bought.
+- **Passwords (M4, I1):** org admins reset only the logins the org made; `mustChangePassword` is cleared only after a real change.
+- **Tutor credits (M5):** held before a call and settled after, a few calls at a time per person, `warm` limited.
+- **Relay (M6, L9):** `ws` 8.22.0, an Origin header from Darsi's own site required, revoked tokens refused, sockets per instance and address capped, `/warm` limited.
+- **Projects (M8, L2):** a field allow-list; attachments only from this project's Storage, in the person's own folder; no SVG or HTML; the app's file names. Review screens show only such links (`admin/evidence.ts`).
+- **Smaller ones:** typed profile edits and CSV cells that can't run as formulas (L1); a transactional join limit (L4); framing, HSTS and opener headers (L5); transactional seats (L8); `tutorSearch` checks the caller first (L11); drafts can't be published or created across owners (L12).
+- **Hosting headers:** every path gets HSTS. Every path except Firebase's own `/__/` pages (the sign-in helper frame and popup) gets `X-Frame-Options: DENY`, `Content-Security-Policy: frame-ancestors 'none'`, `Cross-Origin-Opener-Policy: same-origin-allow-popups` (the Google popup still reports back), and a full `Content-Security-Policy-Report-Only`. That policy is only reported until it has been checked on the live site: the code sandbox's srcdoc frame inherits the page's policy, and the legacy build's inline scripts need hashes.
+- **Left to do:** App Check on Firestore, Storage, the callables and `collect`; Auth's email-enumeration protection and a password policy; a dedicated service account for each server part instead of the default compute account (M7); signed certificates with a public check (M1); answer keys out of public Storage (I2); enforcing the CSP; npm advisories with no fix old enough yet (L10). Lesson results are still the phone's word for real lessons: someone can claim full marks for lessons they didn't do.
 
 ## Testing
 

@@ -1,7 +1,8 @@
+import { call } from "../fb";
 import { useCallback, useEffect, useState } from "react";
 import { collection, collectionGroup, doc, documentId, getCountFromServer, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, where, type QueryConstraint } from "firebase/firestore";
 import { db } from "../firebase";
-import type { Org, Profile } from "../auth/types";
+import type { Org, Profile, Role } from "../auth/types";
 
 export interface ProgressDoc { lessonId: string; unitId: string; track: string; accuracy: number; xp: number; seconds: number; completedAt: string; competencies?: string[] }
 type ByLang<T> = Partial<Record<"en" | "ar", T>>;
@@ -155,8 +156,19 @@ export const useInvites = (orgId?: string | null) => useOnce(orgId ? async () =>
 
 /** Every organization, newest first (platform admins: /super/orgs). One read, again on reload(). */
 export const useAllOrgs = () => useOnce(async () => (await getDocs(query(collection(db, "orgs"), orderBy("createdAt", "desc")))).docs.map((d) => ({ id: d.id, ...d.data() }) as Org), []);
-/** An account by its exact email or login (platform admins). */
-export const findByEmail = async (email: string) => (await getDocs(query(collection(db, "users"), where("email", "==", email.trim().toLowerCase()), limit(5)))).docs.map((d) => ({ uid: d.id, ...d.data() }) as Profile);
+/**
+ * An account by its exact email or username login, resolved by Auth on the server (functions/src/platform.ts
+ * findAccount): a profile's own `email` is only what its owner typed, so it is never what admins look people up by
+ * (H1 in the security review). `profiles` > 1 means more than one profile claims that email.
+ */
+export interface FoundAccount { uid: string; email: string; emailVerified: boolean; name: string; username: string | null; role: Role; orgId: string | null; teach: string | null; provider: string }
+export const findAccount = (login: string) => call<{ login: string }, { account: FoundAccount | null; profiles: number }>("findAccount")({ login: login.trim().toLowerCase() });
+/** An account by its exact email or login (platform admins), as a profile row with `emailVerified`; [] when none, or when several profiles claim it. */
+export const findByEmail = async (email: string): Promise<(Profile & { emailVerified?: boolean; claimed?: number })[]> => {
+  const { account, profiles } = await findAccount(email);
+  if (!account) return [];
+  return [{ uid: account.uid, name: account.name, email: account.email, username: account.username, role: account.role, orgId: account.orgId, emailVerified: account.emailVerified, claimed: profiles } as Profile & { emailVerified: boolean; claimed: number }];
+};
 /** Accounts whose name starts with what was typed (platform admins). */
 export const findByName = async (name: string) => (await getDocs(query(collection(db, "users"), orderBy("name"), where("name", ">=", name.trim()), where("name", "<=", `${name.trim()}`), limit(10)))).docs.map((d) => ({ uid: d.id, ...d.data() }) as Profile);
 

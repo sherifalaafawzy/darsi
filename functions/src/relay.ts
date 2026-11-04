@@ -15,12 +15,21 @@ import { createServer } from "node:http";
 import { WebSocket, WebSocketServer } from "ws";
 import { auth } from "./admin.js";
 import { askAgent } from "./agent.js";
-import { balance, charge, GEMINI_KEY, googleToken, hasSuper, loadUnit, trackIndex, tutorConfig, tutorReady, vertexModel } from "./tutor.js";
+import { balance, charge, endCall, GEMINI_KEY, googleToken, hasSuper, loadUnit, minuteCredits, startCall, trackIndex, tutorConfig, tutorReady, vertexModel } from "./tutor.js";
+import type { Hold } from "./billingCore.js";
 import { EXPLAIN_TOOL, SEARCH_TOOL, audioCost, down3, instructions, lessonMaterial, pcmToUlaw, searchBoth, ulawToPcm, usageCost, type TutorLang, type Usage } from "./tutorCore.js";
 
 // GEMINI_LIVE_URL and VERTEX_LIVE_URL let the checks use a stand-in.
 const LIVE = process.env.GEMINI_LIVE_URL ?? "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
-const ORIGINS = (process.env.TUTOR_ORIGINS ?? "https://darsiai.org,http://localhost:5173").split(",");
+// Only Darsi's own site in production; `npm run local` passes its address in TUTOR_ORIGINS (L9).
+const ORIGINS = (process.env.TUTOR_ORIGINS ?? "https://darsiai.org").split(",").map((o) => o.trim()).filter(Boolean);
+/** Sockets per instance, and per address: a brake on anyone opening connections they never use (M6). */
+const MAX_SOCKETS = 300, MAX_PER_IP = 6;
+const open = new Map<string, number>();
+const ipOf = (req: { headers: Record<string, string | string[] | undefined>; socket: { remoteAddress?: string } }) =>
+  String(req.headers["x-forwarded-for"] ?? "").split(",")[0].trim() || req.socket.remoteAddress || "?";
+/** Warm-ups per minute per instance: they read only public courses, but each may build a search index. */
+let warms = { at: 0, n: 0 };
 const IDLE_MS = 90_000;
 
 /**
@@ -32,19 +41,34 @@ const server = createServer((req, res) => {
   const url = new URL(req.url ?? "/", "http://relay");
   if (url.pathname !== "/warm") { res.writeHead(404).end(); return; }
   res.writeHead(204, { "Cache-Control": "no-store" }).end();
+  if (Date.now() - warms.at > 60_000) warms = { at: Date.now(), n: 0 };
+  if (++warms.n > 60) return;
   const lang = url.searchParams.get("l") === "ar" ? "ar" : "en";
   void tutorConfig().then((cfg) => (cfg.backend === "vertex" ? googleToken() : null)).catch(() => null);
   void loadUnit(String(url.searchParams.get("u") ?? "").slice(0, 64), null)
     .then((unit) => unit && Promise.all([trackIndex(unit, null, lang), lang === "en" ? null : trackIndex(unit, null, "en")])).catch(() => null);
 });
-const wss = new WebSocketServer({ server, path: "/live", maxPayload: 64 * 1024, verifyClient: ({ origin }: { origin?: string }) => !origin || ORIGINS.includes(origin) });
+// An Origin header is required (browsers always send one), and it must be Darsi's (L9).
+const wss = new WebSocketServer({
+  server, path: "/live", maxPayload: 64 * 1024, perMessageDeflate: false,
+  verifyClient: ({ origin, req }: { origin?: string; req: Parameters<typeof ipOf>[0] }) => {
+    if (!origin || !ORIGINS.includes(origin)) return false;
+    const total = [...open.values()].reduce((a, b) => a + b, 0);
+    return total < MAX_SOCKETS && (open.get(ipOf(req)) ?? 0) < MAX_PER_IP;
+  },
+});
 
-wss.on("connection", (phone: WebSocket) => {
+wss.on("connection", (phone: WebSocket, req: Parameters<typeof ipOf>[0]) => {
+  const ip = ipOf(req);
+  open.set(ip, (open.get(ip) ?? 0) + 1);
+  phone.once("close", () => { const n = (open.get(ip) ?? 1) - 1; if (n > 0) open.set(ip, n); else open.delete(ip); });
   const send = (o: unknown) => { if (phone.readyState === WebSocket.OPEN) phone.send(JSON.stringify(o)); };
   const fail = (code: string) => { send({ type: "error", code }); phone.close(); };
   let gem: WebSocket | null = null, uid = "", lastActive = Date.now(), closed = false;
   // agentUsd: explainers from the tutor agent, charged on top of the voice (whose cost is the higher of tokens and minutes).
   let inSec = 0, outSec = 0, tokenUsd = 0, agentUsd = 0, chargedUsd = 0;
+  // The call's place and the credits held for it (startCall, M5); `short`: credits a turn cost beyond the balance.
+  let call: { id: string; hold: Hold } | null = null, short = 0;
   let idle: NodeJS.Timeout | null = null, cap: NodeJS.Timeout | null = null;
   const helloWait = setTimeout(() => fail("no-hello"), 10_000);
 
@@ -54,17 +78,25 @@ wss.on("connection", (phone: WebSocket) => {
     const due = cost - chargedUsd;
     if (due <= 0) return;
     chargedUsd = cost;
-    const r = await charge(uid, due, "voice").catch(() => null);
-    if (!r) return;
+    const r = await charge(uid, due, "voice").catch((e) => { console.error("charge failed", String(e)); return null; });
+    // A turn that couldn't be charged ends the call (fail closed): the talking is never free.
+    if (!r) { if (!final) { send({ type: "error", code: "tutor-gone" }); end(); } return; }
+    short += r.short;
     send({ type: "credits", used: r.credits, left: r.left });
     if (!r.ok && !final) { send({ type: "out" }); end(); }
+  };
+  /** After the last charge: what a turn couldn't take comes out of the credits held, the rest goes back. */
+  const release = async () => {
+    if (!call) return;
+    const c = call; call = null;
+    await endCall(uid, c.id, c.hold, short).catch((e) => console.error("hold not released", String(e)));
   };
   let cfgLive: Awaited<ReturnType<typeof tutorConfig>>["live"] | null = null;
   const end = () => {
     if (closed) return;
     closed = true;
     [helloWait, idle, cap].forEach((t) => t && clearTimeout(t));
-    void settle(true);
+    void settle(true).finally(() => release());
     gem?.close();
     if (phone.readyState === WebSocket.OPEN) phone.close();
   };
@@ -89,7 +121,8 @@ wss.on("connection", (phone: WebSocket) => {
     clearTimeout(helloWait);
 
     // Side by side where they don't depend on each other: every step here is time the learner waits in silence.
-    const [user, cfg] = await Promise.all([auth.verifyIdToken(String(m.token ?? "")).catch(() => null), tutorConfig()]);
+    // checkRevoked: a session ended by Auth (a password change, a removal) can't start a call (L9).
+    const [user, cfg] = await Promise.all([auth.verifyIdToken(String(m.token ?? ""), true).catch(() => null), tutorConfig()]);
     if (!user) return fail("auth");
     if (!hasSuper(user)) return fail("no-super");
     cfgLive = cfg.live;
@@ -98,6 +131,10 @@ wss.on("connection", (phone: WebSocket) => {
     const [left, unit] = await Promise.all([balance(user.uid), loadUnit(String(m.unitId ?? "").slice(0, 64), orgId)]);
     if (left <= 0) return fail("no-credits");
     if (!unit) return fail("no-course");
+    // One call at a time per person, with a minute's credits held while it runs (M5).
+    try { call = await startCall(user.uid, "voice", await minuteCredits(cfg), (cfg.maxMinutes + 2) * 60_000); }
+    catch (e) { return fail(String((e as Error).message) === "busy" ? "busy" : "no-credits"); }
+    if (closed) { uid = user.uid; await release(); return; }
     uid = user.uid;
     const lang: TutorLang = m.lang === "ar" ? "ar" : "en";
     const lessonId = String(m.lessonId ?? "").slice(0, 80) || null;

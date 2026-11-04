@@ -15,6 +15,8 @@ export interface Ctx { d: string; role: string; aud?: string; lang: string; org?
 export interface Batch { ctx: Ctx; events: InEvent[] }
 
 export const MAX_EVENTS = 100;
+/** How far ahead of the server's clock an event may be (seconds). */
+export const FUTURE_SEC = 600;
 const ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
 const DEVICE = /^[a-z0-9]{16,40}$/;
 const LANG = /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/;
@@ -42,7 +44,8 @@ const str = (v: unknown, re: RegExp) => (typeof v === "string" && re.test(v) ? v
 
 /**
  * A batch from a phone, checked: unknown events and parameters are dropped, times outside the last 30 days (or more
- * than a day ahead: phones with a wrong clock) are dropped, and anything malformed at the top refuses the whole batch.
+ * than 10 minutes ahead: phones with a wrong clock, or someone filling a day that hasn't started; H3) are dropped,
+ * and anything malformed at the top refuses the whole batch.
  */
 export function parseBatch(raw: unknown, nowSec: number): Batch {
   const b = raw as { d?: unknown; c?: Record<string, unknown>; e?: unknown };
@@ -58,7 +61,7 @@ export function parseBatch(raw: unknown, nowSec: number): Batch {
   for (const x of b.e as unknown[]) {
     const e = x as { n?: unknown; t?: unknown; p?: Record<string, unknown>; o?: unknown };
     const n = e?.n as EventName;
-    if (!EVENTS.includes(n) || typeof e.t !== "number" || e.t < nowSec - 30 * 86400 || e.t > nowSec + 86400) continue;
+    if (!EVENTS.includes(n) || typeof e.t !== "number" || e.t < nowSec - 30 * 86400 || e.t > nowSec + FUTURE_SEC) continue;
     const p: Record<string, string | number> = {};
     for (const [k, kind] of Object.entries(PARAMS[n])) {
       const v = e.p?.[k];
@@ -68,6 +71,36 @@ export function parseBatch(raw: unknown, nowSec: number): Batch {
     events.push({ n, t: Math.floor(e.t), p, off: e.o === 1 });
   }
   return { ctx, events };
+}
+
+/**
+ * What counts may be kept under, by name (H3 in the security review): analytics/{day} turns ids into map keys, so a
+ * phone's own strings are used only when Darsi knows them. Courses from the catalogs, labs from the app, organizations,
+ * tracks and languages from the platform's settings, a fixed list of screens; anything else counts as "other".
+ */
+export interface Known { units: ReadonlySet<string>; labs: ReadonlySet<string>; orgs: ReadonlySet<string>; tracks: ReadonlySet<string>; langs: ReadonlySet<string> }
+export const SCREENS: ReadonlySet<string> = new Set(["home", "welcome", "learn", "lesson", "lab", "labs", "kit", "downloads", "me", "tracks", "tutor", "upgrade", "signin", "signup", "forgot", "org", "admin", "teach", "super", "results"]);
+export const AUDIENCES: ReadonlySet<string> = new Set(["teachers", "students"]);
+export const OTHER = "other";
+const known = (v: string, set: ReadonlySet<string>) => (set.has(v) ? v : OTHER);
+
+export function sanitize({ ctx, events }: Batch, k: Known): Batch {
+  const { org, aud, ver, ...rest } = ctx;
+  const out: Ctx = { ...rest, lang: known(ctx.lang, k.langs) };
+  if (org && k.orgs.has(org)) out.org = org;
+  if (aud) out.aud = known(aud, AUDIENCES);
+  if (ver && /^[0-9A-Za-z._-]{1,24}$/.test(ver)) out.ver = ver;
+  return {
+    ctx: out,
+    events: events.map((e) => {
+      const p = { ...e.p };
+      if (typeof p.u === "string") p.u = known(p.u, k.units);
+      if (typeof p.tr === "string") p.tr = known(p.tr, k.tracks);
+      if (typeof p.lab === "string") p.lab = known(p.lab, k.labs);
+      if (typeof p.s === "string") p.s = known(p.s, SCREENS);
+      return { ...e, p };
+    }),
+  };
 }
 
 export const dayOf = (sec: number) => new Date(sec * 1000).toISOString().slice(0, 10);
