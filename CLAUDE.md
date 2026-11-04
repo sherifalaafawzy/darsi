@@ -329,6 +329,7 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - **Deployed** with the user's go-ahead; see "Firebase project" below.
 25. Done and deployed (2026-11-04, uncommitted): **platform admins see every course, certificate and project.** The user asked that "super admins can see all courses and certificates and projects". TECHNICAL.md "Platform administration".
     - Every course in the learner screens (`useMine().all`), labelled for teachers, students or university teachers.
+    - Learn opens on "All tracks" for them (2026-11-04, uncommitted): every course of every track, hidden tracks too, one line each; a course loads when opened. The track switcher still picks one track. Checked: web 1222 tests, `tsc`, `lint:css`, and on the local stack signed in as the platform admin (81 courses in 9 tracks at 1280 px; the menu at 375 px, no sideways scroll). Deployed 2026-11-04 (Hosting only; see "Firebase project").
     - /super/projects: every project, to review.
     - /super/certificates: every certificate earned, each openable.
     - Both pages are in the nav.
@@ -474,6 +475,7 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - Without an account, a collection-group query of `submissions` and a query of `users` by `summary.lessonsDone` both answer 403.
     - As a returning guest on darsiai.org, the update toast's Reload moved them to the new build. Home showed their own courses, and no Firebase chunk loaded.
   - Not checked live: the admin's Home, /super/projects and /super/certificates, which need a platform-admin sign-in (the user's).
+- Deployed 2026-11-04 ("All tracks" on Learn for platform admins, uncommitted, with the user's go-ahead): Hosting only (`index-E2vvbrVc.js`), built in `H:/tmp/darsi-deploy3` (HEAD 15846f16, the tutor edits already live, and this change) and deployed with `H:/tmp/firebase.deploy.json`. That copy passed `tsc`, web 1222 tests and e2e 30/30; startup 4 files. Checked live: darsiai.org serves the build and the committed cast picture, and a guest loads no Firebase chunk. Not checked live: Learn signed in as a platform admin (the user's).
 - **Storage**: the app uses the bucket **`darsi-f0685` in europe-west1**, set by `VITE_FIREBASE_STORAGE_BUCKET` in `.env.local`. It is deploy target `main` with `firebase/storage.rules`.
   - The original default bucket `darsi-f0685.firebasestorage.app` (us-west1, never used) was deleted on 2026-10-25 and now returns 404 `NoSuchBucket`. Keep the `main` target: without one, `firebase deploy --only storage` aims at the project's default bucket, which no longer exists.
   - Checked live on 2026-10-25: media/kits are public, and submissions return 403 to anonymous requests.

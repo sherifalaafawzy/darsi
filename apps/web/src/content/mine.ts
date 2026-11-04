@@ -1,7 +1,8 @@
 /**
  * What one learner sees: courses for their audience (teachers or students) in the tracks they chose, one track on
- * Home at a time. Platform admins see every course: all tracks, for teachers and for students. Shared by Home, the
- * track switcher, My tracks, Kit, Downloads, Me and the nav.
+ * Home at a time. Platform admins see every course: all tracks (hidden ones too), for teachers and for students, and
+ * Home shows them all at once until they pick one track (`adminTrack`). Shared by Home, the track switcher, My tracks,
+ * Kit, Downloads, Me and the nav.
  */
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n";
@@ -33,14 +34,16 @@ export function useMine() {
   const { state, dispatch } = useStore();
   const { role } = useAuth();
   const { t } = useI18n();
-  const { visible, of, levelName } = useTracks();
+  const { all: every, visible, of, levelName } = useTracks();
   const audience = audienceFor(role, state.audience);
   // Where they study (students) or teach (teachers). University teachers also see the university courses, pinned first.
   const stage = audience === "students" ? state.stage : teachStage(state.teach);
   const uni = audience === "teachers" && stage === "university";
   const start = (track: Track) => startLevel(stage, of(track).levels);
   const all = role === "superadmin";
-  const tracks = all ? visible : myTracks(state.tracks, visible);
+  const tracks = all ? every : myTracks(state.tracks, visible);
+  // A platform admin's pick is kept apart from the learner's, so "All tracks" stays their default.
+  const active = all ? (state.adminTrack && tracks.some((x) => x.id === state.adminTrack) ? state.adminTrack : undefined) : activeTrack(state.track, tracks);
   const ids = new Set(tracks.map((t) => t.id));
   return {
     audience,
@@ -60,9 +63,11 @@ export function useMine() {
       return audience === "students" && of(track).builtIn && st ? `${name}${t("common.sep")}${t(`stage.${st}`)}` : name;
     },
     tracks,
-    active: activeTrack(state.track, tracks),
+    /** The track Home shows; none for a platform admin looking at every track. */
+    active,
     /** A course for this learner: their audience, in one of their tracks. */
     isMine: (u: Pick<CatalogEntry, "track" | "audience" | "teach">) => ids.has(u.track) && (all || (audienceOf(u) === audience && (!u.teach || uni))),
-    setActive: (track: Track) => dispatch({ type: "set", patch: { track } }),
+    /** Show one track on Home; a platform admin can go back to every track with none. */
+    setActive: (track?: Track) => dispatch({ type: "set", patch: all ? { adminTrack: track } : { track } }),
   };
 }

@@ -10,7 +10,12 @@ export function TrackSwitchButton({ open, onToggle }: { open: boolean; onToggle:
   const { t } = useI18n();
   const tracks = useTracks();
   const style = useTrackStyles();
-  const { active } = useMine();
+  const { active, all } = useMine();
+  if (!active && all) return (
+    <button type="button" className="track-switch" aria-expanded={open} aria-controls="track-menu" onClick={onToggle} aria-label={t("tracks.switch", { track: t("tracks.all") })}>
+      <Icon name="learn" size={20} /><span>{t("tracks.all")}</span><Icon name={open ? "up" : "down"} size={18} />
+    </button>
+  );
   if (!active) return <>{t("home.title")}</>;
   return (
     <button type="button" className={cx("track-switch", trackClass(style(active)))} aria-expanded={open} aria-controls="track-menu" onClick={onToggle}
@@ -20,7 +25,7 @@ export function TrackSwitchButton({ open, onToggle }: { open: boolean; onToggle:
   );
 }
 
-/** The learner's tracks (tap one to show it on Home), then "Add or remove tracks". Shown under the app bar. */
+/** The learner's tracks (tap one to show it on Home), then "Add or remove tracks". Platform admins also get "All tracks". Shown under the app bar. */
 export function TrackMenu({ onClose }: { onClose: () => void }) {
   const { t } = useI18n();
   const tracks = useTracks();
@@ -31,8 +36,14 @@ export function TrackMenu({ onClose }: { onClose: () => void }) {
   useEffect(() => { first.current?.focus(); }, []);
   return (
     <div id="track-menu" className="track-menu" role="group" aria-label={t("tracks.title")} onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}>
+      {mine.all && (
+        <button type="button" ref={first} className="track-menu-item" aria-pressed={!mine.active} onClick={() => { mine.setActive(undefined); onClose(); }}>
+          <span className="track-menu-icon"><Icon name="learn" size={20} /></span><span className="track-menu-name">{t("tracks.all")}</span>
+          {!mine.active && <Icon name="check" size={20} />}
+        </button>
+      )}
       {mine.tracks.map((tr, i) => (
-        <button key={tr.id} ref={i === 0 ? first : undefined} type="button" className={cx("track-menu-item", trackClass(style(tr.id)))} aria-pressed={tr.id === mine.active}
+        <button key={tr.id} ref={i === 0 && !mine.all ? first : undefined} type="button" className={cx("track-menu-item", trackClass(style(tr.id)))} aria-pressed={tr.id === mine.active}
           onClick={() => { mine.setActive(tr.id); onClose(); }}>
           <span className="track-menu-icon"><Icon name={tr.icon as IconName} size={20} /></span><span className="track-menu-name">{tracks.name(tr.id)}</span>
           {tr.id === mine.active && <Icon name="check" size={20} />}

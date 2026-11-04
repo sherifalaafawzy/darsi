@@ -69,21 +69,46 @@ describe("audience and tracks", () => {
 });
 
 describe("Home", () => {
-  it("shows platform admins every course in a track, for teachers and for students, labelled", async () => {
+  it("shows platform admins every course in every track at once, and opens one", async () => {
+    h.role = "superadmin";
+    h.units = [entry("ai-t"), entry("ai-s", { audience: "students", level: 2 }), entry("cyber-t"), entry("iot-s", { audience: "students" })];
+    seed({ tracks: ["cyber"], audience: "teachers", track: "cyber" });
+    show(<Home />);
+    expect(await screen.findByRole("button", { name: "All tracks: change track" })).toBeTruthy();
+    for (const name of ["Course ai-t", "Course ai-s", "Course cyber-t", "Course iot-s"]) expect(screen.getByText(name)).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 2 }).map((x) => x.textContent)).toEqual(["AI", "IoT", "Cyber security"]); // the platform's track order
+    expect(screen.getAllByText("For students").length).toBe(2);
+    // Nothing is loaded until a course is opened.
+    expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
+    fireEvent.click(screen.getByText("Course cyber-t"));
+    expect(await screen.findByRole("button", { name: "Start" })).toBeTruthy();
+  });
+
+  it("lets platform admins pick one track, and go back to all of them", async () => {
     h.role = "superadmin";
     h.units = [entry("ai-t"), entry("ai-s", { audience: "students", level: 2 }), entry("ai-u1", { level: 4, teach: "university" }), entry("cyber-t")];
-    seed({ tracks: ["cyber"], audience: "teachers", track: "ai" });
+    seed({ tracks: ["cyber"], audience: "teachers", track: "cyber" });
     let seen: ReturnType<typeof useMine> | null = null;
-    show(<><Home /><Probe on={(_, m) => { seen = m; }} /></>);
+    let state = initialState;
+    show(<><Home /><Probe on={(s, m) => { seen = m; state = s; }} /></>);
+    fireEvent.click(await screen.findByRole("button", { name: "All tracks: change track" }));
+    expect(screen.getAllByRole("button", { pressed: true }).map((b) => b.textContent)).toEqual(["All tracks"]);
+    fireEvent.click(screen.getByRole("button", { name: "AI" }));
+    expect(state).toMatchObject({ adminTrack: "ai", track: "cyber" }); // the learner's own pick is left alone
     await screen.findByRole("heading", { name: "Course ai-s" });
     await screen.findByRole("heading", { name: "Course ai-u1" });
     expect(screen.getByRole("heading", { name: "Course ai-t" })).toBeTruthy();
     expect(screen.getAllByText("For students").length).toBe(1);
     expect(screen.getAllByText("For university teachers").length).toBe(1);
-    // Every track, whatever they picked; Kit and Downloads take every course.
+    expect(screen.queryByText("Course cyber-t")).toBeNull();
+    // Every track, hidden ones too, whatever they picked; Kit and Downloads take every course.
     expect(seen!.all).toBe(true);
-    expect(seen!.tracks.map((t) => t.id)).toEqual(BUILTIN_TRACKS.filter((t) => !t.hidden).map((t) => t.id));
+    expect(seen!.tracks.map((t) => t.id)).toEqual(BUILTIN_TRACKS.map((t) => t.id));
     expect(seen!.isMine(entry("iot-x", { audience: "students" }))).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "AI: change track" }));
+    fireEvent.click(screen.getByRole("button", { name: "All tracks" }));
+    expect(state.adminTrack).toBeUndefined();
+    expect(await screen.findByText("Course cyber-t")).toBeTruthy();
   });
 
   it("keeps everyone else to their own audience and tracks", async () => {

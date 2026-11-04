@@ -22,6 +22,8 @@ export interface AppState {
   /** The learner's tracks: Home shows one of them at a time (`track`); none chosen means every track on offer. */
   tracks: Track[];
   track?: Track;
+  /** A platform admin's track on Home; none means every track. */
+  adminTrack?: Track;
   weeklyLessons: number;
   levels: Partial<Record<Track, number>>;
   progress: Record<string, LessonResult>;
