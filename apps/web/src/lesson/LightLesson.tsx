@@ -42,19 +42,20 @@ export function saveVideoShape(shape: VideoShape): void {
 }
 
 /**
- * Landscape (the default) is the 16:9 stage at full width. Portrait: upright phones get the portrait stage (9:16, easier to read than 16:9 at this width), as wide as fits between the
- * player's top and the Continue bar, with the player's controls (up to three rows at these widths, 9.5rem) and the
- * bar (6rem) below it. The title above takes one line or three, so this is measured, not guessed. Where that would be
- * under 12rem wide (short phones), the 16:9 stage at full width fits instead. Wider screens leave it to the player.
+ * Landscape (the default) is the 16:9 stage at full width. Portrait, whenever the learner picks it, on every screen:
+ * the 9:16 stage (easier to read than 16:9 on a phone), centred, as wide as fits between the player's top and the
+ * Continue bar, with the player's controls (up to three rows on phones, 9.5rem) and the bar (6rem) below it. The title
+ * above takes one line or three, so this is measured, not guessed. Never under 16rem wide: on a short screen (most
+ * phones once the browser's bars are counted, or a phone turned sideways) the page scrolls a little instead. It once
+ * fell back to landscape there, and on wide screens left the choice to the player, which picked landscape, so the
+ * button changed nothing.
  */
-export function fitStage(el: HTMLElement, shape: VideoShape = "landscape"): Orient | "auto" {
+export function fitStage(el: HTMLElement, shape: VideoShape = "landscape"): Orient {
   el.style.maxInlineSize = "";
   if (shape === "landscape") return "landscape";
-  if (typeof matchMedia !== "function" || !matchMedia("(orientation: portrait) and (max-width: 599px)").matches) return "auto";
-  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const rem = (typeof getComputedStyle === "function" && parseFloat(getComputedStyle(document.documentElement).fontSize)) || 16;
   const top = (el.parentElement?.querySelector(".light-lesson") ?? el).getBoundingClientRect().top; // the poster's, while it shows
-  const width = Math.floor(((innerHeight - top - 15.5 * rem) * 9) / 16);
-  if (width < 12 * rem) return "landscape";
+  const width = Math.max(16 * rem, Math.floor(((innerHeight - top - 15.5 * rem) * 9) / 16));
   el.style.maxInlineSize = `${width}px`;
   return "portrait";
 }
@@ -62,8 +63,10 @@ export function fitStage(el: HTMLElement, shape: VideoShape = "landscape"): Orie
 /** A package already in memory: the tutor agent's explainers (tutor/Explainer.tsx), one language, no audio. */
 export interface LightPkg { manifest: { defaultLang: string; languages: { code: string }[] }; scenes: unknown; timing: Record<string, unknown> }
 
-export function LightLesson({ light, pkg, lang, poster, onEvent, onError, shape = "landscape" }: {
+export function LightLesson({ light, pkg, lang, poster, onEvent, onError, shape = "landscape", start = false }: {
   light?: Light; pkg?: LightPkg; lang: string; poster: ReactNode; onEvent: (e: LightEvent) => void; onError: () => void; shape?: VideoShape;
+  /** Start playing as soon as the picture is ready. Explainers do; a course video waits for the learner. */
+  start?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const events = useRef(onEvent);
@@ -95,9 +98,10 @@ export function LightLesson({ light, pkg, lang, poster, onEvent, onError, shape 
       });
       live.current = player;
       setShown(true);
+      if (start) void player.play();
       addEventListener("orientationchange", refit);
     })().catch(() => { if (!gone) onError(); });
     return () => { gone = true; live.current = null; removeEventListener("orientationchange", refit); player?.destroy(); };
-  }, [light, pkg, lang]);
+  }, [light, pkg, lang, start]);
   return <>{!shown && <div className="light-lesson light-wait">{poster}</div>}<div ref={host} className="light-lesson" /></>;
 }

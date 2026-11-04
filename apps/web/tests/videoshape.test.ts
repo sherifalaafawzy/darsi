@@ -26,9 +26,23 @@ describe("video shape", () => {
     expect(el.style.maxInlineSize).toBe("");
   });
 
-  it("asks for portrait only when chosen (wide screens leave it to the player)", () => {
+  it("gives portrait whenever it is chosen, on any screen, never narrower than 16rem", () => {
     const el = document.createElement("div");
-    expect(fitStage(el, "portrait")).toBe("auto");
+    const was = window.innerHeight;
+    try {
+      for (const h of [1200, 900, 664, 375]) { // tall phone, tablet, iPhone Chrome with its bars, a phone turned sideways
+        Object.defineProperty(window, "innerHeight", { configurable: true, value: h });
+        expect(fitStage(el, "portrait")).toBe("portrait");
+        expect(parseFloat(el.style.maxInlineSize)).toBeGreaterThanOrEqual(256);
+      }
+      Object.defineProperty(window, "innerHeight", { configurable: true, value: 1200 });
+      fitStage(el, "portrait");
+      expect(el.style.maxInlineSize).toBe(`${Math.floor(((1200 - 0 - 15.5 * 16) * 9) / 16)}px`); // as wide as fits
+      expect(fitStage(el, "landscape")).toBe("landscape");
+      expect(el.style.maxInlineSize).toBe("");
+    } finally {
+      Object.defineProperty(window, "innerHeight", { configurable: true, value: was });
+    }
   });
 });
 
