@@ -145,7 +145,7 @@ function UnitBlock({ entry, current, bare }: { entry: CatalogEntry; current: boo
         <Button block variant="secondary" icon="award" onClick={() => nav("/kit")}>{t("home.allDone")}</Button>
       )}
       <UnitPath track={unit.track} label={L(unit.title)} nodes={[
-        ...unit.lessons.map((l, i) => ({ label: L(l.title), state: (state.progress[l.id] ? "done" : i === nextIdx ? "current" : "locked") as "done" | "current" | "locked", callout: t("common.start"), onClick: () => go(l.id) })),
+        ...unit.lessons.map((l, i) => ({ label: L(l.title), state: (state.progress[l.id] ? "done" : i === nextIdx ? "current" : "locked") as "done" | "current" | "locked", callout: t("common.start"), onClick: () => go(l.id), open: mine.all })),
         { label: t("me.certs"), state: (nextIdx === -1 ? "done" : "locked") as "done" | "locked", checkpoint: true, onClick: () => nav("/me#certificates") },
       ]} />
     </section>

@@ -41,7 +41,9 @@ export function FeedbackSheet({ result, title, explanation, answer, answerLabel 
   );
 }
 
-export interface PathNode { label: string; state?: "done" | "current" | "locked"; checkpoint?: boolean; callout?: string; stateLabel?: string; onClick?: () => void; }
+export interface PathNode { label: string; state?: "done" | "current" | "locked"; checkpoint?: boolean; callout?: string; stateLabel?: string; onClick?: () => void;
+  /** A locked node that can still be opened (it keeps its lock): for staff looking through a course. */
+  open?: boolean; }
 export interface UnitPathProps { nodes: PathNode[]; track?: Track | "kola"; label?: string; }
 const OFFSETS = [0, 1, 2, 1, 0, -1, -2, -1];
 /** Winding lesson map; the zigzag uses logical offsets so it mirrors in RTL. */
@@ -56,7 +58,7 @@ export function UnitPath({ nodes, track = "kola", label }: UnitPathProps) {
         return (
           <li key={i} className={cx("dr-path-step", `is-${state}`, n.checkpoint && "is-checkpoint")} style={{ ["--dr-off" as string]: OFFSETS[i % OFFSETS.length] }}>
             {state === "current" && n.callout && <span className="dr-path-callout">{n.callout}</span>}
-            <button type="button" className="dr-path-node" disabled={state === "locked"} onClick={n.onClick} aria-label={n.label + (n.stateLabel ? ` — ${n.stateLabel}` : "")} aria-current={state === "current" ? "step" : undefined}>
+            <button type="button" className="dr-path-node" disabled={state === "locked" && !n.open} onClick={n.onClick} aria-label={n.label + (n.stateLabel ? ` — ${n.stateLabel}` : "")} aria-current={state === "current" ? "step" : undefined}>
               <Icon name={icon} size={30} />
             </button>
             <span className="dr-path-label">{n.label}</span>

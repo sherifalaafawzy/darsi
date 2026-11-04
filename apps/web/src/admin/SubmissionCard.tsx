@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { Link } from "react-router-dom";
 import { Button, Icon } from "@darsi/design-system";
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthProvider";
@@ -21,7 +22,8 @@ export function SubmissionCard({ uid, sub, lessonTitle, who, onReviewed }: { uid
   return (
     <article className={`submission is-${sub.status}`}>
       {who}
-      <header><strong>{lessonTitle}</strong><span className={`status status-${sub.status}`}>{t(`p.status.${sub.status}` as "p.status.submitted")}</span></header>
+      {/* Platform admins open the lesson at its project step. */}
+      <header><strong>{role === "superadmin" && sub.unitId ? <Link to={`/lesson/${sub.unitId}/${sub.lessonId}?step=project`}>{lessonTitle}</Link> : lessonTitle}</strong><span className={`status status-${sub.status}`}>{t(`p.status.${sub.status}` as "p.status.submitted")}</span></header>
       <p dir="auto" className="sub-text">{sub.text}</p>
       {sub.fileUrl && <a href={sub.fileUrl} target="_blank" rel="noreferrer noopener"><Icon name="file" size={16} /> {sub.fileName ?? t("p.attachment")}</a>}
       {canReview ? (

@@ -43,6 +43,8 @@ describe("every project", () => {
     expect(screen.getByText("My chatbot for the class")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Amina Bello" }).getAttribute("href")).toBe("/super/people/u1");
     await screen.findByText("Your AI project");
+    // The lesson opens at its project step (platform admins can open any step).
+    expect(screen.getByRole("link", { name: "Your AI project" }).getAttribute("href")).toBe("/lesson/ai-1-1/ai-1-1-4?step=project");
     fireEvent.click(screen.getByRole("button", { name: "Approve" }));
     await waitFor(() => expect(m.reload).toHaveBeenCalled());
     expect(m.updated[0]).toMatchObject({ ref: "users/u1/submissions/s1", data: { status: "approved", reviewedBy: "admin" } });
