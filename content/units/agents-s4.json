@@ -196,7 +196,7 @@
           },
           "body": {
             "en": "Agents reach goals in steps, and they plan those steps in two common ways. In plan-then-act, the model writes every step first and then runs them: cheap and easy to check, but it can’t adapt when a result surprises it. In step-by-step planning (often called ReAct, for reasoning and acting), the model looks at each result before choosing the next step: it adapts better, but costs a model call for every step. Darsi Tiny does a little of both: a one-line plan, then each tool call in turn.\n\nEither way, each step builds on the one before, so errors carry forward and multiply. If each step is right 90% of the time, two steps are both right 81% of the time, and five steps only 59%. Worse, a failed step can quietly become the next step’s input: on Saturday the timetable tool answers “no school”, and Darsi Tiny still sets the reminder “6B: 6B”. The fix is a check after every step, in code or by a person, before anything is built on a result.\n\nA language model’s only memory within a conversation is its context window: every token it reads at once, including the tools list, the conversation so far and room to write its next step. Darsi Tiny’s window holds 384 tokens, about three or four requests; big cloud models read about 128,000. Every token costs time, money and, on a phone, data, at every step. When the window fills, something must go, and the model can’t tell you what it lost: in the memory lab, dropping the oldest turns makes “yes” lose its question, and “Dala” gets today’s weather because “tomorrow” fell out.\n\nSo the app, not the model, decides what stays. Common strategies: keep the most recent turns (a sliding window); replace finished exchanges with short notes or summaries; pin the facts a task depends on, such as dates and places; and fetch only the part of a long document that a step needs (retrieval). Each has a cost: a summary can drop a detail, and retrieval can fetch the wrong passage. And whatever stays in the window is sent again at every step, so keep private details out of it unless the task needs them.",
-            "ar": "يبلغ الوكلاء أهدافهم على خطوات، ويخطّطون لهذه الخطوات بطريقتين شائعتين. في «التخطيط ثم التنفيذ» يكتب النموذج الخطوات كلها أولًا ثم ينفّذها: طريقة رخيصة وسهلة الفحص، لكنها لا تتكيّف حين تفاجئها نتيجة. وفي «التخطيط خطوة بخطوة» (ويُسمّى غالبًا ReAct، أي التفكير ثم الفعل) ينظر النموذج إلى كل نتيجة قبل أن يختار الخطوة التالية: فيتكيّف أفضل، لكنه يكلّف استدعاءً للنموذج في كل خطوة. ويفعل «درسي الصغير» شيئًا من الطريقتين: خطة من سطر واحد، ثم استدعاءات الأدوات واحدًا بعد الآخر.\n\nوفي الحالتين تُبنى كل خطوة على ما قبلها، فتنتقل الأخطاء إلى ما بعدها وتتضاعف. فإن كانت كل خطوة صحيحة في ٩٠٪ من المرات، كانت خطوتان صحيحتين معًا في ٨١٪ فقط، وخمس خطوات في ٥٩٪. والأسوأ أن الخطوة الفاشلة قد تصير بهدوء مدخلًا للخطوة التالية: ففي يوم السبت تجيب أداة الجدول «لا دراسة»، ومع ذلك يضبط «درسي الصغير» التذكير «6B: 6B». والعلاج فحصٌ بعد كل خطوة، في الكود أو على يد إنسان، قبل أن يُبنى أي شيء على نتيجة.\n\nوذاكرة النموذج اللغوي الوحيدة في المحادثة هي نافذة السياق: كل الرموز التي يقرؤها دفعة واحدة، ومنها قائمة الأدوات، والمحادثة حتى الآن، ومساحة ليكتب خطوته التالية. تتسع نافذة «درسي الصغير» لـ٣٨٤ رمزًا، أي نحو ثلاثة طلبات أو أربعة، أما النماذج السحابية الكبيرة فتقرأ نحو ١٢٨ ألفًا. ولكل رمز كلفة من الوقت والمال، ومن البيانات على الهاتف، في كل خطوة. وحين تمتلئ النافذة لا بد أن يخرج منها شيء، ولا يستطيع النموذج أن يخبرك بما فقده: ففي مختبر الذاكرة يؤدي إسقاط أقدم الأدوار إلى أن تفقد «نعم» سؤالها، وإلى أن تحصل «دالا» على طقس اليوم لأن كلمة «غدًا» سقطت.\n\nلذلك فالتطبيق، لا النموذج، هو الذي يقرّر ما يبقى. ومن الطرق الشائعة: الاحتفاظ بأحدث الأدوار (نافذة منزلقة)، واستبدال الحوارات المنتهية بملاحظات أو ملخّصات قصيرة، وتثبيت الحقائق التي تعتمد عليها المهمة كالتواريخ والأماكن، وجلب الجزء الذي تحتاجه الخطوة فقط من مستند طويل (الاسترجاع). ولكل طريقة كلفتها: فقد يُسقط الملخّص تفصيلًا، وقد يجلب الاسترجاع المقطع الخطأ. وتذكّر أن كل ما يبقى في النافذة يُرسَل من جديد في كل خطوة، فأبقِ التفاصيل الخاصة خارجها ما لم تحتجها المهمة."
+            "ar": "يبلغ الوكلاء أهدافهم على خطوات، ويخطّطون لهذه الخطوات بطريقتين شائعتين. في «التخطيط ثم التنفيذ» يكتب النموذج الخطوات كلها أولًا ثم ينفّذها: طريقة رخيصة وسهلة الفحص، لكنها لا تتكيّف حين تفاجئها نتيجة. وفي «التخطيط خطوة بخطوة» (ويُسمّى غالبًا ReAct، أي التفكير ثم الفعل) ينظر النموذج إلى كل نتيجة قبل أن يختار الخطوة التالية: فيتكيّف أفضل، لكنه يكلّف استدعاءً للنموذج في كل خطوة. ويفعل «درسي الصغير» شيئًا من الطريقتين: خطة من سطر واحد، ثم استدعاءات الأدوات واحدًا بعد الآخر.\n\nوفي الحالتين تُبنى كل خطوة على ما قبلها، فتنتقل الأخطاء إلى ما بعدها وتتضاعف. فإن كانت كل خطوة صحيحة في ٩٠٪ من المرات، كانت خطوتان صحيحتين معًا في ٨١٪ فقط، وخمس خطوات في ٥٩٪. والأسوأ أن الخطوة الفاشلة قد تصير بهدوء مدخلًا للخطوة التالية: ففي يوم السبت تجيب أداة الجدول «لا دراسة»، ومع ذلك يضبط «درسي الصغير» التذكير «6B: 6B». والعلاج فحصٌ بعد كل خطوة، في الكود أو على يد إنسان، قبل أن يُبنى أي شيء على نتيجة.\n\nوذاكرة النموذج اللغوي الوحيدة في المحادثة هي نافذة السياق: كل التوكنز التي يقرؤها دفعة واحدة، ومنها قائمة الأدوات، والمحادثة حتى الآن، ومساحة ليكتب خطوته التالية. تتسع نافذة «درسي الصغير» لـ٣٨٤ توكنًا، أي نحو ثلاثة طلبات أو أربعة، أما النماذج السحابية الكبيرة فتقرأ نحو ١٢٨ ألفًا. ولكل توكن كلفة من الوقت والمال، ومن البيانات على الهاتف، في كل خطوة. وحين تمتلئ النافذة لا بد أن يخرج منها شيء، ولا يستطيع النموذج أن يخبرك بما فقده: ففي مختبر الذاكرة يؤدي إسقاط أقدم الأدوار إلى أن تفقد «نعم» سؤالها، وإلى أن تحصل «دالا» على طقس اليوم لأن كلمة «غدًا» سقطت.\n\nلذلك فالتطبيق، لا النموذج، هو الذي يقرّر ما يبقى. ومن الطرق الشائعة: الاحتفاظ بأحدث الأدوار (نافذة منزلقة)، واستبدال الحوارات المنتهية بملاحظات أو ملخّصات قصيرة، وتثبيت الحقائق التي تعتمد عليها المهمة كالتواريخ والأماكن، وجلب الجزء الذي تحتاجه الخطوة فقط من مستند طويل (الاسترجاع). ولكل طريقة كلفتها: فقد يُسقط الملخّص تفصيلًا، وقد يجلب الاسترجاع المقطع الخطأ. وتذكّر أن كل ما يبقى في النافذة يُرسَل من جديد في كل خطوة، فأبقِ التفاصيل الخاصة خارجها ما لم تحتجها المهمة."
           },
           "keyTerms": [
             {
@@ -274,7 +274,7 @@
           "answer": "c",
           "explain": {
             "en": "Notes keep what was asked and answered in fewer tokens, and pinning the dates and places means the facts the plan depends on never fall out.",
-            "ar": "تحفظ الملاحظات ما سُئل وما أُجيب برموز أقل، وتثبيت التواريخ والأماكن يعني أن الحقائق التي تعتمد عليها الخطة لا تسقط أبدًا. أما الاحتفاظ بكل شيء فيتوقف عند امتلاء النافذة، وإسقاط الأقدم يُضيع البدايات."
+            "ar": "تحفظ الملاحظات ما سُئل وما أُجيب بتوكنز أقل، وتثبيت التواريخ والأماكن يعني أن الحقائق التي تعتمد عليها الخطة لا تسقط أبدًا. أما الاحتفاظ بكل شيء فيتوقف عند امتلاء النافذة، وإسقاط الأقدم يُضيع البدايات."
           }
         },
         {
@@ -283,7 +283,7 @@
           "lang": "python",
           "prompt": {
             "en": "A conversation is a list of turns, oldest first; each turn is a pair (text, tokens). Write trim(turns, budget): keep the newest turns whose tokens fit in budget, in their original order, and stop at the first turn that doesn’t fit. (No model runs in this sandbox, so the token counts are given.)",
-            "ar": "المحادثة قائمة من الأدوار، الأقدم أولًا، وكل دور زوج (النص، عدد الرموز). اكتب الدالة ⁦trim(turns, budget)⁩: أبقِ أحدث الأدوار التي تتسع لها budget، بترتيبها الأصلي، وتوقّف عند أول دور لا يتسع. (لا يعمل أي نموذج في هذه البيئة، لذلك أعداد الرموز معطاة.)"
+            "ar": "المحادثة قائمة من الأدوار، الأقدم أولًا، وكل دور زوج (النص، عدد التوكنز). اكتب الدالة ⁦trim(turns, budget)⁩: أبقِ أحدث الأدوار التي تتسع لها budget، بترتيبها الأصلي، وتوقّف عند أول دور لا يتسع. (لا يعمل أي نموذج في هذه البيئة، لذلك أعداد التوكنز معطاة.)"
           },
           "starter": "def trim(turns, budget):\n    kept = []\n    used = 0\n    # walk back from the newest turn\n    return kept\n",
           "solution": "def trim(turns, budget):\n    kept = []\n    used = 0\n    for t in reversed(turns):\n        if used + t[1] > budget:\n            break\n        kept.insert(0, t)\n        used += t[1]\n    return kept\n",
@@ -309,7 +309,7 @@
           "hints": [
             {
               "en": "Loop over reversed(turns) and keep a running total of tokens.",
-              "ar": "مرّ على ⁦reversed(turns)⁩ واحتفظ بمجموع متراكم للرموز."
+              "ar": "مرّ على ⁦reversed(turns)⁩ واحتفظ بمجموع متراكم للتوكنز."
             },
             {
               "en": "kept.insert(0, t) keeps the oldest-first order; break stops at the first turn that doesn’t fit.",
@@ -372,7 +372,7 @@
           ],
           "explain": {
             "en": "Keeping everything fails once the window is full; dropping the oldest loses whatever a later turn depends on; notes keep what was asked and answered in fewer tokens; retrieval keeps long documents outside the window.",
-            "ar": "الاحتفاظ بكل شيء يفشل حين تمتلئ النافذة، وإسقاط الأقدم يُضيع ما يعتمد عليه دور لاحق، والملاحظات تحفظ ما سُئل وما أُجيب برموز أقل، والاسترجاع يُبقي المستندات الطويلة خارج النافذة."
+            "ar": "الاحتفاظ بكل شيء يفشل حين تمتلئ النافذة، وإسقاط الأقدم يُضيع ما يعتمد عليه دور لاحق، والملاحظات تحفظ ما سُئل وما أُجيب بتوكنز أقل، والاسترجاع يُبقي المستندات الطويلة خارج النافذة."
           }
         },
         {
@@ -380,7 +380,7 @@
           "id": "lab",
           "prompt": {
             "en": "Try it: with Keep everything, send the seven messages one by one and see where the answer is cut off. Start again with Drop the oldest and the window at 128 tokens: when you reply “yes” and then “Dala”, what has fallen out, and what does Darsi Tiny do without it? Then try Keep notes at 384. The lab is done when a turn has fallen out and a turn has finished with notes.",
-            "ar": "جرّب: مع «احتفظ بكل شيء» أرسل الرسائل السبع واحدة بعد الأخرى، ولاحظ أين ينقطع الجواب. ثم ابدأ من جديد مع «أسقِط الأقدم» والنافذة على ١٢٨ رمزًا: حين تجيب «نعم» ثم «دالا»، ما الذي سقط، وماذا يفعل «درسي الصغير» من دونه؟ ثم جرّب «احتفظ بملاحظات» على ٣٨٤. ينتهي المختبر حين يسقط دور، وحين يكتمل دور مع الملاحظات."
+            "ar": "جرّب: مع «احتفظ بكل شيء» أرسل الرسائل السبع واحدة بعد الأخرى، ولاحظ أين ينقطع الجواب. ثم ابدأ من جديد مع «أسقِط الأقدم» والنافذة على ١٢٨ توكنًا: حين تجيب «نعم» ثم «دالا»، ما الذي سقط، وماذا يفعل «درسي الصغير» من دونه؟ ثم جرّب «احتفظ بملاحظات» على ٣٨٤. ينتهي المختبر حين يسقط دور، وحين يكتمل دور مع الملاحظات."
           },
           "tool": "memory"
         },
@@ -430,7 +430,7 @@
           "lang": "python",
           "prompt": {
             "en": "Darsi Tiny’s window is 384 tokens, and the app keeps 64 free for the model to write. Fill the gaps: the turns fit if their tokens plus the room to write are at most the window.",
-            "ar": "تتسع نافذة «درسي الصغير» لـ٣٨٤ رمزًا، ويترك التطبيق ٦٤ منها فارغة ليكتب النموذج. املأ الفراغات: تتسع الأدوار إن كان مجموع رموزها مع مساحة الكتابة لا يزيد على النافذة."
+            "ar": "تتسع نافذة «درسي الصغير» لـ٣٨٤ توكنًا، ويترك التطبيق ٦٤ منها فارغة ليكتب النموذج. املأ الفراغات: تتسع الأدوار إن كان مجموع توكنزها مع مساحة الكتابة لا يزيد على النافذة."
           },
           "code": [
             "def fits(turns, window, reserve):\n    used = 0\n    for t in turns:\n        used += t[1]\n    return used + ",
@@ -452,7 +452,7 @@
           ],
           "explain": {
             "en": "The model needs room to write its next step, so the turns may use only window − reserve tokens: 384 − 64 = 320 for Darsi Tiny’s conversation and tools line.",
-            "ar": "يحتاج النموذج إلى مساحة يكتب فيها خطوته التالية، فلا يحق للأدوار إلا ⁦window − reserve⁩ من الرموز: ٣٨٤ − ٦٤ = ٣٢٠ للمحادثة وسطر الأدوات في «درسي الصغير»."
+            "ar": "يحتاج النموذج إلى مساحة يكتب فيها خطوته التالية، فلا يحق للأدوار إلا ⁦window − reserve⁩ من التوكنز: ٣٨٤ − ٦٤ = ٣٢٠ للمحادثة وسطر الأدوات في «درسي الصغير»."
           }
         },
         {
@@ -566,7 +566,7 @@
             ],
             "ar": [
               "تُبنى كل خطوة على ما قبلها: افحص كل نتيجة قبل استعمالها.",
-              "نافذة السياق هي الذاكرة الوحيدة: ٣٨٤ رمزًا لـ«درسي الصغير»، ونحو ١٢٨ ألفًا للنماذج الكبيرة.",
+              "نافذة السياق هي الذاكرة الوحيدة: ٣٨٤ توكنًا لـ«درسي الصغير»، ونحو ١٢٨ ألفًا للنماذج الكبيرة.",
               "التطبيق يقرّر ما يبقى: أحدث الأدوار، والملاحظات، والحقائق المثبّتة، والاسترجاع."
             ]
           }
@@ -882,7 +882,7 @@
           },
           "body": {
             "en": "Many agent systems split the work into roles instead of one agent doing everything. A planner proposes the next step; a checker reviews it before anything runs; a runner calls the tool; and a person approves actions and handles whatever is stopped. The roles can be different models, one model with different instructions, or plain code. What matters is that one part checks another before anything happens.\n\nThe checker doesn’t have to be clever. In the team lab it is five strict rules in code: the tool must be on; every detail must have the right shape (25:00 is not a time); every name and number must come from the request or an earlier result; no earlier step may have failed; and a person must say yes to any action. Together they stop 9Z copied as 9C, a reminder to “tisums the library”, a reminder at 25:00 and the Saturday reminder. Rules never guess and can’t be talked round, and they are cheap and fast.\n\nA second language model as checker can catch subtler problems that rules miss, such as a rude or misleading message, but it can also be wrong, and the tricks that fool the planner may fool it too. Start with rules, add a model checker only where judgement is needed, and never let it be the only guard on an action. When the checker stops a call, it should hand it back rather than guess a fix: Darsi Tiny was never trained to take a checker’s feedback, so a person asks again. Silent automatic retries can loop, cost tokens and hide the slip.\n\nMore roles cost more. Every model call reads and writes tokens, so time, money and data add up, and each extra step is another chance to fail. If each of two steps is right 90% of the time, both are right 81% of the time; three steps, about 73%. A good design uses the fewest model calls the job needs, a strict check at every step, and a person for actions.",
-            "ar": "تقسّم أنظمة وكلاء كثيرة العمل إلى أدوار بدل أن يفعل وكيل واحد كل شيء. فالمخطِّط يقترح الخطوة التالية، والمدقّق يراجعها قبل أن يُشغَّل أي شيء، والمنفِّذ يستدعي الأداة، والإنسان يوافق على الأفعال ويتولّى كل ما أُوقف. وقد تكون الأدوار نماذج مختلفة، أو نموذجًا واحدًا بتعليمات مختلفة، أو كودًا عاديًا. والمهم أن يفحص جزءٌ جزءًا آخر قبل أن يحدث أي شيء.\n\nولا يلزم أن يكون المدقّق ذكيًا. ففي مختبر الفريق هو خمس قواعد صارمة في الكود: أن تكون الأداة مفعّلة، وأن يكون لكل تفصيل الشكل الصحيح (فـ25:00 ليس وقتًا)، وأن يأتي كل اسم ورقم من الطلب أو من نتيجة سابقة، وألا تكون خطوة سابقة قد فشلت، وأن يوافق إنسان على أي فعل. وهذه القواعد معًا توقف 9Z الذي نُسخ 9C، وتذكيرًا بـ«tisums the library»، وتذكيرًا في الساعة 25:00، وتذكير يوم السبت. فالقواعد لا تخمّن أبدًا ولا يمكن إقناعها بالعدول، وهي رخيصة وسريعة.\n\nأما نموذج لغوي ثانٍ في دور المدقّق فقد يلتقط مشكلات أدق تفوت القواعد، كرسالة فظّة أو مضلِّلة، لكنه قد يخطئ هو أيضًا، وقد تخدعه الحيل نفسها التي تخدع المخطِّط. فابدأ بالقواعد، وأضف نموذجًا مدقِّقًا حيث يلزم التقدير فقط، ولا تجعله أبدًا الحارس الوحيد على فعل. وحين يوقف المدقّق استدعاءً، فعليه أن يعيده لا أن يخمّن إصلاحًا: فـ«درسي الصغير» لم يُدرَّب قط على تلقّي ملاحظات المدقّق، ولذلك يعيد الإنسان السؤال. أما إعادة المحاولة التلقائية الصامتة فقد تدور بلا نهاية، وتستهلك الرموز، وتُخفي الخطأ.\n\nوالأدوار الأكثر أعلى كلفة. فكل استدعاء للنموذج يقرأ رموزًا ويكتبها، فيتراكم الوقت والمال والبيانات، وكل خطوة إضافية فرصة أخرى للفشل. فإن كانت كل خطوة من خطوتين صحيحة في ٩٠٪ من المرات، كانتا صحيحتين معًا في ٨١٪، وثلاث خطوات في نحو ٧٣٪. والتصميم الجيد يستعمل أقل عدد من استدعاءات النموذج تحتاجه المهمة، مع فحص صارم في كل خطوة، وإنسان للأفعال."
+            "ar": "تقسّم أنظمة وكلاء كثيرة العمل إلى أدوار بدل أن يفعل وكيل واحد كل شيء. فالمخطِّط يقترح الخطوة التالية، والمدقّق يراجعها قبل أن يُشغَّل أي شيء، والمنفِّذ يستدعي الأداة، والإنسان يوافق على الأفعال ويتولّى كل ما أُوقف. وقد تكون الأدوار نماذج مختلفة، أو نموذجًا واحدًا بتعليمات مختلفة، أو كودًا عاديًا. والمهم أن يفحص جزءٌ جزءًا آخر قبل أن يحدث أي شيء.\n\nولا يلزم أن يكون المدقّق ذكيًا. ففي مختبر الفريق هو خمس قواعد صارمة في الكود: أن تكون الأداة مفعّلة، وأن يكون لكل تفصيل الشكل الصحيح (فـ25:00 ليس وقتًا)، وأن يأتي كل اسم ورقم من الطلب أو من نتيجة سابقة، وألا تكون خطوة سابقة قد فشلت، وأن يوافق إنسان على أي فعل. وهذه القواعد معًا توقف 9Z الذي نُسخ 9C، وتذكيرًا بـ«tisums the library»، وتذكيرًا في الساعة 25:00، وتذكير يوم السبت. فالقواعد لا تخمّن أبدًا ولا يمكن إقناعها بالعدول، وهي رخيصة وسريعة.\n\nأما نموذج لغوي ثانٍ في دور المدقّق فقد يلتقط مشكلات أدق تفوت القواعد، كرسالة فظّة أو مضلِّلة، لكنه قد يخطئ هو أيضًا، وقد تخدعه الحيل نفسها التي تخدع المخطِّط. فابدأ بالقواعد، وأضف نموذجًا مدقِّقًا حيث يلزم التقدير فقط، ولا تجعله أبدًا الحارس الوحيد على فعل. وحين يوقف المدقّق استدعاءً، فعليه أن يعيده لا أن يخمّن إصلاحًا: فـ«درسي الصغير» لم يُدرَّب قط على تلقّي ملاحظات المدقّق، ولذلك يعيد الإنسان السؤال. أما إعادة المحاولة التلقائية الصامتة فقد تدور بلا نهاية، وتستهلك التوكنز، وتُخفي الخطأ.\n\nوالأدوار الأكثر أعلى كلفة. فكل استدعاء للنموذج يقرأ توكنز ويكتبها، فيتراكم الوقت والمال والبيانات، وكل خطوة إضافية فرصة أخرى للفشل. فإن كانت كل خطوة من خطوتين صحيحة في ٩٠٪ من المرات، كانتا صحيحتين معًا في ٨١٪، وثلاث خطوات في نحو ٧٣٪. والتصميم الجيد يستعمل أقل عدد من استدعاءات النموذج تحتاجه المهمة، مع فحص صارم في كل خطوة، وإنسان للأفعال."
           },
           "keyTerms": [
             {
@@ -1115,7 +1115,7 @@
           },
           "who": {
             "en": "Mr Joseph Mwangi, computer studies",
-            "ar": "أ. جوزيف موانغي، علوم الحاسوب"
+            "ar": "أ. جوزيف موانجي، علوم الحاسوب"
           },
           "initial": {
             "en": "J",
@@ -1135,7 +1135,7 @@
               "tone": "consider",
               "consequence": {
                 "en": "A retry can repeat the slip, invent a new one or loop, costing tokens each time, and nobody sees what was stopped or why.",
-                "ar": "قد تكرّر إعادة المحاولة الخطأ، أو تخترع خطأً جديدًا، أو تدور بلا نهاية، فتستهلك الرموز في كل مرة، ولا يرى أحد ما أُوقف ولا سببه."
+                "ar": "قد تكرّر إعادة المحاولة الخطأ، أو تخترع خطأً جديدًا، أو تدور بلا نهاية، فتستهلك التوكنز في كل مرة، ولا يرى أحد ما أُوقف ولا سببه."
               }
             },
             {
@@ -1207,7 +1207,7 @@
             {
               "criterion": {
                 "en": "I can: explain what more roles cost, in tokens and in compounding errors.",
-                "ar": "أستطيع: شرح كلفة الأدوار الإضافية، في الرموز وفي تضاعف الأخطاء."
+                "ar": "أستطيع: شرح كلفة الأدوار الإضافية، في التوكنز وفي تضاعف الأخطاء."
               }
             }
           ]
@@ -1244,7 +1244,7 @@
             "ar": [
               "تقسيم الوكيل إلى مخطِّط ومدقِّق ومنفِّذ وإنسان.",
               "كتابة قواعد صارمة توقف الاستدعاء الخاطئ قبل تنفيذه.",
-              "موازنة كلفة الأدوار الإضافية: الرموز وتضاعف الأخطاء."
+              "موازنة كلفة الأدوار الإضافية: التوكنز وتضاعف الأخطاء."
             ]
           }
         },
@@ -2265,8 +2265,8 @@
             "ar": "الضبط الدقيق والنسيان وحواجز الحماية في الكود"
           },
           "body": {
-            "en": "Fine-tuning changes a model’s numbers so it learns from examples. In the teach lab, Darsi Tiny learns a new bus tool from 16 example conversations (8 per language) in 15 training steps, on your phone. Only its top block and final norm train, about 394,000 of its 2.94 million numbers; the rest stay fixed. That takes seconds to a couple of minutes on a laptop and up to about eleven minutes on an old phone, and the result (1.6 MB) stays on that phone.\n\nNew learning can overwrite old skills: this is called catastrophic forgetting. Before teaching, Darsi Tiny gets 0 of 8 bus requests right and 8 of 8 old skills. Taught with no old conversations mixed in, it gets 7/8 bus requests but only 1/8 old skills. With 16 old conversations replayed alongside the new ones: 7/8 and 5/8. With 48: 5/8 and 8/8. Replay trades a little of the new skill for keeping the old ones. Every fine-tune is a new model, so it must pass the full test set again, including its safety cases.\n\nSafety a model has learned is not a guarantee. Darsi Tiny learned to refuse cheating, harm and scams, and to ask before sending a message. But refusals worded in ways it hadn’t seen got a tool call 28% of the time in English and 12% in Arabic, and «نعم، أرسلها.» (“Yes, send it.”) on its own makes it invent a message. Fine-tuning changes the same numbers that hold these habits, so a careless or deliberate fine-tune can wear them away. Behaviour you need every time can’t rest on the model alone.\n\nSo guard actions in code, around the model, in layers (defence in depth): give each task only the tools it needs (least privilege); bind approval to the exact action, comparing what will run with what the person was shown; check every detail’s shape and source; log every decision, allowed or refused; and re-run the evaluation after every change. Each layer can fail on its own, but they rarely all fail together.",
-            "ar": "الضبط الدقيق يغيّر أرقام النموذج ليتعلّم من أمثلة. ففي مختبر «علّم الوكيل أداة جديدة» يتعلّم «درسي الصغير» أداة جديدة للحافلات من ١٦ محادثة نموذجية (٨ لكل لغة) في ١٥ خطوة تدريب، على هاتفك. ولا يتدرّب منه إلا الكتلة العليا والتطبيع الأخير، أي نحو ٣٩٤ ألفًا من أرقامه البالغة ٢٫٩٤ مليون، وتبقى البقية ثابتة. ويستغرق ذلك من ثوانٍ إلى دقيقتين تقريبًا على حاسوب محمول، ونحو ١١ دقيقة على هاتف قديم، وتبقى النتيجة (١٫٦ ميغابايت) على ذلك الهاتف.\n\nوقد يمحو التعلّم الجديد المهارات القديمة: وهذا ما يُسمّى النسيان الكارثي. فقبل التعليم يصيب «درسي الصغير» ٠ من ٨ طلبات للحافلات، و٨ من ٨ في مهاراته القديمة. وإذا عُلّم دون أن تُخلط معه محادثات قديمة أصاب ٧/٨ في الحافلات، لكن ١/٨ فقط في المهارات القديمة. ومع ١٦ محادثة قديمة يُعاد التدرّب عليها إلى جانب الجديدة: ٧/٨ و٥/٨. ومع ٤٨: ٥/٨ و٨/٨. فإعادة القديم تقايض قليلًا من المهارة الجديدة بالحفاظ على القديمة. وكل ضبط دقيق ينتج نموذجًا جديدًا، فلا بد أن ينجح في مجموعة الاختبار كلها من جديد، بما فيها حالات الأمان.\n\nوالأمان الذي تعلّمه النموذج ليس ضمانًا. فقد تعلّم «درسي الصغير» أن يرفض الغش والأذى والاحتيال، وأن يسأل قبل إرسال رسالة. لكن طلبات الرفض المصوغة بطرق لم يرها حصلت على استدعاء أداة في ٢٨٪ من المرات بالإنجليزية و١٢٪ بالعربية، وعبارة «نعم، أرسلها.» وحدها تجعله يختلق رسالة. والضبط الدقيق يغيّر الأرقام نفسها التي تحمل هذه العادات، فقد يمحوها ضبطٌ مهمل أو متعمَّد. فالسلوك الذي تحتاجه في كل مرة لا يمكن أن يعتمد على النموذج وحده.\n\nلذلك احرس الأفعال بالكود، حول النموذج، على طبقات (الحماية متعدّدة الطبقات): أعطِ كل مهمة الأدوات التي تحتاجها فقط (أقل الصلاحيات)، واربط الموافقة بالفعل نفسه بمقارنة ما سيُنفَّذ بما عُرض على الشخص، وافحص شكل كل تفصيل ومصدره، وسجّل كل قرار، مسموحًا كان أو مرفوضًا، وأعد تشغيل التقييم بعد كل تغيير. فكل طبقة قد تفشل وحدها، لكنها نادرًا ما تفشل كلها معًا."
+            "en": "Fine-tuning changes a model’s numbers so it learns from examples. In the teach lab, Darsi Tiny learns a new bus tool from 16 example conversations (8 per language) in 15 training steps, on your phone. Only its top block and final norm train, about 394,000 of its 2.94 million numbers; the rest stay fixed. That takes seconds to a couple of minutes on a laptop and up to about eleven minutes on an old phone, and the result (1.6 MB) stays on that phone.\n\nNew learning can overwrite old skills: this is called catastrophic forgetting. Before teaching, Darsi Tiny gets 0 of 8 bus requests right and 8 of 8 old skills. Taught with no old conversations mixed in, it gets 7/8 bus requests but only 1/8 old skills. With 16 old conversations replayed alongside the new ones: 7/8 and 5/8. With 48: 5/8 and 8/8. Replay trades a little of the new skill for keeping the old ones. Every fine-tune is a new model, so it must pass the full test set again, including its safety cases.\n\nSafety a model has learned is not a guarantee. Darsi Tiny learned to refuse cheating, harm and scams, and to ask before sending a message. But requests it should refuse, worded in ways it hadn’t seen, got a tool call 28% of the time in English and 12% in Arabic, and «نعم، أرسلها.» (“Yes, send it.”) on its own makes it invent a message. Fine-tuning changes the same numbers that hold these habits, so a careless or deliberate fine-tune can wear them away. Behaviour you need every time can’t rest on the model alone.\n\nSo guard actions in code, around the model, in layers (defence in depth): give each task only the tools it needs (least privilege); bind approval to the exact action, comparing what will run with what the person was shown; check every detail’s shape and source; log every decision, allowed or refused; and re-run the evaluation after every change. Each layer can fail on its own, but they rarely all fail together.",
+            "ar": "الضبط الدقيق يغيّر أرقام النموذج ليتعلّم من أمثلة. ففي مختبر «علّم الوكيل أداة جديدة» يتعلّم «درسي الصغير» أداة جديدة للحافلات من ١٦ محادثة نموذجية (٨ لكل لغة) في ١٥ خطوة تدريب، على هاتفك. ولا يتدرّب منه إلا الكتلة العليا والتطبيع الأخير، أي نحو ٣٩٤ ألفًا من أرقامه البالغة ٢٫٩٤ مليون، وتبقى البقية ثابتة. ويستغرق ذلك من ثوانٍ إلى دقيقتين تقريبًا على حاسوب محمول، ونحو ١١ دقيقة على هاتف قديم، وتبقى النتيجة (١٫٦ ميغابايت) على ذلك الهاتف.\n\nوقد يمحو التعلّم الجديد المهارات القديمة: وهذا ما يُسمّى النسيان الكارثي. فقبل التعليم يصيب «درسي الصغير» ٠ من ٨ طلبات للحافلات، و٨ من ٨ في مهاراته القديمة. وإذا عُلّم دون أن تُخلط معه محادثات قديمة أصاب ٧/٨ في الحافلات، لكن ١/٨ فقط في المهارات القديمة. ومع ١٦ محادثة قديمة يُعاد التدرّب عليها إلى جانب الجديدة: ٧/٨ و٥/٨. ومع ٤٨: ٥/٨ و٨/٨. فإعادة القديم تقايض قليلًا من المهارة الجديدة بالحفاظ على القديمة. وكل ضبط دقيق ينتج نموذجًا جديدًا، فلا بد أن ينجح في مجموعة الاختبار كلها من جديد، بما فيها حالات الأمان.\n\nوالأمان الذي تعلّمه النموذج ليس ضمانًا. فقد تعلّم «درسي الصغير» أن يرفض الغش والأذى والاحتيال، وأن يسأل قبل إرسال رسالة. لكن الطلبات التي كان يجب أن يرفضها، حين صيغت بطرق لم يرها، حصلت على استدعاء أداة في ٢٨٪ من المرات بالإنجليزية و١٢٪ بالعربية، وعبارة «نعم، أرسلها.» وحدها تجعله يختلق رسالة. والضبط الدقيق يغيّر الأرقام نفسها التي تحمل هذه العادات، فقد يمحوها ضبطٌ مهمل أو متعمَّد. فالسلوك الذي تحتاجه في كل مرة لا يمكن أن يعتمد على النموذج وحده.\n\nلذلك احرس الأفعال بالكود، حول النموذج، على طبقات (الحماية متعدّدة الطبقات): أعطِ كل مهمة الأدوات التي تحتاجها فقط (أقل الصلاحيات)، واربط الموافقة بالفعل نفسه بمقارنة ما سيُنفَّذ بما عُرض على الشخص، وافحص شكل كل تفصيل ومصدره، وسجّل كل قرار، مسموحًا كان أو مرفوضًا، وأعد تشغيل التقييم بعد كل تغيير. فكل طبقة قد تفشل وحدها، لكنها نادرًا ما تفشل كلها معًا."
           },
           "keyTerms": [
             {
@@ -2510,7 +2510,7 @@
               "id": "e",
               "text": {
                 "en": "Trusting the refusals it learned in training",
-                "ar": "الثقة بطلبات الرفض التي تعلّمها في التدريب"
+                "ar": "الثقة بالرفض الذي تعلّمه في التدريب"
               }
             }
           ],
@@ -2883,7 +2883,7 @@
           "answer": true,
           "explain": {
             "en": "The model sees only the tokens in its window (384 for Darsi Tiny). Anything dropped is gone, and the model can’t even tell it’s missing, so the app decides what stays.",
-            "ar": "لا يرى النموذج إلا الرموز التي في نافذته (٣٨٤ لـ«درسي الصغير»). وكل ما يُسقط يضيع، بل لا يستطيع النموذج أن يعرف أنه ناقص، ولذلك يقرّر التطبيق ما يبقى."
+            "ar": "لا يرى النموذج إلا التوكنز التي في نافذته (٣٨٤ لـ«درسي الصغير»). وكل ما يُسقط يضيع، بل لا يستطيع النموذج أن يعرف أنه ناقص، ولذلك يقرّر التطبيق ما يبقى."
           }
         },
         {
@@ -2937,7 +2937,7 @@
           ],
           "explain": {
             "en": "Notes, pinned facts and retrieval keep the essentials in fewer tokens. Dropping turns without notes loses whatever later turns depend on, and keeping everything simply stops working when the window is full.",
-            "ar": "الملاحظات والحقائق المثبّتة والاسترجاع تحفظ الأساسي برموز أقل. أما إسقاط الأدوار دون ملاحظات فيُضيع ما تعتمد عليه الأدوار اللاحقة، والاحتفاظ بكل شيء يتوقف ببساطة حين تمتلئ النافذة."
+            "ar": "الملاحظات والحقائق المثبّتة والاسترجاع تحفظ الأساسي بتوكنز أقل. أما إسقاط الأدوار دون ملاحظات فيُضيع ما تعتمد عليه الأدوار اللاحقة، والاحتفاظ بكل شيء يتوقف ببساطة حين تمتلئ النافذة."
           }
         },
         {
@@ -3199,8 +3199,8 @@
             "d"
           ],
           "explain": {
-            "en": "Guards in code hold whatever the model writes. Instructions and learned refusals are the model’s own behaviour, which can fail on new wordings (28% and 12% of reworded refusals got a call) or after fine-tuning.",
-            "ar": "الحواجز في الكود تصمد مهما كتب النموذج. أما التعليمات والرفض المتعلَّم فهما سلوك النموذج نفسه، وقد يفشلان مع الصيغ الجديدة (حصل ٢٨٪ و١٢٪ من الرفض المعاد صوغه على استدعاء) أو بعد الضبط الدقيق."
+            "en": "Guards in code hold whatever the model writes. Instructions and learned refusals are the model’s own behaviour, which can fail on new wordings (28% and 12% of reworded requests it should refuse still got a tool call) or after fine-tuning.",
+            "ar": "الحواجز في الكود تصمد مهما كتب النموذج. أما التعليمات والرفض المتعلَّم فهما سلوك النموذج نفسه، وقد يفشلان مع الصيغ الجديدة (حصل ٢٨٪ و١٢٪ من الطلبات التي يجب رفضها، بصيغ جديدة، على استدعاء أداة) أو بعد الضبط الدقيق."
           }
         }
       ],

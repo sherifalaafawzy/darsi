@@ -12,7 +12,7 @@ export default function Classifier(_: LabProps) {
     <TryThis items={[
       L("Change the test to “Confirm the bank password today”: none of its words are in the examples, so the model only guesses, at 50%.", "غيّر نص الاختبار إلى «أكد كلمة سر البنك اليوم»: لا توجد أي كلمة منه في الأمثلة، فيكتفي النموذج بالتخمين، بثقة ٥٠٪."),
       L("Type that message in “New example”, add it to Phishing and test again: now the model gets it right, because it has seen those words.", "اكتب الرسالة نفسها في «مثال جديد» وأضفها إلى «تصيّد»، ثم اختبر من جديد: يصيب النموذج الآن، لأنه رأى هذه الكلمات."),
-      L("Test “Click now to see the exam timetable”: words from both lists compete, and the model calls it safe. With few examples, a model is easy to fool.", "اختبر «اضغط الآن لترى جدول الامتحانات»: تتنافس كلمات من القائمتين، فيحكم النموذج بأنها آمنة. النموذج الذي تعلّم من أمثلة قليلة سهل الخداع."),
+      L("Test “Click now to see the exam timetable”: words from both lists compete, and the model calls it safe. With few examples, a model is easy to fool.", "اختبر «اضغط الآن لترى جدول امتحانات يوم الثلاثاء»: تتنافس كلمات من القائمتين، فيحكم النموذج بأنها آمنة. النموذج الذي تعلّم من أمثلة قليلة سهل الخداع."),
     ]} />
     <TrainClassifier key={lang} kicker={L("AI lab", "مختبر الذكاء الاصطناعي")} title={L("Teach the machine", "علّم الآلة")}
     addLabel={L("Add example", "أضف مثالًا")} draftLabel={L("New example", "مثال جديد")} testLabel={L("Test the model", "اختبر النموذج")} guessLabel={L("The model thinks:", "يظن النموذج أنها:")} confidenceLabel={L("Confidence", "الثقة")}

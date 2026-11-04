@@ -7,8 +7,8 @@
     "ar": "تنظيف البيانات وتنظيمها"
   },
   "summary": {
-    "en": "Turn messy registers and mark sheets into tidy tables you can trust: lay them out well, make names agree, deal with blanks and repeats, and join sheets by pupil ID, by hand and with a few lines of Python you can run again next week.",
-    "ar": "حوّل سجلّات الحضور وأوراق الدرجات غير المرتّبة إلى جداول مرتّبة تثق بها: نظّم تخطيطها، ووحّد الأسماء، وتعامل مع الفراغات والتكرار، واربط الأوراق برقم التلميذ، باليد وببضعة أسطر من Python تعيد تشغيلها الأسبوع القادم."
+    "en": "Turn messy registers and mark sheets into tidy tables you can trust: lay them out well, make names agree, deal with blanks and repeats, and join sheets by pupil ID, by hand and with a few lines of Python you can run again next week. Before this: “Python for teachers” (Programming, level 2).",
+    "ar": "حوّل سجلّات الحضور وأوراق الدرجات غير المرتّبة إلى جداول مرتّبة تثق بها: نظّم تخطيطها، ووحّد الأسماء، وتعامل مع الفراغات والتكرار، واربط الأوراق برقم التلميذ، باليد وببضعة أسطر من Python تعيد تشغيلها الأسبوع القادم. قبل هذا: «Python للمعلمين» (البرمجة، المستوى ٢)."
   },
   "lessons": [
     {
@@ -343,25 +343,22 @@
           "id": "p4",
           "lang": "python",
           "prompt": {
-            "en": "Put the lines in order (and indent them): the program prints the class’s average maths mark from marks.csv.",
-            "ar": "رتّب الأسطر (وأزِحها): يطبع البرنامج متوسط درجة الرياضيات في الفصل من marks.csv."
+            "en": "csv is already imported (import csv). Put the lines in order and indent them: the program prints the class’s average maths mark from marks.csv, leaving out pupils whose mark is blank.",
+            "ar": "استُورد csv مسبقًا (import csv). رتّب الأسطر وأزِحها: يطبع البرنامج متوسط درجة الرياضيات في الفصل من marks.csv، دون التلاميذ الذين درجتهم فارغة."
           },
           "lines": [
-            "import csv",
-            "total = 0",
-            "count = 0",
-            "with open(\"marks.csv\") as f:",
-            "    for row in csv.DictReader(f):",
-            "        total = total + int(row[\"maths\"])",
-            "        count = count + 1",
-            "print(total / count)"
+            "marks = []",
+            "for row in csv.DictReader(open(\"marks.csv\")):",
+            "    if row[\"maths\"] != \"\":",
+            "        marks.append(int(row[\"maths\"]))",
+            "print(sum(marks) / len(marks))"
           ],
           "distractors": [
-            "        total = total + row[\"maths\"]"
+            "        marks.append(row[\"maths\"])"
           ],
           "explain": {
-            "en": "Start the total and the count at 0, then for every row add the mark (as a number, with int()) and count one more pupil. Only after the loop, divide the total by the count. Adding row[\"maths\"] without int() would add text, which fails.",
-            "ar": "ابدأ المجموع والعدد من 0، ثم أضف لكل صف الدرجة (عددًا، بـ ⁦int()⁩) وزِد العدد واحدًا. وبعد انتهاء الحلقة فقط، اقسم المجموع على العدد. أما إضافة ⁦row[\"maths\"]⁩ دون ⁦int()⁩ فتضيف نصًّا، وهذا يفشل."
+            "en": "The empty list comes first, so the loop has somewhere to put the marks. For each row, the if skips a blank mark, and the rest are appended as numbers, with int(). Only after the loop, average them: sum(marks) / len(marks). Each line needs the one before it, so there is only one order that works. Appending row[\"maths\"] without int() would store text, and sum() would fail.",
+            "ar": "تأتي القائمة الفارغة أولًا، ليجد البرنامج مكانًا يضع فيه الدرجات. ولكل صف، تتخطّى if الدرجة الفارغة، وتُضاف البقية أعدادًا بـ ⁦int()⁩. وبعد انتهاء الحلقة فقط، احسب المتوسط: ⁦sum(marks) / len(marks)⁩. وكل سطر يحتاج إلى الذي قبله، فلا يصلح إلا ترتيب واحد. أما إضافة ⁦row[\"maths\"]⁩ دون ⁦int()⁩ فتخزّن نصًّا، فتفشل ⁦sum()⁩."
           }
         },
         {
@@ -1095,7 +1092,7 @@
           "fix": "    clean = name.strip().lower()",
           "explain": {
             "en": "lower() makes “amina ” small, but the space at the end stays, so “amina ” and “amina” are still two names. Adding strip() removes the space: Amina and Tunde, 2 pupils.",
-            "ar": "تجعل ⁦lower()⁩ الاسم «amina » صغيرًا، لكن المسافة في آخره تبقى، فيبقى «amina » و«amina» اسمين. وإضافة ⁦strip()⁩ تحذف المسافة: أمينة وتونده، تلميذان."
+            "ar": "تجعل ⁦lower()⁩ الاسم «amina » صغيرًا، لكن المسافة في آخره تبقى، فيبقى «amina » و«amina» اسمين. وإضافة ⁦strip()⁩ تحذف المسافة: أمينة وتوندي، تلميذان."
           }
         },
         {
@@ -2390,7 +2387,7 @@
           "answer": "a",
           "explain": {
             "en": "names.get(2, \"?\") finds pupil 2, Tunde. Pupil 7 isn’t in the dictionary, so .get gives the \"?\" instead of stopping with an error, as names[7] would.",
-            "ar": "تجد ⁦names.get(2, \"?\")⁩ التلميذ 2، تونده. أما التلميذ 7 فليس في القاموس، فتعطي .get علامة ⁦\"?\"⁩ بدل التوقّف بخطأ، كما كانت ستفعل ⁦names[7]⁩."
+            "ar": "تجد ⁦names.get(2, \"?\")⁩ التلميذ 2، توندي. أما التلميذ 7 فليس في القاموس، فتعطي .get علامة ⁦\"?\"⁩ بدل التوقّف بخطأ، كما كانت ستفعل ⁦names[7]⁩."
           }
         },
         {

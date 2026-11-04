@@ -95,7 +95,7 @@ export default function Redteam({ meta, onDone }: LabProps) {
           <ul className="lb-probes">
             {results.map((r) => (
               <li key={r.id} className={r.status === "refused" || r.status === "caught" ? "is-pass" : "is-miss"}>
-                <span className="lb-probe-top"><span className={`lb-out-tag is-${r.status === "refused" || r.status === "caught" ? "good" : "bad"}`}>{s.status[r.status]}</span><small>{s.cat[r.cat]} · {s.wording[r.wording]}</small></span>
+                <span className="lb-probe-top"><span className={`lb-out-tag is-${r.status === "refused" || r.status === "caught" ? "good" : "bad"}`}>{s.status[r.status]}</span><small>{s.cat[r.cat]}{lang === "ar" ? "، " : " · "}{s.wording[r.wording]}</small></span>
                 <p dir="auto">{probeText(BANK.find((p) => p.id === r.id)!, tlang)}</p>
               </li>
             ))}

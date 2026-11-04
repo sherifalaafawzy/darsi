@@ -17,17 +17,19 @@ export function LabFrame({ title, kicker = "AI lab", takeaway, icon = "ai", chil
 export interface Ingredient { key: string; label: string; text: string; on?: boolean; }
 export interface PromptBuilderProps extends LabProps {
   ingredients: Ingredient[];
-  /** Example answers indexed by number of active ingredients (offline, pre-reviewed). */
-  outputs: string[];
+  /** Example answer for the keys that are on (offline, pre-reviewed): lets each ingredient have its own effect. */
+  answer?: (on: string[]) => string;
+  /** Older, simpler form: example answers indexed by the number of ingredients on. Used when `answer` is not given. */
+  outputs?: string[];
   ran?: boolean;
   strengthLabel?: string; strengthText?: (on: number, total: number) => string; runLabel?: string; outputLabel?: string; emptyText?: string;
 }
-export function PromptBuilder({ ingredients, outputs, ran: initRan, strengthLabel = "Prompt strength", strengthText, runLabel = "Ask the AI", outputLabel = "Example answer", emptyText = "Tap ingredients to build a prompt", ...lab }: PromptBuilderProps) {
+export function PromptBuilder({ ingredients, answer, outputs = [], ran: initRan, strengthLabel = "Prompt strength", strengthText, runLabel = "Ask the AI", outputLabel = "Example answer", emptyText = "Tap ingredients to build a prompt", ...lab }: PromptBuilderProps) {
   const [on, setOn] = useState(ingredients.filter((x) => x.on).map((x) => x.key));
   const [ran, setRan] = useState(!!initRan);
   const flip = (k: string) => { setOn(on.includes(k) ? on.filter((x) => x !== k) : [...on, k]); setRan(false); };
   const prompt = ingredients.filter((x) => on.includes(x.key)).map((x) => x.text).join(" ");
-  const out = outputs[Math.min(on.length, outputs.length - 1)];
+  const out = answer ? (on.length ? answer(ingredients.filter((x) => on.includes(x.key)).map((x) => x.key)) : "") : outputs[Math.min(on.length, outputs.length - 1)];
   return (
     <LabFrame {...lab} icon="chat">
       <div className="dr-pb-ings">

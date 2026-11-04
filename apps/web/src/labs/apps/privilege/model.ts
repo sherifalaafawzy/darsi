@@ -17,7 +17,7 @@ export const ALL_TOOLS = TOOLS;
 
 export interface Task { id: string; en: string; ar: string; needs: ToolName[] }
 export const TASKS: Task[] = [
-  { id: "plan", en: "Plan tomorrow's lessons for 6B", ar: "خطّط لحصص الغد للصف 6B", needs: ["timetable", "library"] },
+  { id: "plan", en: "Plan tomorrow's lessons for 6B", ar: "خطّط لحصص الغد للفصل 6B", needs: ["timetable", "library"] },
   { id: "word", en: "Explain a word and find a book on it", ar: "اشرح كلمة وابحث عن كتاب عنها", needs: ["glossary", "library"] },
   { id: "trip", en: "Message a parent that the trip is on Friday", ar: "راسل وليَّ أمرٍ بأن الرحلة يوم الجمعة", needs: ["send_message"] },
   { id: "far", en: "How far is the next village, and the weather there", ar: "كم تبعد القرية التالية، وكيف طقسها", needs: ["route", "weather"] },

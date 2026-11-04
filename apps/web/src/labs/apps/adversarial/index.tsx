@@ -40,7 +40,7 @@ const S = {
 
 export default function Adversarial({ meta, onDone }: LabProps) {
   const s = useS(S);
-  const { num } = useI18n();
+  const { num, lang } = useI18n();
   const test = useMemo(() => trainingSet(6, 777), []);
   const net = useRef(makeNet());
   const [trained, setTrained] = useState(false);
@@ -85,7 +85,7 @@ export default function Adversarial({ meta, onDone }: LabProps) {
               <div className="stack-sm">
                 <span className="dr-field-label">{s.attacked}</span>
                 <PixelGrid n={10} value={result!.img} label={s.attacked} readOnly />
-                <p className="lb-note">{s.thinks}: <strong>{s.shape[SHAPES[nowLabel]]}</strong> ({num(pAdv![nowLabel], { style: "percent" })}) · {s.changed(num(result!.changed.length))}</p>
+                <p className="lb-note">{s.thinks}: <strong>{s.shape[SHAPES[nowLabel]]}</strong> ({num(pAdv![nowLabel], { style: "percent" })}){lang === "ar" ? "، " : " · "}{s.changed(num(result!.changed.length))}</p>
               </div>
             </div>
             <p className={`lb-verdict ${nowLabel !== sample.label ? "is-warn" : ""}`} aria-live="polite">{nowLabel !== sample.label ? s.flipped(s.shape[SHAPES[sample.label]], s.shape[SHAPES[nowLabel]]) : s.held}</p>

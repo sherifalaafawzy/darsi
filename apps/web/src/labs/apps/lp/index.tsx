@@ -28,8 +28,8 @@ const S = {
     corners: "Corners", bestAt: "Best corner", bestVal: "Best profit", tightH: (a: string) => `Limits used up at the best corner: ${a}.`,
     try1: "Drag “Profit to aim for” up, slowly. The dashed line slides up the shaded area; the last point it touches is a corner, (3, 5), earning 290.",
     try2: "Raise the price of tomatoes to 50 and press “Jump to the best”: the best plan jumps to another corner, (6, 2). The plans didn't change, only what you value.",
-    try3: "Set the pupils' hours to 24: the hours line moves out and stops mattering, so the corners change. Tap a point inside the shaded area: it fits but earns less than the best corner.",
-    takeaway: "This is a linear program: a straight-line goal and straight-line limits. The best answer is always at a corner, so the simplex method (in every optimisation solver) walks from corner to corner instead of trying every plan.",
+    try3: "Set the pupils' hours to 24: the hours line moves out, so the corners change. Tap a point inside the shaded area: it fits but earns less than the best corner.",
+    takeaway: "This is a linear program: a straight-line goal and straight-line limits. The best answer is always at a corner, so the simplex method (used inside many linear-programming solvers) walks from corner to corner instead of trying every plan.",
   },
   ar: {
     intro: "في حديقة المدرسة مكان لأحواض الطماطم (x) وأحواض الفاصولياء (y). وهناك ثلاثة قيود: الأرض والماء والساعات التي يستطيع التلاميذ العمل فيها. كل خطة تحترم القيود الثلاثة تقع في المنطقة المظلّلة. فأيّ خطة تربح أكثر؟",
@@ -49,8 +49,8 @@ const S = {
     corners: "الزوايا", bestAt: "أفضل زاوية", bestVal: "أكبر ربح", tightH: (a: string) => `القيود المستنفدة عند أفضل زاوية: ${a}.`,
     try1: "اسحب «الربح المطلوب» إلى الأعلى ببطء. ينزلق الخط المتقطّع فوق المنطقة المظلّلة، وآخر نقطة يلمسها زاوية: (٣، ٥)، وربحها ٢٩٠.",
     try2: "ارفع سعر الطماطم إلى ٥٠ واضغط «انتقل إلى الأفضل»: تقفز أفضل خطة إلى زاوية أخرى، (٦، ٢). لم تتغيّر الخطط، بل تغيّر ما تقدّره.",
-    try3: "اجعل ساعات التلاميذ ٢٤: يبتعد خط الساعات ولا يعود مؤثّرًا، فتتغيّر الزوايا. ثم المس نقطة داخل المنطقة المظلّلة: تصلح، لكنها تربح أقل من أفضل زاوية.",
-    takeaway: "هذا برنامج خطي: هدف على شكل خط مستقيم وقيود على شكل خطوط مستقيمة. وأفضل إجابة تقع دائمًا في زاوية، ولذلك تمشي طريقة السمبلكس (الموجودة في كل برامج التحسين) من زاوية إلى زاوية بدل أن تجرّب كل الخطط.",
+    try3: "اجعل ساعات التلاميذ ٢٤: يبتعد خط الساعات، فتتغيّر الزوايا. ثم المس نقطة داخل المنطقة المظلّلة: تصلح، لكنها تربح أقل من أفضل زاوية.",
+    takeaway: "هذا برنامج خطي: هدف على شكل خط مستقيم وقيود على شكل خطوط مستقيمة. وأفضل إجابة تقع دائمًا في زاوية، ولذلك تمشي طريقة السمبلكس (المستعملة في كثير من برامج حل البرامج الخطية) من زاوية إلى زاوية بدل أن تجرّب كل الخطط.",
   },
 };
 

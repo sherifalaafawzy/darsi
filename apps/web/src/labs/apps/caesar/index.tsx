@@ -22,7 +22,7 @@ const S = {
     try1: "In Hide a message, move the Key: every letter moves by the same amount, so the same letter always becomes the same secret letter.",
     try2: "In Crack a message, find the tallest bar: it is probably “e”. Move your guess until the bars line up with the dots, and the message reads.",
     try3: (n: string) => `Press Let the computer try every key: it checks all ${n} keys in a blink and ranks them by how much the letters look like English.`,
-    takeaway: "A cipher with only 25 keys is no secret: a computer tries them all in a blink, and letter counts give it away even by hand. Modern encryption has more keys than there are atoms on Earth, and hides letter patterns completely.",
+    takeaway: "A cipher with only 25 keys is no secret: a computer tries them all in a blink, and letter counts give it away even by hand. Modern encryption has more keys than there are grains of sand on Earth, and hides letter patterns completely.",
   },
   ar: {
     intro: "أخفى يوليوس قيصر رسائله بتحريك كل حرف بضعة مواضع في الأبجدية. جرّب ذلك، ثم اكسر رسالة سرية كما يفعل محلّلو الشيفرات: بعدّ الحروف.",
@@ -35,7 +35,7 @@ const S = {
     try1: "في «أخفِ رسالة» حرّك المفتاح: يتحرّك كل حرف بالمقدار نفسه، فيصبح الحرف نفسه دائمًا الحرفَ السري نفسه.",
     try2: "في «اكسر رسالة» ابحث عن أطول عمود، فهو غالبًا حرف «ا». حرّك تخمينك حتى تصطف الأعمدة مع النقاط، فتصبح الرسالة مقروءة.",
     try3: (n: string) => `اضغط «دع الحاسوب يجرّب كل المفاتيح»: يفحص المفاتيح الـ${n} كلها في لمحة، ويرتّبها بحسب قرب حروفها من العربية.`,
-    takeaway: "الشيفرة التي لها ٢٧ مفتاحًا فقط ليست سرًا: يجرّبها الحاسوب كلها في لمحة، وعدد الحروف يفضحها حتى باليد. أما التشفير الحديث فمفاتيحه أكثر من ذرات الأرض، ويخفي أنماط الحروف تمامًا.",
+    takeaway: "الشيفرة التي لها ٢٧ مفتاحًا فقط ليست سرًا: يجرّبها الحاسوب كلها في لمحة، وعدد الحروف يفضحها حتى باليد. أما التشفير الحديث فمفاتيحه أكثر من حبّات الرمل على الأرض، ويخفي أنماط الحروف تمامًا.",
   },
 };
 
