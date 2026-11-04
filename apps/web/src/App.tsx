@@ -42,6 +42,7 @@ const CourseAccess = lazy(() => import("./results/CourseAccess").then((m) => ({ 
 const CONTENT = { loadCatalog, loadUnit };
 const SuperAdmin = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.SuperAdmin })));
 const AnalyticsPage = lazy(() => import("./admin/Analytics").then((m) => ({ default: m.AnalyticsPage })));
+const PeoplePage = lazy(() => import("./admin/Analytics").then((m) => ({ default: m.PeoplePage })));
 const OrgAnalytics = lazy(() => import("./admin/Analytics").then((m) => ({ default: m.OrgAnalytics })));
 const OrgReport = lazy(() => import("./admin/OrgReport").then((m) => ({ default: m.OrgReport })));
 const OrgsAdmin = lazy(() => import("./admin/OrgsAdmin").then((m) => ({ default: m.OrgsAdmin })));
@@ -183,7 +184,8 @@ function Routed() {
             <Route path="super/certificates" element={<CertificatesPage />} />
             <Route path="super/orgs/:orgId" element={<OrgAnalytics />} />
             <Route path="super/orgs/:orgId/report" element={<OrgReport />} />
-            <Route path="super/people/:uid" element={<PersonDetail back="/super/analytics" />} />
+            <Route path="super/people" element={<PeoplePage />} />
+            <Route path="super/people/:uid" element={<PersonDetail back="/super/people" />} />
             <Route path="super/content" element={<ContentList />} />
             <Route path="super/content/:unitId" element={<UnitEditor Player={LessonPlayer} />} />
             <Route path="super/tracks" element={<TracksPage />} />

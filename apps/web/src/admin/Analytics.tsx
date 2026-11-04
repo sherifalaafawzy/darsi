@@ -141,11 +141,23 @@ function OrgsTable({ o, onOpen }: { o?: Overview; onOpen: (id: string) => void }
   );
 }
 
-/** Every account: most recently active first, or found by name. */
-function People() {
+/** /super/people (platform admins): every account, from the nav rail. One page of 50 at a time, read once. */
+export function PeoplePage() {
+  const { t } = useI18n();
+  return (
+    <>
+      <AppBar title={t("nav.people")} />
+      <main className="screen wide stack-lg"><People paged /></main>
+    </>
+  );
+}
+
+/** Every account: most recently active first, or found by name. `paged` adds "Show more" (50 more each time). */
+function People({ paged }: { paged?: boolean }) {
   const { t } = useI18n();
   const [q, setQ] = useState(""), [search, setSearch] = useState("");
-  const people = usePeople(search);
+  const [max, setMax] = useState(50);
+  const people = usePeople(search, max);
   return (
     <section className="panel stack">
       <div className="table-tools"><h3>{t("an.people")}</h3>
@@ -156,6 +168,7 @@ function People() {
       </div>
       {people.error && <p className="notice err">{people.error.message}</p>}
       {people.data && (people.data.length ? <PeopleTable rows={people.data} to={(m) => `/super/people/${m.uid}`} /> : <p className="muted">{t("an.noPeople")}</p>)}
+      {paged && !search && people.data?.length === max && <div className="row-gap"><Button size="sm" variant="secondary" onClick={() => setMax(max + 50)}>{t("an.showMore")}</Button></div>}
       <p className="muted small">{search ? t("an.searchHint") : t("an.recentHint")}</p>
     </section>
   );

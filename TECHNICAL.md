@@ -148,6 +148,7 @@ AuthProvider            Firebase user + custom claims {role, orgId}; claims are 
 | `/super/tracks` | `superadmin` | Tracks and levels for every unit (see [Tracks and levels](#tracks-and-levels)) |
 | `/super/languages`, `/super/languages/:code` | `superadmin` | Languages beyond English and Arabic: add, translate, publish (see [Languages and right-to-left](#languages-and-right-to-left)) |
 | `/super/orgs` | `superadmin` | Every organization; create one (see [Platform administration](#platform-administration)) |
+| `/super/people` | `superadmin` | All users ("All users" in the nav rail): every account, most recently active first, 50 at a time with "Show 50 more", or found by name; each opens `/super/people/:uid` |
 | `/super/analytics`, `/super/orgs/:orgId`, `/super/people/:uid` | `superadmin` | Platform analytics: every account and organization, usage from phones, the Google Analytics connection (see [Analytics](#analytics)) |
 
 Roles are `learner` (independent), `student`, `teacher`, `orgAdmin` and `superadmin`. They live in **Auth custom claims** {role, orgId, and with Darsi Super plan and planUntil}, which only Cloud Functions set, and are mirrored to `users/{uid}` for the UI. When `users/{uid}` changes role or organization, AuthProvider refreshes the token so the security rules see the new claims.

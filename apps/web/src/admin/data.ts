@@ -104,13 +104,13 @@ export const useActiveDevices = () => useOnce(async () => {
 }, []);
 
 /** Accounts, most recently active first, or by name when searching (prefix, as typed). */
-export const usePeople = (search: string) => useOnce(async () => {
+export const usePeople = (search: string, max = 50) => useOnce(async () => {
   const s = search.trim();
   const q = s
-    ? query(collection(db, "users"), orderBy("name"), where("name", ">=", s), where("name", "<=", `${s}`), limit(50))
-    : query(collection(db, "users"), orderBy("lastActive", "desc"), limit(50));
+    ? query(collection(db, "users"), orderBy("name"), where("name", ">=", s), where("name", "<=", `${s}`), limit(max))
+    : query(collection(db, "users"), orderBy("lastActive", "desc"), limit(max));
   return (await getDocs(q)).docs.map((d) => ({ uid: d.id, ...d.data() }) as Profile);
-}, [search]);
+}, [search, max]);
 
 /** A project with the account it belongs to (users/{uid}/submissions). */
 export interface AnySubmission extends Submission { uid: string }
