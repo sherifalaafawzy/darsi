@@ -9,6 +9,9 @@ import "./styles/auth.css";
 import "./styles/lesson.css";
 import { App } from "./App";
 import { keepPageFonts } from "./platform/fonts";
+import { startBugLog } from "./bugs/log";
+
+startBugLog(); // the last errors and failed requests, for "Report a problem" (in memory only)
 
 createRoot(document.getElementById("root")!).render(<StrictMode><App /></StrictMode>);
 keepPageFonts();

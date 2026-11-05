@@ -64,6 +64,9 @@ service firebase.storage {
         && unitId.matches('[a-z0-9][a-z0-9-]{1,63}') && file.matches('[a-z0-9][a-z0-9-]{1,99}-[0-9]{10,16}-[A-Za-z0-9_.-]{1,240}');
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
+    // Problem reports' screenshots (TECHNICAL.md "Problem reports"): written only by the reportBug function; platform
+    // admins alone read them.
+    match /bugReports/{file} { allow read: if isSuper(); allow write: if false; }
     // Project evidence from app versions before course folders: submissions/{orgId|"none"}/{uid}/{file}.
     match /submissions/{orgId}/{uid}/{file} {
       allow read: if request.auth != null && (request.auth.uid == uid || staffS(orgId, uid));

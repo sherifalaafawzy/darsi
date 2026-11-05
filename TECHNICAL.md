@@ -150,6 +150,7 @@ AuthProvider            Firebase user + custom claims {role, orgId}; claims are 
 | `/super/orgs` | `superadmin` | Every organization; create one (see [Platform administration](#platform-administration)) |
 | `/super/people` | `superadmin` | All users ("All users" in the nav rail): every account, most recently active first, 50 at a time with "Show 50 more", or found by name; each opens `/super/people/:uid` |
 | `/super/analytics`, `/super/orgs/:orgId`, `/super/people/:uid` | `superadmin` | Platform analytics: every account and organization, usage from phones, the Google Analytics connection (see [Analytics](#analytics)) |
+| `/super/bugs` | `superadmin` | Problem reports from "Report a problem" (see [Problem reports](#problem-reports)) |
 
 Roles are `learner` (independent), `student`, `teacher`, `orgAdmin` and `superadmin`. They live in **Auth custom claims** {role, orgId, and with Darsi Super plan and planUntil}, which only Cloud Functions set, and are mirrored to `users/{uid}` for the UI. When `users/{uid}` changes role or organization, AuthProvider refreshes the token so the security rules see the new claims.
 
@@ -318,6 +319,9 @@ analytics/{yyyy-mm-dd}      day, n, off, ev {name: n}, role {role: {events, less
                             sessions {n, lang, role, aud, installed, offline}, lessons {n, track, unit, lang, acc, accN, sec},
                             labs, downloads {n, mb}, screens, dev, devNew, devRole   ← collect (increments only)
 analyticsDevices/{id}       first, last (yyyy-mm-dd), role, lang, aud, org, inst   ← collect; id = the phone's random id
+bugReports/{id}             createdAt, status (new | fixed | closed), text, url, path, user {uid, email, name, role, orgId, plan, provider} | null,
+                            shot {path, bytes, type, w, h} | null, details {page, app, device, network, account, learner, log}, server {ua, lang},
+                            statusBy, statusAt   ← reportBug; platform admins change only the status
 ```
 
 `notify.hourUtc` is the UTC hour that equals `hourLocal` in `tz` today. `registerDevice` and `updateNotifyPrefs` recompute it, and `dailyNudges` rewrites it when daylight saving moves it. The notification queries are equality-only (`notify.on` + `notify.hourUtc`; `orgId` + `role`), so they need no composite index.
@@ -401,6 +405,7 @@ Username logins (for people without email) map to `<username>@users.darsi.app`. 
 | `onSubscriptionWrite`, `onOrgLicence` | Firestore triggers | Rewrite the claims (`plan`, `planUntil`) when a subscription or an org licence changes |
 | `statsJob` | scheduled, daily 02:30 UTC | Accounts and organizations from every user's summary into `stats/overview` |
 | `refreshStats` | callable | Platform admin only: the same, now (the Refresh button on /super/analytics) |
+| `reportBug` | HTTPS (`darsiai.org/api/bug`, a Hosting rewrite) | "Report a problem": anyone's report (guests too), checked and cut to size, with who sent it only from a verified ID token; the screenshot goes to `bugReports/{id}.jpg` in the bucket. At most 2 instances; per instance 8 per address per 10 minutes, 10 per account per hour, 120 per hour in all (see [Problem reports](#problem-reports)) |
 
 Every role or organization change goes through these functions, which set the claims and write an `audit` entry. Clients can never grant themselves access. A change that takes power away (a lower role, leaving or changing organization) also revokes the account's refresh tokens (`writeClaims`), and every privileged callable checks the claims Auth holds now (`freshCaller`), not the ones in the caller's token. `functions/src/admin.ts` initializes the Admin SDK once and sets the region and instance cap for every function.
 
@@ -484,6 +489,27 @@ Two sources, both read with one-shot reads on `/super/analytics`:
 - The top tracks, courses, labs, languages, roles and screens.
 - The organizations table, people (the 50 most recently active, or a name search), and the Google Analytics connection.
 - `/super/orgs/:id` has one organization's figures, its lessons per day, its branding and its people; `/super/people/:uid` is the person page.
+
+## Problem reports
+
+Anyone can report a problem from any screen, guests included: a round button with a bug at the inline start of the screen (above the bottom nav and the lesson's Continue bar), and "Report a problem" at the foot of the nav rail from 900 px, where the floating button hides (`Layout` sets `data-rail` on `<html>`).
+
+**On the phone:**
+- `bugs/log.ts` (startup, imports nothing, ~1 KB with the button): from `main.tsx` on, it keeps the last 25 errors, unhandled rejections, `console.error` calls, failed loads (scripts, pictures) and failed or refused requests (method, path and status; never a query or a body; requests their own code cancelled are skipped), plus the last 15 pages. In memory only; it leaves the phone only inside a report.
+- `bugs/Fab.tsx` (startup): the button, and `ReportBug` in App. The first tap loads the `Report` chunk (~14 KB gzipped, with `modern-screenshot` 4.7.0; not precached), which takes a picture of the screen first, without the button, then opens the sheet over it.
+- The picture: the part of the page on screen (`domToCanvas` of `<body>`, shifted by the window's scroll), at most 1600 px on the long side, JPEG at 0.72 (lower if it would pass ~1.1 MB): about 35 KB on a phone and 110 KB on a laptop. Its fonts are the page language's own (`familiesFor`), inlined from the fonts cache, so an English page never fetches the Arabic files. A browser that can't draw it gets the sheet without one, and anyone can add a picture of their own (shrunk on the phone).
+- The sheet (`bugs/Report.tsx`, `styles/bug.css`; a bottom sheet on phones, a panel at the inline start from 900 px): "What went wrong?" (at least 3 characters), the picture with a switch to leave it out, a plain list of what else is sent, and "See everything that is sent" with the exact JSON.
+- What goes with the words and the picture (`gather`): the page (address with secret-looking query values replaced by "…", title, scroll, language, direction), the app (build file, service worker, installed, storage used), the device (user agent, platform, languages, viewport, screen, pixel ratio, orientation, touch, memory, cores, time zone, local time, reduced motion), the connection (online, type, speed, Data saver), the account as the app knows it, the learner's settings (language, audience, stage, tracks, levels, weekly goal, lessons finished, downloads, Data saver, organization) and the log.
+- It goes to `/api/bug` with a plain `fetch` (guests never load Firebase); signed in, with the ID token. Offline, or when the request can't get through, the report waits in IndexedDB (`darsi:reports`, at most 5, dropped after 30 days) and goes at the next start or when the connection returns, with the token only if the same account is still signed in (its details still say whose it was). 429 says to wait a few minutes.
+
+**On the server** (`functions/src/bugs.ts`; the pure parts, tested, in `bugsCore.ts`): `reportBug`, an HTTP function behind the Hosting rewrite `/api/bug` (max 2 instances).
+- `parseReport` checks everything: the words (3–4,000 characters), the address (secrets replaced again), the details (`clean`: plain data only, strings ≤ 2,000 characters, ≤ 80 keys and 60 items, 6 levels, ≤ 48 KB), and the picture (a JPEG, PNG or WebP data: URL of ≤ 1.2 MB whose own bytes say it is that image; SVG and anything else is refused). The body is at most 1.7 MB.
+- Who sent it comes only from the ID token, verified with revocation checked (a bad token is refused with 401, never stored as a guest), plus the profile's name: uid, email, name, role, organization, plan and sign-in method.
+- Limits per instance: 8 reports per address per 10 minutes, 10 per account per hour, 120 per hour in all.
+- It writes `bugReports/{id}` {createdAt, status "new", text, url, path, user, shot {path, bytes, type, w, h}, details, server {ua, lang}} and the picture to `bugReports/{id}.{jpg|png|webp}` in the app's bucket.
+- Rules: only platform admins read either; they change only `status` ("new", "fixed", "closed"), signed with their own uid and the request time; nobody creates or deletes a report from a client (`tests-rules/security.rules.test.ts`). Index: `bugReports (status, createdAt desc)`.
+
+**For platform admins** (`/super/bugs`, "Problem reports" in the nav; `admin/Bugs.tsx` in the SuperAdmin chunk): the new reports or all of them, newest first, 30 at a time, read once. Each shows the words, who (a link to their person page) or "A guest", the page, the browser and screen at a glance, the connection, the last errors, the picture (downloaded only when opened), all the details, and Mark fixed, Close it, Reopen and "Copy the details" (the whole report as JSON, for a ticket or a coding assistant).
 
 ## Darsi Super
 

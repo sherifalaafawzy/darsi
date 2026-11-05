@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { BottomNav, BrandMark, ConnectionStatus, Icon, InstallPrompt, Mark, UpdateToast, type IconName } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
@@ -7,6 +7,7 @@ import { useI18n, type MessageKey } from "../i18n";
 import { useStore } from "../state/store";
 import { audienceFor } from "../content/mine";
 import { useInstall, useOnline, usePwaUpdate } from "../pwa";
+import { openReport } from "../bugs/log";
 
 interface NavItem { path: string; icon: IconName; key: MessageKey }
 const TABS: NavItem[] = [
@@ -26,7 +27,7 @@ export function accountLinks(role: Role, signedIn: boolean): NavItem[] {
   const links: NavItem[] = [];
   if (role === "orgAdmin") links.push({ path: "/admin", icon: "settings", key: "nav.admin" }, { path: "/admin/analytics", icon: "chart", key: "nav.analytics" });
   if (role === "teacher" || role === "orgAdmin") links.push({ path: "/teach", icon: "chat", key: "nav.teach" });
-  if (role === "superadmin") links.push({ path: "/super", icon: "language", key: "nav.super" }, { path: "/super/analytics", icon: "chart", key: "nav.analytics" }, { path: "/super/orgs", icon: "home", key: "nav.orgs" }, { path: "/super/people", icon: "profile", key: "nav.people" }, { path: "/super/projects", icon: "file", key: "nav.projects" }, { path: "/super/certificates", icon: "check", key: "nav.certificates" }, { path: "/super/plans", icon: "award", key: "nav.plans" });
+  if (role === "superadmin") links.push({ path: "/super", icon: "language", key: "nav.super" }, { path: "/super/analytics", icon: "chart", key: "nav.analytics" }, { path: "/super/orgs", icon: "home", key: "nav.orgs" }, { path: "/super/people", icon: "profile", key: "nav.people" }, { path: "/super/projects", icon: "file", key: "nav.projects" }, { path: "/super/certificates", icon: "check", key: "nav.certificates" }, { path: "/super/bugs", icon: "bug", key: "nav.bugs" }, { path: "/super/plans", icon: "award", key: "nav.plans" });
   else links.push({ path: "/org", icon: "home", key: "nav.org" });
   // The course editor: platform admins publish for everyone, org admins for their own members.
   if (role === "superadmin" || role === "orgAdmin") links.push({ path: role === "superadmin" ? "/super/content" : "/admin/content", icon: "edit", key: "nav.content" });
@@ -48,6 +49,8 @@ export function Layout() {
   const snoozed = state.installDismissedAt && Date.now() - state.installDismissedAt < 14 * 864e5;
   const showInstall = completed && !snoozed && install.canInstall;
   const extra = accountLinks(role, Boolean(user));
+  // The rail has its own "Report a problem" from 900 px, so the floating one hides there (styles/bug-fab.css).
+  useEffect(() => { document.documentElement.dataset.rail = ""; return () => { delete document.documentElement.dataset.rail; }; }, []);
   // Students have no classroom kit to teach with.
   const tabs = audienceFor(role, state.audience) === "students" ? TABS.filter((x) => x.path !== "/kit") : TABS;
   // The longest matching link wins, so /admin/content lights up the editor, not Admin as well.
@@ -68,6 +71,7 @@ export function Layout() {
           : <Link to="/learn" className="rail-brand" aria-label="Darsi"><Mark size={36} /><span>{lang === "ar" ? "درسي" : "Darsi"}</span></Link>}
         {tabs.map(railItem)}
         {extra.length > 0 && <><hr className="rail-sep" />{extra.map(railItem)}</>}
+        <button type="button" className="rail-item rail-report" aria-haspopup="dialog" onClick={openReport}><Icon name="bug" size={24} /><span>{t("bug.button")}</span></button>
         {/* On phones Sign out is at the top of Me; on wide screens it is always here. */}
         {user && <button type="button" className="rail-item rail-signout" onClick={() => { void signOut(); }}><Icon name="close" size={24} /><span>{t("me.signOut")}</span></button>}
       </nav>

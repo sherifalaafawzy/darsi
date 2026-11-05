@@ -1,7 +1,7 @@
 import { call } from "../fb";
 import { useCallback, useEffect, useState } from "react";
-import { collection, collectionGroup, doc, documentId, getCountFromServer, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, where, type QueryConstraint } from "firebase/firestore";
-import { db } from "../firebase";
+import { collection, collectionGroup, doc, documentId, getCountFromServer, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where, type QueryConstraint } from "firebase/firestore";
+import { db, storage } from "../firebase";
 import type { Org, Profile, Role } from "../auth/types";
 
 export interface ProgressDoc { lessonId: string; unitId: string; track: string; accuracy: number; xp: number; seconds: number; completedAt: string; competencies?: string[] }
@@ -188,3 +188,23 @@ export const useSubscription = (uid?: string) => useOnce(uid ? async () => {
   const s = await getDoc(doc(db, "subscriptions", uid));
   return s.exists() ? (s.data() as { plan: string; status: string; currentPeriodEnd: number; source: string }) : null;
 } : null, [uid]);
+
+/** A problem report (functions/src/bugs.ts), as /super/bugs reads it. `details` is whatever the phone gathered. */
+export interface BugReport {
+  id: string; status: "new" | "fixed" | "closed"; text: string; url: string; path: string; createdAt?: { seconds: number } | null;
+  user: { uid: string; email: string | null; name: string | null; role: string; orgId: string | null; plan: string | null; provider: string | null } | null;
+  shot: { path: string; bytes: number; type: string; w: number | null; h: number | null } | null;
+  details: Record<string, unknown>; server?: { ua: string; lang: string }; statusBy?: string; statusAt?: { seconds: number } | null;
+}
+/** Problem reports, newest first: the new ones, or all of them. Read once when the page opens. */
+export const useBugReports = (onlyNew: boolean, max: number) => useOnce(async () => {
+  const q = query(collection(db, "bugReports"), ...(onlyNew ? [where("status", "==", "new")] : []), orderBy("createdAt", "desc"), limit(max));
+  return (await getDocs(q)).docs.map((d) => ({ ...d.data(), id: d.id }) as BugReport);
+}, [onlyNew, max]);
+export const setBugStatus = (id: string, status: BugReport["status"], uid: string) =>
+  updateDoc(doc(db, "bugReports", id), { status, statusBy: uid, statusAt: serverTimestamp() });
+/** A report's screenshot, for platform admins only (storage rules); loaded when someone opens it. */
+export async function bugShotUrl(path: string): Promise<string> {
+  const [{ getDownloadURL, ref }, s] = await Promise.all([import("firebase/storage"), storage()]);
+  return getDownloadURL(ref(s, path));
+}

@@ -23,9 +23,11 @@ const DS_CSS = path.join(ROOT, "packages/design-system/dist/styles.css");
 /** Which stylesheet owns which classes. Add a class here when you add it to a screen. */
 export const OWNERS = {
   base: { own: ["panel", "tiles", "tile", "ok", "err", "err-text", "row-gap", "icon-list", "icon-item", "form-grid", "span2", "file-pick", "avatar", "sm", "person-link", "pill", "pill-warn", "wide", "table-tools", "search-input", "table-wrap", "data-table", "num", "no-print", "cap-code", "cap-label"] },
-  layout: { own: ["app-shell", "app-main", "app-float", "nav-rail", "rail-brand", "rail-credit", "rail-item", "is-active", "rail-sep", "rail-signout", "nav-bottom"] },
-  admin: { own: ["admin-cols", "code-row", "cov-row", "cov-bar", "req", "req-facts", "brand-row", "brand-preview", "po-found", "po-danger"] },
+  layout: { own: ["app-shell", "app-main", "app-float", "nav-rail", "rail-brand", "rail-credit", "rail-item", "is-active", "rail-sep", "rail-signout", "rail-report", "nav-bottom"] },
+  admin: { own: ["admin-cols", "code-row", "cov-row", "cov-bar", "req", "req-facts", "brand-row", "brand-preview", "po-found", "po-danger", "bug-report-text", "bug-report-shot", "bug-report-log", "bug-report-more", "bug-report-json"] },
   tutor: { own: ["tu-chat", "tu-me", "tu-tutor", "tu-hint", "tu-src", "tu-link", "tu-state", "tu-panel", "tu-panel-head", "tu-panel-title", "tu-panel-body", "tu-av", "tu-center", "tu-talk", "tu-modes", "tu-wide", "tu-explainer", "tu-explainer-title"], prefix: ["tu-"] },
+  "bug-fab": { own: ["bug-fab", "bug-note"] },
+  bug: { own: ["bug-sheet", "bug-head", "bug-title", "bug-body", "bug-label", "bug-text", "bug-h3", "bug-shot", "bug-list", "bug-all", "bug-json", "bug-done", "bug-done-title"], prefix: ["is-"] },
   "tutor-fab": { own: ["tutor-fab", "tf-face", "tf-mouth", "tf-eye", "tf-brows", "tf-blink"], prefix: ["tf-"] },
   analytics: { own: ["an-head", "an-chart", "an-bar", "an-axis", "an-grid", "an-ranked", "an-name", "an-meter"], prefix: ["or-"] },
   person: { own: ["person", "person-head", "person-stats", "person-cols", "cap-groups", "cap-group", "cap-row", "cap-meter", "cap-word", "course", "course-head", "done", "submission", "sub-text", "badge-ok", "status"], prefix: ["is-", "status-"] },

@@ -8,8 +8,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import { doc, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
-import { ref, uploadBytes } from "firebase/storage";
+import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { getBytes, ref, uploadBytes } from "firebase/storage";
 
 let env: RulesTestEnvironment;
 const root = resolve(__dirname, "../../..");
@@ -180,5 +180,38 @@ describe("Storage: project files (L2) and logos", () => {
   it("an org admin still uploads the org's logo", async () => {
     const adm = env.authenticatedContext("adm", { role: "orgAdmin", orgId: "org1" }).storage();
     await assertSucceeds(uploadBytes(ref(adm, "orgs/org1/brand/logo-abc123def.webp"), new Uint8Array([1]), { contentType: "image/webp" }));
+  });
+});
+
+describe("problem reports", () => {
+  const seed = () => env.withSecurityRulesDisabled(async (c) => {
+    await setDoc(doc(c.firestore(), "bugReports/b1"), { status: "new", text: "It broke", user: { uid: "amina" }, details: {} });
+    await uploadBytes(ref(c.storage(), "bugReports/b1.jpg"), new Uint8Array([0xff, 0xd8, 0xff]), { contentType: "image/jpeg" });
+  });
+  const admin = () => env.authenticatedContext("boss", { role: "superadmin" });
+  it("only platform admins read them and their screenshots, even the person who sent one", async () => {
+    await seed();
+    await assertSucceeds(getDoc(doc(admin().firestore(), "bugReports/b1")));
+    await assertSucceeds(getBytes(ref(admin().storage(), "bugReports/b1.jpg")));
+    for (const c of [learner("amina", "amina@school.org"), env.authenticatedContext("oa", { role: "orgAdmin", orgId: "org1" }), env.unauthenticatedContext()]) {
+      await assertFails(getDoc(doc(c.firestore(), "bugReports/b1")));
+      await assertFails(getBytes(ref(c.storage(), "bugReports/b1.jpg")));
+    }
+  });
+  it("a platform admin changes the status, signed as themselves; nothing else", async () => {
+    await seed();
+    const db = admin().firestore();
+    await assertSucceeds(updateDoc(doc(db, "bugReports/b1"), { status: "fixed", statusBy: "boss", statusAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(db, "bugReports/b1"), { status: "fixed", statusBy: "someone", statusAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(db, "bugReports/b1"), { status: "gone", statusBy: "boss", statusAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(db, "bugReports/b1"), { text: "Edited", status: "closed", statusBy: "boss", statusAt: serverTimestamp() }));
+  });
+  it("nobody writes one or a screenshot directly: only the function does", async () => {
+    for (const c of [admin(), learner("amina", "amina@school.org"), env.unauthenticatedContext()]) {
+      await assertFails(setDoc(doc(c.firestore(), "bugReports/new1"), { status: "new", text: "Spam" }));
+      await assertFails(uploadBytes(ref(c.storage(), "bugReports/new1.jpg"), new Uint8Array([0xff, 0xd8, 0xff]), { contentType: "image/jpeg" }));
+    }
+    await seed();
+    await assertFails(deleteDoc(doc(admin().firestore(), "bugReports/b1")));
   });
 });

@@ -25,6 +25,7 @@ import { MyTracks } from "./screens/MyTracks";
 import { LabApp, Labs } from "./screens/Labs";
 import { Me } from "./screens/Me";
 import { TutorFab } from "./tutor/Fab";
+import { ReportBug } from "./bugs/Fab";
 
 // Loaded on demand: learners never download or parse the landing page (after their first visit) or any staff screen.
 // vite.config.ts keeps these chunks out of the precache; the service worker caches each one the first time it is used.
@@ -49,6 +50,7 @@ const OrgsAdmin = lazy(() => import("./admin/OrgsAdmin").then((m) => ({ default:
 const PlansPage = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.PlansPage })));
 const ProjectsPage = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.ProjectsPage })));
 const CertificatesPage = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.CertificatesPage })));
+const BugsPage = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.BugsPage })));
 const Upgrade = lazy(() => import("./upgrade/Upgrade").then((m) => ({ default: m.Upgrade })));
 const Tutor = lazy(() => import("./tutor/Tutor").then((m) => ({ default: m.Tutor })));
 const TutorPanel = lazy(() => import("./tutor/Tutor").then((m) => ({ default: m.TutorPanel })));
@@ -182,6 +184,7 @@ function Routed() {
             <Route path="super/plans" element={<PlansPage />} />
             <Route path="super/projects" element={<ProjectsPage />} />
             <Route path="super/certificates" element={<CertificatesPage />} />
+            <Route path="super/bugs" element={<BugsPage />} />
             <Route path="super/orgs/:orgId" element={<OrgAnalytics />} />
             <Route path="super/orgs/:orgId/report" element={<OrgReport />} />
             <Route path="super/people" element={<PeoplePage />} />
@@ -198,6 +201,7 @@ function Routed() {
     </Routes>
     </Suspense>
     <LessonTutor />
+    <ReportBug />
     </BrandProvider>
   );
 }

@@ -32,6 +32,8 @@ export { paymobWebhook, startCheckout, stripeWebhook } from "./payments.js";
 /** Darsi Super tutor: text answers and the balance (the voice relay is relay.ts, on Cloud Run). */
 export { tutorAsk, tutorStatus } from "./tutor.js";
 export { tutorSearch } from "./agent.js";
+/** "Report a problem": anyone's report, with a screenshot and details, for platform admins (bugs.ts). */
+export { reportBug } from "./bugs.js";
 
 const MEMBER_ROLES: Role[] = ["student", "teacher", "orgAdmin"];
 

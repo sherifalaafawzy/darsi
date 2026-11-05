@@ -213,6 +213,17 @@ service cloud.firestore {
     match /analytics/{day} { allow read: if isSuper(); allow write: if false; }
     match /analyticsDevices/{id} { allow read: if isSuper(); allow write: if false; }
 
+    // Problem reports (TECHNICAL.md "Problem reports"): written only by the reportBug function, which anyone reaches
+    // (guests included). They hold screenshots and device details, so platform admins alone read them, on /super/bugs,
+    // and change nothing but the status.
+    match /bugReports/{id} {
+      allow read: if isSuper();
+      allow update: if isSuper() && onlyChanges(['status', 'statusBy', 'statusAt'])
+        && request.resource.data.status in ['new', 'fixed', 'closed'] && request.resource.data.statusBy == request.auth.uid
+        && request.resource.data.statusAt == request.time;
+      allow create, delete: if false;
+    }
+
     // Darsi Super (docs/SUPER.md): only Cloud Functions write subscriptions and payments (the payment webhooks, grantSuper).
     // A person reads their own subscription; platform admins read everything.
     match /subscriptions/{uid} { allow read: if (signedIn() && request.auth.uid == uid) || isSuper(); allow write: if false; }
