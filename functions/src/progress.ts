@@ -42,10 +42,15 @@ function writeSummary(tx: Transaction, uid: string, rows: Rows) {
   tx.set(db.doc(`users/${uid}`), { summary }, { mergeFields: Object.keys(summary).map((k) => `summary.${k}`) });
 }
 
-/** A progress doc was written (or deleted): its row changes, and the summary with it. */
+/**
+ * A progress doc was written (or deleted): its row changes, and the summary with it. A deletion for an account whose
+ * profile is gone (the account was deleted with all its data) changes nothing: writing the summary would bring back an
+ * empty profile and its private rows. A new account's first results can still arrive before its profile.
+ */
 export async function progressChanged(uid: string, lessonId: string) {
   if (!LESSON_ID.test(lessonId)) return "not a lesson id";
-  const orgId = ((await db.doc(`users/${uid}`).get()).get("orgId") as string | null | undefined) ?? null;
+  const profile = await db.doc(`users/${uid}`).get();
+  const orgId = (profile.get("orgId") as string | null | undefined) ?? null;
   const meta = await lessonMeta(lessonId, orgId);
   if (!meta) {
     // Not a lesson this person can see. Only a row counted before (a course since unpublished) is still followed.
@@ -54,6 +59,7 @@ export async function progressChanged(uid: string, lessonId: string) {
   }
   return db.runTransaction(async (tx) => {
     const [state, doc] = await Promise.all([tx.get(rowsRef(uid)), tx.get(db.doc(`users/${uid}/progress/${lessonId}`))]);
+    if (!doc.exists && !profile.exists) return "account gone";
     const stored = state.get("rows") as Rows | undefined;
     const rows: Rows = stored ? { ...stored } : await buildRows(uid, orgId, tx);
     const had = rows[lessonId] ?? stored?.[lessonId];
