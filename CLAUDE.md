@@ -351,6 +351,9 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - **Code:** `tour/Start.tsx` (startup, `AppTour` in App); the lazy `Tour` chunk (`tour/Tour.ts`, driver.js 1.10.2 and `styles/tour.css`, ~11 KB gzipped, not precached); strings in `tour/strings/`. The stops are built from what is on screen (rail or bottom nav, learner or staff, students without Kit). Right to left: mirrored sides, Arabic numerals, ← for Next.
     - **Checked:** web 1,402 tests pass, 1 skipped (`tests/tour.test.tsx` 7), `tsc`, `lint:css`, e2e 30/30 on a private build, startup still 4 files. On the emulators with a new account: sign-up, onboarding, then the tour by itself at 1280 px in English (12 stops); from Me at 375 px and 768 px in Arabic (bottom nav, the floating Report button) and at 1280 px in Arabic (the rail on the right, popovers to its left). No sideways scroll. The test account was deleted.
     - **Deploying it again needs:** Hosting only.
+28. Done and deployed (2026-11-05, commit ca625755): **download sizes count the kits, per language.** The user asked what each learner costs; the check found the catalog's download size left out the lesson kits, so courses showed about half their real size (a quarter for some Arabic ones). Kits carry `sizeKB` (language → format → KB; the seed from disk, the editor on upload), the catalog lists `sizeByLang` (`sizeMB` is the largest, for older phones), and Downloads shows the learner's own (`downloadMB`). TECHNICAL.md "Authored content".
+    - **Checked:** web 1,405 tests (`tests/kitsize.test.ts` new), functions 193 (a per-language test in `content.test.ts`), `tsc`, e2e 30/30 on a clean build.
+    - **Open, the user's call:** students download the teacher kits too (about 60% of an Arabic course download) though they reach Kit only from "All done".
 9. Not started: the security review. The user asked for static scanning of the rules, functions and client, plus a pentest of the deployed URL with `H:\htdocs\pentest-lab` (allowlist-gated; add only darsi-f0685 hosts). It is deferred until the code is finished.
 
 ### Firebase project (live): darsi-f0685
@@ -524,6 +527,12 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
   - The deploy copy passed `tsc`, `lint:css`, web 1327 and e2e 30/30 on its own build (port 4180); startup 4 files, 190.6 KB gzipped; the `Tour` chunk 11.3 KB, not precached.
   - Checked live on darsiai.org (Pixel 7, Playwright), as a guest through the landing page's "Continue without an account": onboarding, no tour by itself, then Me's "Take the tour" ran from /learn (11 stops, the Learn stop on the bottom nav), with no Firebase SDK chunk, no errors and no sideways scroll. (Opening /signup loads the SDK, as the account screens may.)
   - Not checked live: the tour starting by itself after a real sign-up (checked on the emulators; the user's).
+- Deployed 2026-11-05 (item 28, download sizes, commit ca625755, with the user's go-ahead), from the clean worktree `H:/tmp/darsi-live` at ca625755 (functions `npm ci` and build; `content/media` copied in for the seed):
+  1. **All 49 Cloud Functions** (since the last full deploy only the catalog and shared validator changed; `reportBug` and `collect` were already live).
+  2. Hosting (`index-VXwMMS7f.js`).
+  3. `node scripts/seed-content.mjs --replace <the 87 live ids>`: all 87 republished (v3–v4), 0 new media. Every live draft was last written by the seed, so no editor edits were lost.
+  - The deploy copy passed functions 178, web 1330, `tsc` and e2e 30/30.
+  - Checked live: the catalog has `sizeByLang` on all 87 (average 3.7 MB English, 5.3 MB Arabic; `sizeMB` 5.3, was 2.0). As guests on darsiai.org (Pixel 7), Downloads shows 4.6 MB for ai-1-1 in English and ٦٫٨ ميغابايت in Arabic.
 - **Storage**: the app uses the bucket **`darsi-f0685` in europe-west1**, set by `VITE_FIREBASE_STORAGE_BUCKET` in `.env.local`. It is deploy target `main` with `firebase/storage.rules`.
   - The original default bucket `darsi-f0685.firebasestorage.app` (us-west1, never used) was deleted on 2026-10-25 and now returns 404 `NoSuchBucket`. Keep the `main` target: without one, `firebase deploy --only storage` aims at the project's default bucket, which no longer exists.
   - Checked live on 2026-10-25: media/kits are public, and submissions return 403 to anonymous requests.
