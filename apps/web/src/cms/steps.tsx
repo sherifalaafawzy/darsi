@@ -4,7 +4,7 @@
  */
 import { useEffect, useState } from "react";
 import { Icon } from "@darsi/design-system";
-import { CODE_STEPS, GRADED, type ChoiceStep, type FillStep, type LocalText, type Step, type TrueFalseStep, type VideoStep } from "../content/types";
+import { CODE_STEPS, EVIDENCE_KINDS, GRADED, SETUP_OS, type ChoiceStep, type FillStep, type LocalText, type Step, type TrueFalseStep, type VideoStep } from "../content/types";
 import { ARTS } from "../content/validate";
 import { categoryOf } from "../labs/categories";
 import { LAB_METAS, labMeta } from "../labs/catalog";
@@ -12,6 +12,7 @@ import { useI18n, type MessageKey } from "../i18n";
 import { blankStep, nextLetter } from "./ids";
 import { Check, Items, LangName, LList, LText, Num, Sel, Text, Upload } from "./fields";
 import { useEditLangs, useLangView } from "./langs";
+import { CT } from "../lesson/capstoneText";
 import { BlocksForm, BugForm, CodeFillForm, CodeForm, ParsonsForm, SnippetForm } from "./codeForms";
 
 export const STEP_LABEL: Record<Step["type"], MessageKey> = {
@@ -158,6 +159,7 @@ function Body({ step: s, onChange, media }: { step: Step; onChange: (s: Step) =>
         <LText label={t("project.deliver")} value={s.deliverable} onChange={(deliverable) => onChange({ ...s, deliverable })} />
         <Items items={s.rubric} min={1} itemLabel={(i) => `${t("cms.criterion")} ${i + 1}`} addLabel={t("cms.addCriterion")} onChange={(rubric) => onChange({ ...s, rubric })} add={() => ({ criterion: LT() })}
           render={(r, set) => <LText label={t("cms.criterion")} value={r.criterion} onChange={(criterion) => set({ criterion })} />} />
+        <CapstoneForm step={s} onChange={onChange} />
       </>
     );
     case "video": return <VideoForm step={s} onChange={onChange} media={media} />;
@@ -168,6 +170,44 @@ function Body({ step: s, onChange, media }: { step: Step; onChange: (s: Step) =>
     case "blocks": return <BlocksForm step={s} onChange={onChange} />;
   }
 }
+
+/**
+ * A capstone milestone's extra fields (types.ts ProjectStep): what the learner sends (checked by checkCapstone), the
+ * starter repository's name in the Darsi GitHub org, hours, the milestone id in darsi-check.json, and setup per computer.
+ */
+function CapstoneForm({ step: s, onChange }: { step: Extract<Step, { type: "project" }>; onChange: (s: Step) => void }) {
+  const { L } = useI18n();
+  const has = (k: typeof EVIDENCE_KINDS[number]) => !!s.evidence?.some((e) => e.kind === k);
+  const toggle = (k: typeof EVIDENCE_KINDS[number], on: boolean) => {
+    const evidence = on ? [...(s.evidence ?? []), { kind: k }] : (s.evidence ?? []).filter((e) => e.kind !== k);
+    onChange({ ...s, evidence: evidence.length ? evidence : undefined });
+  };
+  const setup = (os: typeof SETUP_OS[number]) => s.setup?.find((x) => x.os === os)?.body;
+  const setSetup = (os: typeof SETUP_OS[number], body: LocalText) => {
+    const rest = (s.setup ?? []).filter((x) => x.os !== os);
+    const next = body.en || Object.values(body).some(Boolean) ? [...rest, { os, body }] : rest;
+    onChange({ ...s, setup: next.length ? SETUP_OS.flatMap((o) => next.filter((x) => x.os === o)) : undefined });
+  };
+  return (
+    <fieldset className="stack">
+      <legend className="dr-field-label">{L(CT.kicker)}</legend>
+      {EVIDENCE_KINDS.map((k) => <Check key={k} label={L(EVIDENCE_LABEL[k])} checked={has(k)} onChange={(on) => toggle(k, on)} />)}
+      <Text label={L(CT.starter)} value={s.starterRepo ?? ""} dir="ltr" hint="darsi-org/…" onChange={(v) => onChange({ ...s, starterRepo: v.trim() || undefined })} />
+      <Num label={L(EVIDENCE_LABEL.hours)} value={s.hours ?? 0} min={0} max={200} onChange={(v) => onChange({ ...s, hours: v > 0 ? v : undefined })} />
+      <Text label={L(EVIDENCE_LABEL.milestone)} value={s.milestone ?? ""} dir="ltr" hint="m1" onChange={(v) => onChange({ ...s, milestone: v.trim() || undefined })} />
+      {SETUP_OS.map((os) => <LText key={os} label={`${L(CT.setup)}: ${L(CT[os])}`} value={setup(os)} multiline onChange={(b) => setSetup(os, b)} />)}
+    </fieldset>
+  );
+}
+const EVIDENCE_LABEL: Record<typeof EVIDENCE_KINDS[number] | "hours" | "milestone", LocalText> = {
+  repo: { en: "A GitHub repository whose Actions run passed", ar: "مستودع على GitHub نجح تشغيل Actions فيه" },
+  release: { en: "A tagged release", ar: "إصدار موسوم" },
+  check: { en: "darsi-check.json passing this milestone", ar: "ملف darsi-check.json يجتاز هذه المرحلة" },
+  scan: { en: "Scans of localhost only (aisec, cyber)", ar: "فحوص لـ localhost فقط (aisec، cyber)" },
+  url: { en: "A link to the work (Colab, a Space, a dashboard)", ar: "رابط للعمل (Colab، أو Space، أو لوحة بيانات)" },
+  hours: { en: "Hours of work", ar: "ساعات العمل" },
+  milestone: { en: "Milestone id in darsi-check.json", ar: "معرّف المرحلة في darsi-check.json" },
+};
 
 /** Any app from the Labs catalogue, as "Shelf: Title". An id the catalogue doesn't know (an old import) stays visible. */
 function LabPicker({ value, onChange }: { value: string; onChange: (id: string) => void }) {

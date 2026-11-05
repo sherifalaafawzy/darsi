@@ -87,13 +87,23 @@ export function StepView(p: StepViewProps) {
   }
 }
 
+/** A reading body may include illustrative screenshots as a lone paragraph: ![caption](/media/...). */
+function ReadingBody({ text }: { text: string }) {
+  return <>{text.split(/\n\n+/).map((para, i) => {
+    const cleaned = para.trim().replace(/[\u2066-\u2069\u202A-\u202E]/g, "");
+    const m = cleaned.match(/^!\[([^\]]*)\]\((\/media\/[^)\s]+)\)$/);
+    if (m) return <figure key={i} className="reading-fig"><img src={m[2]} alt={m[1]} loading="lazy" /><figcaption>{m[1]}</figcaption></figure>;
+    return <p key={i}>{para}</p>;
+  })}</>;
+}
+
 function ReadView({ step, onReady }: { step: Extract<Step, { type: "read" }>; onReady: (r: boolean) => void }) {
   const { t, L } = useI18n();
   useEffect(() => { onReady(true); }, [onReady]);
   return (
     <article className="reading" dir="auto">
       <QuestionHeader type="reflect" icon="file" typeLabel={t("lesson.read")} prompt={L(step.title)} />
-      {L(step.body).split(/\n\n+/).map((para, i) => <p key={i}>{para}</p>)}
+      <ReadingBody text={L(step.body)} />
       {step.keyTerms?.length ? <aside className="key-terms"><h3>{t("lesson.keyTerms")}</h3><dl>{step.keyTerms.map((k, i) => <div key={i}><dt>{L(k.term)}</dt><dd>{L(k.def)}</dd></div>)}</dl></aside> : null}
     </article>
   );

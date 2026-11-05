@@ -1,0 +1,23 @@
+﻿<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<title>Darsi — clear local cache</title>
+<body>
+<p>Clearing service workers and caches for this origin…</p>
+<script>
+(async () => {
+  try {
+    if ("serviceWorker" in navigator) {
+      for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+    }
+    if (window.caches) {
+      for (const n of await caches.keys()) await caches.delete(n);
+    }
+    // Drop guest progress? keep learning; only clear content caches above.
+  } catch (e) { document.body.innerHTML += "<pre>" + e + "</pre>"; }
+  const next = new URLSearchParams(location.search).get("next") || "/learn";
+  location.replace(next);
+})();
+</script>
+</body>
+</html>

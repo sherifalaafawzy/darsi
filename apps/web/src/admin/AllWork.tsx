@@ -11,6 +11,8 @@ import { SubmissionCard } from "./SubmissionCard";
 import "../styles/admin.css";
 import "../styles/person.css";
 import "./strings";
+import type { CapFields } from "../content/capstone";
+import { CT } from "../lesson/capstoneText";
 
 /**
  * Platform admins see everyone's work: /super/projects (every project submitted, to review as a teacher would) and
@@ -18,13 +20,18 @@ import "./strings";
  */
 const PAGE = 50;
 
-/** /super/projects: every project anyone submitted, newest first; the ones waiting for a review by default. */
+/**
+ * /super/projects: every project anyone submitted, newest first; the ones waiting for a review by default. "Darsi staff
+ * only" is the capstone queue: milestones from learners without a school, who have no teacher to review them.
+ */
 export function ProjectsPage() {
   const { t, L, locale } = useI18n();
-  const [waiting, setWaiting] = useState(true);
+  const [show, setShow] = useState<"waiting" | "staff" | "all">("waiting");
+  const waiting = show !== "all";
   const [max, setMax] = useState(PAGE);
   const subs = useAllSubmissions(waiting, max);
-  const list = subs.data ?? [];
+  const read = subs.data ?? [];
+  const list = useMemo(() => (show === "staff" ? read.filter((s) => (s as typeof s & CapFields).queue === "staff") : read), [read, show]);
   const names = useNames(useMemo(() => [...new Set(list.map((s) => s.uid))].sort(), [list]));
   const unitIds = useMemo(() => [...new Set(list.map((s) => s.unitId).filter(Boolean))].sort(), [list]);
   const { data: units } = useAsync(() => Promise.all(unitIds.map((id) => loadUnit(id).catch(() => null))), [unitIds.join(",")]);
@@ -40,8 +47,9 @@ export function ProjectsPage() {
       <main className="screen wide stack-lg">
         <p className="muted">{t("aw.projectsIntro")}</p>
         <div className="row-gap" role="group" aria-label={t("aw.projectsTitle")}>
-          <Button size="sm" variant={waiting ? "primary" : "ghost"} aria-pressed={waiting} onClick={() => { setWaiting(true); setMax(PAGE); }}>{t("aw.waiting")}</Button>
-          <Button size="sm" variant={waiting ? "ghost" : "primary"} aria-pressed={!waiting} onClick={() => { setWaiting(false); setMax(PAGE); }}>{t("aw.all")}</Button>
+          <Button size="sm" variant={show === "waiting" ? "primary" : "ghost"} aria-pressed={show === "waiting"} onClick={() => { setShow("waiting"); setMax(PAGE); }}>{t("aw.waiting")}</Button>
+          <Button size="sm" variant={show === "staff" ? "primary" : "ghost"} aria-pressed={show === "staff"} onClick={() => { setShow("staff"); setMax(PAGE); }}>{L(CT.staffOnly)}</Button>
+          <Button size="sm" variant={show === "all" ? "primary" : "ghost"} aria-pressed={show === "all"} onClick={() => { setShow("all"); setMax(PAGE); }}>{t("aw.all")}</Button>
         </div>
         {subs.error && <p className="notice err">{subs.error.message}</p>}
         {!subs.data && !subs.error && <div className="loading" aria-busy="true" />}
@@ -55,7 +63,7 @@ export function ProjectsPage() {
               {s.createdAt && <>{t("common.sep")}{date.format(new Date(s.createdAt.seconds * 1000))}</>}
             </p>} />;
         })}
-        {list.length === max && <div><Button variant="secondary" onClick={() => setMax(max + PAGE)}>{t("aw.more")}</Button></div>}
+        {read.length === max && <div><Button variant="secondary" onClick={() => setMax(max + PAGE)}>{t("aw.more")}</Button></div>}
       </main>
     </>
   );

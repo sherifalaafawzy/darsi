@@ -32,6 +32,7 @@ export { paymobWebhook, startCheckout, stripeWebhook } from "./payments.js";
 /** Darsi Super tutor: text answers and the balance (the voice relay is relay.ts, on Cloud Run). */
 export { tutorAsk, tutorStatus } from "./tutor.js";
 export { tutorSearch } from "./agent.js";
+export { checkCapstone } from "./capstone.js";
 /** "Report a problem": anyone's report, with a screenshot and details, for platform admins (bugs.ts). */
 export { reportBug } from "./bugs.js";
 
@@ -173,7 +174,7 @@ export const createMembers = onCall({ timeoutSeconds: 540, memory: "512MiB" }, a
   const mustChange = req.data?.mustChangePassword !== false;
   const defaultRole: Role = MEMBER_ROLES.includes(req.data?.defaultRole) ? req.data.defaultRole : "student";
 
-  // Resolve teachers' emails (or username logins) → uids, through Auth: a profile's email is only what its owner typed
+  // Resolve teachers' emails (or username logins) â†’ uids, through Auth: a profile's email is only what its owner typed
   // (H1), Auth's is the account's. The account must be a teacher or admin of this org.
   const teacherEmails = [...new Set(members.map((m) => str(m.teacherEmail).toLowerCase()).filter(Boolean))].slice(0, 200);
   const teacherIds: Record<string, string> = {};
@@ -257,7 +258,7 @@ export const removeMember = onCall(async (req) => {
   if (uid === by.uid) throw new HttpsError("failed-precondition", "You cannot remove yourself.");
   const u = await db.doc(`users/${uid}`).get();
   if (u.get("orgId") !== orgId) throw new HttpsError("not-found", "Not a member of this organization.");
-  // setRole → writeClaims ends their sessions (they leave the organization), so no device keeps its access.
+  // setRole â†’ writeClaims ends their sessions (they leave the organization), so no device keeps its access.
   await setRole(uid, "learner", null, { teacherId: null, group: null });
   await db.doc(`orgs/${orgId}`).update({ memberCount: FieldValue.increment(-1) });
   await audit("removeMember", by.uid, { orgId, uid });

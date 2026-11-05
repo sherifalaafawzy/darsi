@@ -70,6 +70,8 @@ const fetchPublic = (path: string) => async () => { const r = await fetch(storag
 /** Storage answered that the file isn't there (nothing published yet), as opposed to no answer at all (offline). */
 const notFound = (e: unknown) => (e as { status?: number }).status === 404;
 const EMPTY: Catalog = { version: 1, units: [] };
+/** Vite on localhost (serve or preview): allow unpublished courses under /content/dev. */
+const localHostDev = () => typeof location !== "undefined" && (location.hostname === "localhost" || location.hostname === "127.0.0.1");
 /**
  * Org files go through the SDK (only that org's members may read them). App hands over the reader (setOrgReader):
  * this module is shared with lazy staff chunks, and any SDK import here, even a dynamic one, makes the bundler split
@@ -99,17 +101,24 @@ export function mergeCatalog(pub: Catalog | null, org: Catalog | null): Catalog 
  * an empty list; no answer and no copy from an earlier visit (a first visit offline) is an error, so Home can say so.
  */
 export const loadCatalog = (): Promise<Catalog> => (catalog ??= (async () => {
-  if (!firebaseReady || !firebaseConfig.storageBucket) return EMPTY;
+  if (!firebaseReady || !firebaseConfig.storageBucket) {
+    if (import.meta.env.MODE === "development" || localHostDev()) {
+      const extra = await fetch("/content/dev-catalog.json").then((r) => (r.ok ? r.json() as Promise<Catalog> : null)).catch(() => null);
+      return extra ?? EMPTY;
+    }
+    return EMPTY;
+  }
   const orgId = scope.orgId;
   const [pub, org] = await Promise.all([
-    cachedJSON<Catalog>(storageUrl("content/catalog.json"), fetchPublic("content/catalog.json"), true).catch((e) => (notFound(e) || import.meta.env.MODE === "development" ? EMPTY : Promise.reject(e))),
+    cachedJSON<Catalog>(storageUrl("content/catalog.json"), fetchPublic("content/catalog.json"), true).catch((e) => (notFound(e) || import.meta.env.MODE === "development" || localHostDev() ? EMPTY : Promise.reject(e))),
     orgId ? cachedJSON<Catalog>(storageUrl(`orgs/${orgId}/catalog.json`), fetchOrg(`orgs/${orgId}/catalog.json`), true).catch(() => null) : null,
   ]);
   const live = mergeCatalog(pub, org);
-  // Local courses under content/units, served only by the dev server. Production never asks for them.
-  if (import.meta.env.MODE !== "development") return live;
+  // Local courses under content/units (vite serve middleware). Also on localhost so a stale preview SW cannot hide them.
+  if (import.meta.env.MODE !== "development" && !localHostDev()) return live;
   const extra = await fetch("/content/dev-catalog.json").then((r) => (r.ok ? r.json() as Promise<Catalog> : null)).catch(() => null);
-  return extra ? mergeCatalog(live, extra) : live;
+  // Prefer local src for the same id (unpublished edits beat a published copy).
+  return extra ? mergeCatalog(extra, live) : live;
 })().catch((e) => { catalog = null; throw e; }));
 
 let settings: Promise<Settings | null> | null = null;

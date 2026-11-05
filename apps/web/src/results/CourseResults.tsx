@@ -6,11 +6,14 @@ import { useI18n } from "../i18n";
 import type { Unit } from "../content/types";
 import { useLoad, type ContentLoader } from "./async";
 import { courseResults, myGrant, type StudentWork } from "./data";
+import type { CapFields } from "../content/capstone";
+import { CapstoneResult } from "../lesson/CapstoneParts";
 import "../styles/admin.css";
 
 /**
  * /results: a university teacher's read-only view of the courses a platform admin gave them access to: each student's
- * check scores per lesson, and their project submissions (final projects first). Nothing here can change a record.
+ * check scores per lesson, and their project submissions (final projects first; capstone milestones with their
+ * repository, checks and advisory AI review). Nothing here can change a record.
  */
 export function CourseResults({ content }: { content: ContentLoader }) {
   const { t, L } = useI18n();
@@ -93,7 +96,8 @@ function Course({ unitId, content }: { unitId: string; content: ContentLoader })
   );
 }
 
-function Work({ w, who, lesson }: { w: StudentWork; who: string; lesson: string }) {
+function Work({ w: work, who, lesson }: { w: StudentWork; who: string; lesson: string }) {
+  const w = work as StudentWork & CapFields;
   const { t, locale } = useI18n();
   const files = (w.files?.length ? w.files : w.fileUrl ? [{ url: w.fileUrl, name: w.fileName ?? t("p.attachment") }] : []).filter((f) => isEvidenceUrl(f.url));
   const when = w.createdAt ? new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(w.createdAt.seconds * 1000)) : "";
@@ -101,7 +105,11 @@ function Work({ w, who, lesson }: { w: StudentWork; who: string; lesson: string 
     <article className="submission">
       <header><strong><bdi>{who}</bdi></strong><span className="muted small">{w.final ? t("results.final") : lesson}{when && `${t("common.sep")}${when}`}</span></header>
       <p dir="auto" className="sub-text">{w.text}</p>
-      {w.final && <>
+      {w.capstone && <>
+        {[w.repo, ...(w.links ?? [])].filter((u): u is string => !!u && /^https:\/\//.test(u)).map((u) => <a key={u} href={u} target="_blank" rel="noreferrer noopener" dir="ltr"><Icon name="link" size={16} /> {u.replace("https://", "")}</a>)}
+        <CapstoneResult checks={w.checks} review={w.aiReview} />
+      </>}
+      {(w.final || w.capstone) && <>
         <h3 className="small">{t("results.explain")}</h3><p dir="auto" className="sub-text">{w.explain || "—"}</p>
         <h3 className="small">{t("results.aiUse")}</h3><p dir="auto">{!w.aiUse || w.aiUse === "none" ? t("results.aiNone") : w.aiUse}</p>
       </>}

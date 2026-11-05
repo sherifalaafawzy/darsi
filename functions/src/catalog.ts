@@ -77,15 +77,17 @@ export function catalogEntry(unit: Unit, owner: Owner, version: number, jsonByte
     ...(unit.audience === "students" ? { audience: "students" as const } : {}),
     // University courses carry `teach`, so phones show them to university teachers only.
     ...(unit.teach === "university" ? { teach: "university" as const } : {}),
+    // A track's capstone is listed after the other courses of its level.
+    ...(unit.kind === "capstone" ? { kind: "capstone" as const } : {}),
   };
 }
 
 /**
  * catalog.json for one owner from the entries stored on each published unit, ordered by track (the order platform
- * admins set; unknown tracks last), then level and title.
+ * admins set; unknown tracks last), then level (a capstone after the other courses of its level) and title.
  */
 const BUILTIN_ORDER = Object.fromEntries(BUILTIN_TRACKS.map((t) => [t.id, t.order]));
 export function buildCatalog(entries: CatalogEntry[], order: Record<string, number> = BUILTIN_ORDER) {
-  const units = [...entries].sort((a, b) => (order[a.track] ?? 999) - (order[b.track] ?? 999) || a.level - b.level || a.title.en.localeCompare(b.title.en) || a.id.localeCompare(b.id));
+  const units = [...entries].sort((a, b) => (order[a.track] ?? 999) - (order[b.track] ?? 999) || a.level - b.level || Number(a.kind === "capstone") - Number(b.kind === "capstone") || a.title.en.localeCompare(b.title.en) || a.id.localeCompare(b.id));
   return { version: 1, units };
 }

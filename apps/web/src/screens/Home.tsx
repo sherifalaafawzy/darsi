@@ -82,7 +82,7 @@ function AllCourses({ units }: { units: CatalogEntry[] }) {
   const { t, num } = useI18n();
   const tracks = useTracks();
   const mine = useMine();
-  const order = (a: CatalogEntry, b: CatalogEntry) => a.level - b.level || audienceRank(a) - audienceRank(b) || a.id.localeCompare(b.id);
+  const order = (a: CatalogEntry, b: CatalogEntry) => a.level - b.level || audienceRank(a) - audienceRank(b) || Number(a.kind === "capstone") - Number(b.kind === "capstone") || a.id.localeCompare(b.id);
   const groups = mine.tracks.map((tr) => ({ tr, list: units.filter((u) => u.track === tr.id).sort(order) })).filter((g) => g.list.length);
   if (!groups.length) return <EmptyState icon="learn" title={t("home.empty")} body={t("home.emptyBody")} />;
   return (

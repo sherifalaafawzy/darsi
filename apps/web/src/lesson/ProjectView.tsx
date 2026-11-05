@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { Button, ChoiceCard, Icon, QuestionHeader } from "@darsi/design-system";
-import { loadFirebase } from "../fb";
+import { call, loadFirebase } from "../fb";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n";
 import type { ProjectStep } from "../content/types";
+import { GITHUB_REPO, MAX_LINKS, type CapResult } from "../content/capstone";
+import { CapstoneBrief, CapstoneResult } from "./CapstoneParts";
+import { CT } from "./capstoneText";
 
 /**
  * Phone photos are 2–5 MB and teachers often pay per MB: shrink photos to at most 1280 px and re-encode them as JPEG
@@ -26,8 +29,8 @@ async function shrinkImage(file: File, max = 1280): Promise<Blob> {
 }
 
 /** A draft kept on this phone, so work typed offline (or before a refresh) isn't lost. Files are picked again. */
-interface Draft { text: string; explain: string; ai: "" | "none" | "some"; aiHow: string }
-const EMPTY: Draft = { text: "", explain: "", ai: "", aiHow: "" };
+interface Draft { text: string; explain: string; ai: "" | "none" | "some"; aiHow: string; repo: string; links: string; check: string }
+const EMPTY: Draft = { text: "", explain: "", ai: "", aiHow: "", repo: "", links: "", check: "" };
 const draftKey = (lessonId: string, stepId: string) => `darsi-project-draft:${lessonId}:${stepId}`;
 export function readDraft(lessonId: string, stepId: string): Draft {
   try { return { ...EMPTY, ...JSON.parse(localStorage.getItem(draftKey(lessonId, stepId)) ?? "{}") }; } catch { return EMPTY; }
@@ -43,6 +46,10 @@ export const MAX_FILES = 4;
  * student's teacher, and university teachers a platform admin gave access to the course, can see it. A track's final
  * project (`final`) also asks the student to explain how it works in their own words and to say whether they used AI.
  * Nothing here is graded.
+ *
+ * A capstone milestone (step.evidence) also takes a GitHub repository, links and the starter's darsi-check.json, and is
+ * sent through the checkCapstone function, which checks them, adds an advisory AI review and writes the submission
+ * (learners can't write those fields themselves). Nothing the learner built is run by Darsi.
  */
 export function ProjectView({ step, lessonId, unitId, onReady, preview }: { step: ProjectStep; lessonId: string; unitId: string; onReady: (r: boolean) => void; preview?: boolean }) {
   const { t, L } = useI18n();
@@ -53,7 +60,17 @@ export function ProjectView({ step, lessonId, unitId, onReady, preview }: { step
   useEffect(() => { onReady(state === "sent" || state === "later"); }, [state, onReady]);
   const edit = (patch: Partial<Draft>) => setD((x) => { const n = { ...x, ...patch }; writeDraft(lessonId, step.id, n); return n; });
   const final = !!step.final;
-  const ready = !!d.text.trim() && (!final || (!!d.explain.trim() && (d.ai === "none" || (d.ai === "some" && !!d.aiHow.trim()))));
+  const ev = new Set((step.evidence ?? []).map((e) => e.kind)), cap = ev.size > 0;
+  // Capstone milestones ask what a final project asks: an explanation in the learner's own words and any AI use.
+  const asks = final || cap;
+  const [result, setResult] = useState<CapResult | null>(null);
+  const links = d.links.split(/\s+/).map((x) => x.trim()).filter(Boolean);
+  const repoOk = !ev.has("repo") || GITHUB_REPO.test(d.repo.trim());
+  const linksOk = links.length <= MAX_LINKS && links.every((l) => /^https:\/\/\S+$/.test(l)) && (!ev.has("url") || links.length > 0);
+  let checkOk = true;
+  if (d.check) { try { JSON.parse(d.check); } catch { checkOk = false; } }
+  const capReady = !cap || (repoOk && linksOk && checkOk && (!(ev.has("check") || ev.has("scan")) || !!d.check));
+  const ready = !!d.text.trim() && capReady && (!asks || (!!d.explain.trim() && (d.ai === "none" || (d.ai === "some" && !!d.aiHow.trim()))));
   const submit = async () => {
     if (!user) return;
     if (typeof navigator !== "undefined" && navigator.onLine === false) { setState("offline"); return; }
@@ -72,6 +89,16 @@ export function ProjectView({ step, lessonId, unitId, onReady, preview }: { step
           sent.push({ url: await getDownloadURL(r), name: file.name, type });
         }
       }
+      if (cap) {
+        const r = await call<Record<string, unknown>, CapResult>("checkCapstone")({
+          unitId, lessonId, stepId: step.id, text: d.text, explain: d.explain, aiUse: d.ai === "some" ? d.aiHow : "none", name: profile?.name ?? user.displayName ?? "",
+          repo: d.repo.trim(), links, check: d.check || null, files: sent,
+        });
+        setResult(r);
+        writeDraft(lessonId, step.id, { ...d, check: "" });
+        setState("sent");
+        return;
+      }
       const [{ db }, { addDoc, collection, serverTimestamp }] = await Promise.all([loadFirebase(), import("firebase/firestore")]);
       await addDoc(collection(db, "users", user.uid, "submissions"), {
         lessonId, unitId, stepId: step.id, orgId: orgId ?? null, text: d.text, fileUrl: sent[0]?.url ?? null, fileName: sent[0]?.name ?? null,
@@ -82,19 +109,45 @@ export function ProjectView({ step, lessonId, unitId, onReady, preview }: { step
       setState("sent");
     } catch { setState("error"); }
   };
-  const pick = (list: FileList | null) => setFiles((x) => [...x, ...Array.from(list ?? [])].slice(0, final ? MAX_FILES : 1));
+  const many = final || cap;
+  const pick = (list: FileList | null) => setFiles((x) => [...x, ...Array.from(list ?? [])].slice(0, many ? MAX_FILES : 1));
+  const pickCheck = async (list: FileList | null) => { const f = list?.[0]; if (f) edit({ check: (await f.text()).slice(0, 100_000) }); };
   return (
     <div className="stack">
-      <QuestionHeader type="reflect" icon="target" typeLabel={t(final ? "project.finalKicker" : "project.kicker")} prompt={L(step.prompt)} />
+      <QuestionHeader type="reflect" icon="target" typeLabel={cap ? L(CT.kicker) : t(final ? "project.finalKicker" : "project.kicker")} prompt={L(step.prompt)} />
       <div className="project-card">
         <p>{L(step.task)}</p>
+        {cap && <CapstoneBrief step={step} />}
         <p><strong>{t("project.deliver")}</strong> {L(step.deliverable)}</p>
         <div><strong>{t(final ? "project.checklist" : "project.rubric")}</strong><ul>{step.rubric.map((r, i) => <li key={i}>{L(r.criterion)}</li>)}</ul></div>
       </div>
-      {state === "sent" ? <p className="notice ok"><Icon name="check" size={18} /> {t(final ? "project.finalSent" : "project.sent")}</p> : <>
+      {state === "sent" && result ? <div className="stack-sm">
+        <p className="notice ok"><Icon name="check" size={18} /> {L(result.queue === "staff" ? CT.sentStaff : CT.sentTeacher)}</p>
+        <CapstoneResult checks={result.checks} review={result.aiReview} rubric={step.rubric} />
+        <div><Button size="sm" variant="secondary" onClick={() => { setResult(null); setState("idle"); }}>{L(CT.sendAgain)}</Button></div>
+      </div> : state === "sent" ? <p className="notice ok"><Icon name="check" size={18} /> {t(final ? "project.finalSent" : "project.sent")}</p> : <>
         <label className="dr-field-label" htmlFor={`evidence-${step.id}`}>{t("project.evidence")}</label>
         <textarea id={`evidence-${step.id}`} className="dr-reflect-input" dir="auto" rows={5} value={d.text} onChange={(e) => edit({ text: e.target.value })} placeholder={t("project.placeholder")} />
-        {final && <>
+        {cap && <fieldset className="stack-sm">
+          <legend className="dr-field-label">{L(CT.send)}</legend>
+          {ev.has("repo") && <>
+            <label className="dr-field-label" htmlFor={`repo-${step.id}`}>{L(CT.repo)}</label>
+            <input id={`repo-${step.id}`} className="dr-reflect-input" dir="ltr" inputMode="url" value={d.repo} onChange={(e) => edit({ repo: e.target.value })} placeholder="https://github.com/you/your-project" />
+            <p className="muted small">{L(d.repo && !repoOk ? CT.repoBad : CT.repoHint)}</p>
+          </>}
+          {ev.has("release") && <p className="muted small">{L(CT.release)}</p>}
+          {ev.has("scan") && <p className="notice">{L(CT.scan)}</p>}
+          <label className="dr-field-label" htmlFor={`links-${step.id}`}>{L(CT.links)}</label>
+          <textarea id={`links-${step.id}`} className="dr-reflect-input" dir="ltr" rows={2} value={d.links} onChange={(e) => edit({ links: e.target.value })} />
+          {!linksOk && d.links && <p className="notice err">{L(CT.linksBad)}</p>}
+          {(ev.has("check") || ev.has("scan")) && <>
+            <span className="dr-field-label">{L(CT.check)}</span>
+            <label className="file-pick"><Icon name="file" size={20} /><span>{d.check ? "darsi-check.json ✓" : L(CT.checkPick)}</span>
+              <input type="file" accept="application/json,.json" onChange={(e) => pickCheck(e.target.files)} /></label>
+            <p className="muted small">{L(checkOk ? CT.checkHint : CT.checkBad)}</p>
+          </>}
+        </fieldset>}
+        {asks && <>
           <label className="dr-field-label" htmlFor={`explain-${step.id}`}>{t("project.explain")}</label>
           <textarea id={`explain-${step.id}`} className="dr-reflect-input" dir="auto" rows={5} value={d.explain} onChange={(e) => edit({ explain: e.target.value })} placeholder={t("project.explainHint")} />
           <fieldset className="stack-sm project-ai">
@@ -106,14 +159,15 @@ export function ProjectView({ step, lessonId, unitId, onReady, preview }: { step
             {d.ai === "some" && <textarea aria-label={t("project.aiHow")} className="dr-reflect-input" dir="auto" rows={3} value={d.aiHow} onChange={(e) => edit({ aiHow: e.target.value })} placeholder={t("project.aiHow")} />}
           </fieldset>
         </>}
-        <label className="file-pick"><Icon name="image" size={20} /><span>{files.length ? files.map((f) => f.name).join(t("common.sep")) : t(final ? "project.attachMany" : "project.attach")}</span>
-          <input type="file" multiple={final} accept={final ? "image/*,application/pdf,audio/*" : "image/*,application/pdf"} onChange={(e) => pick(e.target.files)} /></label>
+        <label className="file-pick"><Icon name="image" size={20} /><span>{files.length ? files.map((f) => f.name).join(t("common.sep")) : t(many ? "project.attachMany" : "project.attach")}</span>
+          <input type="file" multiple={many} accept={many ? "image/*,application/pdf,audio/*" : "image/*,application/pdf"} onChange={(e) => pick(e.target.files)} /></label>
         {files.length > 0 && <Button size="sm" variant="ghost" onClick={() => setFiles([])}>{t("project.clearFiles")}</Button>}
-        {final && <p className="muted small">{t("project.draftKept")}</p>}
+        {asks && <p className="muted small">{t("project.draftKept")}</p>}
+        {state === "sending" && cap && <p className="muted small">{L(CT.checking)}</p>}
         {state === "error" && <p className="notice err">{t("project.error")}</p>}
         {state === "offline" && <p className="notice">{t("project.offline")}</p>}
         <div className="row-gap">
-          <Button icon="check" disabled={!ready || state === "sending" || !user || preview} loading={state === "sending"} onClick={submit}>{t(final ? "project.finalSubmit" : "project.submit")}</Button>
+          <Button icon="check" disabled={!ready || state === "sending" || !user || preview} loading={state === "sending"} onClick={submit}>{cap ? L(CT.sendBtn) : t(final ? "project.finalSubmit" : "project.submit")}</Button>
           <Button variant="ghost" onClick={() => setState("later")}>{t("project.later")}</Button>
         </div>
         {!user && <p className="muted small">{t("project.guest")}</p>}

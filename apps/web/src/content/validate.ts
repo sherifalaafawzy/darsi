@@ -8,7 +8,7 @@
  * It imports only robot.ts (pure, copied along with it).
  */
 import { fewestBlocks } from "./robot";
-import type { RobotCommand, RobotWorld, Unit } from "./types";
+import { EVIDENCE_KINDS, SETUP_OS, type EvidenceKind, type RobotCommand, type RobotWorld, type Unit } from "./types";
 
 export type IssueCode =
   | "required" | "minItems" | "duplicateId" | "badId" | "lessonIdPrefix" | "badValue" | "range"
@@ -205,9 +205,29 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
         const rubric = arr(s.rubric); minItems(rubric, "rubric", 1);
         if (s.final !== undefined && typeof s.final !== "boolean") add("final", "badValue");
         rubric.forEach((r, i) => { if (!isObj(r)) add(`rubric.${i}`, "badValue"); else text(r, "criterion"); });
+        capstoneFields(s);
         break;
       }
     }
+  };
+
+  /** A capstone milestone's optional fields (types.ts ProjectStep): evidence, setup tabs, starter repo, hours. */
+  const capstoneFields = (s: Obj) => {
+    if (s.evidence !== undefined) {
+      if (!Array.isArray(s.evidence)) add("evidence", "badValue");
+      else s.evidence.forEach((e, i) => {
+        if (!isObj(e) || !EVIDENCE_KINDS.includes(e.kind as EvidenceKind)) return add(`evidence.${i}`, "badValue");
+        if (e.label !== undefined) text(e, "label");
+      });
+      if (Array.isArray(s.evidence) && new Set(s.evidence.map((e) => isObj(e) ? e.kind : "")).size !== s.evidence.length) add("evidence", "duplicateId");
+    }
+    if (s.setup !== undefined) {
+      if (!Array.isArray(s.setup)) add("setup", "badValue");
+      else s.setup.forEach((x, i) => { if (!isObj(x) || !SETUP_OS.includes(x.os as typeof SETUP_OS[number])) add(`setup.${i}`, "badValue"); else text(x, "body"); });
+    }
+    if (s.starterRepo !== undefined && (!isStr(s.starterRepo) || !/^[a-z0-9][a-z0-9-]{1,59}$/.test(s.starterRepo))) add("starterRepo", "badValue");
+    if (s.hours !== undefined && (!isNum(s.hours) || s.hours <= 0 || s.hours > 200)) add("hours", "range", { min: 1, max: 200 });
+    if (s.milestone !== undefined && (!isStr(s.milestone) || !/^[a-z0-9][a-z0-9-]{0,19}$/.test(s.milestone))) add("milestone", "badValue");
   };
 
   /** A program to write: Python needs tests (output to match or a check to pass), SQL the tables it runs on. */
@@ -408,6 +428,7 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
   text(u, "title"); text(u, "summary");
   if (u.audience !== undefined && u.audience !== "teachers" && u.audience !== "students") add("audience", "badValue", { value: String(u.audience) });
   if (u.teach !== undefined && u.teach !== "university") add("teach", "badValue", { value: String(u.teach) });
+  if (u.kind !== undefined && u.kind !== "capstone") add("kind", "badValue", { value: String(u.kind) });
   if (byteSize(u) > MAX_UNIT_BYTES) add("", "tooLarge", { max: Math.round(MAX_UNIT_BYTES / 1000) });
   const lessons = arr(u.lessons);
   minItems(lessons, "lessons", 1);

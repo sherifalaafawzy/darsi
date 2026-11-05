@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import unit from "../../../content/retired/ai-1.json";
 import { COMPETENCIES } from "../src/content/competencies";
 import { errorsOf, validateUnit, type Issue } from "../src/content/validate";
@@ -166,3 +168,29 @@ describe("validateUnit", () => {
     expect(errs(u).some((i) => i.code === "tooLarge" && i.at.lesson === 0)).toBe(true);
   });
 });
+
+describe("capstone fields", () => {
+  const caps = ["agents", "ai", "aisec", "code", "cyber", "data", "ds", "iot", "opt"].map((t) => JSON.parse(readFileSync(join(__dirname, `../../../content/units/${t}-capstone.json`), "utf8")) as AnyObj);
+  const cap = () => structuredClone(caps[1]);
+  const proj = (u: AnyObj) => stepOf(u, "project");
+
+  it("accepts all nine capstone units with no errors", () => {
+    for (const u of caps) expect(errs(u), u.id).toEqual([]);
+  });
+
+  it("rejects unknown evidence, repeated evidence, setup for an unknown OS and bad starter names", () => {
+    let u = cap(); proj(u).evidence = [{ kind: "zip" }];
+    expect(has(errs(u), "badValue", "evidence.0")).toBe(true);
+    u = cap(); proj(u).evidence = [{ kind: "repo" }, { kind: "repo" }];
+    expect(has(errs(u), "duplicateId", "evidence")).toBe(true);
+    u = cap(); proj(u).setup = [{ os: "linux", body: { en: "x", ar: "x" } }];
+    expect(has(errs(u), "badValue", "setup.0")).toBe(true);
+    u = cap(); proj(u).starterRepo = "https://github.com/x/y";
+    expect(has(errs(u), "badValue", "starterRepo")).toBe(true);
+    u = cap(); proj(u).hours = 0;
+    expect(has(errs(u), "range", "hours")).toBe(true);
+    u = cap(); u.kind = "bonus";
+    expect(has(errs(u), "badValue", "kind")).toBe(true);
+  });
+});
+

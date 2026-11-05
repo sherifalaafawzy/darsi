@@ -101,7 +101,26 @@ export interface ProjectStep extends Base {
   type: "project"; task: LocalText; deliverable: LocalText; rubric: { criterion: LocalText }[];
   /** The track's final project: the student also explains how it works in their own words and declares any AI use. Not graded. */
   final?: boolean;
+  /**
+   * A capstone milestone (a unit with kind "capstone"): what the learner sends besides text and files (a GitHub repo,
+   * a release tag, the starter's darsi-check.json, a localhost-only scan, other links). Sent through checkCapstone,
+   * which runs the deterministic checks and an advisory AI review (TECHNICAL.md "Capstones").
+   */
+  evidence?: Evidence[];
+  /** How to set up, per computer: Windows, Mac, or Colab/Codespaces in the browser. */
+  setup?: SetupTab[];
+  /** The starter repository's name in the Darsi GitHub org (content/capstone.ts STARTER_ORG). */
+  starterRepo?: string;
+  /** Hours of work this milestone takes, for the learner's planning. */
+  hours?: number;
+  /** The milestone id the starter's check script reports in darsi-check.json (m1, m2…). */
+  milestone?: string;
 }
+export const EVIDENCE_KINDS = ["repo", "release", "check", "scan", "url"] as const;
+export type EvidenceKind = typeof EVIDENCE_KINDS[number];
+export interface Evidence { kind: EvidenceKind; label?: LocalText }
+export const SETUP_OS = ["windows", "mac", "colab"] as const;
+export interface SetupTab { os: typeof SETUP_OS[number]; body: LocalText }
 
 /** One test of a Python program: what input() returns, then what the program must print and/or a check run after it. */
 export interface CodeTest {
@@ -248,7 +267,9 @@ export function teachSync(local: string | null | undefined, remote: string | nul
 export const AUDIENCES: Audience[] = ["teachers", "students"];
 /** A course's audience; courses without one are for teachers. */
 export const audienceOf = (u: { audience?: Audience }): Audience => u.audience ?? "teachers";
-export interface Unit { id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: Lesson[]; audience?: Audience; teach?: "university" }
+export interface Unit { id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: Lesson[]; audience?: Audience; teach?: "university";
+  /** A capstone: real-tool milestones built on the learner's own computer, Colab or Codespaces. Lessons need no video. */
+  kind?: "capstone" }
 export interface CatalogEntry {
   id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: number; sizeMB: number; available: boolean;
   /** What a download costs in each language (MB): the course, its light lessons or videos, kits and runtimes. `sizeMB` is the largest. */
@@ -259,6 +280,8 @@ export interface CatalogEntry {
   audience?: Audience;
   /** Set only for university courses: Home shows them to university teachers only. */
   teach?: "university";
+  /** A track's capstone: listed after the other courses of its level. */
+  kind?: "capstone";
 }
 export interface Catalog { version: number; units: CatalogEntry[] }
 /** The onboarding check (public/content/placement.json): per track and audience, questions for each level. */

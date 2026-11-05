@@ -131,9 +131,31 @@ function devUnits(): Plugin {
 }
 
 /** Dev only: serve content/media at /media/ so a lesson's light video and MP4 play before they are published. */
+/** Dev only: serve content/kits at /kits/ so classroom kits download before publish. */
+function devKits(): Plugin {
+  const root = resolve(fileURLToPath(new URL("../../content/kits", import.meta.url)));
+  const types: Record<string, string> = { ".pdf": "application/pdf", ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation", ".mp4": "video/mp4" };
+  return {
+    name: "dev-kits",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = decodeURIComponent((req.url ?? "").split("?")[0] ?? "");
+        if (!url.startsWith("/kits/")) return next();
+        const rel = url.slice("/kits/".length);
+        if (!rel || rel.includes("..")) return next();
+        const file = resolve(root, rel);
+        if (!file.startsWith(root) || !existsSync(file) || !statSync(file).isFile()) return next();
+        res.setHeader("Content-Type", types[extname(file)] ?? "application/octet-stream");
+        res.setHeader("Content-Length", statSync(file).size);
+        createReadStream(file).pipe(res);
+      });
+    },
+  };
+}
 function devMedia(): Plugin {
   const root = resolve(fileURLToPath(new URL("../../content/media", import.meta.url)));
-  const types: Record<string, string> = { ".mp4": "video/mp4", ".vtt": "text/vtt; charset=utf-8", ".json": "application/json", ".opus": "audio/ogg", ".m4a": "audio/mp4", ".wav": "audio/wav" };
+  const types: Record<string, string> = { ".mp4": "video/mp4", ".vtt": "text/vtt; charset=utf-8", ".json": "application/json", ".opus": "audio/ogg", ".m4a": "audio/mp4", ".wav": "audio/wav", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".gif": "image/gif" };
   return {
     name: "dev-media",
     apply: "serve",
@@ -262,6 +284,8 @@ export default defineConfig({
     earlySw(),
     devUnits(),
     devMedia(),
+
+    devKits(),
   ],
   server: { port: 5173, host: true },
   build: {

@@ -1,0 +1,27 @@
+/**
+ * Capstones (TECHNICAL.md "Capstones"): every track's level-3 course ends in a capstone unit whose milestones are built
+ * with real, free tools on the learner's own computer, Colab or Codespaces. The starter repositories live in one GitHub
+ * organisation: change STARTER_ORG here when it exists, and every unit's link follows.
+ */
+export const STARTER_ORG = "https://github.com/darsi-org";
+/** A milestone's starter repository (ProjectStep.starterRepo is only the repository's name). */
+export const starterUrl = (repo: string) => `${STARTER_ORG}/${repo}`;
+/** A GitHub repository link as learners paste it: https://github.com/owner/repo, optionally .git or a trailing slash. */
+export const GITHUB_REPO = /^https:\/\/github\.com\/([A-Za-z0-9-]{1,39})\/([A-Za-z0-9._-]{1,100}?)(?:\.git)?\/?$/;
+/** The most extra links a capstone submission takes (Colab, a Space, a dashboard…). */
+export const MAX_LINKS = 5;
+/** darsi-check.json is small; anything bigger is not what the starter's check script writes. */
+export const MAX_CHECK_BYTES = 100_000;
+
+/** One deterministic check checkCapstone ran (functions/src/capstoneCore.ts CheckResult). */
+export interface CapCheck { id: string; ok: boolean; en: string; ar: string }
+/** The advisory AI review stored on a capstone submission (capstoneCore.ts AiReview). Only the function writes it. */
+export interface AiReview {
+  status: "done" | "unavailable" | "skipped";
+  scores: { criterion: number; score: number; en: string; ar: string }[];
+  summary: { en: string; ar: string }; next: { en: string; ar: string }; model?: string; usd?: number; at?: string;
+}
+/** What checkCapstone answers. */
+export interface CapResult { id: string; checks: CapCheck[]; aiReview: AiReview; queue: "teacher" | "staff" }
+/** The fields checkCapstone adds to a submission (users/{uid}/submissions; admin/data.ts Submission has the rest). */
+export interface CapFields { capstone?: boolean; repo?: string | null; links?: string[]; checks?: CapCheck[]; aiReview?: AiReview; queue?: "teacher" | "staff" }

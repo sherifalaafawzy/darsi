@@ -23,7 +23,7 @@ export function LessonScreen() {
   if (!lesson) return <EmptyState title={t("err.notFound")} />;
   // Platform admins can open any lesson at any step (?step=project opens it at its project).
   const explore = all ? { at: Math.max(0, lesson.steps.findIndex((s) => s.type === params.get("step"))) } : undefined;
-  return <LessonPlayer key={lesson.id} unitId={unit.id} lesson={lesson} nextId={unit.lessons[unit.lessons.indexOf(lesson) + 1]?.id} track={unit.track} explore={explore} />;
+  return <LessonPlayer key={lesson.id} unitId={unit.id} lesson={lesson} nextId={unit.lessons[unit.lessons.indexOf(lesson) + 1]?.id} track={unit.track} unitKind={unit.kind} explore={explore} />;
 }
 
 /** What kind of step it is, for the platform admin's step list. */
@@ -36,7 +36,7 @@ const kindOf = (s: Step) => KINDS[s.type] ?? "question";
  * With `explore` (platform admins) any step can be opened from a list, nothing has to be answered or watched first,
  * and a lesson they skipped through isn't recorded as finished.
  */
-export function LessonPlayer({ unitId, lesson, nextId, track, preview, explore }: { unitId: string; lesson: import("../content/types").Lesson; nextId?: string; track: import("../content/types").Track; preview?: { onExit: () => void }; explore?: { at: number } }) {
+export function LessonPlayer({ unitId, lesson, nextId, track, unitKind, preview, explore }: { unitId: string; lesson: import("../content/types").Lesson; nextId?: string; track: import("../content/types").Track; unitKind?: "capstone"; preview?: { onExit: () => void }; explore?: { at: number } }) {
   const navigate = useNavigate();
   const nav = (to: string) => (preview ? preview.onExit() : navigate(to));
   const { t, L, lang, num } = useI18n();
@@ -83,10 +83,16 @@ export function LessonPlayer({ unitId, lesson, nextId, track, preview, explore }
   };
 
   if (finished) {
+    // Capstones (and any lesson with only ungraded read/project steps) should not flash XP/accuracy.
+    const hasGraded = lesson.steps.some((s) => isGraded(s));
+    const showScore = unitKind !== "capstone" && hasGraded;
+    const stats = showScore
+      ? [{ label: "XP", value: `+${num(finished.xp)}` }, { label: t("lesson.accuracy"), value: num(finished.accuracy, { style: "percent" }), tone: track }, { label: t("lesson.time"), value: t("common.minutes", { n: Math.max(1, Math.round(finished.seconds / 60)) }), tone: "ai" }]
+      : [];
     return (
       <main className="screen narrow">
         <LessonComplete title={t("lesson.done")} subtitle={L(lesson.title)}
-          stats={[{ label: "XP", value: `+${num(finished.xp)}` }, { label: t("lesson.accuracy"), value: num(finished.accuracy, { style: "percent" }), tone: track }, { label: t("lesson.time"), value: t("common.minutes", { n: Math.max(1, Math.round(finished.seconds / 60)) }), tone: "ai" }]}
+          stats={stats}
           tryLabel={t("lesson.try")} tryTomorrow={L(lesson.tryTomorrow)}
           actions={preview ? <Button block onClick={preview.onExit}>{t("common.close")}</Button> : <>
             {nextId && <Button block iconEnd="next" onClick={() => nav(`/lesson/${unitId}/${nextId}`)}>{t("lesson.next")}</Button>}

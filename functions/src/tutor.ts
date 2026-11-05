@@ -44,7 +44,7 @@ export const tutorReady = (cfg: TutorConfig) => cfg.on && (cfg.backend === "vert
 
 // Vertex AI: its endpoints (VERTEX_BASE lets the checks use a stand-in) and the service account's token.
 export const vertexModel = (project: string, loc: string, model: string) => `projects/${project}/locations/${loc}/publishers/google/models/${model}`;
-const vertexHost = (loc: string) => process.env.VERTEX_BASE ?? (loc === "global" ? "https://aiplatform.googleapis.com" : `https://${loc}-aiplatform.googleapis.com`);
+export const vertexHost = (loc: string) => process.env.VERTEX_BASE ?? (loc === "global" ? "https://aiplatform.googleapis.com" : `https://${loc}-aiplatform.googleapis.com`);
 let token: { v: string; until: number } | null = null;
 /** An access token for Google's APIs, kept until a minute before it expires. */
 export async function googleToken(): Promise<string> {
@@ -191,7 +191,7 @@ export const balance = async (uid: string) => Math.round(creditsLeft((await db.d
 /* ---------- Text answers ---------- */
 
 // GEMINI_BASE lets the emulator checks use a stand-in.
-const GEMINI = `${process.env.GEMINI_BASE ?? "https://generativelanguage.googleapis.com"}/v1beta/models`;
+export const GEMINI = `${process.env.GEMINI_BASE ?? "https://generativelanguage.googleapis.com"}/v1beta/models`;
 
 export interface Answer { inScope: boolean; answer: string; sources: { id: string; unitId: string; lessonId: string; stepId: string; lesson: string }[]; usd: number }
 /**
