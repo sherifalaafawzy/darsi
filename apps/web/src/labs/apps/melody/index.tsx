@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";

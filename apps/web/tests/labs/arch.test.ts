@@ -5,7 +5,7 @@ import { FACE_LINE, judged, likeness, prototype, TEST, TRAIN, WIDE } from "../..
 import { decode, encode, mse, paint } from "../../src/labs/apps/vae/model";
 import { addNoise, CLEAN, denoiseStep, mse as dmse, noisePattern } from "../../src/labs/apps/denoise/model";
 import { BATCH, fits, memory, WIDE as WIDE_JOB } from "../../src/labs/apps/split/model";
-import { CASES, judge, tally } from "../../src/labs/apps/suite/model";
+import { CASES, judge, tally, type Mark } from "../../src/labs/apps/suite/model";
 
 describe("a memory that fades", () => {
   it("forgets a cue when little memory survives, and keeps it when almost all survives", () => {
@@ -66,7 +66,7 @@ describe("two machines", () => {
 
 describe("a test with a refusal", () => {
   it("fails when a required refusal is marked pass", () => {
-    const marks = Object.fromEntries(CASES.map((c) => [c.id, c.mustRefuse ? "refuse" : "pass"]));
+    const marks: Record<string, Mark | undefined> = Object.fromEntries(CASES.map((c) => [c.id, c.mustRefuse ? "refuse" : "pass"]));
     expect(tally(judge(CASES, marks)).missed).toBe(0);
     expect(tally(judge(CASES, marks)).right).toBe(CASES.length);
     marks.photo = "pass";

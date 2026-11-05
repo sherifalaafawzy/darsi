@@ -508,6 +508,13 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
   - Checked live: `reportBug` answers 405 to GET, 400 to junk and 401 to a bad token. A guest on darsiai.org (Pixel 7, Playwright) sent a report: 201, screenshot 785×1600 (115 KB), all the details, no Firebase chunk, no errors, no sideways scroll. That report and its picture were deleted afterwards with the Admin SDK.
   - The index was still building right after the deploy; /super/bugs' "New" view needs it.
   - Not checked live: /super/bugs, which needs a platform-admin sign-in (the user's).
+- Published and deployed 2026-11-05 (the MIT-based AI architecture courses, commit 8038a686 plus two type fixes, with the user's go-ahead), from the clean worktree `H:/tmp/darsi-live` moved to 8038a686:
+  1. Hosting (`index-BDtKp6DB.js`) with the seven new labs (`rnn`, `melody`, `detect`, `vae`, `denoise`, `suite`, `split`), and the `collect` function (its lab list now knows them). Nothing else changed in the functions.
+  2. `node scripts/seed-content.mjs ai-d1 ai-d2 ai-d3 ai-u2 ai-u3 ai-u4` (personal application-default login; the six units' media copied into the worktree): each v1, 30 kit files and 48 media files.
+  - HEAD did not type-check (an unused import in `labs/apps/melody/index.tsx`, a `Mark` type in `tests/labs/arch.test.ts`), so `npm run build` failed; both fixed in the worktree and in the main checkout (uncommitted).
+  - The deploy copy passed `tsc`, web 1320 tests and e2e 30/30 on a private port (4180, `playwright.private.config.ts`, untracked); startup 4 files.
+  - Checked live: the catalog lists 87 courses; ai-d1 downloads with CORS for darsiai.org; in the browser pane after the service-worker update, ai-d1-1's light lesson plays and all seven labs open, with no Firebase SDK.
+  - Known leftover: `public/content/dev-catalog.json` (dev only) is shipped and precached; add it to `globIgnores`.
 - **Storage**: the app uses the bucket **`darsi-f0685` in europe-west1**, set by `VITE_FIREBASE_STORAGE_BUCKET` in `.env.local`. It is deploy target `main` with `firebase/storage.rules`.
   - The original default bucket `darsi-f0685.firebasestorage.app` (us-west1, never used) was deleted on 2026-10-25 and now returns 404 `NoSuchBucket`. Keep the `main` target: without one, `firebase deploy --only storage` aims at the project's default bucket, which no longer exists.
   - Checked live on 2026-10-25: media/kits are public, and submissions return 403 to anonymous requests.

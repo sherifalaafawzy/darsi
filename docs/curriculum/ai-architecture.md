@@ -3,7 +3,7 @@
 Three advanced courses on how modern AI is built, for university students and for the lecturers who teach them. They
 follow the 2026 run of MIT's *Introduction to Deep Learning* (6.S191), taught by Alexander Amini and Ava Amini and
 published at [introtodeeplearning.com](https://introtodeeplearning.com/2026/index.html). The six units and the new labs are written
-and can be opened on the local app. They are not published. Every lesson video is voiced locally, in English and Egyptian Arabic, as a light lesson and a 240p file.
+and are published (2026-11-05). Every lesson video is voiced locally, in English and Egyptian Arabic, as a light lesson and a 240p file.
 
 6.S191 is a nine-lecture bootcamp plus three software labs, rewritten every year. Darsi cannot ship that course. The
 lectures assume a GPU notebook, PyTorch and, in one lab, photographs of faces. Darsi runs on a phone, offline, with no
