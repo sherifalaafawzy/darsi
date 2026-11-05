@@ -38,25 +38,28 @@ describe("final projects in the content", () => {
     expect(JSON.stringify(u)).not.toContain('"final":true');
     expect(u.lessons.slice(0, 4).every((l) => l.steps.some((s) => s.type === "project"))).toBe(true); // the milestones
   });
-  it.each(TRACKS)("%s-capstone ends with its final project, in both languages", (t) => {
+  it.each(TRACKS)("%s-capstone has three stages (description, starter, submission), no questions and no score", (t) => {
     const u = capstone(t);
     expect(u.kind).toBe("capstone");
     expect(u.level).toBe(3);
-    const last = u.lessons[u.lessons.length - 1];
-    const p = last.steps.find((s) => s.type === "project") as ProjectStep;
+    expect(u.lessons.map((l) => l.id)).toEqual([`${t}-capstone-description`, `${t}-capstone-starter`, `${t}-capstone-submission`]);
+    const GRADED_TYPES = new Set(["mcq", "multi", "truefalse", "order", "match", "fill", "short", "numeric", "categorize", "hotspot"]);
+    for (const l of u.lessons) expect(l.steps.some((s) => GRADED_TYPES.has(s.type)), `${l.id}: no questions`).toBe(false);
+    for (const l of u.lessons.slice(0, 2)) expect(JSON.stringify(l)).not.toContain('"final":true');
+    const last = u.lessons[2];
+    const projects = last.steps.filter((s) => s.type === "project") as ProjectStep[];
+    expect(projects.length).toBeGreaterThan(0);
+    const p = projects[projects.length - 1];
     expect(p.final).toBe(true);
-    expect(p.evidence?.some((e) => e.kind === "release")).toBe(true);
+    expect(p.evidence?.some((e) => e.kind === "repo")).toBe(true);
+    expect(p.starterRepo).toBeTruthy();
     expect(p.rubric.length).toBeGreaterThanOrEqual(3);
-    for (const l of u.lessons.slice(0, -1)) expect(JSON.stringify(l)).not.toContain('"final":true');
-    const text = JSON.stringify(last);
-    expect(text).not.toContain("·");
     for (const s of last.steps) expect(JSON.stringify(s)).toContain('"ar"');
   });
 });
-
 /** The ai capstone's final milestone without its capstone fields: a plain final project. */
 const capStep = () => capstone("ai").lessons.at(-1)!.steps.find((s) => s.type === "project") as ProjectStep;
-const step = (): ProjectStep => { const { evidence: _e, setup: _s, starterRepo: _r, hours: _h, milestone: _m, ...p } = capStep(); return p; };
+const step = (): ProjectStep => ({ type: "project", id: "final", final: true, prompt: { en: "Your final project", ar: "مشروعك النهائي" }, task: { en: "Build it", ar: "ابنيه" }, deliverable: { en: "A short write-up", ar: "وصف قصير" }, rubric: [{ criterion: { en: "Works", ar: "يشتغل" } }, { criterion: { en: "Explained", ar: "مشروح" } }, { criterion: { en: "Honest about AI", ar: "صادق" } }] }) as unknown as ProjectStep;
 const view = () => render(<I18nProvider lang="en"><ProjectView step={step()} lessonId="ai-s3-cap" unitId="ai-s3" onReady={() => {}} /></I18nProvider>);
 
 describe("a final project", () => {

@@ -26,10 +26,11 @@ describe.each(units.map((u) => [u.id, u] as const))("course %s", (_, unit) => {
     for (const l of unit.lessons) {
       const types = l.steps.map((s) => s.type);
       // Never two steps of the same type in a row; at least three question types; every graded step says why.
-      types.forEach((t, i) => { if (i) expect(t, `${l.id}: two ${t} steps in a row`).not.toBe(types[i - 1]); });
-      expect(new Set(types.filter((t) => GRADED.has(t))).size, `${l.id}: question types`).toBeGreaterThanOrEqual(3);
+      if (unit.kind !== "capstone") types.forEach((t, i) => { if (i) expect(t, `${l.id}: two ${t} steps in a row`).not.toBe(types[i - 1]); });
+      if (unit.kind !== "capstone") expect(new Set(types.filter((t) => GRADED.has(t))).size, `${l.id}: question types`).toBeGreaterThanOrEqual(3); // capstones: no quizzes, no score
       for (const s of l.steps) if (GRADED.has(s.type)) expect(s.explain?.en, `${l.id} ${s.id}: explain`).toBeTruthy();
-      expect(l.slides.map((s) => s.layout), `${l.id}: slides`).toEqual(["title", "bullets", "bullets", "activity", "questions", "exit"]);
+      if (unit.kind === "capstone") expect(l.slides.length, `${l.id}: slides`).toBeGreaterThanOrEqual(3); // own kit deck shape
+      else expect(l.slides.map((s) => s.layout), `${l.id}: slides`).toEqual(["title", "bullets", "bullets", "activity", "questions", "exit"]);
       for (const s of l.steps) if (s.type === "lab") expect(LAB_METAS.map((m) => m.id), `${l.id}: lab ${s.tool}`).toContain(s.tool);
     }
   });

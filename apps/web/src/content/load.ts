@@ -71,7 +71,7 @@ const fetchPublic = (path: string) => async () => { const r = await fetch(storag
 const notFound = (e: unknown) => (e as { status?: number }).status === 404;
 const EMPTY: Catalog = { version: 1, units: [] };
 /** Vite on localhost (serve or preview): allow unpublished courses under /content/dev. */
-const localHostDev = () => typeof location !== "undefined" && (location.hostname === "localhost" || location.hostname === "127.0.0.1");
+const localHostDev = () => import.meta.env.MODE !== "test" && typeof location !== "undefined" && (location.hostname === "localhost" || location.hostname === "127.0.0.1");
 /**
  * Org files go through the SDK (only that org's members may read them). App hands over the reader (setOrgReader):
  * this module is shared with lazy staff chunks, and any SDK import here, even a dynamic one, makes the bundler split
