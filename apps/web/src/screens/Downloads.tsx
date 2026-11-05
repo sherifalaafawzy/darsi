@@ -5,10 +5,14 @@ import { useMine } from "../content/mine";
 import { useI18n } from "../i18n";
 import { useStore } from "../state/store";
 import { cacheUrls, onMeteredConnection, removeCached } from "../platform";
-import { CODE_STEPS } from "../content/types";
+import { CODE_STEPS, type CatalogEntry } from "../content/types";
 import { prefetchCodeSteps } from "../code/loader";
 import { prefetchLightPacks } from "../lesson/LightLesson";
 import { track } from "../analytics/track";
+
+/** What downloading a course costs in this language (files in other languages fall back to English, as downloads do). */
+export const downloadMB = (u: Pick<CatalogEntry, "sizeMB" | "sizeByLang"> | undefined, lang: string) =>
+  u ? u.sizeByLang?.[lang] ?? u.sizeByLang?.en ?? u.sizeMB : 0;
 
 export function Downloads() {
   const { t, L, lang, num } = useI18n();
@@ -30,7 +34,7 @@ export function Downloads() {
       if (unit.lessons.some((l) => l.steps.some((s) => CODE_STEPS.has(s.type)))) await prefetchCodeSteps();
       await prefetchLightPacks(unit);
       dispatch({ type: "download", unit: id, on: true });
-      track("unit_download", { u: id, mb: Math.round(catalog?.units.find((u) => u.id === id)?.sizeMB ?? 0) });
+      track("unit_download", { u: id, mb: Math.round(downloadMB(catalog?.units.find((u) => u.id === id), lang)) });
     } catch { if (!ctl.signal.aborted) setErrors((e) => ({ ...e, [id]: true })); }
     finally { setProgress((p) => { const n = { ...p }; delete n[id]; return n; }); }
   };
@@ -46,7 +50,7 @@ export function Downloads() {
           const p = progress[u.id];
           const st = p !== undefined ? "downloading" : errors[u.id] ? "error" : state.downloads[u.id] ? "done" : "idle";
           return <div key={u.id} className="stack-sm">
-            <DownloadRow track={u.track} title={L(u.title)} meta={t("dl.meta", { lessons: u.lessons, size: num(u.sizeMB, { maximumFractionDigits: 1 }) })} state={st} progress={p}
+            <DownloadRow track={u.track} title={L(u.title)} meta={t("dl.meta", { lessons: u.lessons, size: num(downloadMB(u, lang), { maximumFractionDigits: 1 }) })} state={st} progress={p}
               onDownload={() => !blocked && download(u.id)} onCancel={() => aborts.current[u.id]?.abort()}
               downloadLabel={t("dl.download")} cancelLabel={t("dl.cancel")} doneLabel={t("dl.saved")} retryLabel={t("common.retry")} errorText={t("dl.failed")} />
             {st === "done" && <button type="button" className="link-btn" onClick={() => remove(u.id)}>{t("dl.remove")}</button>}

@@ -181,6 +181,8 @@ export interface KitFile {
   /** … or a full path with "{lang}" and no extension (used for /media videos) … */ path?: string;
   /** … or uploaded files (course editor): language → format → URL. */ urls?: Partial<Record<string, Partial<Record<KitFormat, string>>>>;
   formats: KitFormat[];
+  /** Each file's size in KB, like `urls` (language → format), so the catalog can say what a download costs. */
+  sizeKB?: Partial<Record<string, Partial<Record<KitFormat, number>>>>;
 }
 export type KitFormat = "pdf" | "pptx" | "mp4";
 /** Uploaded kits fall back to English, then to any language that has the format. */
@@ -250,6 +252,8 @@ export const audienceOf = (u: { audience?: Audience }): Audience => u.audience ?
 export interface Unit { id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: Lesson[]; audience?: Audience; teach?: "university" }
 export interface CatalogEntry {
   id: string; track: Track; level: number; title: LocalText; summary: LocalText; lessons: number; sizeMB: number; available: boolean;
+  /** What a download costs in each language (MB): the course, its light lessons or videos, kits and runtimes. `sizeMB` is the largest. */
+  sizeByLang?: Record<string, number>;
   /** Authored units (course editor): Storage path of the published JSON, its version, and who sees it ("public" or an orgId). */
   src?: string; version?: number; owner?: string;
   /** Set only for courses for students. */

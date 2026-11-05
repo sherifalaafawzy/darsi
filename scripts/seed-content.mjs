@@ -26,7 +26,7 @@
  */
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, extname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { contentTypeOf, kitFiles, mediaPathOf, mediaPaths, withKitUrls } from "./lib/kits.mjs";
@@ -120,7 +120,7 @@ for (const f of files) {
       await bucket().upload(local, { destination: k.path, resumable: false, metadata: { contentType: contentTypeOf(k.fmt), cacheControl: "public, max-age=86400" } });
     }
     const { media, missing, sent } = await uploadMedia(id, mediaPaths(source));
-    const unit = withKitUrls(source, urlOf, { has: hasKit, media });
+    const unit = withKitUrls(source, urlOf, { has: hasKit, media, sizeOf: (file) => statSync(join(ROOT, "content/kits", file)).size });
     const rev = (Number(meta.get("rev")) || 0) + 1;
     const batch = db.batch();
     // The same light record the editor writes (apps/web/src/cms/data.ts metaOf); `published` stays as it is.

@@ -340,10 +340,12 @@ export function KitForm({ lesson: l, onChange, media }: { lesson: Lesson; onChan
     kind, pages: 1, formats: KIT_FORMATS[kind], urls: {},
     title: kind === "slides" ? { en: "Slides", ar: "شرائح" } : { en: "Lesson plan", ar: "خطة الدرس" },
   }] });
-  const setUrl = (k: KitFile, i: number, lang: string, fmt: KitFormat, url: string | null) => {
+  // Each file's size goes with its link, so the catalog can say what a download costs.
+  const setUrl = (k: KitFile, i: number, lang: string, fmt: KitFormat, url: string | null, bytes = 0) => {
     const byLang = { ...(k.urls?.[lang] ?? {}) };
-    if (url) byLang[fmt] = url; else delete byLang[fmt];
-    onChange({ ...l, kit: l.kit.map((x, n) => (n === i ? { ...k, urls: { ...k.urls, [lang]: byLang } } : x)) });
+    const kb = { ...(k.sizeKB?.[lang] ?? {}) };
+    if (url) { byLang[fmt] = url; kb[fmt] = Math.round(bytes / 1024); } else { delete byLang[fmt]; delete kb[fmt]; }
+    onChange({ ...l, kit: l.kit.map((x, n) => (n === i ? { ...k, urls: { ...k.urls, [lang]: byLang }, sizeKB: { ...k.sizeKB, [lang]: kb } } : x)) });
   };
   return (
     <div className="stack">
@@ -358,7 +360,7 @@ export function KitForm({ lesson: l, onChange, media }: { lesson: Lesson; onChan
                 {langs.map((lng) => <div key={lng.code} className="stack">{k.formats.map((fmt) => fmt !== "mp4" && (
                   <Upload key={fmt} label={<>{t(fmt === "pdf" ? "kit.pdf" : "kit.pptx")} (<LangName name={lng.name} code={lng.code} />)</>} kind={fmt} owner={media.owner} unitId={media.unitId}
                     base={`${media.lessonId}_kit_${k.kind}_${lng.code}`} current={k.urls?.[lng.code]?.[fmt]}
-                    onDone={(url) => setUrl(k, i, lng.code, fmt, url)} onClear={() => setUrl(k, i, lng.code, fmt, null)} />
+                    onDone={(url, bytes) => setUrl(k, i, lng.code, fmt, url, bytes)} onClear={() => setUrl(k, i, lng.code, fmt, null)} />
                 ))}</div>)}
               </div>
             ) : <p className="muted small" dir="ltr">{k.base ?? k.path}</p>}

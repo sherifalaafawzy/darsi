@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildCatalog, canManage, catalogEntry, catalogPath, idAllowed, isOwner, mediaPrefix, sizeMB, staleVersions, unitPath, unitPrefix, versionOf } from "../src/catalog";
+import { buildCatalog, canManage, catalogEntry, catalogPath, idAllowed, isOwner, mediaPrefix, sizeByLang, sizeMB, staleVersions, unitPath, unitPrefix, versionOf } from "../src/catalog";
 import { FILES, transform } from "../scripts/copy-shared.mjs";
 import type { Unit } from "../src/shared/types";
 import { errorsOf, validateUnit } from "../src/shared/validate";
@@ -79,6 +79,25 @@ describe("catalog", () => {
     const v = light.lessons[0].steps.find((s) => s.type === "video")!;
     if (v.type === "video") v.light = { files: {}, langs: { en: "en", ar: "ar-EG" }, sizeKB: { en: 383, ar: 410 } };
     expect(sizeMB(light, 59_325)).toBeCloseTo(0.1 + 0.4 + 2.4 + 2.9, 5); // 410 KB, the larger language
+  });
+  it("counts each language's own kits and light lessons, and lists the largest for older phones", () => {
+    const u = structuredClone(ai1);
+    for (const l of u.lessons) {
+      for (const s of l.steps) if (s.type === "video") { s.light = { files: {}, langs: { en: "en", ar: "ar-EG" }, sizeKB: { en: 512, ar: 512 } }; }
+      l.kit = [
+        { kind: "slides", title: { en: "Slides" }, pages: 1, formats: ["pdf", "pptx"], urls: {}, sizeKB: { en: { pdf: 100, pptx: 130 }, ar: { pdf: 300, pptx: 130 } } },
+        { kind: "lesson-plan", title: { en: "Plan" }, pages: 1, formats: ["pdf"], urls: {}, sizeKB: { en: { pdf: 130 } } }, // Arabic falls back to English
+        { kind: "video", title: { en: "Video" }, pages: 0, formats: ["mp4"], urls: {}, sizeKB: { en: { mp4: 5000 } } }, // never downloaded
+      ];
+    }
+    const videos = u.lessons.reduce((a, l) => a + l.steps.filter((s) => s.type === "video").length, 0);
+    const n = u.lessons.length;
+    const by = sizeByLang(u, 100_000);
+    expect(by.en).toBeCloseTo(Math.round((0.1 + videos * 0.5 + n * 360 / 1024) * 10) / 10, 5);
+    expect(by.ar).toBeCloseTo(Math.round((0.1 + videos * 0.5 + n * 560 / 1024) * 10) / 10, 5);
+    const e = catalogEntry(u, "public", 1, 100_000);
+    expect(e.sizeByLang).toEqual(by);
+    expect(e.sizeMB).toBe(by.ar);
   });
   it("orders units by track, then level, then title", () => {
     const u = (id: string, track: Unit["track"], level: number, title: string) => catalogEntry({ ...ai1, id, track, level, title: { en: title } }, "public", 1, 1000);

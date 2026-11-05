@@ -761,7 +761,7 @@ orgs/{orgId}/units/{id}/v{n}.json
 orgs/{orgId}/media/{id}/…
 ```
 
-Each catalog entry carries `src` (the JSON's Storage path), `version`, `owner` and `sizeMB` (the JSON plus one language's videos). Media links in a lesson are Storage download URLs, so `<video src>` plays without headers. For org media they are bearer links: anyone given the link can open the file. Uploaded files get a unique suffix, so replacing a file never breaks the link inside an already-published version.
+Each catalog entry carries `src` (the JSON's Storage path), `version`, `owner`, `sizeByLang` and `sizeMB`. `sizeByLang` is what a download fetches in each language (`sizeByLang` in `functions/src/catalog.ts`, mirroring `unitAssetUrls`): the JSON, each video step's light lesson (or its MP4 when it has none), the kits' files (not video kits) and the code runtimes. A language without its own file counts the English one, as the app does. `sizeMB` is the largest language, for phones that don't read `sizeByLang`; Downloads shows the learner's own (`downloadMB`). Kit files carry `sizeKB` (language → format → KB, like `urls`): the seed records it from the files on disk (`withKitUrls(…, { sizeOf })`), and the editor records it on upload. Before 2026-11-05 kits weren't counted, so courses showed about half their real size. Media links in a lesson are Storage download URLs, so `<video src>` plays without headers. For org media they are bearer links: anyone given the link can open the file. Uploaded files get a unique suffix, so replacing a file never breaks the link inside an already-published version.
 
 **Loading** (`apps/web/src/content/load.ts`):
 - `loadCatalog()` merges two catalogs:

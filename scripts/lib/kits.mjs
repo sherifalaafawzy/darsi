@@ -48,8 +48,10 @@ export const mediaPathOf = (unitId, local, hash) => `content/media/${unitId}/${h
  * - `urlOf(path)` is a Storage path's download URL; `has(file)` as for kitFiles.
  * - `media` maps each uploaded /media/ path to its URL. Media that wasn't uploaded (files still to be made, such as ai-1's
  *   narrated videos) keeps its app path, and video kits without any uploaded file are left out.
+ * - `sizeOf(file)`, when given, is a kit file's size in bytes: kits then carry `sizeKB` (language → format → KB), which
+ *   the catalog adds to each language's download size.
  */
-export function withKitUrls(unit, urlOf, { has = all, media = new Map() } = {}) {
+export function withKitUrls(unit, urlOf, { has = all, media = new Map(), sizeOf } = {}) {
   const swap = (m) => m && Object.fromEntries(Object.entries(m).map(([k, v]) => [k, media.get(v) ?? v]));
   return {
     ...unit,
@@ -74,10 +76,14 @@ export function withKitUrls(unit, urlOf, { has = all, media = new Map() } = {}) 
         if (!k.base) return [k];
         const { base, ...rest } = k;
         const urls = {};
+        const sizeKB = {};
         for (const lang of KIT_LANGS) for (const fmt of k.formats) {
-          if (fmt !== "mp4" && (lang === "en" || has(`${base}-${lang}.${fmt}`))) (urls[lang] ??= {})[fmt] = urlOf(pathOf(unit.id, base, lang, fmt));
+          const file = `${base}-${lang}.${fmt}`;
+          if (fmt === "mp4" || (lang !== "en" && !has(file))) continue;
+          (urls[lang] ??= {})[fmt] = urlOf(pathOf(unit.id, base, lang, fmt));
+          if (sizeOf) (sizeKB[lang] ??= {})[fmt] = Math.round(sizeOf(file) / 1024);
         }
-        return [{ ...rest, urls }];
+        return [{ ...rest, urls, ...(sizeOf ? { sizeKB } : {}) }];
       }),
     })),
   };

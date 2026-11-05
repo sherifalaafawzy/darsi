@@ -388,6 +388,8 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
         for (const fmt of formats) if (!Object.values(k.urls).some((m) => isObj(m) && okUrl(m[fmt as string]))) add(`urls.${String(fmt)}`, "required");
       } else if (k.path !== undefined) { if (!isStr(k.path) || !okUrl(k.path.replace("{lang}", "en") + ".x")) add("path", "badUrl"); }
       else if (!isStr(k.base) || !/^[A-Za-z0-9_./-]{1,120}$/.test(k.base) || k.base.includes("..")) add("base", "badUrl");
+      // File sizes, for the download size: language → format → KB.
+      if (k.sizeKB !== undefined && !(isObj(k.sizeKB) && Object.values(k.sizeKB).every((m) => isObj(m) && Object.values(m).every((n) => isNum(n) && n >= 0 && n <= 500_000)))) add("sizeKB", "badValue");
     });
     ctx = outer;
     const comps = l.competencies;
