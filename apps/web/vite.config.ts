@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { createReadStream, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { transformAsync } from "@babel/core";
 import { defineConfig, type Plugin } from "vite";
@@ -110,6 +110,64 @@ const pushSw = `push-sw.js?v=${createHash("sha256").update(readFileSync(new URL(
 // so changing them alone is a new version that installed phones fetch, even when the build is otherwise the same.
 const hostHeaders = createHash("sha256").update(JSON.stringify(JSON.parse(readFileSync(new URL("../../firebase.json", import.meta.url), "utf8")).hosting.headers)).digest("hex").slice(0, 10);
 
+/** Dev only: serve content/units/*.json at /content/dev/<id>.json so new courses can be read before they are published. */
+function devUnits(): Plugin {
+  const units = fileURLToPath(new URL("../../content/units", import.meta.url));
+  return {
+    name: "dev-units",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = (req.url ?? "").split("?")[0] ?? "";
+        const m = url.match(/^\/content\/dev\/([a-z0-9-]+)\.json$/);
+        if (!m) return next();
+        const file = join(units, `${m[1]}.json`);
+        if (!existsSync(file)) return next();
+        res.setHeader("Content-Type", "application/json");
+        res.end(readFileSync(file));
+      });
+    },
+  };
+}
+
+/** Dev only: serve content/media at /media/ so a lesson's light video and MP4 play before they are published. */
+function devMedia(): Plugin {
+  const root = resolve(fileURLToPath(new URL("../../content/media", import.meta.url)));
+  const types: Record<string, string> = { ".mp4": "video/mp4", ".vtt": "text/vtt; charset=utf-8", ".json": "application/json", ".opus": "audio/ogg", ".m4a": "audio/mp4", ".wav": "audio/wav" };
+  return {
+    name: "dev-media",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = decodeURIComponent((req.url ?? "").split("?")[0] ?? "");
+        if (!url.startsWith("/media/")) return next();
+        const rel = url.slice("/media/".length);
+        if (!rel || rel.includes("..")) return next();
+        const file = resolve(root, rel);
+        if (!file.startsWith(root) || !existsSync(file) || !statSync(file).isFile()) return next();
+        const stat = statSync(file);
+        const type = types[extname(file)] ?? "application/octet-stream";
+        res.setHeader("Content-Type", type);
+        res.setHeader("Accept-Ranges", "bytes");
+        const range = req.headers.range;
+        const m = range ? /bytes=(\d*)-(\d*)/.exec(range) : null;
+        if (!m) {
+          res.setHeader("Content-Length", stat.size);
+          createReadStream(file).pipe(res);
+          return;
+        }
+        const start = m[1] ? Number(m[1]) : 0;
+        const end = m[2] ? Number(m[2]) : stat.size - 1;
+        if (start > end || end >= stat.size) { res.statusCode = 416; res.end(); return; }
+        res.statusCode = 206;
+        res.setHeader("Content-Range", `bytes ${start}-${end}/${stat.size}`);
+        res.setHeader("Content-Length", end - start + 1);
+        createReadStream(file, { start, end }).pipe(res);
+      });
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     react(),
@@ -202,6 +260,8 @@ export default defineConfig({
     }),
     legacyRuntimes(),
     earlySw(),
+    devUnits(),
+    devMedia(),
   ],
   server: { port: 5173, host: true },
   build: {

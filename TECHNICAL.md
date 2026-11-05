@@ -751,6 +751,7 @@ Each catalog entry carries `src` (the JSON's Storage path), `version`, `owner` a
   1. the public catalog, fetched with **plain `fetch`** from the Storage REST URL, so guests never load the SDK;
   2. for org members, the org catalog.
 - `mergeCatalog`: public entries first, then the org's; an org entry never replaces a public one.
+- The Vite dev server (`import.meta.env.MODE === "development"`) also merges `/content/dev-catalog.json`, and serves each listed unit from `content/units` at `/content/dev/<id>.json`. A public catalog it cannot read counts as empty, so a local course still opens. Tests and production never request the file.
 - Nothing published yet (a 404) is an empty catalog, and Home says "No courses yet". No answer and no copy from an earlier visit (a first visit offline) is an error, and Home offers Retry. A unit missing from the catalog can't be loaded: there are no built-in files to fall back on.
 - **Caching.** Catalogs are network-first with the last copy as the offline fallback. Unit files are cache-first by their versioned path. Both live in `darsi-content`, managed here rather than by a service-worker rule (a stale-while-revalidate rule would serve old catalogs and store everything twice).
 - **Org files** go through the SDK (`storageJSON()` in `firebase.ts`). App hands load.ts the reader with `setOrgReader` (see "The bundle rule" below).

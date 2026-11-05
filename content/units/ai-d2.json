@@ -1,0 +1,2552 @@
+{
+  "id": "ai-d2",
+  "track": "ai",
+  "level": 4,
+  "audience": "students",
+  "title": {
+    "en": "Vision and generation",
+    "ar": "الرؤية والتوليد"
+  },
+  "summary": {
+    "en": "How a network sees a grid of numbers, how a detector misses a group it never trained on, and three ways to invent a picture: a short code, a contest, and one denoise step.",
+    "ar": "كيف ترى الشبكة شبكة أرقام، وكيف يفوّت كاشف مجموعة لم يتدرّب عليها، وثلاث طرق لاختراع صورة: رمز قصير، ومنافسة، وخطوة إزالة ضجيج."
+  },
+  "lessons": [
+    {
+      "id": "ai-d2-1",
+      "title": {
+        "en": "A picture is a grid of numbers",
+        "ar": "الصورة شبكة أرقام"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Sketch a 3×3 upright-edge filter and one output pixel by hand.",
+        "ar": "ارسم مرشّح حواف قائمة ٣×٣ وبكسل خرج واحدًا باليد."
+      },
+      "materials": {
+        "en": [
+          "A phone with Darsi",
+          "Paper for one hand-worked step",
+          "The slides from the kit"
+        ],
+        "ar": [
+          "هاتف فيه درسي",
+          "ورق لخطوة واحدة باليد",
+          "شرائح الحزمة"
+        ]
+      },
+      "competencies": [
+        "S.TA.C",
+        "S.SD.C"
+      ],
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "A picture is a grid of numbers",
+            "ar": "الصورة شبكة أرقام"
+          },
+          "src": null,
+          "duration": 108,
+          "sizeMB": 0.6,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A grid",
+                "ar": "شبكة"
+              }
+            },
+            {
+              "at": 16.6,
+              "atBy": {
+                "en": 16.6,
+                "ar": 13.8
+              },
+              "label": {
+                "en": "A filter",
+                "ar": "مرشّح"
+              }
+            },
+            {
+              "at": 44.1,
+              "atBy": {
+                "en": 44.1,
+                "ar": 39.5
+              },
+              "label": {
+                "en": "No name",
+                "ar": "من غير اسم"
+              }
+            },
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Remember",
+                "ar": "تذكّر"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 64.5,
+            "atBy": {
+              "en": 64.5,
+              "ar": 56.21
+            },
+            "question": {
+              "type": "choice",
+              "id": "q1",
+              "prompt": {
+                "en": "A grey picture on a computer is…",
+                "ar": "الصورة الرمادية في الحاسوب هي…"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "A grid of numbers",
+                    "ar": "شبكة أرقام"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "A list of object names",
+                    "ar": "قائمة أسماء أشياء"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "One bit for the whole photo",
+                    "ar": "بت واحد للصورة كلها"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "Each cell is a brightness. Colour is three such grids.",
+                "ar": "كل خانة سطوع. واللون ثلاث شبكات من هذا النوع."
+              }
+            }
+          },
+          "transcript": {
+            "en": "A grey picture is not a thing with a name. On the computer it is a grid of numbers, one brightness in each cell. Today: pictures as grids, and what a small filter actually mixes. A grey image is one grid. A colour image is three, and each cell is a brightness, not an object. A three by three filter lays on the picture and multiplies nine cells. It writes that sum as the new pixel. An upright-edge filter lights walls. A blur averages neighbours, and neither knows it is looking at a face. Here is one position of the filter. Nine multiplications become one number, and the name of the object is not in that number. Quick check! A grey picture on a computer is which of these? A grid of numbers. Names, if they appear, come from many layers, not from one filter. In the app, open the convolution lab. Slide an edge filter and a blur, and say what each new picture shows. Your turn. Does a three by three filter already know it is looking at a face? Remember this. A filter mixes neighbours. It does not name what it sees. Try it on paper tonight. Sketch a three by three edge filter and compute one output pixel.",
+            "ar": "الصورة الرمادية مش حاجة ليها اسم. على الكمبيوتر هي شبكة أرقام، سطوع واحد في كل خانة. النهارده: الصور كشبكات، والمرشّح الصغير بيخلط إيه بالظبط. الصورة الرمادية شبكة واحدة. والملونة تلاتة، وكل خانة سطوع، مش حاجة. مرشّح تلاتة في تلاتة بيتحط على الصورة وبيضرب تسع خانات. وبيكتب المجموع ده بكسل جديد. مرشّح الحواف القائمة بينوّر الحيطان. والطمس بياخد متوسط الجيران، والاتنين مش عارفين إنهم بيبصوا على وش. ده موضع واحد للمرشّح. تسع ضربات بيبقوا رقم واحد، واسم الحاجة مش جوه الرقم ده. سؤال سريع! الصورة الرمادية في الكمبيوتر إيه من دول؟ شبكة أرقام. الأسماء، لو ظهرت، بتيجي من طبقات كتير، مش من مرشّح واحد. في التطبيق، افتح معمل الطي. حرّك مرشّح حواف وطمس، وقول كل صورة جديدة بتبيّن إيه. دورك. مرشّح تلاتة في تلاتة عارف إنه بيبص على وش؟ افتكر كده. المرشّح بيخلط الجيران. ومش بيسمّي اللي شايفه. جرّبها على الورق الليلة. ارسم مرشّح حواف تلاتة في تلاتة واحسب بكسل خرج واحد."
+          },
+          "sources": {
+            "en": "/media/ai-d2-1/video-en.mp4",
+            "ar": "/media/ai-d2-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-d2-1/captions-en.vtt",
+            "ar": "/media/ai-d2-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-d2-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-d2-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-d2-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-d2-1/light/audio/en.opus",
+              "manifest.json": "/media/ai-d2-1/light/manifest.json",
+              "scenes.json": "/media/ai-d2-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-d2-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-d2-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 231,
+              "ar": 206
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "A picture is a grid of numbers",
+            "ar": "الصورة شبكة أرقام"
+          },
+          "body": {
+            "en": "Read a grey image as a matrix and a colour image as three. A filter slides, multiplies, and writes a new grid. An upright-edge filter lights walls. A blur averages. Pooling keeps the strongest cell in a small block and throws the rest away. Nothing here has recognised a face. Open the convolution lab and say which filter did which job.",
+            "ar": "اقرأ الصورة الرمادية مصفوفة والملونة ثلاثًا. وينزلق المرشّح ويضرب ويكتب شبكة جديدة. ومرشّح الحواف القائمة يضيء الجدران. والطمس يأخذ المتوسط. والتجميع يبقي أقوى خانة في مربع صغير ويرمي الباقي. ولا شيء هنا تعرّف على وجه. افتح معمل الطي وقل أي مرشّح فعل أي عمل."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Pixel",
+                "ar": "بكسل"
+              },
+              "def": {
+                "en": "One cell of brightness.",
+                "ar": "خانة سطوع واحدة."
+              }
+            },
+            {
+              "term": {
+                "en": "Filter",
+                "ar": "مرشّح"
+              },
+              "def": {
+                "en": "A small grid that mixes neighbours.",
+                "ar": "شبكة صغيرة تخلط الجيران."
+              }
+            },
+            {
+              "term": {
+                "en": "Pooling",
+                "ar": "التجميع"
+              },
+              "def": {
+                "en": "Keep the strongest value in a block.",
+                "ar": "أبقِ أقوى قيمة في مربع."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "A grey picture on a computer is…",
+            "ar": "الصورة الرمادية في الحاسوب هي…"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A grid of numbers",
+                "ar": "شبكة أرقام"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A list of object names",
+                "ar": "قائمة أسماء أشياء"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "One bit for the whole photo",
+                "ar": "بت واحد للصورة كلها"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Each cell is a brightness. Colour is three such grids.",
+            "ar": "كل خانة سطوع. واللون ثلاث شبكات من هذا النوع."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "A 3×3 filter already knows it is looking at a face.",
+            "ar": "المرشّح ٣×٣ يعرف أصلًا أنه ينظر إلى وجه."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It only mixes each pixel with its neighbours. Faces, if they appear, come from many layers.",
+            "ar": "هو فقط يخلط كل بكسل بجيرانها. والوجوه، إن ظهرت، تأتي من طبقات كثيرة."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q3",
+          "prompt": {
+            "en": "Match the filter.",
+            "ar": "صل المرشّح."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Upright edges",
+                "ar": "حواف قائمة"
+              },
+              "right": {
+                "en": "Walls and door sides",
+                "ar": "الجدران وجانبا الباب"
+              }
+            },
+            {
+              "left": {
+                "en": "Blur",
+                "ar": "طمس"
+              },
+              "right": {
+                "en": "A pixel averaged with its neighbours",
+                "ar": "بكسل أخذ متوسطه مع جيرانه"
+              }
+            },
+            {
+              "left": {
+                "en": "Pooling",
+                "ar": "التجميع"
+              },
+              "right": {
+                "en": "Keep the strongest in a small block",
+                "ar": "أبقِ الأقوى في مربع صغير"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Convolution mixes. Pooling throws detail away.",
+            "ar": "الطي يخلط. والتجميع يرمي التفصيل."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Slide an upright-edge filter and a blur. Name what each new picture shows.",
+            "ar": "حرّك مرشّح حواف قائمة وطمسًا. وسمِّ ما تعرضه كل صورة جديدة."
+          },
+          "tool": "convolution"
+        },
+        {
+          "type": "order",
+          "id": "q4",
+          "prompt": {
+            "en": "Order one filter step.",
+            "ar": "رتّب خطوة مرشّح."
+          },
+          "steps": [
+            {
+              "en": "Lay the 3×3 on the picture",
+              "ar": "ضع ٣×٣ على الصورة"
+            },
+            {
+              "en": "Multiply and add the nine cells",
+              "ar": "اضرب الخلايا التسع واجمعها"
+            },
+            {
+              "en": "Write that sum as the new pixel",
+              "ar": "اكتب المجموع بكسلًا جديدًا"
+            }
+          ],
+          "explain": {
+            "en": "The new picture is those sums, one per position.",
+            "ar": "الصورة الجديدة هي هذه المجاميع، واحد عند كل موضع."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "What did the filter not know?",
+            "ar": "ماذا لم يعرف المرشّح؟"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: one output pixel",
+            "ar": "مشروع: بكسل خرج واحد"
+          },
+          "task": {
+            "en": "Compute one output pixel of an upright-edge filter on a 3×3 you draw. State what the filter cannot name.",
+            "ar": "احسب بكسل خرج واحدًا لمرشّح حواف قائمة على ٣×٣ ترسمه. واذكر ما لا يستطيع المرشّح تسميته."
+          },
+          "deliverable": {
+            "en": "The arithmetic and the sentence.",
+            "ar": "الحساب والجملة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "The sum is the output pixel.",
+                "ar": "المجموع هو بكسل الخرج."
+              }
+            },
+            {
+              "criterion": {
+                "en": "The sentence refuses object names.",
+                "ar": "الجملة ترفض أسماء الأشياء."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "A picture is a grid of numbers",
+            "ar": "الصورة شبكة أرقام"
+          },
+          "note": {
+            "en": "University, vision 1",
+            "ar": "الجامعة، الرؤية ١"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "A grid",
+            "ar": "شبكة"
+          },
+          "bullets": {
+            "en": [
+              "One number per cell",
+              "Three grids for colour"
+            ],
+            "ar": [
+              "رقم لكل خانة",
+              "ثلاث شبكات للون"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "A filter",
+            "ar": "مرشّح"
+          },
+          "bullets": {
+            "en": [
+              "Mixes neighbours",
+              "Does not name objects"
+            ],
+            "ar": [
+              "يخلط الجيران",
+              "لا يسمّي الأشياء"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "In the lab",
+            "ar": "في المعمل"
+          },
+          "bullets": {
+            "en": [
+              "Upright edges",
+              "Blur"
+            ],
+            "ar": [
+              "حواف قائمة",
+              "طمس"
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Ask",
+            "ar": "اسأل"
+          },
+          "bullets": {
+            "en": [
+              "What is the filter mixing?"
+            ],
+            "ar": [
+              "ماذا يخلط المرشّح؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "A filter does not know the name of what?"
+            ],
+            "ar": [
+              "المرشّح لا يعرف اسم ماذا؟"
+            ]
+          },
+          "narration": {
+            "en": "A filter does not know the name of what?",
+            "ar": "المرشّح لا يعرف اسم ماذا؟"
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: A picture is a grid of numbers",
+            "ar": "الشرائح: الصورة شبكة أرقام"
+          },
+          "pages": 6,
+          "base": "ai-d2-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Plan: A picture is a grid of numbers",
+            "ar": "الخطة: الصورة شبكة أرقام"
+          },
+          "pages": 2,
+          "base": "ai-d2-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-d2-1/video-{lang}"
+        }
+      ]
+    },
+    {
+      "id": "ai-d2-2",
+      "title": {
+        "en": "Who a detector misses",
+        "ar": "من يفوّته الكاشف"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "State the line and the wide face’s score from the lab.",
+        "ar": "اذكر الخط ودرجة الوجه العريض من المعمل."
+      },
+      "materials": {
+        "en": [
+          "A phone with Darsi",
+          "Paper for one hand-worked step",
+          "The slides from the kit"
+        ],
+        "ar": [
+          "هاتف فيه درسي",
+          "ورق لخطوة واحدة باليد",
+          "شرائح الحزمة"
+        ]
+      },
+      "competencies": [
+        "S.TA.C",
+        "S.SD.C"
+      ],
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Who a detector misses",
+            "ar": "من يفوّته الكاشف"
+          },
+          "src": null,
+          "duration": 108,
+          "sizeMB": 0.6,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "The average",
+                "ar": "المتوسط"
+              }
+            },
+            {
+              "at": 17.8,
+              "atBy": {
+                "en": 17.8,
+                "ar": 15.2
+              },
+              "label": {
+                "en": "The miss",
+                "ar": "التفويت"
+              }
+            },
+            {
+              "at": 43.8,
+              "atBy": {
+                "en": 43.8,
+                "ar": 38.2
+              },
+              "label": {
+                "en": "The box",
+                "ar": "الصندوق"
+              }
+            },
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Remember",
+                "ar": "تذكّر"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 65.86,
+            "atBy": {
+              "en": 65.86,
+              "ar": 56.99
+            },
+            "question": {
+              "type": "choice",
+              "id": "q1",
+              "prompt": {
+                "en": "The tiny detector was trained on close-set eyes. A wider drawn face scores…",
+                "ar": "تدرّب الكاشف الصغير على عينين متقاربتين. الوجه المرسوم الأعرض درجته…"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Below the line",
+                    "ar": "تحت الخط"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Perfect",
+                    "ar": "كاملة"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "The same as the box",
+                    "ar": "مثل الصندوق تمامًا"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "It never saw that spacing, so the match falls under the line. The box stays under it too.",
+                "ar": "لم يرَ تلك المسافة، فينزل التطابق تحت الخط. والصندوق يبقى تحته أيضًا."
+              }
+            }
+          },
+          "transcript": {
+            "en": "The detector was trained on drawings with the eyes close together. A wider face is still a face, and it was never in that average. Today: who a detector misses, and why a high score on the training shape is not enough. The score is how close a picture is to the average of the training faces. The line is the same for every picture. The wide face falls below the line. The box stays below it too, and that part is correct. A test on only the training shape hides the miss. These are drawings, not anyone's photograph. Close-set eyes sit in the average. Spread them out and the score drops, even though it is still a face. Quick check! The detector trained on close-set eyes. A wider drawn face scores where? Below the line. Same idea, wider spacing, and the match falls short. In the app, open the detector. Read the three test scores and say which face was missed. Your turn. Is a high score on the training shape enough to trust a detector on new people? Remember this. Report who was missed. Do not test a face detector on real photographs of people. Try it tonight. Write the line and the wide face's score from the lab.",
+            "ar": "الكاشف اتدرّب على رسومات عيونها قريبة من بعض. الوش الأعرض لسه وش، وعمره ما كان في المتوسط ده. النهارده: الكاشف بيفوّت مين، وليه الدرجة العالية على شكل التدريب مش كفاية. الدرجة هي قد إيه الصورة قريبة من متوسط وشوش التدريب. والخط واحد لكل صورة. الوش العريض بينزل تحت الخط. والصندوق كمان بيفضل تحته، والجزء ده صح. اختبار على شكل التدريب بس بيخبّي التفويت. ودي رسومات، مش صورة أي شخص. العيون القريبة جوه المتوسط. باعدها والدرجة بتنزل، مع إن ده لسه وش. سؤال سريع! الكاشف اتدرّب على عينين قريبين. الوش الأعرض درجته فين؟ تحت الخط. نفس الفكرة، ومسافة أعرض، والتطابق مش مكمّل. في التطبيق، افتح الكاشف. اقرأ درجات الاختبار التلاتة وقول أي وش اتفتوت. دورك. درجة عالية على شكل التدريب تكفي نثق في كاشف على ناس جداد؟ افتكر كده. اذكر مين اللي اتفتوت. ومتختبرش كاشف وشوش على صور حقيقية لناس. جرّبها الليلة. اكتب الخط ودرجة الوش العريض من المعمل."
+          },
+          "sources": {
+            "en": "/media/ai-d2-2/video-en.mp4",
+            "ar": "/media/ai-d2-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-d2-2/captions-en.vtt",
+            "ar": "/media/ai-d2-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-d2-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-d2-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-d2-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-d2-2/light/audio/en.opus",
+              "manifest.json": "/media/ai-d2-2/light/manifest.json",
+              "scenes.json": "/media/ai-d2-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-d2-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-d2-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 232,
+              "ar": 204
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Who a detector misses",
+            "ar": "من يفوّته الكاشف"
+          },
+          "body": {
+            "en": "Training used drawings with eyes close together. The test includes a wider drawing that is still a face, and a box that is not. The score is how much the picture matches the average. The line is the same for all of them. The wide face misses. That is the point of a face-detection lab without anyone’s photograph: a detector repeats the shapes it was shown, and a test on only those shapes hides the miss.",
+            "ar": "استخدم التدريب رسومًا بعيون متقاربة. ويشمل الاختبار رسمًا أعرض ما زال وجهًا، وصندوقًا ليس وجهًا. والدرجة هي مقدار مطابقة الصورة للمتوسط. والخط واحد للجميع. والوجه العريض يُفوَّت. وهذا مقصد معمل كشف الوجوه من غير صورة لأي شخص: الكاشف يكرّر الأشكال التي عُرضت عليه، والاختبار على تلك الأشكال وحدها يخفي التفويت."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Prototype",
+                "ar": "النموذج الأوّلي"
+              },
+              "def": {
+                "en": "The average of the training faces.",
+                "ar": "متوسط وجوه التدريب."
+              }
+            },
+            {
+              "term": {
+                "en": "Score",
+                "ar": "الدرجة"
+              },
+              "def": {
+                "en": "How close a picture is to that average.",
+                "ar": "مدى قرب الصورة من ذلك المتوسط."
+              }
+            },
+            {
+              "term": {
+                "en": "Miss",
+                "ar": "التفويت"
+              },
+              "def": {
+                "en": "A true face that scores below the line.",
+                "ar": "وجه حقيقي درجته تحت الخط."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "The tiny detector was trained on close-set eyes. A wider drawn face scores…",
+            "ar": "تدرّب الكاشف الصغير على عينين متقاربتين. الوجه المرسوم الأعرض درجته…"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Below the line",
+                "ar": "تحت الخط"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Perfect",
+                "ar": "كاملة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The same as the box",
+                "ar": "مثل الصندوق تمامًا"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "It never saw that spacing, so the match falls under the line. The box stays under it too.",
+            "ar": "لم يرَ تلك المسافة، فينزل التطابق تحت الخط. والصندوق يبقى تحته أيضًا."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "A high score on the training shape is enough to trust a detector on new people.",
+            "ar": "الدرجة العالية على شكل التدريب كافية للثقة بكاشف على أناس جدد."
+          },
+          "answer": false,
+          "explain": {
+            "en": "The wide face is still a face, and the detector missed it. The test has to include who might be missed.",
+            "ar": "الوجه العريض ما زال وجهًا، وقد فوّته الكاشف. ويجب أن يشمل الاختبار من قد يُفوَّت."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q3",
+          "prompt": {
+            "en": "Match the picture.",
+            "ar": "صل الصورة."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Round drawing",
+                "ar": "الرسم المتقارب"
+              },
+              "right": {
+                "en": "In the training average",
+                "ar": "في متوسط التدريب"
+              }
+            },
+            {
+              "left": {
+                "en": "Wide drawing",
+                "ar": "الرسم العريض"
+              },
+              "right": {
+                "en": "A face the detector misses",
+                "ar": "وجه يفوّته الكاشف"
+              }
+            },
+            {
+              "left": {
+                "en": "Box",
+                "ar": "الصندوق"
+              },
+              "right": {
+                "en": "Correctly not a face",
+                "ar": "ليس وجهًا، وهذا صواب"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Same idea, different spacing, different score. That is the lab.",
+            "ar": "الفكرة نفسها، والمسافة مختلفة، والدرجة مختلفة. هذا هو المعمل."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Read the three test scores. Say which face was missed.",
+            "ar": "اقرأ درجات الاختبار الثلاث. وقل أي وجه فُوّت."
+          },
+          "tool": "detect"
+        },
+        {
+          "type": "order",
+          "id": "q4",
+          "prompt": {
+            "en": "Order a fair check of a detector.",
+            "ar": "رتّب فحصًا عادلًا لكاشف."
+          },
+          "steps": [
+            {
+              "en": "Train on one set",
+              "ar": "درّب على مجموعة"
+            },
+            {
+              "en": "Test on shapes it did not train on",
+              "ar": "اختبر على أشكال لم يتدرّب عليها"
+            },
+            {
+              "en": "Report who it misses",
+              "ar": "اذكر من يفوّته"
+            }
+          ],
+          "explain": {
+            "en": "The miss is invisible if you only rescore the training pictures.",
+            "ar": "التفويت لا يُرى إذا أعدت حساب صور التدريب فقط."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Which mistake is worse here: missing the wide face, or calling the box a face?",
+            "ar": "أي خطأ أسوأ هنا: تفويت الوجه العريض، أم اعتبار الصندوق وجهًا؟"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: the miss",
+            "ar": "مشروع: التفويت"
+          },
+          "task": {
+            "en": "From the lab, report the score of the round test, the wide face and the box, and whether each is above the line.",
+            "ar": "من المعمل، اذكر درجة اختبار الشكل المتقارب والوجه العريض والصندوق، وهل كل منها فوق الخط."
+          },
+          "deliverable": {
+            "en": "Three scores and one sentence on the miss.",
+            "ar": "ثلاث درجات وجملة عن التفويت."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "The wide face is reported as a miss.",
+                "ar": "الوجه العريض يُذكر تفويتًا."
+              }
+            },
+            {
+              "criterion": {
+                "en": "No real photograph is used.",
+                "ar": "لا تُستخدم صورة حقيقية."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Who a detector misses",
+            "ar": "من يفوّته الكاشف"
+          },
+          "note": {
+            "en": "University, vision 2",
+            "ar": "الجامعة، الرؤية ٢"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "One average",
+            "ar": "متوسط واحد"
+          },
+          "bullets": {
+            "en": [
+              "Trained on close-set eyes",
+              "The line is shared"
+            ],
+            "ar": [
+              "تدرّب على عينين متقاربتين",
+              "الخط مشترك"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The miss",
+            "ar": "التفويت"
+          },
+          "bullets": {
+            "en": [
+              "A wider face scores low",
+              "A box stays low"
+            ],
+            "ar": [
+              "وجه أعرض درجته منخفضة",
+              "الصندوق يبقى منخفضًا"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "In the lab",
+            "ar": "في المعمل"
+          },
+          "bullets": {
+            "en": [
+              "Read the wide score",
+              "Read the box"
+            ],
+            "ar": [
+              "اقرأ درجة العريض",
+              "اقرأ الصندوق"
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Ask",
+            "ar": "اسأل"
+          },
+          "bullets": {
+            "en": [
+              "Why is the training shape not a test?"
+            ],
+            "ar": [
+              "لماذا ليس شكل التدريب اختبارًا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name the group the detector missed."
+            ],
+            "ar": [
+              "سمِّ المجموعة التي فوّتها الكاشف."
+            ]
+          },
+          "narration": {
+            "en": "Name the group the detector missed.",
+            "ar": "سمِّ المجموعة التي فوّتها الكاشف."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Who a detector misses",
+            "ar": "الشرائح: من يفوّته الكاشف"
+          },
+          "pages": 6,
+          "base": "ai-d2-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Plan: Who a detector misses",
+            "ar": "الخطة: من يفوّته الكاشف"
+          },
+          "pages": 2,
+          "base": "ai-d2-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-d2-2/video-{lang}"
+        }
+      ]
+    },
+    {
+      "id": "ai-d2-3",
+      "title": {
+        "en": "Squeeze and sample",
+        "ar": "اضغط ثم خذ عيّنة"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Write the two numbers of the original blob and the difference after you move one slider.",
+        "ar": "اكتب رقمي البقعة الأصلية والفرق بعد أن تحرّك مؤشرًا واحدًا."
+      },
+      "materials": {
+        "en": [
+          "A phone with Darsi",
+          "Paper for one hand-worked step",
+          "The slides from the kit"
+        ],
+        "ar": [
+          "هاتف فيه درسي",
+          "ورق لخطوة واحدة باليد",
+          "شرائح الحزمة"
+        ]
+      },
+      "competencies": [
+        "S.TA.C",
+        "S.SD.C"
+      ],
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Squeeze and sample",
+            "ar": "اضغط ثم خذ عيّنة"
+          },
+          "src": null,
+          "duration": 103,
+          "sizeMB": 0.6,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "The code",
+                "ar": "الرمز"
+              }
+            },
+            {
+              "at": 16.5,
+              "atBy": {
+                "en": 16.5,
+                "ar": 14.5
+              },
+              "label": {
+                "en": "A nudge",
+                "ar": "تحريك"
+              }
+            },
+            {
+              "at": 42.1,
+              "atBy": {
+                "en": 42.1,
+                "ar": 38.7
+              },
+              "label": {
+                "en": "Not a photo",
+                "ar": "مش صورة"
+              }
+            },
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Remember",
+                "ar": "تذكّر"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 60.02,
+            "atBy": {
+              "en": 60.02,
+              "ar": 56.64
+            },
+            "question": {
+              "type": "choice",
+              "id": "q1",
+              "prompt": {
+                "en": "The two-number code of the blob is…",
+                "ar": "رمز البقعة المكوّن من رقمين هو…"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Where the brightness sits",
+                    "ar": "موضع الإضاءة"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "The name of the object",
+                    "ar": "اسم الشيء"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "A proof the picture is a photo",
+                    "ar": "دليل أن الصورة فوتوغرافية"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "Encoding takes the centre of the brightness. Decoding paints a blob there.",
+                "ar": "الترميز يأخذ مركز الإضاءة. وفك الترميز يرسم بقعة هناك."
+              }
+            }
+          },
+          "transcript": {
+            "en": "The blob's code is two numbers: where its brightness sits. Decoding paints a blob there, and it does not keep every pixel. Today: squeeze a picture into a short code, and what a nudge invents. Encoding finds the centre of the brightness. Decoding paints a new blob at that code. Leave the code and the decode is close. Move it and you invent a new blob, not a repair of the old pixels. Two numbers are a summary of this brightness. They are not a map of meaning, and they are not a photograph. Here the two numbers pick a place. The painted blob follows them, and the original pixels do not come back. Quick check! The two-number code of the blob is which of these? Where the brightness sits. The exact pixels were never stored. In the app, open the code lab. Leave the sliders, then move one, and say when the decode stopped being a rebuild. Your turn. Does nudging the code repair the original pixels? Remember this. A short code rebuilds a summary. A moved code is a new picture. Try it tonight. Write the two numbers of the original blob, then the difference after one nudge.",
+            "ar": "رمز البقعة رقمين: السطوع قاعد فين. وفك الترميز بيرسم بقعة هناك، ومش بيحتفظ بكل بكسل. النهارده: نضغط صورة في رمز قصير، والتحريك بيخترع إيه. الترميز بيدوّر على مركز السطوع. وفك الترميز بيرسم بقعة جديدة عند الرمز ده. سيب الرمز وفك الترميز بيبقى قريب. حرّكه وهتخترع بقعة جديدة، مش تصليح للبكسلات القديمة. الرقمين ملخّص للسطوع ده. ومش خريطة معنى، ومش صورة فوتوغرافية. هنا الرقمين بيختاروا مكان. والبقعة المرسومة بتمشي وراهم، وبكسلات الأصل مش بترجع. سؤال سريع! رمز البقعة اللي من رقمين هو إيه من دول؟ موضع السطوع. والبكسلات بالظبط عمرها ما تخزّنت. في التطبيق، افتح معمل الرمز. سيب المؤشرات، وبعدين حرّك واحد، وقول امتى الفك بطّل يبقى إعادة بناء. دورك. تحريك الرمز بيصلّح بكسلات الأصل؟ افتكر كده. الرمز القصير بيعيد بناء ملخّص. والرمز اللي اتحرّك صورة جديدة. جرّبها الليلة. اكتب رقمي البقعة الأصلية، وبعدين الفرق بعد تحريكة واحدة."
+          },
+          "sources": {
+            "en": "/media/ai-d2-3/video-en.mp4",
+            "ar": "/media/ai-d2-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-d2-3/captions-en.vtt",
+            "ar": "/media/ai-d2-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-d2-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-d2-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-d2-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-d2-3/light/audio/en.opus",
+              "manifest.json": "/media/ai-d2-3/light/manifest.json",
+              "scenes.json": "/media/ai-d2-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-d2-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-d2-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 219,
+              "ar": 204
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Squeeze and sample",
+            "ar": "اضغط ثم خذ عيّنة"
+          },
+          "body": {
+            "en": "An autoencoder squeezes and rebuilds. In this lab the squeeze is the centre of the brightness, two numbers, and the rebuild is a blob painted there. Nudge either number and the blob moves. The difference from the original grows because the code never stored every pixel. A variational version keeps a cloud around the code so a sample is allowed. Two numbers are not a map of meaning. They are a summary of this brightness.",
+            "ar": "يضغط المرمّز التلقائي ويعيد البناء. والضغط في هذا المعمل هو مركز الإضاءة، رقمان، وإعادة البناء بقعة تُرسم هناك. وحرّك أي رقم فتتحرك البقعة. ويكبر الفرق عن الأصل لأن الرمز لم يخزّن كل بكسل. والنسخة المتغيرة تحتفظ بسحابة حول الرمز حتى تجوز عيّنة. والرقمان ليسا خريطة معنى. هما ملخّص لهذه الإضاءة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Code",
+                "ar": "الرمز"
+              },
+              "def": {
+                "en": "A short summary of the picture.",
+                "ar": "ملخّص قصير للصورة."
+              }
+            },
+            {
+              "term": {
+                "en": "Decode",
+                "ar": "فك الترميز"
+              },
+              "def": {
+                "en": "Paint from the code, not from the file.",
+                "ar": "ارسم من الرمز، لا من الملف."
+              }
+            },
+            {
+              "term": {
+                "en": "Sample",
+                "ar": "عيّنة"
+              },
+              "def": {
+                "en": "A new code, then a new picture.",
+                "ar": "رمز جديد، ثم صورة جديدة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "The two-number code of the blob is…",
+            "ar": "رمز البقعة المكوّن من رقمين هو…"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Where the brightness sits",
+                "ar": "موضع الإضاءة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The name of the object",
+                "ar": "اسم الشيء"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A proof the picture is a photo",
+                "ar": "دليل أن الصورة فوتوغرافية"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Encoding takes the centre of the brightness. Decoding paints a blob there.",
+            "ar": "الترميز يأخذ مركز الإضاءة. وفك الترميز يرسم بقعة هناك."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "Nudging the code repairs the original pixels.",
+            "ar": "تحريك الرمز يصلح بكسلات الأصل."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It paints a new blob at the new code. The exact pixels were never stored.",
+            "ar": "يرسم بقعة جديدة عند الرمز الجديد. والبكسلات بالضبط لم تُخزَّن."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q3",
+          "prompt": {
+            "en": "Match the model.",
+            "ar": "صل النموذج."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Autoencoder",
+                "ar": "المرمّز التلقائي"
+              },
+              "right": {
+                "en": "Squeeze, then rebuild",
+                "ar": "اضغط ثم أعد البناء"
+              }
+            },
+            {
+              "left": {
+                "en": "Code",
+                "ar": "الرمز"
+              },
+              "right": {
+                "en": "A short summary",
+                "ar": "ملخّص قصير"
+              }
+            },
+            {
+              "left": {
+                "en": "Sample",
+                "ar": "العيّنة"
+              },
+              "right": {
+                "en": "A new code, decoded",
+                "ar": "رمز جديد يُفك"
+              }
+            }
+          ],
+          "explain": {
+            "en": "A variational model keeps a cloud of codes so a new sample is allowed.",
+            "ar": "النموذج المتغير يحتفظ بسحابة من الرموز حتى تجوز عيّنة جديدة."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Leave the code, then move it. Say when the decode stopped being a rebuild.",
+            "ar": "اترك الرمز، ثم حرّكه. وقل متى توقف الفك عن أن يكون إعادة بناء."
+          },
+          "tool": "vae"
+        },
+        {
+          "type": "order",
+          "id": "q4",
+          "prompt": {
+            "en": "Order one encode and decode.",
+            "ar": "رتّب ترميزًا وفكًا."
+          },
+          "steps": [
+            {
+              "en": "Find where the brightness sits",
+              "ar": "جد موضع الإضاءة"
+            },
+            {
+              "en": "Store those two numbers",
+              "ar": "خزّن هذين الرقمين"
+            },
+            {
+              "en": "Paint a blob at that code",
+              "ar": "ارسم بقعة عند ذلك الرمز"
+            }
+          ],
+          "explain": {
+            "en": "The picture you get back is the decode, not the file you started with.",
+            "ar": "الصورة التي تعود هي فك الرمز، لا الملف الذي بدأت به."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "What did the code fail to keep?",
+            "ar": "ماذا فشل الرمز في الاحتفاظ به؟"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: a moved code",
+            "ar": "مشروع: رمز تحرّك"
+          },
+          "task": {
+            "en": "Record the code of the original, a nudged code, and both differences. Say which decode is a new picture.",
+            "ar": "سجّل رمز الأصل ورمزًا محرَّكًا وكلا الفرقين. وقل أي فك هو صورة جديدة."
+          },
+          "deliverable": {
+            "en": "The numbers and the sentence.",
+            "ar": "الأرقام والجملة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "The nudged decode is called new, not repaired.",
+                "ar": "الفك المحرَّك يُسمّى جديدًا، لا مصلحًا."
+              }
+            },
+            {
+              "criterion": {
+                "en": "You do not claim a photograph.",
+                "ar": "لا تدّعي صورة فوتوغرافية."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Squeeze and sample",
+            "ar": "اضغط ثم خذ عيّنة"
+          },
+          "note": {
+            "en": "University, vision 3",
+            "ar": "الجامعة، الرؤية ٣"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Two numbers",
+            "ar": "رقمان"
+          },
+          "bullets": {
+            "en": [
+              "Where the brightness sits",
+              "Not the pixels"
+            ],
+            "ar": [
+              "موضع الإضاءة",
+              "ليست البكسلات"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "A nudge",
+            "ar": "تحريك"
+          },
+          "bullets": {
+            "en": [
+              "A new blob",
+              "Not a repair"
+            ],
+            "ar": [
+              "بقعة جديدة",
+              "ليست إصلاحًا"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "In the lab",
+            "ar": "في المعمل"
+          },
+          "bullets": {
+            "en": [
+              "Leave the code",
+              "Move one slider"
+            ],
+            "ar": [
+              "اترك الرمز",
+              "حرّك مؤشرًا واحدًا"
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Ask",
+            "ar": "اسأل"
+          },
+          "bullets": {
+            "en": [
+              "What did the code throw away?"
+            ],
+            "ar": [
+              "ماذا رمى الرمز؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "A nudged code rebuilds, or invents?"
+            ],
+            "ar": [
+              "الرمز المحرَّك يعيد البناء، أم يخترع؟"
+            ]
+          },
+          "narration": {
+            "en": "A nudged code rebuilds, or invents?",
+            "ar": "الرمز المحرَّك يعيد البناء، أم يخترع؟"
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Squeeze and sample",
+            "ar": "الشرائح: اضغط ثم خذ عيّنة"
+          },
+          "pages": 6,
+          "base": "ai-d2-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Plan: Squeeze and sample",
+            "ar": "الخطة: اضغط ثم خذ عيّنة"
+          },
+          "pages": 2,
+          "base": "ai-d2-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-d2-3/video-{lang}"
+        }
+      ]
+    },
+    {
+      "id": "ai-d2-4",
+      "title": {
+        "en": "Adversaries and noise",
+        "ar": "خصمان وضجيج"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Write the three methods and one failure each, from memory.",
+        "ar": "اكتب الطرق الثلاث وفشلًا واحدًا لكل منها، من الذاكرة."
+      },
+      "materials": {
+        "en": [
+          "A phone with Darsi",
+          "Paper for one hand-worked step",
+          "The slides from the kit"
+        ],
+        "ar": [
+          "هاتف فيه درسي",
+          "ورق لخطوة واحدة باليد",
+          "شرائح الحزمة"
+        ]
+      },
+      "competencies": [
+        "S.TA.C",
+        "S.SD.C"
+      ],
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Adversaries and noise",
+            "ar": "خصمان وضجيج"
+          },
+          "src": null,
+          "duration": 109,
+          "sizeMB": 0.6,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Three ideas",
+                "ar": "تلات أفكار"
+              }
+            },
+            {
+              "at": 19.4,
+              "atBy": {
+                "en": 19.4,
+                "ar": 18.2
+              },
+              "label": {
+                "en": "One step",
+                "ar": "خطوة واحدة"
+              }
+            },
+            {
+              "at": 49.4,
+              "atBy": {
+                "en": 49.4,
+                "ar": 48.6
+              },
+              "label": {
+                "en": "Not evidence",
+                "ar": "مش دليل"
+              }
+            },
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Remember",
+                "ar": "تذكّر"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 68.7,
+            "atBy": {
+              "en": 68.7,
+              "ar": 68.07
+            },
+            "question": {
+              "type": "choice",
+              "id": "q1",
+              "prompt": {
+                "en": "Which idea removes a little noise at a time?",
+                "ar": "أي فكرة تزيل قليلًا من الضجيج في كل مرة؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Diffusion",
+                    "ar": "الانتشار"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "A single 3×3 edge filter",
+                    "ar": "مرشّح حواف ٣×٣ واحد"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "A password hash",
+                    "ar": "تجزئة كلمة مرور"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "Diffusion repeats a small denoise. One step in the lab is the idea, not a finished generator.",
+                "ar": "يكرّر الانتشار إزالة ضجيج صغيرة. والخطوة في المعمل هي الفكرة، لا مولّدًا مكتملًا."
+              }
+            }
+          },
+          "transcript": {
+            "en": "Three ideas invent a picture. One rebuilds from a code, one tries to fool a judge, and one removes a little noise at a time. Today: a contest, a denoise step, and why one step is not a finished picture. A generative contest trains one network to fool another. The contest can collapse, and a sharp sample is still not a proof. Diffusion adds noise until the picture is gone. Then it learns a step that removes a little, and repeats that step. The lab takes one step on a plus sign, pulling each pixel toward black or white. Heavy noise leaves the plus unfinished. Put the three names in a row before you admire any sample. Rebuild, contest, and denoise are different losses. Quick check! Which idea removes a little noise at a time? Diffusion. One step in the lab is the idea, not a trained generator. In the app, open the denoise lab. Set the noise in the middle and at the far right, and say what one step did not restore. Your turn. Is a picture from a generator evidence of what it shows? Remember this. Three different losses. A generated picture is not evidence. Try it tonight. Write the three methods and one failure each.",
+            "ar": "تلات أفكار بيخترعوا صورة. واحد بيعيد البناء من رمز، وواحد بيحاول يخدع قاضي، وواحد بيشيل شوية ضوضاء في كل مرة. النهارده: منافسة، وخطوة تشيل الضوضاء، وليه الخطوة الواحدة مش صورة خلصانة. المنافسة التوليدية بتدرّب شبكة تخدع شبكة تانية. والمنافسة ممكن تنهار، والعيّنة الحادة برضه مش دليل. الانتشار بيضيف ضوضاء لحد ما الصورة تختفي. وبعدين يتعلّم خطوة تشيل شوية، ويكرّر الخطوة دي. المعمل بياخد خطوة واحدة على علامة زائد، ويسحب كل بكسل ناحية الأسود أو الأبيض. والضوضاء التقيلة بتسيب الزائد مش خلصان. حط التلات أسماء في صف قبل ما تعجب بأي عيّنة. إعادة البناء، والمنافسة، وإزالة الضوضاء، تلات خسائر مختلفة. سؤال سريع! أي فكرة بتشيل شوية ضوضاء في كل مرة؟ الانتشار. الخطوة الواحدة في المعمل هي الفكرة، مش مولّد متدرّب. في التطبيق، افتح معمل إزالة الضوضاء. خلّي الضوضاء في النص وفي أقصى اليمين، وقول الخطوة الواحدة مرجّعتش إيه. دورك. صورة من مولّد دليل على اللي بتبيّنه؟ افتكر كده. تلات خسائر مختلفة. والصورة المتولّدة مش دليل. جرّبها الليلة. اكتب التلات طرق وفشل واحد لكل طريقة."
+          },
+          "sources": {
+            "en": "/media/ai-d2-4/video-en.mp4",
+            "ar": "/media/ai-d2-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-d2-4/captions-en.vtt",
+            "ar": "/media/ai-d2-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-d2-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-d2-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-d2-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-d2-4/light/audio/en.opus",
+              "manifest.json": "/media/ai-d2-4/light/manifest.json",
+              "scenes.json": "/media/ai-d2-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-d2-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-d2-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 233,
+              "ar": 229
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Adversaries and noise",
+            "ar": "خصمان وضجيج"
+          },
+          "body": {
+            "en": "Three ways to invent a picture. An autoencoder rebuilds from a short code. A GAN trains one network to fool another, and the contest can collapse. Diffusion destroys a picture with noise and learns a step that removes a little; repeat it and a picture can return. The denoise lab takes one step on a plus sign, pulling pixels toward black or white. If the noise is heavy, one step leaves a blur. A generated picture is not evidence of what it shows.",
+            "ar": "ثلاث طرق لاختراع صورة. المرمّز التلقائي يعيد البناء من رمز قصير. والشبكة الخصمية تدرّب شبكة لتخدع أخرى، وقد تنهار المنافسة. والانتشار يدمّر الصورة بالضجيج ويتعلّم خطوة تزيل قليلًا، وتكرارها قد يعيد صورة. ومعمل إزالة الضجيج يأخذ خطوة واحدة على علامة زائد، فيسحب البكسلات نحو الأسود أو الأبيض. وإذا ثقل الضجيج تركت الخطوة طمسًا. والصورة المولَّدة ليست دليلًا على ما تعرضه."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "GAN",
+                "ar": "شبكة خصمية"
+              },
+              "def": {
+                "en": "One network tries to fool another.",
+                "ar": "شبكة تحاول أن تخدع أخرى."
+              }
+            },
+            {
+              "term": {
+                "en": "Diffusion",
+                "ar": "الانتشار"
+              },
+              "def": {
+                "en": "Add noise, then remove it a little at a time.",
+                "ar": "أضف ضجيجًا، ثم أزله قليلًا في كل مرة."
+              }
+            },
+            {
+              "term": {
+                "en": "One step",
+                "ar": "خطوة واحدة"
+              },
+              "def": {
+                "en": "Not a finished picture.",
+                "ar": "ليست صورة مكتملة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "Which idea removes a little noise at a time?",
+            "ar": "أي فكرة تزيل قليلًا من الضجيج في كل مرة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Diffusion",
+                "ar": "الانتشار"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A single 3×3 edge filter",
+                "ar": "مرشّح حواف ٣×٣ واحد"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A password hash",
+                "ar": "تجزئة كلمة مرور"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Diffusion repeats a small denoise. One step in the lab is the idea, not a finished generator.",
+            "ar": "يكرّر الانتشار إزالة ضجيج صغيرة. والخطوة في المعمل هي الفكرة، لا مولّدًا مكتملًا."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "A picture from a generator is evidence of what it shows.",
+            "ar": "صورة من مولّد دليل على ما تعرضه."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It is a sample from a loss. It can be confident and false.",
+            "ar": "هي عيّنة من خسارة. وقد تكون واثقة وكاذبة."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q3",
+          "prompt": {
+            "en": "Match the generator.",
+            "ar": "صل المولّد."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Autoencoder",
+                "ar": "المرمّز التلقائي"
+              },
+              "right": {
+                "en": "Rebuild from a short code",
+                "ar": "أعد البناء من رمز قصير"
+              }
+            },
+            {
+              "left": {
+                "en": "GAN",
+                "ar": "شبكة خصمية"
+              },
+              "right": {
+                "en": "One network tries to fool another",
+                "ar": "شبكة تحاول أن تخدع أخرى"
+              }
+            },
+            {
+              "left": {
+                "en": "Diffusion",
+                "ar": "الانتشار"
+              },
+              "right": {
+                "en": "Undo noise one step at a time",
+                "ar": "أزل الضجيج خطوة بعد خطوة"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Three different losses. The lab only shows one denoise step.",
+            "ar": "ثلاث خسائر مختلفة. والمعمل يُظهر خطوة إزالة ضجيج واحدة فقط."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Set the noise in the middle and at the far right. Say what one step did not restore.",
+            "ar": "اجعل الضجيج في الوسط وفي أقصى اليمين. وقل ماذا لم تستعده الخطوة الواحدة."
+          },
+          "tool": "denoise"
+        },
+        {
+          "type": "order",
+          "id": "q4",
+          "prompt": {
+            "en": "Order a diffusion story.",
+            "ar": "رتّب حكاية انتشار."
+          },
+          "steps": [
+            {
+              "en": "Add noise until the picture is gone",
+              "ar": "أضف الضجيج حتى تختفي الصورة"
+            },
+            {
+              "en": "Learn a step that removes a little",
+              "ar": "تعلّم خطوة تزيل قليلًا"
+            },
+            {
+              "en": "Repeat the step",
+              "ar": "كرّر الخطوة"
+            }
+          ],
+          "explain": {
+            "en": "The lab stops after one step, on purpose.",
+            "ar": "يتوقف المعمل بعد خطوة واحدة، عمدًا."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Why is one denoise step not a picture coming back?",
+            "ar": "لماذا ليست خطوة إزالة ضجيج واحدة صورة تعود؟"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: three methods",
+            "ar": "مشروع: ثلاث طرق"
+          },
+          "task": {
+            "en": "Make the table: rebuild, contest, denoise. For diffusion, quote the lab: what one step left unfinished.",
+            "ar": "اصنع الجدول: إعادة بناء، ومنافسة، وإزالة ضجيج. وللانتشار، انقل عن المعمل: ماذا تركت الخطوة الواحدة ناقصًا."
+          },
+          "deliverable": {
+            "en": "The table.",
+            "ar": "الجدول."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Each method has a different failure.",
+                "ar": "لكل طريقة فشل مختلف."
+              }
+            },
+            {
+              "criterion": {
+                "en": "The lab is not called a trained generator.",
+                "ar": "لا يُسمّى المعمل مولّدًا مدرَّبًا."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Adversaries and noise",
+            "ar": "خصمان وضجيج"
+          },
+          "note": {
+            "en": "University, vision 4",
+            "ar": "الجامعة، الرؤية ٤"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Three ideas",
+            "ar": "ثلاث أفكار"
+          },
+          "bullets": {
+            "en": [
+              "Rebuild from a code",
+              "Fool a judge"
+            ],
+            "ar": [
+              "إعادة البناء من رمز",
+              "خداع قاضٍ"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "One step",
+            "ar": "خطوة واحدة"
+          },
+          "bullets": {
+            "en": [
+              "Pull toward black or white",
+              "Not the picture back"
+            ],
+            "ar": [
+              "اسحب نحو الأسود أو الأبيض",
+              "ليست الصورة عائدة"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "In the lab",
+            "ar": "في المعمل"
+          },
+          "bullets": {
+            "en": [
+              "Noise in the middle",
+              "Noise at the end"
+            ],
+            "ar": [
+              "ضجيج في الوسط",
+              "ضجيج في النهاية"
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Ask",
+            "ar": "اسأل"
+          },
+          "bullets": {
+            "en": [
+              "Which failure is whose?"
+            ],
+            "ar": [
+              "فشل من هذا؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name the method that undoes noise."
+            ],
+            "ar": [
+              "سمِّ الطريقة التي تلغي الضجيج."
+            ]
+          },
+          "narration": {
+            "en": "Name the method that undoes noise.",
+            "ar": "سمِّ الطريقة التي تلغي الضجيج."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Adversaries and noise",
+            "ar": "الشرائح: خصمان وضجيج"
+          },
+          "pages": 6,
+          "base": "ai-d2-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Plan: Adversaries and noise",
+            "ar": "الخطة: خصمان وضجيج"
+          },
+          "pages": 2,
+          "base": "ai-d2-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-d2-4/video-{lang}"
+        }
+      ]
+    },
+    {
+      "id": "ai-d2-check",
+      "title": {
+        "en": "Vision and generation: unit check",
+        "ar": "الرؤية والتوليد: اختبار الوحدة"
+      },
+      "minutes": 12,
+      "tryTomorrow": {
+        "en": "Redo the one item you missed, on paper, before the next course.",
+        "ar": "أعد البند الذي أخطأت فيه، على الورق، قبل المقرر التالي."
+      },
+      "materials": {
+        "en": [
+          "Paper",
+          "The four lessons"
+        ],
+        "ar": [
+          "ورق",
+          "الدروس الأربعة"
+        ]
+      },
+      "competencies": [
+        "S.TA.C",
+        "S.SD.C"
+      ],
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "A grey picture on a computer is…",
+            "ar": "الصورة الرمادية في الحاسوب هي…"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A grid of numbers",
+                "ar": "شبكة أرقام"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A list of object names",
+                "ar": "قائمة أسماء أشياء"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "One bit for the whole photo",
+                "ar": "بت واحد للصورة كلها"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Each cell is a brightness. Colour is three such grids.",
+            "ar": "كل خانة سطوع. واللون ثلاث شبكات من هذا النوع."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "A 3×3 filter already knows it is looking at a face.",
+            "ar": "المرشّح ٣×٣ يعرف أصلًا أنه ينظر إلى وجه."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It only mixes each pixel with its neighbours. Faces, if they appear, come from many layers.",
+            "ar": "هو فقط يخلط كل بكسل بجيرانها. والوجوه، إن ظهرت، تأتي من طبقات كثيرة."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q3",
+          "prompt": {
+            "en": "Match the filter.",
+            "ar": "صل المرشّح."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Upright edges",
+                "ar": "حواف قائمة"
+              },
+              "right": {
+                "en": "Walls and door sides",
+                "ar": "الجدران وجانبا الباب"
+              }
+            },
+            {
+              "left": {
+                "en": "Blur",
+                "ar": "طمس"
+              },
+              "right": {
+                "en": "A pixel averaged with its neighbours",
+                "ar": "بكسل أخذ متوسطه مع جيرانه"
+              }
+            },
+            {
+              "left": {
+                "en": "Pooling",
+                "ar": "التجميع"
+              },
+              "right": {
+                "en": "Keep the strongest in a small block",
+                "ar": "أبقِ الأقوى في مربع صغير"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Convolution mixes. Pooling throws detail away.",
+            "ar": "الطي يخلط. والتجميع يرمي التفصيل."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q4",
+          "prompt": {
+            "en": "The tiny detector was trained on close-set eyes. A wider drawn face scores…",
+            "ar": "تدرّب الكاشف الصغير على عينين متقاربتين. الوجه المرسوم الأعرض درجته…"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Below the line",
+                "ar": "تحت الخط"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Perfect",
+                "ar": "كاملة"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "The same as the box",
+                "ar": "مثل الصندوق تمامًا"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "It never saw that spacing, so the match falls under the line. The box stays under it too.",
+            "ar": "لم يرَ تلك المسافة، فينزل التطابق تحت الخط. والصندوق يبقى تحته أيضًا."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q5",
+          "prompt": {
+            "en": "A high score on the training shape is enough to trust a detector on new people.",
+            "ar": "الدرجة العالية على شكل التدريب كافية للثقة بكاشف على أناس جدد."
+          },
+          "answer": false,
+          "explain": {
+            "en": "The wide face is still a face, and the detector missed it. The test has to include who might be missed.",
+            "ar": "الوجه العريض ما زال وجهًا، وقد فوّته الكاشف. ويجب أن يشمل الاختبار من قد يُفوَّت."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q6",
+          "prompt": {
+            "en": "Match the picture.",
+            "ar": "صل الصورة."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Round drawing",
+                "ar": "الرسم المتقارب"
+              },
+              "right": {
+                "en": "In the training average",
+                "ar": "في متوسط التدريب"
+              }
+            },
+            {
+              "left": {
+                "en": "Wide drawing",
+                "ar": "الرسم العريض"
+              },
+              "right": {
+                "en": "A face the detector misses",
+                "ar": "وجه يفوّته الكاشف"
+              }
+            },
+            {
+              "left": {
+                "en": "Box",
+                "ar": "الصندوق"
+              },
+              "right": {
+                "en": "Correctly not a face",
+                "ar": "ليس وجهًا، وهذا صواب"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Same idea, different spacing, different score. That is the lab.",
+            "ar": "الفكرة نفسها، والمسافة مختلفة، والدرجة مختلفة. هذا هو المعمل."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q7",
+          "prompt": {
+            "en": "The two-number code of the blob is…",
+            "ar": "رمز البقعة المكوّن من رقمين هو…"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Where the brightness sits",
+                "ar": "موضع الإضاءة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The name of the object",
+                "ar": "اسم الشيء"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A proof the picture is a photo",
+                "ar": "دليل أن الصورة فوتوغرافية"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Encoding takes the centre of the brightness. Decoding paints a blob there.",
+            "ar": "الترميز يأخذ مركز الإضاءة. وفك الترميز يرسم بقعة هناك."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q8",
+          "prompt": {
+            "en": "Nudging the code repairs the original pixels.",
+            "ar": "تحريك الرمز يصلح بكسلات الأصل."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It paints a new blob at the new code. The exact pixels were never stored.",
+            "ar": "يرسم بقعة جديدة عند الرمز الجديد. والبكسلات بالضبط لم تُخزَّن."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q9",
+          "prompt": {
+            "en": "Match the model.",
+            "ar": "صل النموذج."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Autoencoder",
+                "ar": "المرمّز التلقائي"
+              },
+              "right": {
+                "en": "Squeeze, then rebuild",
+                "ar": "اضغط ثم أعد البناء"
+              }
+            },
+            {
+              "left": {
+                "en": "Code",
+                "ar": "الرمز"
+              },
+              "right": {
+                "en": "A short summary",
+                "ar": "ملخّص قصير"
+              }
+            },
+            {
+              "left": {
+                "en": "Sample",
+                "ar": "العيّنة"
+              },
+              "right": {
+                "en": "A new code, decoded",
+                "ar": "رمز جديد يُفك"
+              }
+            }
+          ],
+          "explain": {
+            "en": "A variational model keeps a cloud of codes so a new sample is allowed.",
+            "ar": "النموذج المتغير يحتفظ بسحابة من الرموز حتى تجوز عيّنة جديدة."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q10",
+          "prompt": {
+            "en": "Which idea removes a little noise at a time?",
+            "ar": "أي فكرة تزيل قليلًا من الضجيج في كل مرة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Diffusion",
+                "ar": "الانتشار"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "A single 3×3 edge filter",
+                "ar": "مرشّح حواف ٣×٣ واحد"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A password hash",
+                "ar": "تجزئة كلمة مرور"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Diffusion repeats a small denoise. One step in the lab is the idea, not a finished generator.",
+            "ar": "يكرّر الانتشار إزالة ضجيج صغيرة. والخطوة في المعمل هي الفكرة، لا مولّدًا مكتملًا."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Vision and generation",
+            "ar": "الرؤية والتوليد"
+          },
+          "note": {
+            "en": "University",
+            "ar": "الجامعة"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The check",
+            "ar": "الاختبار"
+          },
+          "bullets": {
+            "en": [
+              "Four lessons",
+              "One sitting"
+            ],
+            "ar": [
+              "أربعة دروس",
+              "جلسة واحدة"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "How to sit it",
+            "ar": "كيف تؤديه"
+          },
+          "bullets": {
+            "en": [
+              "No notes",
+              "Explain the why"
+            ],
+            "ar": [
+              "بلا ملاحظات",
+              "اشرح السبب"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Work it",
+            "ar": "اعمله"
+          },
+          "bullets": {
+            "en": [
+              "Answer all ten",
+              "Then read each explain"
+            ],
+            "ar": [
+              "أجب عن العشرة",
+              "ثم اقرأ كل تفسير"
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Look back",
+            "ar": "راجع"
+          },
+          "bullets": {
+            "en": [
+              "Which lesson was the miss?"
+            ],
+            "ar": [
+              "أي درس كان الخطأ؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name the idea you will redo."
+            ],
+            "ar": [
+              "سمِّ الفكرة التي ستعيدها."
+            ]
+          },
+          "narration": {
+            "en": "Name the idea you will redo.",
+            "ar": "سمِّ الفكرة التي ستعيدها."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Vision and generation",
+            "ar": "الشرائح: الرؤية والتوليد"
+          },
+          "pages": 6,
+          "base": "ai-d2-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Plan: Vision and generation",
+            "ar": "الخطة: الرؤية والتوليد"
+          },
+          "pages": 2,
+          "base": "ai-d2-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ]
+    }
+  ]
+}

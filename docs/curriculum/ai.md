@@ -23,6 +23,8 @@ framework, the ids and how a course is written; this page is what each AI course
   solution for a local problem.
 - Every course assumes the one before it, and no lesson repeats a lesson below it: where a Labs app comes back (`bias` in
   teachers' levels 1 and 4), it is used for a new job (spotting a data gap, then running an audit).
+- **University architecture (written locally, not published).** Three more advanced courses, for university students
+  and for lecturers, follow the 2026 MIT 6.S191 lecture sequence. The plan is `docs/curriculum/ai-architecture.md`.
 
 ## Competencies
 

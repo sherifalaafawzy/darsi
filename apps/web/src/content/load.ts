@@ -102,10 +102,14 @@ export const loadCatalog = (): Promise<Catalog> => (catalog ??= (async () => {
   if (!firebaseReady || !firebaseConfig.storageBucket) return EMPTY;
   const orgId = scope.orgId;
   const [pub, org] = await Promise.all([
-    cachedJSON<Catalog>(storageUrl("content/catalog.json"), fetchPublic("content/catalog.json"), true).catch((e) => (notFound(e) ? EMPTY : Promise.reject(e))),
+    cachedJSON<Catalog>(storageUrl("content/catalog.json"), fetchPublic("content/catalog.json"), true).catch((e) => (notFound(e) || import.meta.env.MODE === "development" ? EMPTY : Promise.reject(e))),
     orgId ? cachedJSON<Catalog>(storageUrl(`orgs/${orgId}/catalog.json`), fetchOrg(`orgs/${orgId}/catalog.json`), true).catch(() => null) : null,
   ]);
-  return mergeCatalog(pub, org);
+  const live = mergeCatalog(pub, org);
+  // Local courses under content/units, served only by the dev server. Production never asks for them.
+  if (import.meta.env.MODE !== "development") return live;
+  const extra = await fetch("/content/dev-catalog.json").then((r) => (r.ok ? r.json() as Promise<Catalog> : null)).catch(() => null);
+  return extra ? mergeCatalog(live, extra) : live;
 })().catch((e) => { catalog = null; throw e; }));
 
 let settings: Promise<Settings | null> | null = null;
@@ -132,6 +136,7 @@ export async function loadUnit(id: string): Promise<Unit> {
   const entry = (await loadCatalog()).units.find((u) => u.id === id);
   if (!entry?.src) throw new Error(`No published unit ${id}`);
   const src = entry.src;
+  if (src.startsWith("/")) return cachedJSON<Unit>(src, async () => { const r = await fetch(src); if (!r.ok) throw new Error(`${src}: ${r.status}`); return r.json(); }, true);
   return cachedJSON<Unit>(storageUrl(src), isOrgPath(src) ? fetchOrg(src) : fetchPublic(src), false);
 }
 

@@ -1,0 +1,2552 @@
+{
+  "id": "ai-d1",
+  "track": "ai",
+  "level": 4,
+  "audience": "students",
+  "title": {
+    "en": "Networks and sequences",
+    "ar": "الشبكات والمتسلسلات"
+  },
+  "summary": {
+    "en": "How a deep network learns, and how a sequence model decides what to remember. On a phone: a forward step, a backward step, a fading memory, and eight notes.",
+    "ar": "كيف تتعلّم شبكة عميقة، وكيف يقرّر نموذج المتسلسلة ما يتذكّره. على هاتف: خطوة أمامية، وخطوة خلفية، وذاكرة تخبو، وثماني نغمات."
+  },
+  "lessons": [
+    {
+      "id": "ai-d1-1",
+      "title": {
+        "en": "A stack of neurons",
+        "ar": "كومة من الخلايا العصبية"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "On paper, compute one forward step: two inputs, two weights, a bias, then a ReLU.",
+        "ar": "على الورق، احسب خطوة أمامية: مدخلان، ووزنان، وانحياز، ثم ReLU."
+      },
+      "materials": {
+        "en": [
+          "A phone with Darsi",
+          "Paper for one hand-worked step",
+          "The slides from the kit"
+        ],
+        "ar": [
+          "هاتف فيه درسي",
+          "ورق لخطوة واحدة باليد",
+          "شرائح الحزمة"
+        ]
+      },
+      "competencies": [
+        "S.TA.C",
+        "S.SD.C"
+      ],
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "A stack of neurons",
+            "ar": "كومة من الخلايا العصبية"
+          },
+          "src": null,
+          "duration": 115,
+          "sizeMB": 0.7,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "A line that misses",
+                "ar": "خط يخطئ الشكل"
+              }
+            },
+            {
+              "at": 17.3,
+              "atBy": {
+                "en": 17.3,
+                "ar": 17.7
+              },
+              "label": {
+                "en": "One neuron",
+                "ar": "خلية واحدة"
+              }
+            },
+            {
+              "at": 48.8,
+              "atBy": {
+                "en": 48.8,
+                "ar": 47.9
+              },
+              "label": {
+                "en": "The ring",
+                "ar": "الحلقة"
+              }
+            },
+            {
+              "at": 94.4,
+              "atBy": {
+                "en": 94.4,
+                "ar": 89.9
+              },
+              "label": {
+                "en": "Remember and try it",
+                "ar": "تذكّر وجرّب"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 67.36,
+            "atBy": {
+              "en": 67.36,
+              "ar": 65.2
+            },
+            "question": {
+              "type": "choice",
+              "id": "q1",
+              "prompt": {
+                "en": "A single neuron draws which boundary?",
+                "ar": "أي حد ترسمه خلية واحدة؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "One straight cut",
+                    "ar": "قطع مستقيم واحد"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Any closed curve",
+                    "ar": "أي منحنى مغلق"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Two cuts at once",
+                    "ar": "قطعان معًا"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "A neuron is a weighted sum and an activation. One of them cuts the plane once.",
+                "ar": "الخلية مجموع موزون وتنشيط. وواحدة منها تقطع المستوى مرة واحدة."
+              }
+            }
+          },
+          "transcript": {
+            "en": "Look at this ring of points. A single straight line cannot put the inside on one side and the outside on the other. Today: what one neuron can cut, and why a stack with a bend can separate a shape a line cannot. A neuron is a weighted sum, a bias, and an activation. The weights say how much each input counts, and the bias shifts the sum before the bend. One neuron draws one straight cut. Stack linear layers with no activation and they collapse into that same single cut. The activation is the bend. It lets the next layer turn the previous cut into a curve. Here is a ring. A line misses it, and a small network with a hidden layer learns a boundary around it. Quick check! A single neuron draws which boundary? One straight cut. A closed curve needs the bend, and more than one layer. In the app, open the playground. Train a small network on a shape a line cannot separate, and watch the boundary bend. Your turn. Without an activation, what does a stack of layers become? Remember this. One neuron makes one cut, and depth bends the boundary only when an activation sits between the layers. Try it on paper tonight. Compute one forward step: two inputs, two weights, a bias, then a ReLU.",
+            "ar": "بص على حلقة النقط دي. الخط المستقيم الواحد مش قادر يحط اللي جوه في ناحية واللي بره في الناحية التانية. النهارده: إيه اللي الخلية العصبية الواحدة تقدر تقطعه، وليه كومة فيها انحناء تقدر تفصل شكل الخط مش قادر يفصله. الخلية العصبية مجموع موزون، وانحياز، وتنشيط. الأوزان بتقول كل مدخل بيفرق قد إيه، والانحياز بيزحزح المجموع قبل الانحناء. الخلية الواحدة بترسم قطع مستقيم واحد. لو رصيت طبقات خطية من غير تنشيط، هتنطوي في نفس القطع الواحد. التنشيط هو الانحناء. هو اللي يخلي الطبقة اللي بعده تحوّل القطع السابق لمنحنى. دي حلقة. الخط بيخطئها، وشبكة صغيرة بطبقة مخفية بتتعلم حد يلف حوالينها. سؤال سريع! الخلية العصبية الواحدة بترسم أي حد؟ قطع مستقيم واحد. المنحنى المغلق محتاج الانحناء، وأكتر من طبقة. في التطبيق، افتح الملعب. درّب شبكة صغيرة على شكل الخط مش قادر يفصله، وشوف الحد وهو بينحني. دورك. من غير تنشيط، كومة الطبقات بتبقى إيه؟ افتكر كده. الخلية الواحدة بتعمل قطع واحد، والعمق بيحني الحد بس لما يبقى فيه تنشيط بين الطبقات. جرّبها على الورق الليلة. احسب خطوة أمامية واحدة: مدخلين، ووزنين، وانحياز، وبعدين ريلو."
+          },
+          "sources": {
+            "en": "/media/ai-d1-1/video-en.mp4",
+            "ar": "/media/ai-d1-1/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-d1-1/captions-en.vtt",
+            "ar": "/media/ai-d1-1/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-d1-1/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-d1-1/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-d1-1/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-d1-1/light/audio/en.opus",
+              "manifest.json": "/media/ai-d1-1/light/manifest.json",
+              "scenes.json": "/media/ai-d1-1/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-d1-1/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-d1-1/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 257,
+              "ar": 246
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "A stack of neurons",
+            "ar": "كومة من الخلايا العصبية"
+          },
+          "body": {
+            "en": "Write a neuron as weights, a bias and an activation. One neuron draws one cut. Stack linear layers with no activation and they collapse into a single cut. The activation is what lets the next layer bend the previous one. In the playground, a ring of points is the picture: a line misses it, and a network with a hidden layer can learn it. You are not training a large model. You are watching depth do one job a single neuron cannot.",
+            "ar": "اكتب الخلية أوزانًا وانحيازًا وتنشيطًا. وترسم خلية واحدة قطعًا واحدًا. وإن رصصت طبقات خطية بلا تنشيط انطوت في قطع واحد. والتنشيط هو ما يتيح للطبقة التالية أن تحني السابقة. وفي الملعب، حلقة من النقاط هي الصورة: يخطئها الخط، وتستطيع شبكة ذات طبقة مخفية أن تتعلّمها. أنت لا تدرّب نموذجًا كبيرًا. أنت تشاهد العمق يفعل عملًا لا تفعله خلية واحدة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Neuron",
+                "ar": "خلية عصبية"
+              },
+              "def": {
+                "en": "A weighted sum, a bias and an activation.",
+                "ar": "مجموع موزون وانحياز وتنشيط."
+              }
+            },
+            {
+              "term": {
+                "en": "Depth",
+                "ar": "العمق"
+              },
+              "def": {
+                "en": "More than one layer.",
+                "ar": "أكثر من طبقة."
+              }
+            },
+            {
+              "term": {
+                "en": "Activation",
+                "ar": "التنشيط"
+              },
+              "def": {
+                "en": "The bend that stops a stack collapsing into one line.",
+                "ar": "الانحناء الذي يمنع الكومة من أن تصير خطًا واحدًا."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "A single neuron draws which boundary?",
+            "ar": "أي حد ترسمه خلية واحدة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "One straight cut",
+                "ar": "قطع مستقيم واحد"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Any closed curve",
+                "ar": "أي منحنى مغلق"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Two cuts at once",
+                "ar": "قطعان معًا"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "A neuron is a weighted sum and an activation. One of them cuts the plane once.",
+            "ar": "الخلية مجموع موزون وتنشيط. وواحدة منها تقطع المستوى مرة واحدة."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "Adding a hidden layer can separate shapes one neuron cannot.",
+            "ar": "إضافة طبقة مخفية تستطيع فصل أشكال لا تفصلها خلية واحدة."
+          },
+          "answer": true,
+          "explain": {
+            "en": "The playground shows a ring that one line misses and a small network learns.",
+            "ar": "يُظهر الملعب حلقة يخطئها خط واحد وتتعلّمها شبكة صغيرة."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q3",
+          "prompt": {
+            "en": "Match the part to its job.",
+            "ar": "صل الجزء بعمله."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Weight",
+                "ar": "الوزن"
+              },
+              "right": {
+                "en": "How much an input counts",
+                "ar": "مقدار تأثير المدخل"
+              }
+            },
+            {
+              "left": {
+                "en": "Bias",
+                "ar": "الانحياز"
+              },
+              "right": {
+                "en": "A shift before the activation",
+                "ar": "إزاحة قبل التنشيط"
+              }
+            },
+            {
+              "left": {
+                "en": "Activation",
+                "ar": "التنشيط"
+              },
+              "right": {
+                "en": "A bend, so the stack is not one big line",
+                "ar": "انحناء حتى لا تصير الكومة خطًا واحدًا"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Without an activation, stacked linear layers collapse into one linear layer.",
+            "ar": "من غير تنشيط، تنطوي الطبقات الخطية المتراصة في طبقة خطية واحدة."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Train a small network on a shape one line cannot separate. Watch the boundary bend.",
+            "ar": "درّب شبكة صغيرة على شكل لا يفصله خط. وشاهد الحد ينحني."
+          },
+          "tool": "playground"
+        },
+        {
+          "type": "order",
+          "id": "q4",
+          "prompt": {
+            "en": "Put a forward step in order.",
+            "ar": "رتّب خطوة أمامية."
+          },
+          "steps": [
+            {
+              "en": "Multiply inputs by weights",
+              "ar": "اضرب المدخلات في الأوزان"
+            },
+            {
+              "en": "Add the bias",
+              "ar": "أضف الانحياز"
+            },
+            {
+              "en": "Apply the activation",
+              "ar": "طبّق التنشيط"
+            }
+          ],
+          "explain": {
+            "en": "The activation is last. It bends the sum.",
+            "ar": "التنشيط آخر شيء. وهو يحني المجموع."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "Where did the single neuron fail, in one sentence?",
+            "ar": "أين فشلت الخلية الواحدة، في جملة واحدة؟"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: one forward step",
+            "ar": "مشروع: خطوة أمامية"
+          },
+          "task": {
+            "en": "Write a network with two inputs and one hidden unit. Compute the output by hand for one example, then check it in the playground.",
+            "ar": "اكتب شبكة بمدخلين ووحدة مخفية واحدة. واحسب الخرج يدويًا لمثال واحد، ثم تحقق منه في الملعب."
+          },
+          "deliverable": {
+            "en": "The arithmetic and a sentence on what the activation changed.",
+            "ar": "الحساب وجملة عما غيّره التنشيط."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "The arithmetic matches a forward step.",
+                "ar": "الحساب يطابق خطوة أمامية."
+              }
+            },
+            {
+              "criterion": {
+                "en": "The sentence says what a line cannot do.",
+                "ar": "الجملة تقول ما لا يستطيعه خط."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "A stack of neurons",
+            "ar": "كومة من الخلايا العصبية"
+          },
+          "note": {
+            "en": "University, 1",
+            "ar": "الجامعة، ١"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The cut",
+            "ar": "القطع"
+          },
+          "bullets": {
+            "en": [
+              "One neuron, one cut",
+              "A stack can bend"
+            ],
+            "ar": [
+              "خلية واحدة، قطع واحد",
+              "الكومة تستطيع أن تحني"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "What bends it",
+            "ar": "ما يحنيها"
+          },
+          "bullets": {
+            "en": [
+              "The activation",
+              "Without it, still one line"
+            ],
+            "ar": [
+              "التنشيط",
+              "من غيرها، يظل خطًا واحدًا"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "In the lab",
+            "ar": "في المعمل"
+          },
+          "bullets": {
+            "en": [
+              "Open the playground",
+              "Find a shape a line misses"
+            ],
+            "ar": [
+              "افتح الملعب",
+              "جد شكلًا يخطئه خط"
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Ask",
+            "ar": "اسأل"
+          },
+          "bullets": {
+            "en": [
+              "Why is depth not the same as “more”?"
+            ],
+            "ar": [
+              "لماذا ليس العمق هو «المزيد»؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name the part that bends the stack."
+            ],
+            "ar": [
+              "سمِّ الجزء الذي يحني الكومة."
+            ]
+          },
+          "narration": {
+            "en": "Name the part that bends the stack.",
+            "ar": "سمِّ الجزء الذي يحني الكومة."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: A stack of neurons",
+            "ar": "الشرائح: كومة من الخلايا العصبية"
+          },
+          "pages": 6,
+          "base": "ai-d1-1/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Plan: A stack of neurons",
+            "ar": "الخطة: كومة من الخلايا العصبية"
+          },
+          "pages": 2,
+          "base": "ai-d1-1/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-d1-1/video-{lang}"
+        }
+      ]
+    },
+    {
+      "id": "ai-d1-2",
+      "title": {
+        "en": "Loss, descent and backprop",
+        "ar": "الخسارة والنزول والانتشار العكسي"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Compute the 2.4 step on paper without looking it up.",
+        "ar": "احسب خطوة ٢٫٤ على الورق من غير أن تبحث عنها."
+      },
+      "materials": {
+        "en": [
+          "A phone with Darsi",
+          "Paper for one hand-worked step",
+          "The slides from the kit"
+        ],
+        "ar": [
+          "هاتف فيه درسي",
+          "ورق لخطوة واحدة باليد",
+          "شرائح الحزمة"
+        ]
+      },
+      "competencies": [
+        "S.TA.C",
+        "S.SD.C"
+      ],
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Loss, descent and backprop",
+            "ar": "الخسارة والنزول والانتشار العكسي"
+          },
+          "src": null,
+          "duration": 115,
+          "sizeMB": 0.7,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "The valley",
+                "ar": "الوادي"
+              }
+            },
+            {
+              "at": 16.6,
+              "atBy": {
+                "en": 16.6,
+                "ar": 13.4
+              },
+              "label": {
+                "en": "The slope",
+                "ar": "الميل"
+              }
+            },
+            {
+              "at": 44.6,
+              "atBy": {
+                "en": 44.6,
+                "ar": 40
+              },
+              "label": {
+                "en": "One step",
+                "ar": "خطوة واحدة"
+              }
+            },
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Remember",
+                "ar": "تذكّر"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 68.61,
+            "atBy": {
+              "en": 68.61,
+              "ar": 62.49
+            },
+            "question": {
+              "type": "choice",
+              "id": "q1",
+              "prompt": {
+                "en": "Loss θ², θ = 3, η = 0.1. θ after one step?",
+                "ar": "الخسارة θ²، وθ تساوي ٣، وإيتا ٠٫١. أين θ بعد خطوة؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "2.4",
+                    "ar": "٢٫٤"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "2.7",
+                    "ar": "٢٫٧"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "3.6",
+                    "ar": "٣٫٦"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "The slope is 2θ = 6, so the step is 0.1 × 6 and θ becomes 2.4.",
+                "ar": "الميل ٢θ ويساوي ٦، فالخطوة ٠٫١ × ٦ وتصبح θ ٢٫٤."
+              }
+            }
+          },
+          "transcript": {
+            "en": "A ball sits high on a valley. One step can walk it down, or throw it out the other side. Today: loss, the gradient, and why a step that is too big climbs out of the valley. The loss is a number that is large when the answer is wrong. Learning picks weights that make that number small. The gradient points uphill, locally. Descent steps the other way, against it. For the loss theta squared, the slope is two theta. At three, with a rate of a tenth, the next value is two point four. Here the ball takes steps down theta squared. A small rate crawls, and a rate that is too big climbs out. Quick check! The loss is theta squared, theta is three, and the rate is a tenth. Where is theta after one step? At two point four. The slope is six, and a tenth of six stays inside the valley. In the app, open the gradient lab. Run a good step, then a step that is too big, and watch the ball. Your turn. The loss grows on every step. What is the most likely cause? Remember this. The gradient points uphill, and the size of the step decides whether you stay in the valley. Try it on paper tonight. Take the step from three, at a rate of a tenth, and write two point four.",
+            "ar": "كرة واقفة فوق في وادي. خطوة واحدة ممكن تنزّلها، أو ترميها بره الناحية التانية. النهارده: الخسارة، والتدرّج، وليه الخطوة الكبيرة زيادة بتطلع بره الوادي. الخسارة رقم بيكبر لما الإجابة تبقى غلط. والتعلّم بيختار أوزان تخلّي الرقم ده صغير. التدرّج بيشاور لفوق، محليًا. والنزول يخطو في الاتجاه التاني، عكسه. للخسارة ثيتا تربيع، الميل اتنين في ثيتا. عند تلاتة، وبمعدّل واحد من عشرة، القيمة الجاية اتنين علامة أربعة. هنا الكرة بتاخد خطوات على ثيتا تربيع. المعدّل الصغير بيزحف، والمعدّل الكبير زيادة بيطلع بره. سؤال سريع! الخسارة ثيتا تربيع، وثيتا تلاتة، والمعدّل واحد من عشرة. ثيتا بعد خطوة كام؟ عند اتنين علامة أربعة. الميل ستة، وعُشر الستة بيفضل جوه الوادي. في التطبيق، افتح معمل التدرّج. شغّل خطوة كويسة، وبعدين خطوة كبيرة زيادة، وشوف الكرة. دورك. الخسارة بتكبر كل خطوة. السبب الأرجح إيه؟ افتكر كده. التدرّج بيشاور لفوق، وحجم الخطوة هو اللي يقرر هتفضل جوه الوادي ولا لأ. جرّبها على الورق الليلة. خد الخطوة من تلاتة، بمعدّل واحد من عشرة، واكتب اتنين علامة أربعة."
+          },
+          "sources": {
+            "en": "/media/ai-d1-2/video-en.mp4",
+            "ar": "/media/ai-d1-2/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-d1-2/captions-en.vtt",
+            "ar": "/media/ai-d1-2/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-d1-2/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-d1-2/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-d1-2/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-d1-2/light/audio/en.opus",
+              "manifest.json": "/media/ai-d1-2/light/manifest.json",
+              "scenes.json": "/media/ai-d1-2/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-d1-2/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-d1-2/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 244,
+              "ar": 223
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Loss, descent and backprop",
+            "ar": "الخسارة والنزول والانتشار العكسي"
+          },
+          "body": {
+            "en": "For the loss θ² the slope is 2θ. One step is θ minus the learning rate times that slope. At θ = 3 and a rate of 0.1 the next θ is 2.4. A rate that is too large steps past the bottom and the loss grows. Backprop is this blame, layer by layer, via the chain rule. Open the gradient lab for the valley, and the backprop lab when you want every number in a tiny net. A falling loss on the training points is not proof the model is right on new points.",
+            "ar": "للخسارة θ² الميل هو ٢θ. والخطوة هي θ ناقص معدّل التعلّم مضروبًا في ذلك الميل. وعند θ تساوي ٣ ومعدّل ٠٫١ تصبح θ التالية ٢٫٤. والمعدّل الكبير جدًا يتخطى القاع فتكبر الخسارة. والانتشار العكسي هو هذا اللوم، طبقة بعد طبقة، بقاعدة السلسلة. افتح معمل التدرّج للوادي، ومعمل الانتشار العكسي حين تريد كل رقم في شبكة صغيرة. والخسارة الهابطة على نقاط التدريب ليست دليلًا أن النموذج صحيح على نقاط جديدة."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Loss",
+                "ar": "الخسارة"
+              },
+              "def": {
+                "en": "A number that is large when the answer is wrong.",
+                "ar": "رقم يكبر حين تكون الإجابة خاطئة."
+              }
+            },
+            {
+              "term": {
+                "en": "Gradient",
+                "ar": "التدرّج"
+              },
+              "def": {
+                "en": "The local uphill direction.",
+                "ar": "اتجاه الصعود المحلي."
+              }
+            },
+            {
+              "term": {
+                "en": "Learning rate",
+                "ar": "معدّل التعلّم"
+              },
+              "def": {
+                "en": "How far one step moves.",
+                "ar": "كم تبعد الخطوة الواحدة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "Loss θ², θ = 3, η = 0.1. θ after one step?",
+            "ar": "الخسارة θ²، وθ تساوي ٣، وإيتا ٠٫١. أين θ بعد خطوة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "2.4",
+                "ar": "٢٫٤"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "2.7",
+                "ar": "٢٫٧"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "3.6",
+                "ar": "٣٫٦"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The slope is 2θ = 6, so the step is 0.1 × 6 and θ becomes 2.4.",
+            "ar": "الميل ٢θ ويساوي ٦، فالخطوة ٠٫١ × ٦ وتصبح θ ٢٫٤."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "The gradient points at the minimum.",
+            "ar": "يشير التدرّج إلى القاع."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It points uphill, locally. Descent steps against it.",
+            "ar": "يشير إلى أعلى، محليًا. والنزول يخطو عكسه."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q3",
+          "prompt": {
+            "en": "Match the curve to the cause.",
+            "ar": "صل المنحنى بسببه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Loss grows every step",
+                "ar": "الخسارة تكبر كل خطوة"
+              },
+              "right": {
+                "en": "Step too big",
+                "ar": "خطوة كبيرة جدًا"
+              }
+            },
+            {
+              "left": {
+                "en": "Loss falls very slowly",
+                "ar": "الخسارة تهبط ببطء شديد"
+              },
+              "right": {
+                "en": "Step too small",
+                "ar": "خطوة صغيرة جدًا"
+              }
+            },
+            {
+              "left": {
+                "en": "Train loss low, new data worse",
+                "ar": "خسارة التدريب منخفضة والبيانات الجديدة أسوأ"
+              },
+              "right": {
+                "en": "Memorising the training set",
+                "ar": "حفظ مجموعة التدريب"
+              }
+            }
+          ],
+          "explain": {
+            "en": "The learning rate and overfitting leave different fingerprints on the curve.",
+            "ar": "معدّل التعلّم والإفراط في الملاءمة يتركان أثرين مختلفين على المنحنى."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Run a good step and a step that is too big. Watch the ball in the valley.",
+            "ar": "شغّل خطوة مناسبة وخطوة كبيرة جدًا. وراقب الكرة في الوادي."
+          },
+          "tool": "gradient"
+        },
+        {
+          "type": "order",
+          "id": "q4",
+          "prompt": {
+            "en": "Order one descent step.",
+            "ar": "رتّب خطوة نزول واحدة."
+          },
+          "steps": [
+            {
+              "en": "Compute the loss",
+              "ar": "احسب الخسارة"
+            },
+            {
+              "en": "Compute the gradient",
+              "ar": "احسب التدرّج"
+            },
+            {
+              "en": "Step against the gradient",
+              "ar": "اخطُ عكس التدرّج"
+            }
+          ],
+          "explain": {
+            "en": "You need the slope before you can step against it.",
+            "ar": "تحتاج الميل قبل أن تخطو عكسه."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "What does a growing loss tell you, before you look at the weights?",
+            "ar": "ماذا تقول لك خسارة تكبر، قبل أن تنظر إلى الأوزان؟"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: five steps by hand",
+            "ar": "مشروع: خمس خطوات باليد"
+          },
+          "task": {
+            "en": "Take five steps on θ² from θ = 3 at η = 0.1 and at η = 1.1. Say which one leaves the valley.",
+            "ar": "خذ خمس خطوات على θ² من θ تساوي ٣ عند إيتا ٠٫١ وعند إيتا ١٫١. وقل أيهما يغادر الوادي."
+          },
+          "deliverable": {
+            "en": "The ten numbers and one sentence.",
+            "ar": "الأرقام العشرة وجملة واحدة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "Both runs are arithmetic, not a screenshot.",
+                "ar": "كلا التشغيلين حساب، لا لقطة شاشة."
+              }
+            },
+            {
+              "criterion": {
+                "en": "The sentence names the rate that diverges.",
+                "ar": "الجملة تسمّي المعدّل الذي يتباعد."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Loss, descent and backprop",
+            "ar": "الخسارة والنزول والانتشار العكسي"
+          },
+          "note": {
+            "en": "University, 2",
+            "ar": "الجامعة، ٢"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The step",
+            "ar": "الخطوة"
+          },
+          "bullets": {
+            "en": [
+              "Loss is large when wrong",
+              "Step against the slope"
+            ],
+            "ar": [
+              "الخسارة تكبر عند الخطأ",
+              "اخطُ عكس الميل"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The rate",
+            "ar": "المعدّل"
+          },
+          "bullets": {
+            "en": [
+              "Too small crawls",
+              "Too big climbs out"
+            ],
+            "ar": [
+              "الصغير يزحف",
+              "الكبير يصعد خارجًا"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "In the lab",
+            "ar": "في المعمل"
+          },
+          "bullets": {
+            "en": [
+              "Run Good",
+              "Run Too big"
+            ],
+            "ar": [
+              "شغّل المناسب",
+              "شغّل الكبير جدًا"
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Ask",
+            "ar": "اسأل"
+          },
+          "bullets": {
+            "en": [
+              "Where does the gradient point?"
+            ],
+            "ar": [
+              "إلى أين يشير التدرّج؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "θ² at 3, rate 0.1: write the next θ."
+            ],
+            "ar": [
+              "θ² عند ٣، والمعدّل ٠٫١: اكتب θ التالية."
+            ]
+          },
+          "narration": {
+            "en": "θ² at 3, rate 0.1: write the next θ.",
+            "ar": "θ² عند ٣، والمعدّل ٠٫١: اكتب θ التالية."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Loss, descent and backprop",
+            "ar": "الشرائح: الخسارة والنزول والانتشار العكسي"
+          },
+          "pages": 6,
+          "base": "ai-d1-2/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Plan: Loss, descent and backprop",
+            "ar": "الخطة: الخسارة والنزول والانتشار العكسي"
+          },
+          "pages": 2,
+          "base": "ai-d1-2/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-d1-2/video-{lang}"
+        }
+      ]
+    },
+    {
+      "id": "ai-d1-3",
+      "title": {
+        "en": "Sequences and the memory that fades",
+        "ar": "المتسلسلات والذاكرة التي تخبو"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Write the hidden state after a cue of 1 and one empty step, if memory is one half.",
+        "ar": "اكتب الحالة المخفية بعد إشارة ١ وخطوة فارغة واحدة، إذا كانت الذاكرة نصفًا."
+      },
+      "materials": {
+        "en": [
+          "A phone with Darsi",
+          "Paper for one hand-worked step",
+          "The slides from the kit"
+        ],
+        "ar": [
+          "هاتف فيه درسي",
+          "ورق لخطوة واحدة باليد",
+          "شرائح الحزمة"
+        ]
+      },
+      "competencies": [
+        "S.TA.C",
+        "S.SD.C"
+      ],
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Sequences and the memory that fades",
+            "ar": "المتسلسلات والذاكرة التي تخبو"
+          },
+          "src": null,
+          "duration": 114,
+          "sizeMB": 0.7,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "The cue",
+                "ar": "الإشارة"
+              }
+            },
+            {
+              "at": 16.4,
+              "atBy": {
+                "en": 16.4,
+                "ar": 15.1
+              },
+              "label": {
+                "en": "The state",
+                "ar": "الحالة"
+              }
+            },
+            {
+              "at": 45.1,
+              "atBy": {
+                "en": 45.1,
+                "ar": 42.7
+              },
+              "label": {
+                "en": "The fade",
+                "ar": "الخبو"
+              }
+            },
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Remember",
+                "ar": "تذكّر"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 66.92,
+            "atBy": {
+              "en": 66.92,
+              "ar": 63.12
+            },
+            "question": {
+              "type": "choice",
+              "id": "q1",
+              "prompt": {
+                "en": "Three empty steps follow a cue. Memory is near 0. What is left at the end?",
+                "ar": "ثلاث خطوات فارغة بعد إشارة. الذاكرة قرب الصفر. ماذا يبقى في النهاية؟"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "Almost none of the cue",
+                    "ar": "لا شيء تقريبًا من الإشارة"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "The whole cue",
+                    "ar": "الإشارة كلها"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "A new cue the net invented",
+                    "ar": "إشارة جديدة اخترعتها الشبكة"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "Each step keeps only a little of the hidden state, so the cue fades.",
+                "ar": "كل خطوة تبقي قليلًا من الحالة المخفية، فتخبو الإشارة."
+              }
+            }
+          },
+          "transcript": {
+            "en": "The first symbol is a cue, and then the line goes quiet. A weak memory forgets that cue before the end. Today: how a recurrent net reads one symbol at a time, and why its memory fades. A sequence is read one symbol at a time. The hidden state is the only memory the next symbol will see. Each step keeps only a share of that state. If the share is near zero, the cue is gone after a few empty steps. Near one, the sign of the cue is still there at the end. That is the limit of this simple net: a long gap washes the start away. Here is how much of the cue is left. A weak memory keeps almost none, and a strong memory keeps most of it. Quick check! Three empty steps follow a cue, and the memory is near zero. What is left at the end? Almost none of the cue. A small memory, multiplied again and again, washes the start away. In the app, open the memory lab. Find a memory that keeps more than half the cue, and one that keeps almost none. Your turn. Does a recurrent net read the whole sequence in one look? Remember this. The hidden state is the memory, and a long gap fades it. Attention, next, looks back instead. Try it on paper tonight. Start from a cue of one, keep half, and take one empty step.",
+            "ar": "الرمز الأول إشارة، وبعدين السطر بيسكت. الذاكرة الضعيفة بتنسى الإشارة دي قبل الآخر. النهارده: الشبكة التكرارية بتقرا رمز واحد في كل مرة إزاي، وليه ذاكرتها بتخبو. المتسلسلة بتتقرأ رمز واحد في كل مرة. والحالة المخفية هي الذاكرة الوحيدة اللي الرمز الجاي هيشوفها. كل خطوة بتحتفظ بحصة بس من الحالة دي. لو الحصة قرب الصفر، الإشارة بتروح بعد شوية خطوات فاضية. قرب الواحد، علامة الإشارة لسه موجودة في الآخر. وده حد الشبكة البسيطة دي: الفجوة الطويلة بتمسح البداية. دي كمية الإشارة اللي فاضلة. الذاكرة الضعيفة بتسيب تقريبًا ولا حاجة، والقوية بتسيب معظمها. سؤال سريع! تلات خطوات فاضية بعد الإشارة، والذاكرة قرب الصفر. إيه اللي فاضل في الآخر؟ تقريبًا ولا حاجة من الإشارة. ذاكرة صغيرة، تتضرب مرة ورا مرة، بتمسح البداية. في التطبيق، افتح معمل الذاكرة. دور على ذاكرة تسيب أكتر من نص الإشارة، وواحدة تسيب تقريبًا ولا حاجة. دورك. الشبكة التكرارية بتقرا المتسلسلة كلها بنظرة واحدة؟ افتكر كده. الحالة المخفية هي الذاكرة، والفجوة الطويلة بتخبّيها. والانتباه، في اللي بعد كده، بيرجع يبص لورا. جرّبها على الورق الليلة. ابدأ من إشارة واحد، احتفظ بالنص، وخد خطوة فاضية واحدة."
+          },
+          "sources": {
+            "en": "/media/ai-d1-3/video-en.mp4",
+            "ar": "/media/ai-d1-3/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-d1-3/captions-en.vtt",
+            "ar": "/media/ai-d1-3/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-d1-3/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-d1-3/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-d1-3/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-d1-3/light/audio/en.opus",
+              "manifest.json": "/media/ai-d1-3/light/manifest.json",
+              "scenes.json": "/media/ai-d1-3/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-d1-3/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-d1-3/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 245,
+              "ar": 236
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Sequences and the memory that fades",
+            "ar": "المتسلسلات والذاكرة التي تخبو"
+          },
+          "body": {
+            "en": "Open the memory lab. The first cell is a cue and the next three are empty. The slider is how much of the hidden state survives each step. Near zero, the end has forgotten the cue. Near one, the sign of the cue is still there. That is the limit of a simple recurrent net: a long gap washes the start away. Attention, in the next lesson, looks back instead of trusting this number.",
+            "ar": "افتح معمل الذاكرة. الخانة الأولى إشارة والثلاث التالية فارغة. والمؤشر هو مقدار الحالة المخفية الذي يبقى في كل خطوة. وقرب الصفر، نسيت النهاية الإشارة. وقرب الواحد، ما زالت إشارة البداية هناك. وهذا حد الشبكة التكرارية البسيطة: فجوة طويلة تغسل البداية. والانتباه، في الدرس التالي، ينظر إلى الوراء بدل أن يثق بهذا الرقم."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Hidden state",
+                "ar": "الحالة المخفية"
+              },
+              "def": {
+                "en": "What the net carries to the next step.",
+                "ar": "ما تحمله الشبكة إلى الخطوة التالية."
+              }
+            },
+            {
+              "term": {
+                "en": "Cue",
+                "ar": "الإشارة"
+              },
+              "def": {
+                "en": "The early symbol that must still matter.",
+                "ar": "الرمز المبكر الذي يجب أن يظل مهمًا."
+              }
+            },
+            {
+              "term": {
+                "en": "Fading",
+                "ar": "الخبو"
+              },
+              "def": {
+                "en": "A small memory multiplied at every step.",
+                "ar": "ذاكرة صغيرة تُضرب في كل خطوة."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "Three empty steps follow a cue. Memory is near 0. What is left at the end?",
+            "ar": "ثلاث خطوات فارغة بعد إشارة. الذاكرة قرب الصفر. ماذا يبقى في النهاية؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Almost none of the cue",
+                "ar": "لا شيء تقريبًا من الإشارة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The whole cue",
+                "ar": "الإشارة كلها"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A new cue the net invented",
+                "ar": "إشارة جديدة اخترعتها الشبكة"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Each step keeps only a little of the hidden state, so the cue fades.",
+            "ar": "كل خطوة تبقي قليلًا من الحالة المخفية، فتخبو الإشارة."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "A recurrent net reads the whole sequence in one look.",
+            "ar": "تقرأ الشبكة التكرارية المتسلسلة كلها بنظرة واحدة."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It reads one symbol at a time and hopes the hidden state kept the rest.",
+            "ar": "تقرأ رمزًا واحدًا في كل مرة وتأمل أن الحالة المخفية احتفظت بالباقي."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q3",
+          "prompt": {
+            "en": "Match the word to the meaning.",
+            "ar": "صل الكلمة بمعناها."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Hidden state",
+                "ar": "الحالة المخفية"
+              },
+              "right": {
+                "en": "What the net carries forward",
+                "ar": "ما تحمله الشبكة إلى الأمام"
+              }
+            },
+            {
+              "left": {
+                "en": "Cue",
+                "ar": "الإشارة"
+              },
+              "right": {
+                "en": "The symbol that must still matter at the end",
+                "ar": "الرمز الذي يجب أن يظل مهمًا في النهاية"
+              }
+            },
+            {
+              "left": {
+                "en": "Fading",
+                "ar": "الخبو"
+              },
+              "right": {
+                "en": "A small memory times the state, again and again",
+                "ar": "ذاكرة صغيرة تضرب الحالة مرة بعد مرة"
+              }
+            }
+          ],
+          "explain": {
+            "en": "The lab’s end number is the cue after it has been multiplied by the memory at every empty step.",
+            "ar": "رقم النهاية في المعمل هو الإشارة بعد ضربها في الذاكرة عند كل خطوة فارغة."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Find a memory that keeps more than half the cue, and one that keeps almost none.",
+            "ar": "جد ذاكرة تبقي أكثر من نصف الإشارة، وأخرى لا تبقي شيئًا تقريبًا."
+          },
+          "tool": "rnn"
+        },
+        {
+          "type": "order",
+          "id": "q4",
+          "prompt": {
+            "en": "Order one recurrent step.",
+            "ar": "رتّب خطوة تكرارية."
+          },
+          "steps": [
+            {
+              "en": "Read the next symbol",
+              "ar": "اقرأ الرمز التالي"
+            },
+            {
+              "en": "Mix it with the old hidden state",
+              "ar": "اخلطه بالحالة المخفية القديمة"
+            },
+            {
+              "en": "Keep the mix as the new state",
+              "ar": "أبقِ الخليط حالة جديدة"
+            }
+          ],
+          "explain": {
+            "en": "The new state is the only memory the next symbol will see.",
+            "ar": "الحالة الجديدة هي الذاكرة الوحيدة التي سيراها الرمز التالي."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "What did the empty steps do to the cue?",
+            "ar": "ماذا فعلت الخطوات الفارغة بالإشارة؟"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: two memories",
+            "ar": "مشروع: ذاكرتان"
+          },
+          "task": {
+            "en": "Record the end state at memory 0.2 and at memory 0.9 for the lab’s cue. Say which one still knows the start.",
+            "ar": "سجّل الحالة النهائية عند ذاكرة ٠٫٢ وعند ٠٫٩ لإشارة المعمل. وقل أيهما ما زال يعرف البداية."
+          },
+          "deliverable": {
+            "en": "The two numbers and one sentence.",
+            "ar": "الرقمان وجملة واحدة."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "The numbers come from the lab.",
+                "ar": "الرقمان من المعمل."
+              }
+            },
+            {
+              "criterion": {
+                "en": "The sentence names fading, not “the net understood”.",
+                "ar": "الجملة تسمّي الخبو، لا «الشبكة فهمت»."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Sequences and the memory that fades",
+            "ar": "المتسلسلات والذاكرة التي تخبو"
+          },
+          "note": {
+            "en": "University, 3",
+            "ar": "الجامعة، ٣"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "One symbol at a time",
+            "ar": "رمز واحد في كل مرة"
+          },
+          "bullets": {
+            "en": [
+              "The state is the memory",
+              "Empty steps still multiply it"
+            ],
+            "ar": [
+              "الحالة هي الذاكرة",
+              "الخطوات الفارغة تضربها أيضًا"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The fade",
+            "ar": "الخبو"
+          },
+          "bullets": {
+            "en": [
+              "Small memory, cue gone",
+              "Large memory, cue remains"
+            ],
+            "ar": [
+              "ذاكرة صغيرة، الإشارة ذهبت",
+              "ذاكرة كبيرة، الإشارة تبقى"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "In the lab",
+            "ar": "في المعمل"
+          },
+          "bullets": {
+            "en": [
+              "Slider to the left",
+              "Slider to the right"
+            ],
+            "ar": [
+              "المؤشر إلى اليسار",
+              "المؤشر إلى اليمين"
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Ask",
+            "ar": "اسأل"
+          },
+          "bullets": {
+            "en": [
+              "What would a longer gap do?"
+            ],
+            "ar": [
+              "ماذا تفعل فجوة أطول؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Does the end still know the cue? Write the number."
+            ],
+            "ar": [
+              "هل ما زالت النهاية تعرف الإشارة؟ اكتب الرقم."
+            ]
+          },
+          "narration": {
+            "en": "Does the end still know the cue? Write the number.",
+            "ar": "هل ما زالت النهاية تعرف الإشارة؟ اكتب الرقم."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Sequences and the memory that fades",
+            "ar": "الشرائح: المتسلسلات والذاكرة التي تخبو"
+          },
+          "pages": 6,
+          "base": "ai-d1-3/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Plan: Sequences and the memory that fades",
+            "ar": "الخطة: المتسلسلات والذاكرة التي تخبو"
+          },
+          "pages": 2,
+          "base": "ai-d1-3/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-d1-3/video-{lang}"
+        }
+      ]
+    },
+    {
+      "id": "ai-d1-4",
+      "title": {
+        "en": "Attention and the transformer",
+        "ar": "الانتباه والمحوّل"
+      },
+      "minutes": 18,
+      "tryTomorrow": {
+        "en": "Write one sentence: what the melody lab counted, and what a GPU lab would still only be counting.",
+        "ar": "اكتب جملة: ماذا عدّ معمل اللحن، وماذا سيظل معمل بطاقة الرسوم يعدّه فقط."
+      },
+      "materials": {
+        "en": [
+          "A phone with Darsi",
+          "Paper for one hand-worked step",
+          "The slides from the kit"
+        ],
+        "ar": [
+          "هاتف فيه درسي",
+          "ورق لخطوة واحدة باليد",
+          "شرائح الحزمة"
+        ]
+      },
+      "competencies": [
+        "S.TA.C",
+        "S.SD.C"
+      ],
+      "steps": [
+        {
+          "type": "video",
+          "id": "video",
+          "prompt": {
+            "en": "Watch",
+            "ar": "شاهد"
+          },
+          "title": {
+            "en": "Attention and the transformer",
+            "ar": "الانتباه والمحوّل"
+          },
+          "src": null,
+          "duration": 105,
+          "sizeMB": 0.6,
+          "chapters": [
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Look back",
+                "ar": "بص لورا"
+              }
+            },
+            {
+              "at": 17.5,
+              "atBy": {
+                "en": 17.5,
+                "ar": 16.1
+              },
+              "label": {
+                "en": "The mix",
+                "ar": "الخليط"
+              }
+            },
+            {
+              "at": 42.9,
+              "atBy": {
+                "en": 42.9,
+                "ar": 41.8
+              },
+              "label": {
+                "en": "Eight notes",
+                "ar": "ثماني نغمات"
+              }
+            },
+            {
+              "at": 0,
+              "atBy": {
+                "en": 0,
+                "ar": 0
+              },
+              "label": {
+                "en": "Remember",
+                "ar": "تذكّر"
+              }
+            }
+          ],
+          "checkpoint": {
+            "at": 60,
+            "atBy": {
+              "en": 60,
+              "ar": 56.65
+            },
+            "question": {
+              "type": "choice",
+              "id": "q1",
+              "prompt": {
+                "en": "Attention builds a new vector by…",
+                "ar": "يبني الانتباه متجهًا جديدًا بأن…"
+              },
+              "options": [
+                {
+                  "id": "a",
+                  "text": {
+                    "en": "A weighted sum of the other vectors",
+                    "ar": "مجموع موزون للمتجهات الأخرى"
+                  }
+                },
+                {
+                  "id": "b",
+                  "text": {
+                    "en": "Copying only the first symbol",
+                    "ar": "نسخ الرمز الأول فقط"
+                  }
+                },
+                {
+                  "id": "c",
+                  "text": {
+                    "en": "Forgetting every weight",
+                    "ar": "نسيان كل وزن"
+                  }
+                }
+              ],
+              "answer": "a",
+              "explain": {
+                "en": "The scores become weights that add to 1, and the new vector is their mix.",
+                "ar": "تصير الدرجات أوزانًا مجموعها ١، والمتجه الجديد خليطها."
+              }
+            }
+          },
+          "transcript": {
+            "en": "Eight notes sit in a row. The model does not hear music. It only counts which pitch followed which. Today: attention, the transformer, and why eight notes are a count and not a song. Attention scores every earlier item and mixes them. The new vector is a weighted sum. A transformer block adds that mix back onto the original. Nothing is forced through one narrow state. The melody lab always picks the most common follower. A pitch it never saw follow another cannot appear. Here is one transformer block. Attention mixes, and the residual adds the original back. Quick check! Attention builds a new vector by doing what? A weighted sum of the other vectors. The scores become weights, and the weights do the mixing. In the app, open the eight-note lab. Read the tune, then the four notes it writes next, and name one pitch it cannot invent. Your turn. Did those eight notes compose a piece of music? Remember this. Attention mixes, the residual keeps the original, and the eight notes only counted. Try it tonight. Write one sentence on what was counted, and what was not.",
+            "ar": "تمان نغمات واقفين في صف. النموذج مش سامع موسيقى. هو بس بيعدّ أي درجة جت بعد أي درجة. النهارده: الانتباه، والمحوّل، وليه تمان نغمات عدّ ومش أغنية. الانتباه بيقيّم كل عنصر سابق وبيخلطهم. والمتجه الجديد مجموع موزون. كتلة المحوّل بترجّع الخليط ده على الأصل. ومفيش حاجة بتتفرض تعدّي من حالة ضيقة واحدة. معمل اللحن دايمًا بيختار التابع الأكثر تكرارًا. والدرجة اللي عمرها ما شافها جاية بعد درجة تانية مش ممكن تظهر. دي كتلة محوّل واحدة. الانتباه بيخلط، والباقي بيرجّع الأصل. سؤال سريع! الانتباه يبني متجه جديد إزاي؟ مجموع موزون للمتجهات التانية. الدرجات بتبقى أوزان، والأوزان هي اللي بتخلط. في التطبيق، افتح معمل التمان نغمات. اقرأ اللحن، وبعدين الأربع نغمات اللي بيكتبها بعده، وسمّي درجة مش قادر يخترعها. دورك. النغمات التمانية دي ألّفت مقطوعة؟ افتكر كده. الانتباه بيخلط، والباقي بيحتفظ بالأصل، والتمان نغمات عدّوا بس. جرّبها الليلة. اكتب جملة عن اللي اتعدّ، واللي ما اتعدّش."
+          },
+          "sources": {
+            "en": "/media/ai-d1-4/video-en.mp4",
+            "ar": "/media/ai-d1-4/video-ar.mp4"
+          },
+          "captions": {
+            "en": "/media/ai-d1-4/captions-en.vtt",
+            "ar": "/media/ai-d1-4/captions-ar.vtt"
+          },
+          "light": {
+            "files": {
+              "audio/ar-EG.m4a": "/media/ai-d1-4/light/audio/ar-EG.m4a",
+              "audio/ar-EG.opus": "/media/ai-d1-4/light/audio/ar-EG.opus",
+              "audio/en.m4a": "/media/ai-d1-4/light/audio/en.m4a",
+              "audio/en.opus": "/media/ai-d1-4/light/audio/en.opus",
+              "manifest.json": "/media/ai-d1-4/light/manifest.json",
+              "scenes.json": "/media/ai-d1-4/light/scenes.json",
+              "timing/ar-EG.json": "/media/ai-d1-4/light/timing/ar-EG.json",
+              "timing/en.json": "/media/ai-d1-4/light/timing/en.json"
+            },
+            "langs": {
+              "en": "en",
+              "ar": "ar-EG"
+            },
+            "sizeKB": {
+              "en": 224,
+              "ar": 208
+            }
+          }
+        },
+        {
+          "type": "read",
+          "id": "read",
+          "prompt": {
+            "en": "Read",
+            "ar": "اقرأ"
+          },
+          "title": {
+            "en": "Attention and the transformer",
+            "ar": "الانتباه والمحوّل"
+          },
+          "body": {
+            "en": "Attention replaces the hope that a hidden state kept the start. Each item asks a question, every item offers a key, and the new vector is a weighted sum. A transformer block does that and also adds the original back, so nothing is forced through one narrow state. The melody lab is MIT’s music lab cut down to eight notes: it counts which pitch followed which, then always picks the most common follower. It cannot play a pitch it never saw follow another. Say that limit out loud.",
+            "ar": "يستبدل الانتباه بالأمل أن حالة مخفية احتفظت بالبداية. كل عنصر يسأل سؤالًا، وكل عنصر يقدّم مفتاحًا، والمتجه الجديد مجموع موزون. وكتلة المحوّل تفعل ذلك وتعيد إضافة الأصل أيضًا، فلا يُجبر شيء على المرور في حالة ضيقة واحدة. ومعمل اللحن هو معمل الموسيقى في المساق مقصوصًا إلى ثماني نغمات: يعدّ أي درجة تبعت أي درجة، ثم يختار دائمًا التابع الأكثر تكرارًا. ولا يستطيع أن يعزف درجة لم يرها تتبع أخرى. قل هذا الحد بصوت عالٍ."
+          },
+          "keyTerms": [
+            {
+              "term": {
+                "en": "Attention",
+                "ar": "الانتباه"
+              },
+              "def": {
+                "en": "A weighted mix of the other items.",
+                "ar": "خليط موزون من العناصر الأخرى."
+              }
+            },
+            {
+              "term": {
+                "en": "Transformer block",
+                "ar": "كتلة المحوّل"
+              },
+              "def": {
+                "en": "Attention, a small feed-forward, and a residual add.",
+                "ar": "انتباه، وتغذية أمامية صغيرة، وإضافة الباقي."
+              }
+            },
+            {
+              "term": {
+                "en": "Next note",
+                "ar": "النغمة التالية"
+              },
+              "def": {
+                "en": "The most common follower in a tiny tune, not a composition.",
+                "ar": "التابع الأكثر تكرارًا في لحن صغير، لا تأليف."
+              }
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "Attention builds a new vector by…",
+            "ar": "يبني الانتباه متجهًا جديدًا بأن…"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A weighted sum of the other vectors",
+                "ar": "مجموع موزون للمتجهات الأخرى"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Copying only the first symbol",
+                "ar": "نسخ الرمز الأول فقط"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Forgetting every weight",
+                "ar": "نسيان كل وزن"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The scores become weights that add to 1, and the new vector is their mix.",
+            "ar": "تصير الدرجات أوزانًا مجموعها ١، والمتجه الجديد خليطها."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "The eight-note lab composed a piece of music.",
+            "ar": "ألّف معمل النغمات الثماني مقطوعة موسيقية."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It continued the counts from one short tune. It did not hear music and it did not train for long.",
+            "ar": "أكمل أعداد لحن قصير واحد. لم يسمع موسيقى ولم يتدرّب طويلًا."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q3",
+          "prompt": {
+            "en": "Match the piece.",
+            "ar": "صل القطعة."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Query",
+                "ar": "الاستعلام"
+              },
+              "right": {
+                "en": "What this item is looking for",
+                "ar": "ما يبحث عنه هذا العنصر"
+              }
+            },
+            {
+              "left": {
+                "en": "Key",
+                "ar": "المفتاح"
+              },
+              "right": {
+                "en": "What each item offers",
+                "ar": "ما يقدمه كل عنصر"
+              }
+            },
+            {
+              "left": {
+                "en": "Residual",
+                "ar": "الباقي"
+              },
+              "right": {
+                "en": "Adding the original back",
+                "ar": "إعادة إضافة الأصل"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Attention mixes. The residual keeps what was already there.",
+            "ar": "الانتباه يخلط. والباقي يحتفظ بما كان موجودًا."
+          }
+        },
+        {
+          "type": "lab",
+          "id": "lab",
+          "prompt": {
+            "en": "Read the eight-note tune and the four notes it writes next. Name one pitch it cannot invent.",
+            "ar": "اقرأ لحن الثماني نغمات والنغمات الأربع التي يكتبها بعد ذلك. وسمِّ درجة لا يستطيع اختراعها."
+          },
+          "tool": "melody"
+        },
+        {
+          "type": "order",
+          "id": "q4",
+          "prompt": {
+            "en": "Order an attention step.",
+            "ar": "رتّب خطوة انتباه."
+          },
+          "steps": [
+            {
+              "en": "Score every item",
+              "ar": "قيّم كل عنصر"
+            },
+            {
+              "en": "Turn scores into weights that add to 1",
+              "ar": "حوّل الدرجات إلى أوزان مجموعها ١"
+            },
+            {
+              "en": "Mix the vectors with those weights",
+              "ar": "اخلط المتجهات بهذه الأوزان"
+            }
+          ],
+          "explain": {
+            "en": "The mix is last. The weights have to exist first.",
+            "ar": "الخليط آخر شيء. والأوزان يجب أن توجد أولًا."
+          }
+        },
+        {
+          "type": "reflect",
+          "id": "reflect",
+          "prompt": {
+            "en": "What did the eight notes fail to be?",
+            "ar": "ماذا فشلت النغمات الثماني أن تكون؟"
+          }
+        },
+        {
+          "type": "project",
+          "id": "project",
+          "prompt": {
+            "en": "Project: what was counted",
+            "ar": "مشروع: ماذا عُدّ"
+          },
+          "task": {
+            "en": "From the melody lab, list every pair of notes that occurred and the continuation. State one pair that never occurred.",
+            "ar": "من معمل اللحن، اذكر كل زوج نغمات وقع والتكملة. واذكر زوجًا لم يقع قط."
+          },
+          "deliverable": {
+            "en": "The list and the missing pair.",
+            "ar": "القائمة والزوج الغائب."
+          },
+          "rubric": [
+            {
+              "criterion": {
+                "en": "The missing pair is really absent.",
+                "ar": "الزوج الغائب غائب فعلًا."
+              }
+            },
+            {
+              "criterion": {
+                "en": "You do not call the result a composition.",
+                "ar": "لا تسمّي النتيجة تأليفًا."
+              }
+            }
+          ]
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Attention and the transformer",
+            "ar": "الانتباه والمحوّل"
+          },
+          "note": {
+            "en": "University, 4",
+            "ar": "الجامعة، ٤"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Look back",
+            "ar": "انظر إلى الوراء"
+          },
+          "bullets": {
+            "en": [
+              "Score, then mix",
+              "Add the original back"
+            ],
+            "ar": [
+              "قيّم ثم اخلط",
+              "أعد إضافة الأصل"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "Eight notes",
+            "ar": "ثماني نغمات"
+          },
+          "bullets": {
+            "en": [
+              "Counts, not hearing",
+              "No pitch it never saw"
+            ],
+            "ar": [
+              "عدّ، لا سمع",
+              "لا درجة لم يرها"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "In the lab",
+            "ar": "في المعمل"
+          },
+          "bullets": {
+            "en": [
+              "Read the tune",
+              "Read the next four notes"
+            ],
+            "ar": [
+              "اقرأ اللحن",
+              "اقرأ النغمات الأربع التالية"
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Ask",
+            "ar": "اسأل"
+          },
+          "bullets": {
+            "en": [
+              "What was not counted?"
+            ],
+            "ar": [
+              "ماذا لم يُعد؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Attention replaces which hope?"
+            ],
+            "ar": [
+              "الانتباه يستبدل بأي أمل؟"
+            ]
+          },
+          "narration": {
+            "en": "Attention replaces which hope?",
+            "ar": "الانتباه يستبدل بأي أمل؟"
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Attention and the transformer",
+            "ar": "الشرائح: الانتباه والمحوّل"
+          },
+          "pages": 6,
+          "base": "ai-d1-4/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Plan: Attention and the transformer",
+            "ar": "الخطة: الانتباه والمحوّل"
+          },
+          "pages": 2,
+          "base": "ai-d1-4/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        },
+        {
+          "kind": "video",
+          "title": {
+            "en": "The lesson video (240p, to watch again or share)",
+            "ar": "فيديو الدرس (بدقة 240p، لتشاهده مجددًا أو تشاركه)"
+          },
+          "pages": 0,
+          "formats": [
+            "mp4"
+          ],
+          "path": "/media/ai-d1-4/video-{lang}"
+        }
+      ]
+    },
+    {
+      "id": "ai-d1-check",
+      "title": {
+        "en": "Networks and sequences: unit check",
+        "ar": "الشبكات والمتسلسلات: اختبار الوحدة"
+      },
+      "minutes": 12,
+      "tryTomorrow": {
+        "en": "Redo the one item you missed, on paper, before the next course.",
+        "ar": "أعد البند الذي أخطأت فيه، على الورق، قبل المقرر التالي."
+      },
+      "materials": {
+        "en": [
+          "Paper",
+          "The four lessons"
+        ],
+        "ar": [
+          "ورق",
+          "الدروس الأربعة"
+        ]
+      },
+      "competencies": [
+        "S.TA.C",
+        "S.SD.C"
+      ],
+      "steps": [
+        {
+          "type": "choice",
+          "id": "q1",
+          "prompt": {
+            "en": "A single neuron draws which boundary?",
+            "ar": "أي حد ترسمه خلية واحدة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "One straight cut",
+                "ar": "قطع مستقيم واحد"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Any closed curve",
+                "ar": "أي منحنى مغلق"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Two cuts at once",
+                "ar": "قطعان معًا"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "A neuron is a weighted sum and an activation. One of them cuts the plane once.",
+            "ar": "الخلية مجموع موزون وتنشيط. وواحدة منها تقطع المستوى مرة واحدة."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q2",
+          "prompt": {
+            "en": "Adding a hidden layer can separate shapes one neuron cannot.",
+            "ar": "إضافة طبقة مخفية تستطيع فصل أشكال لا تفصلها خلية واحدة."
+          },
+          "answer": true,
+          "explain": {
+            "en": "The playground shows a ring that one line misses and a small network learns.",
+            "ar": "يُظهر الملعب حلقة يخطئها خط واحد وتتعلّمها شبكة صغيرة."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q3",
+          "prompt": {
+            "en": "Match the part to its job.",
+            "ar": "صل الجزء بعمله."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Weight",
+                "ar": "الوزن"
+              },
+              "right": {
+                "en": "How much an input counts",
+                "ar": "مقدار تأثير المدخل"
+              }
+            },
+            {
+              "left": {
+                "en": "Bias",
+                "ar": "الانحياز"
+              },
+              "right": {
+                "en": "A shift before the activation",
+                "ar": "إزاحة قبل التنشيط"
+              }
+            },
+            {
+              "left": {
+                "en": "Activation",
+                "ar": "التنشيط"
+              },
+              "right": {
+                "en": "A bend, so the stack is not one big line",
+                "ar": "انحناء حتى لا تصير الكومة خطًا واحدًا"
+              }
+            }
+          ],
+          "explain": {
+            "en": "Without an activation, stacked linear layers collapse into one linear layer.",
+            "ar": "من غير تنشيط، تنطوي الطبقات الخطية المتراصة في طبقة خطية واحدة."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q4",
+          "prompt": {
+            "en": "Loss θ², θ = 3, η = 0.1. θ after one step?",
+            "ar": "الخسارة θ²، وθ تساوي ٣، وإيتا ٠٫١. أين θ بعد خطوة؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "2.4",
+                "ar": "٢٫٤"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "2.7",
+                "ar": "٢٫٧"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "3.6",
+                "ar": "٣٫٦"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The slope is 2θ = 6, so the step is 0.1 × 6 and θ becomes 2.4.",
+            "ar": "الميل ٢θ ويساوي ٦، فالخطوة ٠٫١ × ٦ وتصبح θ ٢٫٤."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q5",
+          "prompt": {
+            "en": "The gradient points at the minimum.",
+            "ar": "يشير التدرّج إلى القاع."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It points uphill, locally. Descent steps against it.",
+            "ar": "يشير إلى أعلى، محليًا. والنزول يخطو عكسه."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q6",
+          "prompt": {
+            "en": "Match the curve to the cause.",
+            "ar": "صل المنحنى بسببه."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Loss grows every step",
+                "ar": "الخسارة تكبر كل خطوة"
+              },
+              "right": {
+                "en": "Step too big",
+                "ar": "خطوة كبيرة جدًا"
+              }
+            },
+            {
+              "left": {
+                "en": "Loss falls very slowly",
+                "ar": "الخسارة تهبط ببطء شديد"
+              },
+              "right": {
+                "en": "Step too small",
+                "ar": "خطوة صغيرة جدًا"
+              }
+            },
+            {
+              "left": {
+                "en": "Train loss low, new data worse",
+                "ar": "خسارة التدريب منخفضة والبيانات الجديدة أسوأ"
+              },
+              "right": {
+                "en": "Memorising the training set",
+                "ar": "حفظ مجموعة التدريب"
+              }
+            }
+          ],
+          "explain": {
+            "en": "The learning rate and overfitting leave different fingerprints on the curve.",
+            "ar": "معدّل التعلّم والإفراط في الملاءمة يتركان أثرين مختلفين على المنحنى."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q7",
+          "prompt": {
+            "en": "Three empty steps follow a cue. Memory is near 0. What is left at the end?",
+            "ar": "ثلاث خطوات فارغة بعد إشارة. الذاكرة قرب الصفر. ماذا يبقى في النهاية؟"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "Almost none of the cue",
+                "ar": "لا شيء تقريبًا من الإشارة"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "The whole cue",
+                "ar": "الإشارة كلها"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "A new cue the net invented",
+                "ar": "إشارة جديدة اخترعتها الشبكة"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "Each step keeps only a little of the hidden state, so the cue fades.",
+            "ar": "كل خطوة تبقي قليلًا من الحالة المخفية، فتخبو الإشارة."
+          }
+        },
+        {
+          "type": "truefalse",
+          "id": "q8",
+          "prompt": {
+            "en": "A recurrent net reads the whole sequence in one look.",
+            "ar": "تقرأ الشبكة التكرارية المتسلسلة كلها بنظرة واحدة."
+          },
+          "answer": false,
+          "explain": {
+            "en": "It reads one symbol at a time and hopes the hidden state kept the rest.",
+            "ar": "تقرأ رمزًا واحدًا في كل مرة وتأمل أن الحالة المخفية احتفظت بالباقي."
+          }
+        },
+        {
+          "type": "match",
+          "id": "q9",
+          "prompt": {
+            "en": "Match the word to the meaning.",
+            "ar": "صل الكلمة بمعناها."
+          },
+          "pairs": [
+            {
+              "left": {
+                "en": "Hidden state",
+                "ar": "الحالة المخفية"
+              },
+              "right": {
+                "en": "What the net carries forward",
+                "ar": "ما تحمله الشبكة إلى الأمام"
+              }
+            },
+            {
+              "left": {
+                "en": "Cue",
+                "ar": "الإشارة"
+              },
+              "right": {
+                "en": "The symbol that must still matter at the end",
+                "ar": "الرمز الذي يجب أن يظل مهمًا في النهاية"
+              }
+            },
+            {
+              "left": {
+                "en": "Fading",
+                "ar": "الخبو"
+              },
+              "right": {
+                "en": "A small memory times the state, again and again",
+                "ar": "ذاكرة صغيرة تضرب الحالة مرة بعد مرة"
+              }
+            }
+          ],
+          "explain": {
+            "en": "The lab’s end number is the cue after it has been multiplied by the memory at every empty step.",
+            "ar": "رقم النهاية في المعمل هو الإشارة بعد ضربها في الذاكرة عند كل خطوة فارغة."
+          }
+        },
+        {
+          "type": "choice",
+          "id": "q10",
+          "prompt": {
+            "en": "Attention builds a new vector by…",
+            "ar": "يبني الانتباه متجهًا جديدًا بأن…"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": {
+                "en": "A weighted sum of the other vectors",
+                "ar": "مجموع موزون للمتجهات الأخرى"
+              }
+            },
+            {
+              "id": "b",
+              "text": {
+                "en": "Copying only the first symbol",
+                "ar": "نسخ الرمز الأول فقط"
+              }
+            },
+            {
+              "id": "c",
+              "text": {
+                "en": "Forgetting every weight",
+                "ar": "نسيان كل وزن"
+              }
+            }
+          ],
+          "answer": "a",
+          "explain": {
+            "en": "The scores become weights that add to 1, and the new vector is their mix.",
+            "ar": "تصير الدرجات أوزانًا مجموعها ١، والمتجه الجديد خليطها."
+          }
+        }
+      ],
+      "slides": [
+        {
+          "layout": "title",
+          "title": {
+            "en": "Networks and sequences",
+            "ar": "الشبكات والمتسلسلات"
+          },
+          "note": {
+            "en": "University",
+            "ar": "الجامعة"
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "The check",
+            "ar": "الاختبار"
+          },
+          "bullets": {
+            "en": [
+              "Four lessons",
+              "One sitting"
+            ],
+            "ar": [
+              "أربعة دروس",
+              "جلسة واحدة"
+            ]
+          }
+        },
+        {
+          "layout": "bullets",
+          "title": {
+            "en": "How to sit it",
+            "ar": "كيف تؤديه"
+          },
+          "bullets": {
+            "en": [
+              "No notes",
+              "Explain the why"
+            ],
+            "ar": [
+              "بلا ملاحظات",
+              "اشرح السبب"
+            ]
+          }
+        },
+        {
+          "layout": "activity",
+          "title": {
+            "en": "Work it",
+            "ar": "اعمله"
+          },
+          "bullets": {
+            "en": [
+              "Answer all ten",
+              "Then read each explain"
+            ],
+            "ar": [
+              "أجب عن العشرة",
+              "ثم اقرأ كل تفسير"
+            ]
+          }
+        },
+        {
+          "layout": "questions",
+          "title": {
+            "en": "Look back",
+            "ar": "راجع"
+          },
+          "bullets": {
+            "en": [
+              "Which lesson was the miss?"
+            ],
+            "ar": [
+              "أي درس كان الخطأ؟"
+            ]
+          }
+        },
+        {
+          "layout": "exit",
+          "title": {
+            "en": "Exit ticket",
+            "ar": "بطاقة الخروج"
+          },
+          "bullets": {
+            "en": [
+              "Name the idea you will redo."
+            ],
+            "ar": [
+              "سمِّ الفكرة التي ستعيدها."
+            ]
+          },
+          "narration": {
+            "en": "Name the idea you will redo.",
+            "ar": "سمِّ الفكرة التي ستعيدها."
+          }
+        }
+      ],
+      "kit": [
+        {
+          "kind": "slides",
+          "title": {
+            "en": "Slides: Networks and sequences",
+            "ar": "الشرائح: الشبكات والمتسلسلات"
+          },
+          "pages": 6,
+          "base": "ai-d1-check/slides",
+          "formats": [
+            "pdf",
+            "pptx"
+          ]
+        },
+        {
+          "kind": "lesson-plan",
+          "title": {
+            "en": "Plan: Networks and sequences",
+            "ar": "الخطة: الشبكات والمتسلسلات"
+          },
+          "pages": 2,
+          "base": "ai-d1-check/lesson-plan",
+          "formats": [
+            "pdf"
+          ]
+        }
+      ]
+    }
+  ]
+}
