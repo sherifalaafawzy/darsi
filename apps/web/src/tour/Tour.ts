@@ -3,7 +3,7 @@
  * starts. The steps are built from what is on screen when it starts, so the same tour fits the nav rail (from 900 px),
  * the bottom nav (phones and tablets), learners and staff, and a step whose thing isn't there is left out.
  */
-import { driver, type DriveStep, type Side } from "driver.js";
+import { driver, type Driver, type DriveStep, type Side } from "driver.js";
 import "driver.js/dist/driver.css";
 import "../styles/tour.css";
 import "./strings";
@@ -82,6 +82,10 @@ export function stops(staff = false): Stop[] {
 const physical = (w: Where | undefined, dir: "ltr" | "rtl"): Side | undefined =>
   w === "start" ? (dir === "rtl" ? "right" : "left") : w === "end" ? (dir === "rtl" ? "left" : "right") : w;
 
+let open: Driver | null = null;
+/** Closes the tour if it is open (the screen it was showing has gone: another page, or onboarding). */
+export const stopTour = () => open?.destroy();
+
 /** Runs the tour; resolves when it ends (finished, skipped or closed). */
 export function runTour({ t, dir, staff }: TourOptions): Promise<void> {
   const list = stops(staff);
@@ -124,7 +128,7 @@ export function runTour({ t, dir, staff }: TourOptions): Promise<void> {
         // Keyboard and screen-reader users land on the next button, not somewhere behind the overlay.
         requestAnimationFrame(() => p.nextButton.focus({ preventScroll: true }));
       },
-      onDestroyed: () => { if (keys) window.removeEventListener("keyup", keys); resolve(); },
+      onDestroyed: () => { open = null; if (keys) window.removeEventListener("keyup", keys); resolve(); },
     });
     const keys = dir === "rtl" ? (e: KeyboardEvent) => {
       if (e.key === "Escape") d.destroy();
@@ -132,6 +136,7 @@ export function runTour({ t, dir, staff }: TourOptions): Promise<void> {
       else if (e.key === "ArrowRight" && d.hasPreviousStep()) d.movePrevious();
     } : null;
     if (keys) window.addEventListener("keyup", keys);
+    open = d;
     d.drive();
   });
 }

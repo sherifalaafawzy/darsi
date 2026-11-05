@@ -516,7 +516,7 @@ Anyone can report a problem from any screen, guests included: a round button wit
 A guided look around the app with [driver.js](https://driverjs.com) 1.10.2: the real screen dimmed, one thing lit at a time, with a popover that says what it is for. It is in English and Arabic (right to left), and fits the nav rail (from 900 px), tablets and phones.
 
 **When it starts:**
-- By itself once per account on this device: the first time a signed-in person reaches a screen with the app's navigation. After sign-up that is after onboarding, on Home; staff land on their dashboard. It never starts by itself for guests, on a lesson, on the account screens or on "choose a new password", or while a sheet or the track menu is open. `state.toured` (the local store, so each account on each device) records it when the tour starts.
+- By itself once per account on this device: the first time a signed-in person reaches the learning screens with onboarding done (tracks chosen), on Home; org and platform admins, who skip onboarding, on their dashboard. Just before it opens it checks again that the app's layout is on screen, no onboarding step is, the page hasn't changed and there is navigation to point at, so it never lands on "Who are you?" when the layout showed for a moment first. It never starts by itself for guests, on a lesson, on the account screens or on "choose a new password", or while a sheet or the track menu is open. `state.toured` (the local store, so each account on each device) records it when the tour starts.
 - From Me, "Take the tour" (`openTour()`), for anyone, guests included: it goes to Learn first (the staff dashboard if onboarding isn't done), so every stop can be shown.
 
 **On the phone:**

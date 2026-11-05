@@ -1,7 +1,7 @@
 // The tour: which stops it makes for what is on screen (rail or bottom nav, learner or staff), right-to-left sides and
 // numerals, and when it starts by itself (once per signed-in account, never for guests) or from Me.
-import { act, render, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { act, fireEvent, render, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { I18nProvider, useI18n } from "../src/i18n";
 
 const m = vi.hoisted(() => ({
@@ -33,7 +33,7 @@ beforeAll(() => {
 });
 beforeEach(() => {
   document.body.innerHTML = "";
-  m.configs = []; m.user = null; m.role = "teacher"; m.state = { onboarded: true, toured: undefined }; m.dispatch.mockReset();
+  m.configs = []; m.moves = []; m.user = null; m.role = "teacher"; m.state = { onboarded: true, toured: undefined }; m.dispatch.mockReset();
 });
 
 const links = (paths: string[], cls = "") => paths.map((p) => `<a class="${cls}" href="${p}">x</a>`).join("");
@@ -102,7 +102,7 @@ describe("the tour", () => {
   });
 });
 
-function Where() { const { pathname } = useLocation(); return <p data-testid="at">{pathname}</p>; }
+function Where() { const { pathname } = useLocation(); const nav = useNavigate(); return <><p data-testid="at">{pathname}</p><button type="button" onClick={() => nav("/labs")}>go to labs</button></>; }
 const app = (path = "/learn") => render(
   <I18nProvider lang="en"><MemoryRouter initialEntries={[path]}><Routes><Route path="*" element={<><Where /><AppTour home="/admin" /></>} /></Routes></MemoryRouter></I18nProvider>,
 );
@@ -130,6 +130,44 @@ describe("when it starts", () => {
     await quiet("/lesson/ai-1-1/ai-1-1-1");
     expect(m.configs).toHaveLength(0);
     expect(m.dispatch).not.toHaveBeenCalled();
+  });
+
+  it("not by itself before onboarding is done, even where the app's layout shows (Me), nor over an onboarding step", async () => {
+    const quiet = async (path = "/learn") => { const r = app(path); await new Promise((res) => setTimeout(res, 1000)); r.unmount(); };
+    m.user = { uid: "u1" }; m.state = { onboarded: false, toured: undefined };
+    shell({ rail: false });
+    await quiet("/me"); // "Who are you?" not answered yet
+    m.state = { onboarded: true, toured: undefined };
+    shell({ rail: false });
+    document.body.insertAdjacentHTML("beforeend", '<section class="dr-onb">Where do you teach?</section>');
+    await quiet();
+    expect(m.configs).toHaveLength(0);
+    expect(m.dispatch).not.toHaveBeenCalled();
+  });
+
+  it("not by itself with nothing to point at (no navigation on screen)", async () => {
+    m.user = { uid: "u1" };
+    document.body.innerHTML = '<div class="app-shell"><main></main></div>';
+    const r = app("/me");
+    await new Promise((res) => setTimeout(res, 1200));
+    r.unmount();
+    expect(m.configs).toHaveLength(0);
+  });
+
+  it("closes if its page goes while it is open", async () => {
+    m.user = { uid: "u1" };
+    shell({ rail: false });
+    const r = app();
+    await waitFor(() => expect(m.configs).toHaveLength(1), { timeout: 4000 });
+    fireEvent.click(r.getByRole("button", { name: "go to labs" }));
+    await waitFor(() => expect(m.moves).toContain("end"));
+  });
+
+  it("by itself for admins, who skip onboarding", async () => {
+    m.user = { uid: "boss" }; m.role = "superadmin"; m.state = { onboarded: false, toured: undefined };
+    shell({ rail: true, home: false, staff: ["/super"] });
+    app("/super");
+    await waitFor(() => expect(m.configs).toHaveLength(1), { timeout: 4000 });
   });
 
   it("from Me, for anyone: it goes to Learn first", async () => {
