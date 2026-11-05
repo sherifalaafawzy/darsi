@@ -4,9 +4,9 @@ import { Button, ChoiceCard, LanguagePicker, Mark, OnboardingStep, PlacementResu
 import { useI18n, useLanguages } from "../i18n";
 import { useStore, type AppState } from "../state/store";
 import { loadPlacement, useAsync } from "../content/load";
-import { STAGES, teachStage, type Audience, type Placement, type Stage, type Track } from "../content/types";
+import { teachStage, type Audience, type Placement, type Stage, type Track } from "../content/types";
 import { useTracks } from "../content/settings";
-import { useMine } from "../content/mine";
+import { useMine, useStagesOffered } from "../content/mine";
 import { track } from "../analytics/track";
 import { grade, shuffled, type Answer } from "../lesson/engine";
 
@@ -26,6 +26,10 @@ export function Onboarding() {
   const isStudent = fixed ? mine.audience === "students" : state.audience === "students";
   const steps: Phase[] = [...(fixed ? [] : ["where" as const]), ...(isStudent ? ["stage" as const] : ["teach" as const]), "tracks", "time", "offer"];
   const stepOf = (p: Phase) => steps.indexOf(p) + 1;
+  // Only stages that have courses (a stage whose courses are all unpublished disappears).
+  const teachStages = useStagesOffered("teachers"), studyStages = useStagesOffered("students");
+  const teachNow = teachStages.find((st) => st === teachStage(state.teach));
+  const studyNow = studyStages.find((st) => st === state.stage);
   const [levels, setLevels] = useState<Partial<Record<Track, number>>>({});
   const set = (patch: Partial<AppState>) => dispatch({ type: "set", patch });
   const finish = (lv: Partial<Record<Track, number>>) => {
@@ -55,18 +59,18 @@ export function Onboarding() {
   );
   if (phase === "teach") return (
     <main className="screen narrow">
-      <OnboardingStep step={stepOf("teach")} total={steps.length} title={t("onb.teach")} body={t("onb.teachBody")} primary={cont("tracks", !teachStage(state.teach))}>
+      <OnboardingStep step={stepOf("teach")} total={steps.length} title={t("onb.teach")} body={t("onb.teachBody")} primary={cont("tracks", !teachNow)}>
         <div role="radiogroup" aria-label={t("onb.teach")}>
-          {STAGES.map((st) => <ChoiceCard key={st} icon={STAGE_ICON[st]} title={t(`stage.${st}`)} description={t(`stage.${st}D`)} selected={teachStage(state.teach) === st} onClick={() => set({ teach: st, audience: "teachers" })} />)}
+          {teachStages.map((st) => <ChoiceCard key={st} icon={STAGE_ICON[st]} title={t(`stage.${st}`)} description={t(`stage.${st}D`)} selected={teachNow === st} onClick={() => set({ teach: st, audience: "teachers" })} />)}
         </div>
       </OnboardingStep>
     </main>
   );
   if (phase === "stage") return (
     <main className="screen narrow">
-      <OnboardingStep step={stepOf("stage")} total={steps.length} title={t("onb.stage")} body={t("onb.stageBody")} primary={cont("tracks", !state.stage)}>
+      <OnboardingStep step={stepOf("stage")} total={steps.length} title={t("onb.stage")} body={t("onb.stageBody")} primary={cont("tracks", !studyNow)}>
         <div role="radiogroup" aria-label={t("onb.stage")}>
-          {STAGES.map((st) => <ChoiceCard key={st} icon={STAGE_ICON[st]} title={t(`stage.${st}`)} description={t(`stage.${st}D`)} selected={state.stage === st} onClick={() => set({ stage: st })} />)}
+          {studyStages.map((st) => <ChoiceCard key={st} icon={STAGE_ICON[st]} title={t(`stage.${st}`)} description={t(`stage.${st}D`)} selected={studyNow === st} onClick={() => set({ stage: st })} />)}
         </div>
       </OnboardingStep>
     </main>

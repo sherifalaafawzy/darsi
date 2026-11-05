@@ -77,6 +77,15 @@ export function ContentList() {
       setMsg({ ok: true, text: t("cms.duplicated", { title: titleOf(copy) }) });
     } catch (e) { setMsg({ ok: false, text: (e as Error).message }); } finally { setBusy(""); }
   };
+  /** Takes a course away from learners (it stays here as a draft, and can be published again). */
+  const unpublish = async (u: UnitMeta) => {
+    setBusy(u.id); setMsg(null);
+    try {
+      await cmsApi.unpublishUnit({ unitId: u.id });
+      setList((l) => l?.map((x) => (x.id === u.id ? { ...x, published: null } : x))); setAsk("");
+      setMsg({ ok: true, text: t("cms.unpublishedTitle", { title: titleOf(u) }) });
+    } catch (e) { setMsg({ ok: false, text: (e as Error).message }); } finally { setBusy(""); }
+  };
   const remove = async (u: UnitMeta) => {
     setBusy(u.id); setMsg(null);
     try {
@@ -143,9 +152,17 @@ export function ContentList() {
                       )}
                       <div className="ed-toolbar">
                         <Button size="sm" variant="secondary" icon="edit" onClick={() => nav(`${base}/${u.id}`)}>{t("cms.open")}</Button>
-                        <Button size="sm" variant="ghost" icon="file" loading={busy === u.id && ask !== u.id} disabled={!!busy} onClick={() => { void duplicate(u); }}>{t("cms.duplicate")}</Button>
+                        <Button size="sm" variant="ghost" icon="file" loading={busy === u.id && !ask.endsWith(u.id)} disabled={!!busy} onClick={() => { void duplicate(u); }}>{t("cms.duplicate")}</Button>
+                        {u.published && <Button size="sm" variant="ghost" icon="offline" disabled={!!busy} aria-expanded={ask === `off:${u.id}`} onClick={() => setAsk(ask === `off:${u.id}` ? "" : `off:${u.id}`)}>{t("cms.unpublish")}</Button>}
                         <Button size="sm" variant="ghost" icon="close" disabled={!!busy} aria-expanded={ask === u.id} onClick={() => setAsk(ask === u.id ? "" : u.id)}>{t("cms.delete")}</Button>
                       </div>
+                      {ask === `off:${u.id}` && (
+                        <div className="notice ed-confirm" role="alert">
+                          <span>{t("cms.unpublishConfirm")}</span>
+                          <Button size="sm" autoFocus loading={busy === u.id} onClick={() => { void unpublish(u); }}>{t("cms.unpublish")}</Button>
+                          <Button size="sm" variant="ghost" onClick={() => setAsk("")}>{t("common.cancel")}</Button>
+                        </div>
+                      )}
                       {ask === u.id && (
                         <div className="notice ed-confirm" role="alert">
                           <span>{t("cms.deleteConfirm", { title: titleOf(u) })}</span>

@@ -8,10 +8,10 @@ import { NotificationsPanel } from "../notify/NotificationsPanel";
 import { isolate, useI18n, useLanguages } from "../i18n";
 import { useStore } from "../state/store";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
-import { STAGES, teachStage, type Unit } from "../content/types";
+import { teachStage, type Unit } from "../content/types";
 import { useSuperOn, useTracks } from "../content/settings";
 import { certCode } from "../content/cert";
-import { useMine } from "../content/mine";
+import { useMine, useStagesOffered } from "../content/mine";
 import { share } from "../platform";
 import { useInstall } from "../pwa";
 import { openTour } from "../tour/Start";
@@ -32,6 +32,8 @@ export function Me() {
   const nav = useNavigate();
   // The learner's own tracks, or every track on offer if they haven't chosen.
   const me = useMine();
+  // Only stages that have courses (a stage whose courses are all unpublished disappears).
+  const teachStages = useStagesOffered("teachers"), studyStages = useStagesOffered("students");
   const mine = me.tracks;
   return (
     <>
@@ -59,12 +61,12 @@ export function Me() {
         </section>}
         {me.audience === "teachers" && <section className="stack" aria-labelledby="teach-h"><h2 id="teach-h" className="section-title">{t("me.teach")}</h2>
           <div role="radiogroup" aria-labelledby="teach-h">
-            {STAGES.map((st) => <ChoiceCard key={st} title={t(`stage.${st}`)} description={t(`stage.${st}D`)} selected={teachStage(state.teach) === st} onClick={() => set({ teach: st })} />)}
+            {teachStages.map((st) => <ChoiceCard key={st} title={t(`stage.${st}`)} description={t(`stage.${st}D`)} selected={teachStage(state.teach) === st} onClick={() => set({ teach: st })} />)}
           </div>
         </section>}
         {me.audience === "students" && <section className="stack" aria-labelledby="stage-h"><h2 id="stage-h" className="section-title">{t("me.stage")}</h2>
           <div role="radiogroup" aria-labelledby="stage-h">
-            {STAGES.map((st) => <ChoiceCard key={st} title={t(`stage.${st}`)} description={t(`stage.${st}D`)} selected={state.stage === st} onClick={() => set({ stage: st })} />)}
+            {studyStages.map((st) => <ChoiceCard key={st} title={t(`stage.${st}`)} description={t(`stage.${st}D`)} selected={state.stage === st} onClick={() => set({ stage: st })} />)}
           </div>
         </section>}
         <PlacementResult title={t("me.levels")} levels={mine.map(({ id: tr, levels: of }) => ({ track: tr, trackLabel: tracks.name(tr), level: me.levelOf(tr), of, label: me.levelName(tr, me.levelOf(tr)) }))} />

@@ -17,7 +17,7 @@ vi.mock("../src/content/load", async (orig) => ({
     lessons: [{ id: `${id}-1`, title: { en: "First lesson" }, minutes: 5, steps: [], tryTomorrow: { en: "T" }, slides: [], kit: [] }] }),
 }));
 
-const { audienceFor, activeTrack, myTracks, useMine } = await import("../src/content/mine");
+const { audienceFor, activeTrack, myTracks, useMine, stagesWithCourses } = await import("../src/content/mine");
 const { teachSync } = await import("../src/content/types");
 const ar = (await import("../src/i18n/ar.json")).default;
 const { BUILTIN_TRACKS } = await import("../src/content/tracks");
@@ -32,6 +32,8 @@ const { validateUnit } = await import("../src/content/validate");
 
 const entry = (id: string, extra: Partial<CatalogEntry> = {}): CatalogEntry => ({ id, track: id.split("-")[0], level: 1, title: { en: `Course ${id}` }, summary: { en: "S" },
   lessons: 1, sizeMB: 1, available: true, src: `content/units/${id}/v1.json`, version: 1, owner: "public", ...extra });
+/** Courses at every level, for both audiences, so every school stage is offered. */
+const everyStage = () => [1, 2, 3, 4].flatMap((l) => [entry(`ai-t${l}`, { level: l }), entry(`ai-s${l}`, { audience: "students", level: l })]);
 const seed = (patch: object) => { h.stored = { ...initialState, onboarded: true, lang: "en", ...patch }; };
 function Probe({ on }: { on: (s: ReturnType<typeof useStore>["state"], m: ReturnType<typeof useMine>) => void }) { on(useStore().state, useMine()); return null; }
 const show = (ui: ReactNode) => render(<I18nProvider lang="en"><SettingsProvider lang="en"><StoreProvider><MemoryRouter>{ui}</MemoryRouter></StoreProvider></SettingsProvider></I18nProvider>);
@@ -239,6 +241,7 @@ describe("where a teacher teaches", () => {
   });
 
   it("lets a teacher change where they teach in Me", async () => {
+    h.units = [...h.units, ...everyStage()];
     seed({ tracks: ["ai"], audience: "teachers", teach: "primary" });
     let state = initialState;
     show(<><Me /><Probe on={(s) => { state = s; }} /></>);
@@ -253,6 +256,7 @@ describe("where a teacher teaches", () => {
 
 describe("Onboarding", () => {
   it("asks teacher or student, and a student goes on to choose tracks", async () => {
+    h.units = [...h.units, ...everyStage()];
     h.stored = { ...initialState, lang: "en" };
     let state = initialState;
     show(<><Onboarding /><Probe on={(s) => { state = s; }} /></>);
@@ -271,6 +275,7 @@ describe("Onboarding", () => {
   });
 
   it("asks a teacher where they teach, and will not continue until they choose", async () => {
+    h.units = [...h.units, ...everyStage()];
     h.stored = { ...initialState, lang: "en" };
     let state = initialState;
     show(<><Onboarding /><Probe on={(s) => { state = s; }} /></>);
@@ -388,5 +393,33 @@ describe("starting at your level", () => {
     seed({ tracks: ["ai"], audience: "teachers", levels: { ai: 2 }, progress: { "ai-two-1": { done: true, accuracy: 1, xp: 30, seconds: 60, completedAt: "2026-10-28T00:00:00Z" } } });
     show(<><Home /><Probe on={(s) => { state = s; }} /></>);
     await waitFor(() => expect(state.levels.ai).toBe(3));
+  });
+});
+
+describe("stages with courses", () => {
+  it("offers a stage only when a published course is written for it", () => {
+    const units = [entry("ai-s1", { audience: "students", level: 1 }), entry("ai-s4", { audience: "students", level: 4 }), entry("ai-2-1", { level: 2 }),
+      entry("ai-u1", { level: 4, teach: "university" }), entry("ai-s2", { audience: "students", level: 2, available: false })];
+    expect(stagesWithCourses(units, "students")).toEqual(["primary", "university"]);
+    expect(stagesWithCourses(units, "teachers")).toEqual(["lower", "university"]); // the university courses count for university
+    expect(stagesWithCourses(units, "students", new Set(["cyber"]))).toEqual(["primary", "lower", "upper", "university"]); // no course in a visible track: every stage
+    expect(stagesWithCourses(undefined, "teachers")).toHaveLength(4); // no catalog yet (or offline)
+  });
+
+  it("onboarding and Me show only stages that have courses (only university courses published)", async () => {
+    h.units = [entry("ai-s4", { audience: "students", level: 4 }), entry("ai-u1", { level: 4, teach: "university" })];
+    h.stored = { ...initialState, lang: "en" };
+    const onb = show(<Onboarding />);
+    fireEvent.click(await screen.findByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("radio", { name: /A teacher/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    await waitFor(() => expect(screen.getAllByRole("radio").map((r) => r.textContent)).toEqual([expect.stringMatching(/^University or college/)]));
+    onb.unmount();
+    seed({ audience: "students", stage: "primary" }); // chose primary before its courses were unpublished
+    show(<Me />);
+    const group = await screen.findByRole("radiogroup", { name: "Where I study" });
+    await waitFor(() => expect(group.querySelectorAll("[role=radio]")).toHaveLength(1));
+    expect(group.textContent).toMatch(/University or college/);
+    h.units = [];
   });
 });

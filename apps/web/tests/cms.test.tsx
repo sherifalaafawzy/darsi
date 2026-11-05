@@ -112,6 +112,21 @@ describe("ContentList", () => {
     await waitFor(() => expect(screen.queryByText("Sensors")).toBeNull());
   });
 
+  it("unpublishes a course from the list after asking, and keeps it as a draft", async () => {
+    m.list = three();
+    m.api.unpublishUnit.mockResolvedValue({ ok: true });
+    wrap(<ContentList />, "/super/content", "/super/content");
+    const card = (await screen.findByText("Sensors")).closest("li") as HTMLElement;
+    fireEvent.click(within(card).getByRole("button", { name: "Unpublish" }));
+    expect(m.api.unpublishUnit).not.toHaveBeenCalled();
+    expect(within(card).getByText(/Take this unit away from learners/)).toBeTruthy();
+    fireEvent.click(within(card).getAllByRole("button", { name: "Unpublish" }).at(-1)!);
+    await waitFor(() => expect(m.api.unpublishUnit).toHaveBeenCalledWith({ unitId: "u87654321" }));
+    expect(await screen.findByText(/Unpublished Sensors/)).toBeTruthy();
+    await waitFor(() => expect(within(card).queryByRole("button", { name: "Unpublish" })).toBeNull()); // a draft now
+    expect(screen.getByText("Sensors")).toBeTruthy(); // still listed
+  });
+
   it("creates a new unit for the platform with a generated id and one lesson", async () => {
     wrap(<ContentList />, "/super/content", "/super/content");
     fireEvent.click(await screen.findByRole("button", { name: "New unit" }));

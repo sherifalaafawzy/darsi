@@ -4,11 +4,13 @@
  * Home shows them all at once until they pick one track (`adminTrack`). Shared by Home, the track switcher, My tracks,
  * Kit, Downloads, Me and the nav.
  */
+import { useMemo } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n";
 import type { Role } from "../auth/types";
 import { useStore } from "../state/store";
 import { useTracks } from "./settings";
+import { loadCatalog, useAsync } from "./load";
 import { STAGES, audienceOf, stageLevel, teachStage, type Audience, type CatalogEntry, type Stage, type Track, type TrackDef } from "./types";
 
 /** School accounts are what their school made them; everyone else said so in onboarding (or Me). */
@@ -26,6 +28,25 @@ export function myTracks(chosen: Track[], visible: TrackDef[]): TrackDef[] {
  * (where a student studies, or where a teacher teaches), capped at the track's top level. With no stage yet, Beginner.
  */
 export const startLevel = (stage: Stage | undefined, levels: number) => (stage ? Math.min(stageLevel(stage), levels) : 1);
+
+/**
+ * The school stages to offer in "Where do you study?" / "Where do you teach?": those with a published course for this
+ * audience in a visible track. A stage's courses are the ones at its level (primary school is Beginner … university is
+ * Advanced); for teachers, the university courses count for university too. Without a catalog (still loading,
+ * offline) or with no courses at all, every stage, so onboarding never stalls.
+ */
+export function stagesWithCourses(units: CatalogEntry[] | undefined, audience: Audience, tracks?: Set<string>): Stage[] {
+  if (!units) return STAGES;
+  const live = units.filter((u) => u.available && (!tracks || tracks.has(u.track)) && audienceOf(u) === audience);
+  const offered = STAGES.filter((st) => live.some((u) => (u.teach ? st === "university" : u.level === stageLevel(st))));
+  return offered.length ? offered : STAGES;
+}
+/** The stages to offer this audience now (one catalog read, shared with Home). */
+export function useStagesOffered(audience: Audience): Stage[] {
+  const { data } = useAsync(loadCatalog, []);
+  const { visible } = useTracks();
+  return useMemo(() => stagesWithCourses(data?.units, audience, new Set(visible.map((tr) => tr.id))), [data, audience, visible]);
+}
 
 /** The track Home shows: the one picked last, while it is still one of the learner's; else their first. */
 export const activeTrack = (current: Track | undefined, mine: TrackDef[]): Track | undefined => (mine.find((t) => t.id === current) ?? mine[0])?.id;
