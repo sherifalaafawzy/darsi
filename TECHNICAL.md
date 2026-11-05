@@ -511,6 +511,23 @@ Anyone can report a problem from any screen, guests included: a round button wit
 
 **For platform admins** (`/super/bugs`, "Problem reports" in the nav; `admin/Bugs.tsx` in the SuperAdmin chunk): the new reports or all of them, newest first, 30 at a time, read once. Each shows the words, who (a link to their person page) or "A guest", the page, the browser and screen at a glance, the connection, the last errors, the picture (downloaded only when opened), all the details, and Mark fixed, Close it, Reopen and "Copy the details" (the whole report as JSON, for a ticket or a coding assistant).
 
+## The tour
+
+A guided look around the app with [driver.js](https://driverjs.com) 1.10.2: the real screen dimmed, one thing lit at a time, with a popover that says what it is for. It is in English and Arabic (right to left), and fits the nav rail (from 900 px), tablets and phones.
+
+**When it starts:**
+- By itself once per account on this device: the first time a signed-in person reaches a screen with the app's navigation. After sign-up that is after onboarding, on Home; staff land on their dashboard. It never starts by itself for guests, on a lesson, on the account screens or on "choose a new password", or while a sheet or the track menu is open. `state.toured` (the local store, so each account on each device) records it when the tour starts.
+- From Me, "Take the tour" (`openTour()`), for anyone, guests included: it goes to Learn first (the staff dashboard if onboarding isn't done), so every stop can be shown.
+
+**On the phone:**
+- `tour/Start.tsx` (startup, a few hundred bytes): `AppTour` in App, beside `ReportBug`. It imports no Firebase and nothing lazy.
+- The tour itself is the `Tour` chunk (`tour/Tour.ts`, ~11 KB gzipped with driver.js and its stylesheet; not precached), loaded only when a tour starts. Offline before it is cached, the tour simply waits for the next time (`toured` isn't set).
+- Its strings are `tour/strings/{en,ar}.json`, registered with `addMessages` when the chunk loads; stop titles reuse the nav's own labels. Other languages show English.
+- `stops()` builds the list from what is on screen when the tour starts, so missing things are left out: welcome; the track switcher, this week and the next lesson (Home only); Learn, Downloads, Labs, Kit (not for students) and Me in the rail or the bottom nav, whichever is shown (`shown()` measures, since both are in the page); on the rail, Organization and the staff pages (My students, Admin, Platform, Lesson editor); Report a problem (the rail's item, or the floating button); done. On phones staff hear that their pages are in Me (`tour.meStaffD`).
+- Steps give sides as start/end, turned into driver.js's physical sides by the page's direction. The progress line uses the page's numerals ("٣ من ١٢"). Right to left, ← is Next and → is Back (driver.js's own keys are left to right, so they are off there). Highlighted things can't be tapped during the tour (`disableActiveInteraction`), so a tab can't leave the page mid-tour. Reduced motion turns off its fade and smooth scrolling.
+- `styles/tour.css` (with the chunk, after driver.js's own sheet): the popover in Darsi's look (tokens, a hard shadow, 48 px buttons, logical sides). driver.js places the arrow by physical side, so the arrow alone is `direction: ltr`.
+- Tests: `tests/tour.test.tsx` (the stops on a phone, a wide screen and for staff, Arabic sides, numerals and keys, and when it starts).
+
 ## Darsi Super
 
 The paid tier: a live tutor for the courses (docs/SUPER.md has the plan and phases). Phase 0 (the groundwork), phase 1 (payments) and phase 2 (the tutor) are built. Server code is `functions/src/billing.ts`, `payments.ts`, `tutor.ts` and `relay.ts`, with the pure parts, tested, in `billingCore.ts`, `paymentsCore.ts` and `tutorCore.ts`.

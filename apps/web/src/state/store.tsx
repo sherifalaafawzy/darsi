@@ -35,6 +35,8 @@ export interface AppState {
   /** ISO week ("2026-W43") → lessons completed that week. Streaks count teaching weeks, not days. */
   weeks: Record<string, number>;
   installDismissedAt?: number;
+  /** When the tour (tour/Start.tsx) last started on this device: it starts by itself only once per account. */
+  toured?: number;
   /** Labs the learner has finished on this device (the tick on a Labs card). */
   labsDone?: Record<string, true>;
   /** Chose "Continue without an account" (only meaningful in the guest store). */

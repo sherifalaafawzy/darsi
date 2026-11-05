@@ -211,7 +211,7 @@ export default defineConfig({
         // Lesson content is tiny and precached; kits are cached when a unit is downloaded. Staff-only and first-visit
         // chunks (and exceljs, ~930 KB) are not precached, so a learner's install stays small; "darsi-chunks" caches them on first use.
         // firebase-* covers firebase-extra (Functions, Storage, Messaging) too.
-        globIgnores: ["kits/**", "lib/**", "push-sw.js", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin,firebase,Cms,competencies,Analytics,OrgReport,OrgsAdmin,Super,Plans,Upgrade,Tutor,Report}-*.{js,css}",
+        globIgnores: ["kits/**", "lib/**", "push-sw.js", "**/exceljs*.js", "**/{Landing,OrgScreen,AdminHome,PersonDetail,AddPeople,importer,Teach,SuperAdmin,admin,firebase,Cms,competencies,Analytics,OrgReport,OrgsAdmin,Super,Plans,Upgrade,Tutor,Report,Tour}-*.{js,css}",
           // Each lab app (~5–20 KB) is cached when first opened, or all at once with "Save all labs for offline".
           "**/lab-*.js",
           // The code steps and their sandbox load with the first lesson that has code (or when such a unit is downloaded).

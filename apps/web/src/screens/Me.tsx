@@ -14,6 +14,7 @@ import { certCode } from "../content/cert";
 import { useMine } from "../content/mine";
 import { share } from "../platform";
 import { useInstall } from "../pwa";
+import { openTour } from "../tour/Start";
 
 export function Me() {
   const { t, L, locale } = useI18n();
@@ -76,6 +77,7 @@ export function Me() {
               action={<Button size="sm" variant="secondary" icon="share" onClick={() => share({ title: `${t("cert.kicker")}: ${L(u.title)}`, text: `${state.name} — ${code}` })}>{t("kit.share")}</Button>} />;
           })}
         </section>
+        <Button block variant="secondary" icon="info" onClick={openTour}>{t("tour.replay")}</Button>
         {install.canInstall && <Button block variant="secondary" icon="install" onClick={install.install}>{t("me.install")}</Button>}
         <Button block variant="ghost" onClick={() => { if (confirm(t("me.reset") + "?")) dispatch({ type: "reset" }); }}>{t("me.reset")}</Button>
         <p className="muted small center">Darsi{t("common.sep")}<span className="dr-other-script" lang="ar">درسي</span>{t("common.sep")}v0.1.0</p>

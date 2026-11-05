@@ -27,6 +27,7 @@ export const OWNERS = {
   admin: { own: ["admin-cols", "code-row", "cov-row", "cov-bar", "req", "req-facts", "brand-row", "brand-preview", "po-found", "po-danger", "bug-report-text", "bug-report-shot", "bug-report-log", "bug-report-more", "bug-report-json"] },
   tutor: { own: ["tu-chat", "tu-me", "tu-tutor", "tu-hint", "tu-src", "tu-link", "tu-state", "tu-panel", "tu-panel-head", "tu-panel-title", "tu-panel-body", "tu-av", "tu-center", "tu-talk", "tu-modes", "tu-wide", "tu-explainer", "tu-explainer-title"], prefix: ["tu-"] },
   "bug-fab": { own: ["bug-fab", "bug-note"] },
+  tour: { own: ["dt-pop"], prefix: ["driver-"] },
   bug: { own: ["bug-sheet", "bug-head", "bug-title", "bug-body", "bug-label", "bug-text", "bug-h3", "bug-shot", "bug-list", "bug-all", "bug-json", "bug-done", "bug-done-title"], prefix: ["is-"] },
   "tutor-fab": { own: ["tutor-fab", "tf-face", "tf-mouth", "tf-eye", "tf-brows", "tf-blink"], prefix: ["tf-"] },
   analytics: { own: ["an-head", "an-chart", "an-bar", "an-axis", "an-grid", "an-ranked", "an-name", "an-meter"], prefix: ["or-"] },

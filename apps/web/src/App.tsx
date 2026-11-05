@@ -26,6 +26,7 @@ import { LabApp, Labs } from "./screens/Labs";
 import { Me } from "./screens/Me";
 import { TutorFab } from "./tutor/Fab";
 import { ReportBug } from "./bugs/Fab";
+import { AppTour } from "./tour/Start";
 
 // Loaded on demand: learners never download or parse the landing page (after their first visit) or any staff screen.
 // vite.config.ts keeps these chunks out of the precache; the service worker caches each one the first time it is used.
@@ -202,6 +203,7 @@ function Routed() {
     </Suspense>
     <LessonTutor />
     <ReportBug />
+    <AppTour home={homeFor(role)} />
     </BrandProvider>
   );
 }
