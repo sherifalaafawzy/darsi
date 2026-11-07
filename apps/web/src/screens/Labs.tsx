@@ -5,6 +5,7 @@ import { useI18n } from "../i18n";
 import { useStore } from "../state/store";
 import { track } from "../analytics/track";
 import { onMeteredConnection } from "../platform";
+import { readPins } from "../platform/offline";
 import { CATEGORIES, categoryOf } from "../labs/categories";
 import { LAB_METAS, LADDER, labMeta, nextLab } from "../labs/catalog";
 import { LabEmbed, saveAllLabs } from "../labs/loader";
@@ -102,30 +103,44 @@ function Ladder() {
   );
 }
 
-/** "Save all labs for offline": the size first (labs-manifest.json, made at build time), then every lab chunk. */
+/**
+ * "Save all labs for offline": the size first (labs-manifest.json, made at build time), then every lab's files, pinned so
+ * they stay on the phone across app updates (platform/offline.ts). With Data saver on mobile data it asks first.
+ */
 function SaveLabs() {
   const { t, num } = useI18n();
   const { state } = useStore();
   const [mb, setMb] = useState<number | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-  const [status, setStatus] = useState<"" | "saved" | "failed">(() => { try { return localStorage.getItem("darsi:labsSaved") === document.querySelector<HTMLScriptElement>("script[type=module][src]")?.src ? "saved" : ""; } catch { return ""; } });
+  const [status, setStatus] = useState<"" | "saved" | "failed">("");
+  const [ask, setAsk] = useState(false);
+  useEffect(() => {
+    let live = true;
+    void readPins().then((pins) => { if (live && pins.includes("labs")) setStatus((s) => s || "saved"); });
+    return () => { live = false; };
+  }, []);
   useEffect(() => { fetch("/labs-manifest.json").then((r) => (r.ok ? r.json() : null)).then((m: { total?: number } | null) => m?.total && setMb(Math.max(0.1, Math.round(m.total / 1e5) / 10))).catch(() => {}); }, []);
-  const blocked = state.dataSaver && onMeteredConnection();
   const save = async () => {
-    setStatus(""); setProgress({ done: 0, total: 1 });
+    setAsk(false); setStatus(""); setProgress({ done: 0, total: 1 });
     try {
       await saveAllLabs((done, total) => setProgress({ done, total }));
       setStatus("saved");
-      try { localStorage.setItem("darsi:labsSaved", document.querySelector<HTMLScriptElement>("script[type=module][src]")?.src ?? "1"); } catch { /* private mode */ }
     } catch { setStatus("failed"); } finally { setProgress(null); }
   };
+  // Checked on the tap: the connection may have changed since the page drew.
+  const onSave = () => { if (state.dataSaver && onMeteredConnection()) setAsk(true); else void save(); };
   return (
     <section className="panel stack lb-save">
       {status === "saved" ? <p className="notice ok" role="status"><Icon name="offline" size={18} /> {t("labs.saved")}</p> : <>
-        {blocked && <p className="notice">{t("dl.dataSaver")}</p>}
-        <Button variant="secondary" icon="install" loading={!!progress} disabled={blocked} onClick={() => { void save(); }}>
+        <Button variant="secondary" icon="install" loading={!!progress} onClick={onSave}>
           {progress ? t("labs.saving", { done: progress.done, total: progress.total }) : mb ? t("labs.saveAllMb", { mb: num(mb) }) : t("labs.saveAll")}
         </Button>
+        {ask && !progress && (
+          <div className="notice stack-sm" role="alert">
+            <p>{t("labs.askMetered")}</p>
+            <div><Button size="sm" variant="secondary" onClick={() => { void save(); }}>{t("labs.anyway")}</Button></div>
+          </div>
+        )}
         {status === "failed" && <p className="notice err" role="alert">{t("labs.saveFailed")}</p>}
       </>}
     </section>
@@ -149,7 +164,8 @@ export function LabApp() {
         <LabEmbed id={id} onDone={() => dispatch({ type: "labDone", id })} />
         {next && (
           <a className={`lb-next ${trackClass(trackStyle(categoryOf(next.category).track))}`} href={`/labs/${next.id}`} onClick={(e) => { e.preventDefault(); nav(`/labs/${next.id}`); }}>
-            <span className="muted small">{t("labs.next")}</span><strong>{L(next.title)}</strong><span className="small">{L(next.summary)}</span>
+            {/* Ink, not muted: on the track colours muted text falls under 4.5:1 (2.0:1 on cyber). */}
+            <span className="small">{t("labs.next")}</span><strong>{L(next.title)}</strong><span className="small">{L(next.summary)}</span>
           </a>
         )}
       </main>

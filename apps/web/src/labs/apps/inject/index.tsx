@@ -6,7 +6,7 @@ import { Segmented } from "../../kit/controls";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
 import { TOOLS } from "../../../tinylm";
-import { ModelGate, RecordedTag, Thinking, Transcript, useTiny, agentTurn, type Event } from "./lab-tiny";
+import { ModelGate, RecordedTag, RunFailed, Thinking, Transcript, useTiny, agentTurn, type Event } from "./lab-tiny";
 import { approvalCheck, asksApproval, type Hooks } from "./lab-agent";
 import { ATTACKS, attackText, DEFENCES, outcome, requestFor, tamper, type Defence, type Outcome, type Place } from "./model";
 import { RECORDED } from "./recorded";
@@ -73,13 +73,14 @@ export default function Inject({ meta, onDone }: LabProps) {
   const [events, setEvents] = useState<Event[] | null>(null);
   const [out, setOut] = useState<Outcome>();
   const [recorded, setRecorded] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const attack = ATTACKS.find((a) => a.id === attackId);
   const toggle = (d: Defence) => setDefs((x) => { const n = new Set(x); n.has(d) ? n.delete(d) : n.add(d); return n; });
 
   async function run(armed: boolean) {
     if (tiny.busy) return;
-    tiny.setBusy(true); setEvents([]); setOut(undefined);
+    tiny.setBusy(true); setEvents([]); setOut(undefined); setFailed(false);
     const req = requestFor(place);
     const reqTool = req.place.includes("via") ? "route" : "library";
     const tools = defs.has("allowlist") ? MINIMAL[place] : TOOLS;
@@ -95,17 +96,18 @@ export default function Inject({ meta, onDone }: LabProps) {
     const hooks: Hooks = { view, gate, stopped: () => stopFlag.current };
     const first = `${lang === "ar" ? req.ar : req.en}`;
     try {
-      const r1 = await agentTurn(tiny.generate, { tools, turns: [{ role: "user", text: first }] }, tiny.world!, hooks);
+      const world = await tiny.prepare();
+      const r1 = await agentTurn(tiny.generate, { tools, turns: [{ role: "user", text: first }] }, world, hooks);
       let all: Event[] = r1.events, conv = r1.conv;
       const smuggled = armed && attack && r1.events.some((e) => e.kind === "answer" && !e.byCode && asksApproval(e.text));
       if (smuggled && !r1.stopped && !stopFlag.current) {
         const yes = tlang === "ar" ? "نعم" : "yes";
-        const r2 = await agentTurn(tiny.generate, { tools, turns: [...conv.turns, { role: "user", text: yes }] }, tiny.world!, hooks);
+        const r2 = await agentTurn(tiny.generate, { tools, turns: [...conv.turns, { role: "user", text: yes }] }, world, hooks);
         all = [...all, { kind: "user", text: yes }, ...r2.events];
       }
       setEvents(all); setOut(outcome(all, instr));
       onDone?.();
-    } catch { setEvents(null); } finally { stopFlag.current = false; tiny.setBusy(false); }
+    } catch { setEvents(null); setFailed(true); } finally { stopFlag.current = false; tiny.setBusy(false); }
   }
 
   const stopFlag = useMemo(() => ({ current: false }), []);
@@ -114,9 +116,9 @@ export default function Inject({ meta, onDone }: LabProps) {
   const body = (
     <div className="stack">
       <div className="stack-sm">
-        <Segmented label={s.place} value={place} options={(["note", "title", "via"] as Place[]).map((p) => [p, s.placeName[p]])} onChange={(p) => { setPlace(p); setEvents(null); }} />
+        <Segmented label={s.place} value={place} options={(["note", "title", "via"] as Place[]).map((p) => [p, s.placeName[p]])} onChange={(p) => { setPlace(p); setEvents(null); setFailed(false); }} />
         <label className="dr-field-label" htmlFor="lb-inj-atk">{s.attack}</label>
-        <select id="lb-inj-atk" className="dr-field-input lb-select" value={attackId} onChange={(e) => { setAttackId(e.target.value); setEvents(null); }}>
+        <select id="lb-inj-atk" className="dr-field-input lb-select" value={attackId} onChange={(e) => { setAttackId(e.target.value); setEvents(null); setFailed(false); }}>
           <option value="none">{s.none}</option>
           {ATTACKS.map((a) => <option key={a.id} value={a.id}>{attackText(a, tlang)} — {s.kind[a.kind]}</option>)}
         </select>
@@ -127,7 +129,7 @@ export default function Inject({ meta, onDone }: LabProps) {
         <span className="dr-field-label">{s.defences}</span>
         <div className="lb-fixes" role="group" aria-label={s.defences}>
           {DEFENCES.map((d) => (
-            <button key={d} type="button" className={defs.has(d) ? "lb-fix is-on" : "lb-fix"} aria-pressed={defs.has(d)} onClick={() => { toggle(d); setEvents(null); }}>
+            <button key={d} type="button" className={defs.has(d) ? "lb-fix is-on" : "lb-fix"} aria-pressed={defs.has(d)} onClick={() => { toggle(d); setEvents(null); setFailed(false); }}>
               <Icon name={defs.has(d) ? "check" : "close"} size={18} />
               <span>{s.def[d]}<span className="lb-fix-rule">{s.defRule[d]}</span></span>
             </button>
@@ -141,6 +143,7 @@ export default function Inject({ meta, onDone }: LabProps) {
           : <Button size="sm" icon="play" disabled={tiny.busy} onClick={() => run(true)}>{events ? s.again : s.run}</Button>}
       </div>
       {tiny.busy && <Thinking onStop={stop} />}
+      {failed && !tiny.busy && <RunFailed onRetry={() => run(attackId !== "none")} onRecorded={() => setRecorded(true)} />}
 
       {events && !!events.length && (
         <div className="stack-sm">
@@ -152,7 +155,7 @@ export default function Inject({ meta, onDone }: LabProps) {
   );
 
   return (
-    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway} onReset={() => { setEvents(null); setDefs(new Set()); setAttackId("trained-parents"); setPlace("note"); }}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway} onReset={() => { setEvents(null); setFailed(false); setDefs(new Set()); setAttackId("trained-parents"); setPlace("note"); }}>
       {recorded
         ? <><RecordedTag /><Transcript events={RECORDED[tlang]} /><p className="lb-verdict is-warn"><span className="lb-out-tag is-sent">{s.tag.sent}</span> {s.out.sent}</p></>
         : <ModelGate tiny={tiny} onRecorded={() => setRecorded(true)}>{body}</ModelGate>}

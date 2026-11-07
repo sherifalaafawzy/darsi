@@ -185,6 +185,7 @@ describe("sudoku", () => {
     expect(sd.smart(9, by("hard")).guesses).toBe(4);
     const trap = sd.plain(9, by("trap"));
     expect(trap.capped).toBe(true); expect(trap.solved).toBe(false);
+    expect(trap.guesses).toBe(100_000); // gives up after exactly the 100,000 guesses Try this and opt-s4-3 quote
     expect(sd.smart(9, by("trap")).guesses).toBe(0);
     const small = sd.plain(4, by("small"));
     expect(small.solved).toBe(true); expect(ok(4, small.grid)).toBe(true);

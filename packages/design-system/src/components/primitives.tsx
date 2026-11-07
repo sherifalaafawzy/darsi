@@ -92,20 +92,26 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   block?: boolean;
   icon?: IconName;
   iconEnd?: IconName;
-  /** Shows a spinner and disables the button. */
+  /** Shows a spinner and ignores presses (aria-disabled), but stays focusable: the focus doesn't drop to the page. */
   loading?: boolean;
   /** Square icon button; `children` becomes its aria-label. */
   iconOnly?: boolean;
   children: ReactNode;
 }
-export function Button({ variant = "primary", size = "md", block, icon, iconEnd, loading, iconOnly, children, className, disabled, ...rest }: ButtonProps) {
+export function Button({ variant = "primary", size = "md", block, icon, iconEnd, loading, iconOnly, children, className, disabled, onClick, ...rest }: ButtonProps) {
+  // While loading, a real `disabled` would drop the keyboard focus to the page (WCAG 2.4.3), so loading wins over it: the
+  // button stays focusable, says it is busy and unavailable, and ignores presses. preventDefault also stops a submit
+  // button sending its form again (a click, or Enter in one of the form's fields). `disabled` applies again once it's done.
+  const busy = Boolean(loading);
   return (
     <button
       type="button" {...rest}
       className={cx("dr-btn", `dr-btn-${variant}`, `dr-btn-${size}`, block && "dr-btn-block", iconOnly && "dr-btn-icon", loading && "is-loading", className)}
-      aria-busy={loading || undefined}
+      aria-busy={busy || undefined}
+      aria-disabled={busy || rest["aria-disabled"] || undefined}
       aria-label={iconOnly ? String(children) : rest["aria-label"]}
-      disabled={disabled || loading}
+      disabled={busy ? false : disabled}
+      onClick={busy ? (e) => e.preventDefault() : onClick}
     >
       {loading ? <span className="dr-spinner" aria-hidden /> : icon && <Icon name={icon} />}
       {!iconOnly && <span className="dr-btn-label">{children}</span>}

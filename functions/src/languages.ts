@@ -8,7 +8,7 @@ import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/
 import { audit, db, freshCaller, str } from "./admin.js";
 import { staleVersions } from "./catalog.js";
 import { SETTINGS, writeSettingsFile } from "./settings.js";
-import { bucket } from "./storage.js";
+import { bucket, saveJson } from "./storage.js";
 import { LANG_CODE, validateLanguage } from "./shared/languages.js";
 import type { LanguageDef } from "./shared/types.js";
 
@@ -43,10 +43,7 @@ export const publishLanguage = onCall(async (req) => {
   if (problems.length) throw new HttpsError("invalid-argument", "The language has problems.", { problems });
 
   const version = (Number(d.published?.version) || 0) + 1;
-  await bucket().file(packPath(code, version)).save(JSON.stringify({ code, version, messages: d.messages }), {
-    resumable: false, contentType: "application/json; charset=utf-8",
-    metadata: { cacheControl: "public, max-age=31536000, immutable" },
-  });
+  await saveJson(packPath(code, version), JSON.stringify({ code, version, messages: d.messages }), "public, max-age=31536000, immutable");
   const entry = languageEntry({ ...d, code }, version);
   const languages = await db.runTransaction(async (tx) => {
     const s = await tx.get(db.doc(SETTINGS));

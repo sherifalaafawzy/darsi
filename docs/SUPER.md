@@ -20,11 +20,11 @@ Phase 0 is built and deployed; phases 1 (payments) and 2 (the tutor) are built (
   - Three kinds: one person, a seat in an organization (priced per seat), and a pack of extra credits.
   - The active plans are published, without costs, as `content/plans.json` for the Super screen.
 - **Credits** are the tutor's limit (`credits/{uid}`):
-  - Each paid period brings the plan's credits, and unused ones lapse at the period's end.
+  - Each paid period brings the plan's credits, and unused ones lapse at the period's end. A period paid early (Paymob) adds its credits to what is left, to the new end.
   - Packs never expire, and are spent after the period's credits.
   - When credits run out, the tutor says so and offers a pack. Lessons, Labs and everything else stay free.
 - **An individual's access** is `subscriptions/{uid}` {plan, status, source, currentPeriodEnd}. Only the payment webhooks write it, or a platform admin's complimentary grant.
-- **An organization's access** is `orgs/{id}.licence` {plan, seats, until}. A platform admin sets it (invoiced), or a checkout does. Org admins give and take seats, or fill the free ones (teachers first).
+- **An organization's access** is `orgs/{id}.licence` {plan, seats, until}. A platform admin sets it (invoiced), or a checkout does: a checkout buys seat-time, so renewing the same seats adds a year and fewer seats add less. Org admins give and take seats, or fill the free ones (teachers first); seats beyond a smaller licence are freed.
 - **Who has Super:** the functions work it out and put it in the custom claims (`plan`, `planUntil`) beside role and organization. The phone checks the claim, and every tutor call checks it again on the server.
 - **Guests and free accounts** keep everything Darsi has now. Super adds the tutor and live explainers only, so learning never sits behind a paywall.
 
@@ -127,7 +127,7 @@ Done in phase 0. Revenue goes through the Measurement Protocol **from the server
   - The Paymob and Stripe buttons arrive in phase 1.
 - **Me** shows Super's status, or a link to the Super screen.
 - **The tutor:**
-  - An "Ask the tutor" button in lessons and on Home opens a lazy chunk that isn't precached.
+  - A floating tutor button on lesson screens opens a lazy chunk that isn't precached.
   - It works online only, with a clear offline message. Transcripts and explainers already seen are kept for offline reading.
   - The credits left are always visible, and each answer shows what it cost.
 - **Guests never load Firebase,** as now. The tutor and checkout need an account.

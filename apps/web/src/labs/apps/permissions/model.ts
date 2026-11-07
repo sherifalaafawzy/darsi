@@ -6,7 +6,9 @@
 export type Perm = "camera" | "mic" | "location" | "contacts" | "sms" | "photos" | "notifications" | "calendar";
 export type AppId = "torch" | "timetable" | "photo" | "quiz";
 export const APPS: Record<AppId, { asks: Perm[]; needs: Perm[]; optional?: Perm[] }> = {
-  torch: { asks: ["camera", "location", "contacts"], needs: ["camera"] },
+  // Since Android 6 (2015) an app switches the flash on without camera access (and phones have a torch built in), so
+  // denying a torch the camera is right; only very old phones need it, so allowing it isn't marked wrong either.
+  torch: { asks: ["camera", "location", "contacts"], needs: [], optional: ["camera"] },
   timetable: { asks: ["notifications", "calendar", "mic", "contacts"], needs: ["notifications"], optional: ["calendar"] },
   photo: { asks: ["photos", "camera", "location", "sms"], needs: ["photos"], optional: ["camera"] },
   quiz: { asks: ["notifications", "mic", "contacts", "location"], needs: [], optional: ["notifications"] },

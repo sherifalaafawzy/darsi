@@ -14,7 +14,7 @@ export const topicLang = (lang: unknown): Lang => (typeof lang === "string" && L
 export type Cat = "reminders" | "reviews" | "staff" | "news";
 export type Kind =
   | "daily0" | "daily1" | "daily2" | "weekGoal" | "streak" | "comeback7" | "comeback21"
-  | "reviewApproved" | "reviewRevise" | "staffSubmission" | "staffOrgRequest";
+  | "reviewApproved" | "reviewRevise" | "orgApproved" | "orgRejected" | "staffSubmission" | "staffOrgRequest";
 
 /** Values a message can fill in. `name` and `org` are isolated; `uid` only builds links. */
 export interface MessageVars { n?: number; name?: string; org?: string; feedback?: string; uid?: string }
@@ -47,7 +47,7 @@ export const CATALOGUE: Record<Kind, Entry> = {
   daily0: {
     cat: "reminders", link: "/learn",
     en: { title: fixed("Your 5-minute lesson is ready"), body: fixed("One short lesson today, one new idea for your class tomorrow.") },
-    ar: { title: fixed("درسك ذو الدقائق الخمس جاهز"), body: fixed("درس قصير اليوم، وفكرة جديدة لصفّك غدًا.") },
+    ar: { title: fixed("درسك ذو الدقائق الخمس جاهز"), body: fixed("درس قصير اليوم، وفكرة جديدة لفصلك غدًا.") },
   },
   daily1: {
     cat: "reminders", link: "/learn",
@@ -57,7 +57,7 @@ export const CATALOGUE: Record<Kind, Entry> = {
   daily2: {
     cat: "reminders", link: "/learn",
     en: { title: fixed("Something new for your class"), body: fixed("Today's lesson ends with an idea you can try tomorrow.") },
-    ar: { title: fixed("شيء جديد لصفّك"), body: fixed("ينتهي درس اليوم بفكرة يمكنك تجربتها غدًا.") },
+    ar: { title: fixed("شيء جديد لفصلك"), body: fixed("ينتهي درس اليوم بفكرة يمكنك تجربتها غدًا.") },
   },
   weekGoal: {
     cat: "reminders", link: "/learn",
@@ -80,17 +80,28 @@ export const CATALOGUE: Record<Kind, Entry> = {
   comeback21: {
     cat: "reminders", link: "/learn",
     en: { title: fixed("New ideas for your classroom"), body: fixed("Come back for a 5-minute lesson whenever you're ready.") },
-    ar: { title: fixed("أفكار جديدة لصفّك"), body: fixed("عُد لدرس من خمس دقائق متى كنت مستعدًا.") },
+    ar: { title: fixed("أفكار جديدة لفصلك"), body: fixed("عُد لدرس من خمس دقائق متى كنت مستعدًا.") },
   },
   reviewApproved: {
-    cat: "reviews", link: "/learn",
+    cat: "reviews", link: "/me#projects",
     en: { title: fixed("Your project was approved"), body: feedbackOr("Well done, your project was approved.") },
     ar: { title: fixed("تمت الموافقة على مشروعك"), body: feedbackOr("أحسنت، تمت الموافقة على مشروعك.") },
   },
   reviewRevise: {
-    cat: "reviews", link: "/learn",
+    cat: "reviews", link: "/me#projects",
     en: { title: fixed("Feedback on your project"), body: feedbackOr("Your reviewer suggested a few changes.") },
     ar: { title: fixed("ملاحظات على مشروعك"), body: feedbackOr("اقترح المراجِع بعض التعديلات.") },
+  },
+  // Whoever asked to register an organization hears the outcome (reviewOrg); the rejection carries the reviewer's note.
+  orgApproved: {
+    cat: "reviews", link: "/admin",
+    en: { title: fixed("Your organization is approved"), body: (v) => `${org(v)} is now on Darsi. Add your teachers and students from Admin.` },
+    ar: { title: fixed("تمت الموافقة على مؤسستك"), body: (v) => `أصبحت ${org(v)} في «درسي». أضف معلميك وطلابك من «الإدارة».` },
+  },
+  orgRejected: {
+    cat: "reviews", link: "/org",
+    en: { title: fixed("About your organization request"), body: feedbackOr("Open Darsi to read the reply.") },
+    ar: { title: fixed("بخصوص طلب مؤسستك"), body: feedbackOr("افتح «درسي» لقراءة الرد.") },
   },
   staffSubmission: {
     cat: "staff", link: "/teach/{uid}",

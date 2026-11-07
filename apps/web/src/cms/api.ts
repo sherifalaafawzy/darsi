@@ -2,9 +2,12 @@ import { call } from "../fb";
 import type { LanguageDef, TrackDef } from "../content/types";
 import type { Issue } from "../content/validate";
 
-/** Course editor callables (functions/src/content.ts). publishUnit refuses a draft with errors and returns them in `details.issues`. */
+/**
+ * Course editor callables (functions/src/content.ts). publishUnit refuses a draft with errors and returns them in
+ * `details.issues`; with `rev` (the draft revision the editor shows), it refuses with "aborted" a draft someone saved since.
+ */
 export const cmsApi = {
-  publishUnit: call<{ unitId: string }, { version: number }>("publishUnit"),
+  publishUnit: call<{ unitId: string; rev?: number }, { version: number }>("publishUnit"),
   unpublishUnit: call<{ unitId: string }, { ok: boolean }>("unpublishUnit"),
   deleteUnit: call<{ unitId: string }, { ok: boolean }>("deleteUnit"),
   /** Platform admins (functions/src/settings.ts). `rev` is the version edited; refused with "aborted" if someone saved since. */

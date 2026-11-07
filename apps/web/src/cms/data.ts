@@ -4,7 +4,7 @@
  * the content. Both are saved in one batch, and every save bumps `rev` so two editors can't overwrite each other.
  */
 import { collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, serverTimestamp, setDoc, updateDoc, where, writeBatch, type Timestamp } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, storageJSON } from "../firebase";
 import { audienceOf, type Audience, type LanguageDef, type Lesson, type LocalText, type Track, type TrackDef, type Unit } from "../content/types";
 import { mergeTracks } from "../content/tracks";
 import { copyLesson } from "./ids";
@@ -18,9 +18,22 @@ export interface UnitMeta {
   updatedAt?: Timestamp | null; updatedBy?: string;
   /** Set by the publishUnit function: the live version, and the draft rev it was made from. */
   published?: { version: number; rev?: number; at?: Timestamp | null; by?: string } | null;
+  /**
+   * Set by the editor: draft rev `rev` holds exactly what published version `version` holds (the author brought that
+   * version back, or undid their changes). Any later save moves the rev on, and any publish the version, so a stale
+   * mark never counts.
+   */
+  same?: { version: number; rev: number } | null;
 }
 export type Status = "draft" | "live" | "changed";
-export const statusOf = (m: Pick<UnitMeta, "rev" | "published">): Status => (!m.published ? "draft" : m.published.rev === m.rev ? "live" : "changed");
+export const statusOf = (m: Pick<UnitMeta, "rev" | "published"> & { same?: UnitMeta["same"] }): Status =>
+  (!m.published ? "draft" : m.published.rev === m.rev || (m.same?.rev === m.rev && m.same.version === m.published.version) ? "live" : "changed");
+
+/** JSON with every object's keys sorted: two drafts are the same content whatever order Firestore or an edit left their keys in. */
+export function canonical(v: unknown): string {
+  return JSON.stringify(v, (_k, x: unknown) => (x && typeof x === "object" && !Array.isArray(x)
+    ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, (x as Record<string, unknown>)[k]])) : x));
+}
 
 /** Firestore refuses `undefined`; the editor leaves optional fields undefined. */
 const plain = <T,>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
@@ -33,6 +46,12 @@ export const freshMeta = (owner: string, u: Unit): UnitMeta => ({ id: u.id, owne
 export async function listUnits(owner: string): Promise<UnitMeta[]> {
   const snap = await getDocs(query(collection(db, "units"), where("owner", "==", owner), orderBy("updatedAt", "desc")));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as UnitMeta);
+}
+
+/** The active organizations, by name: whose own courses a platform admin can open (one read, platform admins only). */
+export async function listOrgs(): Promise<{ id: string; name: string }[]> {
+  const snap = await getDocs(query(collection(db, "orgs"), where("status", "==", "active")));
+  return snap.docs.map((d) => ({ id: d.id, name: String(d.get("name") ?? d.id) })).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function getUnit(id: string): Promise<{ meta: UnitMeta; unit: Unit } | null> {
@@ -51,17 +70,47 @@ export async function createUnit(owner: string, unit: Unit, uid: string) {
   await b.commit();
 }
 
-/** Saves the draft as rev + 1. A refusal while someone else saved meanwhile is reported as "conflict". */
-export async function saveUnit(unit: Unit, rev: number, uid: string): Promise<{ rev: number } | { conflict: true }> {
+/**
+ * Saves the draft as rev + 1. A refusal while someone else saved meanwhile is reported as "conflict". `same`: the
+ * published version this draft is identical to, marked so lists show it as published (UnitMeta.same). Rules that
+ * don't know the mark yet refuse it; the draft is then saved without it.
+ */
+export async function saveUnit(unit: Unit, rev: number, uid: string, same?: number): Promise<{ rev: number } | { conflict: true }> {
   const b = writeBatch(db);
-  b.update(doc(db, "units", unit.id), { ...metaOf(unit), rev: rev + 1, updatedAt: serverTimestamp(), updatedBy: uid });
+  b.update(doc(db, "units", unit.id), { ...metaOf(unit), rev: rev + 1, updatedAt: serverTimestamp(), updatedBy: uid, ...(same ? { same: { version: same, rev: rev + 1 } } : {}) });
   b.update(doc(db, "unitDrafts", unit.id), { rev: rev + 1, unit: plain(unit) });
   try { await b.commit(); return { rev: rev + 1 }; }
   catch (e) {
     const now = (await getDoc(doc(db, "units", unit.id)).catch(() => null))?.get("rev");
     if (typeof now === "number" && now !== rev) return { conflict: true };
+    if (same) return saveUnit(unit, rev, uid);
     throw e;
   }
+}
+
+/**
+ * Marks a draft that nobody changed as identical to published version `version` (found by comparing the two), as a
+ * save of the same content (its "Updated" date stays). Best effort: null when refused (someone saved meanwhile, or
+ * rules without the mark).
+ */
+export async function markSame(unitId: string, rev: number, version: number, uid: string): Promise<{ rev: number } | null> {
+  const b = writeBatch(db);
+  b.update(doc(db, "units", unitId), { rev: rev + 1, updatedBy: uid, same: { version, rev: rev + 1 } });
+  b.update(doc(db, "unitDrafts", unitId), { rev: rev + 1 });
+  try { await b.commit(); return { rev: rev + 1 }; } catch { return null; }
+}
+
+/** Where a published version lives in Storage (functions/src/catalog.ts unitPath). */
+export const publishedPath = (owner: string, unitId: string, version: number) => `${owner === "public" ? "content" : `orgs/${owner}`}/units/${unitId}/v${version}.json`;
+/**
+ * A published version of a unit, as learners got it: publishUnit writes the draft as it was saved, so putting it back
+ * in the draft loses nothing. The live version and the one before it are kept (catalog.ts staleVersions); unpublishing
+ * deletes them all. Read through the SDK: org units are for that org's members only (storage.rules).
+ */
+export async function readPublished(owner: string, unitId: string, version: number): Promise<Unit> {
+  const u = (await storageJSON(publishedPath(owner, unitId, version))) as Unit | null;
+  if (!u || typeof u !== "object" || u.id !== unitId || !Array.isArray(u.lessons)) throw new Error(`v${version} is not this unit`);
+  return u;
 }
 
 /** Appends a copy of `lesson` (new id) to another unit's draft, as a normal save of that unit. */

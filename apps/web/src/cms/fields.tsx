@@ -19,6 +19,21 @@ export function LangName({ name, code }: { name: string; code?: string }) {
   return other ? <span lang={code ?? "ar"} className="dr-other-script">{name}</span> : <>{name}</>;
 }
 
+/**
+ * Draft / published / changes not published, in words. In an app bar on a phone it says it short (the title needs the
+ * room); the full words stay for screen readers and in its tooltip.
+ */
+export function StatusPill({ status, version }: { status: "draft" | "live" | "changed"; version: number }) {
+  const { t } = useI18n();
+  const long = t(`cms.status.${status}`, { n: version });
+  return (
+    <span className={`ed-status is-${status}`} title={long}>
+      <span>{long}</span>
+      <span aria-hidden="true">{t(`cms.statusShort.${status}`, { n: version })}</span>
+    </span>
+  );
+}
+
 /** Label + control + hint, in the design system's field styles. */
 export function Field({ id, label, tag, hint, children }: { id: string; label: string; tag?: EditLang; hint?: string; children: ReactNode }) {
   return (

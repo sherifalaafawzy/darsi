@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { AppBar, Button, TextField } from "@darsi/design-system";
 import { api } from "../auth/api";
 import { useSuperOn } from "../content/settings";
-import { useI18n } from "../i18n";
+import { isolate, useI18n, type MessageKey } from "../i18n";
 import { usePlansConfig, type Economics, type PlanDef } from "./data";
 import { message, Note, type Msg } from "./Super";
+import { CapstoneSettings } from "./CapstoneSettings";
 import "../styles/admin.css";
 import "./strings";
 
@@ -21,6 +22,12 @@ const marginOf = (p: PlanDef, cur: "EGP" | "USD", eco: Economics | null) => {
   if (!price || !eco?.usdPerCredit || !eco.egpPerUsd) return null;
   return 1 - (p.credits * eco.usdPerCredit) / (cur === "USD" ? price : price / eco.egpPerUsd);
 };
+/** savePlans' refusals (functions/src/billingCore.ts PlanError: the error's details.reason, with its numbers). */
+const REFUSAL: Record<string, MessageKey> = {
+  "eco-cost": "sp.err.ecoCost", "eco-rate": "sp.err.ecoRate", "plans-count": "sp.err.plansCount", "plan-id": "sp.err.planId", "plan-twice": "sp.err.planTwice",
+  "plan-name": "sp.err.planName", "plan-price": "sp.err.planPrice", "plan-no-price": "sp.err.planNoPrice", "plan-credits": "sp.err.planCredits",
+  "pack-credits": "sp.err.packCredits", "plan-margin": "sp.err.planMargin",
+};
 
 /** /super/plans: the plans people and organizations can buy. */
 export function PlansPage() {
@@ -33,9 +40,17 @@ export function PlansPage() {
   const { num } = useI18n();
   useEffect(() => { if (saved.data) { setPlans(saved.data.plans); if (saved.data.economics) setEco(saved.data.economics); } }, [saved.data]);
   const set = (i: number, patch: Partial<PlanDef>) => setPlans((ps) => ps.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+  /** A refusal in the admin's language, with its own numerals; one the page doesn't know, in the server's words. */
+  const refusal = (e: unknown) => {
+    const d = (e as { details?: Record<string, unknown> }).details ?? {};
+    const key = typeof d.reason === "string" ? REFUSAL[d.reason] : undefined;
+    if (!key) return message(e);
+    const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+    return t(key, { id: isolate(String(d.id ?? "")), cur: String(d.cur ?? ""), n: n(d.n), min: n(d.min), max: n(d.max), pct: num(n(d.margin), { style: "percent" }), least: num(n(d.min), { style: "percent" }) });
+  };
   const save = async () => {
     setBusy(true); setMsg(null);
-    try { await api.savePlans({ plans, economics: eco }); setMsg({ ok: true, text: t("sp.saved") }); saved.reload(); } catch (e) { setMsg({ ok: false, text: message(e) }); } finally { setBusy(false); }
+    try { await api.savePlans({ plans, economics: eco }); setMsg({ ok: true, text: t("sp.saved") }); saved.reload(); } catch (e) { setMsg({ ok: false, text: refusal(e) }); } finally { setBusy(false); }
   };
   const price = (v: string) => (v.trim() === "" ? undefined : Number(v));
   return (
@@ -43,6 +58,8 @@ export function PlansPage() {
       <AppBar title={t("sp.title")} />
       <main className="screen wide stack-lg">
         <SuperSwitch />
+        {/* Capstone AI reviews have their own switch and limits: they aren't part of Super (lesson/ProjectView). */}
+        <CapstoneSettings />
         <p className="muted">{t("sp.intro")}</p>
         {saved.error && <p className="notice err">{saved.error.message}</p>}
         <section className="panel stack" aria-labelledby="eco-h"><h3 id="eco-h">{t("sp.ecoTitle")}</h3>
@@ -73,7 +90,8 @@ export function PlansPage() {
               <span key={cur} className={m < MIN_MARGIN ? "notice err" : "notice ok"}>{t("sp.margin", { cur, pct: num(m, { style: "percent" }) })}</span>
             ); })}</p>
             <div className="row-gap">
-              <label className="row-gap"><input type="checkbox" checked={p.active} onChange={(e) => set(i, { active: e.target.checked })} /> {t("sp.active")}</label>
+              {/* A 24px box in a 44px+ target (admin.css .pick-cell), not the browser's 13px one. */}
+              <label className="pick-cell"><input type="checkbox" checked={p.active} onChange={(e) => set(i, { active: e.target.checked })} />{t("sp.active")}</label>
               <Button size="sm" variant="ghost" icon="close" onClick={() => setPlans((ps) => ps.filter((_, j) => j !== i))}>{t("sp.remove")}</Button>
             </div>
           </section>
@@ -125,7 +143,7 @@ function RevenueCheck({ plans }: { plans: PlanDef[] }) {
   return (
     <section className="panel stack" aria-labelledby="rc-h"><h3 id="rc-h">{t("sp.checkTitle")}</h3>
       <p className="muted small">{t("sp.checkHint")}</p>
-      <div className="row-gap">
+      <div className="form-grid">
         <label className="or-pick"><span>{t("sp.plan")}</span><select value={plan} onChange={(e) => setPlan(e.target.value)}>{plans.map((p) => <option key={p.id} value={p.id}>{p.name.en}</option>)}</select></label>
         <label className="or-pick"><span>{t("sp.currency")}</span><select value={cur} onChange={(e) => setCur(e.target.value as "EGP" | "USD")}><option>EGP</option><option>USD</option></select></label>
         <Button size="sm" variant="secondary" icon="check" loading={busy} disabled={!plans.length} onClick={() => { void check(); }}>{t("sp.check")}</Button>

@@ -3,6 +3,7 @@ import { Icon } from "@darsi/design-system";
 import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
 import { Slider, Stats } from "../../kit/controls";
+import { signed } from "../../kit/Formula";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
 import { CORPUS, complete, HELDOUT, leaks, logProb, membershipAccuracy, SECRET, train, usefulness } from "./model";
@@ -18,6 +19,7 @@ const S = {
     leakY: "Leaking: the model repeats the private record.", leakN: "Safe: the private record no longer comes out.",
     useful: "Useful on ordinary lines", member: "Attacker's guess (was it trained on?)",
     memberNote: "A membership-inference attacker checks how familiar a sentence feels to the model. 50% means they're only guessing.",
+    familiar: "How familiar each line feels to the model (closer to 0 = more familiar):", seen: "Trained on:", unseen: "Never seen:",
     try1: "At privacy “none”, read the private line's completion: the model gives back the exact card number it was trained on. It memorised it.",
     try2: "Raise “Privacy added”: the secret stops coming out, and the attacker's guess falls towards 50%. But watch “Useful on ordinary lines” drop too.",
     try3: "This is the trade-off: more privacy, less leaking, but a less useful model. There is no free setting — you choose where to sit.",
@@ -31,6 +33,7 @@ const S = {
     leakY: "تسريب: يكرّر النموذج السجلّ الخاص.", leakN: "آمن: لم يعد السجلّ الخاص يخرج.",
     useful: "الفائدة على الأسطر العادية", member: "تخمين المهاجم (هل دُرّب عليها؟)",
     memberNote: "مهاجم استدلال العضوية يفحص كم يبدو السطر مألوفًا للنموذج. و٥٠٪ تعني أنه يخمّن فحسب.",
+    familiar: "مدى ألفة كل سطر للنموذج (الأقرب إلى الصفر أكثر ألفة):", seen: "تدرّب عليه:", unseen: "لم يرَه قطّ:",
     try1: "عند خصوصية «لا شيء»، اقرأ إكمال السطر الخاص: يعيد النموذج رقم البطاقة نفسه الذي دُرّب عليه. لقد حفظه.",
     try2: "ارفع «الخصوصية المضافة»: يتوقّف السرّ عن الخروج، ويهبط تخمين المهاجم نحو ٥٠٪. لكن راقب «الفائدة على الأسطر العادية» تهبط أيضًا.",
     try3: "هذه هي الموازنة: خصوصية أكثر، وتسريب أقلّ، لكن نموذج أقلّ فائدة. لا إعداد مجاني — أنت تختار أين تقف.",
@@ -48,7 +51,9 @@ export default function Leak({ meta, onDone }: LabProps) {
   const secretOut = complete(model, secret.prompt, privacy, 3);
   const normalOut = complete(model, NORMAL[tlang], privacy, 4);
   const isLeak = leaks(model, secret, privacy);
-  const member = membershipAccuracy(model, CORPUS[tlang], HELDOUT[tlang], privacy);
+  // At or below 50% the attacker learns nothing: a lower score only means its familiarity threshold came out the wrong
+  // way round (it showed 31% in Arabic), so it shows as chance, which the note and the tries call 50%.
+  const member = Math.max(0.5, membershipAccuracy(model, CORPUS[tlang], HELDOUT[tlang], privacy));
   const member0 = CORPUS[tlang][0], nonMember = HELDOUT[tlang][0];
 
   // Mark done once the learner has pushed privacy up enough to close the leak after seeing it.
@@ -73,9 +78,10 @@ export default function Leak({ meta, onDone }: LabProps) {
         <p className={`lb-verdict ${isLeak ? "is-warn" : ""}`} aria-live="polite"><span className={`lb-out-tag is-${isLeak ? "leaked" : "blocked"}`}><Icon name={isLeak ? "warning" : "lock"} size={16} /></span> {isLeak ? s.leakY : s.leakN}</p>
         <Stats items={[{ label: s.useful, value: num(usefulness(model, HELDOUT[tlang], privacy), { style: "percent" }) }, { label: s.member, value: num(member, { style: "percent" }) }]} />
         <p className="lb-note">{s.memberNote}</p>
+        <p className="lb-note">{s.familiar}</p>
         <ul className="lb-mi">
-          <li><span dir="auto">“{member0}”</span><span className="lb-note" dir="ltr">{num(logProb(model, member0, privacy), { maximumFractionDigits: 1 })}</span></li>
-          <li><span dir="auto">“{nonMember}”</span><span className="lb-note" dir="ltr">{num(logProb(model, nonMember, privacy), { maximumFractionDigits: 1 })}</span></li>
+          <li><span dir="auto"><strong>{s.seen}</strong> “{member0}”</span><span className="lb-note" dir="ltr">{signed(num, logProb(model, member0, privacy), 1)}</span></li>
+          <li><span dir="auto"><strong>{s.unseen}</strong> “{nonMember}”</span><span className="lb-note" dir="ltr">{signed(num, logProb(model, nonMember, privacy), 1)}</span></li>
         </ul>
       </div>
     </LabShell>

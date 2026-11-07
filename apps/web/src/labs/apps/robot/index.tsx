@@ -14,12 +14,12 @@ const S = {
   en: {
     intro: "A robot does exactly what its program says, one card after another, and nothing else. Lay the cards in order, then press Run to watch it walk.",
     level: "Grid", goal: "Get the robot to the flag.", program: "Your program", cards: (n: string, max: string) => `${n} of ${max}`, cardsN: { one: "{n} card", other: "{n} cards" } as Forms,
-    commands: "Cards to use", forward: "Forward", left: "Turn left", right: "Turn right", times: { one: "once", other: "{n} times" } as Forms,
+    sep: ", ", commands: "Cards to use", forward: "Forward", left: "Turn left", right: "Turn right", times: { one: "once", other: "{n} times" } as Forms,
     tapCard: "Tap a card in your program to repeat it, up to 4 times.", full: "No room for another card: take one out first.",
     remove: (c: string) => `Take out ${c}`, run: "Run the robot", clear: "Clear", grid: "The robot's grid", empty: "Tap the cards below to build a program.",
     outcome: { goal: "The robot reached the flag!", wall: "Bump! The robot walked into a wall.", edge: "The robot reached the edge of the grid.", short: "The robot stopped before the flag." } as Record<RobotOutcome, string>,
-    used: (n: string, best: string) => `You used ${n} cards. The fewest possible is ${best}. Can you do it with fewer?`,
-    bestDone: (n: string) => `${n} cards: the fewest possible!`, stars: (n: string) => `${n} stars of 3`, next: "Next grid", shorten: "Join repeated cards",
+    used: (cards: string, best: string) => `You used ${cards}. The fewest possible is ${best}. Can you do it with fewer?`,
+    bestDone: (cards: string) => `${cards}: the fewest possible!`, stars: { one: "{n} star of 3", other: "{n} stars of 3" } as Forms, next: "Next grid", shorten: "Join repeated cards",
     try1: "On grid 1, use four Forward cards, then one Forward card tapped to ×4. The robot walks the same way: repeating is a loop.",
     try2: "On grid 2 the robot faces the wrong way. A turn can be repeated too: “Turn right ×2” turns it round.",
     try3: "On grid 5, find the route that needs the fewest cards. Is it the shortest walk?",
@@ -28,12 +28,12 @@ const S = {
   ar: {
     intro: "ينفّذ الروبوت ما يقوله برنامجه بالضبط، بطاقة بعد بطاقة، ولا شيء غير ذلك. رتّب البطاقات، ثم اضغط «شغّل» لتراه يمشي.",
     level: "الشبكة", goal: "أوصل الروبوت إلى الراية.", program: "برنامجك", cards: (n: string, max: string) => `${n} من ${max}`, cardsN: { one: "بطاقة واحدة", two: "بطاقتين", few: "{n} بطاقات", many: "{n} بطاقة", other: "{n} بطاقة" } as Forms,
-    commands: "البطاقات المتاحة", forward: "إلى الأمام", left: "استدر يسارًا", right: "استدر يمينًا", times: { one: "مرة واحدة", two: "مرتين", few: "{n} مرات", many: "{n} مرة", other: "{n} مرة" } as Forms,
+    sep: "، ", commands: "البطاقات المتاحة", forward: "إلى الأمام", left: "استدر يسارًا", right: "استدر يمينًا", times: { one: "مرة واحدة", two: "مرتين", few: "{n} مرات", many: "{n} مرة", other: "{n} مرة" } as Forms,
     tapCard: "انقر بطاقة في برنامجك لتكرّرها حتى ٤ مرات.", full: "لا مكان لبطاقة أخرى: أخرِج واحدة أولًا.",
     remove: (c: string) => `أخرِج ${c}`, run: "شغّل الروبوت", clear: "امسح", grid: "شبكة الروبوت", empty: "انقر البطاقات في الأسفل لتبني برنامجًا.",
     outcome: { goal: "وصل الروبوت إلى الراية!", wall: "طاخ! اصطدم الروبوت بجدار.", edge: "وصل الروبوت إلى حافة الشبكة.", short: "توقّف الروبوت قبل الراية." } as Record<RobotOutcome, string>,
-    used: (n: string, best: string) => `استعملت ${n} من البطاقات. وأقل عدد ممكن هو ${best}. هل تستطيع أن تنجح بعدد أقل؟`,
-    bestDone: (n: string) => `${n} من البطاقات: أقل عدد ممكن!`, stars: (n: string) => `${n} من ٣ نجوم`, next: "الشبكة التالية", shorten: "اجمع البطاقات المتكرّرة",
+    used: (cards: string, best: string) => `استعملت ${cards}. وأقل عدد ممكن هو ${best}. هل تستطيع أن تنجح بعدد أقل؟`,
+    bestDone: (cards: string) => `${cards}: أقل عدد ممكن!`, stars: { one: "نجمة واحدة من ٣", two: "نجمتان من ٣", few: "{n} نجوم من ٣", many: "{n} نجمة من ٣", other: "{n} نجمة من ٣" } as Forms, next: "الشبكة التالية", shorten: "اجمع البطاقات المتكرّرة",
     try1: "في الشبكة ١، استعمل أربع بطاقات «إلى الأمام»، ثم بطاقة واحدة تنقرها حتى تصير ×٤. يمشي الروبوت المسار نفسه: التكرار حلقة.",
     try2: "في الشبكة ٢ يتّجه الروبوت إلى الجهة الخطأ. والاستدارة يمكن تكرارها أيضًا: «استدر يمينًا ×٢» تجعله يلتفّ إلى الخلف.",
     try3: "في الشبكة ٥، ابحث عن المسار الذي يحتاج إلى أقل عدد من البطاقات. هل هو أقصر طريق؟",
@@ -107,10 +107,10 @@ export default function Robot({ meta, onDone }: LabProps) {
       {outcome && <p className={won ? "lb-verdict" : "lb-verdict is-warn"} role="status">{s.outcome[outcome]}</p>}
       {won && (
         <div className="lb-robot-score">
-          <span className="lb-robot-stars" role="img" aria-label={s.stars(num(stars(program.length, fewest)))}>
+          <span className="lb-robot-stars" role="img" aria-label={count(stars(program.length, fewest), s.stars)}>
             {[1, 2, 3].map((k) => <span key={k} className={k <= stars(program.length, fewest) ? "is-on" : undefined} aria-hidden>★</span>)}
           </span>
-          <p className="lb-note">{program.length <= fewest ? s.bestDone(num(program.length)) : s.used(num(program.length), num(fewest))}</p>
+          <p className="lb-note">{program.length <= fewest ? s.bestDone(count(program.length, s.cardsN)) : s.used(count(program.length, s.cardsN), count(fewest, s.cardsN))}</p>
           {lvl < LEVELS.length - 1 && <Button size="sm" variant="secondary" icon="next" onClick={() => pick(lvl + 1)}>{s.next}</Button>}
         </div>
       )}
@@ -121,7 +121,7 @@ export default function Robot({ meta, onDone }: LabProps) {
           <ol className="lb-robot-prog">
             {program.map((b, i) => (
               <li key={i} className="lb-robot-item">
-                <button type="button" className={`lb-robot-card is-${b.cmd}`} disabled={walking} aria-label={`${label[b.cmd]}, ${count(b.times, s.times)}`}
+                <button type="button" className={`lb-robot-card is-${b.cmd}`} disabled={walking} aria-label={`${label[b.cmd]}${s.sep}${count(b.times, s.times)}`}
                   onClick={() => edit(repeat(program, i))}>
                   <CmdIcon cmd={b.cmd} /><span>{label[b.cmd]}</span>{b.times > 1 && <strong className="lb-robot-times">×{num(b.times)}</strong>}
                 </button>

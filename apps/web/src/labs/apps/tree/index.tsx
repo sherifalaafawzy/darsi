@@ -25,7 +25,7 @@ const S = {
     takeaway: "Decision trees are easy to read and to question: you can see exactly why they decide. The computer picks each question by information gain, the same rule you can follow by hand. But a tree that fits a few examples perfectly can still be wrong about new days.",
   },
   ar: {
-    intro: "هذه ١٤ يومًا من الفصل الماضي: حالة الطقس، وهل لعب الصف كرة القدم في الخارج وقت الاستراحة. تتعلّم شجرة القرار النمط في صورة سلسلة أسئلة. اختر السؤال في كل خطوة، أو دع الحاسوب يختار الأفضل.",
+    intro: "هذه ١٤ يومًا من الفصل الدراسي الماضي: حالة الطقس، وهل لعب الفصل كرة القدم في الخارج وقت الاستراحة. تتعلّم شجرة القرار النمط في صورة سلسلة أسئلة. اختر السؤال في كل خطوة، أو دع الحاسوب يختار الأفضل.",
     attr: { sky: "السماء", heat: "الحرارة", humid: "الرطوبة", wind: "الرياح" } as Record<Attr, string>,
     q: { sky: "كيف السماء؟", heat: "ما درجة الحرارة؟", humid: "ما درجة الرطوبة؟", wind: "كيف الرياح؟" } as Record<Attr, string>,
     val: { sunny: "مشمسة", cloudy: "غائمة", rainy: "ممطرة", hot: "حارة", mild: "معتدلة", cool: "باردة", high: "عالية", normal: "عادية", weak: "خفيفة", strong: "قوية" } as Record<string, string>,

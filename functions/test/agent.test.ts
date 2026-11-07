@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { AGENT_PRICES, agentMessage, parseEvents, readTurn, repairMessage, turnCost } from "../src/agentCore.js";
+import { abandonedCost, AGENT_PRICES, agentMessage, agentPricesAt, parseEvents, PRICES_2027, readTurn, repairMessage, turnCost } from "../src/agentCore.js";
+
+describe("the agent's prices (sfm-04)", () => {
+  it("switch to Google's 2027 prices on 1 Jan 2027 by themselves, keeping the runtime's", () => {
+    expect(agentPricesAt(Date.UTC(2026, 11, 31, 23, 59))).toEqual(AGENT_PRICES);
+    expect(agentPricesAt(Date.UTC(2027, 0, 1))).toEqual({ ...AGENT_PRICES, ...PRICES_2027 });
+    expect(agentPricesAt(Date.UTC(2027, 0, 1)).textIn).toBe(1.5);
+  });
+  it("a turn given up at its time limit costs its input once and the runtime meanwhile (sfm-03)", () => {
+    // 12,000 characters of rules, lesson and question (about 3,000 tokens) and 8 s.
+    expect(abandonedCost(12000, 8, AGENT_PRICES)).toBeCloseTo(3000 * 0.75e-6 + 8 * AGENT_PRICES.runtimePerSec, 10);
+    expect(abandonedCost(-5, -1, AGENT_PRICES)).toBe(0);
+  });
+});
 
 const ev = (delta: Record<string, unknown>) => ({ author: "darsi_tutor", actions: { state_delta: delta } });
 

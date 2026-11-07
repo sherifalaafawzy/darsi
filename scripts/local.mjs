@@ -23,7 +23,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
-import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { connect } from "node:net";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -52,6 +52,9 @@ function java() {
   const env = { ...process.env };
   // Java's loopback pipe fails in a temp folder whose path has spaces (docs/FIREBASE.md, emulators).
   if (win && !env.JAVA_TOOL_OPTIONS) env.JAVA_TOOL_OPTIONS = "-Djdk.net.unixdomain.tmpdir=C:\\Users\\Public";
+  // A private temp folder: the Storage emulator keeps its files in <temp>/firebase/storage, which any other emulator
+  // started on this machine (another checkout's, or `npm run test:rules`) wipes.
+  env.TEMP = env.TMP = env.TMPDIR = join(ROOT, ".emulator-tmp"); mkdirSync(env.TEMP, { recursive: true });
   if (major("java") >= 21) return env;
   const roots = win ? ["C:/Program Files/Java", "C:/Program Files/Eclipse Adoptium", "C:/Program Files/Microsoft", "C:/Program Files/Zulu"] : ["/usr/lib/jvm", "/Library/Java/JavaVirtualMachines"];
   for (const r of roots.filter(existsSync)) for (const d of readdirSync(r).filter((x) => /jdk|jre/i.test(x)).sort().reverse()) {
@@ -70,7 +73,9 @@ function localSettings() {
   if (!existsSync(env)) writeFileSync(env, `# The Emulator Suite (npm run local): the payment stand-in on 4799, and the local app after paying.
 PAYMOB_PUBLIC_KEY=pk_test_local\nPAYMOB_INTEGRATIONS=1\nPAYMOB_BASE=http://127.0.0.1:4799\nSTRIPE_BASE=http://127.0.0.1:4799\nSITE_URL=${WEB}\n`);
   if (!existsSync(secrets)) writeFileSync(secrets, `PAYMOB_SECRET_KEY=sk_test_local\nPAYMOB_HMAC_SECRET=${randomBytes(16).toString("hex")}
-STRIPE_SECRET_KEY=sk_test_local\nSTRIPE_WEBHOOK_SECRET=whsec_${randomBytes(16).toString("hex")}\nGEMINI_API_KEY=unset\n`);
+STRIPE_SECRET_KEY=sk_test_local\nSTRIPE_WEBHOOK_SECRET=whsec_${randomBytes(16).toString("hex")}\nGEMINI_API_KEY=unset\nGITHUB_TOKEN=unset\n`);
+  // checkCapstone's GitHub token (added 2026-11): without a line the emulator asks Secret Manager for it on every start.
+  else if (!/^GITHUB_TOKEN=/m.test(readFileSync(secrets, "utf8"))) writeFileSync(secrets, `${readFileSync(secrets, "utf8").replace(/\n?$/, "\n")}GITHUB_TOKEN=unset\n`);
   return secrets;
 }
 

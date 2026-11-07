@@ -13,11 +13,11 @@ import { FieldValue } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { defineSecret, defineString } from "firebase-functions/params";
-import { db, freshCaller, str } from "./admin.js";
+import { caller, db, freshCaller, str } from "./admin.js";
 import { recordPayment, recordRefund } from "./billing.js";
-import type { Currency, PaymentRecord, Plan } from "./billingCore.js";
+import { renewsByItself, type Currency, type PaymentRecord, type Plan, type Subscription } from "./billingCore.js";
 import { superOn } from "./settings.js";
-import { checkoutAmount, formEncode, fullyRefunded, kindOf, paymobOutcome, providerFor, stripeSession, verifyPaymob, verifyStripe, type CheckoutKind } from "./paymentsCore.js";
+import { checkoutAmount, formEncode, fullyRefunded, invoicePeriod, kindOf, paymobOutcome, providerFor, realSecret, stripeSession, stripeSubStatus, verifyPaymob, verifyStripe, type CheckoutKind, type StripeInvoice } from "./paymentsCore.js";
 
 const PAYMOB_SECRET = defineSecret("PAYMOB_SECRET_KEY");
 const PAYMOB_HMAC = defineSecret("PAYMOB_HMAC_SECRET");
@@ -38,7 +38,7 @@ interface Checkout {
   seats: number | null; provider: "paymob" | "stripe"; clientId: string | null; status: "open" | "paid" | "refunded";
 }
 const closed = () => new HttpsError("failed-precondition", "payments-closed");
-const real = (s: string) => s.trim() !== "" && s.trim() !== "unset";
+const real = realSecret;
 
 /* ---------- Starting a checkout ---------- */
 
@@ -56,6 +56,9 @@ export const startCheckout = onCall({ secrets: [PAYMOB_SECRET, STRIPE_SECRET] },
   const kind = kindOf(plan);
   if (kind === "licence" && (c.role !== "orgAdmin" || !c.orgId)) throw new HttpsError("permission-denied", "Only an organization's admins can buy seats.");
   if (kind === "credits" && !(Number(req.auth?.token.planUntil) > Date.now())) throw new HttpsError("failed-precondition", "Credit packs are for people who have Darsi Super.");
+  // A Stripe subscription that renews by itself would charge alongside a second one (sfm-05): its owner cancels the
+  // renewal first (setRenewal). A Paymob period bought early is added after the current one, credits and all.
+  if (kind === "subscription" && renewsByItself((await db.doc(`subscriptions/${c.uid}`).get()).data() as Subscription | undefined)) throw new HttpsError("failed-precondition", "already-subscribed");
   let price;
   try { price = checkoutAmount(plan, currency, Number(req.data?.seats ?? 1)); } catch (e) { throw new HttpsError("invalid-argument", (e as Error).message); }
   const provider = providerFor(currency);
@@ -102,16 +105,21 @@ export const startCheckout = onCall({ secrets: [PAYMOB_SECRET, STRIPE_SECRET] },
 
 /* ---------- Turning a verified payment into Super ---------- */
 
-async function pay(checkoutId: string, provider: "paymob" | "stripe", ref: string, cents: number, currency: string) {
+/**
+ * `stripe`: a Stripe invoice's period (its end and length, ms) and its subscription, so Super follows Stripe's own
+ * dates (sfm-07) without losing time paid ahead.
+ */
+async function pay(checkoutId: string, provider: "paymob" | "stripe", ref: string, cents: number, currency: string, stripe: { until?: number; periodMs?: number; stripeSub?: string } = {}) {
   const snap = await db.doc(`checkouts/${checkoutId}`).get();
   const c = snap.data() as Checkout | undefined;
   if (!c || c.provider !== provider) { logger.warn("payment for an unknown checkout", { checkoutId, provider, ref }); return "unknown checkout"; }
   // The amount must be what Darsi asked for (renewals: the plan's price for one period).
   if (cents !== c.cents || currency.toUpperCase() !== c.currency) { logger.error("payment amount differs from the checkout", { checkoutId, ref, cents, currency, want: c.cents }); return "amount differs"; }
-  const p: PaymentRecord = { provider, ref, kind: c.kind, uid: c.kind === "licence" ? undefined : c.uid, orgId: c.orgId ?? undefined, plan: c.plan, amount: c.amount, currency: c.currency, seats: c.seats ?? undefined, clientId: c.clientId ?? undefined, checkout: checkoutId };
+  const p: PaymentRecord = { provider, ref, kind: c.kind, uid: c.kind === "licence" ? undefined : c.uid, orgId: c.orgId ?? undefined, plan: c.plan, amount: c.amount, currency: c.currency, seats: c.seats ?? undefined, clientId: c.clientId ?? undefined, checkout: checkoutId,
+    ...(c.kind === "subscription" && stripe.until ? { until: stripe.until, ...(stripe.periodMs ? { periodMs: stripe.periodMs } : {}) } : {}), ...(c.kind === "subscription" && stripe.stripeSub ? { stripeSub: stripe.stripeSub } : {}) };
+  // recordPayment marks the checkout paid in the same transaction as the payment.
   const r = await recordPayment(p);
-  if (!r.duplicate) await snap.ref.update({ status: "paid", paidAt: FieldValue.serverTimestamp(), [`payments.${ref}`]: true });
-  return r.duplicate ? "duplicate" : "recorded";
+  return r.duplicate ? "duplicate" : r.unapplied ? "unapplied" : "recorded";
 }
 
 async function refund(provider: "paymob" | "stripe", ref: string) {
@@ -178,10 +186,48 @@ async function stripe<T>(method: "GET" | "POST", path: string, body?: Record<str
     ...(body ? { body: formEncode(body) } : {}),
   });
   const json = (await r.json().catch(() => ({}))) as T & { error?: { message?: string } };
-  if (!r.ok) throw new Error(`Stripe ${r.status}: ${json.error?.message ?? ""}`);
+  if (!r.ok) throw Object.assign(new Error(`Stripe ${r.status}: ${json.error?.message ?? ""}`), { status: r.status });
   return json;
 }
-interface StripeInvoice { id: string; subscription: string | null; payment_intent: string | null; billing_reason: string; amount_paid: number; currency: string }
+interface StripeSub { id: string; status: string; cancel_at_period_end: boolean }
+
+/** The person a Stripe subscription belongs to, and their subscription record if it is still this Stripe subscription. */
+async function ownerOf(stripeSubId: string): Promise<{ uid: string; mine: boolean } | null> {
+  const map = await db.doc(`stripeSubs/${stripeSubId}`).get();
+  const uid = map.exists ? ((await db.doc(`checkouts/${map.get("checkout")}`).get()).get("uid") as string | undefined) : undefined;
+  if (!uid) return null;
+  // An older subscription's events (cancelled long ago, replaced since by another card subscription, a Paymob period
+  // or complimentary days) must not touch the one the person has now. Card subscriptions recorded before the id was
+  // kept have none.
+  const sub = await db.doc(`subscriptions/${uid}`).get();
+  const now = sub.get("stripeSub") as string | undefined;
+  return { uid, mine: sub.get("source") === "stripe" && (!now || now === stripeSubId) };
+}
+
+/**
+ * Cancels (renew false) or restores (renew true) the renewal of the caller's own Stripe subscription (sfm-05): Super
+ * runs to the end of what was paid either way, and the Super screen offers both. Works with Darsi Super switched off
+ * too, so nobody is ever kept paying. Answers {renewal: "on" | "off", until}.
+ */
+export const setRenewal = onCall({ secrets: [STRIPE_SECRET] }, async (req) => {
+  const c = caller(req);
+  const renew = req.data?.renew === true;
+  if (!real(STRIPE_SECRET.value())) throw closed();
+  const ref = db.doc(`subscriptions/${c.uid}`);
+  const sub = (await ref.get()).data() as Subscription | undefined;
+  if (!sub || sub.source !== "stripe" || !sub.stripeSub || sub.status === "expired" || !(sub.currentPeriodEnd > Date.now())) throw new HttpsError("failed-precondition", "no-renewal");
+  let s: StripeSub;
+  try { s = await stripe<StripeSub>("POST", `subscriptions/${encodeURIComponent(sub.stripeSub)}`, { cancel_at_period_end: !renew }); }
+  catch (e) {
+    logger.error("setRenewal failed", { uid: c.uid, error: String(e) });
+    // 4xx: Stripe has already ended it (failed payments, a refund), so there's nothing to renew.
+    if (Number((e as { status?: number }).status) >= 400 && Number((e as { status?: number }).status) < 500) throw new HttpsError("failed-precondition", "no-renewal");
+    throw new HttpsError("unavailable", "Stripe didn't answer. Try again in a minute.");
+  }
+  const status = stripeSubStatus(s);
+  await ref.set({ status, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  return { renewal: status === "canceled" ? "off" : "on", until: sub.currentPeriodEnd };
+});
 
 /**
  * Stripe's webhook, signature-checked on the raw body. Invoices and sessions are read back from Stripe in one API
@@ -198,29 +244,40 @@ export const stripeWebhook = onRequest({ secrets: [STRIPE_SECRET, STRIPE_WEBHOOK
       const s = await stripe<{ id: string; client_reference_id: string | null; mode: string; payment_status: string; payment_intent: string | null; invoice: string | null; subscription: string | null; amount_total: number; currency: string }>("GET", `checkout/sessions/${o.id}`);
       if (s.payment_status !== "paid" || !s.client_reference_id) result = `not paid (${s.payment_status})`;
       else {
-        let ref = s.payment_intent ?? s.id;
+        let ref = s.payment_intent ?? s.id, period: { until?: number; periodMs?: number } = {};
         if (s.mode === "subscription" && s.invoice) {
           const inv = await stripe<StripeInvoice>("GET", `invoices/${s.invoice}`);
           ref = inv.payment_intent ?? inv.id;
+          period = invoicePeriod(inv);
           if (s.subscription) await db.doc(`stripeSubs/${s.subscription}`).set({ checkout: s.client_reference_id, at: FieldValue.serverTimestamp() });
         }
-        result = await pay(s.client_reference_id, "stripe", ref, s.amount_total, s.currency);
+        result = await pay(s.client_reference_id, "stripe", ref, s.amount_total, s.currency, { ...period, stripeSub: s.subscription ?? undefined });
       }
     } else if (event.type === "invoice.paid") {
       const inv = await stripe<StripeInvoice>("GET", `invoices/${o.id}`);
-      // The first invoice comes with checkout.session.completed; this handles the renewals.
+      // The first invoice comes with checkout.session.completed; this handles the renewals, to the end of the period
+      // the invoice paid for (Stripe bills calendar months: 28 to 31 days).
       if (inv.billing_reason !== "subscription_create" && inv.subscription) {
         const map = await db.doc(`stripeSubs/${inv.subscription}`).get();
-        result = map.exists ? await pay(map.get("checkout"), "stripe", inv.payment_intent ?? inv.id, inv.amount_paid, inv.currency) : "unknown subscription";
+        result = map.exists ? await pay(map.get("checkout"), "stripe", inv.payment_intent ?? inv.id, inv.amount_paid, inv.currency, { ...invoicePeriod(inv), stripeSub: inv.subscription }) : "unknown subscription";
       }
     } else if (event.type === "charge.refunded") {
       if (o.refunded === true && typeof o.payment_intent === "string") result = await refund("stripe", o.payment_intent);
       else result = "partial refund";
+    } else if (event.type === "customer.subscription.updated") {
+      // Renewal cancelled or restored (here or in Stripe), or a card failing: read back from Stripe, so an event that
+      // arrives late never undoes a newer change. The period itself only moves with a paid invoice.
+      const owner = await ownerOf(String(o.id));
+      if (owner?.mine) {
+        const s = await stripe<StripeSub>("GET", `subscriptions/${encodeURIComponent(String(o.id))}`);
+        await db.doc(`subscriptions/${owner.uid}`).set({ status: stripeSubStatus(s), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        result = stripeSubStatus(s);
+      }
     } else if (event.type === "customer.subscription.deleted") {
-      // Cancelled: Super lasts to the end of what was paid (entitlement keeps a cancelled subscription until then).
-      const map = await db.doc(`stripeSubs/${o.id}`).get();
-      const uid = map.exists ? ((await db.doc(`checkouts/${map.get("checkout")}`).get()).get("uid") as string | undefined) : undefined;
-      if (uid) { await db.doc(`subscriptions/${uid}`).set({ status: "canceled", updatedAt: FieldValue.serverTimestamp() }, { merge: true }); result = "canceled"; }
+      // Ended: Super lasts to the end of what was paid (entitlement keeps a cancelled subscription until then), and
+      // there is no renewal left to cancel or restore.
+      const owner = await ownerOf(String(o.id));
+      if (owner?.mine) { await db.doc(`subscriptions/${owner.uid}`).set({ status: "canceled", stripeSub: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }, { merge: true }); result = "canceled"; }
     }
   } catch (e) {
     // Stripe retries a failed webhook for days; recordPayment makes the retry safe.

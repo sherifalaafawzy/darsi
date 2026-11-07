@@ -120,7 +120,8 @@ describe("tools", () => {
     expect(outcome(asked, TOOLS)?.kind).toBe("ask");
     const replied = (await turn("Dala", TOOLS, asked)).turns;
     expect(calls(replied)).toEqual([{ tool: "weather", args: { place: "Dala", day: "tomorrow" } }]);
-    // The lab's notes are true: 9Z is copied as 9C, and one changed word makes the model guess a tool.
+    // The lab's notes are true: with every tool on 9Z is copied as 9C (as the lesson's reading says; the
+    // note doesn't name the class, since other tool lines give 9A), and one changed word makes the model guess a tool.
     const nineZ = outcome((await turn("What does 9Z have tomorrow?")).turns, TOOLS);
     expect(nineZ?.kind).toBe("wrong");
     expect(nineZ?.ungrounded).toEqual(["9C"]);
@@ -178,6 +179,7 @@ describe("memory", () => {
   async function chat(lang: Lang, strategy: Strategy, size: number) {
     let ts: Turn[] = [];
     let full = false;
+    let cutAt = 0; // which message's answer ran out of room (1-based), 0 if none
     for (const msg of SCRIPT[lang]) {
       ts = [...ts, ...user(msg)];
       for (let k = 0; k < 6 && nextOf(ts) !== "done"; k++) {
@@ -186,23 +188,31 @@ describe("memory", () => {
         if (size - w.used <= 4) { full = true; break; }
         const { out, add } = await advance({ tools: TOOLS, turns: visible(ts, w.fate) }, gen, run, undefined, size - w.used);
         ts = [...ts, ...add];
+        if (out.kind === "answer" && out.cut && !cutAt) cutAt = ts.filter((t) => t.role === "user").length;
         if (out.kind === "bad" || (out.kind === "answer" && out.cut)) break;
       }
       if (full) break;
     }
-    return { ts, full };
+    return { ts, full, cutAt };
   }
 
-  it("keeping everything runs out of room by the fourth message", async () => {
-    const { ts, full } = await chat("en", "all", 384);
-    expect(full).toBe(true);
-    expect(ts.filter((t) => t.role === "user").length).toBeLessThan(6);
+  // The lab's try1 and the lessons (agents-s4, agents-3-1) say this, in both languages' messages.
+  it("keeping everything cuts the fourth answer off, then nothing fits", async () => {
+    for (const lang of ["en", "ar"] as const) {
+      const { ts, full, cutAt } = await chat(lang, "all", 384);
+      expect(full, lang).toBe(true);
+      expect(cutAt, lang).toBe(4);
+      expect(ts.filter((t) => t.role === "user").length, lang).toBeLessThan(6);
+    }
   }, 60_000);
 
   it("with a 128-token window, the oldest turns fall out and Darsi Tiny forgets", async () => {
-    const { ts } = await chat("en", "drop", 128);
-    expect(calls(ts).some((c) => c.tool === "send_message")).toBe(false); // the question fell out before "yes"
-    expect(calls(ts).at(-1)).toEqual({ tool: "weather", args: { place: "Dala", day: "today" } }); // "tomorrow" fell out
+    const place = { en: "Dala", ar: "دالا" };
+    for (const lang of ["en", "ar"] as const) {
+      const { ts } = await chat(lang, "drop", 128);
+      expect(calls(ts).some((c) => c.tool === "send_message"), lang).toBe(false); // the question fell out before "yes"
+      expect(calls(ts).at(-1), lang).toEqual({ tool: "weather", args: { place: place[lang], day: "today" } }); // "tomorrow" fell out
+    }
   }, 60_000);
 
   it("with notes, all seven messages work in 384 tokens", async () => {

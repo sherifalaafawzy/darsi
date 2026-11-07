@@ -8,7 +8,7 @@ import { checkCall, classSaid, unfound, type Issue } from "../agentloop/agent";
 /** What each tool does and what it needs, for people (FORMAT.md has the exact arguments). */
 export const TOOL_TEXT: Record<ToolName, { en: string; ar: string; args: string }> = {
   calculator: { en: "does sums", ar: "يجري الحسابات", args: "expr" },
-  timetable: { en: "reads a class's timetable", ar: "يقرأ جدول حصص الصف", args: "class, day, period?" },
+  timetable: { en: "reads a class's timetable", ar: "يقرأ جدول حصص الفصل", args: "class, day, period?" },
   weather: { en: "gives a village's weather", ar: "يعطي طقس قرية", args: "place, day?" },
   library: { en: "finds library books", ar: "يجد كتب المكتبة", args: "query" },
   attendance: { en: "reads a pupil's attendance", ar: "يقرأ حضور تلميذ", args: "student, range?" },

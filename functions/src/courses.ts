@@ -8,6 +8,7 @@
  */
 import { catalogPath, type Owner } from "./catalog.js";
 import { bucket } from "./storage.js";
+import { GRADED } from "./shared/types.js";
 
 const cache = new Map<string, { at: number; v: Promise<unknown> }>();
 /** The value for `key`, loaded at most every `ms`; a failed load is forgotten at once so the next call tries again. */
@@ -27,7 +28,7 @@ async function readJson(path: string): Promise<unknown | null> {
 }
 
 export interface CourseEntry { id: string; track: string; src?: string; version?: number }
-interface UnitFile { id: string; track: string; lessons: { id: string; competencies?: unknown }[] }
+interface UnitFile { id: string; track: string; lessons: { id: string; competencies?: unknown; steps?: { type?: unknown }[] }[] }
 const OWNER = /^[A-Za-z0-9_-]{1,128}$/;
 
 /** One owner's catalog ("public" or an orgId): its published units. */
@@ -47,7 +48,15 @@ export async function visibleCourses(orgId: string | null): Promise<CourseEntry[
 
 const unitFile = (src: string) => cached(`unit:${src}`, 30 * 60e3, async () => (await readJson(src)) as UnitFile | null);
 
-export interface LessonMeta { unitId: string; track: string; competencies: string[] }
+/**
+ * `graded`: false when the lesson asks nothing that is marked right or wrong (a project or capstone stage, a reading):
+ * its result then says nothing about accuracy, and the summary doesn't count it as a score (FC-06).
+ */
+export interface LessonMeta { unitId: string; track: string; competencies: string[]; graded?: boolean }
+
+/** Whether a lesson has a step that is marked right or wrong (the engine's GRADED step types). */
+export const lessonGraded = (lesson: { steps?: { type?: unknown }[] }) =>
+  (Array.isArray(lesson.steps) ? lesson.steps : []).some((s) => GRADED.has(s?.type as never));
 
 /**
  * The unit, track and competencies of a published lesson the person can see, from the unit itself; null when no such
@@ -61,7 +70,7 @@ export async function lessonMeta(lessonId: string, orgId: string | null): Promis
     const lesson = unit?.lessons?.find((l) => l.id === lessonId);
     if (unit && lesson) {
       const competencies = (Array.isArray(lesson.competencies) ? lesson.competencies : []).filter((c): c is string => typeof c === "string" && c.length <= 40).slice(0, 30);
-      return { unitId: unit.id, track: unit.track, competencies };
+      return { unitId: unit.id, track: unit.track, competencies, graded: lessonGraded(lesson) };
     }
   }
   return null;

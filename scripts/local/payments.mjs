@@ -30,7 +30,7 @@ function parseForm(text) {
 
 export async function startPayments({ secrets, functionsUrl, paymobHmac }) {
   const s = readEnv(secrets);
-  const paymob = new Map(), sessions = new Map(), invoices = new Map(), transactions = new Map();
+  const paymob = new Map(), sessions = new Map(), invoices = new Map(), transactions = new Map(), subscriptions = new Map();
   const post = (url, body, headers) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body }).then(async (r) => `${r.status} ${await r.text()}`);
 
   const server = http.createServer((req, res) => {
@@ -75,7 +75,7 @@ export async function startPayments({ secrets, functionsUrl, paymobHmac }) {
           const b = parseForm(raw), li = b.line_items?.["0"] ?? {}, total = Number(li.price_data?.unit_amount ?? 0) * Number(li.quantity ?? 1);
           const sid = id("cs_test");
           sessions.set(sid, { id: sid, object: "checkout.session", client_reference_id: b.client_reference_id, mode: b.mode, payment_status: "unpaid", payment_intent: null, invoice: null, subscription: null,
-            amount_total: total, currency: li.price_data?.currency ?? "usd", success_url: b.success_url, cancel_url: b.cancel_url, name: li.price_data?.product_data?.name ?? "Darsi" });
+            amount_total: total, currency: li.price_data?.currency ?? "usd", success_url: b.success_url, cancel_url: b.cancel_url, name: li.price_data?.product_data?.name ?? "Darsi", interval: li.price_data?.recurring?.interval ?? null });
           return json(200, { id: sid, url: `http://127.0.0.1:4799/stripe/${sid}` });
         }
         const sm = req.method === "GET" && url.pathname.match(/^\/stripe\/(cs_test_[0-9a-f]+)$/);
@@ -92,15 +92,29 @@ export async function startPayments({ secrets, functionsUrl, paymobHmac }) {
           c.payment_status = "paid"; c.payment_intent = id("pi");
           if (c.mode === "subscription") {
             c.subscription = id("sub"); c.invoice = id("in");
-            invoices.set(c.invoice, { id: c.invoice, subscription: c.subscription, payment_intent: c.payment_intent, billing_reason: "subscription_create", amount_paid: c.amount_total, currency: c.currency });
+            // Like Stripe's: the line's period is the month (or year) paid for, by the calendar.
+            const start = new Date(), end = new Date(start);
+            if (c.interval === "year") end.setUTCFullYear(end.getUTCFullYear() + 1); else end.setUTCMonth(end.getUTCMonth() + 1);
+            const period = { start: Math.floor(start.getTime() / 1000), end: Math.floor(end.getTime() / 1000) };
+            invoices.set(c.invoice, { id: c.invoice, subscription: c.subscription, payment_intent: c.payment_intent, billing_reason: "subscription_create", amount_paid: c.amount_total, currency: c.currency, lines: { object: "list", data: [{ period }] } });
+            subscriptions.set(c.subscription, { id: c.subscription, object: "subscription", status: "active", cancel_at_period_end: false, current_period_end: period.end });
           }
           const body = JSON.stringify({ id: id("evt"), type: "checkout.session.completed", data: { object: { id: c.id } } }), t = Math.floor(Date.now() / 1000);
           const sig = `t=${t},v1=${createHmac("sha256", s.STRIPE_WEBHOOK_SECRET).update(`${t}.${body}`).digest("hex")}`;
           console.log(`  payments: Stripe → ${await post(`${functionsUrl}/stripeWebhook`, body, { "Stripe-Signature": sig })}`);
           return go(c.success_url);
         }
-        const get = req.method === "GET" && url.pathname.match(/^\/v1\/(checkout\/sessions|invoices)\/([^/?]+)/);
-        if (get) { const o = (get[1] === "invoices" ? invoices : sessions).get(get[2]); return o ? json(200, o) : json(404, { error: { message: "No such object" } }); }
+        // A subscription's renewal cancelled or restored (setRenewal), and read back (the subscription.updated webhook).
+        const um = req.method === "POST" && url.pathname.match(/^\/v1\/subscriptions\/([^/?]+)$/);
+        if (um) {
+          const sub = subscriptions.get(decodeURIComponent(um[1]));
+          if (!sub || sub.status === "canceled") return json(404, { error: { message: "No such subscription" } });
+          const f = parseForm(raw);
+          if (f.cancel_at_period_end !== undefined) sub.cancel_at_period_end = f.cancel_at_period_end === "true";
+          return json(200, sub);
+        }
+        const get = req.method === "GET" && url.pathname.match(/^\/v1\/(checkout\/sessions|invoices|subscriptions)\/([^/?]+)/);
+        if (get) { const o = (get[1] === "invoices" ? invoices : get[1] === "subscriptions" ? subscriptions : sessions).get(decodeURIComponent(get[2])); return o ? json(200, o) : json(404, { error: { message: "No such object" } }); }
         json(404, { error: { message: `The local stand-in has no ${req.method} ${url.pathname}` } });
       } catch (e) { json(500, { error: { message: String(e) } }); }
     });

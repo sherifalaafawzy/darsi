@@ -19,7 +19,7 @@ async function onboard(page: Page) {
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("radio").nth(1).click();
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: /Start from the beginning/ }).click();
+  await page.getByRole("button", { name: /Skip the check/ }).click();
   // The test reloads next, and a reload can beat the store's async save: wait until IndexedDB has it.
   await page.waitForFunction(() => new Promise<boolean>((done) => {
     const open = indexedDB.open("keyval-store");

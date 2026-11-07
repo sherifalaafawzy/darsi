@@ -42,7 +42,11 @@ export const storage = () => (store ??= import("firebase/storage").then(({ getSt
 }));
 
 // The tutor's answers can take an explainer and a repair turn (functions/src/agent.ts), longer than the SDK's 70 s.
-const SLOW: Record<string, number> = { tutorAsk: 180_000 };
+// createMembers may run for 540 s (functions/src/index.ts): a client that gave up sooner would lose the passwords made.
+// deleteAccount deletes every record and file of an account (functions/src/account.ts), up to 540 s for a large one.
+// checkCapstone asks GitHub (up to 20 s) and the review model (up to 45 s) after a cold start, within its own 120 s: a
+// client that gave up at 70 s would say "check your connection" for a milestone that was in fact sent.
+const SLOW: Record<string, number> = { tutorAsk: 180_000, createMembers: 540_000, deleteAccount: 540_000, exportAccountData: 120_000, checkCapstone: 120_000 };
 
 /** Typed callable helper; loads the Functions SDK on the first call. */
 export const call = <Req, Res>(name: string) => async (data: Req): Promise<Res> => {

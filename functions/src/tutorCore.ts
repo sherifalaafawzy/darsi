@@ -16,7 +16,13 @@ const pick = (t: Local | undefined, lang: string) => (t ? (t[lang] ?? t.en ?? ""
 // Invisible isolates around code in Arabic text (TECHNICAL.md "Languages and right-to-left") mean nothing to the model.
 const clean = (s: string) => s.replace(/[⁦-⁩‎‏]/g, "").replace(/[ \t]+/g, " ").trim();
 
-/** Every lesson's sections in one language (English where a text is missing). */
+/**
+ * A course's unit check: the graded test that finishes the course (lesson ids `<unitId>-check`, questions only). Its
+ * questions' explanations name the answers, so the tutor is never given them (X-TUTOR-ANSWERS).
+ */
+export const isUnitCheck = (l: { id: string }) => l.id.endsWith("-check");
+
+/** Every lesson's sections in one language (English where a text is missing); a unit check's questions are left out. */
 export function sections(unit: TutorUnit, lang: string): Section[] {
   const out: Section[] = [];
   const course = pick(unit.title, lang);
@@ -30,17 +36,21 @@ export function sections(unit: TutorUnit, lang: string): Section[] {
         const terms = (s.keyTerms ?? []).map((k) => `${pick(k.term, lang)}: ${pick(k.def, lang)}`).join("\n");
         out.push({ ...base, id: `${l.id}/${s.id}`, kind: "reading", text: clean(`${pick(s.title, lang)}\n${pick(s.body, lang)}${terms ? `\n${terms}` : ""}`), terms: (s.keyTerms ?? []).map((k) => pick(k.term, lang)).filter(Boolean) });
       } else if (s.type === "project" && s.task) out.push({ ...base, id: `${l.id}/${s.id}`, kind: "project", text: clean(pick(s.task, lang)) });
-      else if (s.prompt && s.explain) practice.push(`${pick(s.prompt, lang)} — ${pick(s.explain, lang)}`);
+      else if (s.prompt && s.explain && !isUnitCheck(l)) practice.push(`${pick(s.prompt, lang)} — ${pick(s.explain, lang)}`);
     }
     if (practice.length) out.push({ unitId: unit.id, lessonId: l.id, stepId: "practice", course, lesson, id: `${l.id}/practice`, kind: "practice", text: clean(practice.join("\n")) });
   }
   return out;
 }
 
-/** The lesson the learner is in, as the tutor's course material (about 4,000 tokens at most). */
+/**
+ * The lesson the learner is in, as the tutor's course material (about 4,000 tokens at most). A lesson with no sections
+ * of its own (a unit check) gets the course's readings, so the tutor can still explain the ideas it tests.
+ */
 export function lessonMaterial(unit: TutorUnit, lessonId: string | null, lang: string, max = 14000) {
   const all = sections(unit, lang);
-  const mine = lessonId ? all.filter((s) => s.lessonId === lessonId) : all.filter((s) => s.kind === "reading");
+  const own = lessonId ? all.filter((s) => s.lessonId === lessonId) : [];
+  const mine = own.length ? own : all.filter((s) => s.kind === "reading");
   return mine.map((s) => `[${s.id}] (${s.lesson}, ${s.kind})\n${s.text}`).join("\n\n").slice(0, max);
 }
 
@@ -106,6 +116,7 @@ export function instructions(o: { lang: TutorLang; course: string; lesson: strin
     "SCOPE: answer only from the COURSE MATERIAL below and from what the search_course tool returns. If the material doesn't cover a question, don't answer it, even partly or from general knowledge: say kindly, in one sentence, that it's outside their Darsi courses, and offer to help with the lesson. Greetings and thanks are fine.",
     `LANGUAGE: ${speak} If the learner switches between Egyptian Arabic and English, follow them. For any other language, answer in ${o.lang === "ar" ? "Egyptian Arabic" : "English"}.`,
     "TEACHING: answer in two to four short sentences. When you explain a concept, end with one quick question that checks the learner understood. If they didn't, explain it another way (an analogy, a small worked example), never the same words again.",
+    "GRADED QUESTIONS: the course's own questions, quizzes and unit check are the learner's own work, and they count toward the certificate. Never give the answer to one of them, and never say whether an answer the learner is thinking of is right, even if they ask directly (which option, the order, the pairs, the missing word, the code). Instead give a hint, explain the idea the question tests with a different example, or point to the part of the lesson that settles it, and ask what they think. Your own check questions are yours to discuss.",
     o.style ? `The learner prefers: ${o.style}.` : "",
     o.voice ? "You are speaking aloud: no lists, no markdown, no symbols; say numbers and code as a person would." : "",
     o.voice ? "SEARCH FIRST: before you say something is outside the courses, always call search_course with the question. You hear speech, so words can be misheard: search with the course's own spelling of the term (for example phishing, not fishing), and treat a near-sounding course term as what the learner meant." : "",
@@ -150,6 +161,17 @@ export const outside = (lang: TutorLang) => lang === "ar"
 
 /** USD per million tokens, and per minute of audio (Google's price list; config/tutor can change them). */
 export interface Prices { textIn: number; audioIn: number; textOut: number; audioOut: number; perMinIn: number; perMinOut: number }
+/** The numbers ≥ 0 in a hand-written object (config/tutor's prices), and the keys of everything else. */
+export function finiteNumbers(o: unknown): { ok: Record<string, number>; bad: string[] } {
+  const ok: Record<string, number> = {}, bad: string[] = [];
+  if (o === undefined || o === null) return { ok, bad };
+  if (typeof o !== "object" || Array.isArray(o)) return { ok, bad: ["(not an object)"] };
+  for (const [k, v] of Object.entries(o as Record<string, unknown>)) {
+    if (typeof v === "number" && Number.isFinite(v) && v >= 0) ok[k] = v;
+    else bad.push(k);
+  }
+  return { ok, bad };
+}
 export const LIVE_PRICES: Prices = { textIn: 0.75, audioIn: 3, textOut: 4.5, audioOut: 12, perMinIn: 0.005, perMinOut: 0.018 };
 export const TEXT_PRICES: Prices = { textIn: 0.3, audioIn: 0.3, textOut: 2.5, audioOut: 2.5, perMinIn: 0, perMinOut: 0 };
 

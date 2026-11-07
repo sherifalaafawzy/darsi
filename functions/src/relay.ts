@@ -14,7 +14,7 @@
 import { createServer } from "node:http";
 import { WebSocket, WebSocketServer } from "ws";
 import { auth } from "./admin.js";
-import { askAgent } from "./agent.js";
+import { AgentError, askAgent } from "./agent.js";
 import { balance, charge, endCall, GEMINI_KEY, googleToken, hasSuper, loadUnit, minuteCredits, startCall, trackIndex, tutorConfig, tutorReady, vertexModel } from "./tutor.js";
 import type { Hold } from "./billingCore.js";
 import { EXPLAIN_TOOL, SEARCH_TOOL, audioCost, down3, instructions, lessonMaterial, pcmToUlaw, searchBoth, ulawToPcm, usageCost, type TutorLang, type Usage } from "./tutorCore.js";
@@ -26,18 +26,36 @@ const ORIGINS = (process.env.TUTOR_ORIGINS ?? "https://darsiai.org").split(",").
 /** Sockets per instance, and per address: a brake on anyone opening connections they never use (M6). */
 const MAX_SOCKETS = 300, MAX_PER_IP = 6;
 const open = new Map<string, number>();
-const ipOf = (req: { headers: Record<string, string | string[] | undefined>; socket: { remoteAddress?: string } }) =>
-  String(req.headers["x-forwarded-for"] ?? "").split(",")[0].trim() || req.socket.remoteAddress || "?";
+/**
+ * The caller's address: the last X-Forwarded-For entry, the one Google's front end adds on Cloud Run (sfm-10). The
+ * entries before it are whatever the caller sent, so keying on the first let anyone pass the per-address limit by
+ * sending a new one with every socket. (Phones reach the relay on its run.app address, not through Hosting, so the
+ * CDN's headers that functions/src/clientIp.ts reads aren't there, and a caller could set them.)
+ */
+export const ipOf = (req: { headers: Record<string, string | string[] | undefined>; socket: { remoteAddress?: string } }) => {
+  const h = req.headers["x-forwarded-for"];
+  const hops = (Array.isArray(h) ? h.join(",") : String(h ?? "")).split(",").map((s) => s.trim()).filter(Boolean);
+  return hops[hops.length - 1] || req.socket.remoteAddress || "?";
+};
 /** Warm-ups per minute per instance: they read only public courses, but each may build a search index. */
 let warms = { at: 0, n: 0 };
 const IDLE_MS = 90_000;
+
+/**
+ * Charges still being written after a phone hung up (an explainer that came back after it, the call's last turn).
+ * Cloud Run stops an instance with SIGTERM and gives it 10 seconds: they finish first.
+ */
+const settling = new Set<Promise<unknown>>();
+process.once("SIGTERM", () => {
+  void Promise.race([Promise.allSettled([...settling]), new Promise((ok) => setTimeout(ok, 8_000))]).finally(() => process.exit(0));
+});
 
 /**
  * GET /warm?u=<unitId>&l=<lang>, sent by the phone when the tutor panel opens: it wakes an instance (Cloud Run scales
  * to zero, and a cold start took 3 s), and warms the settings, Google's token and a public course's search index, so a
  * call that follows starts at once. It reads nothing private and answers nothing. (Cloud Run reserves /healthz.)
  */
-const server = createServer((req, res) => {
+export const server = createServer((req, res) => {
   const url = new URL(req.url ?? "/", "http://relay");
   if (url.pathname !== "/warm") { res.writeHead(404).end(); return; }
   res.writeHead(204, { "Cache-Control": "no-store" }).end();
@@ -58,8 +76,12 @@ const wss = new WebSocketServer({
   },
 });
 
+let hopsLogged = false;
 wss.on("connection", (phone: WebSocket, req: Parameters<typeof ipOf>[0]) => {
   const ip = ipOf(req);
+  // Once per instance, how many X-Forwarded-For entries arrive (no addresses): a phone's own connection should have
+  // one, which confirms Google's front end adds the last (sfm-10).
+  if (!hopsLogged) { hopsLogged = true; console.log("relay: x-forwarded-for entries", String(req.headers["x-forwarded-for"] ?? "").split(",").filter((s) => s.trim()).length); }
   open.set(ip, (open.get(ip) ?? 0) + 1);
   phone.once("close", () => { const n = (open.get(ip) ?? 1) - 1; if (n > 0) open.set(ip, n); else open.delete(ip); });
   const send = (o: unknown) => { if (phone.readyState === WebSocket.OPEN) phone.send(JSON.stringify(o)); };
@@ -92,11 +114,20 @@ wss.on("connection", (phone: WebSocket, req: Parameters<typeof ipOf>[0]) => {
     await endCall(uid, c.id, c.hold, short).catch((e) => console.error("hold not released", String(e)));
   };
   let cfgLive: Awaited<ReturnType<typeof tutorConfig>>["live"] | null = null;
+  // The explainer being made (one at a time per call), so a hang-up waits for its cost before the last charge (sfm-02).
+  let explaining: Promise<void> | null = null;
   const end = () => {
     if (closed) return;
     closed = true;
-    [helloWait, idle, cap].forEach((t) => t && clearTimeout(t));
-    void settle(true).finally(() => release());
+    clearTimeout(helloWait);
+    if (idle) clearInterval(idle);
+    if (cap) clearTimeout(cap);
+    // The agent's turn runs on after a hang-up and Darsi pays for it: its cost is charged when it comes back, before
+    // the credits held for the call are settled and released, so what it cost beyond the balance comes out of the
+    // hold. The voice place is kept until then, so hanging up on a drawing and calling again doesn't skip the charge.
+    const last = Promise.resolve(explaining).catch(() => {}).then(() => settle(true)).finally(() => release());
+    settling.add(last);
+    void last.finally(() => settling.delete(last));
     gem?.close();
     if (phone.readyState === WebSocket.OPEN) phone.close();
   };
@@ -134,8 +165,17 @@ wss.on("connection", (phone: WebSocket, req: Parameters<typeof ipOf>[0]) => {
     // One call at a time per person, with a minute's credits held while it runs (M5).
     try { call = await startCall(user.uid, "voice", await minuteCredits(cfg), (cfg.maxMinutes + 2) * 60_000); }
     catch (e) { return fail(String((e as Error).message) === "busy" ? "busy" : "no-credits"); }
-    if (closed) { uid = user.uid; await release(); return; }
+    // From here on, end() settles and releases this call.
     uid = user.uid;
+    if (closed) { await release(); return; }
+    // Google's token comes before Gemini's session opens: a phone that left while it was fetched must not leave a Live
+    // session and its timers running (sfm-11). end() has released the call then.
+    const vertex = cfg.backend === "vertex";
+    let bearer = "";
+    if (vertex) {
+      try { bearer = await googleToken(); } catch (e) { console.error("google token", String(e)); return fail("tutor-gone"); }
+      if (closed) return;
+    }
     const lang: TutorLang = m.lang === "ar" ? "ar" : "en";
     const lessonId = String(m.lessonId ?? "").slice(0, 80) || null;
     const lesson = unit.lessons.find((l) => l.id === lessonId);
@@ -146,33 +186,41 @@ wss.on("connection", (phone: WebSocket, req: Parameters<typeof ipOf>[0]) => {
     let agentSession = "";
     const sys = instructions({ lang, course: unit.title[lang] ?? unit.title.en, lesson: lesson ? (lesson.title[lang] ?? lesson.title.en) : "", material: lessonMaterial(unit, lessonId, lang, 10000), voice: true, style: String(m.style ?? "").slice(0, 60), explain: agentOn });
     /** The explain tool. The phone shows the board at once and the tutor says it will draw there; the pictures are made
-     * in the background and start when they are ready, and the tutor is then given the scenes to talk through. */
+     * in the background and start when they are ready, and the tutor is then given the scenes to talk through. One
+     * at a time per call. Whatever happens to the call, the agent's turn is charged: Darsi pays for it either way. */
     const explain = (topic: string): string => {
+      if (closed) return "The call has ended.";
+      if (explaining) return "The last drawing is still being made and will appear on the board. Keep talking about it; don't ask for another one yet.";
       send({ type: "board" });
-      void (async () => {
+      const say = (text: string) => { if (!closed && gem?.readyState === WebSocket.OPEN) gem.send(JSON.stringify({ realtimeInput: { text } })); };
+      explaining = (async () => {
         try {
           const [ix, ixEn] = await indexes;
           const r = await askAgent({ cfg, uid, orgId, unit, lessonId, lang, question: topic.slice(0, 600), show: true, sessionId: agentSession || undefined, ix, en: ixEn });
           agentSession = r.sessionId;
           agentUsd += r.usd;
-          if (closed) return;
-          const say = (text: string) => { if (gem?.readyState === WebSocket.OPEN) gem.send(JSON.stringify({ realtimeInput: { text } })); };
-          if (!r.explainer) { say("The pictures could not be drawn. Explain the topic in words now."); return; }
-          send({ type: "explainer", pkg: r.explainer });
-          const script = r.explainer.scenes.scenes.map((s, i) => `Scene ${i + 1}: ${(s.narration as Record<string, string>)[lang]}`).join("\n");
-          say(`The board is playing. Talk through these scenes now, in order, in the learner's language:\n${script}`);
-          void settle();
+          if (!closed) {
+            if (!r.explainer) say("The pictures could not be drawn. Explain the topic in words now.");
+            else {
+              send({ type: "explainer", pkg: r.explainer });
+              const script = r.explainer.scenes.scenes.map((s, i) => `Scene ${i + 1}: ${(s.narration as Record<string, string>)[lang]}`).join("\n");
+              say(`The board is playing. Talk through these scenes now, in order, in the learner's language:\n${script}`);
+            }
+          }
         } catch (e) {
+          // A failed or timed-out explainer still cost what the agent measured, and what surely ran (AgentError).
+          if (e instanceof AgentError) agentUsd += e.usd;
           console.error("explain failed", String(e));
-          if (gem?.readyState === WebSocket.OPEN) gem.send(JSON.stringify({ realtimeInput: { text: "The pictures could not be drawn. Explain the topic in words now." } }));
+          say("The pictures could not be drawn. Explain the topic in words now.");
         }
-      })();
+        // On a call that is still going this charges now; after a hang-up, end() charges it once this is done.
+        if (!closed) await settle();
+      })().finally(() => { explaining = null; });
       return "Say one short sentence, in the learner's language, that you will show this on the board. Then stop. Do not explain the topic yet.";
     };
 
-    const vertex = cfg.backend === "vertex";
     gem = vertex
-      ? new WebSocket(process.env.VERTEX_LIVE_URL ?? `wss://${cfg.liveLocation}-aiplatform.googleapis.com/ws/google.cloud.aiplatform.v1.LlmBidiService/BidiGenerateContent`, { headers: { Authorization: `Bearer ${await googleToken()}` } })
+      ? new WebSocket(process.env.VERTEX_LIVE_URL ?? `wss://${cfg.liveLocation}-aiplatform.googleapis.com/ws/google.cloud.aiplatform.v1.LlmBidiService/BidiGenerateContent`, { headers: { Authorization: `Bearer ${bearer}` } })
       : new WebSocket(`${LIVE}?key=${encodeURIComponent(GEMINI_KEY.value())}`);
     gem.on("open", () => gem!.send(JSON.stringify({ setup: {
       model: vertex ? vertexModel(cfg.vertexProject, cfg.liveLocation, cfg.liveModel) : `models/${cfg.liveModel}`,
@@ -186,6 +234,8 @@ wss.on("connection", (phone: WebSocket, req: Parameters<typeof ipOf>[0]) => {
       let s: { setupComplete?: unknown; serverContent?: { modelTurn?: { parts?: { inlineData?: { data?: string } }[] }; interrupted?: boolean; turnComplete?: boolean; inputTranscription?: { text?: string }; outputTranscription?: { text?: string } }; toolCall?: { functionCalls?: { id: string; name: string; args?: { query?: string } }[] }; usageMetadata?: Usage; goAway?: unknown };
       try { s = JSON.parse(raw.toString("utf8")); } catch { return; }
       if (s.setupComplete) {
+        // The phone left while the session was being set up: close it rather than start timers no end() would stop.
+        if (closed) { gem?.close(); return; }
         send({ type: "ready", left });
         idle = setInterval(() => { if (Date.now() - lastActive > IDLE_MS) end(); }, 15_000);
         cap = setTimeout(() => { send({ type: "error", code: "time" }); end(); }, cfg.maxMinutes * 60_000);

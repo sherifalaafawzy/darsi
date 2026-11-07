@@ -14,7 +14,7 @@ import { ASK, BLOCKS, BUS_TOOLS, EXAMPLES, LR, oldPhoneMinutes, REPLAYS, runBus,
 
 const S = {
   en: {
-    intro: "Fine-tuning teaches a model something new from examples. Here you teach Darsi Tiny a new tool, bus, from 16 example conversations, on this phone: only its top layer learns. Then you test the new tool, and its old skills.",
+    intro: "Fine-tuning teaches a model something new from examples. Here you teach Darsi Tiny a new tool, bus, from 16 example conversations, on this phone: only its top block learns. Then you test the new tool, and its old skills.",
     tool: "The new tool", toolText: "tells the next bus from a village and how often buses go. It takes:",
     ask: "Ask about a bus", askNote: "Before teaching, Darsi Tiny has never seen the bus tool, even though it is in its tools line.",
     examples: (n: string) => `The ${n} examples`,
@@ -26,7 +26,7 @@ const S = {
     took: (t: string) => `Teaching took ${t} on this phone.`,
     stopped: (a: string) => `Stopped after step ${a}. What it learned so far is in use; Continue goes on from there.`,
     hidden: "Stopped because the screen was hidden: nothing trains in the background.",
-    loss: "Error on the examples", lossLabel: "Error after each step",
+    loss: "Error on the examples", lossLabel: "Error after each step", stepAxis: "Step",
     testing: "Testing…", results: "Test results",
     newTool: (a: string, b: string) => `New tool, villages it never saw: ${a} of ${b} right.`,
     oldSkills: (a: string, b: string) => `Old skills: ${a} of ${b} right.`,
@@ -42,7 +42,7 @@ const S = {
     takeaway: "Fine-tuning changes a model's numbers so it learns from examples, but it can forget what it knew; practising old examples alongside the new ones keeps them. Test both before you trust the result.",
   },
   ar: {
-    intro: "الضبط الدقيق يعلّم النموذج شيئًا جديدًا من أمثلة. هنا تعلّم «درسي الصغير» أداة جديدة اسمها bus من ١٦ محادثة نموذجية، على هذا الهاتف: لا تتعلّم إلا طبقته العليا. ثم تختبر الأداة الجديدة، ومهاراته القديمة.",
+    intro: "الضبط الدقيق يعلّم النموذج شيئًا جديدًا من أمثلة. هنا تعلّم «درسي الصغير» أداة جديدة اسمها bus من ١٦ محادثة نموذجية، على هذا الهاتف: لا تتعلّم إلا كتلته العليا. ثم تختبر الأداة الجديدة، ومهاراته القديمة.",
     tool: "الأداة الجديدة", toolText: "تخبر بموعد الحافلة التالية من قرية، وكل كم دقيقة تمر الحافلات. تأخذ:",
     ask: "اسأل عن حافلة", askNote: "قبل التعليم، لم يرَ «درسي الصغير» أداة bus قط، مع أنها في سطر أدواته.",
     examples: (n: string) => `الأمثلة الـ${n}`,
@@ -54,7 +54,7 @@ const S = {
     took: (t: string) => `استغرق التعليم ${t} على هذا الهاتف.`,
     stopped: (a: string) => `توقف بعد الخطوة ${a}. ما تعلّمه حتى الآن قيد الاستعمال، و«تابع» يكمل من هناك.`,
     hidden: "توقف لأن الشاشة أُخفيت: لا شيء يتدرّب في الخلفية.",
-    loss: "الخطأ في الأمثلة", lossLabel: "الخطأ بعد كل خطوة",
+    loss: "الخطأ في الأمثلة", lossLabel: "الخطأ بعد كل خطوة", stepAxis: "الخطوة",
     testing: "يختبر…", results: "نتائج الاختبار",
     newTool: (a: string, b: string) => `الأداة الجديدة، مع قرى لم يرها: ${a} من ${b} صحيحة.`,
     oldSkills: (a: string, b: string) => `المهارات القديمة: ${a} من ${b} صحيحة.`,
@@ -70,6 +70,9 @@ const S = {
     takeaway: "يغيّر الضبط الدقيق أرقام النموذج فيتعلّم من الأمثلة، لكنه قد ينسى ما كان يعرفه؛ والتمرّن على أمثلة قديمة مع الجديدة يحفظها. اختبر الاثنين قبل أن تثق بالنتيجة.",
   },
 };
+
+/** Ticks on whole steps only (1, 3, 5 … 15), never 5.67 or 10.33. */
+const STEP_TICKS = [7, 6, 5, 4, 3, 2].find((d) => (STEPS - 1) % d === 0) ?? 1;
 
 interface Run { replay: number; newOk: number; oldOk: number; ms: number }
 interface Saved { buf: ArrayBuffer; replay: number }
@@ -209,8 +212,8 @@ export default function Teach({ meta, onDone }: LabProps) {
               {phase !== "training" && done === total && lastRun && <p className="lb-note">{s.took(secs(lastRun.ms))}</p>}
               {partial && phase === "idle" && <p className="lb-verdict is-warn">{hidden ? s.hidden : s.stopped(num(partial.done))}</p>}
               {losses.length > 1 && (
-                <Plot x={[1, STEPS]} y={[0, Math.max(...losses) * 1.1]} label={s.lossLabel} height={160} xLabel={s.step(num(STEPS), num(STEPS))} yLabel={s.loss}
-                  lines={[{ points: losses.map((l, i) => [i + 1, l] as const), tone: "b" }]} ticks={3} />
+                <Plot x={[1, STEPS]} y={[0, Math.max(...losses) * 1.1]} label={s.lossLabel} height={160} xLabel={s.stepAxis} yLabel={s.loss}
+                  lines={[{ points: losses.map((l, i) => [i + 1, l] as const), tone: "b" }]} ticks={STEP_TICKS} yTicks={3} />
               )}
             </div>
           )}

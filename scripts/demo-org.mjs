@@ -8,7 +8,8 @@
  *   npm run demo-org -- --remove            delete the demo organization and every demo account (add --emulator locally)
  *
  * What it makes (the same every time: a seeded random generator; running it again replaces it):
- * - orgs/demo-school, "Nile Valley Demo School" (`demo: true`), with invite codes (orgs/demo-school/private/invites).
+ * - orgs/demo-school, "Nile Valley Demo School" (`demo: true`), with invite codes (orgs/demo-school/private/invites)
+ *   and its request's contact and reason (orgs/demo-school/private/request).
  * - An org admin, 4 teachers and 48 students in 4 classes. Accounts are `demo-…` uids with username logins
  *   (`demo.<name>@users.darsi.app`, docs/FIREBASE.md); students and teachers get random passwords nobody knows.
  * - Lessons finished over the last 12 weeks, from the real courses in content/units (their competencies, so the
@@ -46,6 +47,7 @@ const { getStorage } = require("firebase-admin/storage");
 initializeApp({ projectId, storageBucket: emulator ? `${projectId}.appspot.com` : "darsi-f0685", ...(emulator ? {} : { credential: applicationDefault() }) });
 const db = getFirestore(), auth = getAuth();
 const { summarize } = await import(pathToFileURL(join(ROOT, "functions/lib/summary.js")).href);
+const { GRADED } = await import(pathToFileURL(join(ROOT, "functions/lib/shared/types.js")).href);
 
 const ORG = "demo-school";
 const DAY = 864e5, NOW = Date.now();
@@ -84,6 +86,8 @@ const shuffle = (xs) => xs.map((x) => [rnd(), x]).sort((a, b) => a[0] - b[0]).ma
 /* ---------- Courses from content/units, in lesson order ---------- */
 const units = readdirSync(join(ROOT, "content/units")).filter((f) => f.endsWith(".json")).map((f) => JSON.parse(readFileSync(join(ROOT, "content/units", f), "utf8")));
 const lessonsOf = (u) => u.lessons.map((l) => ({ id: l.id, unitId: u.id, track: u.track, competencies: l.competencies ?? [] }));
+/** Lessons with nothing marked right or wrong (projects, capstone stages): the summary doesn't score them (summary.ts). */
+const ungraded = new Set(units.flatMap((u) => u.lessons.filter((l) => !(l.steps ?? []).some((s) => GRADED.has(s.type))).map((l) => l.id)));
 const studentCourse = (track, level) => units.find((u) => u.track === track && u.audience === "students" && u.level === level);
 const teacherCourse = (track, level) => units.find((u) => u.track === track && !u.audience && !u.teach && u.level === level);
 
@@ -152,7 +156,7 @@ async function writeProgress(uid, rows) {
   const batch = db.batch();
   for (const p of rows) batch.set(db.doc(`users/${uid}/progress/${p.lessonId}`), p);
   // The summary the trigger would write; it recomputes the same thing when it sees the progress docs.
-  batch.set(db.doc(`users/${uid}`), { summary: summarize(rows, NOW) }, { merge: true });
+  batch.set(db.doc(`users/${uid}`), { summary: summarize(rows.map((p) => (ungraded.has(p.lessonId) ? { ...p, graded: false } : p)), NOW) }, { merge: true });
   await batch.commit();
 }
 
@@ -163,10 +167,11 @@ const code = () => Array.from(randomBytes(12), (b) => SET[b % SET.length]).join(
 const codes = { teacher: code(), student: code() };
 await db.doc(`orgs/${ORG}`).set({
   name: "Nile Valley Demo School", type: "school", country: "EG", city: "Aswan", size: 52, status: "active", demo: true,
-  contact: "Demo data, not a real school", reason: "Made by scripts/demo-org.mjs for testing", createdBy: "demo-admin",
-  memberCount: 53, createdAt: Timestamp.fromMillis(NOW - 100 * DAY), reviewedAt: Timestamp.fromMillis(NOW - 99 * DAY),
+  createdBy: "demo-admin", memberCount: 53, createdAt: Timestamp.fromMillis(NOW - 100 * DAY), reviewedAt: Timestamp.fromMillis(NOW - 99 * DAY),
 });
 await db.doc(`orgs/${ORG}/private/invites`).set(codes);
+// The request's contact and reason are private, as requestOrg stores them: every member reads the org document.
+await db.doc(`orgs/${ORG}/private/request`).set({ contact: "Demo data, not a real school", reason: "Made by scripts/demo-org.mjs for testing" });
 await Promise.all(Object.entries(codes).map(([role, c]) => db.doc(`inviteCodes/${c}`).set({ orgId: ORG, role })));
 
 const logins = {};

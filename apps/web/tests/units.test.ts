@@ -8,14 +8,25 @@ import { COMPETENCIES } from "../src/content/competencies";
 import { GRADED, type Unit } from "../src/content/types";
 import { validateUnit } from "../src/content/validate";
 import { LAB_METAS } from "../src/labs/catalog";
-import { kitFiles, mediaPathOf, mediaPaths, withKitUrls } from "../../../scripts/lib/kits.mjs";
-import { arabicStrings, codePieces, isolatesPair } from "../../../scripts/lib/isolates.mjs";
+import { figurePaths, kitFiles, mediaPathOf, mediaPaths, withKitUrls } from "../../../scripts/lib/kits.mjs";
+import { arabicStrings, isolatesOverLines, isolatesPair, reisolate } from "../../../scripts/lib/isolates.mjs";
+import { figureOf } from "../src/content/figure";
 import { runInNode } from "./code/node";
 
 const DIR = join(__dirname, "../../../content/units");
 const KITS = join(__dirname, "../../../content/kits");
+const PACKS = join(__dirname, "../../../content/packs");
 const units = readdirSync(DIR).filter((f) => f.endsWith(".json")).map((f) => JSON.parse(readFileSync(join(DIR, f), "utf8")) as Unit);
 const codes = new Set(COMPETENCIES.map((c) => c.code));
+/**
+ * Code and formulas in Arabic text sit in left-to-right isolates exactly as `node scripts/isolate-code.mjs --fix` puts
+ * them (a half-isolated formula fails too), the isolates pair up, and none holds a line break.
+ */
+const isolateProblems = (strings: [string, string, unknown][]) => strings.flatMap(([path, text]) => [
+  ...(reisolate(text) !== text ? [`${path}: run node scripts/isolate-code.mjs --fix`] : []),
+  ...(!isolatesPair(text) ? [`${path}: isolates don't pair up`] : []),
+  ...isolatesOverLines(text).map(() => `${path}: an isolate holds a line break`),
+]);
 
 describe.each(units.map((u) => [u.id, u] as const))("course %s", (_, unit) => {
   it("validates with no errors and no warnings", () => {
@@ -53,6 +64,12 @@ describe.each(units.map((u) => [u.id, u] as const))("course %s", (_, unit) => {
     const published = withKitUrls(unit, url, { has: (f) => existsSync(join(KITS, f)), media });
     expect(validateUnit(published, { competencies: codes }).filter((i) => i.level === "error")).toEqual([]);
     expect(JSON.stringify(published)).not.toMatch(/"\/kits\//);
+    // Pictures in the text point at Storage too, and the app shows them (content/figure.ts); no /media/ path is left.
+    const shown = published.lessons.flatMap((l) => l.steps.flatMap((s) => (s.type === "read" ? [s.body] : s.type === "project" ? (s.setup ?? []).map((x) => x.body) : [])))
+      .flatMap((t) => Object.values(t).flatMap((v) => (v ?? "").split(/\n\s*\n/))).map((p) => figureOf(p, "test")).filter(Boolean);
+    expect(shown.length).toBeGreaterThanOrEqual(figurePaths(unit).length);
+    expect(shown.filter((f) => !f!.src.startsWith("https://"))).toEqual([]);
+    expect(JSON.stringify(published)).not.toMatch(/\(\/[⁦-⁩]?media\//);
   });
 
   // `npm run kits` builds them (English is always required; some kits exist in English only).
@@ -65,10 +82,28 @@ describe.each(units.map((u) => [u.id, u] as const))("course %s", (_, unit) => {
     for (const m of text.matchAll(/"ar":\s*"([^"]*)"/g)) expect(m[1]).not.toContain("·");
   });
 
+  // Beside Arabic-Indic digits the Greek ε is drawn like ٤ («٤ε» reads «٤٤»): write «إبسلون» (docs/curriculum/ar-lingo.md).
+  it("never puts a bare ε next to an Arabic-Indic digit in Arabic", () => {
+    expect(arabicStrings(JSON.parse(JSON.stringify(unit))).filter(([, t]) => /[٠-٩]\s?ε|ε\s?[٠-٩]/.test(t)).map(([p]) => p)).toEqual([]);
+  });
+
   it("keeps code and formulas in Arabic text in left-to-right isolates (node scripts/isolate-code.mjs --fix)", () => {
-    const strings = arabicStrings(JSON.parse(JSON.stringify(unit)));
-    const missing = strings.flatMap(([path, text]) => codePieces(text).map(([s, e]) => `${path}: ${text.slice(s, e)}`));
-    expect(missing).toEqual([]);
-    expect(strings.filter(([, text]) => !isolatesPair(text)).map(([path]) => `${path}: isolates don't pair up`)).toEqual([]);
+    expect(isolateProblems(arabicStrings(JSON.parse(JSON.stringify(unit))))).toEqual([]);
+  });
+});
+
+// Course packs (content/packs) are printed in the Arabic course-pack PDF: their code and formulas need isolates too.
+describe.each(readdirSync(PACKS).filter((f) => f.endsWith(".json")).map((f) => [f] as const))("course pack %s", (f) => {
+  const pack = JSON.parse(readFileSync(join(PACKS, f), "utf8"));
+  it("keeps code and formulas in Arabic text in left-to-right isolates (node scripts/isolate-code.mjs --fix)", () => {
+    expect(isolateProblems(arabicStrings(pack, f))).toEqual([]);
+  });
+  it("never uses the middle dot in Arabic", () => {
+    for (const m of JSON.stringify(pack).matchAll(/"ar":\s*"([^"]*)"/g)) expect(m[1]).not.toContain("·");
+  });
+  // build-kits prints a criterion's levels[0..3] under Excellent, Good, Developing and Not yet: the best work comes first.
+  it("lists each rubric criterion's levels best first", () => {
+    const weakest = /^(none|vague|missing|incorrect|unclear|wrong|weak|fails|does not|not |one run|out(side)? of scope)/i;
+    for (const r of pack.rubric ?? []) expect(r.levels[0].en, `${f}: ${r.name.en}`).not.toMatch(weakest);
   });
 });

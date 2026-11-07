@@ -6,7 +6,7 @@
  */
 import { logger } from "firebase-functions/v2";
 import { onRequest } from "firebase-functions/v2/https";
-import { agentMessage, parseEvents, readTurn, repairMessage, turnCost, type AgentReply, type AgentTurn } from "./agentCore.js";
+import { abandonedCost, agentMessage, parseEvents, readTurn, repairMessage, turnCost, type AgentReply, type AgentTurn } from "./agentCore.js";
 import { toPackage, type ExplainerPackage } from "./explainer.js";
 import { googleToken, loadUnit, PROJECT, trackIndex, tutorConfig, type TutorConfig } from "./tutor.js";
 import { instructions, lessonMaterial, searchBoth, type Index, type TutorLang, type TutorUnit } from "./tutorCore.js";
@@ -42,20 +42,31 @@ async function runTurn(cfg: TutorConfig, uid: string, sessionId: string, message
 
 export interface AgentAnswer { reply: AgentReply; explainer: ExplainerPackage | null; sessionId: string; usd: number }
 
+/**
+ * A question the agent didn't answer, with what it cost Darsi anyway (sfm-03): turns it finished (a reply-less turn,
+ * a first turn before a repair that failed) at their measured cost, and a turn given up at its time limit at what it
+ * surely cost (abandonedCost). The callers charge it, so a slow or failed agent turn is never free.
+ */
+export class AgentError extends Error {
+  constructor(message: string, readonly usd: number, readonly timedOut = false) { super(message); this.name = "AgentError"; }
+}
+const timedOut = (e: unknown) => (e as Error)?.name === "TimeoutError" || String(e).includes("TimeoutError");
+
 type SessionFor = { cfg: TutorConfig; uid: string; orgId: string | null; unit: TutorUnit; lessonId: string | null; lang: TutorLang; style?: string };
+const rulesFor = (o: SessionFor, material: string) => {
+  const lesson = o.unit.lessons.find((l) => l.id === o.lessonId);
+  return instructions({ lang: o.lang, course: o.unit.title[o.lang] ?? o.unit.title.en, lesson: lesson ? (lesson.title[o.lang] ?? lesson.title.en) : "", material, voice: false, style: o.style });
+};
 /** A new agent session with the tutor's rules and the lesson (tutorAsk opens one when the panel opens, so the first question doesn't wait). */
 export function openSession(o: SessionFor): Promise<string> {
   const material = lessonMaterial(o.unit, o.lessonId, o.lang, 10000);
-  const lesson = o.unit.lessons.find((l) => l.id === o.lessonId);
-  return newSession(o.cfg, o.uid, {
-    tutor_rules: instructions({ lang: o.lang, course: o.unit.title[o.lang] ?? o.unit.title.en, lesson: lesson ? (lesson.title[o.lang] ?? lesson.title.en) : "", material, voice: false, style: o.style }),
-    material, lang: o.lang, unit_id: o.unit.id, org_id: o.orgId, search_url: searchUrl(),
-  });
+  return newSession(o.cfg, o.uid, { tutor_rules: rulesFor(o, material), material, lang: o.lang, unit_id: o.unit.id, org_id: o.orgId, search_url: searchUrl() });
 }
 
 /**
  * One question through the agent. A session the phone kept is reused (the agent remembers the conversation); a new one
  * gets the tutor's rules and the lesson. An explainer Lesson Studio rejects gets one repair turn, then is dropped.
+ * Throws AgentError (with its cost) when it gets no answer.
  */
 export async function askAgent(o: SessionFor & { question: string; sessionId?: string; show?: boolean; ix: Index; en: Index | null }): Promise<AgentAnswer> {
   const material = lessonMaterial(o.unit, o.lessonId, o.lang, 10000);
@@ -64,13 +75,18 @@ export async function askAgent(o: SessionFor & { question: string; sessionId?: s
   const found = hits.filter((r) => !material.includes(`[${r.s.id}]`))
     .map((r) => `[${r.s.id}] (${r.s.course}: ${r.s.lesson}, ${r.s.kind})\n${r.s.text.slice(0, 2500)}`).join("\n\n");
   const open = () => openSession(o);
-  let sessionId = o.sessionId || await open();
   const message = agentMessage(o.question, found, !!o.show, hits.length > 0);
   const ms = o.show ? EXPLAINER_MS : ANSWER_MS;
-  let turn = await runTurn(o.cfg, o.uid, sessionId, message, ms).catch(async (e) => {
-    if (!o.sessionId || String(e).includes("TimeoutError")) throw e;
-    sessionId = await open(); // the phone's session is gone (expired, or another lesson's): start afresh
-    return runTurn(o.cfg, o.uid, sessionId, message, ms);
+  // What a turn given up at its time limit surely cost: the rules, the lesson and the message read once, and the runtime meanwhile.
+  const given = (e: unknown, timeMs: number) => (timedOut(e) ? abandonedCost(rulesFor(o, material).length + message.length, timeMs / 1000, o.cfg.agentPrices) : 0);
+  // Opening a session runs no model, so a failure there costs nothing to charge.
+  const session = () => open().catch((e) => { throw new AgentError(String(e), 0); });
+  const ask = (id: string) => runTurn(o.cfg, o.uid, id, message, ms).catch((e) => { throw new AgentError(String(e), given(e, ms), timedOut(e)); });
+  let sessionId = o.sessionId || await session();
+  let turn = await ask(sessionId).catch(async (e: AgentError) => {
+    if (!o.sessionId || e.timedOut) throw e; // a turn that ran out of time isn't asked again
+    sessionId = await session(); // the phone's session is gone (expired, or another lesson's): start afresh
+    return ask(sessionId);
   });
   let usd = turnCost(turn.usage, turn.seconds, o.cfg.agentPrices);
   let explainer: ExplainerPackage | null = null;
@@ -78,7 +94,8 @@ export async function askAgent(o: SessionFor & { question: string; sessionId?: s
     let flat = turn.explainer, made = toPackage(flat, o.lang);
     if (made.errors.length) {
       logger.warn("explainer rejected, repairing", { errors: made.errors.slice(0, 8) });
-      const again = await runTurn(o.cfg, o.uid, sessionId, repairMessage(made.errors.map((e) => `${e.path}: ${e.code}${e.detail ? ` (${e.detail})` : ""}`)), EXPLAINER_MS);
+      const repair = repairMessage(made.errors.map((e) => `${e.path}: ${e.code}${e.detail ? ` (${e.detail})` : ""}`));
+      const again = await runTurn(o.cfg, o.uid, sessionId, repair, EXPLAINER_MS).catch((e) => { throw new AgentError(String(e), usd + given(e, EXPLAINER_MS), timedOut(e)); });
       usd += turnCost(again.usage, again.seconds, o.cfg.agentPrices);
       if (again.explainer) { flat = again.explainer; made = toPackage(flat, o.lang); }
       if (again.reply) turn = { ...turn, reply: again.reply };
@@ -87,7 +104,7 @@ export async function askAgent(o: SessionFor & { question: string; sessionId?: s
     // The turn ended with the explainer: its opening line introduces it in the chat.
     if (!turn.reply?.answer) turn.reply = { inScope: true, sources: [], ...turn.reply, answer: flat.scenes[0]?.narration?.trim() || flat.title };
   }
-  if (!turn.reply) throw new Error(turn.error ?? "The agent didn't reply");
+  if (!turn.reply) throw new AgentError(turn.error ?? "The agent didn't reply", usd);
   return { reply: turn.reply, explainer, sessionId, usd };
 }
 

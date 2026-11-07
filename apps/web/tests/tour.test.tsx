@@ -66,6 +66,14 @@ describe("the stops", () => {
     expect(list.find((x) => x.title === "bug.button")!.el).toBe(".rail-report");
   });
 
+  it("tells a platform admin what Learn and the track switch hold for them: every course, not theirs from their level", () => {
+    shell({ rail: true, staff: ["/super", "/super/content"] });
+    const admin = stops(true, true);
+    expect(admin.find((x) => x.title === "nav.learn")!.body).toBe("tour.learnAllD");
+    expect(admin.find((x) => x.title === "tour.trackT")!.body).toBe("tour.trackAllD");
+    expect(stops(true).find((x) => x.title === "nav.learn")!.body).toBe("tour.learnD");
+  });
+
   it("staff on a phone hear that their pages are in Me; students have no Kit; a page without Home skips its stops", () => {
     shell({ rail: false, home: false, kit: false });
     const list = stops(true);
@@ -99,6 +107,26 @@ describe("the tour", () => {
     for (const key of ["ArrowLeft", "ArrowRight", "Escape"]) window.dispatchEvent(new KeyboardEvent("keyup", { key }));
     expect(m.moves).toEqual(["next", "back", "end"]);
     await done;
+  });
+
+  it("gives focus back when it ends: where it was, or the page's title", async () => {
+    const t = ((k: string) => k) as any;
+    shell({ rail: true });
+    const was = document.querySelector<HTMLElement>(".track-switch")!;
+    was.focus();
+    let done = runTour({ t, dir: "ltr", staff: false });
+    was.blur(); // the popover had it
+    m.configs[0].onDestroyed();
+    await done;
+    expect(document.activeElement).toBe(was);
+    // Started by itself (nothing focused): the page's title, made focusable for it.
+    shell({ rail: true });
+    document.querySelector("main")!.insertAdjacentHTML("afterbegin", `<div class="app-main"><h1>Learn</h1></div>`);
+    done = runTour({ t, dir: "ltr", staff: false });
+    m.configs[1].onDestroyed();
+    await done;
+    expect(document.activeElement?.textContent).toBe("Learn");
+    expect(document.activeElement?.getAttribute("tabindex")).toBe("-1");
   });
 });
 
@@ -168,6 +196,17 @@ describe("when it starts", () => {
     shell({ rail: true, home: false, staff: ["/super"] });
     app("/super");
     await waitFor(() => expect(m.configs).toHaveLength(1), { timeout: 4000 });
+  });
+
+  it("from Me, a platform admin (who skips onboarding) goes to Learn too", async () => {
+    m.user = { uid: "boss" }; m.role = "superadmin"; m.state = { onboarded: false, toured: 1 };
+    shell({ rail: true });
+    const r = app("/me");
+    act(() => openTour());
+    await waitFor(() => expect(r.getByTestId("at").textContent).toBe("/learn"));
+    // Let the tour it opens start and close here, so it doesn't land in the next test.
+    await waitFor(() => expect(m.configs).toHaveLength(1), { timeout: 4000 });
+    act(() => m.configs[0].onDestroyed?.());
   });
 
   it("from Me, for anyone: it goes to Learn first", async () => {

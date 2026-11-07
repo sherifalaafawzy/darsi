@@ -42,7 +42,9 @@ export function StandardsTable({ people, fw }: { people: Profile[]; fw: Framewor
         <thead><tr><th>{t("or.item")}</th><th className="num">{t("or.reached")}</th><th>{t("or.levels")}</th><th className="num">{t("col.accuracy")}</th></tr></thead>
         <tbody>{rows.map(({ item, levels, reached, avgAccuracy }) => (
           <tr key={item.id}>
-            <td data-label={t("or.item")}><span className="cap-code" dir="ltr">{item.id}</span> <strong>{L(item.label)}</strong>{item.level && <small> — {L(item.level)}</small>}{item.group && item.group !== item.label && <small className="or-sub">{L(item.group)}</small>}</td>
+            {/* One wrapper: on phones each cell is a flex row (label, value), and the code, name and level must wrap
+                together in the value column instead of being squeezed side by side (base.css .data-table). */}
+            <td data-label={t("or.item")}><div><span className="cap-code" dir="ltr">{item.id}</span> <strong>{L(item.label)}</strong>{item.level && <small> — {L(item.level)}</small>}{item.group && item.group !== item.label && <small className="or-sub">{L(item.group)}</small>}</div></td>
             <td data-label={t("or.reached")} className="num">{people.length ? num(reached / people.length, { style: "percent" }) : "—"}<small className="or-sub">{t("or.ofPeople", { n: reached, of: people.length })}</small></td>
             <td data-label={t("or.levels")} className="or-levels">
               <span className="or-stack" role="img" aria-label={LEVELS.map((k, i) => `${t(k)}: ${num(levels[i])}`).join(t("common.sep"))}>

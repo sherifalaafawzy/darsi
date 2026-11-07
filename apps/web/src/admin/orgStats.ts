@@ -2,7 +2,7 @@
  * An organization's people, summed up for its report (admin/OrgReport.tsx). Everything comes from users/*.summary,
  * which the org admin's member list already holds, so the report costs no extra reads. Pure, for the tests.
  */
-import type { Profile } from "../auth/types";
+import { scoredOf, type Profile } from "../auth/types";
 import { isoWeek } from "../state/store";
 import { strength } from "../content/competencies";
 import type { Framework, StandardItem } from "../content/standards";
@@ -16,14 +16,14 @@ const daysAgo = (iso: string | null, now: number) => (iso ? (now - Date.parse(is
 
 /**
  * Where a person stands: not started (no lesson yet), inactive (nothing for 14 days), needs support (average score
- * under 60% over 3 lessons or more), or on track.
+ * under 60% over 3 graded lessons or more: a project lesson is no score), or on track.
  */
 export type Status = "notStarted" | "inactive" | "support" | "onTrack";
 export function statusOf(p: Person, now = Date.now()): Status {
   const s = p.summary;
   if (!s?.lessonsDone) return "notStarted";
   if (daysAgo(lastSeen(p), now) > 14) return "inactive";
-  if (s.lessonsDone >= 3 && s.avgAccuracy < 0.6) return "support";
+  if (scoredOf(s) >= 3 && s.avgAccuracy < 0.6) return "support";
   return "onTrack";
 }
 
@@ -34,7 +34,8 @@ export function filterPeople(members: Person[], f: Filter): Person[] {
 }
 
 export function totals(people: Person[], now = Date.now()) {
-  const withLessons = people.filter((p) => p.summary?.lessonsDone);
+  // Accuracy over people with a graded lesson (FC-06).
+  const withLessons = people.filter((p) => scoredOf(p.summary));
   const status: Record<Status, number> = { notStarted: 0, inactive: 0, support: 0, onTrack: 0 };
   for (const p of people) status[statusOf(p, now)]++;
   return {
@@ -57,25 +58,26 @@ export function weekly(people: Person[], now = Date.now()) {
 }
 
 export function byTrack(people: Person[]) {
-  const out: Record<string, { people: number; lessons: number; acc: number; sec: number }> = {};
+  const out: Record<string, { people: number; lessons: number; graded: number; acc: number; sec: number }> = {};
   for (const p of people) for (const [tr, x] of Object.entries(p.summary?.tracks ?? {})) {
-    const o = (out[tr] ??= { people: 0, lessons: 0, acc: 0, sec: 0 });
-    o.people++; o.lessons += x.n; o.acc += x.acc; o.sec += x.sec;
+    const o = (out[tr] ??= { people: 0, lessons: 0, graded: 0, acc: 0, sec: 0 });
+    // acc sums the graded lessons (g); summaries from before it have none, so all n count.
+    o.people++; o.lessons += x.n; o.graded += x.g ?? x.n; o.acc += x.acc; o.sec += x.sec;
   }
-  return Object.entries(out).map(([track, o]) => ({ track, people: o.people, lessons: o.lessons, avgAccuracy: o.lessons ? o.acc / o.lessons : null, seconds: o.sec }))
+  return Object.entries(out).map(([track, o]) => ({ track, people: o.people, lessons: o.lessons, avgAccuracy: o.graded ? o.acc / o.graded : null, seconds: o.sec }))
     .sort((a, b) => b.lessons - a.lessons);
 }
 
 /**
  * Per course people have lessons in: how many started it, and how many finished every lesson (lessons = the course's
- * lesson count, from the catalog; a course no longer in it shows no completions).
+ * lesson count, from the catalog). A course no longer in it has no known size: `completed` is null (shown "—"), not 0.
  */
 export function byCourse(people: Person[], courses: Array<{ id: string; lessons: number }>) {
   const size = new Map(courses.map((c) => [c.id, c.lessons]));
   const ids = [...new Set(people.flatMap((p) => Object.keys(p.summary?.units ?? {})))];
   return ids.map((id) => {
     const done = people.map((p) => p.summary?.units?.[id] ?? 0), of = size.get(id);
-    return { id, started: done.filter((n) => n > 0).length, completed: of ? done.filter((n) => n >= of).length : 0 };
+    return { id, started: done.filter((n) => n > 0).length, completed: of ? done.filter((n) => n >= of).length : null };
   }).filter((c) => c.started > 0).sort((a, b) => b.started - a.started || a.id.localeCompare(b.id));
 }
 
@@ -123,7 +125,7 @@ export function byTeacher(members: Person[], fw: Framework, now = Date.now()) {
     const own = t.summary;
     return {
       teacher: t,
-      own: { lessons: own?.lessonsDone ?? 0, avgAccuracy: own?.lessonsDone ? own.avgAccuracy : null, seconds: own?.seconds ?? 0,
+      own: { lessons: own?.lessonsDone ?? 0, avgAccuracy: scoredOf(own) ? own!.avgAccuracy : null, seconds: own?.seconds ?? 0,
         secure: fw.items.filter((it) => itemEvidence(t, it).level === 3).length, reached: fw.items.filter((it) => itemEvidence(t, it).n > 0).length, last: lastSeen(t) },
       students: totals(students, now),
     };

@@ -4,11 +4,11 @@
  */
 import { useEffect, useState } from "react";
 import { Icon } from "@darsi/design-system";
-import { CODE_STEPS, EVIDENCE_KINDS, GRADED, SETUP_OS, type ChoiceStep, type FillStep, type LocalText, type Step, type TrueFalseStep, type VideoStep } from "../content/types";
-import { ARTS } from "../content/validate";
+import { CODE_STEPS, EVIDENCE_KINDS, GRADED, SETUP_OS, type ChoiceStep, type FillStep, type HotspotStep, type LocalText, type Step, type TrueFalseStep, type VideoStep } from "../content/types";
+import { ARTS, CAPSTONE_FIELDS } from "../content/validate";
 import { categoryOf } from "../labs/categories";
 import { LAB_METAS, labMeta } from "../labs/catalog";
-import { useI18n, type MessageKey } from "../i18n";
+import { isolate, useI18n, type MessageKey } from "../i18n";
 import { blankStep, nextLetter } from "./ids";
 import { Check, Items, LangName, LList, LText, Num, Sel, Text, Upload } from "./fields";
 import { useEditLangs, useLangView } from "./langs";
@@ -27,23 +27,27 @@ const LT = (): LocalText => ({ en: "", ar: "" });
 
 export interface MediaCtx { owner: string; unitId: string; lessonId: string }
 
-export function StepForm({ step, onChange, media }: { step: Step; onChange: (s: Step) => void; media: MediaCtx }) {
+/** `capstone`: the unit is a capstone (kind "capstone"), so its project steps are milestones with capstone fields. */
+export function StepForm({ step, onChange, media, capstone }: { step: Step; onChange: (s: Step) => void; media: MediaCtx; capstone?: boolean }) {
   const { t } = useI18n();
   const set = <K extends string>(patch: Partial<Record<K, unknown>>) => onChange({ ...step, ...patch } as Step);
   const graded = GRADED.has(step.type);
   // Questions can show code above their answers ("What does this print?"); the code steps have their own.
   const snippet = graded && !CODE_STEPS.has(step.type);
+  // Videos, readings and labs ask nothing: their line is a short instruction ("Watch", "Read", "Try it"), which the
+  // kit's lesson plan prints and read-aloud speaks.
+  const instruction = step.type === "video" || step.type === "read" || step.type === "lab";
   return (
     <div className="stack">
-      <LText label={t("cms.prompt")} value={step.prompt} onChange={(prompt) => set({ prompt })} />
+      <LText label={t(instruction ? "cms.instruction" : "cms.prompt")} hint={instruction ? t("cms.instructionHint") : undefined} value={step.prompt} onChange={(prompt) => set({ prompt })} />
       {snippet && <SnippetForm value={step.snippet} onChange={(v) => { const { snippet: _, ...rest } = step; onChange((v ? { ...rest, snippet: v } : rest) as Step); }} />}
-      <Body step={step} onChange={onChange} media={media} />
+      <Body step={step} onChange={onChange} media={media} capstone={capstone} />
       {graded && <LText label={t("cms.explain")} hint={t("cms.explainHint")} value={step.explain} onChange={(explain) => set({ explain })} multiline rows={2} />}
     </div>
   );
 }
 
-function Body({ step: s, onChange, media }: { step: Step; onChange: (s: Step) => void; media: MediaCtx }) {
+function Body({ step: s, onChange, media, capstone }: { step: Step; onChange: (s: Step) => void; media: MediaCtx; capstone?: boolean }) {
   const { t } = useI18n();
   switch (s.type) {
     case "choice": case "multi": case "image": {
@@ -108,11 +112,12 @@ function Body({ step: s, onChange, media }: { step: Step; onChange: (s: Step) =>
         <LText label={t("cms.mockBody")} value={s.mock.body} onChange={(body) => onChange({ ...s, mock: { ...s.mock, body } })} multiline />
         <LText label={t("cms.mockLink")} value={s.mock.link} onChange={(link) => onChange({ ...s, mock: { ...s.mock, link } })} />
         <p className="muted small">{t("cms.spotsHint")}</p>
-        <Items items={s.spots} min={1} itemLabel={(i) => `${t("cms.spot")} ${i + 1}`} addLabel={t("cms.addSpot")} onChange={(spots) => onChange({ ...s, spots })}
+        <Items<HotspotStep["spots"][number]> items={s.spots} min={1} itemLabel={(i) => `${t("cms.spot")} ${i + 1}`} addLabel={t("cms.addSpot")} onChange={(spots) => onChange({ ...s, spots })}
           add={() => ({ id: `s${s.spots.length + 1}${Date.now().toString(36).slice(-2)}`, x: 5, y: 50, w: 90, h: 30, label: LT() })}
           render={(sp, set) => (
             <div className="stack">
               <LText label={t("cms.spotLabel")} value={sp.label} onChange={(label) => set({ ...sp, label })} />
+              <SpotPlace spot={sp} body={s.mock.body} onChange={(line) => { const { line: _, ...rest } = sp; set(line === undefined ? rest : { ...rest, line }); }} />
               <div className="ed-grid4">{(["x", "y", "w", "h"] as const).map((k) => <Num key={k} label={t(`cms.spot.${k}` as MessageKey)} min={0} max={100} value={sp[k]} onChange={(v) => set({ ...sp, [k]: v })} />)}</div>
             </div>
           )} />
@@ -156,10 +161,12 @@ function Body({ step: s, onChange, media }: { step: Step; onChange: (s: Step) =>
     case "project": return (
       <>
         <LText label={t("cms.task")} value={s.task} onChange={(task) => onChange({ ...s, task })} multiline />
-        <LText label={t("project.deliver")} value={s.deliverable} onChange={(deliverable) => onChange({ ...s, deliverable })} />
+        <LText label={t("cms.deliverable")} value={s.deliverable} onChange={(deliverable) => onChange({ ...s, deliverable })} />
         <Items items={s.rubric} min={1} itemLabel={(i) => `${t("cms.criterion")} ${i + 1}`} addLabel={t("cms.addCriterion")} onChange={(rubric) => onChange({ ...s, rubric })} add={() => ({ criterion: LT() })}
           render={(r, set) => <LText label={t("cms.criterion")} value={r.criterion} onChange={(criterion) => set({ criterion })} />} />
-        <CapstoneForm step={s} onChange={onChange} />
+        {/* Milestone fields only in a capstone (checkCapstone refuses any other unit); a step that already has some
+            elsewhere still shows them, so they can be cleared. */}
+        {(capstone || CAPSTONE_FIELDS.some((k) => s[k] !== undefined)) && <CapstoneForm step={s} onChange={onChange} />}
       </>
     );
     case "video": return <VideoForm step={s} onChange={onChange} media={media} />;
@@ -192,14 +199,38 @@ function CapstoneForm({ step: s, onChange }: { step: Extract<Step, { type: "proj
     <fieldset className="stack">
       <legend className="dr-field-label">{L(CT.kicker)}</legend>
       {EVIDENCE_KINDS.map((k) => <Check key={k} label={L(EVIDENCE_LABEL[k])} checked={has(k)} onChange={(on) => toggle(k, on)} />)}
-      <Text label={L(CT.starter)} value={s.starterRepo ?? ""} dir="ltr" hint="darsi-org/…" onChange={(v) => onChange({ ...s, starterRepo: v.trim() || undefined })} />
-      <Num label={L(EVIDENCE_LABEL.hours)} value={s.hours ?? 0} min={0} max={200} onChange={(v) => onChange({ ...s, hours: v > 0 ? v : undefined })} />
-      <Text label={L(EVIDENCE_LABEL.milestone)} value={s.milestone ?? ""} dir="ltr" hint="m1" onChange={(v) => onChange({ ...s, milestone: v.trim() || undefined })} />
+      <Text label={L(CT.starter)} value={s.starterRepo ?? ""} dir="ltr" hint={L(EVIDENCE_LABEL.starterHint)} onChange={(v) => onChange({ ...s, starterRepo: v.trim() || undefined })} />
+      {/* Empty until set: a milestone has no hours unless the author gives some. */}
+      <Num label={L(EVIDENCE_LABEL.hours)} value={s.hours} min={1} max={200} onChange={(v) => onChange({ ...s, hours: v > 0 ? v : undefined })} />
+      <Text label={L(EVIDENCE_LABEL.milestone)} value={s.milestone ?? ""} dir="ltr" hint={L(EVIDENCE_LABEL.milestoneHint)} onChange={(v) => onChange({ ...s, milestone: v.trim() || undefined })} />
       {SETUP_OS.map((os) => <LText key={os} label={`${L(CT.setup)}: ${L(CT[os])}`} value={setup(os)} multiline onChange={(b) => setSetup(os, b)} />)}
     </fieldset>
   );
 }
-const EVIDENCE_LABEL: Record<typeof EVIDENCE_KINDS[number] | "hours" | "milestone", LocalText> = {
+/**
+ * Where a hotspot sits: on a line of the message (counted in the English text, as the validator does) or on its link,
+ * so the player fits it to that line on any screen; or a box in percent (also the fallback where a line isn't found).
+ */
+function SpotPlace({ spot, body, onChange }: { spot: { line?: number | "link" }; body: LocalText; onChange: (line: number | "link" | undefined) => void }) {
+  const { t, L } = useI18n();
+  const lines = (body?.en ?? "").split("\n");
+  const shown = L(body).split("\n");
+  // A line the message no longer has stays listed, so the select shows it (the checks flag it).
+  const count = Math.max(lines.length, typeof spot.line === "number" ? spot.line + 1 : 0);
+  const cut = (x: string) => (x.length > 40 ? `${x.slice(0, 39)}…` : x);
+  const options: (readonly [string, string])[] = [
+    ["box", t("cms.spot.onBox")],
+    ...Array.from({ length: count }, (_, i) => [String(i), t("cms.spot.onLine", { n: i + 1, text: isolate(cut((shown.length === lines.length ? shown[i] : lines[i]) ?? "")) })] as const),
+    ["link", t("cms.spot.onLink")],
+  ];
+  return <Sel label={t("cms.spot.where")} value={spot.line === undefined ? "box" : String(spot.line)} options={options}
+    onChange={(v) => onChange(v === "box" ? undefined : v === "link" ? "link" : Number(v))} />;
+}
+
+export const EVIDENCE_LABEL: Record<typeof EVIDENCE_KINDS[number] | "hours" | "milestone" | "milestoneHint" | "starterHint", LocalText> = {
+  milestoneHint: { en: "A short id, such as m1", ar: "معرّف قصير، مثل m1" },
+  // The validator wants the bare name; the organisation is content/capstone.ts STARTER_ORG.
+  starterHint: { en: "Only the repository's name in github.com/darsi-org, for example ai-capstone", ar: "اسم المستودع فقط في github.com/darsi-org، مثل ai-capstone" },
   repo: { en: "A GitHub repository whose Actions run passed", ar: "مستودع على GitHub نجح تشغيل Actions فيه" },
   release: { en: "A tagged release", ar: "إصدار موسوم" },
   check: { en: "darsi-check.json passing this milestone", ar: "ملف darsi-check.json يجتاز هذه المرحلة" },

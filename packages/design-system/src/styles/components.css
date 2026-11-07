@@ -28,7 +28,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .dr-btn-icon { padding-inline: 0; inline-size: var(--tap-min); }
 .dr-btn-icon.dr-btn-ghost { color: var(--ink-muted); }
 .dr-btn:disabled { background: var(--surface-sunk); color: var(--ink-muted); border-color: var(--line-strong); box-shadow: none; cursor: not-allowed; transform: none; }
-.dr-btn.is-loading { background: var(--kola-soft); color: var(--ink); border-color: var(--ink); }
+/* A ghost button with nothing to do (Redo with nothing to redo) fades instead of gaining a box, so it never looks more
+   prominent than the working one beside it. */
+.dr-btn-ghost:disabled { background: transparent; border-color: transparent; opacity: 0.45; }
+/* Loading keeps the button focusable (aria-disabled, clicks ignored): the focus stays where it was. */
+.dr-btn.is-loading { background: var(--kola-soft); color: var(--ink); border-color: var(--ink); box-shadow: none; cursor: progress; transform: none; opacity: 1; }
 .dr-spinner { inline-size: 18px; block-size: 18px; border-radius: 50%; border: 3px solid var(--kola); border-block-start-color: transparent; animation: dr-spin .8s linear infinite; }
 
 /* Track colours. Every track-aware component gets `dr-tr dr-tr-<tone>` (trackClass in primitives.tsx), and its rules
@@ -140,7 +144,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* UnitPath */
 .dr-path { list-style: none; margin: 0; padding: var(--space-4) 0; display: grid; gap: var(--space-4); justify-items: center; }
-.dr-path-step { position: relative; display: grid; justify-items: center; gap: var(--space-1); inset-inline-start: calc(var(--dr-off) * var(--space-12)); }
+/* The zigzag narrows on small screens (10vw a step) so the outermost label stays on a 320 px screen (400% zoom). */
+.dr-path-step { position: relative; display: grid; justify-items: center; gap: var(--space-1); inset-inline-start: calc(var(--dr-off) * min(var(--space-12), 10vw)); }
 .dr-path-node { display: grid; place-items: center; inline-size: var(--path-node); block-size: var(--path-node); border-radius: 50%; cursor: pointer;
   border: 3px solid var(--ink); background: var(--kola); color: var(--on-kola); box-shadow: 0 6px 0 0 var(--ink); }
 .dr-path-node:active { transform: translateY(6px); box-shadow: none; }
@@ -191,11 +196,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .dr-toast-action { min-block-size: 40px; padding-inline: var(--space-3); border: 0; border-radius: var(--radius-sm); background: var(--kola); color: var(--on-kola); font-family: var(--font-display); font-weight: 700; font-size: 16px; cursor: pointer; }
 
 /* DownloadRow */
-.dr-dl { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-md); }
+/* On a narrow screen (320 px, or 400% zoom) the button goes under the title instead of pushing the page sideways. */
+.dr-dl { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-md); }
 .dr-dl.is-error { border-color: var(--wrong); }
 .dr-dl-icon { display: grid; place-items: center; inline-size: 44px; block-size: 44px; flex: none; border-radius: var(--radius-md); padding: 0; }
 .dr-dl-icon.dr-tr { background: var(--tr-soft); color: var(--tr-ink); }
-.dr-dl-main { flex: 1; display: grid; gap: 2px; min-inline-size: 0; }
+.dr-dl-main { flex: 1 1 5rem; display: grid; gap: 2px; min-inline-size: 0; }
+.dr-dl > .dr-btn, .dr-dl-done { margin-inline-start: auto; }
 .dr-dl-meta { font-size: 14px; line-height: 20px; color: var(--ink-muted); }
 .dr-dl.is-error .dr-dl-meta { color: var(--wrong); }
 .dr-dl-done { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--correct); font-weight: 700; font-size: 14px; padding-inline: var(--space-2); }
@@ -435,7 +442,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .dr-lab-stats { display: flex; gap: var(--space-4); font-size: 14px; color: var(--ink-muted); }
 .dr-lab-stats strong { color: var(--ink); font-family: var(--font-display); font-size: 18px; }
 .dr-pb-ings { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.dr-pb-ing { display: inline-flex; align-items: center; gap: var(--space-1); min-block-size: 40px; padding-inline: var(--space-3); border: 2px dashed var(--line-strong); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+.dr-pb-ing { display: inline-flex; align-items: center; gap: var(--space-1); min-block-size: var(--tap-min); padding-inline: var(--space-3); border: 2px dashed var(--line-strong); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
 .dr-pb-ing.is-on { border-style: solid; border-color: var(--ink); background: var(--sunbird); }
 .dr-pb-plus { font-size: 18px; line-height: 1; }
 .dr-pb-prompt { min-block-size: 72px; padding: var(--space-3); border-radius: var(--radius-sm); background: var(--surface-sunk); font-family: ui-monospace, monospace; font-size: 14px; line-height: 22px; }
@@ -453,7 +460,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .dr-nw-fill { display: block; block-size: 100%; background: var(--sunbird); box-shadow: inset 0 0 0 1px var(--ink); border-radius: var(--radius-pill); transition: inline-size .2s ease; }
 .dr-nw-pct { font-size: 14px; font-weight: 700; text-align: end; font-variant-numeric: tabular-nums; }
 .dr-nw-temp { display: grid; gap: var(--space-1); font-size: 14px; }
-.dr-nw-temp input { inline-size: 100%; accent-color: var(--kola); block-size: 32px; }
+.dr-nw-temp input { inline-size: 100%; accent-color: var(--kola); block-size: 44px; }
 .dr-nw-ends { display: flex; justify-content: space-between; color: var(--ink-muted); font-size: 12px; }
 .dr-tc-classes { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
 .dr-tc-class { display: grid; align-content: start; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-md); background: var(--tone-soft); border: 2px solid var(--ink); }

@@ -19,8 +19,14 @@ export function createPlayer(host: HTMLElement, pkg: LightPackage, opts?: {
   remember?: boolean;
   /** The stage's shape; "auto" picks portrait for upright phones. */
   orient?: Orient | "auto";
+  /**
+   * The player's own words to replace: the quick check's button (next), the end card's title (done) and score, where
+   * the player writes "{n}" right out of "{m}" in the lesson language's digits.
+   */
+  labels?: LightLabels;
   onEvent?: (e: LightEvent) => void;
 }): LightPlayer;
+export type LightLabels = Partial<Record<"next" | "done" | "score", string>>;
 /** The technology packs a lesson's scenes.json needs: science (equations, plots, networks…), code, data, iot, network, opt. */
 export function packsUsed(scenes: unknown): string[];
 /** Loads packs ahead of time (a course saved for offline use). */

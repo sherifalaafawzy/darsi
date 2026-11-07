@@ -4,6 +4,7 @@ import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
 import { usePlural, type Forms } from "../../kit/plural";
 import { Segmented, Slider } from "../../kit/controls";
+import { signed } from "../../kit/Formula";
 import { rng } from "../../kit/rng";
 import { useS } from "../../kit/strings";
 import { useLoop } from "../../kit/useLoop";
@@ -106,7 +107,9 @@ export default function Llm({ meta, onDone }: LabProps) {
           <h3>{s.s2}</h3><p className="lb-note">{s.s2b(num(DIMS))}</p>
           <div className="stack-sm">
             {toks.slice(-3).map((t, i) => (
-              <p key={i} className="lb-vec"><span>{word(t.key)}</span><span className="lb-mono" dir="ltr">{(lm.emb.get(t.key) ?? new Array<number>(DIMS).fill(0)).map((v, d) => <bdi key={d}>{d ? ", " : "["}{n2(v)}</bdi>)}<bdi>]</bdi></span></p>
+              // Every embedding has negatives: signed() writes them minus first with no Arabic letter mark (which turned each
+              // isolate right to left and fused "[٠٫١٢٠٫٤- ,, ٠٫٧]"), and each isolate is left to right like its line.
+              <p key={i} className="lb-vec"><span>{word(t.key)}</span><span className="lb-mono" dir="ltr">{(lm.emb.get(t.key) ?? new Array<number>(DIMS).fill(0)).map((v, d) => <bdi key={d} dir="ltr">{d ? ", " : "["}{signed(num, v)}</bdi>)}<bdi dir="ltr">]</bdi></span></p>
             ))}
           </div>
         </li>

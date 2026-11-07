@@ -14,6 +14,8 @@ export interface TourOptions {
   dir: "ltr" | "rtl";
   /** Has staff pages (Teach, Admin, Platform): on phones they are in Me, and its stop says so. */
   staff: boolean;
+  /** A platform admin: Learn holds every course, not "yours from your level up". */
+  all?: boolean;
 }
 
 /** The first matching element that is actually shown (the rail and the bottom nav are both in the page). */
@@ -60,15 +62,15 @@ const STAFF: [string, MessageKey, MessageKey][] = [
   ["/super/content", "nav.content", "tour.contentD"],
 ];
 
-/** The stops for what is on screen now. */
-export function stops(staff = false): Stop[] {
+/** The stops for what is on screen now. A platform admin's Learn and track switch say what they hold for them (`all`). */
+export function stops(staff = false, all = false): Stop[] {
   const out: Stop[] = [{ title: "tour.welcomeT", body: "tour.welcomeD" }];
-  if (shown(".track-switch")) out.push({ el: ".track-switch", title: "tour.trackT", body: "tour.trackD", side: "bottom" });
+  if (shown(".track-switch")) out.push({ el: ".track-switch", title: "tour.trackT", body: all ? "tour.trackAllD" : "tour.trackD", side: "bottom" });
   if (shown(".week-card")) out.push({ el: ".week-card", title: "tour.weekT", body: "tour.weekD", side: "bottom" });
   if (shown(".unit .dr-card")) out.push({ el: ".unit .dr-card", title: "tour.lessonT", body: "tour.lessonD" });
   const rail = Boolean(shown(".nav-rail"));
   const nav: Where = rail ? "end" : "top";
-  for (const [path, title, body] of TABS) if (shown(tab(path))) out.push({ el: tab(path), title, body, side: nav });
+  for (const [path, title, body] of TABS) if (shown(tab(path))) out.push({ el: tab(path), title, body: all && path === "/learn" ? "tour.learnAllD" : body, side: nav });
   const pages = STAFF.filter(([path]) => shown(railTab(path)));
   if (shown(tab("/me"))) out.push({ el: tab("/me"), title: "nav.me", body: !rail && staff ? "tour.meStaffD" : "tour.meD", side: nav });
   for (const [path, title, body] of pages) out.push({ el: railTab(path), title, body, side: "end" });
@@ -82,13 +84,24 @@ export function stops(staff = false): Stop[] {
 const physical = (w: Where | undefined, dir: "ltr" | "rtl"): Side | undefined =>
   w === "start" ? (dir === "rtl" ? "right" : "left") : w === "end" ? (dir === "rtl" ? "left" : "right") : w;
 
+/** After the tour: focus back where it was, or on the page's title, not lost behind the closed popover. */
+function giveBack(before: HTMLElement | null) {
+  const el = before?.isConnected ? before : document.querySelector<HTMLElement>(".app-main h1");
+  if (!el) return;
+  if (!el.matches("a[href], button, input, select, textarea, [tabindex]")) el.tabIndex = -1;
+  el.focus({ preventScroll: true });
+}
+
 let open: Driver | null = null;
 /** Closes the tour if it is open (the screen it was showing has gone: another page, or onboarding). */
 export const stopTour = () => open?.destroy();
 
 /** Runs the tour; resolves when it ends (finished, skipped or closed). */
-export function runTour({ t, dir, staff }: TourOptions): Promise<void> {
-  const list = stops(staff);
+export function runTour({ t, dir, staff, all }: TourOptions): Promise<void> {
+  const list = stops(staff, all);
+  // Where focus goes back when the tour ends: where it was, or the page's title (the tour may have started by itself,
+  // or Me's "Take the tour" moved to Learn first).
+  const before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
   const calm = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   return new Promise((resolve) => {
     const steps: DriveStep[] = list.map((s, i) => ({
@@ -128,7 +141,7 @@ export function runTour({ t, dir, staff }: TourOptions): Promise<void> {
         // Keyboard and screen-reader users land on the next button, not somewhere behind the overlay.
         requestAnimationFrame(() => p.nextButton.focus({ preventScroll: true }));
       },
-      onDestroyed: () => { open = null; if (keys) window.removeEventListener("keyup", keys); resolve(); },
+      onDestroyed: () => { open = null; if (keys) window.removeEventListener("keyup", keys); giveBack(before); resolve(); },
     });
     const keys = dir === "rtl" ? (e: KeyboardEvent) => {
       if (e.key === "Escape") d.destroy();

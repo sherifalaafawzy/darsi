@@ -38,15 +38,48 @@ const inLang = (by: Partial<Record<string, number>> | undefined, lang: string) =
   return Number.isFinite(n) ? Number(n) : undefined;
 };
 type Kit = Unit["lessons"][number]["kit"][number];
+
+/**
+ * Pictures in a unit's text, as the app saves them with a download (apps/web/src/content/load.ts unitAssetUrls and
+ * content/figure.ts): a paragraph that is only ![caption](link) in a read step's body or a capstone milestone's setup
+ * tab, in that language (English when the text has none), with a published link (an app /media/ path is never one).
+ * Arabic text may hold isolate marks inside the path; they are read past.
+ */
+const MARKS = /[\u2066-\u2069\u202A-\u202E]/g;
+const FIGURE = /^!\[([^\]]*)\]\(([^)\s]+)\)$/;
+function figureTexts(unit: Unit): Record<string, string | undefined>[] {
+  return unit.lessons.flatMap((l) => l.steps.flatMap((s) => (s.type === "read" ? [s.body] : s.type === "project" ? (s.setup ?? []).map((x) => x.body) : [])));
+}
+const figuresIn = (text: string | undefined) => (text ?? "").split(/\n\s*\n/).flatMap((para) => {
+  const m = para.trim().replace(MARKS, "").match(FIGURE);
+  return m && !m[2].startsWith("/") ? [m[2]] : [];
+});
+/** The pictures a learner in `lang` downloads with the unit (each once). */
+export const figureUrls = (unit: Unit, lang: string) => [...new Set(figureTexts(unit).flatMap((t) => figuresIn(t[lang] ?? t.en)))];
+/** Every language's pictures (each once): what publishing sizes. */
+export const allFigureUrls = (unit: Unit) => [...new Set(figureTexts(unit).flatMap((t) => Object.values(t).flatMap((v) => figuresIn(v))))];
+/**
+ * A picture's Storage path, from its download link in this bucket ("…/v0/b/<bucket>/o/content%2Fmedia%2F…"), the only
+ * pictures the app shows from Storage; null for anything else.
+ */
+export function figurePath(url: string, bucket: string): string | null {
+  const m = /^https?:\/\/[^/]+\/v0\/b\/([^/]+)\/o\/([^?#]+)/.exec(url);
+  if (!m || m[1] !== bucket) return null;
+  let path: string;
+  try { path = decodeURIComponent(m[2]); } catch { return null; }
+  return path.startsWith("content/media/") && !path.split("/").some((p) => p === "" || p === "." || p === "..") ? path : null;
+}
 const kitKB = (k: Kit, lang: string, fmt: Kit["formats"][number]) =>
   inLang(Object.fromEntries(Object.entries(k.sizeKB ?? {}).flatMap(([l, m]) => (m?.[fmt] != null ? [[l, m[fmt]]] : []))), lang) ?? 0;
 
 /**
  * Download size shown before a download (the brand book: sizes before every download), per language: what the app's
  * download fetches (unitAssetUrls) — the JSON, each video step's light lesson (or its MP4 when it has none), the kits'
- * files (not video kits) and the code runtimes. Languages are those the light lessons and kits record, and English.
+ * files (not video kits), the pictures in the text and the code runtimes. Languages are those the light lessons and
+ * kits record, and English. `figureKB`: each picture's size by its link (content.ts reads them from Storage when
+ * publishing); a picture without one counts nothing.
  */
-export function sizeByLang(unit: Unit, jsonBytes: number): Record<string, number> {
+export function sizeByLang(unit: Unit, jsonBytes: number, figureKB: Record<string, number> = {}): Record<string, number> {
   const langs = new Set(["en"]);
   for (const l of unit.lessons) {
     for (const s of l.steps) if (s.type === "video") for (const x of Object.keys(s.light?.sizeKB ?? {})) langs.add(x);
@@ -61,17 +94,19 @@ export function sizeByLang(unit: Unit, jsonBytes: number): Record<string, number
       for (const s of l.steps) if (s.type === "video") mb += s.light?.sizeKB ? (inLang(s.light.sizeKB, lang) ?? 0) / 1024 : s.sizeMB || 0;
       for (const k of l.kit) if (k.kind !== "video") for (const fmt of k.formats) if (fmt !== "mp4") mb += kitKB(k, lang, fmt) / 1024;
     }
+    for (const url of figureUrls(unit, lang)) mb += (Number(figureKB[url]) || 0) / 1024;
     out[lang] = Math.max(0.1, Math.round(mb * 10) / 10);
   }
   return out;
 }
 /** The largest language's download: what phones that don't read `sizeByLang` show. */
-export const sizeMB = (unit: Unit, jsonBytes: number) => Math.max(...Object.values(sizeByLang(unit, jsonBytes)));
+export const sizeMB = (unit: Unit, jsonBytes: number, figureKB: Record<string, number> = {}) => Math.max(...Object.values(sizeByLang(unit, jsonBytes, figureKB)));
 
-export function catalogEntry(unit: Unit, owner: Owner, version: number, jsonBytes: number): CatalogEntry {
+export function catalogEntry(unit: Unit, owner: Owner, version: number, jsonBytes: number, figureKB: Record<string, number> = {}): CatalogEntry {
+  const by = sizeByLang(unit, jsonBytes, figureKB);
   return {
     id: unit.id, track: unit.track, level: unit.level, title: unit.title, summary: unit.summary,
-    lessons: unit.lessons.length, sizeMB: sizeMB(unit, jsonBytes), sizeByLang: sizeByLang(unit, jsonBytes), available: true,
+    lessons: unit.lessons.length, sizeMB: Math.max(...Object.values(by)), sizeByLang: by, available: true,
     src: unitPath(owner, unit.id, version), version, owner,
     // Phones show teachers' and students' courses apart; teachers' courses (the default) carry no field.
     ...(unit.audience === "students" ? { audience: "students" as const } : {}),

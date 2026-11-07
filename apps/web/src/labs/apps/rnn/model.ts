@@ -1,5 +1,9 @@
-/** One recurrent step: h ← memory · h + tanh(x). `memory` is how much of the hidden state survives. */
-export const rnnStep = (h: number, x: number, memory: number) => memory * h + Math.tanh(x);
+/**
+ * One recurrent step: h ← memory · h + x. `memory` is how much of the hidden state survives. A real recurrent net also
+ * squashes the sum (tanh); the lab leaves that out so its numbers are the lessons' arithmetic: a cue of 1 with memory ½
+ * gives 1, ½, ¼, ⅛, and memory 0.9 keeps 0.9³ ≈ 0.73 of it. With tanh the cue went in as 0.76 and 0.9 kept only 0.56.
+ */
+export const rnnStep = (h: number, x: number, memory: number) => memory * h + x;
 
 /** Hidden state after each symbol. The sequence starts at h = 0. */
 export function rnnRun(seq: number[], memory: number): number[] {

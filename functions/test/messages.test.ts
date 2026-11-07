@@ -12,13 +12,13 @@ const ASCII_DIGIT = /[0-9]/;
 describe("message catalogue", () => {
   it("has exactly the contract's kinds, each with a category and a link", () => {
     expect([...KINDS].sort()).toEqual([
-      "comeback21", "comeback7", "daily0", "daily1", "daily2", "reviewApproved", "reviewRevise",
+      "comeback21", "comeback7", "daily0", "daily1", "daily2", "orgApproved", "orgRejected", "reviewApproved", "reviewRevise",
       "staffOrgRequest", "staffSubmission", "streak", "weekGoal",
     ]);
     const cats: Record<Kind, string> = {
       daily0: "reminders", daily1: "reminders", daily2: "reminders", weekGoal: "reminders", streak: "reminders",
       comeback7: "reminders", comeback21: "reminders", reviewApproved: "reviews", reviewRevise: "reviews",
-      staffSubmission: "staff", staffOrgRequest: "staff",
+      orgApproved: "reviews", orgRejected: "reviews", staffSubmission: "staff", staffOrgRequest: "staff",
     };
     for (const k of KINDS) expect(catOf(k)).toBe(cats[k]);
   });
@@ -43,11 +43,11 @@ describe("message catalogue", () => {
   it("has the contract's exact wording", () => {
     const en = (k: Kind) => message(k, "en", VARS), ar = (k: Kind) => message(k, "ar", VARS);
     expect(en("daily0")).toEqual({ title: "Your 5-minute lesson is ready", body: "One short lesson today, one new idea for your class tomorrow." });
-    expect(ar("daily0")).toEqual({ title: "درسك ذو الدقائق الخمس جاهز", body: "درس قصير اليوم، وفكرة جديدة لصفّك غدًا." });
+    expect(ar("daily0")).toEqual({ title: "درسك ذو الدقائق الخمس جاهز", body: "درس قصير اليوم، وفكرة جديدة لفصلك غدًا." });
     expect(en("daily1")).toEqual({ title: "Five minutes for you?", body: "Pick up where you left off. It only takes five minutes." });
     expect(ar("daily1")).toEqual({ title: "خمس دقائق لك اليوم؟", body: "تابع من حيث توقفت، فالأمر لا يستغرق سوى خمس دقائق." });
     expect(en("daily2")).toEqual({ title: "Something new for your class", body: "Today's lesson ends with an idea you can try tomorrow." });
-    expect(ar("daily2")).toEqual({ title: "شيء جديد لصفّك", body: "ينتهي درس اليوم بفكرة يمكنك تجربتها غدًا." });
+    expect(ar("daily2")).toEqual({ title: "شيء جديد لفصلك", body: "ينتهي درس اليوم بفكرة يمكنك تجربتها غدًا." });
     expect(en("weekGoal")).toEqual({ title: "3 lessons left for this week's goal", body: "You're close. A short lesson now keeps you on track." });
     expect(ar("weekGoal")).toEqual({ title: "دروس متبقية لهدف هذا الأسبوع: ٣", body: "أنت قريب. درس قصير الآن يُبقيك على المسار." });
     expect(en("streak")).toEqual({ title: "Your streak: 3 weeks", body: "You've learned every week lately. One lesson keeps it going." });
@@ -55,7 +55,7 @@ describe("message catalogue", () => {
     expect(en("comeback7")).toEqual({ title: "We saved your place", body: "Your next lesson is waiting, and it takes five minutes." });
     expect(ar("comeback7")).toEqual({ title: "حفظنا مكانك", body: "درسك التالي بانتظارك، ولا يستغرق سوى خمس دقائق." });
     expect(en("comeback21")).toEqual({ title: "New ideas for your classroom", body: "Come back for a 5-minute lesson whenever you're ready." });
-    expect(ar("comeback21")).toEqual({ title: "أفكار جديدة لصفّك", body: "عُد لدرس من خمس دقائق متى كنت مستعدًا." });
+    expect(ar("comeback21")).toEqual({ title: "أفكار جديدة لفصلك", body: "عُد لدرس من خمس دقائق متى كنت مستعدًا." });
     expect(en("reviewApproved")).toEqual({ title: "Your project was approved", body: "Clear plan." });
     expect(ar("reviewApproved")).toEqual({ title: "تمت الموافقة على مشروعك", body: "Clear plan." });
     expect(en("reviewRevise")).toEqual({ title: "Feedback on your project", body: "Clear plan." });
@@ -64,6 +64,19 @@ describe("message catalogue", () => {
     expect(ar("staffSubmission")).toEqual({ title: "مشروع جديد للمراجعة", body: "وصل مشروع جديد من ⁨Amina Bello⁩ للمراجعة." });
     expect(en("staffOrgRequest")).toEqual({ title: "New organization request", body: "⁨Hope School⁩ asked to join Darsi." });
     expect(ar("staffOrgRequest")).toEqual({ title: "طلب مؤسسة جديد", body: "طلبت ⁨Hope School⁩ الانضمام إلى «درسي»." });
+    expect(en("orgApproved")).toEqual({ title: "Your organization is approved", body: "⁨Hope School⁩ is now on Darsi. Add your teachers and students from Admin." });
+    expect(ar("orgApproved")).toEqual({ title: "تمت الموافقة على مؤسستك", body: "أصبحت ⁨Hope School⁩ في «درسي». أضف معلميك وطلابك من «الإدارة»." });
+    expect(en("orgRejected")).toEqual({ title: "About your organization request", body: "Clear plan." });
+    expect(ar("orgRejected")).toEqual({ title: "بخصوص طلب مؤسستك", body: "Clear plan." });
+    expect(message("orgRejected", "en", {}).body).toBe("Open Darsi to read the reply.");
+    expect(message("orgRejected", "ar", {}).body).toBe("افتح «درسي» لقراءة الرد.");
+  });
+
+  it("calls a group of pupils «فصل», never «صف» (docs/curriculum/ar-lingo.md)", () => {
+    for (const k of KINDS) {
+      const { title, body } = message(k, "ar", VARS);
+      expect(`${title} ${body}`, k).not.toMatch(/صف/);
+    }
   });
 
   it("weekGoal says 1 lesson / n lessons in English", () => {
@@ -130,9 +143,14 @@ describe("review feedback", () => {
 
 describe("links, tags and payload", () => {
   it("links are app paths from the contract", () => {
-    for (const k of ["daily0", "daily1", "daily2", "weekGoal", "streak", "comeback7", "comeback21", "reviewApproved", "reviewRevise"] as Kind[]) {
+    for (const k of ["daily0", "daily1", "daily2", "weekGoal", "streak", "comeback7", "comeback21"] as Kind[]) {
       expect(linkFor(k)).toBe("/learn");
     }
+    // A reviewed project opens in Me's "My projects"; an organization request's outcome where it matters.
+    expect(linkFor("reviewApproved")).toBe("/me#projects");
+    expect(linkFor("reviewRevise")).toBe("/me#projects");
+    expect(linkFor("orgApproved")).toBe("/admin");
+    expect(linkFor("orgRejected")).toBe("/org");
     expect(linkFor("staffSubmission", { uid: "abc123" })).toBe("/teach/abc123");
     expect(linkFor("staffOrgRequest")).toBe("/super");
     for (const k of KINDS) expect(CATALOGUE[k].link.startsWith("/")).toBe(true);
@@ -144,12 +162,13 @@ describe("links, tags and payload", () => {
     expect(tagFor("reviewRevise", "s2")).toBe("darsi-review-s2");
     expect(tagFor("staffSubmission", "s3")).toBe("darsi-staff-s3");
     expect(tagFor("staffOrgRequest", "o1")).toBe("darsi-staff-o1");
+    expect(tagFor("orgApproved", "o1")).toBe("darsi-review-o1");
   });
 
   it("builds a small data-only web push", () => {
     const ar = webpush(message("daily0", "ar"), "ar", "/learn", "darsi-nudge");
     expect(ar.headers).toEqual({ TTL: "86400", Urgency: "normal" });
-    expect(ar.data).toEqual({ title: "درسك ذو الدقائق الخمس جاهز", body: "درس قصير اليوم، وفكرة جديدة لصفّك غدًا.", link: "/learn", tag: "darsi-nudge", lang: "ar", dir: "rtl" });
+    expect(ar.data).toEqual({ title: "درسك ذو الدقائق الخمس جاهز", body: "درس قصير اليوم، وفكرة جديدة لفصلك غدًا.", link: "/learn", tag: "darsi-nudge", lang: "ar", dir: "rtl" });
     const en = webpush(message("daily0", "en"), "en", "/learn", "darsi-nudge");
     expect(en.data.dir).toBe("ltr");
     expect(en.data.lang).toBe("en");

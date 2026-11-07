@@ -1,12 +1,26 @@
 /* "Report a problem" (bugs/Fab.tsx): the button on every screen, at the inline start, at the height of the tutor's
-   button (above the bottom nav and the lesson's Continue bar). Global, since it is on the startup path. From 900 px the
-   screens with the nav rail have the rail's own "Report a problem" instead (Layout sets data-rail on <html>). */
-.bug-fab { position: fixed; inset-inline-start: var(--space-3); inset-block-end: calc(var(--space-12) * 2 + env(safe-area-inset-bottom)); z-index: var(--z-sheet); display: grid; place-items: center; inline-size: var(--tap-min); block-size: var(--tap-min); padding: 0; border: 2px solid var(--ink); border-radius: var(--radius-pill); background: var(--paper); color: var(--ink); box-shadow: var(--shadow-card); cursor: pointer; }
-.bug-fab:active { box-shadow: none; transform: translateY(3px); }
+   button (above the bottom nav and the lesson's Continue bar, and above the answer sheet while it shows: --fab-end in
+   app.css). Pages leave room at their foot to scroll clear of it (--fab-clear). Global, since it is on the startup path.
+   From 900 px the screens with the nav rail have the rail's own "Report a problem" instead (Layout sets data-rail on <html>). */
+.bug-fab { position: fixed; inset-inline-start: var(--space-3); inset-block-end: var(--fab-end); z-index: var(--z-sheet); display: grid; place-items: center; inline-size: var(--tap-min); block-size: var(--tap-min); padding: 0; border: 2px solid var(--ink); border-radius: var(--radius-pill); background: var(--paper); color: var(--ink); box-shadow: var(--shadow-card); cursor: pointer; transition: opacity 0.15s ease-out, transform 0.15s ease-out; }
+.bug-fab:active { box-shadow: none; transform: translateY(3px); transition: none; }
 .bug-fab:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .bug-fab[aria-busy="true"] { animation: bug-pulse 0.9s ease-in-out infinite; }
 @keyframes bug-pulse { 50% { transform: scale(0.9); } }
 /* Shown for a few seconds when the report's chunk can't load (offline, never opened before). */
-.bug-note { position: fixed; inset-inline: var(--space-3); inset-block-end: calc(var(--space-12) * 3 + env(safe-area-inset-bottom)); z-index: var(--z-toast); max-inline-size: 360px; margin: 0; padding: var(--space-3); border: 2px solid var(--ink); border-radius: var(--radius-md); background: var(--paper); box-shadow: var(--shadow-card); }
+.bug-note { position: fixed; inset-inline: var(--space-3); inset-block-end: calc(var(--fab-end) + var(--tap-min) + var(--space-2)); z-index: var(--z-toast); max-inline-size: 360px; margin: 0; padding: var(--space-3); border: 2px solid var(--ink); border-radius: var(--radius-md); background: var(--paper); box-shadow: var(--shadow-card); }
+/* Below 900 px it steps aside so it never sits on what the person reads or taps (bugs/Fab.tsx useFabsAside sets data-fabs
+   on <html>): while the page scrolls down (back when it scrolls up, or reaches its top or end), and while a video's
+   checkpoint question or the lesson's answer sheet shows. It stays in the page for keyboards and screen readers, and
+   shows when it has the focus or the tour points at it. Reduced motion: the design system turns the fade off. */
+@media (max-width: 899px) {
+  [data-fabs] .bug-fab { opacity: 0; transform: scale(0.5); pointer-events: none; }
+  [data-fabs] .bug-fab:focus-visible, [data-fabs] .bug-fab.driver-active-element { opacity: 1; transform: none; pointer-events: auto; }
+}
+/* The landing page has no bar at its foot, and its main button sits where this one would float: there the button closes
+   the page instead, after the footer, at the content's edge (App renders it right after the page, in #root). It is
+   part of the page there, so it never steps aside. */
+#root > .landing ~ .bug-fab { position: static; margin: 0 max(var(--space-4), calc((100% - 1088px) / 2)) var(--space-8); opacity: 1; transform: none; pointer-events: auto; }
+#root > .landing ~ .bug-fab:active { transform: translateY(3px); }
 @media (min-width: 900px) { [data-rail] .bug-fab { display: none; } }
 @media print { .bug-fab, .bug-note { display: none; } }

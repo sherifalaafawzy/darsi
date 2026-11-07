@@ -266,7 +266,7 @@ fair for everyone.*
 - Describe each example by features (numbers you can measure).
 - Classify a new example by its nearest neighbours, and see how the number of neighbours changes the answer.
 - Explain why the choice of features matters.
-- **Lab:** `knn`. **Competencies:** S.TA.A.
+- **Labs:** `knn`, then `convolution` (filters find features in the pixels). **Competencies:** S.TA.A.
 - **Try it:** measure ten fruits (size, softness) on a chart, label them ripe or not, and classify a new one by its
   nearest neighbours.
 

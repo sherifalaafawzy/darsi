@@ -34,12 +34,37 @@ export function accountLinks(role: Role, signedIn: boolean): NavItem[] {
   return links;
 }
 
+/** Pages outside the nav that still have a name of their own (the window title, App.tsx PageTitle). */
+const OTHER_PAGES: NavItem[] = [
+  { path: "/tracks", icon: "learn", key: "tracks.title" },
+  { path: "/results", icon: "chart", key: "results.title" },
+  { path: "/licences", icon: "file", key: "me.licences" },
+  { path: "/super/access", icon: "chart", key: "access.title" },
+];
+/** The name of the page at `pathname`: its tab, staff link or own name (the longest match wins), or null (a lesson). */
+export function pageKey(pathname: string, role: Role, signedIn: boolean): MessageKey | null {
+  const hit = [...TABS, ...accountLinks(role, signedIn), ...OTHER_PAGES]
+    .filter((i) => pathname === i.path || pathname.startsWith(`${i.path}/`))
+    .sort((a, b) => b.path.length - a.path.length)[0];
+  return hit?.key ?? null;
+}
+
+/**
+ * Puts keyboard and screen-reader focus on a heading the page just showed, so the person carries on from there: the
+ * button or tab they pressed has gone, or belongs to the page they left (focus would drop to the start of the page).
+ */
+export function focusHeading(el: HTMLElement | null | undefined) {
+  if (!el) return;
+  if (!el.hasAttribute("tabindex")) el.tabIndex = -1;
+  el.focus({ preventScroll: true });
+}
+
 const Loading = () => <div className="loading" aria-busy="true" />;
 
 export function Layout() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const nav = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, key: navKey } = useLocation();
   const { user, role, signOut } = useAuth();
   const { state, dispatch } = useStore();
   const online = useOnline();
@@ -51,6 +76,19 @@ export function Layout() {
   const extra = accountLinks(role, Boolean(user));
   // The rail has its own "Report a problem" from 900 px, so the floating one hides there (styles/bug-fab.css).
   useEffect(() => { document.documentElement.dataset.rail = ""; return () => { delete document.documentElement.dataset.rail; }; }, []);
+  // Moving to another page in the app (not a page that has just loaded: React Router's first location is "default"),
+  // focus goes to the new page's title, as a page load would start there; the tab pressed would otherwise keep it, and
+  // nothing would say the page changed. A page still loading (a lazy staff screen), or one that put focus somewhere
+  // itself (a field to type in), keeps it.
+  useEffect(() => {
+    if (navKey === "default") return;
+    const id = requestAnimationFrame(() => {
+      const h = document.querySelector<HTMLElement>(".app-main h1");
+      const at = document.activeElement;
+      if (h && !(at && at !== document.body && at.closest(".app-main"))) focusHeading(h);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
   // Students have no classroom kit to teach with.
   const tabs = audienceFor(role, state.audience) === "students" ? TABS.filter((x) => x.path !== "/kit") : TABS;
   // The longest matching link wins, so /admin/content lights up the editor, not Admin as well.
@@ -68,7 +106,7 @@ export function Layout() {
         {/* An organization's members see its logo and name, with a small credit for Darsi under them. */}
         {state.org?.name
           ? <Link to="/learn" className="rail-brand is-org"><BrandMark size={36} /><span><bdi>{state.org.name}</bdi><small className="rail-credit"><Mark size={14} />{t("org.withDarsi")}</small></span></Link>
-          : <Link to="/learn" className="rail-brand" aria-label="Darsi"><Mark size={36} /><span>{lang === "ar" ? "درسي" : "Darsi"}</span></Link>}
+          : <Link to="/learn" className="rail-brand" aria-label={t("app.name")}><Mark size={36} /><span>{t("app.name")}</span></Link>}
         {tabs.map(railItem)}
         {extra.length > 0 && <><hr className="rail-sep" />{extra.map(railItem)}</>}
         <button type="button" className="rail-item rail-report" aria-haspopup="dialog" onClick={openReport}><Icon name="bug" size={24} /><span>{t("bug.button")}</span></button>

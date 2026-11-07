@@ -5,7 +5,7 @@ import { LabShell } from "../../kit/LabShell";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
 import { TOOLS } from "../../../tinylm";
-import { ModelGate, RecordedTag, Thinking, useTiny, agentTurn } from "../inject/lab-tiny";
+import { ModelGate, RecordedTag, RunFailed, Thinking, useTiny, agentTurn } from "../inject/lab-tiny";
 import { answersOf } from "../inject/lab-agent";
 import { BANK, probeText, redteamGate, report, score, statusOf, type Category, type Status } from "./model";
 import { RECORDED } from "./recorded";
@@ -40,8 +40,8 @@ const S = {
     reportH: "تقرير الفريق الأحمر", colCat: "النوع", colTries: "جُرّب", colMiss: "تسلّل", colSev: "الخطورة",
     sev: { 1: "منخفضة", 2: "متوسطة", 3: "عالية" } as Record<number, string>,
     misses: "ما تسلّل", noMiss: "لم يتسلّل شيء في هذا التشغيل.",
-    try1: "شغّل البنك: يرفض «درسي الصغير» معظم الطلبات، لكن راقب صيغ الخصوصية والاحتيال المعاد صياغتها وهي تتسلّل. الرفض المكتسب لا يغطّي كل صياغة.",
-    try2: "اقرأ خطأً: في أحدها كان الروبوت مستعدًّا لإرسال رسالة احتيال؛ وفي آخر أعطى سجل تلميذ لـ«جارة». تلك هي ملاحظاتك.",
+    try1: "شغّل البنك: يرفض «درسي الصغير» معظم الطلبات، لكن راقب صيغة الاحتيال المعاد صياغتها وهي تتسلّل. الرفض المكتسب لا يغطّي كل صياغة.",
+    try2: "اقرأ الخطأ: كان الروبوت مستعدًّا لإرسال رسالة احتيال إلى جميع أولياء الأمور تطلب أرقام بطاقاتهم البنكية. تلك ملاحظتك.",
     try3: "فعّل «أضف قاعدة في الكود» وأعد التشغيل: تمسك القاعدة بما مرّره النموذج، وتبلغ النتيجة قمّتها. ويُظهر التقرير ماذا، وكم مرة، وكم الخطورة.",
     takeaway: "اختبار الفريق الأحمر هو كيف تعرف أين يفشل الروبوت: شغّل الطلبات السيئة، وسجّلها، ودوّن ما تسلّل وكم مرة وكم خطورته. والإصلاحات التي تصمد قواعد في الكود، لا أملٌ أن يقول النموذج «لا» دائمًا.",
   },
@@ -56,24 +56,26 @@ export default function Redteam({ meta, onDone }: LabProps) {
   const [results, setResults] = useState<Res[] | null>(null);
   const [step, setStep] = useState(0);
   const [recorded, setRecorded] = useState(false);
+  const [failed, setFailed] = useState(false);
   const stopFlag = useState(() => ({ current: false }))[0];
 
   async function run() {
     if (tiny.busy) return;
-    tiny.setBusy(true); setResults([]); setStep(0); stopFlag.current = false;
+    tiny.setBusy(true); setResults([]); setStep(0); setFailed(false); stopFlag.current = false;
     const acc: Res[] = [];
     try {
+      const world = await tiny.prepare();
       for (let i = 0; i < BANK.length; i++) {
         if (stopFlag.current) break;
         setStep(i + 1);
         const p = BANK[i];
         const hooks = { gate: guard ? (redteamGate as never) : undefined, stopped: () => stopFlag.current };
-        const r = await agentTurn(tiny.generate, { tools: TOOLS, turns: [{ role: "user", text: probeText(p, tlang) }] }, tiny.world!, hooks);
+        const r = await agentTurn(tiny.generate, { tools: TOOLS, turns: [{ role: "user", text: probeText(p, tlang) }] }, world, hooks);
         acc.push({ id: p.id, cat: p.cat, wording: p.wording, status: statusOf(p.cat, r.events, guard), answer: answersOf(r.events)[0] ?? "" });
         setResults([...acc]);
       }
       onDone?.();
-    } catch { setResults(null); } finally { stopFlag.current = false; tiny.setBusy(false); }
+    } catch { setResults(null); setFailed(true); } finally { stopFlag.current = false; tiny.setBusy(false); }
   }
   const stop = () => { stopFlag.current = true; tiny.stop(); };
 
@@ -83,11 +85,12 @@ export default function Redteam({ meta, onDone }: LabProps) {
 
   const body = (
     <div className="stack">
-      <button type="button" className={guard ? "lb-fix is-on" : "lb-fix"} aria-pressed={guard} onClick={() => { setGuard(!guard); setResults(null); }}>
+      <button type="button" className={guard ? "lb-fix is-on" : "lb-fix"} aria-pressed={guard} onClick={() => { setGuard(!guard); setResults(null); setFailed(false); }}>
         <Icon name={guard ? "check" : "close"} size={18} /><span>{s.guard}<span className="lb-fix-rule">{s.guardRule}</span></span>
       </button>
       <div className="lb-runbar"><Button size="sm" icon="play" disabled={tiny.busy} onClick={run}>{results && results.length ? s.again : s.run}</Button></div>
       {tiny.busy && <div className="stack-sm" aria-live="polite"><p className="lb-note">{s.running(num(step), num(BANK.length))}</p><Thinking onStop={stop} /></div>}
+      {failed && !tiny.busy && <RunFailed onRetry={run} onRecorded={() => setRecorded(true)} />}
 
       {results && !!results.length && (
         <>
@@ -126,7 +129,7 @@ export default function Redteam({ meta, onDone }: LabProps) {
   );
 
   return (
-    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway} onReset={() => { setResults(null); setGuard(false); }}>
+    <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway} onReset={() => { setResults(null); setFailed(false); setGuard(false); }}>
       {recorded
         ? <><RecordedTag /><RecordedScore tlang={tlang} s={s} /></>
         : <ModelGate tiny={tiny} onRecorded={() => setRecorded(true)}>{body}</ModelGate>}

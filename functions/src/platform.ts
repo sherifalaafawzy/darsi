@@ -5,8 +5,9 @@
  */
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { audit, auth, db, freshCaller, requireSuper, str, type Role } from "./admin.js";
+import { audit, auth, db, freshCaller, releasePupils, requireSuper, str, type Role } from "./admin.js";
 import { generateCode, isValidEmail, isValidUsername, usernameToEmail } from "./passwords.js";
+import { firstAdminProblem } from "./roles.js";
 import { bucket } from "./storage.js";
 import { writeClaims } from "./billing.js";
 
@@ -21,27 +22,42 @@ function details(d: Record<string, unknown> | undefined, partial: boolean) {
     if (d?.[k] === undefined) continue;
     out[k] = str(d[k], max);
   }
-  if ((!partial || "name" in out) && (out.name ?? "").length < 2) throw new HttpsError("invalid-argument", "The name needs 2 characters or more.");
+  if ((!partial || "name" in out) && (out.name ?? "").length < 2) throw new HttpsError("invalid-argument", "The name needs 2 characters or more.", { reason: "org-name" });
   return out;
 }
 
-/** Sets claims and the profile; org changes move the member counts and clear the old org's class and teacher. */
+/**
+ * Sets claims and the profile; org changes move the member counts and clear the old org's class and teacher. Someone
+ * who leaves an organization, or stops teaching in it, releases its pupils who had them as their teacher.
+ */
 export async function assign(uid: string, role: Role, orgId: string | null) {
   const user = await db.doc(`users/${uid}`).get();
-  if (!user.exists) throw new HttpsError("not-found", "No such account.");
+  if (!user.exists) throw new HttpsError("not-found", "No such account.", { reason: "no-account" });
   const before = (user.get("orgId") as string | null | undefined) ?? null;
+  const roleBefore = (user.get("role") as Role | undefined) ?? "learner";
   await user.ref.set({ role, orgId, claimsUpdatedAt: FieldValue.serverTimestamp(), ...(before !== orgId ? { teacherId: null, group: null, superSeat: false } : {}) }, { merge: true });
   await writeClaims(uid, role, orgId);
   if (before !== orgId) {
     if (before) await db.doc(`orgs/${before}`).update({ memberCount: FieldValue.increment(-1) }).catch(() => {});
     if (orgId) await db.doc(`orgs/${orgId}`).update({ memberCount: FieldValue.increment(1) });
   }
-  return { before };
+  if (before && (before !== orgId || (role !== "teacher" && role !== "orgAdmin"))) await releasePupils(before, uid);
+  return { before, roleBefore };
 }
 
 export const createOrg = onCall(async (req) => {
   const c = await requireSuper(req);
   const d = details(req.data, false);
+  // The first admin is checked before anything is written, so a refusal leaves no organization behind. Naming yourself
+  // would make you an org admin and end your platform-admin sessions (setUserRole refuses self-changes for the same
+  // reason); another platform admin is demoted only on purpose, from their own page.
+  const admin = str(req.data?.adminUid, 128);
+  if (admin) {
+    const problem = firstAdminProblem(admin, c.uid, await db.doc(`users/${admin}`).get());
+    if (problem === "self") throw new HttpsError("failed-precondition", "You can't make yourself an organization's admin: you would stop being a platform admin.", { reason: "admin-self" });
+    if (problem === "missing") throw new HttpsError("not-found", "No such account.", { reason: "no-account" });
+    if (problem === "superadmin") throw new HttpsError("failed-precondition", "That person is a platform admin. Change their role on their page first.", { reason: "admin-super" });
+  }
   const codes = { teacher: generateCode(), student: generateCode() };
   const ref = db.collection("orgs").doc();
   const batch = db.batch();
@@ -50,9 +66,8 @@ export const createOrg = onCall(async (req) => {
   batch.set(db.doc(`inviteCodes/${codes.teacher}`), { orgId: ref.id, role: "teacher" });
   batch.set(db.doc(`inviteCodes/${codes.student}`), { orgId: ref.id, role: "student" });
   await batch.commit();
-  const admin = str(req.data?.adminUid, 128);
-  if (admin) await assign(admin, "orgAdmin", ref.id);
-  await audit("createOrg", c.uid, { orgId: ref.id, admin: admin || null });
+  const was = admin ? await assign(admin, "orgAdmin", ref.id) : null;
+  await audit("createOrg", c.uid, { orgId: ref.id, admin: admin || null, ...(was ? { adminBefore: { role: was.roleBefore, orgId: was.before } } : {}) });
   return { orgId: ref.id };
 });
 
@@ -60,10 +75,10 @@ export const updateOrg = onCall(async (req) => {
   const c = await requireSuper(req);
   const orgId = str(req.data?.orgId, 128);
   const ref = db.doc(`orgs/${orgId}`);
-  if (!(await ref.get()).exists) throw new HttpsError("not-found", "No such organization.");
+  if (!(await ref.get()).exists) throw new HttpsError("not-found", "No such organization.", { reason: "no-org" });
   const d = details(req.data, true);
   const status = req.data?.status;
-  if (status !== undefined && status !== "active" && status !== "rejected") throw new HttpsError("invalid-argument", "status must be active or rejected.");
+  if (status !== undefined && status !== "active" && status !== "rejected") throw new HttpsError("invalid-argument", "status must be active or rejected.", { reason: "bad-status" });
   await ref.update({ ...d, ...(status ? { status } : {}) });
   await audit("updateOrg", c.uid, { orgId, ...d, ...(status ? { status } : {}) });
   return { ok: true };
@@ -78,8 +93,8 @@ export const deleteOrg = onCall({ timeoutSeconds: 300 }, async (req) => {
   const orgId = str(req.data?.orgId, 128);
   const ref = db.doc(`orgs/${orgId}`);
   const org = await ref.get();
-  if (!org.exists) throw new HttpsError("not-found", "No such organization.");
-  if (str(req.data?.confirm, 120) !== org.get("name")) throw new HttpsError("failed-precondition", "Type the organization's name to confirm.");
+  if (!org.exists) throw new HttpsError("not-found", "No such organization.", { reason: "no-org" });
+  if (str(req.data?.confirm, 120) !== org.get("name")) throw new HttpsError("failed-precondition", "Type the organization's name to confirm.", { reason: "confirm-name" });
   const members = await db.collection("users").where("orgId", "==", orgId).select().get();
   for (const m of members.docs) {
     await m.ref.set({ role: "learner", orgId: null, teacherId: null, group: null, superSeat: false, claimsUpdatedAt: FieldValue.serverTimestamp() }, { merge: true });
@@ -96,23 +111,38 @@ export const deleteOrg = onCall({ timeoutSeconds: 300 }, async (req) => {
 });
 
 /**
+ * An organization keeps an admin: its only admin is not demoted, moved out or removed until someone else is made its
+ * admin (refused with `last-admin`; OrgManage says so before asking). Refusals carry a stable `reason` in their details,
+ * which the admin screens put in the admin's language (admin/refusals.ts); the English message stays as a fallback.
+ */
+export async function refuseLastAdmin(uid: string, orgId: string) {
+  const admins = await db.collection("users").where("orgId", "==", orgId).where("role", "==", "orgAdmin").select().limit(2).get();
+  if (admins.docs.length > 0 && admins.docs.every((d) => d.id === uid)) {
+    throw new HttpsError("failed-precondition", "This is the organization's only admin. Make someone else its admin first.", { reason: "last-admin" });
+  }
+}
+
+/**
  * Any account's role and organization: students, teachers and org admins need an active organization; learners and
  * platform admins have none. A platform admin can't change their own role (so nobody locks the platform out).
  */
 export const setUserRole = onCall(async (req) => {
   const c = await requireSuper(req);
   const uid = str(req.data?.uid, 128), role = str(req.data?.role) as Role;
-  if (!ROLES.includes(role)) throw new HttpsError("invalid-argument", "Invalid role.");
-  if (uid === c.uid) throw new HttpsError("failed-precondition", "You cannot change your own role.");
+  if (!ROLES.includes(role)) throw new HttpsError("invalid-argument", "Invalid role.", { reason: "bad-role" });
+  if (uid === c.uid) throw new HttpsError("failed-precondition", "You cannot change your own role.", { reason: "self-role" });
   let orgId: string | null = null;
   if (IN_ORG.includes(role)) {
     orgId = str(req.data?.orgId, 128);
     const org = orgId ? await db.doc(`orgs/${orgId}`).get() : null;
-    if (!org?.exists) throw new HttpsError("not-found", "Choose an organization.");
-    if (org.get("status") !== "active") throw new HttpsError("failed-precondition", "This organization is not active.");
+    if (!org?.exists) throw new HttpsError("not-found", "Choose an organization.", { reason: "no-org" });
+    if (org.get("status") !== "active") throw new HttpsError("failed-precondition", "This organization is not active.", { reason: "org-inactive" });
   }
-  const { before } = await assign(uid, role, orgId);
-  await audit("setUserRole", c.uid, { uid, role, orgId, before });
+  const now = await db.doc(`users/${uid}`).get();
+  const adminOf = now.get("role") === "orgAdmin" ? (now.get("orgId") as string | null | undefined) : null;
+  if (adminOf && (role !== "orgAdmin" || orgId !== adminOf)) await refuseLastAdmin(uid, adminOf);
+  const { before, roleBefore } = await assign(uid, role, orgId);
+  await audit("setUserRole", c.uid, { uid, role, orgId, before, roleBefore });
   return { ok: true };
 });
 
@@ -124,7 +154,7 @@ export const setUserRole = onCall(async (req) => {
  */
 export const findAccount = onCall(async (req) => {
   const c = await freshCaller(req);
-  if (c.role !== "superadmin" && c.role !== "orgAdmin") throw new HttpsError("permission-denied", "Admins only.");
+  if (c.role !== "superadmin" && c.role !== "orgAdmin") throw new HttpsError("permission-denied", "Admins only.", { reason: "not-admin" });
   const raw = str(req.data?.login, 200).toLowerCase();
   const email = raw.includes("@") ? raw : isValidUsername(raw) ? usernameToEmail(raw) : "";
   if (!email || !isValidEmail(email)) return { account: null, profiles: 0 };

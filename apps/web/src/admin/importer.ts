@@ -50,6 +50,16 @@ export const parseRole = (v: string, fallback: Role): Role => ROLE_WORDS[norm(v)
 
 export interface RowCheck { member: MemberInput; errors: string[]; warnings: string[]; row: number }
 
+/**
+ * The order rows are sent to createMembers: teachers and admins first, everyone else after, each group in its own
+ * order. Accounts are made a few dozen per call, so a teacher listed below her students is still made before them,
+ * and their teacher's login can be found.
+ */
+export function sendOrder<T extends { member: MemberInput }>(rows: T[]): T[] {
+  const staff = (r: T) => r.member.role === "teacher" || r.member.role === "orgAdmin";
+  return [...rows.filter(staff), ...rows.filter((r) => !staff(r))];
+}
+
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME = /^[a-z0-9][a-z0-9._-]{2,39}$/i;
 
@@ -75,7 +85,8 @@ export function buildMembers(rows: unknown[][], mapping: Mapping, opts: { defaul
     if (!name) errors.push("name");
     if (email && !EMAIL.test(email)) errors.push("email");
     if (username && !USERNAME.test(username)) errors.push("username");
-    if (!email && !username) warnings.push("autoUsername");
+    // A login is made up only for a row that is created: one missing its name isn't, so it doesn't promise one.
+    if (!email && !username && name) warnings.push("autoUsername");
     if (roleRaw && !ROLE_WORDS[norm(roleRaw)]) warnings.push("role");
     const key = email || username;
     if (key) { if (seen.has(key)) errors.push("duplicate"); else seen.set(key, row); }
@@ -121,17 +132,24 @@ export function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((x) => x.trim() !== ""));
 }
 
-/** Credentials workbook to hand out (download once; passwords are never stored by Darsi in readable form). */
-export async function credentialsXlsx(rows: { name: string; login: string; password?: string; role?: string; group?: string; status: string }[], labels: Record<string, string>): Promise<Blob> {
+/**
+ * Credentials workbook to hand out (download once; passwords are never stored by Darsi in readable form). `row` is the
+ * person's row in the imported sheet, as in the preview, so a row that failed is easy to find there.
+ */
+export async function credentialsXlsx(rows: { row?: number; name: string; login: string; password?: string; role?: string; group?: string; status: string }[], labels: Record<string, string>,
+  /** The sheet's name in the admin's language, and right to left for a right-to-left language. */
+  opts: { sheet?: string; rtl?: boolean } = {}): Promise<Blob> {
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook(); wb.creator = "Darsi";
-  const ws = wb.addWorksheet("Accounts");
+  const ws = wb.addWorksheet(sheetName(opts.sheet || "Accounts"), { views: [{ state: "frozen", ySplit: 1, rightToLeft: !!opts.rtl }] });
   ws.columns = [
+    ...(rows.some((r) => r.row != null) ? [{ header: labels.row ?? "#", key: "row", width: 6 }] : []),
     { header: labels.name, key: "name", width: 32 }, { header: labels.login, key: "login", width: 34 }, { header: labels.password, key: "password", width: 18 },
     { header: labels.role, key: "role", width: 14 }, { header: labels.group, key: "group", width: 16 }, { header: labels.status, key: "status", width: 14 },
   ];
   ws.getRow(1).font = { bold: true };
   rows.forEach((r) => ws.addRow(r));
+  cleanBook(wb);
   const buf = await wb.xlsx.writeBuffer();
   return new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 }
@@ -146,6 +164,15 @@ export async function templateXlsx(): Promise<Blob> {
   ws.columns.forEach((c) => { c.width = 24; });
   return new Blob([await wb.xlsx.writeBuffer()], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 }
+
+/** Text without the invisible direction marks the screens wrap names and ids in (isolate(): U+2066–U+2069). */
+export const plainText = <T,>(v: T): T => (typeof v === "string" ? (v.replace(/[\u2066-\u2069]/g, "") as T) : v);
+/** Every text cell of a workbook as plain text: an exported file must not carry the screens' invisible marks. */
+export function cleanBook(wb: import("exceljs").Workbook) {
+  wb.eachSheet((ws) => ws.eachRow((row) => row.eachCell((cell) => { if (typeof cell.value === "string") cell.value = plainText(cell.value); })));
+}
+/** A sheet name Excel accepts: at most 31 characters, none of : \ / ? * [ ]. */
+export const sheetName = (s: string) => plainText(s).replace(/[:\\/?*[\]]/g, " ").trim().slice(0, 31) || "Sheet";
 
 export function downloadBlob(blob: Blob, name: string) {
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();

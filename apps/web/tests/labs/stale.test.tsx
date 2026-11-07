@@ -17,11 +17,28 @@ afterEach(() => { setOnline(true); vi.unstubAllGlobals(); Reflect.deleteProperty
 describe("a lab chunk that fails to load", () => {
   it("online: says Darsi was updated and reloads", async () => {
     setOnline(true);
+    const fetch = vi.fn(async () => new Response(null, { headers: { "Content-Type": "text/javascript; charset=utf-8" } }));
+    vi.stubGlobal("fetch", fetch);
     render(<I18nProvider lang="en"><LabMissing retry={() => {}} /></I18nProvider>);
-    expect(screen.getByText("Darsi was updated. Reload to open this lab.")).toBeTruthy();
+    expect(await screen.findByText("Darsi was updated. Reload to open this lab.")).toBeTruthy();
+    expect(fetch).toHaveBeenCalledWith("/sw.js", expect.objectContaining({ method: "HEAD", cache: "no-store" }));
     expect(screen.queryByText(/isn.t on your phone yet/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Reload" }));
     await vi.waitFor(() => expect(reload).toHaveBeenCalled());
+  });
+
+  it("online with nothing getting through (no data left, a Wi-Fi sign-in page): says the lab isn't saved, never Reload", async () => {
+    setOnline(true);
+    for (const answer of [async () => { throw new TypeError("Failed to fetch"); }, async () => new Response("<html>", { headers: { "Content-Type": "text/html" } })]) {
+      vi.stubGlobal("fetch", vi.fn(answer));
+      const retry = vi.fn();
+      const { unmount } = render(<I18nProvider lang="en"><LabMissing retry={retry} /></I18nProvider>);
+      expect(await screen.findByText(/isn.t on your phone yet/)).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Reload" })).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+      expect(retry).toHaveBeenCalled();
+      unmount();
+    }
   });
 
   it("offline: says the lab isn't saved and retries", () => {

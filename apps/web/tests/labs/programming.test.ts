@@ -106,6 +106,22 @@ describe("sorting", () => {
     expect(c("insertion", makeBars(32, "nearly")).cmps).toBeLessThan(c("merge", makeBars(32, "nearly")).cmps);
   });
 
+  it("makes a nearly sorted list that is never already sorted, so insertion sort wins at every size", () => {
+    const work = (a: (typeof ALGOS)[number], bars: number[]) => ops(a, bars).length;
+    for (const n of [8, 16, 32]) for (const seed of [1, 2, 3, 7, 42, 99]) {
+      const bars = makeBars(n, "nearly", seed);
+      expect(isSorted(bars), `${n} bars, seed ${seed}`).toBe(false);
+      expect([...bars].sort((x, y) => x - y)).toEqual(Array.from({ length: n }, (_, i) => i + 1));
+      expect(work("insertion", bars), `${n} bars, seed ${seed}`).toBeLessThan(work("bubble", bars));
+    }
+  });
+
+  it("gives the counts the lab's first try and code-s3 quote (8, then 32 mixed-up bars)", () => {
+    const c = (a: (typeof ALGOS)[number], n: number) => replay(makeBars(n, "random"), ops(a, makeBars(n, "random")), Infinity).cmps;
+    expect([c("bubble", 8), c("bubble", 32)]).toEqual([28, 496]);
+    expect([c("merge", 8), c("merge", 32)]).toEqual([16, 123]);
+  });
+
   it("replays part of the way, and paces the race", () => {
     const bars = makeBars(8, "reversed"), steps = ops("bubble", bars);
     const r = replay(bars, steps, 2);
@@ -134,7 +150,16 @@ describe("recursion", () => {
     expect(c).toHaveLength(fibCalls(6));
     expect([fibCalls(5), fibCalls(10), fibCalls(20)]).toEqual([15, 177, 21891]);
     expect(c.filter((x) => x.n === 2)).toHaveLength(5); // fib(2) is worked out five times
-    expect(fibCallsRemembered(20)).toBe(21);
+    // Every call, the ones answered from the dictionary too, as the course's memo code counts them (fib(30): 59).
+    const memoCalls = (n: number) => {
+      const memo = new Map<number, number>();
+      let k = 0;
+      const fib = (m: number): number => { k++; if (memo.has(m)) return memo.get(m)!; if (m < 2) return m; const v = fib(m - 1) + fib(m - 2); memo.set(m, v); return v; };
+      fib(n);
+      return k;
+    };
+    for (const n of [0, 1, 2, 5, 10, 20, 30, 40]) expect(fibCallsRemembered(n), `fib(${n})`).toBe(memoCalls(n));
+    expect([fibCallsRemembered(30), fibCallsRemembered(40)]).toEqual([59, 79]);
     const l = layout(c);
     expect(l.width).toBe(c.filter((x) => !x.children.length).length);
     expect(l.depth).toBe(6);

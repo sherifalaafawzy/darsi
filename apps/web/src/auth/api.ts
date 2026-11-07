@@ -2,7 +2,15 @@ import { call } from "../fb";
 import type { Role } from "./types";
 
 export interface MemberInput { name: string; email?: string; username?: string; role?: Role; group?: string; teacherEmail?: string; lang?: string }
-export interface MemberResult { row: number; name: string; login: string; password?: string; uid?: string; status: "created" | "exists" | "error"; error?: string }
+/**
+ * One row's outcome (functions/src/index.ts createMembers), in the order sent. "exists": the typed email has an account;
+ * "taken": someone has the typed username. warning "teacherNotFound": created, but no teacher of this organization has
+ * the login in its teacher column. `reason`: why a row wasn't created, for the screen to say in the admin's language
+ * (`error` is the server's English).
+ */
+export interface MemberResult { row: number; name: string; login: string; password?: string; uid?: string; status: "created" | "exists" | "taken" | "error"; error?: string; reason?: "missingName" | "invalidEmail" | "invalidUsername" | "exists" | "taken"; warning?: "teacherNotFound" }
+/** Why an account action was refused (functions/src/account.ts, the error's details.reason). */
+export type AccountRefusal = "recent-login" | "renewing" | "self-staff" | "self-org" | "superadmin" | "not-yours" | "missing";
 
 /** Push notifications (functions/src/notify.ts). Each device gets its own language; cats can each be switched off. */
 /** The phone's language: notifications come in Arabic for Arabic and in English for every other language. */
@@ -38,12 +46,18 @@ export const api = {
   updateOrg: call<Partial<OrgDetails> & { orgId: string; status?: "active" | "rejected" }, { ok: boolean }>("updateOrg"),
   deleteOrg: call<{ orgId: string; confirm: string }, { members: number; units: number }>("deleteOrg"),
   setUserRole: call<{ uid: string; role: Role; orgId?: string | null }, { ok: boolean }>("setUserRole"),
+  // Data rights and abuse (functions/src/account.ts). No uid: your own account.
+  exportAccountData: call<{ uid?: string }, Record<string, unknown>>("exportAccountData"),
+  deleteAccount: call<{ uid?: string }, { ok: boolean }>("deleteAccount"),
+  setAccountSuspended: call<{ uid: string; suspended: boolean; reason?: string }, { suspended: boolean }>("setAccountSuspended"),
+  moderateSubmission: call<{ uid: string; id: string; reason?: string }, { ok: boolean; files: number }>("moderateSubmission"),
   // Darsi Super (functions/src/billing.ts).
   setSuperOn: call<{ on: boolean }, { on: boolean }>("setSuperOn"),
   savePlans: call<{ plans: unknown[]; economics: { usdPerCredit: number; egpPerUsd: number } }, { rev: number }>("savePlans"),
   grantCredits: call<{ uid: string; credits: number }, { ok: boolean }>("grantCredits"),
-  grantSuper: call<{ uid: string; days: number; plan?: string }, { ok: boolean }>("grantSuper"),
-  setOrgLicence: call<{ orgId: string; seats: number; days?: number; plan?: string }, { ok: boolean }>("setOrgLicence"),
+  // Taking Super back and removing a licence are their own flags, never an empty number field.
+  grantSuper: call<{ uid: string; days: number; plan?: string; revoke?: boolean }, { ok: boolean }>("grantSuper"),
+  setOrgLicence: call<{ orgId: string; seats: number; days?: number; plan?: string; remove?: boolean }, { ok: boolean }>("setOrgLicence"),
   setSeat: call<{ orgId: string; uid: string; on: boolean }, { ok: boolean }>("setSeat"),
   fillSeats: call<{ orgId: string }, { given: number }>("fillSeats"),
   checkRevenueEvent: call<{ plan: string; currency: "EGP" | "USD" }, { sent: boolean; reason?: string; status?: number; validation?: { validationMessages?: Array<{ description: string; fieldPath?: string }> } | null }>("checkRevenueEvent"),

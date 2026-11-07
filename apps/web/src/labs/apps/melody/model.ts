@@ -9,6 +9,11 @@ export function transitions(song: number[], n = PITCHES.length): number[][] {
   return c;
 }
 
+/** What followed pitch `from`, most often first: [pitch, times]. These counts are the whole model; the lab shows them. */
+export function followers(counts: number[][], from: number): [number, number][] {
+  return (counts[from] ?? []).flatMap((n, to): [number, number][] => (n > 0 ? [[to, n]] : [])).sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+}
+
 /** The most common follower, or the same pitch when a note was never followed. */
 export function nextOf(counts: number[][], from: number): number {
   const row = counts[from] ?? [];

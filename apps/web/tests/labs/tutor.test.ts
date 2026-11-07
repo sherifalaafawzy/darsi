@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { usableAnswer } from "../../src/labs/apps/tutor";
+import { asksAgain, isFollowUp, usableAnswer } from "../../src/labs/apps/tutor";
 import { CONCEPTS, matchConcept, preferAnswer, sceneOf, seedAnswer } from "../../src/labs/apps/tutor/model";
 
 describe("text tutor", () => {
@@ -38,5 +38,16 @@ describe("text tutor", () => {
     expect(usableAnswer("تضرب الخلية المدخلات في الأوزان وتجمع الانحياز.", line, "en")).toBe(false);
     const ar = "تضرب الخلية العصبية مدخلاتها في الأوزان، ثم تجمع الانحياز وتمرّر الناتج عبر دالة تنشيط.";
     expect(usableAnswer("تستخدم الخلية الأوزان والانحياز ثم دالة تنشيط لإنتاج النتيجة.", ar, "ar")).toBe(true);
+  });
+
+  it("hears a plea to explain the last idea again, in both languages, and nothing else", () => {
+    for (const q of ["I still don't understand. Explain it again.", "I still don’t understand", "Can you say it more simply?", "One more time, please"]) expect(asksAgain(q), q).toBe(true);
+    for (const q of ["ما زلت لا أفهم. اشرح مرة أخرى.", "لم أفهم", "اشرحها بشكل أبسط", "زدني"]) expect(asksAgain(q), q).toBe(true);
+    // A message that names an idea is a new question, whatever words it shares with a plea.
+    for (const q of ["Help me understand HTTPS", "Can you give an example of a for loop?", "Tell me more about memory", "Explain bubble sort again", "Sort 4, 2, 5, 1 again"]) expect(asksAgain(q), q).toBe(false);
+    for (const q of ["أريد أن أفهم HTTPS", "أعطني مثالًا عن HTTPS"]) expect(asksAgain(q), q).toBe(false);
+    // "understand", "more" and "example" on their own are not pleas.
+    expect(isFollowUp("Help me understand")).toBe(false);
+    expect(isFollowUp("Give me an example")).toBe(false);
   });
 });

@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { BUILTIN_TRACKS } from "../src/content/tracks";
 import { AUDIENCES, type Placement } from "../src/content/types";
-import { placementBank } from "../src/screens/Onboarding";
+import { placementBank, placementNext, placementProgress, type PlaceState } from "../src/screens/Onboarding";
+import { arabicStrings, isolatesOverLines, isolatesPair, reisolate } from "../../../scripts/lib/isolates.mjs";
 
 // The onboarding check (public/content/placement.json): every track it covers has three questions for each audience
 // and level, in English and Arabic, each with a right answer and an explanation.
@@ -80,6 +81,65 @@ describe("placement.json", () => {
         expect(t?.ar?.trim(), q.id).toBeTruthy();
         expect(t!.ar, `${q.id}: "·" reads as a zero in Arabic`).not.toContain("·");
       }
+    }
+  });
+
+  it("offers three or four different answers, which the check labels A to D", () => {
+    for (const q of questions) if (q.type === "choice") {
+      expect(q.options.length, q.id).toBeLessThanOrEqual(4);
+      for (const lang of ["en", "ar"] as const) expect(new Set(q.options.map((o) => o.text[lang])).size, `${q.id} ${lang}`).toBe(q.options.length);
+    }
+  });
+
+  it("shows code longer than a phrase as a snippet (a loop on one line is not Python)", () => {
+    for (const q of questions) {
+      if (q.snippet) {
+        expect(["python", "sql"], q.id).toContain(q.snippet.lang);
+        expect(q.snippet.text.trim(), q.id).toBeTruthy();
+      }
+      expect(q.prompt.en, q.id).not.toMatch(/\bfor \w+ in [^:]+:\s*(if|while|for)\b/);
+    }
+  });
+
+  it("keeps code and formulas in Arabic text in left-to-right isolates", () => {
+    const strings = arabicStrings(JSON.parse(JSON.stringify(placement)), "placement") as [string, string, unknown][];
+    expect(strings.flatMap(([path, text]) => [
+      ...(reisolate(text) !== text ? [`${path}: needs isolates (scripts/lib/isolates.mjs reisolate)`] : []),
+      ...(!isolatesPair(text) ? [`${path}: isolates don't pair up`] : []),
+      ...isolatesOverLines(text).map(() => `${path}: an isolate holds a line break`),
+    ])).toEqual([]);
+  });
+
+  it("is the same as the track files (content/placement) for every question they hold", () => {
+    const byId = new Map(questions.map((q) => [q.id, q]));
+    for (const track of ["code", "data", "agents", "opt", "aisec", "data-science"]) {
+      const file = JSON.parse(readFileSync(join(__dirname, `../../../content/placement/${track}.json`), "utf8")) as Pick<Placement, "questions">;
+      for (const q of file.questions) expect(byId.get(q.id), q.id).toEqual(q);
+    }
+  });
+});
+
+describe("the check's progress bar", () => {
+  // Every way through one track: from each start level, any run of right and wrong answers.
+  const walks = (start: number, top: number) => {
+    const out: boolean[][] = [];
+    const go = (s: PlaceState, path: boolean[]) => {
+      for (const ok of [true, false]) {
+        const r = placementNext(s, ok, top);
+        if ("level" in r) out.push([...path, ok]); else go(r.state, [...path, ok]);
+      }
+    };
+    go({ level: start, asked: 0 }, []);
+    return out;
+  };
+
+  it("starts empty, only ever moves forward, and fills a track's share only when the next track starts", () => {
+    const top = 4, tracks = 3;
+    for (let start = 1; start <= top; start++) for (const path of walks(start, top)) for (let ti = 0; ti < tracks; ti++) {
+      const bar = path.map((_, i) => placementProgress(ti, tracks, i + 1, start, top));
+      expect(bar[0]).toBeCloseTo((ti / tracks) * 100); // a university teacher's first question is no longer at 75%
+      for (let i = 1; i < bar.length; i++) expect(bar[i]).toBeGreaterThan(bar[i - 1]); // a miss no longer shrinks it
+      expect(bar[bar.length - 1]).toBeLessThan(((ti + 1) / tracks) * 100);
     }
   });
 });

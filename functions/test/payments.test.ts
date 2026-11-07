@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { checkoutAmount, formEncode, fullyRefunded, kindOf, paymobHmac, paymobOutcome, providerFor, stripeSession, verifyPaymob, verifyStripe } from "../src/paymentsCore";
+import { checkoutAmount, formEncode, fullyRefunded, invoicePeriod, invoicePeriodEnd, kindOf, paymobHmac, paymobOutcome, providerFor, realSecret, stripeSession, stripeSubStatus, verifyPaymob, verifyStripe } from "../src/paymentsCore";
 
 const monthly = { id: "super_monthly", name: { en: "Super monthly", ar: "سوبر شهري" }, kind: "individual" as const, period: "month" as const, prices: { EGP: 149, USD: 4.99 }, credits: 300, active: true };
 const seat = { ...monthly, id: "super_seat", kind: "seat" as const, period: "year" as const, prices: { USD: 20, EGP: 600 } };
@@ -99,5 +99,33 @@ describe("Stripe", () => {
     expect(lic).toMatchObject({ mode: "payment", payment_intent_data: { metadata: { checkout: "chk2" } } });
     expect(lic.line_items[0]).toMatchObject({ quantity: 30, price_data: { unit_amount: 2000 } });
     expect(lic.line_items[0].price_data).not.toHaveProperty("recurring");
+  });
+  it("reads the period an invoice paid for from its lines, not the invoice's own period (sfm-07)", () => {
+    // A renewal on 6 Jan: the line covers 6 Jan to 6 Feb (31 days); the invoice's period_end would be 6 Jan.
+    const jan6 = Date.UTC(2027, 0, 6) / 1000, feb6 = Date.UTC(2027, 1, 6) / 1000;
+    expect(invoicePeriodEnd({ lines: { data: [{ period: { start: jan6, end: feb6 } }] } })).toBe(feb6 * 1000);
+    expect(invoicePeriodEnd({ lines: { data: [{ period: { start: 1, end: 5 } }, { period: { start: jan6, end: feb6 } }] } })).toBe(feb6 * 1000);
+    expect(invoicePeriodEnd({})).toBeUndefined();
+    expect(invoicePeriodEnd({ lines: { data: [{}] } })).toBeUndefined();
+    // And how long that period is, from the line that ends last, so time paid ahead is added in full.
+    expect(invoicePeriod({ lines: { data: [{ period: { start: 1, end: 5 } }, { period: { start: jan6, end: feb6 } }] } })).toEqual({ until: feb6 * 1000, periodMs: 31 * 864e5 });
+    expect(invoicePeriod({ lines: { data: [{ period: { end: feb6 } }] } })).toEqual({ until: feb6 * 1000 });
+    expect(invoicePeriod({})).toEqual({});
+  });
+  it("never takes the placeholder secret 'unset' (payments closed) as a signing key (sec-live-3)", () => {
+    const now = 1_800_000_000, body = "{}";
+    const forged = `t=${now},v1=${createHmac("sha256", "unset").update(`${now}.${body}`).digest("hex")}`;
+    expect(verifyStripe(body, forged, "unset", now)).toBe(false);
+    expect(verifyStripe(body, forged, " unset ", now)).toBe(false);
+    expect(verifyPaymob(txn, paymobHmac(txn, "unset"), "unset")).toBe(false);
+    expect([realSecret("unset"), realSecret(""), realSecret(undefined), realSecret("whsec_x")]).toEqual([false, false, false, true]);
+  });
+  it("tells a renewing subscription from a cancelled or failing one", () => {
+    expect(stripeSubStatus({ status: "active", cancel_at_period_end: false })).toBe("active");
+    expect(stripeSubStatus({ status: "active", cancel_at_period_end: true })).toBe("canceled");
+    expect(stripeSubStatus({ status: "canceled" })).toBe("canceled");
+    expect(stripeSubStatus({ status: "past_due" })).toBe("past_due");
+    expect(stripeSubStatus({ status: "unpaid" })).toBe("past_due");
+    expect(stripeSubStatus({ status: "trialing" })).toBe("active");
   });
 });

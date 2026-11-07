@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppBar, Button, EmptyState, ProgressBar, dirFor } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
@@ -9,8 +9,9 @@ import { setLanguages, useI18n, type MessageKey } from "../i18n";
 import en from "../i18n/en.json";
 import ar from "../i18n/ar.json";
 import { cmsApi } from "./api";
+import { useAutosave } from "./autosave";
 import { createTranslation, deleteTranslation, getTranslation, listTranslations, saveTranslation, statusOf, type TranslationDraft } from "./data";
-import { LangName, Sel, Text } from "./fields";
+import { LangName, Sel, StatusPill, Text } from "./fields";
 import { readTranslations, sheetCsv, sheetRows, sheetXlsx } from "./sheets";
 import "../styles/editor.css";
 import "./strings";
@@ -168,11 +169,13 @@ const fieldsOf = (d: TranslationDraft) => ({ native: d.native, english: d.englis
 
 /**
  * /super/languages/:code: translate the app's UI strings into one language. Saved as a draft (translations/{code},
- * with a rev check); "Publish" saves, then asks publishLanguage to put it in front of learners.
+ * with a rev check) by itself, as the course editor saves: a few seconds after the last change, when the tab is
+ * hidden, and as the page closes (the app's own navigation included); Back saves first and asks only if that fails.
+ * "Publish" saves, then asks publishLanguage to put it in front of learners.
  */
 export function TranslatePage() {
   const { code = "" } = useParams();
-  const { t, num } = useI18n();
+  const { t, num, locale } = useI18n();
   const nav = useNavigate();
   const { user } = useAuth();
   const [draft, setDraft] = useState<TranslationDraft | null>(null);
@@ -183,11 +186,19 @@ export function TranslatePage() {
   const [shown, setShown] = useState(PAGE);
   const [busy, setBusy] = useState<"" | "save" | "publish" | "unpublish" | "delete" | "import">("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [ask, setAsk] = useState<"" | "delete" | "unpublish">("");
+  const [ask, setAsk] = useState<"" | "delete" | "unpublish" | "leave">("");
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [saveErr, setSaveErr] = useState<"" | "conflict" | "failed">("");
+  // What saves read when they run (a save queued behind another, or the one as the page closes).
+  const revRef = useRef(0);
+  const savedRef = useRef("");
 
   useEffect(() => {
-    getTranslation(code).then((d) => { if (!d) setLoadErr(t("err.notFound")); else { const x = { ...d, messages: d.messages ?? {} }; setDraft(x); setSaved(JSON.stringify(fieldsOf(x))); } })
-      .catch((e: Error) => setLoadErr(e.message));
+    getTranslation(code).then((d) => {
+      if (!d) { setLoadErr(t("err.notFound")); return; }
+      const x = { ...d, messages: d.messages ?? {} };
+      setDraft(x); setSaved(JSON.stringify(fieldsOf(x))); revRef.current = x.rev; savedRef.current = JSON.stringify(fieldsOf(x));
+    }).catch((e: Error) => setLoadErr(e.message));
   }, [code]); // eslint-disable-line react-hooks/exhaustive-deps
   const dirty = useMemo(() => !!draft && JSON.stringify(fieldsOf(draft)) !== saved, [draft, saved]);
   useEffect(() => {
@@ -197,7 +208,27 @@ export function TranslatePage() {
     return () => removeEventListener("beforeunload", warn);
   }, [dirty]);
   const check = useMemo(() => checkTranslation(draft?.messages ?? {}, EN), [draft?.messages]);
-  const setMessage = useCallback((k: string, v: string) => { setDraft((d) => (d ? { ...d, messages: { ...d.messages, [k]: v } } : d)); setMsg(null); }, []);
+  const setMessage = useCallback((k: string, v: string) => { setDraft((d) => (d ? { ...d, messages: { ...d.messages, [k]: v } } : d)); setMsg((m) => (m && !m.ok ? m : null)); }, []);
+
+  /** Saves the draft (`d`: what to save, else what is on screen). `quiet` (autosave) shows no message unless it fails. */
+  const save = useCallback(async (quiet = false, d: TranslationDraft | null = draft): Promise<boolean> => {
+    if (!d || !user) return false;
+    const json = JSON.stringify(fieldsOf(d));
+    // Already saved (by a save this one queued behind): nothing to write.
+    if (json === savedRef.current) { if (!quiet) setMsg({ ok: true, text: t("cms.saved") }); return true; }
+    setBusy("save"); if (!quiet) setMsg(null);
+    try {
+      const r = await saveTranslation(d, revRef.current, user.uid);
+      if ("conflict" in r) { setSaveErr("conflict"); setMsg({ ok: false, text: t("cms.lang.conflict") }); return false; }
+      revRef.current = r.rev; savedRef.current = json;
+      // Typing goes on while a save is out: keep it, and move only the revision and what counts as saved.
+      setDraft((cur) => (cur ? { ...(cur === draft ? d : cur), rev: r.rev } : cur)); setSaved(json); setSavedAt(new Date()); setSaveErr("");
+      if (!quiet) setMsg({ ok: true, text: t("cms.saved") });
+      return true;
+    } catch (e) { setSaveErr("failed"); setMsg({ ok: false, text: (e as Error).message }); return false; }
+    finally { setBusy(""); }
+  }, [draft, user, t]);
+  const auto = useAutosave({ dirty, paused: !!busy, blocked: saveErr === "conflict", change: draft, save });
 
   if (loadErr) return <main className="screen"><EmptyState tone="error" title={t("err.title")} body={loadErr} action={<Button size="sm" onClick={() => nav("/super/languages")}>{t("common.back")}</Button>} /></main>;
   if (!draft || !user) return <div className="loading" aria-busy="true" />;
@@ -208,24 +239,21 @@ export function TranslatePage() {
     && (!needle || [k, EN[k], AR[k] ?? "", draft.messages[k] ?? ""].some((s) => s.toLowerCase().includes(needle))));
   const st = statusOf(draft);
   const problems = validateLanguage(draft, cleanMessages(draft.messages, EN));
+  const time = savedAt ? new Intl.DateTimeFormat(locale, { timeStyle: "short" }).format(savedAt) : "";
+  const saveState = busy === "save" ? t("cms.saving") : saveErr ? t("cms.notSaved") : dirty ? t("cms.unsaved") : time ? t("cms.savedAt", { time }) : t("cms.allSaved");
 
-  const save = async (d = draft): Promise<boolean> => {
-    setBusy("save"); setMsg(null);
-    try {
-      const r = await saveTranslation(d, d.rev, user.uid);
-      if ("conflict" in r) { setMsg({ ok: false, text: t("cms.lang.conflict") }); return false; }
-      const next = { ...d, rev: r.rev };
-      setDraft(next); setSaved(JSON.stringify(fieldsOf(next))); setMsg({ ok: true, text: t("cms.saved") });
-      return true;
-    } catch (e) { setMsg({ ok: false, text: (e as Error).message }); return false; }
-    finally { setBusy(""); }
+  /** Back saves first; only a save that fails asks (inline, as the course editor does). */
+  const leave = async () => {
+    if (!dirty) return nav("/super/languages");
+    if (saveErr !== "conflict" && await auto.run(() => save(true))) return nav("/super/languages");
+    setAsk("leave");
   };
   const publish = async () => {
     if (check.placeholders.length) { setFilter("fix"); setMsg({ ok: false, text: t("cms.lang.publishBlocked", { n: check.placeholders.length }) }); return; }
     if (problems.length) { setMsg({ ok: false, text: problems.map((p) => t(PROBLEM[p])).join(" ") }); return; }
     // Publish what the app can use: keys it has, trimmed. Strings for keys it no longer has are dropped here.
     const clean = { ...draft, messages: cleanMessages(draft.messages, EN) };
-    if ((dirty || JSON.stringify(clean.messages) !== JSON.stringify(draft.messages)) && !(await save(clean))) return;
+    if (!(await auto.run(() => save(true, clean)))) return;
     setBusy("publish"); setMsg(null);
     try {
       const r = await cmsApi.publishLanguage({ code });
@@ -241,7 +269,7 @@ export function TranslatePage() {
   };
   const remove = async () => {
     setAsk(""); setBusy("delete");
-    try { await deleteTranslation(code); setSaved(JSON.stringify(fieldsOf(draft))); nav("/super/languages"); }
+    try { await deleteTranslation(code); auto.skip(); nav("/super/languages"); }
     catch (e) { setMsg({ ok: false, text: (e as Error).message }); setBusy(""); }
   };
   const rows = () => sheetRows(code, EN, AR, draft.messages);
@@ -262,8 +290,8 @@ export function TranslatePage() {
 
   return (
     <>
-      <AppBar title={draft.native || code} onBack={() => { if (!dirty || confirm(t("cms.leaveConfirm"))) nav("/super/languages"); }} backLabel={t("common.back")}
-        actions={<span className={`ed-status is-${st}`}>{t(`cms.status.${st}` as MessageKey, { n: draft.published?.version ?? 0 })}</span>} />
+      <AppBar title={draft.native || code} onBack={() => { void leave(); }} backLabel={t("common.back")}
+        actions={<StatusPill status={st} version={draft.published?.version ?? 0} />} />
       <main className="screen wide stack-lg ed">
         <details className="panel ed-more">
           <summary>{t("cms.lang.details")}</summary>
@@ -306,16 +334,27 @@ export function TranslatePage() {
       </main>
 
       <div className="ed-bar">
-        <Button loading={busy === "save"} disabled={!!busy && busy !== "save"} variant={dirty ? "primary" : "secondary"} icon="check" onClick={() => { void save(); }}>{dirty ? t("cms.save") : t("cms.savedShort")}</Button>
-        <Button loading={busy === "publish"} disabled={!!busy} variant={dirty ? "secondary" : "primary"} icon="share" onClick={() => { void publish(); }}>{t("cms.publish")}</Button>
-        {draft.published ? <Button variant="ghost" disabled={!!busy} onClick={() => setAsk("unpublish")}>{t("cms.unpublish")}</Button>
-          : <Button variant="ghost" icon="close" disabled={!!busy} onClick={() => setAsk("delete")}>{t("cms.lang.delete")}</Button>}
+        <span className={`ed-save${saveErr ? " is-error" : ""}`} title={t("cms.autosaveHint")}>{saveState}</span>
+        <span className="ed-bar-end">
+          {dirty && <Button size="sm" loading={busy === "save"} disabled={!!busy && busy !== "save"} variant="secondary" icon="check" title="Ctrl+S" onClick={() => { void auto.run(() => save()); }}>{t("cms.save")}</Button>}
+          <Button loading={busy === "publish"} disabled={!!busy} icon="share" onClick={() => { void publish(); }}>{t("cms.publish")}</Button>
+          {draft.published ? <Button variant="ghost" disabled={!!busy} onClick={() => setAsk("unpublish")}>{t("cms.unpublish")}</Button>
+            : <Button variant="ghost" icon="close" disabled={!!busy} onClick={() => setAsk("delete")}>{t("cms.lang.delete")}</Button>}
+        </span>
         {msg && <p className={msg.ok ? "notice ok ed-confirm" : "notice err ed-confirm"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}
-        {ask && (
+        {(ask === "delete" || ask === "unpublish") && (
           <div className="notice ed-confirm" role="alert">
             <span>{t(ask === "delete" ? "cms.lang.deleteConfirm" : "cms.lang.unpublishConfirm")}</span>
             <Button size="sm" autoFocus onClick={() => { void (ask === "delete" ? remove() : unpublish()); }}>{ask === "delete" ? t("cms.confirmDelete") : t("cms.unpublish")}</Button>
             <Button size="sm" variant="ghost" onClick={() => setAsk("")}>{t("common.cancel")}</Button>
+          </div>
+        )}
+        {ask === "leave" && (
+          <div className="notice ed-confirm" role="alert">
+            <span>{t("cms.leaveConfirm")}</span>
+            <Button size="sm" autoFocus loading={busy === "save"} onClick={async () => { if (await auto.run(() => save())) nav("/super/languages"); }}>{t("cms.saveLeave")}</Button>
+            <Button size="sm" variant="secondary" onClick={() => { auto.skip(); nav("/super/languages"); }}>{t("cms.leaveAnyway")}</Button>
+            <Button size="sm" variant="ghost" onClick={() => setAsk("")}>{t("cms.stay")}</Button>
           </div>
         )}
       </div>

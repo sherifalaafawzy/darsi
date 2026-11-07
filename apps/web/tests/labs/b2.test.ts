@@ -8,7 +8,7 @@ import { knn, looAccuracy, mangoes } from "../../src/labs/apps/knn/model";
 import { assign, houses, move, run, startStops, walk } from "../../src/labs/apps/kmeans/model";
 import { episode, greedyPath, newQ, yard } from "../../src/labs/apps/rl/model";
 import { best, cases, confusion, cost } from "../../src/labs/apps/threshold/model";
-import { breakEven, ev, PAYOFF, SCORES, totals, WEIGHTS, winner } from "../../src/labs/apps/decision/model";
+import { breakEven, ev, leaders, PAYOFF, SCORES, totals, WEIGHTS } from "../../src/labs/apps/decision/model";
 import { errorRate, leaves, missRate, train as trainBias } from "../../src/labs/apps/bias/model";
 import { cosine, pca } from "../../src/labs/kit/vectors";
 import { matchKey } from "../../src/labs/kit/text";
@@ -204,12 +204,20 @@ describe("thresholds", () => {
 
 describe("decide with numbers", () => {
   it("weights change the winner; expected value flips at the break-even chance", () => {
-    expect(winner(totals(SCORES, WEIGHTS))).toBe("museum");
-    expect(winner(totals(SCORES, { cost: 5, learning: 0, travel: 0, safety: 0 }))).toBe("farm");
-    expect(winner(totals(SCORES, { cost: 0, learning: 5, travel: 0, safety: 0 }))).toBe("science");
+    expect(leaders(totals(SCORES, WEIGHTS))).toEqual(["museum", "science"]); // the tie the lessons start from
+    expect(leaders(totals(SCORES, { ...WEIGHTS, learning: 5 }))).toEqual(["science"]);
+    expect(leaders(totals(SCORES, { ...WEIGHTS, cost: 5 }))).toEqual(["farm"]);
+    expect(leaders(totals(SCORES, { cost: 5, learning: 0, travel: 0, safety: 0 }))).toEqual(["farm"]);
+    expect(leaders(totals(SCORES, { cost: 0, learning: 5, travel: 0, safety: 0 }))).toEqual(["science"]);
     expect(breakEven(PAYOFF)).toBeCloseTo(0.5);
     expect(ev(0.2, PAYOFF).outside).toBeGreaterThan(ev(0.2, PAYOFF).hall);
     expect(ev(0.8, PAYOFF).outside).toBeLessThan(ev(0.8, PAYOFF).hall);
+    // ai-s4-1's lab prompt: Safety alone picks the museum; scoring Outside on a rainy day 5 instead of 2 moves the flip to 80%.
+    const kinderRain = { ...PAYOFF, outsideRain: 5 };
+    expect(leaders(totals(SCORES, { cost: 0, learning: 0, travel: 0, safety: 5 }))).toEqual(["museum"]);
+    expect(breakEven(kinderRain)).toBeCloseTo(0.8);
+    expect(ev(0.75, kinderRain).outside).toBeGreaterThan(ev(0.75, kinderRain).hall);
+    expect(ev(0.85, kinderRain).outside).toBeLessThan(ev(0.85, kinderRain).hall);
   });
 });
 

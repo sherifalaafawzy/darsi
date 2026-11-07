@@ -53,8 +53,8 @@ Keep these the same in every course, and the same as the Labs apps (`apps/web/sr
   total of 1 to 4 is 10, and with `range(1, 11)` it is 55; marks `[12, 7, 15]` give 2 passed; `area(4, 3)` is 12.
 - **Searching** (`search` lab): one by one takes up to n guesses; halving (binary search) at most 7 for 1 to 100,
   about 10 for 1,000 and about 20 for a million. Binary search only works on a sorted list.
-- **Sorting** (`sorting` lab): bubble, insertion, selection and merge sort. Going from 8 to 32 bars, bubble sort needs
-  about 16 times the comparisons, merge sort only about 6 times. Insertion sort wins on nearly sorted lists; selection
+- **Sorting** (`sorting` lab): bubble, insertion, selection and merge sort. Going from 8 to 32 mixed-up bars, bubble sort's
+  comparisons go from 28 to 496 (about 18 times), merge sort's only from 16 to 123 (about 8 times). Insertion sort wins on nearly sorted lists; selection
   sort makes the fewest swaps.
 - **How work grows** (`bigo` lab): finding a name in a sorted list of n is log n, the tallest pupil n, sorting n log n,
   every pair (shared birthdays) n². A phone does roughly ten million simple steps a second: for a million items, n is a
@@ -119,6 +119,8 @@ Keep these the same in every course, and the same as the Labs apps (`apps/web/sr
 | Parsons problem | مسألة بارسونز | مسألة بارسونز |
 | pair programming | البرمجة الثنائية | البرمجة في أزواج |
 | recursion | الاستدعاء الذاتي | الاستدعاء الذاتي (الريكيرجن) |
+| memoisation | تذكّر النتائج (not «التخزين المؤقت», which is caching) | تذكّر النتايج |
+| feedback (to learners) | التغذية الراجعة (not «الرد» or «رد فعل», a reaction) | التغذية الراجعة |
 | stack, queue, dictionary | مكدّس، طابور، قاموس | الستاك، الطابور، القاموس (الديكشنري) |
 | Python | Python | بايثون |
 
@@ -208,7 +210,7 @@ hold data, and the classic algorithms for searching and sorting, judged by the w
 
 | Lesson | Objectives | Lab | Code steps | Competencies |
 |---|---|---|---|---|
-| 1 Functions: one job each (الدوال: لكل دالة مهمة) | Define functions with parameters, and `return` a result. Tell `return` from `print`. Test a function with `assert`. | `trace` | `code` (a function, checked with tests); `parsons`; `snippet` (print or return?) | CODE.2, CODE.3 |
+| 1 Functions: one job each (الدوال: لكل دالة مهمة واحدة) | Define functions with parameters, and `return` a result. Tell `return` from `print`. Test a function with `assert`. | `trace` | `code` (a function, checked with tests); `parsons`; `snippet` (print or return?) | CODE.2, CODE.3 |
 | 2 Lists and loops (القوائم والحلقات) | Index a list from 0 (and from the end with −1), and add to it. Use a loop to total, count and find the largest without `max()`. Choose a list as a stack or a queue. | `stack` | `code` (the largest without `max`); `codefill`; `bug` (IndexError) | CODE.2, CODE.1 |
 | 3 Searching (البحث) | Write linear search. Explain binary search and why the list must be sorted. Count the worst-case steps of each for 1,000 items. | `search` | `code` (linear search returning the position or −1); `parsons` (binary search); `snippet` | CODE.1, CODE.2 |
 | 4 Sorting, and judging algorithms (الترتيب والحكم على الخوارزميات) | Explain bubble, insertion and merge sort. Judge algorithms by correctness first, then the work they do. Test with edge cases: empty, one item, already sorted, repeats. | `sorting` | `code` (`is_sorted`, with edge-case tests); `parsons` (insertion sort); `snippet` | CODE.1, CODE.3 |

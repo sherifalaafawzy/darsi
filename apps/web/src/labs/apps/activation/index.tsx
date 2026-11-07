@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
 import { Segmented, Slider } from "../../kit/controls";
+import { signed } from "../../kit/Formula";
 import { Plot, type Tone } from "../../kit/Plot";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
@@ -52,7 +53,7 @@ export default function Activation({ meta, onDone }: LabProps) {
   const [seen, setSeen] = useState<Set<Fn>>(() => new Set(["sigmoid"]));
   useEffect(() => { setSeen((x) => new Set(x).add(fn)); }, [fn]);
   useEffect(() => { if (seen.size === FNS.length) onDone?.(); }, [seen.size]); // eslint-disable-line react-hooks/exhaustive-deps
-  const n2 = (v: number) => num(Math.round(v * 100) / 100);
+  const n2 = (v: number) => signed(num, v); // "ReLU (−٣) = ٠": the minus stays first in the left-to-right lines
   const y = apply[fn](z);
   const shown = all ? FNS : [fn];
   return (

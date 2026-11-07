@@ -3,12 +3,13 @@
  * functions are the only way content reaches learners: they validate the draft with the same validator as the editor,
  * write an immutable versioned JSON file to Storage and rebuild that owner's catalog.json.
  */
+import { gzipSync } from "node:zlib";
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
 import { audit, db, freshCaller, str } from "./admin.js";
-import { buildCatalog, canManage, catalogEntry, catalogPath, idAllowed, isOwner, mediaPrefix, staleVersions, unitPath, unitPrefix, type Owner } from "./catalog.js";
+import { allFigureUrls, buildCatalog, canManage, catalogEntry, catalogPath, figurePath, idAllowed, isOwner, mediaPrefix, staleVersions, unitPath, unitPrefix, type Owner } from "./catalog.js";
 import { loadTracks } from "./settings.js";
-import { bucket } from "./storage.js";
+import { bucket, saveJson } from "./storage.js";
 import { mediaStillUsed } from "./trackRules.js";
 import { levelsByTrack } from "./shared/tracks.js";
 import type { CatalogEntry, Unit } from "./shared/types.js";
@@ -38,10 +39,7 @@ async function writeCatalog(owner: Owner) {
   const key = (es: CatalogEntry[]) => es.map((e) => `${e.id}@${e.version}`).sort().join(",");
   let entries = await read();
   for (let i = 0; i < 3; i++) {
-    await bucket().file(catalogPath(owner)).save(JSON.stringify(buildCatalog(entries, order)), {
-      resumable: false, contentType: "application/json; charset=utf-8",
-      metadata: { cacheControl: owner === "public" ? "public, max-age=60" : "private, max-age=60" },
-    });
+    await saveJson(catalogPath(owner), JSON.stringify(buildCatalog(entries, order)), owner === "public" ? "public, max-age=60" : "private, max-age=60");
     const again = await read();
     if (key(again) === key(entries)) return;
     entries = again;
@@ -54,23 +52,47 @@ async function deleteJson(owner: Owner, unitId: string, keepFrom = Infinity) {
   await Promise.all(doomed.map((name) => bucket().file(name).delete({ ignoreNotFound: true })));
 }
 
-/** Validate the draft, write content/…/units/{id}/v{n+1}.json, and rebuild the catalog. */
+/**
+ * Validate the draft, write content/…/units/{id}/v{n+1}.json, and rebuild the catalog. The editor sends the draft
+ * `rev` its screen shows: a draft someone saved since (two admins at once, an autosave from another tab) is refused
+ * rather than published unseen (FS-RACES).
+ */
 export const publishUnit = onCall({ memory: "512MiB" }, async (req) => {
   const { c, unitId, owner } = await target(req);
-  return publishDraft(owner, unitId, c.uid);
+  const rev = Number.isInteger(req.data?.rev) ? Number(req.data.rev) : undefined;
+  return publishDraft(owner, unitId, c.uid, rev);
 });
+
+/** Each published picture in the unit's text, its size in KB by its link (catalog.ts sizeByLang counts them). */
+async function figureSizes(unit: Unit): Promise<Record<string, number>> {
+  const out: Record<string, number> = {};
+  const name = bucket().name;
+  await Promise.all(allFigureUrls(unit).map(async (url) => {
+    const path = figurePath(url, name);
+    if (!path) return;
+    try {
+      const [m] = await bucket().file(path).getMetadata();
+      const size = Number(m.size);
+      if (Number.isFinite(size) && size > 0) out[url] = Math.round(size / 1024);
+    } catch { /* not there: counts nothing (the seed refuses missing pictures) */ }
+  }));
+  return out;
+}
 
 /**
  * Publishes a unit's saved draft. The callable above and `npm run seed` (scripts/seed-content.mjs, which publishes the
  * starting courses) both go through here, so a seeded unit is checked and laid out exactly like one from the editor.
  */
-export async function publishDraft(owner: Owner, unitId: string, by: string) {
+export async function publishDraft(owner: Owner, unitId: string, by: string, rev?: number) {
   const meta = await db.doc(`units/${unitId}`).get();
   if (!meta.exists || meta.get("owner") !== owner) throw new HttpsError("not-found", "No such unit.");
   const c = { uid: by };
   const draft = await db.doc(`unitDrafts/${unitId}`).get();
   // The draft must be this owner's too (L12): an org admin can't publish another owner's draft under their own unit.
   if (!draft.exists || draft.get("owner") !== owner) throw new HttpsError("failed-precondition", "The unit's draft belongs to someone else.");
+  if (rev !== undefined && (Number(draft.get("rev")) || 0) !== rev) {
+    throw new HttpsError("aborted", "Someone saved this unit after you opened it. Reload it, check it, then publish.", { reason: "changed" });
+  }
   const unit = draft.get("unit") as Unit | undefined;
   // The unit's track must be one platform admins set up, and its level must fit that track.
   const errors = errorsOf(validateUnit(unit, { tracks: levelsByTrack(await loadTracks()) }));
@@ -79,13 +101,14 @@ export async function publishDraft(owner: Owner, unitId: string, by: string) {
   if (!idAllowed(owner, unitId)) throw new HttpsError("failed-precondition", "Organization units need a generated id.");
   const version = (Number(meta.get("published.version")) || 0) + 1;
   const body = JSON.stringify(unit);
-  await bucket().file(unitPath(owner, unitId, version)).save(body, {
-    resumable: false, contentType: "application/json; charset=utf-8",
-    // Versioned paths never change, so phones may keep them forever; org units stay out of shared caches.
-    metadata: { cacheControl: `${owner === "public" ? "public" : "private"}, max-age=31536000, immutable` },
-  });
+  // Versioned paths never change, so phones may keep them forever; org units stay out of shared caches. Stored gzipped
+  // (storage.ts saveJson), so the download size counts the gzipped bytes phones fetch.
+  await saveJson(unitPath(owner, unitId, version), body, `${owner === "public" ? "public" : "private"}, max-age=31536000, immutable`);
+  const jsonBytes = Math.min(byteSize(unit), gzipSync(body).length);
+  // The download size counts the pictures in the text too (the capstones' screenshots), which phones save with it.
+  const figureKB = await figureSizes(unit);
   // `rev` is the draft revision that went live: the editor shows "changes not published" while the draft's rev differs.
-  await meta.ref.update({ published: { version, rev: Number(draft.get("rev")) || 0, at: FieldValue.serverTimestamp(), by: c.uid, entry: catalogEntry(unit, owner, version, byteSize(unit)) } });
+  await meta.ref.update({ published: { version, rev: Number(draft.get("rev")) || 0, at: FieldValue.serverTimestamp(), by: c.uid, entry: catalogEntry(unit, owner, version, jsonBytes, figureKB) } });
   await writeCatalog(owner);
   await deleteJson(owner, unitId, version);
   await audit("publishUnit", c.uid, { unitId, owner, version });

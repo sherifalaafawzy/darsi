@@ -80,4 +80,23 @@ describe("overview", () => {
     expect(o.orgs).toEqual({ o1: { name: "Nile School", country: "EG", members: 2, teachers: 1, students: 1, active7: 1, active30: 2, lessons: 6, xp: 280, avgAccuracy: 0.7 } });
     expect(o.orgsByStatus).toEqual({ active: 1, pending: 1 });
   });
+  it("averages accuracy only over people with graded lessons (FC-06)", () => {
+    const o = overview([
+      { role: "student", orgId: "o1", lessonsDone: 3, graded: 0, avgAccuracy: 0 }, // only project lessons: no score
+      { role: "student", orgId: "o1", lessonsDone: 4, graded: 3, avgAccuracy: 0.6 },
+      { role: "teacher", orgId: "o1", lessonsDone: 2, avgAccuracy: 0.8 }, // a summary from before `graded`
+    ], [{ id: "o1", name: "Nile School", status: "active" }], now);
+    expect(o.users.withLessons).toBe(3);
+    expect(o.lessons).toBe(9);
+    expect(o.avgAccuracy).toBeCloseTo(0.7);
+    expect(o.orgs.o1.avgAccuracy).toBeCloseTo(0.7);
+  });
+  it("keeps an organization's name and country to the sizes the functions allow, so stats/overview stays small", () => {
+    const o = overview([], [{ id: "o1", name: "N".repeat(5000), status: "active", country: "x".repeat(1_048_000) }, { id: "o2", status: "active", country: { not: "a string" } }], now);
+    expect(o.orgs.o1.name).toHaveLength(120);
+    expect(o.orgs.o1.country).toHaveLength(80);
+    expect(o.orgs.o2).toMatchObject({ name: "o2" });
+    expect(o.orgs.o2.country).toBeUndefined();
+    expect(JSON.stringify(o).length).toBeLessThan(2000);
+  });
 });

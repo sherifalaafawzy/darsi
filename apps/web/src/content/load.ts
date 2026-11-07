@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { firebaseConfig, firebaseReady, useEmulators } from "../firebase-config";
 import { captionsFor, kitUrl, lightLang, videoSrc, type Catalog, type CatalogEntry, type Placement, type Settings, type Unit } from "./types";
+import { figureOf } from "./figure";
 import { RUNTIMES, runtimeScript, runtimesOf } from "./runtimes";
 
 const memo = new Map<string, Promise<unknown>>();
@@ -43,7 +44,8 @@ const orgFlag = {
   get: () => { try { return localStorage.getItem("darsi:orgFiles") === "1"; } catch { return false; } },
   set: (on: boolean) => { try { if (on) localStorage.setItem("darsi:orgFiles", "1"); else localStorage.removeItem("darsi:orgFiles"); } catch { /* private mode */ } },
 };
-async function forgetOrgFiles() {
+/** Also called by signing out (auth/AuthProvider), which waits for it before the page reloads. */
+export async function forgetOrgFiles() {
   if (typeof caches === "undefined") return;
   for (const name of [CONTENT_CACHE, "darsi-media"]) {
     const c = await caches.open(name);
@@ -51,17 +53,37 @@ async function forgetOrgFiles() {
   }
 }
 
-/** JSON through Cache Storage. `fresh`: network first, cached copy if that fails; otherwise cache first. */
-async function cachedJSON<T>(key: string, fetcher: () => Promise<unknown>, fresh: boolean): Promise<T> {
+/** How long a catalog may take before the last copy answers instead (a connection that hangs rather than fails). */
+export const SLOW_MS = 2500;
+const SLOW = Symbol("slow");
+/**
+ * JSON through Cache Storage. `fresh`: network first, but the cached copy answers when the network fails or takes longer
+ * than SLOW_MS (the network's copy is still stored when it arrives, for next time); otherwise cache first. A phone that
+ * is "online" with no usable data would otherwise wait on Home, Downloads and even downloaded lessons until it gave up.
+ */
+async function cachedJSON<T>(key: string, fetcher: () => Promise<unknown>, fresh: boolean, onStored?: () => void): Promise<T> {
   const cache = typeof caches !== "undefined" ? await caches.open(CONTENT_CACHE).catch(() => null) : null;
   const fromCache = async () => { const hit = await cache?.match(key); return hit ? ((await hit.json()) as T) : null; };
-  if (!fresh) { const hit = await fromCache(); if (hit) return hit; }
-  try {
+  if (!fresh) { const hit = await fromCache().catch(() => null); if (hit) return hit; }
+  const net = (async () => {
     const data = (await fetcher()) as T;
-    await cache?.put(key, new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } })).catch(() => {});
+    const put = await cache?.put(key, new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } })).then(() => true, () => false);
+    if (put) onStored?.();
     return data;
+  })();
+  // Handled at once: when the cached copy answers first, a failure of this request later is nobody's error (it would
+  // otherwise surface as an unhandled rejection in the problem reports' log).
+  net.catch(() => {});
+  try {
+    const hit = fresh ? await fromCache().catch(() => null) : null;
+    if (!hit) return await net;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const slow = new Promise<typeof SLOW>((resolve) => { timer = setTimeout(() => resolve(SLOW), SLOW_MS); });
+    const first = await Promise.race([net, slow]).finally(() => clearTimeout(timer));
+    // Too slow: the last copy answers, and the network's lands in the cache by itself for next time.
+    return first !== SLOW ? first : hit;
   } catch (e) {
-    const hit = fresh ? await fromCache() : null;
+    const hit = fresh ? await fromCache().catch(() => null) : null;
     if (hit) return hit;
     throw e;
   }
@@ -70,8 +92,12 @@ const fetchPublic = (path: string) => async () => { const r = await fetch(storag
 /** Storage answered that the file isn't there (nothing published yet), as opposed to no answer at all (offline). */
 const notFound = (e: unknown) => (e as { status?: number }).status === 404;
 const EMPTY: Catalog = { version: 1, units: [] };
-/** Vite on localhost (serve or preview): allow unpublished courses under /content/dev. */
-const localHostDev = () => import.meta.env.MODE !== "test" && typeof location !== "undefined" && (location.hostname === "localhost" || location.hostname === "127.0.0.1");
+/**
+ * The Vite dev server only (never a build, nor tests): unpublished courses from content/units, listed in
+ * content/dev-catalog.json and served under /content/dev by vite.config.ts devUnits.
+ */
+const devServer = () => import.meta.env.DEV && import.meta.env.MODE !== "test";
+const devCatalog = () => fetch("/content/dev-catalog.json").then((r) => (r.ok ? r.json() as Promise<Catalog> : null)).catch(() => null);
 /**
  * Org files go through the SDK (only that org's members may read them). App hands over the reader (setOrgReader):
  * this module is shared with lazy staff chunks, and any SDK import here, even a dynamic one, makes the bundler split
@@ -101,23 +127,16 @@ export function mergeCatalog(pub: Catalog | null, org: Catalog | null): Catalog 
  * an empty list; no answer and no copy from an earlier visit (a first visit offline) is an error, so Home can say so.
  */
 export const loadCatalog = (): Promise<Catalog> => (catalog ??= (async () => {
-  if (!firebaseReady || !firebaseConfig.storageBucket) {
-    if (import.meta.env.MODE === "development" || localHostDev()) {
-      const extra = await fetch("/content/dev-catalog.json").then((r) => (r.ok ? r.json() as Promise<Catalog> : null)).catch(() => null);
-      return extra ?? EMPTY;
-    }
-    return EMPTY;
-  }
+  if (!firebaseReady || !firebaseConfig.storageBucket) return (devServer() ? await devCatalog() : null) ?? EMPTY;
   const orgId = scope.orgId;
   const [pub, org] = await Promise.all([
-    cachedJSON<Catalog>(storageUrl("content/catalog.json"), fetchPublic("content/catalog.json"), true).catch((e) => (notFound(e) || import.meta.env.MODE === "development" || localHostDev() ? EMPTY : Promise.reject(e))),
+    cachedJSON<Catalog>(storageUrl("content/catalog.json"), fetchPublic("content/catalog.json"), true).catch((e) => (notFound(e) || devServer() ? EMPTY : Promise.reject(e))),
     orgId ? cachedJSON<Catalog>(storageUrl(`orgs/${orgId}/catalog.json`), fetchOrg(`orgs/${orgId}/catalog.json`), true).catch(() => null) : null,
   ]);
   const live = mergeCatalog(pub, org);
-  // Local courses under content/units (vite serve middleware). Also on localhost so a stale preview SW cannot hide them.
-  if (import.meta.env.MODE !== "development" && !localHostDev()) return live;
-  const extra = await fetch("/content/dev-catalog.json").then((r) => (r.ok ? r.json() as Promise<Catalog> : null)).catch(() => null);
-  // Prefer local src for the same id (unpublished edits beat a published copy).
+  if (!devServer()) return live;
+  // Local courses under content/units: a local copy beats a published one with the same id (unpublished edits).
+  const extra = await devCatalog();
   return extra ? mergeCatalog(extra, live) : live;
 })().catch((e) => { catalog = null; throw e; }));
 
@@ -146,7 +165,51 @@ export async function loadUnit(id: string): Promise<Unit> {
   if (!entry?.src) throw new Error(`No published unit ${id}`);
   const src = entry.src;
   if (src.startsWith("/")) return cachedJSON<Unit>(src, async () => { const r = await fetch(src); if (!r.ok) throw new Error(`${src}: ${r.status}`); return r.json(); }, true);
-  return cachedJSON<Unit>(storageUrl(src), isOrgPath(src) ? fetchOrg(src) : fetchPublic(src), false);
+  try {
+    return await cachedJSON<Unit>(storageUrl(src), isOrgPath(src) ? fetchOrg(src) : fetchPublic(src), false, () => { void pruneVersions(id, src).catch(() => {}); });
+  } catch (e) {
+    // The course was republished and the phone has the new catalog but not the new version, with no connection: the
+    // newest version saved here (a downloaded course's) keeps it working offline until it can be updated.
+    const older = await newestCached(src).catch(() => null);
+    if (older) return older;
+    throw e;
+  }
+}
+/** The versions of a unit kept in darsi-content (…/units/<id>/v<n>.json, as storageUrl keys them), by number. */
+async function cachedVersions(src: string): Promise<{ v: number; key: Request }[]> {
+  const folder = /^(.+\/units\/[^/]+\/)v\d+\.json$/.exec(src)?.[1];
+  if (!folder || typeof caches === "undefined" || !(await caches.has(CONTENT_CACHE))) return [];
+  const out: { v: number; key: Request }[] = [];
+  for (const key of await (await caches.open(CONTENT_CACHE)).keys()) {
+    const path = decodeURIComponent(/\/o\/([^?]+)/.exec(key.url)?.[1] ?? "");
+    const v = path.startsWith(folder) ? Number(/^v(\d+)\.json$/.exec(path.slice(folder.length))?.[1]) : NaN;
+    if (Number.isInteger(v)) out.push({ v, key });
+  }
+  return out.sort((a, b) => a.v - b.v);
+}
+/** The highest version of a unit kept in darsi-content. */
+async function newestCached(src: string): Promise<Unit | null> {
+  const best = (await cachedVersions(src)).pop();
+  const hit = best ? await (await caches.open(CONTENT_CACHE)).match(best.key) : undefined;
+  return hit ? ((await hit.json()) as Unit) : null;
+}
+/**
+ * Which version of a unit the phone downloaded (Downloads registers it): that version's file stays in darsi-content
+ * after a republish, so the downloaded course still opens offline (newestCached) until the learner updates it. Null: not
+ * known (a download whose version wasn't recorded, or nothing registered yet), so every older version stays.
+ */
+let keptVersion: (unitId: string) => number | null | undefined = () => null;
+export const setKeptVersions = (get: (unitId: string) => number | null | undefined) => { keptVersion = get; };
+/** A new version of a unit is stored: the older ones go, except the downloaded one, so republishes don't pile up. */
+async function pruneVersions(unitId: string, src: string) {
+  const keep = keptVersion(unitId);
+  if (keep === null) return;
+  const all = await cachedVersions(src);
+  const current = all.find((x) => storageUrl(src) === x.key.url)?.v ?? Math.max(...all.map((x) => x.v));
+  const old = all.filter((x) => x.v < current && x.v !== keep);
+  if (!old.length) return;
+  const cache = await caches.open(CONTENT_CACHE);
+  await Promise.all(old.map((x) => cache.delete(x.key)));
 }
 
 export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): { data?: T; error?: Error; loading: boolean; retry: () => void } {
@@ -162,14 +225,18 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): { data?: T; 
 }
 
 /**
- * All URLs needed to use a unit offline: kit files in both formats for the current language, captions, videos. The
- * unit's JSON is not among them: loadUnit has already cached it (org files can't be fetched without the SDK).
+ * All URLs needed to use a unit offline: kit files in both formats for the current language, captions, videos, pictures
+ * in the text. The unit's JSON is not among them: loadUnit has already cached it (org files can't be fetched without the SDK).
  */
 export function unitAssetUrls(unit: Unit, lang: string): string[] {
   const urls: string[] = [];
   for (const l of unit.lessons) {
     for (const k of l.kit) if (k.kind !== "video") for (const f of k.formats) { const u = kitUrl(k, lang, f); if (u) urls.push(u); }
     for (const s of l.steps) {
+      // Pictures in the text (the capstones' screenshots), as published to Storage (content/figure.ts).
+      for (const text of s.type === "read" ? [s.body] : s.type === "project" ? (s.setup ?? []).map((x) => x.body) : []) {
+        for (const para of (text[lang] ?? text.en).split(/\n\s*\n/)) { const fig = figureOf(para); if (fig && !fig.src.startsWith("/")) urls.push(fig.src); }
+      }
       if (s.type !== "video") continue;
       const pl = lightLang(s, lang);
       if (pl && s.light) {

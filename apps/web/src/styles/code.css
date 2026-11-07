@@ -2,6 +2,11 @@
    Parsons lines, gaps, bug lines and the robot. Code is always left to right, in the phone's own monospace font
    (nothing to download). Every control is at least 44px. */
 
+/* ---------- Every code step ---------- */
+/* A step's root and its parts are grid items, which grow to their content's widest line: a long Parsons line widened
+   the whole lesson page on a phone. They keep to the lesson's column; long lines wrap or scroll inside their own box. */
+.cd-step, .cd-step > * { min-inline-size: 0; }
+
 /* ---------- Editor ---------- */
 .cd-edit { display: grid; gap: var(--space-2); min-inline-size: 0; }
 .cd-editor { display: flex; min-inline-size: 0; border: 2px solid var(--line-strong); border-radius: var(--radius-md); background: var(--surface); overflow: hidden; }
@@ -13,6 +18,12 @@
 .cd-keys { display: flex; gap: var(--space-1); overflow-x: auto; padding-block-end: var(--space-1); }
 .cd-key { flex: none; min-inline-size: 44px; min-block-size: 44px; padding: 0 var(--space-2); border: 2px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: 700 17px/1 ui-monospace, Menlo, Consolas, monospace; }
 .cd-key:active { background: var(--surface-sunk); }
+/* How to leave the editor from a keyboard (Tab indents in it). Screen readers always get it (the editor's description);
+   touch screens show it once Tab or Esc is pressed in the editor (CodeSteps adds is-shown). */
+.cd-tab-hint { margin: 0; }
+@media (hover: none), (pointer: coarse) {
+  .cd-tab-hint:not(.is-shown) { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
 .cd-hint { margin: 0; padding: var(--space-2) var(--space-3); border-inline-start: 4px solid var(--sunbird); background: var(--sunbird-soft); }
 
 /* ---------- Output and tests ---------- */
@@ -37,13 +48,16 @@
 .cd-row.is-pass { border-color: var(--leaf-ink); background: var(--leaf-soft); }
 .cd-row.is-fail { border-color: var(--hibiscus-ink); background: var(--hibiscus-soft); }
 .cd-empty { padding: var(--space-3); border: 2px dashed var(--line-strong); border-radius: var(--radius-sm); color: var(--ink-muted); }
-.cd-row-code { flex: 1 1 auto; min-inline-size: 0; font: 15px/22px ui-monospace, Menlo, Consolas, monospace; white-space: pre; overflow-x: auto; }
+/* A long line wraps inside its row (a 360 px phone shows about 30 characters) rather than scrolling sideways; the
+   indent is the row's padding, so a wrapped line keeps it. */
+.cd-row-code { flex: 1 1 auto; min-inline-size: 0; font: 15px/22px ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: auto; }
 .cd-row-tools { display: flex; flex: none; gap: var(--space-1); }
 .cd-tool { min-inline-size: 44px; min-block-size: 44px; border: 2px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: 700 18px/1 ui-monospace, Menlo, Consolas, monospace; }
 .cd-tool:disabled { opacity: 0.4; }
 .cd-pool { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .cd-line-btn, .cd-token { min-block-size: 44px; padding: var(--space-1) var(--space-3); border: 2px solid var(--ink); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: 15px/22px ui-monospace, Menlo, Consolas, monospace; text-align: start; white-space: pre; box-shadow: var(--shadow-press); }
-.cd-line-btn { box-sizing: border-box; inline-size: 100%; min-inline-size: 0; overflow-x: auto; }
+/* A whole line shows, wrapped at its spaces; a run with no space scrolls inside the button. */
+.cd-line-btn { box-sizing: border-box; inline-size: 100%; min-inline-size: 0; overflow-x: auto; white-space: pre-wrap; }
 .cd-token { min-inline-size: 44px; }
 
 /* ---------- Fill the gaps ---------- */
@@ -55,7 +69,9 @@
 
 /* ---------- Find the bug ---------- */
 .cd-bug { display: grid; gap: 2px; min-inline-size: 0; padding: var(--space-1); border: 2px solid var(--line); border-radius: var(--radius-md); background: var(--surface); overflow-x: auto; }
-.cd-bug-line { display: flex; align-items: center; min-block-size: 44px; padding: 0 var(--space-2); border: 2px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--ink); font: 15px/22px ui-monospace, Menlo, Consolas, monospace; text-align: start; white-space: pre; }
+.cd-bug-line { display: flex; align-items: center; min-block-size: 44px; padding: 0 var(--space-2); border: 2px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--ink); font: 15px/22px ui-monospace, Menlo, Consolas, monospace; text-align: start; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* The line's code wraps beside its number, with its own spaces kept, instead of widening the list. */
+.cd-bug-line > code { flex: 1 1 auto; min-inline-size: 0; }
 .cd-bug-line.is-sel { border-color: var(--kola-deep); background: var(--kola-soft); }
 .cd-bug-line.is-pass { border-color: var(--leaf-ink); background: var(--leaf-soft); }
 .cd-bug-line.is-fail { border-color: var(--hibiscus-ink); background: var(--hibiscus-soft); }

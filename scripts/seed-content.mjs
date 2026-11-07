@@ -9,6 +9,9 @@
  * Media (narrated videos, captions and light lessons) is gitignored: scripts/import-packs.mjs makes it from the course
  * packs and Lesson Studio. Each file goes to a folder named by its content, so phones cache it for good and a re-seed
  * uploads only what changed. A unit's media that isn't on this computer keeps its app path (and video kits are left out).
+ * Figures in lesson text (![caption](/media/…), the capstones' screenshots in content/media/capstone-shared) are uploaded
+ * the same way and their links rewritten. A unit whose figures aren't on this computer isn't published: the app has no
+ * fallback for a missing picture, and Hosting answers its old app path with the app's own page.
  *
  *   npm run seed -- --emulator          the local Emulator Suite (demo-darsi)
  *   npm run seed                        the real project (.firebaserc)
@@ -29,7 +32,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, extname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { contentTypeOf, kitFiles, mediaPathOf, mediaPaths, withKitUrls } from "./lib/kits.mjs";
+import { contentTypeOf, figurePaths, kitFiles, mediaPathOf, mediaPaths, withKitUrls } from "./lib/kits.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const args = process.argv.slice(2);
@@ -92,8 +95,13 @@ async function uploadMedia(unitId, paths) {
     const body = readFileSync(join(ROOT, "content", p));
     const dest = mediaPathOf(unitId, p, createHash("sha256").update(body).digest("hex").slice(0, 12));
     const file = bucket().file(dest);
-    if (!(await file.exists())[0]) {
-      await file.save(body, { resumable: false, metadata: { contentType: contentTypeOf(extname(p).slice(1)), cacheControl: "public, max-age=31536000, immutable" } });
+    // Text (the light lessons' JSON, captions) is stored gzipped, as the functions store units (storage.ts saveJson):
+    // phones fetch a quarter of the bytes. A copy uploaded before that is sent again, gzipped. Audio, video and kits
+    // are compressed already.
+    const gzip = /\.(json|vtt)$/i.test(p);
+    const had = await file.getMetadata().then(([m]) => m, (e) => { if (e.code === 404) return null; throw e; });
+    if (!had || (gzip && had.contentEncoding !== "gzip")) {
+      await file.save(body, { resumable: false, gzip, metadata: { contentType: contentTypeOf(extname(p).slice(1)), cacheControl: "public, max-age=31536000, immutable" } });
       sent++;
     }
     media.set(p, urlOf(dest));
@@ -113,6 +121,12 @@ for (const f of files) {
       continue;
     }
     if (meta.exists && meta.get("owner") !== "public") throw new Error(`units/${id} belongs to ${meta.get("owner")}`);
+    const figures = figurePaths(source);
+    const lost = figures.filter((p) => !existsSync(join(ROOT, "content", p)));
+    if (lost.length) throw new Error(`its text shows ${lost.length} picture(s) that aren't on this computer (${lost.map((p) => `content${p}`).join(", ")}). Copy them there first: a missing picture shows as a broken image.`);
+    // Pictures load whenever the step opens: keep each to about 1280 px wide and 100 KB for learners who pay per MB.
+    const heavy = figures.filter((p) => statSync(join(ROOT, "content", p)).size > 100 * 1024);
+    if (heavy.length) console.warn(`  ${id}: picture(s) over 100 KB, shrink them: ${heavy.map((p) => `content${p}`).join(", ")}`);
     const kits = kitFiles(source, hasKit);
     for (const k of kits) {
       const local = join(ROOT, "content/kits", k.file);
@@ -132,7 +146,7 @@ for (const f of files) {
     batch.set(db.doc(`unitDrafts/${id}`), { owner: "public", rev, unit });
     await batch.commit();
     const { version } = await publishDraft("public", id, "seed");
-    console.log(`  ${id}: ${kits.length} kit files and ${media.size} media files (${sent} new) uploaded, published as v${version}`
+    console.log(`  ${id}: ${kits.length} kit files and ${media.size} media files (${sent} new${figures.length ? `; ${figures.length} pictures in the text` : ""}) uploaded, published as v${version}`
       + (missing ? `. ${missing} media file(s) aren't on this computer and keep their app paths.` : ""));
   } catch (e) {
     failed++;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AppBar, Button, EmptyState, TrackChip } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import { COMPETENCIES } from "../content/competencies";
@@ -9,7 +9,7 @@ import { useTracks } from "../content/settings";
 import { levelsByTrack } from "../content/tracks";
 import { useI18n, type MessageKey } from "../i18n";
 import { cmsApi } from "./api";
-import { createUnit, freshMeta, getUnit, listUnits, statusOf, unitExists, type Status, type UnitMeta } from "./data";
+import { createUnit, freshMeta, getUnit, listOrgs, listUnits, saveUnit, statusOf, unitExists, type Status, type UnitMeta } from "./data";
 import { LText } from "./fields";
 import { blankUnit, copyTitle, newUnitId, withNewIds } from "./ids";
 import { LevelPicker, TrackPicker } from "./pickers";
@@ -33,7 +33,11 @@ export function ContentList() {
   const fmt = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
   const date = (ts?: { seconds: number } | null) => (ts ? fmt.format(new Date(ts.seconds * 1000)) : "—");
   const { user, role, orgId } = useAuth();
-  const owner = role === "superadmin" ? "public" : orgId;
+  // Platform admins see Darsi's courses, or any organization's own (to open, unpublish or delete one, e.g. for abuse).
+  const [pick, setPick] = useState("public");
+  const [orgs, setOrgs] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => { if (role === "superadmin") listOrgs().then(setOrgs).catch(() => {}); }, [role]);
+  const owner = role === "superadmin" ? pick : orgId;
   const base = role === "superadmin" ? "/super/content" : "/admin/content";
   const [list, setList] = useState<UnitMeta[] | undefined>();
   const [err, setErr] = useState("");
@@ -44,8 +48,10 @@ export function ContentList() {
   const [fStatus, setFStatus] = useState<Status | "">("");
   const [ask, setAsk] = useState("");
   const [busy, setBusy] = useState("");
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  useEffect(() => { if (owner) listUnits(owner).then(setList).catch((e: Error) => setErr(e.message)); }, [owner]);
+  // A message from the page that sent us here (a unit deleted in the editor), shown where the admin lands.
+  const done = (useLocation().state as { done?: string } | null)?.done;
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(done ? { ok: true, text: done } : null);
+  useEffect(() => { if (owner) { setList(undefined); setErr(""); listUnits(owner).then(setList).catch((e: Error) => setErr(e.message)); } }, [owner]);
 
   const present = useMemo(() => [...new Set((list ?? []).map((u) => u.track))].sort((a, b) => tracks.order(a) - tracks.order(b) || a.localeCompare(b)), [list, tracks]);
   const levels = useMemo(() => [...new Set((list ?? []).filter((u) => u.track === fTrack).map((u) => u.level))].sort((a, b) => a - b), [list, fTrack]);
@@ -63,6 +69,18 @@ export function ContentList() {
   if (!owner || !user) return <main className="screen"><EmptyState title={t("err.notFound")} /></main>;
 
   const create = async (unit: Unit) => { await createUnit(owner, unit, user.uid); nav(`${base}/${unit.id}`); };
+  /**
+   * An imported file in place of an existing unit's draft (platform admins; public ids are kept): a normal save of that
+   * unit, so its learners keep their progress, and the live version stays until someone publishes. A rollback to any
+   * version that was exported, not only the two Storage keeps.
+   */
+  const replace = async (unit: Unit) => {
+    const r = await getUnit(unit.id);
+    if (!r || r.meta.owner !== owner) throw new Error(t("cms.idTaken", { id: unit.id }));
+    const res = await saveUnit(unit, r.meta.rev, user.uid);
+    if ("conflict" in res) throw new Error(t("cms.conflict"));
+    nav(`${base}/${unit.id}`);
+  };
   const titleOf = (u: { title: LocalText }) => L(u.title) || t("cms.untitled");
   const clear = () => { setQ(""); setFTrack(""); setFLevel(0); setFStatus(""); };
   /** A new draft from the unit's saved draft, with new ids (it shares no progress with the original). */
@@ -106,11 +124,20 @@ export function ContentList() {
           {owner === "public" && <Button size="sm" variant="ghost" icon="settings" onClick={() => nav("/super/tracks")}>{t("cms.tracks.title")}</Button>}
           {owner === "public" && <Button size="sm" variant="ghost" icon="language" onClick={() => nav("/super/languages")}>{t("cms.lang.title")}</Button>}
         </div>
-        <p className="muted">{t(owner === "public" ? "cms.introPublic" : "cms.introOrg")}</p>
+        {role === "superadmin" && orgs.length > 0 && (
+          <div className="dr-field">
+            <label htmlFor="ed-owner" className="dr-field-label">{t("cms.owner")}</label>
+            <select id="ed-owner" className="dr-field-input" value={pick} onChange={(e) => { setPick(e.target.value); setQ(""); setFTrack(""); setFLevel(0); setFStatus(""); setPanel(""); setMsg(null); }}>
+              <option value="public">{t("cms.ownerPublic")}</option>
+              {orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+          </div>
+        )}
+        <p className="muted">{owner === "public" ? t("cms.introPublic") : role === "superadmin" ? t("cms.introOrgSuper") : t("cms.introOrg")}</p>
         {err && <p className="notice err" role="alert">{err}</p>}
         {msg && <p className={msg.ok ? "notice ok" : "notice err"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}
         {panel === "new" && <NewUnit onCreate={create} onCancel={() => setPanel("")} />}
-        {panel === "import" && <ImportUnit owner={owner} onCreate={create} onCancel={() => setPanel("")} />}
+        {panel === "import" && <ImportUnit owner={owner} onCreate={create} onReplace={replace} onCancel={() => setPanel("")} />}
         {!list ? <div className="loading" aria-busy="true" /> : list.length === 0 ? (
           <section className="panel"><EmptyState icon="edit" title={t("cms.none")} body={t("cms.noneBody")} action={<Button size="sm" onClick={() => setPanel("new")}>{t("cms.newUnit")}</Button>} /></section>
         ) : (
@@ -222,17 +249,19 @@ function NewUnit({ onCreate, onCancel }: { onCreate: (u: Unit) => Promise<void>;
 
 /**
  * A unit file from disk or pasted. Platform admins keep its id (a unit exported here comes back as itself, with its
- * learners' progress); org units always get new ids. Errors are fixed in the editor.
+ * learners' progress), and may put it in place of the draft of the unit that already has that id (a rollback to an
+ * exported version); org units always get new ids. Errors are fixed in the editor.
  */
-function ImportUnit({ owner, onCreate, onCancel }: { owner: string; onCreate: (u: Unit) => Promise<void>; onCancel: () => void }) {
+function ImportUnit({ owner, onCreate, onReplace, onCancel }: { owner: string; onCreate: (u: Unit) => Promise<void>; onReplace: (u: Unit) => Promise<void>; onCancel: () => void }) {
   const { t } = useI18n();
   const tracks = useTracks();
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [check, setCheck] = useState<{ unit: Unit; errors: number; warnings: number } | null>(null);
+  const [taken, setTaken] = useState(false);
   const read = (src: string) => {
-    setErr(""); setCheck(null);
+    setErr(""); setCheck(null); setTaken(false);
     let data: unknown;
     try { data = JSON.parse(src); } catch { return setErr(t("cms.badJson")); }
     if (typeof data !== "object" || data === null || !Array.isArray((data as Unit).lessons)) return setErr(t("cms.notAUnit"));
@@ -244,9 +273,14 @@ function ImportUnit({ owner, onCreate, onCancel }: { owner: string; onCreate: (u
     if (!check) return;
     setBusy(true); setErr("");
     try {
-      if (owner === "public" && await unitExists(check.unit.id)) { setErr(t("cms.idTaken", { id: check.unit.id })); setBusy(false); return; }
+      if (owner === "public" && await unitExists(check.unit.id)) { setTaken(true); setBusy(false); return; }
       await onCreate(check.unit);
     } catch (e) { setErr((e as Error).message); setBusy(false); }
+  };
+  const replace = async () => {
+    if (!check) return;
+    setBusy(true); setErr("");
+    try { await onReplace(check.unit); } catch (e) { setErr((e as Error).message); setBusy(false); setTaken(false); }
   };
   return (
     <section className="panel stack" aria-labelledby="ed-import-h">
@@ -256,14 +290,22 @@ function ImportUnit({ owner, onCreate, onCancel }: { owner: string; onCreate: (u
         <input type="file" accept="application/json,.json" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const s = await f.text(); setText(s); read(s); } e.target.value = ""; }} /></label>
       <div className="dr-field">
         <label htmlFor="ed-json" className="dr-field-label">{t("cms.pasteJson")}</label>
-        <textarea id="ed-json" className="dr-field-input ed-json" dir="ltr" rows={6} spellCheck={false} value={text} onChange={(e) => { setText(e.target.value); setCheck(null); }} />
+        <textarea id="ed-json" className="dr-field-input ed-json" dir="ltr" rows={6} spellCheck={false} value={text} onChange={(e) => { setText(e.target.value); setCheck(null); setTaken(false); }} />
       </div>
       {err && <p className="notice err" role="alert">{err}</p>}
       {check && <p className={check.errors ? "notice" : "notice ok"} role="status">{t("cms.importCheck", { id: check.unit.id, lessons: check.unit.lessons.length, errors: check.errors, warnings: check.warnings })}</p>}
-      <div className="row-gap">
-        {check ? <Button loading={busy} onClick={() => { void go(); }}>{t("cms.importGo")}</Button> : <Button variant="secondary" disabled={!text.trim()} onClick={() => read(text)}>{t("cms.importRead")}</Button>}
-        <Button variant="ghost" onClick={onCancel}>{t("common.cancel")}</Button>
-      </div>
+      {check && taken ? (
+        <div className="notice ed-confirm" role="alert">
+          <span>{t("cms.replaceAsk", { id: check.unit.id })}</span>
+          <Button size="sm" autoFocus loading={busy} onClick={() => { void replace(); }}>{t("cms.replaceGo")}</Button>
+          <Button size="sm" variant="ghost" onClick={() => setTaken(false)}>{t("common.cancel")}</Button>
+        </div>
+      ) : (
+        <div className="row-gap">
+          {check ? <Button loading={busy} onClick={() => { void go(); }}>{t("cms.importGo")}</Button> : <Button variant="secondary" disabled={!text.trim()} onClick={() => read(text)}>{t("cms.importRead")}</Button>}
+          <Button variant="ghost" onClick={onCancel}>{t("common.cancel")}</Button>
+        </div>
+      )}
     </section>
   );
 }

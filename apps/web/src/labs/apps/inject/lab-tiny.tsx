@@ -11,9 +11,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Button, Icon } from "@darsi/design-system";
 import { useI18n } from "../../../i18n";
 import { TinyLM, fetchManifest, fetchWorld, isDownloaded, type World } from "../../../tinylm";
-import { useAppBase } from "../../../tinylm/base";
 import { useS } from "../../kit/strings";
-import { agentTurn, converse, type Event, type Generate, type Hooks } from "./lab-agent";
+import { LAB_BASE, agentTurn, converse, type Event, type Generate, type Hooks } from "./lab-agent";
 
 const T = {
   en: {
@@ -21,6 +20,8 @@ const T = {
     size: (mb: string) => `Download the model (${mb} MB, once)`, downloading: "Downloading the model…", loaded: "Model ready, on your phone.",
     recorded: "See a recorded run instead", recordedTag: "Recorded run (the model is not downloaded)", retry: "Try the download again",
     offline: "Couldn't download the model. You can still watch a recorded run.", thinking: "Darsi Tiny is thinking…", stop: "Stop",
+    checking: "Looking for the model on this phone…",
+    runFailed: "Darsi Tiny couldn't finish this run. Check your connection and try again, or watch a recorded run.", runAgain: "Try again",
     you: "You", plan: "Plan", calls: "Calls the tool", result: "Tool result", shows: "Shown to the model", answer: "Answers", blocked: "Blocked by a rule", codeSays: "Code answers",
     note: "This result also carried an instruction.",
   },
@@ -29,20 +30,29 @@ const T = {
     size: (mb: string) => `نزّل النموذج (${mb} ميغابايت، مرة واحدة)`, downloading: "يجري تنزيل النموذج…", loaded: "النموذج جاهز على هاتفك.",
     recorded: "شاهد تشغيلًا مسجّلًا بدلًا من ذلك", recordedTag: "تشغيل مسجّل (النموذج غير مُنزّل)", retry: "أعد محاولة التنزيل",
     offline: "تعذّر تنزيل النموذج. ما زال بإمكانك مشاهدة تشغيل مسجّل.", thinking: "يفكّر «درسي الصغير»…", stop: "أوقف",
+    checking: "يجري البحث عن النموذج على هذا الهاتف…",
+    runFailed: "لم يستطع «درسي الصغير» إكمال هذا التشغيل. تحقّق من الاتصال وحاول مجددًا، أو شاهد تشغيلًا مسجّلًا.", runAgain: "حاول مجددًا",
     you: "أنت", plan: "الخطة", calls: "يستدعي الأداة", result: "نتيجة الأداة", shows: "ما يراه النموذج", answer: "يجيب", blocked: "أوقفته قاعدة", codeSays: "يجيب الكود",
     note: "حملت هذه النتيجة تعليمات أيضًا.",
   },
 };
 
-/** The one TinyLM for a lab (the worker ends itself when idle). State for the gate: not started, loading, ready, failed. */
-export type TinyState = "idle" | "loading" | "ready" | "error";
+/**
+ * The one TinyLM for a lab (the worker ends itself when idle). State for the gate: checking this phone, not started,
+ * loading, ready, failed. "ready" always means the model is on the phone and the school's data (world.json) is at hand.
+ */
+export type TinyState = "checking" | "idle" | "loading" | "ready" | "error";
 export interface Tiny {
   state: TinyState;
   mb: string;
   progress: number;
-  world: World | null;
-  /** Download (or read from cache) and start the model. */
+  /** Download (or read from cache) and start the model, from the gate's button. */
   load: () => void;
+  /**
+   * Before every run: the school's data the tools read (kept after the first fetch, which the darsi-lib cache answers
+   * once the model is on the phone). Throws when it can't be had, so the lab shows RunFailed instead of nothing.
+   */
+  prepare: () => Promise<World>;
   /** One move of the model in a conversation (what agentTurn/converse want). */
   generate: Generate;
   stop: () => void;
@@ -51,22 +61,33 @@ export interface Tiny {
 }
 
 export function useTiny(): Tiny {
-  const base = useAppBase();
+  const base = LAB_BASE;
   const lm = useMemo(() => new TinyLM({ base }), [base]);
   const lmRef = useRef(lm);
   lmRef.current = lm;
-  const [state, setState] = useState<TinyState>("idle");
+  const [state, setState] = useState<TinyState>("checking");
   const [bytes, setBytes] = useState(2_746_862 + 10_746 + 15_720);
   const [progress, setProgress] = useState(0);
-  const [world, setWorld] = useState<World | null>(null);
+  const world = useRef<World | null>(null);
   const [busy, setBusy] = useState(false);
   const { num } = useI18n();
 
   useEffect(() => {
     let live = true;
-    setWorld(null);
+    world.current = null;
+    setState("checking"); setProgress(0);
     fetchManifest(base).then((m) => { if (live && m.files["model.bin"]) setBytes(m.files["model.bin"].gzip + m.files["tokenizer.json"].gzip + m.files["world.json"].gzip); }).catch(() => {});
-    isDownloaded(base).then((has) => { if (live && has) setState((s) => (s === "idle" ? "ready" : s)); }).catch(() => {});
+    // Already on this phone (another lab, or an earlier visit, downloaded it): fetch the school's data too (a cache hit),
+    // then skip the gate. Ready without the data was the bug: every run then failed on its first tool call.
+    isDownloaded(base)
+      .then(async (has) => {
+        if (!has) return false;
+        const w = await fetchWorld(base);
+        if (live) world.current = w;
+        return true;
+      })
+      .catch(() => false)
+      .then((ready) => { if (live) setState((s) => (s === "checking" ? (ready ? "ready" : "idle") : s)); });
     return () => { live = false; lm.dispose(); };
   }, [lm, base]);
 
@@ -75,9 +96,15 @@ export function useTiny(): Tiny {
     const total = bytes;
     Promise.all([
       lm.load((loaded, t) => setProgress(Math.min(1, loaded / (t || total)))),
-      fetchWorld(base),
-    ]).then(([, w]) => { setWorld(w); setProgress(1); setState("ready"); }).catch(() => setState("error"));
+      world.current ?? fetchWorld(base),
+    ]).then(([, w]) => { world.current = w; setProgress(1); setState("ready"); }).catch(() => setState("error"));
   }, [bytes, lm, base]);
+
+  const prepare = useCallback(async () => {
+    const w = world.current ?? await fetchWorld(base);
+    world.current = w;
+    return w;
+  }, [base]);
 
   const generate: Generate = useCallback(async (conv) => {
     const r = await lmRef.current.generate(conv, { maxTokens: 120 });
@@ -85,7 +112,7 @@ export function useTiny(): Tiny {
   }, []);
   const stop = useCallback(() => lmRef.current.stop(), []);
 
-  return { state, mb: num(Math.round(bytes / 1e5) / 10), progress, world, load, generate, stop, busy, setBusy };
+  return { state, mb: num(Math.round(bytes / 1e5) / 10), progress, load, prepare, generate, stop, busy, setBusy };
 }
 
 /** The download gate. Shows the size and a button; while loading, a progress bar; on failure, Retry and the fallback.
@@ -94,9 +121,12 @@ export function ModelGate({ tiny, onRecorded, children }: { tiny: Tiny; onRecord
   const t = useS(T);
   if (tiny.state === "ready") return <>{children}</>;
   return (
+    // No aria-busy here: it would hold back the polite announcements below ("Looking for the model…", "Downloading…").
     <div className="lb-tiny-gate">
       <p className="lb-note"><Icon name="agent" size={18} /> {t.about}</p>
-      {tiny.state === "loading" ? (
+      {tiny.state === "checking" ? (
+        <p className="lb-row" aria-live="polite"><span className="dr-spinner" aria-hidden /><span>{t.checking}</span></p>
+      ) : tiny.state === "loading" ? (
         <>
           <p aria-live="polite">{t.downloading}</p>
           <div className="lb-meter" aria-hidden><span style={{ inlineSize: `${Math.round(tiny.progress * 100)}%` }} /></div>
@@ -123,6 +153,20 @@ export function ModelGate({ tiny, onRecorded, children }: { tiny: Tiny; onRecord
 export function Thinking({ onStop }: { onStop: () => void }) {
   const t = useS(T);
   return <div className="lb-row" aria-live="polite"><span className="dr-spinner" aria-hidden /><span>{t.thinking}</span><Button size="sm" variant="ghost" icon="pause" onClick={onStop}>{t.stop}</Button></div>;
+}
+
+/** A run that broke (the school's data or the model couldn't be had, or the worker stopped): say so, never show nothing. */
+export function RunFailed({ onRetry, onRecorded }: { onRetry: () => void; onRecorded?: () => void }) {
+  const t = useS(T);
+  return (
+    <div className="stack-sm">
+      <p className="lb-verdict is-warn" role="alert">{t.runFailed}</p>
+      <div className="lb-row">
+        <Button size="sm" icon="sync" onClick={onRetry}>{t.runAgain}</Button>
+        {onRecorded && <Button size="sm" variant="secondary" onClick={onRecorded}>{t.recorded}</Button>}
+      </div>
+    </div>
+  );
 }
 
 /** A banner naming a transcript as recorded (not a live run of the model). */

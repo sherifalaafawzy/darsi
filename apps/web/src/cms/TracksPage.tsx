@@ -49,6 +49,8 @@ export function TracksPage() {
   const [loadErr, setLoadErr] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string; list?: string[] } | null>(null);
   const [tried, setTried] = useState(false);
+  /** Back with changes not saved: asked inline (tracks publish to phones, so they never save by themselves). */
+  const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
     Promise.all([getSettings(), unitsByTrack()]).then(([s, u]) => { setRev(s.rev); setBase(rowsOf(s.tracks)); setRows(rowsOf(s.tracks)); setUsage(u); })
@@ -80,9 +82,9 @@ export function TracksPage() {
   const nameOf = (id: string) => L(rows.find((r) => r.def.id === id)?.def.name) || id;
   const unitNames = (ids: string[]) => ids.map((id) => L([...usage.values()].flat().find((u) => u.id === id)?.title) || id).join("، ");
 
-  const save = async () => {
+  const save = async (): Promise<boolean> => {
     setTried(true);
-    if (issues.length) { setMsg({ ok: false, text: t("cms.tracks.errors", { n: issues.length }) }); return; }
+    if (issues.length) { setMsg({ ok: false, text: t("cms.tracks.errors", { n: issues.length }) }); return false; }
     setBusy(true); setMsg(null);
     try {
       const r = await cmsApi.saveSettings({ rev, tracks: strip(rows) });
@@ -90,18 +92,20 @@ export function TracksPage() {
       const next = rowsOf(mergeTracks(r.tracks));
       setRev(r.rev); setBase(next); setRows(next); setTried(false); apply(r.tracks);
       setMsg({ ok: true, text: t("cms.tracks.saved") });
+      return true;
     } catch (e) {
       const code = codeOf(e), conflicts = conflictsOf(e), n = issuesOf(e).length;
       if (code === "aborted") setMsg({ ok: false, text: t("cms.tracks.conflict") });
       else if (conflicts.length) setMsg({ ok: false, text: t("cms.tracks.blocked"), list: conflicts.map((c) =>
         t(c.reason === "removed" ? "cms.tracks.blockedRemoved" : "cms.tracks.blockedLevels", { name: nameOf(c.track) || c.track, units: unitNames(c.units) })) });
       else setMsg({ ok: false, text: n ? t("cms.tracks.errors", { n }) : (e as Error).message });
+      return false;
     } finally { setBusy(false); }
   };
 
   return (
     <EditLangsProvider langs={languages.map((l) => l.code)}>
-      <AppBar title={t("cms.tracks.title")} onBack={() => { if (!dirty || confirm(t("cms.leaveConfirm"))) nav("/super/content"); }} backLabel={t("common.back")} />
+      <AppBar title={t("cms.tracks.title")} onBack={() => { if (dirty) setLeaving(true); else nav("/super/content"); }} backLabel={t("common.back")} />
       <main className="screen wide stack-lg ed">
         <p className="muted">{t("cms.tracks.intro")}</p>
         <TrackStylesProvider styles={styles}><ol className="ed-tracks">
@@ -135,6 +139,14 @@ export function TracksPage() {
         <Button loading={busy} disabled={!dirty} icon="check" onClick={() => { void save(); }}>{t("cms.tracks.save")}</Button>
         {dirty && <Button variant="ghost" disabled={busy} onClick={() => { setRows(base); setMsg(null); setTried(false); }}>{t("cms.tracks.discard")}</Button>}
         {msg && <div className={msg.ok ? "notice ok" : "notice err"} role={msg.ok ? "status" : "alert"}>{msg.text}{msg.list && <ul>{msg.list.map((x) => <li key={x}>{x}</li>)}</ul>}</div>}
+        {leaving && dirty && (
+          <div className="notice ed-confirm" role="alert">
+            <span>{t("cms.leaveConfirm")}</span>
+            <Button size="sm" autoFocus loading={busy} onClick={async () => { if (await save()) nav("/super/content"); }}>{t("cms.saveLeave")}</Button>
+            <Button size="sm" variant="secondary" onClick={() => nav("/super/content")}>{t("cms.leaveAnyway")}</Button>
+            <Button size="sm" variant="ghost" onClick={() => setLeaving(false)}>{t("cms.stay")}</Button>
+          </div>
+        )}
       </div>
     </EditLangsProvider>
   );

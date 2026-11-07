@@ -20,8 +20,8 @@ export function Landing() {
   return (
     <div className="landing">
       <header className="lp-nav">
-        <Link to="/" className="lp-brand" aria-label="Darsi"><Mark size={36} /><span>{lang === "ar" ? "درسي" : "Darsi"}</span></Link>
-        <nav className="lp-links" aria-label="Sections">
+        <Link to="/" className="lp-brand" aria-label={t("app.name")}><Mark size={36} /><span>{t("app.name")}</span></Link>
+        <nav className="lp-links" aria-label={L(C.nav.sections)}>
           <a href="#how">{L(C.nav.approach)}</a><a href="#tracks">{L(C.nav.tracks)}</a><a href="#orgs">{L(C.nav.orgs)}</a><a href="#standards">{L(C.nav.standards)}</a><a href="#faq">{L(C.nav.faq)}</a>
         </nav>
         <div className="lp-actions">
@@ -124,6 +124,7 @@ export function Landing() {
         {/* The other script's brand name in the phone's own font: an English page never downloads the Arabic web fonts. */}
         <p>{lang === "ar" ? "درسي (Darsi)" : <>Darsi (<span className="dr-other-script" lang="ar">درسي</span>)</>} — {L(C.footer)}</p>
         <details><summary>{lang === "ar" ? "المصادر" : "Sources"}</summary><ul>{C.sources.map((s) => <li key={s.url}><a href={s.url} target="_blank" rel="noreferrer noopener" dir="ltr">{s.label}</a></li>)}</ul></details>
+        <p><Link to="/licences">{lang === "ar" ? "تراخيص البرمجيات مفتوحة المصدر" : "Open-source licences"}</Link></p>
       </footer>
     </div>
   );

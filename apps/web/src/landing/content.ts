@@ -3,12 +3,12 @@ type L = { en: string; ar: string };
 const t = (en: string, ar: string): L => ({ en, ar });
 
 export const landing = {
-  nav: { approach: t("How it works", "كيف يعمل"), tracks: t("Tracks", "المسارات"), orgs: t("For organizations", "للمؤسسات"), standards: t("Standards", "المعايير"), faq: t("FAQ", "أسئلة شائعة"), language: t("Language", "اللغة"), signIn: t("Sign in", "تسجيل الدخول"), start: t("Start learning", "ابدأ التعلّم") },
+  nav: { approach: t("How it works", "كيف يعمل"), tracks: t("Tracks", "المسارات"), orgs: t("For organizations", "للمؤسسات"), standards: t("Standards", "المعايير"), faq: t("FAQ", "أسئلة شائعة"), sections: t("Sections", "أقسام الصفحة"), language: t("Language", "اللغة"), signIn: t("Sign in", "تسجيل الدخول"), start: t("Start learning", "ابدأ التعلّم") },
   hero: {
     kicker: t("AI, programming, data, IoT and cyber security — for teachers and their students", "الذكاء الاصطناعي والبرمجة والبيانات وإنترنت الأشياء والأمن السيبراني — للمعلمين وطلابهم"),
     title: t("Teachers who understand technology change a country.", "المعلم الذي يفهم التقنية يغيّر بلدًا."),
     body: t("Darsi gives school and university teachers serious, practical training in AI, programming, data, IoT and cyber security, with courses for their students too: short lessons with narrated videos, real projects in their own classrooms, and ready-to-teach slides and lesson plans — in their language, on any phone, even offline.",
-            "يقدّم «درسي» لمعلمي المدارس والجامعات تدريبًا جادًا وعمليًا في الذكاء الاصطناعي والبرمجة والبيانات وإنترنت الأشياء والأمن السيبراني، مع دورات لطلابهم أيضًا: دروس قصيرة مع فيديوهات مشروحة بالصوت، ومشاريع حقيقية في صفوفهم، وشرائح وخطط دروس جاهزة للتدريس — بلغتهم، على أي هاتف، وحتى دون اتصال."),
+            "يقدّم «درسي» لمعلمي المدارس والجامعات تدريبًا جادًا وعمليًا في الذكاء الاصطناعي والبرمجة والبيانات وإنترنت الأشياء والأمن السيبراني، مع دورات لطلابهم أيضًا: دروس قصيرة مع فيديوهات مشروحة بالصوت، ومشاريع حقيقية في فصولهم، وشرائح وخطط دروس جاهزة للتدريس — بلغتهم، على أي هاتف، وحتى دون اتصال."),
     primary: t("Start learning", "ابدأ التعلّم"), secondary: t("Bring Darsi to your school", "اجلب «درسي» إلى مؤسستك"),
     proof: t("Works offline · Arabic and English · Designed for low-cost phones", "يعمل دون اتصال، بالعربية والإنجليزية، ومصمَّم للهواتف منخفضة التكلفة"),
   },
@@ -17,7 +17,7 @@ export const landing = {
     items: [
       { stat: t("44 million", "٤٤ مليون"), text: t("additional teachers the world needs by 2030 — 15 million in sub-Saharan Africa alone (UNESCO, 2024).", "معلم إضافي يحتاجه العالم بحلول ٢٠٣٠، منهم ١٥ مليونًا في أفريقيا جنوب الصحراء وحدها (اليونسكو، ٢٠٢٤).") },
       { stat: t("2.2 billion", "٢٫٢ مليار"), text: t("people are still offline; in low-income countries only 23% use the internet (ITU, 2025).", "شخص ما زالوا دون اتصال بالإنترنت، وفي البلدان منخفضة الدخل لا يستخدمه سوى ٢٣٪ (الاتحاد الدولي للاتصالات، ٢٠٢٥).") },
-      { stat: t("1 teacher", "معلم واحد"), text: t("reaches hundreds of pupils over a career. Upskilling teachers is the fastest way to bring AI and digital safety into every classroom.", "يصل إلى مئات الطلاب خلال مسيرته. تأهيل المعلمين هو أسرع طريق لإدخال الذكاء الاصطناعي والسلامة الرقمية إلى كل صف.") },
+      { stat: t("1 teacher", "معلم واحد"), text: t("reaches hundreds of pupils over a career. Upskilling teachers is the fastest way to bring AI and digital safety into every classroom.", "يصل إلى مئات الطلاب خلال مسيرته. تأهيل المعلمين هو أسرع طريق لإدخال الذكاء الاصطناعي والسلامة الرقمية إلى كل فصل.") },
     ],
     note: t("Most technology training is designed for well-connected offices, in English, on laptops. Darsi is designed for the staff room, the phone and the language teachers actually use.",
             "معظم برامج التدريب التقني صُمّمت لمكاتب متصلة جيدًا، بالإنجليزية، وعلى أجهزة محمولة. أما «درسي» فمصمَّم لغرفة المعلمين، وللهاتف، وللغة التي يستخدمها المعلمون فعلًا."),
@@ -26,8 +26,8 @@ export const landing = {
     title: t("How Darsi works", "كيف يعمل «درسي»"),
     steps: [
       { title: t("Learn", "تعلّم"), text: t("10–12 minute lessons: a narrated animated video, a clear reading with key terms, and the ideas behind the tools — not just which button to press.", "دروس من ١٠ إلى ١٢ دقيقة: فيديو متحرّك مشروح بالصوت، وقراءة واضحة مع المصطلحات الأساسية، والأفكار التي تقف وراء الأدوات — لا مجرد الزر الذي تضغطه.") },
-      { title: t("Practise", "تدرّب"), text: t("Many kinds of questions — from spotting phishing in a real message to fixing a bug in real code that runs on your phone — plus 96 hands-on Labs apps: train a neural network, wire a sensor, crack a cipher, plan a delivery route.", "أنواع كثيرة من الأسئلة — من اكتشاف التصيّد في رسالة حقيقية إلى إصلاح خطأ في شيفرة حقيقية تعمل على هاتفك — إضافة إلى ٩٦ تطبيقًا عمليًا في «المختبرات»: درّب شبكة عصبية، وصِل مستشعرًا، وفُكّ شيفرة، وخطّط مسار توصيل.") },
-      { title: t("Apply", "طبّق"), text: t("Every lesson ends with a project done in your own school: map the AI your pupils use, write prompts for a real lesson, draft your classroom AI policy. Teachers or admins review it against a rubric.", "ينتهي كل درس بمشروع تنفّذه في مدرستك: ارسم خريطة أدوات الذكاء الاصطناعي التي يستخدمها طلابك، اكتب طلبات لدرس حقيقي، صُغ سياسة صفّك لاستخدام الذكاء الاصطناعي. يراجعه معلم أو مشرف وفق معايير واضحة.") },
+      { title: t("Practise", "تدرّب"), text: t("Many kinds of questions — from spotting phishing in a real message to fixing a bug in real code that runs on your phone — plus more than 100 hands-on Labs apps: train a neural network, wire a sensor, crack a cipher, plan a delivery route.", "أنواع كثيرة من الأسئلة — من اكتشاف التصيّد في رسالة حقيقية إلى إصلاح خطأ في شيفرة حقيقية تعمل على هاتفك — إضافة إلى أكثر من ١٠٠ تطبيق عملي في «المختبرات»: درّب شبكة عصبية، وصِل مستشعرًا، وفُكّ شيفرة، وخطّط مسار توصيل.") },
+      { title: t("Apply", "طبّق"), text: t("Every lesson ends with a project done in your own school: map the AI your pupils use, write prompts for a real lesson, draft your classroom AI policy. Teachers or admins review it against a rubric.", "ينتهي كل درس بمشروع تنفّذه في مدرستك: ارسم خريطة أدوات الذكاء الاصطناعي التي يستخدمها طلابك، اكتب طلبات لدرس حقيقي، صُغ سياسة فصلك لاستخدام الذكاء الاصطناعي. يراجعه معلم أو مشرف وفق معايير واضحة.") },
       { title: t("Teach", "علّم"), text: t("Download the lesson's slides as PDF or PowerPoint, the narrated video, and a lesson plan with a pupil worksheet — activities that work with chalk and paper.", "نزّل شرائح الدرس بصيغة PDF أو PowerPoint، والفيديو المشروح، وخطة درس مع ورقة عمل للطلاب — بأنشطة تعمل بالطباشير والورق.") },
       { title: t("Prove it", "أثبت ذلك"), text: t("Progress is mapped to international competency frameworks, so certificates and reports say exactly what a teacher can do.", "يرتبط التقدّم بأطر كفايات دولية، فتوضّح الشهادات والتقارير بدقة ما يستطيع المعلم فعله.") },
     ],
@@ -82,7 +82,7 @@ export const landing = {
     title: t("Our quality bar", "معاييرنا للجودة"),
     items: [
       t("Concepts before buttons: teachers learn how the technology works, so their knowledge outlasts any app.", "المفاهيم قبل الأزرار: يتعلّم المعلم كيف تعمل التقنية، فتبقى معرفته بعد زوال أي تطبيق."),
-      t("Every lesson ends in practice in a real classroom, reviewed by people — not just a quiz.", "ينتهي كل درس بتطبيق في صف حقيقي يراجعه بشر — لا مجرد اختبار."),
+      t("Every lesson ends in practice in a real classroom, reviewed by people — not just a quiz.", "ينتهي كل درس بتطبيق في فصل حقيقي يراجعه بشر — لا مجرد اختبار."),
       t("Local examples: school WhatsApp groups, exam timetables, solar lamps, market prices.", "أمثلة محلية: مجموعات واتساب المدرسية، وجداول الامتحانات، والمصابيح الشمسية، وأسعار السوق."),
       t("Content is checked by subject specialists and native-language editors before it is published.", "يراجع المحتوى مختصون في المادة ومحرّرون بلغتها الأم قبل نشره."),
     ],
@@ -92,7 +92,7 @@ export const landing = {
     items: [
       [t("Do I need a computer?", "هل أحتاج إلى حاسوب؟"), t("No. Darsi is designed for phones first and also works on tablets and computers.", "لا. صُمّم «درسي» للهاتف أولًا، ويعمل أيضًا على الأجهزة اللوحية والحواسيب.")],
       [t("Does it work without internet?", "هل يعمل دون إنترنت؟"), t("Yes. After you download a unit, its lessons, videos and teaching kits work offline. Your progress uploads when you reconnect.", "نعم. بعد تنزيل وحدة، تعمل دروسها وفيديوهاتها وحقائبها دون اتصال، ويُرفع تقدّمك عند عودة الاتصال.")],
-      [t("Can I use the slides with my class?", "هل يمكنني استخدام الشرائح مع صفّي؟"), t("Yes. Kits are free to copy for your school. Slides come as PDF or editable PowerPoint, with speaker notes.", "نعم. يُسمح بنسخ الحقائب لمدرستك مجانًا. الشرائح متاحة بصيغة PDF أو PowerPoint قابلة للتعديل مع ملاحظات المتحدّث.")],
+      [t("Can I use the slides with my class?", "هل يمكنني استخدام الشرائح مع فصلي؟"), t("Yes. Kits are free to copy for your school. Slides come as PDF or editable PowerPoint, with speaker notes.", "نعم. يُسمح بنسخ الحقائب لمدرستك مجانًا. الشرائح متاحة بصيغة PDF أو PowerPoint قابلة للتعديل مع ملاحظات المتحدّث.")],
       [t("How does my school or ministry join?", "كيف تنضم مدرستي أو وزارتي؟"), t("Create an account, choose “Register your organization”, and tell us about it. After approval you become its admin and can add people.", "أنشئ حسابًا، واختر «سجّل مؤسستك»، وأخبرنا عنها. بعد الموافقة تصبح مشرفها وتستطيع إضافة الأشخاص.")],
       [t("Who can see my progress?", "من يستطيع رؤية تقدّمي؟"), t("Only you — unless you belong to an organization, where its admins (and, for students, their teacher) can see your learning record.", "أنت فقط — إلا إذا كنت عضوًا في مؤسسة، فيرى مشرفوها (ومعلمك إن كنت طالبًا) سجل تعلّمك.")],
       [t("Which languages are available?", "ما اللغات المتاحة؟"), t("Arabic and English today. The platform is built so more languages can be added without redesign.", "العربية والإنجليزية اليوم. والمنصة مبنية بحيث يمكن إضافة لغات أخرى دون إعادة تصميم.")],

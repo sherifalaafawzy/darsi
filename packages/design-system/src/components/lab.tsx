@@ -51,15 +51,23 @@ export function approximateTokens(text: string): string[] {
   const parts = text.match(/[\p{L}\p{M}\p{N}]+|[^\s\p{L}\p{M}\p{N}]/gu) ?? [];
   return parts.flatMap((w) => (w.length <= 5 ? [w] : Array.from({ length: Math.ceil(w.length / 4) }, (_, i) => w.slice(i * 4, i * 4 + 4))));
 }
-export interface TokenViewerProps extends LabProps { text: string; inputLabel?: string; tokensLabel?: string; charsLabel?: string; }
-export function TokenViewer({ text, inputLabel = "Text to split into tokens", tokensLabel = "tokens", charsLabel = "characters", num = plainNum, ...lab }: TokenViewerProps) {
+export interface TokenViewerProps extends LabProps {
+  text: string; inputLabel?: string; tokensLabel?: string; charsLabel?: string;
+  /** The whole count, in place of the number and its label, for languages whose counted words change with the number
+   *  ("1 token", «توكن واحد», «٣ أحرف», «١١ حرفًا»). */
+  tokensText?: (n: number) => ReactNode; charsText?: (n: number) => ReactNode;
+}
+export function TokenViewer({ text, inputLabel = "Text to split into tokens", tokensLabel = "tokens", charsLabel = "characters", tokensText, charsText, num = plainNum, ...lab }: TokenViewerProps) {
   const [t, setT] = useState(text);
   const toks = approximateTokens(t);
   return (
     <LabFrame {...lab} icon="grip">
       <textarea className="dr-reflect-input" dir="auto" rows={2} value={t} onChange={(e) => setT(e.target.value)} aria-label={inputLabel} />
       <div className="dr-tokens" dir="auto">{toks.map((k, i) => <span key={i} className={`dr-token dr-token-${i % 4}`}>{k}</span>)}</div>
-      <div className="dr-lab-stats"><span><strong>{num(toks.length)}</strong> {tokensLabel}</span><span><strong>{num(t.length)}</strong> {charsLabel}</span></div>
+      <div className="dr-lab-stats">
+        <span>{tokensText ? tokensText(toks.length) : <><strong>{num(toks.length)}</strong> {tokensLabel}</>}</span>
+        <span>{charsText ? charsText(t.length) : <><strong>{num(t.length)}</strong> {charsLabel}</>}</span>
+      </div>
     </LabFrame>
   );
 }
@@ -70,12 +78,22 @@ export function withTemperature(cands: { word: string; p: number }[], temp: numb
   const sum = w.reduce((a, b) => a + b, 0);
   return cands.map((c, i) => ({ word: c.word, p: w[i] / sum }));
 }
-export interface NextWordLabProps extends LabProps { context: string; candidates: { word: string; p: number }[]; temperature?: number; generated?: string; tempLabel?: string; lowLabel?: string; highLabel?: string; generateLabel?: string; }
-export function NextWordLab({ context, candidates, temperature = 1, generated = "", tempLabel = "Temperature", lowLabel = "Predictable", highLabel = "Creative", generateLabel = "Pick the next word", num = plainNum, ...lab }: NextWordLabProps) {
+export interface NextWordLabProps extends LabProps {
+  context: string; candidates: { word: string; p: number }[]; temperature?: number; generated?: string; tempLabel?: string; lowLabel?: string; highLabel?: string; generateLabel?: string;
+  /** Each pick, with the temperature it was drawn at (so an app can tell when both ends of the slider were tried). */
+  onGenerate?: (word: string, temperature: number) => void;
+}
+export function NextWordLab({ context, candidates, temperature = 1, generated = "", tempLabel = "Temperature", lowLabel = "Predictable", highLabel = "Creative", generateLabel = "Pick the next word", num = plainNum, onGenerate, ...lab }: NextWordLabProps) {
   const [temp, setTemp] = useState(temperature);
   const [gen, setGen] = useState(generated);
   const probs = withTemperature(candidates, temp);
-  const sample = () => { let r = Math.random(), acc = 0; for (const c of probs) { acc += c.p; if (r <= acc) { setGen(c.word); return; } } };
+  const sample = () => {
+    const r = Math.random();
+    let acc = 0, word = probs[probs.length - 1]?.word ?? ""; // rounding can leave r past the last sum: take the last word
+    for (const c of probs) { acc += c.p; if (r <= acc) { word = c.word; break; } }
+    setGen(word);
+    onGenerate?.(word, temp);
+  };
   return (
     <LabFrame {...lab} icon="ai">
       <p className="dr-nw-context" dir="auto">{context} <span className={cx("dr-blank", gen && "is-filled")}>{gen ? <bdi>{gen}</bdi> : " "}</span></p>
@@ -101,7 +119,7 @@ export function classify(text: string, classes: { examples: string[] }[]) {
 }
 export interface ClassDef { id: string; label: string; tone?: Tone; examples: string[]; }
 export interface TrainClassifierProps extends LabProps { classes: ClassDef[]; test?: string; addLabel?: string; draftLabel?: string; testLabel?: string; guessLabel?: string; confidenceLabel?: string; }
-export function TrainClassifier({ classes: init, test: initTest = "", addLabel = "Add example", draftLabel = "New example", testLabel = "Test the model", guessLabel = "The model thinks:", confidenceLabel = "Confidence", ...lab }: TrainClassifierProps) {
+export function TrainClassifier({ classes: init, test: initTest = "", addLabel = "Add example", draftLabel = "New example", testLabel = "Test the model", guessLabel = "The model thinks:", confidenceLabel = "Confidence", num = plainNum, ...lab }: TrainClassifierProps) {
   const [classes, setClasses] = useState(init);
   const [draft, setDraft] = useState("");
   const [test, setTest] = useState(initTest);
@@ -113,7 +131,7 @@ export function TrainClassifier({ classes: init, test: initTest = "", addLabel =
       <div className="dr-tc-classes">
         {classes.map((c, i) => (
           <div key={c.id} className={`dr-tc-class dr-tone-${c.tone ?? tones[i % 4]}`}>
-            <div className="dr-tc-class-head"><strong>{c.label}</strong><span>{c.examples.length}</span></div>
+            <div className="dr-tc-class-head"><strong>{c.label}</strong><span>{num(c.examples.length)}</span></div>
             <ul>{c.examples.map((e, k) => <li key={k} dir="auto">{e}</li>)}</ul>
             <button type="button" className="dr-tc-add" disabled={!draft.trim()} onClick={() => add(i)}>+ {addLabel}</button>
           </div>
@@ -122,7 +140,7 @@ export function TrainClassifier({ classes: init, test: initTest = "", addLabel =
       <TextField label={draftLabel} value={draft} onChange={(e) => setDraft(e.target.value)} />
       <div className="dr-tc-test">
         <TextField label={testLabel} value={test} onChange={(e) => setTest(e.target.value)} />
-        {res && <div className="dr-tc-result" role="status"><span>{guessLabel}</span><strong>{classes[res.best].label}</strong><ProgressBar value={Math.round(res.confidence * 100)} label={confidenceLabel} /></div>}
+        {res && <div className="dr-tc-result" role="status"><span>{guessLabel}</span><strong>{classes[res.best].label}</strong><ProgressBar value={Math.round(res.confidence * 100)} label={confidenceLabel} valueText={num(Math.round(res.confidence * 100) / 100, { style: "percent" })} /></div>}
       </div>
     </LabFrame>
   );

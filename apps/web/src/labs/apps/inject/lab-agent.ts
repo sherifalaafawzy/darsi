@@ -7,7 +7,16 @@
  * The file name starts with "lab-" on purpose: four lab chunks share it, and vite.config.ts keeps lab-*.js out of the
  * precache (the service worker caches it with the first of these labs instead).
  */
-import { langOf, runTool, type Conversation, type Lang, type Step, type ToolCall, type Turn, type World } from "../../../tinylm";
+import { TINYLM_BASE, langOf, runTool, type Conversation, type Lang, type Step, type ToolCall, type Turn, type World } from "../../../tinylm";
+
+/**
+ * The model these labs run. Their tries, recorded runs and lessons (aisec-*: "6 of 8 in English, 7 of 8 in Arabic",
+ * the filter that misses the reworded scam in both languages) describe the bilingual v1 model, so they stay on it, as
+ * the agents labs do (agentloop/lab-agents.tsx). The per-language app models (tinylm/base.ts) refuse the Arabic scam
+ * outright and garble a message they were tricked into sending, so guardrails' Try 1–3 could not happen on them.
+ * One model also means one 2.8 MB download for both lab families. tests/labs/aisec.test.ts runs this folder.
+ */
+export const LAB_BASE = TINYLM_BASE;
 
 /** One move of the model: what TinyLM.generate returns (its step and why it stopped). */
 export interface Move { step: Step; stoppedBy: string }

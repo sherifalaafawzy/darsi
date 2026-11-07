@@ -33,7 +33,7 @@ const S = {
     arg: "Detail", given: "Given", ok: "right", missingShort: "missing", optional: "optional, not given",
     notes: {
       france: "No tool knows capitals. With “What's”, Darsi Tiny says it can't; with “What is”, it guesses the glossary. A small change of words changes what a small model does.",
-      ninez: "There is no class 9Z. Darsi Tiny copied it as 9C: it has seen 9C-like names far more often.",
+      ninez: "There is no class 9Z, so Darsi Tiny copied it wrongly: the check above shows what it wrote. A small model fills a detail with something that looks likely.",
       copy: "Darsi Tiny copied the wrong words into the call. It was never trained on this wording, so it doesn't know where the word starts.",
       self: "Switch a few tools off and ask again: does it still list them? It learned a fixed sentence, so the tools line, not its answer, is the truth.",
     } as Record<string, string>,
@@ -66,7 +66,7 @@ const S = {
     arg: "التفصيل", given: "القيمة", ok: "صحيح", missingShort: "ناقص", optional: "اختياري، لم يُعطَ",
     notes: {
       france: "لا تعرف أي أداة العواصم. مع «What's» يقول «درسي الصغير» إنه لا يستطيع، ومع «What is» يخمّن المسرد. تغيير صغير في الكلمات يغيّر ما يفعله نموذج صغير.",
-      ninez: "لا يوجد صف اسمه 9Z. نسخه «درسي الصغير» على أنه 9C: فقد رأى أسماء مثل 9C أكثر بكثير.",
+      ninez: "لا يوجد فصل اسمه 9Z، فنسخه «درسي الصغير» خطأً، والفحص أعلاه يُظهر ما كتبه. فالنموذج الصغير يملأ التفصيل بما يبدو مرجّحًا.",
       copy: "نسخ «درسي الصغير» كلمات خاطئة إلى الاستدعاء. لم يتدرّب قط على هذه الصيغة، فلا يعرف أين تبدأ الكلمة.",
       self: "أوقف بعض الأدوات واسأل مجددًا: هل ما زال يذكرها؟ لقد تعلّم جملة ثابتة، فالحقيقة في سطر الأدوات لا في جوابه.",
     },

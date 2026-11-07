@@ -1,6 +1,10 @@
 /* The report sheet (bugs/Report.tsx): loads with its lazy chunk. A sheet from the bottom on phones, a panel at the
-   inline start from 900 px (the tutor's panel is at the inline end). */
-.bug-sheet { position: fixed; inset-inline: 0; inset-block-end: 0; z-index: var(--z-toast); display: flex; flex-direction: column; max-block-size: 92vh; background: var(--paper); border-block-start: 3px solid var(--ink); border-start-start-radius: var(--radius-lg); border-start-end-radius: var(--radius-lg); box-shadow: var(--shadow-press); }
+   inline start from 900 px (the tutor's panel is at the inline end). It is a <dialog> opened as a modal, so the browser's
+   own dialog box (centred, padded, bordered, its own colours and sizes) is undone here. */
+.bug-sheet { position: fixed; inset-inline: 0; inset-block: auto 0; z-index: var(--z-toast); display: flex; flex-direction: column; box-sizing: border-box; inline-size: auto; max-inline-size: none; block-size: auto; max-block-size: 92vh; margin: 0; padding: 0; border: 0; border-block-start: 3px solid var(--ink); border-start-start-radius: var(--radius-lg); border-start-end-radius: var(--radius-lg); background: var(--paper); color: var(--ink); box-shadow: var(--shadow-press); }
+.bug-sheet:not([open]) { display: none; }
+/* Before Chrome 122, ::backdrop doesn't see the tokens, so it stays clear there; the page behind is inert either way. */
+.bug-sheet::backdrop { background: var(--scrim); }
 @media (min-width: 900px) { .bug-sheet { inset-block: 0; inset-inline-end: auto; inline-size: 440px; max-block-size: none; border-block-start: 0; border-inline-end: 3px solid var(--ink); border-radius: 0; } }
 .bug-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) var(--space-4); border-block-end: 2px solid var(--line); }
 .bug-title { margin: 0; font: var(--text-title); }

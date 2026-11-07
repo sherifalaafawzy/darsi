@@ -8,8 +8,8 @@
     "ar": "بحوث العمليات: البرمجة الخطية والصحيحة وبالقيود، والنمذجة بـ OR-Tools، والطرق التقريبية"
   },
   "summary": {
-    "en": "The field behind airline schedules, supply chains and hospital rosters, on your phone: linear programs and the simplex method, integer programs and branch and bound, constraint programming with CP-SAT, local search and the optimality gap, and the trade-offs a modeller must make in the open. You write and run real OR-Tools models in Python. Before this: “First Python” (Programming, lower secondary).",
-    "ar": "العلم الذي يقف وراء جداول الطيران وسلاسل التوريد ومناوبات المستشفيات، على هاتفك: البرامج الخطية وطريقة السمبلكس، والبرامج الصحيحة والتفريع والتحديد، والبرمجة بالقيود مع CP-SAT، والبحث المحلي وفجوة الأمثلية، والموازنات التي يجب أن يجريها صانع النموذج علنًا. ستكتب نماذج OR-Tools حقيقية بلغة بايثون وتشغّلها. قبل هذا: «أولى خطواتك في Python» (البرمجة، المرحلة الإعدادية)."
+    "en": "The field behind airline schedules, supply chains and hospital rosters, on your phone: linear programs and the simplex method, integer programs and branch and bound, constraint programming with CP-SAT, local search and the optimality gap, and the trade-offs a modeller must make in the open. You write and run real OR-Tools models in Python. Before this: some Python (loops, lists and functions), such as “Functions, lists and algorithms” (Programming, upper secondary).",
+    "ar": "العلم الذي يقف وراء جداول الطيران وسلاسل التوريد ومناوبات المستشفيات، على هاتفك: البرامج الخطية وطريقة السمبلكس، والبرامج الصحيحة والتفريع والتحديد، والبرمجة بالقيود مع CP-SAT، والبحث المحلي وفجوة الأمثلية، والموازنات التي يجب أن يجريها صانع النموذج علنًا. ستكتب نماذج OR-Tools حقيقية بلغة بايثون وتشغّلها. قبل هذا: شيء من بايثون (الحلقات والقوائم والدوال)، مثل «الدوال والقوائم والخوارزميات» (البرمجة، المرحلة الثانوية)."
   },
   "lessons": [
     {
@@ -124,19 +124,19 @@
                 {
                   "id": "b",
                   "text": {
-                    "en": "Every point on the edge between them is optimal too",
-                    "ar": "كل نقطة على الضلع بينهما مثلى أيضًا"
+                    "en": "Only those two corners are optimal",
+                    "ar": "هاتان الزاويتان وحدهما مثليان"
                   }
                 },
                 {
                   "id": "c",
                   "text": {
-                    "en": "Only those two corners are optimal",
-                    "ar": "هاتان الزاويتان وحدهما مثليان"
+                    "en": "Every point on the edge between them is optimal too",
+                    "ar": "كل نقطة على الضلع بينهما مثلى أيضًا"
                   }
                 }
               ],
-              "answer": "b",
+              "answer": "c",
               "explain": {
                 "en": "If two neighbouring corners give the same best value, the goal line is parallel to the edge joining them, so it touches the whole edge at once. Every point on that edge is optimal: the LP has many optimal solutions, and a solver returns one of them.",
                 "ar": "إذا أعطت زاويتان متجاورتان أفضل قيمة نفسها، فخط الهدف موازٍ للضلع الذي يصل بينهما، فيلمس الضلع كله دفعة واحدة. وكل نقطة على هذا الضلع مثلى: فللبرنامج الخطي حلول مثلى كثيرة، ويُرجع برنامج الحل واحدًا منها."
@@ -193,8 +193,8 @@
             "ar": "البرامج الخطية والزوايا والأسعار"
           },
           "body": {
-            "en": "A linear program (LP) has continuous variables, linear constraints and a linear objective. In standard form it reads: maximise cᵀx subject to Ax ≤ b and x ≥ 0, where x are the decisions, A and b the limits and c the value of each decision. The school garden is a small one: x tomato beds and y bean beds, maximise 30x + 40y, with land x + y ≤ 8, water 2x + y ≤ 14 and pupils’ hours x + 3y ≤ 18.\n\nEach linear constraint keeps one side of a line (in higher dimensions, a hyperplane), so the feasible region, the plans that keep every limit, is a convex polyhedron: the segment between any two feasible plans is feasible. The objective is a family of parallel lines; pushed as far as it will go, it last touches the region at a corner (a vertex), or along a whole edge when two corners tie. So if an LP has an optimum, one is at a corner. The garden’s corners are (0, 0), (7, 0), (6, 2), (3, 5) and (0, 6), and the best is (3, 5), with 290.\n\nThe simplex method, published by George Dantzig in 1947, walks from corner to neighbouring corner, each time improving the objective, and stops when no neighbour is better; by convexity that corner is optimal. Picking the variable with the largest gain first, the garden goes from (0, 0) to (0, 6) and then (3, 5). In the worst case simplex can visit exponentially many corners (Klee and Minty built such examples in 1972), but in practice it is fast, which is why it remains the workhorse; interior-point methods, from 1984, cross the inside of the region in polynomial time. GLOP, the linear solver in Google’s OR-Tools, is a simplex solver; others include HiGHS, CPLEX and Gurobi, which solve LPs with millions of variables.\n\nEvery LP has a dual whose variables are prices for the constraints. A constraint’s dual value, or shadow price, is how much the best objective improves when its right-hand side grows by one. In the garden, an extra pupil-hour is worth 5, an extra bed of land 25 and extra water 0. Strong duality says the prices value the limits at exactly the best profit: 8 × 25 + 18 × 5 + 14 × 0 = 290. Complementary slackness says a constraint with slack (water: 11 cans used of 14) has price zero, and a variable used in the optimum earns exactly what its resources cost. A shadow price holds over a range: hours are worth 5 each from 18 up to 24, where the best plan reaches (0, 8) with 320; beyond that, more hours add nothing.\n\nSolvers report dual values directly: in OR-Tools, each constraint’s dual_value(), on the phone too. You can also find one yourself, as an economist would: solve again with the limit one unit larger and subtract. Reading the prices is often worth more than the plan itself: they say which limit to relax, and which spending would be wasted.",
-            "ar": "للبرنامج الخطي متغيّرات متصلة، وقيود خطية، ودالة هدف خطية. وصيغته القياسية: كبّر cᵀx بشرط ⁦Ax ≤ b⁩ و⁦x ≥ 0⁩، حيث x القرارات، وA وb القيود، وc قيمة كل قرار. وحديقة المدرسة برنامج صغير منها: x أحواض الطماطم وy أحواض الفاصولياء، كبّر ⁦30x + 40y⁩، مع قيد الأرض ⁦x + y ≤ 8⁩، والماء ⁦2x + y ≤ 14⁩، وساعات الطلاب ⁦x + 3y ≤ 18⁩.\n\nكل قيد خطي يُبقي جانبًا واحدًا من خط (وفي أبعاد أعلى، من مستوٍ فائق)، لذلك فالمنطقة الممكنة، أي الخطط التي تلتزم بكل القيود، متعدّد سطوح محدّب: القطعة الواصلة بين أي خطتين ممكنتين ممكنة أيضًا. ودالة الهدف عائلة من الخطوط المتوازية، وحين تُدفع إلى أبعد ما يمكن تلمس المنطقة أخيرًا عند زاوية (رأس)، أو على امتداد ضلع كامل حين تتعادل زاويتان. فإن كان للبرنامج الخطي حل أمثل، فأحد حلوله المثلى في زاوية. وزوايا الحديقة (٠، ٠) و(٧، ٠) و(٦، ٢) و(٣، ٥) و(٠، ٦)، وأفضلها (٣، ٥) بربح ٢٩٠.\n\nأما طريقة السمبلكس، التي نشرها جورج دانتزيج عام ١٩٤٧، فتمشي من زاوية إلى زاوية مجاورة، وتحسّن الهدف في كل مرة، وتتوقّف حين لا تكون أي زاوية مجاورة أفضل، وبفضل التحدّب تكون تلك الزاوية هي المثلى. وإذا اختيرت أولًا المتغيّر صاحب أكبر مكسب، تنتقل الحديقة من (٠، ٠) إلى (٠، ٦) ثم إلى (٣، ٥). وقد تزور السمبلكس في أسوأ الحالات عددًا أُسّيًا من الزوايا (بنى كلي ومينتي أمثلة كهذه عام ١٩٧٢)، لكنها سريعة في الواقع، ولهذا تبقى الأداة الأساسية، أما طرق النقطة الداخلية، منذ ١٩٨٤، فتعبر داخل المنطقة في وقت كثيرة حدود. وGLOP، برنامج الحل الخطي في OR-Tools من Google، برنامج سمبلكس، ومن البرامج الأخرى HiGHS وCPLEX وGurobi، وهي تحلّ برامج خطية فيها ملايين المتغيّرات.\n\nلكل برنامج خطي برنامج ثنائي متغيّراته أسعار للقيود. والقيمة الثنائية لقيد، أو سعر الظل، هي مقدار تحسّن أفضل قيمة للهدف حين يزيد طرفه الأيمن وحدة واحدة. ففي الحديقة، قيمة الساعة الإضافية من عمل الطلاب ٥، والحوض الإضافي من الأرض ٢٥، والماء الإضافي صفر. وتقول الثنائية القوية إن الأسعار تقيّم القيود بأفضل ربح تمامًا: ٨ × ٢٥ + ١٨ × ٥ + ١٤ × ٠ = ٢٩٠. ويقول مبدأ التراخي المتمّم إن القيد الذي فيه فائض (الماء: يُستعمل ١١ دلوًا من ١٤) سعره صفر، وإن المتغيّر المستعمل في الحل الأمثل يربح بالضبط ما تكلّفه موارده. ويصحّ سعر الظل ضمن مدى: فقيمة كل ساعة ٥ من ١٨ ساعة حتى ٢٤، حيث تصل أفضل خطة إلى (٠، ٨) بربح ٣٢٠، وبعد ذلك لا تضيف الساعات الإضافية شيئًا.\n\nتُعطي برامج الحل القيم الثنائية مباشرة: ففي OR-Tools تعطيها ⁦dual_value()⁩ لكل قيد، على الهاتف أيضًا. ويمكنك كذلك أن تجدها بنفسك كما يفعل الاقتصادي: أعِد الحل بعد زيادة القيد وحدة واحدة واطرح. وقراءة الأسعار كثيرًا ما تكون أثمن من الخطة نفسها: فهي تخبرك أيّ القيود يستحق التوسيع، وأيّ إنفاق سيضيع هدرًا."
+            "en": "A linear program (LP) has continuous variables, linear constraints and a linear objective. In standard form it reads: maximise cᵀx subject to Ax ≤ b and x ≥ 0, where x are the decisions, A and b the limits and c the value of each decision. The school garden is a small one: x tomato beds and y bean beds, maximise 30x + 40y, with land x + y ≤ 8, water 2x + y ≤ 14 and pupils’ hours x + 3y ≤ 18.\n\nEach linear constraint keeps one side of a line (in higher dimensions, a hyperplane), so the feasible region, the plans that keep every limit, is a convex polyhedron: the segment between any two feasible plans is feasible. The objective is a family of parallel lines; pushed as far as it will go, it last touches the region at a corner (a vertex), or along a whole edge when two corners tie. So if an LP has an optimum, one is at a corner. The garden’s corners are (0, 0), (7, 0), (6, 2), (3, 5) and (0, 6), and the best is (3, 5), with 290.\n\nThe simplex method, devised by George Dantzig in 1947, walks from corner to neighbouring corner, each time improving the objective, and stops when no neighbour is better; by convexity that corner is optimal. Picking the variable with the largest gain first, the garden goes from (0, 0) to (0, 6) and then (3, 5). In the worst case simplex can visit exponentially many corners (Klee and Minty built such examples in 1972), but in practice it is fast, which is why it remains the workhorse; interior-point methods, from 1984, cross the inside of the region in polynomial time. GLOP, the linear solver in Google’s OR-Tools, is a simplex solver; others include HiGHS, CPLEX and Gurobi, which solve LPs with millions of variables.\n\nEvery LP has a dual whose variables are prices for the constraints. A constraint’s dual value, or shadow price, is how much the best objective improves when its right-hand side grows by one. In the garden, an extra pupil-hour is worth 5, an extra bed of land 25 and extra water 0. Strong duality says the prices value the limits at exactly the best profit: 8 × 25 + 18 × 5 + 14 × 0 = 290. Complementary slackness says a constraint with slack (water: 11 cans used of 14) has price zero, and a variable used in the optimum earns exactly what its resources cost. A shadow price holds over a range: hours are worth 5 each from 18 up to 24, where the best plan reaches (0, 8) with 320; beyond that, more hours add nothing.\n\nSolvers report dual values directly: in OR-Tools, each constraint’s dual_value(), on the phone too. You can also find one yourself, as an economist would: solve again with the limit one unit larger and subtract. Reading the prices is often worth more than the plan itself: they say which limit to relax, and which spending would be wasted.",
+            "ar": "للبرنامج الخطي متغيّرات متصلة، وقيود خطية، ودالة هدف خطية. وصيغته القياسية: كبّر cᵀx بشرط ⁦Ax ≤ b⁩ و⁦x ≥ 0⁩، حيث x القرارات، وA وb القيود، وc قيمة كل قرار. وحديقة المدرسة برنامج صغير منها: x أحواض الطماطم وy أحواض الفاصولياء، كبّر ⁦30x + 40y⁩، مع قيد الأرض ⁦x + y ≤ 8⁩، والماء ⁦2x + y ≤ 14⁩، وساعات الطلاب ⁦x + 3y ≤ 18⁩.\n\nكل قيد خطي يُبقي جانبًا واحدًا من خط (وفي أبعاد أعلى، من مستوٍ فائق)، لذلك فالمنطقة الممكنة، أي الخطط التي تلتزم بكل القيود، متعدّد سطوح محدّب: القطعة الواصلة بين أي خطتين ممكنتين ممكنة أيضًا. ودالة الهدف عائلة من الخطوط المتوازية، وحين تُدفع إلى أبعد ما يمكن تلمس المنطقة أخيرًا عند زاوية (رأس)، أو على امتداد ضلع كامل حين تتعادل زاويتان. فإن كان للبرنامج الخطي حل أمثل، فأحد حلوله المثلى في زاوية. وزوايا الحديقة (٠، ٠) و(٧، ٠) و(٦، ٢) و(٣، ٥) و(٠، ٦)، وأفضلها (٣، ٥) بربح ٢٩٠.\n\nأما طريقة السمبلكس، التي ابتكرها جورج دانتزيج عام ١٩٤٧، فتمشي من زاوية إلى زاوية مجاورة، وتحسّن الهدف في كل مرة، وتتوقّف حين لا تكون أي زاوية مجاورة أفضل، وبفضل التحدّب تكون تلك الزاوية هي المثلى. وإذا اختير أولًا المتغيّر صاحب أكبر مكسب، تنتقل الحديقة من (٠، ٠) إلى (٠، ٦) ثم إلى (٣، ٥). وقد تزور السمبلكس في أسوأ الحالات عددًا أُسّيًا من الزوايا (بنى كلي ومينتي أمثلة كهذه عام ١٩٧٢)، لكنها سريعة في الواقع، ولهذا تبقى الأداة الأساسية، أما طرق النقطة الداخلية، منذ ١٩٨٤، فتعبر داخل المنطقة في وقت كثيرة حدود. وGLOP، برنامج الحل الخطي في OR-Tools من Google، برنامج سمبلكس، ومن البرامج الأخرى HiGHS وCPLEX وGurobi، وهي تحلّ برامج خطية فيها ملايين المتغيّرات.\n\nلكل برنامج خطي برنامج ثنائي متغيّراته أسعار للقيود. والقيمة الثنائية لقيد، أو سعر الظل، هي مقدار تحسّن أفضل قيمة للهدف حين يزيد طرفه الأيمن وحدة واحدة. ففي الحديقة، قيمة الساعة الإضافية من عمل الطلاب ٥، والحوض الإضافي من الأرض ٢٥، والماء الإضافي صفر. وتقول الثنائية القوية إن الأسعار تقيّم القيود بأفضل ربح تمامًا: ٨ × ٢٥ + ١٨ × ٥ + ١٤ × ٠ = ٢٩٠. ويقول مبدأ التراخي المتمّم إن القيد الذي فيه فائض (الماء: يُستعمل ١١ دلوًا من ١٤) سعره صفر، وإن المتغيّر المستعمل في الحل الأمثل يربح بالضبط ما تكلّفه موارده. ويصحّ سعر الظل ضمن مدى: فقيمة كل ساعة ٥ من ١٨ ساعة حتى ٢٤، حيث تصل أفضل خطة إلى (٠، ٨) بربح ٣٢٠، وبعد ذلك لا تضيف الساعات الإضافية شيئًا.\n\nتُعطي برامج الحل القيم الثنائية مباشرة: ففي OR-Tools تعطيها ⁦dual_value()⁩ لكل قيد، على الهاتف أيضًا. ويمكنك كذلك أن تجدها بنفسك كما يفعل الاقتصادي: أعِد الحل بعد زيادة القيد وحدة واحدة واطرح. وقراءة الأسعار كثيرًا ما تكون أثمن من الخطة نفسها: فهي تخبرك أيّ القيود يستحق التوسيع، وأيّ إنفاق سيضيع هدرًا."
           },
           "keyTerms": [
             {
@@ -383,7 +383,7 @@
           ],
           "explain": {
             "en": "Three ≥ constraints and a minimised cost give 40.97 coins: about 1.3 cups of rice, 0.55 cups of greens and 2 handfuls of groundnuts. Energy and iron are binding; protein (23.2 g) has slack, so its shadow price is zero. Each constraint’s dual_value() gives its shadow price, here on the phone and in Colab alike, where the same program runs unchanged on Google’s OR-Tools.",
-            "ar": "ثلاثة قيود من نوع ≥ وكلفة تُصغَّر تعطي ٤٠٫٩٧ قطعة نقدية: نحو ١٫٣ كوب من الأرز، و٠٫٥٥ كوب من الخضار، وحفنتين من الفول السوداني. والطاقة والحديد قيدان مقيِّدان، أما البروتين (٢٣٫٢ غرام) ففيه فائض، فسعر ظله صفر. وتعطي ⁦dual_value()⁩ لكل قيد سعر ظله، هنا على الهاتف وفي Colab على السواء، حيث يعمل البرنامج نفسه دون تغيير على OR-Tools من Google."
+            "ar": "ثلاثة قيود من نوع ⁦≥⁩ وكلفة تُصغَّر تعطي ٤٠٫٩٧ قطعة نقدية: نحو ١٫٣ كوب من الأرز، و٠٫٥٥ كوب من الخضار، وحفنتين من الفول السوداني. والطاقة والحديد قيدان مقيِّدان، أما البروتين (٢٣٫٢ غرام) ففيه فائض، فسعر ظله صفر. وتعطي ⁦dual_value()⁩ لكل قيد سعر ظله، هنا على الهاتف وفي Colab على السواء، حيث يعمل البرنامج نفسه دون تغيير على OR-Tools من Google."
           }
         },
         {
@@ -709,7 +709,7 @@
             "en": "Activity sheet: Linear programming and the simplex method",
             "ar": "ورقة النشاط: البرمجة الخطية وطريقة السمبلكس"
           },
-          "pages": 3,
+          "pages": 4,
           "base": "opt-s4-1/lesson-plan",
           "formats": [
             "pdf"
@@ -897,8 +897,8 @@
               "ar": "ar-EG"
             },
             "sizeKB": {
-              "en": 524,
-              "ar": 524
+              "en": 527,
+              "ar": 528
             }
           }
         },
@@ -1342,13 +1342,13 @@
             "en": [
               "Root (5 min): The cheapest cost per seat is the bus (550 ÷ 30 ≈ 18.3 against 300 ÷ 14 ≈ 21.4), so the relaxation uses buses only: 64 ÷ 30 = 2.13 buses, 1,173.33 coins. Write it at the top of a tree.",
               "Branch (8 min): Draw two children: “at most 2 buses” and “at least 3 buses”. In the first, 2 buses seat 60, and the relaxation adds 4 ÷ 14 ≈ 0.29 of a minibus: about 1,186. In the second, 3 buses cost 1,650.",
-              "Prune (7 min): Keep branching the first child on the minibus (at least 1). You reach 2 buses and 1 minibus, 1,400, a whole plan. The 3-bus branch can’t beat it (1,650), so cross it out without exploring it.",
+              "Prune (7 min): In the first child the minibus is fractional, so branch on it. “No minibus” is impossible (2 buses seat only 60). “At least 1 minibus” gives 1 minibus and 1.67 buses (about 1,217), so branch on buses: “at least 2 buses” gives 2 buses and 1 minibus, 1,400, a whole plan. The 3-bus branch can’t beat it (1,650), so cross it out without exploring it. The “at most 1 bus” branch (about 1,279) could still win, so pairs who finish early explore it: it holds only worse plans, 1 bus and 3 minibuses (1,450) or 5 minibuses (1,500).",
               "Fee (5 min): Add a 300-coin booking fee for any minibus. Recompute: 2 buses + 1 minibus = 1,700, so 3 buses (1,650) win. At what fee does the answer flip? (250.)"
             ],
             "ar": [
               "الجذر (٥ دقائق): أرخص كلفة للمقعد في الحافلة (٥٥٠ ÷ ٣٠ ≈ ١٨٫٣ مقابل ٣٠٠ ÷ ١٤ ≈ ٢١٫٤)، لذلك لا يستعمل الإرخاء إلا الحافلات: ٦٤ ÷ ٣٠ = ٢٫١٣ حافلة، بكلفة ١١٧٣٫٣٣. اكتبه في أعلى الشجرة.",
               "التفريع (٨ دقائق): ارسم فرعين: «حافلتان على الأكثر» و«ثلاث حافلات على الأقل». في الأول تتّسع حافلتان لـ ٦٠، ويضيف الإرخاء ٤ ÷ ١٤ ≈ ٠٫٢٩ من حافلة صغيرة: نحو ١١٨٦. وفي الثاني تكلّف ثلاث حافلات ١٦٥٠.",
-              "القطع (٧ دقائق): تابع تفريع الفرع الأول على الحافلة الصغيرة (واحدة على الأقل). ستصل إلى حافلتين وحافلة صغيرة، بكلفة ١٤٠٠، وهي خطة صحيحة. ولا يستطيع فرع الحافلات الثلاث أن يتفوّق عليها (١٦٥٠)، فاشطبه دون استكشافه.",
+              "القطع (٧ دقائق): في الفرع الأول تكون الحافلة الصغيرة كسرية، ففرّع عليها. ففرع «بلا حافلة صغيرة» مستحيل (حافلتان تتّسعان لـ ٦٠ فقط)، وفرع «حافلة صغيرة واحدة على الأقل» يعطي حافلة صغيرة و١٫٦٧ حافلة (نحو ١٢١٧)، ففرّع على الحافلات: فرع «حافلتان على الأقل» يعطي حافلتين وحافلة صغيرة، بكلفة ١٤٠٠، وهي خطة صحيحة. ولا يستطيع فرع الحافلات الثلاث أن يتفوّق عليها (١٦٥٠)، فاشطبه دون استكشافه. أما فرع «حافلة واحدة على الأكثر» (نحو ١٢٧٩) فقد يفوز بعد، فليستكشفه من ينتهي أولًا: ليس فيه إلا خطط أسوأ، حافلة وثلاث حافلات صغيرة (١٤٥٠) أو خمس حافلات صغيرة (١٥٠٠).",
               "الرسوم (٥ دقائق): أضف رسوم حجز قدرها ٣٠٠ قطعة نقدية لأي حافلة صغيرة. وأعِد الحساب: حافلتان وحافلة صغيرة = ١٧٠٠، فتفوز ثلاث حافلات (١٦٥٠). عند أيّ رسوم تنقلب الإجابة؟ (٢٥٠.)"
             ]
           },
@@ -1420,7 +1420,7 @@
             "en": "Activity sheet: Integer programs and branch and bound",
             "ar": "ورقة النشاط: البرمجة بالأعداد الصحيحة والتفريع والتحديد"
           },
-          "pages": 3,
+          "pages": 4,
           "base": "opt-s4-2/lesson-plan",
           "formats": [
             "pdf"
@@ -1478,7 +1478,7 @@
             "ar": "البرمجة بالقيود: الانتشار والبحث"
           },
           "src": null,
-          "duration": 252,
+          "duration": 253,
           "sizeMB": 1.5,
           "chapters": [
             {
@@ -1504,10 +1504,10 @@
               }
             },
             {
-              "at": 61.8,
+              "at": 63,
               "atBy": {
-                "en": 61.8,
-                "ar": 58.3
+                "en": 63,
+                "ar": 60.2
               },
               "label": {
                 "en": "Search and global constraints",
@@ -1515,10 +1515,10 @@
               }
             },
             {
-              "at": 130.3,
+              "at": 131.4,
               "atBy": {
-                "en": 130.3,
-                "ar": 124.8
+                "en": 131.4,
+                "ar": 126.7
               },
               "label": {
                 "en": "Infeasible is a proof",
@@ -1526,10 +1526,10 @@
               }
             },
             {
-              "at": 219,
+              "at": 220.1,
               "atBy": {
-                "en": 219,
-                "ar": 210.5
+                "en": 220.1,
+                "ar": 212.4
               },
               "label": {
                 "en": "Remember and try it",
@@ -1574,15 +1574,15 @@
                 "ar": "يفكّر قيد «كلها مختلفة» في المجموعة كلها: ثلاثة متغيّرات لا تحوي مجالاتها معًا إلا قيمتين لا يمكن أن تختلف كلها أبدًا (مبدأ برج الحمام). لذلك يفشل الانتشار فورًا، دون بحث. أما قواعد «لا يساوي» المنفصلة، التي ترى كلٌّ منها زوجًا واحدًا، فلا تكتشف ذلك إلا بالبحث."
               }
             },
-            "at": 130.29,
+            "at": 131.44,
             "atBy": {
-              "en": 130.29,
-              "ar": 124.76
+              "en": 131.44,
+              "ar": 126.69
             }
           },
           "transcript": {
-            "en": "A hard sudoku. Plain backtracking needs thirteen thousand five hundred and twenty-eight guesses. A constraint solver needs four. Same puzzle, same rules: so what’s the difference? Today: constraint programming, with domains, propagation and search. In constraint programming, every variable has a domain: the values still possible. A sudoku cell starts with one to nine; an exam starts with every slot. Constraints remove values that can’t be part of any solution. That removal is propagation. Place a five, and five vanishes from its row, its column and its box. A cell left with one value takes it, and the change spreads. In the lab’s hard sudoku, propagation alone fills fifty-one cells without a single guess. When propagation stops, search guesses, but cleverly. Fail first: choose the variable with the fewest values left, because that’s where a wrong guess shows up soonest. After each guess, propagate again; at a dead end, undo and try the next value. Global constraints carry a whole pattern at once. All-different over nine cells knows more than thirty-six separate not-equal rules: if three cells share only two values, it fails straight away. CP-SAT has others for routes, schedules and tables. In CP-SAT, a four-by-four sudoku takes a few lines. Every row and every column is all-different, and so is every box. Quick check! Only two exam slots are left, and three exams all clash with each other. What does an all-different constraint do? It fails at once: three exams can’t fit in two slots. And when every branch fails, the solver has proved there is no solution, so INFEASIBLE is a proof, not a shrug. In the exam lab, three slots are the fewest, because Omar’s three exams all clash. Many problems have symmetry: swap two exam slots, or two identical buses, and you get the same plan again. Breaking it, for example by saying slot one is used before slot two, can cut the search many times over. Google’s CP-SAT mixes three ideas: propagation from constraint programming, clause learning from SAT solvers, which remember why a branch failed, and linear relaxations. It has won the MiniZinc Challenge again and again, and it’s what most OR-Tools users reach for first. In the app, solve sudokus three ways: propagate then guess, propagate only, and plain backtracking. Count the guesses each one needs. Your turn. Propagation stops with three empty cells: one has two candidates, the other two have three. Which cell does fail-first search guess in? The one with two: fewest values, so a wrong guess fails fastest. Remember: domains shrink by propagation, and search guesses fail-first and undoes dead ends. Global constraints prune more. And INFEASIBLE is a proof. Try it yourself: write the four-by-four sudoku in CP-SAT, boxes and all. Then remove one given, and count the solutions with a solution callback.",
-            "ar": "سودوكو صعبة. التراجع البسيط محتاج تلتاشر ألف وخمسمية وتمانية وعشرين تخمين. وبرنامج حلّ القيود محتاج أربعة. نفس اللغز ونفس القواعد: طب إيه الفرق؟ النهارده: البرمجة بالقيود، بالمجالات والانتشار والبحث. في البرمجة بالقيود، كل متغيّر ليه مجال: القيم اللي لسه ممكنة. خانة السودوكو بتبدأ من واحد لتسعة، والامتحان بيبدأ بكل المواعيد. والقيود بتشيل القيم اللي مينفعش تبقى جزء من أي حل. الشطب ده اسمه الانتشار. حط خمسة، والخمسة بتختفي من الصف والعمود والمربع بتوعها. والخانة اللي يفضل فيها قيمة واحدة بتاخدها، والتغيير بينتشر. وفي سودوكو المعمل الصعبة، الانتشار لوحده بيملا واحد وخمسين خانة من غير ولا تخمين. لما الانتشار يقف، البحث بيخمّن، بس بذكاء. «الفشل أولًا»: اختار المتغيّر اللي فاضله أقل قيم، لأن هناك التخمين الغلط بيبان أسرع. وبعد كل تخمين، انشر تاني، ولو وصلت لطريق مسدود، ارجع وجرّب القيمة اللي بعدها. القيود الشاملة بتشيل نمط كامل مرة واحدة. قيد «كلهم مختلفين» على تسع خانات بيعرف أكتر من ستة وتلاتين قاعدة «مش متساويين» لوحدهم: لو تلات خانات بيتشاركوا في قيمتين بس، بيفشل على طول. وCP-SAT عنده قيود تانية للطرق والجداول والمواعيد. في CP-SAT، السودوكو أربعة في أربعة بتاخد كام سطر. كل صف وكل عمود «كلهم مختلفين»، وكمان كل مربع. سؤال سريع! فاضل ميعادين امتحانات بس، وفيه تلات امتحانات كلهم متعارضين مع بعض. قيد «كلهم مختلفين» هيعمل إيه؟ بيفشل على طول: تلات امتحانات مينفعش يدخلوا في ميعادين. ولما كل الفروع تفشل، يبقى برنامج الحل أثبت إن مفيش حل، يعني INFEASIBLE إثبات، مش هزّة كتف. وفي معمل الامتحانات، تلات مواعيد هي الأقل، لأن امتحانات عمر التلاتة كلهم متعارضين. مسائل كتير فيها تماثل: بدّل ميعادين امتحانات، أو أتوبيسين زي بعض، تلاقي نفس الخطة تاني. وكسر التماثل ده، مثلًا إنك تقول الميعاد الأول بيتستخدم قبل التاني، ممكن يقلّل البحث أضعاف كتيرة. CP-SAT بتاع جوجل بيخلط تلات أفكار: الانتشار من البرمجة بالقيود، والتعلّم من برامج حل SAT، اللي بتفتكر الفرع فشل ليه، والإرخاءات الخطية. وكسب مسابقة MiniZinc مرة ورا مرة، وهو أول حاجة أغلب مستخدمي OR-Tools بيروحوا لها. في التطبيق، حلّ السودوكو بتلات طرق: انتشار وبعدين تخمين، وانتشار بس، والتراجع البسيط. وعدّ التخمينات اللي كل طريقة محتاجاها. دورك. الانتشار وقف وفيه تلات خانات فاضية: واحدة فيها مرشّحين، والاتنين التانيين فيهم تلاتة. البحث بطريقة «الفشل أولًا» هيخمّن في أنهي خانة؟ اللي فيها اتنين: أقل قيم، فالتخمين الغلط بيفشل أسرع. افتكر: المجالات بتصغر بالانتشار، والبحث بيخمّن «الفشل أولًا» وبيرجع من الطرق المسدودة. والقيود الشاملة بتقطع أكتر. وINFEASIBLE إثبات. جرّبها بنفسك: اكتب السودوكو أربعة في أربعة في CP-SAT، بالمربعات كمان. وبعدين شيل رقم من المعطيات، وعدّ الحلول بدالة «سولوشن كولباك»."
+            "en": "A hard sudoku. Plain backtracking needs thirteen thousand five hundred and twenty-eight guesses. A constraint solver needs four. Same puzzle, same rules: so what’s the difference? Today: constraint programming, with domains, propagation and search. In constraint programming, every variable has a domain: the values still possible. A sudoku cell starts with one to nine; an exam starts with every slot. Constraints remove values that can’t be part of any solution. That removal is propagation. Place a five, and five vanishes from its row, its column and its box. A cell left with one value takes it, and the change spreads. In the lab’s hard sudoku, propagation alone takes it from twenty-seven digits to fifty-one, without a single guess. When propagation stops, search guesses, but cleverly. Fail first: choose the variable with the fewest values left, because that’s where a wrong guess shows up soonest. After each guess, propagate again; at a dead end, undo and try the next value. Global constraints carry a whole pattern at once. All-different over nine cells knows more than thirty-six separate not-equal rules: if three cells share only two values, it fails straight away. CP-SAT has others for routes, schedules and tables. In CP-SAT, a four-by-four sudoku takes a few lines. Every row and every column is all-different, and so is every box. Quick check! Only two exam slots are left, and three exams all clash with each other. What does an all-different constraint do? It fails at once: three exams can’t fit in two slots. And when every branch fails, the solver has proved there is no solution, so INFEASIBLE is a proof, not a shrug. In the exam lab, three slots are the fewest, because Omar’s three exams all clash. Many problems have symmetry: swap two exam slots, or two identical buses, and you get the same plan again. Breaking it, for example by saying slot one is used before slot two, can cut the search many times over. Google’s CP-SAT mixes three ideas: propagation from constraint programming, clause learning from SAT solvers, which remember why a branch failed, and linear relaxations. It has won the MiniZinc Challenge again and again, and it’s what most OR-Tools users reach for first. In the app, solve sudokus three ways: propagate then guess, propagate only, and plain backtracking. Count the guesses each one needs. Your turn. Propagation stops with three empty cells: one has two candidates, the other two have three. Which cell does fail-first search guess in? The one with two: fewest values, so a wrong guess fails fastest. Remember: domains shrink by propagation, and search guesses fail-first and undoes dead ends. Global constraints prune more. And INFEASIBLE is a proof. Try it yourself: write the four-by-four sudoku in CP-SAT, boxes and all. Then remove one given, and count the solutions with a solution callback.",
+            "ar": "سودوكو صعبة. التراجع البسيط محتاج تلتاشر ألف وخمسمية وتمانية وعشرين تخمين. وبرنامج حلّ القيود محتاج أربعة. نفس اللغز ونفس القواعد: طب إيه الفرق؟ النهارده: البرمجة بالقيود، بالمجالات والانتشار والبحث. في البرمجة بالقيود، كل متغيّر ليه مجال: القيم اللي لسه ممكنة. خانة السودوكو بتبدأ من واحد لتسعة، والامتحان بيبدأ بكل المواعيد. والقيود بتشيل القيم اللي مينفعش تبقى جزء من أي حل. الشطب ده اسمه الانتشار. حط خمسة، والخمسة بتختفي من الصف والعمود والمربع بتوعها. والخانة اللي يفضل فيها قيمة واحدة بتاخدها، والتغيير بينتشر. وفي سودوكو المعمل الصعبة، الانتشار لوحده بيوصّلها من سبعة وعشرين رقم لواحد وخمسين، من غير ولا تخمين. لما الانتشار يقف، البحث بيخمّن، بس بذكاء. «الفشل أولًا»: اختار المتغيّر اللي فاضله أقل قيم، لأن هناك التخمين الغلط بيبان أسرع. وبعد كل تخمين، انشر تاني، ولو وصلت لطريق مسدود، ارجع وجرّب القيمة اللي بعدها. القيود الشاملة بتشيل نمط كامل مرة واحدة. قيد «كلهم مختلفين» على تسع خانات بيعرف أكتر من ستة وتلاتين قاعدة «مش متساويين» لوحدهم: لو تلات خانات بيتشاركوا في قيمتين بس، بيفشل على طول. وCP-SAT عنده قيود تانية للطرق والجداول والمواعيد. في CP-SAT، السودوكو أربعة في أربعة بتاخد كام سطر. كل صف وكل عمود «كلهم مختلفين»، وكمان كل مربع. سؤال سريع! فاضل ميعادين امتحانات بس، وفيه تلات امتحانات كلهم متعارضين مع بعض. قيد «كلهم مختلفين» هيعمل إيه؟ بيفشل على طول: تلات امتحانات مينفعش يدخلوا في ميعادين. ولما كل الفروع تفشل، يبقى برنامج الحل أثبت إن مفيش حل، يعني INFEASIBLE إثبات، مش هزّة كتف. وفي معمل الامتحانات، تلات مواعيد هي الأقل، لأن امتحانات عمر التلاتة كلهم متعارضين. مسائل كتير فيها تماثل: بدّل ميعادين امتحانات، أو أتوبيسين زي بعض، تلاقي نفس الخطة تاني. وكسر التماثل ده، مثلًا إنك تقول الميعاد الأول بيتستخدم قبل التاني، ممكن يقلّل البحث أضعاف كتيرة. CP-SAT بتاع جوجل بيخلط تلات أفكار: الانتشار من البرمجة بالقيود، والتعلّم من برامج حل SAT، اللي بتفتكر الفرع فشل ليه، والإرخاءات الخطية. وكسب مسابقة MiniZinc مرة ورا مرة، وهو أول حاجة أغلب مستخدمي OR-Tools بيروحوا لها. في التطبيق، حلّ السودوكو بتلات طرق: انتشار وبعدين تخمين، وانتشار بس، والتراجع البسيط. وعدّ التخمينات اللي كل طريقة محتاجاها. دورك. الانتشار وقف وفيه تلات خانات فاضية: واحدة فيها مرشّحين، والاتنين التانيين فيهم تلاتة. البحث بطريقة «الفشل أولًا» هيخمّن في أنهي خانة؟ اللي فيها اتنين: أقل قيم، فالتخمين الغلط بيفشل أسرع. افتكر: المجالات بتصغر بالانتشار، والبحث بيخمّن «الفشل أولًا» وبيرجع من الطرق المسدودة. والقيود الشاملة بتقطع أكتر. وINFEASIBLE إثبات. جرّبها بنفسك: اكتب السودوكو أربعة في أربعة في CP-SAT، بالمربعات كمان. وبعدين شيل رقم من المعطيات، وعدّ الحلول بدالة «سولوشن كولباك»."
           },
           "sources": {
             "en": "/media/opt-s4-3/video-en.mp4",
@@ -1608,8 +1608,8 @@
               "ar": "ar-EG"
             },
             "sizeKB": {
-              "en": 559,
-              "ar": 542
+              "en": 562,
+              "ar": 546
             }
           }
         },
@@ -1625,8 +1625,8 @@
             "ar": "المجالات والانتشار والبحث والإثبات"
           },
           "body": {
-            "en": "Constraint programming (CP) describes a problem by variables, the domain of values each can still take, and constraints between them, and then searches. A sudoku cell has the domain 1 to 9; an exam has every slot; a lesson has every period. Unlike LP, constraints need not be linear: all-different, “if this then that”, a route that visits every stop once.\n\nThe engine of CP is propagation. Each constraint removes values that cannot belong to any solution, and every removal may let another constraint remove more, until nothing changes: a fixpoint. Place a 5 and it leaves its row, column and box; a cell left with one candidate takes it, and so on. Propagation never removes a value a solution needs, so it is always safe, but on its own it may stop short: in the lab’s hard 9 × 9 sudoku it fills 51 cells and then stalls.\n\nThen search takes over. It picks a variable, tries a value, propagates again, and undoes the choice at a dead end (backtracking). Good search strategies matter enormously. Fail-first chooses the variable with the smallest domain, where a wrong guess is caught soonest; with it, propagation plus search solves the hard sudoku with 4 guesses, where plain backtracking without propagation needs 13,528. Breaking symmetry, for example requiring slot 1 to be used before slot 2 when slots are interchangeable, stops the search from exploring copies of the same plan.\n\nGlobal constraints capture a whole pattern. All-different over nine cells propagates far more than its 36 pairwise “not equal” constraints: if three cells share only two values between them, it fails at once (the pigeonhole principle). Solvers also offer constraints for circuits (routes), no-overlap and cumulative (schedules with durations and capacities) and tables of allowed combinations.\n\nWhen every branch fails, the solver has proved that no solution exists: INFEASIBLE is a proof, not a guess. If it simply runs out of time it reports UNKNOWN (or FEASIBLE, with a solution it cannot yet prove best). When a real model is infeasible, find a small set of conflicting rules, by removing or softening them one at a time, and take the conflict to the people who own those rules.\n\nGoogle’s CP-SAT combines CP propagation with clause learning from SAT solvers (it remembers why a branch failed, so it never fails that way again), linear relaxations and several search strategies running in parallel. It has won many gold medals in the MiniZinc Challenge, the yearly competition of constraint solvers, and it is the solver most OR-Tools users try first for timetables, rosters and scheduling.",
-            "ar": "تصف البرمجة بالقيود المسألة بمتغيّرات، ومجال القيم التي ما زال كل منها يستطيع أن يأخذها، وقيود بينها، ثم تبحث. فمجال خانة السودوكو من ١ إلى ٩، وللامتحان كل المواعيد، وللدرس كل الحصص. وخلافًا للبرمجة الخطية، لا يلزم أن تكون القيود خطية: «كلها مختلفة»، و«إذا كان هذا فذاك»، ومسار يزور كل محطة مرة واحدة.\n\nمحرّك البرمجة بالقيود هو الانتشار. فكل قيد يحذف القيم التي لا يمكن أن تنتمي إلى أي حل، وكل حذف قد يسمح لقيد آخر بأن يحذف المزيد، حتى لا يتغيّر شيء: نقطة ثابتة. ضع ٥ فتختفي من صفها وعمودها ومربعها، والخانة التي يبقى فيها مرشّح واحد تأخذه، وهكذا. ولا يحذف الانتشار أبدًا قيمة يحتاج إليها حل، فهو آمن دائمًا، لكنه وحده قد يتوقّف قبل النهاية: ففي سودوكو المختبر الصعب ٩ × ٩ يملأ ٥١ خانة ثم يتوقّف.\n\nعندها يتولّى البحث الأمر. فيختار متغيّرًا، ويجرّب قيمة، وينشر من جديد، ويتراجع عن الاختيار عند الطريق المسدود (التراجع). واستراتيجيات البحث الجيدة مهمة جدًا. فطريقة «الفشل أولًا» تختار المتغيّر صاحب أصغر مجال، حيث يُكتشف التخمين الخاطئ أسرع، ومعها يحلّ الانتشار والبحث السودوكو الصعب بـ ٤ تخمينات، بينما يحتاج التراجع البسيط دون انتشار إلى ١٣٬٥٢٨. وكسر التماثل، مثل اشتراط استعمال الموعد ١ قبل الموعد ٢ حين تكون المواعيد قابلة للتبادل، يمنع البحث من استكشاف نسخ من الخطة نفسها.\n\nوالقيود الشاملة تلتقط نمطًا كاملًا. فقيد «كلها مختلفة» على تسع خانات ينشر أكثر بكثير من قيوده الثنائية الستة والثلاثين «لا يساوي»: فإن تشاركت ثلاث خانات في قيمتين فقط، فشل فورًا (مبدأ برج الحمام). وتقدّم برامج الحل أيضًا قيودًا للدوائر (المسارات)، ولعدم التداخل والتراكم (جداول فيها مُدد وسعات)، ولجداول التركيبات المسموح بها.\n\nوحين تفشل كل الفروع، يكون برنامج الحل قد أثبت أنه لا يوجد حل: فـ INFEASIBLE إثبات لا تخمين. أما إذا نفد وقته فيُعلن UNKNOWN (أو FEASIBLE، مع حل لا يستطيع بعدُ إثبات أنه الأفضل). وحين يكون نموذج حقيقي مستحيلًا، جِد مجموعة صغيرة من القواعد المتعارضة، بحذفها أو تليينها واحدة تلو الأخرى، واعرض التعارض على أصحاب هذه القواعد.\n\nويجمع CP-SAT من Google بين انتشار البرمجة بالقيود وتعلّم الشروط من برامج حل SAT (فهو يتذكّر لماذا فشل فرع، فلا يفشل بالطريقة نفسها ثانية)، والإرخاءات الخطية، وعدة استراتيجيات بحث تعمل بالتوازي. وقد فاز بميداليات ذهبية كثيرة في مسابقة MiniZinc، المسابقة السنوية لبرامج حلّ القيود، وهو البرنامج الذي يجرّبه أولًا معظم مستخدمي OR-Tools للجداول والمناوبات والجدولة."
+            "en": "Constraint programming (CP) describes a problem by variables, the domain of values each can still take, and constraints between them, and then searches. A sudoku cell has the domain 1 to 9; an exam has every slot; a lesson has every period. Unlike LP, constraints need not be linear: all-different, “if this then that”, a route that visits every stop once.\n\nThe engine of CP is propagation. Each constraint removes values that cannot belong to any solution, and every removal may let another constraint remove more, until nothing changes: a fixpoint. Place a 5 and it leaves its row, column and box; a cell left with one candidate takes it, and so on. Propagation never removes a value a solution needs, so it is always safe, but on its own it may stop short: in the lab’s hard 9 × 9 sudoku it fills only 24 cells (with the 27 givens, 51 of the 81) and then stalls.\n\nThen search takes over. It picks a variable, tries a value, propagates again, and undoes the choice at a dead end (backtracking). Good search strategies matter enormously. Fail-first chooses the variable with the smallest domain, where a wrong guess is caught soonest; with it, propagation plus search solves the hard sudoku with 4 guesses, where plain backtracking without propagation needs 13,528. Breaking symmetry, for example requiring slot 1 to be used before slot 2 when slots are interchangeable, stops the search from exploring copies of the same plan.\n\nGlobal constraints capture a whole pattern. All-different over nine cells propagates far more than its 36 pairwise “not equal” constraints: if three cells share only two values between them, it fails at once (the pigeonhole principle). Solvers also offer constraints for circuits (routes), no-overlap and cumulative (schedules with durations and capacities) and tables of allowed combinations.\n\nWhen every branch fails, the solver has proved that no solution exists: INFEASIBLE is a proof, not a guess. If it simply runs out of time it reports UNKNOWN (or FEASIBLE, with a solution it cannot yet prove best). When a real model is infeasible, find a small set of conflicting rules, by removing or softening them one at a time, and take the conflict to the people who own those rules.\n\nGoogle’s CP-SAT combines CP propagation with clause learning from SAT solvers (it remembers why a branch failed, so it never fails that way again), linear relaxations and several search strategies running in parallel. It has won many gold medals in the MiniZinc Challenge, the yearly competition of constraint solvers, and it is the solver most OR-Tools users try first for timetables, rosters and scheduling.",
+            "ar": "تصف البرمجة بالقيود المسألة بمتغيّرات، ومجال القيم التي ما زال كل منها يستطيع أن يأخذها، وقيود بينها، ثم تبحث. فمجال خانة السودوكو من ١ إلى ٩، وللامتحان كل المواعيد، وللدرس كل الحصص. وخلافًا للبرمجة الخطية، لا يلزم أن تكون القيود خطية: «كلها مختلفة»، و«إذا كان هذا فذاك»، ومسار يزور كل محطة مرة واحدة.\n\nمحرّك البرمجة بالقيود هو الانتشار. فكل قيد يحذف القيم التي لا يمكن أن تنتمي إلى أي حل، وكل حذف قد يسمح لقيد آخر بأن يحذف المزيد، حتى لا يتغيّر شيء: نقطة ثابتة. ضع ٥ فتختفي من صفها وعمودها ومربعها، والخانة التي يبقى فيها مرشّح واحد تأخذه، وهكذا. ولا يحذف الانتشار أبدًا قيمة يحتاج إليها حل، فهو آمن دائمًا، لكنه وحده قد يتوقّف قبل النهاية: ففي سودوكو المختبر الصعب ٩ × ٩ لا يملأ إلا ٢٤ خانة (فيصير في الشبكة ٥١ رقمًا من ٨١، منها ٢٧ رقمًا معطى) ثم يتوقّف.\n\nعندها يتولّى البحث الأمر. فيختار متغيّرًا، ويجرّب قيمة، وينشر من جديد، ويتراجع عن الاختيار عند الطريق المسدود (التراجع). واستراتيجيات البحث الجيدة مهمة جدًا. فطريقة «الفشل أولًا» تختار المتغيّر صاحب أصغر مجال، حيث يُكتشف التخمين الخاطئ أسرع، ومعها يحلّ الانتشار والبحث السودوكو الصعب بـ ٤ تخمينات، بينما يحتاج التراجع البسيط دون انتشار إلى ١٣٬٥٢٨. وكسر التماثل، مثل اشتراط استعمال الموعد ١ قبل الموعد ٢ حين تكون المواعيد قابلة للتبادل، يمنع البحث من استكشاف نسخ من الخطة نفسها.\n\nوالقيود الشاملة تلتقط نمطًا كاملًا. فقيد «كلها مختلفة» على تسع خانات ينشر أكثر بكثير من قيوده الثنائية الستة والثلاثين «لا يساوي»: فإن تشاركت ثلاث خانات في قيمتين فقط، فشل فورًا (مبدأ برج الحمام). وتقدّم برامج الحل أيضًا قيودًا للدوائر (المسارات)، ولعدم التداخل والتراكم (جداول فيها مُدد وسعات)، ولجداول التركيبات المسموح بها.\n\nوحين تفشل كل الفروع، يكون برنامج الحل قد أثبت أنه لا يوجد حل: فـ INFEASIBLE إثبات لا تخمين. أما إذا نفد وقته فيُعلن UNKNOWN (أو FEASIBLE، مع حل لا يستطيع بعدُ إثبات أنه الأفضل). وحين يكون نموذج حقيقي مستحيلًا، جِد مجموعة صغيرة من القواعد المتعارضة، بحذفها أو تليينها واحدة تلو الأخرى، واعرض التعارض على أصحاب هذه القواعد.\n\nويجمع CP-SAT من Google بين انتشار البرمجة بالقيود وتعلّم الشروط من برامج حل SAT (فهو يتذكّر لماذا فشل فرع، فلا يفشل بالطريقة نفسها ثانية)، والإرخاءات الخطية، وعدة استراتيجيات بحث تعمل بالتوازي. وقد فاز بميداليات ذهبية كثيرة في مسابقة MiniZinc، المسابقة السنوية لبرامج حلّ القيود، وهو البرنامج الذي يجرّبه أولًا معظم مستخدمي OR-Tools للجداول والمناوبات والجدولة."
           },
           "keyTerms": [
             {
@@ -1767,8 +1767,8 @@
             "d"
           ],
           "explain": {
-            "en": "Propagation is safe deduction: it removes only impossible values, so no solution is lost, and global constraints deduce more than their pieces. It doesn’t guess (that’s search) and alone it can stall, as the hard sudoku does at 51 cells.",
-            "ar": "الانتشار استنتاج آمن: لا يحذف إلا القيم المستحيلة، فلا يضيع أي حل، والقيود الشاملة تستنتج أكثر من أجزائها. وهو لا يخمّن (هذا عمل البحث)، وقد يتوقّف وحده، كما يتوقّف السودوكو الصعب عند ٥١ خانة."
+            "en": "Propagation is safe deduction: it removes only impossible values, so no solution is lost, and global constraints deduce more than their pieces. It doesn’t guess (that’s search) and alone it can stall, as the hard sudoku does with 51 of its 81 cells full.",
+            "ar": "الانتشار استنتاج آمن: لا يحذف إلا القيم المستحيلة، فلا يضيع أي حل، والقيود الشاملة تستنتج أكثر من أجزائها. وهو لا يخمّن (هذا عمل البحث)، وقد يتوقّف وحده، كما يتوقّف السودوكو الصعب وقد امتلأت ٥١ خانة من ٨١."
           }
         },
         {
@@ -1841,10 +1841,10 @@
           "type": "truefalse",
           "id": "p5",
           "prompt": {
-            "en": "If CP-SAT reports INFEASIBLE, it may just have run out of time, and a solution might still exist.",
-            "ar": "إذا أعلن CP-SAT أن النتيجة INFEASIBLE، فقد يكون وقته نفد فقط، وقد يكون هناك حل مع ذلك."
+            "en": "If CP-SAT reports INFEASIBLE, giving it more time won’t find a solution.",
+            "ar": "إذا أعلن CP-SAT أن النتيجة INFEASIBLE، فلن يجد حلًا حتى لو أعطيته وقتًا أطول."
           },
-          "answer": false,
+          "answer": true,
           "explain": {
             "en": "INFEASIBLE means the search proved that no solution exists. A solver that runs out of time reports UNKNOWN, or FEASIBLE if it found a solution it can’t yet prove best.",
             "ar": "تعني INFEASIBLE أن البحث أثبت عدم وجود حل. أما برنامج الحل الذي ينفد وقته فيُعلن UNKNOWN، أو FEASIBLE إن وجد حلًا لا يستطيع بعدُ إثبات أنه الأفضل."
@@ -2177,7 +2177,7 @@
             "ar": "الطرق التقريبية والموازنات"
           },
           "src": null,
-          "duration": 251,
+          "duration": 252,
           "sizeMB": 1.5,
           "chapters": [
             {
@@ -2203,10 +2203,10 @@
               }
             },
             {
-              "at": 94.7,
+              "at": 96.2,
               "atBy": {
-                "en": 94.7,
-                "ar": 94
+                "en": 96.2,
+                "ar": 95.3
               },
               "label": {
                 "en": "Escaping and measuring",
@@ -2214,10 +2214,10 @@
               }
             },
             {
-              "at": 150.8,
+              "at": 152.2,
               "atBy": {
-                "en": 150.8,
-                "ar": 150.2
+                "en": 152.2,
+                "ar": 151.4
               },
               "label": {
                 "en": "Trade-offs in the open",
@@ -2225,10 +2225,10 @@
               }
             },
             {
-              "at": 217.7,
+              "at": 219.1,
               "atBy": {
-                "en": 217.7,
-                "ar": 214.5
+                "en": 219.1,
+                "ar": 215.8
               },
               "label": {
                 "en": "Remember and try it",
@@ -2273,15 +2273,15 @@
                 "ar": "الفجوة = (أفضل ما وُجد − الحد) ÷ أفضل ما وُجد = (١٠٥ − ١٠٠) ÷ ١٠٥ ≈ ٤٫٨٪. ويقع الحل الأمثل الحقيقي في مكان ما بين ١٠٠ و١٠٥ كم، لذلك لا يمكن توفير أكثر من ٥ كم، وربما لا شيء: فقد لا يكون الحد محكمًا."
               }
             },
-            "at": 139.69,
+            "at": 141.1,
             "atBy": {
-              "en": 139.69,
-              "ar": 139.35
+              "en": 141.1,
+              "ar": 140.58
             }
           },
           "transcript": {
-            "en": "A delivery company plans routes for two thousand vans every night. Nobody proves those routes are the best, and nobody needs to. They’re good, fast and checked. Today: how, and what a modeller owes the people affected. Today: heuristics, local search, and the trade-offs a modeller makes. Routing is NP-hard: as the stops grow, every known exact method can take exponentially long. Twenty villages already give more than a billion billion round trips. So for big instances, we trade a proof for a good answer in time. Heuristics work in two stages. First build a plan fast, for example nearest neighbour: always drive to the closest stop not yet visited. Then improve it with local search: change it a little, and keep the changes that help. For routes, the classic small change is 2-opt: remove two roads, and reconnect by reversing the stretch between them. It removes every crossing. In the lab’s bus map, it takes nearest neighbour’s thirty-four point six kilometres down to twenty-eight point six, the best route. The heart of 2-opt is one line: reverse a slice. Keep the new route if the trip is shorter, and repeat until no swap helps. Local search stops at a local optimum, where no small change helps. Metaheuristics escape: annealing accepts some worse moves while hot, tabu search forbids undoing recent moves, and genetic algorithms mix good plans. In the seating lab, annealing finds the best plan two runs in three; hill climbing, one in four. Quick check! Your heuristic found a route of one hundred and five kilometres, and an LP bound says no route can be shorter than one hundred. What’s the optimality gap? About five percent: at most five kilometres could still be saved, and maybe none. A bound turns good into a measured promise. Real plans weigh several goals: total distance, the longest ride for any child, drivers’ hours. The shortest total can leave one village’s children on the bus for ninety minutes. Put the goals and the fairness limits in the model, and show the trade-off. In practice, OR-Tools’ routing library builds a first route, then improves it with guided local search within a time limit. Engineers test on past days, and keep a person able to override. Plans nobody can question don’t get trusted. In the app, seat twelve pupils with hill climbing and with annealing. Run each several times, and change the starting temperature. Your turn. Plan A is two kilometres shorter in total. Plan B is longer, but no child rides more than forty minutes. Which should the model pick? It depends on goals people agree, so show both, with their numbers. Remember: for hard problems, build, then improve. Escape local optima with metaheuristics, and measure the gap against a bound. And put fairness in the model, in the open. Try it yourself: write 2-opt for a five-stop route in Python, and check it against every possible route. Then add a limit on the longest ride, and see what it costs.",
-            "ar": "شركة توصيل بتخطّط طرق لألفين عربية كل ليلة. محدش بيثبت إن الطرق دي هي الأحسن، ومحدش محتاج. هي كويسة، وسريعة، وحد بيراجعها. النهارده: إزاي، وصاحب النموذج مدين بإيه للناس اللي يخصّهم الأمر. النهارده: الطرق التقريبية، والبحث المحلي، والموازنات اللي بيعملها صاحب النموذج. تخطيط الطرق مسألة «NP-hard»: كل ما المحطات تزيد، كل الطرق الدقيقة اللي نعرفها ممكن تاخد وقت بيكبر أُسّيًا. عشرين قرية بس بيدّوا أكتر من مليار مليار لفّة. فللمسائل الكبيرة، بنبدّل الإثبات بإجابة كويسة في الوقت. الطرق التقريبية بتشتغل على مرحلتين. الأول ابني خطة بسرعة، مثلًا «أقرب جار»: روح دايمًا لأقرب محطة لسه مزرتهاش. وبعدين حسّنها بالبحث المحلي: غيّر فيها حاجة صغيرة، وخلّي التغييرات اللي بتفيد. في الطرق، التغيير الصغير المشهور اسمه «تو أوبت»: شيل طريقين، ووصّل تاني بإنك تعكس الحتة اللي بينهم. وده بيشيل أي تقاطع. وفي خريطة الأتوبيس بتاعة المعمل، بينزّل أربعة وتلاتين فاصلة ستة كيلو بتوع أقرب جار لتمانية وعشرين فاصلة ستة، وده أحسن طريق. قلب الـ «تو أوبت» سطر واحد: اعكس حتة من القائمة. خلّي الطريق الجديد لو المشوار بقى أقصر، وكرّر لحد ما مفيش تبديل يفيد. البحث المحلي بيقف عند حل محلي، مفيش فيه تغيير صغير بيفيد. والطرق الفوقية بتهرب: التلدين بيقبل خطوات أوحش وهو سخن، والبحث المحرّم بيمنع الرجوع في خطوات لسه معمولة، والخوارزميات الجينية بتخلط خطط كويسة. وفي معمل القعدة، التلدين بيلاقي أحسن خطة مرتين من تلاتة، وتسلّق التل مرة من أربعة. سؤال سريع! الطريقة التقريبية بتاعتك لقت طريق مية وخمسة كيلو، والحد الأدنى من البرمجة الخطية بيقول مفيش طريق أقصر من مية. فجوة الأمثلية كام؟ حوالي خمسة في المية: أقصى حاجة ممكن تتوفّر خمسة كيلو، ويمكن ولا حاجة. والحد الأدنى بيحوّل «كويس» لوعد متقاس. الخطط الحقيقية بتوزن كذا هدف: المسافة كلها، وأطول مشوار لأي طفل، وساعات السواقين. والأقصر في المجموع ممكن يسيب عيال قرية واحدة في الأتوبيس تسعين دقيقة. حط الأهداف وحدود العدل جوّه النموذج، واعرض الموازنة. في الواقع، مكتبة الطرق في OR-Tools بتبني أول طريق، وبعدين بتحسّنه ببحث محلي موجَّه في حدود وقت معيّن. والمهندسين بيختبروا على أيام فاتت، ويخلّوا فيه شخص يقدر يغيّر الخطة. والخطط اللي محدش يقدر يسأل عنها محدش بيثق فيها. في التطبيق، قعّد اتناشر تلميذ بتسلّق التل وبالتلدين. شغّل كل واحد كذا مرة، وغيّر الحرارة اللي بيبدأ بيها. دورك. خطة A أقصر بكيلومترين في المجموع. وخطة B أطول، بس مفيش طفل بيركب أكتر من أربعين دقيقة. النموذج يختار أنهي؟ ده بيعتمد على أهداف الناس يتفقوا عليها، فاعرض الاتنين، بأرقامهم. افتكر: في المسائل الصعبة، ابني، وبعدين حسّن. واهرب من الحلول المحلية بالطرق الفوقية، وقيس الفجوة قصاد حد أدنى. وحط العدل في النموذج، قدّام الكل. جرّبها بنفسك: اكتب «تو أوبت» لطريق فيه خمس محطات ببايثون، وقارنه بكل الطرق الممكنة. وبعدين زوّد حد لأطول مشوار، وشوف بيكلّف قد إيه."
+            "en": "A delivery company plans routes for two thousand vans every night. Nobody proves those routes are the best, and nobody needs to. They’re good, fast and checked. Today: how, and what a modeller owes the people affected. Today: heuristics, local search, and the trade-offs a modeller makes. Routing is NP-hard: as the stops grow, every known exact method can take exponentially long. Twenty villages already give more than a billion billion round trips. So for big instances, we trade a proof for a good answer in time. Heuristics work in two stages. First build a plan fast, for example nearest neighbour: always drive to the closest stop not yet visited. Then improve it with local search: change it a little, and keep the changes that help. For routes, the classic small change is 2-opt: remove two roads, and reconnect by reversing the stretch between them. When the two roads cross, it uncrosses them. In the lab’s bus map, it takes nearest neighbour’s thirty-four point six kilometres down to twenty-eight point six, the best route. The heart of 2-opt is one line: reverse a slice. Keep the new route if the trip is shorter, and repeat until no swap helps. Local search stops at a local optimum, where no small change helps. Metaheuristics escape: annealing accepts some worse moves while hot, tabu search forbids undoing recent moves, and genetic algorithms mix good plans. In the seating lab, annealing finds the best plan two runs in three; hill climbing, one in four. Quick check! Your heuristic found a route of one hundred and five kilometres, and an LP bound says no route can be shorter than one hundred. What’s the optimality gap? About five percent: at most five kilometres could still be saved, and maybe none. A bound turns good into a measured promise. Real plans weigh several goals: total distance, the longest ride for any child, drivers’ hours. The shortest total can leave one village’s children on the bus for ninety minutes. Put the goals and the fairness limits in the model, and show the trade-off. In practice, OR-Tools’ routing library builds a first route, then improves it with guided local search within a time limit. Engineers test on past days, and keep a person able to override. Plans nobody can question don’t get trusted. In the app, seat twelve pupils with hill climbing and with annealing. Run each several times, and change the starting temperature. Your turn. Plan A is two kilometres shorter in total. Plan B is longer, but no child rides more than forty minutes. Which should the model pick? It depends on goals people agree, so show both, with their numbers. Remember: for hard problems, build, then improve. Escape local optima with metaheuristics, and measure the gap against a bound. And put fairness in the model, in the open. Try it yourself: write 2-opt for a five-stop route in Python, and check it against every possible route. Then add a limit on the longest ride, and see what it costs.",
+            "ar": "شركة توصيل بتخطّط طرق لألفين عربية كل ليلة. محدش بيثبت إن الطرق دي هي الأحسن، ومحدش محتاج. هي كويسة، وسريعة، وحد بيراجعها. النهارده: إزاي، وصاحب النموذج مدين بإيه للناس اللي يخصّهم الأمر. النهارده: الطرق التقريبية، والبحث المحلي، والموازنات اللي بيعملها صاحب النموذج. تخطيط الطرق مسألة «NP-hard»: كل ما المحطات تزيد، كل الطرق الدقيقة اللي نعرفها ممكن تاخد وقت بيكبر أُسّيًا. عشرين قرية بس بيدّوا أكتر من مليار مليار لفّة. فللمسائل الكبيرة، بنبدّل الإثبات بإجابة كويسة في الوقت. الطرق التقريبية بتشتغل على مرحلتين. الأول ابني خطة بسرعة، مثلًا «أقرب جار»: روح دايمًا لأقرب محطة لسه مزرتهاش. وبعدين حسّنها بالبحث المحلي: غيّر فيها حاجة صغيرة، وخلّي التغييرات اللي بتفيد. في الطرق، التغيير الصغير المشهور اسمه «تو أوبت»: شيل طريقين، ووصّل تاني بإنك تعكس الحتة اللي بينهم. ولو الطريقين دول متقاطعين، بيفك التقاطع. وفي خريطة الأتوبيس بتاعة المعمل، بينزّل أربعة وتلاتين فاصلة ستة كيلو بتوع أقرب جار لتمانية وعشرين فاصلة ستة، وده أحسن طريق. قلب الـ «تو أوبت» سطر واحد: اعكس حتة من القائمة. خلّي الطريق الجديد لو المشوار بقى أقصر، وكرّر لحد ما مفيش تبديل يفيد. البحث المحلي بيقف عند حل محلي، مفيش فيه تغيير صغير بيفيد. والطرق الفوقية بتهرب: التلدين بيقبل خطوات أوحش وهو سخن، والبحث المحرّم بيمنع الرجوع في خطوات لسه معمولة، والخوارزميات الجينية بتخلط خطط كويسة. وفي معمل القعدة، التلدين بيلاقي أحسن خطة مرتين من تلاتة، وتسلّق التل مرة من أربعة. سؤال سريع! الطريقة التقريبية بتاعتك لقت طريق مية وخمسة كيلو، والحد الأدنى من البرمجة الخطية بيقول مفيش طريق أقصر من مية. فجوة الأمثلية كام؟ حوالي خمسة في المية: أقصى حاجة ممكن تتوفّر خمسة كيلو، ويمكن ولا حاجة. والحد الأدنى بيحوّل «كويس» لوعد متقاس. الخطط الحقيقية بتوزن كذا هدف: المسافة كلها، وأطول مشوار لأي طفل، وساعات السواقين. والأقصر في المجموع ممكن يسيب عيال قرية واحدة في الأتوبيس تسعين دقيقة. حط الأهداف وحدود العدل جوّه النموذج، واعرض الموازنة. في الواقع، مكتبة الطرق في OR-Tools بتبني أول طريق، وبعدين بتحسّنه ببحث محلي موجَّه في حدود وقت معيّن. والمهندسين بيختبروا على أيام فاتت، ويخلّوا فيه شخص يقدر يغيّر الخطة. والخطط اللي محدش يقدر يسأل عنها محدش بيثق فيها. في التطبيق، قعّد اتناشر تلميذ بتسلّق التل وبالتلدين. شغّل كل واحد كذا مرة، وغيّر الحرارة اللي بيبدأ بيها. دورك. خطة A أقصر بكيلومترين في المجموع. وخطة B أطول، بس مفيش طفل بيركب أكتر من أربعين دقيقة. النموذج يختار أنهي؟ ده بيعتمد على أهداف الناس يتفقوا عليها، فاعرض الاتنين، بأرقامهم. افتكر: في المسائل الصعبة، ابني، وبعدين حسّن. واهرب من الحلول المحلية بالطرق الفوقية، وقيس الفجوة قصاد حد أدنى. وحط العدل في النموذج، قدّام الكل. جرّبها بنفسك: اكتب «تو أوبت» لطريق فيه خمس محطات ببايثون، وقارنه بكل الطرق الممكنة. وبعدين زوّد حد لأطول مشوار، وشوف بيكلّف قد إيه."
           },
           "sources": {
             "en": "/media/opt-s4-4/video-en.mp4",
@@ -2307,8 +2307,8 @@
               "ar": "ar-EG"
             },
             "sizeKB": {
-              "en": 553,
-              "ar": 552
+              "en": 556,
+              "ar": 555
             }
           }
         },
@@ -2324,8 +2324,8 @@
             "ar": "إجابات جيدة لمسائل صعبة، والاختيارات التي تقف وراءها"
           },
           "body": {
-            "en": "Many real optimization problems are NP-hard: the travelling salesperson problem, vehicle routing, timetabling, most integer programs. In plain words, no method is known that solves every instance quickly, and most researchers believe none exists (that is the famous P versus NP question). The numbers grow brutally: a round trip through n stops has n! ÷ 2 orders, so 20 villages give about 1.2 × 10¹⁸ routes. Exact methods still solve many instances with clever bounds, but for big ones, every night, practitioners trade a proof of optimality for a good answer within a time limit.\n\nA heuristic usually works in two stages. A construction heuristic builds a plan fast: nearest neighbour drives to the closest unvisited stop each time. An improvement heuristic, or local search, then repeatedly makes a small change from a neighbourhood and keeps it if the plan gets better. For routes the classic neighbourhood is 2-opt: remove two edges and reconnect by reversing the stretch between them, which removes every crossing. In the lab’s bus map, nearest neighbour drives 34.6 km and three 2-opt moves bring it to 28.6 km, the best route there is; on other maps 2-opt stops short.\n\nLocal search stops at a local optimum, a plan no single move improves. Metaheuristics are strategies for escaping: simulated annealing accepts a worse move of size d with probability e^(−d/T) and slowly lowers the temperature T; tabu search forbids undoing recent moves; genetic algorithms combine parts of good plans; large neighbourhood search destroys part of a plan and rebuilds it with an exact solver. In the seating lab, hill climbing reaches the best known plan about one run in four, annealing about two in three.\n\nWithout a proof, measure. A lower bound (from an LP relaxation, or for routes a structure called a 1-tree) gives the optimality gap: a 105 km route against a bound of 100 km is within (105 − 100) ÷ 105 ≈ 4.8%. Some algorithms carry guarantees, such as Christofides’ method, never more than 1.5 times the optimum for routes with ordinary distances, but in practice local search usually does far better than its guarantee.\n\nFinally, real plans have several goals: total distance, the longest ride for any child, drivers’ hours, emissions. The shortest total can leave one village’s children on the bus for ninety minutes. A responsible modeller puts fairness limits in the model, shows the trade-offs with numbers, tests on past days, keeps a person able to override, and publishes how the plan is made. Google’s OR-Tools routing library follows this pattern: a first solution strategy, guided local search, and a time limit you choose.",
-            "ar": "كثير من مسائل الحلول المثلى الحقيقية صعبة حسابيًا (NP-hard): مسألة البائع المتجوّل، وتوجيه المركبات، والجدولة، ومعظم البرامج الصحيحة. وبكلمات بسيطة، لا تُعرف طريقة تحلّ كل حالاتها بسرعة، ويعتقد معظم الباحثين أنه لا توجد طريقة كهذه (وهذا هو سؤال P مقابل NP الشهير). والأعداد تنمو بقسوة: فلجولة تمرّ بـ n محطة ⁦n! ÷ 2⁩ ترتيبًا، فتعطي ٢٠ قرية نحو ١٫٢ × ١٠¹⁸ مسارًا. وما زالت الطرق الدقيقة تحلّ حالات كثيرة بحدود ذكية، لكن في المسائل الكبيرة، كل ليلة، يبدّل الممارسون إثبات الأمثلية بإجابة جيدة ضمن حدٍّ زمني.\n\nتعمل الطريقة التقريبية عادةً على مرحلتين. فالطريقة البنائية تبني خطة بسرعة: «أقرب جار» يتّجه كل مرة إلى أقرب محطة لم يزرها. ثم تُجري طريقة التحسين، أو البحث المحلي، تغييرًا صغيرًا من «جوار» الخطة مرة بعد مرة، وتُبقيه إن صارت الخطة أفضل. والجوار الكلاسيكي للمسارات هو ‎⁦2-opt⁩: احذف ضلعين، ثم صِل من جديد بعكس الجزء الواقع بينهما، فيزول كل تقاطع. ففي خريطة الحافلة في المختبر، يقطع «أقرب جار» ٣٤٫٦ كم، وتنزل به ثلاث حركات ‎⁦2-opt⁩ إلى ٢٨٫٦ كم، وهو أفضل مسار ممكن، وفي خرائط أخرى يتوقّف ‎⁦2-opt⁩ قبل الأفضل.\n\nيتوقّف البحث المحلي عند حل أمثل محلي، أي خطة لا تحسّنها حركة واحدة. والطرق الفوقية استراتيجيات للخروج منه: فالتلدين المحاكى يقبل حركة أسوأ بمقدار d باحتمال ⁦e^(−d/T)⁩ ويخفض درجة الحرارة T ببطء، والبحث المحرّم يمنع التراجع عن الحركات الأخيرة، والخوارزميات الجينية تجمع أجزاء من خطط جيدة، والبحث في الجوار الواسع يهدم جزءًا من الخطة ويعيد بناءه ببرنامج حل دقيق. وفي مختبر الجلوس، يصل تسلّق التل إلى أفضل خطة معروفة في نحو جولة من كل أربع، والتلدين في نحو جولتين من كل ثلاث.\n\nومن دون إثبات، قِس. فالحد الأدنى (من إرخاء خطي، أو في المسارات من بنية تُسمّى «الشجرة الواحدة») يعطي فجوة الأمثلية: فمسار طوله ١٠٥ كم مقابل حدّ قدره ١٠٠ كم يقع ضمن (١٠٥ − ١٠٠) ÷ ١٠٥ ≈ ٤٫٨٪. ولبعض الخوارزميات ضمانات، كطريقة كريستوفايدس التي لا تزيد أبدًا على ١٫٥ ضعف الأمثل في المسارات ذات المسافات العادية، لكن البحث المحلي يتفوّق عمليًا على ضمانه بكثير.\n\nوأخيرًا، للخطط الحقيقية أهداف عدة: المسافة الكلية، وأطول رحلة لأي طفل، وساعات السائقين، والانبعاثات. وقد يترك أقصر مجموع أطفالَ قرية واحدة في الحافلة تسعين دقيقة. والمنمذج المسؤول يضع حدود العدالة في النموذج، ويعرض الموازنات بالأرقام، ويختبر على أيام سابقة، ويُبقي شخصًا قادرًا على تعديل الخطة، وينشر طريقة صنعها. وتتبع مكتبة المسارات في OR-Tools من Google هذا النمط: استراتيجية للحل الأول، وبحث محلي موجَّه، وحدّ زمني تختاره أنت."
+            "en": "Many real optimization problems are NP-hard: the travelling salesperson problem, vehicle routing, timetabling, most integer programs. In plain words, no method is known that solves every instance quickly, and most researchers believe none exists (that is the famous P versus NP question). The numbers grow brutally: a round trip that leaves the school, visits n stops and comes back has n! ÷ 2 orders, so 20 villages give about 1.2 × 10¹⁸ routes. Exact methods still solve many instances with clever bounds, but for big ones, every night, practitioners trade a proof of optimality for a good answer within a time limit.\n\nA heuristic usually works in two stages. A construction heuristic builds a plan fast: nearest neighbour drives to the closest unvisited stop each time. An improvement heuristic, or local search, then repeatedly makes a small change from a neighbourhood and keeps it if the plan gets better. For routes the classic neighbourhood is 2-opt: remove two edges and reconnect by reversing the stretch between them. When the two removed edges cross, the move uncrosses them, so with straight-line distances a route that no 2-opt move can shorten has no crossings. On the map of the lab “The school bus route”, nearest neighbour drives 34.6 km and three 2-opt moves bring it to 28.6 km, the best route there is; on other maps 2-opt stops short.\n\nLocal search stops at a local optimum, a plan no single move improves. Metaheuristics are strategies for escaping: simulated annealing accepts a worse move of size d with probability e^(−d/T) and slowly lowers the temperature T; tabu search forbids undoing recent moves; genetic algorithms combine parts of good plans; large neighbourhood search destroys part of a plan and rebuilds it with an exact solver. In the seating lab, hill climbing reaches the best known plan about one run in four, annealing about two in three.\n\nWithout a proof, measure. A lower bound (from an LP relaxation, or for routes a structure called a 1-tree) gives the optimality gap: a 105 km route against a bound of 100 km is within (105 − 100) ÷ 105 ≈ 4.8%. Some algorithms carry guarantees, such as Christofides’ method, never more than 1.5 times the optimum for routes with ordinary distances, but in practice local search usually does far better than its guarantee.\n\nFinally, real plans have several goals: total distance, the longest ride for any child, drivers’ hours, emissions. The shortest total can leave one village’s children on the bus for ninety minutes. A responsible modeller puts fairness limits in the model, shows the trade-offs with numbers, tests on past days, keeps a person able to override, and publishes how the plan is made. Google’s OR-Tools routing library follows this pattern: a first solution strategy, guided local search, and a time limit you choose.",
+            "ar": "كثير من مسائل الحلول المثلى الحقيقية صعبة حسابيًا (NP-hard): مسألة البائع المتجوّل، وتوجيه المركبات، والجدولة، ومعظم البرامج الصحيحة. وبكلمات بسيطة، لا تُعرف طريقة تحلّ كل حالاتها بسرعة، ويعتقد معظم الباحثين أنه لا توجد طريقة كهذه (وهذا هو سؤال P مقابل NP الشهير). والأعداد تنمو بقسوة: فللجولة التي تنطلق من المدرسة وتمرّ بـ n محطة ثم تعود إليها ⁦n! ÷ 2⁩ ترتيبًا، فتعطي ٢٠ قرية نحو ١٫٢ × ١٠¹⁸ مسارًا. وما زالت الطرق الدقيقة تحلّ حالات كثيرة بحدود ذكية، لكن في المسائل الكبيرة، كل ليلة، يبدّل الممارسون إثبات الأمثلية بإجابة جيدة ضمن حدٍّ زمني.\n\nتعمل الطريقة التقريبية عادةً على مرحلتين. فالطريقة البنائية تبني خطة بسرعة: «أقرب جار» يتّجه كل مرة إلى أقرب محطة لم يزرها. ثم تُجري طريقة التحسين، أو البحث المحلي، تغييرًا صغيرًا من «جوار» الخطة مرة بعد مرة، وتُبقيه إن صارت الخطة أفضل. والجوار الكلاسيكي للمسارات هو ‎⁦2-opt⁩: احذف ضلعين، ثم صِل من جديد بعكس الجزء الواقع بينهما. فإن كان الضلعان المحذوفان متقاطعين أزالت الحركة تقاطعهما، لذلك لا يبقى أي تقاطع، بالمسافات المستقيمة، في مسار لا تستطيع أي حركة ‎⁦2-opt⁩ أن تقصّره. ففي خريطة مختبر «طريق حافلة المدرسة»، يقطع «أقرب جار» ٣٤٫٦ كم، وتنزل به ثلاث حركات ‎⁦2-opt⁩ إلى ٢٨٫٦ كم، وهو أفضل مسار ممكن، وفي خرائط أخرى يتوقّف ‎⁦2-opt⁩ قبل الأفضل.\n\nيتوقّف البحث المحلي عند حل أمثل محلي، أي خطة لا تحسّنها حركة واحدة. والطرق الفوقية استراتيجيات للخروج منه: فالتلدين المحاكى يقبل حركة أسوأ بمقدار d باحتمال ⁦e^(−d/T)⁩ ويخفض درجة الحرارة T ببطء، والبحث المحرّم يمنع التراجع عن الحركات الأخيرة، والخوارزميات الجينية تجمع أجزاء من خطط جيدة، والبحث في الجوار الواسع يهدم جزءًا من الخطة ويعيد بناءه ببرنامج حل دقيق. وفي مختبر الجلوس، يصل تسلّق التل إلى أفضل خطة معروفة في نحو جولة من كل أربع، والتلدين في نحو جولتين من كل ثلاث.\n\nومن دون إثبات، قِس. فالحد الأدنى (من إرخاء خطي، أو في المسارات من بنية تُسمّى «الشجرة الواحدة») يعطي فجوة الأمثلية: فمسار طوله ١٠٥ كم مقابل حدّ قدره ١٠٠ كم يقع ضمن (١٠٥ − ١٠٠) ÷ ١٠٥ ≈ ٤٫٨٪. ولبعض الخوارزميات ضمانات، كطريقة كريستوفايدس التي لا تزيد أبدًا على ١٫٥ ضعف الأمثل في المسارات ذات المسافات العادية، لكن البحث المحلي يتفوّق عمليًا على ضمانه بكثير.\n\nوأخيرًا، للخطط الحقيقية أهداف عدة: المسافة الكلية، وأطول رحلة لأي طفل، وساعات السائقين، والانبعاثات. وقد يترك أقصر مجموع أطفالَ قرية واحدة في الحافلة تسعين دقيقة. والمنمذج المسؤول يضع حدود العدالة في النموذج، ويعرض الموازنات بالأرقام، ويختبر على أيام سابقة، ويُبقي شخصًا قادرًا على تعديل الخطة، وينشر طريقة صنعها. وتتبع مكتبة المسارات في OR-Tools من Google هذا النمط: استراتيجية للحل الأول، وبحث محلي موجَّه، وحدّ زمني تختاره أنت."
           },
           "keyTerms": [
             {
@@ -2462,8 +2462,8 @@
           },
           "answer": false,
           "explain": {
-            "en": "It stops at a local optimum: no single 2-opt move helps, but a better route may need a different kind of move. On the lab’s default map it reaches the best route; on other maps it stops short.",
-            "ar": "إنه يتوقّف عند حل أمثل محلي: لا تفيد أي حركة ‎⁦2-opt⁩ واحدة، لكن مسارًا أفضل قد يحتاج إلى نوع آخر من الحركات. ففي خريطة المختبر الافتراضية يصل إلى أفضل مسار، وفي خرائط أخرى يتوقّف قبله."
+            "en": "It stops at a local optimum: no single 2-opt move helps, but a better route may need a different kind of move. On the default map of the lab “The school bus route” it reaches the best route; on other maps it can stop short.",
+            "ar": "إنه يتوقّف عند حل أمثل محلي: لا تفيد أي حركة ‎⁦2-opt⁩ واحدة، لكن مسارًا أفضل قد يحتاج إلى نوع آخر من الحركات. ففي الخريطة الافتراضية لمختبر «طريق حافلة المدرسة» يصل إلى أفضل مسار، وفي خرائط أخرى قد يتوقّف قبله."
           }
         },
         {
@@ -2512,8 +2512,8 @@
             }
           ],
           "explain": {
-            "en": "Reversing r[i..j] swaps two edges for two others. Keeping only shorter routes takes 25 down to 16, which a check of all 12 distinct round trips confirms is the best. On bigger maps 2-opt can stop at a local optimum, so measure the gap. The same program runs unchanged in Colab, where OR-Tools’ routing library does this, and more, for hundreds of stops.",
-            "ar": "عكس الجزء ⁦r[i..j]⁩ يبدّل ضلعين بضلعين آخرين. وإبقاء المسارات الأقصر فقط ينزل بالطول من ٢٥ إلى ١٦، ويؤكّد فحص الجولات المختلفة الاثنتي عشرة كلها أنه الأفضل. وفي الخرائط الأكبر قد يتوقّف ‎⁦2-opt⁩ عند حل أمثل محلي، فقِس الفجوة. والبرنامج نفسه يعمل دون تغيير في Colab، حيث تفعل مكتبة المسارات في OR-Tools هذا وأكثر لمئات المحطات."
+            "en": "Reversing r[i..j] swaps two edges for two others. Keeping only shorter routes takes 25 down to 16, which a check of all 12 distinct round trips (from stop 0 through the other four: 4! ÷ 2) confirms is the best. On bigger maps 2-opt can stop at a local optimum, so measure the gap. The same program runs unchanged in Colab, where OR-Tools’ routing library does this, and more, for hundreds of stops.",
+            "ar": "عكس الجزء ⁦r[i..j]⁩ يبدّل ضلعين بضلعين آخرين. وإبقاء المسارات الأقصر فقط ينزل بالطول من ٢٥ إلى ١٦، ويؤكّد فحص الجولات المختلفة الاثنتي عشرة كلها (من المحطة ٠ عبر المحطات الأربع الأخرى: ⁦4! ÷ 2⁩) أنه الأفضل. وفي الخرائط الأكبر قد يتوقّف ‎⁦2-opt⁩ عند حل أمثل محلي، فقِس الفجوة. والبرنامج نفسه يعمل دون تغيير في Colab، حيث تفعل مكتبة المسارات في OR-Tools هذا وأكثر لمئات المحطات."
           }
         },
         {
@@ -3114,13 +3114,13 @@
             "en": [
               "fractional",
               "prunes",
-              "integer",
+              "continuous",
               "doubles"
             ],
             "ar": [
               "كسري",
               "يقطع",
-              "صحيح",
+              "متصل",
               "يضاعف"
             ]
           },
@@ -3135,8 +3135,8 @@
             ]
           },
           "explain": {
-            "en": "A fractional value (2.13 buses) is where the relaxation breaks the integer rule, so that’s where to split; pruning branches that can’t win is what keeps the tree small.",
-            "ar": "القيمة الكسرية (٢٫١٣ حافلة) هي حيث يخالف الإرخاء شرط الأعداد الصحيحة، فهناك يكون التقسيم، وقطع الفروع التي لا يمكن أن تفوز هو ما يُبقي الشجرة صغيرة."
+            "en": "A fractional value (2.13 buses) is where the relaxation breaks the integer rule, so that’s where to split; pruning branches that can’t win is what keeps the tree small. Continuous variables may take fractions, so branch and bound never splits on them.",
+            "ar": "القيمة الكسرية (٢٫١٣ حافلة) هي حيث يخالف الإرخاء شرط الأعداد الصحيحة، فهناك يكون التقسيم، وقطع الفروع التي لا يمكن أن تفوز هو ما يُبقي الشجرة صغيرة. أما المتغيّرات المتصلة فيحقّ لها أن تأخذ كسورًا، فلا يُقسَّم عندها أبدًا."
           }
         },
         {
@@ -3236,8 +3236,8 @@
             ">"
           ],
           "explain": {
-            "en": "[::-1] reverses the slice, r[j + 1:] is the rest of the route after it, and < keeps only shorter routes. Two edges are swapped for two others, which removes a crossing.",
-            "ar": "يعكس [::-1] الجزء، و⁦r[j + 1:]⁩ بقية المسار بعده، و< لا يُبقي إلا المسارات الأقصر. فيُستبدل ضلعان بضلعين آخرين، فيزول تقاطع."
+            "en": "[::-1] reverses the slice, r[j + 1:] is the rest of the route after it, and < keeps only shorter routes. Two edges are swapped for two others: when the two removed edges cross, the move uncrosses them.",
+            "ar": "يعكس ⁦[::-1]⁩ الجزء، و⁦r[j + 1:]⁩ بقية المسار بعده، و⁦<⁩ لا يُبقي إلا المسارات الأقصر. فيُستبدل ضلعان بضلعين آخرين، فإن كان الضلعان المحذوفان متقاطعين أزالت الحركة تقاطعهما."
           }
         }
       ],
@@ -3397,7 +3397,7 @@
             "en": "Activity sheet: Operations research: LP, MIP, CP, OR-Tools modelling, heuristics: unit check",
             "ar": "ورقة النشاط: بحوث العمليات: البرمجة الخطية والصحيحة وبالقيود، والنمذجة بـ OR-Tools، والطرق التقريبية: اختبار الوحدة"
           },
-          "pages": 2,
+          "pages": 4,
           "base": "opt-s4-check/lesson-plan",
           "formats": [
             "pdf"

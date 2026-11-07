@@ -3,6 +3,7 @@ import { Button } from "@darsi/design-system";
 import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
 import { Segmented, Stats } from "../../kit/controls";
+import { signed } from "../../kit/Formula";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
 import { backward, error, forward, START, train, update, type W } from "./model";
@@ -64,7 +65,8 @@ export default function Backprop({ meta, onDone }: LabProps) {
   const [rate, setRate] = useState(1);
   const [learned, setLearned] = useState(0);
   const b = backward(w, X, T), f = b.f, E = error(f.y, T);
-  const n = (v: number) => num(Math.round(v * 1000) / 1000), n2 = (v: number) => num(Math.round(v * 100) / 100);
+  // signed: a real minus and no direction mark, so an Arabic negative weight reads "−٠٫٤" in the left-to-right lines.
+  const n = (v: number) => signed(num, v, 3), n2 = (v: number) => num(Math.round(v * 100) / 100);
   const eq = (...parts: (string | number)[]) => <p className="lb-mono" dir="ltr">{parts.map((p, i) => <bdi key={i}>{typeof p === "number" ? n(p) : p}</bdi>)}</p>;
   const next = () => {
     if (stage < 6) setStage(stage + 1);
@@ -106,10 +108,11 @@ export default function Backprop({ meta, onDone }: LabProps) {
 function BackpropDiagram({ w, f, stage, fmt }: { w: W; f: ReturnType<typeof backward>["f"]; stage: number; fmt: (v: number) => string }) {
   const P = { x1: [36, 50], x2: [36, 150], h1: [150, 50], h2: [150, 150], y: [262, 100] } as const;
   const lit = (layer: "in" | "out") => (layer === "in" ? stage === 1 || stage === 5 : stage === 2 || stage === 4);
-  const wire = (a: keyof typeof P, b: keyof typeof P, v: number, layer: "in" | "out") => (
+  // Input weights sit a third of the way along their wire: w₁₂ and w₂₁ cross at the middle, where their labels overlapped.
+  const wire = (a: keyof typeof P, b: keyof typeof P, v: number, layer: "in" | "out", t = layer === "in" ? 0.35 : 0.5) => (
     <g key={`${a}${b}`}>
       <line x1={P[a][0]} y1={P[a][1]} x2={P[b][0]} y2={P[b][1]} className={`lb-wire ${v < 0 ? "lb-tone-b" : "lb-tone-a"}`} strokeWidth={lit(layer) ? 5 : 2} strokeDasharray={v < 0 ? "6 4" : undefined} />
-      <text x={(P[a][0] + P[b][0]) / 2} y={(P[a][1] + P[b][1]) / 2 - 4} textAnchor="middle" className="lb-node-text">{fmt(v)}</text>
+      <text x={P[a][0] + (P[b][0] - P[a][0]) * t} y={P[a][1] + (P[b][1] - P[a][1]) * t - 4} textAnchor="middle" className="lb-node-text">{fmt(v)}</text>
     </g>
   );
   const node = (k: keyof typeof P, label: string, value?: number, cls = "lb-node") => (

@@ -43,8 +43,38 @@ export const usernameToEmail = (u: string) => `${u.trim().toLowerCase()}@${USERN
 export const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 export const isValidUsername = (u: string) => /^[a-z0-9][a-z0-9._-]{2,39}$/i.test(u);
 
-/** Username suggestion from a name in any script, with a random suffix: "amina.bello.4821". */
+/**
+ * Arabic letters (and the Persian and Urdu ones) in Latin, so a pupil's login carries their name: «منى عبد الرحمن»
+ * → "mna abd alrhmn". Consonants as Egyptians write names in Latin (ج g, ذ z, ة a, ى a); short vowels aren't written
+ * in Arabic, so none are guessed; و is "w" at the start of a word and "o" inside it (محمود → mhmod). Hamza seats,
+ * tatweel and harakat are dropped, and anything else in the Arabic block separates words.
+ */
+const AR: Record<string, string> = {
+  "ا": "a", "أ": "a", "إ": "e", "آ": "a", "ٱ": "a", "ى": "a", "ة": "a", "ب": "b", "ت": "t", "ث": "th", "ج": "g", "ح": "h",
+  "خ": "kh", "د": "d", "ذ": "z", "ر": "r", "ز": "z", "س": "s", "ش": "sh", "ص": "s", "ض": "d", "ط": "t", "ظ": "z", "ع": "a",
+  "غ": "gh", "ف": "f", "ق": "q", "ك": "k", "ل": "l", "م": "m", "ن": "n", "ه": "h", "ي": "y", "ء": "", "ئ": "", "ؤ": "",
+  "پ": "p", "چ": "ch", "ژ": "zh", "گ": "g", "ک": "k", "ی": "y", "ٹ": "t", "ڈ": "d", "ڑ": "r", "ں": "n", "ہ": "h", "ھ": "h", "ے": "e",
+};
+const AR_DIGITS = "٠١٢٣٤٥٦٧٨٩", FA_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
+export function transliterate(name: string): string {
+  return name.normalize("NFKC") // presentation forms (ﻻ) become plain letters
+    .replace(/[ً-ٰٟـ]/g, "") // harakat, dagger alif, tatweel
+    .replace(/(^|[^؀-ۿ])و/g, "$1w").replace(/و/g, "o") // و
+    .replace(/[؀-ۿ]/g, (ch) => {
+      const d = AR_DIGITS.includes(ch) ? AR_DIGITS.indexOf(ch) : FA_DIGITS.indexOf(ch);
+      return d >= 0 ? String(d) : AR[ch] ?? " ";
+    });
+}
+
+/**
+ * Username suggestion from a name in any script, with a random suffix: "amina.bello.48213", «منى عبد الرحمن» →
+ * "mna.abd.27561". The first two parts of the name keep logins short to type on a phone. The suffix (5 digits, or 6
+ * after "user." for a name with no letter we can write in Latin) leaves tens of thousands of logins per name, and
+ * createMembers draws again when one is taken. (It was 4 digits, and every Arabic name was "user.": 9,000 logins for
+ * the whole platform, so large imports refused people as "Already exists".)
+ */
 export function suggestUsername(name: string): string {
-  const latin = name.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "").slice(0, 24);
-  return `${latin || "user"}.${randomInt(1000, 10000)}`;
+  const latin = transliterate(name).normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .split(/[^a-z0-9]+/).filter(Boolean).slice(0, 2).join(".").slice(0, 24).replace(/\.+$/, "");
+  return latin ? `${latin}.${randomInt(10000, 100000)}` : `user.${randomInt(100000, 1000000)}`;
 }

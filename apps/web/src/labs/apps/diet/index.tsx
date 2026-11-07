@@ -55,10 +55,17 @@ export default function Diet({ meta, onDone }: LabProps) {
   useEffect(() => { if (shown && meets(mix)) onDone?.(); }, [shown && meets(mix)]); // eslint-disable-line react-hooks/exhaustive-deps
   const t = totals(mix), lacking = short(mix);
   const n1 = (v: number) => num(Math.round(v * 10) / 10);
+  // Portions to one decimal, and to one significant digit below 0.1: the cheapest plate can need 0.01 of a cup, which
+  // one decimal would show as 0.
+  const portion = (v: number) => num(v < 0.1 ? Number(v.toPrecision(1)) : Math.round(v * 10) / 10);
   const coins = (v: number) => s.coins(n1(v));
   const ok = res.lp.status === "optimal";
   const tight = res.tight.map((n) => s.nut[n]), free = NUTRIENTS.filter((n) => !res.tight.includes(n)).map((n) => s.nut[n]);
   const step = (f: Food, d: number) => setMix((m) => ({ ...m, [f]: Math.max(0, Math.min(4, m[f] + d)) }));
+  // The simplex's portions exactly (only rounding noise dropped): rounded to 0.01 a cup, the cheapest plate at 4 portions
+  // fell short of energy and iron.
+  const best = FOODS.filter((f) => res.mix[f] > 1e-9);
+  const serve = () => setMix(Object.fromEntries(FOODS.map((f) => [f, best.includes(f) ? res.mix[f] : 0])) as Mix);
 
   return (
     <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
@@ -71,7 +78,7 @@ export default function Diet({ meta, onDone }: LabProps) {
                 <div className="lb-food-name"><strong>{s.food[f]}</strong><small>{s.price(num(PER[f].price))}</small></div>
                 <div className="lb-portion">
                   <button type="button" className="lb-portion-btn" aria-label={s.less(s.food[f])} disabled={!mix[f]} onClick={() => step(f, -0.5)}>−</button>
-                  <output className="lb-portion-val">{n1(mix[f])}</output>
+                  <output className="lb-portion-val">{portion(mix[f])}</output>
                   <button type="button" className="lb-portion-btn" aria-label={s.more(s.food[f])} onClick={() => step(f, 0.5)}>+</button>
                 </div>
                 <button type="button" className={have.has(f) ? "lb-switch lb-opt-switch is-on" : "lb-switch lb-opt-switch"} aria-pressed={have.has(f)} aria-label={`${s.have}: ${s.food[f]}`} onClick={() => setHave((h) => { const n = new Set(h); if (n.has(f)) n.delete(f); else n.add(f); return n; })}><span className="lb-switch-knob" aria-hidden /><span>{s.have}</span></button>
@@ -100,12 +107,12 @@ export default function Diet({ meta, onDone }: LabProps) {
           {shown && (ok ? (
             <div className="lb-panel" aria-live="polite">
               <strong>{s.best}: {coins(res.lp.value)}</strong>
-              <ul className="lb-meal">{FOODS.filter((f) => res.mix[f] > 0.005).map((f) => <li key={f}><span>{s.food[f]}</span><span>{n1(res.mix[f])}</span></li>)}</ul>
+              <ul className="lb-meal">{best.map((f) => <li key={f}><span>{s.food[f]}</span><span>{portion(res.mix[f])}</span></li>)}</ul>
               <p className="lb-note">{s.corners(res.lp.path.map((p) => n1(p.value)).join(s.arrow))}</p>
               {!!tight.length && <p className="lb-note">{s.tight(tight.join(s.list))}</p>}
               {!!free.length && <p className="lb-note">{s.free(free.join(s.list))}</p>}
               {meets(mix) && <p className="lb-note">{s.vs(coins(cost(mix)), coins(res.lp.value))}</p>}
-              <div className="lb-row"><Button size="sm" variant="secondary" onClick={() => setMix(Object.fromEntries(FOODS.map((f) => [f, Math.round(res.mix[f] * 100) / 100])) as Mix)}>{s.serve}</Button></div>
+              <div className="lb-row"><Button size="sm" variant="secondary" onClick={serve}>{s.serve}</Button></div>
             </div>
           ) : <p className="lb-verdict is-warn" aria-live="polite">{s.none}</p>)}
         </div>

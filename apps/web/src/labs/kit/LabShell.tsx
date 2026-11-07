@@ -11,12 +11,15 @@ import "../../styles/lab-kit.css";
  * things to do and notice, so the app teaches rather than just sits there), the app, and the takeaway.
  */
 export function LabShell({ meta, intro, tries, takeaway, onReset, children }: { meta: LabMeta; intro?: ReactNode; tries?: ReactNode[]; takeaway?: ReactNode; onReset?: () => void; children: ReactNode }) {
-  const { L } = useI18n();
+  const { L, lang } = useI18n();
   const k = useKit();
   const cat = categoryOf(meta.category);
   const style = useTrackStyles()(cat.track);
+  // Labs speak English and Arabic only (useS): in any other language the lab is English, laid out left to right, so a
+  // right-to-left page doesn't move its punctuation ("?How strong is that password").
+  const english = lang !== "en" && lang !== "ar" ? { dir: "ltr" as const, lang: "en" } : {};
   return (
-    <section className={`lb-shell ${trackClass(style)}`} aria-labelledby={`lb-${meta.id}`}>
+    <section className={`lb-shell ${trackClass(style)}`} aria-labelledby={`lb-${meta.id}`} {...english}>
       <header className="lb-head">
         <span className="lb-icon" aria-hidden><Icon name={style.icon} /></span>
         <div className="lb-head-text"><span className="lb-kicker">{L(cat.name)}</span><h2 id={`lb-${meta.id}`}>{L(meta.title)}</h2></div>

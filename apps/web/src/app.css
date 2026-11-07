@@ -1,6 +1,23 @@
 /* App-level layout. Visual language lives in @darsi/design-system — use its tokens and components first. */
 html, body, #root { min-height: 100%; }
 body { background: var(--paper); }
+
+/* The floating "Report a problem" and tutor buttons (bug-fab.css, tutor-fab.css) sit in a band above the bottom nav and
+   the lesson's Continue bar; while the answer sheet shows, above the sheet: LessonPlayer puts the sheet's height in
+   --sheet-h on <html> (no :has() on old phones). --fab-end is the band's foot; --fab-clear is its top (the tutor's face
+   is 60 px) plus a gap: the room a page leaves at its foot so its last line can scroll clear of them. Focus moves (and
+   the light player's focus()) keep the focused control above the band and the bars under it (WCAG 2.4.11). Below
+   900 px the buttons also step aside while the page scrolls down and while a checkpoint question or the answer sheet
+   shows (bugs/Fab.tsx useFabsAside, data-fabs on <html>). */
+:root {
+  --sheet-h: 0px;
+  --fab-end: max(calc(var(--space-12) * 2 + env(safe-area-inset-bottom)), calc(var(--sheet-h) + var(--space-3)));
+  --fab-clear: calc(var(--fab-end) + 60px + var(--space-3));
+  scroll-padding-block-end: var(--fab-clear);
+}
+/* Pages with no bar of their own (the lesson's last screen, onboarding, the account screens) leave that room on phones.
+   Not the first onboarding step (.onb): its Continue sits at the thumb, below the band. */
+@media (max-width: 899px) { #root > main:not(.onb) { padding-block-end: var(--fab-clear); } }
 .screen { box-sizing: border-box; width: 100%; max-width: 960px; margin-inline: auto; padding: var(--space-4); display: grid; gap: var(--space-6); align-content: start; }
 .screen.narrow { max-width: var(--content-max); }
 .stack { display: grid; gap: var(--space-3); }
@@ -20,7 +37,7 @@ body { background: var(--paper); }
 .week-card { padding: var(--space-4); background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-lg); }
 .unit { display: grid; gap: var(--space-3); }
 /* Home's track switcher (components/TrackSwitch.tsx): the current track in the app bar, and the menu under it. */
-.track-switch { display: inline-flex; align-items: center; max-inline-size: 100%; min-width: 0; min-block-size: 40px; padding-inline: var(--space-2); border: 2px solid var(--ink); border-radius: var(--radius-pill); background: var(--tr-soft); color: var(--ink); font: inherit; cursor: pointer; }
+.track-switch { display: inline-flex; align-items: center; max-inline-size: 100%; min-width: 0; min-block-size: var(--tap-min); padding-inline: var(--space-2); border: 2px solid var(--ink); border-radius: var(--radius-pill); background: var(--tr-soft); color: var(--ink); font: inherit; cursor: pointer; }
 .track-switch > * + * { margin-inline-start: var(--space-1); }
 .track-switch > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .track-switch > .dr-icon:first-child { flex: none; color: var(--tr-ink); }
@@ -46,7 +63,8 @@ body { background: var(--paper); }
 /* Lesson */
 .lesson { min-height: 100dvh; display: flex; flex-direction: column; }
 .lesson-top { position: sticky; top: 0; z-index: var(--z-appbar); background: var(--paper); padding-block-start: env(safe-area-inset-top); max-width: var(--content-max); width: 100%; margin-inline: auto; }
-.lesson-body { flex: 1; padding-block-end: 200px; }
+/* Room to scroll the step clear of the Continue bar and the floating buttons, or of the answer sheet and the buttons above it. */
+.lesson-body { flex: 1; padding-block-end: max(200px, var(--fab-clear)); }
 .lesson-bar { display: grid; justify-items: center; position: fixed; inset-inline: 0; bottom: 0; z-index: var(--z-sheet); padding: var(--space-3) var(--space-4) max(var(--space-4), env(safe-area-inset-bottom)); background: var(--surface); border-block-start: 2px solid var(--line); }
 /* justify-items centres the button too: .dr-btn resets the margin. */
 .lesson-bar > *, .dr-sheet.dr-floating-bottom > * { max-width: calc(var(--content-max) - 2 * var(--space-4)); margin-inline: auto; width: 100%; }

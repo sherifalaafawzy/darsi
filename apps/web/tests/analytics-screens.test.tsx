@@ -50,7 +50,7 @@ describe("AnalyticsPage", () => {
       orgs: { o1: { name: "Nile School", country: "EG", members: 60, teachers: 10, students: 50, active7: 30, active30: 45, lessons: 400, xp: 0, avgAccuracy: 0.7 } },
       orgsByStatus: { active: 1, pending: 2 },
     };
-    m.days = [{ day: today, n: 50, off: 10, dev: 12, lessons: { n: 9, track: { ai: 7, iot: 2 }, unit: { "ai-1-1": 7 }, acc: 630, accN: 9 }, sessions: { n: 20, installed: 5, lang: { ar: 15, en: 5 }, role: { guest: 8, teacher: 12 } }, labs: { neuron: 3 } }];
+    m.days = [{ day: today, n: 50, off: 10, dev: 12, lessons: { n: 9, track: { ai: 7, iot: 2 }, unit: { "ai-1-1": 7 }, acc: 630, accN: 9 }, sessions: { n: 20, installed: 5, lang: { ar: 15, en: 5 }, role: { guest: 8, teacher: 12 } }, labs: { neuron: 3 }, capstone: { calls: 6, reviews: 4, usd: 0.0041 } }];
     wrap(<AnalyticsPage />);
     expect(screen.getByText("340")).toBeTruthy(); // phones active in 7 days
     expect(screen.getByText("Today 12, 30 days 900, guests included")).toBeTruthy();
@@ -62,6 +62,7 @@ describe("AnalyticsPage", () => {
     expect(screen.getByText("Guest")).toBeTruthy();
     expect(screen.getByText(/20% of activity happened offline/)).toBeTruthy();
     expect(screen.getByText(/Off: Darsi counts usage itself/)).toBeTruthy();
+    expect(screen.getByText("Milestones sent: 6, cost at the provider: $0.004")).toBeTruthy(); // capstone AI reviews (checkCapstone)
   });
 
   it("connects Google Analytics with the app's measurement ID and an API secret", async () => {

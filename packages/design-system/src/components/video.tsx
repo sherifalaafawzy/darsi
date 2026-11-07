@@ -95,7 +95,7 @@ function cueText(tt: TextTrack): string {
 }
 
 export function VideoPlayer(p: VideoPlayerProps) {
-  const { title, meta, poster, src, tracks, duration, chapters = [], questionsAt = [], caption, checkpoint, checkpointLabel = "Pause and answer",
+  const { title, meta, poster, src, tracks, duration: given, chapters = [], questionsAt = [], caption, checkpoint, checkpointLabel = "Pause and answer",
     quality = "240p", actions, playLabel = "Play", pauseLabel = "Pause", captionsLabel = "Captions", captionsOffLabel = "Off",
     seekLabel = "Seek", speedLabel = "Playback speed", speedNormalLabel = "Normal", fullscreenLabel = "Full screen",
     exitFullscreenLabel = "Exit full screen", muteLabel = "Mute", unmuteLabel = "Unmute", volumeLabel = "Volume",
@@ -120,6 +120,11 @@ export function VideoPlayer(p: VideoPlayerProps) {
   const [capId, setCapId] = useState("");
   const [flash, setFlash] = useState<"" | "back" | "fwd">("");
   const [metaTick, setMetaTick] = useState(0);
+  // The file's own length once its metadata is in: `duration` is what the page expects (a video narrated in another
+  // language runs shorter or longer), and the clock, the bar, its marks and seeking all go by the real one.
+  const [real, setReal] = useState(0);
+  useEffect(() => setReal(0), [src]);
+  const duration = real || given;
   const speedDomId = `${useId()}-speed`;
   const ccDomId = `${useId()}-cc`;
   const ref = useRef<HTMLVideoElement>(null);
@@ -392,7 +397,7 @@ export function VideoPlayer(p: VideoPlayerProps) {
             onPlay={() => { setPlaying(true); setWaiting(false); }} onPause={() => setPlaying(false)}
             onWaiting={() => setWaiting(true)} onStalled={() => setWaiting(true)} onSeeking={() => setWaiting(true)}
             onPlaying={() => setWaiting(false)} onSeeked={() => setWaiting(false)} onCanPlay={() => setWaiting(false)}
-            onProgress={(e) => readBuffered(e.currentTarget)} onLoadedMetadata={() => setMetaTick((n) => n + 1)}
+            onProgress={(e) => readBuffered(e.currentTarget)} onLoadedMetadata={(e) => { const d = e.currentTarget.duration; if (Number.isFinite(d) && d > 0) setReal(d); setMetaTick((n) => n + 1); }}
             onError={() => { setPlaying(false); setWaiting(false); p.onError?.(); }}
             onTimeUpdate={(e) => { remember(e.currentTarget.currentTime); p.onTimeUpdate?.(e.currentTarget.currentTime); readBuffered(e.currentTarget); }}>{tracks}</video>
         ) : <div className="dr-video-poster">{typeof poster === "string" ? <img src={poster} alt="" /> : poster}</div>}

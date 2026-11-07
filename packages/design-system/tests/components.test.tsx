@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { Button, QuizOption, MatchPairs, OrderSteps, FillBlank, TrueFalse, LanguagePicker, Switch, DarsiRoot, UnitPath, VideoPlayer, FactCheck, TrainClassifier,
   TrackChip, TrackStylesProvider, ProgressBar, PlacementResult, TRACK_TONES, ICON_NAMES, BUILTIN_TRACK_STYLES, AppBar, BrandProvider, CertificateCard } from "../src";
 import paths from "../src/icons/paths.json";
-import { approximateTokens, withTemperature, classify } from "../src/components/lab";
+import { approximateTokens, withTemperature, classify, NextWordLab, TokenViewer } from "../src/components/lab";
 import { applyLocale, dirFor, formatNumber } from "../src/locale";
 
 describe("locale", () => {
@@ -64,9 +64,31 @@ describe("Button", () => {
     render(<Button iconOnly icon="close">Close lesson</Button>);
     expect(screen.getByRole("button", { name: "Close lesson" })).toBeTruthy();
   });
-  it("loading disables and sets aria-busy", () => {
-    render(<Button loading>Save</Button>);
-    const b = screen.getByRole("button"); expect(b).toHaveProperty("disabled", true); expect(b.getAttribute("aria-busy")).toBe("true");
+  it("loading ignores presses but keeps the focus (aria-disabled, not disabled), even when disabled is also set", () => {
+    const fn = vi.fn();
+    const { rerender } = render(<Button loading onClick={fn}>Save</Button>);
+    const b = screen.getByRole("button");
+    b.focus();
+    expect(b).toHaveProperty("disabled", false);
+    expect(b.getAttribute("aria-disabled")).toBe("true");
+    expect(b.getAttribute("aria-busy")).toBe("true");
+    fireEvent.click(b);
+    expect(fn).not.toHaveBeenCalled();
+    rerender(<Button loading disabled onClick={fn}>Save</Button>); // the usual "loading={busy} disabled={busy}"
+    expect(b).toHaveProperty("disabled", false);
+    expect(document.activeElement).toBe(b);
+    rerender(<Button disabled onClick={fn}>Save</Button>); // done: disabled applies again
+    expect(b).toHaveProperty("disabled", true);
+    expect(b.getAttribute("aria-disabled")).toBeNull();
+    rerender(<Button onClick={fn}>Save</Button>);
+    fireEvent.click(b);
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+  it("a loading submit button doesn't send its form again", () => {
+    const submit = vi.fn((e: { preventDefault: () => void }) => e.preventDefault());
+    render(<form onSubmit={submit}><Button type="submit" loading>Send</Button></form>);
+    fireEvent.click(screen.getByRole("button"));
+    expect(submit).not.toHaveBeenCalled();
   });
 });
 
@@ -194,9 +216,30 @@ describe("AI lab logic", () => {
     // Arabic vowel marks belong to their word: «سيُغلق» is one word, matched by the same word with its mark.
     expect(classify("سيُغلق حسابك", [{ examples: ["اجتماع الثلاثاء"] }, { examples: ["سيُغلق حسابك اليوم"] }]).best).toBe(1);
   });
+  it("NextWordLab reports each pick with the temperature it was drawn at", () => {
+    const fn = vi.fn();
+    render(<NextWordLab title="t" context="The pupils open their" candidates={[{ word: "books", p: 0.6 }, { word: "phones", p: 0.4 }]} onGenerate={fn} />);
+    fireEvent.change(screen.getByRole("slider"), { target: { value: "0.2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Pick the next word" }));
+    expect(fn).toHaveBeenLastCalledWith(expect.stringMatching(/^(books|phones)$/), 0.2);
+    fireEvent.change(screen.getByRole("slider"), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Pick the next word" }));
+    expect(fn).toHaveBeenLastCalledWith(expect.stringMatching(/^(books|phones)$/), 2);
+  });
   it("TrainClassifier shows a guess", () => {
     render(<TrainClassifier title="t" classes={[{ id: "s", label: "Safe", examples: ["meeting"] }, { id: "p", label: "Phishing", examples: ["click now"] }]} test="click here now" />);
     expect(screen.getByRole("status").textContent).toContain("Phishing");
+  });
+  it("TrainClassifier writes its confidence and counts with the page's digits", () => {
+    const numAr = (n: number, o?: Intl.NumberFormatOptions) => new Intl.NumberFormat("ar-EG", o).format(n);
+    render(<TrainClassifier title="t" num={numAr} classes={[{ id: "s", label: "Safe", examples: ["meeting"] }, { id: "p", label: "Phishing", examples: ["click now", "act now"] }]} test="unknown words" />);
+    expect(screen.getByRole("status").textContent).toContain("٥٠٪");
+    expect(screen.getByRole("status").textContent).not.toMatch(/[0-9]/);
+    expect(screen.getByText("٢")).toBeTruthy();
+  });
+  it("TokenViewer can say the whole count, for languages whose counted word changes with the number", () => {
+    const { container } = render(<TokenViewer title="t" text="pen" tokensText={(n) => (n === 1 ? "one token" : `${n} tokens`)} charsText={(n) => `${n} letters`} />);
+    expect(container.querySelector(".dr-lab-stats")!.textContent).toBe("one token3 letters");
   });
   it("FactCheck reveals the note after a verdict", () => {
     render(<FactCheck title="t" open="c" answer={[{ text: "Nile flows north to south", claim: { id: "c", verdict: "false", note: "Wrong — south to north." } }]} />);
@@ -222,5 +265,23 @@ describe("organization brand", () => {
     expect(container.querySelector("img.dr-brand-logo")).toBeNull();
     expect(container.querySelectorAll(".dr-mark").length).toBe(2);
     expect(container.querySelector(".dr-cert-issuer")).toBeNull();
+  });
+});
+
+describe("small screens and disabled looks (components.css)", () => {
+  const css = () => require("node:fs").readFileSync(require("node:path").join(process.cwd(), "src/styles/components.css"), "utf8") as string;
+  const rule = (sel: string) => css().match(new RegExp(`(?:^|\n)${sel.replace(/[.*+?^${}()|[\]\>]/g, "\$&")} \{([^}]*)\}`))?.[1] ?? "";
+  it("a download row wraps its button under the title instead of pushing a 320 px page sideways", () => {
+    expect(rule(".dr-dl")).toMatch(/flex-wrap: wrap/);
+    expect(rule(".dr-dl-main")).toMatch(/flex: 1 1 5rem/);
+  });
+  it("the path's zigzag narrows on small screens, so its outer labels stay on the screen", () => {
+    expect(rule(".dr-path-step")).toMatch(/min\(var\(--space-12\), 10vw\)/);
+  });
+  it("the prompt lab's ingredient chips are full-size targets", () => {
+    expect(rule(".dr-pb-ing")).toMatch(/min-block-size: var\(--tap-min\)/);
+  });
+  it("a disabled ghost button fades instead of gaining a box", () => {
+    expect(rule(".dr-btn-ghost:disabled")).toMatch(/background: transparent; border-color: transparent; opacity/);
   });
 });

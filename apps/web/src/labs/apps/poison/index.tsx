@@ -6,6 +6,7 @@ import { RunBar, Slider, Stats } from "../../kit/controls";
 import { Plot, type Dot } from "../../kit/Plot";
 import { useS } from "../../kit/strings";
 import { useKit } from "../../kit/strings";
+import { usePlural, type Forms } from "../../kit/plural";
 import { useLoop } from "../../kit/useLoop";
 import type { LabProps } from "../../types";
 import { accuracy, batchOf, makeData, makeNet, poison, predict, RATE, suspects } from "./model";
@@ -18,7 +19,9 @@ const S = {
     find: "Find the odd ones out", remove: "Drop suspects and retrain", clean: "Start over, clean",
     classA: "Kind A", classB: "Kind B", xlab: "size", ylab: "sweetness",
     note: "Ringed points have flipped labels. Squares are the ones the neighbour check suspects.",
-    howFound: (n: string, k: string, f: string) => `The neighbour check flagged ${n} points: ${k} really poisoned, ${f} ordinary points near the border.`,
+    // n is a counted phrase ("7 points"); k and f follow labels, so they read right whatever the number.
+    howFound: (n: string, k: string, f: string) => `The neighbour check flagged ${n}. Really poisoned: ${k}. Ordinary points near the border: ${f}.`,
+    points: { one: "{n} point", other: "{n} points" } as Forms, noneFound: "The neighbour check flagged no points.",
     retrained: (a: string) => `Trained again without the suspects. Accuracy back to ${a}.`,
     needTrain: "Press Train to fit the line.",
     try1: "Set poisoned labels to 0 and train: the line splits the two kinds cleanly, accuracy near 100%.",
@@ -32,7 +35,8 @@ const S = {
     find: "اعثر على الأمثلة الشاذّة", remove: "احذف المشتبه بها ودرّب", clean: "ابدأ نظيفًا من جديد",
     classA: "النوع أ", classB: "النوع ب", xlab: "الحجم", ylab: "الحلاوة",
     note: "النقاط المطوّقة تسمياتها مقلوبة. والمربّعات هي ما يشتبه به فحص الجيران.",
-    howFound: (n: string, k: string, f: string) => `أشار فحص الجيران إلى ${n} نقطة: ${k} مسمّمة فعلًا، و${f} نقاط عادية قرب الحدّ.`,
+    howFound: (n: string, k: string, f: string) => `أشار فحص الجيران إلى ${n}. المسمّمة فعلًا: ${k}، والعادية قرب الحدّ: ${f}.`,
+    points: { one: "نقطة واحدة", two: "نقطتين", few: "{n} نقاط", many: "{n} نقطة", other: "{n} نقطة" } as Forms, noneFound: "لم يُشر فحص الجيران إلى أي نقطة.",
     retrained: (a: string) => `دُرّب من جديد دون المشتبه بها. عادت الدقة إلى ${a}.`,
     needTrain: "اضغط «درّب» لملاءمة الخط.",
     try1: "اضبط التسميات المسمّمة على ٠ ودرّب: يفصل الخط النوعين بنظافة، والدقة قرب ١٠٠٪.",
@@ -45,6 +49,7 @@ const S = {
 export default function Poison({ meta, onDone }: LabProps) {
   const s = useS(S), k = useKit();
   const { num } = useI18n();
+  const count = usePlural();
   const [seed, setSeed] = useState(1);
   const [nPoison, setNPoison] = useState(8);
   const test = useMemo(() => makeData(TEST, 99), []);
@@ -96,7 +101,7 @@ export default function Poison({ meta, onDone }: LabProps) {
             <Button size="sm" variant="secondary" onClick={find} disabled={loop.running}>{s.find}</Button>
             {sus && <Button size="sm" onClick={dropRetrain} disabled={loop.running}>{s.remove}</Button>}
           </div>
-          {sus && <p className="lb-note" aria-live="polite">{s.howFound(num(sus.length), num(foundReal), num(sus.length - foundReal))}</p>}
+          {sus && <p className="lb-note" aria-live="polite">{sus.length ? s.howFound(count(sus.length, s.points), num(foundReal), num(sus.length - foundReal)) : s.noneFound}</p>}
           {sus && removed.size > 0 && acc !== null && !loop.running && <p className="lb-answer is-ok">{s.retrained(num(acc, { style: "percent" }))}</p>}
         </div>
       </div>

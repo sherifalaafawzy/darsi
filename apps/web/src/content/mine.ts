@@ -41,11 +41,48 @@ export function stagesWithCourses(units: CatalogEntry[] | undefined, audience: A
   const offered = STAGES.filter((st) => live.some((u) => (u.teach ? st === "university" : u.level === stageLevel(st))));
   return offered.length ? offered : STAGES;
 }
+/** Who the placement check is for: their audience, whether university courses are theirs, and their school stage. */
+export interface Placed { audience: Audience; uni: boolean; stage?: Stage }
+/**
+ * The levels the placement check may place a learner at in a track, lowest first: the levels with a published course for
+ * them there (their audience; university courses for university teachers), so the check never names a level that
+ * Home then has nothing for. A student goes no higher than their own stage (courses are written for a stage), or to
+ * the lowest level with a course if nothing is at or below it. Without a catalog (loading, offline) or with no course for
+ * them in the track, every level up to that cap.
+ */
+export function placeLevels(units: CatalogEntry[] | undefined, track: Track, top: number, who: Placed): number[] {
+  const cap = who.audience === "students" && who.stage ? Math.min(top, stageLevel(who.stage)) : top;
+  const offered = [...new Set((units ?? [])
+    .filter((u) => u.available && u.track === track && audienceOf(u) === who.audience && (!u.teach || who.uni))
+    .map((u) => u.level))].filter((l) => l >= 1 && l <= top).sort((a, b) => a - b);
+  if (!offered.length) return Array.from({ length: cap }, (_, i) => i + 1);
+  const within = offered.filter((l) => l <= cap);
+  return within.length ? within : [offered[0]];
+}
+/** Where the check starts among `levels` (placeLevels): the learner's start level, else the nearest above it, else the top. */
+export const placeStart = (levels: number[], start: number) => (levels.includes(start) ? start : levels.find((l) => l > start) ?? levels[levels.length - 1] ?? start);
+
 /** The stages to offer this audience now (one catalog read, shared with Home). */
 export function useStagesOffered(audience: Audience): Stage[] {
   const { data } = useAsync(loadCatalog, []);
   const { visible } = useTracks();
   return useMemo(() => stagesWithCourses(data?.units, audience, new Set(visible.map((tr) => tr.id))), [data, audience, visible]);
+}
+
+/**
+ * placeLevels and placeStart for this learner, from the catalog (one read, shared with Home). `ready` once the catalog
+ * has answered or failed (offline: every level), so a check never changes its levels while it asks.
+ */
+export function usePlacement() {
+  const { data, error } = useAsync(loadCatalog, []);
+  const mine = useMine();
+  const { of } = useTracks();
+  const { audience, uni, stage } = mine.placed;
+  return useMemo(() => {
+    const levels = (track: Track) => placeLevels(data?.units, track, of(track).levels, { audience, uni, stage });
+    return { ready: Boolean(data || error), levels, start: (track: Track) => placeStart(levels(track), mine.startLevel(track)) };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, error, of, audience, uni, stage]);
 }
 
 /** The track Home shows: the one picked last, while it is still one of the learner's; else their first. */
@@ -78,11 +115,21 @@ export function useMine() {
     startLevel: start,
     /** The learner's level in a track: from the placement check or their courses, else where they start. */
     levelOf: (track: Track) => Math.min(state.levels[track] ?? start(track), of(track).levels),
-    /** A level's name; for students on a built-in track, with the school stage it is written for ("Elementary · Lower secondary"). */
+    /**
+     * The name of the learner's level ("Your level", the check's result, My levels). A student's own school stage goes
+     * beside it ("Intermediate · Upper secondary"); never another stage, which isn't theirs.
+     */
     levelName: (track: Track, level: number) => {
+      const name = levelName(track, level), st = STAGES[level - 1];
+      return audience === "students" && of(track).builtIn && st && st === stage ? `${name}${t("common.sep")}${t(`stage.${st}`)}` : name;
+    },
+    /** A course's level; for students on a built-in track, with the school stage it is written for ("Elementary · Lower secondary"). */
+    courseLevelName: (track: Track, level: number) => {
       const name = levelName(track, level), st = STAGES[level - 1];
       return audience === "students" && of(track).builtIn && st ? `${name}${t("common.sep")}${t(`stage.${st}`)}` : name;
     },
+    /** Who the placement check is for (placeLevels). */
+    placed: { audience, uni, stage } as Placed,
     tracks,
     /** The track Home shows; none for a platform admin looking at every track. */
     active,

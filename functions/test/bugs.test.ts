@@ -98,4 +98,12 @@ describe("limiter", () => {
     for (let i = 0; i < BUG_LIMITS.instance.n; i++) over(`10.1.${i >> 8}.${i & 255}`, null, t);
     expect(over("10.9.9.9", null, t)).toBe(true);
   });
+  it("never lets one address use up the instance's reports for everyone else", () => {
+    const over = limiter(), t = 1_000_000;
+    let refused = 0;
+    for (let i = 0; i < BUG_LIMITS.instance.n + 5; i++) if (over("6.6.6.6", null, t)) refused++;
+    expect(refused).toBe(BUG_LIMITS.instance.n + 5 - BUG_LIMITS.address.n);
+    expect(over("5.6.7.8", null, t)).toBe(false); // an honest address right after
+    expect(over("5.6.7.9", "uid2", t)).toBe(false); // and a signed-in person
+  });
 });

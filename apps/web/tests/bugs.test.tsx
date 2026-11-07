@@ -44,7 +44,7 @@ vi.mock("../src/admin/data", async (orig) => ({
 
 const { startBugLog, bugLog, notePage, openReport } = await import("../src/bugs/log");
 const { ReportBug } = await import("../src/bugs/Fab");
-const { redact, flushReports } = await import("../src/bugs/Report");
+const { redact, flushReports, inShot } = await import("../src/bugs/Report");
 const { BugsPage, deviceLine } = await import("../src/admin/Bugs");
 
 const fetchMock = vi.fn();
@@ -84,6 +84,15 @@ describe("the log", () => {
 describe("Report a problem", () => {
   it("hides secrets in the page address", () => {
     expect(redact("https://darsiai.org/signup?code=ABCD-EFGH-JKLM&org=1")).toBe("https://darsiai.org/signup?code=%E2%80%A6&org=1");
+  });
+
+  it("leaves the button, its note and the page's <noscript> (raw markup with scripts on) out of the picture", () => {
+    const el = (html: string) => { const d = document.createElement("div"); d.innerHTML = html; return d.firstElementChild!; };
+    expect(inShot(el("<noscript>Darsi needs JavaScript to run.</noscript>"))).toBe(false);
+    expect(inShot(el('<button class="bug-fab"></button>'))).toBe(false);
+    expect(inShot(el('<p class="bug-note"></p>'))).toBe(false);
+    expect(inShot(el('<main class="screen"></main>'))).toBe(true);
+    expect(inShot(document.createTextNode("text"))).toBe(true);
   });
 
   it("takes a picture of the screen (without its own button), then sends the words, picture and details as a guest", async () => {
@@ -157,6 +166,42 @@ describe("Report a problem", () => {
     fireEvent.change(screen.getByLabelText("What went wrong?"), { target: { value: "Something is wrong" } });
     fireEvent.click(screen.getByRole("button", { name: "Send the report" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/several reports/);
+  });
+
+  it("is a modal: the browser's own where it has one, and closing puts the focus back on the button", async () => {
+    const showModal = vi.fn(function (this: HTMLDialogElement) { this.setAttribute("open", ""); });
+    Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value: showModal });
+    try {
+      app();
+      const fab = screen.getByRole("button", { name: "Report a problem" });
+      fab.focus();
+      fireEvent.click(fab);
+      const dialog = await screen.findByRole("dialog", { name: "Report a problem" });
+      expect(showModal).toHaveBeenCalled();
+      expect(document.activeElement).toBe(screen.getByLabelText("What went wrong?"));
+      // Escape: the browser's "cancel".
+      fireEvent(dialog, new Event("cancel", { cancelable: true }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Report a problem" }));
+    } finally { delete (HTMLDialogElement.prototype as { showModal?: unknown }).showModal; }
+  });
+
+  it("without <dialog> support, Escape closes it and Tab stays inside", async () => {
+    app();
+    fireEvent.click(screen.getByRole("button", { name: "Report a problem" }));
+    const dialog = await screen.findByRole("dialog");
+    // jsdom lays nothing out: every control counts as on screen.
+    const rects = vi.spyOn(Element.prototype, "getClientRects").mockReturnValue([{}] as unknown as DOMRectList);
+    try {
+      const send = screen.getByRole("button", { name: "Send the report" });
+      send.focus();
+      fireEvent.keyDown(document, { key: "Tab" });
+      expect(dialog.contains(document.activeElement)).toBe(true);
+      expect(document.activeElement).not.toBe(send);
+    } finally { rects.mockRestore(); }
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Report a problem" }));
   });
 });
 

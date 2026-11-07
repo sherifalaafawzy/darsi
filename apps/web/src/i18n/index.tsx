@@ -47,9 +47,29 @@ export type MessageKey = keyof typeof en | keyof typeof import("../cms/strings/e
 /** A number format for a locale, falling back to English for a tag the browser doesn't know. */
 const numberFormat = (locale: string, opts?: Intl.NumberFormatOptions) => { try { return new Intl.NumberFormat(locale, opts); } catch { return new Intl.NumberFormat("en", opts); } };
 
+/** A count's CLDR plural category in a language (cached). An unknown tag counts as English; a browser without
+ *  Intl.PluralRules (Chrome before 63) gets "other", the plain key. */
+const pluralRules = new Map<string, Intl.PluralRules | null>();
+export function pluralOf(lang: string, n: number): string {
+  if (!pluralRules.has(lang)) {
+    let rules: Intl.PluralRules | null = null;
+    try { rules = new Intl.PluralRules(lang); } catch { try { rules = new Intl.PluralRules("en"); } catch { rules = null; } }
+    pluralRules.set(lang, rules);
+  }
+  return pluralRules.get(lang)?.select(n) ?? "other";
+}
+/**
+ * A string from one dictionary. With a count (a number {n}), the count's plural form "<key>.<category>" (zero, one, two,
+ * few or many) wins when the dictionary has it; the key itself is the "other" form. So Arabic says «صفحتان», «٣ صفحات»
+ * and «١١ صفحة», and English "1 page", while a language without the forms keeps its one string.
+ */
+const lookup = (dict: Record<string, string> | undefined, lang: string, key: string, n: unknown) =>
+  dict && ((typeof n === "number" && dict[`${key}.${pluralOf(lang, n)}`]) || dict[key]);
+
 interface I18n {
   lang: string;
-  /** UI string with {var} interpolation; numbers are localised (Arabic-Indic digits for ar). */
+  /** UI string with {var} interpolation; numbers are localised (Arabic-Indic digits for ar). A number {n} picks the
+   *  string's plural form ("<key>.one", "<key>.few"…) where the language has one. */
   t: (key: MessageKey, vars?: Record<string, string | number>) => string;
   /** Content string for the current language, falling back to English. */
   L: (text: LocalText | undefined) => string;
@@ -65,9 +85,13 @@ export function I18nProvider({ lang, children }: { lang: string; children: React
   const meta = useMemo(() => languageOf(lang), [lang, v]); // eslint-disable-line react-hooks/exhaustive-deps
   const num = useCallback((n: number, opts?: Intl.NumberFormatOptions) => numberFormat(meta.numerals, opts).format(n), [meta.numerals]);
   const t = useCallback((key: MessageKey, vars?: Record<string, string | number>) => {
-    const s = MESSAGES[meta.code]?.[key] ?? MESSAGES.en[key] ?? key;
-    return vars ? s.replace(/\{(\w+)\}/g, (_, k) => { const x = vars[k]; return typeof x === "number" ? num(x) : String(x ?? ""); }) : s;
-  }, [meta.code, num, v]); // eslint-disable-line react-hooks/exhaustive-deps
+    const own = lookup(MESSAGES[meta.code], meta.code, key, vars?.n);
+    const s = own ?? lookup(MESSAGES.en, "en", key, vars?.n) ?? key;
+    const out = vars ? s.replace(/\{(\w+)\}/g, (_, k) => { const x = vars[k]; return typeof x === "number" ? num(x) : String(x ?? ""); }) : s;
+    // A string a right-to-left language doesn't have yet shows in English, isolated left to right (LRI…PDI), so its
+    // punctuation stays at its end: "Where do you teach?", not "?Where do you teach".
+    return own === undefined && meta.dir === "rtl" ? `⁦${out}⁩` : out;
+  }, [meta.code, meta.dir, num, v]); // eslint-disable-line react-hooks/exhaustive-deps
   const L = useCallback((text: LocalText | undefined) => pick(text, meta.code), [meta.code]);
   const value = useMemo(() => ({ lang: meta.code, t, L, num, dir: meta.dir, locale: meta.numerals }), [meta.code, meta.dir, meta.numerals, t, L, num]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

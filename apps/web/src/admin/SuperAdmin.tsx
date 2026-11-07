@@ -4,14 +4,18 @@ import { useAuth } from "../auth/AuthProvider";
 import { api, displayLogin, type BroadcastAudience, type BroadcastLang } from "../auth/api";
 import type { Org } from "../auth/types";
 import { isolate, useI18n, type MessageKey } from "../i18n";
-import { useBroadcasts, useOrgsByStatus, usePerson, type Broadcast } from "./data";
+import { useBroadcasts, useOrgRequest, useOrgsByStatus, usePerson, type Broadcast } from "./data";
+import { Ledger } from "./Ledger";
 import "../styles/admin.css";
+import "./strings";
 
 /** Display helpers for an organization: localized type, "city، country" and a locale date. */
 export function useOrgText() {
   const { t, locale } = useI18n();
   return {
-    type: (o: Org) => (["school", "university", "ministry", "ngo"].includes(o.type) ? t(`type.${o.type}` as "type.school") : o.type),
+    // The request form's four types, then the two platform admins can also give (OrgsAdmin: company, other).
+    type: (o: Org) => (["school", "university", "ministry", "ngo"].includes(o.type) ? t(`type.${o.type}` as "type.school")
+      : o.type === "company" || o.type === "other" ? t(`po.t.${o.type}`) : o.type),
     place: (o: Org) => [o.city, o.country].filter(Boolean).join(t("common.sep")) || "—",
     date: (ts?: { seconds: number } | null) => (ts ? new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(ts.seconds * 1000)) : "—"),
   };
@@ -23,8 +27,10 @@ export function SuperAdmin() {
   const { role } = useAuth();
   const ot = useOrgText();
   const isSuper = role === "superadmin";
-  const { data: pending = [], error: pendingErr } = useOrgsByStatus("pending", isSuper);
-  const { data: active = [], error: activeErr } = useOrgsByStatus("active", isSuper);
+  const pendingQ = useOrgsByStatus("pending", isSuper);
+  const activeQ = useOrgsByStatus("active", isSuper);
+  const { data: pending = [], error: pendingErr } = pendingQ;
+  const { data: active = [], error: activeErr } = activeQ;
   const sent = useBroadcasts(isSuper);
   const [msg, setMsg] = useState("");
   const [q, setQ] = useState("");
@@ -33,6 +39,8 @@ export function SuperAdmin() {
     return active.filter((o) => !s || [o.name, o.country, o.city].some((x) => x?.toLowerCase().includes(s)));
   }, [active, q]);
   const error = pendingErr ?? activeErr;
+  // Until each list is read, it says so: never "0" or "No requests".
+  const pendingLoading = pendingQ.loading && !pendingQ.data, activeLoading = activeQ.loading && !activeQ.data;
 
   return (
     <>
@@ -40,9 +48,9 @@ export function SuperAdmin() {
       <main className="screen wide stack-lg">
         {error && <p className="notice err">{error.message}</p>}
         <section className="tiles">
-          <div className="tile"><span>{t("sup.pending")}</span><strong>{num(pending.length)}</strong></div>
-          <div className="tile"><span>{t("sup.active")}</span><strong>{num(active.length)}</strong></div>
-          <div className="tile"><span>{t("adm.members")}</span><strong>{num(active.reduce((a, o) => a + (o.memberCount ?? 0), 0))}</strong></div>
+          <div className="tile"><span>{t("sup.pending")}</span><strong>{pendingLoading ? "…" : num(pending.length)}</strong></div>
+          <div className="tile"><span>{t("sup.active")}</span><strong>{activeLoading ? "…" : num(active.length)}</strong></div>
+          <div className="tile"><span>{t("adm.members")}</span><strong>{activeLoading ? "…" : num(active.reduce((a, o) => a + (o.memberCount ?? 0), 0))}</strong></div>
         </section>
 
         <Announce orgs={active} onSent={sent.reload} />
@@ -51,7 +59,7 @@ export function SuperAdmin() {
         <section className="panel stack">
           <h3>{t("sup.pending")}</h3>
           {msg && <p className="notice ok" role="status">{msg}</p>}
-          {pending.length === 0 ? <p className="muted">{t("sup.none")}</p> : pending.map((o) => <OrgRequest key={o.id} org={o} onDone={setMsg} />)}
+          {pendingLoading ? <p className="muted" aria-busy="true">{t("adm.loading")}</p> : pending.length === 0 ? <p className="muted">{t("sup.none")}</p> : pending.map((o) => <OrgRequest key={o.id} org={o} onDone={(m) => { setMsg(m); pendingQ.reload(); activeQ.reload(); }} />)}
         </section>
 
         <section className="panel">
@@ -59,7 +67,7 @@ export function SuperAdmin() {
             <h3>{t("sup.active")}</h3>
             <input type="search" placeholder={t("sup.search")} value={q} onChange={(e) => setQ(e.target.value)} aria-label={t("sup.search")} />
           </div>
-          {active.length === 0 ? <EmptyState icon="home" title={t("sup.noActive")} /> : (
+          {activeLoading ? <p className="muted" aria-busy="true">{t("adm.loading")}</p> : active.length === 0 ? <EmptyState icon="home" title={t("sup.noActive")} /> : (
             <div className="table-wrap">
               <table className="data-table">
                 <thead><tr><th>{t("sup.org")}</th><th>{t("org.type")}</th><th>{t("sup.place")}</th><th className="num">{t("adm.members")}</th><th>{t("sup.since")}</th></tr></thead>
@@ -76,6 +84,8 @@ export function SuperAdmin() {
             </div>
           )}
         </section>
+
+        {isSuper && <Ledger />}
       </main>
     </>
   );
@@ -86,6 +96,9 @@ function OrgRequest({ org, onDone }: { org: Org; onDone: (msg: string) => void }
   const { t, num } = useI18n();
   const ot = useOrgText();
   const { data: by } = usePerson(org.createdBy);
+  // The contact and reason are private (orgs/{id}/private/request); older requests kept them on the org document.
+  const { data: priv } = useOrgRequest(org.id);
+  const contact = priv?.contact || org.contact, reason = priv?.reason || org.reason;
   const [rejecting, setRejecting] = useState(false);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -95,7 +108,13 @@ function OrgRequest({ org, onDone }: { org: Org; onDone: (msg: string) => void }
     try {
       await api.reviewOrg({ orgId: org.id, approve, note: approve ? undefined : note.trim() || undefined });
       onDone(t(approve ? "sup.approved" : "sup.rejectedMsg", { org: isolate(org.name) }));
-    } catch (e) { setErr((e as Error).message); setBusy(false); }
+    } catch (e) {
+      // reviewOrg's reason: someone reviewed it meanwhile (the lists are read again, so the card goes), or the requester
+      // can't be made its admin now.
+      const why = String((e as { details?: { reason?: string } }).details?.reason ?? "");
+      if (why === "reviewed") { onDone(t("sup.errReviewed", { org: isolate(org.name) })); return; }
+      setErr(why === "requester-in-org" ? t("sup.errInOrg") : why === "requester-staff" ? t("sup.errStaff") : (e as Error).message); setBusy(false);
+    }
   };
 
   return (
@@ -106,9 +125,10 @@ function OrgRequest({ org, onDone }: { org: Org; onDone: (msg: string) => void }
         <div><dt>{t("sup.place")}</dt><dd><bdi>{ot.place(org)}</bdi></dd></div>
         {org.size ? <div><dt>{t("org.size")}</dt><dd>{num(org.size)}</dd></div> : null}
         <div><dt>{t("sup.requestedBy")}</dt><dd>{by ? <><bdi>{by.name}</bdi> <small dir="ltr">{displayLogin(by.email)}</small></> : "—"}</dd></div>
-        {org.contact && <div><dt>{t("org.contact")}</dt><dd dir="auto">{org.contact}</dd></div>}
-        {org.reason && <div className="span2"><dt>{t("org.reason")}</dt><dd dir="auto">{org.reason}</dd></div>}
+        {contact && <div><dt>{t("org.contact")}</dt><dd dir="auto">{contact}</dd></div>}
+        {reason && <div className="span2"><dt>{t("org.reason")}</dt><dd dir="auto">{reason}</dd></div>}
       </dl>
+      {by?.orgId && by.orgId !== org.id && <p className="notice">{t("sup.inOtherOrg")}</p>}
       {rejecting ? (
         <div className="stack-sm">
           <label className="dr-field-label" htmlFor={`note-${org.id}`}>{t("sup.rejectNote")}</label>

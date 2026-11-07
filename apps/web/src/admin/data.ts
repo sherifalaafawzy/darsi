@@ -1,39 +1,53 @@
 import { call } from "../fb";
 import { useCallback, useEffect, useState } from "react";
-import { collection, collectionGroup, doc, documentId, getCountFromServer, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where, type QueryConstraint } from "firebase/firestore";
+import { collection, collectionGroup, doc, documentId, getCountFromServer, getDoc, getDocs, limit, orderBy, query, serverTimestamp, setDoc, updateDoc, where, type QueryConstraint } from "firebase/firestore";
 import { db, storage } from "../firebase";
 import type { Org, Profile, Role } from "../auth/types";
+import type { EarnedCert, Sent } from "../content/cert";
+import { USERNAME_DOMAIN } from "../auth/api";
 
 export interface ProgressDoc { lessonId: string; unitId: string; track: string; accuracy: number; xp: number; seconds: number; completedAt: string; competencies?: string[] }
 type ByLang<T> = Partial<Record<"en" | "ar", T>>;
 /** broadcasts/{id}: written by the sendBroadcast function, readable by platform admins. */
 export interface Broadcast { id: string; title?: ByLang<string>; body?: ByLang<string>; link?: string; audience?: { type: "all" | "org" | "role"; orgId?: string; role?: string }; sentBy?: string; sentAt?: { seconds: number } | null; results?: ByLang<string | null> }
-export interface Submission { id: string; lessonId: string; unitId: string; text: string; fileUrl?: string | null; fileName?: string | null; status: "submitted" | "approved" | "revise"; score?: number; feedback?: string; createdAt?: { seconds: number } | null; orgId?: string | null }
+export interface Submission { id: string; lessonId: string; unitId: string; text: string; fileUrl?: string | null; fileName?: string | null; status: "submitted" | "approved" | "revise"; score?: number; feedback?: string; createdAt?: { seconds: number } | null; orgId?: string | null;
+  /** The project step it answers, a final project's or capstone milestone's explanation and AI use, and every file (admin/WorkBody.tsx shows them). */
+  stepId?: string; final?: boolean; explain?: string; aiUse?: string; files?: { url: string; name: string; type?: string }[] }
 
-function useLive<T>(subscribe: ((set: (v: T) => void, fail: (e: Error) => void) => () => void) | null, deps: unknown[]): { data?: T; error?: Error } {
-  const [s, setS] = useState<{ data?: T; error?: Error }>({});
-  useEffect(() => {
-    if (!subscribe) return;
-    setS({});
-    return subscribe((data) => setS({ data }), (error) => setS({ error }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-  return s;
-}
-const listOf = <T,>(path: string, ...c: QueryConstraint[]) => (set: (v: T[]) => void, fail: (e: Error) => void) =>
-  onSnapshot(query(collection(db, path), ...c), (snap) => set(snap.docs.map((d) => ({ id: d.id, uid: d.id, ...d.data() }) as T)), fail);
+/*
+ * Staff screens read once when they open, and again through reload() after their own writes or a Refresh button.
+ * There are no live listeners (TECHNICAL.md "Constraints"): a listener on an org's members would push every lesson any
+ * student finishes to every open admin or teacher screen. The `fresh` reads below never show one person's or one
+ * organization's data while another's loads.
+ */
+const listOf = async <T,>(path: string, ...c: QueryConstraint[]) =>
+  (await getDocs(query(collection(db, path), ...c))).docs.map((d) => ({ id: d.id, uid: d.id, ...d.data() }) as T);
+/** By name, with nameless profiles (a sign-up whose profile write lost a race) last instead of left out (orderBy drops them). */
+export const byName = (a: { name?: string | null }, b: { name?: string | null }) => Number(!a.name) - Number(!b.name) || (a.name ?? "").localeCompare(b.name ?? "");
 
-export const useOrg = (orgId?: string | null) =>
-  useLive<Org | null>(orgId ? (set, fail) => onSnapshot(doc(db, "orgs", orgId), (s) => set(s.exists() ? ({ id: s.id, ...s.data() } as Org) : null), fail) : null, [orgId]);
-export const useMembers = (orgId?: string | null) => useLive<Profile[]>(orgId ? listOf<Profile>("users", where("orgId", "==", orgId), orderBy("name")) : null, [orgId]);
+export const useOrg = (orgId?: string | null) => useOnce<Org | null>(orgId ? async () => {
+  const s = await getDoc(doc(db, "orgs", orgId));
+  return s.exists() ? ({ id: s.id, ...s.data() } as Org) : null;
+} : null, [orgId], true);
+export const useMembers = (orgId?: string | null) =>
+  useOnce<Profile[]>(orgId ? async () => (await listOf<Profile>("users", where("orgId", "==", orgId))).sort(byName) : null, [orgId], true);
 export const useMyStudents = (orgId?: string | null, teacherUid?: string) =>
-  useLive<Profile[]>(orgId && teacherUid ? listOf<Profile>("users", where("orgId", "==", orgId), where("teacherId", "==", teacherUid), orderBy("name")) : null, [orgId, teacherUid]);
-export const usePerson = (uid?: string) =>
-  useLive<Profile | null>(uid ? (set, fail) => onSnapshot(doc(db, "users", uid), (s) => set(s.exists() ? ({ uid: s.id, ...s.data() } as Profile) : null), fail) : null, [uid]);
-export const useProgress = (uid?: string) => useLive<ProgressDoc[]>(uid ? listOf<ProgressDoc>(`users/${uid}/progress`) : null, [uid]);
-export const useSubmissions = (uid?: string) => useLive<Submission[]>(uid ? listOf<Submission>(`users/${uid}/submissions`, orderBy("createdAt", "desc")) : null, [uid]);
-export const useOrgsByStatus = (status: Org["status"], enabled: boolean) => useLive<Org[]>(enabled ? listOf<Org>("orgs", where("status", "==", status), orderBy("createdAt", "desc")) : null, [status, enabled]);
-export const useMyOrgRequests = (uid?: string) => useLive<Org[]>(uid ? listOf<Org>("orgs", where("createdBy", "==", uid)) : null, [uid]);
+  useOnce<Profile[]>(orgId && teacherUid ? async () => (await listOf<Profile>("users", where("orgId", "==", orgId), where("teacherId", "==", teacherUid))).sort(byName) : null, [orgId, teacherUid], true);
+/** An organization's teachers and admins (who can be a student's teacher): one read, not the whole member list. */
+export const useOrgStaff = (orgId?: string | null) =>
+  useOnce<Profile[]>(orgId ? async () => (await listOf<Profile>("users", where("orgId", "==", orgId), where("role", "in", ["teacher", "orgAdmin"]))).sort(byName) : null, [orgId], true);
+export const usePerson = (uid?: string) => useOnce<Profile | null>(uid ? async () => {
+  const s = await getDoc(doc(db, "users", uid));
+  return s.exists() ? ({ uid: s.id, ...s.data() } as Profile) : null;
+} : null, [uid], true);
+export const useProgress = (uid?: string) => useOnce<ProgressDoc[]>(uid ? () => listOf<ProgressDoc>(`users/${uid}/progress`) : null, [uid], true);
+export const useSubmissions = (uid?: string) => useOnce<Submission[]>(uid ? () => listOf<Submission>(`users/${uid}/submissions`, orderBy("createdAt", "desc")) : null, [uid], true);
+/** users/{uid}/certs/{unitId}: a certificate as first earned (state/sync.ts), kept after its course is unpublished. */
+export interface CertDoc extends EarnedCert { id: string }
+export const useCerts = (uid?: string) => useOnce<CertDoc[]>(uid ? () => listOf<CertDoc>(`users/${uid}/certs`) : null, [uid], true);
+export const useOrgsByStatus = (status: Org["status"], enabled: boolean) =>
+  useOnce<Org[]>(enabled ? () => listOf<Org>("orgs", where("status", "==", status), orderBy("createdAt", "desc")) : null, [status, enabled], true);
+export const useMyOrgRequests = (uid?: string) => useOnce<Org[]>(uid ? () => listOf<Org>("orgs", where("createdBy", "==", uid)) : null, [uid], true);
 
 /** The last 20 announcements, newest first. A log, so it is read once (and again via reload() after a send), not live. */
 export function useBroadcasts(enabled: boolean): { data?: Broadcast[]; error?: Error; reload: () => void } {
@@ -51,8 +65,19 @@ export function useBroadcasts(enabled: boolean): { data?: Broadcast[]; error?: E
   return { ...s, reload };
 }
 
+/**
+ * The accounts an admin made in their organization since `since` (ms, this phone's clock), read once: after an import
+ * call whose answer was lost, the rows it may have made (admin/AddPeople.tsx). Two equality filters, no extra index.
+ */
+export async function madeSince(orgId: string, by: string, since: number): Promise<Profile[]> {
+  const made = await listOf<Profile>("users", where("orgId", "==", orgId), where("createdBy", "==", by));
+  return made.filter((p) => (p.createdAt?.seconds ?? 0) * 1000 >= since);
+}
+
 /** Days since an ISO date string, or Infinity. */
 export const daysSince = (iso?: string | null) => (iso ? (Date.now() - new Date(iso).getTime()) / 864e5 : Infinity);
+/** A class as it is saved: spaces trimmed and runs of spaces made one, at most 60 characters (the rules' limit), or null. */
+export const cleanGroup = (s: string) => s.replace(/\s+/g, " ").trim().slice(0, 60) || null;
 
 /* ---------- Platform analytics (/super/analytics; TECHNICAL.md "Analytics") ---------- */
 
@@ -69,18 +94,27 @@ export interface Overview {
 /** analytics/{yyyy-mm-dd}: the day's event counts from the collect function (nested maps of numbers). */
 export type DayCounts = { day: string } & { [k: string]: unknown };
 
-/** One read, again on reload(): admins' screens stay off live listeners too. */
-function useOnce<T>(load: (() => Promise<T>) | null, deps: unknown[]): { data?: T; error?: Error; reload: () => void } {
+/**
+ * One read, again on reload(): admins' screens stay off live listeners too. With `fresh`, data read for other deps
+ * (the previous person or organization) is never returned, and a failed reload keeps what was already shown.
+ * `loading`: the first read for these deps hasn't answered yet, so a screen shows that, not "nobody" or "0" (an empty
+ * list that was only still loading led an admin towards importing the same people twice). A reload keeps what is shown.
+ */
+function useOnce<T>(load: (() => Promise<T>) | null, deps: unknown[], fresh = false): { data?: T; error?: Error; loading: boolean; reload: () => void } {
   const [n, setN] = useState(0);
-  const [s, setS] = useState<{ data?: T; error?: Error }>({});
+  const key = JSON.stringify(deps);
+  const [s, setS] = useState<{ data?: T; error?: Error; key?: string }>({});
   useEffect(() => {
     if (!load) return;
     let live = true;
-    Promise.resolve().then(load).then((data) => { if (live) setS({ data }); }, (error: Error) => { if (live) setS({ error }); });
+    Promise.resolve().then(load).then((data) => { if (live) setS({ data, key }); },
+      (error: Error) => { if (live) setS((p) => (fresh && p.key === key ? { data: p.data, error, key } : { error, key })); });
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, n]);
-  return { ...s, reload: useCallback(() => setN((x) => x + 1), []) };
+  const reload = useCallback(() => setN((x) => x + 1), []);
+  const loading = load !== null && s.key !== key;
+  return fresh && s.key !== key ? { loading, reload } : { data: s.data, error: s.error, loading, reload };
 }
 
 export const useOverview = () => useOnce(async () => {
@@ -104,13 +138,27 @@ export const useActiveDevices = () => useOnce(async () => {
   return { d1, d7, d30 };
 }, []);
 
-/** Accounts, most recently active first, or by name when searching (prefix, as typed). */
+/** What a username login looks like (auth/api.ts loginToEmail): a search for one also asks Auth (findAccount). */
+const LOGIN = /^[a-z0-9._-]{3,}$/i;
+const namesFrom = async (s: string, max: number) => (await getDocs(query(collection(db, "users"), orderBy("name"), where("name", ">=", s), where("name", "<=", `${s}`), limit(max))))
+  .docs.map((d) => ({ uid: d.id, ...d.data() }) as Profile);
+/**
+ * Accounts, most recently active first; or, searching, the account with that exact email or username (resolved by Auth,
+ * as the org page's "Add a person" does) and accounts whose name starts with the text, as typed or with a capital first
+ * letter (Firestore compares names as written).
+ */
 export const usePeople = (search: string, max = 50) => useOnce(async () => {
   const s = search.trim();
-  const q = s
-    ? query(collection(db, "users"), orderBy("name"), where("name", ">=", s), where("name", "<=", `${s}`), limit(max))
-    : query(collection(db, "users"), orderBy("lastActive", "desc"), limit(max));
-  return (await getDocs(q)).docs.map((d) => ({ uid: d.id, ...d.data() }) as Profile);
+  if (!s) return (await getDocs(query(collection(db, "users"), orderBy("lastActive", "desc"), limit(max)))).docs.map((d) => ({ uid: d.id, ...d.data() }) as Profile);
+  const email = s.includes("@");
+  const [account, ...named] = await Promise.all([
+    email || LOGIN.test(s) ? findByEmail(email ? s : `${s}@${USERNAME_DOMAIN}`) : Promise.resolve([]),
+    ...(email ? [] : [...new Set([s, s.charAt(0).toLocaleUpperCase() + s.slice(1)])].map((x) => namesFrom(x, max))),
+  ]);
+  // The account's own profile, for the table's lessons and activity (Auth's answer has only its name and role).
+  const full = await Promise.all(account.map(async (a) => { const d = await getDoc(doc(db, "users", a.uid)); return d.exists() ? ({ uid: d.id, ...d.data() } as Profile) : a; }));
+  const seen = new Set<string>();
+  return [...full, ...named.flat()].filter((p) => !seen.has(p.uid) && !!seen.add(p.uid)).slice(0, max);
 }, [search, max]);
 
 /** A project with the account it belongs to (users/{uid}/submissions). */
@@ -138,6 +186,15 @@ export async function finishedAt(uid: string, unitId: string): Promise<string | 
   return rows.docs.map((d) => d.get("completedAt") as string | undefined).filter((x): x is string => typeof x === "string").sort().pop() ?? null;
 }
 
+/** The projects someone sent for one course, as content/cert.ts reads them (platform admins: a capstone's milestones). */
+export async function sentFor(uid: string, unitId: string): Promise<Sent[]> {
+  const rows = await getDocs(query(collection(db, "users", uid, "submissions"), where("unitId", "==", unitId)));
+  return rows.docs.map((d) => {
+    const at = d.get("createdAt") as { seconds?: number } | null | undefined;
+    return { unitId, lessonId: String(d.get("lessonId") ?? ""), stepId: (d.get("stepId") as string | undefined) || undefined, createdAt: typeof at?.seconds === "number" ? new Date(at.seconds * 1000).toISOString() : null };
+  });
+}
+
 /** The Google Analytics stream collect forwards to (config/analytics), set on /super/analytics. */
 export interface GaConfig { measurementId: string; apiSecret: string }
 export const useGaConfig = () => useOnce(async () => {
@@ -152,6 +209,14 @@ export const useInvites = (orgId?: string | null) => useOnce(orgId ? async () =>
   const [priv, org] = await Promise.all([getDoc(doc(db, "orgs", orgId, "private", "invites")), getDoc(doc(db, "orgs", orgId))]);
   const old = org.get("inviteCodes") as { teacher?: string; student?: string } | undefined;
   return { teacher: (priv.get("teacher") ?? old?.teacher) as string | undefined, student: (priv.get("student") ?? old?.student) as string | undefined };
+} : null, [orgId]);
+/**
+ * What an organization's requester told platform admins privately (orgs/{orgId}/private/request: its admins and platform
+ * admins only). Requests from before 2026-11 kept it on the org document, until scripts/migrate-org-requests.mjs.
+ */
+export const useOrgRequest = (orgId?: string | null) => useOnce(orgId ? async () => {
+  const s = await getDoc(doc(db, "orgs", orgId, "private", "request"));
+  return { contact: s.get("contact") as string | undefined, reason: s.get("reason") as string | undefined };
 } : null, [orgId]);
 
 /** Every organization, newest first (platform admins: /super/orgs). One read, again on reload(). */
@@ -171,6 +236,14 @@ export const findByEmail = async (email: string): Promise<(Profile & { emailVeri
 };
 /** Accounts whose name starts with what was typed (platform admins). */
 export const findByName = async (name: string) => (await getDocs(query(collection(db, "users"), orderBy("name"), where("name", ">=", name.trim()), where("name", "<=", `${name.trim()}`), limit(10)))).docs.map((d) => ({ uid: d.id, ...d.data() }) as Profile);
+/** Find accounts by exact email or username login (through Auth, findAccount), else by the start of their name (platform admins). */
+export async function findPeople(q: string): Promise<(Profile & { emailVerified?: boolean; claimed?: number })[]> {
+  const s = q.trim();
+  if (!s) return [];
+  if (s.includes("@")) return findByEmail(s);
+  const byLogin = LOGIN.test(s) ? await findByEmail(`${s}@${USERNAME_DOMAIN}`) : [];
+  return byLogin.length ? byLogin : findByName(s);
+}
 
 /* ---------- Darsi Super (docs/SUPER.md) ---------- */
 export interface PlanDef { id: string; name: { en: string; ar: string }; kind: "individual" | "seat" | "credits"; period: "month" | "year"; prices: { EGP?: number; USD?: number }; credits: number; active: boolean }

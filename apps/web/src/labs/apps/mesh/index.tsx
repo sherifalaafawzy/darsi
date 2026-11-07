@@ -12,7 +12,7 @@ import { links, NODES, path, routes, type Node } from "./model";
 const S = {
   en: {
     intro: "Sensors spread over a farm can't all reach the office gateway (the square) directly. Each one passes messages to a neighbour in radio range, hop by hop. Tap a sensor to break it, or switch to adding relays.",
-    map: "The farm: square is the gateway, circles are sensors, triangles are relays you added, lines are radio links; numbers are hops to the gateway", range: "Radio range", m: (n: string) => `${n} m`,
+    map: "The farm: square is the gateway, circles are sensors, triangles are relays you added, lines are radio links; numbers are hops to the gateway", range: "Radio range", m: { other: "{n} m" } as Forms,
     tap: "Tap the map to", breakIt: "Break or fix a sensor", relay: "Add a relay", reset: "Fix everything",
     reach: "Reach the gateway", avg: "Average hops", most: "Most hops", allOk: "Every sensor's message gets through.",
     cut: { one: "1 sensor is cut off: its messages are lost.", other: "{n} sensors are cut off: their messages are lost." } as Forms,
@@ -24,7 +24,7 @@ const S = {
   },
   ar: {
     intro: "لا تستطيع كل المستشعرات المنتشرة في المزرعة الوصول مباشرةً إلى بوابة المكتب (المربع). فيمرّر كل منها الرسائل إلى جار في مدى الإرسال، قفزة بعد قفزة. المس مستشعرًا لتعطّله، أو انتقل إلى إضافة المكرّرات.",
-    map: "المزرعة: المربع هو البوابة، والدوائر مستشعرات، والمثلثات مكرّرات أضفتها، والخطوط وصلات لاسلكية، والأرقام عدد القفزات إلى البوابة", range: "مدى الإرسال", m: (n: string) => `${n} متر`,
+    map: "المزرعة: المربع هو البوابة، والدوائر مستشعرات، والمثلثات مكرّرات أضفتها، والخطوط وصلات لاسلكية، والأرقام عدد القفزات إلى البوابة", range: "مدى الإرسال", m: { one: "متر واحد", two: "متران", few: "{n} أمتار", many: "{n} مترًا", other: "{n} متر" } as Forms,
     tap: "المس الخريطة لـ", breakIt: "تعطيل مستشعر أو إصلاحه", relay: "إضافة مكرّر", reset: "أصلح كل شيء",
     reach: "تصل إلى البوابة", avg: "متوسط القفزات", most: "أكثر القفزات", allOk: "تصل رسائل كل المستشعرات.",
     cut: { one: "مستشعر واحد معزول: رسائله تضيع.", two: "مستشعران معزولان: رسائلهما تضيع.", few: "{n} مستشعرات معزولة: رسائلها تضيع.", many: "{n} مستشعرًا معزولًا: رسائلها تضيع.", other: "{n} مستشعر معزول: رسائلها تضيع." } as Forms,
@@ -76,7 +76,7 @@ export default function Mesh({ meta, onDone }: LabProps) {
           <p className="lb-note">{s.map}</p>
         </div>
         <div className="stack">
-          <Slider label={s.range} value={range} min={1.5} max={5} step={0.1} onChange={setRange} format={(v) => s.m(num(Math.round(v * 100)))} />
+          <Slider label={s.range} value={range} min={1.5} max={5} step={0.1} onChange={setRange} format={(v) => count(Math.round(v * 100), s.m)} />
           <Segmented label={s.tap} value={mode} options={[["break", s.breakIt], ["relay", s.relay]]} onChange={setMode} />
           <div className="lb-row"><Button size="sm" variant="ghost" icon="sync" onClick={() => { setDown(new Set()); setNodes(NODES); }}>{s.reset}</Button></div>
           <p className={cut.length ? "lb-verdict is-warn" : "lb-verdict"} aria-live="polite">{cut.length ? count(cut.length, s.cut) : s.allOk}</p>

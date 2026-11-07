@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildCatalog, canManage, catalogEntry, catalogPath, idAllowed, isOwner, mediaPrefix, sizeByLang, sizeMB, staleVersions, unitPath, unitPrefix, versionOf } from "../src/catalog";
+import { allFigureUrls, buildCatalog, canManage, catalogEntry, catalogPath, figurePath, figureUrls, idAllowed, isOwner, mediaPrefix, sizeByLang, sizeMB, staleVersions, unitPath, unitPrefix, versionOf } from "../src/catalog";
 import { FILES, transform } from "../scripts/copy-shared.mjs";
 import type { Unit } from "../src/shared/types";
 import { errorsOf, validateUnit } from "../src/shared/validate";
@@ -98,6 +98,31 @@ describe("catalog", () => {
     const e = catalogEntry(u, "public", 1, 100_000);
     expect(e.sizeByLang).toEqual(by);
     expect(e.sizeMB).toBe(by.ar);
+  });
+  it("counts the pictures in the text that each language downloads (the capstones' screenshots)", () => {
+    const u = structuredClone(ai1);
+    const shot = (name: string) => `https://firebasestorage.googleapis.com/v0/b/darsi-f0685/o/content%2Fmedia%2Fcapstone-shared%2F${name}.jpg?alt=media`;
+    const read = u.lessons[0].steps.find((s) => s.type === "read");
+    if (read?.type !== "read") throw new Error("ai-1 has a reading");
+    // English shows one picture twice; Arabic a different one, with isolate marks in its path (read past, as the app does).
+    read.body = {
+      en: `Open the repository.\n\n![The green Code button](${shot("code")})\n\nThen again:\n\n![The green Code button](${shot("code")})\n\n![An app path](/media/x.jpg)`,
+      ar: `افتح المستودع.\n\n![زر Code الأخضر](\u2066${shot("code-ar")}\u2069)`,
+    };
+    expect(figureUrls(u, "en")).toEqual([shot("code")]);
+    expect(figureUrls(u, "ar")).toEqual([shot("code-ar")]);
+    expect(figureUrls(u, "fr")).toEqual([shot("code")]); // no French text: the English pictures
+    expect(allFigureUrls(u).sort()).toEqual([shot("code"), shot("code-ar")].sort());
+    const kb = { [shot("code")]: 512, [shot("code-ar")]: 1024 };
+    const without = sizeByLang(u, 100_000), withPics = sizeByLang(u, 100_000, kb);
+    expect(withPics.en).toBeCloseTo(without.en + 0.5, 5);
+    expect(catalogEntry(u, "public", 1, 100_000, kb).sizeByLang).toEqual(withPics);
+    // Only this bucket's published course media is sized; the path is decoded and checked.
+    expect(figurePath(shot("code"), "darsi-f0685")).toBe("content/media/capstone-shared/code.jpg");
+    expect(figurePath(`http://127.0.0.1:9199/v0/b/demo-darsi.appspot.com/o/content%2Fmedia%2Fx%2Fa.jpg?alt=media`, "demo-darsi.appspot.com")).toBe("content/media/x/a.jpg");
+    expect(figurePath(shot("code"), "another-bucket")).toBeNull();
+    expect(figurePath("https://firebasestorage.googleapis.com/v0/b/darsi-f0685/o/submissions%2Fx%2Fy.jpg", "darsi-f0685")).toBeNull();
+    expect(figurePath("https://firebasestorage.googleapis.com/v0/b/darsi-f0685/o/content%2Fmedia%2F..%2Fsecret.json", "darsi-f0685")).toBeNull();
   });
   it("orders units by track, then level, then title", () => {
     const u = (id: string, track: Unit["track"], level: number, title: string) => catalogEntry({ ...ai1, id, track, level, title: { en: title } }, "public", 1, 1000);

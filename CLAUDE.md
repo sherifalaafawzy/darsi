@@ -32,7 +32,7 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
 ### Next steps, in order
 1. Done: `src/admin/SuperAdmin.tsx` (/super), `src/admin/Teach.tsx` (/teach, /teach/:uid via `TeachPerson`), `src/org/OrgScreen.tsx` (/org). Pass names into `t()` through `isolate()` from `i18n` (the plain-text `<bdi>`).
 2. Done: `App.tsx` is AuthProvider > StoreProvider (key = uid or "guest") > I18n > Router.
-   - Each account has its own local store (`darsi:state:<uid>`); guests keep `darsi:state`. An account created in the last 10 minutes takes over the guest's progress. Any other account takes only the guest's settings.
+   - Each account has its own local store (`darsi:state:<uid>`); guests keep `darsi:state`. Only the sign-in that created an account on this device (sign-up or Google, within 10 minutes, no org claim: `adoptsGuest` in store.tsx) takes over the guest's progress, so a pupil signing in on a shared phone never inherits the last guest's work. Any other account takes only the guest's settings.
    - Guests are people who chose "Continue without an account" (`state.guest`) or who onboarded before accounts existed.
    - The staff routes (/org /admin… /teach… /super) skip the onboarding gate; the learning routes don't.
    - Signing in remounts the router (new store key), so the account screens' own `nav()` after sign-in never runs. `SignedIn` in App.tsx redirects instead and keeps `?org=1` → `/org?request=1`.
@@ -360,6 +360,44 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - **Stages:** "Where do you study?" / "Where do you teach?" (onboarding and Me) offer only stages with a published course for that audience in a visible track (`stagesWithCourses` / `useStagesOffered` in `content/mine.ts`); for university teachers the university courses count. No catalog (loading, offline) or no courses at all: every stage.
     - **Live courses:** at the user's choice, the 33 university-level courses stay: the 12 university-teacher courses (`*-u*`), the 12 students' Advanced courses (`*-s4`, `ai-d1`–`ai-d3`) and the 9 teachers' Advanced courses (`*-4-1`). The other 54 (primary and secondary levels) were unpublished (drafts and progress kept; republish from the list or with `npm run seed -- <ids>`).
     - **Checked:** web 1,408 tests (stage rule, onboarding and Me with only university courses, list Unpublish), `tsc`, e2e 30/30 on a clean build, startup 4 files (190.8 KB gzipped).
+30. Done (2026-11-08): **the release pass.** The user asked for "one final revision on content, security, videos, labs, ui, ux" so the platform is ready to ship for students, teachers and organizations, with full admin support. Built in the worktree `H:/tmp/darsi-final` from ae9ac16e.
+    - **How:** an audit of about 800 findings, then fixes by file-owning groups; content, video and starter fixes; walkthroughs of every role (en/ar, 375/1280, Chromium, WebKit, Firefox) on the local stack; then a fix round for what they found.
+    - **Learners:**
+      - The learning profile (onboarded, tracks, levels, audience, stage, weekly goal) syncs to `users/{uid}`, so a new phone skips onboarding.
+      - Certificates: `users/{uid}/certs` records, synced; codes depend on the course, time and account, not the name (old codes kept).
+      - Me → My projects shows reviews; "Send a new version" opens the project step alone.
+      - Placement walks only levels with a course.
+      - Arabic-Indic digits work in typed answers and code steps.
+      - The floating buttons step aside on scroll and in answer sheets.
+      - Tabs merge their progress.
+      - `/licences`.
+    - **Staff:**
+      - Loading states.
+      - No actions on your own account; the last admin can't be removed (server).
+      - Refusals carry `details.reason` codes, shown in the UI language (`admin/refusals.ts`).
+      - Course titles of unpublished courses come from `admin/courseTitles.json`: re-run `apps/web/scripts/course-titles.mjs` when courses change.
+      - Data export and deletion; org requests' contact in `private/request` (run `scripts/migrate-org-requests.mjs` once after deploy).
+    - **Editor:** autosave on leave (`cms/autosave.ts`), languages autosave, `units.same` marks a draft equal to a published version, field names in checks.
+    - **Content:**
+      - all 51 live courses fixed;
+      - 126 videos re-voiced and re-rendered;
+      - quiz answers spread over A/B/C in 97 videos;
+      - true/false balanced (121/123; placement 25/25);
+      - kits rebuilt;
+      - nine starter repos fixed.
+    - **Pipeline notes:**
+      - After `import-media`, run `node scripts/isolate-code.mjs --fix` (transcripts come back unisolated).
+      - Lesson Studio's generators (`scripts/darsi/arch-videos.mjs`, `out/ds-work`, `out/code-tmp`) don't carry this pass's fixes or the quiz reorder; never regenerate from them.
+      - Narration and conversion can hit Windows "UNKNOWN: unknown error, open" file locks while renders run; run them apart.
+    - **Checked:**
+      - web 2,332 tests, functions 329, rules 40, design system 66, Lesson Studio 335;
+      - `tsc`, `lint:css`, contrast;
+      - e2e 30/30 on a private build;
+      - the local stack in Chromium (service worker, 51 courses, no Firebase for guests).
+    - **Open:**
+      - Startup is 8 files (entry, `i18n`, `app-config` (src/firebase-config.ts, renamed in vite.config so the e2e guard only matches the SDK), `platform`, `dist`, `robot`, `preload-helper`, `rolldown-runtime`), 226 KB gzipped. Rolldown refuses to merge those shared modules into the entry since this pass. Neither new modules, staff screens, lab apps, the vendored player nor vite.config caused it alone (bisected 2026-11-07).
+      - The Report button can overlap the first card before any scroll.
+      - WebKit stale-after-review to check on a real iPhone.
 9. Not started: the security review. The user asked for static scanning of the rules, functions and client, plus a pentest of the deployed URL with `H:\htdocs\pentest-lab` (allowlist-gated; add only darsi-f0685 hosts). It is deferred until the code is finished.
 
 ### Firebase project (live): darsi-f0685

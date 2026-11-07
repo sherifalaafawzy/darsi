@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { BrandMark, Button, Icon, Mark, ProgressBar, TrackChip, cx, trackClass, useBrand, useTrackStyles, type Track } from "./primitives";
 
 export interface LessonCardProps { track: Track; title: string; meta?: string; progress?: number; offline?: boolean; offlineLabel?: string; trackLabel?: string; action?: ReactNode; }
@@ -28,12 +28,23 @@ export function LessonTopBar({ value, track, valueText, onClose, closeLabel = "C
   );
 }
 
-export interface FeedbackSheetProps { result: "correct" | "wrong"; title: string; explanation?: string; answer?: string; answerLabel?: string; onContinue?: () => void; continueLabel?: string; floating?: boolean; }
-export function FeedbackSheet({ result, title, explanation, answer, answerLabel = "Answer: ", onContinue, continueLabel = "Continue", floating = true }: FeedbackSheetProps) {
+export interface FeedbackSheetProps {
+  result: "correct" | "wrong"; title: string; explanation?: string; answer?: string; answerLabel?: string; onContinue?: () => void; continueLabel?: string; floating?: boolean;
+  /** Move focus to the result's title when the sheet opens (default): the Check button it replaces is gone, and focus would drop to the page. */
+  autoFocus?: boolean;
+}
+/**
+ * A checked answer's result. It replaces the bar with Check, so it takes the focus (its title, which a screen reader
+ * reads; Tab goes on to Continue). It isn't a live region: a page that wants the explanation read out announces it in a
+ * live region that is already on the page (a region inserted already filled is often not read).
+ */
+export function FeedbackSheet({ result, title, explanation, answer, answerLabel = "Answer: ", onContinue, continueLabel = "Continue", floating = true, autoFocus = true }: FeedbackSheetProps) {
   const ok = result === "correct";
+  const head = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { if (autoFocus) head.current?.focus({ preventScroll: true }); }, [autoFocus]);
   return (
-    <section className={cx("dr-sheet", ok ? "dr-sheet-correct" : "dr-sheet-wrong", floating && "dr-floating-bottom")} role="status" aria-live="polite">
-      <div className="dr-sheet-head"><span className="dr-sheet-badge"><Icon name={ok ? "check" : "cross"} /></span><h2 className="dr-sheet-title">{title}</h2></div>
+    <section className={cx("dr-sheet", ok ? "dr-sheet-correct" : "dr-sheet-wrong", floating && "dr-floating-bottom")}>
+      <div className="dr-sheet-head"><span className="dr-sheet-badge"><Icon name={ok ? "check" : "cross"} /></span><h2 ref={head} className="dr-sheet-title" tabIndex={-1}>{title}</h2></div>
       {explanation && <p className="dr-sheet-body">{explanation}</p>}
       {answer && <p className="dr-sheet-answer"><strong>{answerLabel}</strong><bdi>{answer}</bdi></p>}
       <Button block variant={ok ? "primary" : "secondary"} onClick={onContinue} iconEnd="next">{continueLabel}</Button>
@@ -76,7 +87,8 @@ export function LessonComplete({ title, subtitle, stats = [], tryTomorrow, tryLa
   return (
     <section className="dr-complete">
       <div className="dr-complete-burst" aria-hidden><Mark size={72} /></div>
-      <h2 className="dr-complete-title">{title}</h2>
+      {/* Focusable from a script: a lesson moves focus here when it ends. */}
+      <h2 className="dr-complete-title" tabIndex={-1}>{title}</h2>
       {subtitle && <p className="dr-complete-sub">{subtitle}</p>}
       <dl className="dr-complete-stats">
         {stats.map((s, i) => <div key={i} className={cx("dr-stat", !s.tone || s.tone === "kola" ? "dr-stat-kola" : trackClass(styleOf(s.tone)))}><dt>{s.label}</dt><dd>{s.value}</dd></div>)}

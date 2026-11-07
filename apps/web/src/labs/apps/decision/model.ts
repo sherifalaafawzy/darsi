@@ -22,7 +22,14 @@ export function totals(scores: Scores, weights: Record<Criterion, number>): Reco
   const wsum = CRITERIA.reduce((s, c) => s + weights[c], 0) || 1;
   return Object.fromEntries(OPTIONS.map((o) => [o, CRITERIA.reduce((s, c) => s + weights[c] * scores[o][c], 0) / (5 * wsum)])) as Record<Option, number>;
 }
-export const winner = (t: Record<Option, number>) => OPTIONS.reduce((b, o) => (t[o] > t[b] ? o : b), OPTIONS[0]);
+/**
+ * The options with the best total: one, or all of those that tie. The starting weights tie the museum and the science
+ * centre (54 of 70 each), as the lessons and their video say; picking the first of them made the lab call a tie a win.
+ */
+export function leaders(t: Record<Option, number>): Option[] {
+  const top = Math.max(...OPTIONS.map((o) => t[o]));
+  return OPTIONS.filter((o) => top - t[o] < 1e-9);
+}
 
 /** Sports day: outside or in the hall? How good each would be (0–10) if it stays dry or rains. */
 export interface Payoff { outsideDry: number; outsideRain: number; hallDry: number; hallRain: number }

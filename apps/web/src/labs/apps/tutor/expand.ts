@@ -48,6 +48,17 @@ export interface BuiltScene {
 
 const tx = (en: string, ar: string) => ({ en, ar });
 
+/**
+ * The Arabic answer lines are Arabic prose: Arabic-Indic digits (ar-EG, the app's Arabic number locale) and «،» between
+ * items, as written Arabic everywhere else in Darsi. Code and conditions inside a line (`mark >= 50?`) stay as they are.
+ */
+const AR_NUM = new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 2, useGrouping: false });
+export const arNum = (v: number) => AR_NUM.format(v);
+const arList = (xs: readonly (number | string)[], sep = "، ") => xs.map((x) => (typeof x === "number" ? arNum(x) : x)).join(sep);
+/** A counted noun in Arabic (zero, one, two, few 3–10, many 11–99, other), with the number written by arNum. */
+const arCount = (n: number, forms: Record<"zero" | "one" | "two" | "few" | "many" | "other", string>) =>
+  forms[new Intl.PluralRules("ar").select(n) as keyof typeof forms].replace("{n}", arNum(n));
+
 export function sceneJson(spec: SceneSpec): string {
   return JSON.stringify(spec);
 }
@@ -385,9 +396,10 @@ export function expand(spec: SceneSpec): BuiltScene {
       ...p, label: spec.nodes[i], at: "b" as const, ...(i === spec.to ? { shape: "square" as const } : {}),
     }));
     const via = run.path.map((i) => spec.nodes[i]).join(", ");
+    const viaAr = arList(run.path.map((i) => spec.nodes[i]), " ← ");
     const told = tx(
       `Dijkstra settles the nearest place first. The shortest way is ${via}: ${run.total}.`,
-      `ديكسترا يثبّت أقرب مكان أولًا. أقصر طريق هو ${via}، ${run.total}.`,
+      `ديكسترا يثبّت أقرب مكان أولًا. أقصر طريق هو ${viaAr}، وطوله ${arNum(run.total)}.`,
     );
     const body = {
       id: "map", x: 80, y: 108, w: 1120, h: 560, type: "graph", fit: "fill",
@@ -401,12 +413,16 @@ export function expand(spec: SceneSpec): BuiltScene {
     const frames = bubble(spec.values);
     const dur = durFor(frames.length);
     const swaps = frames.filter((f) => f.swap).length;
-    const sorted = [...spec.values].sort((a, b) => a - b).join(", ");
+    const inOrder = [...spec.values].sort((a, b) => a - b);
+    const sorted = inOrder.join(", ");
     const swapEn = swaps === 1 ? "It makes 1 swap" : `It makes ${swaps} swaps`;
-    const swapAr = swaps === 1 ? "يفعل تبديلًا واحدًا" : `يفعل ${swaps} تبديلات`;
+    const swapAr = arCount(swaps, {
+      zero: "لا يحتاج إلى أي تبديل", one: "يجري تبديلًا واحدًا", two: "يجري تبديلين",
+      few: "يجري {n} تبديلات", many: "يجري {n} تبديلًا", other: "يجري {n} تبديل",
+    });
     const line = tx(
       `Bubble sort compares neighbours and swaps them when the left one is bigger. ${swapEn}. In order: ${sorted}.`,
-      `الترتيب الفقاعي يقارن كل جارين ويبدّلهما إذا كان الأيسر أكبر. ${swapAr}. بعد الترتيب: ${sorted}.`,
+      `الترتيب الفقاعي يقارن كل جارين ويبدّلهما إذا كان الأيسر أكبر. ${swapAr}. بعد الترتيب: ${arList(inOrder)}.`,
     );
     const body = {
       id: "arr", x: 48, y: 120, w: 1184, h: 540, type: "array", values: spec.values, index: true,
@@ -427,7 +443,7 @@ export function expand(spec: SceneSpec): BuiltScene {
   const dur = durFor(run.frames.length);
   const line = tx(
     `Pack the best points per kilo first, then whatever still fits. The score is ${run.value}.`,
-    `عبّئ الأغلى لكل كيلو أولًا، ثم ما يتسع بعد ذلك. المجموع ${run.value}.`,
+    `عبّئ الأغلى لكل كيلو أولًا، ثم ما يتسع بعد ذلك. المجموع ${arNum(run.value)}.`,
   );
   const body = {
     id: "truck", x: 160, y: 100, w: 960, h: 580, type: "knapsack", cap: spec.cap,
@@ -476,11 +492,11 @@ function signalScene(spec: Extract<SceneSpec, { kind: "signal" }>, json: string)
   const line = spec.adc
     ? tx(
       `An ADC with ${spec.adc} bits turns the smooth reading into ${2 ** spec.adc} steps, so the value jumps from step to step.`,
-      `محوّل بـ ${spec.adc} بتات يحوّل القراءة الملساء إلى ${2 ** spec.adc} درجات، فتقفز القيمة من درجة إلى أخرى.`,
+      `محوّل ذو ${arCount(spec.adc, { zero: "{n} بت", one: "بت واحد", two: "بتين", few: "{n} بتات", many: "{n} بتًا", other: "{n} بت" })} يحوّل القراءة الملساء إلى ${arCount(2 ** spec.adc, { zero: "{n} درجة", one: "درجة واحدة", two: "درجتين", few: "{n} درجات", many: "{n} درجة", other: "{n} درجة" })}، فتقفز القيمة من درجة إلى أخرى.`,
     )
     : tx(
       `The fan switches on above ${spec.high} and off only below ${spec.low}. Two lines stop it flickering.`,
-      `تعمل المروحة فوق ${spec.high} ولا تتوقف إلا تحت ${spec.low}. الخطان يمنعانها من التذبذب.`,
+      `تعمل المروحة فوق ${arNum(spec.high)} ولا تتوقف إلا تحت ${arNum(spec.low)}. الخطان يمنعانها من التذبذب.`,
     );
   const body = {
     id: "sig", x: 48, y: 100, w: 1184, h: 560, type: "signal",
@@ -513,7 +529,7 @@ function traceScene(spec: Extract<SceneSpec, { kind: "trace" }>, json: string): 
   const dur = durFor(steps.length);
   const line = tx(
     `Python runs one line at a time. total starts at 0 and grows by each mark. It prints ${total}.`,
-    `ينفّذ بايثون سطرًا في كل مرة. يبدأ total من صفر ويكبر بكل درجة. ويطبع ${total}.`,
+    `ينفّذ بايثون سطرًا في كل مرة. يبدأ total من صفر ويكبر بكل درجة. ويطبع ${arNum(total)}.`,
   );
   const body = {
     id: "code", x: 80, y: 110, w: 1120, h: 540, type: "trace", code, steps,
@@ -571,7 +587,7 @@ function queryScene(spec: Extract<SceneSpec, { kind: "query" }>, json: string): 
   const names = top.map((i) => rows[i][0]).join(", ");
   const line = tx(
     `WHERE keeps marks of ${spec.min} or more. ORDER BY puts the highest first, and LIMIT keeps two: ${names}.`,
-    `يبقي WHERE الدرجات من ${spec.min} فأكثر. ويضع ORDER BY الأعلى أولًا، ويبقي LIMIT اثنين: ${names}.`,
+    `يبقي WHERE الدرجات من ${arNum(spec.min)} فأكثر. ويضع ORDER BY الأعلى أولًا، ويبقي LIMIT اثنين: ${top.map((i) => words[rows[i][0] as keyof typeof words].ar).join("، ")}.`,
   );
   const body = {
     id: "q", x: 48, y: 110, w: 1184, h: 560, type: "query", sql, words, layout: "top",
@@ -594,7 +610,7 @@ function patternScene(spec: Extract<SceneSpec, { kind: "pattern" }>, json: strin
   const dur = durFor(frames.length);
   const line = tx(
     `A pattern is something that repeats. Here ${spec.a} is always followed by ${spec.b}.`,
-    `النمط شيء يتكرّر. هنا يأتي ${spec.b} دائمًا بعد ${spec.a}.`,
+    `النمط شيء يتكرّر. هنا يأتي ${arNum(spec.b)} دائمًا بعد ${arNum(spec.a)}.`,
   );
   const body = {
     id: "arr", x: 48, y: 140, w: 1184, h: 480, type: "array", values, index: true,
@@ -627,7 +643,7 @@ function netScene(spec: Extract<SceneSpec, { kind: "net" }>, json: string): Buil
     const dur = 8;
     const line = tx(
       `A neuron multiplies its ${k} inputs by weights (${ws.join(", ")}), adds a bias (${bias}), and passes the sum through an activation so the output fires from 0 to 1.`,
-      `تضرب الخلية العصبية مدخلاتها الـ ${k} في الأوزان (${ws.join("، ")})، وتجمع الانحياز (${bias})، وتحوّل المجموع عبر دالة تنشيط ليخرج رقم بين 0 و 1.`,
+      `تضرب الخلية العصبية مدخلاتها الـ${arNum(k)} في الأوزان (${arList(ws)})، وتجمع الانحياز (${arNum(bias)})، وتحوّل المجموع عبر دالة تنشيط ليخرج رقم بين ${arNum(0)} و${arNum(1)}.`,
     );
     const body = {
       id: "net", x: 80, y: 110, w: 1120, h: 540, type: "net", layers: L, weights, acts, values: true,
@@ -797,7 +813,7 @@ function plotScene(spec: Extract<SceneSpec, { kind: "plot" }>, json: string): Bu
     const dur = durFor(pts.length);
     const line = tx(
       `Gradient descent starts at weight ${x0} and steps downhill along the slope until the error (loss) reaches its lowest point at 4.`,
-      `يبدأ الانحدار التدريجي عند الوزن ${x0} وينزل مع الميل خطوة بعد خطوة حتى يصل الخطأ (الخسارة) إلى أدنى نقطة عند 4.`,
+      `يبدأ الانحدار التدريجي عند الوزن ${arNum(x0)} وينزل مع الميل خطوة بعد خطوة حتى يصل الخطأ (الخسارة) إلى أدنى نقطة عند ${arNum(4)}.`,
     );
     const body = {
       id: "plot", x: 64, y: 110, w: 1152, h: 548, type: "plot", xr: [0, 8], yr: [0, 4], grid: true,
@@ -895,10 +911,11 @@ function gatesScene(spec: Extract<SceneSpec, { kind: "gates" }>, json: string): 
 function bitsScene(spec: Extract<SceneSpec, { kind: "bits" }>, json: string): BuiltScene {
   const dur = durFor(spec.values.length);
   const last = spec.values[spec.values.length - 1];
-  const places = Array.from({ length: spec.n }, (_, i) => 2 ** (spec.n - 1 - i)).join(", ");
+  const placeValues = Array.from({ length: spec.n }, (_, i) => 2 ** (spec.n - 1 - i));
+  const places = placeValues.join(", ");
   const line = tx(
     `In binary, each bit doubles the place value (${places}). Adding the lit powers of two gives ${spec.values.join(" → ")} (ending at ${last}).`,
-    `في النظام الثنائي، يضاعف كل بت قيمة الخانة (${places}). وجمع القوى المضيئة للعدد 2 يعطي ${spec.values.join(" ← ")} (حتى ${last}).`,
+    `في النظام الثنائي، يضاعف كل بت قيمة الخانة (${arList(placeValues)}). وجمع القوى المضيئة للعدد ${arNum(2)} يعطي ${arList(spec.values, " ← ")} (حتى ${arNum(last)}).`,
   );
   const body = {
     id: "bits", x: 64, y: 120, w: 1152, h: 520, type: "bits",
@@ -960,9 +977,14 @@ function seqScene(spec: Extract<SceneSpec, { kind: "seq" }>, json: string): Buil
     ease: "step" as const,
   }));
   const stepsText = spec.msgs.map(([a, b, m]) => `${spec.actors[a]} → ${spec.actors[b]} (${m})`).join(", ");
+  // Arabic names read right to left, so their arrow points left; Latin names (the built-in scenes) stay a left-to-right run.
+  const stepsAr = spec.msgs.map(([a, b, m]) => {
+    const [from, to] = [spec.actors[a], spec.actors[b]];
+    return /\p{Script=Arabic}/u.test(from + to) ? `${from} ← ${to} (${m})` : `${from} → ${to} (${m})`;
+  }).join("، ");
   const line = tx(
     `Watch the messages in order: ${stepsText}.`,
-    `تابع الرسائل بالترتيب: ${stepsText}.`,
+    `تابع الرسائل بالترتيب: ${stepsAr}.`,
   );
   const body = {
     id: "seq", x: 64, y: 110, w: 1152, h: 548, type: "sequence", participants, messages,
@@ -998,7 +1020,7 @@ function searchScene(spec: Extract<SceneSpec, { kind: "search" }>, json: string)
   const dur = durFor(frames.length);
   const line = tx(
     `Binary search checks the middle item of the sorted list and halves the search range each step${found >= 0 ? ` until it finds ${spec.target} at index ${found}` : ""}.`,
-    `يفحص البحث الثنائي العنصر الأوسط في القائمة المرتّبة ويقسم النطاق إلى النصف في كل خطوة${found >= 0 ? ` حتى يجد ${spec.target} في الخانة ${found}` : ""}.`,
+    `يفحص البحث الثنائي العنصر الأوسط في القائمة المرتّبة ويقسم النطاق إلى النصف في كل خطوة${found >= 0 ? ` حتى يجد ${arNum(spec.target)} في الخانة ${arNum(found)}` : ""}.`,
   );
   const body = {
     id: "arr", x: 48, y: 120, w: 1184, h: 540, type: "array", values, index: true,

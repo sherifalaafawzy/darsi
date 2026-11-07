@@ -27,6 +27,7 @@ export function AppTour({ home }: { home: string }) {
   const running = useRef(false);
   const tour = useRef<{ mod: typeof import("./Tour"); at: string } | null>(null);
   const staff = accountLinks(role, Boolean(user)).some((l) => l.path !== "/org");
+  const all = role === "superadmin";
   // Learners take the tour once onboarding is done (their tracks chosen); admins skip onboarding, so they don't wait.
   const settled = state.onboarded || role === "orgAdmin" || role === "superadmin";
   const latest = useRef({ settled, pathname });
@@ -45,13 +46,13 @@ export function AppTour({ home }: { home: string }) {
       // onboarding step, another page, a sheet). By itself it starts only on the screen it was meant for, with the
       // navigation there to point at.
       if (!document.querySelector(".app-shell") || document.querySelector(".dr-onb")) return;
-      if (auto && (!latest.current.settled || latest.current.pathname !== from || mod.stops(staff).length <= 2)) return;
+      if (auto && (!latest.current.settled || latest.current.pathname !== from || mod.stops(staff, all).length <= 2)) return;
       if (auto && document.querySelector(".dr-sheet, .track-menu, [role=dialog][aria-modal=true]")) return; // something else is open: next time
       dispatch({ type: "set", patch: { toured: Date.now() } });
       tour.current = { mod, at: location.pathname };
-      await mod.runTour({ t, dir, staff });
+      await mod.runTour({ t, dir, staff, all });
     } catch { /* the chunk isn't on this device yet, and it's offline: next time */ } finally { running.current = false; tour.current = null; }
-  }, [t, dir, staff, dispatch]);
+  }, [t, dir, staff, all, dispatch]);
 
   // Once per account on this device, when the learning screens first show (after onboarding).
   const auto = Boolean(user) && !state.toured && settled && !QUIET.test(pathname);
@@ -68,12 +69,13 @@ export function AppTour({ home }: { home: string }) {
     if (open && (pathname !== open.at || !settled)) open.mod.stopTour();
   }, [pathname, settled]);
 
-  // From Me: the tour goes where the learning is, so every stop can be shown.
+  // From Me: the tour goes where the learning is, so every stop can be shown (platform admins open it without onboarding).
+  const learns = state.onboarded || all;
   useEffect(() => {
-    const h = () => { nav(state.onboarded ? "/learn" : home); setTimeout(() => void run(false), 300); };
+    const h = () => { nav(learns ? "/learn" : home); setTimeout(() => void run(false), 300); };
     window.addEventListener(OPEN_TOUR, h);
     return () => window.removeEventListener(OPEN_TOUR, h);
-  }, [nav, home, state.onboarded, run]);
+  }, [nav, home, learns, run]);
 
   return null;
 }

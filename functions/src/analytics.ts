@@ -15,6 +15,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { db, freshCaller } from "./admin.js";
 import { superStats } from "./billingCore.js";
 import { dailyCounts, dayOf, measurementPayloads, overview, parseBatch, sanitize, type Batch, type Counts, type Known, type OrgRow, type UserRow } from "./analyticsCore.js";
+import { clientIp } from "./clientIp.js";
 import { catalogOf } from "./courses.js";
 import { loadLanguages, loadTracks } from "./settings.js";
 import { LAB_IDS } from "./shared/labs.js";
@@ -55,9 +56,9 @@ async function countDevice(batch: Batch, day: string) {
 }
 
 /**
- * Requests per minute, per instance: per address and device (L6: the client's address is Hosting's fastly-client-ip,
- * or the first x-forwarded-for hop), per address alone (a school's phones share one), and for the whole instance:
- * the brake that holds even when someone makes up addresses and device ids.
+ * Requests per minute, per instance: per address and device (L6: the client's address as clientIp.ts finds it behind
+ * Hosting and Cloudflare), per address alone (a school's phones share one), and for the whole instance: the brake that
+ * holds even when someone makes up addresses and device ids.
  */
 const seen = new Map<string, { at: number; n: number }>();
 function over(key: string, max: number, now: number) {
@@ -72,8 +73,7 @@ export function tooMany(ip: string, device: string, now = Date.now()) {
   if (++instance.n > LIMITS.instance) return true;
   return over(`a:${ip}`, LIMITS.address, now) || over(`d:${ip}:${device}`, LIMITS.device, now);
 }
-export const clientIp = (h: Record<string, string | string[] | undefined>, fallback = "?") =>
-  String(h["fastly-client-ip"] ?? "").trim() || String(h["x-forwarded-for"] ?? "").split(",")[0].trim() || fallback;
+export { clientIp };
 
 /** The ids counts may be kept under (sanitize), re-read at most every 10 minutes per instance. */
 let knownIds: { at: number; v: Promise<Known> } | null = null;
@@ -142,7 +142,7 @@ export const collect = onRequest({ maxInstances: 3, memory: "256MiB", timeoutSec
 /** Every account's role, organization, dates and summary (only those fields), and every organization. */
 async function buildOverview() {
   const [users, orgs, subs] = await Promise.all([
-    db.collection("users").select("role", "orgId", "createdAt", "lastActive", "superSeat", "summary.lessonsDone", "summary.xp", "summary.avgAccuracy", "summary.lastActive", "summary.weeks").get(),
+    db.collection("users").select("role", "orgId", "createdAt", "lastActive", "superSeat", "summary.lessonsDone", "summary.graded", "summary.xp", "summary.avgAccuracy", "summary.lastActive", "summary.weeks").get(),
     db.collection("orgs").select("name", "status", "country", "memberCount", "licence").get(),
     db.collection("subscriptions").get(),
   ]);
@@ -151,7 +151,7 @@ async function buildOverview() {
     const last = [u.lastActive, s.lastActive].filter((x): x is string => typeof x === "string").sort().pop() ?? null;
     return {
       role: u.role, orgId: u.orgId ?? null, createdAt: u.createdAt instanceof Timestamp ? u.createdAt.toMillis() : null, lastActive: last,
-      lessonsDone: Number(s.lessonsDone) || 0, xp: Number(s.xp) || 0, avgAccuracy: Number(s.avgAccuracy) || 0, weeks: (s.weeks as Record<string, number>) ?? {},
+      lessonsDone: Number(s.lessonsDone) || 0, ...(typeof s.graded === "number" ? { graded: s.graded } : {}), xp: Number(s.xp) || 0, avgAccuracy: Number(s.avgAccuracy) || 0, weeks: (s.weeks as Record<string, number>) ?? {},
     };
   });
   const orgRows: OrgRow[] = orgs.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<OrgRow, "id">) }));

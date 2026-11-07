@@ -65,7 +65,7 @@ function Report({ r, onChanged }: { r: BugReport; onChanged: () => void }) {
         <span className="pill">{t(STATUS[r.status] ?? "bg.statusNew")}</span>{" "}
         {when}{t("common.sep")}
         {r.user ? <Link className="person-link" to={`/super/people/${r.user.uid}`}><bdi>{r.user.name || r.user.email || r.user.uid}</bdi></Link> : t("bg.guest")}
-        {r.user && <>{t("common.sep")}{ROLES.includes(r.user.role) ? t(`role.${r.user.role}` as MessageKey) : r.user.role}</>}
+        {r.user && <>{t("common.sep")}{ROLES.includes(r.user.role) ? t(`rn.${r.user.role}` as MessageKey) : r.user.role}</>}
       </p>
       <p className="bug-report-text">{r.text}</p>
       <p className="small"><b>{t("bg.page")}:</b> <bdi dir="ltr"><code>{r.path || "—"}</code></bdi></p>

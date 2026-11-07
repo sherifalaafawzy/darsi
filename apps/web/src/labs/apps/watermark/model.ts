@@ -10,14 +10,18 @@ import { rng } from "../../kit/rng";
 export interface Choice { en: string; ar: string }
 export interface Slot { choices: Choice[] }
 
-/** A short sentence with interchangeable words at each slot (a tiny stand-in for a model's vocabulary). */
+/**
+ * A short sentence with interchangeable words at each slot (a tiny stand-in for a model's vocabulary). Every choice
+ * must fit every choice of the next slot: in Arabic the first slot's subjects are all feminine, like its verbs (تفتح),
+ * and the fourth slot's are all third-person plural, like its verbs (يصلون); in English those are plural too.
+ */
 export const SLOTS: Slot[] = [
-  { choices: [{ en: "The library", ar: "المكتبة" }, { en: "The club", ar: "النادي" }, { en: "Our class", ar: "صفّنا" }, { en: "The hall", ar: "القاعة" }] },
+  { choices: [{ en: "The library", ar: "المكتبة" }, { en: "The club", ar: "الجمعية" }, { en: "Our school", ar: "مدرستنا" }, { en: "The hall", ar: "القاعة" }] },
   { choices: [{ en: "opens", ar: "تفتح" }, { en: "meets", ar: "تجتمع" }, { en: "starts", ar: "تبدأ" }, { en: "gathers", ar: "تلتقي" }] },
   { choices: [{ en: "early", ar: "مبكرًا" }, { en: "today", ar: "اليوم" }, { en: "soon", ar: "قريبًا" }, { en: "again", ar: "مجددًا" }] },
-  { choices: [{ en: "and everyone", ar: "والجميع" }, { en: "and the pupils", ar: "والتلاميذ" }, { en: "and we all", ar: "وكلّنا" }, { en: "and friends", ar: "والأصدقاء" }] },
+  { choices: [{ en: "and the parents", ar: "وأولياء الأمور" }, { en: "and the pupils", ar: "والتلاميذ" }, { en: "and the teachers", ar: "والمعلّمون" }, { en: "and friends", ar: "والأصدقاء" }] },
   { choices: [{ en: "arrive", ar: "يصلون" }, { en: "come", ar: "يأتون" }, { en: "gather", ar: "يجتمعون" }, { en: "wait", ar: "ينتظرون" }] },
-  { choices: [{ en: "happily", ar: "بسعادة" }, { en: "quietly", ar: "بهدوء" }, { en: "together", ar: "معًا" }, { en: "on time", ar: "في الوقت" }] },
+  { choices: [{ en: "happily", ar: "بسعادة" }, { en: "quietly", ar: "بهدوء" }, { en: "together", ar: "معًا" }, { en: "on time", ar: "في الموعد" }] },
 ];
 
 /** A 32-bit hash of a string, so the same key and word always land on the same side of the green/red split. */

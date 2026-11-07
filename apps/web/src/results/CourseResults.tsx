@@ -1,29 +1,31 @@
-import { isEvidenceUrl } from "../admin/evidence";
 import { useMemo, useState } from "react";
-import { AppBar, EmptyState, Icon } from "@darsi/design-system";
+import { Navigate } from "react-router-dom";
+import { AppBar, EmptyState } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n";
-import type { Unit } from "../content/types";
+import { GRADED, type ProjectStep, type Unit } from "../content/types";
 import { useLoad, type ContentLoader } from "./async";
 import { courseResults, myGrant, type StudentWork } from "./data";
-import type { CapFields } from "../content/capstone";
-import { CapstoneResult } from "../lesson/CapstoneParts";
+import { projectStep, stepName, WorkBody, type WorkFields } from "../admin/WorkBody";
+import { mayHaveResults } from "./who";
 import "../styles/admin.css";
 
 /**
  * /results: a university teacher's read-only view of the courses a platform admin gave them access to: each student's
  * check scores per lesson, and their project submissions (final projects first; capstone milestones with their
- * repository, checks and advisory AI review). Nothing here can change a record.
+ * repository, checks and advisory AI review; files read with this teacher's own sign-in). Nothing here can change a record.
  */
 export function CourseResults({ content }: { content: ContentLoader }) {
   const { t, L } = useI18n();
-  const { user } = useAuth();
+  const { user, role, profile, profileReady } = useAuth();
   const grant = useLoad(() => (user ? myGrant(user.uid) : Promise.resolve(null)), [user?.uid]);
   const catalog = useLoad(() => content.loadCatalog(), []);
   const units = grant.data?.units ?? [];
   const [pick, setPick] = useState<string>("");
   const unitId = pick || units[0] || "";
   const titleOf = (id: string) => { const e = catalog.data?.units.find((u) => u.id === id); return e ? L(e.title) : id; };
+  // No grant, and not someone who could get one (a school's teacher, admin or student): back to Me, not a dead end.
+  if (user && profileReady && !grant.loading && !grant.error && !units.length && !mayHaveResults(role, profile?.teach)) return <Navigate to="/me" replace />;
 
   return (
     <>
@@ -63,7 +65,9 @@ function Course({ unitId, content }: { unitId: string; content: ContentLoader })
   if (data.loading || unit.loading) return <div className="loading" aria-busy="true" />;
   if (data.error) return <p className="notice err">{data.error.message}</p>;
   const { results, work } = data.data!;
-  const score = (uid: string, lessonId: string) => { const r = results.find((x) => x.uid === uid && x.lessonId === lessonId); return r ? `${num(Math.round(r.accuracy * 100))}%` : "—"; };
+  // A lesson with nothing marked right or wrong (a project, a capstone stage) is done, not scored: ✓, never "100%".
+  const graded = (lessonId: string) => lessons.find((x) => x.id === lessonId)?.steps.some((s) => GRADED.has(s.type)) ?? true;
+  const score = (uid: string, lessonId: string) => { const r = results.find((x) => x.uid === uid && x.lessonId === lessonId); return !r ? "—" : graded(lessonId) ? `${num(Math.round(r.accuracy * 100))}%` : "✓"; };
   const lessonTitle = (id: string) => { const l = lessons.find((x) => x.id === id); return l ? L(l.title) : id; };
   return (
     <div className="stack-lg">
@@ -90,30 +94,23 @@ function Course({ unitId, content }: { unitId: string; content: ContentLoader })
       </section>
       <section className="stack" aria-labelledby="work-h">
         <h2 id="work-h" className="section-title">{t("results.work")}</h2>
-        {!work.length ? <p className="muted">{t("results.noWork")}</p> : work.map((w) => <Work key={w.id} w={w} who={label(w.uid)} lesson={lessonTitle(w.lessonId)} />)}
+        {!work.length ? <p className="muted">{t("results.noWork")}</p> : work.map((w) => <Work key={w.id} w={w} who={label(w.uid)} lesson={lessonTitle(w.lessonId)} step={projectStep(lessons.find((l) => l.id === w.lessonId), w.stepId)} />)}
       </section>
     </div>
   );
 }
 
-function Work({ w: work, who, lesson }: { w: StudentWork; who: string; lesson: string }) {
-  const w = work as StudentWork & CapFields;
-  const { t, locale } = useI18n();
-  const files = (w.files?.length ? w.files : w.fileUrl ? [{ url: w.fileUrl, name: w.fileName ?? t("p.attachment") }] : []).filter((f) => isEvidenceUrl(f.url));
+/** One project, with everything the student sent (WorkBody, as teachers and admins see it), read only. */
+function Work({ w: work, who, lesson, step }: { w: StudentWork; who: string; lesson: string; step?: ProjectStep }) {
+  const w = work as StudentWork & WorkFields;
+  const { t, L, locale } = useI18n();
   const when = w.createdAt ? new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(w.createdAt.seconds * 1000)) : "";
+  // A capstone lesson holds five milestones: it is titled by the one this is, not by its lesson ("3. Project submission").
+  const milestone = w.capstone ? stepName(step, L) : "";
   return (
     <article className="submission">
-      <header><strong><bdi>{who}</bdi></strong><span className="muted small">{w.final ? t("results.final") : lesson}{when && `${t("common.sep")}${when}`}</span></header>
-      <p dir="auto" className="sub-text">{w.text}</p>
-      {w.capstone && <>
-        {[w.repo, ...(w.links ?? [])].filter((u): u is string => !!u && /^https:\/\//.test(u)).map((u) => <a key={u} href={u} target="_blank" rel="noreferrer noopener" dir="ltr"><Icon name="link" size={16} /> {u.replace("https://", "")}</a>)}
-        <CapstoneResult checks={w.checks} review={w.aiReview} />
-      </>}
-      {(w.final || w.capstone) && <>
-        <h3 className="small">{t("results.explain")}</h3><p dir="auto" className="sub-text">{w.explain || "—"}</p>
-        <h3 className="small">{t("results.aiUse")}</h3><p dir="auto">{!w.aiUse || w.aiUse === "none" ? t("results.aiNone") : w.aiUse}</p>
-      </>}
-      {files.map((f, i) => <a key={i} href={f.url} target="_blank" rel="noreferrer noopener"><Icon name="file" size={16} /> <bdi>{f.name}</bdi></a>)}
+      <header><strong><bdi>{who}</bdi></strong><span className="muted small">{w.final ? t("results.final") : milestone || lesson}{when && `${t("common.sep")}${when}`}</span></header>
+      <WorkBody work={w} rubric={step?.rubric} />
     </article>
   );
 }

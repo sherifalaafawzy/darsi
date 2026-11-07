@@ -176,8 +176,16 @@ describe("UnitEditor", () => {
     fireEvent.click(within(nav).getByRole("button", { name: /Checks/ }));
     expect(await screen.findByText("No errors: ready to publish")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Publish" }));
-    await waitFor(() => expect(m.api.publishUnit).toHaveBeenCalledWith({ unitId: "ai-1" }));
+    // With the revision on screen, so a draft someone saved since is never published unseen.
+    await waitFor(() => expect(m.api.publishUnit).toHaveBeenCalledWith({ unitId: "ai-1", rev: 3 }));
     expect(await screen.findByText(/Published as version 2/)).toBeTruthy();
+  });
+
+  it("says so when someone saved the unit after it was opened, instead of publishing", async () => {
+    m.api.publishUnit.mockRejectedValueOnce(Object.assign(new Error("Someone saved this unit after you opened it."), { code: "functions/aborted", details: { reason: "changed" } }));
+    await openEditor();
+    fireEvent.click(await screen.findByRole("button", { name: "Publish" }));
+    expect(await screen.findByText(/Someone else saved this unit while you were editing/)).toBeTruthy();
   });
 
   it("blocks Publish while there are errors and jumps to the step from the checks list", async () => {
@@ -466,7 +474,7 @@ describe("Languages", () => {
     expect(screen.getByText("q.found")).toBeTruthy();
     expect(screen.getByText("Use exactly these, as in English: {n} {total}")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Publish" }));
-    expect(await screen.findByText(/Not published yet: 1 translations need fixing/)).toBeTruthy();
+    expect(await screen.findByText(/Not published yet\. Translations to fix: 1 /)).toBeTruthy();
     expect(m.api.publishLanguage).not.toHaveBeenCalled();
 
     fireEvent.change(screen.getByLabelText("French"), { target: { value: "{n} sur {total} trouvés" } });
@@ -484,9 +492,9 @@ describe("Languages", () => {
     const input = (await screen.findByText("Import a spreadsheet (.xlsx or .csv)")).parentElement!.querySelector("input")!;
     const csv = new File([["key,English,fr", "common.continue,Continue,Continuer", "home.title,Learn,Apprendre", "nope,x,y", ""].join("\n")], "fr.csv", { type: "text/csv" });
     fireEvent.change(input, { target: { files: [csv] } });
-    expect(await screen.findByText("Read 2 translations from the file. Save to keep them. Skipped 1 rows with keys the app doesn't have.")).toBeTruthy();
+    expect(await screen.findByText("Translations read from the file: 2. They save by themselves in a moment. Rows skipped (keys the app doesn't have): 1.")).toBeTruthy();
     expect(screen.getByText(/Translated: 2 of/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Save draft" })).toBeTruthy(); // not saved until asked
+    expect(screen.getByText("Saving soon…")).toBeTruthy(); // the autosave takes it from here
   });
 
   it("lets the lesson editor show fields for an added language, and checks what's missing in it", async () => {
@@ -511,7 +519,8 @@ describe("editor strings", () => {
     const { STEP_MENU } = await import("../src/cms/steps");
     const { TRACK_ICONS } = await import("../src/cms/TracksPage");
     const codes = ["required", "minItems", "duplicateId", "badId", "lessonIdPrefix", "badValue", "range", "answerNotInOptions", "answersNotInOptions",
-      "fillBlanks", "fillAnswers", "fillBank", "badUrl", "checkpoint", "tooLarge", "missingLang", "unknownCompetency", "noSlides", "codeTest", "unsolvable"];
+      "fillBlanks", "fillAnswers", "fillBank", "badUrl", "checkpoint", "tooLarge", "missingLang", "unknownCompetency", "noSlides", "codeTest", "unsolvable",
+      "duplicateText", "capstoneOnly", "capstoneMilestone"];
     const dynamic = [...codes.map((c) => `cms.issue.${c}`), ...ARTS.map((a) => `cms.art.${a}`),
       ...SLIDE_LAYOUTS.map((x) => `cms.layout.${x}`), ...["x", "y", "w", "h"].map((k) => `cms.spot.${k}`), ...["draft", "live", "changed"].map((s) => `cms.status.${s}`),
       ...["draft", "live", "changed"].map((s) => `cms.filter.${s}`), ...STEP_MENU.map((s) => `cms.stepHint.${s}`),

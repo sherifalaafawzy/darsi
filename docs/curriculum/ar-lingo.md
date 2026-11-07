@@ -61,7 +61,9 @@ Both registers use the same word for the same concept. A learner who hears "ال
 | Overfitting | **الإفراط في التوفيق** (the common Arabic ML term; used across ds) | الحفظ الزائد, الإفراط في التخصيص |
 | Categories (kinds of things, not histogram bins) | **أنواع** | فئات |
 | Precision (classification metric) | **الدقة الإيجابية** in course text, with "precision" once | الضبطية |
+| Softness (of fruit, the knn lab's axis and ai-s3-2) | **الطراوة** | الليونة |
 | Pass mark | **درجة النجاح** | حد النجاح |
+| Quiz sheet (a unit check's kit) | **ورقة الاختبار**; "Review plan and quiz sheet": **خطة المراجعة وورقة الاختبار** | ورقة المسابقة (a contest sheet) |
 | Heat | **الحرارة** | السخونة (for a sensor value) |
 | Rule of thumb | **قاعدة عامة** | قاعدة ذهبية |
 | Struggle (the effort that is the learning, ai-4-1-4) | **المجهود** (narration and MSA) | التعب |
@@ -75,6 +77,40 @@ Both registers use the same word for the same concept. A learner who hears "ال
 | LED, defined once in full | **مصباح LED (أي الصمام الثنائي الباعث للضوء)** | الصمام الضوئي |
 | Tidy (spaces, names) vs sort | **نظّف** (the clean lab's «نظّف المسافات») | رتّب, which means sort elsewhere |
 | Odd one out (the poison lab's button) | **«اعثر على الأمثلة الشاذّة»** | «اعثر على الشاذّة» (a bare adjective) |
+| IT team (who to tell, in university courses) | **فريق الآي تي** (ar-EG narration), **فريق تقنية المعلومات** (MSA course text) | مدرّس, المدرسة (cyber-s4 is a university course) |
+| Hop (a message passing from one device to the next) | **قفزة**, plural **قفزات** (narration and MSA; the mesh lab says «القفزات») | نطّة |
+| Computational graph (backprop) | **المخطط الحسابي**, plural **المخططات الحسابية** | الشبكة الحسابية (collides with الشبكة العصبية) |
+| Permutation-equivariant (attention) | **متساوي التغيّر مع التبديل**, glossed once (reorder the inputs and the outputs reorder the same way) | متكافئ مع التبديل; متساوي التغاير (التغاير is covariance) |
+| Seminar (a university discussion class; the lecturer courses) | **حلقة النقاش** (narration and MSA), as ai-u1 and the other `*-u1` courses write it | a bare «الحلقة», which is also the ring of points in ai-u2 |
+| Residual connection (transformer) | **الوصلة المتبقية**; the path: **المسار المتبقي** | الباقي (reads as "the rest") |
+| Fine-tuning (the teach lab, ai-3-1, agents-3-1, agents-s4, ai-d3, ai-u4) | **الضبط الدقيق** (a small one: **ضبط دقيق مصغَّر**) | التعديل الدقيق |
+| Transformer block; the top block a small fine-tune teaches | **كتلة المحوّل**; **الكتلة العليا**, plural **الكتل** (ar-EG narration and the ai-d3-2/ai-u4-2 videos: **الكتلة اللي فوق**, **الكتل اللي تحت**) | «البلوك»; الطبقة الأخيرة (reads as the output layer, which the teach lab keeps frozen) |
+| Vanishing gradient (backprop through many steps or layers) | **التدرّج المتلاشي** (as ai-u1 and ai-d1 write it); the problem: **مشكلة التدرّج المتلاشي** | «تلاشي التدرّج» as the term's name |
+| Repository (GitHub) | **المستودع** (also in the capstones' Egyptian text, as the milestone card's «مستودع البداية» says); a link is **رابط** | ريبو; لينك |
+| Convolution (vision networks) | **الالتفاف** (narration and MSA; the CNN diagrams in the videos say it) | الطي |
+| Max pooling | **التجميع الأقصى**; average pooling: **التجميع المتوسط** | التجميع alone where the kind matters |
+| Prototype (a detector's average of its training examples) | **النمط المرجعي** | النموذج الأوّلي (an early product) |
+| Noise (in a picture or a signal); denoising | **الضوضاء**; denoise: **إزالة الضوضاء** (the ai-u3-4 and ai-d2-4 videos say it, as ai-u1 does) | الضجيج, or the two mixed |
+| Brightness (of a pixel; where it sits, the vae lab's code) | **السطوع**: «موضع السطوع», «مركز السطوع» (ai-d2, ai-u3) | الإضاءة (that is lighting) |
+| Variational autoencoder | **المرمّز التلقائي المتغيّر (VAE)** (the vae lab's «المرمّز المتغير») | النموذج المتغير |
+| GAN | **الشبكة التوليدية الخصمية (GAN)** in full once, then **الشبكة الخصمية (GAN)**; its discriminator: **المميِّز** | شبكة خصمية without the acronym; القاضي (a court judge) |
+| Hash, hash function | **الهاش** / **دالة الهاش** (ar-EG narration); **دالة التجزئة (الهاش)** at its first mention and in the key terms of MSA course text, then **دالة التجزئة** (as cyber-2-1 and cyber-s4 write it) | التجزيء; دالة التجزئة with no «(الهاش)» on first mention when the video says الهاش |
+| Aliasing (sampling too slowly); an alias (the false frequency) | **التشويه الترددي** (the adc lab's «التشويه الترددي (aliasing)»), with «(aliasing)» at its first mention and in the key terms; an alias: **تردد زائف**. The ar-EG narration may shorten it to «التشويه» | «التشويه» alone in MSA course text (that is distortion, as in THD) |
+| Rate-monotonic (RM) scheduling | **الجدولة الرتيبة المعدّل (RM)**; its bound: **حد الجدولة الرتيبة المعدّل**; the priority rule: **إسناد الأولوية الرتيب المعدّل**; after an indefinite noun, no «ال»: «بأولويات رتيبة المعدّل» (iot-u1) | «المعدّل الثابت» (that means a fixed rate) |
+| Oscilloscope | **راسم الإشارة** | مذبذب (an oscillator) |
+| Derating (a safety margin taken off a battery's or a part's rating) | **هامش الأمان من السعة**; before derating: **قبل خصم هامش الأمان من السعة** | خفض التصنيف (reads as downgrading a classification) |
+| Scaffolding (teaching) | **السقالات التعليمية (التدرّج بالدعم)** in MSA course text, as the key term; **السقالة** / **سقّل** in ar-EG narration; scaffolded labs: **المعامل المتدرّجة** | «التدرّج» alone as the term's name |
+| Fail-safe defaults (Saltzer and Schroeder's principle) | **الإعدادات الافتراضية الآمنة** (a default setting is **الإعداد الافتراضي**) | «الافتراضات الآمنة» (that means safe assumptions) |
+| Scope (the signed list of what students may test, cyber-u1) | **النطاق**; a signed scope: **نطاق موقّع** | «نطاق» for the cyber range |
+| Cyber range (an isolated network of virtual machines for attack practice, cyber-u1) | **ميدان تدريب سيبراني**; an isolated range: **ميدان تدريب معزول** | «نطاق معزول», «نطاق أمن معزول» (نطاق is the scope) |
+| Replication (copies of a database on several machines, data-u1) | **النسخ المتماثل**; replicated data: **بيانات منسوخة نسخًا متماثلًا** | التكرار, متكررة (that is the redundancy normalisation removes) |
+| Local optimum (local search, opt) | **الحل الأمثل المحلي** (**حل أمثل محلي**), plural **الحلول المثلى المحلية**, as opt-s4 writes it | «قمة محلية», «القمم المحلية» (a peak: wrong for the minimisations in opt-u1-3, where the anneal lab says «قيمة صغرى محلية») |
+| Integrality (integer programs, opt) | **شرط الأعداد الصحيحة** | «شرط الصحة» (reads as a validity or health condition) |
+| Cutting planes (opt) | **المستويات القاطعة** | «مستويات القطع» |
+| Tampered (a result, page or file an attacker changed, aisec) | **مُتلاعَب به** / **مُتلاعَب بها** in MSA course text (as aisec-s3, aisec-s4 and aisec-4-1 write it), matching the ar-EG narration's **متلعّب فيه** / **متلاعب فيها** | «معبوثة», «المعبوثة» with no «بها» (عبث takes بـ); «معبوث بها» is grammatical but not the course term. The labs' own labels change with the lab |
+| Epsilon (the size of an adversarial nudge, aisec) | **إبسلون** (masculine: «إبسلون يساوي ٠٫٥»), in course text and narration; `eps` in code. University courses (`*-u1`), whose formulas use Latin digits inside isolates (ε = 0.1, ε-DP), keep ε as notation | the bare Greek ε in the Arabic text of school and student courses (next to Arabic-Indic digits it reads as ٤: «٤ε» shows as «٤٤») |
+| Red teaming (the activity, aisec) | **الاختبار الهجومي**, with «(الفريق الأحمر)» at its first mention (as aisec-4-1 and aisec-s4 write it); the group, and a red-team exercise or round: **الفريق الأحمر**, **تمرين فريق أحمر** | «الفريق الأحمر» for the activity («ننفّذ الفريق الأحمر») |
+| Arm span (fingertip to fingertip, arms stretched out; ds-s3) | **امتداد الذراعين** (MSA course text), glossed once «(من طرف الأصابع إلى طرف الأصابع)»; ar-EG narration: **الدراعين وهما مفرودين** | طول الذراعين (the length of the arms; a learner may measure one arm) |
 
 Canonical names (the same name in the English and the Arabic, spelled the same way everywhere):
 
@@ -91,6 +127,9 @@ Canonical names (the same name in the English and the Arabic, spelled the same w
 - **Narrator gender:** not changed by this pass. It is still the user's call.
 - **Currency (iot-1-2-2):** naira and CFA francs stay as in the packs, until the user decides otherwise.
 - **CO₂ thresholds (iot-3-1, iot-4-1, iot-s3):** open the windows above 1,000 ppm; below 800 is well aired; above 1,500 the air is already poor. The user can still overrule this.
+- **AI policy principles (ai-4-1-2):** Purpose is **الهدف** and Equal access is **الفرص المتساوية**, in the narration, on screen and in the course text (not الغاية or تكافؤ الفرص), so learners match the names they heard. The video keeps its words; the unit follows.
+- **The coreference example (ai-u1-3):** in Arabic every noun in "the student couldn't fit the laptop in the bag because it was full" is masculine (الطالب، اللابتوب، **الدُّرج**; «الطالب مقدرش يحط اللابتوب في الدُّرج لأنه كان مليان»), so grammar doesn't give the answer away and only the meaning does. The English keeps "bag".
+- **Capstones (`*-capstone`):** their course text is Egyptian Arabic, by the user's choice, and the glossary still applies (كلمة السر، بيانات الاختبار، المستودع، رابط). Between Arabic steps the arrow is «←» («المستودع ← تبويب Actions»); «→» stays only inside a left-to-right run such as «Code → Codespaces».
 
 ## Where this file is used
 

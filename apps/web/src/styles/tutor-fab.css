@@ -1,8 +1,20 @@
 /* The tutor's button on lesson screens and the tutor's face (tutor/Fab.tsx, tutor/Face.tsx): global, since both are on the
-   startup path. The panel's own styles are in tutor.css, with its lazy chunk. Above the lesson's Continue bar. */
-.tutor-fab { position: fixed; inset-inline-end: var(--space-4); inset-block-end: calc(var(--space-12) * 2 + env(safe-area-inset-bottom)); z-index: var(--z-sheet); inline-size: 60px; block-size: 60px; padding: 0; border: 2px solid var(--ink); border-radius: var(--radius-pill); background: var(--sunbird-soft); box-shadow: var(--shadow-press); overflow: hidden; cursor: pointer; }
-.tutor-fab:active { box-shadow: none; transform: translateY(4px); }
+   startup path. The panel's own styles are in tutor.css, with its lazy chunk. Above the lesson's Continue bar; while the
+   answer sheet shows, above it in the margin from 900 px (--fab-end in app.css) and in its head below that, so "why?"
+   can still be asked then. */
+.tutor-fab { position: fixed; inset-inline-end: var(--space-4); inset-block-end: var(--fab-end); z-index: var(--z-sheet); inline-size: 60px; block-size: 60px; padding: 0; border: 2px solid var(--ink); border-radius: var(--radius-pill); background: var(--sunbird-soft); box-shadow: var(--shadow-press); overflow: hidden; cursor: pointer; transition: opacity 0.15s ease-out, transform 0.15s ease-out; }
+.tutor-fab:active { box-shadow: none; transform: translateY(4px); transition: none; }
 .tutor-fab:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+/* Below 900 px it steps aside with the Report button (bugs/Fab.tsx useFabsAside, data-fabs on <html>): "away" while the
+   page scrolls down or a video's checkpoint question shows; it stays reachable by keyboard and shows when focused.
+   "sheet" while the answer sheet shows: it sits in the sheet's head at the inline end, beside "Correct!", centred on the
+   head's 40 px badge (the sheet's 3 px top border, its --space-4 padding, half the badge), so it covers neither the
+   chosen answer above the sheet nor the explanation in it. */
+@media (max-width: 899px) {
+  [data-fabs="away"] .tutor-fab { opacity: 0; transform: scale(0.5); pointer-events: none; }
+  [data-fabs="away"] .tutor-fab:focus-visible { opacity: 1; transform: none; pointer-events: auto; }
+  [data-fabs="sheet"] .tutor-fab { inline-size: var(--tap-min); block-size: var(--tap-min); inset-block-end: calc(var(--sheet-h) - 3px - var(--space-4) - 20px - var(--tap-min) / 2); }
+}
 .tf-face { display: block; inline-size: 100%; block-size: 100%; }
 .tutor-fab { --mouth: 0; }
 /* --mouth (0–1) is set from the tutor's voice; at rest the mouth is a closed line. */

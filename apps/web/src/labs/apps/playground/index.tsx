@@ -4,6 +4,7 @@ import { LabShell } from "../../kit/LabShell";
 import { RunBar, Segmented, Slider, Stats } from "../../kit/controls";
 import type { Act, Net } from "../../kit/nn";
 import { Plot } from "../../kit/Plot";
+import { usePlural, type Forms } from "../../kit/plural";
 import { rng } from "../../kit/rng";
 import { useKit, useS } from "../../kit/strings";
 import { useLoop } from "../../kit/useLoop";
@@ -14,27 +15,27 @@ const S = {
   en: {
     intro: "Each dot is an example: a circle is one kind, a square the other. Press Train and the network adjusts its weights round after round. The background shows what it would answer at every spot.",
     data: "Data", blobs: "Two groups", circle: "Circle", xor: "Corners (XOR)", spiral: "Spiral", noise: "Noise",
-    layers: "Hidden layers", neurons: "Neurons per layer", activation: "Activation", rate: "Learning rate",
-    weights: (n: string) => `This network has ${n} weights to learn.`,
+    layers: "Hidden layers", neurons: "Neurons per layer", activation: "Activation", none: "None (linear)", rate: "Learning rate",
+    weights: (n: string) => `This network has ${n} to learn.`, weightsN: { one: "{n} weight", other: "{n} weights" } as Forms,
     hint: { blobs: "A straight line is enough here: even zero hidden layers works.", circle: "No straight line can do this. Add a hidden layer with a few neurons.", xor: "Each neuron draws one line; you need at least two lines. Try 1 layer with 3 or more neurons.", spiral: "The hardest: try 2–3 layers of 8 neurons. Be patient." } as Record<Dataset, string>,
     lossChart: "Error going down as the network learns", done: "It works! The network learned this shape.", stuck: "Stopped: try more neurons, another activation or a different learning rate.",
     try1: "Press Train: within a few seconds the background bends into a ring around the circles, and accuracy reaches 100%.",
-    try2: "Set Hidden layers to 0 and train again: with no hidden layer the network can only draw one straight line, so accuracy stays near 50%.",
+    try2: "Set Hidden layers to 0 and train: one straight line, near 50%. Then pick 1 hidden layer with Activation “None (linear)” and train: still one straight line. The bend comes from the activation.",
     try3: "Pick Spiral, set 3 hidden layers with 8 neurons per layer, and train: the error stays flat for a while, then drops quickly once the network finds the shape.",
-    takeaway: "One neuron can only draw one straight line. Layers of neurons combine and bend those lines, so a network can learn shapes a single neuron never could. Training is just many small weight changes that lower the error.",
+    takeaway: "One neuron can only draw one straight line. Layers of neurons combine those lines and their activation bends them, so a network can learn shapes a single neuron never could. Training is just many small weight changes that lower the error.",
     map: "What the network answers across the plane",
   },
   ar: {
     intro: "كل نقطة مثال: الدائرة نوع، والمربع نوع آخر. اضغط «درّب» وستعدّل الشبكة أوزانها جولة بعد جولة. وتُظهر الخلفية ما ستجيب به عند كل موضع.",
     data: "البيانات", blobs: "مجموعتان", circle: "دائرة", xor: "الزوايا (XOR)", spiral: "حلزون", noise: "التشويش",
-    layers: "الطبقات المخفية", neurons: "الخلايا في كل طبقة", activation: "دالة التنشيط", rate: "معدّل التعلّم",
-    weights: (n: string) => `في هذه الشبكة ${n} وزنًا عليها أن تتعلّمها.`,
+    layers: "الطبقات المخفية", neurons: "الخلايا في كل طبقة", activation: "دالة التنشيط", none: "بلا تنشيط (خطي)", rate: "معدّل التعلّم",
+    weights: (n: string) => `في هذه الشبكة ${n} عليها أن تتعلّمها.`, weightsN: { one: "وزن واحد", two: "وزنان", few: "{n} أوزان", many: "{n} وزنًا", other: "{n} وزن" } as Forms,
     hint: { blobs: "يكفي خط مستقيم هنا: حتى صفر طبقات مخفية ينجح.", circle: "لا يستطيع أي خط مستقيم فعل هذا. أضف طبقة مخفية فيها بضع خلايا.", xor: "كل خلية ترسم خطًا واحدًا، وتحتاج إلى خطين على الأقل. جرّب طبقة واحدة بثلاث خلايا أو أكثر.", spiral: "الأصعب: جرّب ٢ أو ٣ طبقات بثماني خلايا. وتحلَّ بالصبر." } as Record<Dataset, string>,
     lossChart: "الخطأ ينخفض بينما تتعلّم الشبكة", done: "نجحت! تعلّمت الشبكة هذا الشكل.", stuck: "توقّف التدريب: جرّب خلايا أكثر، أو دالة تنشيط أخرى، أو معدّل تعلّم مختلفًا.",
     try1: "اضغط «درّب»: خلال ثوانٍ تنثني الخلفية لتصبح حلقة حول الدوائر، وتصل الدقة إلى ١٠٠٪.",
-    try2: "اجعل «الطبقات المخفية» صفرًا ودرّب من جديد: من دون طبقة مخفية لا ترسم الشبكة إلا خطًا مستقيمًا واحدًا، فتبقى الدقة قرب ٥٠٪.",
+    try2: "اجعل «الطبقات المخفية» صفرًا ودرّب: خط مستقيم واحد، والدقة قرب ٥٠٪. ثم اختر طبقة مخفية واحدة مع «بلا تنشيط (خطي)» ودرّب: يبقى خطًا مستقيمًا واحدًا. الانحناء يأتي من دالة التنشيط.",
     try3: "اختر «حلزون»، واجعل الطبقات المخفية ٣ بثماني خلايا في كل طبقة، ثم درّب: يبقى الخطأ ثابتًا مدة، ثم ينخفض بسرعة حين تجد الشبكة الشكل.",
-    takeaway: "الخلية الواحدة لا ترسم إلا خطًا مستقيمًا واحدًا. أما طبقات الخلايا فتجمع هذه الخطوط وتثنيها، فتتعلّم الشبكة أشكالًا لا تستطيعها خلية واحدة. والتدريب ما هو إلا تغييرات صغيرة كثيرة في الأوزان تقلّل الخطأ.",
+    takeaway: "الخلية الواحدة لا ترسم إلا خطًا مستقيمًا واحدًا. أما طبقات الخلايا فتجمع هذه الخطوط، ودالة التنشيط تثنيها، فتتعلّم الشبكة أشكالًا لا تستطيعها خلية واحدة. والتدريب ما هو إلا تغييرات صغيرة كثيرة في الأوزان تقلّل الخطأ.",
     map: "ما تجيب به الشبكة في كل أنحاء المستوى",
   },
 };
@@ -43,6 +44,7 @@ const MAX_ROUNDS = 3000;
 export default function Playground({ meta, onDone }: LabProps) {
   const s = useS(S), k = useKit();
   const { num } = useI18n();
+  const count = usePlural();
   const [data, setData] = useState<Dataset>("circle");
   const [noise, setNoise] = useState(0);
   const [layers, setLayers] = useState(1);
@@ -55,7 +57,10 @@ export default function Playground({ meta, onDone }: LabProps) {
   const hist = useRef<number[]>([]);
   const [round, setRound] = useState(0);
   const [stopped, setStopped] = useState<"" | "done" | "stuck">("");
-  const reset = () => { net.current = makeNet({ layers, neurons, act, seed: Math.floor(Math.random() * 1e6) }); hist.current = []; setRound(0); setStopped(""); };
+  // A new network always redraws: before any training, round and stopped were already 0 and "", so changing the layers
+  // left the old network's diagram and weight count on screen.
+  const [, redrawNet] = useState(0);
+  const reset = () => { net.current = makeNet({ layers, neurons, act, seed: Math.floor(Math.random() * 1e6) }); hist.current = []; setRound(0); setStopped(""); redrawNet((g) => g + 1); };
   useEffect(() => { loop.stop(); reset(); }, [layers, neurons, act, data, noise]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const step = () => {
@@ -89,11 +94,12 @@ export default function Playground({ meta, onDone }: LabProps) {
         <div className="stack">
           <Segmented label={s.layers} value={layers} options={[0, 1, 2, 3].map((n) => [n, num(n)] as const)} onChange={setLayers} />
           <Slider label={s.neurons} value={neurons} min={1} max={8} disabled={layers === 0} format={(v) => num(v)} onChange={setNeurons} />
-          <Segmented label={s.activation} value={act} options={[["tanh", "tanh"], ["relu", "ReLU"], ["sigmoid", "sigmoid"]]} onChange={setAct} />
+          {/* "None" keeps every hidden layer straight, so the class can tell the layer's part from the activation's. */}
+          <Segmented label={s.activation} value={act} options={[["tanh", "tanh"], ["relu", "ReLU"], ["sigmoid", "sigmoid"], ["linear", s.none]]} onChange={setAct} />
           <Segmented label={s.rate} value={lr} options={[0.03, 0.1, 0.3, 1].map((v) => [v, num(v)] as const)} onChange={setLr} />
           <Slider label={s.noise} value={noise} min={0} max={1} step={0.25} format={(v) => num(v, { style: "percent" })} onChange={setNoise} />
           <NetDiagram net={net.current} />
-          <p className="lb-note">{s.weights(num(net.current.weightCount))}</p>
+          <p className="lb-note">{s.weights(count(net.current.weightCount, s.weightsN))}</p>
           {h.length > 1 && <Plot x={[0, Math.max(10, h.length)]} y={[0, Math.max(0.8, ...h.slice(0, 5))]} height={150} label={s.lossChart} lines={[{ points: lossLine, tone: "b" }]} xLabel={k.epoch} yLabel={k.loss} />}
         </div>
       </div>

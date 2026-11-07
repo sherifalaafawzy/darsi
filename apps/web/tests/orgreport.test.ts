@@ -79,3 +79,21 @@ describe("byTeacher", () => {
     expect(rows[0].students.people).toBe(0);
   });
 });
+
+// FC-06: a lesson with nothing graded (a project, a capstone stage) is done, not scored.
+describe("ungraded lessons in the report", () => {
+  it("never make someone 'need support' or pull a score down", () => {
+    const capOnly = person("cap", { lastActive: daysAgo(1) }, { lessonsDone: 3, graded: 0, avgAccuracy: 0 });
+    const mixed = person("mix", { lastActive: daysAgo(1) }, { lessonsDone: 5, graded: 3, avgAccuracy: 0.5 });
+    expect(statusOf(capOnly, NOW)).toBe("onTrack");
+    expect(statusOf(mixed, NOW)).toBe("support");
+    expect(totals([capOnly, mixed], NOW).avgAccuracy).toBeCloseTo(0.5);
+    expect(totals([capOnly], NOW).avgAccuracy).toBeNull();
+  });
+  it("divide a track's accuracy by its graded lessons", () => {
+    const p = person("p", {}, { lessonsDone: 3, graded: 2, avgAccuracy: 0.8, tracks: { ai: { n: 3, acc: 1.6, sec: 600, g: 2 } } });
+    const old = person("o", {}, { lessonsDone: 2, avgAccuracy: 0.5, tracks: { ai: { n: 2, acc: 1, sec: 60 } } }); // a summary from before `g`
+    expect(byTrack([p])[0]).toMatchObject({ lessons: 3, avgAccuracy: 0.8 });
+    expect(byTrack([p, old])[0].avgAccuracy).toBeCloseTo(2.6 / 4);
+  });
+});

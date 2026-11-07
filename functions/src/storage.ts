@@ -7,8 +7,16 @@ import { getStorage } from "firebase-admin/storage";
 const BUCKET = process.env.CONTENT_BUCKET || (process.env.FUNCTIONS_EMULATOR === "true" ? `${process.env.GCLOUD_PROJECT}.appspot.com` : "darsi-f0685");
 export const bucket = () => getStorage().bucket(BUCKET);
 
-/** A small public JSON file that phones re-check at most once a minute (catalogs, settings). */
-export const savePublicJson = (path: string, data: unknown, isPublic = true) => bucket().file(path).save(JSON.stringify(data), {
-  resumable: false, contentType: "application/json; charset=utf-8",
-  metadata: { cacheControl: `${isPublic ? "public" : "private"}, max-age=60` },
+/**
+ * A JSON file phones read (catalogs, units, settings, language packs), stored gzipped (Content-Encoding: gzip): a
+ * browser asks for gzip and gets about a quarter of the bytes, and unpacks it itself, so `fetch().json()` and the
+ * Storage SDK read it unchanged; a client that doesn't ask gets it unpacked by Storage, and the Admin SDK's
+ * download() unpacks it too. JSON shrinks 3 to 8 times, and learners pay for every byte.
+ */
+export const saveJson = (path: string, body: string, cacheControl: string) => bucket().file(path).save(body, {
+  resumable: false, gzip: true, contentType: "application/json; charset=utf-8", metadata: { cacheControl },
 });
+
+/** A small public JSON file that phones re-check at most once a minute (catalogs, settings). */
+export const savePublicJson = (path: string, data: unknown, isPublic = true) =>
+  saveJson(path, JSON.stringify(data), `${isPublic ? "public" : "private"}, max-age=60`);

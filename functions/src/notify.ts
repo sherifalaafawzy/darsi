@@ -15,7 +15,9 @@ import {
   type Audience, type Cat, type Kind, type Lang, type MessageVars,
 } from "./messages.js";
 import { isValidTz, parseTime, pickNudge, utcHourFor } from "./nudge.js";
+import { stillTeaches } from "./roles.js";
 import { LANG_CODE } from "./shared/languages.js";
+import { recountWaiting } from "./waiting.js";
 
 interface Cats { reminders: boolean; reviews: boolean; staff: boolean; news: boolean }
 interface Notify {
@@ -144,6 +146,22 @@ async function forgetDevice(uid: string, ref: DocumentReference) {
   if (o.get("uid") === uid) await owner.delete();
 }
 
+/**
+ * Every device of an account whose data is being deleted (account.ts): each token leaves its announcement topics, so
+ * the phone stops getting Darsi's news, and the device and token records go. Returns how many devices there were.
+ */
+export async function forgetAllDevices(uid: string): Promise<number> {
+  const devs = await db.collection(`users/${uid}/devices`).get();
+  await Promise.all(devs.docs.map(async (d) => {
+    const token = d.get("token");
+    if (typeof token === "string") await applyTopics(token, topicsOf(d.get("topics")), []);
+    await forgetDevice(uid, d.ref);
+  }));
+  const owned = await db.collection("pushTokens").where("uid", "==", uid).get();
+  await Promise.all(owned.docs.map((d) => d.ref.delete()));
+  return devs.size;
+}
+
 /* ---------- Sending ---------- */
 
 /** Sends one kind to all of a person's devices, each in its own language. Returns how many devices accepted it. */
@@ -192,6 +210,27 @@ export async function alertOrgRequest(orgId: string, orgName: string) {
   const admins = await db.collection("users").where("role", "==", "superadmin").limit(50).get();
   await Promise.all(admins.docs.map((a) =>
     quietly(sendToUser(a.id, "staff", "staffOrgRequest", { org: orgName }, "/super", `darsi-staff-${orgId}`, a.data()), "staffOrgRequest")));
+}
+
+/**
+ * An organization request was reviewed: whoever sent it hears the outcome (reviewOrg). Approved, it opens the admin
+ * pages they now have; rejected, /org, which shows the reviewer's note. Their "Project feedback" switch covers it: a
+ * learner's settings never show the staff one.
+ */
+export async function alertOrgReviewed(uid: string, orgId: string, orgName: string, approved: boolean, note: string) {
+  const kind: Kind = approved ? "orgApproved" : "orgRejected";
+  await sendToUser(uid, "reviews", kind, { org: orgName, feedback: note }, linkFor(kind), tagFor(kind, orgId));
+}
+
+/**
+ * A project that waits for Darsi staff (a capstone milestone from someone without a school: capstone.ts queueFor)
+ * reaches every platform admin, as an organization request does, so the "replies here, usually within a week" the
+ * learner is told can be kept (FS-STAFFQUEUE).
+ */
+async function alertStaffQueue(uid: string, id: string, vars: MessageVars) {
+  const admins = await db.collection("users").where("role", "==", "superadmin").limit(50).get();
+  await Promise.all(admins.docs.filter((a) => a.id !== uid).map((a) =>
+    quietly(sendToUser(a.id, "staff", "staffSubmission", vars, "/super/projects", `darsi-staff-${id}`, a.data()), "staffSubmission")));
 }
 
 /* ---------- Callables ---------- */
@@ -288,33 +327,46 @@ export const sendBroadcast = onCall(async (req) => {
 
 /* ---------- Triggers ---------- */
 
-/** A project was submitted: the student's teacher hears about it, or the organization's admins when there is no teacher. */
+/**
+ * A project was submitted: the student's teacher hears about it, or the organization's admins when there is no
+ * teacher. The teacher counts only while they still teach in the student's organization: one who left (or became a
+ * student) gets nothing, and the admins hear instead. A capstone milestone queued for Darsi staff goes to platform
+ * admins.
+ */
 export const onSubmissionCreated = onDocumentCreated("users/{uid}/submissions/{id}", async (event) => {
   const { uid, id } = event.params;
   const student = await db.doc(`users/${uid}`).get();
   if (!student.exists) return;
+  // The staff lists show who has projects waiting (waiting.ts).
+  await recountWaiting(uid);
   const vars = { name: str(student.get("name"), 120) || str(student.get("username"), 40), uid };
   const tag = `darsi-staff-${id}`;
+  if (event.data?.get("queue") === "staff") { await alertStaffQueue(uid, id, vars); return; }
+  const orgId = str(student.get("orgId"), 128);
   const teacherId = str(student.get("teacherId"), 128);
   if (teacherId && teacherId !== uid) {
-    await quietly(sendToUser(teacherId, "staff", "staffSubmission", vars, `/teach/${encodeURIComponent(uid)}`, tag), "staffSubmission");
-    return;
+    const teacher = (await db.doc(`users/${teacherId}`).get()).data();
+    if (teacher && stillTeaches(teacher, orgId)) {
+      await quietly(sendToUser(teacherId, "staff", "staffSubmission", vars, `/teach/${encodeURIComponent(uid)}`, tag, teacher), "staffSubmission");
+      return;
+    }
   }
-  const orgId = str(student.get("orgId"), 128);
   if (!orgId) return;
   const admins = await db.collection("users").where("orgId", "==", orgId).where("role", "==", "orgAdmin").limit(50).get();
   await Promise.all(admins.docs.filter((a) => a.id !== uid).map((a) =>
     quietly(sendToUser(a.id, "staff", "staffSubmission", vars, `/admin/people/${encodeURIComponent(uid)}`, tag, a.data()), "staffSubmission")));
 });
 
-/** A project was reviewed: the person who sent it gets the result and the feedback. */
+/** A project was reviewed: the person who sent it gets the result and the feedback, and opens it in Me's "My projects". */
 export const onSubmissionUpdated = onDocumentUpdated("users/{uid}/submissions/{id}", async (event) => {
   const before = event.data?.before.data(), after = event.data?.after.data();
+  // Reviewed, or set back to "submitted": the staff lists' count of projects waiting changes (waiting.ts).
+  if (before && after && before.status !== after.status) await recountWaiting(event.params.uid);
   if (!before || !after || before.status !== "submitted") return;
   const kind: Kind | null = after.status === "approved" ? "reviewApproved" : after.status === "revise" ? "reviewRevise" : null;
   if (!kind) return;
   const { uid, id } = event.params;
-  await quietly(sendToUser(uid, "reviews", kind, { feedback: after.feedback }, "/learn", `darsi-review-${id}`), kind);
+  await quietly(sendToUser(uid, "reviews", kind, { feedback: after.feedback }, linkFor(kind), tagFor(kind, id)), kind);
 });
 
 /** Role, organization or language changed: every device moves to the matching announcement topics. */

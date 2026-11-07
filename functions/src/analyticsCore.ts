@@ -172,8 +172,9 @@ export function measurementPayloads({ ctx, events }: Batch, nowSec: number): Rec
 }
 
 /** The fields of users/{uid} the overview reads (a select(), so the rest never leaves Firestore). */
-export interface UserRow { role?: string; orgId?: string | null; createdAt?: number | null; lastActive?: string | null; lessonsDone?: number; xp?: number; avgAccuracy?: number; weeks?: Record<string, number> }
-export interface OrgRow { id: string; name?: string; status?: string; country?: string; memberCount?: number }
+/** `graded`: the person's lessons with questions marked right or wrong (summaries before 2026-11-06 lack it: all of them). */
+export interface UserRow { role?: string; orgId?: string | null; createdAt?: number | null; lastActive?: string | null; lessonsDone?: number; graded?: number; xp?: number; avgAccuracy?: number; weeks?: Record<string, number> }
+export interface OrgRow { id: string; name?: unknown; status?: string; country?: unknown; memberCount?: number }
 export interface OrgStats { name: string; country?: string; members: number; teachers: number; students: number; active7: number; active30: number; lessons: number; xp: number; avgAccuracy: number | null }
 export interface Overview {
   at: string;
@@ -185,16 +186,26 @@ export interface Overview {
   orgsByStatus: Record<string, number>;
 }
 
-/** Accounts and organizations, from every user's summary: one pass, run daily and on demand from /super/analytics. */
+/**
+ * Accounts and organizations, from every user's summary: one pass, run daily and on demand from /super/analytics.
+ * Accuracy averages people who have graded lessons (FC-06). An organization's name and country are cut to the sizes
+ * the functions allow, so an odd org document can't push stats/overview past Firestore's 1 MiB (it used to copy
+ * whatever an org admin wrote).
+ */
 export function overview(users: UserRow[], orgs: OrgRow[], now = new Date()): Overview {
   const ms = now.getTime();
   const within = (iso: string | null | undefined, days: number) => Boolean(iso) && ms - Date.parse(iso!) < days * 864e5;
   const byRole: Record<string, number> = {};
   const weeks: Record<string, number> = {};
-  let new7 = 0, new30 = 0, active7 = 0, active30 = 0, lessons = 0, xp = 0, accSum = 0, withLessons = 0;
+  let new7 = 0, new30 = 0, active7 = 0, active30 = 0, lessons = 0, xp = 0, accSum = 0, accN = 0, withLessons = 0;
   const per: Record<string, OrgStats & { accSum: number; accN: number }> = {};
   const active = new Set(orgs.filter((o) => o.status === "active").map((o) => o.id));
-  for (const o of orgs) if (active.has(o.id)) per[o.id] = { name: o.name ?? o.id, ...(o.country ? { country: o.country } : {}), members: 0, teachers: 0, students: 0, active7: 0, active30: 0, lessons: 0, xp: 0, avgAccuracy: null, accSum: 0, accN: 0 };
+  for (const o of orgs) {
+    if (!active.has(o.id)) continue;
+    const name = typeof o.name === "string" && o.name ? o.name.slice(0, 120) : o.id;
+    const country = typeof o.country === "string" ? o.country.slice(0, 80) : "";
+    per[o.id] = { name, ...(country ? { country } : {}), members: 0, teachers: 0, students: 0, active7: 0, active30: 0, lessons: 0, xp: 0, avgAccuracy: null, accSum: 0, accN: 0 };
+  }
   for (const u of users) {
     const role = u.role ?? "learner";
     byRole[role] = (byRole[role] ?? 0) + 1;
@@ -203,16 +214,17 @@ export function overview(users: UserRow[], orgs: OrgRow[], now = new Date()): Ov
     const a7 = within(u.lastActive, 7), a30 = within(u.lastActive, 30);
     if (a7) active7++;
     if (a30) active30++;
-    const done = u.lessonsDone ?? 0;
+    const done = u.lessonsDone ?? 0, scored = typeof u.graded === "number" ? u.graded : done;
     lessons += done; xp += u.xp ?? 0;
-    if (done) { withLessons++; accSum += u.avgAccuracy ?? 0; }
+    if (done) withLessons++;
+    if (scored) { accSum += u.avgAccuracy ?? 0; accN++; }
     for (const [w, n] of Object.entries(u.weeks ?? {})) weeks[w] = (weeks[w] ?? 0) + n;
     const o = u.orgId ? per[u.orgId] : undefined;
     if (o) {
       o.members++; if (role === "teacher") o.teachers++; if (role === "student") o.students++;
       if (a7) o.active7++; if (a30) o.active30++;
       o.lessons += done; o.xp += u.xp ?? 0;
-      if (done) { o.accSum += u.avgAccuracy ?? 0; o.accN++; }
+      if (scored) { o.accSum += u.avgAccuracy ?? 0; o.accN++; }
     }
   }
   const orgsOut: Record<string, OrgStats> = {};
@@ -222,6 +234,6 @@ export function overview(users: UserRow[], orgs: OrgRow[], now = new Date()): Ov
   return {
     at: now.toISOString(),
     users: { total: users.length, byRole, new7, new30, active7, active30, withLessons },
-    lessons, xp, avgAccuracy: withLessons ? accSum / withLessons : null, weeks, orgs: orgsOut, orgsByStatus,
+    lessons, xp, avgAccuracy: accN ? accSum / accN : null, weeks, orgs: orgsOut, orgsByStatus,
   };
 }

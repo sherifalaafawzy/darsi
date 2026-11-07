@@ -50,9 +50,14 @@ service cloud.firestore {
         && request.resource.data.rev == 1 && request.resource.data.get('published', null) == null
         && request.resource.data.updatedBy == request.auth.uid;
       // `lessons` is a small summary ({id, title} per lesson) so the unit list can show lesson titles without the drafts.
+      // `same` {version, rev}: this rev of the draft equals published version `version` (the editor's "Bring back the
+      // published version", cms/data.ts markSame), so the list shows it as published. Only for the rev being written.
       allow update: if canEdit(resource.data.owner) && nextRev()
-        && onlyChanges(['title', 'track', 'level', 'audience', 'lessonCount', 'lessons', 'rev', 'updatedAt', 'updatedBy'])
-        && request.resource.data.updatedBy == request.auth.uid;
+        && onlyChanges(['title', 'track', 'level', 'audience', 'lessonCount', 'lessons', 'rev', 'updatedAt', 'updatedBy', 'same'])
+        && request.resource.data.updatedBy == request.auth.uid
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['same'])
+          || (request.resource.data.same is map && request.resource.data.same.keys().hasOnly(['version', 'rev'])
+            && request.resource.data.same.version is int && request.resource.data.same.rev == request.resource.data.rev));
       allow delete: if canEdit(resource.data.owner) && resource.data.get('published', null) == null;
     }
     match /unitDrafts/{unitId} {
@@ -67,17 +72,24 @@ service cloud.firestore {
         && (!exists(/databases/$(database)/documents/units/$(unitId)) || get(/databases/$(database)/documents/units/$(unitId)).data.get('published', null) == null);
     }
 
-    // Profile fields a person may set on their own profile, with their types and sizes (L1). Only the fields a write
-    // changes are checked (`keys`), so an older profile with odd data can still be updated.
+    // Profile fields a person may set on their own profile, with their types and sizes (L1), each element included:
+    // a list or map of a few entries could otherwise hold a megabyte each, and staff screens list profiles. Track ids
+    // are at most 24 characters, so 30 of them join to 749. Only the fields a write changes are checked (`keys`), so an
+    // older profile with odd data can still be updated. The learning profile (onboarded, audience, stage, teach, tracks,
+    // weeklyLessons, levels, and learnAt: when it last changed, in ms) lets a new device skip onboarding (state/sync.ts).
     function profileOk(d, keys) {
       return (!('name' in keys) || (d.name is string && d.name.size() <= 120))
         && (!('lang' in keys) || (d.lang is string && d.lang.size() <= 16))
         && (!('lastActive' in keys) || (d.lastActive is string && d.lastActive.size() <= 40))
-        && (!('prefs' in keys) || (d.prefs is map && d.prefs.size() <= 30))
         && (!('teach' in keys) || (d.teach is string && d.teach.size() <= 24))
-        && (!('tracks' in keys) || (d.tracks is list && d.tracks.size() <= 30))
+        && (!('tracks' in keys) || (d.tracks is list && d.tracks.size() <= 30 && d.tracks.join(',').size() <= 750))
         && (!('weeklyLessons' in keys) || (d.weeklyLessons is number && d.weeklyLessons >= 0 && d.weeklyLessons <= 100))
-        && (!('levels' in keys) || (d.levels is map && d.levels.size() <= 30));
+        && (!('levels' in keys) || (d.levels is map && d.levels.size() <= 30 && d.levels.keys().join(',').size() <= 750
+          && d.levels.values().hasOnly([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])))
+        && (!('onboarded' in keys) || d.onboarded is bool)
+        && (!('audience' in keys) || d.audience in ['teachers', 'students'])
+        && (!('stage' in keys) || d.stage in ['primary', 'lower', 'upper', 'university'])
+        && (!('learnAt' in keys) || (d.learnAt is int && d.learnAt >= 0 && d.learnAt <= 100000000000000));
     }
     // What an org admin changes on a member: class, teacher, active, name.
     function memberOk(d, keys) {
@@ -90,27 +102,34 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if canSee(uid, resource.data);
       // Self-registration: an individual learner with no organization. The email is the account's own, as Auth knows
-      // it (H1): admins look people up by email, so nobody may claim another person's address.
+      // it (H1): admins look people up by email, so nobody may claim another person's address. createdAt is the
+      // server's time (the app sends serverTimestamp()), never a string the statistics job would carry around. The
+      // username-login domain is for accounts organizations make (createMembers writes their profiles): one signed up
+      // for by hand gets no profile, so it can't pose as a school's username account (sec-rules-05).
       allow create: if signedIn() && request.auth.uid == uid
         && request.resource.data.role == 'learner'
         && request.resource.data.get('orgId', null) == null
-        && request.resource.data.keys().hasOnly(['name', 'email', 'lang', 'role', 'orgId', 'createdAt', 'lastActive', 'prefs', 'teach', 'tracks', 'weeklyLessons', 'levels'])
+        && request.resource.data.keys().hasOnly(['name', 'email', 'lang', 'role', 'orgId', 'createdAt', 'lastActive', 'teach', 'tracks', 'weeklyLessons', 'levels'])
         && request.auth.token.email is string && request.resource.data.email == request.auth.token.email.lower()
+        && !request.auth.token.email.lower().matches('.*@users[.]darsi[.]app')
         && request.resource.data.name is string && request.resource.data.name.size() <= 120
+        && request.resource.data.get('createdAt', request.time) == request.time
         && profileOk(request.resource.data, request.resource.data.keys());
       // A person edits their own profile but never their email, role, organization, teacher, computed summary or
       // notification settings (`notify`: the registerDevice/updateNotifyPrefs functions write it). The first-login
       // flag (mustChangePassword) is cleared only by the passwordChanged function, after a real password change (I1).
       allow update: if signedIn() && request.auth.uid == uid
-        && onlyChanges(['name', 'lang', 'lastActive', 'prefs', 'teach', 'tracks', 'weeklyLessons', 'levels'])
+        && onlyChanges(['name', 'lang', 'lastActive', 'teach', 'tracks', 'weeklyLessons', 'levels', 'onboarded', 'audience', 'stage', 'learnAt'])
         && profileOk(request.resource.data, request.resource.data.diff(resource.data).affectedKeys());
       // Org admins organise their people (class/group, assigned teacher, active flag).
       allow update: if isOrgAdmin(resource.data.get('orgId', null)) && onlyChanges(['group', 'teacherId', 'active', 'name'])
         && memberOk(request.resource.data, request.resource.data.diff(resource.data).affectedKeys());
       allow update, delete: if isSuper();
 
-      // A lesson result (state/sync.ts progressDoc). Every field typed and bounded (H2): the summary trigger counts only
-      // published lessons and takes their unit, track and competencies from the unit itself (M1).
+      // A lesson result (state/sync.ts progressDoc). Every field typed and bounded (H2), competency codes included (at
+      // most 30 of up to 40 characters: 1,229 joined; join also refuses anything but strings), since staff screens and
+      // course results read these documents as they are. The summary trigger counts only published lessons and takes
+      // their unit, track and competencies from the unit itself (M1).
       match /progress/{lessonId} {
         allow read: if canSee(uid, get(/databases/$(database)/documents/users/$(uid)).data);
         allow create, update: if signedIn() && request.auth.uid == uid
@@ -123,6 +142,7 @@ service cloud.firestore {
           && request.resource.data.get('unitId', '') is string && request.resource.data.get('unitId', '').size() <= 64
           && request.resource.data.get('track', '') is string && request.resource.data.get('track', '').size() <= 24
           && request.resource.data.get('competencies', []) is list && request.resource.data.get('competencies', []).size() <= 30
+          && request.resource.data.get('competencies', []).join(',').size() <= 1230
           && request.resource.data.get('attempts', 0) is int && request.resource.data.get('attempts', 0) >= 0 && request.resource.data.get('attempts', 0) <= 1000;
         allow delete: if false;
       }
@@ -158,8 +178,11 @@ service cloud.firestore {
           && (request.resource.data.get('fileName', null) == null || (request.resource.data.fileName is string && request.resource.data.fileName.size() <= 200))
           && (!('files' in request.resource.data) || filesOk(request.resource.data.files))
           && (!('final' in request.resource.data) || request.resource.data.final is bool);
-        // Teachers and org admins review: status, score and feedback only.
-        allow update: if (isTeacherOf(get(/databases/$(database)/documents/users/$(uid)).data) || isOrgAdmin(resource.data.orgId) || isSuper())
+        // Teachers and org admins review: status, score and feedback only. Who reviews is who may read it (canSee): the
+        // person's teacher and the admins of the organization the person is in now, not the one the work was sent from
+        // (sec-rules-04: a new school's admins could not review earlier work, and a former school's still could).
+        allow update: if (isTeacherOf(get(/databases/$(database)/documents/users/$(uid)).data)
+            || isOrgAdmin(get(/databases/$(database)/documents/users/$(uid)).data.get('orgId', null)) || isSuper())
           && onlyChanges(['status', 'score', 'feedback', 'reviewedBy', 'reviewedAt'])
           && request.resource.data.status in ['submitted', 'approved', 'revise']
           && shortText(request.resource.data, 'feedback', 5000)
@@ -172,6 +195,22 @@ service cloud.firestore {
         allow write: if signedIn() && request.auth.uid == uid
           && (request.resource == null || (request.resource.data.keys().hasOnly(['text', 'updatedAt'])
             && request.resource.data.text is string && request.resource.data.text.size() <= 50000));
+      }
+
+      // A certificate as it was first earned (Me: the course title in every language, its track, the date and its code,
+      // content/cert.ts), so every device and the staff pages show the same date and code after a replay, a rename or a
+      // republish, and a course that was unpublished keeps its certificate. Its owner writes it once; nobody changes it.
+      // Sizes bound each part; the code is optional (records from before codes were kept have none).
+      match /certs/{unitId} {
+        allow read: if canSee(uid, get(/databases/$(database)/documents/users/$(uid)).data);
+        allow create: if signedIn() && request.auth.uid == uid && unitId.matches('[a-z0-9][a-z0-9-]{1,63}')
+          && request.resource.data.keys().hasOnly(['title', 'track', 'at', 'code'])
+          && (!('code' in request.resource.data) || (request.resource.data.code is string && request.resource.data.code.matches('DRS-[A-Z0-9-]{1,86}')))
+          && request.resource.data.title is map && request.resource.data.title.size() >= 1 && request.resource.data.title.size() <= 30
+          && request.resource.data.title.keys().join(',').size() <= 300 && request.resource.data.title.values().join('').size() <= 6000
+          && request.resource.data.track is string && request.resource.data.track.size() <= 24
+          && request.resource.data.at is string && request.resource.data.at.size() <= 40;
+        allow update, delete: if false;
       }
 
       // Push tokens, one per device. Only Cloud Functions (registerDevice, unregisterDevice, the senders) touch them.
@@ -255,13 +294,18 @@ service cloud.firestore {
         && (b == null || (b.keys().hasOnly(['logo', 'v']) && b.v is int
           && (b.get('logo', null) == null || (b.logo is string && b.logo.matches('orgs/' + orgId + '/brand/logo-[a-z0-9]{6,32}[.](png|webp|jpg)')))));
     }
+    // Every member reads the org document (and each member's phone caches it at sign-in), so it holds nothing private:
+    // the requester's contact and reason live in private/request. Its admins change only its name and logo (Organization
+    // branding), sized above; country and city are a platform admin's, through updateOrg (80 characters each). Writing
+    // them unbounded here once let an org admin push stats/overview past Firestore's 1 MiB and stop the stats job.
     match /orgs/{orgId} {
       allow read: if inOrg(orgId) || isSuper() || (signedIn() && resource.data.createdBy == request.auth.uid);
-      allow update: if isOrgAdmin(orgId) && onlyChanges(['name', 'settings', 'country', 'city', 'brand']) && brandOk(orgId);
+      allow update: if isOrgAdmin(orgId) && onlyChanges(['name', 'brand']) && brandOk(orgId);
       allow update, delete: if isSuper();
       allow create: if false; // requests go through the requestOrg Cloud Function
-      // Its invite codes: only its admins and platform admins read them (members must never see the teacher code);
-      // only the functions write them (reviewOrg, regenerateInviteCode).
+      // Its invite codes (invites) and the request's contact and reason (request): only its admins and platform admins
+      // read them (members must never see the teacher code or the requester's phone); only the functions write them
+      // (requestOrg, reviewOrg, regenerateInviteCode).
       match /private/{doc} { allow read: if isOrgAdmin(orgId) || isSuper(); allow write: if false; }
     }
 

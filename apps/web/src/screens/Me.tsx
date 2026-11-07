@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppBar, BrandMark, Button, CertificateCard, ChoiceCard, Icon, LanguagePicker, PlacementResult, Switch, TextField, TrackChip } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
@@ -7,26 +7,34 @@ import { accountLinks } from "../components/Layout";
 import { NotificationsPanel } from "../notify/NotificationsPanel";
 import { isolate, useI18n, useLanguages } from "../i18n";
 import { useStore } from "../state/store";
+import { readMyWork, type MySubmission } from "../state/myWork";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
-import { teachStage, type Unit } from "../content/types";
+import { teachStage, type CatalogEntry, type Unit } from "../content/types";
 import { useSuperOn, useTracks } from "../content/settings";
-import { certCode } from "../content/cert";
+import { capstoneMilestones, certCandidates, codeOf, earnedCert, milestonesSent, type EarnedCert } from "../content/cert";
 import { useMine, useStagesOffered } from "../content/mine";
 import { share } from "../platform";
 import { useInstall } from "../pwa";
 import { openTour } from "../tour/Start";
+import { clearRuns } from "../lesson/engine";
+import { MyProjects } from "./MyProjects";
+import { MyData } from "../account/MyData";
 
 export function Me() {
   const { t, L, locale } = useI18n();
   const languages = useLanguages();
   const { state, dispatch } = useStore();
-  const set = (patch: Parameters<typeof dispatch>[0] & { type: "set" } extends { patch: infer P } ? P : never) => dispatch({ type: "set", patch });
+  // offlineUid: signed in, but the phone was offline at start, so nothing can be read yet; not a guest.
+  const { user, offlineUid } = useAuth();
+  const set =(patch: Parameters<typeof dispatch>[0] & { type: "set" } extends { patch: infer P } ? P : never) => dispatch({ type: "set", patch });
   const { data: catalog } = useAsync(loadCatalog, []);
-  const [units, setUnits] = useState<Unit[]>([]);
   const install = useInstall();
-  useEffect(() => { if (catalog) Promise.all(catalog.units.filter((u) => u.available).map((u) => loadUnit(u.id))).then(setUnits).catch(() => {}); }, [catalog]);
-  useEffect(() => { if (location.hash === "#certificates") document.getElementById("certificates")?.scrollIntoView(); }, [units]);
-  const done = units.filter((u) => u.lessons.every((l) => state.progress[l.id]));
+  const editName = useAccountName();
+  // Certificates come from the record kept when each was earned; working out new ones opens only the courses whose
+  // lessons are all finished, so opening Me downloads next to nothing.
+  const waiting = useNewCertificates(catalog?.units, user?.uid);
+  const certs = Object.entries(state.certs ?? {}).sort(([, a], [, b]) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+  useEffect(() => { if (location.hash === "#certificates") document.getElementById("certificates")?.scrollIntoView(); }, [certs.length, waiting.length]);
   const dateFmt = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
   const tracks = useTracks();
   const nav = useNavigate();
@@ -49,7 +57,7 @@ export function Me() {
           <Switch label={t("me.analytics")} description={t("me.analyticsD")} checked={state.analytics !== false} onChange={(on) => set({ analytics: on })} />
         </section>
         <NotificationsPanel />
-        <TextField label={t("me.name")} hint={t("me.nameHint")} value={state.name} onChange={(e) => set({ name: e.target.value })} autoComplete="name" />
+        <TextField label={t("me.name")} hint={t(user ? "me.nameHintAccount" : "me.nameHint")} value={state.name} onChange={(e) => editName(e.target.value)} autoComplete="name" maxLength={120} />
         <section className="stack" aria-labelledby="tracks-h"><h2 id="tracks-h" className="section-title">{t("tracks.title")}</h2>
           <div className="row-gap">{mine.map((x) => <TrackChip key={x.id} track={x.id}>{tracks.name(x.id)}</TrackChip>)}</div>
           <div><Button size="sm" variant="secondary" icon="settings" onClick={() => nav("/tracks")}>{t("tracks.manage")}</Button></div>
@@ -70,22 +78,134 @@ export function Me() {
           </div>
         </section>}
         <PlacementResult title={t("me.levels")} levels={mine.map(({ id: tr, levels: of }) => ({ track: tr, trackLabel: tracks.name(tr), level: me.levelOf(tr), of, label: me.levelName(tr, me.levelOf(tr)) }))} />
+        {/* What became of the projects they sent: status and the reviewer's feedback (signed in; guests can't send). */}
+        {user && <MyProjects uid={user.uid} units={catalog?.units} />}
         <section id="certificates" className="stack"><h2 className="section-title">{t("me.certs")}</h2>
-          {done.length === 0 && <p className="muted">{t("me.noCerts")}</p>}
-          {done.map((u) => {
-            const last = u.lessons.map((l) => state.progress[l.id]?.completedAt).sort().pop()!;
-            const code = certCode(u.id, state.name, last);
-            return <CertificateCard key={u.id} track={u.track} kicker={t("cert.kicker")} trackLabel={tracks.name(u.track)} name={state.name || "—"} title={L(u.title)} date={dateFmt.format(new Date(last))} code={code}
-              action={<Button size="sm" variant="secondary" icon="share" onClick={() => share({ title: `${t("cert.kicker")}: ${L(u.title)}`, text: `${state.name} — ${code}` })}>{t("kit.share")}</Button>} />;
+          {certs.length === 0 && <p className="muted">{t("me.noCerts")}</p>}
+          {certs.map(([id, c]) => {
+            const code = codeOf(id, c, user?.uid); // set when earned: renaming never changes it (content/cert.ts)
+            return <CertificateCard key={id} track={c.track} kicker={t("cert.kicker")} trackLabel={tracks.name(c.track)} name={state.name || "—"} title={L(c.title)} date={dateFmt.format(new Date(c.at))} code={code}
+              action={<Button size="sm" variant="secondary" icon="share" onClick={() => share({ title: `${t("cert.kicker")}: ${L(c.title)}`, text: `${state.name} — ${code}` })}>{t("kit.share")}</Button>} />;
           })}
+          {/* A capstone is finished when its milestones are sent, not when its lessons are ("submit later" sends nothing). */}
+          {waiting.map((w) => (
+            <div key={w.unit.id} className="notice stack-sm">
+              <strong>{L(w.unit.title)}</strong>
+              <div>{t("cert.capPending")}</div>
+              {!user && !offlineUid ? <div className="muted small">{t("project.guest")}</div> : w.sent !== null && <div className="muted small">{t("cert.capSent", { n: w.sent, m: w.of })}</div>}
+              {user && w.next && <div><Button size="sm" variant="secondary" iconEnd="next" onClick={() => nav(`/lesson/${w.unit.id}/${w.next!.lessonId}?step=${encodeURIComponent(w.next!.stepId)}`)}>{t("cert.capSend")}</Button></div>}
+            </div>
+          ))}
         </section>
         <Button block variant="secondary" icon="info" onClick={openTour}>{t("tour.replay")}</Button>
         {install.canInstall && <Button block variant="secondary" icon="install" onClick={install.install}>{t("me.install")}</Button>}
-        <Button block variant="ghost" onClick={() => { if (confirm(t("me.reset") + "?")) dispatch({ type: "reset" }); }}>{t("me.reset")}</Button>
+        <Button block variant="ghost" onClick={() => { if (confirm(t("me.resetAsk"))) { clearRuns(); dispatch({ type: "reset" }); } }}>{t("me.reset")}</Button>
+        {/* Signed in: your data as a file, and deleting your account (account/MyData.tsx). */}
+        <MyData />
+        <Button block variant="ghost" onClick={() => nav("/licences")}>{t("me.licences")}</Button>
         <p className="muted small center">Darsi{t("common.sep")}<span className="dr-other-script" lang="ar">درسي</span>{t("common.sep")}v0.1.0</p>
       </main>
     </>
   );
+}
+
+/**
+ * Per account, this session: the profile's name as last seen (AuthProvider reads the profile once per sign-in and doesn't
+ * see this screen's saves), and the account's name as this phone last knew it (that, or the name saved here since).
+ * Without it, opening Me again put the profile's older name back over the one just typed and saved.
+ */
+const accountName = new Map<string, { seen?: string; name: string }>();
+
+/**
+ * The name on certificates. Signed in, it is the account's name (users/{uid}.name), which every device and the platform's
+ * certificate page use too: typing here saves it there once typing stops (or Me closes), and a name changed elsewhere
+ * (another phone, an org admin) replaces this phone's copy when Me first opens after the app starts. Guests keep it on
+ * the phone only.
+ */
+function useAccountName() {
+  const { user, profile, updateProfile } = useAuth();
+  const { state, dispatch } = useStore();
+  const pending = useRef<string | null>(null);
+  const flush = useCallback(() => {
+    const name = pending.current;
+    pending.current = null;
+    if (name === null || !user) return;
+    // Saved before the profile arrived (seen unset): the profile read may be older than this save.
+    accountName.set(user.uid, { seen: accountName.get(user.uid)?.seen ?? profile?.name, name });
+    updateProfile({ name }).catch(() => {});
+  }, [updateProfile, user, profile?.name]);
+  useEffect(() => {
+    if (!user || !profile?.name || pending.current !== null) return;
+    const known = accountName.get(user.uid);
+    const take = (name: string) => { if (name !== state.name) dispatch({ type: "set", patch: { name } }); };
+    if (!known || (known.seen !== undefined && known.seen !== profile.name)) {
+      // A profile name not seen before this session (the first look, or changed elsewhere) is the account's: take it.
+      accountName.set(user.uid, { seen: profile.name, name: profile.name });
+      take(profile.name);
+    } else {
+      // Otherwise keep what is on the phone (typed and saved here since), unless it was emptied: then the account's.
+      if (known.seen === undefined) accountName.set(user.uid, { seen: profile.name, name: known.name });
+      if (!state.name.trim()) take(known.name);
+    }
+  }, [user, profile?.name]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (pending.current === null) return;
+    const id = setTimeout(flush, 800);
+    return () => clearTimeout(id);
+  }, [state.name, flush]);
+  useEffect(() => () => flush(), [flush]);
+  return (name: string) => {
+    dispatch({ type: "set", patch: { name } });
+    // An empty name isn't saved: the account keeps the one it has.
+    pending.current = user && name.trim() ? name.slice(0, 120) : null;
+  };
+}
+
+/** A capstone whose lessons are all finished but whose milestones aren't all sent: no certificate yet. */
+interface Waiting { unit: Unit; sent: number | null; of: number; next: { lessonId: string; stepId: string } | null }
+
+/**
+ * Records the certificates earned since Me last looked (AppState.certs), and returns the capstones still waiting for
+ * milestones. It downloads next to nothing: only courses whose lessons the results say are all finished are opened
+ * (cache-first, and usually already on the phone), one failing doesn't stop the others, and a capstone's milestones are
+ * one small read of the learner's own projects, signed in. Guests can't send, so they earn no capstone certificate.
+ */
+function useNewCertificates(units: CatalogEntry[] | undefined, uid: string | undefined): Waiting[] {
+  const { state, dispatch } = useStore();
+  const [waiting, setWaiting] = useState<Waiting[]>([]);
+  const todo = useMemo(() => (units ? certCandidates(units, state.progress).filter((u) => !state.certs?.[u.id]) : []), [units, state.progress, state.certs]);
+  const key = todo.map((u) => u.id).join(",");
+  useEffect(() => {
+    if (!todo.length) { setWaiting((w) => (w.length ? [] : w)); return; }
+    let live = true;
+    const progress = state.progress;
+    (async () => {
+      const earned: [string, EarnedCert][] = [];
+      const left: Waiting[] = [];
+      await Promise.all(todo.map(async (entry) => {
+        const unit = await loadUnit(entry.id).catch(() => null);
+        if (!unit) return;
+        const cap = unit.kind === "capstone";
+        let sent: MySubmission[] | null | undefined = cap ? undefined : [];
+        if (cap && uid) sent = (await readMyWork(uid, { unitId: unit.id }, true).catch(() => null))?.list ?? null;
+        const cert = earnedCert(unit, progress, sent ?? undefined);
+        if (cert) earned.push([unit.id, cert]);
+        else if (cap && unit.lessons.every((l) => progress[l.id])) {
+          // Which milestone to send next, once the read says which were sent (offline, the first may have been already).
+          const have = new Set((sent ?? []).map((s) => `${s.lessonId}/${s.stepId}`));
+          const next = sent ? capstoneMilestones(unit).find((m) => !have.has(`${m.lessonId}/${m.stepId}`)) ?? null : null;
+          const m = milestonesSent(unit, sent ?? []);
+          left.push({ unit, sent: sent ? m.sent : null, of: m.of, next });
+        }
+      }));
+      if (!live) return;
+      for (const [id, cert] of earned) dispatch({ type: "earnCert", id, cert });
+      setWaiting(left);
+    })();
+    return () => { live = false; };
+    // `todo` is described by `key`; the results are read when the work starts.
+  }, [key, uid]); // eslint-disable-line react-hooks/exhaustive-deps
+  return waiting;
 }
 
 /**

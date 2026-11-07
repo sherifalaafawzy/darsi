@@ -10,7 +10,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { onRequest } from "firebase-functions/v2/https";
 import { auth, db } from "./admin.js";
-import { clientIp } from "./analytics.js";
+import { clientIp } from "./clientIp.js";
 import { bucket } from "./storage.js";
 import { limiter, MAX_BODY, parseReport } from "./bugsCore.js";
 

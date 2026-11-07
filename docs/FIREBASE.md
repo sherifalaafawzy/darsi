@@ -22,7 +22,7 @@ Darsi runs on the Firebase project **`darsi-f0685`** in region **`europe-west1`*
 
 - `apps/web/.env.local` holds the web config for `darsi-f0685`. It is gitignored. A Firebase web API key is a public project identifier, not a secret: the security rules protect the data. Keep it out of git anyway.
 - `.firebaserc` sets the default project to `darsi-f0685`.
-- `apps/web/.env.development` points `npm run dev` at the Emulator Suite (project `demo-darsi`), so day-to-day development never touches live data.
+- `apps/web/.env.development` (committed: `!apps/web/.env.development` in `.gitignore`) points `npm run dev` at the Emulator Suite (project `demo-darsi`), so day-to-day development never touches live data. In development mode it outranks `.env.local`; builds and the unit tests still read `.env.local`. If it goes missing, `npm run dev` turns Firebase off instead of using the live project (`firebase-config.ts`; `VITE_ALLOW_LIVE_DEV=true` overrides that on purpose).
 
 ## 3. Build and deploy
 
@@ -41,6 +41,22 @@ On the **first** functions deploy:
 
 Firestore builds the composite indexes in `firebase/firestore.indexes.json` after deploy. The console shows "Building", and admin lists stay empty until the build finishes.
 
+Every functions deploy needs these secrets to exist (`npx firebase functions:secrets:set <NAME>`; `unset` is a valid value where a section says so): `PAYMOB_SECRET_KEY`, `PAYMOB_HMAC_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (§9 Payments), `GEMINI_API_KEY` (§9 The tutor) and `GITHUB_TOKEN` (§9 Capstones).
+
+### Once, after the next deploy of the 2026-11 fixes
+
+Deploy the Firestore rules (organization requests, certificates, element sizes, the username domain), the functions and Hosting together, then run these once against the live project (credentials as for `npm run seed`, §7; build the functions first):
+
+```bash
+npm run build --prefix functions
+node scripts/migrate-org-requests.mjs --dry-run   # what would move
+node scripts/migrate-org-requests.mjs             # contact and reason off every org document, into orgs/{id}/private/request
+npm run resummarize                               # graded lessons only, and the projects waiting for review
+```
+
+- `migrate-org-requests` must run once: until it does, older organizations still carry the requester's contact and reason on the org document, which every member reads (the review cards on `/super` read `private/request` and fall back to the org document). It is safe to run again (`--emulator` for the local suite).
+- `resummarize` rebuilds every summary with the same code as the trigger, so older lesson rows learn which lessons are ungraded (projects, capstone stages, readings) and every profile gets `projectsWaiting`.
+
 ## 4. Make yourself the platform admin
 
 Roles live in Auth custom claims, which only the Admin SDK can set.
@@ -58,9 +74,10 @@ The app picks up the role by itself: it refreshes claims when `users/{uid}` chan
 ## 5. Check before going live
 
 - Sign up, sign out, sign in again; reset a password from "Forgot password?".
-- As an independent learner: finish lesson 1. In Firestore, `users/{uid}/progress/ai-1-1-1` appears and `users/{uid}.summary` updates within seconds (that is the trigger).
+- As an independent learner: finish the first lesson of a live course, for example "Audit an AI tool" in Leading AI at school (`ai-4-1`). In Firestore, `users/{uid}/progress/ai-4-1-1` appears and `users/{uid}.summary` updates within seconds (that is the trigger). The live courses are the ones `content/catalog.json` in Storage lists, not every file in `content/units`.
 - Request an organization from `/org?request=1`, approve it at `/super`, then join it with an invite code from a second account.
-- In an org admin account: add two people, download the credentials, print the login slips.
+- In an org admin account: add two people, download the credentials, print the login slips. Pupils who name a teacher made in the same sheet get that teacher (teachers are made first); a name in Arabic gets a Latin login (`mna.abd.27561`).
+- Data rights: in Me, **Your data → Download my data** gives a JSON file. With a throwaway account made by sign-up, **Delete my account and my data** (it asks for a recent sign-in) removes it from Authentication and Firestore. Platform admins have the same, plus Suspend, on a person's page (TECHNICAL.md "Accounts: data, deletion and suspension").
 - On a cheap Android phone: install the PWA, go offline, and confirm a downloaded unit still opens.
 - Notifications: see the checks at the end of [6. Push notifications](#6-push-notifications).
 - Course editor: see the checks at the end of [7. Course editor](#7-course-editor).
@@ -69,7 +86,7 @@ The app picks up the role by itself: it refreshes claims when `users/{uid}` chan
 
 Darsi sends web push through Firebase Cloud Messaging (FCM):
 - **learning reminders**: opt-in, at most one a day, at the hour the person picks;
-- **project feedback** for learners and **staff alerts** (a project to review, a new organization request);
+- **project feedback** for learners (a review, opening Me's "My projects"; the outcome of an organization request) and **staff alerts** (a project to review, a new organization request, a capstone milestone waiting for Darsi staff);
 - **announcements** that platform admins send from `/super`.
 
 Nothing is sent to a device until its owner turns notifications on in **Me**, and each category can be switched off there. Guests never load the messaging SDK. How it works is in [TECHNICAL.md](../TECHNICAL.md#push-notifications).
@@ -131,17 +148,17 @@ Platform admins publish units for everyone at `/super/content`; org admins publi
 
 ### Publish the starting courses
 
-The app ships no courses: every course comes from the editor. The starting ones (AI basics `ai-1-1`, Passwords and phishing `cyber-1-1` and Sensors `iot-1-2`, with their kits and media) are files in `content/` at the repo root, published once with:
+The app ships no courses: every course comes from the editor. `content/units/` at the repo root holds every course source (96 on 2026-11-07, with their kits in `content/kits/` and their media in `content/media/`, which is gitignored). **What is live is `content/catalog.json` in Storage** (51 courses on 2026-11-07), not that folder: the primary and secondary courses were unpublished on 2026-11-05 and only their drafts remain. Publish by name:
 
 ```bash
 npm run build --prefix functions
-npm run seed
+npm run seed -- <id> <id>…            # e.g. npm run seed -- ai-4-1
 ```
 
 - It uses the same credentials as `npm run superadmin` (§4): a service-account key in `GOOGLE_APPLICATION_CREDENTIALS`, or `gcloud auth application-default login` with your personal account.
-- It uploads the kit and media files to `content/media/<unit>/`, saves each unit as a platform draft and publishes it through the editor's own publish code. Unit and lesson ids stay the same, so learners keep their progress, notes and certificates.
-- A unit that already has a draft is left alone (it may hold edits made in the editor); `--replace` overwrites it. `npm run seed -- --emulator` does the same against the emulators.
-- `npm run seed -- --unpublish <id>` takes a unit off the site, like the editor's Unpublish. The old `ai-1` was retired this way on 2026-10-28; its source is in `content/retired/`.
+- It uploads the kit and media files (and the pictures in the lesson text) to `content/media/<unit>/`, saves each unit as a platform draft and publishes it through the editor's own publish code. Unit and lesson ids stay the same, so learners keep their progress, notes and certificates. A unit whose pictures or media aren't on this computer keeps its app paths or isn't published (pictures), so seed from a checkout that has `content/media`.
+- A unit that already has a draft is left alone (it may hold edits made in the editor); `npm run seed -- --replace <id>…` overwrites those drafts and publishes them. **Never run `--replace` without ids on the live project:** with no ids the seed takes every file in `content/units`, so it would republish all 96, including the courses deliberately kept off the site (and overwrite any editor edits). Without `--replace`, no ids only publishes sources that have never had a draft. `npm run seed -- --emulator` does the same against the emulators, where publishing everything is fine.
+- `npm run seed -- --unpublish <id>…` takes units off the site, like the editor's Unpublish. The old `ai-1` was retired this way on 2026-10-28; its source is in `content/retired/`. Storage allows about one update a second to `content/catalog.json`, so unpublishing many at once can hit 429 "rate limit for object mutation": run the ones that failed again, a few at a time.
 - **Do this before deploying a Hosting build without built-in courses** (since 2026-10-27): until the public catalog lists the units, learners see "No courses yet".
 - Without a key: sign in on the live site as a platform admin, **Lesson editor → Import JSON** with a file from `content/units/`, upload each lesson's kit files (in `content/kits/`) in the lesson's **Classroom kit** and its videos (in `content/media/`), then **Publish**.
 
@@ -244,7 +261,7 @@ npx firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
 
 **Stripe (USD).** Start with the test mode.
 1. **Developers → API keys:** the secret key goes in `STRIPE_SECRET_KEY`.
-2. **Developers → Webhooks → Add endpoint:** `https://europe-west1-darsi-f0685.cloudfunctions.net/stripeWebhook`, with the events `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `invoice.paid`, `charge.refunded` and `customer.subscription.deleted`. Its signing secret goes in `STRIPE_WEBHOOK_SECRET`.
+2. **Developers → Webhooks → Add endpoint:** `https://europe-west1-darsi-f0685.cloudfunctions.net/stripeWebhook`, with the events `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `invoice.paid`, `charge.refunded`, `customer.subscription.updated` (a renewal cancelled or restored, here or in Stripe) and `customer.subscription.deleted`. Its signing secret goes in `STRIPE_WEBHOOK_SECRET`.
 
 Then deploy the rules and functions (`npx firebase deploy --only firestore:rules,functions`) and Hosting.
 
@@ -254,11 +271,13 @@ Then deploy the rules and functions (`npx firebase deploy --only firestore:rules
 
 **Where it runs:** Vertex AI in darsi-f0685, as the project's default compute service account (it has Editor, which includes `aiplatform.endpoints.predict`). The Vertex AI API is on. Vertex bills the project's Cloud billing account, so **GCP credits pay for the tutor only if darsi-f0685 is linked to the billing account that holds them** (Billing → Account management → change billing for the project).
 
-**The Gemini API key** (`GEMINI_API_KEY`, "Darsi tutor (Gemini)", restricted to the Generative Language API) exists only as a fallback (`config/tutor.backend = "gemini"`), billed from AI Studio's prepaid balance, which is empty. Every functions deploy still needs the secret to exist:
+**The `GEMINI_API_KEY` secret** must exist for every functions deploy (`tutorAsk` and `checkCapstone` declare it, and the voice relay is deployed with it), but since 2026-11-03 it holds a **dead key**: the "Darsi tutor (Gemini)" API key was deleted then, because the tutor uses Vertex AI. So `config/tutor.backend = "gemini"` (the Gemini API, billed from AI Studio's prepaid balance) fails until a new key is made and stored:
 
 ```bash
 npx firebase functions:secrets:set GEMINI_API_KEY
 ```
+
+**Never delete the API key "Browser key (auto created by Firebase)"** while cleaning up keys: it is the web app's `VITE_FIREBASE_API_KEY`, and without it nobody can sign in.
 
 **The voice relay** runs on Cloud Run beside the functions, with the same code:
 
@@ -287,6 +306,20 @@ python -m venv .venv
 
 **Before launch:** run the eval (`node scripts/tutor-eval.mjs`, on Vertex with your application-default login, about $0.15) and check it passes; then talk to the tutor for a few minutes on a phone and compare `tutorUsage` with the Gemini bill, to confirm the cost per credit on /super/plans.
 
+### Capstones: GitHub token and limits
+
+**Every functions deploy from 2026-11-06 on needs the `GITHUB_TOKEN` secret to exist** (`checkCapstone` reads it; TECHNICAL.md "Capstones"). Create a fine-grained personal access token on GitHub with **Repository access: Public repositories (read-only)** and no other permission, then:
+
+```bash
+npx firebase functions:secrets:set GITHUB_TOKEN
+```
+
+With the token GitHub allows 5,000 requests an hour; set it to `unset` to run without one (60 an hour, shared by every function instance behind one address). Either way, a check GitHub doesn't answer is shown as "not checked", never as the learner's failure. For the emulators, `functions/.secret.local` holds `GITHUB_TOKEN=unset`.
+
+**Limits:** `config/capstone` (defaults: `ai` true, `perDay` 5 AI reviews per learner, `maxPerDay` 300 for the whole platform, `callsPerDay` 20 sends per learner) is changed on **Plans** (/super/plans) under "AI reviews of capstone milestones", which calls `saveCapstoneConfig`. The day's use is in `analytics/{day}.capstone` and shows there. The AI review uses the tutor's text model (`config/tutor`, Vertex AI by default), so it needs no key of its own.
+
+**Check it works:** as a student without a school, send milestone 1 of a live capstone (for example `ai-capstone`) with a public repository made from its starter repository (`STARTER_ORG` in `apps/web/src/content/capstone.ts`). The card shows the checks and the AI review, the project waits on /super/projects, and every platform admin gets a staff alert (when notifications are on).
+
 ## Local development with the emulators
 
 **Everything at once, to test: `npm run local -- you@gmail.com`** (`scripts/local.mjs`). It starts the emulators (data kept in `.emulator-data/`, saved on Ctrl+C), publishes the courses on the first run, and serves the app as it ships, with its service worker, on http://localhost:4173, so it also works offline once loaded. "Continue with Google" opens the emulator's account picker: pick the address you gave, which is a platform admin with a year of Darsi Super. It adds sample plans (/super/plans), the tutor's voice relay (ws://localhost:8091), and a stand-in for Paymob and Stripe on port 4799 (`scripts/local/payments.mjs`) whose Pay button sends the emulator's webhooks a properly signed callback, so a purchase runs end to end with no money. The tutor answers for real through Vertex AI in darsi-f0685 (`config/tutor` in the emulator; set `engine` to `"agent"` there to try the agent), with your gcloud application-default login, billed to that project's billing account. When another program holds port 8080 (Laragon's nginx), Firestore moves to 8085 (`firebase.local.json`, gitignored). `--no-build` reuses the last build, `--fresh` starts from empty emulators. The emulator's own settings are `functions/.env.local` and `.secret.local` (test values only; created on the first run). A browser that ran an older local build shows the update toast once.
@@ -298,6 +331,8 @@ npm run build --prefix functions
 npx firebase emulators:start --project demo-darsi --only auth,firestore,functions,storage
 npm run dev                          # the web app talks to the emulators (.env.development)
 ```
+
+- **Port 8080 taken** (Laragon's nginx on this machine): start the emulators with `--config firebase.local.json` (which `npm run local` writes, with Firestore on 8085), and put `VITE_FIRESTORE_EMULATOR_PORT=8085` in `apps/web/.env.development.local` (gitignored) so `npm run dev` finds Firestore there.
 
 - **"Firestore Emulator has exited with code: 1"** and `Unable to establish loopback connection` in `firestore-debug.log`: Java 16+ opens its loopback pipe through a Unix-domain socket in the temp folder, which fails on this machine (a user folder with spaces). Point it at a short folder with no spaces:
   ```bash
@@ -312,8 +347,8 @@ npm run dev                          # the web app talks to the emulators (.env.
 
 | Piece | Where | Notes |
 |---|---|---|
-| Web app | Hosting | Precaches the learner app shell (~640 KB), plus the fonts for the teacher's language. The Firebase SDK loads only for signed-in people; staff screens and exceljs load only when used. |
-| Data | Firestore | Rules in `firebase/firestore.rules`. Learner progress syncs with one read per sign-in, with no live listeners. |
+| Web app | Hosting | Precaches the learner app shell (about 1.3 MB, 418 KB gzipped, on 2026-11-07), plus the fonts for the teacher's language. The Firebase SDK loads only for signed-in people; staff screens and exceljs load only when used. |
+| Data | Firestore | Rules in `firebase/firestore.rules` (tests: `npm run test:rules -w @darsi/web`). Learner progress syncs with one read per sign-in; the only live listener is a signed-in person's own profile (claims refresh). |
 | Files | Storage | Project evidence (≤ 10 MB, images/PDF/mp4/audio). Media and kits are public read. Published units: `content/` is public, `orgs/{orgId}/` is for that org's members; the editor uploads videos (≤ 60 MB), captions and kit files there. Readable by browsers once the bucket CORS is applied (§7). |
 | Course editor | Cloud Functions | `publishUnit`, `unpublishUnit` and `deleteUnit` write what learners read; drafts are in Firestore `units` and `unitDrafts`. |
 | Roles, orgs, accounts | Cloud Functions | `europe-west1`, max 20 instances. Every role change is written to `audit`. |

@@ -1,24 +1,27 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type Ref } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon, cx, trackClass, useTrackStyles, type IconName } from "@darsi/design-system";
 import { useMine } from "../content/mine";
 import { useTracks } from "../content/settings";
 import { useI18n } from "../i18n";
 
-/** The current track in Home's app bar; tapping it opens TrackMenu to switch track, or add and remove tracks. */
-export function TrackSwitchButton({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+/**
+ * The current track in Home's app bar; tapping it opens TrackMenu to switch track, or add and remove tracks. `ref` is the
+ * button, so Home can give it focus back when the menu closes (Escape or a pick), instead of losing it to the page.
+ */
+export function TrackSwitchButton({ open, onToggle, ref }: { open: boolean; onToggle: () => void; ref?: Ref<HTMLButtonElement> }) {
   const { t } = useI18n();
   const tracks = useTracks();
   const style = useTrackStyles();
   const { active, all } = useMine();
   if (!active && all) return (
-    <button type="button" className="track-switch" aria-expanded={open} aria-controls="track-menu" onClick={onToggle} aria-label={t("tracks.switch", { track: t("tracks.all") })}>
+    <button ref={ref} type="button" className="track-switch" aria-expanded={open} aria-controls="track-menu" onClick={onToggle} aria-label={t("tracks.switch", { track: t("tracks.all") })}>
       <Icon name="learn" size={20} /><span>{t("tracks.all")}</span><Icon name={open ? "up" : "down"} size={18} />
     </button>
   );
   if (!active) return <>{t("home.title")}</>;
   return (
-    <button type="button" className={cx("track-switch", trackClass(style(active)))} aria-expanded={open} aria-controls="track-menu" onClick={onToggle}
+    <button ref={ref} type="button" className={cx("track-switch", trackClass(style(active)))} aria-expanded={open} aria-controls="track-menu" onClick={onToggle}
       aria-label={t("tracks.switch", { track: tracks.name(active) })}>
       <Icon name={tracks.of(active).icon as IconName} size={20} /><span>{tracks.name(active)}</span><Icon name={open ? "up" : "down"} size={18} />
     </button>

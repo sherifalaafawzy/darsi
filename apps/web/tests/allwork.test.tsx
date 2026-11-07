@@ -9,6 +9,7 @@ const m = vi.hoisted(() => ({
   calls: [] as { waiting: boolean; max: number }[],
   reload: vi.fn(),
   updated: [] as unknown[],
+  sent: {} as Record<string, unknown[]>,
 }));
 vi.mock("../src/firebase", () => ({ db: {}, auth: {}, storage: {}, functions: {}, firebaseReady: true, call: () => vi.fn() }));
 vi.mock("firebase/firestore", async (orig) => ({ ...(await orig<typeof import("firebase/firestore")>()), doc: (...p: unknown[]) => p.slice(1).join("/"), updateDoc: async (ref: unknown, data: unknown) => { m.updated.push({ ref, data }); }, serverTimestamp: () => "now" }));
@@ -19,8 +20,15 @@ vi.mock("../src/content/load", async (orig) => ({
   loadCatalog: async () => ({ version: 1, units: [
     { id: "ai-1-1", track: "ai", level: 1, title: { en: "AI basics" }, summary: { en: "" }, lessons: 4, sizeMB: 1, available: true },
     { id: "cyber-1-1", track: "cyber", level: 1, title: { en: "Passwords" }, summary: { en: "" }, lessons: 4, sizeMB: 1, available: true },
+    { id: "ai-cap", track: "ai", level: 4, title: { en: "AI capstone" }, summary: { en: "" }, lessons: 1, sizeMB: 1, available: true, kind: "capstone" },
   ] }),
-  loadUnit: async (id: string) => ({ id, track: "ai", level: 1, title: { en: "AI basics" }, summary: { en: "" }, lessons: [{ id: `${id}-4`, title: { en: "Your AI project" }, minutes: 5, steps: [], tryTomorrow: { en: "" }, slides: [], kit: [] }] }),
+  loadUnit: async (id: string) => id === "ai-cap"
+    // A capstone: one lesson with two milestones (project steps that take evidence).
+    ? { id, kind: "capstone", track: "ai", level: 4, title: { en: "AI capstone" }, summary: { en: "" }, lessons: [{ id: "ai-cap-1", title: { en: "Build it" }, minutes: 5, tryTomorrow: { en: "" }, slides: [], kit: [], steps: [
+      { id: "m1", type: "project", prompt: { en: "Milestone 1" }, deliverable: { en: "" }, rubric: [], evidence: [{ kind: "repo" }] },
+      { id: "m2", type: "project", prompt: { en: "Milestone 2" }, deliverable: { en: "" }, rubric: [], evidence: [{ kind: "links" }] },
+    ] }] }
+    : { id, track: "ai", level: 1, title: { en: "AI basics" }, summary: { en: "" }, lessons: [{ id: `${id}-4`, title: { en: "Your AI project" }, minutes: 5, steps: [], tryTomorrow: { en: "" }, slides: [], kit: [] }] },
 }));
 vi.mock("../src/admin/data", async (orig) => ({
   ...(await orig<typeof import("../src/admin/data")>()),
@@ -28,6 +36,7 @@ vi.mock("../src/admin/data", async (orig) => ({
   useNames: () => ({ data: { u1: "Amina Bello", u2: "Omar" } }),
   useLearners: () => ({ data: m.learners, reload: vi.fn() }),
   finishedAt: async () => "2026-10-30T09:00:00.000Z",
+  sentFor: async (uid: string) => m.sent[uid] ?? [],
 }));
 
 const { ProjectsPage, CertificatesPage } = await import("../src/admin/AllWork");
@@ -74,5 +83,29 @@ describe("every certificate", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show certificate" }));
     await screen.findByText(/DRS-CYBER-1-1-/);
     expect(screen.getAllByText("Omar").length).toBeGreaterThan(1);
+  });
+});
+
+describe("capstone certificates", () => {
+  it("count only when every milestone was sent, carry the account's own name, and date from the last milestone", async () => {
+    m.learners = [
+      { uid: "u3", name: "", email: "rana@users.darsi.app", summary: { lessonsDone: 1, units: { "ai-cap": 1 } } },
+      { uid: "u4", name: "Zed", summary: { lessonsDone: 1, units: { "ai-cap": 1 } } },
+    ];
+    m.sent = {
+      u3: [{ unitId: "ai-cap", lessonId: "ai-cap-1", stepId: "m1", createdAt: "2026-10-29T09:00:00.000Z" }, { unitId: "ai-cap", lessonId: "ai-cap-1", stepId: "m2", createdAt: "2026-11-02T09:00:00.000Z" }],
+      // Zed finished the lessons but sent only the first milestone ("later" sends nothing).
+      u4: [{ unitId: "ai-cap", lessonId: "ai-cap-1", stepId: "m1", createdAt: "2026-10-29T09:00:00.000Z" }],
+    };
+    page(<CertificatesPage />);
+    await screen.findByText("AI capstone");
+    expect(screen.getAllByRole("button", { name: "Show certificate" }).length).toBe(1);
+    expect(screen.queryByText("Zed")).toBeNull();
+    // No profile name: the list names the login, and the certificate says "—", as the learner's own (Me) does.
+    expect(screen.getByRole("link", { name: "rana" }).getAttribute("href")).toBe("/super/people/u3");
+    fireEvent.click(screen.getByRole("button", { name: "Show certificate" }));
+    await screen.findByText(/^DRS-AI-CAP-[0-9A-Z]{4}-[0-9A-Z]{4}$/); // from the course, the time and the account (cert.ts certCode), not the name
+    expect(screen.getByText("—")).toBeTruthy();
+    expect(screen.getByText(/November 2, 2026/)).toBeTruthy();
   });
 });

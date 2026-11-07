@@ -1,26 +1,25 @@
 import { lazy, Suspense, useEffect, useState, type ReactElement } from "react";
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useMatch, useNavigate, useSearchParams } from "react-router-dom";
-import { applyLocale, BrandProvider, Button, EmptyState } from "@darsi/design-system";
-import { AuthProvider, useAuth } from "./auth/AuthProvider";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useMatch, useNavigate, useSearchParams } from "react-router-dom";
+import { AppBar, applyLocale, BrandProvider, Button, EmptyState, UpdateToast } from "@darsi/design-system";
+import { AuthProvider, KEPT_KEY, useAuth } from "./auth/AuthProvider";
 import { Forgot, NotConfigured, SetPassword, SignIn, SignUp } from "./auth/AuthScreens";
 import type { Role } from "./auth/types";
 import { I18nProvider, useI18n } from "./i18n";
-import { StoreProvider, useStore } from "./state/store";
-import { useCloudSync } from "./state/sync";
+import { adoptsGuest, StoreProvider, useStore } from "./state/store";
+import { useCloudSync, useLearningSync } from "./state/sync";
 import { useOrgBrand } from "./state/orgBrand";
 import { useAnalytics } from "./analytics/useAnalytics";
 import { configureContent, loadCatalog, loadUnit, setOrgReader, storageUrl } from "./content/load";
-import { teachSync } from "./content/types";
 import { SettingsProvider, useLanguageReady, useSuperOn } from "./content/settings";
 import { call, loadFirebase } from "./fb";
 import { usePushRefresh } from "./notify/usePushRefresh";
-import { Layout } from "./components/Layout";
+import { Layout, pageKey } from "./components/Layout";
 import { Home } from "./screens/Home";
 import { LessonPlayer, LessonScreen } from "./screens/LessonScreen";
 import { canPlayLight, LightLesson, setLightPlayer } from "./lesson/LightLesson";
 import { Onboarding } from "./screens/Onboarding";
 import { Kit } from "./screens/Kit";
-import { Downloads } from "./screens/Downloads";
+import { Downloads, useOfflineRefresh } from "./screens/Downloads";
 import { MyTracks } from "./screens/MyTracks";
 import { LabApp, Labs } from "./screens/Labs";
 import { Me } from "./screens/Me";
@@ -31,6 +30,7 @@ import { AppTour } from "./tour/Start";
 // Loaded on demand: learners never download or parse the landing page (after their first visit) or any staff screen.
 // vite.config.ts keeps these chunks out of the precache; the service worker caches each one the first time it is used.
 const Landing = lazy(() => import("./landing/Landing").then((m) => ({ default: m.Landing })));
+const Licences = lazy(() => import("./landing/Licences").then((m) => ({ default: m.Licences })));
 const OrgScreen = lazy(() => import("./org/OrgScreen").then((m) => ({ default: m.OrgScreen })));
 const AdminHome = lazy(() => import("./admin/AdminHome").then((m) => ({ default: m.AdminHome })));
 const PersonDetail = lazy(() => import("./admin/PersonDetail").then((m) => ({ default: m.PersonDetail })));
@@ -74,15 +74,38 @@ function Allow({ roles }: { roles: Role[] }) {
   return roles.includes(role) ? <Outlet /> : <Navigate to="/learn" replace />;
 }
 
-/** Learning screens need the onboarding answers (language, where you teach, tracks, level) first. */
-function Onboarded() {
-  const { state } = useStore();
-  return state.onboarded ? <Outlet /> : <Onboarding />;
+/**
+ * Pages for any signed-in account that read its data through the SDK (Course results). Guests go to sign in without
+ * loading the page, so they never download Firebase; an account whose SDK can't load yet (offline) goes to its lessons.
+ */
+function SignedInOnly() {
+  const { user, offlineUid } = useAuth();
+  return user ? <Outlet /> : <Navigate to={offlineUid ? "/learn" : "/signin"} replace />;
 }
 
 /**
- * Signing in swaps the store (key = uid), which remounts the router, so the account screens' own nav() after
- * sign-in never runs; this sends people on instead. Sign-up from "Register your organization" carries ?org=1.
+ * Learning screens need the onboarding answers (language, where you teach, tracks, level) first. Onboarding takes the
+ * place of the page that was asked for, which shows at the same address once it is done (a lesson link, a project).
+ * - Platform admins skip it: they see every course in every track, in the language they use (TECHNICAL.md "Tracks").
+ * - Signed in on a new device, the answers come from the account (state/sync.ts useLearningSync), not asked again: a
+ *   moment of loading while its profile is read and copied here.
+ * - Teachers and org admins keep a way to their own pages while they go through it (no nav until it is done).
+ */
+function Onboarded() {
+  const { state } = useStore();
+  const { t } = useI18n();
+  const { user, role, profile, profileReady } = useAuth();
+  if (state.onboarded || role === "superadmin") return <Outlet />;
+  if (user && (!profileReady || profile?.onboarded === true)) return <Loading />;
+  const exit = role === "orgAdmin" ? { to: "/admin", label: t("org.openAdmin") } : role === "teacher" ? { to: "/teach", label: t("org.openTeach") } : undefined;
+  return <Onboarding exit={exit} />;
+}
+
+/**
+ * Where a sign-in or sign-up lands. The account screens never navigate after signing in: AuthProvider publishes the
+ * account (claims first), the store swaps (key = uid) and remounts the router at the same address, and this sends
+ * each role on: admins to their dashboard, everyone else to their lessons. An invite code (?code=, from sign-up, an
+ * invite link or "I already have an account") goes to /org, which joins with it; "Register your organization" carries ?org=1.
  */
 function SignedIn() {
   const [params] = useSearchParams();
@@ -98,29 +121,21 @@ const homeFor = (role: Role) => (role === "orgAdmin" ? "/admin" : role === "supe
 
 function Routed() {
   const { state, ready, dispatch } = useStore();
-  const { user, profile, role, orgId, configured, offlineUid, updateProfile } = useAuth();
+  const { user, profile, profileReady, role, orgId, configured, offlineUid } = useAuth();
   const { dir } = useI18n();
   // Before any screen asks for the catalog: org members also see their org's published units.
   configureContent({ orgId: user ? orgId : null, signedIn: Boolean(user || offlineUid) });
-  useEffect(() => {
-    applyLocale(state.lang, state.theme, dir); // an added language's direction is the one platform admins set
-    // An organization's members see its name first, then Darsi's.
-    const darsi = state.lang === "ar" ? "درسي" : "Darsi";
-    document.title = state.org?.name ? `${state.org.name} — ${darsi}` : state.lang === "ar" ? "درسي — Darsi" : "Darsi — درسي";
-  }, [state.lang, state.theme, dir, state.org?.name]);
+  // An added language's direction is the one platform admins set. (The window title: PageTitle.)
+  useEffect(() => { applyLocale(state.lang, state.theme, dir); }, [state.lang, state.theme, dir]);
   // Certificates use the local name; start it from the account name.
   useEffect(() => { if (ready && profile?.name && !state.name) dispatch({ type: "set", patch: { name: profile.name } }); }, [ready, profile?.name, state.name, dispatch]);
-  // Where a teacher teaches lives in the guest store, and on users/{uid}.teach once they are signed in.
-  // updateProfile loads Firestore only when it is called, and it returns immediately without a user.
-  useEffect(() => {
-    if (!ready || !user) return;
-    const plan = teachSync(state.teach, profile?.teach, profile != null);
-    if (plan.pull) dispatch({ type: "set", patch: { teach: plan.pull } });
-    if (plan.push) void updateProfile({ teach: plan.push });
-  }, [ready, user, profile, state.teach, dispatch, updateProfile]);
+  // The learning profile (onboarding's answers, tracks, levels, where they teach or study) is the account's on every
+  // device: copied from users/{uid} as AuthProvider reads it, and written back only when it changes here.
+  useLearningSync(user?.uid, user ? (profile as Record<string, unknown> | null) : null, profileReady);
   useCloudSync(user?.uid);
   useOrgBrand(user?.uid, user ? orgId : null);
   useAnalytics(); // a queue on the phone, sent in small batches (analytics/track.ts); no Firebase
+  useOfflineRefresh(); // once per version: downloaded courses keep their code steps, labs and packs (screens/Downloads)
   usePushRefresh(); // signed in and opted in on this phone only; guests never load messaging
   const langReady = useLanguageReady();
 
@@ -133,6 +148,7 @@ function Routed() {
 
   return (
     <BrandProvider logo={state.org?.logo} name={state.org?.name}>
+    <PageTitle />
     <Suspense fallback={<Loading />}>
     <Routes>
       <Route index element={inApp ? <Navigate to={homeFor(role)} replace /> : <Landing />} />
@@ -140,6 +156,8 @@ function Routed() {
       <Route path="signup" element={account(<SignUp />)} />
       <Route path="forgot" element={account(<Forgot />)} />
       <Route path="welcome" element={<Navigate to="/" replace />} />
+      {/* Open-source licences: for anyone, from Me or the home page's footer (a lazy chunk, not precached). */}
+      <Route path="licences" element={<Licences />} />
 
       <Route element={inApp ? <Outlet /> : <Navigate to="/" replace />}>
         <Route element={<Onboarded />}>
@@ -159,9 +177,15 @@ function Routed() {
             account section and Sign out, which a staff member on a phone (no nav rail) must always be able to reach. */}
         <Route element={<Layout />}>
           <Route path="me" element={<Me />} />
-          <Route path="org" element={<OrgScreen />} />
+          {/* Signed out, /org only says to sign in: that needs no organization chunk, which reads through the SDK. */}
+          <Route path="org" element={user ? <OrgScreen /> : <OrgGuest />} />
           <Route path="tutor" element={<Tutor relayUrl={import.meta.env.VITE_TUTOR_RELAY ?? ""} ask={call("tutorAsk")} status={call("tutorStatus")} Player={canPlayLight() ? LightLesson : null} />} />
           <Route path="upgrade" element={<UpgradeRoute />} />
+          {/* University teachers: the courses a platform admin gave them (courseAccess/{uid}); the rules guard the data,
+              and the page says so when there is no grant. Platform admins open it too. */}
+          <Route element={<SignedInOnly />}>
+            <Route path="results" element={<CourseResults content={CONTENT} />} />
+          </Route>
           <Route element={<Allow roles={["orgAdmin"]} />}>
             <Route path="admin" element={<AdminHome />} />
             <Route path="admin/people/:uid" element={<PersonDetail />} />
@@ -177,7 +201,6 @@ function Routed() {
             <Route path="teach/analytics" element={<OrgReport mode="teacher" />} />
           </Route>
           <Route element={<Allow roles={["superadmin"]} />}>
-            <Route path="results" element={<CourseResults content={CONTENT} />} />
             <Route path="super" element={<SuperAdmin />} />
             <Route path="super/access" element={<CourseAccess content={CONTENT} />} />
             <Route path="super/analytics" element={<AnalyticsPage />} />
@@ -204,13 +227,50 @@ function Routed() {
     <LessonTutor />
     <ReportBug />
     <AppTour home={homeFor(role)} />
+    <KeptNotice />
     </BrandProvider>
+  );
+}
+
+/**
+ * The window title names the page ("Labs — Darsi", «المختبرات — درسي»), so screen readers, the browser's tabs and its
+ * history say where you are; an organization's members see its name in place of Darsi's. Pages without a name of their
+ * own (a lesson, the account screens) get Darsi's. It comes before the routes and runs on every move, so a screen that
+ * names itself more closely (a lesson's or a lab's title) in its own effect has the last word, and loses it when left.
+ */
+function PageTitle() {
+  const { pathname } = useLocation();
+  const { t, lang } = useI18n();
+  const { user, role } = useAuth();
+  const org = useStore().state.org?.name;
+  const key = pageKey(pathname, role, Boolean(user));
+  useEffect(() => {
+    const darsi = t("app.name");
+    document.title = key ? `${t(key)} — ${org || darsi}` : org ? `${org} — ${darsi}` : lang === "ar" ? "درسي — Darsi" : "Darsi — درسي";
+  }, [pathname, key, org, lang, t]);
+  return null;
+}
+
+/**
+ * /org for a guest: sign in first. Rendered here rather than in the lazy organization chunk, which reads through the
+ * Firebase SDK that guests never download. An invite code in the address goes on to sign-in, which joins with it after.
+ */
+function OrgGuest() {
+  const { t } = useI18n();
+  const nav = useNavigate();
+  const code = useSearchParams()[0].get("code");
+  return (
+    <>
+      <AppBar title={t("org.title")} />
+      <main className="screen narrow"><EmptyState icon="profile" title={t("org.signInFirst")}
+        action={<Button onClick={() => nav(code ? `/signin?code=${encodeURIComponent(code)}` : "/signin")}>{t("auth.signIn")}</Button>} /></main>
+    </>
   );
 }
 
 /** /upgrade, told whether Darsi Super is on (the chunk can't import content/settings without splitting startup). */
 function UpgradeRoute() {
-  return <Upgrade plansUrl={storageUrl("content/plans.json")} startCheckout={call("startCheckout")} superOn={useSuperOn().on} />;
+  return <Upgrade plansUrl={storageUrl("content/plans.json")} startCheckout={call("startCheckout")} setRenewal={call("setRenewal")} superOn={useSuperOn().on} />;
 }
 
 /**
@@ -222,7 +282,9 @@ function LessonTutor() {
   const at = useMatch("/lesson/:unitId/:lessonId")?.params;
   const [open, setOpen] = useState(false);
   const superOn = useSuperOn().on;
-  const onboarded = useStore().state.onboarded; // a lesson link opened before onboarding shows onboarding, not a lesson
+  // A lesson link opened before onboarding shows onboarding, not a lesson (platform admins skip it).
+  const { role } = useAuth();
+  const onboarded = useStore().state.onboarded || role === "superadmin";
   useEffect(() => setOpen(false), [at?.lessonId]);
   if (!at?.unitId || !at.lessonId || !superOn || !onboarded) return null;
   return open
@@ -235,14 +297,24 @@ function WithI18n() {
   return <I18nProvider lang={state.lang}><SettingsProvider lang={state.lang}><BrowserRouter><Routed /></BrowserRouter></SettingsProvider></I18nProvider>;
 }
 
-/** One local store per person on this device; a just-created account takes over the guest's progress. */
+/**
+ * One local store per person on this device. An account created here a moment ago (sign-up or Google, by the person who
+ * learned as a guest) takes over the guest's progress; accounts an organization made never do (adoptsGuest).
+ */
 function Scoped() {
-  const { user, loading, offlineUid } = useAuth();
+  const { user, orgId, loading, offlineUid } = useAuth();
   if (loading) return <Loading />;
-  const created = user?.metadata.creationTime ? Date.parse(user.metadata.creationTime) : 0;
   // offlineUid: signed in on this device but offline before the SDK was cached; keep learning in their own store.
   const scope = user?.uid ?? offlineUid ?? "guest";
-  return <StoreProvider key={scope} scope={scope} adoptGuest={Date.now() - created < 10 * 60e3}><WithI18n /></StoreProvider>;
+  return <StoreProvider key={scope} scope={scope} adoptGuest={adoptsGuest(user?.metadata, orgId)}><WithI18n /></StoreProvider>;
+}
+
+/** After signing out with work not yet sent (offline): it stays on this device and goes up at the next sign-in here. */
+function KeptNotice() {
+  const { t } = useI18n();
+  const [show, setShow] = useState(() => { try { return sessionStorage.getItem(KEPT_KEY) === "1"; } catch { return false; } });
+  useEffect(() => { try { sessionStorage.removeItem(KEPT_KEY); } catch { /* private mode */ } }, []); // said once
+  return show ? <UpdateToast floating actionLabel={t("common.gotIt")} onAction={() => setShow(false)}>{t("auth.keptOnDevice")}</UpdateToast> : null;
 }
 
 export function App() {

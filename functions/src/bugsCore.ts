@@ -86,6 +86,8 @@ export function parseReport(body: unknown): Report {
 /**
  * Reports allowed per window, per instance: per address (a school's phones share one), per account, and for the
  * whole instance, the brake that holds even when someone makes up addresses (the function's own URL takes any headers).
+ * Only a report that passes its address and account limits counts toward the instance's: one address sending hundreds
+ * used to spend the whole instance's hour on refusals, and everyone else's reports were then refused too.
  */
 export const BUG_LIMITS = { address: { n: 8, ms: 10 * 60e3 }, account: { n: 10, ms: 60 * 60e3 }, instance: { n: 120, ms: 60 * 60e3 } };
 export function limiter() {
@@ -96,5 +98,5 @@ export function limiter() {
     return ++s.n > lim.n;
   };
   return (ip: string, uid: string | null, now = Date.now()) =>
-    over("*", BUG_LIMITS.instance, now) || over(`a:${ip}`, BUG_LIMITS.address, now) || (uid != null && over(`u:${uid}`, BUG_LIMITS.account, now));
+    over(`a:${ip}`, BUG_LIMITS.address, now) || (uid != null && over(`u:${uid}`, BUG_LIMITS.account, now)) || over("*", BUG_LIMITS.instance, now);
 }
