@@ -360,7 +360,7 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - **Stages:** "Where do you study?" / "Where do you teach?" (onboarding and Me) offer only stages with a published course for that audience in a visible track (`stagesWithCourses` / `useStagesOffered` in `content/mine.ts`); for university teachers the university courses count. No catalog (loading, offline) or no courses at all: every stage.
     - **Live courses:** at the user's choice, the 33 university-level courses stay: the 12 university-teacher courses (`*-u*`), the 12 students' Advanced courses (`*-s4`, `ai-d1`–`ai-d3`) and the 9 teachers' Advanced courses (`*-4-1`). The other 54 (primary and secondary levels) were unpublished (drafts and progress kept; republish from the list or with `npm run seed -- <ids>`).
     - **Checked:** web 1,408 tests (stage rule, onboarding and Me with only university courses, list Unpublish), `tsc`, e2e 30/30 on a clean build, startup 4 files (190.8 KB gzipped).
-30. Done (2026-11-08): **the release pass.** The user asked for "one final revision on content, security, videos, labs, ui, ux" so the platform is ready to ship for students, teachers and organizations, with full admin support. Built in the worktree `H:/tmp/darsi-final` from ae9ac16e.
+30. Done and deployed (2026-11-08, commit c161b155; see "Firebase project" below): **the release pass.** The user asked for "one final revision on content, security, videos, labs, ui, ux" so the platform is ready to ship for students, teachers and organizations, with full admin support. Built in the worktree `H:/tmp/darsi-final` from ae9ac16e.
     - **How:** an audit of about 800 findings, then fixes by file-owning groups; content, video and starter fixes; walkthroughs of every role (en/ar, 375/1280, Chromium, WebKit, Firefox) on the local stack; then a fix round for what they found.
     - **Learners:**
       - The learning profile (onboarded, tracks, levels, audience, stage, weekly goal) syncs to `users/{uid}`, so a new phone skips onboarding.
@@ -582,6 +582,21 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
 - Deployed 2026-11-05 (item 29, commit 5dfe8b93, with the user's go-ahead), from the clean worktree `H:/tmp/darsi-live`: Hosting only (`index-DtU4tHNc.js`; functions unchanged). Then `node scripts/seed-content.mjs --unpublish <54 ids>` (personal application-default login): 44 at once, and 10 again one at a time, because Storage allows about one update a second to `content/catalog.json` (429 "rate limit for object mutation"). Unpublish many courses with a pause between them.
   - The deploy copy passed `tsc`, web 1333 and e2e 30/30.
   - Checked live: the catalog lists exactly the 33 kept (all level 4 or `teach: "university"`), and none of the 54 is still marked published in the editor. As new guests on darsiai.org (Pixel 7), "Where do you teach?" and "Where do you study?" each offer only "University or college", with no errors.
+- Deployed 2026-11-08 (item 30, the release pass, commit c161b155, with the user's go-ahead), from the worktree `H:/tmp/darsi-final`:
+  1. Firestore rules and indexes, Storage rules (unchanged, skipped).
+  2. Hosting (`index-DADr8pCF.js`).
+  3. `npm run seed -- --replace <the 51 live ids>`: all republished with the new videos and kits. A read-only check first found every live draft last written by the seed.
+  4. The `GITHUB_TOKEN` secret, created by the user (`checkCapstone` declares it; every functions deploy now needs it).
+  5. **55 of 56 Cloud Functions** (6 new: `exportAccountData`, `deleteAccount`, `setAccountSuspended`, `setRenewal`, `saveCapstoneConfig`, `moderateSubmission`).
+     - **`onOrgLicence` is still the previous version.** Its new retry-on-failure policy makes a non-interactive deploy ask for `--force`, which was refused here. The user runs `npx firebase deploy --only functions:onOrgLicence --project darsi-f0685 --force` (retries are safe: `writeClaims` skips claims that already match).
+  6. The voice relay, revision `darsi-tutor-00008-6j4`.
+  7. `node scripts/migrate-org-requests.mjs` moved 2 of 2 organizations' contact into `private/request`; `npm run resummarize` rebuilt 9 summaries.
+  - Lesson Studio commit 4b34d7f and the nine darsi-org starters were pushed the same day; every starter's Actions run is green.
+  - Checked live:
+    - The new callables answer "Sign in first" without an account; `/api/collect` 405 to GET, `/api/bug` 400 to junk.
+    - Anonymous reads of `users`, `orgs/*/private/request` and `users/*/certs` answer 403; the catalog lists 51 courses.
+    - darsiai.org serves the build: the service worker activates, and a guest at 375 px loads no Firebase chunk, with no errors and no sideways scroll.
+  - Not checked live: the signed-in flows (learning-profile sync, certificate records, data export and deletion, the editor's autosave), which need sign-ins (the user's).
 - **Storage**: the app uses the bucket **`darsi-f0685` in europe-west1**, set by `VITE_FIREBASE_STORAGE_BUCKET` in `.env.local`. It is deploy target `main` with `firebase/storage.rules`.
   - The original default bucket `darsi-f0685.firebasestorage.app` (us-west1, never used) was deleted on 2026-10-25 and now returns 404 `NoSuchBucket`. Keep the `main` target: without one, `firebase deploy --only storage` aims at the project's default bucket, which no longer exists.
   - Checked live on 2026-10-25: media/kits are public, and submissions return 403 to anonymous requests.
