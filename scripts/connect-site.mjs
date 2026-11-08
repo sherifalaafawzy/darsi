@@ -12,13 +12,19 @@
  *    (the global key). Any other host's DNS is its owner's: the script prints the record to create.
  * 2. Firebase Hosting: the host as a custom domain of the darsi-f0685 site (its certificate can take up to a day).
  * 3. Firebase Authentication: the host in the authorized domains, or signing in there fails.
+ * 4. Storage CORS: https://<host> in firebase/storage.cors.json, applied to the bucket, or the app can't read its
+ *    settings, catalogs and sites.json there (Firebase Storage answers only listed origins; no wildcards).
  * Steps 2 and 3 use `gcloud auth print-access-token` for the personal account (GCLOUD_ACCOUNT overrides it), billed
  * to darsi-f0685 (x-goog-user-project). A host outside *.darsiai.org also needs adding to the voice relay's
  * TUTOR_ORIGINS (docs/FIREBASE.md "Organization sites"); the script reminds you.
  * Each step reads first and changes only what is missing, so running it again is safe.
  */
 import { execSync } from "node:child_process";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const PROJECT = "darsi-f0685";
 const SITE = "darsi-f0685";
 const TARGET = "darsi-f0685.web.app";
@@ -119,10 +125,26 @@ async function authDomains() {
   say("Auth", `added ${host} to the authorized domains.`);
 }
 
+/* ---------- 4. Storage CORS ---------- */
+// The app reads settings, catalogs, courses and sites.json from firebasestorage.googleapis.com, which answers only the
+// origins in the bucket's CORS list (no wildcard subdomains). The list lives in firebase/storage.cors.json.
+async function cors() {
+  const file = join(ROOT, "firebase", "storage.cors.json");
+  const conf = JSON.parse(readFileSync(file, "utf8"));
+  const origin = `https://${host}`;
+  if (conf[0].origin.includes(origin)) { say("CORS", `ok: ${origin} is in firebase/storage.cors.json (apply it if the bucket isn't up to date).`); }
+  else if (dry) { say("CORS", `would add ${origin} to firebase/storage.cors.json and apply it to gs://${PROJECT}.`); return; }
+  else { conf[0].origin.push(origin); writeFileSync(file, `${JSON.stringify(conf, null, 2)}\n`); say("CORS", `added ${origin} to firebase/storage.cors.json (commit it).`); }
+  if (dry) return;
+  execSync(`gcloud storage buckets update gs://${PROJECT} --cors-file="${file}" --account=${ACCOUNT}`, { stdio: "ignore" });
+  say("CORS", `applied the list to gs://${PROJECT}.`);
+}
+
 console.log(`${dry ? "Dry run: " : ""}connecting ${host} to Darsi (project ${PROJECT})`);
 await dns().catch((e) => fail("DNS", String(e?.message ?? e)));
 await hosting().catch((e) => fail("Hosting", String(e?.message ?? e)));
 await authDomains().catch((e) => fail("Auth", String(e?.message ?? e)));
+await cors().catch((e) => fail("CORS", String(e?.message ?? e)));
 say("Tutor", underZone ? "ok: the relay's TUTOR_ORIGINS includes https://*.darsiai.org." : `add https://${host} to the relay's TUTOR_ORIGINS and deploy it again (docs/FIREBASE.md).`);
 say("Next", `on /super/orgs/<id>, "Web address": ${host}, with or without Darsi's identity.`);
 process.exit(problems ? 1 : 0);

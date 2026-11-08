@@ -223,7 +223,7 @@ npx firebase deploy --only functions:setOrgSite,functions:onOrgSite
 npx firebase deploy --only hosting
 ```
 
-Then the voice relay with the new `TUTOR_ORIGINS` (section 9, "The tutor": `https://darsiai.org,https://*.darsiai.org`). Storage's rules and CORS don't change: `content/` is already public, and the app reads Storage only through `firebasestorage.googleapis.com`, which answers every origin.
+Then the voice relay with the new `TUTOR_ORIGINS` (section 9, "The tutor": `https://darsiai.org,https://*.darsiai.org`). Storage's rules don't change (`content/` is already public), but **its CORS list does**: `firebasestorage.googleapis.com` answers only the origins in the bucket's CORS settings, with no wildcard subdomains, so each address needs `https://<host>` in `firebase/storage.cors.json`, applied with `gcloud storage buckets update gs://darsi-f0685 --cors-file=firebase/storage.cors.json --account=sherifalaafawzy@gmail.com` (`connect-site.mjs` does both). Without it, the app on that address can't read its settings, catalog or `sites.json` (found on cis.darsiai.org, 2026-11-08).
 
 ### Add a site
 

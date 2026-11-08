@@ -607,6 +607,16 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - Anonymous reads of `users`, `orgs/*/private/request` and `users/*/certs` answer 403; the catalog lists 51 courses.
     - darsiai.org serves the build: the service worker activates, and a guest at 375 px loads no Firebase chunk, with no errors and no sideways scroll.
   - Not checked live: the signed-in flows (learning-profile sync, certificate records, data export and deletion, the editor's autosave), which need sign-ins (the user's).
+- Deployed 2026-11-08, second deploy (items 31 and 32, commit 1690427b, with the user's go-ahead), from `H:/tmp/darsi-final`:
+  1. Firestore rules (clients can't write `courses` or `site` on an org).
+  2. **58 of 59 functions**, 3 new: `setOrgCourses`, `setOrgSite`, `onOrgSite`. `onOrgLicence` still waits for the user's `--force` deploy.
+  3. Hosting (`index-CzyPlzZB.js`).
+  4. The relay, revision `darsi-tutor-00009-mjr`, with `TUTOR_ORIGINS=https://darsiai.org,https://*.darsiai.org`.
+  5. The CIS address: `config/sites`, `orgs/iQfVWNDh1bSPOVxRwHBg.site = {cis.darsiai.org, darsi: true}`, `content/sites.json` with a public logo copy, and an audit entry.
+  6. Storage CORS: `https://cis.darsiai.org` added. Without it, `firebasestorage.googleapis.com` refused the app's reads on that address. `connect-site.mjs` now does this step.
+  - Checked live:
+    - On cis.darsiai.org (certificate active), a guest at 375 px in English and Arabic sees the CIS name and logo with "with Darsi", the title "CIS Training Platform — Darsi", no Firebase chunk, no errors and no sideways scroll.
+    - darsiai.org never reads `sites.json`.
 - Created 2026-11-08 (with the user's go-ahead): **the CIS organization**, "CIS Training Platform" (`orgs/iQfVWNDh1bSPOVxRwHBg`, type university, Egypt, with its logo). The user is its platform admin, and it has no org admin yet.
   - **Accounts:** 203, with a script that does what `createMembers` does (claims, profile, `mustChangePassword`, audit).
     - Faculty and assistant staff are teachers, in the groups «هيئة التدريس» and «الهيئة المعاونة».
