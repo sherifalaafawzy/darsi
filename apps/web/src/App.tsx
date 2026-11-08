@@ -8,6 +8,7 @@ import { I18nProvider, useI18n } from "./i18n";
 import { adoptsGuest, StoreProvider, useStore } from "./state/store";
 import { useCloudSync, useLearningSync } from "./state/sync";
 import { useOrgBrand } from "./state/orgBrand";
+import { identityOf, useSite } from "./state/site";
 import { useAnalytics } from "./analytics/useAnalytics";
 import { configureContent, loadCatalog, loadUnit, setOrgReader, storageUrl } from "./content/load";
 import { SettingsProvider, useLanguageReady, useSuperOn } from "./content/settings";
@@ -48,6 +49,8 @@ const PeoplePage = lazy(() => import("./admin/Analytics").then((m) => ({ default
 const OrgAnalytics = lazy(() => import("./admin/Analytics").then((m) => ({ default: m.OrgAnalytics })));
 const OrgReport = lazy(() => import("./admin/OrgReport").then((m) => ({ default: m.OrgReport })));
 const OrgsAdmin = lazy(() => import("./admin/OrgsAdmin").then((m) => ({ default: m.OrgsAdmin })));
+/** Which courses the organization's teachers, students and classes see (org admins; platform admins on an org's page). */
+const OrgCoursesPage = lazy(() => import("./admin/OrgCourses").then((m) => ({ default: m.OrgCoursesPage })));
 const PlansPage = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.PlansPage })));
 const ProjectsPage = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.ProjectsPage })));
 const CertificatesPage = lazy(() => import("./admin/SuperAdmin").then((m) => ({ default: m.CertificatesPage })));
@@ -121,6 +124,9 @@ const homeFor = (role: Role) => (role === "orgAdmin" ? "/admin" : role === "supe
 
 function Routed() {
   const { state, ready, dispatch } = useStore();
+  // An organization's own web address shows its name and logo (state/site.ts): read before the first screen.
+  const { ready: siteReady, site } = useSite();
+  const brand = identityOf(state.org, site);
   const { user, profile, profileReady, role, orgId, configured, offlineUid } = useAuth();
   const { dir } = useI18n();
   // Before any screen asks for the catalog: org members also see their org's published units.
@@ -133,25 +139,26 @@ function Routed() {
   // device: copied from users/{uid} as AuthProvider reads it, and written back only when it changes here.
   useLearningSync(user?.uid, user ? (profile as Record<string, unknown> | null) : null, profileReady);
   useCloudSync(user?.uid);
-  useOrgBrand(user?.uid, user ? orgId : null);
+  // The org's name, logo and the courses it lets this member see (their role, and their class from the profile).
+  useOrgBrand(user?.uid, user ? orgId : null, { role, group: profileReady ? profile?.group ?? null : undefined });
   useAnalytics(); // a queue on the phone, sent in small batches (analytics/track.ts); no Firebase
   useOfflineRefresh(); // once per version: downloaded courses keep their code steps, labs and packs (screens/Downloads)
   usePushRefresh(); // signed in and opted in on this phone only; guests never load messaging
   const langReady = useLanguageReady();
 
   // An added language's strings are fetched when it is picked: until then the loading screen, not English.
-  if (!ready || !langReady) return <Loading />;
+  if (!ready || !langReady || !siteReady) return <Loading />;
   if (user && profile?.mustChangePassword) return <SetPassword />;
   // Guests: chose "Continue without an account", or used Darsi on this device before accounts existed.
   const inApp = Boolean(user) || Boolean(offlineUid) || Boolean(state.guest) || state.onboarded;
   const account = (screen: ReactElement) => (user ? <SignedIn /> : configured ? screen : <NotConfigured />);
 
   return (
-    <BrandProvider logo={state.org?.logo} name={state.org?.name}>
-    <PageTitle />
+    <BrandProvider logo={brand.logo} name={brand.name} darsi={brand.darsi}>
+    <PageTitle name={brand.name} darsi={brand.darsi} />
     <Suspense fallback={<Loading />}>
     <Routes>
-      <Route index element={inApp ? <Navigate to={homeFor(role)} replace /> : <Landing />} />
+      <Route index element={inApp ? <Navigate to={homeFor(role)} replace /> : <Landing site={site} />} />
       <Route path="signin" element={account(<SignIn />)} />
       <Route path="signup" element={account(<SignUp />)} />
       <Route path="forgot" element={account(<Forgot />)} />
@@ -190,6 +197,7 @@ function Routed() {
             <Route path="admin" element={<AdminHome />} />
             <Route path="admin/people/:uid" element={<PersonDetail />} />
             <Route path="admin/analytics" element={<OrgReport />} />
+            <Route path="admin/courses" element={<OrgCoursesPage />} />
             <Route path="admin/add" element={<AddPeople />} />
             <Route path="admin/import" element={<ImportPeople />} />
             <Route path="admin/content" element={<ContentList />} />
@@ -234,20 +242,20 @@ function Routed() {
 
 /**
  * The window title names the page ("Labs — Darsi", «المختبرات — درسي»), so screen readers, the browser's tabs and its
- * history say where you are; an organization's members see its name in place of Darsi's. Pages without a name of their
- * own (a lesson, the account screens) get Darsi's. It comes before the routes and runs on every move, so a screen that
+ * history say where you are; an organization's members (and anyone on its own web address) see its name in place of
+ * Darsi's. Pages without a name of their own (a lesson, the account screens) get Darsi's, or the organization's beside
+ * it, or alone on a site without Darsi's identity. It comes before the routes and runs on every move, so a screen that
  * names itself more closely (a lesson's or a lab's title) in its own effect has the last word, and loses it when left.
  */
-function PageTitle() {
+function PageTitle({ name, darsi }: { name: string | null; darsi: boolean }) {
   const { pathname } = useLocation();
   const { t, lang } = useI18n();
   const { user, role } = useAuth();
-  const org = useStore().state.org?.name;
   const key = pageKey(pathname, role, Boolean(user));
   useEffect(() => {
-    const darsi = t("app.name");
-    document.title = key ? `${t(key)} — ${org || darsi}` : org ? `${org} — ${darsi}` : lang === "ar" ? "درسي — Darsi" : "Darsi — درسي";
-  }, [pathname, key, org, lang, t]);
+    const own = t("app.name");
+    document.title = key ? `${t(key)} — ${name || own}` : name ? (darsi ? `${name} — ${own}` : name) : lang === "ar" ? "درسي — Darsi" : "Darsi — درسي";
+  }, [pathname, key, name, darsi, lang, t]);
   return null;
 }
 
@@ -292,9 +300,11 @@ function LessonTutor() {
     : <TutorFab label={t("lesson.askTutor")} onOpen={() => setOpen(true)} />;
 }
 
+/** On an organization's site without Darsi's identity, its name takes Darsi's place in every UI string (i18n rebrand). */
 function WithI18n() {
   const { state } = useStore();
-  return <I18nProvider lang={state.lang}><SettingsProvider lang={state.lang}><BrowserRouter><Routed /></BrowserRouter></SettingsProvider></I18nProvider>;
+  const brand = identityOf(state.org, useSite().site);
+  return <I18nProvider lang={state.lang} brand={brand.darsi ? null : brand.name}><SettingsProvider lang={state.lang}><BrowserRouter><Routed /></BrowserRouter></SettingsProvider></I18nProvider>;
 }
 
 /**

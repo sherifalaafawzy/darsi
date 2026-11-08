@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Button, Icon, Mark, ProgressBar, cx, trackClass, useTrackStyles, type Track } from "./primitives";
+import { Button, DecorMark, Icon, ProgressBar, cx, trackClass, useTrackStyles, type Track } from "./primitives";
 
 export interface ConnectionStatusProps { state: "offline" | "syncing" | "synced"; children: ReactNode; action?: ReactNode; floating?: boolean; }
 /** Tells the truth about the network. Offline is calm, not an error. */
@@ -18,7 +18,7 @@ export interface InstallPromptProps { title: string; body: string; onInstall?: (
 export function InstallPrompt({ title, body, onInstall, onDismiss, installLabel = "Install", dismissLabel = "Not now", floating }: InstallPromptProps) {
   return (
     <aside className={cx("dr-install", floating && "dr-floating-bottom")} aria-label={title}>
-      <span className="dr-install-icon"><Mark size={40} /></span>
+      <span className="dr-install-icon"><DecorMark size={40} /></span>
       <div className="dr-install-text"><strong>{title}</strong><p>{body}</p></div>
       <div className="dr-install-actions">
         <Button size="sm" icon="install" onClick={onInstall}>{installLabel}</Button>

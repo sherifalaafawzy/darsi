@@ -398,6 +398,16 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
       - Startup is 8 files (entry, `i18n`, `app-config` (src/firebase-config.ts, renamed in vite.config so the e2e guard only matches the SDK), `platform`, `dist`, `robot`, `preload-helper`, `rolldown-runtime`), 226 KB gzipped. Rolldown refuses to merge those shared modules into the entry since this pass. Neither new modules, staff screens, lab apps, the vendored player nor vite.config caused it alone (bisected 2026-11-07).
       - The Report button can overlap the first card before any scroll.
       - WebKit stale-after-review to check on a real iPhone.
+31. Done (2026-11-08): **course visibility in organizations.** The user asked that admins control "which students or teachers in the org can see which courses in an easy way". TECHNICAL.md "Course visibility in organizations".
+    - `orgs/{id}.courses`: `{mode: "all"}` (default) or `{mode: "chosen", teachers, students, groups: {class: ids}}`. Written only by the `setOrgCourses` callable (org admins of that org, platform admins), with the checks shared in `content/orgCourses.ts`.
+    - Members' phones store their own resolved list in `state.org.courses` from the one-shot org read (`state/orgBrand.ts`). `useMine` and Home, Kit, Downloads, My tracks and onboarding apply it.
+    - It narrows what people are offered; it isn't access control (a direct lesson link still opens).
+    - The admin screen is `/admin/courses` (lazy `OrgCourses` chunk), and the same panel is on `/super/orgs/:id`.
+32. Done (2026-11-08): **organization sites (custom web addresses) and the Darsi identity switch.** The user asked for domains per organization, with Darsi's identity on or off set by a platform admin, starting with cis.darsiai.org for the CIS organization. TECHNICAL.md "Organization sites"; docs/FIREBASE.md §8b.
+    - `orgs/{id}.site = {host, darsi}`, written only by `setOrgSite` (platform admins). It publishes the public `content/sites.json` with a public copy of the logo. The `onOrgSite` trigger republishes on a rename or a new logo.
+    - On a host that isn't Darsi's, the app reads `sites.json` once (plain fetch, cached; `state/site.ts`) and shows the organization's name and logo. With `darsi: false`, no Darsi name or mark appears in the UI (`rebrand()` in i18n), except `/licences` and the model name "Darsi Tiny".
+    - New hosts: `node scripts/connect-site.mjs <host>` (Cloudflare CNAME as DNS only, the Hosting custom domain, and Auth's authorized domains), then the Web address panel.
+    - The relay's `TUTOR_ORIGINS` takes `https://*.darsiai.org`.
 9. Not started: the security review. The user asked for static scanning of the rules, functions and client, plus a pentest of the deployed URL with `H:\htdocs\pentest-lab` (allowlist-gated; add only darsi-f0685 hosts). It is deferred until the code is finished.
 
 ### Firebase project (live): darsi-f0685
@@ -597,6 +607,17 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - Anonymous reads of `users`, `orgs/*/private/request` and `users/*/certs` answer 403; the catalog lists 51 courses.
     - darsiai.org serves the build: the service worker activates, and a guest at 375 px loads no Firebase chunk, with no errors and no sideways scroll.
   - Not checked live: the signed-in flows (learning-profile sync, certificate records, data export and deletion, the editor's autosave), which need sign-ins (the user's).
+- Created 2026-11-08 (with the user's go-ahead): **the CIS organization**, "CIS Training Platform" (`orgs/iQfVWNDh1bSPOVxRwHBg`, type university, Egypt, with its logo). The user is its platform admin, and it has no org admin yet.
+  - **Accounts:** 203, with a script that does what `createMembers` does (claims, profile, `mustChangePassword`, audit).
+    - Faculty and assistant staff are teachers, in the groups «هيئة التدريس» and «الهيئة المعاونة».
+    - 175 fourth-year CS students are in «علوم حاسب، الفرقة الرابعة».
+    - Each account got a random 6-digit temporary password; the app makes them choose a new one at first sign-in.
+  - **Credentials:** the workbook went to the user only (never the repo), and nobody was emailed. One staff address typed as `…@cis.edu` was created as `…@cis.edu.eg`.
+  - **cis.darsiai.org:**
+    - a CNAME to `darsi-f0685.web.app` in Cloudflare (DNS only);
+    - a Firebase Hosting custom domain;
+    - in Auth's authorized domains.
+  - **Cloudflare key:** the user shared a Cloudflare Global API Key in chat. It isn't stored anywhere; rotate it.
 - **Storage**: the app uses the bucket **`darsi-f0685` in europe-west1**, set by `VITE_FIREBASE_STORAGE_BUCKET` in `.env.local`. It is deploy target `main` with `firebase/storage.rules`.
   - The original default bucket `darsi-f0685.firebasestorage.app` (us-west1, never used) was deleted on 2026-10-25 and now returns 404 `NoSuchBucket`. Keep the `main` target: without one, `firebase deploy --only storage` aims at the project's default bucket, which no longer exists.
   - Checked live on 2026-10-25: media/kits are public, and submissions return 403 to anonymous requests.

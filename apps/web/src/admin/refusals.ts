@@ -13,6 +13,11 @@ const WORDS: Record<string, MessageKey> = {
   "org-name": "rf.orgName", "confirm-name": "rf.confirmName", "batch-size": "rf.batchSize", "admin-self": "po.adminSelf", "admin-super": "po.adminIsSuper",
   // account.ts (data, deletion, suspension)
   superadmin: "po.adminIsSuper", "not-yours": "acc.notYours", renewing: "acc.renewing", missing: "p.notFound",
+  // orgCourses.ts (which courses members see; content/orgCourses.ts OrgCoursesProblem)
+  "courses-mode": "oc.rf.mode", "courses-list": "oc.rf.list", "courses-id": "oc.rf.id", "courses-many": "oc.rf.many",
+  "courses-classes": "oc.rf.classes", "courses-class": "oc.rf.class", "courses-total": "oc.rf.total",
+  // sites.ts (an organization's own web address; content/sites.ts SiteProblem)
+  "site-host": "site.rf.host", "site-reserved": "site.rf.reserved", "site-taken": "site.rf.taken",
 };
 
 /** The refusal's code (`details.reason`), or "". */

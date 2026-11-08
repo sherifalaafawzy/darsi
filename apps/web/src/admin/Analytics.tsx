@@ -14,6 +14,8 @@ import { saveGaConfig, useActiveDevices, useDays, useGaConfig, useMembers, useOr
 import { PeopleTable } from "./AdminHome";
 import { OrgBranding } from "./OrgBranding";
 import { OrgManage } from "./OrgsAdmin";
+import { OrgCoursesPanel } from "./OrgCourses";
+import { OrgSitePanel } from "./OrgSite";
 import { LicencePanel, SeatsPanel } from "./Super";
 import { Bars, Ranked } from "./charts";
 import "../styles/admin.css";
@@ -282,9 +284,13 @@ export function OrgAnalytics() {
         <div><Button icon="chart" onClick={() => nav(`/super/orgs/${orgId}/report`)}>{t("or.open")}</Button></div>
         <section className="panel stack"><h3>{t("an.orgLessons30")}</h3><DayBars data={lessons} label={t("an.m.lessons")} loading={days.loading && !days.data} /></section>
         {org && <OrgBranding org={org} onSaved={orgQ.reload} />}
+        {/* Its own web address (cis.darsiai.org) and whether Darsi's identity shows there: platform admins only. */}
+        {org && <OrgSitePanel org={org} onSaved={orgQ.reload} />}
         {org && <LicencePanel org={org} onChanged={orgQ.reload} />}
         {org && membersQ.data && <SeatsPanel org={org} members={members} onChanged={membersQ.reload} />}
         {org && <OrgManage org={org} members={members} loading={membersLoading} onChanged={changed} />}
+        {/* Which courses its teachers, students and classes see: the panel org admins have on /admin/courses. */}
+        {org && <OrgCoursesPanel key={org.id} org={org} members={membersQ.data} membersFailed={!!membersQ.error && !membersQ.data} onSaved={orgQ.reload} />}
         <section className="panel stack"><h3>{t("adm.people")}</h3>
           {membersLoading ? <p className="muted" aria-busy="true">{t("adm.loading")}</p> : membersQ.error && !membersQ.data ? <p className="notice err">{refusalText(membersQ.error, t)}</p>
             : members.length ? <PeopleTable rows={members} to={(m) => `/super/people/${m.uid}`} /> : <p className="muted">{t("adm.noPeople")}</p>}

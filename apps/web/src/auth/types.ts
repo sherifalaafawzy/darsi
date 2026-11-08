@@ -76,6 +76,10 @@ export interface Org {
   brand?: { logo: string | null; v: number } | null;
   /** A Darsi Super licence: a plan, its seats and its end (ms). */
   licence?: { plan: string; seats: number; until: number } | null;
+  /** Which courses its members see (content/orgCourses.ts readOrgCourses): absent or { mode: "all" } is every course. setOrgCourses only. */
+  courses?: unknown;
+  /** Its own web address and whether Darsi's identity shows there (TECHNICAL.md "Organization sites"). setOrgSite only. */
+  site?: { host: string; darsi: boolean } | null;
   createdAt?: { seconds: number } | null;
   reviewedAt?: { seconds: number } | null;
 }

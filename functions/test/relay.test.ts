@@ -46,7 +46,7 @@ gem.on("connection", (s) => {
 });
 process.env.GEMINI_LIVE_URL = `ws://127.0.0.1:${(gem.address() as AddressInfo).port}`;
 process.env.VERTEX_LIVE_URL = process.env.GEMINI_LIVE_URL;
-process.env.TUTOR_ORIGINS = "http://test.local";
+process.env.TUTOR_ORIGINS = "http://test.local, https://*.darsiai.org";
 process.env.PORT = "0";
 const { server, ipOf } = await import("../src/relay.js");
 await new Promise((ok) => (server.listening ? ok(null) : server.once("listening", ok)));
@@ -142,5 +142,25 @@ describe("the voice relay's brakes (sfm-10, sfm-11)", () => {
       expect(liveSessions).toBe(sessions);
       expect(h.events.filter((e) => e === "release")).toHaveLength(1);
     } finally { h.backend = "gemini"; h.token = null; }
+  });
+});
+
+describe("which pages may open the relay (L9, organization sites)", () => {
+  /** Whether a socket from this origin opens (the relay answers a refused one with 401 before any WebSocket). */
+  const opens = (origin?: string) => new Promise<boolean>((ok) => {
+    const s = new WebSocket(relayUrl, origin ? { origin } : {});
+    s.once("open", () => { s.close(); ok(true); });
+    s.once("unexpected-response", (_req, res) => { ok(res.statusCode === 101); });
+    s.once("error", () => ok(false));
+  });
+  it("lets in Darsi's listed origins and organization sites under *.darsiai.org, over https only", async () => {
+    expect(await opens("http://test.local")).toBe(true);
+    expect(await opens("https://cis.darsiai.org")).toBe(true);
+    expect(await opens("https://a.b.darsiai.org")).toBe(true);
+    expect(await opens("http://cis.darsiai.org")).toBe(false);
+    expect(await opens("https://darsiai.org.evil.com")).toBe(false);
+    expect(await opens("https://evildarsiai.org")).toBe(false);
+    expect(await opens("https://cis.darsiai.org:8443")).toBe(false);
+    expect(await opens(undefined)).toBe(false);
   });
 });

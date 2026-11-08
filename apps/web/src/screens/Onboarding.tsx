@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Button, ChoiceCard, LanguagePicker, Mark, OnboardingStep as Step, PlacementResult, QuestionHeader, QuizOption, TrueFalse, LessonTopBar, type IconName } from "@darsi/design-system";
+import { BrandMark, Button, ChoiceCard, LanguagePicker, OnboardingStep as Step, PlacementResult, QuestionHeader, QuizOption, TrueFalse, LessonTopBar, useBrand, type IconName } from "@darsi/design-system";
 import { useI18n, useLanguages } from "../i18n";
 import { useStore, type AppState } from "../state/store";
 import { loadPlacement, useAsync } from "../content/load";
@@ -28,6 +28,7 @@ export function Onboarding({ exit }: { exit?: { to: string; label: string } } = 
   const { t } = useI18n();
   const languages = useLanguages();
   const { state, dispatch } = useStore();
+  const brand = useBrand();
   const [phase, setPhase] = useState<Phase>("language");
   const tracks = useTracks();
   const nav = useNavigate();
@@ -66,7 +67,8 @@ export function Onboarding({ exit }: { exit?: { to: string; label: string } } = 
   if (phase === "language") return (
     <main className="screen narrow onb">
       {out}
-      <div className="onb-hero"><Mark size={72} /></div>
+      {/* Darsi's mark, or the organization's logo and name (its members, and anyone on its own web address). */}
+      <div className="onb-hero"><BrandMark size={72} />{brand.name && <strong><bdi>{brand.name}</bdi></strong>}</div>
       <h1 className="dr-onb-title">{t("onb.language")}</h1>
       <LanguagePicker label={t("onb.language")} value={state.lang} onChange={(lang) => set({ lang })} languages={languages} />
       {cont(steps[0])}
@@ -103,11 +105,16 @@ export function Onboarding({ exit }: { exit?: { to: string; label: string } } = 
       </OnboardingStep>
     </main>
   );
+  // Tracks on offer: every visible one, or, when their organization chose their courses, those with a course for them.
+  // With nothing chosen for them yet they can carry on (no track chosen means every track on offer later).
+  const offered = mine.offered;
   if (phase === "tracks") return (
     <main className="screen narrow">
       {out}
-      <OnboardingStep step={stepOf("tracks")} total={steps.length} title={t("onb.tracks")} body={t("onb.tracksBody")} primary={cont("time", !state.tracks.length)}>
-        {tracks.visible.map(({ id: tr, icon }) => <ChoiceCard key={tr} icon={icon as IconName} multi title={tracks.name(tr)} selected={state.tracks.includes(tr)}
+      <OnboardingStep step={stepOf("tracks")} total={steps.length} title={t("onb.tracks")} body={t("onb.tracksBody")}
+        primary={cont("time", offered.length > 0 && !offered.some((x) => state.tracks.includes(x.id)))}>
+        {mine.chosenByOrg && <p className="notice">{t(offered.length ? "onb.tracksOrg" : "onb.tracksOrgNone")}</p>}
+        {offered.map(({ id: tr, icon }) => <ChoiceCard key={tr} icon={icon as IconName} multi title={tracks.name(tr)} selected={state.tracks.includes(tr)}
           onClick={() => set({ tracks: state.tracks.includes(tr) ? state.tracks.filter((x) => x !== tr) : [...state.tracks, tr] })} />)}
       </OnboardingStep>
     </main>
@@ -124,7 +131,7 @@ export function Onboarding({ exit }: { exit?: { to: string; label: string } } = 
   if (phase === "offer") return (
     <main className="screen narrow">
       {out}
-      <OnboardingStep step={stepOf("offer")} total={steps.length} title={t("onb.placement")} body={t(isStudent ? "onb.placementBodyStudent" : "onb.placementBody")} art={<Mark size={72} />}
+      <OnboardingStep step={stepOf("offer")} total={steps.length} title={t("onb.placement")} body={t(isStudent ? "onb.placementBodyStudent" : "onb.placementBody")} art={<BrandMark size={72} />}
         primary={<Button block iconEnd="next" onClick={() => setPhase("quiz")}>{t("onb.startCheck")}</Button>}
         secondary={<Button block variant="ghost" onClick={() => finish({})}>{t("onb.skipCheck")}</Button>} />
     </main>
@@ -133,8 +140,7 @@ export function Onboarding({ exit }: { exit?: { to: string; label: string } } = 
   if (phase === "quiz") return <PlacementQuiz onClose={() => setPhase("offer")} onDone={(lv, n) => { setLevels(lv); setChecked(n); setPhase("result"); }} />;
   // The level each track starts at, as the check placed it, else where the learner starts among the levels with courses
   // for them: what Home then shows as "Your level". It is what Start learning saves.
-  const placed = tracks.visible.filter(({ id }) => !state.tracks.length || state.tracks.includes(id))
-    .map(({ id: tr, levels: of }) => ({ tr, of, level: levels[tr] ?? place.start(tr) }));
+  const placed = mine.tracks.map(({ id: tr, levels: of }) => ({ tr, of, level: levels[tr] ?? place.start(tr) }));
   return (
     <main className="screen narrow">
       <PlacementResult title={t("place.title")} summary={t(checked ? "place.summary" : "place.summaryNone")}

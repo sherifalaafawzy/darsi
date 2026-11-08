@@ -1,10 +1,11 @@
 /**
  * What one learner sees: courses for their audience (teachers or students) in the tracks they chose, one track on
  * Home at a time. Platform admins see every course: all tracks (hidden ones too), for teachers and for students, and
- * Home shows them all at once until they pick one track (`adminTrack`). Shared by Home, the track switcher, My tracks,
- * Kit, Downloads, Me and the nav.
+ * Home shows them all at once until they pick one track (`adminTrack`). An organization can narrow what its teachers,
+ * students and classes see (`state.org.courses`, content/orgCourses.ts); its admins still see everything. Shared by
+ * Home, the track switcher, My tracks, Kit, Downloads, Me, onboarding and the nav.
  */
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n";
 import type { Role } from "../auth/types";
@@ -17,6 +18,44 @@ import { STAGES, audienceOf, stageLevel, teachStage, type Audience, type Catalog
 export const audienceFor = (role: Role | null | undefined, chosen?: Audience): Audience =>
   role === "student" ? "students" : role === "teacher" ? "teachers" : chosen ?? "teachers";
 export const audienceFixed = (role: Role | null | undefined) => role === "student" || role === "teacher";
+
+/**
+ * The course ids this member's organization lets them see, or null for every course: org admins and platform admins see
+ * everything, and so does anyone whose organization hasn't chosen (no `state.org.courses`; state/orgBrand.ts).
+ */
+export const orgSees = (role: Role | null | undefined, list: readonly string[] | undefined): Set<string> | null =>
+  role === "orgAdmin" || role === "superadmin" || !list ? null : new Set(list);
+/** orgSees for the person using the app, from what their phone keeps (it holds offline). */
+export function useOrgSees(): Set<string> | null {
+  const { role } = useAuth();
+  const list = useStore().state.org?.courses;
+  return useMemo(() => orgSees(role, list), [role, list]);
+}
+/** Only the courses the organization lets this member see (all of them when it hasn't chosen). */
+export const seenOnly = <T extends { id: string }>(units: T[] | undefined, sees: Set<string> | null): T[] | undefined =>
+  units && sees ? units.filter((u) => sees.has(u.id)) : units;
+/**
+ * The tracks a member whose organization chose their courses can pick: the visible tracks with a ready course for them
+ * (`ok`: one they may see, for their audience). Without the catalog (still loading, or offline and never read), every
+ * visible track, so nothing stalls; with it and nothing chosen for them, none.
+ */
+export function tracksOffered(visible: TrackDef[], units: CatalogEntry[] | undefined, ok: (u: CatalogEntry) => boolean): TrackDef[] {
+  if (!units) return visible;
+  return visible.filter((t) => units.some((u) => u.track === t.id && u.available && ok(u)));
+}
+/** The catalog's units as this module last read them, so a screen that mounts later starts with them (no extra render). */
+let lastUnits: CatalogEntry[] | undefined;
+/** The catalog's units, read only when `on`: most people have no organization choice, and pay nothing for this. */
+function useUnitsWhen(on: boolean): CatalogEntry[] | undefined {
+  const [units, setUnits] = useState(() => (on ? lastUnits : undefined));
+  useEffect(() => {
+    if (!on) return;
+    let live = true;
+    loadCatalog().then((c) => { lastUnits = c.units; if (live) setUnits(c.units); }, () => {});
+    return () => { live = false; };
+  }, [on]);
+  return on ? units : undefined;
+}
 
 /** The chosen tracks still on offer, in the platform's order; every track on offer when none of them is. */
 export function myTracks(chosen: Track[], visible: TrackDef[]): TrackDef[] {
@@ -62,11 +101,12 @@ export function placeLevels(units: CatalogEntry[] | undefined, track: Track, top
 /** Where the check starts among `levels` (placeLevels): the learner's start level, else the nearest above it, else the top. */
 export const placeStart = (levels: number[], start: number) => (levels.includes(start) ? start : levels.find((l) => l > start) ?? levels[levels.length - 1] ?? start);
 
-/** The stages to offer this audience now (one catalog read, shared with Home). */
+/** The stages to offer this audience now (one catalog read, shared with Home): only courses the organization lets them see count. */
 export function useStagesOffered(audience: Audience): Stage[] {
   const { data } = useAsync(loadCatalog, []);
   const { visible } = useTracks();
-  return useMemo(() => stagesWithCourses(data?.units, audience, new Set(visible.map((tr) => tr.id))), [data, audience, visible]);
+  const sees = useOrgSees();
+  return useMemo(() => stagesWithCourses(seenOnly(data?.units, sees), audience, new Set(visible.map((tr) => tr.id))), [data, audience, visible, sees]);
 }
 
 /**
@@ -77,12 +117,15 @@ export function usePlacement() {
   const { data, error } = useAsync(loadCatalog, []);
   const mine = useMine();
   const { of } = useTracks();
+  const sees = useOrgSees();
   const { audience, uni, stage } = mine.placed;
   return useMemo(() => {
-    const levels = (track: Track) => placeLevels(data?.units, track, of(track).levels, { audience, uni, stage });
+    // Only the levels with a course the organization lets them see: the check never places them where Home has nothing.
+    const units = seenOnly(data?.units, sees);
+    const levels = (track: Track) => placeLevels(units, track, of(track).levels, { audience, uni, stage });
     return { ready: Boolean(data || error), levels, start: (track: Track) => placeStart(levels(track), mine.startLevel(track)) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, error, of, audience, uni, stage]);
+  }, [data, error, of, audience, uni, stage, sees]);
 }
 
 /** The track Home shows: the one picked last, while it is still one of the learner's; else their first. */
@@ -99,7 +142,15 @@ export function useMine() {
   const uni = audience === "teachers" && stage === "university";
   const start = (track: Track) => startLevel(stage, of(track).levels);
   const all = role === "superadmin";
-  const tracks = all ? every : myTracks(state.tracks, visible);
+  // The organization chose this member's courses (never for its admins or platform admins: orgSees).
+  const sees = useOrgSees();
+  const chosen = !!sees && !all;
+  const units = useUnitsWhen(chosen);
+  const forMe = (u: Pick<CatalogEntry, "audience" | "teach">) => audienceOf(u) === audience && (!u.teach || uni);
+  const seen = (u: { id: string }) => !sees || sees.has(u.id);
+  // Tracks they can pick: with an organization's choice, only those with a course it lets them see.
+  const offered = chosen ? tracksOffered(visible, units, (u) => seen(u) && forMe(u)) : visible;
+  const tracks = all ? every : myTracks(state.tracks, offered);
   // A platform admin's pick is kept apart from the learner's, so "All tracks" stays their default.
   const active = all ? (state.adminTrack && tracks.some((x) => x.id === state.adminTrack) ? state.adminTrack : undefined) : activeTrack(state.track, tracks);
   const ids = new Set(tracks.map((t) => t.id));
@@ -131,10 +182,16 @@ export function useMine() {
     /** Who the placement check is for (placeLevels). */
     placed: { audience, uni, stage } as Placed,
     tracks,
-    /** The track Home shows; none for a platform admin looking at every track. */
+    /** The track Home shows; none for a platform admin looking at every track (or a member with nothing chosen for them). */
     active,
-    /** A course for this learner: their audience, in one of their tracks. */
-    isMine: (u: Pick<CatalogEntry, "track" | "audience" | "teach">) => ids.has(u.track) && (all || (audienceOf(u) === audience && (!u.teach || uni))),
+    /** The tracks they can pick (onboarding, My tracks): the visible ones, or with an organization's choice those with a course for them. */
+    offered,
+    /** Their organization chose which courses they see (state.org.courses). */
+    chosenByOrg: chosen,
+    /** Their organization lets them see this course (always, without a choice). */
+    seen,
+    /** A course for this learner: their audience, in one of their tracks, and one their organization lets them see. */
+    isMine: (u: Pick<CatalogEntry, "id" | "track" | "audience" | "teach">) => ids.has(u.track) && (all || (forMe(u) && seen(u))),
     /** Show one track on Home; a platform admin can go back to every track with none. */
     setActive: (track?: Track) => dispatch({ type: "set", patch: all ? { adminTrack: track } : { track } }),
   };

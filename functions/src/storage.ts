@@ -6,6 +6,14 @@ import { getStorage } from "firebase-admin/storage";
  */
 const BUCKET = process.env.CONTENT_BUCKET || (process.env.FUNCTIONS_EMULATOR === "true" ? `${process.env.GCLOUD_PROJECT}.appspot.com` : "darsi-f0685");
 export const bucket = () => getStorage().bucket(BUCKET);
+/**
+ * The address anyone fetches a public file at (content/…, which the Storage rules let everyone read), as the app builds
+ * it (content/load.ts storageUrl): Firebase Storage's REST endpoint, which answers every origin, or the emulator's.
+ */
+export const publicFileUrl = (path: string) => {
+  const emu = process.env.FIREBASE_STORAGE_EMULATOR_HOST;
+  return `${emu ? `http://${emu.replace(/^https?:\/\//, "")}` : "https://firebasestorage.googleapis.com"}/v0/b/${BUCKET}/o/${encodeURIComponent(path)}?alt=media`;
+};
 
 /**
  * A JSON file phones read (catalogs, units, settings, language packs), stored gzipped (Content-Encoding: gzip): a

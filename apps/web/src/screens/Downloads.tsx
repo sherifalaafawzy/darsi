@@ -112,8 +112,9 @@ export function Downloads() {
   const [needModel, setNeedModel] = useState<Record<string, true>>({});
   const [model, setModel] = useState<{ mb: number | null; state: "" | "busy" | "failed" | "noSpace" }>({ mb: null, state: "" });
   const aborts = useRef<Record<string, AbortController>>({});
-  const { isMine } = useMine();
-  const units = catalog?.units.filter((u) => u.available && isMine(u)) ?? [];
+  const { isMine, seen } = useMine();
+  // Their courses; and a course already saved here that their organization has since hidden, so it can be removed.
+  const units = catalog?.units.filter((u) => u.available && (isMine(u) || (!!state.downloads[u.id] && !seen(u)))) ?? [];
   const metered = state.dataSaver && onMeteredConnection();
   const saved = JSON.stringify(state.downloads);
 

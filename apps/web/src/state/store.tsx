@@ -51,7 +51,8 @@ export interface AppState {
   guest?: boolean;
   /**
    * The member's organization as the app shows it (state/orgBrand.ts): its name, and its logo as a small data: URL kept
-   * here so it shows offline and is downloaded again only when `v` changes. Absent for people without an organization.
+   * here so it shows offline and is downloaded again only when `v` changes, and the courses it lets this member see.
+   * Absent for people without an organization.
    */
   org?: OrgBrand;
   /** Anonymous usage statistics (analytics/track.ts); on unless switched off in Me. */
@@ -72,7 +73,11 @@ export interface AppState {
  */
 export const LEARN_KEYS = ["onboarded", "tracks", "levels", "audience", "stage", "weeklyLessons", "teach"] as const;
 export type LearnKey = (typeof LEARN_KEYS)[number];
-export interface OrgBrand { id: string; name: string; logo?: string; v: number }
+/**
+ * `courses`: the course ids the organization lets this member see (content/orgCourses.ts seesFor, worked out from the org
+ * document, their role and their class when it was read); absent, every course. Kept here so it holds offline.
+ */
+export interface OrgBrand { id: string; name: string; logo?: string; v: number; courses?: string[] }
 /** A downloaded course: the catalog version and the language its files were saved in; "done" from older downloads. */
 export type Download = "done" | { v: number; lang: string };
 const browserLang = typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("ar") ? "ar" : "en";

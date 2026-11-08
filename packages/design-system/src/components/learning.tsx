@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { BrandMark, Button, Icon, Mark, ProgressBar, TrackChip, cx, trackClass, useBrand, useTrackStyles, type Track } from "./primitives";
+import { BrandMark, Button, DecorMark, Icon, Mark, ProgressBar, TrackChip, cx, trackClass, useBrand, useTrackStyles, type Track } from "./primitives";
 
 export interface LessonCardProps { track: Track; title: string; meta?: string; progress?: number; offline?: boolean; offlineLabel?: string; trackLabel?: string; action?: ReactNode; }
 export function LessonCard({ track, title, meta, progress, offline, offlineLabel = "Offline ready", trackLabel, action }: LessonCardProps) {
@@ -86,7 +86,7 @@ export function LessonComplete({ title, subtitle, stats = [], tryTomorrow, tryLa
   const styleOf = useTrackStyles();
   return (
     <section className="dr-complete">
-      <div className="dr-complete-burst" aria-hidden><Mark size={72} /></div>
+      <div className="dr-complete-burst" aria-hidden><DecorMark size={72} /></div>
       {/* Focusable from a script: a lesson moves focus here when it ends. */}
       <h2 className="dr-complete-title" tabIndex={-1}>{title}</h2>
       {subtitle && <p className="dr-complete-sub">{subtitle}</p>}
@@ -108,8 +108,9 @@ export function CertificateCard({ track, name, title, date, code, kicker = "Cert
       <div className="dr-cert-band" aria-hidden />
       <div className="dr-cert-body">
         <div className="dr-cert-top">
-          {/* An organization's certificate: its logo first, Darsi's mark beside it, and its name as the issuer. */}
-          <span className="dr-cert-marks"><BrandMark size={36} />{brand.logo && <Mark size={20} />}</span>
+          {/* An organization's certificate: its logo first, Darsi's mark beside it (not on a site without Darsi's identity),
+              and its name as the issuer. */}
+          <span className="dr-cert-marks"><BrandMark size={36} />{brand.logo && brand.darsi !== false && <Mark size={20} />}</span>
           <TrackChip track={track} solid>{trackLabel}</TrackChip>
         </div>
         <p className="dr-cert-kicker">{kicker}</p>

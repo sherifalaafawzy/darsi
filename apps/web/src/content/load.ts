@@ -152,6 +152,13 @@ export const loadSettings = (): Promise<Settings | null> => (settings ??= (async
 /** After the Tracks page saves: read the new settings next time. */
 export const forgetSettings = () => { settings = null; };
 
+/**
+ * content/sites.json (functions/src/sites.ts): which organization each site host belongs to. Read only on such a host
+ * (state/site.ts), network-first with the last copy offline, like the settings; null when there is no answer or copy.
+ */
+export const loadSitesFile = (): Promise<unknown> => (!firebaseReady || !firebaseConfig.storageBucket ? Promise.resolve(null)
+  : cachedJSON<unknown>(storageUrl("content/sites.json"), fetchPublic("content/sites.json"), true).catch(() => null));
+
 /** A published language's UI strings, content/i18n/{code}/v{n}.json: cache-first, since a version's path never changes. */
 export async function loadLanguagePack(code: string, version: number): Promise<Record<string, string>> {
   if (!firebaseReady || !firebaseConfig.storageBucket) throw new Error("No content storage");

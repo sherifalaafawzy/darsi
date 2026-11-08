@@ -210,6 +210,45 @@ The demo script writes the demo admin's, a teacher's and a student's logins to `
 - On a phone, use the app, then switch to another app. In Firestore, `analytics/<today>` grows and `analyticsDevices` has the phone. In Google Analytics, **Reports → Realtime** shows the events within a minute or two (once connected).
 - As an org admin: **Admin → Your organization's look:** change the name, add a logo, **Save**. A member who opens Darsi sees the logo at the top of every screen and the name in the tab; their certificates show both.
 
+## 8b. Organization sites (custom web addresses)
+
+TECHNICAL.md "Organization sites (custom web addresses)" has the design. An organization can have its own address, such as cis.darsiai.org: the same Hosting site and build answer there, and the app shows that organization's name and logo, with or without Darsi's identity.
+
+### Deploy (once)
+
+```bash
+npm run build --prefix functions
+npx firebase deploy --only firestore:rules
+npx firebase deploy --only functions:setOrgSite,functions:onOrgSite
+npx firebase deploy --only hosting
+```
+
+Then the voice relay with the new `TUTOR_ORIGINS` (section 9, "The tutor": `https://darsiai.org,https://*.darsiai.org`). Storage's rules and CORS don't change: `content/` is already public, and the app reads Storage only through `firebasestorage.googleapis.com`, which answers every origin.
+
+### Add a site
+
+1. **Connect the address** (DNS, Hosting, Auth). For an address under darsiai.org:
+
+   ```bash
+   node scripts/connect-site.mjs school.darsiai.org --dry-run    # reads only, says what it would do
+   node scripts/connect-site.mjs school.darsiai.org
+   ```
+
+   It creates the CNAME `school.darsiai.org → darsi-f0685.web.app` in Cloudflare as "DNS only" (not proxied: Hosting issues the certificate itself), adds the address as a custom domain of the `darsi-f0685` Hosting site, and adds it to Firebase Auth's authorized domains, each only if missing, then prints where each stands. Cloudflare credentials come from the environment and are never printed or stored: `CLOUDFLARE_API_TOKEN` (a token with DNS edit on darsiai.org), or `CLOUDFLARE_API_KEY` and `CLOUDFLARE_EMAIL` (the global key). Hosting and Auth use `gcloud auth print-access-token --account=sherifalaafawzy@gmail.com`, billed to darsi-f0685. Running it again is safe.
+
+   An address elsewhere (`learn.school.edu`): its owner creates the CNAME (or, for a bare domain, the records the Hosting console shows); the script still adds the Hosting domain and the Auth domain. Add `https://learn.school.edu` to the relay's `TUTOR_ORIGINS` and deploy the relay again, or the voice tutor refuses that page.
+
+   By hand instead: Cloudflare → DNS → Add record (CNAME, the name, `darsi-f0685.web.app`, proxy off); Firebase console → Hosting → Add custom domain; Authentication → Settings → Authorized domains → Add domain.
+2. **Wait for the certificate.** The Hosting console (or the script, run again) shows the domain as connected once the DNS record is visible; it can take up to a day. Until then the address answers with a certificate error.
+3. **Point it at the organization.** On darsiai.org as a platform admin: Organizations → the organization → **Web address**: type the address, choose **Show Darsi's identity** (on: the organization's name and logo with "with Darsi"; off: no Darsi name or mark in the app), **Save the address**. `setOrgSite` publishes `content/sites.json`; phones see it within a minute. Renaming the organization or changing its logo republishes it by itself (`onOrgSite`). **Remove the address** takes it off (the address then shows Darsi's look).
+
+### Check it works
+
+- `https://<address>` shows the organization's landing page: its logo and name, Sign in, Create an account and Continue without an account (with "with Darsi" when Darsi's identity shows). The browser tab says the organization's name.
+- Sign in there (email and Google): the account screens show the organization's logo and name. A member of that organization sees its look throughout, and certificates name it.
+- Without Darsi's identity: no "Darsi" in the app's own words (the licences page and course content keep it), and the app bar shows the logo, or the name's first letter without one.
+- On the local stack: `http://localhost:4173/?site=<address>` stands in for the address (until the tab closes; `?site=` stops it), reading the emulator's `content/sites.json`.
+
 ## 9. Darsi Super
 
 docs/SUPER.md has the plan; TECHNICAL.md "Darsi Super" has the design. Phase 0 (deployed 2026-11-02) adds the plans, credits, licences and the revenue path. Phase 1 adds the Paymob and Stripe checkouts and webhooks; it charges nobody until their keys are set.
@@ -283,10 +322,10 @@ npx firebase functions:secrets:set GEMINI_API_KEY
 
 ```bash
 npm run build --prefix functions
-gcloud run deploy darsi-tutor --source functions --region europe-west1 --project darsi-f0685 --account=sherifalaafawzy@gmail.com --set-build-env-vars GOOGLE_ENTRYPOINT="node lib/relay.js" --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest --set-env-vars TUTOR_ORIGINS=https://darsiai.org,GOOGLE_CLOUD_PROJECT=darsi-f0685 --allow-unauthenticated --timeout 900 --session-affinity --max-instances 3 --concurrency 40
+gcloud run deploy darsi-tutor --source functions --region europe-west1 --project darsi-f0685 --account=sherifalaafawzy@gmail.com --set-build-env-vars GOOGLE_ENTRYPOINT="node lib/relay.js" --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest --set-env-vars "^;^TUTOR_ORIGINS=https://darsiai.org,https://*.darsiai.org;GOOGLE_CLOUD_PROJECT=darsi-f0685" --allow-unauthenticated --timeout 900 --session-affinity --max-instances 3 --concurrency 40
 ```
 
-`functions/.gcloudignore` keeps the local test keys out of the upload. Put the address it prints, as a WebSocket, in `apps/web/.env.local` before building Hosting: `VITE_TUTOR_RELAY=wss://darsi-tutor-….run.app/live`. Without it the tutor offers typing only.
+`TUTOR_ORIGINS` lists the pages that may open the relay: exact origins, and `https://*.darsiai.org` for every organization site under darsiai.org (https only; `functions/src/origins.ts`). An organization address elsewhere (`learn.school.edu`) is added as its own `https://` entry. gcloud splits `--set-env-vars` on commas, hence the `^;^` (";" separates the variables instead). `functions/.gcloudignore` keeps the local test keys out of the upload. Put the address it prints, as a WebSocket, in `apps/web/.env.local` before building Hosting: `VITE_TUTOR_RELAY=wss://darsi-tutor-….run.app/live`. Without it the tutor offers typing only.
 
 **The tutor agent** (`agent/`, Google ADK on Vertex AI Agent Runtime; TECHNICAL.md "Darsi Super"). It answers typed questions and makes explainers when `config/tutor.engine` is `"agent"`; the voice relay asks it for explainers too.
 

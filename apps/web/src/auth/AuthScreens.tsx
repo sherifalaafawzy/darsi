@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import type { User, UserCredential } from "firebase/auth";
-import { Button, Mark, TextField } from "@darsi/design-system";
+import { BrandMark, Button, TextField, useBrand } from "@darsi/design-system";
 import { loadFirebase } from "../fb";
 import { isolate, useI18n } from "../i18n";
 import { useStore } from "../state/store";
@@ -57,13 +57,16 @@ async function afterGoogle(user: User, lang: string) {
 
 function Shell({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
   const { t } = useI18n();
+  const brand = useBrand();
   const { ensureFirebase, configured } = useAuth();
   // Opening an account screen is the moment to fetch the SDK and start listening for sign-in.
   useEffect(() => { if (configured) ensureFirebase().catch(() => {}); }, [configured, ensureFirebase]);
   return (
     <main className="auth-shell">
       <div className="auth-card">
-        <Link to="/" className="auth-brand" aria-label={t("app.name")}><Mark size={48} /></Link>
+        {/* Darsi's mark, or an organization's logo on its own web address (App's BrandProvider). */}
+        <Link to="/" className="auth-brand" aria-label={brand.name || t("app.name")}><BrandMark size={48} /></Link>
+        {brand.name && <p className="auth-org"><bdi>{brand.name}</bdi></p>}
         <h1>{title}</h1>
         {sub && <p className="muted">{sub}</p>}
         {children}

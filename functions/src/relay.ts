@@ -17,12 +17,14 @@ import { auth } from "./admin.js";
 import { AgentError, askAgent } from "./agent.js";
 import { balance, charge, endCall, GEMINI_KEY, googleToken, hasSuper, loadUnit, minuteCredits, startCall, trackIndex, tutorConfig, tutorReady, vertexModel } from "./tutor.js";
 import type { Hold } from "./billingCore.js";
+import { originAllowed, parseOrigins } from "./origins.js";
 import { EXPLAIN_TOOL, SEARCH_TOOL, audioCost, down3, instructions, lessonMaterial, pcmToUlaw, searchBoth, ulawToPcm, usageCost, type TutorLang, type Usage } from "./tutorCore.js";
 
 // GEMINI_LIVE_URL and VERTEX_LIVE_URL let the checks use a stand-in.
 const LIVE = process.env.GEMINI_LIVE_URL ?? "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
-// Only Darsi's own site in production; `npm run local` passes its address in TUTOR_ORIGINS (L9).
-const ORIGINS = (process.env.TUTOR_ORIGINS ?? "https://darsiai.org").split(",").map((o) => o.trim()).filter(Boolean);
+// Only Darsi's own site in production, plus organization sites with "https://*.darsiai.org" (origins.ts); `npm run
+// local` passes its address in TUTOR_ORIGINS (L9).
+const ORIGINS = parseOrigins(process.env.TUTOR_ORIGINS ?? "https://darsiai.org");
 /** Sockets per instance, and per address: a brake on anyone opening connections they never use (M6). */
 const MAX_SOCKETS = 300, MAX_PER_IP = 6;
 const open = new Map<string, number>();
@@ -70,7 +72,7 @@ export const server = createServer((req, res) => {
 const wss = new WebSocketServer({
   server, path: "/live", maxPayload: 64 * 1024, perMessageDeflate: false,
   verifyClient: ({ origin, req }: { origin?: string; req: Parameters<typeof ipOf>[0] }) => {
-    if (!origin || !ORIGINS.includes(origin)) return false;
+    if (!originAllowed(origin, ORIGINS)) return false;
     const total = [...open.values()].reduce((a, b) => a + b, 0);
     return total < MAX_SOCKETS && (open.get(ipOf(req)) ?? 0) < MAX_PER_IP;
   },

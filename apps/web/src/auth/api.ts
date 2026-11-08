@@ -1,5 +1,7 @@
 import { call } from "../fb";
 import type { Role } from "./types";
+import type { OrgCourses } from "../content/orgCourses";
+import type { OrgSite } from "../content/sites";
 
 export interface MemberInput { name: string; email?: string; username?: string; role?: Role; group?: string; teacherEmail?: string; lang?: string }
 /**
@@ -36,6 +38,8 @@ export const api = {
   setMemberRole: call<{ orgId: string; uid: string; role: Role }, { ok: boolean }>("setMemberRole"),
   resetMemberPassword: call<{ orgId: string; uid: string }, { password: string; login: string }>("resetMemberPassword"),
   removeMember: call<{ orgId: string; uid: string }, { ok: boolean }>("removeMember"),
+  // Which courses the org's teachers, students and classes see (functions/src/orgCourses.ts); returns what was stored.
+  setOrgCourses: call<{ orgId: string; courses: OrgCourses }, { courses: OrgCourses }>("setOrgCourses"),
   passwordChanged: call<Record<string, never>, { ok: boolean }>("passwordChanged"),
   registerDevice: call<{ token: string; lang: PushLang; tz: string } & NotifyPrefs, { ok: true }>("registerDevice"),
   unregisterDevice: call<{ token: string }, { ok: true }>("unregisterDevice"),
@@ -43,6 +47,8 @@ export const api = {
   sendBroadcast: call<BroadcastInput, { id: string; results: BroadcastResults }>("sendBroadcast"),
   // Platform admins only (functions/src/platform.ts).
   createOrg: call<OrgDetails & { adminUid?: string }, { orgId: string }>("createOrg"),
+  // An organization's own web address and whether Darsi's identity shows there (functions/src/sites.ts); "" removes it.
+  setOrgSite: call<{ orgId: string; host: string; darsi: boolean }, { site: OrgSite | null }>("setOrgSite"),
   updateOrg: call<Partial<OrgDetails> & { orgId: string; status?: "active" | "rejected" }, { ok: boolean }>("updateOrg"),
   deleteOrg: call<{ orgId: string; confirm: string }, { members: number; units: number }>("deleteOrg"),
   setUserRole: call<{ uid: string; role: Role; orgId?: string | null }, { ok: boolean }>("setUserRole"),

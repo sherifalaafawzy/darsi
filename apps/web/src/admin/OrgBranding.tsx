@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BrandProvider, Button, Mark, TextField, BrandMark } from "@darsi/design-system";
+import { BrandProvider, Button, Mark, TextField, BrandMark, useBrand } from "@darsi/design-system";
 import { doc, updateDoc } from "firebase/firestore";
 import { deleteObject, ref, uploadBytes } from "firebase/storage";
 import { db, storage, storageDataUrl } from "../firebase";
@@ -49,6 +49,8 @@ export function OrgBranding({ org, onSaved }: { org: Org; /** Reads the organiza
   const { t } = useI18n();
   const { state, dispatch } = useStore();
   const { orgId: myOrg } = useAuth();
+  // On an organization's own web address without Darsi's identity (App's BrandProvider), the preview shows no Darsi credit.
+  const darsi = useBrand().darsi !== false;
   const mine = myOrg === org.id;
   // What is saved now: the org as read, then what this panel saved, until the org is read again. The page reads once
   // (no listener), so without this a second save would compare against, and delete, the wrong logo.
@@ -113,8 +115,8 @@ export function OrgBranding({ org, onSaved }: { org: Org; /** Reads the organiza
       <TextField label={t("brand.name")} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
       <div className="brand-row">
         {/* What members will see in their app bar. */}
-        <BrandProvider logo={shown} name={trimmed}>
-          <div className="brand-preview" aria-label={t("brand.preview")}><BrandMark size={36} /><strong><bdi>{trimmed || "—"}</bdi></strong><small><Mark size={14} />{t("org.withDarsi")}</small></div>
+        <BrandProvider logo={shown} name={trimmed} darsi={darsi}>
+          <div className="brand-preview" aria-label={t("brand.preview")}><BrandMark size={36} /><strong><bdi>{trimmed || "—"}</bdi></strong>{darsi && <small><Mark size={14} />{t("org.withDarsi")}</small>}</div>
         </BrandProvider>
         <input ref={file} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => { void pick(e.target.files?.[0]); e.target.value = ""; }} />
         <Button size="sm" variant="secondary" icon="install" onClick={() => file.current?.click()}>{shown ? t("brand.changeLogo") : t("brand.addLogo")}</Button>

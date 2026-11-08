@@ -66,6 +66,17 @@ export function pluralOf(lang: string, n: number): string {
 const lookup = (dict: Record<string, string> | undefined, lang: string, key: string, n: unknown) =>
   dict && ((typeof n === "number" && dict[`${key}.${pluralOf(lang, n)}`]) || dict[key]);
 
+/**
+ * Darsi's name in the UI strings, for an organization site without Darsi's identity (state/site.ts): it becomes the
+ * organization's name, isolated so a Latin name can't reorder an Arabic sentence. "Darsi Tiny" («درسي الصغير») stays: it
+ * is a model's name, which the labs and courses use too. So do the few strings where Darsi is named as the other party
+ * (the branding panel's hints, and the web address panel's "site." strings, which are about Darsi's identity) or as a
+ * framework (KEEP_DARSI).
+ */
+const DARSI_NAME = /Darsi(?! Tiny)|درسي(?! الصغير)/g;
+const KEEP_DARSI = new Set(["brand.hint", "brand.hintOther", "p.fw.darsi"]);
+export const rebrand = (s: string, name: string) => s.replace(DARSI_NAME, () => isolate(name));
+
 interface I18n {
   lang: string;
   /** UI string with {var} interpolation; numbers are localised (Arabic-Indic digits for ar). A number {n} picks the
@@ -80,18 +91,21 @@ interface I18n {
 }
 const Ctx = createContext<I18n | null>(null);
 
-export function I18nProvider({ lang, children }: { lang: string; children: ReactNode }) {
+/** `brand`: an organization's name to show in place of Darsi's (a site without Darsi's identity); none on Darsi's own. */
+export function I18nProvider({ lang, brand, children }: { lang: string; brand?: string | null; children: ReactNode }) {
   const v = useSyncExternalStore(subscribe, getVersion);
   const meta = useMemo(() => languageOf(lang), [lang, v]); // eslint-disable-line react-hooks/exhaustive-deps
   const num = useCallback((n: number, opts?: Intl.NumberFormatOptions) => numberFormat(meta.numerals, opts).format(n), [meta.numerals]);
   const t = useCallback((key: MessageKey, vars?: Record<string, string | number>) => {
     const own = lookup(MESSAGES[meta.code], meta.code, key, vars?.n);
-    const s = own ?? lookup(MESSAGES.en, "en", key, vars?.n) ?? key;
+    const raw = own ?? lookup(MESSAGES.en, "en", key, vars?.n) ?? key;
+    // Before the variables go in, so a name a person typed is never changed.
+    const s = brand && !KEEP_DARSI.has(key) && !key.startsWith("site.") ? rebrand(raw, brand) : raw;
     const out = vars ? s.replace(/\{(\w+)\}/g, (_, k) => { const x = vars[k]; return typeof x === "number" ? num(x) : String(x ?? ""); }) : s;
     // A string a right-to-left language doesn't have yet shows in English, isolated left to right (LRI…PDI), so its
     // punctuation stays at its end: "Where do you teach?", not "?Where do you teach".
     return own === undefined && meta.dir === "rtl" ? `⁦${out}⁩` : out;
-  }, [meta.code, meta.dir, num, v]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [meta.code, meta.dir, num, v, brand]); // eslint-disable-line react-hooks/exhaustive-deps
   const L = useCallback((text: LocalText | undefined) => pick(text, meta.code), [meta.code]);
   const value = useMemo(() => ({ lang: meta.code, t, L, num, dir: meta.dir, locale: meta.numerals }), [meta.code, meta.dir, meta.numerals, t, L, num]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

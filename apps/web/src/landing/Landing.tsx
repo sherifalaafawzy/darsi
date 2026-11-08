@@ -1,22 +1,81 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Button, Icon, LessonCard, Mark, ProgressBar, QuizOption, TrackChip, QuestionHeader, StreakCounter, trackClass, useTrackStyles } from "@darsi/design-system";
+import { BrandMark, Button, Icon, LessonCard, Mark, ProgressBar, QuizOption, TrackChip, QuestionHeader, StreakCounter, trackClass, useTrackStyles } from "@darsi/design-system";
 import { landing as C } from "./content";
 import { useStore } from "../state/store";
 import { useI18n, useLanguages } from "../i18n";
+import type { SiteEntry } from "../content/sites";
 import "../styles/landing.css";
 
-/** Public home page: what Darsi is, how it works, who it is for, standards, FAQ. */
-export function Landing() {
+/**
+ * Public home page: what Darsi is, how it works, who it is for, standards, FAQ. On an organization's own web address
+ * (`site`, App from state/site.ts), that organization's page instead (SiteLanding).
+ */
+export function Landing({ site }: { site?: SiteEntry | null } = {}) {
+  if (site) return <SiteLanding site={site} />;
+  return <DarsiLanding />;
+}
+
+/** The language switch in the top bar: one tap for two languages, a short menu of their own names for more. */
+function LangSwitch() {
+  const { lang } = useI18n();
+  const languages = useLanguages();
+  const { dispatch } = useStore();
+  const setLang = (code: string) => dispatch({ type: "set", patch: { lang: code } });
+  const others = languages.filter((l) => l.code !== lang);
+  return others.length === 1
+    ? <button type="button" className="lp-lang dr-other-script" onClick={() => setLang(others[0].code)} lang={others[0].code}>{others[0].native}</button>
+    : <select className="lp-lang lp-lang-menu" aria-label={lang === "ar" ? C.nav.language.ar : C.nav.language.en} value={lang} onChange={(e) => setLang(e.target.value)}>
+      {languages.map((l) => <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>)}
+    </select>;
+}
+
+/**
+ * An organization's own web address, before signing in: its logo and name (App's BrandProvider), "with Darsi" when
+ * Darsi's identity shows there, and the ways in. None of Darsi's marketing copy, which speaks about Darsi.
+ */
+function SiteLanding({ site }: { site: SiteEntry }) {
+  const nav = useNavigate();
+  const { lang, t } = useI18n();
+  const { dispatch } = useStore();
+  const L = (x: { en: string; ar: string }) => x[lang as "en" | "ar"] ?? x.en;
+  const guest = () => { dispatch({ type: "set", patch: { guest: true } }); nav("/learn"); };
+  return (
+    <div className="landing">
+      <header className="lp-nav">
+        <Link to="/" className="lp-brand"><BrandMark size={36} /><span><bdi>{site.name}</bdi></span></Link>
+        <div className="lp-actions">
+          <LangSwitch />
+          <Button size="sm" variant="ghost" onClick={() => nav("/signin")}>{t("auth.signIn")}</Button>
+        </div>
+      </header>
+      <main className="lp-site">
+        <BrandMark size={96} />
+        <p className="lp-kicker">{L(C.site.welcome)}</p>
+        <h1><bdi>{site.name}</bdi></h1>
+        {site.darsi && <p className="lp-site-credit"><Mark size={20} />{t("org.withDarsi")}</p>}
+        <p className="lp-lead">{L(C.site.body)}</p>
+        <div className="lp-ctas">
+          <Button iconEnd="next" onClick={() => nav("/signin")}>{t("auth.signIn")}</Button>
+          <Button variant="secondary" onClick={() => nav("/signup")}>{t("auth.noAccount")}</Button>
+          <Button variant="ghost" onClick={guest} title={t("guest.note")}>{t("guest.cta")}</Button>
+        </div>
+        <p className="lp-proof"><Icon name="offline" size={18} />{L(C.hero.proof)}</p>
+      </main>
+      <footer className="lp-footer">
+        <p><bdi>{site.name}</bdi>{site.darsi && <> — {t("org.withDarsi")}</>}</p>
+        <p><Link to="/licences">{t("me.licences")}</Link></p>
+      </footer>
+    </div>
+  );
+}
+
+function DarsiLanding() {
   const nav = useNavigate();
   const { lang, t, locale } = useI18n();
-  const languages = useLanguages();
   const { dispatch } = useStore();
   const styleOf = useTrackStyles();
   const guest = () => { dispatch({ type: "set", patch: { guest: true } }); nav("/learn"); };
   const L = (x: { en: string; ar: string }) => x[lang as "en" | "ar"] ?? x.en;
-  const setLang = (code: string) => dispatch({ type: "set", patch: { lang: code } });
-  // Two languages: one tap switches. More (platform admins added some): a short menu of their own names.
-  const others = languages.filter((l) => l.code !== lang);
   return (
     <div className="landing">
       <header className="lp-nav">
@@ -25,11 +84,8 @@ export function Landing() {
           <a href="#how">{L(C.nav.approach)}</a><a href="#tracks">{L(C.nav.tracks)}</a><a href="#orgs">{L(C.nav.orgs)}</a><a href="#standards">{L(C.nav.standards)}</a><a href="#faq">{L(C.nav.faq)}</a>
         </nav>
         <div className="lp-actions">
-          {others.length === 1
-            ? <button type="button" className="lp-lang dr-other-script" onClick={() => setLang(others[0].code)} lang={others[0].code}>{others[0].native}</button>
-            : <select className="lp-lang lp-lang-menu" aria-label={L(C.nav.language)} value={lang} onChange={(e) => setLang(e.target.value)}>
-              {languages.map((l) => <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>)}
-            </select>}
+          {/* Two languages: one tap switches. More (platform admins added some): a short menu of their own names. */}
+          <LangSwitch />
           <Button size="sm" variant="ghost" onClick={() => nav("/signin")}>{L(C.nav.signIn)}</Button>
           <Button size="sm" onClick={() => nav("/signup")}>{L(C.nav.start)}</Button>
         </div>

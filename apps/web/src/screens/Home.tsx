@@ -28,7 +28,8 @@ export function Home() {
   // One of the learner's tracks at a time, and only courses for their audience, starting at the learner's level.
   // University courses only for university teachers, and pinned above the rest, in the order they are taken.
   // Platform admins: every course in the track, for teachers and for students, from Beginner up; or every track at once.
-  const units = (catalog?.units ?? []).filter((u) => u.track === mine.active && (mine.all || (audienceOf(u) === mine.audience && (!u.teach || mine.uni))));
+  // An organization's member: only the courses it chose for them (isMine).
+  const units = (catalog?.units ?? []).filter((u) => u.track === mine.active && mine.isMine(u));
   const pinned = units.filter((u) => u.teach).sort(byOrder);
   const name = mine.active ? tracks.name(mine.active) : "";
   const level = mine.all ? 0 : mine.active ? mine.levelOf(mine.active) : 1;
@@ -64,7 +65,9 @@ export function Home() {
         {error && <EmptyState tone="offline" title={t("pwa.offline")} action={<Button size="sm" icon="sync" onClick={retry}>{t("common.retry")}</Button>} />}
         {!catalog && !error && <div className="loading" aria-busy="true" />}
         {everything && catalog && <AllCourses units={catalog.units} />}
-        {!everything && catalog && !units.length && <EmptyState icon="learn"
+        {/* Their organization chose their courses, and none of them is for them yet: say who decides, not "add a track". */}
+        {!everything && catalog && !mine.active && mine.chosenByOrg && <EmptyState icon="learn" title={t("home.orgNone")} body={t("home.orgNoneBody")} />}
+        {!everything && catalog && !units.length && (mine.active || !mine.chosenByOrg) && <EmptyState icon="learn"
           title={mine.audience === "students" ? t("home.emptyStudents", { track: name }) : t("home.emptyTrack", { track: name })} body={t("home.emptyTrackBody")}
           action={<Button size="sm" variant="secondary" icon="settings" onClick={() => nav("/tracks")}>{t("tracks.manage")}</Button>} />}
         {at !== level && <p className="notice">{t("home.startAbove", { level: tracks.levelName(mine.active!, level), track: name })}</p>}

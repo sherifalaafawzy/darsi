@@ -15,6 +15,7 @@ import { downloadBlob, plainText } from "./importer";
 import { OrgBranding } from "./OrgBranding";
 import { Note, SeatsPanel, type Msg } from "./Super";
 import { refusalText } from "./refusals";
+import { readOrgCourses } from "../content/orgCourses";
 import "./strings";
 import "../styles/admin.css";
 
@@ -127,6 +128,10 @@ export function AdminHome() {
 
         <section className="panel stack"><h3>{t("or.open")}</h3><p className="muted small">{t("or.openHint")}</p>
           <div><Button icon="chart" onClick={() => nav("/admin/analytics")}>{t("or.open")}</Button></div></section>
+        {/* Which courses its teachers, students and classes see (admin/OrgCourses.tsx), with what holds now. */}
+        <section className="panel stack"><h3>{t("oc.title")}</h3><p className="muted small">{t("oc.openHint")}</p>
+          {org && <p className="small">{t(readOrgCourses(org.courses).mode === "chosen" ? "oc.nowChosen" : "oc.nowAll")}</p>}
+          <div><Button icon="book" variant="secondary" onClick={() => nav("/admin/courses")}>{t("oc.open")}</Button></div></section>
 
         <div className="admin-cols">
           <section className="panel"><h3>{t("adm.codes")}</h3>

@@ -25,7 +25,8 @@ export function MyTracks() {
   const [checking, setChecking] = useState<Track | null>(null);
   const [added, setAdded] = useState<Track | null>(null);
   const chosen = mine.tracks.map((x) => x.id);
-  const courses = (id: string) => (catalog?.units ?? []).filter((u) => u.track === id && u.available && (mine.all || audienceOf(u) === mine.audience)).length;
+  // Courses for them in a track: their audience, and with an organization's choice only the ones it lets them see.
+  const courses = (id: string) => (catalog?.units ?? []).filter((u) => u.track === id && u.available && (mine.all || (audienceOf(u) === mine.audience && mine.seen(u)))).length;
   const toggle = (id: string) => {
     const on = chosen.includes(id);
     if (on && chosen.length === 1) { setWarn(true); return; }
@@ -41,7 +42,9 @@ export function MyTracks() {
       <AppBar title={t("tracks.title")} onBack={() => nav("/learn")} backLabel={t("common.back")} />
       <main className="screen narrow stack">
         <p className="muted">{t("tracks.body")}</p>
-        {tracks.visible.map((tr) => {
+        {mine.chosenByOrg && <p className="notice">{t(mine.offered.length ? "onb.tracksOrg" : "onb.tracksOrgNone")}</p>}
+        {/* Every visible track, or, when their organization chose their courses, the tracks with a course for them. */}
+        {mine.offered.map((tr) => {
           const n = courses(tr.id);
           return <ChoiceCard key={tr.id} multi icon={tr.icon as IconName} title={tracks.name(tr.id)} selected={chosen.includes(tr.id)} onClick={() => toggle(tr.id)}
             description={catalog ? (n ? t("tracks.courses", { n }) : t("tracks.none")) : undefined} />;

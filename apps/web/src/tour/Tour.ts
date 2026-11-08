@@ -57,6 +57,7 @@ const STAFF: [string, MessageKey, MessageKey][] = [
   ["/org", "nav.org", "tour.orgD"],
   ["/teach", "nav.teach", "tour.teachD"],
   ["/admin", "nav.admin", "tour.adminD"],
+  ["/admin/courses", "nav.courses", "tour.coursesD"],
   ["/super", "nav.super", "tour.superD"],
   ["/admin/content", "nav.content", "tour.contentD"],
   ["/super/content", "nav.content", "tour.contentD"],

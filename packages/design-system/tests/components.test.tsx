@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { Button, QuizOption, MatchPairs, OrderSteps, FillBlank, TrueFalse, LanguagePicker, Switch, DarsiRoot, UnitPath, VideoPlayer, FactCheck, TrainClassifier,
-  TrackChip, TrackStylesProvider, ProgressBar, PlacementResult, TRACK_TONES, ICON_NAMES, BUILTIN_TRACK_STYLES, AppBar, BrandProvider, CertificateCard } from "../src";
+  TrackChip, TrackStylesProvider, ProgressBar, PlacementResult, TRACK_TONES, ICON_NAMES, BUILTIN_TRACK_STYLES, AppBar, BrandProvider, CertificateCard, InstallPrompt } from "../src";
 import paths from "../src/icons/paths.json";
 import { approximateTokens, withTemperature, classify, NextWordLab, TokenViewer } from "../src/components/lab";
 import { applyLocale, dirFor, formatNumber } from "../src/locale";
@@ -259,6 +259,24 @@ describe("organization brand", () => {
     expect(imgs[0].getAttribute("src")).toBe(logo);
     expect(container.querySelector(".dr-cert .dr-mark")).toBeTruthy(); // Darsi's mark stays beside the org's logo
     expect(screen.getByText("Nile School")).toBeTruthy();
+  });
+  it("on a site without Darsi's identity: no Darsi mark anywhere, and the name's first letter when there is no logo", () => {
+    const { container } = render(<BrandProvider name="CIS Training Platform" darsi={false}>
+      <AppBar title="Home" /><CertificateCard track="ai" name="Amal" title="AI basics" date="1 Nov" code="X1" />
+    </BrandProvider>);
+    expect(container.querySelector(".dr-mark")).toBeNull();
+    expect([...container.querySelectorAll(".dr-brand-initial")].map((e) => e.textContent)).toEqual(["C", "C"]);
+    expect(screen.getByText("CIS Training Platform")).toBeTruthy();
+    const withLogo = render(<BrandProvider logo={logo} name="CIS" darsi={false}><CertificateCard track="ai" name="Amal" title="AI basics" date="1 Nov" code="X1" /></BrandProvider>);
+    expect(withLogo.container.querySelector("img.dr-brand-logo")).toBeTruthy();
+    expect(withLogo.container.querySelector(".dr-mark")).toBeNull();
+    // Decorations (the install prompt's icon) follow it too.
+    const install = render(<BrandProvider name="CIS" darsi={false}><InstallPrompt title="Add" body="b" installLabel="Install" dismissLabel="Not now" onInstall={() => {}} onDismiss={() => {}} /></BrandProvider>);
+    expect(install.container.querySelector(".dr-install-icon .dr-brand-initial")).toBeTruthy();
+    expect(install.container.querySelector(".dr-mark")).toBeNull();
+    // With Darsi's identity (the default) and no logo, Darsi's mark as before, decorations included.
+    const withDarsi = render(<BrandProvider name="CIS"><AppBar title="Home" /><InstallPrompt title="Add" body="b" installLabel="Install" dismissLabel="Not now" onInstall={() => {}} onDismiss={() => {}} /></BrandProvider>);
+    expect(withDarsi.container.querySelectorAll(".dr-mark").length).toBe(2);
   });
   it("shows Darsi's mark without a brand", () => {
     const { container } = render(<><AppBar title="Home" /><CertificateCard track="ai" name="Amal" title="AI basics" date="1 Nov" code="X1" /></>);

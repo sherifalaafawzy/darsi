@@ -1,6 +1,6 @@
 import { Suspense, useEffect } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { BottomNav, BrandMark, ConnectionStatus, Icon, InstallPrompt, Mark, UpdateToast, type IconName } from "@darsi/design-system";
+import { BottomNav, BrandMark, ConnectionStatus, Icon, InstallPrompt, Mark, UpdateToast, useBrand, type IconName } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import type { Role } from "../auth/types";
 import { useI18n, type MessageKey } from "../i18n";
@@ -25,7 +25,8 @@ const TABS: NavItem[] = [
 export function accountLinks(role: Role, signedIn: boolean): NavItem[] {
   if (!signedIn) return [];
   const links: NavItem[] = [];
-  if (role === "orgAdmin") links.push({ path: "/admin", icon: "settings", key: "nav.admin" }, { path: "/admin/analytics", icon: "chart", key: "nav.analytics" });
+  // Courses: which courses the organization's teachers, students and classes see (admin/OrgCourses.tsx).
+  if (role === "orgAdmin") links.push({ path: "/admin", icon: "settings", key: "nav.admin" }, { path: "/admin/analytics", icon: "chart", key: "nav.analytics" }, { path: "/admin/courses", icon: "book", key: "nav.courses" });
   if (role === "teacher" || role === "orgAdmin") links.push({ path: "/teach", icon: "chat", key: "nav.teach" });
   if (role === "superadmin") links.push({ path: "/super", icon: "language", key: "nav.super" }, { path: "/super/analytics", icon: "chart", key: "nav.analytics" }, { path: "/super/orgs", icon: "home", key: "nav.orgs" }, { path: "/super/people", icon: "profile", key: "nav.people" }, { path: "/super/projects", icon: "file", key: "nav.projects" }, { path: "/super/certificates", icon: "check", key: "nav.certificates" }, { path: "/super/bugs", icon: "bug", key: "nav.bugs" }, { path: "/super/plans", icon: "award", key: "nav.plans" });
   else links.push({ path: "/org", icon: "home", key: "nav.org" });
@@ -67,6 +68,8 @@ export function Layout() {
   const { pathname, key: navKey } = useLocation();
   const { user, role, signOut } = useAuth();
   const { state, dispatch } = useStore();
+  // The organization's (its members', or anyone's on its own web address: App's BrandProvider), else Darsi's.
+  const brand = useBrand();
   const online = useOnline();
   const update = usePwaUpdate();
   const install = useInstall();
@@ -103,9 +106,10 @@ export function Layout() {
   return (
     <div className="app-shell">
       <nav className="nav-rail" aria-label={t("nav.main")}>
-        {/* An organization's members see its logo and name, with a small credit for Darsi under them. */}
-        {state.org?.name
-          ? <Link to="/learn" className="rail-brand is-org"><BrandMark size={36} /><span><bdi>{state.org.name}</bdi><small className="rail-credit"><Mark size={14} />{t("org.withDarsi")}</small></span></Link>
+        {/* An organization's logo and name, with a small credit for Darsi under them (none on its own site without
+            Darsi's identity). */}
+        {brand.name
+          ? <Link to="/learn" className="rail-brand is-org"><BrandMark size={36} /><span><bdi>{brand.name}</bdi>{brand.darsi !== false && <small className="rail-credit"><Mark size={14} />{t("org.withDarsi")}</small>}</span></Link>
           : <Link to="/learn" className="rail-brand" aria-label={t("app.name")}><Mark size={36} /><span>{t("app.name")}</span></Link>}
         {tabs.map(railItem)}
         {extra.length > 0 && <><hr className="rail-sep" />{extra.map(railItem)}</>}

@@ -1,4 +1,4 @@
-import { createContext, useContext, useId, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { createContext, useContext, useId, useMemo, type ButtonHTMLAttributes, type ReactNode } from "react";
 import paths from "../icons/paths.json";
 
 /** A track id. Nine are built in (ai, iot, cyber, code, data, agents, opt, aisec, data-science); platform admins can add more (see TrackStylesProvider). */
@@ -71,18 +71,29 @@ export function Mark({ size = 32 }: { size?: number }) {
 }
 
 /**
- * An organization's own look for its members: its logo (a small data: or https: image) and name. Wherever the app
- * shows Darsi's mark as its brand (app bar, certificates), BrandMark shows the logo instead; no logo, Darsi's mark.
+ * An organization's own look for its members (and on its own web address): its logo (a small data: or https: image)
+ * and name. Wherever the app shows Darsi's mark as its brand (app bar, certificates), BrandMark shows the logo instead;
+ * no logo, Darsi's mark. `darsi: false` (an organization site without Darsi's identity): Darsi's mark never shows, so
+ * an organization without a logo gets the first letter of its name instead, and certificates lose Darsi's small mark.
  */
-export interface Brand { logo?: string | null; name?: string | null }
+export interface Brand { logo?: string | null; name?: string | null; darsi?: boolean }
 const BrandCtx = createContext<Brand>({});
-export function BrandProvider({ logo, name, children }: Brand & { children: ReactNode }) {
-  return <BrandCtx.Provider value={{ logo, name }}>{children}</BrandCtx.Provider>;
+export function BrandProvider({ logo, name, darsi, children }: Brand & { children: ReactNode }) {
+  const value = useMemo(() => ({ logo, name, darsi }), [logo, name, darsi]);
+  return <BrandCtx.Provider value={value}>{children}</BrandCtx.Provider>;
 }
 export const useBrand = () => useContext(BrandCtx);
 export function BrandMark({ size = 32 }: { size?: number }) {
-  const { logo } = useBrand();
-  return logo ? <img className="dr-brand-logo" src={logo} alt="" width={size} height={size} decoding="async" /> : <Mark size={size} />;
+  const { logo, name, darsi } = useBrand();
+  if (logo) return <img className="dr-brand-logo" src={logo} alt="" width={size} height={size} decoding="async" />;
+  if (darsi !== false || !name?.trim()) return <Mark size={size} />;
+  // The first letter of the name (a whole grapheme, so an accented or Arabic letter isn't cut in two).
+  const first = Array.from(name.trim())[0] ?? "";
+  return <span className="dr-brand-initial" aria-hidden style={{ inlineSize: size, blockSize: size, fontSize: Math.round(size * 0.5) }}>{first}</span>;
+}
+/** Darsi's mark as decoration (a lesson's finish, the install prompt), or the organization's on a site without Darsi's identity. */
+export function DecorMark({ size = 32 }: { size?: number }) {
+  return useBrand().darsi === false ? <BrandMark size={size} /> : <Mark size={size} />;
 }
 
 export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> {

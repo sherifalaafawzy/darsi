@@ -8,7 +8,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { deleteDoc, deleteField, doc, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 import { getBytes, ref, uploadBytes } from "firebase/storage";
 
 let env: RulesTestEnvironment;
@@ -271,6 +271,53 @@ describe("organizations: the request's private details, and what org admins chan
     await assertFails(updateDoc(doc(adm(), "orgs/org1"), { country: "Egypt", city: "Giza" }));
     await assertFails(updateDoc(doc(adm(), "orgs/org1"), { settings: { big: "x".repeat(1000) } }));
     await assertFails(updateDoc(doc(adm(), "orgs/org1"), { name: "x".repeat(81) }));
+  });
+  // Course visibility (TECHNICAL.md "Course visibility in organizations"): every member's phone reads `courses`, so only
+  // setOrgCourses, which checks its shape and size, writes it.
+  it("nobody writes which courses members see from a client, not even a platform admin; members read it", async () => {
+    await seed();
+    const chosen = { mode: "chosen", teachers: ["ai-4-1"], students: ["ai-s4"], groups: { "Grade 7A": ["cyber-s4"] } };
+    const boss = () => env.authenticatedContext("boss", { role: "superadmin" }).firestore();
+    await assertFails(updateDoc(doc(adm(), "orgs/org1"), { courses: chosen }));
+    await assertFails(updateDoc(doc(adm(), "orgs/org1"), { name: "Nile Valley School", courses: { mode: "all" } }));
+    await assertFails(updateDoc(doc(pupil(), "orgs/org1"), { courses: { mode: "all" } }));
+    await assertFails(updateDoc(doc(boss(), "orgs/org1"), { courses: chosen }));
+    await assertFails(setDoc(doc(boss(), "orgs/org1"), { name: "Nile School", status: "active", courses: chosen }));
+    // A platform admin still changes everything else directly (the branding panel on an org's page).
+    await assertSucceeds(updateDoc(doc(boss(), "orgs/org1"), { name: "Nile Valley School", brand: { logo: null, v: 1 } }));
+    // With the field in place (as setOrgCourses writes it), members read it and the other writes still pass.
+    await env.withSecurityRulesDisabled((c) => updateDoc(doc(c.firestore(), "orgs/org1"), { courses: chosen }));
+    const got = await assertSucceeds(getDoc(doc(pupil(), "orgs/org1")));
+    expect(got.data()?.courses).toEqual(chosen);
+    await assertSucceeds(updateDoc(doc(adm(), "orgs/org1"), { name: "Nile School", brand: { logo: null, v: 3 } }));
+    await assertSucceeds(updateDoc(doc(boss(), "orgs/org1"), { status: "active" }));
+    await assertFails(updateDoc(doc(boss(), "orgs/org1"), { courses: { mode: "all" } }));
+    await assertFails(updateDoc(doc(adm(), "orgs/org1"), { courses: { mode: "all" } }));
+    await assertFails(deleteDoc(doc(adm(), "orgs/org1")));
+  });
+  // Organization sites (TECHNICAL.md "Organization sites"): `site` decides which organization a web address shows, so
+  // only setOrgSite writes it (one organization per host, kept in config/sites), and nobody writes config/sites itself.
+  it("nobody writes an organization's web address from a client, not even a platform admin; members read it", async () => {
+    await seed();
+    const site = { host: "nile.darsiai.org", darsi: false };
+    const boss = () => env.authenticatedContext("boss", { role: "superadmin" }).firestore();
+    await assertFails(updateDoc(doc(adm(), "orgs/org1"), { site }));
+    await assertFails(updateDoc(doc(adm(), "orgs/org1"), { name: "Nile Valley School", site }));
+    await assertFails(updateDoc(doc(pupil(), "orgs/org1"), { site }));
+    await assertFails(updateDoc(doc(boss(), "orgs/org1"), { site }));
+    await assertFails(updateDoc(doc(boss(), "orgs/org1"), { name: "Nile Valley School", site: null }));
+    await assertFails(setDoc(doc(boss(), "orgs/org1"), { name: "Nile School", status: "active", site }));
+    await assertFails(setDoc(doc(boss(), "config/sites"), { list: [{ host: "nile.darsiai.org", orgId: "org1" }] }));
+    await env.withSecurityRulesDisabled((c) => updateDoc(doc(c.firestore(), "orgs/org1"), { site }));
+    const got = await assertSucceeds(getDoc(doc(pupil(), "orgs/org1")));
+    expect(got.data()?.site).toEqual(site);
+    // With a site in place, its admins still change the name and logo (onOrgSite publishes them), and a platform admin
+    // the rest, as long as `site` stays as it is.
+    await assertSucceeds(updateDoc(doc(adm(), "orgs/org1"), { name: "Nile School", brand: { logo: null, v: 4 } }));
+    await assertSucceeds(updateDoc(doc(boss(), "orgs/org1"), { status: "active" }));
+    await assertFails(updateDoc(doc(boss(), "orgs/org1"), { "site.darsi": true }));
+    await assertFails(updateDoc(doc(adm(), "orgs/org1"), { site: deleteField() }));
+    await assertFails(updateDoc(doc(boss(), "orgs/org1"), { site: deleteField() }));
   });
 });
 

@@ -99,6 +99,12 @@ export const landing = {
     ],
   },
   cta: { title: t("Start with one lesson today.", "ابدأ بدرس واحد اليوم."), body: t("Ten minutes, your phone, your language.", "عشر دقائق، هاتفك، لغتك.") },
+  /** An organization's own web address (Landing's SiteLanding): its name and logo, no word about Darsi in the copy. */
+  site: {
+    body: t("Courses in AI, programming, data, IoT and cyber security, with hands-on labs and real projects — in Arabic and English, on any phone, even offline.",
+            "دورات في الذكاء الاصطناعي والبرمجة والبيانات وإنترنت الأشياء والأمن السيبراني، مع مختبرات تفاعلية ومشاريع حقيقية — بالعربية والإنجليزية، على أي هاتف، وحتى دون اتصال."),
+    welcome: t("Welcome", "أهلًا بك"),
+  },
   footer: t("technology training for teachers and their students. Kits are free to copy for your school.", "تدريب تقني للمعلمين وطلابهم. يُسمح بنسخ الحقائب لمدرستك مجانًا."), // after "Darsi (درسي) — " (Landing.tsx)
   sources: [
     { label: "UNESCO (2024), Global report on teachers — via UN News", url: "https://news.un.org/en/node/1147067" },

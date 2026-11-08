@@ -17,7 +17,7 @@ const LAB_ENTRY = /labs[\\/]apps[\\/]([\w-]+)[\\/]index\.tsx$/;
  * kept by a runtime cache, or saved with a downloaded course (offline-manifest.json below). `re` matches the same files.
  */
 // WorkBody: the project card's body and its styles, shared by the staff screens and /results (admin/WorkBody.tsx).
-const LAZY_SCREENS = ["Landing", "OrgScreen", "AdminHome", "PersonDetail", "AddPeople", "importer", "Teach", "SuperAdmin", "admin", "Cms", "competencies", "Analytics", "OrgReport", "OrgsAdmin", "Super", "Plans", "Upgrade", "Tutor", "Report", "Tour", "Licences", "WorkBody"];
+const LAZY_SCREENS = ["Landing", "OrgScreen", "AdminHome", "PersonDetail", "AddPeople", "importer", "Teach", "SuperAdmin", "admin", "Cms", "competencies", "Analytics", "OrgReport", "OrgsAdmin", "OrgCourses", "Super", "Plans", "Upgrade", "Tutor", "Report", "Tour", "Licences", "WorkBody"];
 export const ON_DEMAND: { glob: string; re: RegExp }[] = [
   { glob: "**/exceljs*.js", re: /(?:^|\/)exceljs[^/]*\.js$/ },
   // The Firebase SDK (firebase, firebase-extra: Functions, Storage, Messaging) and src/firebase.ts: "firebase-" and the

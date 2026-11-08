@@ -1,0 +1,88 @@
+/**
+ * Which courses an organization's members see (TECHNICAL.md "Course visibility in organizations"): the `courses` field
+ * of orgs/{orgId}. Absent or { mode: "all" }: every course, as before. { mode: "chosen", … }: a teacher sees the
+ * `teachers` list, a student the `students` list, and both also their class's list (`groups[group]`). Org admins and
+ * platform admins always see everything. Each person still sees only courses for them (their audience), so a list
+ * narrows what they see and never widens it.
+ *
+ * Pure and dependency-free: members' phones (state/orgBrand.ts, content/mine.ts), the admin screen (admin/OrgCourses.tsx)
+ * and the setOrgCourses function (a copy in functions/src/shared/, functions/scripts/copy-shared.mjs) read it the same way.
+ */
+export interface OrgCoursesChosen { mode: "chosen"; teachers: string[]; students: string[]; groups: Record<string, string[]> }
+export type OrgCourses = { mode: "all" } | OrgCoursesChosen;
+
+/**
+ * Bounds that keep the org document small, since every member's phone reads it at each start: at most 300 courses in
+ * one list, 60 classes with a list, 2,000 course ids in all, and class names as the people pages save them (≤ 60).
+ */
+export const ORG_COURSES_MAX = { list: 300, groups: 60, total: 2000, group: 60 } as const;
+/** A course id as the catalog has it (validate.ts UNIT_ID; a test keeps the two equal). */
+export const COURSE_ID = /^[a-z0-9][a-z0-9-]{1,39}$/;
+
+/** Why a `courses` value was refused: setOrgCourses puts it in the error's details.reason (admin/refusals.ts). */
+export type OrgCoursesProblem = "courses-mode" | "courses-list" | "courses-id" | "courses-many" | "courses-classes" | "courses-class" | "courses-total";
+
+const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+/** Sorted, without repeats: the same choice is always stored (and compared) the same way. */
+const tidy = (ids: string[]) => [...new Set(ids)].sort();
+/** A class name the people pages could have saved: trimmed, 1–60 characters, never one of Firestore's reserved `__…__` names. */
+export const classNameOk = (g: string) => g.length > 0 && g.length <= ORG_COURSES_MAX.group && g === g.trim() && !/^__.*__$/.test(g);
+
+/**
+ * Checks what an admin saves and puts it in its stored form (lists sorted, repeats and empty class lists dropped), or
+ * says why not. Unknown modes, ids that aren't course ids, and anything past the bounds are refused.
+ */
+export function checkOrgCourses(v: unknown): { value: OrgCourses } | { problem: OrgCoursesProblem } {
+  if (!isObj(v) || (v.mode !== "all" && v.mode !== "chosen")) return { problem: "courses-mode" };
+  if (v.mode === "all") return { value: { mode: "all" } };
+  const list = (x: unknown): string[] | OrgCoursesProblem => {
+    if (x === undefined) return [];
+    if (!Array.isArray(x)) return "courses-list";
+    if (!x.every((id) => typeof id === "string" && COURSE_ID.test(id))) return "courses-id";
+    const ids = tidy(x as string[]);
+    return ids.length > ORG_COURSES_MAX.list ? "courses-many" : ids;
+  };
+  const teachers = list(v.teachers), students = list(v.students);
+  if (typeof teachers === "string") return { problem: teachers };
+  if (typeof students === "string") return { problem: students };
+  if (v.groups !== undefined && !isObj(v.groups)) return { problem: "courses-list" };
+  const groups: Record<string, string[]> = {};
+  for (const [name, ids] of Object.entries(v.groups ?? {})) {
+    if (!classNameOk(name)) return { problem: "courses-class" };
+    const got = list(ids);
+    if (typeof got === "string") return { problem: got };
+    if (got.length) groups[name] = got;
+  }
+  if (Object.keys(groups).length > ORG_COURSES_MAX.groups) return { problem: "courses-classes" };
+  const total = teachers.length + students.length + Object.values(groups).reduce((n, g) => n + g.length, 0);
+  if (total > ORG_COURSES_MAX.total) return { problem: "courses-total" };
+  const sorted = Object.fromEntries(Object.keys(groups).sort().map((k) => [k, groups[k]]));
+  return { value: { mode: "chosen", teachers, students, groups: sorted } };
+}
+
+/**
+ * The org document's `courses` as the admin screen edits it. Anything that isn't a well-formed choice reads as
+ * "every course" (the default), so a damaged field never hides courses from anyone.
+ */
+export function readOrgCourses(v: unknown): OrgCourses {
+  const r = checkOrgCourses(v);
+  return "value" in r ? r.value : { mode: "all" };
+}
+
+/**
+ * The course ids one member may see, sorted, or null for every course: org admins and platform admins, an organization
+ * that hasn't chosen (or whose field can't be read), and anyone who isn't a teacher or a student. A member's own list
+ * is their role's plus their class's.
+ */
+export function seesFor(courses: unknown, role: string | null | undefined, group?: string | null): string[] | null {
+  if (role !== "teacher" && role !== "student") return null;
+  const c = readOrgCourses(courses);
+  if (c.mode !== "chosen") return null;
+  const own = role === "teacher" ? c.teachers : c.students;
+  const cls = group && Object.prototype.hasOwnProperty.call(c.groups, group) ? c.groups[group] : [];
+  return tidy([...own, ...cls]);
+}
+
+/** Two stored lists say the same (both sorted, as seesFor gives them); undefined and null both mean every course. */
+export const sameSees = (a: readonly string[] | null | undefined, b: readonly string[] | null | undefined) =>
+  (a ?? null) === (b ?? null) || (!!a && !!b && a.length === b.length && a.every((x, i) => x === b[i]));
