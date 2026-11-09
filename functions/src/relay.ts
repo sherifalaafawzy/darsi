@@ -13,11 +13,12 @@
  */
 import { createServer } from "node:http";
 import { WebSocket, WebSocketServer } from "ws";
-import { auth } from "./admin.js";
+import { auth, db } from "./admin.js";
 import { AgentError, askAgent } from "./agent.js";
 import { balance, charge, endCall, GEMINI_KEY, googleToken, hasSuper, loadUnit, minuteCredits, startCall, trackIndex, tutorConfig, tutorReady, vertexModel } from "./tutor.js";
 import type { Hold } from "./billingCore.js";
-import { originAllowed, parseOrigins } from "./origins.js";
+import { originAllowed, parseOrigins, siteOrigins } from "./origins.js";
+import { APPROVED, type SiteStatus } from "./shared/sites.js";
 import { EXPLAIN_TOOL, SEARCH_TOOL, audioCost, down3, instructions, lessonMaterial, pcmToUlaw, searchBoth, ulawToPcm, usageCost, type TutorLang, type Usage } from "./tutorCore.js";
 
 // GEMINI_LIVE_URL and VERTEX_LIVE_URL let the checks use a stand-in.
@@ -25,6 +26,11 @@ const LIVE = process.env.GEMINI_LIVE_URL ?? "wss://generativelanguage.googleapis
 // Only Darsi's own site in production, plus organization sites with "https://*.darsiai.org" (origins.ts); `npm run
 // local` passes its address in TUTOR_ORIGINS (L9).
 const ORIGINS = parseOrigins(process.env.TUTOR_ORIGINS ?? "https://darsiai.org");
+// Any other organization address a platform admin approved (sites/{host}), looked up when a page first calls.
+const siteAllowed = siteOrigins(async (host) => {
+  const s = await db.doc(`sites/${host}`).get();
+  return s.exists && APPROVED.includes(s.get("status") as SiteStatus);
+});
 /** Sockets per instance, and per address: a brake on anyone opening connections they never use (M6). */
 const MAX_SOCKETS = 300, MAX_PER_IP = 6;
 const open = new Map<string, number>();
@@ -68,13 +74,13 @@ export const server = createServer((req, res) => {
   void loadUnit(String(url.searchParams.get("u") ?? "").slice(0, 64), null)
     .then((unit) => unit && Promise.all([trackIndex(unit, null, lang), lang === "en" ? null : trackIndex(unit, null, "en")])).catch(() => null);
 });
-// An Origin header is required (browsers always send one), and it must be Darsi's (L9).
+// An Origin header is required (browsers always send one), and it must be Darsi's or an approved organization address (L9).
 const wss = new WebSocketServer({
   server, path: "/live", maxPayload: 64 * 1024, perMessageDeflate: false,
-  verifyClient: ({ origin, req }: { origin?: string; req: Parameters<typeof ipOf>[0] }) => {
-    if (!originAllowed(origin, ORIGINS)) return false;
-    const total = [...open.values()].reduce((a, b) => a + b, 0);
-    return total < MAX_SOCKETS && (open.get(ipOf(req)) ?? 0) < MAX_PER_IP;
+  verifyClient: ({ origin, req }: { origin?: string; req: Parameters<typeof ipOf>[0] }, done: (ok: boolean) => void) => {
+    const room = () => [...open.values()].reduce((a, b) => a + b, 0) < MAX_SOCKETS && (open.get(ipOf(req)) ?? 0) < MAX_PER_IP;
+    if (originAllowed(origin, ORIGINS)) { done(room()); return; }
+    siteAllowed(origin).then((ok) => done(ok && room()), () => done(false));
   },
 });
 

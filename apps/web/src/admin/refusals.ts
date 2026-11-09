@@ -16,8 +16,9 @@ const WORDS: Record<string, MessageKey> = {
   // orgCourses.ts (which courses members see; content/orgCourses.ts OrgCoursesProblem)
   "courses-mode": "oc.rf.mode", "courses-list": "oc.rf.list", "courses-id": "oc.rf.id", "courses-many": "oc.rf.many",
   "courses-classes": "oc.rf.classes", "courses-class": "oc.rf.class", "courses-total": "oc.rf.total",
-  // sites.ts (an organization's own web address; content/sites.ts SiteProblem)
-  "site-host": "site.rf.host", "site-reserved": "site.rf.reserved", "site-taken": "site.rf.taken",
+  // sites.ts (an organization's own web addresses: content/sites.ts SiteProblem, and manageSite's own)
+  "site-host": "site.rf.host", "site-reserved": "site.rf.reserved", "site-taken": "site.rf.taken", "site-limit": "site.rf.limit",
+  "site-state": "site.rf.state", "no-site": "site.rf.noSite",
 };
 
 /** The refusal's code (`details.reason`), or "". */

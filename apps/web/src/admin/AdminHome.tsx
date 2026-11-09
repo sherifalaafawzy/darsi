@@ -13,6 +13,7 @@ import { lastActiveText } from "./PersonDetail";
 import { byWaiting, waitingOf, waitingTotals } from "./review";
 import { downloadBlob, plainText } from "./importer";
 import { OrgBranding } from "./OrgBranding";
+import { OrgSitePanel } from "./Domains";
 import { Note, SeatsPanel, type Msg } from "./Super";
 import { refusalText } from "./refusals";
 import { readOrgCourses } from "../content/orgCourses";
@@ -177,6 +178,8 @@ export function AdminHome() {
 
         {org && membersQ.data && <SeatsPanel org={org} members={members} onChanged={membersQ.reload} />}
         {org && <OrgBranding org={org} onSaved={orgQ.reload} />}
+        {/* Its own web address: asked for here, approved and connected by a platform admin (TECHNICAL.md "Organization sites"). */}
+        {orgId && <OrgSitePanel orgId={orgId} />}
 
         <section className="panel">
           <div className="table-tools">

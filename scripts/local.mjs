@@ -9,8 +9,9 @@
  * - Your account: "Sign in with Google" opens the emulator's account picker; pick the address you gave. It is a
  *   platform admin with a year of Darsi Super and its credits.
  * - The starting courses (npm run seed -- --emulator) on the first run, sample plans (/super/plans), the tutor's voice
- *   relay (ws://localhost:8091), and a stand-in for Paymob and Stripe (scripts/local/payments.mjs), so a purchase runs
- *   end to end with no money.
+ *   relay (ws://localhost:8091), a stand-in for Paymob and Stripe (scripts/local/payments.mjs), so a purchase runs
+ *   end to end with no money, and one for Google's web address APIs (scripts/local/domains.mjs), so approving an
+ *   organization's address connects it here and never at Google.
  * - The tutor answers for real through Vertex AI in darsi-f0685 (config/tutor in the emulator), with your gcloud
  *   application-default login; Google bills those few cents to that project's billing account.
  *
@@ -28,6 +29,7 @@ import { connect } from "node:net";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { startPayments } from "./local/payments.mjs";
+import { startDomains } from "./local/domains.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const args = process.argv.slice(2);
@@ -38,7 +40,7 @@ const FN = `http://127.0.0.1:5001/${P}/${REGION}`;
 const DATA = join(ROOT, ".emulator-data"), FUNCTIONS = join(ROOT, "functions");
 const win = process.platform === "win32";
 const children = [];
-let payments = null, stopping = false;
+let payments = null, domains = null, stopping = false;
 /** The emulators' last lines, shown if they stop on their own. */
 const emuLog = [];
 const step = (s) => console.log(`\n▸ ${s}`);
@@ -106,7 +108,7 @@ async function emulatorConfig() {
   let pick = 8080;
   if (!(await free(8080))) { pick = 0; for (const p of [8085, 8086, 8087, 8088]) if (await free(p)) { pick = p; break; } }
   if (!pick) { console.error("Ports 8080 and 8085–8088 are all taken; free one for the Firestore emulator."); process.exit(1); }
-  for (const [what, p] of [["Auth", 9099], ["Functions", 5001], ["Storage", 9199], ["the emulator UI", 4000], ["the app", 4173], ["the voice relay", 8091], ["the payment stand-in", 4799]]) {
+  for (const [what, p] of [["Auth", 9099], ["Functions", 5001], ["Storage", 9199], ["the emulator UI", 4000], ["the app", 4173], ["the voice relay", 8091], ["the payment stand-in", 4799], ["the web address stand-in", 4798]]) {
     if (!(await free(p))) { console.error(`Port ${p} (${what}) is taken. Stop whatever uses it (an earlier \`npm run local\`?) and try again.`); process.exit(1); }
   }
   const cfg = JSON.parse(readFileSync(join(ROOT, "firebase.json"), "utf8"));
@@ -196,9 +198,11 @@ if (!seeded) {
   await done(run("node", ["scripts/seed-content.mjs", "--emulator"]));
 }
 
-step("Starting the payment stand-in and the tutor's voice relay");
+step("Starting the payment and web address stand-ins and the tutor's voice relay");
 const { paymobHmac } = await import(pathToFileURL(join(FUNCTIONS, "lib/paymentsCore.js")).href);
 payments = await startPayments({ secrets, functionsUrl: FN, paymobHmac });
+// Organization web addresses: the functions emulator connects them here, never at Google (scripts/local/domains.mjs).
+domains = await startDomains();
 children.push(run("node", ["functions/lib/relay.js"], {
   quiet: true, log: (t) => process.stdout.write(t.replace(/^/gm, "  relay: ")),
   env: { ...process.env, PORT: "8091", GCLOUD_PROJECT: P, FUNCTIONS_EMULATOR: "true", TUTOR_ORIGINS: WEB, GEMINI_API_KEY: "unset",
@@ -237,6 +241,7 @@ function shutdown() {
   if (stopping) return;
   stopping = true;
   payments?.close();
+  domains?.close();
   // Ctrl+C reaches the children too; the emulators save their data, then exit.
   for (const c of children) if (c !== emu && c.exitCode === null) c.kill();
   if (emu.exitCode !== null) process.exit(0);

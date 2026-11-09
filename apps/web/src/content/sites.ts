@@ -15,6 +15,39 @@ export interface OrgSite { host: string; darsi: boolean }
 /** Why a host was refused: not a lowercase hostname, one of Darsi's own, or another organization's. */
 export type SiteProblem = "site-host" | "site-reserved" | "site-taken";
 
+/**
+ * Where a web address stands (sites/{host}; manageSite and sitesJob): an organization admin asked for it, a platform
+ * admin refused it, or approved it and it is being connected, is live, or is stuck on a step a platform admin must
+ * look at. Only an approved address (connecting, live, problem) is in content/sites.json.
+ */
+export type SiteStatus = "requested" | "refused" | "connecting" | "live" | "problem";
+export const APPROVED: readonly SiteStatus[] = ["connecting", "live", "problem"];
+/** One step of connecting an address: done, waiting on something outside Darsi (DNS, the certificate), not started, or failed. */
+export type StepState = "ok" | "wait" | "todo" | "error";
+/**
+ * The steps, in order: dns (the address points at Darsi's Hosting site, which also proves it is ours), hosting (the
+ * address is a custom domain of that site), cert (its HTTPS certificate), auth (signing in works there: Firebase
+ * Auth's authorized domains) and cors (the app there may read Darsi's files: the Storage bucket's CORS list).
+ */
+export interface SiteSteps { dns: StepState; hosting: StepState; cert: StepState; auth: StepState; cors: StepState }
+export const STEPS: readonly (keyof SiteSteps)[] = ["dns", "hosting", "cert", "auth", "cors"];
+/** A DNS record the address's owner must add (or remove), as Firebase Hosting asks for it. */
+export interface DnsRecord { name: string; type: string; value: string; action: "add" | "remove" }
+/** sites/{host}, keyed by the host: written only by the functions. Times are ms since 1970. */
+export interface SiteDoc {
+  host: string; orgId: string; orgName: string; darsi: boolean; status: SiteStatus;
+  requestedBy: string | null; requestedAt: number | null;
+  approvedBy: string | null; approvedAt: number | null;
+  refusedReason: string | null;
+  steps: SiteSteps | null; records: DnsRecord[] | null; issues: string[] | null; error: string | null;
+  checkedAt: number | null; liveAt: number | null;
+}
+/** The DNS zone Darsi manages: its subdomains point at Hosting through one wildcard record, so nobody adds anything. */
+export const DARSI_ZONE = "darsiai.org";
+export const inDarsiZone = (host: string) => host.endsWith(`.${DARSI_ZONE}`);
+/** Where every organization address points (a CNAME), Darsi's Hosting site. */
+export const HOSTING_TARGET = "darsi-f0685.web.app";
+
 /** Darsi's own addresses, which are never an organization's. */
 export const DARSI_HOSTS: readonly string[] = ["darsiai.org", "www.darsiai.org"];
 /** Firebase Hosting's own addresses (darsi-f0685.web.app and the like): Darsi's, and anyone's on the same suffixes. */

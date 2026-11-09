@@ -1,7 +1,7 @@
 // Which pages may open the tutor's voice relay (origins.ts, used by relay.ts): exact origins, and "https://*.<domain>"
 // for organization sites (TECHNICAL.md "Organization sites"), which matches https subdomains only.
 import { describe, expect, it } from "vitest";
-import { originAllowed, parseOrigins } from "../src/origins";
+import { originAllowed, parseOrigins, siteOrigins } from "../src/origins";
 
 describe("TUTOR_ORIGINS", () => {
   it("reads exact origins and https wildcards, separated by commas or spaces, and ignores other wildcards", () => {
@@ -28,5 +28,37 @@ describe("TUTOR_ORIGINS", () => {
     const rules = parseOrigins("https://darsiai.org");
     expect(originAllowed("https://darsiai.org", rules)).toBe(true);
     expect(originAllowed("https://cis.darsiai.org", rules)).toBe(false);
+  });
+});
+
+describe("organization addresses outside the wildcard (siteOrigins)", () => {
+  it("asks once per address, keeps the answer, and never asks about something that can't be a site", async () => {
+    const asked: string[] = [];
+    let t = 0;
+    const allowed = siteOrigins(async (host) => { asked.push(host); return host === "learn.cis.edu.eg"; }, () => t);
+    expect(await allowed("https://learn.cis.edu.eg")).toBe(true);
+    expect(await allowed("https://learn.cis.edu.eg")).toBe(true);
+    expect(await allowed("https://other.school.org")).toBe(false);
+    for (const bad of [undefined, "http://learn.cis.edu.eg", "https://learn.cis.edu.eg:8443", "https://darsiai.org", "https://x.web.app", "https://10.0.0.1", "null"]) {
+      expect(await allowed(bad), String(bad)).toBe(false);
+    }
+    expect(asked).toEqual(["learn.cis.edu.eg", "other.school.org"]);
+    // A refusal is kept a minute, an approval five; then asked again.
+    t = 61_000;
+    await allowed("https://other.school.org");
+    await allowed("https://learn.cis.edu.eg");
+    expect(asked).toEqual(["learn.cis.edu.eg", "other.school.org", "other.school.org"]);
+    t = 301_000;
+    await allowed("https://learn.cis.edu.eg");
+    expect(asked.at(-1)).toBe("learn.cis.edu.eg");
+  });
+  it("asks at most 30 times a minute, and refuses when the lookup fails", async () => {
+    let n = 0;
+    const allowed = siteOrigins(async () => { n++; return true; }, () => 0);
+    for (let i = 0; i < 40; i++) await allowed(`https://made-up-${i}.org`);
+    expect(n).toBe(30);
+    expect(await allowed("https://made-up-99.org")).toBe(false);
+    const broken = siteOrigins(async () => { throw new Error("offline"); });
+    expect(await broken("https://learn.cis.edu.eg")).toBe(false);
   });
 });

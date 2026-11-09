@@ -255,6 +255,14 @@ service cloud.firestore {
     // Problem reports (TECHNICAL.md "Problem reports"): written only by the reportBug function, which anyone reaches
     // (guests included). They hold screenshots and device details, so platform admins alone read them, on /super/bugs,
     // and change nothing but the status.
+    // Organization web addresses (TECHNICAL.md "Organization sites"): one document per address, keyed by it, asked for,
+    // approved, connected and removed only through manageSite and sitesJob, so no client writes one. Platform admins
+    // read them all (/super/domains); an org admin reads its own organization's (its "Web address" panel, a query on
+    // orgId). Members don't: the address and its look reach them through content/sites.json.
+    match /sites/{host} {
+      allow read: if isSuper() || (resource != null && isOrgAdmin(resource.data.orgId));
+      allow write: if false;
+    }
     match /bugReports/{id} {
       allow read: if isSuper();
       allow update: if isSuper() && onlyChanges(['status', 'statusBy', 'statusAt'])
@@ -299,9 +307,8 @@ service cloud.firestore {
     // branding), sized above; country and city are a platform admin's, through updateOrg (80 characters each). Writing
     // them unbounded here once let an org admin push stats/overview past Firestore's 1 MiB and stop the stats job.
     // `courses` (which courses its teachers, students and classes see) is written only by setOrgCourses, which checks
-    // its shape and size: no client writes it, platform admins included. `site` (its own web address, and whether
-    // Darsi's identity shows there) is written only by setOrgSite, which keeps one organization per host in
-    // config/sites and publishes content/sites.json.
+    // its shape and size: no client writes it, platform admins included. `site` (its web address before sites/{host},
+    // 2026-11-09) was written only by setOrgSite, and no client writes it either.
     match /orgs/{orgId} {
       allow read: if inOrg(orgId) || isSuper() || (signedIn() && resource.data.createdBy == request.auth.uid);
       allow update: if isOrgAdmin(orgId) && onlyChanges(['name', 'brand']) && brandOk(orgId);

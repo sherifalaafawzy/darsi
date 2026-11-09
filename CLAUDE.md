@@ -406,8 +406,19 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
 32. Done (2026-11-08): **organization sites (custom web addresses) and the Darsi identity switch.** The user asked for domains per organization, with Darsi's identity on or off set by a platform admin, starting with cis.darsiai.org for the CIS organization. TECHNICAL.md "Organization sites"; docs/FIREBASE.md §8b.
     - `orgs/{id}.site = {host, darsi}`, written only by `setOrgSite` (platform admins). It publishes the public `content/sites.json` with a public copy of the logo. The `onOrgSite` trigger republishes on a rename or a new logo.
     - On a host that isn't Darsi's, the app reads `sites.json` once (plain fetch, cached; `state/site.ts`) and shows the organization's name and logo. With `darsi: false`, no Darsi name or mark appears in the UI (`rebrand()` in i18n), except `/licences` and the model name "Darsi Tiny".
-    - New hosts: `node scripts/connect-site.mjs <host>` (Cloudflare CNAME as DNS only, the Hosting custom domain, and Auth's authorized domains), then the Web address panel.
-    - The relay's `TUTOR_ORIGINS` takes `https://*.darsiai.org`.
+    - New hosts: approval on `/super/domains` connects them (item 33); `node scripts/connect-site.mjs <host>` is the manual fallback.
+    - The relay's `TUTOR_ORIGINS` takes `https://*.darsiai.org`; other approved addresses it looks up itself (item 33).
+33. Done (2026-11-09, uncommitted, not deployed): **web addresses asked for by organizations and connected on approval.** The user asked that organizations be asked for nothing but the domain, with every other step done by the system after a platform admin approves, on a tab that shows which addresses are live. TECHNICAL.md "Organization sites"; docs/FIREBASE.md §8b.
+    - **Data:** `sites/{host}` (`SiteDoc` in `content/sites.ts`): status requested, refused, connecting, live or problem, plus five steps (dns, hosting, cert, auth, cors). Only the functions write it. `orgs/{id}.site` and `config/sites` are the old shape; `sitesJob` moves the CIS entry over on its first run.
+    - **Server:** `manageSite` (request, cancel, check, approve, refuse, identity, remove), `sitesJob` (every 15 minutes), `onOrgSite` (rename, logo, deletion), and `setOrgSite` kept as a wrapper. `functions/src/domains.ts` adds the Hosting custom domain, then (only once the address points at Darsi) the authorized domain and the CORS origin, as the functions' service account. The relay looks up approved addresses itself (`siteOrigins`).
+    - **Screens:** "Web address" on `/admin` (ask, status, the DNS change for an outside domain, Check now), `/super/domains` ("Web addresses": approve, refuse, add, steps, identity, remove), a summary on `/super/orgs/:id`, and a waiting count on `/super`.
+    - **DNS:** addresses under darsiai.org need a one-time wildcard `*` CNAME to `darsi-f0685.web.app`, DNS only. It doesn't exist yet (checked 2026-11-09): `node scripts/connect-site.mjs --wildcard` or Cloudflare by hand. Other domains' owners add the record the panel shows.
+    - **Local:** `scripts/local/domains.mjs` (:4798) stands in for Google, so the emulators never touch darsi-f0685.
+    - **Checked:**
+      - functions 384 tests (sites 31, domains 6); web 2,378 (`tests/domains.test.tsx`); rules 43; `tsc`; `lint:css`; e2e 30/30 on a private build. Startup is still 8 files, 228.4 KB gzipped; `Domains` is a lazy chunk, not precached.
+      - Read-only against live: `connectHost("cis.darsiai.org", false)` reads all five steps as done.
+      - On the local stack, as an org admin and as a platform admin, in English and in Arabic at 375 px: asked for two addresses, approved both (identity off on one), saw the external one's CNAME, both turned live, removed one (Hosting, sign-in and CORS undone in the stand-in), and added one directly.
+    - **Deploy needs:** rules, the four site functions, Hosting, the relay, and the wildcard record.
 9. Not started: the security review. The user asked for static scanning of the rules, functions and client, plus a pentest of the deployed URL with `H:\htdocs\pentest-lab` (allowlist-gated; add only darsi-f0685 hosts). It is deferred until the code is finished.
 
 ### Firebase project (live): darsi-f0685

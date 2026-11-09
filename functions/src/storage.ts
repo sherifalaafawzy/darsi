@@ -4,7 +4,7 @@ import { getStorage } from "firebase-admin/storage";
  * The app's bucket. Never the project default: darsi-f0685's default bucket was deleted (CLAUDE.md, Firebase project).
  * In the emulator it is the demo project's default bucket, which is what the web app's .env.development uses.
  */
-const BUCKET = process.env.CONTENT_BUCKET || (process.env.FUNCTIONS_EMULATOR === "true" ? `${process.env.GCLOUD_PROJECT}.appspot.com` : "darsi-f0685");
+export const BUCKET = process.env.CONTENT_BUCKET || (process.env.FUNCTIONS_EMULATOR === "true" ? `${process.env.GCLOUD_PROJECT}.appspot.com` : "darsi-f0685");
 export const bucket = () => getStorage().bucket(BUCKET);
 /**
  * The address anyone fetches a public file at (content/…, which the Storage rules let everyone read), as the app builds

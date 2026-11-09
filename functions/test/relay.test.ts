@@ -7,7 +7,14 @@ import type { AddressInfo } from "node:net";
 import { WebSocket, WebSocketServer } from "ws";
 
 const h = vi.hoisted(() => ({ charges: [] as number[], events: [] as string[], asks: 0, agent: null as null | (() => Promise<unknown>), backend: "gemini", token: null as null | Promise<string> }));
-vi.mock("../src/admin.js", () => ({ auth: { verifyIdToken: async () => ({ uid: "u1", planUntil: Date.now() + 864e5 }) } }));
+vi.mock("../src/admin.js", () => ({
+  auth: { verifyIdToken: async () => ({ uid: "u1", planUntil: Date.now() + 864e5 }) },
+  // An approved organization address outside *.darsiai.org (sites/{host}), and one only asked for.
+  db: { doc: (path: string) => ({ get: async () => {
+    const status = ({ "sites/learn.cis.edu.eg": "live", "sites/asked.school.org": "requested" } as Record<string, string>)[path];
+    return { exists: Boolean(status), get: () => status };
+  } }) },
+}));
 vi.mock("../src/agent.js", () => {
   class AgentError extends Error { constructor(m: string, readonly usd: number, readonly timedOut = false) { super(m); } }
   return { AgentError, askAgent: () => { h.asks++; return h.agent!(); } };
@@ -162,5 +169,10 @@ describe("which pages may open the relay (L9, organization sites)", () => {
     expect(await opens("https://evildarsiai.org")).toBe(false);
     expect(await opens("https://cis.darsiai.org:8443")).toBe(false);
     expect(await opens(undefined)).toBe(false);
+  });
+  it("lets in an approved organization address elsewhere, without a new TUTOR_ORIGINS, and not one only asked for", async () => {
+    expect(await opens("https://learn.cis.edu.eg")).toBe(true);
+    expect(await opens("https://asked.school.org")).toBe(false);
+    expect(await opens("https://never.heard.of")).toBe(false);
   });
 });

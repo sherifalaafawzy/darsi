@@ -1,23 +1,32 @@
 #!/usr/bin/env node
 /**
- * Connects a new organization web address (TECHNICAL.md "Organization sites (custom web addresses)"): everything a host
- * needs outside the app before the "Web address" panel on /super/orgs/:id can point it at an organization.
+ * Organization web addresses outside the app (TECHNICAL.md "Organization sites (custom web addresses)").
+ *
+ * Since 2026-11-09 a platform admin's approval on /super/domains connects an address by itself (manageSite and
+ * functions/src/domains.ts: Hosting, Auth's authorized domains, Storage CORS), and sitesJob turns it live. What is
+ * left outside the app is DNS, once, for every address under darsiai.org:
+ *
+ *   node scripts/connect-site.mjs --wildcard             the `*.darsiai.org` CNAME to darsi-f0685.web.app, DNS only
+ *   node scripts/connect-site.mjs --wildcard --dry-run   only read and say what it would do
+ *
+ * By hand instead: Cloudflare → darsiai.org → DNS → Add record: CNAME, name `*`, target darsi-f0685.web.app, proxy
+ * off ("DNS only": Firebase Hosting issues each address's certificate itself). Explicit records (www, cis) win over it.
+ *
+ * The rest is the manual fallback the app no longer needs, kept for a host the functions can't reach:
  *
  *   node scripts/connect-site.mjs school.darsiai.org             do it, then print where each part stands
  *   node scripts/connect-site.mjs school.darsiai.org --dry-run   only read and say what it would do
  *
- * 1. DNS (hosts under darsiai.org): a CNAME from the host to darsi-f0685.web.app in Cloudflare, "DNS only" (not
- *    proxied: Firebase Hosting issues the certificate itself). Credentials from the environment, never printed:
- *    CLOUDFLARE_API_TOKEN (a token with Zone.DNS edit on darsiai.org), or CLOUDFLARE_API_KEY and CLOUDFLARE_EMAIL
- *    (the global key). Any other host's DNS is its owner's: the script prints the record to create.
+ * 1. DNS (hosts under darsiai.org): a CNAME from the host to darsi-f0685.web.app in Cloudflare, "DNS only". Any other
+ *    host's DNS is its owner's: the script prints the record to create.
  * 2. Firebase Hosting: the host as a custom domain of the darsi-f0685 site (its certificate can take up to a day).
  * 3. Firebase Authentication: the host in the authorized domains, or signing in there fails.
  * 4. Storage CORS: https://<host> in firebase/storage.cors.json, applied to the bucket, or the app can't read its
  *    settings, catalogs and sites.json there (Firebase Storage answers only listed origins; no wildcards).
- * Steps 2 and 3 use `gcloud auth print-access-token` for the personal account (GCLOUD_ACCOUNT overrides it), billed
- * to darsi-f0685 (x-goog-user-project). A host outside *.darsiai.org also needs adding to the voice relay's
- * TUTOR_ORIGINS (docs/FIREBASE.md "Organization sites"); the script reminds you.
- * Each step reads first and changes only what is missing, so running it again is safe.
+ * Cloudflare credentials come from the environment and are never printed: CLOUDFLARE_API_TOKEN (a token with Zone.DNS
+ * edit on darsiai.org), or CLOUDFLARE_API_KEY and CLOUDFLARE_EMAIL (the global key). Steps 2 and 3 use
+ * `gcloud auth print-access-token` for the personal account (GCLOUD_ACCOUNT overrides it), billed to darsi-f0685
+ * (x-goog-user-project). Each step reads first and changes only what is missing, so running it again is safe.
  */
 import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -33,17 +42,19 @@ const ACCOUNT = process.env.GCLOUD_ACCOUNT || "sherifalaafawzy@gmail.com";
 
 const args = process.argv.slice(2);
 const dry = args.includes("--dry-run");
-const host = (args.find((a) => !a.startsWith("--")) ?? "").trim().toLowerCase().replace(/\.$/, "");
+const wildcard = args.includes("--wildcard");
+const host = wildcard ? `*.${ZONE.name}` : (args.find((a) => !a.startsWith("--")) ?? "").trim().toLowerCase().replace(/\.$/, "");
 
 // The same rules as apps/web/src/content/sites.ts (checkSiteHost), which setOrgSite applies.
 const LABEL = "[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?";
 const HOST = new RegExp(`^(?:${LABEL}\\.)+(?=[a-z0-9-]*[a-z])${LABEL}$`);
 const reserved = (h) => ["darsiai.org", "www.darsiai.org"].includes(h) || h.endsWith(".web.app") || h.endsWith(".firebaseapp.com") || h.endsWith(".localhost");
-if (!host || host.length > 253 || !HOST.test(host) || reserved(host)) {
-  console.error("Usage: node scripts/connect-site.mjs <host> [--dry-run]   (a lowercase hostname such as school.darsiai.org, not one of Darsi's own)");
+if (!wildcard && (!host || host.length > 253 || !HOST.test(host) || reserved(host))) {
+  console.error("Usage: node scripts/connect-site.mjs --wildcard [--dry-run]");
+  console.error("       node scripts/connect-site.mjs <host> [--dry-run]   (a lowercase hostname such as school.darsiai.org, not one of Darsi's own)");
   process.exit(1);
 }
-const underZone = host.endsWith(`.${ZONE.name}`);
+const underZone = wildcard || host.endsWith(`.${ZONE.name}`);
 const say = (step, text) => console.log(`${step.padEnd(9)} ${text}`);
 let problems = 0;
 const fail = (step, text) => { problems++; say(step, `PROBLEM: ${text}`); };
@@ -72,7 +83,7 @@ async function dns() {
   const cname = records.find((r) => r.type === "CNAME");
   const other = records.filter((r) => r.type !== "CNAME" && r.type !== "TXT");
   if (other.length) { fail("DNS", `${host} already has ${other.map((r) => r.type).join(", ")} records; remove them in Cloudflare first (nothing changed).`); return; }
-  const want = { type: "CNAME", name: host, content: TARGET, proxied: false, ttl: 1, comment: "Darsi organization site (scripts/connect-site.mjs)" };
+  const want = { type: "CNAME", name: host, content: TARGET, proxied: false, ttl: 1, comment: wildcard ? "Darsi organization sites: every address under darsiai.org (scripts/connect-site.mjs --wildcard)" : "Darsi organization site (scripts/connect-site.mjs)" };
   if (cname && cname.content === TARGET && cname.proxied === false) { say("DNS", `ok: CNAME ${host} → ${TARGET}, DNS only.`); return; }
   if (dry) { say("DNS", `would ${cname ? `change the CNAME (now → ${cname.content}${cname.proxied ? ", proxied" : ""})` : "create the CNAME"} ${host} → ${TARGET}, DNS only.`); return; }
   const res = await fetch(cname ? `${api}/${cname.id}` : api, { method: cname ? "PATCH" : "POST", headers: { ...auth, "Content-Type": "application/json" }, body: JSON.stringify(want) });
@@ -140,11 +151,17 @@ async function cors() {
   say("CORS", `applied the list to gs://${PROJECT}.`);
 }
 
+if (wildcard) {
+  console.log(`${dry ? "Dry run: " : ""}pointing every address under ${ZONE.name} at ${TARGET}`);
+  await dns().catch((e) => fail("DNS", String(e?.message ?? e)));
+  say("Next", "approve addresses on /super/domains; each turns live by itself once Hosting has its certificate.");
+  process.exit(problems ? 1 : 0);
+}
 console.log(`${dry ? "Dry run: " : ""}connecting ${host} to Darsi (project ${PROJECT})`);
 await dns().catch((e) => fail("DNS", String(e?.message ?? e)));
 await hosting().catch((e) => fail("Hosting", String(e?.message ?? e)));
 await authDomains().catch((e) => fail("Auth", String(e?.message ?? e)));
 await cors().catch((e) => fail("CORS", String(e?.message ?? e)));
-say("Tutor", underZone ? "ok: the relay's TUTOR_ORIGINS includes https://*.darsiai.org." : `add https://${host} to the relay's TUTOR_ORIGINS and deploy it again (docs/FIREBASE.md).`);
-say("Next", `on /super/orgs/<id>, "Web address": ${host}, with or without Darsi's identity.`);
+say("Tutor", underZone ? "ok: the relay's TUTOR_ORIGINS includes https://*.darsiai.org." : "ok once the address is approved: the relay reads sites/{host} itself.");
+say("Next", `on /super/domains, add or approve ${host} for its organization, with or without Darsi's identity.`);
 process.exit(problems ? 1 : 0);

@@ -1,7 +1,11 @@
 import { call } from "../fb";
 import type { Role } from "./types";
 import type { OrgCourses } from "../content/orgCourses";
-import type { OrgSite } from "../content/sites";
+import type { SiteDoc } from "../content/sites";
+
+/** What manageSite does with an address; `orgId` adds one for an organization that didn't ask. */
+export type SiteAction = { host: string } & ({ action: "request" | "cancel" | "check" | "remove" } | { action: "approve"; orgId?: string; darsi: boolean }
+  | { action: "refuse"; reason?: string } | { action: "identity"; darsi: boolean });
 
 export interface MemberInput { name: string; email?: string; username?: string; role?: Role; group?: string; teacherEmail?: string; lang?: string }
 /**
@@ -47,8 +51,9 @@ export const api = {
   sendBroadcast: call<BroadcastInput, { id: string; results: BroadcastResults }>("sendBroadcast"),
   // Platform admins only (functions/src/platform.ts).
   createOrg: call<OrgDetails & { adminUid?: string }, { orgId: string }>("createOrg"),
-  // An organization's own web address and whether Darsi's identity shows there (functions/src/sites.ts); "" removes it.
-  setOrgSite: call<{ orgId: string; host: string; darsi: boolean }, { site: OrgSite | null }>("setOrgSite"),
+  // Organizations' own web addresses (functions/src/sites.ts): org admins ask (request, cancel, check); platform admins
+  // approve, which connects it, refuse, change Darsi's identity, check and remove.
+  manageSite: call<SiteAction, { site: SiteDoc | null; warnings?: string[] }>("manageSite"),
   updateOrg: call<Partial<OrgDetails> & { orgId: string; status?: "active" | "rejected" }, { ok: boolean }>("updateOrg"),
   deleteOrg: call<{ orgId: string; confirm: string }, { members: number; units: number }>("deleteOrg"),
   setUserRole: call<{ uid: string; role: Role; orgId?: string | null }, { ok: boolean }>("setUserRole"),

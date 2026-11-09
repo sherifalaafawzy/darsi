@@ -4,6 +4,7 @@ import { collection, collectionGroup, doc, documentId, getCountFromServer, getDo
 import { db, storage } from "../firebase";
 import type { Org, Profile, Role } from "../auth/types";
 import type { EarnedCert, Sent } from "../content/cert";
+import type { SiteDoc } from "../content/sites";
 import { USERNAME_DOMAIN } from "../auth/api";
 
 export interface ProgressDoc { lessonId: string; unitId: string; track: string; accuracy: number; xp: number; seconds: number; completedAt: string; competencies?: string[] }
@@ -220,6 +221,8 @@ export const useOrgRequest = (orgId?: string | null) => useOnce(orgId ? async ()
 } : null, [orgId]);
 
 /** Every organization, newest first (platform admins: /super/orgs). One read, again on reload(). */
+/** Organizations' web addresses (sites/{host}): one organization's, or every one (platform admins only). */
+export const useSites = (orgId?: string | null, enabled = true) => useOnce<SiteDoc[]>(enabled ? () => (orgId ? listOf<SiteDoc>("sites", where("orgId", "==", orgId)) : listOf<SiteDoc>("sites")) : null, [orgId ?? "", enabled]);
 export const useAllOrgs = () => useOnce(async () => (await getDocs(query(collection(db, "orgs"), orderBy("createdAt", "desc")))).docs.map((d) => ({ id: d.id, ...d.data() }) as Org), []);
 /**
  * An account by its exact email or username login, resolved by Auth on the server (functions/src/platform.ts

@@ -8,6 +8,7 @@ import { useBroadcasts, useOrgRequest, useOrgsByStatus, usePerson, type Broadcas
 import { Ledger } from "./Ledger";
 import "../styles/admin.css";
 import "./strings";
+import { DomainsWaiting } from "./Domains";
 
 /** Display helpers for an organization: localized type, "city، country" and a locale date. */
 export function useOrgText() {
@@ -56,6 +57,7 @@ export function SuperAdmin() {
         <Announce orgs={active} onSent={sent.reload} />
         <RecentAnnouncements list={sent.data} error={sent.error} orgs={active} />
 
+        <DomainsWaiting />
         <section className="panel stack">
           <h3>{t("sup.pending")}</h3>
           {msg && <p className="notice ok" role="status">{msg}</p>}
@@ -291,3 +293,4 @@ function RecentAnnouncements({ list, error, orgs }: { list?: Broadcast[]; error?
 export { PlansPage } from "./Plans";
 export { CertificatesPage, ProjectsPage } from "./AllWork";
 export { BugsPage } from "./Bugs";
+export { DomainsPage } from "./Domains";

@@ -8,7 +8,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import { deleteDoc, deleteField, doc, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { collection, deleteDoc, deleteField, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
 import { getBytes, ref, uploadBytes } from "firebase/storage";
 
 let env: RulesTestEnvironment;
@@ -295,8 +295,33 @@ describe("organizations: the request's private details, and what org admins chan
     await assertFails(updateDoc(doc(adm(), "orgs/org1"), { courses: { mode: "all" } }));
     await assertFails(deleteDoc(doc(adm(), "orgs/org1")));
   });
-  // Organization sites (TECHNICAL.md "Organization sites"): `site` decides which organization a web address shows, so
-  // only setOrgSite writes it (one organization per host, kept in config/sites), and nobody writes config/sites itself.
+  // Organization web addresses (TECHNICAL.md "Organization sites"): sites/{host} is manageSite's alone; platform admins
+  // read every one, an org admin its own organization's, and nobody else.
+  it("only the functions write a web address; platform admins read them all, an org admin only its own", async () => {
+    await seed();
+    const boss = () => env.authenticatedContext("boss", { role: "superadmin" }).firestore();
+    const other = () => env.authenticatedContext("adm2", { role: "orgAdmin", orgId: "org2" }).firestore();
+    const site = (orgId: string, status: string) => ({ host: "x", orgId, orgName: "N", darsi: true, status, requestedBy: "adm", requestedAt: 1 });
+    await env.withSecurityRulesDisabled(async (c) => {
+      await setDoc(doc(c.firestore(), "sites/nile.darsiai.org"), site("org1", "live"));
+      await setDoc(doc(c.firestore(), "sites/delta.darsiai.org"), site("org2", "requested"));
+    });
+    await assertSucceeds(getDocs(collection(boss(), "sites")));
+    await assertSucceeds(getDoc(doc(adm(), "sites/nile.darsiai.org")));
+    await assertSucceeds(getDocs(query(collection(adm(), "sites"), where("orgId", "==", "org1"))));
+    await assertFails(getDocs(collection(adm(), "sites")));
+    await assertFails(getDoc(doc(adm(), "sites/delta.darsiai.org")));
+    await assertFails(getDoc(doc(adm(), "sites/nothing.darsiai.org")));
+    await assertFails(getDoc(doc(other(), "sites/nile.darsiai.org")));
+    await assertFails(getDoc(doc(pupil(), "sites/nile.darsiai.org")));
+    await assertFails(getDocs(query(collection(pupil(), "sites"), where("orgId", "==", "org1"))));
+    await assertFails(setDoc(doc(adm(), "sites/new.darsiai.org"), site("org1", "live")));
+    await assertFails(updateDoc(doc(adm(), "sites/nile.darsiai.org"), { darsi: false }));
+    await assertFails(updateDoc(doc(boss(), "sites/delta.darsiai.org"), { status: "connecting" }));
+    await assertFails(deleteDoc(doc(boss(), "sites/nile.darsiai.org")));
+  });
+  // `site` on the organization (its web address before sites/{host}) decided which organization an address showed, so
+  // no client writes it, and nobody writes config/sites (setOrgSite's old list) itself.
   it("nobody writes an organization's web address from a client, not even a platform admin; members read it", async () => {
     await seed();
     const site = { host: "nile.darsiai.org", darsi: false };

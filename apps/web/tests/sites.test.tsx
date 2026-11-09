@@ -1,23 +1,22 @@
 // Organization sites (TECHNICAL.md "Organization sites (custom web addresses)"): which host is looked up (state/site.ts
 // siteHost), the lookup itself (content/sites.json, kept per host with its logo as data), the brand it gives
 // (identityOf), Darsi's name in the UI strings on a site without Darsi's identity (i18n rebrand), the organization's
-// landing page, and the platform admin's "Web address" panel.
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+// landing page. The admin screens for addresses are tests/domains.test.tsx.
+import { act, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { BrandProvider } from "@darsi/design-system";
-import type { Org } from "../src/auth/types";
 import type { SiteEntry } from "../src/content/sites";
 
 const h = vi.hoisted(() => ({ save: vi.fn(), stored: null as unknown }));
 vi.mock("../src/platform", async (orig) => ({ ...(await orig<typeof import("../src/platform")>()), storage: { get: async () => h.stored, set: async () => {}, remove: async () => {} } }));
-vi.mock("../src/auth/api", async (orig) => ({ ...(await orig<typeof import("../src/auth/api")>()), api: { setOrgSite: (r: unknown) => h.save(r) } }));
 vi.mock("../src/content/load", async (orig) => ({ ...(await orig<typeof import("../src/content/load")>()), loadSettings: async () => null, loadSitesFile: async () => null }));
 
 const { createSiteStore, identityOf, siteHost } = await import("../src/state/site");
 const { I18nProvider, isolate, rebrand, useI18n } = await import("../src/i18n");
 const { StoreProvider } = await import("../src/state/store");
 const { Landing } = await import("../src/landing/Landing");
-const { OrgSitePanel, typedHost } = await import("../src/admin/OrgSite");
+// The admin screens' strings (registered when an admin chunk loads): "site." strings keep Darsi's name.
+await import("../src/admin/Domains");
 
 const LOGO = "https://firebasestorage.googleapis.com/v0/b/darsi-f0685/o/content%2Fsites%2Fo1%2Fabc.webp?alt=media";
 const DATA = "data:image/webp;base64,UklGRg==";
@@ -162,7 +161,7 @@ describe("Darsi's name in the UI strings (a site without Darsi's identity)", () 
   });
   it("never changes a name a person typed, and nothing without a brand", () => {
     at("en", "CIS");
-    expect(t("site.current" as never, { host: "darsi.example" })).toBe("Now: darsi.example");
+    expect(t("site.removed" as never, { host: "darsi.example" })).toBe("Removed: darsi.example.");
     at("en", null);
     expect(t("app.name")).toBe("Darsi");
     expect(rebrand("Darsi Super and Darsi Tiny", "X")).toBe(`${isolate("X")} Super and Darsi Tiny`);
@@ -199,48 +198,5 @@ describe("the organization's own landing page", () => {
     const { container } = page(cis({ name: "منصة سيس للتدريب", logo: null }), "ar");
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("منصة سيس للتدريب");
     expect(container.textContent).not.toMatch(/Darsi|درسي/);
-  });
-});
-
-describe("the platform admin's Web address panel", () => {
-  const org = (site?: Org["site"]): Org => ({ id: "o1", name: "CIS Training Platform", type: "university", status: "active", createdBy: "x", ...(site ? { site } : {}) });
-  const panel = (o: Org, onSaved = vi.fn()) => render(<I18nProvider lang="en"><OrgSitePanel org={o} onSaved={onSaved} /></I18nProvider>);
-
-  it("reads what an admin pastes as a host", () => {
-    expect(typedHost(" https://CIS.darsiai.org/learn?x=1 ")).toBe("cis.darsiai.org");
-    expect(typedHost("cis.darsiai.org.")).toBe("cis.darsiai.org");
-    expect(typedHost("")).toBe("");
-  });
-
-  it("saves the host and Darsi's identity through setOrgSite, and refuses a bad host before sending it", async () => {
-    h.save.mockResolvedValue({ site: { host: "cis.darsiai.org", darsi: false } });
-    const onSaved = vi.fn();
-    panel(org(), onSaved);
-    expect(screen.getByText(/No web address yet/)).toBeTruthy();
-    const field = screen.getByLabelText("Address");
-    fireEvent.change(field, { target: { value: "darsiai.org" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save the address" }));
-    expect(await screen.findByText(/one of Darsi's own addresses/)).toBeTruthy();
-    expect(h.save).not.toHaveBeenCalled();
-    fireEvent.change(field, { target: { value: "https://CIS.darsiai.org/" } });
-    fireEvent.click(screen.getByRole("switch", { name: /Show Darsi's identity/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Save the address" }));
-    await waitFor(() => expect(h.save).toHaveBeenCalledWith({ orgId: "o1", host: "cis.darsiai.org", darsi: false }));
-    expect(await screen.findByText(/Saved\. Phones on this address/)).toBeTruthy();
-    expect(onSaved).toHaveBeenCalled();
-    expect(screen.getByRole("link", { name: "Open it" }).getAttribute("href")).toBe("https://cis.darsiai.org");
-  });
-
-  it("says why the server refused, in the admin's words, and removes an address after asking", async () => {
-    h.save.mockRejectedValueOnce(Object.assign(new Error("Another organization already uses that address."), { details: { reason: "site-taken" } }));
-    panel(org({ host: "cis.darsiai.org", darsi: true }));
-    fireEvent.change(screen.getByLabelText("Address"), { target: { value: "delta.darsiai.org" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save the address" }));
-    expect(await screen.findByText("Another organization already uses that address.")).toBeTruthy();
-    h.save.mockResolvedValueOnce({ site: null });
-    fireEvent.click(screen.getByRole("button", { name: "Remove the address" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Remove it" }));
-    await waitFor(() => expect(h.save).toHaveBeenLastCalledWith({ orgId: "o1", host: "", darsi: true }));
-    expect(await screen.findByText(/The address was removed/)).toBeTruthy();
   });
 });

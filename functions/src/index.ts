@@ -30,8 +30,8 @@ export { collect, refreshStats, statsJob } from "./analytics.js";
 export { createOrg, deleteOrg, findAccount, setUserRole, updateOrg } from "./platform.js";
 /** An organization's admins (and platform admins): which courses its teachers, students and classes see. */
 export { setOrgCourses } from "./orgCourses.js";
-/** Platform admins: an organization's own web address (cis.darsiai.org) and content/sites.json, which phones read at start. */
-export { onOrgSite, setOrgSite } from "./sites.js";
+/** Organizations' own web addresses (cis.darsiai.org): asked for by org admins, approved and connected by platform admins. */
+export { manageSite, onOrgSite, setOrgSite, sitesJob } from "./sites.js";
 /** Data rights and abuse: an account's data exported or deleted, an account suspended, a project's content removed. */
 export { deleteAccount, exportAccountData, moderateSubmission, setAccountSuspended } from "./account.js";
 /** Darsi Super: plans, Super for people and organizations, and revenue (docs/SUPER.md). */

@@ -219,28 +219,24 @@ TECHNICAL.md "Organization sites (custom web addresses)" has the design. An orga
 ```bash
 npm run build --prefix functions
 npx firebase deploy --only firestore:rules
-npx firebase deploy --only functions:setOrgSite,functions:onOrgSite
+npx firebase deploy --only functions:manageSite,functions:setOrgSite,functions:onOrgSite,functions:sitesJob
 npx firebase deploy --only hosting
 ```
 
-Then the voice relay with the new `TUTOR_ORIGINS` (section 9, "The tutor": `https://darsiai.org,https://*.darsiai.org`). Storage's rules don't change (`content/` is already public), but **its CORS list does**: `firebasestorage.googleapis.com` answers only the origins in the bucket's CORS settings, with no wildcard subdomains, so each address needs `https://<host>` in `firebase/storage.cors.json`, applied with `gcloud storage buckets update gs://darsi-f0685 --cors-file=firebase/storage.cors.json --account=sherifalaafawzy@gmail.com` (`connect-site.mjs` does both). Without it, the app on that address can't read its settings, catalog or `sites.json` (found on cis.darsiai.org, 2026-11-08).
+Then the voice relay (section 9, "The tutor"), so it lets in approved addresses outside darsiai.org by itself; its `TUTOR_ORIGINS` stays `https://darsiai.org,https://*.darsiai.org`. Storage's rules don't change (`content/` is already public). `sitesJob` runs every 15 minutes; its first run moves the old `config/sites` list (cis.darsiai.org) into `sites/{host}`. To run it at once: `gcloud scheduler jobs run firebase-schedule-sitesJob-europe-west1 --location=europe-west1 --project=darsi-f0685 --account=sherifalaafawzy@gmail.com`.
+
+**Once, in Cloudflare:** the wildcard record that points every address under darsiai.org at Hosting. Either `node scripts/connect-site.mjs --wildcard` (with `CLOUDFLARE_API_TOKEN`, a token with DNS edit on darsiai.org, or `CLOUDFLARE_API_KEY` and `CLOUDFLARE_EMAIL`, in the environment; `--dry-run` reads only), or by hand: darsiai.org → DNS → Add record → CNAME, name `*`, target `darsi-f0685.web.app`, proxy status **DNS only** (Hosting issues each address's certificate itself, so Cloudflare's proxy must stay off). Explicit records (www, cis) keep working as they are.
 
 ### Add a site
 
-1. **Connect the address** (DNS, Hosting, Auth). For an address under darsiai.org:
+1. **The organization asks:** its admin opens Admin → **Web address**, types the address (`school.darsiai.org`, or one of its own such as `learn.school.edu`) and taps **Ask for this address**. Or a platform admin adds one directly: Web addresses → **Add an address**.
+2. **A platform admin approves:** Web addresses (`/super/domains`; Platform says how many wait) → **Approve and connect**, with **Show Darsi's identity** on (the organization's name and logo with "with Darsi") or off (no Darsi name or mark in the app). That connects it: the Hosting custom domain, the sign-in domain and Storage's CORS, as the functions' service account. **Refuse** takes an optional reason the organization sees.
+3. **DNS:** an address under darsiai.org needs nothing (the wildcard covers it). For any other, the organization's admin sees the change to make (usually a CNAME to `darsi-f0685.web.app`) and passes it to whoever manages that domain's DNS.
+4. **It turns live by itself**, usually within an hour under darsiai.org and a few hours elsewhere: `sitesJob` checks every 15 minutes, and **Check now** checks at once. Until the certificate is out, the address answers with a certificate error. Renaming the organization or changing its logo republishes `content/sites.json` by itself (`onOrgSite`).
 
-   ```bash
-   node scripts/connect-site.mjs school.darsiai.org --dry-run    # reads only, says what it would do
-   node scripts/connect-site.mjs school.darsiai.org
-   ```
+**Remove the address** (on its card) disconnects it: Hosting (kept there 30 days), the sign-in domain and CORS; DNS is left alone. Anything that couldn't be undone is listed, to finish in the Firebase console.
 
-   It creates the CNAME `school.darsiai.org → darsi-f0685.web.app` in Cloudflare as "DNS only" (not proxied: Hosting issues the certificate itself), adds the address as a custom domain of the `darsi-f0685` Hosting site, and adds it to Firebase Auth's authorized domains, each only if missing, then prints where each stands. Cloudflare credentials come from the environment and are never printed or stored: `CLOUDFLARE_API_TOKEN` (a token with DNS edit on darsiai.org), or `CLOUDFLARE_API_KEY` and `CLOUDFLARE_EMAIL` (the global key). Hosting and Auth use `gcloud auth print-access-token --account=sherifalaafawzy@gmail.com`, billed to darsi-f0685. Running it again is safe.
-
-   An address elsewhere (`learn.school.edu`): its owner creates the CNAME (or, for a bare domain, the records the Hosting console shows); the script still adds the Hosting domain and the Auth domain. Add `https://learn.school.edu` to the relay's `TUTOR_ORIGINS` and deploy the relay again, or the voice tutor refuses that page.
-
-   By hand instead: Cloudflare → DNS → Add record (CNAME, the name, `darsi-f0685.web.app`, proxy off); Firebase console → Hosting → Add custom domain; Authentication → Settings → Authorized domains → Add domain.
-2. **Wait for the certificate.** The Hosting console (or the script, run again) shows the domain as connected once the DNS record is visible; it can take up to a day. Until then the address answers with a certificate error.
-3. **Point it at the organization.** On darsiai.org as a platform admin: Organizations → the organization → **Web address**: type the address, choose **Show Darsi's identity** (on: the organization's name and logo with "with Darsi"; off: no Darsi name or mark in the app), **Save the address**. `setOrgSite` publishes `content/sites.json`; phones see it within a minute. Renaming the organization or changing its logo republishes it by itself (`onOrgSite`). **Remove the address** takes it off (the address then shows Darsi's look).
+`node scripts/connect-site.mjs <host>` still does the steps by hand (Cloudflare CNAME, Hosting, Auth, CORS), as a fallback; the app no longer needs it.
 
 ### Check it works
 
