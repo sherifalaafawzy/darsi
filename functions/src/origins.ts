@@ -31,26 +31,23 @@ export function originAllowed(origin: string | undefined, rules: OriginRule[]): 
 }
 
 /**
- * Organization addresses outside a wildcard (learn.school.edu, TECHNICAL.md "Organization sites"): allowed while
- * sites/{host} is approved, so a new address needs no new TUTOR_ORIGINS and no relay deploy. `read` says whether the
- * host is approved; answers are kept 5 minutes (refusals 1 minute), and at most 30 lookups a minute reach it, so a
- * stream of made-up origins costs next to nothing. Only https origins without a port whose host could be a site.
+ * Organization addresses outside a wildcard (learn.school.edu, TECHNICAL.md "Organization sites"): allowed while their
+ * sign-in is (sites/{host} approved, its ownership record there and pointing at Darsi), so a new address needs no new
+ * TUTOR_ORIGINS and no relay deploy. `load` lists those hosts in one read, done again at most every `every` ms (two
+ * minutes) and never per origin, so made-up origins cost nothing and can't crowd real ones out. A read that fails keeps
+ * the last list and is tried again 15 seconds later. Only https origins without a port whose host could be a site.
  */
-export function siteOrigins(read: (host: string) => Promise<boolean>, now = () => Date.now()) {
-  const cache = new Map<string, { ok: boolean; until: number }>();
-  let window = { at: 0, n: 0 };
+export function siteOrigins(load: () => Promise<string[]>, now = () => Date.now(), every = 120_000) {
+  let hosts = new Set<string>(), at = -Infinity;
+  let loading: Promise<void> | null = null;
+  const refresh = () => (loading ??= load().then(
+    (list) => { hosts = new Set(list); at = now(); },
+    () => { at = now() - every + 15_000; },
+  ).finally(() => { loading = null; }));
   return async (origin: string | undefined): Promise<boolean> => {
     const m = /^https:\/\/([a-z0-9.-]{1,253})$/.exec(origin ?? "");
     if (!m || "problem" in checkSiteHost(m[1])) return false;
-    const host = m[1], t = now();
-    const hit = cache.get(host);
-    if (hit && hit.until > t) return hit.ok;
-    if (t - window.at > 60_000) window = { at: t, n: 0 };
-    if (++window.n > 30) return false;
-    let ok: boolean;
-    try { ok = await read(host); } catch { return false; }
-    if (cache.size >= 500) cache.clear();
-    cache.set(host, { ok, until: t + (ok ? 300_000 : 60_000) });
-    return ok;
+    if (now() - at > every) await refresh();
+    return hosts.has(m[1]);
   };
 }

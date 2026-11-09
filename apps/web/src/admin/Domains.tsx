@@ -1,9 +1,10 @@
 /**
  * Organizations' own web addresses (TECHNICAL.md "Organization sites (custom web addresses)"), in three places:
- * - OrgSitePanel, on /admin (org admins): ask for an address by typing it, and see where each one stands. Nothing
- *   else is theirs to do, except the DNS change an address outside darsiai.org needs, which it shows.
+ * - OrgSitePanel, on /admin (org admins): ask for an address under their own domain by typing it, and see where each
+ *   one stands. Nothing else is theirs to do but the two DNS records it shows (an ownership record and a CNAME).
  * - DomainsPage, /super/domains (platform admins): the requests to approve or refuse, an address added for an
- *   organization directly, and every address with each step of its connection, Check now, Darsi's identity and Remove.
+ *   organization directly (under darsiai.org only they can), and every address with each step of its connection,
+ *   Check now, Darsi's identity and Remove.
  * - OrgSiteSummary, on /super/orgs/:id: the organization's addresses at a glance, linking to /super/domains.
  * Every change goes through manageSite (functions/src/sites.ts), which connects an approved address by itself; the
  * screens read sites/{host} once, and again after each change.
@@ -35,8 +36,8 @@ const byState = (a: SiteDoc, b: SiteDoc) => ORDER[a.status] - ORDER[b.status] ||
 export const typedHost = (v: string) => v.trim().toLowerCase().replace(/^[a-z][a-z0-9+.-]*:\/\//, "").replace(/[/?#].*$/, "").replace(/\.$/, "");
 /** Whose DNS an address is in, for "ask whoever manages the DNS of …": learn.school.edu → school.edu. */
 const domainOf = (host: string) => { const l = host.split("."); return l.length > 2 ? l.slice(1).join(".") : host; };
-/** A step that still waits on DNS outside darsiai.org: the records to add are the owner's. */
-const needsDns = (s: SiteDoc) => !inDarsiZone(s.host) && s.steps?.dns !== "ok" && Boolean(s.records?.length);
+/** DNS records still to add (or remove) for an address that isn't live: outside darsiai.org, the organization's. */
+const needsDns = (s: SiteDoc) => !inDarsiZone(s.host) && s.status !== "live" && Boolean(s.records?.length);
 
 type Msg = { ok: boolean; text: string; list?: string[] } | null;
 /** Runs one manageSite action at a time, keeping which one is busy and what to tell the admin. */
@@ -136,6 +137,7 @@ export function OrgSitePanel({ orgId }: { orgId: string }) {
     const checked = checkSiteHost(typedHost(host));
     if ("problem" in checked) { setMsg({ ok: false, text: t(PROBLEM[checked.problem]) }); return; }
     if (!checked.host) return;
+    if (inDarsiZone(checked.host)) { setMsg({ ok: false, text: t("site.rf.zone") }); return; }
     void run("ask", { action: "request", host: checked.host }, () => { setHost(""); return { ok: true, text: t("site.asked") }; });
   };
   return (
@@ -149,7 +151,7 @@ export function OrgSitePanel({ orgId }: { orgId: string }) {
       {q.data && (held < MAX_SITES ? (
         <form className="stack-sm" onSubmit={(e) => { e.preventDefault(); ask(); }}>
           <TextField label={t("site.host")} hint={t("site.hostHint")} value={host} dir="ltr" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false}
-            placeholder="yourschool.darsiai.org" maxLength={260} onChange={(e) => { setHost(e.target.value); setMsg(null); }} />
+            placeholder="learn.yourschool.edu" maxLength={260} onChange={(e) => { setHost(e.target.value); setMsg(null); }} />
           <div><Button type="submit" loading={busy === "ask"} disabled={!typedHost(host) || Boolean(busy)}>{t("site.ask")}</Button></div>
         </form>
       ) : <p className="muted small">{t("site.full", { n: MAX_SITES })}</p>)}
@@ -167,7 +169,8 @@ function OrgSiteCard({ s, busy, run }: { s: SiteDoc; busy: string | null; run: R
     <article className="site-card stack-sm">
       <HostTitle s={s} />
       {s.status === "requested" && <>
-        <p className="small">{t("site.waitHint")}</p>
+        {needsDns(s) ? <><p className="small">{t("site.waitDns", { domain: isolate(domainOf(s.host)) })}</p><DnsChanges records={s.records!} /></>
+          : <p className="small">{t("site.waitHint")}</p>}
         <div><Button size="sm" variant="ghost" loading={busy === key("cancel")} disabled={Boolean(busy)} onClick={() => void run(key("cancel"), { action: "cancel", host: s.host })}>{t("site.takeBack")}</Button></div>
       </>}
       {s.status === "refused" && <>
@@ -179,7 +182,7 @@ function OrgSiteCard({ s, busy, run }: { s: SiteDoc; busy: string | null; run: R
         {s.status === "problem" ? <p className="small">{t("site.problemHint")}</p>
           : needsDns(s) ? <p className="small">{t("site.dnsHint", { domain: isolate(domainOf(s.host)) })}</p>
           : <p className="small">{t("site.zoneHint")}</p>}
-        {s.status === "connecting" && needsDns(s) && <DnsChanges records={s.records!} />}
+        {needsDns(s) && <DnsChanges records={s.records!} />}
         <Steps s={s} />
         <p className="muted small">{t("site.checked", { when: when(s.checkedAt) })}</p>
         <div><Button size="sm" variant="secondary" icon="sync" loading={busy === key("check")} disabled={Boolean(busy)} onClick={() => void run(key("check"), { action: "check", host: s.host })}>{t("site.check")}</Button></div>
@@ -294,7 +297,7 @@ function AddSite({ orgs, preset, busy, run, approvedMsg }: { orgs: Org[]; preset
           </select>
         </label>
         <TextField label={t("site.host")} hint={t("site.hostHint")} error={problem ?? undefined} value={host} dir="ltr" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false}
-          placeholder="school.darsiai.org" maxLength={260} onChange={(e) => { setHost(e.target.value); setProblem(null); }} />
+          placeholder="learn.yourschool.edu" maxLength={260} onChange={(e) => { setHost(e.target.value); setProblem(null); }} />
         <Switch label={t("site.darsi")} description={t(darsi ? "site.darsiOn" : "site.darsiOff")} checked={darsi} onChange={setDarsi} />
         <div><Button type="submit" loading={busy === "add"} disabled={!orgId || !typedHost(host) || Boolean(busy)}>{t("site.addGo")}</Button></div>
       </form>
@@ -307,14 +310,14 @@ function SiteCard({ s, busy, run }: { s: SiteDoc; busy: string | null; run: Run 
   const when = useWhen();
   const [confirm, setConfirm] = useState(false);
   const key = (a: string) => `${a}:${s.host}`;
-  const zoneWait = inDarsiZone(s.host) && s.steps?.dns === "wait";
+  const zone = inDarsiZone(s.host);
+  const records = s.status !== "live" && s.records?.length ? s.records : null;
   return (
     <article className="panel stack">
       <HostTitle s={s} />
       <OrgLine s={s} />
       <Steps s={s} />
-      {needsDns(s) && <><p className="small">{t("site.orgSees")}</p><DnsChanges records={s.records!} /></>}
-      {zoneWait && <p className="muted small">{t("site.zoneWait")}</p>}
+      {records && <><p className="small">{t(zone ? "site.zoneWait" : "site.orgSees")}</p><DnsChanges records={records} /></>}
       {s.issues?.length ? <div className="small"><b>{t("site.issues")}</b><ul dir="ltr">{s.issues.map((x, i) => <li key={i}>{x}</li>)}</ul></div> : null}
       {s.error && <div className="small"><b>{t("site.error")}</b><pre className="bug-report-json" dir="ltr">{s.error}</pre></div>}
       <p className="muted small">{s.status === "live" ? `${t("site.liveSince", { date: when(s.liveAt) })} ` : ""}{t("site.checked", { when: when(s.checkedAt) })}</p>

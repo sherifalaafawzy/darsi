@@ -18,7 +18,8 @@ import { AgentError, askAgent } from "./agent.js";
 import { balance, charge, endCall, GEMINI_KEY, googleToken, hasSuper, loadUnit, minuteCredits, startCall, trackIndex, tutorConfig, tutorReady, vertexModel } from "./tutor.js";
 import type { Hold } from "./billingCore.js";
 import { originAllowed, parseOrigins, siteOrigins } from "./origins.js";
-import { APPROVED, type SiteStatus } from "./shared/sites.js";
+import { APPROVED } from "./shared/sites.js";
+import { hasAccess, readSiteDoc } from "./sitesCore.js";
 import { EXPLAIN_TOOL, SEARCH_TOOL, audioCost, down3, instructions, lessonMaterial, pcmToUlaw, searchBoth, ulawToPcm, usageCost, type TutorLang, type Usage } from "./tutorCore.js";
 
 // GEMINI_LIVE_URL and VERTEX_LIVE_URL let the checks use a stand-in.
@@ -26,11 +27,9 @@ const LIVE = process.env.GEMINI_LIVE_URL ?? "wss://generativelanguage.googleapis
 // Only Darsi's own site in production, plus organization sites with "https://*.darsiai.org" (origins.ts); `npm run
 // local` passes its address in TUTOR_ORIGINS (L9).
 const ORIGINS = parseOrigins(process.env.TUTOR_ORIGINS ?? "https://darsiai.org");
-// Any other organization address a platform admin approved (sites/{host}), looked up when a page first calls.
-const siteAllowed = siteOrigins(async (host) => {
-  const s = await db.doc(`sites/${host}`).get();
-  return s.exists && APPROVED.includes(s.get("status") as SiteStatus);
-});
+// Any other organization address that may sign people in now (sites/{host}): the list, read every two minutes.
+const siteAllowed = siteOrigins(async () => (await db.collection("sites").where("status", "in", [...APPROVED]).get()).docs
+  .map((d) => readSiteDoc(d.id, d.data())).filter((s) => s !== null && hasAccess(s)).map((s) => s!.host));
 /** Sockets per instance, and per address: a brake on anyone opening connections they never use (M6). */
 const MAX_SOCKETS = 300, MAX_PER_IP = 6;
 const open = new Map<string, number>();

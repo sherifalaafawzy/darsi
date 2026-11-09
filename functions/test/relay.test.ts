@@ -9,11 +9,19 @@ import { WebSocket, WebSocketServer } from "ws";
 const h = vi.hoisted(() => ({ charges: [] as number[], events: [] as string[], asks: 0, agent: null as null | (() => Promise<unknown>), backend: "gemini", token: null as null | Promise<string> }));
 vi.mock("../src/admin.js", () => ({
   auth: { verifyIdToken: async () => ({ uid: "u1", planUntil: Date.now() + 864e5 }) },
-  // An approved organization address outside *.darsiai.org (sites/{host}), and one only asked for.
-  db: { doc: (path: string) => ({ get: async () => {
-    const status = ({ "sites/learn.cis.edu.eg": "live", "sites/asked.school.org": "requested" } as Record<string, string>)[path];
-    return { exists: Boolean(status), get: () => status };
-  } }) },
+  // Organization addresses outside *.darsiai.org (sites/{host}): one live, one approved whose CNAME isn't there yet,
+  // one approved without its ownership record, and one only asked for.
+  db: { collection: (name: string) => ({ where: (field: string, op: string, values: string[]) => ({ get: async () => {
+    const ok = { owner: "ok", dns: "ok", hosting: "ok", cert: "ok", auth: "ok", cors: "ok" };
+    const all: Record<string, Record<string, unknown>> = {
+      "learn.cis.edu.eg": { orgId: "o1", status: "live", steps: ok },
+      "soon.school.org": { orgId: "o2", status: "connecting", steps: { ...ok, dns: "wait", auth: "wait", cors: "wait" } },
+      "unproved.school.org": { orgId: "o2", status: "connecting", steps: { ...ok, owner: "wait", auth: "wait", cors: "wait" } },
+      "asked.school.org": { orgId: "o3", status: "requested", steps: null },
+    };
+    if (`${name} ${field} ${op}` !== "sites status in") throw new Error(`unexpected query ${name} ${field} ${op}`);
+    return { docs: Object.entries(all).filter(([, d]) => values.includes(d.status as string)).map(([id, d]) => ({ id, data: () => d })) };
+  } }) }) },
 }));
 vi.mock("../src/agent.js", () => {
   class AgentError extends Error { constructor(m: string, readonly usd: number, readonly timedOut = false) { super(m); } }
@@ -170,8 +178,10 @@ describe("which pages may open the relay (L9, organization sites)", () => {
     expect(await opens("https://cis.darsiai.org:8443")).toBe(false);
     expect(await opens(undefined)).toBe(false);
   });
-  it("lets in an approved organization address elsewhere, without a new TUTOR_ORIGINS, and not one only asked for", async () => {
+  it("lets in an organization address elsewhere while it may sign in, without a new TUTOR_ORIGINS, and no other", async () => {
     expect(await opens("https://learn.cis.edu.eg")).toBe(true);
+    expect(await opens("https://soon.school.org")).toBe(false);
+    expect(await opens("https://unproved.school.org")).toBe(false);
     expect(await opens("https://asked.school.org")).toBe(false);
     expect(await opens("https://never.heard.of")).toBe(false);
   });

@@ -3,16 +3,16 @@
  * Organization web addresses outside the app (TECHNICAL.md "Organization sites (custom web addresses)").
  *
  * Since 2026-11-09 a platform admin's approval on /super/domains connects an address by itself (manageSite and
- * functions/src/domains.ts: Hosting, Auth's authorized domains, Storage CORS), and sitesJob turns it live. What is
- * left outside the app is DNS, once, for every address under darsiai.org:
+ * functions/src/domains.ts: Hosting once the organization's ownership record is there, then Auth's authorized domains
+ * and Storage CORS while it points at Darsi), and sitesJob turns it live. What is left outside the app is DNS: the
+ * organization's own records, or, for an address under darsiai.org, its CNAME in Cloudflare. There is no wildcard
+ * record (2026-11-10: organizations use their own domains); --wildcard stays for the record:
  *
  *   node scripts/connect-site.mjs --wildcard             the `*.darsiai.org` CNAME to darsi-f0685.web.app, DNS only
  *   node scripts/connect-site.mjs --wildcard --dry-run   only read and say what it would do
  *
- * By hand instead: Cloudflare → darsiai.org → DNS → Add record: CNAME, name `*`, target darsi-f0685.web.app, proxy
- * off ("DNS only": Firebase Hosting issues each address's certificate itself). Explicit records (www, cis) win over it.
- *
- * The rest is the manual fallback the app no longer needs, kept for a host the functions can't reach:
+ * The rest is the manual fallback the app no longer needs, kept for a host the functions can't reach. sitesJob takes
+ * sign-in and CORS away again from an organization address that hasn't both its records:
  *
  *   node scripts/connect-site.mjs school.darsiai.org             do it, then print where each part stands
  *   node scripts/connect-site.mjs school.darsiai.org --dry-run   only read and say what it would do

@@ -1,6 +1,7 @@
 // Organizations' web addresses on the admin screens (admin/Domains.tsx; TECHNICAL.md "Organization sites"): an org
-// admin asks for one and sees where it stands, with the DNS change an address of its own needs; a platform admin
-// approves, refuses, adds, checks, changes Darsi's identity and removes, all through manageSite.
+// admin asks for one under its own domain and sees where it stands, with the ownership record and CNAME it adds; a
+// platform admin approves, refuses, adds (under darsiai.org too), checks, changes Darsi's identity and removes, all
+// through manageSite.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { SiteDoc } from "../src/content/sites";
@@ -19,10 +20,15 @@ vi.mock("../src/auth/api", async (orig) => ({ ...(await orig<typeof import("../s
 const { I18nProvider } = await import("../src/i18n");
 const { DomainsPage, DomainsWaiting, OrgSitePanel, OrgSiteSummary, typedHost } = await import("../src/admin/Domains");
 
-const OK = { dns: "ok", hosting: "ok", cert: "ok", auth: "ok", cors: "ok" } as const;
+const OK = { owner: "ok", dns: "ok", hosting: "ok", cert: "ok", auth: "ok", cors: "ok" } as const;
+const TOKEN = "0123456789abcdef0123456789abcdef";
+const RECORDS = (host: string) => [
+  { name: `_darsi.${host}`, type: "TXT", value: `darsi-site=${TOKEN}`, action: "add" as const },
+  { name: host, type: "CNAME", value: "darsi-f0685.web.app", action: "add" as const },
+];
 const site = (host: string, patch: Partial<SiteDoc> = {}): SiteDoc => ({
   host, orgId: "o1", orgName: "CIS Training Platform", darsi: true, status: "requested", requestedBy: "adm", requestedAt: Date.UTC(2026, 10, 9, 10),
-  approvedBy: null, approvedAt: null, refusedReason: null, steps: null, records: null, issues: null, error: null, checkedAt: null, liveAt: null, ...patch,
+  approvedBy: null, approvedAt: null, refusedReason: null, steps: null, records: null, issues: null, error: null, checkedAt: null, liveAt: null, proof: null, ...patch,
 });
 const ui = (node: React.ReactNode, lang = "en", path = "/") => render(<I18nProvider lang={lang}><MemoryRouter initialEntries={[path]}>{node}</MemoryRouter></I18nProvider>);
 
@@ -35,51 +41,64 @@ it("reads what an admin pastes as a host", () => {
 });
 
 describe("an org admin's Web address panel", () => {
-  it("asks for an address, refusing a bad one before sending it", async () => {
-    h.call.mockResolvedValue({ site: site("school.darsiai.org") });
+  it("asks for an address under its own domain, refusing Darsi's and darsiai.org's before sending", async () => {
+    h.call.mockResolvedValue({ site: site("learn.school.edu") });
     ui(<OrgSitePanel orgId="o1" />);
     expect(screen.getByText(/No web address yet/)).toBeTruthy();
     const field = screen.getByLabelText("Address");
     fireEvent.change(field, { target: { value: "www.darsiai.org" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask for this address" }));
     expect(await screen.findByText(/one of Darsi's own addresses/)).toBeTruthy();
-    expect(h.call).not.toHaveBeenCalled();
-    fireEvent.change(field, { target: { value: "https://School.darsiai.org/" } });
+    fireEvent.change(field, { target: { value: "school.darsiai.org" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask for this address" }));
-    await waitFor(() => expect(h.call).toHaveBeenCalledWith({ action: "request", host: "school.darsiai.org" }));
+    expect(await screen.findByText(/Addresses under darsiai\.org are set up by Darsi/)).toBeTruthy();
+    expect(h.call).not.toHaveBeenCalled();
+    fireEvent.change(field, { target: { value: "https://Learn.School.edu/" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask for this address" }));
+    await waitFor(() => expect(h.call).toHaveBeenCalledWith({ action: "request", host: "learn.school.edu" }));
     expect(await screen.findByText(/Sent\. A Darsi platform admin will look at it/)).toBeTruthy();
     expect(h.reload).toHaveBeenCalled();
   });
 
-  it("shows a request waiting, and takes it back", async () => {
-    h.sites = [site("school.darsiai.org")];
+  it("shows a request waiting with the two records to add meanwhile, and takes it back", async () => {
+    h.sites = [site("learn.school.edu", { records: RECORDS("learn.school.edu"), proof: TOKEN })];
     h.call.mockResolvedValue({ site: null });
     ui(<OrgSitePanel orgId="o1" />);
     expect(screen.getByText("Waiting for approval")).toBeTruthy();
-    expect(screen.getByText(/Nothing else is needed from you/)).toBeTruthy();
+    expect(screen.getByText(/While it waits, ask whoever manages the DNS of .*school\.edu/)).toBeTruthy();
+    expect(screen.getByText("_darsi.learn.school.edu")).toBeTruthy();
+    expect(screen.getByText(`darsi-site=${TOKEN}`)).toBeTruthy();
+    expect(screen.getByText("darsi-f0685.web.app")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Take back the request" }));
-    await waitFor(() => expect(h.call).toHaveBeenCalledWith({ action: "cancel", host: "school.darsiai.org" }));
+    await waitFor(() => expect(h.call).toHaveBeenCalledWith({ action: "cancel", host: "learn.school.edu" }));
+  });
+  it("tells an older request with no records that nothing else is needed", () => {
+    h.sites = [site("school.darsiai.org")];
+    ui(<OrgSitePanel orgId="o1" />);
+    expect(screen.getByText(/Nothing else is needed from you/)).toBeTruthy();
   });
 
-  it("shows the one DNS change an address of its own needs, each step, and checks again", async () => {
+  it("shows the DNS changes an address of its own still needs, each step, and checks again", async () => {
     h.sites = [site("learn.cis.edu.eg", {
-      status: "connecting", steps: { ...OK, dns: "wait", cert: "wait" }, checkedAt: Date.UTC(2026, 10, 9, 11),
-      records: [{ name: "learn.cis.edu.eg", type: "CNAME", value: "darsi-f0685.web.app", action: "add" }],
+      status: "connecting", steps: { ...OK, owner: "wait", dns: "wait", hosting: "todo", cert: "todo", auth: "wait", cors: "wait" }, checkedAt: Date.UTC(2026, 10, 9, 11),
+      records: RECORDS("learn.cis.edu.eg"), proof: TOKEN,
     })];
     h.call.mockResolvedValue({ site: h.sites[0] });
     ui(<OrgSitePanel orgId="o1" />);
-    expect(screen.getByText(/ask whoever manages the DNS of .*cis\.edu\.eg/)).toBeTruthy();
+    expect(screen.getByText(/ask whoever manages the DNS of .*cis\.edu\.eg.? to make these changes/)).toBeTruthy();
+    expect(screen.getByText(`darsi-site=${TOKEN}`)).toBeTruthy();
     expect(screen.getByText("darsi-f0685.web.app")).toBeTruthy();
     const steps = screen.getByRole("list", { name: "Connecting it" });
-    expect(within(steps).getAllByText("Waiting")).toHaveLength(2);
-    expect(within(steps).getAllByText("Done")).toHaveLength(3);
+    expect(within(steps).getByText("Ownership record (DNS)")).toBeTruthy();
+    expect(within(steps).getAllByText("Waiting")).toHaveLength(4);
+    expect(within(steps).getAllByText("Not started")).toHaveLength(2);
     fireEvent.click(screen.getByRole("button", { name: "Check now" }));
     await waitFor(() => expect(h.call).toHaveBeenCalledWith({ action: "check", host: "learn.cis.edu.eg" }));
   });
 
   it("asks nothing of an address under darsiai.org, shows a live one, a refused one with its reason, and stops at three", () => {
     h.sites = [
-      site("a.darsiai.org", { status: "connecting", steps: { ...OK, cert: "wait" } }),
+      site("a.darsiai.org", { status: "connecting", steps: { ...OK, cert: "wait" }, records: [{ name: "a.darsiai.org", type: "CNAME", value: "darsi-f0685.web.app", action: "add" }] }),
       site("b.darsiai.org", { status: "live", steps: OK, liveAt: Date.UTC(2026, 10, 9, 12) }),
       site("c.darsiai.org", { status: "refused", refusedReason: "Use your institute's short name" }),
       site("d.darsiai.org"),
@@ -95,19 +114,27 @@ describe("an org admin's Web address panel", () => {
     expect(screen.getByText(/as many addresses as it can have \(3\)/)).toBeTruthy();
   });
 
+  it("says why the server refused a domain itself, in the admin's words", async () => {
+    h.call.mockRejectedValue(Object.assign(new Error("Use an address under your domain"), { details: { reason: "site-apex" } }));
+    ui(<OrgSitePanel orgId="o1" />);
+    fireEvent.change(screen.getByLabelText("Address"), { target: { value: "school.edu" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask for this address" }));
+    expect(await screen.findByText(/not the domain itself/)).toBeTruthy();
+  });
   it("says why the server refused, in the admin's words", async () => {
     h.call.mockRejectedValue(Object.assign(new Error("Another organization already uses or asked for that address."), { details: { reason: "site-taken" } }));
     ui(<OrgSitePanel orgId="o1" />);
-    fireEvent.change(screen.getByLabelText("Address"), { target: { value: "taken.darsiai.org" } });
+    fireEvent.change(screen.getByLabelText("Address"), { target: { value: "taken.school.edu" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask for this address" }));
     expect(await screen.findByText("Another organization already uses or asked for that address.")).toBeTruthy();
   });
 
   it("in Arabic", () => {
-    h.sites = [site("school.darsiai.org")];
+    h.sites = [site("learn.school.edu", { records: RECORDS("learn.school.edu"), proof: TOKEN })];
     ui(<OrgSitePanel orgId="o1" />, "ar");
     expect(screen.getByRole("heading", { name: "عنوان الموقع" })).toBeTruthy();
     expect(screen.getByText("بانتظار الموافقة")).toBeTruthy();
+    expect(screen.getByText(/إضافة هذين السجلّين/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "اسحب الطلب" })).toBeTruthy();
   });
 });
@@ -153,7 +180,7 @@ describe("the platform admin's Web addresses page", () => {
       site("b.darsiai.org", { status: "live", steps: OK }),
       site("a.cis.org", { status: "problem", steps: { ...OK, auth: "error" }, error: "Authentication: 403 The caller does not have permission" }),
       site("learn.cis.edu.eg", { status: "connecting", steps: { ...OK, dns: "wait" }, records: [{ name: "learn.cis.edu.eg", type: "CNAME", value: "darsi-f0685.web.app", action: "add" }] }),
-      site("z.darsiai.org", { status: "connecting", steps: { ...OK, dns: "wait" } }),
+      site("z.darsiai.org", { status: "connecting", steps: { ...OK, dns: "wait" }, records: [{ name: "z.darsiai.org", type: "CNAME", value: "darsi-f0685.web.app", action: "add" }] }),
     ];
     ui(<DomainsPage />);
     expect(screen.getByRole("heading", { name: "Addresses (4)" })).toBeTruthy();
@@ -161,7 +188,7 @@ describe("the platform admin's Web addresses page", () => {
     expect(hosts.map((x) => x.split(/Live|Connecting|Needs attention/)[0])).toEqual(["a.cis.org", "learn.cis.edu.eg", "z.darsiai.org", "b.darsiai.org"]);
     expect(screen.getByText("Authentication: 403 The caller does not have permission")).toBeTruthy();
     expect(screen.getByText(/The organization sees these changes/)).toBeTruthy();
-    expect(screen.getByText(/Cloudflare's wildcard record/)).toBeTruthy();
+    expect(screen.getByText(/Add this record in Cloudflare/)).toBeTruthy();
     expect(screen.getByText("No requests waiting.")).toBeTruthy();
   });
 

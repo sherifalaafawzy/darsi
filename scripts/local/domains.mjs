@@ -1,33 +1,49 @@
 /**
  * A stand-in for the Google APIs that connect an organization's web address (functions/src/domains.ts) on
- * http://127.0.0.1:4798, for `npm run local`: Firebase Hosting's custom domains, Firebase Auth's authorized domains
- * and the bucket's CORS list. In the emulator the functions always talk to it, never to Google.
- * - An address under darsiai.org points at Darsi 5 seconds after it is added (Cloudflare's wildcard record covers it)
- *   and has its certificate 20 seconds after.
- * - Any other address waits for the CNAME record Hosting asks for, as a real one waits for its owner:
- *   GET http://127.0.0.1:4798/dns/<host> stands in for the owner adding it; the certificate follows 15 seconds later.
+ * http://127.0.0.1:4798, for `npm run local`: Firebase Hosting's custom domains, Firebase Auth's authorized domains,
+ * the bucket's CORS list, and DNS as Darsi's own lookup sees it. In the emulator the functions always talk to it,
+ * never to Google or to real DNS.
+ * - An address under darsiai.org points at Darsi 5 seconds after it is added to Hosting (a platform admin adding its
+ *   CNAME in Cloudflare) and has its certificate 15 seconds after.
+ * - Any other address waits for its organization's records, as a real one waits for its owner:
+ *   GET http://127.0.0.1:4798/dns/<host>?txt=darsi-site=<token> stands in for the owner adding the ownership record
+ *   and the CNAME the admin page shows (leave `txt` out to add the CNAME alone); the certificate follows 15 seconds
+ *   after Hosting has the address. GET …/dns/<host>?off=1 takes both away (the domain moved elsewhere).
+ * - GET http://127.0.0.1:4798/resolve/<host> answers Darsi's DNS lookup: { cname, txt }.
  * - GET http://127.0.0.1:4798/ shows everything it holds.
  */
 import http from "node:http";
 
 const TARGET = "darsi-f0685.web.app";
+const zone = (host) => host.endsWith(".darsiai.org");
 
 export async function startDomains(port = 4798) {
-  /** host → when it was added, and when its DNS record was "added" (null until then). */
+  /** host → when Hosting got it. */
   const domains = new Map();
+  /** host → its DNS outside darsiai.org: the CNAME (since when) and the ownership record's value. */
+  const dns = new Map();
   let authorized = ["localhost", "127.0.0.1"];
   let cors = [{ origin: ["http://localhost:4173"], method: ["GET", "HEAD"], maxAgeSeconds: 3600 }];
+  let metageneration = 1;
 
+  /** When the address started pointing at Darsi (null: it doesn't). */
+  const pointedSince = (host) => {
+    if (zone(host)) { const d = domains.get(host); return d ? d.added + 5_000 : null; }
+    return dns.get(host)?.cname ?? null;
+  };
+  const resolve = (host) => {
+    const since = pointedSince(host);
+    return { cname: since !== null && Date.now() >= since ? [TARGET] : [], txt: dns.get(host)?.txt ? [dns.get(host).txt] : [] };
+  };
   const view = (host) => {
-    const d = domains.get(host), now = Date.now();
-    const pointedAt = host.endsWith(".darsiai.org") ? d.added + 5_000 : d.dns;
-    const pointed = pointedAt !== null && now >= pointedAt;
-    const certified = pointed && now >= pointedAt + (host.endsWith(".darsiai.org") ? 15_000 : 15_000);
+    const d = domains.get(host), now = Date.now(), since = pointedSince(host);
+    const pointed = since !== null && now >= since;
+    const certified = pointed && now >= Math.max(since, d.added) + 15_000;
     return {
       name: `customDomains/${host}`, createTime: new Date(d.added).toISOString(),
       hostState: pointed ? "HOST_ACTIVE" : "HOST_UNHOSTED", ownershipState: pointed ? "OWNERSHIP_ACTIVE" : "OWNERSHIP_MISSING",
       cert: { type: "TEMPORARY", state: certified ? "CERT_ACTIVE" : pointed ? "CERT_PROPAGATING" : "CERT_PREPARING" },
-      ...(pointed ? {} : { requiredDnsUpdates: { desired: [{ domainName: host, records: [{ domainName: `${host}.`, type: "CNAME", rdata: `${TARGET}.`, requiredAction: "ADD" }] }] } }),
+      ...(pointed ? {} : { requiredDnsUpdates: { desired: [{ domainName: host, records: [{ domainName: `${host}.`, type: "A", rdata: "199.36.158.100", requiredAction: "ADD" }] }] } }),
     };
   };
 
@@ -42,7 +58,7 @@ export async function startDomains(port = 4798) {
       if (hosting && !hosting[1] && req.method === "POST") {
         const host = url.searchParams.get("customDomainId");
         if (domains.has(host)) return json(409, { error: { message: `${host} is already a custom domain` } });
-        domains.set(host, { added: Date.now(), dns: null });
+        domains.set(host, { added: Date.now() });
         return json(200, { name: `operations/${host}`, done: false });
       }
       if (hosting && hosting[1]) {
@@ -56,17 +72,28 @@ export async function startDomains(port = 4798) {
         return json(200, { authorizedDomains: authorized });
       }
       if (/^\/storage\/v1\/b\/[^/]+$/.test(url.pathname)) {
-        if (req.method === "PATCH") cors = body.cors ?? cors;
-        return json(200, { cors });
+        if (req.method === "PATCH") {
+          const want = url.searchParams.get("ifMetagenerationMatch");
+          if (want && want !== String(metageneration)) return json(412, { error: { message: "Precondition Failed" } });
+          cors = body.cors ?? cors; metageneration++;
+        }
+        return json(200, { cors, metageneration: String(metageneration) });
       }
-      const dns = url.pathname.match(/^\/dns\/([^/]+)$/);
-      if (dns) {
-        const host = decodeURIComponent(dns[1]), d = domains.get(host);
-        if (!d) return json(404, { error: { message: `${host} isn't a custom domain here` } });
-        d.dns ??= Date.now();
-        return json(200, { ok: `${host} now points at ${TARGET}` });
+      const set = url.pathname.match(/^\/dns\/([^/]+)$/);
+      if (set) {
+        const host = decodeURIComponent(set[1]);
+        if (url.searchParams.get("off")) { dns.delete(host); return json(200, { ok: `${host} no longer points at ${TARGET}` }); }
+        const d = dns.get(host) ?? { cname: null, txt: null };
+        d.cname ??= Date.now();
+        if (url.searchParams.get("txt")) d.txt = url.searchParams.get("txt");
+        dns.set(host, d);
+        return json(200, { ok: `${host} now points at ${TARGET}`, txt: d.txt });
       }
-      if (url.pathname === "/") return json(200, { domains: Object.fromEntries([...domains.keys()].map((h) => [h, view(h)])), authorized, cors });
+      const look = url.pathname.match(/^\/resolve\/([^/]+)$/);
+      if (look) return json(200, resolve(decodeURIComponent(look[1])));
+      if (url.pathname === "/") {
+        return json(200, { domains: Object.fromEntries([...domains.keys()].map((h) => [h, view(h)])), dns: Object.fromEntries(dns), authorized, cors });
+      }
       json(404, { error: { message: `The local stand-in has no ${req.method} ${url.pathname}` } });
     });
   });

@@ -18,7 +18,7 @@ const WORDS: Record<string, MessageKey> = {
   "courses-classes": "oc.rf.classes", "courses-class": "oc.rf.class", "courses-total": "oc.rf.total",
   // sites.ts (an organization's own web addresses: content/sites.ts SiteProblem, and manageSite's own)
   "site-host": "site.rf.host", "site-reserved": "site.rf.reserved", "site-taken": "site.rf.taken", "site-limit": "site.rf.limit",
-  "site-state": "site.rf.state", "no-site": "site.rf.noSite",
+  "site-state": "site.rf.state", "no-site": "site.rf.noSite", "site-zone": "site.rf.zone", "site-apex": "site.rf.apex",
 };
 
 /** The refusal's code (`details.reason`), or "". */

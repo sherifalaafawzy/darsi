@@ -1,11 +1,12 @@
 // Organization sites (TECHNICAL.md "Organization sites (custom web addresses)"): the shared host rules (shared/sites.ts,
 // the web app's own file), manageSite (asking, approving, refusing, checking, removing) with an in-memory Firestore and
-// Storage and a stand-in for the Google calls (domains.ts), content/sites.json and its logo copies, sitesJob (the old
-// config/sites list moved in, addresses turning live), and the trigger that follows an organization's changes.
+// Storage and a stand-in for the Google calls (domains.ts), ownership tokens, sign-in and file access following DNS
+// (syncSiteAccess, its sweep and its lock), content/sites.json and its logo copies, sitesJob (the old config/sites list
+// moved in, addresses turning live), and the trigger that follows an organization's changes.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FakeAuth, FakeDb } from "./fakeFirestore";
 import { checkSiteHost, isDarsiHost, siteFor } from "../src/shared/sites";
-import { brandLogoPath, corsWith, hostingCheck, listWith, readLinks, readSiteDoc, sitesNeedPublish, statusOf } from "../src/sitesCore";
+import { brandLogoPath, corsWith, hasAccess, hostingCheck, isReservedName, listWith, planCors, planList, readLinks, readSiteDoc, sitesNeedPublish, statusOf } from "../src/sitesCore";
 import type { HostCheck } from "../src/domains";
 
 const audits = vi.hoisted(() => [] as { action: string; by: string; data: Record<string, unknown> }[]);
@@ -45,19 +46,38 @@ vi.mock("../src/storage.js", () => {
     },
   };
 });
-/** The Google side (domains.ts): what the next check answers, and every call. */
+/**
+ * The Google side (domains.ts): what the next check answers (per host, or for all), every call, the proof each check
+ * looked for, and the authorized domains and CORS origins as syncAccess leaves them.
+ */
 const google = vi.hoisted(() => ({
   calls: [] as string[], warnings: [] as string[], during: null as null | (() => void),
-  answer: null as null | HostCheck,
+  answer: null as null | HostCheck, answers: {} as Record<string, HostCheck>, proofs: {} as Record<string, string | null>,
+  authorized: new Set<string>(), origins: new Set<string>(), syncErrors: [] as string[], syncs: 0,
 }));
-const ALL_OK = { steps: { dns: "ok", hosting: "ok", cert: "ok", auth: "ok", cors: "ok" }, records: [], issues: [], errors: [] } as HostCheck;
+const ALL_OK = { steps: { owner: "ok", dns: "ok", hosting: "ok", cert: "ok" }, records: [], issues: [], errors: [] } as HostCheck;
 const WAITING = {
-  steps: { dns: "wait", hosting: "ok", cert: "wait", auth: "ok", cors: "ok" },
+  steps: { owner: "ok", dns: "wait", hosting: "ok", cert: "wait" },
   records: [{ name: "learn.cis.edu.eg", type: "CNAME", value: "darsi-f0685.web.app", action: "add" }], issues: [], errors: [],
 } as HostCheck;
+const UNPROVED = {
+  steps: { owner: "wait", dns: "wait", hosting: "todo", cert: "todo" },
+  records: [{ name: "_darsi.learn.cis.edu.eg", type: "TXT", value: "darsi-site=x", action: "add" }], issues: [], errors: [],
+} as HostCheck;
 vi.mock("../src/domains.js", () => ({
-  connectHost: async (host: string) => { google.calls.push(`connect ${host}`); google.during?.(); return google.answer!; },
+  connectHost: async (host: string, o: { proof?: string | null } = {}) => {
+    google.calls.push(`connect ${host}`); google.proofs[host] = o.proof ?? null; google.during?.();
+    return google.answers[host] ?? google.answer!;
+  },
   disconnectHost: async (host: string) => { google.calls.push(`disconnect ${host}`); return google.warnings; },
+  syncAccess: async (want: string[], managed: string[]) => {
+    google.syncs++;
+    if (!google.syncErrors.length) {
+      for (const h of managed) if (!want.includes(h)) { google.authorized.delete(h); google.origins.delete(h); }
+      for (const h of want) { google.authorized.add(h); google.origins.add(h); }
+    }
+    return { authorized: google.syncErrors.length ? null : new Set(google.authorized), origins: new Set(google.origins), errors: [...google.syncErrors] };
+  },
 }));
 vi.useFakeTimers({ toFake: ["setTimeout"] });
 
@@ -72,10 +92,14 @@ const as = (uid: string, data: Record<string, unknown>) => ({ auth: { uid, token
 const refusal = async (p: Promise<unknown>) => p.then(() => null, (e: { code?: string; details?: { reason?: string } }) => `${e.code}:${e.details?.reason ?? "no reason"}`);
 const published = () => JSON.parse(store.files.get("content/sites.json")!.bytes.toString()) as { v: number; sites: Record<string, { orgId: string; name: string; logo: string | null; darsi: boolean }> };
 const LOGO = "orgs/o1/brand/logo-abc123def.webp";
+const LIVE_STEPS = { owner: "ok", dns: "ok", hosting: "ok", cert: "ok", auth: "ok", cors: "ok" };
+/** What Darsi put in the authorized domains and CORS list (config/siteAccess). */
+const granted = () => (db.docs.get("config/siteAccess")?.hosts as string[] | undefined) ?? [];
 
 beforeEach(() => {
   db.docs.clear(); auth.users.clear(); audits.length = 0; store.files.clear(); store.saves.length = 0; store.fail429 = 0;
-  google.calls.length = 0; google.warnings = []; google.during = null; google.answer = ALL_OK;
+  google.calls.length = 0; google.warnings = []; google.during = null; google.answer = ALL_OK; google.answers = {}; google.proofs = {};
+  google.authorized = new Set(["localhost", "darsiai.org"]); google.origins = new Set(["darsiai.org"]); google.syncErrors = []; google.syncs = 0;
   auth.users.set("root", { uid: "root", customClaims: { role: "superadmin" } });
   auth.users.set("adm", { uid: "adm", customClaims: { role: "orgAdmin", orgId: "o1" } });
   auth.users.set("adm2", { uid: "adm2", customClaims: { role: "orgAdmin", orgId: "o2" } });
@@ -109,6 +133,9 @@ describe("the host rules (shared with the app)", () => {
     expect(isDarsiHost("[::1]")).toBe(true);
     expect(isDarsiHost("darsiai.org.")).toBe(true);
     expect(isDarsiHost("cis.darsiai.org")).toBe(false);
+    // Names kept for Darsi under darsiai.org are the server's to refuse (the app's startup bundle holds this file whole).
+    for (const h of ["login.darsiai.org", "support.darsiai.org", "api.darsiai.org"]) expect(isReservedName(h), h).toBe(true);
+    for (const h of ["cis.darsiai.org", "login.cis.edu.eg", "login.org"]) expect(isReservedName(h), h).toBe(false);
   });
   it("reads one host's entry from the file, checked", () => {
     const file = { v: 1, sites: { "cis.darsiai.org": { orgId: "o1", name: " CIS ", logo: "https://firebasestorage.googleapis.com/x.webp", darsi: false } } };
@@ -126,69 +153,106 @@ describe("the host rules (shared with the app)", () => {
 
 describe("manageSite: who may do what", () => {
   it("refuses guests, members who aren't admins, and bad addresses, and says why", async () => {
-    expect(await refusal(manageSite.run({ data: { action: "request", host: "cis.darsiai.org" } }))).toBe("unauthenticated:no reason");
-    expect(await refusal(act("tea", "request", { host: "cis.darsiai.org" }))).toBe("permission-denied:not-org-admin");
+    expect(await refusal(manageSite.run({ data: { action: "request", host: "learn.cis.edu.eg" } }))).toBe("unauthenticated:no reason");
+    expect(await refusal(act("tea", "request", { host: "learn.cis.edu.eg" }))).toBe("permission-denied:not-org-admin");
     expect(await refusal(act("adm", "request", { host: "Not a host" }))).toBe("invalid-argument:site-host");
     expect(await refusal(act("adm", "request", { host: "" }))).toBe("invalid-argument:site-host");
     expect(await refusal(act("adm", "request", { host: "www.darsiai.org" }))).toBe("invalid-argument:site-reserved");
+    expect(await refusal(act("root", "approve", { host: "login.darsiai.org", orgId: "o1" }))).toBe("invalid-argument:site-reserved");
+    expect(await refusal(setOrgSite.run(as("root", { orgId: "o1", host: "support.darsiai.org" })))).toBe("invalid-argument:site-reserved");
     expect(await refusal(act("adm", "explode", { host: "cis.darsiai.org" }))).toBe("invalid-argument:site-action");
     // Org admins ask; platform admins approve, refuse, change the identity and remove.
     for (const a of ["approve", "refuse", "identity", "remove"]) expect(await refusal(act("adm", a, { host: "cis.darsiai.org" })), a).toBe("permission-denied:not-super");
-    expect(await refusal(act("root", "request", { host: "cis.darsiai.org" }))).toBe("permission-denied:not-org-admin");
+    expect(await refusal(act("root", "request", { host: "learn.cis.edu.eg" }))).toBe("permission-denied:not-org-admin");
     expect([...db.docs.keys()].filter((k) => k.startsWith("sites/"))).toEqual([]);
     expect(google.calls).toEqual([]);
   });
 });
 
 describe("asking for an address (org admins)", () => {
-  it("records the request for their own organization, connects nothing and publishes nothing", async () => {
-    const r = await act("adm", "request", { host: "cis.darsiai.org" });
-    expect(r.site).toMatchObject({ host: "cis.darsiai.org", orgId: "o1", orgName: "CIS Training Platform", status: "requested", requestedBy: "adm", darsi: true, approvedBy: null });
-    expect(siteDoc("cis.darsiai.org")).toMatchObject({ status: "requested", orgId: "o1" });
+  it("records the request with its own ownership token and the two records to add, connects nothing and publishes nothing", async () => {
+    const r = await act("adm", "request", { host: "learn.cis.edu.eg" });
+    expect(r.site).toMatchObject({ host: "learn.cis.edu.eg", orgId: "o1", orgName: "CIS Training Platform", status: "requested", requestedBy: "adm", darsi: true, approvedBy: null });
+    const proof = siteDoc("learn.cis.edu.eg")?.proof as string;
+    expect(proof).toMatch(/^[0-9a-f]{32}$/);
+    expect(siteDoc("learn.cis.edu.eg")?.records).toEqual([
+      { name: "_darsi.learn.cis.edu.eg", type: "TXT", value: `darsi-site=${proof}`, action: "add" },
+      { name: "learn.cis.edu.eg", type: "CNAME", value: "darsi-f0685.web.app", action: "add" },
+    ]);
     expect(google.calls).toEqual([]);
     expect(store.saves).toEqual([]);
-    expect(audits).toEqual([{ action: "requestSite", by: "adm", data: { orgId: "o1", host: "cis.darsiai.org" } }]);
-    // Asking again changes nothing.
-    expect((await act("adm", "request", { host: "cis.darsiai.org" })).site).toMatchObject({ status: "requested", requestedBy: "adm" });
+    expect(audits).toEqual([{ action: "requestSite", by: "adm", data: { orgId: "o1", host: "learn.cis.edu.eg" } }]);
+    // Asking again changes nothing, the token included.
+    expect((await act("adm", "request", { host: "learn.cis.edu.eg" })).site).toMatchObject({ status: "requested", requestedBy: "adm", proof });
+    // Another organization's request has another token.
+    await act("adm2", "request", { host: "learn.delta.edu.eg" });
+    expect(siteDoc("learn.delta.edu.eg")?.proof).not.toBe(proof);
+  });
+  it("refuses an address under darsiai.org (Darsi's to give) and a domain itself (HSTS would cover the school's other subdomains)", async () => {
+    expect(await refusal(act("adm", "request", { host: "cis.darsiai.org" }))).toBe("invalid-argument:site-zone");
+    for (const h of ["cis.edu.eg", "school.com", "school.co.uk"]) expect(await refusal(act("adm", "request", { host: h })), h).toBe("invalid-argument:site-apex");
+    expect((await act("adm", "request", { host: "learn.school.co.uk" })).site).toMatchObject({ status: "requested" });
+    expect(await refusal(act("root", "approve", { host: "school.com", orgId: "o1" }))).toBe("invalid-argument:site-apex");
   });
   it("refuses an address another organization asked for or uses, and more than three", async () => {
-    await act("adm", "request", { host: "cis.darsiai.org" });
-    expect(await refusal(act("adm2", "request", { host: "cis.darsiai.org" }))).toBe("already-exists:site-taken");
+    await act("adm", "request", { host: "learn.cis.edu.eg" });
+    expect(await refusal(act("adm2", "request", { host: "learn.cis.edu.eg" }))).toBe("already-exists:site-taken");
     for (const h of ["b.cis.org", "c.cis.org"]) await act("adm", "request", { host: h });
     expect(await refusal(act("adm", "request", { host: "d.cis.org" }))).toBe("resource-exhausted:site-limit");
   });
   it("refuses an organization that isn't active yet", async () => {
     db.docs.set("orgs/o1", { name: "CIS", status: "pending" });
-    expect(await refusal(act("adm", "request", { host: "cis.darsiai.org" }))).toBe("failed-precondition:org-inactive");
+    expect(await refusal(act("adm", "request", { host: "learn.cis.edu.eg" }))).toBe("failed-precondition:org-inactive");
   });
   it("lets the organization take back its own request, not another's, and not a connected address", async () => {
-    await act("adm", "request", { host: "cis.darsiai.org" });
-    expect(await refusal(act("adm2", "cancel", { host: "cis.darsiai.org" }))).toBe("permission-denied:not-yours");
-    expect(await act("adm", "cancel", { host: "cis.darsiai.org" })).toEqual({ site: null });
-    expect(siteDoc("cis.darsiai.org")).toBeUndefined();
+    await act("adm", "request", { host: "learn.cis.edu.eg" });
+    expect(await refusal(act("adm2", "cancel", { host: "learn.cis.edu.eg" }))).toBe("permission-denied:not-yours");
+    expect(await act("adm", "cancel", { host: "learn.cis.edu.eg" })).toEqual({ site: null });
+    expect(siteDoc("learn.cis.edu.eg")).toBeUndefined();
     await act("root", "approve", { host: "delta.darsiai.org", orgId: "o2" });
     expect(await refusal(act("adm2", "cancel", { host: "delta.darsiai.org" }))).toBe("failed-precondition:site-state");
   });
 });
 
 describe("approving an address (platform admins)", () => {
-  it("connects it, keeps who asked, publishes content/sites.json with a public copy of the logo, and audits", async () => {
-    await act("adm", "request", { host: "cis.darsiai.org" });
-    const r = await act("root", "approve", { host: "cis.darsiai.org", darsi: false });
-    expect(google.calls).toEqual(["connect cis.darsiai.org"]);
-    expect(r.site).toMatchObject({ status: "live", darsi: false, requestedBy: "adm", approvedBy: "root", steps: ALL_OK.steps, error: null });
-    expect(siteDoc("cis.darsiai.org")).toMatchObject({ status: "live", liveAt: expect.any(Number), checkedAt: expect.any(Number) });
+  it("connects it with the organization's own token, gives it sign-in, keeps who asked, publishes content/sites.json with a public copy of the logo, and audits", async () => {
+    await act("adm", "request", { host: "learn.cis.edu.eg" });
+    const proof = siteDoc("learn.cis.edu.eg")?.proof;
+    const r = await act("root", "approve", { host: "learn.cis.edu.eg", darsi: false });
+    expect(google.calls).toEqual(["connect learn.cis.edu.eg"]);
+    expect(google.proofs["learn.cis.edu.eg"]).toBe(proof);
+    expect(r.site).toMatchObject({ status: "live", darsi: false, requestedBy: "adm", approvedBy: "root", steps: LIVE_STEPS, error: null, proof });
+    expect(siteDoc("learn.cis.edu.eg")).toMatchObject({ status: "live", liveAt: expect.any(Number), checkedAt: expect.any(Number) });
+    expect(google.authorized.has("learn.cis.edu.eg")).toBe(true);
+    expect(google.origins.has("learn.cis.edu.eg")).toBe(true);
+    expect(granted()).toEqual(["learn.cis.edu.eg"]);
+    expect(db.docs.get("config/siteAccess")?.lockUntil).toBe(0);
     const file = published();
-    expect(Object.keys(file.sites)).toEqual(["cis.darsiai.org"]);
-    const entry = file.sites["cis.darsiai.org"];
+    expect(Object.keys(file.sites)).toEqual(["learn.cis.edu.eg"]);
+    const entry = file.sites["learn.cis.edu.eg"];
     expect(entry).toMatchObject({ orgId: "o1", name: "CIS Training Platform", darsi: false });
     // The org's own logo is for its members only; the copy is under content/ (public), named by its bytes, immutable.
     const copy = [...store.files.keys()].find((k) => k.startsWith("content/sites/o1/"))!;
     expect(copy).toMatch(/^content\/sites\/o1\/[0-9a-f]{20}\.webp$/);
     expect(store.files.get(copy)).toMatchObject({ contentType: "image/webp", cacheControl: "public, max-age=31536000, immutable" });
     expect(entry.logo).toBe(`https://firebasestorage.googleapis.com/v0/b/darsi-f0685/o/${encodeURIComponent(copy)}?alt=media`);
-    expect(siteFor(file, "cis.darsiai.org")).toEqual(entry);
-    expect(audits.at(-1)).toEqual({ action: "approveSite", by: "root", data: { orgId: "o1", host: "cis.darsiai.org", darsi: false, status: "live" } });
+    expect(siteFor(file, "learn.cis.edu.eg")).toEqual(entry);
+    expect(audits.at(-1)).toEqual({ action: "approveSite", by: "root", data: { orgId: "o1", host: "learn.cis.edu.eg", darsi: false, status: "live" } });
+  });
+  it("needs no token under darsiai.org, and makes a new one for an address it adds directly", async () => {
+    await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
+    expect(google.proofs["cis.darsiai.org"]).toBeNull();
+    expect(siteDoc("cis.darsiai.org")).toMatchObject({ proof: null, status: "live" });
+    await act("root", "approve", { host: "learn.delta.edu.eg", orgId: "o2" });
+    expect(google.proofs["learn.delta.edu.eg"]).toMatch(/^[0-9a-f]{32}$/);
+  });
+  it("gives no sign-in while the ownership record or the CNAME is missing", async () => {
+    google.answer = UNPROVED;
+    const r = await act("root", "approve", { host: "learn.cis.edu.eg", orgId: "o1" });
+    expect(r.site).toMatchObject({ status: "connecting", steps: { owner: "wait", dns: "wait", auth: "wait", cors: "wait" } });
+    expect(google.authorized.has("learn.cis.edu.eg")).toBe(false);
+    expect(google.origins.has("learn.cis.edu.eg")).toBe(false);
+    expect(granted()).toEqual([]);
   });
   it("keeps the DNS records still missing while it connects, and Google's words when a step failed", async () => {
     google.answer = WAITING;
@@ -196,21 +260,33 @@ describe("approving an address (platform admins)", () => {
     expect(r.site).toMatchObject({ status: "connecting", records: WAITING.records, requestedBy: "root" });
     // Approved already counts: phones on that address get the organization's look as soon as it answers.
     expect(published().sites["learn.cis.edu.eg"]).toMatchObject({ orgId: "o1" });
-    google.answer = { ...ALL_OK, steps: { ...ALL_OK.steps, auth: "error" }, errors: ["Authentication: 403 The caller does not have permission"] };
+    google.answer = { ...ALL_OK, steps: { ...ALL_OK.steps, hosting: "error" }, errors: ["Hosting: 403 The caller does not have permission"] };
     db.docs.set("sites/learn.cis.edu.eg", { ...siteDoc("learn.cis.edu.eg"), checkedAt: 0 });
     const again = await act("root", "check", { host: "learn.cis.edu.eg" });
-    expect(again.site).toMatchObject({ status: "problem", error: "Authentication: 403 The caller does not have permission" });
+    expect(again.site).toMatchObject({ status: "problem", error: "Hosting: 403 The caller does not have permission" });
     expect(published().sites["learn.cis.edu.eg"]).toBeTruthy();
+    // Sign-in that couldn't be given is a problem too, with Google's words; the next run that works clears it.
+    google.answer = ALL_OK; google.syncErrors = ["Authentication: 403 The caller does not have permission"];
+    db.docs.set("sites/learn.cis.edu.eg", { ...siteDoc("learn.cis.edu.eg"), checkedAt: 0 });
+    expect((await act("root", "check", { host: "learn.cis.edu.eg" })).site).toMatchObject({
+      status: "problem", steps: { auth: "error" }, error: "Authentication: 403 The caller does not have permission",
+    });
+    google.syncErrors = [];
+    db.docs.set("sites/learn.cis.edu.eg", { ...siteDoc("learn.cis.edu.eg"), checkedAt: 0 });
+    expect((await act("root", "check", { host: "learn.cis.edu.eg" })).site).toMatchObject({ status: "live", error: null, steps: LIVE_STEPS });
   });
-  it("adds an address nobody asked for, and takes one another organization only asked for", async () => {
-    expect(await refusal(act("root", "approve", { host: "cis.darsiai.org" }))).toBe("not-found:no-site");
-    expect(await refusal(act("root", "approve", { host: "cis.darsiai.org", orgId: "nope" }))).toBe("not-found:no-org");
-    await act("adm2", "request", { host: "cis.darsiai.org" });
-    const r = await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
+  it("adds an address nobody asked for, and takes one another organization only asked for, with a token of its own", async () => {
+    expect(await refusal(act("root", "approve", { host: "learn.cis.edu.eg" }))).toBe("not-found:no-site");
+    expect(await refusal(act("root", "approve", { host: "learn.cis.edu.eg", orgId: "nope" }))).toBe("not-found:no-org");
+    await act("adm2", "request", { host: "learn.cis.edu.eg" });
+    const asked = siteDoc("learn.cis.edu.eg")?.proof;
+    const r = await act("root", "approve", { host: "learn.cis.edu.eg", orgId: "o1" });
     expect(r.site).toMatchObject({ orgId: "o1", requestedBy: "root", status: "live" });
+    // The other organization's DNS record proves nothing for this one.
+    expect(google.proofs["learn.cis.edu.eg"]).not.toBe(asked);
     // Once approved for one organization, it isn't another's.
-    expect(await refusal(act("root", "approve", { host: "cis.darsiai.org", orgId: "o2" }))).toBe("already-exists:site-taken");
-    expect(await refusal(act("adm2", "request", { host: "cis.darsiai.org" }))).toBe("already-exists:site-taken");
+    expect(await refusal(act("root", "approve", { host: "learn.cis.edu.eg", orgId: "o2" }))).toBe("already-exists:site-taken");
+    expect(await refusal(act("adm2", "request", { host: "learn.cis.edu.eg" }))).toBe("already-exists:site-taken");
   });
   it("changes only Darsi's identity on an approved address, without connecting again", async () => {
     await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
@@ -223,14 +299,16 @@ describe("approving an address (platform admins)", () => {
     expect(await refusal(act("root", "identity", { host: "nothing.darsiai.org" }))).toBe("failed-precondition:site-state");
   });
   it("refuses a request with a reason; the address is free again and can still be approved", async () => {
-    await act("adm", "request", { host: "cis.darsiai.org" });
-    const r = await act("root", "refuse", { host: "cis.darsiai.org", reason: "Please ask for an address with your institute's short name" });
+    await act("adm", "request", { host: "learn.cis.edu.eg" });
+    const first = siteDoc("learn.cis.edu.eg")?.proof;
+    const r = await act("root", "refuse", { host: "learn.cis.edu.eg", reason: "Please ask for an address with your institute's short name" });
     expect(r.site).toMatchObject({ status: "refused", refusedReason: "Please ask for an address with your institute's short name" });
-    expect(await refusal(act("root", "refuse", { host: "cis.darsiai.org" }))).toBe("failed-precondition:site-state");
+    expect(await refusal(act("root", "refuse", { host: "learn.cis.edu.eg" }))).toBe("failed-precondition:site-state");
     expect(store.saves).toEqual([]);
-    // Another organization may ask for it now, which replaces the refused request.
-    expect((await act("adm2", "request", { host: "cis.darsiai.org" })).site).toMatchObject({ orgId: "o2", status: "requested", refusedReason: null });
-    expect((await act("root", "approve", { host: "cis.darsiai.org" })).site).toMatchObject({ orgId: "o2", status: "live" });
+    // Another organization may ask for it now, which replaces the refused request, token and all.
+    expect((await act("adm2", "request", { host: "learn.cis.edu.eg" })).site).toMatchObject({ orgId: "o2", status: "requested", refusedReason: null });
+    expect(siteDoc("learn.cis.edu.eg")?.proof).not.toBe(first);
+    expect((await act("root", "approve", { host: "learn.cis.edu.eg" })).site).toMatchObject({ orgId: "o2", status: "live" });
   });
   it("tries again when Storage says the file changed too recently (429)", async () => {
     store.fail429 = 2;
@@ -255,7 +333,25 @@ describe("checking and removing an address", () => {
     await act("adm", "request", { host: "asked.cis.org" });
     expect(await refusal(act("adm", "check", { host: "asked.cis.org" }))).toBe("failed-precondition:site-state");
   });
-  it("disconnects and forgets an address, its entry and its logo copy, and says what couldn't be undone", async () => {
+  it("takes sign-in and file access back as soon as the address no longer points at Darsi, and gives them again when it does", async () => {
+    await act("root", "approve", { host: "learn.cis.edu.eg", orgId: "o1" });
+    expect(google.authorized.has("learn.cis.edu.eg")).toBe(true);
+    // The school's domain lapsed and someone else's DNS took it over.
+    google.answer = { ...WAITING, issues: ["learn.cis.edu.eg points at elsewhere.example.net, not darsi-f0685.web.app."] };
+    db.docs.set("sites/learn.cis.edu.eg", { ...siteDoc("learn.cis.edu.eg"), checkedAt: 0 });
+    const r = await act("adm", "check", { host: "learn.cis.edu.eg" });
+    expect(r.site).toMatchObject({ status: "connecting", steps: { dns: "wait", auth: "wait", cors: "wait" } });
+    expect(google.authorized.has("learn.cis.edu.eg")).toBe(false);
+    expect(google.origins.has("learn.cis.edu.eg")).toBe(false);
+    expect(granted()).toEqual([]);
+    // Still approved: phones there keep the organization's look, and it comes back by itself.
+    expect(published().sites["learn.cis.edu.eg"]).toBeTruthy();
+    google.answer = ALL_OK;
+    await sites.checkSites();
+    expect(siteDoc("learn.cis.edu.eg")).toMatchObject({ status: "live", steps: LIVE_STEPS });
+    expect(google.authorized.has("learn.cis.edu.eg")).toBe(true);
+  });
+  it("disconnects and forgets an address, its entry, its sign-in and its logo copy, and says what couldn't be undone", async () => {
     await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
     await act("root", "approve", { host: "delta.darsiai.org", orgId: "o2" });
     google.warnings = ["Hosting: 500 Internal error"];
@@ -263,14 +359,26 @@ describe("checking and removing an address", () => {
     expect(r).toEqual({ site: null, warnings: ["Hosting: 500 Internal error"] });
     expect(google.calls).toContain("disconnect cis.darsiai.org");
     expect(siteDoc("cis.darsiai.org")).toBeUndefined();
+    expect(google.authorized.has("cis.darsiai.org")).toBe(false);
+    expect(google.authorized.has("delta.darsiai.org")).toBe(true);
+    expect(granted()).toEqual(["delta.darsiai.org"]);
     expect(Object.keys(published().sites)).toEqual(["delta.darsiai.org"]);
     expect([...store.files.keys()].filter((k) => k.startsWith("content/sites/"))).toEqual([]);
     expect(audits.at(-1)).toMatchObject({ action: "removeSite", data: { host: "cis.darsiai.org", warnings: ["Hosting: 500 Internal error"] } });
     // A request is only forgotten: nothing was connected.
     await act("adm", "request", { host: "asked.cis.org" });
-    google.calls.length = 0; google.warnings = [];
+    google.calls.length = 0; google.warnings = []; google.syncs = 0;
     expect(await act("root", "remove", { host: "asked.cis.org" })).toEqual({ site: null, warnings: [] });
     expect(google.calls).toEqual([]);
+    expect(google.syncs).toBe(0);
+    // Sign-in that couldn't be taken back is said too; Darsi keeps it listed, so the next run takes it out.
+    google.syncErrors = ["Authentication: 503 Backend error"];
+    expect((await act("root", "remove", { host: "delta.darsiai.org" })).warnings).toEqual(["Authentication: 503 Backend error"]);
+    expect(granted()).toEqual(["delta.darsiai.org"]);
+    google.syncErrors = [];
+    await sites.checkSites();
+    expect(google.authorized.has("delta.darsiai.org")).toBe(false);
+    expect(granted()).toEqual([]);
   });
   it("never brings back an address removed while it was being checked", async () => {
     await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
@@ -278,6 +386,38 @@ describe("checking and removing an address", () => {
     google.during = () => db.docs.delete("sites/cis.darsiai.org");
     await expect(act("root", "check", { host: "cis.darsiai.org" })).resolves.toBeTruthy();
     expect(siteDoc("cis.darsiai.org")).toBeUndefined();
+  });
+  it("takes out an address Darsi gave sign-in to that nothing lists any more, whatever left it there", async () => {
+    // A run that stopped halfway, or a write that raced another: the address is still in Google's lists.
+    db.docs.set("config/siteAccess", { hosts: ["gone.school.org"], lockUntil: 0 });
+    google.authorized.add("gone.school.org"); google.origins.add("gone.school.org");
+    google.authorized.add("manual.example.com");
+    await sites.checkSites();
+    expect(google.authorized.has("gone.school.org")).toBe(false);
+    expect(google.origins.has("gone.school.org")).toBe(false);
+    // What Darsi didn't put there stays.
+    expect(google.authorized.has("manual.example.com")).toBe(true);
+    expect(granted()).toEqual([]);
+  });
+  it("takes sign-in from an organization's address that has no right to it, even one added by hand", async () => {
+    google.answer = WAITING;
+    await act("root", "approve", { host: "learn.cis.edu.eg", orgId: "o1" });
+    google.authorized.add("learn.cis.edu.eg"); google.origins.add("learn.cis.edu.eg");
+    expect(granted()).toEqual([]);
+    await sites.checkSites();
+    expect(google.authorized.has("learn.cis.edu.eg")).toBe(false);
+    expect(google.origins.has("learn.cis.edu.eg")).toBe(false);
+  });
+  it("waits for another run of the access lists, and says so if it can't get its turn", async () => {
+    db.docs.set("config/siteAccess", { hosts: [], lockUntil: Date.now() + 10 * 60_000 });
+    const run = sites.syncSiteAccess();
+    await vi.runAllTimersAsync();
+    expect(await run).toEqual(["Busy: another change to web addresses is being applied. This one follows within 15 minutes."]);
+    expect(google.syncs).toBe(0);
+    // A lock left by a run that crashed long ago is taken.
+    db.docs.set("config/siteAccess", { hosts: [], lockUntil: Date.now() - 1 });
+    expect(await sites.syncSiteAccess()).toEqual([]);
+    expect(google.syncs).toBe(1);
   });
   it("publishes a site without a logo when the organization has none, or its file is gone", async () => {
     db.docs.set("orgs/o1", { name: "CIS Training Platform", status: "active", brand: { logo: "orgs/o1/brand/logo-missing99.png", v: 2 } });
@@ -306,26 +446,37 @@ describe("sitesJob", () => {
   it("moves the old config/sites list in, checks it, publishes, and drops the list", async () => {
     db.docs.set("orgs/o1", { ...db.docs.get("orgs/o1"), site: { host: "cis.darsiai.org", darsi: true } });
     db.docs.set("config/sites", { list: [{ host: "cis.darsiai.org", orgId: "o1" }, { host: "gone.darsiai.org", orgId: "o9" }], updatedBy: "root" });
-    expect(await sites.checkSites()).toEqual({ imported: 1, checked: 1, live: 1 });
+    expect(await sites.checkSites()).toEqual({ imported: 1, checked: 1, live: 1, errors: [] });
     expect(siteDoc("cis.darsiai.org")).toMatchObject({ orgId: "o1", status: "live", darsi: true, approvedBy: "root" });
     expect(siteDoc("gone.darsiai.org")).toBeUndefined();
     expect(db.docs.get("config/sites")).toBeUndefined();
     expect(Object.keys(published().sites)).toEqual(["cis.darsiai.org"]);
   });
-  it("checks addresses that aren't live yet every run, live ones once a day, and never requests", async () => {
+  it("checks addresses that aren't live yet every run, live ones every hour, and never requests", async () => {
     google.answer = WAITING;
     await act("root", "approve", { host: "learn.cis.edu.eg", orgId: "o1" });
     google.answer = ALL_OK;
     await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
-    await act("adm2", "request", { host: "delta.darsiai.org" });
+    await act("adm2", "request", { host: "learn.delta.edu.eg" });
     google.calls.length = 0; store.saves.length = 0;
-    expect(await sites.checkSites()).toEqual({ imported: 0, checked: 1, live: 2 });
+    expect(await sites.checkSites()).toEqual({ imported: 0, checked: 1, live: 2, errors: [] });
     expect(google.calls).toEqual(["connect learn.cis.edu.eg"]);
     expect(siteDoc("learn.cis.edu.eg")?.status).toBe("live");
     expect(store.saves).toEqual([]);
     google.calls.length = 0;
-    await sites.checkSites(Date.now() + 25 * 3600_000);
+    await sites.checkSites(Date.now() + 61 * 60_000);
     expect(google.calls.sort()).toEqual(["connect cis.darsiai.org", "connect learn.cis.edu.eg"]);
+  });
+  it("gives an address approved before ownership tokens one, and reads an old one under darsiai.org as owned", async () => {
+    db.docs.set("sites/old.cis.edu.eg", { orgId: "o1", status: "live", steps: { dns: "ok", hosting: "ok", cert: "ok", auth: "ok", cors: "ok" }, checkedAt: 0 });
+    db.docs.set("sites/cis.darsiai.org", { orgId: "o1", status: "live", steps: { dns: "ok", hosting: "ok", cert: "ok", auth: "ok", cors: "ok" }, checkedAt: Date.now() });
+    google.answers["old.cis.edu.eg"] = UNPROVED;
+    await sites.checkSites();
+    expect(google.proofs["old.cis.edu.eg"]).toMatch(/^[0-9a-f]{32}$/);
+    expect(siteDoc("old.cis.edu.eg")).toMatchObject({ proof: google.proofs["old.cis.edu.eg"], status: "connecting" });
+    expect(readSiteDoc("cis.darsiai.org", siteDoc("cis.darsiai.org"))?.steps?.owner).toBe("ok");
+    expect(google.authorized.has("cis.darsiai.org")).toBe(true);
+    expect(google.authorized.has("old.cis.edu.eg")).toBe(false);
   });
 });
 
@@ -375,6 +526,7 @@ describe("following an organization's changes (onOrgSite)", () => {
     google.calls.length = 0;
     await onOrgSite.run(event("o1", last, undefined));
     expect(google.calls).toEqual(["disconnect cis.darsiai.org"]);
+    expect(google.authorized.has("cis.darsiai.org")).toBe(false);
     expect(siteDoc("cis.darsiai.org")).toBeUndefined();
     expect(siteDoc("asked.cis.org")).toBeUndefined();
     expect(published().sites).toEqual({});
@@ -403,9 +555,26 @@ describe("the pure parts", () => {
     expect(hostingCheck({ hostState: "HOST_ACTIVE", ownershipState: "OWNERSHIP_ACTIVE", cert: { state: "CERT_EXPIRING_SOON" } }).cert).toBe("ok");
   });
   it("is live only when every step is done, and a problem when one failed", () => {
-    expect(statusOf({ dns: "ok", hosting: "ok", cert: "ok", auth: "ok", cors: "ok" })).toBe("live");
-    expect(statusOf({ dns: "wait", hosting: "ok", cert: "wait", auth: "ok", cors: "ok" })).toBe("connecting");
-    expect(statusOf({ dns: "wait", hosting: "ok", cert: "wait", auth: "error", cors: "ok" })).toBe("problem");
+    expect(statusOf({ owner: "ok", dns: "ok", hosting: "ok", cert: "ok", auth: "ok", cors: "ok" })).toBe("live");
+    expect(statusOf({ owner: "wait", dns: "ok", hosting: "ok", cert: "ok", auth: "ok", cors: "ok" })).toBe("connecting");
+    expect(statusOf({ owner: "ok", dns: "wait", hosting: "ok", cert: "wait", auth: "ok", cors: "ok" })).toBe("connecting");
+    expect(statusOf({ owner: "ok", dns: "wait", hosting: "ok", cert: "wait", auth: "error", cors: "ok" })).toBe("problem");
+  });
+  it("gives sign-in only to an approved address with its ownership record that points at Darsi", () => {
+    const site = (status: string, steps: Record<string, string> | null) => readSiteDoc("learn.cis.edu.eg", { orgId: "o1", status, steps })!;
+    expect(hasAccess(site("live", LIVE_STEPS))).toBe(true);
+    expect(hasAccess(site("problem", { ...LIVE_STEPS, cert: "error" }))).toBe(true);
+    expect(hasAccess(site("connecting", { ...LIVE_STEPS, owner: "wait" }))).toBe(false);
+    expect(hasAccess(site("connecting", { ...LIVE_STEPS, dns: "wait" }))).toBe(false);
+    expect(hasAccess(site("requested", null))).toBe(false);
+    expect(hasAccess(site("refused", LIVE_STEPS))).toBe(false);
+  });
+  it("plans the access lists: adds and drops, keeps the rest in place, and says when nothing changes", () => {
+    expect(planList(["localhost", "darsiai.org", "old.org"], ["new.org"], ["old.org"])).toEqual(["localhost", "darsiai.org", "new.org"]);
+    expect(planList(["darsiai.org", "new.org"], ["new.org"], ["old.org"])).toBeNull();
+    const cors = [{ origin: ["https://darsiai.org", "https://old.org"], method: ["GET"], maxAgeSeconds: 60 }];
+    expect(planCors(cors, ["https://new.org"], ["https://old.org"])).toEqual([{ origin: ["https://darsiai.org", "https://new.org"], method: ["GET"], maxAgeSeconds: 60 }]);
+    expect(planCors(cors, ["https://old.org"], [])).toBeNull();
   });
   it("adds an origin to the bucket's CORS list once, keeping the rest, and takes it out again", () => {
     const cors = [{ origin: ["https://darsiai.org"], method: ["GET", "HEAD"], maxAgeSeconds: 3600 }];
@@ -427,8 +596,9 @@ describe("the pure parts", () => {
     expect(readSiteDoc("h.org", { status: "nope", orgId: "o1" })).toBeNull();
     expect(readSiteDoc("h.org", { status: "live" })).toBeNull();
     expect(readSiteDoc("h.org", { status: "live", orgId: "o1", steps: { dns: "ok", cert: "bad" } })).toMatchObject({
-      host: "h.org", orgName: "o1", darsi: true, steps: { dns: "ok", hosting: "todo", cert: "todo", auth: "todo", cors: "todo" }, records: null,
+      host: "h.org", orgName: "o1", darsi: true, steps: { owner: "todo", dns: "ok", hosting: "todo", cert: "todo", auth: "todo", cors: "todo" }, records: null, proof: null,
     });
+    expect(readSiteDoc("h.org", { status: "live", orgId: "o1", proof: "<script>" })?.proof).toBeNull();
   });
   it("reads the old config/sites list, one entry per host", () => {
     expect(readLinks([{ host: "b.org", orgId: "o2" }, { host: "b.org", orgId: "o3" }, { host: "", orgId: "x" }, "junk", { host: "a.org", orgId: "o1" }]))

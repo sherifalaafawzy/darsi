@@ -32,32 +32,40 @@ describe("TUTOR_ORIGINS", () => {
 });
 
 describe("organization addresses outside the wildcard (siteOrigins)", () => {
-  it("asks once per address, keeps the answer, and never asks about something that can't be a site", async () => {
-    const asked: string[] = [];
-    let t = 0;
-    const allowed = siteOrigins(async (host) => { asked.push(host); return host === "learn.cis.edu.eg"; }, () => t);
-    expect(await allowed("https://learn.cis.edu.eg")).toBe(true);
+  it("reads the list once, again every two minutes, and never for something that can't be a site", async () => {
+    let reads = 0, t = 0;
+    const list = ["learn.cis.edu.eg"];
+    const allowed = siteOrigins(async () => { reads++; return [...list]; }, () => t);
     expect(await allowed("https://learn.cis.edu.eg")).toBe(true);
     expect(await allowed("https://other.school.org")).toBe(false);
     for (const bad of [undefined, "http://learn.cis.edu.eg", "https://learn.cis.edu.eg:8443", "https://darsiai.org", "https://x.web.app", "https://10.0.0.1", "null"]) {
       expect(await allowed(bad), String(bad)).toBe(false);
     }
-    expect(asked).toEqual(["learn.cis.edu.eg", "other.school.org"]);
-    // A refusal is kept a minute, an approval five; then asked again.
-    t = 61_000;
-    await allowed("https://other.school.org");
-    await allowed("https://learn.cis.edu.eg");
-    expect(asked).toEqual(["learn.cis.edu.eg", "other.school.org", "other.school.org"]);
-    t = 301_000;
-    await allowed("https://learn.cis.edu.eg");
-    expect(asked.at(-1)).toBe("learn.cis.edu.eg");
+    expect(reads).toBe(1);
+    // Made-up origins never cause a read, however many.
+    for (let i = 0; i < 100; i++) await allowed(`https://made-up-${i}.org`);
+    expect(reads).toBe(1);
+    // Two minutes on, the list is read again: a removed address is refused, a new one let in.
+    list.splice(0, 1, "other.school.org");
+    t = 121_000;
+    expect(await allowed("https://learn.cis.edu.eg")).toBe(false);
+    expect(await allowed("https://other.school.org")).toBe(true);
+    expect(reads).toBe(2);
   });
-  it("asks at most 30 times a minute, and refuses when the lookup fails", async () => {
-    let n = 0;
-    const allowed = siteOrigins(async () => { n++; return true; }, () => 0);
-    for (let i = 0; i < 40; i++) await allowed(`https://made-up-${i}.org`);
-    expect(n).toBe(30);
-    expect(await allowed("https://made-up-99.org")).toBe(false);
+  it("reads once for callers arriving together, keeps the last list when a read fails, and tries again soon", async () => {
+    let reads = 0, fail = false, t = 0;
+    const allowed = siteOrigins(async () => { reads++; if (fail) throw new Error("offline"); return ["learn.cis.edu.eg"]; }, () => t);
+    expect(await Promise.all([1, 2, 3].map(() => allowed("https://learn.cis.edu.eg")))).toEqual([true, true, true]);
+    expect(reads).toBe(1);
+    fail = true; t = 121_000;
+    expect(await allowed("https://learn.cis.edu.eg")).toBe(true);
+    expect(reads).toBe(2);
+    t = 130_000;
+    await allowed("https://learn.cis.edu.eg");
+    expect(reads).toBe(2);
+    t = 137_000;
+    await allowed("https://learn.cis.edu.eg");
+    expect(reads).toBe(3);
     const broken = siteOrigins(async () => { throw new Error("offline"); });
     expect(await broken("https://learn.cis.edu.eg")).toBe(false);
   });

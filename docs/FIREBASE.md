@@ -212,7 +212,7 @@ The demo script writes the demo admin's, a teacher's and a student's logins to `
 
 ## 8b. Organization sites (custom web addresses)
 
-TECHNICAL.md "Organization sites (custom web addresses)" has the design. An organization can have its own address, such as cis.darsiai.org: the same Hosting site and build answer there, and the app shows that organization's name and logo, with or without Darsi's identity.
+TECHNICAL.md "Organization sites (custom web addresses)" has the design. An organization can have its own address, such as learn.school.edu.eg: the same Hosting site and build answer there, and the app shows that organization's name and logo, with or without Darsi's identity.
 
 ### Deploy (once)
 
@@ -223,20 +223,19 @@ npx firebase deploy --only functions:manageSite,functions:setOrgSite,functions:o
 npx firebase deploy --only hosting
 ```
 
-Then the voice relay (section 9, "The tutor"), so it lets in approved addresses outside darsiai.org by itself; its `TUTOR_ORIGINS` stays `https://darsiai.org,https://*.darsiai.org`. Storage's rules don't change (`content/` is already public). `sitesJob` runs every 15 minutes; its first run moves the old `config/sites` list (cis.darsiai.org) into `sites/{host}`. To run it at once: `gcloud scheduler jobs run firebase-schedule-sitesJob-europe-west1 --location=europe-west1 --project=darsi-f0685 --account=sherifalaafawzy@gmail.com`.
-
-**Once, in Cloudflare:** the wildcard record that points every address under darsiai.org at Hosting. Either `node scripts/connect-site.mjs --wildcard` (with `CLOUDFLARE_API_TOKEN`, a token with DNS edit on darsiai.org, or `CLOUDFLARE_API_KEY` and `CLOUDFLARE_EMAIL`, in the environment; `--dry-run` reads only), or by hand: darsiai.org → DNS → Add record → CNAME, name `*`, target `darsi-f0685.web.app`, proxy status **DNS only** (Hosting issues each address's certificate itself, so Cloudflare's proxy must stay off). Explicit records (www, cis) keep working as they are.
+Then the voice relay (section 9, "The tutor"), so it lets in approved addresses outside darsiai.org by itself; its `TUTOR_ORIGINS` stays `https://darsiai.org,https://*.darsiai.org`. Storage's rules don't change (`content/` is already public). `sitesJob` runs every 15 minutes (live addresses are checked hourly). To run it at once: `gcloud scheduler jobs run firebase-schedule-sitesJob-europe-west1 --location=europe-west1 --project=darsi-f0685 --account=sherifalaafawzy@gmail.com`. Nothing is needed in Cloudflare: there is no wildcard record.
 
 ### Add a site
 
-1. **The organization asks:** its admin opens Admin → **Web address**, types the address (`school.darsiai.org`, or one of its own such as `learn.school.edu`) and taps **Ask for this address**. Or a platform admin adds one directly: Web addresses → **Add an address**.
-2. **A platform admin approves:** Web addresses (`/super/domains`; Platform says how many wait) → **Approve and connect**, with **Show Darsi's identity** on (the organization's name and logo with "with Darsi") or off (no Darsi name or mark in the app). That connects it: the Hosting custom domain, the sign-in domain and Storage's CORS, as the functions' service account. **Refuse** takes an optional reason the organization sees.
-3. **DNS:** an address under darsiai.org needs nothing (the wildcard covers it). For any other, the organization's admin sees the change to make (usually a CNAME to `darsi-f0685.web.app`) and passes it to whoever manages that domain's DNS.
-4. **It turns live by itself**, usually within an hour under darsiai.org and a few hours elsewhere: `sitesJob` checks every 15 minutes, and **Check now** checks at once. Until the certificate is out, the address answers with a certificate error. Renaming the organization or changing its logo republishes `content/sites.json` by itself (`onOrgSite`).
+1. **The organization asks:** its admin opens Admin → **Web address**, types an address under its own domain (`learn.school.edu`, not `school.edu` itself) and taps **Ask for this address**. The panel then shows two DNS records to pass to whoever manages that domain's DNS: the ownership record (`_darsi.<address>`, TXT, `darsi-site=<token>`) and a CNAME to `darsi-f0685.web.app`. They can be added while the request waits.
+2. **A platform admin approves:** Web addresses (`/super/domains`; Platform says how many wait) → **Approve and connect**, with **Show Darsi's identity** on (the organization's name and logo with "with Darsi") or off (no Darsi name or mark in the app). **Refuse** takes an optional reason the organization sees. Approving claims nothing by itself: Darsi adds the address to Hosting once the ownership record is there, and allows signing in there only while the CNAME points at Darsi.
+3. **It turns live by itself**, usually within a few hours of the records being in place: `sitesJob` checks every 15 minutes, and **Check now** checks at once. Until the certificate is out, the address answers with a certificate error. If either record goes later, signing in there stops at the next hourly check. Renaming the organization or changing its logo republishes `content/sites.json` by itself (`onOrgSite`).
 
-**Remove the address** (on its card) disconnects it: Hosting (kept there 30 days), the sign-in domain and CORS; DNS is left alone. Anything that couldn't be undone is listed, to finish in the Firebase console.
+**An address under darsiai.org** is only a platform admin's to add (Web addresses → **Add an address**); it needs no ownership record, but its card shows the CNAME to add in Cloudflare (darsiai.org → DNS → Add record: CNAME, the address's name, target `darsi-f0685.web.app`, proxy status **DNS only**, since Hosting issues the certificate itself). Names such as login, support or api are kept for Darsi.
 
-`node scripts/connect-site.mjs <host>` still does the steps by hand (Cloudflare CNAME, Hosting, Auth, CORS), as a fallback; the app no longer needs it.
+**Remove the address** (on its card) disconnects it: Hosting (kept there 30 days), the sign-in domain and CORS; DNS is left alone. Anything that couldn't be undone is listed; `sitesJob` tries it again.
+
+`node scripts/connect-site.mjs <host>` still does the steps by hand as a fallback; the app no longer needs it, and the next check takes sign-in away again from an address that shouldn't have it.
 
 ### Check it works
 
