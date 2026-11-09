@@ -420,7 +420,7 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
       - On the local stack, as an org admin and as a platform admin, in English and in Arabic at 375 px: asked for two addresses, approved both (identity off on one), saw the external one's CNAME, both turned live, removed one (Hosting, sign-in and CORS undone in the stand-in), and added one directly.
     - **Deploying it again needs:** rules, the four site functions (`manageSite`, `setOrgSite`, `onOrgSite`, `sitesJob`), Hosting, and the relay (the same `TUTOR_ORIGINS`).
     - Item 34 replaced the DNS gate with ownership records and sign-in that follows DNS.
-34. Done (2026-11-10, uncommitted, not deployed): **the security pass on web addresses.** The user asked "do you see any security issues?" and said organizations will add their own domains and subdomains, not darsiai.org; then "Yes, fix them" for all six findings. TECHNICAL.md "Organization sites"; docs/FIREBASE.md §8b.
+34. Done and deployed (2026-11-09, commit c489ee78; see "Firebase project" below): **the security pass on web addresses.** The user asked "do you see any security issues?" and said organizations will add their own domains and subdomains, not darsiai.org; then "Yes, fix them" for all six findings. TECHNICAL.md "Organization sites"; docs/FIREBASE.md §8b.
     - **Sign-in follows DNS:** the authorized domain and the CORS origin are given only while the address has its ownership record and its CNAME to `darsi-f0685.web.app` (`hasAccess`), and taken back at the next check when either goes. Darsi looks DNS up itself (`lookupDns`, Google's resolvers): Hosting doesn't look at an active domain again. Live addresses are checked hourly (was daily).
     - **One sync, with a sweep and a lock:** `syncSiteAccess` (sites.ts) / `syncAccess` (domains.ts) set both lists as a whole from `sites/*`, take out every other organization address and everything Darsi put there before (`config/siteAccess.hosts`, also the lock), never touch darsiai.org, localhost or Hosting's entries, and write CORS conditionally on the bucket's metageneration. Every change runs it; `sitesJob` runs it every 15 minutes.
     - **Ownership record:** each request has a token (`proof`); the organization adds `_darsi.<address>` TXT `darsi-site=<token>` and the CNAME, shown on its panel from the moment it asks. Hosting gets the address only after the record is there, so approving claims nothing for an organization that doesn't run the domain. A platform admin's own addition, or a takeover of another organization's request, gets a new token.
@@ -430,7 +430,7 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - **Checked:**
       - functions 400 tests (sites 41, domains 12, origins and relay updated); web domains and sites tests 35, the full web suite 2,379 of 2,380 (`app-routes` "after signing out with unsent work" failed once under load and passes alone); `tsc` for both; `lint:css`; e2e 30/30 on a private build. Startup 8 files, 224.0 KB gzipped, as the live build (a first try put the kept names in the startup chunk; moved to the functions).
       - On the local stack with the stand-in (Playwright, 375 px and 1280 px): an org admin's darsiai.org and domain-itself asks refused with their messages; a request showed both records; approving added nothing to Hosting; the records arriving connected it (Hosting, sign-in, CORS) and it turned live; the DNS going away took sign-in and CORS back; Remove took everything out; the panel in Arabic at 375 px, right to left, no sideways scroll.
-    - **Deploy needs:** the four site functions (`manageSite`, `setOrgSite`, `onOrgSite`, `sitesJob`) after `npm ci --prefix functions` (tldts is new) and `npm run build --prefix functions`, Hosting, and the relay (same `TUTOR_ORIGINS`). Rules and indexes don't change. After deploying, run `sitesJob` once: CIS's address gets checked with Darsi's own lookup, and the sync adopts it.
+    - **Deploying it again needs:** the four site functions (`manageSite`, `setOrgSite`, `onOrgSite`, `sitesJob`) after `npm ci --prefix functions` (tldts) and `npm run build --prefix functions`, Hosting, and the relay (same `TUTOR_ORIGINS`). Rules and indexes don't change.
 9. Not started: the security review. The user asked for static scanning of the rules, functions and client, plus a pentest of the deployed URL with `H:\htdocs\pentest-lab` (allowlist-gated; add only darsi-f0685 hosts). It is deferred until the code is finished.
 
 ### Firebase project (live): darsi-f0685
@@ -652,6 +652,17 @@ Build for low-resource phones (the user asked for it; see the brand book). No li
     - Both addresses serve the new build. A guest (Pixel 7) sent to `/super/domains` lands on `/` with no Firebase or Domains chunk and no errors; cis.darsiai.org keeps its title.
   - Not checked live: the Web address panel and `/super/domains`, which need an org-admin and a platform-admin sign-in (the user's).
   - The wildcard DNS record doesn't exist, and isn't needed since item 34.
+- Deployed 2026-11-09 (item 34, commit c489ee78, with the user's go-ahead), from `H:/tmp/darsi-final`:
+  1. Functions `manageSite`, `setOrgSite`, `onOrgSite` and `sitesJob`.
+  2. Hosting (`index-C6u-aFNh.js`).
+  3. The relay, revision `darsi-tutor-00011-tws`, with the same `TUTOR_ORIGINS`.
+  4. `sitesJob` run once by hand (22:56 UTC): cis.darsiai.org passed Darsi's own DNS lookup (all six steps done, still live), and `config/siteAccess` adopted it (`hosts: ["cis.darsiai.org"]`, lock released).
+  - Checked live:
+    - Auth's authorized domains and the bucket's CORS list are as before (Darsi's own entries and localhost untouched, cis.darsiai.org in both).
+    - `manageSite` and `setOrgSite` answer "Sign in first"; anonymous reads of `sites` and `config/siteAccess` answer 403.
+    - The relay accepts darsiai.org and cis.darsiai.org and refuses other websites (401).
+    - Both addresses serve the new build. A guest (Pixel 7) sent to `/super/domains` lands on `/` with no Firebase or Domains chunk and no errors; cis.darsiai.org keeps its title.
+  - Not checked live: a school's own domain end to end (none has asked yet), and the two screens signed in (the user's).
 - Created 2026-11-08 (with the user's go-ahead): **the CIS organization**, "CIS Training Platform" (`orgs/iQfVWNDh1bSPOVxRwHBg`, type university, Egypt, with its logo). The user is its platform admin, and it has no org admin yet.
   - **Accounts:** 203, with a script that does what `createMembers` does (claims, profile, `mustChangePassword`, audit).
     - Faculty and assistant staff are teachers, in the groups «هيئة التدريس» and «الهيئة المعاونة».
