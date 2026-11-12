@@ -1,11 +1,12 @@
 /**
- * Search and AI engines (TECHNICAL.md "Search and AI engines"): Hosting sends /, /robots.txt, /sitemap.xml and
+ * Search and AI engines (TECHNICAL.md "Search and AI engines"): Hosting sends /, /sitemap.xml and
  * /llms.txt here, for darsiai.org and for every organization's own address (the address comes in X-Forwarded-Host).
  * - /: the app's shell (app.html, read from Hosting itself, so it is always this release's) with this address's title,
  *   description, canonical, language alternates (?lang=ar), social card, JSON-LD and the page's text in #root
  *   (seoCore.ts). The security headers Hosting puts on app.html are passed on. Phones that already have the app never
  *   come here: the service worker answers / from its own copy.
- * - robots.txt, sitemap.xml, llms.txt: this address's own.
+ * - sitemap.xml, llms.txt: this address's own. (robots.txt is a static file: the Functions Framework answers that path
+ *   itself with an empty 404, before any function code runs.)
  * Reads are kept in memory for a minute (the shell, sites.json, the catalog, a homepage), so a visit costs no
  * Firestore read and at most a few Storage reads a minute per instance. Darsi's own addresses and an organization's
  * that isn't in sites.json get Darsi's page; an unknown address gets Darsi's page with Darsi's canonical.
@@ -16,7 +17,7 @@ import { onRequest } from "firebase-functions/v2/https";
 import { checkPage, pagePath, type OrgPage } from "./shared/page.js";
 import { isDarsiHost, siteFor, type SitesFile } from "./shared/sites.js";
 import { bucket, publicFileUrl } from "./storage.js";
-import { DARSI_URL, darsiSeo, inject, langOf, llms, orgSeo, robots, sitemap, type CatalogUnit, type Seo } from "./seoCore.js";
+import { DARSI_URL, darsiSeo, inject, langOf, llms, orgSeo, sitemap, type CatalogUnit, type Seo } from "./seoCore.js";
 
 const SITE = defineString("SITE_URL", { default: "https://darsiai.org" });
 const TTL = 60_000;
@@ -72,10 +73,10 @@ export const seoPage = onRequest({ maxInstances: 5, memory: "256MiB", timeoutSec
   const path = req.path || "/";
   const lang = langOf(req.query.lang);
   try {
-    if (path === "/robots.txt" || path === "/sitemap.xml" || path === "/llms.txt") {
+    // Not robots.txt: the Functions Framework answers that path itself, before this code (Hosting serves a static one).
+    if (path === "/sitemap.xml" || path === "/llms.txt") {
       const { seo, base } = await seoFor(host, lang);
       res.set("Cache-Control", "public, max-age=3600");
-      if (path === "/robots.txt") { res.type("text/plain").send(robots(base)); return; }
       if (path === "/sitemap.xml") { res.type("application/xml").send(sitemap(base, ["/privacy", "/terms", "/licences"])); return; }
       res.type("text/plain; charset=utf-8").send(llms(seo, base));
       return;

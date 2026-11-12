@@ -3,7 +3,8 @@
  * The app draws its pages in the browser, so a crawler that reads only the first HTML found nothing but a shell. For
  * each address (darsiai.org, and every organization's own) the home page now comes with its own title, description,
  * canonical address, language alternates, social card, schema.org data (JSON-LD), and the page's real text inside
- * #root, which the app replaces when it starts. robots.txt, sitemap.xml and llms.txt are answered per address too.
+ * #root, which the app replaces when it starts. sitemap.xml and llms.txt are answered per address too
+ * (robots.txt is a static file in apps/web/public: the Functions Framework answers that path itself).
  * Everything here is escaped text: nothing an organization types is ever markup.
  */
 import { BUILTIN_TRACKS } from "./shared/tracks.js";
@@ -166,16 +167,6 @@ export function inject(shell: string, s: Seo): string {
   out = out.replace(/<html[^>]*>/i, `<html lang="${s.lang}" dir="${s.dir}">`);
   out = out.replace(/<div id="root"><\/div>/, `<div id="root">${s.body}</div>`);
   return out;
-}
-
-/** robots.txt for an address: the public pages may be read, staff screens and the API not, and where the sitemap is. */
-export function robots(base: string): string {
-  return [
-    "# Darsi: the public pages may be indexed and quoted. Staff screens, Firebase's own paths and the API are not pages.",
-    "User-agent: *", "Allow: /",
-    ...["/super", "/admin", "/teach", "/org", "/results", "/__/", "/api/"].map((p) => `Disallow: ${p}`),
-    "", `Sitemap: ${base}/sitemap.xml`, "",
-  ].join("\n");
 }
 
 /** sitemap.xml: the home page in both languages, and the legal pages and licences. */

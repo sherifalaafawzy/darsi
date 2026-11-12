@@ -48,6 +48,12 @@ describe("Hosting's headers (L5)", () => {
     expect(sso).toBeGreaterThanOrEqual(0);
     expect(sso).toBeLessThan(rw.findIndex((r) => r.destination === "/app.html"));
   });
+  it("never send /robots.txt or /favicon.ico to a function: the Functions Framework answers both itself with an empty 404", () => {
+    const rw = site("app").rewrites.filter((r) => r.function);
+    for (const path of ["/robots.txt", "/favicon.ico"]) expect(rw.map((r) => r.source)).not.toContain(path);
+    expect(readFileSync(resolve(process.cwd(), "public/robots.txt"), "utf8")).toMatch(/Disallow: \/super[\s\S]*Sitemap: https:\/\/darsiai\.org\/sitemap\.xml/);
+    expect((fb.hosting as { target: string; ignore: string[] }[]).find((h) => h.target === "app")!.ignore).not.toContain("robots.txt");
+  });
   it("the sign-in callback site serves nothing but the callback: no service worker, no cache, no framing, no referrer", () => {
     const login = site("login");
     expect(login.public).not.toBe(site("app").public);

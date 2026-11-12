@@ -1,8 +1,8 @@
 // Search and AI engines (seo.ts, seoCore.ts): each address's home page carries its own title, description, canonical,
-// language alternates, JSON-LD and real text; robots.txt, sitemap.xml and llms.txt are per address; nothing an
+// language alternates, JSON-LD and real text; sitemap.xml and llms.txt are per address; nothing an
 // organization types becomes markup.
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { darsiSeo, esc, inject, ldJson, llms, orgSeo, robots, sitemap } from "../src/seoCore";
+import { darsiSeo, esc, inject, ldJson, llms, orgSeo, sitemap } from "../src/seoCore";
 import type { OrgPage } from "../src/shared/page";
 
 const SHELL = `<!doctype html><html lang="en"><head><meta name="description" content="old" /><meta property="og:title" content="old" /><title>Darsi — درسي</title><script src="/boot.js"></script></head><body><div id="root"></div><script type="module" src="/assets/index-abc.js"></script></body></html>`;
@@ -56,9 +56,7 @@ describe("what crawlers read", () => {
     expect(esc(`"'<>&`)).toBe("&quot;&#39;&lt;&gt;&amp;");
   });
 
-  it("robots.txt, sitemap.xml and llms.txt name the address they were asked for", () => {
-    expect(robots("https://learn.nile.edu")).toContain("Sitemap: https://learn.nile.edu/sitemap.xml");
-    expect(robots("https://darsiai.org")).toContain("Disallow: /super");
+  it("sitemap.xml and llms.txt name the address they were asked for", () => {
     const map = sitemap("https://learn.nile.edu", ["/privacy"]);
     expect(map).toContain("<loc>https://learn.nile.edu/</loc>");
     expect(map).toContain('hreflang="ar" href="https://learn.nile.edu/?lang=ar"');
@@ -113,7 +111,7 @@ describe("seoPage", () => {
   it("answers Darsi's own address, an unknown one, and the text files", async () => {
     expect((await get("/", "darsiai.org")).body).toContain("<h3>Leading AI at school</h3>");
     expect((await get("/", "unknown.example")).body).toContain('<link rel="canonical" href="https://darsiai.org/" />');
-    expect((await get("/robots.txt", "learn.nile.edu")).body).toContain("Sitemap: https://learn.nile.edu/sitemap.xml");
+    expect((await get("/sitemap.xml", "learn.nile.edu")).body).toContain("<loc>https://learn.nile.edu/</loc>");
     expect((await get("/llms.txt", "darsiai.org", { lang: "ar" })).body.split("\n")[0]).toBe("# درسي");
   });
 });
