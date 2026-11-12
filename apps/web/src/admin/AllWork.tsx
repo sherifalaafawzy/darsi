@@ -9,8 +9,9 @@ import { useTracks } from "../content/settings";
 import type { CatalogEntry, Lesson, Unit } from "../content/types";
 import { finishedAt, sentFor, useAllSubmissions, useLearners, useNames } from "./data";
 import { knownCourse } from "./courseTitles";
-import { refusalText } from "./refusals";
+import { ErrorNote } from "../staff/LoadState";
 import { projectStep, SubmissionCard } from "./SubmissionCard";
+import { Tabs, TabPanel, useTab, type TabDef } from "./Tabs";
 import "../styles/admin.css";
 import "../styles/person.css";
 import "./strings";
@@ -26,12 +27,22 @@ const PAGE = 50;
 /**
  * /super/projects: every project anyone submitted, newest first; the ones waiting for a review by default. "Darsi staff
  * only" is the capstone queue: milestones from learners without a school, who have no teacher to review them.
+ * The views are the page's tabs (admin/Tabs): /super/projects, ?tab=staff, ?tab=all.
  */
 export function ProjectsPage() {
   const { t, L, locale } = useI18n();
-  const [show, setShow] = useState<"waiting" | "staff" | "all">("waiting");
+  // The three views are tabs (?tab=staff, ?tab=all; waiting has no parameter): one list under them, filtered.
+  const TABS: TabDef[] = [{ id: "waiting", label: t("aw.waiting") }, { id: "staff", label: L(CT.staffOnly) }, { id: "all", label: t("aw.all") }];
+  const st = useTab(TABS);
+  const show = st.tab;
+  // "Waiting" and "Darsi staff only" share one query (the second is a filter of the first): going between them reads
+  // nothing; "All projects" is the other read.
   const waiting = show !== "all";
-  const [max, setMax] = useState(PAGE);
+  // "Show more" counts for the tab it was pressed on: another tab (Back and Forward too) starts at one page again.
+  // Worked out while rendering, not in an effect, so a new tab never reads once with the old tab's larger page first.
+  const [more, setMore] = useState({ tab: show, max: PAGE });
+  if (more.tab !== show) setMore({ tab: show, max: PAGE });
+  const max = more.tab === show ? more.max : PAGE;
   const subs = useAllSubmissions(waiting, max);
   const read = subs.data ?? [];
   const list = useMemo(() => (show === "staff" ? read.filter((s) => (s as typeof s & CapFields).queue === "staff") : read), [read, show]);
@@ -49,26 +60,27 @@ export function ProjectsPage() {
       <AppBar title={t("aw.projectsTitle")} />
       <main className="screen wide stack-lg">
         <p className="muted">{t("aw.projectsIntro")}</p>
-        <div className="row-gap" role="group" aria-label={t("aw.projectsTitle")}>
-          <Button size="sm" variant={show === "waiting" ? "primary" : "ghost"} aria-pressed={show === "waiting"} onClick={() => { setShow("waiting"); setMax(PAGE); }}>{t("aw.waiting")}</Button>
-          <Button size="sm" variant={show === "staff" ? "primary" : "ghost"} aria-pressed={show === "staff"} onClick={() => { setShow("staff"); setMax(PAGE); }}>{L(CT.staffOnly)}</Button>
-          <Button size="sm" variant={show === "all" ? "primary" : "ghost"} aria-pressed={show === "all"} onClick={() => { setShow("all"); setMax(PAGE); }}>{t("aw.all")}</Button>
-        </div>
-        {subs.error && <p className="notice err">{refusalText(subs.error, t)}</p>}
-        {!subs.data && !subs.error && <div className="loading" aria-busy="true" />}
-        {subs.data && !list.length && <EmptyState icon="file" title={t("aw.noProjects")} />}
-        {list.map((s) => {
-          const at = lessons.get(s.lessonId);
-          // A course unpublished since can't be loaded: its title from the course sources, not the lesson's id.
-          const known = at ? undefined : knownCourse(s.unitId);
-          return <SubmissionCard key={`${s.uid}/${s.id}`} uid={s.uid} sub={s} lessonTitle={at?.title ?? (known ? L(known.title) : s.lessonId)} step={projectStep(at?.lesson, s.stepId)} onReviewed={subs.reload}
-            who={<p className="muted small">
-              <Link className="person-link" to={`/super/people/${s.uid}`}>{names.data?.[s.uid] || (names.loading && !names.data ? "…" : t("aw.someone"))}</Link>
-              {at && <>{t("common.sep")}{L(at.unit.title)}</>}
-              {s.createdAt && <>{t("common.sep")}{date.format(new Date(s.createdAt.seconds * 1000))}</>}
-            </p>} />;
-        })}
-        {read.length === max && <div><Button variant="secondary" onClick={() => setMax(max + PAGE)}>{t("aw.more")}</Button></div>}
+        <Tabs label={t("aw.projectsTitle")} tabs={TABS}>
+          {/* One panel, named after the open tab: the list is filtered, never remounted (a review being typed stays). */}
+          <TabPanel id={show}>
+            {subs.error && <ErrorNote error={subs.error} />}
+            {!subs.data && !subs.error && <div className="loading" aria-busy="true" />}
+            {subs.data && !list.length && <EmptyState icon="file" title={t("aw.noProjects")} />}
+            {list.map((s) => {
+              const at = lessons.get(s.lessonId);
+              // A course unpublished since can't be loaded: its title from the course sources, not the lesson's id.
+              const known = at ? undefined : knownCourse(s.unitId);
+              return <SubmissionCard key={`${s.uid}/${s.id}`} uid={s.uid} sub={s} lessonTitle={at?.title ?? (known ? L(known.title) : s.lessonId)} step={projectStep(at?.lesson, s.stepId)} onReviewed={subs.reload}
+                who={<p className="muted small">
+                  {/* The person's page opens on their projects, where this one is. */}
+                  <Link className="person-link" to={`/super/people/${s.uid}?tab=projects`}>{names.data?.[s.uid] || (names.loading && !names.data ? "…" : t("aw.someone"))}</Link>
+                  {at && <>{t("common.sep")}{L(at.unit.title)}</>}
+                  {s.createdAt && <>{t("common.sep")}{date.format(new Date(s.createdAt.seconds * 1000))}</>}
+                </p>} />;
+            })}
+            {read.length === max && <div><Button variant="secondary" onClick={() => setMore({ tab: show, max: max + PAGE })}>{t("aw.more")}</Button></div>}
+          </TabPanel>
+        </Tabs>
       </main>
     </>
   );
@@ -130,7 +142,7 @@ export function CertificatesPage() {
           <div className="tile"><span>{t("aw.certCount")}</span><strong>{ready ? num(all.length) : "…"}</strong></div>
           <div className="tile"><span>{t("aw.people")}</span><strong>{ready ? num(new Set(all.map((r) => r.uid)).size) : "…"}</strong></div>
         </section>
-        {fail && <p className="notice err">{fail.message}</p>}
+        {fail && <ErrorNote error={fail} />}
         {!ready && !fail && <div className="loading" aria-busy="true" />}
         {ready && (
           <section className="panel stack">
@@ -159,7 +171,7 @@ function CertRow({ row, trackLabel }: { row: Earned; trackLabel: string }) {
         <Link className="person-link" to={`/super/people/${row.uid}`} dir="auto">{row.label || t("aw.someone")}</Link>
         <Button size="sm" variant="ghost" icon="award" aria-expanded={open} onClick={() => setOpen(!open)}>{t(open ? "aw.hide" : "aw.show")}</Button>
       </div>
-      {open && error && <p className="notice err">{error.message}</p>}
+      {open && error && <ErrorNote error={error} />}
       {open && last && <CertificateCard track={row.unit.track} kicker={t("cert.kicker")} trackLabel={trackLabel} name={row.name || "—"} title={L(row.unit.title)}
         date={new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(new Date(last))} code={certCode(row.unit.id, last, row.uid)} />}
     </article>

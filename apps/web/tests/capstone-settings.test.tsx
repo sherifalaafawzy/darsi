@@ -54,11 +54,44 @@ describe("capstone AI review settings", () => {
     expect(await screen.findByText("Saved. The next milestone sent follows the new limits.")).toBeTruthy();
   });
 
+  it("reads the digits an Arabic or Persian keyboard types, and nothing that only looks like a number", async () => {
+    view("ar");
+    const perDay = await screen.findByLabelText("المراجعات الآلية لكل متعلّم في اليوم") as HTMLInputElement;
+    const calls = screen.getByLabelText("المراجعات الآلية للمنصة كلها في اليوم") as HTMLInputElement;
+    const saveBtn = screen.getByRole("button", { name: "احفظ الحدود" }) as HTMLButtonElement;
+    // Text fields with a numeric keyboard: a number field refuses these digits.
+    expect(perDay.type).not.toBe("number");
+    fireEvent.change(perDay, { target: { value: "٧" } });
+    expect(perDay.value).toBe("7");
+    fireEvent.change(calls, { target: { value: "۲۵۰" } });
+    expect(calls.value).toBe("250");
+    expect(saveBtn.disabled).toBe(false);
+    // "1e1" is not ten, and an empty field is not 0.
+    for (const typed of ["1e1", "", "-3", "٢٫٥"]) {
+      fireEvent.change(perDay, { target: { value: typed } });
+      expect(saveBtn.disabled, typed).toBe(true);
+      expect(perDay.getAttribute("aria-invalid"), typed).toBe("true");
+    }
+    fireEvent.change(perDay, { target: { value: "٥" } });
+    fireEvent.click(saveBtn);
+    await waitFor(() => expect(m.save).toHaveBeenCalledWith({ perDay: 5, maxPerDay: 250, callsPerDay: 20 }));
+  });
+
   it("starts from the defaults when nothing is saved yet, and speaks Arabic with Arabic digits", async () => {
     m.config = undefined; m.today = undefined;
     view("ar");
     expect(await screen.findByText(/^مفعّلة:/)).toBeTruthy();
     expect((screen.getByLabelText("المراجعات الآلية للمنصة كلها في اليوم") as HTMLInputElement).value).toBe("300");
     expect(screen.getByText(/المراجعات الآلية اليوم: ٠/)).toBeTruthy();
+  });
+
+  it("says a refused save in the admin's language (staff/errors.ts), never the server's raw English", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {}); // errorText logs the raw error
+    m.save.mockRejectedValueOnce(Object.assign(new Error("RAW SERVER WORDS"), { code: "functions/permission-denied", details: { reason: "not-super" } }));
+    view();
+    fireEvent.click(await screen.findByRole("button", { name: "Turn AI reviews off" }));
+    expect(await screen.findByText(/^Only platform admins can do that\./)).toBeTruthy();
+    expect(screen.queryByText(/RAW SERVER WORDS/)).toBeNull();
+    vi.restoreAllMocks();
   });
 });

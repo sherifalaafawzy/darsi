@@ -1,10 +1,11 @@
+import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { createReadStream, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, createReadStream, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 import { transformAsync } from "@babel/core";
-import { defineConfig, type Plugin, type Rolldown } from "vite";
+import { defineConfig, loadEnv, type Plugin, type Rolldown } from "vite";
 import react from "@vitejs/plugin-react";
 import legacy from "@vitejs/plugin-legacy";
 import { VitePWA, type VitePWAOptions } from "vite-plugin-pwa";
@@ -17,7 +18,12 @@ const LAB_ENTRY = /labs[\\/]apps[\\/]([\w-]+)[\\/]index\.tsx$/;
  * kept by a runtime cache, or saved with a downloaded course (offline-manifest.json below). `re` matches the same files.
  */
 // WorkBody: the project card's body and its styles, shared by the staff screens and /results (admin/WorkBody.tsx).
-const LAZY_SCREENS = ["Landing", "OrgScreen", "AdminHome", "PersonDetail", "AddPeople", "importer", "Teach", "SuperAdmin", "admin", "Cms", "competencies", "Analytics", "OrgReport", "OrgsAdmin", "OrgCourses", "Super", "Plans", "Upgrade", "Tutor", "Report", "Tour", "Licences", "WorkBody"];
+// Legal: the terms and privacy pages, which most people open once or never.
+const LAZY_SCREENS = ["Landing", "OrgScreen", "AdminHome", "PersonDetail", "AddPeople", "importer", "Teach", "SuperAdmin", "admin", "Cms", "competencies", "Analytics", "OrgReport", "OrgsAdmin", "OrgCourses", "Super", "Plans", "Upgrade", "Tutor", "Report", "Feedback", "Tour", "Licences", "WorkBody", "Legal",
+  // School sign-in: the finder, refusals and the test page (signed out), Me's row, their shared words, and the wizard.
+  "SchoolFinder", "SchoolLink", "ssoWords", "ssoFlow", "SsoSetup",
+  // The homepage builder, and the homepage blocks it shares with the landing page.
+  "PageBuilder", "SiteBlocks"];
 export const ON_DEMAND: { glob: string; re: RegExp }[] = [
   { glob: "**/exceljs*.js", re: /(?:^|\/)exceljs[^/]*\.js$/ },
   // The Firebase SDK (firebase, firebase-extra: Functions, Storage, Messaging) and src/firebase.ts: "firebase-" and the
@@ -39,8 +45,8 @@ export const ON_DEMAND: { glob: string; re: RegExp }[] = [
 ];
 
 type Out = Rolldown.OutputBundle;
-/** Staff code: the admin, results, course editor and organization screens, which learners never open. */
-const STAFF_SRC = /[\\/]src[\\/](?:admin|results|cms|org)[\\/]/;
+/** Staff code: the admin, results, course editor and organization screens and what they share (src/staff), which learners never open. */
+const STAFF_SRC = /[\\/]src[\\/](?:admin|results|cms|org|staff)[\\/]/;
 /**
  * The built files that hold nothing but staff code and that startup never loads (they are not statically reachable from
  * the entry), with the CSS that only they use. The bundler names a shared chunk after one of its modules ("strings",
@@ -59,7 +65,9 @@ export function staffOnly(bundle: Out): Set<string> {
   const out = new Set<string>();
   for (const c of chunks) {
     if (startup.has(c.fileName)) continue;
-    const own = c.moduleIds.filter((id) => !id.startsWith("\0") && !/[\\/]node_modules[\\/]/.test(id));
+    // A stylesheet rides with the code that imports it (src/styles/tabs.css in the chunk of admin/Tabs.tsx): the code
+    // decides. Its built .css file is then left out below, when no other chunk uses it.
+    const own = c.moduleIds.filter((id) => !id.startsWith("\0") && !/[\\/]node_modules[\\/]/.test(id) && !/\.css(?:\?.*)?$/.test(id));
     if (own.length && own.every((id) => STAFF_SRC.test(id))) out.add(c.fileName);
   }
   const users = new Map<string, string[]>();
@@ -233,18 +241,85 @@ const legacyRuntimes = (): Plugin => {
   };
 };
 
-/** Register the service worker as soon as the page is parsed. workbox-window stays a later dynamic import (the update toast). */
+/**
+ * app.html: the same page as index.html, under a second name (TECHNICAL.md "Search and AI engines"). Hosting serves
+ * it for every app address, and doesn't upload index.html at all (firebase.json ignore), so "/" reaches the seoPage
+ * function, which reads app.html and answers with that address's title, description, structured data and text. A
+ * local preview still has index.html. Kept out of the precache: the service worker keeps index.html, which Hosting
+ * answers with app.html's content.
+ */
+const appShell = (): Plugin => {
+  let out = "";
+  return {
+    name: "darsi-app-shell",
+    apply: "build",
+    configResolved(c) { out = resolve(c.root, c.build.outDir); },
+    closeBundle() {
+      const from = join(out, "index.html");
+      if (out && existsSync(from)) copyFileSync(from, join(out, "app.html"));
+    },
+  };
+};
+
+/**
+ * Register the service worker as soon as the page starts (workbox-window stays a later dynamic import: the update toast).
+ * No inline code: the build names the worker on index.html's own <script src="/boot.js"> tag, and public/boot.js
+ * registers what the tag names (`npm run dev` has no worker, and so no attribute). A build whose page has lost that tag
+ * fails here, not later as an app that never works offline.
+ */
+const BOOT_TAG = '<script src="/boot.js"></script>';
+const BOOT_TAG_SW = '<script src="/boot.js" data-sw="/sw.js"></script>';
+export function withSwRegistration(html: string): string {
+  if (html.includes(BOOT_TAG_SW)) return html; // a page that went through here already (the inline version had the same guard)
+  if (!html.includes(BOOT_TAG)) throw new Error(`Darsi: index.html has no ${BOOT_TAG}, so nothing would register the service worker (public/boot.js does it, for "darsi-early-sw" in vite.config.ts).`);
+  return html.replace(BOOT_TAG, BOOT_TAG_SW);
+}
 const earlySw = (): Plugin => ({
   name: "darsi-early-sw",
   apply: "build",
-  transformIndexHtml: {
-    order: "post",
-    handler(html) {
-      if (html.includes('serviceWorker.register("/sw.js")')) return html;
-      return html.replace("</body>", '<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js")</script></body>');
-    },
+  transformIndexHtml: { order: "post", handler: (html) => withSwRegistration(html) },
+});
+
+/**
+ * A production build made without the project's settings still builds: an app with no sign-in and no courses, or one
+ * that looks for emulators nobody runs, and nothing says so until someone opens the deployed site. So `vite build` in
+ * production mode (npm run build, a Hosting deploy) stops before it starts unless every setting below is there and the
+ * emulators are off. Other modes are not checked (the e2e suite builds with --mode e2e and the committed .env.e2e), nor
+ * is `npm run local`, whose build is meant for the emulators and says so with DARSI_LOCAL_BUILD=1.
+ * `env`: the VITE_ settings as Vite loads them for the mode (loadEnv), plus DARSI_LOCAL_BUILD from the shell.
+ */
+export const REQUIRED_ENV = ["VITE_FIREBASE_API_KEY", "VITE_FIREBASE_AUTH_DOMAIN", "VITE_FIREBASE_PROJECT_ID", "VITE_FIREBASE_STORAGE_BUCKET", "VITE_FIREBASE_APP_ID", "VITE_FIREBASE_VAPID_KEY", "VITE_TUTOR_RELAY"] as const;
+export function checkBuildEnv(env: Record<string, string | undefined>, mode: string): void {
+  if (mode !== "production" || env.DARSI_LOCAL_BUILD === "1") return;
+  const missing = REQUIRED_ENV.filter((k) => !env[k]?.trim());
+  const problems = [
+    ...(missing.length ? [`${missing.join(", ")} ${missing.length > 1 ? "are" : "is"} not set`] : []),
+    ...(env.VITE_USE_EMULATORS === "true" ? ["VITE_USE_EMULATORS is true (the built app would look for the Firebase emulators, not the project)"] : []),
+  ];
+  if (problems.length) throw new Error(`Darsi: this production build would not work: ${problems.join("; ")}. Put the project's settings in apps/web/.env.local (apps/web/.env.example lists them) or in the environment. A build for the local emulators sets DARSI_LOCAL_BUILD=1 (npm run local does).`);
+}
+const buildEnv = (): Plugin => ({
+  name: "darsi-build-env",
+  apply: "build",
+  configResolved(config) {
+    const dir = typeof config.envDir === "string" ? config.envDir : config.root;
+    checkBuildEnv({ ...loadEnv(config.mode, dir, "VITE_"), DARSI_LOCAL_BUILD: process.env.DARSI_LOCAL_BUILD }, config.mode);
   },
 });
+
+/**
+ * Which build this is (src/build.ts reads it; usage batches and problem reports carry it): DARSI_BUILD when the release
+ * script gives one (scripts/deploy.mjs), else the commit and today's date (UTC), else "dev" where there is no git.
+ * The date changes the files that hold the stamp from one day to the next: set DARSI_BUILD to build the same bytes again.
+ */
+export function buildStamp(given: string | undefined = process.env.DARSI_BUILD, now = new Date()): string {
+  if (given?.trim()) return given.trim();
+  try {
+    const commit = execSync("git rev-parse --short HEAD", { cwd: fileURLToPath(new URL(".", import.meta.url)), stdio: ["ignore", "pipe", "ignore"], encoding: "utf8" }).trim();
+    if (/^[0-9a-f]{4,40}$/.test(commit)) return `${commit}-${now.toISOString().slice(0, 10).replace(/-/g, "")}`;
+  } catch { /* no git here (a source archive, a container without it) */ }
+  return "dev";
+}
 
 // The push handlers (public/push-sw.js, ~3 KB, no imports) run inside Workbox's sw.js through importScripts. The content
 // hash in the URL changes sw.js whenever they change, so browsers install the update and never reuse a stale HTTP-cached copy.
@@ -296,7 +371,8 @@ export const runtimeCaching: NonNullable<NonNullable<VitePWAOptions["workbox"]>[
 // The service worker answers every page from its precached index.html, with the headers Hosting sent when it was cached
 // (Permissions-Policy decides whether the tutor may use the microphone). Hosting's headers go into index.html's revision,
 // so changing them alone is a new version that installed phones fetch, even when the build is otherwise the same.
-const hostHeaders = createHash("sha256").update(JSON.stringify(JSON.parse(readFileSync(new URL("../../firebase.json", import.meta.url), "utf8")).hosting.headers)).digest("hex").slice(0, 10);
+// firebase.json has two Hosting sites since school sign-in (the app, and login.darsiai.org): only the app's headers count.
+const hostHeaders = createHash("sha256").update(JSON.stringify(([] as { target?: string; headers?: unknown }[]).concat(JSON.parse(readFileSync(new URL("../../firebase.json", import.meta.url), "utf8")).hosting).find((h) => h.target === "app")?.headers)).digest("hex").slice(0, 10);
 
 /**
  * Dev only: serve content/units/*.json at /content/dev/<id>.json so new courses can be read before they are published,
@@ -387,7 +463,9 @@ function devMedia(): Plugin {
 }
 
 export default defineConfig({
+  define: { __DARSI_BUILD__: JSON.stringify(buildStamp()) },
   plugins: [
+    buildEnv(), // first: a build without the project's settings stops before it does any work
     react(),
     staffFiles(), // before the two manifests and the service worker, which use what it finds
     labsManifest(),
@@ -431,13 +509,18 @@ export default defineConfig({
         // Lesson content is tiny and precached; kits are cached when a unit is downloaded. Staff-only and first-visit
         // chunks (and exceljs, ~930 KB), labs, code steps, Darsi Tiny, the light packs and the Chrome 61 build are not
         // precached (ON_DEMAND above), so a learner's install stays small; the runtime caches below keep them on first use.
-        globIgnores: ["kits/**", "lib/**", "push-sw.js", "offline-sw.js", ...ON_DEMAND.map((p) => p.glob)],
+        // content/dev-catalog.json is the dev server's list of unpublished courses (devUnits above serves it from the
+        // repository's content/ folder). Older scripts wrote it into public/content/, from where it was shipped and
+        // precached: should a copy turn up there again, it is still left out of the precache.
+        globIgnores: ["kits/**", "lib/**", "push-sw.js", "offline-sw.js", "content/dev-catalog.json", "app.html", ...ON_DEMAND.map((p) => p.glob)],
         navigateFallback: "/index.html",
         // Staff-only shared chunks, which no name pattern can catch (staffOnly), leave the precache here.
         manifestTransforms: [async (entries) => ({ manifest: entries.filter((e) => !staff.has(e.url)).map((e) => (e.url === "index.html" ? { ...e, revision: `${e.revision}-${hostHeaders}` } : e)), warnings: [] })],
         // /__/ is Firebase Hosting's own (the sign-in helper page /__/auth/handler opens in the Google popup, since the
         // auth domain is the site's own). Answering it with the app made Google sign-in hang.
-        navigateFallbackDenylist: [/^\/__\//],
+        // /api/ is the functions' (school sign-in's start and finish, problem reports, analytics): fetches, never pages,
+        // and never the app in their place should a navigation ever reach one.
+        navigateFallbackDenylist: [/^\/__\//, /^\/api\//],
         runtimeCaching,
       },
       devOptions: { enabled: false },
@@ -452,6 +535,7 @@ export default defineConfig({
     }),
     legacyRuntimes(),
     earlySw(),
+    appShell(),
     devUnits(),
     devMedia(),
 

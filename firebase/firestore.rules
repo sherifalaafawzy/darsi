@@ -1,23 +1,41 @@
 rules_version = '2';
 // Darsi — Firestore security rules.
 // Roles live in Auth custom claims set only by Cloud Functions: role ∈ {learner, student, teacher, orgAdmin, superadmin}, orgId.
+// The functions write the same role and orgId on users/{uid} (writeClaims' callers), and staff access needs both.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function claims() { return request.auth.token; }
-    function isSuper() { return signedIn() && claims().role == 'superadmin'; }
-    function inOrg(orgId) { return signedIn() && orgId != null && claims().orgId == orgId; }
-    function isOrgAdmin(orgId) { return inOrg(orgId) && claims().role == 'orgAdmin'; }
-    function isTeacherOf(data) { return signedIn() && claims().role == 'teacher' && inOrg(data.orgId) && data.get('teacherId', null) == request.auth.uid; }
-    function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
-
-    // Course access (PLAN.md in out/project-work): a platform admin lets a university teacher see the student results
-    // and project submissions of chosen courses, read only. courseAccess/{uid}.units lists those course ids.
-    function grantedUnits() {
-      return signedIn() && exists(/databases/$(database)/documents/courseAccess/$(request.auth.uid))
-        ? get(/databases/$(database)/documents/courseAccess/$(request.auth.uid)).data.units : [];
+    // Staff access follows the profile, not the token alone: an ID token stays valid for up to an hour after a
+    // demotion, a removal or a suspension, and the profile changes at once. The claim test comes first in each
+    // predicate, so learners and students never pay for the lookup; a staff token with no profile is refused (get() of
+    // a missing document fails closed). `frozen` is the claim the functions put on the teachers and admins of a
+    // suspended organization. inOrg() stays token-only: members read their organization's document with it.
+    // A suspension keeps role and orgId on the profile, and the token in an open tab was minted before it, so both of
+    // its marks are read from the profile as well (the same document: no further lookup): `suspended` on an account
+    // (setAccountSuspended, an organization's own suspend) and `frozen` on the staff of an organization that is
+    // suspended or being deleted (writeClaims mirrors the claim onto the profile). No client write sets or clears either.
+    function me() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function unfrozen() { return claims().get('frozen', false) != true; }
+    function notStopped() { return !('suspended' in me()) && me().get('frozen', false) != true; }
+    function isSuper() {
+      return signedIn() && claims().role == 'superadmin' && me().get('role', '') == 'superadmin' && !('suspended' in me());
     }
-    function granted(unitId) { return unitId is string && unitId in grantedUnits(); }
+    function inOrg(orgId) { return signedIn() && orgId != null && claims().orgId == orgId; }
+    function isOrgAdmin(orgId) {
+      return inOrg(orgId) && claims().role == 'orgAdmin' && unfrozen()
+        && me().get('role', '') == 'orgAdmin' && me().get('orgId', null) == orgId && notStopped();
+    }
+    function isTeacherOf(data) {
+      return signedIn() && claims().role == 'teacher' && inOrg(data.orgId) && data.get('teacherId', null) == request.auth.uid && unfrozen()
+        && me().get('role', '') == 'teacher' && me().get('orgId', null) == data.orgId && notStopped();
+    }
+    function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+    // School sign-in's fields on a profile (TECHNICAL.md "School sign-in"): only the functions write them. `sso` and
+    // `managedBy` say the school made and manages the account, `ssoEmail` is the address its provider gave (display
+    // only), `ssoLinkedAt` when a personal account was connected. Already outside every client write's key list below;
+    // said again here so a later list that grows can't let one through.
+    function noSsoFields(keys) { return !keys.hasAny(['sso', 'ssoEmail', 'managedBy', 'ssoLinkedAt']); }
 
     // Staff who may see a person's learning record.
     function canSee(uid, data) {
@@ -33,7 +51,9 @@ service cloud.firestore {
     // Course editor (TECHNICAL.md "Authored content"). `owner` is "public" (platform admins publish for everyone) or an
     // orgId (that org's admins publish for its members). Drafts are edited here. Publishing, unpublishing and deleting a
     // published unit go through Cloud Functions, which alone write `published` and the Storage files learners read.
-    // Every save bumps `rev` by one, so two editors can't silently overwrite each other.
+    // Every save bumps `rev` by one, so two editors can't silently overwrite each other. `lastVersion` (the last version
+    // number ever published, kept through an unpublish so a new publish never reuses an immutable path) is the
+    // functions' alone: it is in neither list below, so no client creates or changes it.
     function canEdit(owner) { return isSuper() || (owner is string && owner != 'public' && isOrgAdmin(owner)); }
     function nextRev() { return request.resource.data.rev is int && request.resource.data.rev == resource.data.rev + 1; }
     // Org units get generated ids ("u" + 8), so they can never shadow a built-in or public unit.
@@ -114,17 +134,25 @@ service cloud.firestore {
         && !request.auth.token.email.lower().matches('.*@users[.]darsi[.]app')
         && request.resource.data.name is string && request.resource.data.name.size() <= 120
         && request.resource.data.get('createdAt', request.time) == request.time
+        && noSsoFields(request.resource.data.keys())
         && profileOk(request.resource.data, request.resource.data.keys());
       // A person edits their own profile but never their email, role, organization, teacher, computed summary or
       // notification settings (`notify`: the registerDevice/updateNotifyPrefs functions write it). The first-login
       // flag (mustChangePassword) is cleared only by the passwordChanged function, after a real password change (I1).
-      allow update: if signedIn() && request.auth.uid == uid
+      // A suspended account (`suspended`, setAccountSuspended) changes nothing: its token may outlive the suspension.
+      allow update: if signedIn() && request.auth.uid == uid && !('suspended' in resource.data)
         && onlyChanges(['name', 'lang', 'lastActive', 'teach', 'tracks', 'weeklyLessons', 'levels', 'onboarded', 'audience', 'stage', 'learnAt'])
+        && noSsoFields(request.resource.data.diff(resource.data).affectedKeys())
         && profileOk(request.resource.data, request.resource.data.diff(resource.data).affectedKeys());
       // Org admins organise their people (class/group, assigned teacher, active flag).
       allow update: if isOrgAdmin(resource.data.get('orgId', null)) && onlyChanges(['group', 'teacherId', 'active', 'name'])
+        && noSsoFields(request.resource.data.diff(resource.data).affectedKeys())
         && memberOk(request.resource.data, request.resource.data.diff(resource.data).affectedKeys());
-      allow update, delete: if isSuper();
+      // A platform admin's browser changes the same four fields and nothing else, and deletes nobody: roles,
+      // organizations, suspension and deletion go through callables, which check the caller afresh and write the audit log.
+      allow update: if isSuper() && onlyChanges(['group', 'teacherId', 'active', 'name'])
+        && noSsoFields(request.resource.data.diff(resource.data).affectedKeys())
+        && memberOk(request.resource.data, request.resource.data.diff(resource.data).affectedKeys());
 
       // A lesson result (state/sync.ts progressDoc). Every field typed and bounded (H2), competency codes included (at
       // most 30 of up to 40 characters: 1,229 joined; join also refuses anything but strings), since staff screens and
@@ -165,7 +193,10 @@ service cloud.firestore {
       function shortText(d, k, max) { return !(k in d) || (d[k] is string && d[k].size() <= max); }
       match /submissions/{subId} {
         allow read: if canSee(uid, get(/databases/$(database)/documents/users/$(uid)).data);
+        // A suspended account sends nothing (its token may outlive the suspension); an account so new that its profile
+        // isn't written yet still does.
         allow create: if signedIn() && request.auth.uid == uid
+          && (!exists(/databases/$(database)/documents/users/$(uid)) || !get(/databases/$(database)/documents/users/$(uid)).data.keys().hasAny(['suspended']))
           && request.resource.data.keys().hasOnly(['lessonId', 'unitId', 'stepId', 'orgId', 'text', 'fileUrl', 'fileName', 'files', 'final', 'explain', 'aiUse', 'name', 'status', 'createdAt'])
           && request.resource.data.status == 'submitted'
           && request.resource.data.createdAt == request.time
@@ -181,7 +212,9 @@ service cloud.firestore {
         // Teachers and org admins review: status, score and feedback only. Who reviews is who may read it (canSee): the
         // person's teacher and the admins of the organization the person is in now, not the one the work was sent from
         // (sec-rules-04: a new school's admins could not review earlier work, and a former school's still could).
-        allow update: if (isTeacherOf(get(/databases/$(database)/documents/users/$(uid)).data)
+        // Nobody reviews their own project, whatever their role. Two lookups: the person's profile and the reviewer's.
+        allow update: if signedIn() && request.auth.uid != uid
+          && (isTeacherOf(get(/databases/$(database)/documents/users/$(uid)).data)
             || isOrgAdmin(get(/databases/$(database)/documents/users/$(uid)).data.get('orgId', null)) || isSuper())
           && onlyChanges(['status', 'score', 'feedback', 'reviewedBy', 'reviewedAt'])
           && request.resource.data.status in ['submitted', 'approved', 'revise']
@@ -217,17 +250,16 @@ service cloud.firestore {
       match /devices/{deviceId} { allow read, write: if false; }
     }
 
-    // Course access: only platform admins grant or change it; the teacher reads their own grant.
+    // Course access: a platform admin lets a university teacher see the student results and project submissions of
+    // chosen courses, read only. courseAccess/{uid} {units, orgs?, until?} is the grant: platform admins read them all,
+    // the teacher reads their own, and only the audited callables write one. A granted teacher reads no lesson result
+    // or project through these rules: the courseResults callable reads them, filtered by the grant's organizations
+    // (the two collection-group rules that were here opened every organization's results to any grant). Storage still
+    // reads the grant for the project files (storage.rules grantedS).
     match /courseAccess/{uid} {
       allow read: if isSuper() || (signedIn() && request.auth.uid == uid);
-      allow create, update: if isSuper() && request.resource.data.keys().hasOnly(['units', 'name', 'email', 'grantedBy', 'updatedAt'])
-        && request.resource.data.units is list && request.resource.data.units.size() <= 50 && request.resource.data.grantedBy == request.auth.uid;
-      allow delete: if isSuper();
+      allow create, update, delete: if false;
     }
-    // Granted teachers read progress and submissions of their courses across all students (collection-group queries
-    // filtered on unitId), and never write them: no write rule here, and the per-user rules above don't name them.
-    match /{path=**}/progress/{lessonId} { allow read: if granted(resource.data.unitId); }
-    match /{path=**}/submissions/{subId} { allow read: if granted(resource.data.unitId); }
 
     // Announcements sent from /super: written by the sendBroadcast function, read by platform admins.
     match /broadcasts/{id} { allow read: if isSuper(); allow write: if false; }
@@ -237,12 +269,8 @@ service cloud.firestore {
     match /config/{doc} { allow read: if isSuper(); allow write: if false; }
     // The Google Analytics stream the collect function forwards events to (TECHNICAL.md "Analytics"): set on
     // /super/analytics. The API secret only lets a server send events to that stream; platform admins alone read it.
-    match /config/analytics {
-      allow write: if isSuper() && request.resource.data.keys().hasOnly(['measurementId', 'apiSecret', 'updatedAt', 'updatedBy'])
-        && request.resource.data.measurementId is string && request.resource.data.measurementId.matches('(G-[A-Z0-9]{4,16})?')
-        && request.resource.data.apiSecret is string && request.resource.data.apiSecret.size() <= 100
-        && request.resource.data.updatedBy == request.auth.uid;
-    }
+    // Only the setGaConfig callable writes it (checked and audited there), like every other config document.
+    match /config/analytics { allow write: if false; }
 
     // Analytics (TECHNICAL.md "Analytics"), written only by Cloud Functions; platform admins read them on /super/analytics.
     // stats/overview: accounts and organizations, from users/*.summary (statsJob). analytics/{yyyy-mm-dd}: event counts
@@ -262,6 +290,15 @@ service cloud.firestore {
     match /sites/{host} {
       allow read: if isSuper() || (resource != null && isOrgAdmin(resource.data.orgId));
       allow write: if false;
+    }
+    // Feedback ("Share feedback": stars, a topic and a comment) arrives through the sendFeedback function only. Platform
+    // admins read it (/super/feedback) and change its status, nothing else.
+    match /feedback/{id} {
+      allow read: if isSuper();
+      allow update: if isSuper() && onlyChanges(['status', 'statusBy', 'statusAt'])
+        && request.resource.data.status in ['new', 'read', 'archived'] && request.resource.data.statusBy == request.auth.uid
+        && request.resource.data.statusAt == request.time;
+      allow create, delete: if false;
     }
     match /bugReports/{id} {
       allow read: if isSuper();
@@ -304,28 +341,46 @@ service cloud.firestore {
     }
     // Every member reads the org document (and each member's phone caches it at sign-in), so it holds nothing private:
     // the requester's contact and reason live in private/request. Its admins change only its name and logo (Organization
-    // branding), sized above; country and city are a platform admin's, through updateOrg (80 characters each). Writing
-    // them unbounded here once let an org admin push stats/overview past Firestore's 1 MiB and stop the stats job.
+    // branding), sized above, and a platform admin's browser changes no more than that (the branding panel on an
+    // organization's page) and deletes none: status, licence, country, city (80 characters each) and deletion go through
+    // callables (reviewOrg, updateOrg, deleteOrg, …), which write the audit log. Writing country and city unbounded here
+    // once let an org admin push stats/overview past Firestore's 1 MiB and stop the stats job.
     // `courses` (which courses its teachers, students and classes see) is written only by setOrgCourses, which checks
     // its shape and size: no client writes it, platform admins included. `site` (its web address before sites/{host},
     // 2026-11-09) was written only by setOrgSite, and no client writes it either.
     match /orgs/{orgId} {
       allow read: if inOrg(orgId) || isSuper() || (signedIn() && resource.data.createdBy == request.auth.uid);
       allow update: if isOrgAdmin(orgId) && onlyChanges(['name', 'brand']) && brandOk(orgId);
-      allow update: if isSuper() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['courses', 'site']);
-      allow delete: if isSuper();
-      allow create: if false; // requests go through the requestOrg Cloud Function
+      allow update: if isSuper() && onlyChanges(['name', 'brand']) && brandOk(orgId);
+      allow create, delete: if false; // requests go through the requestOrg Cloud Function, deletion through deleteOrg
       // Its invite codes (invites) and the request's contact and reason (request): only its admins and platform admins
       // read them (members must never see the teacher code or the requester's phone); only the functions write them
       // (requestOrg, reviewOrg, regenerateInviteCode).
-      match /private/{doc} { allow read: if isOrgAdmin(orgId) || isSuper(); allow write: if false; }
+      // School sign-in's configuration (private/sso) and its health (private/ssoHealth) are the functions' alone, even
+      // to read: an organization's admins see them through manageSso, which leaves out what no browser should hold.
+      // Who suspended it and why (private/suspension, updateOrg) is the platform's note: its own admins don't read it.
+      match /private/{doc} {
+        allow read: if (isOrgAdmin(orgId) || isSuper()) && !(doc in ['sso', 'ssoHealth']) && (doc != 'suspension' || isSuper());
+        allow write: if false;
+      }
     }
 
     // Invite codes, failed join tries (joinOrg) and audit logs are handled only by Cloud Functions.
     match /inviteCodes/{code} { allow read, write: if false; }
     match /joinAttempts/{uid} { allow read, write: if false; }
+    // The account-deletion queue (deleteOrg queues an organization's managed accounts; deleteAccount queues tutor
+    // conversations it could not erase yet): onAccountDeletion only. Said explicitly, not left to the default.
+    match /accountDeletions/{uid} { allow read, write: if false; }
     // Which account a push token belongs to now (shared phones): registerDevice and unregisterDevice only.
     match /pushTokens/{deviceId} { allow read, write: if false; }
     match /audit/{id} { allow read: if isSuper(); allow write: if false; }
+    // School sign-in (TECHNICAL.md "School sign-in"): which school identity opens which account (ssoIdentities), spent
+    // states (ssoUsed, TTL), slugs and their tombstones (ssoSlugs), one-time student test links (ssoTests, TTL) and the
+    // sealed client secrets (ssoSecrets). Only the sso functions read or write them; no client, platform admins included.
+    match /ssoIdentities/{id} { allow read, write: if false; }
+    match /ssoUsed/{id} { allow read, write: if false; }
+    match /ssoSlugs/{slug} { allow read, write: if false; }
+    match /ssoTests/{token} { allow read, write: if false; }
+    match /ssoSecrets/{orgId} { allow read, write: if false; }
   }
 }

@@ -4,8 +4,9 @@ import { AppBar, Button, EmptyState } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import { scoredOf, type Profile } from "../auth/types";
 import { useI18n } from "../i18n";
-import { PeopleTable } from "./AdminHome";
+import { LoadState } from "../staff/LoadState";
 import { byName, daysSince, useMyStudents } from "./data";
+import { PeopleTable } from "./PeopleTable";
 import { PersonDetail } from "./PersonDetail";
 import { statusOf } from "./orgStats";
 import { byWaiting, waitingOf, waitingTotals } from "./review";
@@ -19,7 +20,7 @@ export function Teach() {
   const nav = useNavigate();
   const { user, orgId } = useAuth();
   const studentsQ = useMyStudents(orgId, user?.uid);
-  const { data: students, error } = studentsQ;
+  const { data: students } = studentsQ;
   // Students with projects waiting come first by default (review.ts: counts kept on their profiles, no extra reads).
   const [q, setQ] = useState(""); const [sort, setSort] = useState<"review" | "name" | "lessons" | "last">("review");
   const [only, setOnly] = useState<"" | "review" | "support">("");
@@ -39,16 +40,18 @@ export function Teach() {
   }, [students, q, sort, only]);
   const toggle = (k: "review" | "support") => setOnly(only === k ? "" : k);
 
-  const loading = Boolean(orgId && user) && !students && !error;
   return (
     <>
       <AppBar title={t("teach.title")} />
       <main className="screen wide stack-lg">
-        {error && <p className="notice err">{error.message}</p>}
-        {loading ? <div className="loading" aria-busy="true" /> : !students?.length ? <EmptyState icon="profile" title={t("teach.empty")} body={t("teach.none")} /> : <>
+        {/* The list is read when the page opens, not kept live (no listeners): this reads it again. Above the list, so it
+            is there whatever the read gave: students, nobody yet, or a failure. */}
+        <div className="row-gap"><Button size="sm" variant="ghost" icon="sync" onClick={studentsQ.reload}>{t("adm.refresh")}</Button></div>
+        {/* A read that failed says why, with Retry: never "No students yet", which is only for a list that was read and is empty. */}
+        <LoadState q={studentsQ} empty={<EmptyState icon="profile" title={t("teach.empty")} body={t("teach.none")} />}>{(list) => <>
           <section className="tiles">
-            <div className="tile"><span>{t("teach.students")}</span><strong>{num(students.length)}</strong></div>
-            <div className="tile"><span>{t("adm.active7")}</span><strong>{num(stats.active)}</strong><small>{num(stats.active / students.length, { style: "percent" })}</small></div>
+            <div className="tile"><span>{t("teach.students")}</span><strong>{num(list.length)}</strong></div>
+            <div className="tile"><span>{t("adm.active7")}</span><strong>{num(stats.active)}</strong><small>{num(stats.active / list.length, { style: "percent" })}</small></div>
             <div className="tile"><span>{t("adm.lessons")}</span><strong>{num(stats.done)}</strong></div>
             <div className="tile"><span>{t("adm.accuracy")}</span><strong>{stats.acc == null ? "—" : num(stats.acc, { style: "percent" })}</strong></div>
             <div className="tile"><span>{t("teach.toReview")}</span><strong>{num(stats.waiting.projects)}</strong>{stats.waiting.people > 0 && <small>{`${t("teach.students")}: ${num(stats.waiting.people)}`}</small>}</div>
@@ -65,12 +68,11 @@ export function Teach() {
               {/* Show only the students to act on: projects waiting for a review, or scores that need support. */}
               {(stats.waiting.projects > 0 || only === "review") && <Button size="sm" variant={only === "review" ? "primary" : "secondary"} aria-pressed={only === "review"} onClick={() => toggle("review")}>{`${t("teach.toReview")}: ${num(stats.waiting.projects)}`}</Button>}
               {(stats.support > 0 || only === "support") && <Button size="sm" variant={only === "support" ? "primary" : "secondary"} aria-pressed={only === "support"} onClick={() => toggle("support")}>{`${t("or.st.support")}: ${num(stats.support)}`}</Button>}
-              {/* The list is read when the page opens, not kept live (no listeners): this reads it again. */}
-              <Button size="sm" variant="ghost" icon="sync" onClick={studentsQ.reload}>{t("adm.refresh")}</Button>
             </div>
-            <PeopleTable rows={rows} to={(m) => `/teach/${m.uid}`} review />
+            {/* A hundred rows, then "Show more": a head of year can teach several hundred students. */}
+            <PeopleTable rows={rows} to={(m) => `/teach/${m.uid}`} review paged resetOn={`${q}\n${sort}\n${only}`} />
           </section>
-        </>}
+        </>}</LoadState>
       </main>
     </>
   );

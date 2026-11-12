@@ -20,6 +20,19 @@ export function LessonScreen() {
   const { all } = useMine();
   const finished = useStore().state.progress;
   const [params] = useSearchParams();
+  // A slow start shows this screen before the account arrives (AuthProvider's SLOW_MS timer), and until then the
+  // catalog has no organization in it: a link to one of its organization's lessons finds no such unit. A screen that
+  // opened before the account is owed one more try once the account is there, whenever the miss shows: usually the
+  // account arrives while that first read is still under way, and the read then fails with the account already there.
+  // Only if the error is what shows (a lesson already playing is never started again), and only once per screen.
+  const signedIn = Boolean(useAuth().user);
+  const late = useRef(!signedIn);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!signedIn || !late.current) return;
+    if (error) { late.current = false; retry(); }
+    else if (unit) late.current = false; // the read answered with the account there: nothing is owed
+  }, [signedIn, error, unit]);
   if (error) return <EmptyState tone="error" title={t("err.title")} body={t("err.body")} action={<Button size="sm" icon="sync" onClick={retry}>{t("common.retry")}</Button>} />;
   if (!unit) return <div className="loading" aria-busy="true" />;
   const lesson = unit.lessons.find((l) => l.id === lessonId);

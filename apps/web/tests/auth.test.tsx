@@ -95,6 +95,9 @@ it("a stored session that ended while offline becomes a guest once the SDK recon
   expect(auth.offlineUid).toBeNull();
   expect(auth.user).toBeNull();
   expect(auth.loading).toBe(false);
+  // The server ended it, so the device is cleaned as Sign out would (tests/auth-offline.test.tsx) and the page restarts.
+  await waitFor(() => expect(h.replace).toHaveBeenCalledWith("/"));
+  expect(h.calls).toEqual(["listen", "terminate", "clearIndexedDbPersistence"]);
 });
 
 it("an account screen loads the SDK on demand, once", async () => {
@@ -124,7 +127,9 @@ describe("signing out (shared phones and lab PCs)", () => {
   it("stops this phone's notifications first, then clears Firestore's cache and the account's work here, and starts afresh", async () => {
     await signedIn();
     h.store["darsi:state:u1"] = own;
+    expect(JSON.parse(localStorage.getItem("darsi:claims:u1")!)).toEqual({ role: "teacher", orgId: "o1", plan: null }); // kept for an offline start
     await act(async () => { await auth.signOut(); });
+    expect(localStorage.getItem("darsi:claims:u1")).toBeNull(); // and gone with the account
     // unregisterDevice needs the session, so it runs before signOut; the cache can only be cleared once the SDK stops.
     expect(h.calls).toEqual(["listen", "pushSignOut:u1", "waitForPendingWrites", "signOut", "terminate", "clearIndexedDbPersistence"]);
     const left = h.store["darsi:state:u1"] as typeof own;

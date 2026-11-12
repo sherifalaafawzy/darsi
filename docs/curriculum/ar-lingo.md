@@ -112,6 +112,16 @@ Both registers use the same word for the same concept. A learner who hears "ال
 | Red teaming (the activity, aisec) | **الاختبار الهجومي**, with «(الفريق الأحمر)» at its first mention (as aisec-4-1 and aisec-s4 write it); the group, and a red-team exercise or round: **الفريق الأحمر**, **تمرين فريق أحمر** | «الفريق الأحمر» for the activity («ننفّذ الفريق الأحمر») |
 | Arm span (fingertip to fingertip, arms stretched out; ds-s3) | **امتداد الذراعين** (MSA course text), glossed once «(من طرف الأصابع إلى طرف الأصابع)»; ar-EG narration: **الدراعين وهما مفرودين** | طول الذراعين (the length of the arms; a learner may measure one arm) |
 
+The app's own screens (MSA) follow the same rule:
+
+| Concept | Use | Do not use |
+|---|---|---|
+| An organization's or the platform's admin | **مشرف** (المشرف، مشرفو المؤسسة) | مسؤول |
+| A suspended organization or account | **موقوف / موقوفة** | معلّق / معلّقة |
+| Darsi as the subject of a verb | masculine: «يحفظه «درسي»»، «لا يستطيع «درسي»» | feminine verbs (تستطيع، تحتاجه، حُدِّثت) |
+| An address the school's provider vouches for (`email_verified`) | **موثَّق** | مؤكَّد |
+| An address the person confirmed through Darsi's own email | **مؤكَّد** | موثَّق |
+
 Canonical names (the same name in the English and the Arabic, spelled the same way everywhere):
 
 - Grace → **غريس**

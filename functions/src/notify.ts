@@ -11,7 +11,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { audit, caller, db, freshCaller, messaging, str } from "./admin.js";
 import {
-  broadcastCondition, isTopicPart, linkFor, message, tagFor, topicLang, topicsFor, webpush, wordingFor,
+  broadcastCondition, isTopicPart, linkFor, message, projectsLink, tagFor, topicLang, topicsFor, webpush, wordingFor,
   type Audience, type Cat, type Kind, type Lang, type MessageVars,
 } from "./messages.js";
 import { isValidTz, parseTime, pickNudge, utcHourFor } from "./nudge.js";
@@ -209,7 +209,7 @@ const quietly = (p: Promise<unknown>, what: string) => p.catch((e) => logger.war
 export async function alertOrgRequest(orgId: string, orgName: string) {
   const admins = await db.collection("users").where("role", "==", "superadmin").limit(50).get();
   await Promise.all(admins.docs.map((a) =>
-    quietly(sendToUser(a.id, "staff", "staffOrgRequest", { org: orgName }, "/super", `darsi-staff-${orgId}`, a.data()), "staffOrgRequest")));
+    quietly(sendToUser(a.id, "staff", "staffOrgRequest", { org: orgName }, "/super?tab=requests", `darsi-staff-${orgId}`, a.data()), "staffOrgRequest")));
 }
 
 /**
@@ -347,14 +347,14 @@ export const onSubmissionCreated = onDocumentCreated("users/{uid}/submissions/{i
   if (teacherId && teacherId !== uid) {
     const teacher = (await db.doc(`users/${teacherId}`).get()).data();
     if (teacher && stillTeaches(teacher, orgId)) {
-      await quietly(sendToUser(teacherId, "staff", "staffSubmission", vars, `/teach/${encodeURIComponent(uid)}`, tag, teacher), "staffSubmission");
+      await quietly(sendToUser(teacherId, "staff", "staffSubmission", vars, projectsLink("teacher", uid), tag, teacher), "staffSubmission");
       return;
     }
   }
   if (!orgId) return;
   const admins = await db.collection("users").where("orgId", "==", orgId).where("role", "==", "orgAdmin").limit(50).get();
   await Promise.all(admins.docs.filter((a) => a.id !== uid).map((a) =>
-    quietly(sendToUser(a.id, "staff", "staffSubmission", vars, `/admin/people/${encodeURIComponent(uid)}`, tag, a.data()), "staffSubmission")));
+    quietly(sendToUser(a.id, "staff", "staffSubmission", vars, projectsLink("admin", uid), tag, a.data()), "staffSubmission")));
 });
 
 /** A project was reviewed: the person who sent it gets the result and the feedback, and opens it in Me's "My projects". */
@@ -382,7 +382,9 @@ export const onUserTopicsChanged = onDocumentUpdated("users/{uid}", async (event
 /* ---------- Daily nudges ---------- */
 
 const PAGE = 300;
-const PARALLEL = 25;
+const PARALLEL = 50;
+/** The run stops taking people after this long (of its 540 s), so it ends by itself and says where it got to. */
+const BUDGET_MS = 500e3;
 
 function isoOf(v: unknown): string | null {
   if (typeof v === "string") return parseTime(v) === null ? null : v;
@@ -425,26 +427,45 @@ async function nudgeOne(doc: QueryDocumentSnapshot, nowMs: number, hour: number)
  * At the top of every UTC hour: the people whose reminder hour this is get at most one encouraging nudge for their day.
  * A cron schedule, not "every 60 minutes": in App Engine cron syntax that interval counts from the end of the previous
  * run, so it drifts past :00 and can eventually skip an hour (everyone whose hourUtc it is would miss that day's nudge).
+ *
+ * One run, 50 people at a time, for at most 500 s: it used to run until the platform killed it at 540 s, with no
+ * record of how far it got. Now it stops by itself and leaves its heartbeat in stats/jobs.dailyNudges (the shape every
+ * scheduled job leaves: {at, ok, …}) with `complete`: false means people of this hour were left without their nudge
+ * (also logged as an error), which is the signal to split the hour over several runs. `seen` counts the people the run
+ * got to.
  */
 export const dailyNudges = onSchedule({ schedule: "0 * * * *", timeZone: "UTC", timeoutSeconds: 540, retryCount: 0 }, async () => {
   const nowMs = Date.now();
   const hour = new Date(nowMs).getUTCHours();
   let last: QueryDocumentSnapshot | undefined;
-  let seen = 0, sent = 0, failed = 0;
-  for (;;) {
-    let q = db.collection("users").where("notify.on", "==", true).where("notify.hourUtc", "==", hour).limit(PAGE);
-    if (last) q = q.startAfter(last);
-    const page = await q.get();
-    seen += page.size;
-    for (let i = 0; i < page.docs.length; i += PARALLEL) {
-      const results = await Promise.allSettled(page.docs.slice(i, i + PARALLEL).map((d) => nudgeOne(d, nowMs, hour)));
-      for (const r of results) {
-        if (r.status === "fulfilled") { if (r.value) sent++; }
-        else { failed++; logger.warn("nudge failed", { error: String(r.reason) }); }
+  let seen = 0, sent = 0, failed = 0, complete = false;
+  const beat = (fields: Record<string, unknown>) => db.doc("stats/jobs").set({ dailyNudges: { at: Date.now(), hour, seen, sent, failed, complete, ...fields } }, { merge: true });
+  try {
+    run: for (;;) {
+      let q = db.collection("users").where("notify.on", "==", true).where("notify.hourUtc", "==", hour).limit(PAGE);
+      if (last) q = q.startAfter(last);
+      const page = await q.get();
+      for (let i = 0; i < page.docs.length; i += PARALLEL) {
+        if (Date.now() - nowMs >= BUDGET_MS) break run;
+        const some = page.docs.slice(i, i + PARALLEL);
+        const results = await Promise.allSettled(some.map((d) => nudgeOne(d, nowMs, hour)));
+        seen += some.length;
+        for (const r of results) {
+          if (r.status === "fulfilled") { if (r.value) sent++; }
+          else { failed++; logger.warn("nudge failed", { error: String(r.reason) }); }
+        }
       }
+      if (page.size < PAGE) { complete = true; break; }
+      if (Date.now() - nowMs >= BUDGET_MS) break;
+      last = page.docs[page.docs.length - 1];
     }
-    if (page.size < PAGE) break;
-    last = page.docs[page.docs.length - 1];
+  } catch (e) {
+    // The query itself failed (one person's failure never gets here): say so, and let the run count as failed.
+    await beat({ ok: false, error: String((e as Error)?.message ?? e).slice(0, 200) }).catch((x) => logger.error("dailyNudges heartbeat not written", { error: String(x) }));
+    throw e;
   }
-  logger.info("dailyNudges", { hour, seen, sent, failed });
+  logger.info("dailyNudges", { hour, seen, sent, failed, complete });
+  if (!complete) logger.error("dailyNudges incomplete", { hour, seen });
+  // The nudges are out either way: a heartbeat that can't be written must not fail the run.
+  await beat({ ok: true, error: FieldValue.delete() }).catch((x) => logger.error("dailyNudges heartbeat not written", { error: String(x) }));
 });

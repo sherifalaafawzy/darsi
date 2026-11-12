@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addPackCredits, afterRefund, claimsFor, creditsForCost, creditsLeft, entitlement, extendPlanCredits, gaUserId, grantPlanCredits, holdCredits, licenceAfterPayment, margin, paymentEffects, periodDays, PlanError, renewalOf, renewsByItself, revenueEvent, revokeEffects, sameClaims, seatsToRelease, settleCredits, spendCredits, STRIPE_GRACE_MS, superStats, validateEconomics, validatePlans, type Credits, type PaymentRecord } from "../src/billingCore";
+import { addPackCredits, afterRefund, claimsFor, creditsForCost, creditsLeft, entitlement, extendPlanCredits, grantPlanCredits, holdCredits, licenceAfterPayment, margin, paymentEffects, periodDays, PlanError, renewalOf, renewsByItself, revenueEvent, revokeEffects, sameClaims, seatsToRelease, settleCredits, spendCredits, STRIPE_GRACE_MS, superStats, validateEconomics, validatePlans, type Credits, type PaymentRecord } from "../src/billingCore";
 
 const NOW = Date.parse("2026-11-02T12:00:00Z");
 const DAY = 864e5;
@@ -74,14 +74,22 @@ describe("entitlement", () => {
     expect(claimsFor("student", "o1", { plan: "super_seat", until: 5, source: "org" })).toEqual({ role: "student", orgId: "o1", plan: "super_seat", planUntil: 5 });
     expect(claimsFor("learner", null, null)).toEqual({ role: "learner" });
   });
+  it("marks a suspended organization's staff frozen only when asked, beside everything else", () => {
+    expect(claimsFor("teacher", "o1", null, true)).toEqual({ role: "teacher", orgId: "o1", frozen: true });
+    expect(claimsFor("orgAdmin", "o1", { plan: "super_seat", until: 5, source: "org" }, true)).toEqual({ role: "orgAdmin", orgId: "o1", plan: "super_seat", planUntil: 5, frozen: true });
+    // Not asked: no key at all, so claims written before suspensions existed still count as the same.
+    expect(claimsFor("teacher", "o1", null, false)).toEqual({ role: "teacher", orgId: "o1" });
+    expect(claimsFor("teacher", "o1", null)).not.toHaveProperty("frozen");
+  });
 });
 
 describe("revenueEvent", () => {
-  it("is a GA4 purchase with the transaction, value, currency and item, and a hashed user id", () => {
+  it("is a GA4 purchase with the transaction, value, currency and item, and nothing that names the buyer", () => {
     const e = revenueEvent({ provider: "paymob", ref: "991", kind: "subscription", uid: "u1", plan: monthly, amount: 149, currency: "EGP", clientId: "a1b2c3d4e5f6a7b8c9d0" }, "purchase", NOW);
     expect(e.client_id).toBe("a1b2c3d4e5f6a7b8c9d0");
-    expect(e.user_id).toBe(gaUserId("u1"));
-    expect(e.user_id).not.toContain("u1");
+    // No user_id any more: even hashed, it was one stable id per account across every purchase.
+    expect(e).not.toHaveProperty("user_id");
+    expect(JSON.stringify(e)).not.toContain("u1");
     expect(e.events[0]).toEqual({ name: "purchase", params: expect.objectContaining({ transaction_id: "paymob_991", value: 149, currency: "EGP", affiliation: "individual", items: [expect.objectContaining({ item_id: "super_monthly", price: 149, quantity: 1 })] }) });
   });
   it("prices a licence per seat, and makes a client id when the phone's isn't known", () => {
@@ -90,6 +98,14 @@ describe("revenueEvent", () => {
     expect(e.events[0].name).toBe("refund");
     expect(e.events[0].params.items[0]).toMatchObject({ price: 10, quantity: 50 });
     expect(e.client_id).toMatch(/^server\.[0-9a-f]{16}$/);
+    expect(e).not.toHaveProperty("user_id");
+  });
+  it("makes a fresh random client id for each event without the phone's, never one worked out from the account", () => {
+    const p = { provider: "paymob" as const, ref: "992", kind: "subscription" as const, uid: "u1", plan: monthly, amount: 149, currency: "EGP" as const };
+    const a = revenueEvent(p, "purchase", NOW), b = revenueEvent(p, "purchase", NOW), c = revenueEvent({ ...p, clientId: "Not Valid!" }, "refund", NOW);
+    for (const e of [a, b, c]) expect(e.client_id).toMatch(/^server\.[0-9a-f]{16}$/);
+    // Before, the same account always got the same id (a hash of it), which tied its purchases together.
+    expect(new Set([a.client_id, b.client_id, c.client_id]).size).toBe(3);
   });
 });
 
@@ -293,5 +309,10 @@ describe("renewals and claims", () => {
     expect(sameClaims({ role: "student", orgId: "o1", plan: "p", planUntil: 5 }, { planUntil: 5, plan: "p", orgId: "o1", role: "student" })).toBe(true);
     expect(sameClaims({ role: "student", orgId: "o1" }, { role: "student", orgId: "o1", plan: "p", planUntil: 5 })).toBe(false);
     expect(sameClaims({ role: "student", planUntil: 5 }, { role: "student", planUntil: 6 })).toBe(false);
+  });
+  it("sees frozen: claims that differ only in it are written again", () => {
+    expect(sameClaims({ role: "teacher", orgId: "o1" }, claimsFor("teacher", "o1", null, true))).toBe(false);
+    expect(sameClaims({ role: "teacher", orgId: "o1", frozen: true }, claimsFor("teacher", "o1", null))).toBe(false);
+    expect(sameClaims({ frozen: true, orgId: "o1", role: "teacher" }, claimsFor("teacher", "o1", null, true))).toBe(true);
   });
 });

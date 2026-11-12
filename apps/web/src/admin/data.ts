@@ -1,11 +1,11 @@
 import { call } from "../fb";
-import { useCallback, useEffect, useState } from "react";
-import { collection, collectionGroup, doc, documentId, getCountFromServer, getDoc, getDocs, limit, orderBy, query, serverTimestamp, setDoc, updateDoc, where, type QueryConstraint } from "firebase/firestore";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { average, collection, collectionGroup, count, doc, documentId, getAggregateFromServer, getCountFromServer, getDoc, getDocs, limit, orderBy, query, serverTimestamp, startAfter, updateDoc, where, type Query, type QueryConstraint, type QueryDocumentSnapshot } from "firebase/firestore";
 import { db, storage } from "../firebase";
 import type { Org, Profile, Role } from "../auth/types";
 import type { EarnedCert, Sent } from "../content/cert";
 import type { SiteDoc } from "../content/sites";
-import { USERNAME_DOMAIN } from "../auth/api";
+import { api, USERNAME_DOMAIN } from "../auth/api";
 
 export interface ProgressDoc { lessonId: string; unitId: string; track: string; accuracy: number; xp: number; seconds: number; completedAt: string; competencies?: string[] }
 type ByLang<T> = Partial<Record<"en" | "ar", T>>;
@@ -19,7 +19,8 @@ export interface Submission { id: string; lessonId: string; unitId: string; text
  * Staff screens read once when they open, and again through reload() after their own writes or a Refresh button.
  * There are no live listeners (TECHNICAL.md "Constraints"): a listener on an org's members would push every lesson any
  * student finishes to every open admin or teacher screen. The `fresh` reads below never show one person's or one
- * organization's data while another's loads.
+ * organization's data while another's loads. An organization's whole member list is the exception to "when they
+ * open": it is read in pages through a callable and shared between screens (useMembers below).
  */
 const listOf = async <T,>(path: string, ...c: QueryConstraint[]) =>
   (await getDocs(query(collection(db, path), ...c))).docs.map((d) => ({ id: d.id, uid: d.id, ...d.data() }) as T);
@@ -30,8 +31,153 @@ export const useOrg = (orgId?: string | null) => useOnce<Org | null>(orgId ? asy
   const s = await getDoc(doc(db, "orgs", orgId));
   return s.exists() ? ({ id: s.id, ...s.data() } as Org) : null;
 } : null, [orgId], true);
-export const useMembers = (orgId?: string | null) =>
-  useOnce<Profile[]>(orgId ? async () => (await listOf<Profile>("users", where("orgId", "==", orgId))).sort(byName) : null, [orgId], true);
+
+/* ---------- An organization's members (TECHNICAL.md) ---------- */
+
+/** "list": lean rows (enough for the dashboard, seats and course pickers). "report": the same rows with each whole summary. */
+export type MembersView = "list" | "report";
+/**
+ * The member list as every staff screen holds it. `data` is set only once every page has arrived (sorted by name):
+ * tiles, counts, reports and exports are worked out from it and never from `partial`, the rows so far, which are only
+ * for showing and searching while a long list loads. A reload keeps `data` on the screen (`refreshing`) until the new
+ * list is whole, and one that fails keeps it beside the `error`.
+ */
+export interface MembersQ {
+  data?: Profile[]; partial: Profile[]; loaded: number; complete: boolean; loading: boolean; refreshing: boolean; error?: Error;
+  /** When `data` was read (ms), 0 before. */
+  at: number;
+  /** Reads this organization's members again, for every screen showing them. */
+  reload: () => void;
+  /** The screen's own change, put into the rows without a read: one person's fields (or several people's), or people gone. */
+  patch: (uid: string | readonly string[], fields: Partial<Profile>) => void;
+  remove: (uid: string | readonly string[]) => void;
+}
+type MembersSnap = Omit<MembersQ, "reload" | "patch" | "remove">;
+/** `buf`: the rows of the read in flight; `run` counts reads, so an older one that answers late changes nothing. */
+interface MembersEntry { snap: MembersSnap; subs: Set<() => void>; run: number; buf: Profile[] | null }
+
+/** One listMembers call's worth: 5,000 members are five calls of lean rows, not 5,000 whole profiles. */
+export const MEMBERS_PAGE = 1000;
+/**
+ * A list nobody is looking at is read again when a screen next opens, once it is this old: an installed app can stay
+ * open for days, and the dashboard's "active this week" must not be last week's. Never while a screen shows it (that
+ * would be polling): Refresh is for that.
+ */
+export const MEMBERS_MAX_AGE = 10 * 60_000;
+const NO_ROWS: Profile[] = [];
+const IDLE: MembersSnap = { partial: NO_ROWS, loaded: 0, complete: false, loading: false, refreshing: false, at: 0 };
+const WAITING: MembersSnap = { ...IDLE, loading: true };
+const VIEWS: readonly MembersView[] = ["list", "report"];
+/**
+ * What was read, per organization and view, for as long as the page lives: the dashboard, the courses page, the report
+ * and the platform's organization page share it, so going from one to the next reads nothing. In memory only. Whoever
+ * can reach a screen that asks for an organization's members is allowed them by the server, so the key needs no account.
+ */
+const MEMBERS = new Map<string, MembersEntry>();
+const mkey = (orgId: string, view: MembersView) => `${view}:${orgId}`;
+const put = (e: MembersEntry, snap: MembersSnap) => { e.snap = snap; for (const cb of [...e.subs]) cb(); };
+const listed = (uid: string | readonly string[]) => new Set(typeof uid === "string" ? [uid] : uid);
+
+/** Reads every page, one after another (the cursor is the last id of a full page; the page after an exactly full last one is empty). */
+function readMembers(orgId: string, view: MembersView) {
+  const key = mkey(orgId, view);
+  if (!MEMBERS.has(key)) MEMBERS.set(key, { snap: WAITING, subs: new Set(), run: 0, buf: null });
+  const e = MEMBERS.get(key)!, run = ++e.run;
+  e.buf = [];
+  put(e, e.snap.data ? { ...e.snap, refreshing: true, error: undefined } : WAITING);
+  void (async () => {
+    let after: string | null = null;
+    do {
+      const r: { members: Profile[]; next: string | null } = await api.listMembers({ orgId, view, after, limit: MEMBERS_PAGE });
+      if (e.run !== run) return;
+      // A row doesn't carry the organization it was asked for: screens that take a Profile expect it.
+      e.buf = [...(e.buf ?? []), ...r.members.map((m) => ({ ...m, orgId }))];
+      after = r.next;
+      if (!e.snap.data && after) put(e, { ...WAITING, partial: e.buf, loaded: e.buf.length });
+    } while (after);
+    const data = [...(e.buf ?? [])].sort(byName);
+    e.buf = null;
+    put(e, { data, partial: data, loaded: data.length, complete: true, loading: false, refreshing: false, at: Date.now() });
+  })().catch((error: Error) => {
+    if (e.run !== run) return;
+    e.buf = null;
+    put(e, e.snap.data ? { ...e.snap, refreshing: false, error } : { ...IDLE, error });
+  });
+}
+
+/** Reads an organization's members again, for every screen showing them; a view nobody shows is only forgotten. */
+export function reloadMembers(orgId: string) {
+  for (const view of VIEWS) {
+    const e = MEMBERS.get(mkey(orgId, view));
+    if (!e) continue;
+    if (e.subs.size) readMembers(orgId, view);
+    else { e.run++; MEMBERS.delete(mkey(orgId, view)); }
+  }
+}
+/**
+ * Forgets the members read for one organization, or for all, so the next screen reads them again: for a change made
+ * elsewhere that the rows can't follow by a patch (accounts made by Add people or an import, a sign-out). A list a
+ * screen is showing stays: that screen's Refresh reads it again.
+ */
+export function forgetMembers(orgId?: string) {
+  for (const [key, e] of [...MEMBERS]) {
+    if ((orgId && !VIEWS.some((v) => key === mkey(orgId, v))) || e.subs.size) continue;
+    e.run++; MEMBERS.delete(key);
+  }
+}
+/** A change the screen itself just made, put into the rows already read (and into a read in flight): no read. */
+export function patchMembers(orgId: string, uid: string | readonly string[], fields: Partial<Profile>) {
+  const ids = listed(uid);
+  const on = (rows: Profile[]) => rows.map((m) => (ids.has(m.uid) ? { ...m, ...fields } : m));
+  for (const view of VIEWS) {
+    const e = MEMBERS.get(mkey(orgId, view));
+    if (!e) continue;
+    if (e.buf) e.buf = on(e.buf);
+    if (!e.snap.partial.some((m) => ids.has(m.uid))) continue;
+    // A new name has a new place in the list.
+    const partial = e.snap.data && "name" in fields ? on(e.snap.partial).sort(byName) : on(e.snap.partial);
+    put(e, { ...e.snap, partial, ...(e.snap.data ? { data: partial } : {}) });
+  }
+}
+/** People who left the organization (removed, deleted): out of the rows already read, without a read. */
+export function dropMembers(orgId: string, uid: string | readonly string[]) {
+  const ids = listed(uid);
+  for (const view of VIEWS) {
+    const e = MEMBERS.get(mkey(orgId, view));
+    if (!e) continue;
+    if (e.buf) e.buf = e.buf.filter((m) => !ids.has(m.uid));
+    if (!e.snap.partial.some((m) => ids.has(m.uid))) continue;
+    const partial = e.snap.partial.filter((m) => !ids.has(m.uid));
+    put(e, { ...e.snap, partial, loaded: partial.length, ...(e.snap.data ? { data: partial } : {}) });
+  }
+}
+
+/**
+ * An organization's members, through the listMembers callable in pages of MEMBERS_PAGE, read once and shared (MEMBERS
+ * above). A "list" screen is also served by a "report" already read or on its way: its rows hold everything a list's do.
+ */
+export function useMembers(orgId?: string | null, view: MembersView = "list"): MembersQ {
+  // Only while this screen has no list of its own to show: a list on screen never turns back into "loading" because
+  // a report started to load beside it.
+  const report = orgId && view === "list" && !MEMBERS.get(mkey(orgId, "list"))?.snap.data ? MEMBERS.get(mkey(orgId, "report"))?.snap : undefined;
+  const as: MembersView = report && (report.data || report.loading) ? "report" : view;
+  const subscribe = useCallback((cb: () => void) => {
+    if (!orgId) return () => {};
+    const had = MEMBERS.get(mkey(orgId, as));
+    // Nothing read yet; or nobody was looking and the last read failed (with or without an older list beside it), or
+    // the list has grown old.
+    if (!had || (had.subs.size === 0 && !had.snap.loading && !had.snap.refreshing && (!had.snap.data || had.snap.error !== undefined || Date.now() - had.snap.at > MEMBERS_MAX_AGE))) readMembers(orgId, as);
+    const e = MEMBERS.get(mkey(orgId, as))!;
+    e.subs.add(cb);
+    return () => { e.subs.delete(cb); };
+  }, [orgId, as]);
+  const snap = useSyncExternalStore(subscribe, () => (orgId ? MEMBERS.get(mkey(orgId, as))?.snap ?? WAITING : IDLE));
+  const reload = useCallback(() => { if (orgId) reloadMembers(orgId); }, [orgId]);
+  const patch = useCallback((uid: string | readonly string[], fields: Partial<Profile>) => { if (orgId) patchMembers(orgId, uid, fields); }, [orgId]);
+  const remove = useCallback((uid: string | readonly string[]) => { if (orgId) dropMembers(orgId, uid); }, [orgId]);
+  return useMemo(() => ({ ...snap, reload, patch, remove }), [snap, reload, patch, remove]);
+}
+
 export const useMyStudents = (orgId?: string | null, teacherUid?: string) =>
   useOnce<Profile[]>(orgId && teacherUid ? async () => (await listOf<Profile>("users", where("orgId", "==", orgId), where("teacherId", "==", teacherUid))).sort(byName) : null, [orgId, teacherUid], true);
 /** An organization's teachers and admins (who can be a student's teacher): one read, not the whole member list. */
@@ -118,6 +264,46 @@ function useOnce<T>(load: (() => Promise<T>) | null, deps: unknown[], fresh = fa
   return fresh && s.key !== key ? { loading, reload } : { data: s.data, error: s.error, loading, reload };
 }
 
+/** A page of a list: its rows and the document the next page starts after (null: this list has no cursor). */
+type Page<T> = { rows: T[]; last: QueryDocumentSnapshot | null };
+const pageOf = async <T,>(q: Query, row: (d: QueryDocumentSnapshot) => T): Promise<Page<T>> => {
+  const { docs } = await getDocs(q);
+  return { rows: docs.map(row), last: docs[docs.length - 1] ?? null };
+};
+/** The constraints that end a paged query: after the last row shown (when there is one), `n` more. */
+const next = (after: QueryDocumentSnapshot | null, n: number): QueryConstraint[] => [...(after ? [startAfter(after)] : []), limit(n)];
+/**
+ * A list its screen shows `max` rows of, where "Show more" raises `max`: the first read asks for `max`, and each raise
+ * reads only the rows after the last one shown and appends them (the screens used to ask for the whole longer list
+ * again: 300 rows shown and "Show more" read 350, of which 300 were already on the screen). A raise after a page that
+ * came back short reads nothing: the list has ended. reload() reads what is shown again from the top, in one query.
+ * Like useOnce without `fresh`: other deps keep the older rows on screen until theirs arrive (`loading` says so).
+ */
+function usePaged<T>(read: ((after: QueryDocumentSnapshot | null, n: number) => Promise<Page<T>>) | null, deps: unknown[], max: number): { data?: T[]; error?: Error; loading: boolean; reload: () => void } {
+  const [n, setN] = useState(0);
+  const key = JSON.stringify(deps);
+  const [s, setS] = useState<{ data?: T[]; error?: Error; key?: string }>({});
+  // What the last read left: for which list (deps and reload count), its rows, where it ended and how many were asked for.
+  const at = useRef<(Page<T> & { id: string; max: number }) | null>(null);
+  useEffect(() => {
+    if (!read) return;
+    const id = `${key}#${n}`, had = at.current?.id === id ? at.current : null;
+    if (had && max > had.max && had.rows.length < had.max) return; // already at its end
+    const more = had && had.last && max > had.max ? had : null;
+    let live = true;
+    Promise.resolve().then(() => read(more ? more.last : null, more ? max - more.rows.length : max)).then((p) => {
+      if (!live) return;
+      const rows = more ? [...more.rows, ...p.rows] : p.rows;
+      at.current = { id, rows, last: p.last ?? more?.last ?? null, max };
+      setS({ data: rows, key });
+    }, (error: Error) => { if (live) setS((p) => (p.key === key ? { ...p, error } : { error, key })); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, max, n]);
+  const reload = useCallback(() => setN((x) => x + 1), []);
+  return { data: s.data, error: s.error, loading: read !== null && s.key !== key, reload };
+}
+
 export const useOverview = () => useOnce(async () => {
   const s = await getDoc(doc(db, "stats", "overview"));
   return s.exists() ? (s.data() as Overview) : null;
@@ -148,9 +334,10 @@ const namesFrom = async (s: string, max: number) => (await getDocs(query(collect
  * as the org page's "Add a person" does) and accounts whose name starts with the text, as typed or with a capital first
  * letter (Firestore compares names as written).
  */
-export const usePeople = (search: string, max = 50) => useOnce(async () => {
+export const usePeople = (search: string, max = 50) => usePaged<Profile>(async (after, n) => {
   const s = search.trim();
-  if (!s) return (await getDocs(query(collection(db, "users"), orderBy("lastActive", "desc"), limit(max)))).docs.map((d) => ({ uid: d.id, ...d.data() }) as Profile);
+  // Everyone, a page at a time ("Show more" reads the next 50 only). A search is one answer, with no cursor.
+  if (!s) return pageOf(query(collection(db, "users"), orderBy("lastActive", "desc"), ...next(after, n)), (d) => ({ uid: d.id, ...d.data() }) as Profile);
   const email = s.includes("@");
   const [account, ...named] = await Promise.all([
     email || LOGIN.test(s) ? findByEmail(email ? s : `${s}@${USERNAME_DOMAIN}`) : Promise.resolve([]),
@@ -159,27 +346,52 @@ export const usePeople = (search: string, max = 50) => useOnce(async () => {
   // The account's own profile, for the table's lessons and activity (Auth's answer has only its name and role).
   const full = await Promise.all(account.map(async (a) => { const d = await getDoc(doc(db, "users", a.uid)); return d.exists() ? ({ uid: d.id, ...d.data() } as Profile) : a; }));
   const seen = new Set<string>();
-  return [...full, ...named.flat()].filter((p) => !seen.has(p.uid) && !!seen.add(p.uid)).slice(0, max);
-}, [search, max]);
+  return { rows: [...full, ...named.flat()].filter((p) => !seen.has(p.uid) && !!seen.add(p.uid)).slice(0, max), last: null };
+}, [search], max);
 
 /** A project with the account it belongs to (users/{uid}/submissions). */
 export interface AnySubmission extends Submission { uid: string }
 /** Every project anyone submitted, for platform admins: newest first, `waiting` only those not reviewed yet. */
-export const useAllSubmissions = (waiting: boolean, max: number) => useOnce(async () => {
-  const q = query(collectionGroup(db, "submissions"), ...(waiting ? [where("status", "==", "submitted")] : []), orderBy("createdAt", "desc"), limit(max));
-  return (await getDocs(q)).docs.map((d) => ({ ...d.data(), id: d.id, uid: d.ref.parent.parent!.id }) as AnySubmission);
-}, [waiting, max]);
+export const useAllSubmissions = (waiting: boolean, max: number) => usePaged<AnySubmission>((after, n) =>
+  pageOf(query(collectionGroup(db, "submissions"), ...(waiting ? [where("status", "==", "submitted")] : []), orderBy("createdAt", "desc"), ...next(after, n)),
+    (d) => ({ ...d.data(), id: d.id, uid: d.ref.parent.parent!.id }) as AnySubmission), [waiting], max);
 
 /** Accounts that finished at least one lesson, most lessons first (platform admins: the certificates page). */
-export const useLearners = (max: number) => useOnce(async () =>
-  (await getDocs(query(collection(db, "users"), where("summary.lessonsDone", ">", 0), orderBy("summary.lessonsDone", "desc"), limit(max)))).docs
-    .map((d) => ({ uid: d.id, ...d.data() }) as Profile), [max]);
+export const useLearners = (max: number) => usePaged<Profile>((after, n) =>
+  pageOf(query(collection(db, "users"), where("summary.lessonsDone", ">", 0), orderBy("summary.lessonsDone", "desc"), ...next(after, n)), (d) => ({ uid: d.id, ...d.data() }) as Profile), [], max);
 
-/** Some accounts' names, read once (the projects page names whose project each is). */
-export const useNames = (uids: string[]) => useOnce(uids.length ? async () => {
-  const docs = await Promise.all(uids.map((uid) => getDoc(doc(db, "users", uid))));
-  return Object.fromEntries(docs.map((d) => [d.id, (d.get("name") as string | undefined) ?? ""]));
-} : null, [uids.join(",")]);
+/** Names already read, for as long as the page lives: "Show more" and a review's re-read ask only for the new people's. */
+const NAMES = new Map<string, string>();
+/**
+ * Some accounts' names (the projects page names whose project each is; the ledger, who paid). Each name is read once
+ * per page load: `data` holds the names known so far, and grows as the missing ones arrive. reload() reads these again.
+ */
+export function useNames(uids: string[]): { data?: Record<string, string>; error?: Error; loading: boolean; reload: () => void } {
+  const key = uids.join(",");
+  const [n, setN] = useState(0);
+  const [s, setS] = useState<{ tick: number; key?: string; error?: Error }>({ tick: 0 });
+  const asked = useRef(uids);
+  asked.current = uids;
+  useEffect(() => {
+    const missing = asked.current.filter((uid) => !NAMES.has(uid));
+    if (!missing.length) return;
+    let live = true;
+    Promise.resolve().then(() => Promise.all(missing.map((uid) => getDoc(doc(db, "users", uid))))).then((docs) => {
+      docs.forEach((d, i) => NAMES.set(missing[i], (d.get("name") as string | undefined) ?? ""));
+      if (live) setS((p) => ({ tick: p.tick + 1 }));
+    }, (error: Error) => { if (live) setS((p) => ({ tick: p.tick + 1, key, error })); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, n]);
+  const reload = useCallback(() => { for (const uid of asked.current) NAMES.delete(uid); setN((x) => x + 1); }, []);
+  const data = useMemo(() => {
+    const known = uids.filter((uid) => NAMES.has(uid));
+    return known.length ? Object.fromEntries(known.map((uid) => [uid, NAMES.get(uid)!])) : undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, s.tick, n]);
+  const error = s.key === key ? s.error : undefined;
+  return { data, error, loading: !error && uids.some((uid) => !NAMES.has(uid)), reload };
+}
 
 /** When someone finished a course: the time of their last lesson in it (ISO), or null. */
 export async function finishedAt(uid: string, unitId: string): Promise<string | null> {
@@ -202,8 +414,12 @@ export const useGaConfig = () => useOnce(async () => {
   const s = await getDoc(doc(db, "config", "analytics"));
   return (s.exists() ? s.data() : { measurementId: "", apiSecret: "" }) as GaConfig;
 }, []);
-export const saveGaConfig = (uid: string, c: GaConfig) =>
-  setDoc(doc(db, "config", "analytics"), { measurementId: c.measurementId.trim(), apiSecret: c.apiSecret.trim(), updatedAt: serverTimestamp(), updatedBy: uid });
+/**
+ * Saved by the setGaConfig callable, which checks the two values, records who changed them and writes the audit entry
+ * (the browser used to write config/analytics itself). `_uid` is kept for the screens that still pass it: the server
+ * takes the caller from the request.
+ */
+export const saveGaConfig = (_uid: string, c: GaConfig) => api.setGaConfig({ measurementId: c.measurementId.trim(), apiSecret: c.apiSecret.trim() });
 
 /** The org's invite codes (orgs/{orgId}/private/invites; its admins only). Codes from before 2026-11 sit on the org itself. */
 export const useInvites = (orgId?: string | null) => useOnce(orgId ? async () => {
@@ -212,13 +428,38 @@ export const useInvites = (orgId?: string | null) => useOnce(orgId ? async () =>
   return { teacher: (priv.get("teacher") ?? old?.teacher) as string | undefined, student: (priv.get("student") ?? old?.student) as string | undefined };
 } : null, [orgId]);
 /**
+ * Who suspended an organization and why (orgs/{orgId}/private/suspension, platform admins only; updateOrg writes it).
+ * Organizations suspended before 2026-11-12 kept it on the org document (`suspended.reason`), which the screen still reads.
+ */
+export const useOrgSuspension = (orgId?: string | null) => useOnce(orgId ? async () => {
+  const s = await getDoc(doc(db, "orgs", orgId, "private", "suspension"));
+  return { reason: s.get("reason") as string | undefined };
+} : null, [orgId]);
+
+/**
  * What an organization's requester told platform admins privately (orgs/{orgId}/private/request: its admins and platform
  * admins only). Requests from before 2026-11 kept it on the org document, until scripts/migrate-org-requests.mjs.
  */
 export const useOrgRequest = (orgId?: string | null) => useOnce(orgId ? async () => {
   const s = await getDoc(doc(db, "orgs", orgId, "private", "request"));
-  return { contact: s.get("contact") as string | undefined, reason: s.get("reason") as string | undefined };
+  // Whether the requester's email was confirmed when they asked (requestOrg records it since 2026-11; older requests
+  // don't say, and the screen then says nothing either).
+  const verified = s.get("emailVerified") as unknown;
+  return { contact: s.get("contact") as string | undefined, reason: s.get("reason") as string | undefined, emailVerified: typeof verified === "boolean" ? verified : undefined };
 } : null, [orgId]);
+
+/**
+ * Whether organization `orgId` manages this account, as the server decides (functions/src/orgMembersCore.ts isManaged,
+ * roles.ts managedAccount): the profile's `managedBy` when it has one, else a username login. Who made the profile
+ * (`createdBy`) says nothing: an admin can add someone with their own email, and that account is theirs. A listMembers
+ * row carries no `managedBy`, only the server's answer for the organization listed (`managed`).
+ */
+export function managedByOrg(p: { managedBy?: string | null; managed?: boolean; email?: string | null }, orgId: string | null | undefined): boolean {
+  if (!orgId) return false;
+  if (typeof p.managedBy === "string" && p.managedBy) return p.managedBy === orgId;
+  if (typeof p.managed === "boolean") return p.managed;
+  return !!p.email?.toLowerCase().endsWith(`@${USERNAME_DOMAIN}`);
+}
 
 /** Every organization, newest first (platform admins: /super/orgs). One read, again on reload(). */
 /** Organizations' web addresses (sites/{host}): one organization's, or every one (platform admins only). */
@@ -273,12 +514,39 @@ export interface BugReport {
   details: Record<string, unknown>; server?: { ua: string; lang: string }; statusBy?: string; statusAt?: { seconds: number } | null;
 }
 /** Problem reports, newest first: the new ones, or all of them. Read once when the page opens. */
-export const useBugReports = (onlyNew: boolean, max: number) => useOnce(async () => {
-  const q = query(collection(db, "bugReports"), ...(onlyNew ? [where("status", "==", "new")] : []), orderBy("createdAt", "desc"), limit(max));
-  return (await getDocs(q)).docs.map((d) => ({ ...d.data(), id: d.id }) as BugReport);
-}, [onlyNew, max]);
+export const useBugReports = (onlyNew: boolean, max: number) => usePaged<BugReport>((after, n) =>
+  pageOf(query(collection(db, "bugReports"), ...(onlyNew ? [where("status", "==", "new")] : []), orderBy("createdAt", "desc"), ...next(after, n)), (d) => ({ ...d.data(), id: d.id }) as BugReport), [onlyNew], max);
 export const setBugStatus = (id: string, status: BugReport["status"], uid: string) =>
   updateDoc(doc(db, "bugReports", id), { status, statusBy: uid, statusAt: serverTimestamp() });
+/** "Share feedback" as stored by sendFeedback (functions/src/feedback.ts); platform admins only (rules). */
+export interface FeedbackDoc {
+  id: string; status: "new" | "read" | "archived"; rating: number; text: string; topic: string | null; path: string;
+  unitId: string | null; source: "button" | "course"; lang: string | null; createdAt?: { seconds: number } | null;
+  user: { uid: string; email: string | null; name: string | null; role: string; orgId: string | null } | null;
+}
+/** Feedback, newest first: the new ones, or all of it. Read once when the page opens, a page at a time. */
+export const useFeedback = (onlyNew: boolean, max: number) => usePaged<FeedbackDoc>((after, n) =>
+  pageOf(query(collection(db, "feedback"), ...(onlyNew ? [where("status", "==", "new")] : []), orderBy("createdAt", "desc"), ...next(after, n)), (d) => ({ ...d.data(), id: d.id }) as FeedbackDoc), [onlyNew], max);
+export const setFeedbackStatus = (id: string, status: FeedbackDoc["status"], uid: string) =>
+  updateDoc(doc(db, "feedback", id), { status, statusBy: uid, statusAt: serverTimestamp() });
+/**
+ * The figures above the list: how many, and the average, in all and in the last 30 days, and how many gave each number
+ * of stars. Aggregation queries (counted on the server: no documents are downloaded), read once when the page opens.
+ */
+export const useFeedbackSummary = (since: number) => useOnce(async () => {
+  const all = collection(db, "feedback");
+  const recent = query(all, where("createdAt", ">=", new Date(since)));
+  const [a, r, ...stars] = await Promise.all([
+    getAggregateFromServer(all, { n: count(), avg: average("rating") }),
+    getAggregateFromServer(recent, { n: count(), avg: average("rating") }),
+    ...[1, 2, 3, 4, 5].map((s) => getCountFromServer(query(all, where("rating", "==", s)))),
+  ]);
+  return {
+    all: { n: a.data().n, avg: a.data().avg ?? null },
+    recent: { n: r.data().n, avg: r.data().avg ?? null },
+    stars: stars.map((s) => s.data().count),
+  };
+}, [since]);
 /** A report's screenshot, for platform admins only (storage rules); loaded when someone opens it. */
 export async function bugShotUrl(path: string): Promise<string> {
   const [{ getDownloadURL, ref }, s] = await Promise.all([import("firebase/storage"), storage()]);

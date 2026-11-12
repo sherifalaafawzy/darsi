@@ -7,8 +7,11 @@
  * host with the same rules the app looks it up with. Pure: no imports; startup uses only isDarsiHost and siteFor.
  */
 
-/** One host in content/sites.json: the organization, its name and logo as published, and whether Darsi's identity shows. */
-export interface SiteEntry { orgId: string; name: string; logo: string | null; darsi: boolean }
+/**
+ * One host in content/sites.json: the organization, its name and logo as published, and whether Darsi's identity shows.
+ * `sso`: its school sign-in, while it is on (the sign-in screen's button: the slug to start with and the provider's host).
+ */
+export interface SiteEntry { orgId: string; name: string; logo: string | null; darsi: boolean; sso?: { slug: string; host: string } }
 /** content/sites.json: `v` is when it was published (ms); `sites` is keyed by host. */
 export interface SitesFile { v: number; sites: Record<string, SiteEntry> }
 /** What the organization document holds (orgs/{id}.site), written only by setOrgSite. */
@@ -103,5 +106,9 @@ export function siteFor(file: unknown, host: string): SiteEntry | null {
   if (!sites || typeof sites !== "object" || !Object.prototype.hasOwnProperty.call(sites, host)) return null;
   const e = (sites as Record<string, unknown>)[host] as Partial<SiteEntry> | null;
   if (!e || typeof e !== "object" || typeof e.orgId !== "string" || !e.orgId || typeof e.name !== "string" || !e.name.trim()) return null;
-  return { orgId: e.orgId, name: e.name.trim().slice(0, 120), logo: logoOk(e.logo) ? e.logo : null, darsi: e.darsi !== false };
+  // The school sign-in, only in its published shape (a slug as the server makes them, a host with an optional port: the
+  // local stand-in provider is 127.0.0.1:4797): anything else, none.
+  const sso = e.sso as { slug?: unknown; host?: unknown } | undefined;
+  const ok = sso && typeof sso.slug === "string" && /^[a-z0-9-]{1,60}$/.test(sso.slug) && typeof sso.host === "string" && /^[a-z0-9.-]{1,253}(?::\d{1,5})?$/.test(sso.host);
+  return { orgId: e.orgId, name: e.name.trim().slice(0, 120), logo: logoOk(e.logo) ? e.logo : null, darsi: e.darsi !== false, ...(ok ? { sso: { slug: sso.slug as string, host: sso.host as string } } : {}) };
 }

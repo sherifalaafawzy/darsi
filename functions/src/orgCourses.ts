@@ -5,6 +5,7 @@
  */
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { audit, db, freshCaller, str } from "./admin.js";
+import { refuseClosedOrg } from "./closedOrg.js";
 import { checkOrgCourses, ORG_COURSES_MAX, type OrgCoursesProblem } from "./shared/orgCourses.js";
 
 /** The English fallback for each refusal; the admin screens show their own words for the code (admin/refusals.ts). */
@@ -28,8 +29,10 @@ export const setOrgCourses = onCall(async (req) => {
   }
   const checked = checkOrgCourses(req.data?.courses);
   if ("problem" in checked) throw new HttpsError("invalid-argument", WORDS[checked.problem], { reason: checked.problem });
-  const ref = db.doc(`orgs/${orgId}`);
-  if (!(await ref.get()).exists) throw new HttpsError("not-found", "No such organization.", { reason: "no-org" });
+  const ref = db.doc(`orgs/${orgId}`), org = await ref.get();
+  if (!org.exists) throw new HttpsError("not-found", "No such organization.", { reason: "no-org" });
+  // Its own admin hides or shows no course while the organization is suspended or being deleted (its members keep learning).
+  await refuseClosedOrg(c, orgId, { status: org.get("status") });
   const courses = checked.value;
   await ref.update({ courses });
   // Counts, not the lists themselves: enough to see who narrowed what, without copying the lists into the log.

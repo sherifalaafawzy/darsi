@@ -9,14 +9,14 @@ Read in this order: this file, then `CLAUDE.md` (conventions and live state), `T
 ## Rules that must not be broken
 - **Secrets:** never read or print `apps/web/.env.local`, `.secrets/`, Lesson Studio's `.env.local`, API keys or tokens. Never put a key in a reply or a file.
 - **Commits:** only when the user asks. Use the repo-local identity Sherif Alaa Fawzy <sherifalaafawzy@gmail.com>, never the global one. Nothing has been committed today: `git status` shows 454 changed or new entries.
-- **Deploys and live changes:** Hosting, functions, rules and live seeding only with the user's explicit go-ahead. Emulators are fine.
+- **Deploys and live changes:** Hosting, functions, rules and live seeding only with the user's explicit go-ahead. Emulators are fine. A release goes out with `npm run deploy` (`docs/OPERATIONS.md`): from a committed tree, after `npm run verify`, never with a bare `firebase deploy`.
 - **Firebase and gcloud:** always pass `--account=sherifalaafawzy@gmail.com`. Never the work account.
 - **Publishing:** never publish live, and never push lessons into the live Lesson Studio, without asking.
 - **Narration costs money.** Lesson Studio's `.cache/narrate/` holds audio already paid for. Never delete it.
 - **Locks:** narration and seeding take turns. Narration: `H:/htdocs/lessonstudio/out/locks/narrate`, taken with `mkdir` and released when done. Seed: `H:/htdocs/lessonstudio/out/locks/seed`. Before you remove someone else's lock, check that its process has stopped. If unsure, ask the user.
 - **Scratch files** go on H:, never the C: temp folder (C: has filled up before). Write scripts with the file tool; shell heredocs mangle backslashes on this PC.
 - **Arabic:** never "·" as a separator; use "،" or `common.sep`. Code and formulas inside Arabic text sit in left-to-right isolates (see below).
-- **Security content teaches defence only.** Light theme only. Startup stays at 4 files, and guests never load Firebase (`CLAUDE.md`).
+- **Security content teaches defence only.** Light theme only. Startup stays inside its budget (`scripts/bundle-budget.json`: 8 files, checked by `node scripts/check-bundle.mjs`), and guests never load Firebase (`CLAUDE.md`).
 - Pin dependency versions at least two weeks old.
 
 ## The goal
@@ -50,9 +50,12 @@ Five new tracks: Programming (`code`), Data engineering (`data`), AI agents (`ag
    - Seed to the emulators under the seed lock: `npm run seed -- --emulator --replace <units>`. This needs JDK 21 and the emulators. See `docs/FIREBASE.md`, "Local development with the emulators". On this PC, set `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:\Users\Public`.
    - Browser check at 375 px on `http://localhost:5173` (`npm run dev`): one lesson per course in English and one in Arabic. The light lesson must play with voice and captions, the lab must open, the code steps must show "Correct!", there must be no page errors, and the Firebase SDK must not download for a guest. Playwright scripts from earlier runs: `H:\htdocs\lessonstudio\out\data-work\e2e.mjs` (data), `H:\htdocs\lessonstudio\out\aisec-src\browse.mjs` (aisec), and the opt scripts in `H:\tmp\darsi-opt`.
 3. **Placement.** Merge the five track files into `apps/web/public/content/placement.json`, making it version 3 (72 + 120 = 192 questions). The track files have the same shape: `{ "questions": [...] }`, with ids `<track>-t<level>-<n>` for teachers and `<track>-s<level>-<n>` for students. `tests/placement.test.ts` checks the rules but does not read the track files yet, so extend it to cover all eight tracks. Then run `cd apps/web && npx vitest run tests/placement.test.ts`.
-4. **Full checks** (`H:\htdocs\darsi`): `npm run typecheck`, `npm run lint:css`, `npm test`, the functions tests (see `functions/package.json`), the design-system contrast check, and `npm run e2e` (it builds a private copy first; set `CHROMIUM_PATH` to the installed chromium-1243 `chrome.exe`, as `CLAUDE.md` says). Measure the startup bundle: it must stay at 4 files.
+4. **Full checks** (`H:\htdocs\darsi`): `npm run verify`. One run does the type-checks, the functions build, the unit tests of the web app, the design system and the functions, the CSS rules and the contrast check, and stops at the first that fails (`docs/OPERATIONS.md`). Its flags:
+   - `npm run verify -- --rules` adds the security rules tests (the emulators; JDK 21 or newer).
+   - `npm run verify -- --e2e` adds the browser suite (it builds the app itself; set `CHROMIUM_PATH` to an installed `chrome.exe`, as `CLAUDE.md` says).
+   - `npm run verify -- --bundle <dir>` checks a built app's startup against `scripts/bundle-budget.json` (files, KB gzipped, no Firebase SDK at startup, nothing lazy in the precache). `node scripts/check-bundle.mjs` alone checks `apps/web/dist`.
 5. **Older tracks' fitting pass** (approved, not started). The student courses `ai-s1…s4`, `cyber-s1…s4` and `iot-s1…s4` should fit their school stages: `s1` simpler, for ages 9–12; `s3` and `s4` deeper, with `s4` at university level. Add code where it fits: AI levels 3–4 (a perceptron and gradient descent with `ulab`), IoT levels 2–4 (the virtual board), cyber levels 3–4 (a password checker, Caesar, hashing). Re-voice only the narration that changes.
-6. **Live publish, only with the user's go-ahead.** Seed live with `npm run seed -- <units>`, which uses the personal account's application-default login (`CLAUDE.md`). Then deploy functions and Hosting the way the earlier deploys did (`CLAUDE.md`, "Firebase project"). Afterwards check the live catalog, and check that a guest still never loads the Firebase SDK.
+6. **Live publish, only with the user's go-ahead.** Seed live with `npm run seed -- <units>`, which uses the personal account's application-default login (`CLAUDE.md`). Then release functions and Hosting with `npm run deploy -- functions hosting --yes` (`docs/OPERATIONS.md`): it refuses an uncommitted tree, runs `npm run verify`, builds, checks the startup budget and tags the commit `live-YYYYMMDD-n`. Afterwards check the live catalog, and check that a guest still never loads the Firebase SDK.
 7. **Docs.** Update `TECHNICAL.md` (tracks, code steps, Labs, languages), `docs/CURRICULUM.md` and `CLAUDE.md` item 19. Do this after the work is verified.
 8. **Commit** only when the user asks.
 
@@ -77,7 +80,7 @@ Five new tracks: Programming (`code`), Data engineering (`data`), AI agents (`ag
 ## Commands
 Run these in `H:\htdocs\darsi` unless a line says otherwise.
 - Dev server: `npm run dev` (port 5173).
-- All tests: `npm test`. Units for one track: `cd apps/web && npx vitest run tests/units.test.ts -t "course <track>-"`.
+- Every check: `npm run verify` (flags `--rules`, `--e2e`, `--bundle <dir>`). Units for one track: `cd apps/web && npx vitest run tests/units.test.ts -t "course <track>-"`.
 - Kits: `cd apps/web && npm run kits -- <unit> …`
 - Isolates: `node scripts/isolate-code.mjs --fix <unit> …`
 - Media import after rendering: `node scripts/import-media.mjs <unit> …`

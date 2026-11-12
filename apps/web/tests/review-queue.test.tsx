@@ -5,11 +5,12 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { Profile } from "../src/auth/types";
 import { I18nProvider } from "../src/i18n";
+import enStaff from "../src/staff/strings/en.json";
 
-const m = vi.hoisted(() => ({ students: [] as unknown[] }));
+const m = vi.hoisted(() => ({ students: [] as unknown[] | undefined, error: undefined as unknown, reload: vi.fn() }));
 vi.mock("../src/firebase", () => ({ db: {}, auth: {}, storage: {}, functions: {}, firebaseReady: true, call: () => vi.fn() }));
 vi.mock("../src/auth/AuthProvider", () => ({ useAuth: () => ({ user: { uid: "t1" }, role: "teacher", orgId: "o1" }) }));
-vi.mock("../src/admin/data", async (orig) => ({ ...(await orig<typeof import("../src/admin/data")>()), useMyStudents: () => ({ data: m.students, reload: vi.fn() }) }));
+vi.mock("../src/admin/data", async (orig) => ({ ...(await orig<typeof import("../src/admin/data")>()), useMyStudents: () => ({ data: m.students, error: m.error, loading: false, reload: m.reload }) }));
 
 const { Teach } = await import("../src/admin/Teach");
 const { byWaiting, waitingOf, waitingTotals } = await import("../src/admin/review");
@@ -23,6 +24,7 @@ const page = (lang = "en") => render(<I18nProvider lang={lang}><MemoryRouter><Te
 const names = () => screen.getAllByRole("link").map((a) => a.textContent ?? "").filter((x) => /Amina|Bola|Chidi|Dayo/.test(x));
 
 beforeEach(() => {
+  m.error = undefined; m.reload.mockClear();
   m.students = [
     student("s1", "Amina"),
     student("s2", "Bola", { projectsWaiting: 1 }),
@@ -40,10 +42,12 @@ describe("/teach", () => {
     expect(names()[0]).toMatch(/Chidi/);
     expect(names()[1]).toMatch(/Bola/);
     // Each waiting student's row says how many; the others' cell stays empty (hidden on phones).
-    const chidi = screen.getByRole("link", { name: /Chidi/ }).closest("tr") as HTMLElement;
-    const count = chidi.querySelector('td[data-label="To review"] > span');
+    const chidi = screen.getAllByRole("link", { name: /Chidi/ })[0].closest("tr") as HTMLElement;
+    const count = chidi.querySelector('td[data-label="To review"] .status');
     expect(count?.textContent).toBe("2");
     expect(count?.className).toContain("status-submitted");
+    // The count opens the student's Projects tab, where the reviews are.
+    expect(count?.closest("a")?.getAttribute("href")).toBe("/teach/s3?tab=projects");
     const amina = screen.getByRole("link", { name: /Amina/ }).closest("tr") as HTMLElement;
     expect(amina.querySelector('td[data-label="To review"]')?.textContent).toBe("");
   });
@@ -63,6 +67,42 @@ describe("/teach", () => {
     page("ar");
     expect(screen.getByText("مشاريع بانتظار المراجعة")).toBeTruthy();
     expect(screen.getAllByText("للمراجعة").length).toBeGreaterThan(0); // the sort option and the column
+  });
+
+  it("says a read that failed, with Retry, and never 'No students yet'; Refresh stays reachable", () => {
+    // useMyStudents as it answers a failed first read: no data, an error.
+    m.students = undefined; m.error = Object.assign(new Error("Missing or insufficient permissions."), { code: "permission-denied" });
+    page();
+    const note = screen.getByRole("alert");
+    expect(note.textContent).toContain(enStaff["st.err.permissionDenied"]);
+    expect(note.textContent).not.toMatch(/insufficient permissions/);
+    expect(screen.queryByText("No students yet")).toBeNull();
+    expect(document.querySelector(".tile")).toBeNull();
+    fireEvent.click(within(note).getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+    expect(m.reload).toHaveBeenCalledTimes(2);
+  });
+
+  it("says 'No students yet' only for a list that was read and is empty, with Refresh above it", () => {
+    m.students = [];
+    page();
+    expect(screen.getByText("No students yet")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+    expect(m.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("draws 100 students of a long list, then more, and starts at the top again on a search", () => {
+    m.students = Array.from({ length: 130 }, (_, i) => student(`p${i}`, `Pupil ${String(i).padStart(3, "0")}`));
+    page();
+    const drawn = () => within(screen.getByRole("table")).getAllByRole("link").length;
+    expect(drawn()).toBe(100);
+    expect(screen.getByText("Showing 100 of 130")).toBeTruthy();
+    // The tiles count everyone, drawn or not.
+    expect(within(screen.getByText("Students", { selector: ".tile span" }).closest(".tile") as HTMLElement).getByText("130")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Show 30 more" }));
+    expect(drawn()).toBe(130);
+    fireEvent.change(screen.getByLabelText("Search by name, email or group"), { target: { value: "pupil" } });
+    expect(drawn()).toBe(100);
   });
 
   it("has nothing to filter when nothing waits", () => {

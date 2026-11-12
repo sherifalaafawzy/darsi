@@ -14,7 +14,9 @@ export const isApproved = (s: SiteStatus) => APPROVED.includes(s);
  * Here rather than in shared/sites.ts, which the app's startup bundle holds whole.
  */
 const RESERVED_NAMES: readonly string[] = ["www", "api", "app", "admin", "auth", "login", "signin", "signup", "account", "accounts", "mail", "email",
-  "smtp", "support", "help", "status", "docs", "blog", "static", "cdn", "assets", "media", "dev", "staging", "test", "pay", "billing", "security"];
+  "smtp", "support", "help", "status", "docs", "blog", "static", "cdn", "assets", "media", "dev", "staging", "test", "pay", "billing", "security",
+  // School sign-in: login.darsiai.org is its callback site (firebase.json, target "login"); sso is kept with it.
+  "sso"];
 export const isReservedName = (host: string) => inDarsiZone(host) && RESERVED_NAMES.includes(host.slice(0, -".darsiai.org".length));
 /**
  * Whether an address may sign people in and read Darsi's files now: approved, its ownership record there (always, under

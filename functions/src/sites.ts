@@ -15,17 +15,28 @@
  *   the lock that lets one syncSiteAccess run at a time.
  * - config/sites (setOrgSite's list before 2026-11-09) is moved into sites/{host} by sitesJob, then deleted.
  * - Addresses under darsiai.org are a platform admin's to add (Darsi runs that DNS, so they need no ownership record).
+ * - An organization's address is a sign-in domain that the organization's DNS controls, so every change to one is in
+ *   the audit log: the admins' actions (requestSite, approveSite, siteIdentity, refuseSite, cancelSite, removeSite), an
+ *   address that stops being live or is live (again) whoever's check found it (siteLost, siteLive, by "sitesJob"), and
+ *   an organization with an approved address that is renamed or re-branded (orgRebrand), since its public address and
+ *   sign-in page follow within a minute with nobody told.
+ * - stats/jobs.sitesJob { at, ok, checked, live }: the job's last run, for whoever watches that it still runs.
  */
 import { createHash, randomBytes } from "node:crypto";
 import { HttpsError, onCall, type FunctionsErrorCode } from "firebase-functions/v2/https";
-import { onDocumentWritten } from "firebase-functions/v2/firestore";
+import { FieldValue } from "firebase-admin/firestore";
+import { onDocumentWrittenWithAuthContext } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { logger } from "firebase-functions/v2";
 import { audit, db, freshCaller, str } from "./admin.js";
-import { bucket, publicFileUrl, savePublicJson } from "./storage.js";
+import { isOwner } from "./catalog.js";
+import { refuseClosedOrg } from "./closedOrg.js";
+import { CATALOGS_DOC, writeCatalog } from "./content.js";
+import { bucket, publicFileUrl, saveRetrying } from "./storage.js";
 import { connectHost, disconnectHost, syncAccess, type Access, type HostCheck } from "./domains.js";
 import { brandLogoPath, hasAccess, isApproved, isReservedName, LOGO_TYPES, newSite, readLinks, readSiteDoc, SITE_LOGOS, siteLogoPath, sitesNeedPublish, statusOf } from "./sitesCore.js";
-import { checkSiteHost, inDarsiZone, type SiteDoc, type SiteEntry, type SitesFile, type SiteSteps, type StepState } from "./shared/sites.js";
+import { checkSiteHost, inDarsiZone, type SiteDoc, type SiteEntry, type SitesFile, type SiteStatus, type SiteSteps, type StepState } from "./shared/sites.js";
+import { ssoOrgRebranded, ssoSiteEntry } from "./ssoStore.js";
 
 export const SITES = "sites";
 export const LEGACY_DOC = "config/sites";
@@ -39,9 +50,19 @@ const CHECK_GAP_MS = 15_000;
 const LIVE_RECHECK_MS = 3600_000;
 /** How long one syncSiteAccess may hold the lock before another may take it (one that crashed). */
 const LOCK_MS = 90_000;
+/**
+ * sitesJob has 300 s. Its checks of single addresses stop after this long (the rest come first at the next run), so
+ * there is always time left to set sign-in and file access from what was found: that step is what takes sign-in away
+ * from an address whose DNS no longer shows it is Darsi's.
+ */
+const CHECKS_MS = 200_000;
+/** The job's first minute at most goes to catalogs a publish couldn't write (content.ts CATALOGS_DOC). */
+const MEND_MS = 60_000;
+/** The job's last run: { sitesJob: { at, ok, checked, live } }. */
+export const JOBS_DOC = "stats/jobs";
 
 type Reason = "site-host" | "site-reserved" | "site-taken" | "site-limit" | "site-state" | "site-zone" | "site-apex" | "no-site" | "not-super"
-  | "not-org-admin" | "not-yours" | "no-org" | "org-inactive" | "site-action";
+  | "not-org-admin" | "no-org" | "org-inactive" | "site-action";
 /** The English fallback for each refusal; the admin screens show their own words for the code (admin/refusals.ts). */
 const WORDS: Record<Reason, string> = {
   "site-host": "Type a web address such as learn.yourschool.edu: lowercase letters, digits, dots and dashes.",
@@ -54,7 +75,6 @@ const WORDS: Record<Reason, string> = {
   "no-site": "No such web address.",
   "not-super": "Platform admins only.",
   "not-org-admin": "Organization admins only.",
-  "not-yours": "That address belongs to another organization.",
   "no-org": "No such organization.",
   "org-inactive": "The organization isn't active yet.",
   "site-action": "Unknown action.",
@@ -101,26 +121,18 @@ async function publicLogo(orgId: string, logo: unknown): Promise<{ url: string; 
   }
 }
 
-/** Storage refuses a second change to one object within about a second (429): two admins saving at once. */
-async function saveRetrying(path: string, data: unknown) {
-  for (let i = 0; ; i++) {
-    try { return await savePublicJson(path, data); } catch (e) {
-      const code = Number((e as { code?: unknown }).code);
-      if (i >= 4 || !(code === 429 || code === 503 || /rate limit/i.test(String(e)))) throw e;
-      await new Promise((ok) => setTimeout(ok, 1200 * 2 ** i));
-    }
-  }
-}
-
 /**
  * Publishes content/sites.json from every approved address and its organization as it is now (its name, its logo's
  * public copy). Addresses of organizations that no longer exist are left out. Logo copies nothing lists any more go.
  */
 export async function writeSitesFile(): Promise<SitesFile> {
   const snap = await db.collection(SITES).get();
-  const sites: Record<string, SiteEntry> = {};
+  // `sso`: the organization's school sign-in while it is on (its slug and the provider's host), so its own address
+  // shows the school button before anyone signs in, without a finder listing (ssoStore.ssoSiteEntry). The app's
+  // SiteEntry type gains the field with the sign-in screen.
+  const sites: Record<string, SiteEntry & { sso?: { slug: string; host: string } }> = {};
   const used = new Set<string>();
-  const orgs = new Map<string, { name: string; logo: string | null } | null>();
+  const orgs = new Map<string, { name: string; logo: string | null; sso: { slug: string; host: string } | null } | null>();
   for (const d of snap.docs) {
     const s = readSiteDoc(d.id, d.data());
     if (!s || !isApproved(s.status)) continue;
@@ -128,12 +140,14 @@ export async function writeSitesFile(): Promise<SitesFile> {
       const org = await db.doc(`orgs/${s.orgId}`).get();
       const logo = org.exists ? await publicLogo(s.orgId, org.get("brand.logo")) : null;
       if (logo) used.add(logo.path);
-      orgs.set(s.orgId, org.exists ? { name: str(org.get("name"), 120) || s.orgId, logo: logo?.url ?? null } : null);
+      const sso = org.exists ? await ssoSiteEntry(s.orgId, org).catch((e: unknown) => { logger.warn("site: school sign-in not read", { orgId: s.orgId, error: String(e).slice(0, 200) }); return null; }) : null;
+      orgs.set(s.orgId, org.exists ? { name: str(org.get("name"), 120) || s.orgId, logo: logo?.url ?? null, sso } : null);
     }
     const o = orgs.get(s.orgId);
-    if (o) sites[s.host] = { orgId: s.orgId, name: o.name, logo: o.logo, darsi: s.darsi };
+    if (o) sites[s.host] = { orgId: s.orgId, name: o.name, logo: o.logo, darsi: s.darsi, ...(o.sso ? { sso: o.sso } : {}) };
   }
   const file: SitesFile = { v: Date.now(), sites };
+  // Two admins saving at once: Storage's "too soon" (429) is waited out inside the save (storage.ts saveJson).
   await saveRetrying(SITES_FILE, file);
   const [old] = await bucket().getFiles({ prefix: SITE_LOGOS }).catch(() => [[] as { name: string; delete: () => Promise<unknown> }[]]);
   await Promise.all(old.filter((f) => !used.has(f.name)).map((f) => f.delete().catch(() => {})));
@@ -141,14 +155,31 @@ export async function writeSitesFile(): Promise<SitesFile> {
 }
 
 /**
+ * An address that was live and no longer is, or that is live (the first time, or again), goes in the audit log and the
+ * logs, whoever's check found it (the job's, or an admin's "Check now"): `by` is "sitesJob", since no person did it.
+ * Losing an address is logged as an error with `event: "site-lost"`, for an alert: its people can't sign in there, and
+ * until its DNS is looked at nobody knows whether the school dropped the record or someone else now holds the name.
+ * Called after the write, once per change (the status before and after differ), so a problem that stays writes nothing.
+ */
+async function noteStatus(s: Pick<SiteDoc, "host" | "orgId" | "status" | "error" | "issues">, was: SiteStatus) {
+  if (was === s.status || (was !== "live" && s.status !== "live")) return;
+  const { host, orgId } = s;
+  const lost = was === "live";
+  if (lost) logger.error("site lost", { event: "site-lost", host, orgId, status: s.status });
+  else logger.info("site live", { event: "site-live", host, orgId });
+  await audit(lost ? "siteLost" : "siteLive", "sitesJob", lost ? { host, orgId, status: s.status, error: s.error ?? null, issues: s.issues?.length ? s.issues : null } : { host, orgId })
+    .catch((e: unknown) => logger.error("site change not audited", { event: "audit-failed", host, orgId, lost, error: String(e) }));
+}
+
+/**
  * Keeps a check's result, while the address is still approved (a removal may have come meanwhile). Its auth and cors
  * steps stay as syncSiteAccess left them; the caller runs that next.
  */
 async function record(host: string, check: HostCheck, now = Date.now()): Promise<SiteDoc | null> {
-  return db.runTransaction(async (tx) => {
+  const { site, was } = await db.runTransaction(async (tx): Promise<{ site: SiteDoc | null; was: SiteStatus | null }> => {
     const ref = siteRef(host);
     const cur = readSiteDoc(host, (await tx.get(ref)).data());
-    if (!cur || !isApproved(cur.status)) return cur;
+    if (!cur || !isApproved(cur.status)) return { site: cur, was: null };
     const steps: SiteSteps = { ...check.steps, auth: cur.steps?.auth ?? "todo", cors: cur.steps?.cors ?? "todo" };
     const status = check.errors.length ? "problem" : statusOf(steps);
     const patch = {
@@ -156,8 +187,10 @@ async function record(host: string, check: HostCheck, now = Date.now()): Promise
       checkedAt: now, liveAt: status === "live" ? (cur.liveAt ?? now) : cur.liveAt,
     };
     tx.update(ref, patch);
-    return { ...cur, ...patch };
+    return { site: { ...cur, ...patch }, was: cur.status };
   });
+  if (site && was) await noteStatus(site, was);
+  return site;
 }
 
 /** The lines of a site's error that syncSiteAccess writes (a check writes the others). */
@@ -168,18 +201,21 @@ async function setAccess(s: SiteDoc, r: Access, now: number) {
   const want = hasAccess(s);
   const state = (there: Set<string> | null): StepState => (!want ? "wait" : there?.has(s.host) ? "ok" : "error");
   const auth = state(r.authorized), cors = state(r.origins);
-  await db.runTransaction(async (tx) => {
+  const change = await db.runTransaction(async (tx) => {
     const ref = siteRef(s.host);
     const cur = readSiteDoc(s.host, (await tx.get(ref)).data());
-    if (!cur || !isApproved(cur.status) || !cur.steps) return;
+    if (!cur || !isApproved(cur.status) || !cur.steps) return null;
     const steps: SiteSteps = { ...cur.steps, auth, cors };
     const lines = (cur.error ?? "").split("\n").filter((l) => l && !ACCESS_ERROR.test(l));
     if (auth === "error" || cors === "error") lines.push(...r.errors);
     const error = lines.join("\n").slice(0, 1000) || null;
     const status = error ? "problem" : statusOf(steps);
-    if (status === cur.status && error === cur.error && auth === cur.steps.auth && cors === cur.steps.cors) return;
+    if (status === cur.status && error === cur.error && auth === cur.steps.auth && cors === cur.steps.cors) return null;
     tx.update(ref, { steps, status, error, liveAt: status === "live" ? (cur.liveAt ?? now) : cur.liveAt });
+    return { site: { ...cur, status, error }, was: cur.status };
   });
+  // This is where an address turns live (sign-in is the last step), and where one that lost sign-in stops being live.
+  if (change) await noteStatus(change.site, change.was);
 }
 
 /**
@@ -294,7 +330,8 @@ async function approveSite(c: Caller, host: string, orgId: string, darsi: boolea
 async function checkSite(c: Caller, host: string): Promise<SiteDoc> {
   const cur = readSiteDoc(host, (await siteRef(host).get()).data());
   if (!cur) throw refuse("not-found", "no-site");
-  if (c.role !== "superadmin" && cur.orgId !== c.orgId) throw refuse("permission-denied", "not-yours");
+  // Another organization's address: "site-taken", the reason asking for it gives ("not-yours" is an account's refusal).
+  if (c.role !== "superadmin" && cur.orgId !== c.orgId) throw refuse("permission-denied", "site-taken");
   if (!isApproved(cur.status)) throw refuse("failed-precondition", "site-state");
   if (cur.checkedAt && Date.now() - cur.checkedAt < CHECK_GAP_MS) return cur;
   await record(host, await connectHost(host, { proof: await proofFor(cur), prev: cur.steps }));
@@ -333,6 +370,9 @@ export const manageSite = onCall({ timeoutSeconds: 120 }, async (req) => {
   if (isReservedName(checked.host)) throw refuse("invalid-argument", "site-reserved");
   const host = checked.host;
   const superOnly = () => { if (!isSuper) throw refuse("permission-denied", "not-super"); };
+  // An organization's own admin asks for, cancels and checks no address while it is suspended or being deleted
+  // (requestSite alone refused, and only with "org-inactive").
+  if (!isSuper) await refuseClosedOrg(c, c.orgId!);
 
   switch (action) {
     case "request":
@@ -342,7 +382,7 @@ export const manageSite = onCall({ timeoutSeconds: 120 }, async (req) => {
       const site = await db.runTransaction(async (tx) => {
         const cur = readSiteDoc(host, (await tx.get(siteRef(host))).data());
         if (!cur) return null;
-        if (!isSuper && cur.orgId !== c.orgId) throw refuse("permission-denied", "not-yours");
+        if (!isSuper && cur.orgId !== c.orgId) throw refuse("permission-denied", "site-taken");
         if (isApproved(cur.status)) throw refuse("failed-precondition", "site-state");
         tx.delete(siteRef(host));
         return cur;
@@ -420,30 +460,80 @@ async function importLegacy(): Promise<number> {
   return n;
 }
 
+const words = (e: unknown) => String((e as { message?: unknown } | null)?.message ?? e).slice(0, 300);
+
 /**
- * sitesJob's work: moves the old list in, checks (and mends) every approved address that isn't live, and live ones
- * hourly, then sets sign-in and file access from what it found (and mends the lists, whatever changed them).
+ * Writes again the catalogs a publish, unpublish or delete couldn't (content.ts catalogOrPending marked their owners
+ * in CATALOGS_DOC after Storage refused every try), so the editor and what learners see agree again within 15 minutes
+ * with nobody doing anything. An owner is cleared only when its catalog was written and no newer failure marked it
+ * meanwhile; one that still fails stays for the next run and is reported.
+ */
+async function mendCatalogs(started: number, errors: string[]) {
+  const ref = db.doc(CATALOGS_DOC);
+  let dirty: Record<string, unknown>;
+  try { dirty = ((await ref.get()).get("dirty") ?? {}) as Record<string, unknown>; } catch (e) { errors.push(`Catalogs: ${words(e)}`); return; }
+  for (const [owner, at] of Object.entries(dirty)) {
+    if (Date.now() - started > MEND_MS) break;
+    try {
+      if (isOwner(owner)) await writeCatalog(owner);
+      await db.runTransaction(async (tx) => {
+        const now = ((await tx.get(ref)).get("dirty") ?? {}) as Record<string, unknown>;
+        if (now[owner] === at) tx.set(ref, { dirty: { [owner]: FieldValue.delete() } }, { merge: true });
+      });
+      logger.info("catalog mended", { event: "catalog-mended", owner, since: at });
+    } catch (e) {
+      logger.error("catalog still not written", { event: "catalog-pending", owner, since: at, error: words(e) });
+      errors.push(`Catalog ${owner}: ${words(e)}`);
+    }
+  }
+}
+
+/**
+ * sitesJob's work: writes the catalogs a publish couldn't (mendCatalogs), moves the old list in, checks (and mends)
+ * every approved address that isn't live, and live ones hourly, then sets sign-in and file access from what it found
+ * (and mends the lists, whatever changed them), and notes that it ran (JOBS_DOC).
+ *
+ * No step's failure stops the next: one address whose check throws, or the checks running out of time (CHECKS_MS; the
+ * addresses checked longest ago go first, so none is starved), must not keep syncSiteAccess from running, which is
+ * what takes sign-in away from an address that no longer points at Darsi. What failed is returned and logged.
  */
 export async function checkSites(now = Date.now()): Promise<{ imported: number; checked: number; live: number; errors: string[] }> {
-  const imported = await importLegacy();
-  let checked = 0;
-  for (const d of (await db.collection(SITES).get()).docs) {
-    const s = readSiteDoc(d.id, d.data());
-    if (!s || !isApproved(s.status)) continue;
-    if (s.status === "live" && s.checkedAt && now - s.checkedAt < LIVE_RECHECK_MS) continue;
-    await record(s.host, await connectHost(s.host, { proof: await proofFor(s), prev: s.steps }), now);
-    checked++;
-  }
-  const errors = await syncSiteAccess(now);
-  if (imported) await writeSitesFile();
-  const live = (await db.collection(SITES).get()).docs.filter((d) => d.get("status") === "live").length;
+  const started = Date.now();
+  const errors: string[] = [];
+  // A step that threw used to end the run as a failed one; it is still logged as an error, and the run goes on.
+  const fail = (what: string, e: unknown) => { errors.push(`${what}: ${words(e)}`); logger.error("sites job step failed", { event: "sites-job-failed", what, error: words(e) }); };
+  await mendCatalogs(started, errors);
+  let imported = 0, checked = 0, live = 0;
+  try { imported = await importLegacy(); } catch (e) { fail("Import", e); }
+  try {
+    const due = (await db.collection(SITES).get()).docs.map((d) => readSiteDoc(d.id, d.data()))
+      .filter((s): s is SiteDoc => Boolean(s) && isApproved(s!.status) && !(s!.status === "live" && Boolean(s!.checkedAt) && now - s!.checkedAt! < LIVE_RECHECK_MS))
+      .sort((a, b) => (a.checkedAt ?? 0) - (b.checkedAt ?? 0));
+    for (const [i, s] of due.entries()) {
+      if (Date.now() - started > CHECKS_MS) {
+        logger.warn("sites job ran out of time", { event: "sites-job-slow", checked, left: due.length - i });
+        break;
+      }
+      try {
+        await record(s.host, await connectHost(s.host, { proof: await proofFor(s), prev: s.steps }), now);
+        checked++;
+      } catch (e) { fail(s.host, e); }
+    }
+  } catch (e) { fail("Sites", e); }
+  try { errors.push(...(await syncSiteAccess(now))); } catch (e) { fail("Access", e); }
+  try {
+    if (imported) await writeSitesFile();
+    live = (await db.collection(SITES).get()).docs.filter((d) => d.get("status") === "live").length;
+  } catch (e) { fail("Sites file", e); }
+  await db.doc(JOBS_DOC).set({ sitesJob: { at: Date.now(), ok: errors.length === 0, checked, live } }, { merge: true })
+    .catch((e: unknown) => logger.error("sites job heartbeat not written", { error: words(e) }));
   return { imported, checked, live, errors };
 }
 
 /** Every 15 minutes: an approved address turns live by itself once its DNS and certificate are there. */
 export const sitesJob = onSchedule({ schedule: "*/15 * * * *", timeZone: "UTC", timeoutSeconds: 300, retryCount: 0 }, async () => {
   const r = await checkSites();
-  if (r.errors.length) logger.warn("site access not fully set", r);
+  if (r.errors.length) logger.warn("sites job: not everything worked", { event: "sites-job-errors", ...r });
   else if (r.imported || r.checked) logger.info("sites checked", r);
 });
 
@@ -451,25 +541,50 @@ export const sitesJob = onSchedule({ schedule: "*/15 * * * *", timeZone: "UTC", 
  * An organization that is renamed, gets a new logo (OrgBranding writes the document directly) or is deleted: its
  * addresses follow. Renamed or re-branded, content/sites.json again, so its addresses show the change within a minute;
  * deleted, its addresses are disconnected and forgotten, so another organization can have them.
+ *
+ * With the auth context (who wrote the document: an org admin's uid from the app, or the functions' service account):
+ * an organization that has an approved address and changes its name or logo changes what its public address and its
+ * sign-in page say within a minute, with no platform admin told, so it is audited (orgRebrand, by the writer) and
+ * logged as a warning with `event: "org-rebrand"`. So are the addresses a deleted organization takes with it.
  */
-export const onOrgSite = onDocumentWritten({ document: "orgs/{orgId}", maxInstances: 5, timeoutSeconds: 120 }, async (event) => {
+export const onOrgSite = onDocumentWrittenWithAuthContext({ document: "orgs/{orgId}", maxInstances: 5, timeoutSeconds: 120 }, async (event) => {
   const before = event.data?.before.data(), after = event.data?.after.data();
   if (!sitesNeedPublish(before, after)) return;
   const orgId = event.params.orgId;
+  const by = str(event.authId, 200) || "server";
+  // School sign-in's finder: an approved listing shows the name and logo a platform admin saw, so a new one unlists it
+  // until approved again (ssoStore.ssoOrgRebranded). Organizations without school sign-in cost a field check. Its own
+  // failure never stops the addresses' work below.
+  await ssoOrgRebranded(event.params.orgId, before, after).catch((e: unknown) => logger.error("school sign-in listing not followed", { orgId: event.params.orgId, error: String(e).slice(0, 300) }));
+  // The entry records what already happened. One that can't be written is logged with all it would have said, and
+  // never stops what follows: the next address's removal, taking sign-in away, content/sites.json.
+  const note = (action: string, data: Record<string, unknown>) => audit(action, by, data)
+    .catch((e: unknown) => logger.error("site change not audited", { event: "audit-failed", action, by, ...data, error: String(e).slice(0, 300) }));
   const mine = (await db.collection(SITES).where("orgId", "==", orgId).get()).docs
     .map((d) => readSiteDoc(d.id, d.data())).filter((s): s is SiteDoc => Boolean(s));
   if (!mine.length) return;
+  const approved = mine.filter((s) => isApproved(s.status));
   if (!after) {
     for (const s of mine) {
       const warnings = isApproved(s.status) ? await disconnectHost(s.host) : [];
       if (warnings.length) logger.warn("site not fully disconnected", { host: s.host, warnings });
       await siteRef(s.host).delete();
+      await note("removeSite", { orgId, host: s.host, status: s.status, reason: "org-deleted", warnings: warnings.length ? warnings : null });
     }
-    if (mine.some((s) => isApproved(s.status))) await syncSiteAccess();
-  } else if (before?.name !== after.name) {
-    const orgName = str(after.name, 120) || orgId;
-    await Promise.all(mine.map((s) => siteRef(s.host).update({ orgName })));
+    if (approved.length) await syncSiteAccess();
+  } else {
+    const logoOf = (o: typeof after | undefined) => (o?.brand as { logo?: unknown } | null | undefined)?.logo ?? null;
+    const renamed = before?.name !== after.name, logoChanged = logoOf(before) !== logoOf(after);
+    if (approved.length && (renamed || logoChanged)) {
+      const change = { orgId, nameBefore: str(before?.name, 120), nameAfter: str(after.name, 120), logoChanged, hosts: approved.map((s) => s.host) };
+      logger.warn("organization with a web address renamed or re-branded", { event: "org-rebrand", by, ...change });
+      await note("orgRebrand", change);
+    }
+    if (renamed) {
+      const orgName = str(after.name, 120) || orgId;
+      await Promise.all(mine.map((s) => siteRef(s.host).update({ orgName })));
+    }
   }
-  if (mine.some((s) => isApproved(s.status))) await writeSitesFile();
+  if (approved.length) await writeSitesFile();
   logger.info("organization sites followed", { orgId, deleted: !after, sites: mine.length });
 });

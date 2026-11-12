@@ -7,7 +7,8 @@
 import { Component, lazy, Suspense, useEffect, useState, type ComponentType, type LazyExoticComponent, type ReactNode } from "react";
 import { Button, EmptyState } from "@darsi/design-system";
 import { useI18n } from "../i18n";
-import { takeUpdate } from "../pwa";
+import { reloadForUpdate, siteAnswers } from "../pwa";
+import { tellAppError, UpdateReload } from "../app/AppBoundary";
 import { pinGroups } from "../platform/offline";
 import type { CodeLang } from "../content/types";
 import { labMeta } from "./catalog";
@@ -54,29 +55,8 @@ const lazyLab = (id: string) => {
   return lazies.get(id)!;
 };
 
-/**
- * After a deploy, a phone still running the previous version asks for that version's lab chunk, which the site no
- * longer has. Online, that is the cause: take the waiting new version (or reload) instead of blaming the connection.
- */
-export async function reloadForUpdate() {
-  const reg = typeof navigator !== "undefined" ? await navigator.serviceWorker?.getRegistration().catch(() => undefined) : undefined;
-  await reg?.update().catch(() => {});
-  await takeUpdate(reg);
-}
-
-/**
- * Whether Darsi's site really answers. A phone can say it is online while nothing gets through (no data left on the
- * bundle, a weak signal, a Wi-Fi sign-in page), and then the lab simply isn't saved. One tiny request (HEAD of sw.js,
- * never cached), given up after `ms`.
- */
-export async function siteAnswers(ms = 3000): Promise<boolean> {
-  const ctl = typeof AbortController !== "undefined" ? new AbortController() : undefined;
-  const timer = setTimeout(() => ctl?.abort(), ms);
-  try {
-    const r = await fetch("/sw.js", { method: "HEAD", cache: "no-store", signal: ctl?.signal });
-    return r.ok && (r.headers.get("Content-Type") ?? "").includes("javascript");
-  } catch { return false; } finally { clearTimeout(timer); }
-}
+// Moved to pwa.tsx, where the app's own boundaries (app/AppBoundary.tsx) use them too; re-exported for existing imports.
+export { reloadForUpdate, siteAnswers };
 
 /** What shows when a lab's chunk fails: offline (or no data getting through), it isn't saved yet; online, this copy of Darsi is out of date. */
 export function LabMissing({ retry }: { retry: () => void }) {
@@ -91,7 +71,7 @@ export function LabMissing({ retry }: { retry: () => void }) {
   }, [said]);
   if (online === null) return <div className="loading" aria-busy="true" />;
   return online
-    ? <EmptyState tone="offline" title={t("labs.outdated")} action={<Button size="sm" icon="sync" onClick={() => { void reloadForUpdate(); }}>{t("pwa.reload")}</Button>} />
+    ? <EmptyState tone="offline" title={t("labs.outdated")} action={<UpdateReload size="sm" label={t("pwa.reload")} />} />
     : <EmptyState tone="offline" title={t("labs.notSaved")} action={<Button size="sm" icon="sync" onClick={retry}>{t("common.retry")}</Button>} />;
 }
 
@@ -99,6 +79,7 @@ export function LabMissing({ retry }: { retry: () => void }) {
 class LabBoundary extends Component<{ id: string; fallback: (retry: () => void) => ReactNode; children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: unknown) { tellAppError(error); } // the same "darsi:app-error" the app's boundaries send
   retry = () => { lazies.delete(this.props.id); this.setState({ failed: false }); };
   render() { return this.state.failed ? this.props.fallback(this.retry) : this.props.children; }
 }

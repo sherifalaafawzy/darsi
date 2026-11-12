@@ -104,6 +104,34 @@ describe("Languages page: nothing typed is lost", () => {
     expect(m.data.saveTranslation.mock.calls.at(-1)![0].messages).toMatchObject({ [KEY]: "Retour" });
   });
 
+  it("treats another tab as the same page: nothing saved or asked on the way, and Back from there still saves first", async () => {
+    await openFrench();
+    typeFrench("Retour");
+    fireEvent.click(screen.getByRole("tab", { name: "Spreadsheet" }));
+    expect(await screen.findByRole("tabpanel", { name: "Spreadsheet" })).toBeTruthy();
+    expect(m.data.saveTranslation).not.toHaveBeenCalled(); // the page did not close
+    expect(screen.queryByText(/Leave without saving\?/)).toBeNull();
+    expect(screen.getByText("Saving soon…")).toBeTruthy(); // the bar is under every tab
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(await screen.findByText("elsewhere")).toBeTruthy(); // to the list, not to the tab before
+    expect(m.data.saveTranslation).toHaveBeenCalledTimes(1);
+    expect(m.data.saveTranslation.mock.calls[0][0].messages).toMatchObject({ [KEY]: "Retour" });
+  });
+
+  it("saves by itself whichever tab is open", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      await openFrench();
+      typeFrench("Retour");
+      fireEvent.click(screen.getByRole("tab", { name: "Details" }));
+      expect(await screen.findByRole("tabpanel", { name: "Details" })).toBeTruthy();
+      await act(async () => { vi.advanceTimersByTime(3100); });
+      await waitFor(() => expect(m.data.saveTranslation).toHaveBeenCalledTimes(1));
+      expect(m.data.saveTranslation.mock.calls[0][0].messages).toMatchObject({ [KEY]: "Retour" });
+      expect(await screen.findByText(/Saved at/)).toBeTruthy();
+    } finally { vi.useRealTimers(); }
+  });
+
   it("leaves without saving only when asked to, and then saves nothing on the way out", async () => {
     await openFrench();
     typeFrench("Retour");

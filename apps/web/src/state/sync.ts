@@ -4,7 +4,8 @@
  * unpublished). Built for cheap phones on expensive, patchy data: no live listeners and no polling. The three
  * collections are read once per sign-in (and once more when the connection returns, if that first read only reached the
  * offline cache), and only what changed is written. Writes made offline wait in Firestore's local queue and go out when
- * the phone reconnects.
+ * the phone reconnects. Until the server has acknowledged an account's lessons and notes, the account carries the unsent
+ * mark (store.tsx `unsent`), so a session that ends meanwhile (AuthProvider) keeps them on the device for the next sign-in.
  */
 import { useEffect, useReducer, useRef } from "react";
 import { firebaseReady } from "../firebase-config";
@@ -12,7 +13,7 @@ import { loadFirebase } from "../fb";
 import { loadCatalog, loadUnit } from "../content/load";
 import { STAGES, teachStage, type Stage, type Track } from "../content/types";
 import type { EarnedCert } from "../content/cert";
-import { LEARN_KEYS, same, useStore, type AppState, type LearnKey, type LessonResult, type RemoteNote } from "./store";
+import { hasUnsent, LEARN_KEYS, same, unsent, useStore, type AppState, type LearnKey, type LessonResult, type RemoteNote } from "./store";
 
 export interface Remote {
   progress: Record<string, LessonResult>;
@@ -121,12 +122,16 @@ export function useCloudSync(uid?: string) {
   const remote = useRef<Remote>(empty());
   const since = useRef(0);
   const sent = useRef(new Set<string>());
+  // Lesson and note writes on their way (not yet acknowledged by the server), and whether one was refused this session:
+  // the unsent mark (store.tsx unsent) is cleared only with none on their way and none refused (settle).
+  const inflight = useRef(0);
+  const failed = useRef(false);
   const [pulled, bump] = useReducer((n: number) => n + 1, 0);
 
   useEffect(() => {
     if (!on) return;
     let live = true, certsCached = false;
-    remote.current = empty(); since.current = Date.now(); sent.current.clear();
+    remote.current = empty(); since.current = Date.now(); sent.current.clear(); inflight.current = 0; failed.current = false;
     const pull = async () => {
       // Signed-in only, so the SDK is already loading; nothing here reaches a guest's startup bundle.
       const [{ db }, { collection, getDocs }] = await Promise.all([loadFirebase(), import("firebase/firestore")]);
@@ -151,37 +156,78 @@ export function useCloudSync(uid?: string) {
   }, [on, uid, dispatch]);
 
   const { progress, notes, notesAt, certs } = state;
+  // The unsent mark as it was when this state was drawn (it is set before the change is dispatched): read here, not in
+  // the effect, which can run after a newer change was already marked. A clear only removes the mark of the latest
+  // state pushed (`seenLast`), so a lesson finished meanwhile keeps it until its own write is acknowledged.
+  const mark = on ? unsent.get(uid!) : null;
+  const seenLast = useRef<string | null>(null);
   useEffect(() => {
     if (!on) return;
+    seenLast.current = mark;
+    // Nothing of this account's is unsent once the server copy is known (a server read, not the offline cache), every
+    // lesson and note write has been acknowledged, and none was refused this session.
+    const settle = () => { if (remote.current.synced && inflight.current === 0 && !failed.current) unsent.clear(uid!, seenLast.current); };
     const plan = toPush({ progress, notes, notesAt, certs }, remote.current, since.current);
     const ps = plan.progress.filter((id) => !sent.current.has(`p:${id}@${progress[id].completedAt}`));
     const ns = plan.notes.filter((id) => !sent.current.has(`n:${id}@${notesAt[id] ?? 0}`));
     // A certificate is sent at most once a session: the rules never take a second write, so a refusal is the end of it.
     const cs = plan.certs.filter((id) => !sent.current.has(`c:${id}`)).map((id) => [id, certs![id]] as const);
-    if (!ps.length && !ns.length && !cs.length) return;
+    if (!ps.length && !ns.length && !cs.length) { settle(); return; }
     ps.forEach((id) => sent.current.add(`p:${id}@${progress[id].completedAt}`));
     ns.forEach((id) => sent.current.add(`n:${id}@${notesAt[id] ?? 0}`));
     cs.forEach(([id]) => sent.current.add(`c:${id}`));
+    // Counted now, not when each write starts: another run of this effect meanwhile must not see none on their way.
+    const writes = ps.length + ns.length;
+    inflight.current += writes;
+    let begun = 0;
+    const finish = (ok: boolean) => { inflight.current--; if (!ok) failed.current = true; };
+    // setDoc resolves when the server has the write (offline it waits in Firestore's queue, and so does this).
+    const write = (go: () => Promise<unknown>): Promise<void> => {
+      begun++;
+      let p: Promise<unknown>;
+      try { p = go(); } catch (e) { p = Promise.reject(e); }
+      return p.then(() => finish(true), (e: unknown) => { warn(e); finish(false); });
+    };
     (async () => {
       const [{ db }, { doc, setDoc }] = await Promise.all([loadFirebase(), import("firebase/firestore")]);
       const meta: Record<string, Meta> = ps.some((id) => !progress[id].unitId) ? await lessonIndex().catch(() => ({})) : {};
+      const acks: Promise<void>[] = [];
       for (const id of ps) {
-        setDoc(doc(db, "users", uid!, "progress", id), progressDoc(id, progress[id], meta[id])).catch(warn);
+        acks.push(write(() => setDoc(doc(db, "users", uid!, "progress", id), progressDoc(id, progress[id], meta[id]))));
         remote.current.progress[id] = progress[id];
       }
       for (const id of ns) {
         const n = { text: notes[id], at: notesAt[id] || Date.now() };
-        setDoc(doc(db, "users", uid!, "notes", id), { text: n.text, updatedAt: n.at }).catch(warn);
+        acks.push(write(() => setDoc(doc(db, "users", uid!, "notes", id), { text: n.text, updatedAt: n.at })));
         remote.current.notes[id] = n;
       }
-      // Last, so nothing about a certificate can hold up a lesson or a note.
+      // Last, so nothing about a certificate can hold up a lesson or a note. Not counted for the mark: the rules take a
+      // certificate once, so a refusal is common and harmless, and the lessons it comes from are what count.
       for (const [id, c] of cs) {
         setDoc(doc(db, "users", uid!, "certs", id), certDoc(id, c)!).catch(warn);
         remote.current.certs[id] = c;
       }
-    })().catch(warn);
+      await Promise.all(acks);
+      settle();
+    })().catch((e: unknown) => { warn(e); for (; begun < writes; begun++) finish(false); }); // the SDK didn't load: none went
     // `pulled` re-runs this after each read: entries held back until the server copy was known can go now.
-  }, [on, uid, progress, notes, notesAt, certs, pulled]);
+  }, [on, uid, progress, notes, notesAt, certs, pulled, mark]);
+}
+
+/**
+ * Before something that ends this account's session on purpose (Me's "Leave <organization>"): waits up to `ms` for
+ * Firestore to send the writes it holds, then says whether the account still has lessons or notes the cloud hasn't
+ * acknowledged (store.tsx unsent). True: all sent. Never throws.
+ */
+export async function flushSync(uid: string, ms = 5000): Promise<boolean> {
+  try {
+    const [{ db }, { waitForPendingWrites }] = await Promise.all([loadFirebase(), import("firebase/firestore")]);
+    // Offline this never resolves: the cap decides.
+    await Promise.race([waitForPendingWrites(db), new Promise((resolve) => setTimeout(resolve, ms))]);
+  } catch { /* Firestore stopped, or the SDK can't load: the mark says what is known */ }
+  // The writes' own handlers (useCloudSync) clear the mark just after the queue empties.
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  return !hasUnsent(uid);
 }
 
 /* ---------- The learning profile: users/{uid} ---------- */

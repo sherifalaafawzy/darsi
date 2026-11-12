@@ -61,8 +61,12 @@ describe("SuperAdmin", () => {
     expect(screen.getByText("Al-Noor School")).toBeTruthy();
     expect(screen.getByText("Amina Bello")).toBeTruthy();
     expect(screen.getByText("Train our teachers")).toBeTruthy();
+    // The active organizations are under their own tab; the request card stays on the page (hidden) meanwhile.
+    expect(screen.queryByText("Sunrise University")).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Organizations" }));
     expect(screen.getByText("Sunrise University")).toBeTruthy();
     expect(screen.getAllByText("Cairo · Egypt")).toHaveLength(2); // the request card and the active-organizations row
+    fireEvent.click(screen.getByRole("tab", { name: /^Requests/ }));
     fireEvent.click(screen.getByRole("button", { name: "Approve" }));
     await waitFor(() => expect(m.api.reviewOrg).toHaveBeenCalledWith({ orgId: "o1", approve: true, note: undefined }));
     expect(await screen.findByRole("status")).toHaveProperty("textContent", expect.stringContaining("is now active"));
@@ -108,8 +112,57 @@ describe("SuperAdmin", () => {
 
   it("uses the Arabic comma between city and country", () => {
     m.orgs.active = [org({ status: "active" })];
-    wrap(<SuperAdmin />, { lang: "ar" });
+    wrap(<SuperAdmin />, { lang: "ar", url: "/super?tab=orgs" }); // the active organizations' table
+    expect(screen.getByRole("tab", { name: "المؤسسات" }).getAttribute("aria-selected")).toBe("true");
     expect(screen.getByText("Cairo، Egypt")).toBeTruthy();
+    // On a phone the row is a card with the organization across its top (base.css .data-table), the rest as labelled pairs.
+    expect(Array.from(screen.getByText("Cairo، Egypt").closest("tr")!.querySelectorAll("td")).map((c) => c.getAttribute("data-cell"))).toEqual(["main", null, null, null, null]);
+  });
+
+  it("opens on Requests, whose tab carries the number waiting, in the page's numerals", () => {
+    m.orgs.pending = [org({}), org({ id: "o3", name: "Delta School" }), org({ id: "o4", name: "Nile College" })];
+    const first = wrap(<SuperAdmin />);
+    const tab = screen.getByRole("tab", { name: /^Requests/ });
+    expect(tab.getAttribute("aria-selected")).toBe("true");
+    expect(tab.textContent).toBe("Requests 3");
+    expect(screen.getByRole("tabpanel", { name: /^Requests/ }).textContent).toContain("Delta School");
+    expect(screen.getAllByRole("tab").map((x) => x.textContent)).toEqual(["Requests 3", "Announcements", "Organizations", "Records"]);
+    first.unmount();
+    wrap(<SuperAdmin />, { lang: "ar" });
+    expect(screen.getByRole("tab", { name: /^الطلبات/ }).textContent).toBe("الطلبات ٣");
+  });
+
+  it("shows no count on Requests when nothing is waiting, and no Records tab to anyone but a platform admin", () => {
+    as("orgAdmin", "o1");
+    wrap(<SuperAdmin />, { url: "/super?tab=records" });
+    expect(screen.getByRole("tab", { name: "Requests" }).textContent).toBe("Requests");
+    expect(screen.queryByRole("tab", { name: "Records" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "Requests" }).getAttribute("aria-selected")).toBe("true"); // ?tab=records opens the default
+  });
+
+  it("keeps what the last review did in view whatever tab is open", async () => {
+    m.orgs.pending = [org({})];
+    m.api.reviewOrg.mockResolvedValue({ status: "active" });
+    wrap(<SuperAdmin />);
+    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    expect(await screen.findByRole("status")).toHaveProperty("textContent", expect.stringContaining("is now active"));
+    for (const name of ["Organizations", "Records", "Announcements"]) {
+      fireEvent.click(screen.getByRole("tab", { name }));
+      expect(screen.getByRole("tab", { name }).getAttribute("aria-selected")).toBe("true");
+      expect(screen.getAllByRole("status").some((x) => x.textContent?.includes("is now active"))).toBe(true);
+    }
+  });
+
+  it("keeps the organizations search as typed while another tab shows", () => {
+    m.orgs.active = [org({ id: "o2", name: "Sunrise University", status: "active" }), org({ id: "o5", name: "Delta School", status: "active" })];
+    wrap(<SuperAdmin />, { url: "/super?tab=orgs" });
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "delta" } });
+    expect(screen.queryByText("Sunrise University")).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Requests" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Organizations" }));
+    expect((screen.getByRole("searchbox") as HTMLInputElement).value).toBe("delta");
+    expect(screen.getByText("Delta School")).toBeTruthy();
+    expect(screen.queryByText("Sunrise University")).toBeNull();
   });
 });
 
@@ -131,37 +184,47 @@ describe("Teach", () => {
 });
 
 describe("OrgScreen", () => {
-  it("joins with an invite code and refreshes the token claims", async () => {
+  // Joining shows a person's whole record to the organization, so the code alone joins nothing: the screen asks first
+  // (tests/org-join.test.tsx has the question itself). "Join" is the form's button, then the question's.
+  const join = async (label = "Join") => { fireEvent.click(await screen.findByRole("button", { name: label })); };
+
+  it("joins with an invite code, once the person agrees, and refreshes the token claims", async () => {
     m.api.joinOrg.mockResolvedValue({ orgId: "o1", role: "teacher", orgName: "Al-Noor School" });
     wrap(<OrgScreen />);
     fireEvent.change(screen.getByLabelText("Invite code"), { target: { value: "k7q-2mxp" } });
-    fireEvent.click(screen.getByRole("button", { name: "Join" }));
+    await join();
+    expect(m.api.joinOrg).not.toHaveBeenCalled();
+    await join();
     await waitFor(() => expect(m.api.joinOrg).toHaveBeenCalledWith({ code: "K7Q-2MXP" }));
     await waitFor(() => expect(m.auth.refreshClaims).toHaveBeenCalled());
   });
 
-  it("joins from an invite link only once a new account's profile exists, so the join can't make a nameless one (ux-accounts-04)", async () => {
+  it("asks about an invite link only once a new account's profile exists, so the join can't make a nameless one (ux-accounts-04)", async () => {
     m.api.joinOrg.mockResolvedValue({ orgId: "o1", role: "student", orgName: "Al-Noor School" });
     m.auth.profile = null; // signed up a moment ago: the app is still creating it
     const tree = () => <I18nProvider lang="en"><MemoryRouter initialEntries={["/org?code=K7Q-2MXP"]}><OrgScreen /></MemoryRouter></I18nProvider>;
     const r = render(tree());
     await new Promise((ok) => setTimeout(ok, 50));
+    expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(m.api.joinOrg).not.toHaveBeenCalled();
     m.auth.profile = { uid: "me", name: "Me" };
     r.rerender(tree());
+    await join(); // the question appeared by itself; its Join is the only one on the page
     await waitFor(() => expect(m.api.joinOrg).toHaveBeenCalledWith({ code: "K7Q-2MXP" }));
     expect(m.api.joinOrg).toHaveBeenCalledTimes(1);
   });
 
-  it("joins from an invite link after a few seconds even without a profile", async () => {
+  it("asks about an invite link after a few seconds even without a profile", async () => {
     vi.useFakeTimers();
     try {
       m.api.joinOrg.mockResolvedValue({ orgId: "o1", role: "student", orgName: "Al-Noor School" });
       m.auth.profile = null;
       wrap(<OrgScreen />, { url: "/org?code=K7Q-2MXP" });
       await act(async () => { await vi.advanceTimersByTimeAsync(PROFILE_WAIT_MS - 100); });
-      expect(m.api.joinOrg).not.toHaveBeenCalled();
+      expect(screen.queryByRole("alertdialog")).toBeNull();
       await act(async () => { await vi.advanceTimersByTimeAsync(200); });
+      expect(m.api.joinOrg).not.toHaveBeenCalled(); // asked, not joined
+      await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Join" })); });
       expect(m.api.joinOrg).toHaveBeenCalledWith({ code: "K7Q-2MXP" });
     } finally { vi.useRealTimers(); }
   });
@@ -171,6 +234,7 @@ describe("OrgScreen", () => {
     wrap(<OrgScreen />, { lang: "ar" });
     fireEvent.change(screen.getByLabelText("رمز الدعوة"), { target: { value: "AAA-BBBB" } });
     fireEvent.submit(screen.getByLabelText("رمز الدعوة").closest("form")!);
+    await join("انضم");
     expect(await screen.findByText(/مخصص للحسابات التي تُنشئها المدارس/)).toBeTruthy();
   });
 
@@ -178,7 +242,8 @@ describe("OrgScreen", () => {
     m.api.joinOrg.mockRejectedValue(Object.assign(new Error("That code is not valid."), { code: "functions/not-found" }));
     wrap(<OrgScreen />);
     fireEvent.change(screen.getByLabelText("Invite code"), { target: { value: "AAA-BBBB" } });
-    fireEvent.click(screen.getByRole("button", { name: "Join" }));
+    await join();
+    await join();
     expect(await screen.findByText(/Check it with your admin/)).toBeTruthy();
   });
 

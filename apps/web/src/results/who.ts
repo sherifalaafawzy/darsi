@@ -6,3 +6,8 @@
  */
 export const mayHaveResults = (role: string | null | undefined, teach: string | null | undefined) =>
   teach === "university" && (role === "learner" || role === "teacher");
+/**
+ * Has this grant's end passed? The server decides (courseResults answers `no-grant`); this keeps an ended grant from
+ * looking live: /super/access says "Ended on …", and /results says the access ended instead of offering its courses.
+ */
+export const ended = (g: { until?: number | null }, now = Date.now()) => g.until != null && g.until <= now;

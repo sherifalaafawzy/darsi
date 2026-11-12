@@ -10,7 +10,6 @@
     <meta property="og:site_name" content="Darsi — درسي" />
     <meta property="og:title" content="Darsi — درسي" />
     <meta property="og:description" content="Practical training in AI, programming, data, IoT and cyber security for teachers and their students: short lessons and classroom kits in English and Arabic, even offline." />
-    <meta property="og:url" content="https://darsiai.org/" />
     <meta property="og:image" content="https://darsiai.org/app-icons/app-icon-512.png" />
     <meta property="og:image:width" content="512" />
     <meta property="og:image:height" content="512" />
@@ -22,16 +21,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>Darsi — درسي</title>
-    <link rel="canonical" href="https://darsiai.org/" />
-    <script>
-      // Darsi's address is darsiai.org: the Hosting site's own addresses send people there, before anything loads.
-      if (/^darsi-f0685\.(web\.app|firebaseapp\.com)$/.test(location.hostname)) location.replace("https://darsiai.org" + location.pathname + location.search + location.hash);
-    </script>
+    <!-- The page's only script of our own besides the app: the redirect from the Hosting site's own addresses, the
+         service worker's registration (the build adds data-sw) and the "update your browser" card's timer. A file,
+         not inline code, so a Content-Security-Policy without 'unsafe-inline' allows it. Keep the tag exactly so:
+         vite.config.ts ("darsi-early-sw") looks for it. -->
+    <script src="/boot.js"></script>
   </head>
   <body>
     <div id="root"></div>
-    <!-- Shown only if the app never mounts (a browser too old to run even the legacy build). ES5, system fonts,
-         light colours: this has to paint when the bundles and the web fonts do not. -->
+    <!-- Shown only if the app has not mounted after 15 seconds (a browser too old to run even the legacy build);
+         /boot.js decides. System fonts, light colours: this has to paint when the bundles and the web fonts do not. -->
     <div id="boot-fallback" hidden>
       <div class="boot-fallback-card">
         <h1 lang="en">Please update your browser</h1>
@@ -48,17 +47,6 @@
       #boot-fallback h1 { margin: 16px 0 8px; font-size: 22px; line-height: 1.3; color: #b43c0a; }
       #boot-fallback p { margin: 0 0 8px; }
     </style>
-    <script>
-      (function () {
-        var root = document.getElementById("root");
-        var box = document.getElementById("boot-fallback");
-        if (!root || !box) return;
-        function mounted() { return root.childNodes.length > 0; }
-        function tick() { box.hidden = mounted(); }
-        if (window.MutationObserver) new MutationObserver(tick).observe(root, { childList: true });
-        setTimeout(tick, 15000);
-      })();
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

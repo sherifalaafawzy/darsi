@@ -6,9 +6,12 @@ const UPPER = "ABCDEFGHJKLMNPQRSTUVWXYZ";
 const DIGIT = "23456789";
 const SYMBOL = "!@#$%*?";
 
-/** Cryptographically random password with at least one lower, upper, digit and symbol. */
+/**
+ * Cryptographically random password with at least one lower, upper, digit and symbol, 8 to 32 characters. A length
+ * that is not a number means 10: NaN used to pass through the clamp and give a 4-character password.
+ */
 export function generatePassword(length = 10): string {
-  const n = Math.max(8, Math.min(32, Math.floor(length)));
+  const n = Number.isFinite(length) ? Math.max(8, Math.min(32, Math.floor(length))) : 10;
   const all = LOWER + UPPER + DIGIT + SYMBOL;
   const chars = [LOWER, UPPER, DIGIT, SYMBOL].map((set) => set[randomInt(set.length)]);
   while (chars.length < n) chars.push(all[randomInt(all.length)]);

@@ -84,13 +84,25 @@ export function parseReport(body: unknown): Report {
 }
 
 /**
+ * The details as stored. `details.account` is the phone's own word about who was signed in (uid, email, role, plan):
+ * anyone can type it, and a report sent without a token (a guest's, or one that waited offline past a sign-out) would
+ * keep a person's id and email in a record nothing ties to their account. So without a verified token it is dropped,
+ * and with one it is only the token's uid; who sent a report is `user`, from the token (bugs.ts).
+ */
+export function ownDetails(details: Record<string, unknown>, uid: string | null): Record<string, unknown> {
+  const { account: _phone, ...rest } = details;
+  return uid ? { ...rest, account: { uid } } : rest;
+}
+
+/**
  * Reports allowed per window, per instance: per address (a school's phones share one), per account, and for the
  * whole instance, the brake that holds even when someone makes up addresses (the function's own URL takes any headers).
  * Only a report that passes its address and account limits counts toward the instance's: one address sending hundreds
  * used to spend the whole instance's hour on refusals, and everyone else's reports were then refused too.
  */
 export const BUG_LIMITS = { address: { n: 8, ms: 10 * 60e3 }, account: { n: 10, ms: 60 * 60e3 }, instance: { n: 120, ms: 60 * 60e3 } };
-export function limiter() {
+type Limits = { address: { n: number; ms: number }; account: { n: number; ms: number }; instance: { n: number; ms: number } };
+export function limiter(limits: Limits = BUG_LIMITS) {
   const seen = new Map<string, { at: number; n: number }>();
   const over = (key: string, lim: { n: number; ms: number }, now: number) => {
     const s = seen.get(key);
@@ -98,5 +110,5 @@ export function limiter() {
     return ++s.n > lim.n;
   };
   return (ip: string, uid: string | null, now = Date.now()) =>
-    over(`a:${ip}`, BUG_LIMITS.address, now) || (uid != null && over(`u:${uid}`, BUG_LIMITS.account, now)) || over("*", BUG_LIMITS.instance, now);
+    over(`a:${ip}`, limits.address, now) || (uid != null && over(`u:${uid}`, limits.account, now)) || over("*", limits.instance, now);
 }

@@ -4,12 +4,15 @@
  * Each attack the review describes must now be refused, and each write the app really makes must still pass:
  * the profile at sign-up (email and Google), its later edits, progress sync, notes, projects with their files, a
  * teacher's review, the course editor's batch and an org logo.
+ * Staff are staff by token and by profile (the rules read users/{uid} for them: tenancy.rules.test.ts has the cases
+ * where the two disagree), so every staff actor here is seeded with a matching profile.
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import { collection, deleteDoc, deleteField, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
 import { getBytes, ref, uploadBytes } from "firebase/storage";
+import { certDoc, progressDoc } from "../src/state/sync";
 
 let env: RulesTestEnvironment;
 const root = resolve(__dirname, "../../..");
@@ -31,8 +34,15 @@ beforeEach(async () => {
     await setDoc(doc(db, "users/pupil"), { name: "Pupil", email: "pupil@users.darsi.app", role: "student", orgId: "org1", teacherId: "teach", mustChangePassword: true });
     await setDoc(doc(db, "users/pupil/submissions/s1"), { lessonId: "ai-s1-1", unitId: "ai-s1", orgId: "org1", text: "work", status: "submitted" });
     await setDoc(doc(db, "units/uabcdefgh"), { owner: "org2", title: { en: "Theirs" }, rev: 1, updatedBy: "other", published: null });
+    for (const [uid, role, orgId] of STAFF) await setDoc(doc(db, `users/${uid}`), { name: uid, email: `${uid}@school.org`, role, orgId });
   });
 });
+
+/** Every staff actor of this file: uid, role and organization, the same in the token and on the profile. */
+const STAFF: [string, string, string | null][] = [
+  ["adm", "orgAdmin", "org1"], ["oa", "orgAdmin", "org1"], ["teach", "teacher", "org1"], ["oa2", "orgAdmin", "org2"], ["adm2", "orgAdmin", "org2"],
+  ["admA", "orgAdmin", "orgA"], ["boss", "superadmin", null],
+];
 
 const learner = (uid: string, email: string) => env.authenticatedContext(uid, { email, role: "learner" });
 const prog = (lessonId: string, extra: Record<string, unknown> = {}) => ({ lessonId, accuracy: 0.8, xp: 26, seconds: 300, completedAt: "2026-11-04T10:00:00.000Z", unitId: "ai-1-1", track: "ai", competencies: ["T.1"], ...extra });
@@ -108,6 +118,11 @@ describe("progress (H2)", () => {
     const db = learner("amina", "amina@school.org").firestore();
     await assertSucceeds(setDoc(doc(db, "users/amina/progress/ai-1-1-1"), prog("ai-1-1-1")));
     await assertSucceeds(setDoc(doc(db, "users/amina/progress/ai-1-1-2"), { lessonId: "ai-1-1-2", accuracy: 1, xp: 0, seconds: 0, completedAt: "2026-11-04T10:00:00.000Z" }));
+    // As state/sync.ts builds them: with the lesson's unit, track and competencies, and an older result that has none.
+    const done = { done: true as const, accuracy: 0.8, xp: 26, seconds: 300, completedAt: "2026-11-04T10:00:00.000Z" };
+    await assertSucceeds(setDoc(doc(db, "users/amina/progress/ai-1-1-3"), progressDoc("ai-1-1-3", { ...done, unitId: "ai-1-1", track: "ai", competencies: ["T.1"] })));
+    await assertSucceeds(setDoc(doc(db, "users/amina/progress/ai-1-1-4"), progressDoc("ai-1-1-4", done, { unitId: "ai-1-1", track: "ai" })));
+    await assertSucceeds(setDoc(doc(db, "users/amina/progress/ai-1-1-5"), progressDoc("ai-1-1-5", { ...done, accuracy: 1.2, xp: 250.4, seconds: 9e12 })));
   });
   it("anything untyped, oversized, or under another id is refused", async () => {
     const db = learner("amina", "amina@school.org").firestore();
@@ -183,6 +198,34 @@ describe("the course editor (L12)", () => {
     await assertFails(updateDoc(doc(db, "units/usame0001"), { rev: 6, updatedBy: "adm", same: { version: 2, rev: 4 } }));
     await assertFails(updateDoc(doc(db, "units/usame0001"), { rev: 6, updatedBy: "adm", same: { version: 2, rev: 6, extra: true } }));
     await assertFails(updateDoc(doc(db, "units/usame0001"), { rev: 6, updatedBy: "adm", same: { version: "2", rev: 6 } }));
+  });
+  it("never lets a client write lastVersion, which only the functions keep through an unpublish", async () => {
+    const db = env.authenticatedContext("adm", { role: "orgAdmin", orgId: "org1" }).firestore();
+    const boss = env.authenticatedContext("boss", { role: "superadmin" }).firestore();
+    await env.withSecurityRulesDisabled(async (c) => { await setDoc(doc(c.firestore(), "units/ulast0001"), { owner: "org1", title: { en: "Mine" }, rev: 2, updatedBy: "adm", published: null, lastVersion: 3 }); });
+    // Back to v1 (an old immutable path phones still hold), or cleared: refused, for an org admin and a platform admin.
+    await assertFails(updateDoc(doc(db, "units/ulast0001"), { rev: 3, updatedBy: "adm", lastVersion: 0 }));
+    await assertFails(updateDoc(doc(db, "units/ulast0001"), { rev: 3, updatedBy: "adm", lastVersion: deleteField() }));
+    await assertFails(updateDoc(doc(boss, "units/ulast0001"), { rev: 3, updatedBy: "boss", lastVersion: 0 }));
+    await assertFails(setDoc(doc(db, "units/ulast0002"), { owner: "org1", title: { en: "x" }, rev: 1, updatedBy: "adm", published: null, lastVersion: 9 }));
+    // An ordinary save leaves it as it is, and still passes.
+    await assertSucceeds(updateDoc(doc(db, "units/ulast0001"), { rev: 3, updatedBy: "adm", title: { en: "Mine, again" } }));
+  });
+});
+
+describe("the account-deletion queue (accountDeletions)", () => {
+  it("is the functions' only: nobody reads, queues or clears an entry, a platform admin included", async () => {
+    await env.withSecurityRulesDisabled(async (c) => { await setDoc(doc(c.firestore(), "accountDeletions/pupil"), { orgId: "org1", by: "boss", at: 1 }); });
+    for (const ctx of [env.authenticatedContext("boss", { role: "superadmin" }), env.authenticatedContext("adm", { role: "orgAdmin", orgId: "org1" }), learner("amina", "amina@school.org")]) {
+      const db = ctx.firestore();
+      await assertFails(getDoc(doc(db, "accountDeletions/pupil")));
+      await assertFails(getDocs(collection(db, "accountDeletions")));
+      await assertFails(deleteDoc(doc(db, "accountDeletions/pupil")));
+      await assertFails(updateDoc(doc(db, "accountDeletions/pupil"), { held: "renewing" }));
+      // Queueing someone (the trigger deletes whoever is queued) or yourself.
+      await assertFails(setDoc(doc(db, "accountDeletions/amina"), { orgId: "org1", by: "x", at: 1 }));
+    }
+    await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), "accountDeletions/pupil")));
   });
 });
 
@@ -283,14 +326,15 @@ describe("organizations: the request's private details, and what org admins chan
     await assertFails(updateDoc(doc(pupil(), "orgs/org1"), { courses: { mode: "all" } }));
     await assertFails(updateDoc(doc(boss(), "orgs/org1"), { courses: chosen }));
     await assertFails(setDoc(doc(boss(), "orgs/org1"), { name: "Nile School", status: "active", courses: chosen }));
-    // A platform admin still changes everything else directly (the branding panel on an org's page).
+    // A platform admin's browser still saves the name and logo (the branding panel on an org's page), and no more.
     await assertSucceeds(updateDoc(doc(boss(), "orgs/org1"), { name: "Nile Valley School", brand: { logo: null, v: 1 } }));
     // With the field in place (as setOrgCourses writes it), members read it and the other writes still pass.
     await env.withSecurityRulesDisabled((c) => updateDoc(doc(c.firestore(), "orgs/org1"), { courses: chosen }));
     const got = await assertSucceeds(getDoc(doc(pupil(), "orgs/org1")));
     expect(got.data()?.courses).toEqual(chosen);
     await assertSucceeds(updateDoc(doc(adm(), "orgs/org1"), { name: "Nile School", brand: { logo: null, v: 3 } }));
-    await assertSucceeds(updateDoc(doc(boss(), "orgs/org1"), { status: "active" }));
+    await assertSucceeds(updateDoc(doc(boss(), "orgs/org1"), { name: "Nile School", brand: { logo: null, v: 4 } }));
+    await assertFails(updateDoc(doc(boss(), "orgs/org1"), { status: "suspended" })); // through the callables now (audited)
     await assertFails(updateDoc(doc(boss(), "orgs/org1"), { courses: { mode: "all" } }));
     await assertFails(updateDoc(doc(adm(), "orgs/org1"), { courses: { mode: "all" } }));
     await assertFails(deleteDoc(doc(adm(), "orgs/org1")));
@@ -336,10 +380,10 @@ describe("organizations: the request's private details, and what org admins chan
     await env.withSecurityRulesDisabled((c) => updateDoc(doc(c.firestore(), "orgs/org1"), { site }));
     const got = await assertSucceeds(getDoc(doc(pupil(), "orgs/org1")));
     expect(got.data()?.site).toEqual(site);
-    // With a site in place, its admins still change the name and logo (onOrgSite publishes them), and a platform admin
-    // the rest, as long as `site` stays as it is.
+    // With a site in place, its admins and a platform admin still change the name and logo (onOrgSite publishes them),
+    // as long as `site` stays as it is.
     await assertSucceeds(updateDoc(doc(adm(), "orgs/org1"), { name: "Nile School", brand: { logo: null, v: 4 } }));
-    await assertSucceeds(updateDoc(doc(boss(), "orgs/org1"), { status: "active" }));
+    await assertSucceeds(updateDoc(doc(boss(), "orgs/org1"), { name: "Nile Valley School", brand: { logo: null, v: 5 } }));
     await assertFails(updateDoc(doc(boss(), "orgs/org1"), { "site.darsi": true }));
     await assertFails(updateDoc(doc(adm(), "orgs/org1"), { site: deleteField() }));
     await assertFails(updateDoc(doc(boss(), "orgs/org1"), { site: deleteField() }));
@@ -406,6 +450,8 @@ describe("certificates as first earned (users/{uid}/certs)", () => {
   it("its owner writes it once, and nobody changes or deletes it", async () => {
     const db = learner("amina", "amina@school.org").firestore();
     await assertSucceeds(setDoc(doc(db, "users/amina/certs/ai-1-1"), cert));
+    // As state/sync.ts builds it, with its code.
+    await assertSucceeds(setDoc(doc(db, "users/amina/certs/ai-2-1"), certDoc("ai-2-1", { ...cert, track: "ai", code: "DRS-AI-2-1-7KQ2-M9XD" })!));
     await assertFails(setDoc(doc(db, "users/amina/certs/ai-1-1"), { ...cert, at: "2025-01-01T00:00:00.000Z" }));
     await assertFails(deleteDoc(doc(db, "users/amina/certs/ai-1-1")));
     await assertSucceeds(getDoc(doc(db, "users/amina/certs/ai-1-1")));

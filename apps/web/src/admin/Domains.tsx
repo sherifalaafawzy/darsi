@@ -2,14 +2,14 @@
  * Organizations' own web addresses (TECHNICAL.md "Organization sites (custom web addresses)"), in three places:
  * - OrgSitePanel, on /admin (org admins): ask for an address under their own domain by typing it, and see where each
  *   one stands. Nothing else is theirs to do but the two DNS records it shows (an ownership record and a CNAME).
- * - DomainsPage, /super/domains (platform admins): the requests to approve or refuse, an address added for an
- *   organization directly (under darsiai.org only they can), and every address with each step of its connection,
- *   Check now, Darsi's identity and Remove.
+ * - DomainsPage, /super/domains (platform admins), in tabs: the requests to approve or refuse; every address with
+ *   each step of its connection, Check now, Darsi's identity and Remove; an address added for an organization
+ *   directly (under darsiai.org only they can); and the requests that were refused.
  * - OrgSiteSummary, on /super/orgs/:id: the organization's addresses at a glance, linking to /super/domains.
  * Every change goes through manageSite (functions/src/sites.ts), which connects an approved address by itself; the
  * screens read sites/{host} once, and again after each change.
  */
-import { useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AppBar, Button, EmptyState, Icon, Switch, TextField, type IconName } from "@darsi/design-system";
 import { api, type SiteAction } from "../auth/api";
@@ -17,7 +17,11 @@ import type { Org } from "../auth/types";
 import { APPROVED, checkSiteHost, inDarsiZone, STEPS, type DnsRecord, type SiteDoc, type SiteProblem, type SiteStatus, type StepState } from "../content/sites";
 import { isolate, useI18n, type MessageKey } from "../i18n";
 import { useAllOrgs, useSites } from "./data";
-import { refusalText } from "./refusals";
+import { reasonOf } from "./refusals";
+import { errorText } from "../staff/errors";
+import { ErrorNote } from "../staff/LoadState";
+import { TabPanel, Tabs, type TabDef } from "./Tabs";
+import { lazyRetry } from "../app/AppBoundary";
 import "../styles/admin.css";
 import "./strings";
 
@@ -39,6 +43,18 @@ const domainOf = (host: string) => { const l = host.split("."); return l.length 
 /** DNS records still to add (or remove) for an address that isn't live: outside darsiai.org, the organization's. */
 const needsDns = (s: SiteDoc) => !inDarsiZone(s.host) && s.status !== "live" && Boolean(s.records?.length);
 
+/**
+ * Why manageSite refused, in words. An address that is another organization's is one sentence whichever check found it:
+ * `site-taken`, and `not-yours` from a server that still says so (admin/refusals.ts words that code for accounts:
+ * "…the organization that manages the account", which is not what happened to an address). Anything else through
+ * staff/errors.ts, so a failure with no refusal code is a sentence in the admin's language, never the SDK's English.
+ * It logs the raw error: call it where the failure is caught, not while rendering.
+ */
+export function siteRefusal(e: unknown, t: (key: MessageKey) => string): string {
+  const reason = reasonOf(e);
+  return reason === "site-taken" || reason === "not-yours" ? t("site.rf.taken") : errorText(e, t);
+}
+
 type Msg = { ok: boolean; text: string; list?: string[] } | null;
 /** Runs one manageSite action at a time, keeping which one is busy and what to tell the admin. */
 function useActions(reload: () => void) {
@@ -48,7 +64,7 @@ function useActions(reload: () => void) {
   const run = async (key: string, a: SiteAction, done?: (r: Awaited<ReturnType<typeof api.manageSite>>) => Msg) => {
     setBusy(key); setMsg(null);
     try { const r = await api.manageSite(a); setMsg(done?.(r) ?? null); reload(); return r; }
-    catch (e) { setMsg({ ok: false, text: refusalText(e, t) }); return null; }
+    catch (e) { setMsg({ ok: false, text: siteRefusal(e, t) }); return null; }
     finally { setBusy(null); }
   };
   return { busy, msg, setMsg, run };
@@ -144,7 +160,7 @@ export function OrgSitePanel({ orgId }: { orgId: string }) {
     <section className="panel stack" aria-labelledby="site-h">
       <h3 id="site-h">{t("site.title")}</h3>
       <p className="muted small">{t("site.askHint")}</p>
-      {q.error && <p className="notice err">{refusalText(q.error, t)}</p>}
+      {q.error && <ErrorNote error={q.error} />}
       {q.loading && <p className="muted small" aria-busy="true">…</p>}
       {q.data && !list.length && <p className="small">{t("site.none")}</p>}
       {list.map((s) => <OrgSiteCard key={s.host} s={s} busy={busy} run={run} />)}
@@ -193,44 +209,101 @@ function OrgSiteCard({ s, busy, run }: { s: SiteDoc; busy: string | null; run: R
 
 /* ---------- Platform admins: /super/domains ---------- */
 
+/** Schools asking to be listed in the school finder (admin/SsoSetup.tsx): its own chunk, loaded when that tab opens. */
+const SsoListings = lazyRetry(() => import("./SsoSetup").then((m) => ({ default: m.SsoListings })));
+/** The "School sign-in" tab: the organizations are read here, only once it is opened (each is then asked about its request). */
+function SsoListingsTab() {
+  const orgs = useAllOrgs();
+  if (orgs.error) return <ErrorNote error={orgs.error} />;
+  if (!orgs.data) return <div className="loading" aria-busy="true" />;
+  return <Suspense fallback={<div className="loading" aria-busy="true" />}><SsoListings orgs={orgs.data} /></Suspense>;
+}
+
+/**
+ * Tabs under what every one of them needs (two sentences of what the page is for, with how a connection works behind
+ * "How it works", and what the last action did: approving moves an address from Requests to Addresses, so "approved,
+ * now connecting" has to stay in view). Read again is at the end of the tab row (admin/Tabs.tsx `action`). sites is
+ * read once for the page, since every tab and its count come from it; the organizations are read only when Add is opened.
+ */
 export function DomainsPage() {
   const { t } = useI18n();
   const q = useSites();
-  const orgs = useAllOrgs();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const { busy, msg, setMsg, run } = useActions(q.reload);
   const all = q.data ?? [];
   const requests = all.filter((s) => s.status === "requested").sort((a, b) => (a.requestedAt ?? 0) - (b.requestedAt ?? 0));
   const approved = all.filter((s) => APPROVED.includes(s.status)).sort(byState);
   const refused = all.filter((s) => s.status === "refused").sort(byState);
   const approvedMsg = (r: { site: SiteDoc | null }) => (r.site ? { ok: r.site.status !== "problem", text: t("site.approved", { host: isolate(r.site.host), status: t(STATUS[r.site.status]) }) } : null);
+  // Where the page opens: what waits for an answer, else the list. Decided once, when the list is first read: the
+  // default tab is the one with no ?tab=, so deciding again after the last request is approved would move the admin
+  // to Addresses under their hands.
+  const start = useRef<"requests" | "addresses" | null>(null);
+  if (q.data && !start.current) start.current = requests.length ? "requests" : "addresses";
+  // ?tab=refused with nothing refused (the last one was just dismissed, or an old link): the default tab shows, and the
+  // parameter is taken out of the address. Left there, the next refusal would bring the tab back and move the admin to it.
+  const gone = Boolean(q.data) && params.get("tab") === "refused" && !refused.length;
+  useEffect(() => {
+    if (gone) setParams((p) => { const next = new URLSearchParams(p); next.delete("tab"); return next; }, { replace: true });
+  }, [gone]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ?org=<id> is the link on an organization's page (OrgSiteSummary): the Add form, with that organization chosen.
+  const preset = params.get("org") ?? "";
+  const tabs: TabDef[] = [
+    { id: "requests", label: t("tabs.requests"), badge: requests.length },
+    { id: "addresses", label: t("tabs.addresses"), badge: approved.length },
+    { id: "add", label: t("tabs.addAddress") },
+    { id: "refused", label: t("tabs.refused"), badge: refused.length, hidden: !refused.length },
+    // School sign-in's listing requests: the school finder on darsiai.org names only what a platform admin approved.
+    { id: "sso", label: t("tabs.ssoListings") },
+  ];
+  // Nothing is read live: this reads the addresses again, whichever tab is open.
+  const again = <Button size="sm" variant="ghost" icon="sync" title={t("site.refresh")} onClick={() => { setMsg(null); q.reload(); }}>{t("site.refresh")}</Button>;
   return (
     <>
       <AppBar title={t("nav.domains")} />
       <main className="screen wide stack-lg">
-        <p className="muted">{t("site.intro")}</p>
-        <div className="row-gap"><Button size="sm" variant="ghost" icon="sync" onClick={() => { setMsg(null); q.reload(); }}>{t("site.refresh")}</Button></div>
+        <div className="stack-sm">
+          <p className="muted">{t("site.intro")}</p>
+          {/* The rest of what the page used to open with (90 words above the tabs), for whoever wants it. The summary
+              borrows the look of the problem reports' "More details": a full-height row, bold, a pointer. */}
+          <details>
+            <summary className="bug-report-more row-gap"><Icon name="info" size={20} />{t("site.how")}</summary>
+            <ul className="small">{(["site.how1", "site.how2", "site.how3", "site.how4"] as const).map((key) => <li key={key}>{t(key)}</li>)}</ul>
+          </details>
+        </div>
         <Notice msg={msg} />
-        {q.error && <p className="notice err">{refusalText(q.error, t)}</p>}
+        {q.error && <ErrorNote error={q.error} />}
+        {/* Nothing was read: the way to try again stands alone. Once there are tabs it is at the end of their row. */}
+        {!q.data && q.error ? <div className="row-gap">{again}</div> : null}
         {!q.data && !q.error && <div className="loading" aria-busy="true" />}
-        {q.data && <>
-          <section className="stack" aria-labelledby="site-wait-h">
-            <h2 id="site-wait-h">{t("site.waiting", { n: requests.length })}</h2>
-            {requests.length ? requests.map((s) => <RequestCard key={s.host} s={s} busy={busy} run={run} approvedMsg={approvedMsg} />)
-              : <p className="muted">{t("site.noRequests")}</p>}
-          </section>
-          <AddSite orgs={(orgs.data ?? []).filter((o) => o.status === "active")} preset={params.get("org") ?? ""} busy={busy} run={run} approvedMsg={approvedMsg} />
-          <section className="stack" aria-labelledby="site-list-h">
-            <h2 id="site-list-h">{t("site.list", { n: approved.length })}</h2>
-            {approved.length ? approved.map((s) => <SiteCard key={s.host} s={s} busy={busy} run={run} />) : <EmptyState icon="globe" title={t("site.noneYet")} />}
-          </section>
-          {refused.length > 0 && (
-            <details>
-              <summary className="bug-report-more">{t("site.refusedList", { n: refused.length })}</summary>
-              <div className="stack">{refused.map((s) => <RefusedCard key={s.host} s={s} busy={busy} run={run} />)}</div>
-            </details>
-          )}
-        </>}
+        {q.data && (
+          <Tabs label={t("tabs.sections")} tabs={tabs} defaultTab={preset ? "add" : start.current ?? undefined} action={again}>
+            {/* Kept while another tab shows: a reason being typed for a refusal stays. */}
+            <TabPanel id="requests">
+              <section className="stack" aria-labelledby="site-wait-h">
+                <h2 id="site-wait-h">{t("site.waiting", { n: requests.length })}</h2>
+                {requests.length ? requests.map((s) => <RequestCard key={s.host} s={s} busy={busy} run={run} approvedMsg={approvedMsg} />)
+                  : <p className="muted">{t("site.noRequests")}</p>}
+              </section>
+            </TabPanel>
+            {/* Not kept: the longest list here, drawn from what the page already read, and a "Remove it?" left open
+                shouldn't wait behind another tab. */}
+            <TabPanel id="addresses" keep={false}>
+              <section className="stack" aria-labelledby="site-list-h">
+                <h2 id="site-list-h">{t("site.list", { n: approved.length })}</h2>
+                {approved.length ? approved.map((s) => <SiteCard key={s.host} s={s} busy={busy} run={run} />) : <EmptyState icon="globe" title={t("site.noneYet")} />}
+              </section>
+            </TabPanel>
+            <TabPanel id="add"><AddPanel preset={preset} busy={busy} run={run} approvedMsg={approvedMsg} /></TabPanel>
+            <TabPanel id="refused" keep={false}>
+              <section className="stack" aria-labelledby="site-refused-h">
+                <h2 id="site-refused-h">{t("site.refusedList", { n: refused.length })}</h2>
+                {refused.map((s) => <RefusedCard key={s.host} s={s} busy={busy} run={run} />)}
+              </section>
+            </TabPanel>
+            <TabPanel id="sso"><SsoListingsTab /></TabPanel>
+          </Tabs>
+        )}
       </main>
     </>
   );
@@ -270,6 +343,17 @@ function RequestCard({ s, busy, run, approvedMsg }: { s: SiteDoc; busy: string |
         </div>
       )}
     </article>
+  );
+}
+
+/** The Add tab. Every organization is read here, not in the page: only this form's list needs them, and only once the tab is opened. */
+function AddPanel(p: { preset: string; busy: string | null; run: Run; approvedMsg: Approved }) {
+  const orgs = useAllOrgs();
+  return (
+    <>
+      {orgs.error && <ErrorNote error={orgs.error} />}
+      <AddSite orgs={(orgs.data ?? []).filter((o) => o.status === "active")} {...p} />
+    </>
   );
 }
 
@@ -366,7 +450,7 @@ export function OrgSiteSummary({ orgId }: { orgId: string }) {
   return (
     <section className="panel stack" aria-labelledby="site-sum-h">
       <h3 id="site-sum-h">{t("site.title")}</h3>
-      {q.error && <p className="notice err">{refusalText(q.error, t)}</p>}
+      {q.error && <ErrorNote error={q.error} />}
       {q.data && !list.length && <p className="small">{t("site.none")}</p>}
       {list.map((s) => <HostTitle key={s.host} s={s} />)}
       <div><Link className="dr-btn dr-btn-secondary dr-btn-sm" to={`/super/domains?org=${encodeURIComponent(orgId)}`}><Icon name="globe" size={20} />{t("site.manage")}</Link></div>

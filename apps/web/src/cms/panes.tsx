@@ -12,6 +12,7 @@ import type { KitFile, KitFormat, Lesson, Slide, Step, Unit } from "../content/t
 import { errorsOf, SLIDE_LAYOUTS, type Issue } from "../content/validate";
 import { isolate, languageOf, useI18n, type MessageKey } from "../i18n";
 import { copyLessonTo, listUnits, type UnitMeta } from "./data";
+import { failText } from "./entStrings";
 import { fieldText, useFieldName, type FieldName } from "./fieldNames";
 import { Items, LangName, LList, LText, Num, Sel, Upload } from "./fields";
 import { useEditLangs, useLangView } from "./langs";
@@ -264,7 +265,7 @@ export function CopyTo({ owner, unitId, lesson, onDone }: { owner: string; unitI
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   useEffect(() => {
-    listUnits(owner).then((u) => { const others = u.filter((x) => x.id !== unitId); setUnits(others); setTarget(others[0]?.id ?? ""); }).catch((e: Error) => setErr(e.message));
+    listUnits(owner).then((u) => { const others = u.filter((x) => x.id !== unitId); setUnits(others); setTarget(others[0]?.id ?? ""); }).catch((e) => setErr(failText(e, t))); // the SDK's raw English goes through errorText, in the author's language
   }, [owner, unitId]);
   const copy = async () => {
     if (!user || !target) return;
@@ -274,7 +275,7 @@ export function CopyTo({ owner, unitId, lesson, onDone }: { owner: string; unitI
       if (!r) setErr(t("err.notFound"));
       else if ("conflict" in r) setErr(t("cms.copyConflict"));
       else onDone(t("cms.copied", { title: L(r.title) || t("cms.untitled") }));
-    } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+    } catch (e) { setErr(failText(e, t)); } finally { setBusy(false); }
   };
   return (
     <div className="ed-item stack">

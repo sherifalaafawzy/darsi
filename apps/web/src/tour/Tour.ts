@@ -76,7 +76,7 @@ export function stops(staff = false, all = false): Stop[] {
   if (shown(tab("/me"))) out.push({ el: tab("/me"), title: "nav.me", body: !rail && staff ? "tour.meStaffD" : "tour.meD", side: nav });
   for (const [path, title, body] of pages) out.push({ el: railTab(path), title, body, side: "end" });
   const report = shown(".rail-report") ? ".rail-report" : shown(".bug-fab") ? ".bug-fab" : null;
-  if (report) out.push({ el: report, title: "bug.button", body: "tour.reportD", side: report === ".bug-fab" ? "top" : "end" });
+  if (report) out.push({ el: report, title: report === ".bug-fab" ? "fb.button" : "bug.button", body: "tour.reportD", side: report === ".bug-fab" ? "top" : "end" });
   out.push({ title: "tour.doneT", body: "tour.doneD" });
   return out;
 }

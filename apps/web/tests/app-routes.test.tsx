@@ -3,7 +3,10 @@
 //   invite codes to /org), whatever order the sign-in and AuthProvider's publishing happen in;
 // - /results opens for any signed-in account, and a guest never loads it (nor, with it, the Firebase SDK);
 // - finishing onboarding opens the page that was asked for;
-// - an account takes over the guest's learning on this device only when it was created here (never a school account).
+// - an account takes over the guest's learning on this device only when it was created here (never a school account);
+// - "choose your own password" only for accounts that sign in with a password;
+// - the privacy notice and the terms open for anyone, guests too;
+// - a page that breaks leaves the nav in place, and a failure nothing else caught shows a card, never a blank page.
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 type Auth = Record<string, unknown>;
@@ -13,6 +16,12 @@ const h = vi.hoisted(() => {
   return {
     stored: {} as Record<string, unknown>,
     resultsLoaded: false,
+    /** What App hands the Course results page for reading content (results/async.ts ContentLoader). */
+    resultsContent: null as null | { loadCatalog: unknown; loadUnit: unknown; subscribe?: (onForget: () => void) => () => void },
+    /** The org admin's dashboard throws while it renders; a hook under the whole app throws. */
+    adminBreaks: false,
+    appBreaks: false,
+    tutorBreaks: false,
     signIn: vi.fn(),
     popup: vi.fn(),
     redirect: vi.fn(),
@@ -42,6 +51,7 @@ vi.mock("../src/auth/AuthProvider", async () => {
     useAuth: () => useSyncExternalStore(h.subscribe, h.get),
     createLearnerProfile: h.createProfile,
     KEPT_KEY: "darsi:keptOnDevice",
+    ENDED_NOTE: "darsi:endedNote",
   };
 });
 vi.mock("../src/platform", async (orig) => ({
@@ -58,15 +68,25 @@ vi.mock("firebase/firestore", () => ({ doc: (_db: unknown, ...p: string[]) => p.
 vi.mock("../src/analytics/track", async (orig) => ({ ...(await orig<typeof import("../src/analytics/track")>()), track: () => {} }));
 vi.mock("../src/state/sync", () => ({ useCloudSync: () => {}, useLearningSync: () => {} }));
 vi.mock("../src/state/orgBrand", () => ({ useOrgBrand: () => {} }));
-vi.mock("../src/analytics/useAnalytics", () => ({ useAnalytics: () => {} }));
+vi.mock("../src/analytics/useAnalytics", () => ({ useAnalytics: () => { if (h.appBreaks) throw new Error("the app broke"); } }));
 vi.mock("../src/notify/usePushRefresh", () => ({ usePushRefresh: () => {} }));
 vi.mock("../src/tour/Start", () => ({ AppTour: () => null, openTour: () => {}, OPEN_TOUR: "darsi:tour" }));
 vi.mock("../src/content/load", async (orig) => ({
   ...(await orig<typeof import("../src/content/load")>()),
   loadSettings: async () => null, forgetSettings: () => {}, loadCatalog: async () => ({ version: 1, units: [] }),
 }));
-vi.mock("../src/results/CourseResults", () => { h.resultsLoaded = true; return { CourseResults: () => "Course results page" }; });
-vi.mock("../src/admin/AdminHome", () => ({ AdminHome: () => "Org admin dashboard" }));
+vi.mock("../src/results/CourseResults", () => {
+  h.resultsLoaded = true;
+  return { CourseResults: ({ content }: { content: NonNullable<typeof h.resultsContent> }) => { h.resultsContent = content; return "Course results page"; } };
+});
+vi.mock("../src/admin/AdminHome", () => ({ AdminHome: () => { if (h.adminBreaks) throw new Error("the dashboard broke"); return "Org admin dashboard"; } }));
+vi.mock("../src/tutor/Tutor", () => ({ Tutor: () => null, TutorPanel: () => { if (h.tutorBreaks) throw new Error("the tutor broke"); return "The tutor's panel"; } }));
+vi.mock("../src/legal/Legal", () => ({ LegalPage: ({ doc }: { doc: string }) => `Legal page: ${doc}` }));
+// The report sheet's chunk: who the sheet is told the report is from (the card after a crash opens it, app/AppBoundary.tsx).
+vi.mock("../src/bugs/Report", () => ({
+  capture: async () => null, flushReports: async () => {},
+  ReportSheet: ({ uid, about, getToken }: { uid: string | null; about: { who: string | null }; getToken: unknown }) => `Report sheet from ${uid} (${about.who}), ${getToken ? "with" : "without"} a token`,
+}));
 vi.mock("../src/admin/SuperAdmin", () => ({ SuperAdmin: () => "Platform admin dashboard", PlansPage: () => null, ProjectsPage: () => null, CertificatesPage: () => null, BugsPage: () => null }));
 vi.mock("../src/org/OrgScreen", () => ({ OrgScreen: () => "Organization page" }));
 vi.mock("../src/admin/Teach", () => ({ Teach: () => "Teach page", TeachPerson: () => null }));
@@ -91,7 +111,7 @@ async function signInWithPassword(login: string) {
 }
 
 beforeEach(() => {
-  h.reset(); h.stored = {}; h.profileExists = true; h.profileFields = { email: "someone@x.org", name: "Someone" }; h.fbAuth = {};
+  h.reset(); h.stored = {}; h.adminBreaks = false; h.appBreaks = false; h.tutorBreaks = false; h.profileExists = true; h.profileFields = { email: "someone@x.org", name: "Someone" }; h.fbAuth = {};
   h.resetMail.mockReset().mockResolvedValue(undefined); h.reauth.mockReset(); h.updatePassword.mockReset().mockResolvedValue(undefined);
   h.signIn.mockReset().mockResolvedValue({ user: { uid: "x" } });
   h.popup.mockReset(); h.redirect.mockReset().mockResolvedValue(undefined); h.redirectResult.mockReset().mockResolvedValue(null); h.createProfile.mockReset().mockResolvedValue(undefined);
@@ -203,6 +223,93 @@ describe("Course results (/results)", () => {
     open("/results");
     expect(await screen.findByText("Course results page")).toBeTruthy();
     expect(where()).toBe("/results");
+  });
+
+  it("is told when the catalog is forgotten (the editor published, or back after a long while), so it reads the courses again", async () => {
+    h.reset({ user: user("t1"), profile: { uid: "t1", name: "T", role: "learner", teach: "university" }, role: "learner" });
+    open("/results");
+    expect(await screen.findByText("Course results page")).toBeTruthy();
+    const { forgetCatalog } = await import("../src/content/load");
+    const told = vi.fn();
+    const stop = h.resultsContent!.subscribe!(told);
+    forgetCatalog();
+    expect(told).toHaveBeenCalledTimes(1);
+    // Leaving the page stops it: a later forget tells nobody.
+    stop();
+    forgetCatalog();
+    expect(told).toHaveBeenCalledTimes(1);
+  });
+});
+
+// The way back from a school's provider lands on a page of the app with `#sso=<ticket>&f=<flow>` in its address
+// (TECHNICAL.md "School sign-in"). auth/sso.ts takes it out as it loads, before the router starts; these start the real
+// App on such an address the same way (the module loaded when App was imported above, so its step is run again here).
+describe("a school sign-in's return in the address when the app starts", () => {
+  const start = async (path: string) => {
+    history.replaceState(null, "", path);
+    (await import("../src/auth/sso")).stashReturn();
+    return render(<App />);
+  };
+  const record = (patch: Record<string, unknown>) => localStorage.setItem("darsi:sso", JSON.stringify({ verifier: "v".repeat(43), flow: "abcd1234", mode: "signin", next: "/signin", at: Date.now(), ...patch }));
+  /** Nowhere a person, a link or the history could carry it from. */
+  const nowhere = (ticket: string) => {
+    for (const text of [location.href, document.body.innerHTML, JSON.stringify({ ...sessionStorage })]) expect(text).not.toContain(ticket);
+    expect(location.hash).toBe("");
+  };
+  const finishes = vi.fn();
+  beforeEach(() => {
+    finishes.mockReset();
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      if (String(url) !== "/api/sso/finish") return { ok: false, status: 404, json: async () => ({}) } as Response;
+      finishes(JSON.parse(String(init?.body)), (init?.headers as Record<string, string> | undefined)?.Authorization ?? null);
+      return { ok: true, status: 200, json: async () => ({ tested: "create-student", ok: true }) } as Response;
+    }));
+  });
+  afterEach(async () => { vi.unstubAllGlobals(); localStorage.removeItem("darsi:sso"); (await import("../src/auth/sso")).takeStash(location.pathname); });
+
+  it("a return this browser has no record for: the sign-in page says so, with the school finder to start again, and the ticket is nowhere", async () => {
+    await start("/signin#sso=SECRET-TICKET-1&f=abcd1234");
+    expect(await screen.findByText(/Go back to the tab where you started, or start again here/)).toBeTruthy();
+    expect(where()).toBe("/signin");
+    expect(screen.getAllByRole("button", { name: "Sign in with your school" })).toHaveLength(1);
+    expect(screen.getByLabelText("Email or username")).toBeTruthy();
+    nowhere("SECRET-TICKET-1");
+    expect(finishes).not.toHaveBeenCalled();
+  });
+
+  it("a student's test (a test link) shows its result on its own page, without an account and never as a sign-in", async () => {
+    record({ mode: "test", token: "t".repeat(32) });
+    await start("/signin#sso=SECRET-TICKET-2&f=abcd1234");
+    expect(await screen.findByText("The test worked: you would join as a student.")).toBeTruthy();
+    expect(where()).toBe("/sso-test");
+    expect(screen.queryByLabelText("Email or username")).toBeNull();
+    expect(finishes).toHaveBeenCalledTimes(1);
+    expect(finishes).toHaveBeenCalledWith({ ticket: "SECRET-TICKET-2", verifier: "v".repeat(43) }, null);
+    expect(h.signIn).not.toHaveBeenCalled();
+    nowhere("SECRET-TICKET-2");
+    expect(localStorage.getItem("darsi:sso")).toBeNull(); // the record is spent
+  });
+
+  it("someone already signed in on this browser sees the test's result too, instead of being sent to their lessons", async () => {
+    h.reset({ user: user("st1"), profile: { uid: "st1", name: "St", role: "student", orgId: "o1" }, profileReady: true, role: "student", orgId: "o1" });
+    record({ mode: "test", token: "t".repeat(32) });
+    await start("/signin#sso=SECRET-TICKET-3&f=abcd1234");
+    expect(await screen.findByText("The test worked: you would join as a student.")).toBeTruthy();
+    expect(where()).toBe("/sso-test");
+    expect(finishes).toHaveBeenCalledWith({ ticket: "SECRET-TICKET-3", verifier: "v".repeat(43) }, null);
+    nowhere("SECRET-TICKET-3");
+  });
+
+  it("an admin's own test stays on its tab, with the ticket out of the address before the dashboard (and its tabs) render", async () => {
+    h.reset({ user: user("a2"), profile: { uid: "a2", name: "A", role: "orgAdmin", orgId: "o1" }, profileReady: true, role: "orgAdmin", orgId: "o1" });
+    record({ mode: "test" });
+    await start("/admin?tab=signin#sso=SECRET-TICKET-4&f=abcd1234");
+    expect(await screen.findByText("Org admin dashboard")).toBeTruthy();
+    expect(where()).toBe("/admin?tab=signin");
+    nowhere("SECRET-TICKET-4");
+    // Kept for the school sign-in panel of that page, which finishes it with the admin's own sign-in.
+    expect((await import("../src/auth/sso")).returnedTo("/admin")).toBe(true);
+    expect(finishes).not.toHaveBeenCalled();
   });
 });
 
@@ -352,7 +459,7 @@ describe("the account screens", () => {
 
   describe("choosing your own password (accounts an organization made)", () => {
     const choose = async (pw: string) => {
-      h.reset({ user: { ...user("m1"), email: "m1@users.darsi.app" }, profile: { uid: "m1", name: "M", role: "student", mustChangePassword: true }, role: "student", orgId: "o1" });
+      h.reset({ user: { ...user("m1"), email: "m1@users.darsi.app", providerData: [{ providerId: "password" }] }, profile: { uid: "m1", name: "M", role: "student", mustChangePassword: true }, role: "student", orgId: "o1" });
       open("/learn");
       fireEvent.change(await screen.findByLabelText(/^New password/), { target: { value: pw } });
       fireEvent.change(screen.getByLabelText("Repeat password"), { target: { value: pw } });
@@ -373,6 +480,214 @@ describe("the account screens", () => {
       await waitFor(() => expect(h.updatePassword).toHaveBeenCalledWith(expect.objectContaining({ uid: "m1" }), "my-own-secret"));
       expect(screen.queryByRole("alert")).toBeNull();
     });
+
+    // The flag is set when an organization makes the account; the person may then only ever sign in with Google.
+    const flagged = (providers: string[]) => h.reset({
+      user: { ...user("a2"), providerData: providers.map((providerId) => ({ providerId })) },
+      profile: { uid: "a2", name: "A", role: "orgAdmin", orgId: "o1", mustChangePassword: true }, role: "orgAdmin", orgId: "o1",
+    });
+
+    it("an account that signs in with Google only has no password to change: it goes to its home", async () => {
+      flagged(["google.com"]);
+      open("/");
+      expect(await screen.findByText("Org admin dashboard")).toBeTruthy();
+      expect(where()).toBe("/admin");
+      expect(screen.queryByLabelText(/^New password/)).toBeNull();
+    });
+
+    it("an account with a password (alone, or beside Google) is asked for its own first", async () => {
+      for (const providers of [["password"], ["google.com", "password"]]) {
+        flagged(providers);
+        const view = open("/");
+        expect(await screen.findByLabelText(/^New password/)).toBeTruthy();
+        expect(screen.queryByText("Org admin dashboard")).toBeNull();
+        view.unmount();
+      }
+    });
+
+    // School sign-in links an org-made account still on its handed-out password (functions/src/sso.ts): its school
+    // session can't answer "your current password", so the gate leaves it to its home (the flag stays for its own login).
+    it("a school session of such an account is not asked: it goes to its home", async () => {
+      flagged(["password"]);
+      h.reset({ ...h.get(), sso: "o1" });
+      open("/");
+      expect(await screen.findByText("Org admin dashboard")).toBeTruthy();
+      expect(screen.queryByLabelText(/^New password/)).toBeNull();
+    });
+  });
+});
+
+describe("the privacy notice and the terms", () => {
+  it("open for a guest who has never used the app, at their own addresses", async () => {
+    const a = open("/privacy");
+    expect(await screen.findByText("Legal page: privacy")).toBeTruthy();
+    expect(where()).toBe("/privacy");
+    a.unmount();
+    open("/terms");
+    expect(await screen.findByText("Legal page: terms")).toBeTruthy();
+    expect(where()).toBe("/terms");
+  });
+
+  it("open for someone signed in too, without sending them to their home", async () => {
+    h.reset({ user: user("l5"), profile: { uid: "l5", name: "L", role: "learner" }, profileReady: true, role: "learner" });
+    open("/terms");
+    expect(await screen.findByText("Legal page: terms")).toBeTruthy();
+    expect(where()).toBe("/terms");
+  });
+
+  it("name themselves in the window title", async () => {
+    open("/privacy");
+    await waitFor(() => expect(document.title).toBe("Privacy notice — Darsi"));
+  });
+});
+
+describe("after a session the server ended (AuthProvider sessionEnded)", () => {
+  const guest = () => { h.stored["darsi:state"] = { ...initialState, guest: true, onboarded: true, tracks: ["ai"], lang: "en" }; };
+
+  it("the page the person lands on says once that they were signed out", async () => {
+    guest();
+    sessionStorage.setItem("darsi:endedNote", "out");
+    const a = open("/");
+    expect(await screen.findByText("You were signed out. Sign in again to carry on.")).toBeTruthy();
+    expect(sessionStorage.getItem("darsi:endedNote")).toBeNull();
+    a.unmount();
+    open("/");
+    await settle();
+    expect(screen.queryByText(/You were signed out/)).toBeNull(); // once
+  });
+
+  it("and that their unsent work is kept on the phone, when it was", async () => {
+    guest();
+    sessionStorage.setItem("darsi:endedNote", "kept");
+    open("/learn");
+    // Not "will be sent": the kept work may be a typed project draft, which is never sent by itself.
+    expect(await screen.findByText("You were signed out. Your unsent work is kept on this phone, ready for when you sign in again.")).toBeTruthy();
+    expect(screen.queryByText(/will be sent/)).toBeNull();
+  });
+
+  it("someone who left their organization is told by its own note, unless work was kept", async () => {
+    guest();
+    sessionStorage.setItem("darsi:endedNote", "out");
+    sessionStorage.setItem("darsi:leftOrg", JSON.stringify({ name: "Nile School", at: Date.now() }));
+    open("/me");
+    expect(await screen.findByText(/You left .*Nile School/)).toBeTruthy();
+    expect(screen.queryByText(/You were signed out/)).toBeNull();
+  });
+});
+
+describe("a slow start with a kept staff role (AuthProvider offlineUid)", () => {
+  it("staff pages wait behind the loading screen until the SDK publishes the user", async () => {
+    h.stored["darsi:state:a1"] = { ...initialState, onboarded: true, tracks: ["ai"] };
+    h.reset({ user: null, offlineUid: "a1", role: "orgAdmin", orgId: "o1" });
+    const { container } = open("/admin");
+    await settle();
+    expect(screen.queryByText("Org admin dashboard")).toBeNull();
+    expect(where()).toBe("/admin");
+    expect(container.querySelector(".app-main .loading")).toBeTruthy();
+    act(() => h.publish({ user: user("a1"), offlineUid: null, profile: { uid: "a1", name: "A", role: "orgAdmin", orgId: "o1" }, profileReady: true }));
+    expect(await screen.findByText("Org admin dashboard")).toBeTruthy();
+  });
+
+  // The pages that only ask for an account (not a role) took the same moment for "signed out": /results went to the
+  // lessons for good, and /org said to sign in first. `connecting`: the saved session is still being opened.
+  const slow = (more: Auth = {}) => {
+    h.stored["darsi:state:a1"] = { ...initialState, onboarded: true, tracks: ["ai"], lang: "en" };
+    h.reset({ user: null, offlineUid: "a1", connecting: true, ...more });
+  };
+  const arrive = () => act(() => h.publish({ user: user("a1"), offlineUid: null, connecting: false, profile: { uid: "a1", name: "A", role: "learner" }, profileReady: true }));
+
+  it("Course results waits too, and opens where it was asked for when the account arrives", async () => {
+    slow();
+    const { container } = open("/results");
+    await settle();
+    expect(where()).toBe("/results");
+    expect(container.querySelector(".app-main .loading")).toBeTruthy();
+    expect(screen.queryByText("Course results page")).toBeNull();
+    arrive();
+    expect(await screen.findByText("Course results page")).toBeTruthy();
+    expect(where()).toBe("/results");
+  });
+
+  it("an account whose SDK could not load at all (offline) still goes to its lessons", async () => {
+    slow({ connecting: false });
+    open("/results");
+    await waitFor(() => expect(where()).toBe("/learn"));
+    expect(screen.queryByText("Course results page")).toBeNull();
+  });
+
+  it("the organization page waits instead of saying to sign in first; offline, it says so as before", async () => {
+    slow();
+    const a = open("/org?code=ABCD-EFGH-JKLM");
+    await settle();
+    expect(where()).toBe("/org?code=ABCD-EFGH-JKLM");
+    expect(a.container.querySelector(".app-main .loading")).toBeTruthy();
+    expect(screen.queryByText("Sign in to join or register an organization")).toBeNull();
+    arrive();
+    expect(await screen.findByText("Organization page")).toBeTruthy();
+    expect(where()).toBe("/org?code=ABCD-EFGH-JKLM");
+    a.unmount();
+    slow({ connecting: false });
+    open("/org?code=ABCD-EFGH-JKLM");
+    expect(await screen.findByText("Sign in to join or register an organization")).toBeTruthy();
+  });
+});
+
+describe("when something breaks", () => {
+  let logged: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => { logged = vi.spyOn(console, "error").mockImplementation(() => {}); });
+  afterEach(() => { logged.mockRestore(); });
+
+  it("a staff page that throws shows its message inside the layout: the nav stays, and so does the way to other pages", async () => {
+    h.adminBreaks = true;
+    h.reset({ user: user("a3"), profile: { uid: "a3", name: "A", role: "orgAdmin", orgId: "o1" }, profileReady: true, role: "orgAdmin", orgId: "o1" });
+    open("/admin");
+    expect(await screen.findByRole("heading", { name: "Something went wrong on this page" })).toBeTruthy();
+    const nav = screen.getAllByRole("navigation", { name: "Main" })[0]; // the rail
+    expect(nav.querySelector('a[href="/teach"]')).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
+    // Another page opens, and the failure doesn't follow.
+    fireEvent.click(nav.querySelector('a[href="/teach"]')!);
+    expect(await screen.findByText("Teach page")).toBeTruthy();
+    expect(screen.queryByText("Something went wrong on this page")).toBeNull();
+    // Back on the dashboard, mended: it shows.
+    h.adminBreaks = false;
+    fireEvent.click(nav.querySelector('a[href="/admin"]')!);
+    expect(await screen.findByText("Org admin dashboard")).toBeTruthy();
+  });
+
+  it("the tutor's panel failing leaves the lesson alone: its button comes back with a note, and a tap tries again", async () => {
+    h.stored["darsi:state"] = { ...initialState, guest: true, onboarded: true, lang: "en" };
+    h.tutorBreaks = true;
+    open("/lesson/u1/u1-1");
+    fireEvent.click(await screen.findByRole("button", { name: "Ask the tutor" }));
+    expect(await screen.findByText("The tutor couldn’t open. Try again in a moment.")).toBeTruthy();
+    // Neither the page's boundary nor the whole app's card (the lesson screen itself is as it was).
+    expect(screen.queryByText("Something went wrong on this page")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reload" })).toBeNull();
+    h.tutorBreaks = false;
+    fireEvent.click(screen.getByRole("button", { name: "Ask the tutor" }));
+    expect(await screen.findByText("The tutor's panel")).toBeTruthy();
+    expect(screen.queryByText("The tutor couldn’t open. Try again in a moment.")).toBeNull();
+  });
+
+  it("a failure nothing else caught shows a card with Reload, not a blank page", async () => {
+    h.stored["darsi:state"] = { ...initialState, guest: true, onboarded: true, lang: "en" };
+    h.appBreaks = true;
+    open("/learn");
+    expect(await screen.findByRole("heading", { name: "Something went wrong" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Reload" })).toBeTruthy();
+    // A guest's report from the card is anonymous.
+    fireEvent.click(screen.getByRole("button", { name: "Report a problem" }));
+    expect(await screen.findByText("Report sheet from null (null), without a token")).toBeTruthy();
+  });
+
+  it("a signed-in person's report from that card still says whose it is", async () => {
+    h.reset({ user: user("c7"), profile: { uid: "c7", name: "Carla", role: "learner" }, profileReady: true, role: "learner" });
+    h.appBreaks = true;
+    open("/learn");
+    expect(await screen.findByRole("heading", { name: "Something went wrong" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Report a problem" }));
+    expect(await screen.findByText("Report sheet from c7 (Carla), with a token")).toBeTruthy();
   });
 });
 

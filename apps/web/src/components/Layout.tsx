@@ -7,7 +7,10 @@ import { useI18n, type MessageKey } from "../i18n";
 import { useStore } from "../state/store";
 import { audienceFor } from "../content/mine";
 import { useInstall, useOnline, usePwaUpdate } from "../pwa";
-import { openReport } from "../bugs/log";
+import { openFeedback, openReport } from "../bugs/log";
+import { RouteBoundary } from "../app/AppBoundary";
+import { k } from "../legal/strings";
+import { TermsPrompt } from "../legal/TermsPrompt";
 
 interface NavItem { path: string; icon: IconName; key: MessageKey }
 const TABS: NavItem[] = [
@@ -28,7 +31,7 @@ export function accountLinks(role: Role, signedIn: boolean): NavItem[] {
   // Courses: which courses the organization's teachers, students and classes see (admin/OrgCourses.tsx).
   if (role === "orgAdmin") links.push({ path: "/admin", icon: "settings", key: "nav.admin" }, { path: "/admin/analytics", icon: "chart", key: "nav.analytics" }, { path: "/admin/courses", icon: "book", key: "nav.courses" });
   if (role === "teacher" || role === "orgAdmin") links.push({ path: "/teach", icon: "chat", key: "nav.teach" });
-  if (role === "superadmin") links.push({ path: "/super", icon: "language", key: "nav.super" }, { path: "/super/analytics", icon: "chart", key: "nav.analytics" }, { path: "/super/orgs", icon: "home", key: "nav.orgs" }, { path: "/super/people", icon: "profile", key: "nav.people" }, { path: "/super/projects", icon: "file", key: "nav.projects" }, { path: "/super/certificates", icon: "check", key: "nav.certificates" }, { path: "/super/bugs", icon: "bug", key: "nav.bugs" }, { path: "/super/domains", icon: "globe", key: "nav.domains" }, { path: "/super/plans", icon: "award", key: "nav.plans" });
+  if (role === "superadmin") links.push({ path: "/super", icon: "language", key: "nav.super" }, { path: "/super/analytics", icon: "chart", key: "nav.analytics" }, { path: "/super/orgs", icon: "home", key: "nav.orgs" }, { path: "/super/people", icon: "profile", key: "nav.people" }, { path: "/super/projects", icon: "file", key: "nav.projects" }, { path: "/super/certificates", icon: "check", key: "nav.certificates" }, { path: "/super/bugs", icon: "bug", key: "nav.bugs" }, { path: "/super/feedback", icon: "chat", key: "nav.feedback" }, { path: "/super/domains", icon: "globe", key: "nav.domains" }, { path: "/super/plans", icon: "award", key: "nav.plans" });
   else links.push({ path: "/org", icon: "home", key: "nav.org" });
   // The course editor: platform admins publish for everyone, org admins for their own members.
   if (role === "superadmin" || role === "orgAdmin") links.push({ path: role === "superadmin" ? "/super/content" : "/admin/content", icon: "edit", key: "nav.content" });
@@ -41,6 +44,8 @@ const OTHER_PAGES: NavItem[] = [
   { path: "/results", icon: "chart", key: "results.title" },
   { path: "/licences", icon: "file", key: "me.licences" },
   { path: "/super/access", icon: "chart", key: "access.title" },
+  { path: "/privacy", icon: "file", key: k("legal.privacy") },
+  { path: "/terms", icon: "file", key: k("legal.terms") },
 ];
 /** The name of the page at `pathname`: its tab, staff link or own name (the longest match wins), or null (a lesson). */
 export function pageKey(pathname: string, role: Role, signedIn: boolean): MessageKey | null {
@@ -113,16 +118,21 @@ export function Layout() {
           : <Link to="/learn" className="rail-brand" aria-label={t("app.name")}><Mark size={36} /><span>{t("app.name")}</span></Link>}
         {tabs.map(railItem)}
         {extra.length > 0 && <><hr className="rail-sep" />{extra.map(railItem)}</>}
+        <button type="button" className="rail-item rail-feedback" aria-haspopup="dialog" onClick={() => openFeedback()}><Icon name="chat" size={24} /><span>{t("fb.share")}</span></button>
         <button type="button" className="rail-item rail-report" aria-haspopup="dialog" onClick={openReport}><Icon name="bug" size={24} /><span>{t("bug.button")}</span></button>
         {/* On phones Sign out is at the top of Me; on wide screens it is always here. */}
         {user && <button type="button" className="rail-item rail-signout" onClick={() => { void signOut(); }}><Icon name="close" size={24} /><span>{t("me.signOut")}</span></button>}
       </nav>
       <div className="app-main">
         {!online && <ConnectionStatus state="offline" floating>{t("pwa.offline")}</ConnectionStatus>}
-        <Suspense fallback={<Loading />}><Outlet /></Suspense>
+        {/* A page that fails (a staff chunk that won't load, a render error) fails here: the nav, the update toast and
+            the install prompt stay, and the next page gets its own try (app/AppBoundary.tsx). */}
+        <RouteBoundary><Suspense fallback={<Loading />}><Outlet /></Suspense></RouteBoundary>
       </div>
       <div className="app-float">
         {update && <UpdateToast actionLabel={t("pwa.reload")} onAction={update}>{t("pwa.update")}</UpdateToast>}
+        {/* Newer privacy notice or terms than this account accepted: asked here, never in a lesson, never for guests. */}
+        {user && <TermsPrompt />}
         {showInstall && <InstallPrompt title={t("pwa.installTitle")} body={t("pwa.installBody")} installLabel={t("pwa.install")} dismissLabel={t("pwa.notNow")}
           onInstall={install.install} onDismiss={() => dispatch({ type: "set", patch: { installDismissedAt: Date.now() } })} />}
       </div>

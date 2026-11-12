@@ -1,6 +1,6 @@
 import { act, render, waitFor } from "@testing-library/react";
-import { initialState, isoWeek, mergeRemote, StoreProvider, useStore, type AppState, type LessonResult } from "../src/state/store";
-import { certDoc, learningOf, learningSync, progressDoc, remoteCerts, remoteNotes, remoteProgress, toPush, useCloudSync, useLearningSync, type Remote } from "../src/state/sync";
+import { hasUnsent, initialState, isoWeek, mergeRemote, StoreProvider, unsent, useStore, type AppState, type LessonResult } from "../src/state/store";
+import { certDoc, flushSync, learningOf, learningSync, progressDoc, remoteCerts, remoteNotes, remoteProgress, toPush, useCloudSync, useLearningSync, type Remote } from "../src/state/sync";
 import type { EarnedCert } from "../src/content/cert";
 
 // Firestore, IndexedDB and the content files are replaced so the sync rules can be checked without the emulators.
@@ -16,6 +16,7 @@ const h = vi.hoisted(() => ({
   getDocs: vi.fn(),
   setDoc: vi.fn(async (_ref: string, _data: Record<string, unknown>) => {}),
   updateDoc: vi.fn(async (_ref: string, _data: Record<string, unknown>) => {}),
+  waitForPendingWrites: vi.fn(async () => {}),
 }));
 vi.mock("../src/platform", () => ({ storage: { get: async () => h.stored, set: async () => {}, remove: async () => {} } }));
 vi.mock("../src/firebase", () => ({ db: {}, firebaseReady: true }));
@@ -31,6 +32,7 @@ vi.mock("firebase/firestore", () => ({
   getDocs: h.getDocs,
   setDoc: h.setDoc,
   updateDoc: h.updateDoc,
+  waitForPendingWrites: h.waitForPendingWrites,
 }));
 h.getDocs.mockImplementation(async (path: string) => {
   const name = path.split("/").pop() as "progress" | "notes" | "certs";
@@ -311,6 +313,161 @@ describe("useCloudSync", () => {
     act(() => { window.dispatchEvent(new Event("online")); });
     await waitFor(() => expect(certWrites().map((c) => c[0])).toEqual(["users/u1/certs/iot-1-2", "users/u1/certs/ai-1"]));
     expect(h.getDocs).toHaveBeenCalledTimes(6);
+  });
+});
+
+/**
+ * The unsent mark (state/store.tsx unsent): set when an account finishes a lesson or saves a note, cleared only once the
+ * server has acknowledged every lesson and note write and a server read (not the offline cache) showed nothing left. An
+ * ended session keeps the account's work on the device while it is set (AuthProvider sessionEnded, tests/auth-offline).
+ */
+describe("the unsent mark", () => {
+  let store: ReturnType<typeof useStore>;
+  function Probe() { store = useStore(); useCloudSync("u1"); return null; }
+  const MARK = "darsi:unsent:u1";
+  /** setDoc calls that wait until the test says the server answered. */
+  let pending: { path: string; ok: () => void; fail: (e: unknown) => void }[] = [];
+  const answer = async (i: number, ok = true) => {
+    await act(async () => { const w = pending[i]; if (ok) w.ok(); else w.fail(Object.assign(new Error("refused"), { code: "permission-denied" })); });
+  };
+  const finish = (id: string) => act(() => store.dispatch({ type: "completeLesson", id, result: { accuracy: 1, xp: 30, seconds: 100, unitId: "ai-1", track: "ai" } }));
+
+  beforeEach(() => {
+    localStorage.clear();
+    pending = [];
+    h.getDocs.mockClear(); h.setDoc.mockReset();
+    h.setDoc.mockImplementation((path: string) => new Promise<void>((ok, fail) => { pending.push({ path, ok, fail }); }));
+    h.server = { progress: [], notes: [], certs: [], fromCache: false, certsFail: false };
+    h.stored = state({ onboarded: true });
+  });
+
+  it("marks a finished lesson at once, and clears it when the server has acknowledged it", async () => {
+    render(<StoreProvider scope="u1"><Probe /></StoreProvider>);
+    await waitFor(() => expect(h.getDocs).toHaveBeenCalledTimes(3));
+    finish("ai-1-1");
+    expect(localStorage.getItem(MARK)).not.toBeNull();
+    await waitFor(() => expect(pending).toHaveLength(1));
+    expect(localStorage.getItem(MARK)).not.toBeNull(); // on its way, not there yet
+    await answer(0);
+    await waitFor(() => expect(localStorage.getItem(MARK)).toBeNull());
+  });
+
+  it("marks a saved note, and clears it the same way", async () => {
+    render(<StoreProvider scope="u1"><Probe /></StoreProvider>);
+    await waitFor(() => expect(h.getDocs).toHaveBeenCalledTimes(3));
+    act(() => store.dispatch({ type: "saveNote", id: "ai-1-1", text: "try it on Monday" }));
+    expect(hasUnsent("u1")).toBe(true);
+    await waitFor(() => expect(pending.map((w) => w.path)).toEqual(["users/u1/notes/ai-1-1"]));
+    await answer(0);
+    await waitFor(() => expect(hasUnsent("u1")).toBe(false));
+  });
+
+  it("stays while only the offline cache was read, even with the write acknowledged; the server read clears it", async () => {
+    h.server.fromCache = true;
+    h.setDoc.mockImplementation(async () => {});
+    render(<StoreProvider scope="u1"><Probe /></StoreProvider>);
+    await waitFor(() => expect(h.getDocs).toHaveBeenCalledTimes(3));
+    finish("ai-1-1");
+    await waitFor(() => expect(h.setDoc).toHaveBeenCalledTimes(1));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(localStorage.getItem(MARK)).not.toBeNull();
+    h.server.fromCache = false;
+    h.server.progress = [{ id: "ai-1-1", data: { lessonId: "ai-1-1", accuracy: 1, xp: 30, seconds: 100, completedAt: store.state.progress["ai-1-1"].completedAt } }];
+    act(() => { window.dispatchEvent(new Event("online")); });
+    await waitFor(() => expect(localStorage.getItem(MARK)).toBeNull());
+  });
+
+  it("stays when a write is refused", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    render(<StoreProvider scope="u1"><Probe /></StoreProvider>);
+    await waitFor(() => expect(h.getDocs).toHaveBeenCalledTimes(3));
+    finish("ai-1-1");
+    await waitFor(() => expect(pending).toHaveLength(1));
+    await answer(0, false);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(localStorage.getItem(MARK)).not.toBeNull();
+    warn.mockRestore();
+  });
+
+  it("a lesson finished while another's write is on its way keeps the mark until its own is acknowledged", async () => {
+    render(<StoreProvider scope="u1"><Probe /></StoreProvider>);
+    await waitFor(() => expect(h.getDocs).toHaveBeenCalledTimes(3));
+    finish("ai-1-1");
+    await waitFor(() => expect(pending).toHaveLength(1));
+    finish("ai-1-2");
+    await waitFor(() => expect(pending).toHaveLength(2));
+    await answer(0);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(localStorage.getItem(MARK)).not.toBeNull();
+    await answer(1);
+    await waitFor(() => expect(localStorage.getItem(MARK)).toBeNull());
+  });
+
+  it("is kept from an earlier session until this one's server read and writes have the work", async () => {
+    // Finished offline last time: the mark and the lesson are on the device, the cloud lacks it.
+    unsent.mark("u1");
+    h.stored = state({ onboarded: true, progress: { "ai-1-1": lesson(OCT1, { unitId: "ai-1", track: "ai" }) } });
+    render(<StoreProvider scope="u1"><Probe /></StoreProvider>);
+    await waitFor(() => expect(pending.map((w) => w.path)).toEqual(["users/u1/progress/ai-1-1"]));
+    expect(localStorage.getItem(MARK)).not.toBeNull();
+    await answer(0);
+    await waitFor(() => expect(localStorage.getItem(MARK)).toBeNull());
+  });
+
+  it("is cleared by a server read that shows the cloud already has everything", async () => {
+    unsent.mark("u1");
+    h.stored = state({ onboarded: true, progress: { "ai-1-1": lesson(OCT1, { unitId: "ai-1", track: "ai" }) } });
+    h.server.progress = [{ id: "ai-1-1", data: { lessonId: "ai-1-1", accuracy: 0.8, xp: 26, seconds: 300, completedAt: OCT1 } }];
+    render(<StoreProvider scope="u1"><Probe /></StoreProvider>);
+    await waitFor(() => expect(localStorage.getItem(MARK)).toBeNull());
+    expect(h.setDoc).not.toHaveBeenCalled();
+  });
+
+  it("never marks a guest's lessons: they live only on the device and no session forgets them", async () => {
+    function Guest() { store = useStore(); return null; }
+    render(<StoreProvider scope="guest"><Guest /></StoreProvider>);
+    await waitFor(() => expect(store.ready).toBe(true));
+    finish("ai-1-1");
+    expect(Object.keys(localStorage).filter((k) => k.startsWith("darsi:unsent:"))).toEqual([]);
+  });
+
+  it("a clear only removes the mark it saw", () => {
+    unsent.mark("u1");
+    const seen = unsent.get("u1");
+    unsent.mark("u1"); // a newer change
+    unsent.clear("u1", seen);
+    expect(unsent.get("u1")).not.toBeNull();
+    unsent.clear("u1", unsent.get("u1"));
+    expect(unsent.get("u1")).toBeNull();
+  });
+
+  it("counts a project draft with typed words that was never sent, only when asked to", () => {
+    expect(hasUnsent("u1", true)).toBe(false);
+    localStorage.setItem("darsi-project-draft:u1:ai-1-2:proj", JSON.stringify({ text: "", explain: "", ai: "none", aiHow: "", repo: "", links: "", check: "" }));
+    expect(hasUnsent("u1", true)).toBe(false); // nothing typed
+    localStorage.setItem("darsi-project-draft:u1:ai-1-3:proj", JSON.stringify({ text: "My lesson plan", explain: "", ai: "", aiHow: "", repo: "", links: "", check: "" }));
+    expect(hasUnsent("u1", true)).toBe(true);
+    expect(hasUnsent("u1")).toBe(false); // "Leave <organization>" (flushSync) asks only about lessons and notes
+    expect(hasUnsent("u2", true)).toBe(false); // another account's
+    localStorage.setItem("darsi-project-draft:u1:ai-1-3:proj", JSON.stringify({ text: "My lesson plan", sentAt: 1, sentBy: "u1" }));
+    expect(hasUnsent("u1", true)).toBe(false); // a capstone milestone sent from here
+    localStorage.setItem("darsi-project-draft:u1:ai-1-3:proj", JSON.stringify({ text: "My lesson plan, improved", sentAt: 1_700_000_000_000, sentBy: "u1", editedAt: 1_700_000_000_001 }));
+    expect(hasUnsent("u1", true)).toBe(true); // and improved after that: unsent work again
+    localStorage.setItem("darsi-project-draft:u1:ai-1-3:proj", JSON.stringify({ text: "My lesson plan", sentAt: 1_700_000_000_000, sentBy: "u1", editedAt: 1_699_999_999_999 }));
+    expect(hasUnsent("u1", true)).toBe(false); // last changed before it was sent
+    localStorage.setItem("darsi-project-draft:u1:ai-1-4:proj", "{broken");
+    expect(hasUnsent("u1", true)).toBe(true); // unreadable: kept, to be safe
+  });
+
+  it("flushSync: waits for Firestore's queue, then says whether anything is still unsent", async () => {
+    h.waitForPendingWrites.mockClear();
+    expect(await flushSync("u1", 50)).toBe(true);
+    expect(h.waitForPendingWrites).toHaveBeenCalledTimes(1);
+    unsent.mark("u1");
+    h.waitForPendingWrites.mockImplementationOnce(() => new Promise<void>(() => {})); // offline: it never empties
+    const t0 = Date.now();
+    expect(await flushSync("u1", 50)).toBe(false);
+    expect(Date.now() - t0).toBeLessThan(2000);
   });
 });
 

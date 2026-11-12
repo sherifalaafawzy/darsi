@@ -16,14 +16,21 @@ const m = vi.hoisted(() => ({
     deleteObject: vi.fn(async (_ref: unknown) => {}),
   },
   call: vi.fn(async (_: unknown) => ({ id: "c1", queue: "staff", checks: [{ id: "repo", ok: true, en: "Repository found", ar: "وُجد المستودع" }], aiReview: null })),
-  results: { results: [{ uid: "s1", lessonId: "ai-s3-1", accuracy: 0.8 }, { uid: "s2", lessonId: "ai-s3-1", accuracy: 0.5 }],
-    work: [{ id: "w1", uid: "s1", lessonId: "ai-s3-cap", text: "My leaf model", final: true, explain: "It looks at the nearest leaves", aiUse: "none", name: "Sara" }] },
+  // The courseResults callable's answer (functions/src/access.ts): a field a row doesn't have comes as null.
+  courseResults: vi.fn(async (_: unknown): Promise<unknown> => ({ more: false,
+    results: [{ uid: "s1", lessonId: "ai-s3-1", accuracy: 0.8, completedAt: null }, { uid: "s2", lessonId: "ai-s3-1", accuracy: 0.5, completedAt: null }],
+    work: [{ id: "w1", uid: "s1", lessonId: "ai-s3-cap", stepId: null, text: "My leaf model", final: true, explain: "It looks at the nearest leaves", aiUse: "none", name: "Sara", fileUrl: null, fileName: null, files: [], createdAt: null }] })),
+  // courseAccess/{uid}, the teacher's own grant: the one thing /results still reads from Firestore itself.
+  grant: { units: ["ai-s3"] } as Record<string, unknown> | null,
 }));
 vi.mock("../src/auth/AuthProvider", () => ({ useAuth: () => m.auth }));
-vi.mock("../src/fb", () => ({ loadFirebase: async () => ({ db: {}, storage: () => ({}) }), call: () => m.call }));
-vi.mock("firebase/firestore", () => ({ addDoc: m.addDoc, collection: (...p: unknown[]) => p, serverTimestamp: () => "now" }));
+vi.mock("../src/fb", () => ({ loadFirebase: async () => ({ db: {}, storage: () => ({}) }), call: (name: string) => (name === "courseResults" ? m.courseResults : m.call) }));
+vi.mock("../src/firebase", () => ({ db: {} }));
+vi.mock("firebase/firestore", () => ({
+  addDoc: m.addDoc, collection: (...p: unknown[]) => p, serverTimestamp: () => "now",
+  doc: (...p: unknown[]) => p, getDoc: async () => ({ exists: () => !!m.grant, data: () => m.grant }), getDocs: async () => ({ docs: [] }),
+}));
 vi.mock("firebase/storage", () => m.storage);
-vi.mock("../src/results/data", () => ({ myGrant: async () => ({ uid: "t1", units: ["ai-s3"] }), courseResults: async () => m.results }));
 
 const { ProjectView } = await import("../src/lesson/ProjectView");
 const { CourseResults } = await import("../src/results/CourseResults");
@@ -123,11 +130,33 @@ describe("course results for a university teacher", () => {
     expect(await screen.findByText("Scores per lesson")).toBeTruthy();
     expect(screen.getAllByText("Sara").length).toBeGreaterThan(0);
     expect(screen.getByText("Student 2")).toBeTruthy();
+    // On a phone the row is a card: the student across its top, then each lesson's score under the lesson's title.
+    const card = Array.from(screen.getByText("Student 2").closest("tr")!.querySelectorAll("td")).map((c) => c.getAttribute("data-cell"));
+    expect(card[0]).toBe("main");
+    expect(card.length).toBeGreaterThan(1);
+    expect(card.slice(1).every((x) => x === null)).toBe(true);
     expect(screen.getAllByText("80%").length).toBeGreaterThan(0);
     expect(screen.getByText("It looks at the nearest leaves")).toBeTruthy();
     expect(screen.getByText("No AI used")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /approve|revise|save/i })).toBeNull();
     expect(screen.queryByRole("textbox")).toBeNull();
+    // Read through the audited callable (which keeps the grant's organizations), never with the phone's own queries.
+    expect(m.courseResults).toHaveBeenCalledWith({ unitId: "ai-s3" });
+    expect(screen.queryByText(/more results than one page/)).toBeNull();
+  });
+
+  it("says so when the server reached its cap, and words a refusal (the grant ended) in the teacher's language", async () => {
+    m.auth = { ...m.auth, user: { uid: "t1", displayName: "Dr Amal" }, role: "learner" };
+    m.courseResults.mockImplementationOnce(async () => ({ results: [], work: [], more: true }));
+    const first = render(<I18nProvider lang="en"><MemoryRouter><CourseResults content={CONTENT} /></MemoryRouter></I18nProvider>);
+    expect(await screen.findByText(/more results than one page/)).toBeTruthy();
+    first.unmount();
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    m.courseResults.mockImplementationOnce(async () => { throw Object.assign(new Error("You have no access to this course's results."), { code: "functions/permission-denied", details: { reason: "no-grant" } }); });
+    render(<I18nProvider lang="ar"><MemoryRouter><CourseResults content={CONTENT} /></MemoryRouter></I18nProvider>);
+    expect((await screen.findByRole("alert")).textContent).toContain("ليست لك صلاحية رؤية نتائج هذه الدورة");
+    expect(screen.queryByText(/You have no access/)).toBeNull();
+    logged.mockRestore();
   });
 });
 

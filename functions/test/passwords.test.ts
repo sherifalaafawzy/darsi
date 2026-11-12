@@ -11,6 +11,12 @@ describe("passwords", () => {
     }
   });
   it("clamps length", () => { expect(generatePassword(3)).toHaveLength(8); expect(generatePassword(99)).toHaveLength(32); });
+  it("a length that is not a number gives 10 characters, never fewer than 8 (NaN used to give 4)", () => {
+    for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, undefined, Number("abc")]) expect(generatePassword(bad)).toHaveLength(10);
+    expect(generatePassword(0)).toHaveLength(8);
+    expect(generatePassword(-4)).toHaveLength(8);
+    expect(generatePassword(12.7)).toHaveLength(12);
+  });
   it("codes are 12 characters in groups of 4, with no look-alikes", () => {
     for (let i = 0; i < 200; i++) expect(generateCode()).toMatch(/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/);
   });

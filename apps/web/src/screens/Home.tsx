@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppBar, Button, EmptyState, Icon, LessonCard, ProgressBar, StreakCounter, TrackChip, UnitPath } from "@darsi/design-system";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
@@ -11,6 +11,7 @@ import { useI18n } from "../i18n";
 import { useTracks } from "../content/settings";
 import { isoWeek, streakWeeks, useStore } from "../state/store";
 import { useMyWork } from "../state/myWork";
+import { openFeedback } from "../bugs/log";
 
 export function Home() {
   const { t, num } = useI18n();
@@ -275,6 +276,7 @@ function UnitBlock({ entry, current, startHere, bare }: { entry: CatalogEntry; c
       ) : (
         <Button block variant="secondary" icon="award" onClick={() => nav(`/kit#${unit.lessons[0]?.id ?? ""}`)}>{t(student ? "home.allDoneStudent" : "home.allDone")}</Button>
       )}
+      {done && !state.feedbackAsked?.[unit.id] && <AskCourse id={unit.id} title={L(unit.title)} />}
       {/* Each step's state is in its name too (the check and the colour don't reach a screen reader). */}
       <UnitPath track={unit.track} label={L(unit.title)} nodes={[
         ...unit.lessons.map((l, i) => {
@@ -284,6 +286,31 @@ function UnitBlock({ entry, current, startHere, bare }: { entry: CatalogEntry; c
         { label: t("me.certs"), state: (cert || (!cap && nextIdx === -1) ? "done" : "locked") as "done" | "locked", stateLabel: t(cert || (!cap && nextIdx === -1) ? "path.certDone" : "path.certLocked"), checkpoint: true, onClick: () => nav("/me#certificates") },
       ]} />
     </section>
+  );
+}
+
+/**
+ * "How was this course?" under a finished course, once per course (state.feedbackAsked): a star opens the feedback
+ * sheet on that course with those stars (bugs/Feedback.tsx, through openFeedback); "Not now" puts it aside for good.
+ */
+export function AskCourse({ id, title }: { id: string; title: string }) {
+  const { t } = useI18n();
+  const { state, dispatch } = useStore();
+  const q = useId();
+  const asked = () => dispatch({ type: "set", patch: { feedbackAsked: { ...state.feedbackAsked, [id]: Date.now() } } });
+  return (
+    <div className="fb-ask" role="group" aria-labelledby={q}>
+      <p className="fb-ask-q" id={q}>{t("fb.askCourse")}</p>
+      <div className="fb-ask-row">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button key={n} type="button" className="fb-ask-star" aria-label={t("fb.starN", { n })} aria-haspopup="dialog"
+            onClick={() => { asked(); openFeedback({ rating: n, unitId: id, course: title }); }}>
+            <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false"><path d="M12 2.6l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.4l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
+          </button>
+        ))}
+        <Button size="sm" variant="ghost" onClick={asked}>{t("fb.notNow")}</Button>
+      </div>
+    </div>
   );
 }
 

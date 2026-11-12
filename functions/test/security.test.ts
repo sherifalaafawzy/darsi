@@ -6,7 +6,8 @@ import { afterRefund, holdCredits, settleCredits, type Credits } from "../src/bi
 import { losesPower } from "../src/roles";
 import { cleanRow, sameRow, summarize } from "../src/summary";
 import { LAB_IDS } from "../src/shared/labs";
-import { labsFile, labIds } from "../scripts/copy-shared.mjs";
+// The build script is plain JavaScript; scripts/copy-shared.d.mts types its exports.
+import { labIds, labsFile } from "../scripts/copy-shared.mjs";
 
 const NOW = Date.parse("2026-11-01T12:00:00Z") / 1000;
 const D = "a1b2c3d4e5f6a7b8c9d0";

@@ -17,6 +17,7 @@ const { StoreProvider } = await import("../src/state/store");
 const { Landing } = await import("../src/landing/Landing");
 // The admin screens' strings (registered when an admin chunk loads): "site." strings keep Darsi's name.
 await import("../src/admin/Domains");
+await import("../src/admin/ssoStrings");
 
 const LOGO = "https://firebasestorage.googleapis.com/v0/b/darsi-f0685/o/content%2Fsites%2Fo1%2Fabc.webp?alt=media";
 const DATA = "data:image/webp;base64,UklGRg==";
@@ -158,6 +159,15 @@ describe("Darsi's name in the UI strings (a site without Darsi's identity)", () 
     expect(t("p.fw.darsi")).toBe("Darsi skills");
     at("ar", "CIS");
     expect(t("dl.modelSave", { size: 3 })).toMatch(/«درسي الصغير»/);
+  });
+  it("the school sign-in wizard keeps Darsi's name: it speaks of Darsi as the other party", () => {
+    at("en", "Nile School");
+    expect(t("sa.l.requested" as never, { name: isolate("Nile School") })).toBe(`Waiting for Darsi’s team to list ${isolate("Nile School")}.`);
+    expect(t("sa.rf.sso-key" as never)).toBe("School sign-in’s keys aren’t working on Darsi. Ask Darsi’s team.");
+    at("ar", "مدرسة النيل");
+    expect(t("sa.l.asked" as never)).toMatch(/فريق «درسي»/);
+    // What learners read about school sign-in is still the organization's ("ss." strings).
+    expect(t("me.ownLogin")).not.toMatch(/درسي/);
   });
   it("never changes a name a person typed, and nothing without a brand", () => {
     at("en", "CIS");

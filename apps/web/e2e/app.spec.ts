@@ -162,7 +162,7 @@ test("Labs: labs are not in the install, and \"Save all labs\" makes them work o
   expect(await labChunks("darsi-saved")).toBeGreaterThanOrEqual(8);
   await context.setOffline(true);
   await page.goto("/labs/minilm");
-  await expect(page.getByRole("heading", { name: "Build a tiny language model" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Build a tiny language model", level: 2 })).toBeVisible();
   await page.getByRole("button", { name: "Write a sentence" }).click();
   await expect(page.getByText(/copied from the training text|not in the training text/)).toBeVisible();
 });
@@ -235,7 +235,7 @@ test("an English page never downloads the Arabic or extended-Latin fonts", async
   // Navigate inside the app (no reload), so this page's font requests are all counted below.
   for (const [id, title] of [["approve", "Ask before acting"], ["binary", "Bits and bytes"]]) {
     await page.evaluate((path) => { history.pushState(null, "", path); dispatchEvent(new PopStateEvent("popstate")); }, `/labs/${id}`);
-    await expect(page.getByRole("heading", { name: title })).toBeVisible();
+    await expect(page.getByRole("heading", { name: title, level: 2 })).toBeVisible();
   }
   // Punctuation pasted into English lessons that the Latin files lack (U+2010/2011 hyphens, U+204F), plus invisible
   // direction and joining marks: none of them may pull in an Arabic face. Both stacks, every weight in use.

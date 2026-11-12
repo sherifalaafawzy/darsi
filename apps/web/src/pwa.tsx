@@ -32,6 +32,46 @@ export async function takeUpdate(reg?: ServiceWorkerRegistration | null, wait = 
   setTimeout(go, wait);
 }
 
+/**
+ * After a deploy, a phone still running the previous version asks for that version's chunk (a lab, a staff screen, the
+ * tutor), which the site no longer has. Online, that is the cause: take the waiting new version (or reload) instead of
+ * blaming the connection. Always behind a button, never by itself: two failures in a row must not loop reloads.
+ * The check for a newer version is skipped offline and given `wait` ms at most (it can hang on a connection that lets
+ * nothing through), so the button always ends in a reload: the boundaries' Reload (app/AppBoundary.tsx) is the way out.
+ * That check answers as soon as the new worker starts installing, before its files are saved; reloading then would
+ * bring the old version back (the old worker still answers the page), and the same card again. So a worker that is
+ * still installing is waited for, `install` ms at most: once it waits, takeUpdate switches to it; one that fails
+ * ("redundant") or takes longer falls through to the plain reload.
+ */
+export async function reloadForUpdate(wait = 3000, install = 15000) {
+  const reg = typeof navigator !== "undefined" ? await navigator.serviceWorker?.getRegistration().catch(() => undefined) : undefined;
+  if (reg && navigator.onLine !== false) {
+    await Promise.race([Promise.resolve(reg.update()).catch(() => {}), new Promise((done) => setTimeout(done, wait))]);
+    // Whatever already waits: update() has just found something newer than it, and switching to the older one would
+    // bring the same card back.
+    const sw = reg.installing;
+    if (sw) await new Promise<void>((done) => {
+      const timer = setTimeout(done, install);
+      sw.addEventListener("statechange", () => { if (sw.state !== "installing") { clearTimeout(timer); done(); } });
+    });
+  }
+  await takeUpdate(reg);
+}
+
+/**
+ * Whether Darsi's site really answers. A phone can say it is online while nothing gets through (no data left on the
+ * bundle, a weak signal, a Wi-Fi sign-in page), and then the chunk simply isn't saved. One tiny request (HEAD of sw.js,
+ * never cached), given up after `ms`.
+ */
+export async function siteAnswers(ms = 3000): Promise<boolean> {
+  const ctl = typeof AbortController !== "undefined" ? new AbortController() : undefined;
+  const timer = setTimeout(() => ctl?.abort(), ms);
+  try {
+    const r = await fetch("/sw.js", { method: "HEAD", cache: "no-store", signal: ctl?.signal });
+    return r.ok && (r.headers.get("Content-Type") ?? "").includes("javascript");
+  } catch { return false; } finally { clearTimeout(timer); }
+}
+
 interface BIPEvent extends Event { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> }
 let deferred: BIPEvent | null = null;
 const listeners = new Set<() => void>();

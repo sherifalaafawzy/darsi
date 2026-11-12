@@ -50,11 +50,11 @@ const titles = (s = false) => stops(s).map((x) => x.title);
 describe("the stops", () => {
   it("on a phone: Home, the bottom nav and the floating Report button", () => {
     shell({ rail: false });
-    expect(titles()).toEqual(["tour.welcomeT", "tour.trackT", "tour.weekT", "tour.lessonT", "nav.learn", "nav.downloads", "nav.lab", "nav.kit", "nav.me", "bug.button", "tour.doneT"]);
+    expect(titles()).toEqual(["tour.welcomeT", "tour.trackT", "tour.weekT", "tour.lessonT", "nav.learn", "nav.downloads", "nav.lab", "nav.kit", "nav.me", "fb.button", "tour.doneT"]);
     const me = stops().find((x) => x.title === "nav.me")!;
     expect(me.el).toContain(".nav-bottom");
     expect(me.side).toBe("top");
-    expect(stops().find((x) => x.title === "bug.button")!.el).toBe(".bug-fab");
+    expect(stops().find((x) => x.title === "fb.button")!.el).toBe(".bug-fab");
   });
 
   it("on a wide screen: the rail, its staff pages and its Report a problem", () => {
@@ -77,7 +77,7 @@ describe("the stops", () => {
   it("staff on a phone hear that their pages are in Me; students have no Kit; a page without Home skips its stops", () => {
     shell({ rail: false, home: false, kit: false });
     const list = stops(true);
-    expect(list.map((x) => x.title)).toEqual(["tour.welcomeT", "nav.learn", "nav.downloads", "nav.lab", "nav.me", "bug.button", "tour.doneT"]);
+    expect(list.map((x) => x.title)).toEqual(["tour.welcomeT", "nav.learn", "nav.downloads", "nav.lab", "nav.me", "fb.button", "tour.doneT"]);
     expect(list.find((x) => x.title === "nav.me")!.body).toBe("tour.meStaffD");
   });
 });

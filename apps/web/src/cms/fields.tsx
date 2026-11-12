@@ -3,10 +3,11 @@
  * author shows (cms/langs.tsx), each in its own direction, side by side when there is room. Ids come from useId():
  * labels can't be used, Arabic ones collapse to the same id in the design system's TextField.
  */
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Children, cloneElement, isValidElement, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { Button, ProgressBar, Switch } from "@darsi/design-system";
 import type { LocalList, LocalText } from "../content/types";
 import { useI18n } from "../i18n";
+import { failText } from "./entStrings";
 import { useEditLangs, useLangView, type EditLang } from "./langs";
 import { fits, MEDIA, uploadMedia, type MediaKind } from "./upload";
 
@@ -34,13 +35,25 @@ export function StatusPill({ status, version }: { status: "draft" | "live" | "ch
   );
 }
 
-/** Label + control + hint, in the design system's field styles. */
+/**
+ * Label + control + hint, in the design system's field styles. The hint is tied to the control (the child with this
+ * `id`) by aria-describedby, so a screen reader reads "Id, edit text, small letters and dashes" instead of the label
+ * alone; without a hint the control gets no such attribute (one pointing at nothing is an error to checkers).
+ */
 export function Field({ id, label, tag, hint, children }: { id: string; label: string; tag?: EditLang; hint?: string; children: ReactNode }) {
+  const hintId = `${id}-hint`;
+  // Always mapped, hint or not: a hint that comes and goes must not remount the control under the cursor.
+  const described = (c: ReactNode) => {
+    if (!hint || !isValidElement(c)) return c;
+    const el = c as ReactElement<{ id?: string; "aria-describedby"?: string }>;
+    if (el.props.id !== id) return c;
+    return cloneElement(el, { "aria-describedby": [el.props["aria-describedby"], hintId].filter(Boolean).join(" ") });
+  };
   return (
     <div className="dr-field">
       <label htmlFor={id} className="dr-field-label"><bdi>{label}</bdi>{tag && <span className="ed-lang"><LangName name={tag.name} code={tag.code} /></span>}</label>
-      {children}
-      {hint && <span className="dr-field-hint">{hint}</span>}
+      {Children.map(children, described)}
+      {hint && <span id={hintId} className="dr-field-hint">{hint}</span>}
     </div>
   );
 }
@@ -157,6 +170,7 @@ export function Upload({ label, kind, owner, unitId, base, current, onDone, onCl
   onDone: (url: string, bytes: number) => void; onClear: () => void;
 }) {
   const { t, num } = useI18n();
+  const errId = useId();
   const [pct, setPct] = useState<number | null>(null);
   const [size, setSize] = useState(0);
   const [err, setErr] = useState("");
@@ -171,7 +185,8 @@ export function Upload({ label, kind, owner, unitId, base, current, onDone, onCl
     const up = uploadMedia(owner, unitId, base, kind, file, setPct);
     job.current = up;
     try { const r = await up.done; onDone(r.url, r.bytes); }
-    catch (e) { if ((e as { code?: string }).code !== "storage/canceled") setErr((e as Error).message || t("cms.uploadFailed")); }
+    // Why, in the author's language (not allowed, storage full, the connection kept dropping), never Storage's own English.
+    catch (e) { if ((e as { code?: string }).code !== "storage/canceled") setErr(failText(e, t)); }
     finally { setPct(null); job.current = null; }
   };
   return (
@@ -181,7 +196,7 @@ export function Upload({ label, kind, owner, unitId, base, current, onDone, onCl
       {pct === null ? (
         <span className="row-gap">
           <label className="file-pick"><span>{current ? t("cms.replace") : t("cms.choose", { max: MEDIA[kind].maxMB })}</span>
-            <input type="file" accept={MEDIA[kind].accept} onChange={(e) => { void pick(e.target.files?.[0]); e.target.value = ""; }} /></label>
+            <input type="file" accept={MEDIA[kind].accept} aria-describedby={err ? errId : undefined} onChange={(e) => { void pick(e.target.files?.[0]); e.target.value = ""; }} /></label>
           {current && <Button size="sm" variant="ghost" onClick={onClear}>{t("cms.removeFile")}</Button>}
         </span>
       ) : (
@@ -190,7 +205,7 @@ export function Upload({ label, kind, owner, unitId, base, current, onDone, onCl
           <Button size="sm" variant="ghost" onClick={() => job.current?.cancel()}>{t("dl.cancel")}</Button>
         </span>
       )}
-      {err && <span className="err-text" role="alert">{err}</span>}
+      {err && <span id={errId} className="err-text" role="alert">{err}</span>}
     </div>
   );
 }

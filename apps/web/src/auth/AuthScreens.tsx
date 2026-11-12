@@ -1,14 +1,20 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import type { User, UserCredential } from "firebase/auth";
 import { BrandMark, Button, TextField, useBrand } from "@darsi/design-system";
-import { loadFirebase } from "../fb";
+import { call, loadFirebase } from "../fb";
 import { isolate, useI18n } from "../i18n";
 import { useStore } from "../state/store";
 import { isNative } from "../platform";
 import { api, loginToEmail } from "./api";
 import { createLearnerProfile, useAuth } from "./AuthProvider";
+import { LeftOrgNote } from "./LeftOrg";
 import { track } from "../analytics/track";
+import { LEGAL_DOCS, publishedVersions, useLegal, type LegalDoc, type LegalVersions } from "../legal/published";
+import { k } from "../legal/strings";
+import { useSite } from "../state/site";
+import { useSsoOn } from "../content/settings";
+import { loadSchoolFinder, RETURN, returnedTo, ssoNote } from "./sso";
 
 /*
  * After a sign-in or sign-up these screens never navigate. AuthProvider publishes the account (its claims first), the
@@ -41,11 +47,32 @@ const REDIRECT_KEY = "darsi:googleRedirect";
 const noPopup = (code: string) => code.includes("popup-blocked") || code.includes("operation-not-supported-in-this-environment");
 /** Neither the popup nor the redirect can work in this browser (in-app browsers, storage switched off). */
 const noGoogleHere = (code: string) => code.includes("web-storage-unsupported") || code.includes("operation-not-supported-in-this-environment");
+/** Beside REDIRECT_KEY: the versions ticked on the sign-up screen before leaving for Google's page. */
+const AGREED_KEY = "darsi:googleAgreed";
+
+/**
+ * The privacy notice and terms someone ticked on the sign-up screen, recorded on their new account (acceptTerms writes
+ * users/{uid}.terms; the profile must exist, so this comes after createLearnerProfile). Never in the way of signing up:
+ * the account exists by now, and a failure (the connection, a version published a minute ago) is not the person's to fix.
+ */
+const recordAgreed = (versions: LegalVersions | null) => {
+  if (versions) void call<LegalVersions, { ok: boolean }>("acceptTerms")(versions).catch(() => {});
+};
+/** The versions kept across the trip to Google's page, read once. */
+function takeAgreed(): LegalVersions | null {
+  try {
+    const v = JSON.parse(sessionStorage.getItem(AGREED_KEY) ?? "null") as Record<string, unknown> | null;
+    sessionStorage.removeItem(AGREED_KEY);
+    const out: LegalVersions = {};
+    for (const doc of LEGAL_DOCS) { const n = v?.[doc]; if (typeof n === "number" && Number.isInteger(n) && n > 0) out[doc] = n; }
+    return Object.keys(out).length ? out : null;
+  } catch { return null; }
+}
 
 /**
  * A Google account signed in: a new one gets its learner profile (fields the security rules allow). A profile without an
  * email was started by a function (joining from an invite link, on a slow connection, can get there first), so it is
- * still new: createLearnerProfile adds the name and language to it.
+ * still new: createLearnerProfile adds the name and language to it. Answers whether the account is new.
  */
 async function afterGoogle(user: User, lang: string) {
   const [{ db }, { doc, getDoc }] = await Promise.all([loadFirebase(), import("firebase/firestore")]);
@@ -53,6 +80,7 @@ async function afterGoogle(user: User, lang: string) {
   const isNew = !snap.exists() || !snap.get("email");
   if (isNew) await createLearnerProfile(user.uid, { name: user.displayName ?? "", email: (user.email ?? "").toLowerCase(), lang });
   track(isNew ? "sign_up" : "sign_in", { m: "google" });
+  return isNew;
 }
 
 function Shell({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
@@ -74,12 +102,16 @@ function Shell({ title, sub, children }: { title: string; sub?: string; children
     </main>
   );
 }
-const errText = (code: string, t: ReturnType<typeof useI18n>["t"]) =>
+/**
+ * `signUp`: creating an account. There "too many requests" is Firebase's limit on new accounts from one address, which
+ * a whole school behind one connection reaches in a lesson: waiting a minute doesn't help, an hour or the admin does.
+ */
+const errText = (code: string, t: ReturnType<typeof useI18n>["t"], signUp = false) =>
   code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found") ? t("auth.errCreds")
   : code.includes("email-already-in-use") ? t("auth.errExists")
   : code.includes("weak-password") ? t("auth.errWeak")
   : code.includes("network") || code.includes("fetch") ? t("auth.errNetwork") // "fetch": the SDK itself couldn't download
-  : code.includes("too-many-requests") ? t("auth.errTooMany")
+  : code.includes("too-many-requests") ? t(signUp ? k("auth.errTooManySignUp") : "auth.errTooMany")
   : code.includes("popup-blocked") ? t("auth.errPopup")
   : code.includes("user-disabled") ? t("auth.errDisabled") // a platform admin suspended it (functions/src/account.ts)
   : code.includes("invalid-email") ? t("auth.errEmail") // "amina@": the login field takes anything with an @ as an email
@@ -94,6 +126,31 @@ export function SignIn() {
   const [params] = useSearchParams();
   const raw = params.get("code");
   const code = inviteCode(raw);
+  // School sign-in: this address's own school (its site lists it), or /signin?school=<slug>; a test link adds ?try=.
+  const ssoOn = useSsoOn().on;
+  const site = useSite().site;
+  const slug = ssoOn ? params.get("school") : null, tryToken = params.get("try");
+  const ownSchool = ssoOn ? site?.sso?.slug ?? null : null;
+  // Back from the school's provider (#sso=… or #sso_error=…, which sso.ts took out of the address before the router
+  // started and keeps for this page): "busy" until the account is published, or why not; "test" when it turns out to
+  // be a student's test, which shows its result and signs nobody in.
+  // Whatever the switch says: a return that lands after the platform switched school sign-in off (or before this
+  // phone's settings arrived) is still answered (finish then refuses with sso-off).
+  const { pathname, hash } = useLocation();
+  const [back, setBack] = useState<"busy" | "test" | { code: string; detail?: string } | null>(() => (returnedTo(pathname) || RETURN.test(hash) ? "busy" : null));
+  // Said once, after the page restarted: the school session ended, or someone signed out of one here.
+  const [note] = useState(ssoNote.take);
+  // The school chunk only when this page has something of a school's to show: nobody else downloads it.
+  const [S, retrySchool] = useSchoolChunk(Boolean(back) || (ssoOn && Boolean(slug || ownSchool || note)));
+  // Whether a school's button is on the page right now (SchoolOptions says): asked for is not shown. A school this
+  // link names that Darsi doesn't know, or a chunk that couldn't load, leaves "Sign in" the page's one main button.
+  const [schoolShown, setSchoolShown] = useState(false);
+  // An organization's own address knows its school from the first render (its site entry), before the chunk with the
+  // button has loaded: "Sign in" is the second choice from the start, not the main button for a moment. A chunk that
+  // couldn't load leaves it the main one. A school a link names isn't known until the lookup answers: that case waits.
+  const schoolSure = Boolean(ownSchool) && (!slug || slug === ownSchool) && S !== false;
+  // The lookup answered that Darsi has no such school (SchoolOptions says): Darsi's own address offers the finder then.
+  const [schoolNone, setSchoolNone] = useState(false);
   const [login, setLogin] = useState(""); const [pw, setPw] = useState("");
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const submit = async (e: FormEvent) => {
@@ -106,19 +163,100 @@ export function SignIn() {
       // Still busy on purpose: the app moves on by itself (SignedIn), and a second tap must not sign in twice.
     } catch (x) { setErr(errText(String((x as { code?: string }).code ?? x), t)); setBusy(false); }
   };
+  // Only "Signing you in…" until the account is published (SignedIn moves on) or the school part says why not.
+  if (back === "busy" || back === "test") {
+    return (
+      <Shell title={t(back === "test" ? "sso.testTitle" : "auth.signInTitle")}>
+        {/* The school chunk couldn't load (offline): the error, not "Signing you in…" beside it, and a way forward.
+            The return is still held (auth/sso.ts keeps it until the chunk takes it), so Retry finishes the sign-in
+            once the chunk loads; "Back to sign in" shows the plain form. (A reload starts a plain sign-in page: the
+            return is no longer in the address.) */}
+        {S ? (back === "test" ? <S.SchoolTestResult /> : <S.SchoolReturn onRefused={setBack} onTest={() => setBack("test")} ensureFirebase={ensureFirebase} />)
+          : S === false ? <>
+              <p className="notice err" role="alert">{t("auth.errNetwork")}</p>
+              <Button block icon="sync" onClick={retrySchool}>{t("common.retry")}</Button>
+              <Button block variant="ghost" onClick={() => setBack(null)}>{t("auth.backToSignIn")}</Button>
+            </>
+          : <p className="auth-busy" role="status" aria-busy="true"><span className="dr-spinner" aria-hidden="true" />{t("sso.signingIn")}</p>}
+      </Shell>
+    );
+  }
+  // A test link from the school's admin: only the test, which signs nobody in.
+  if (tryToken && slug) return <Shell title={t("sso.testTitle")}>{S ? <S.SchoolOptions slug={slug} token={tryToken} /> : S === false && <>
+    <p className="notice err" role="alert">{t("auth.errNetwork")}</p>
+    <Button block icon="sync" onClick={retrySchool}>{t("common.retry")}</Button>
+  </>}</Shell>;
+  const school = slug ?? ownSchool;
+  // A return this browser holds no record for (it started in another tab or browser, or the record was used): the
+  // sentence says "start again here", so the way to start is right under it. An organization's address has its
+  // school's button there anyway; Darsi's own address gets the finder (and not a second one below).
+  const lostHere = ssoOn && !site && !school && back?.code === "lost";
   return (
     <Shell title={t("auth.signInTitle")} sub={t("auth.signInSub")}>
+      {/* Signed out by leaving an organization (Me): why they are here. */}
+      <LeftOrgNote />
+      {S && note && <S.SchoolNote note={note} />}
+      {S && back && <S.SsoProblem code={back.code} detail={back.detail} />}
+      {lostHere && <FindSchool />}
       {code && <p className="notice">{t("auth.joinAfter", { code: isolate(code) })}</p>}
+      {/* The school's own sign-in first, above the usual ways in. */}
+      {S && school && <S.SchoolOptions slug={slug} onShown={setSchoolShown} onNone={setSchoolNone} />}
       <form className="stack" onSubmit={submit}>
         <TextField label={t("auth.login")} hint={t("auth.loginHint")} value={login} onChange={(e) => setLogin(e.target.value)} autoComplete="username" required />
         <TextField label={t("auth.password")} type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" required />
         {err && <p className="notice err" role="alert">{err}</p>}
-        <Button type="submit" block loading={busy}>{t("auth.signIn")}</Button>
+        {/* The school's button is the main one while it shows; without it, this is. */}
+        <Button type="submit" block variant={schoolShown || schoolSure ? "secondary" : "primary"} loading={busy}>{t("auth.signIn")}</Button>
       </form>
       <GoogleButton />
-      <p className="auth-links"><Link to="/forgot">{t("auth.forgot")}</Link> <Link to={raw ? `/signup?code=${encodeURIComponent(raw)}` : "/signup"}>{t("auth.noAccount")}</Link></p>
+      {/* Darsi's own address: the schools that asked to be listed. An organization's address has its own button.
+          Also when the link named a school Darsi doesn't know: its sentence says to check the link, and this is the way
+          to look for the school. Not while that lookup is on its way, nor when it failed on the connection. */}
+      {ssoOn && !site && (!school || schoolNone) && !lostHere && <FindSchool />}
+      <p className="auth-links"><Link to={school ? `/forgot?school=${encodeURIComponent(school)}` : "/forgot"}>{t("auth.forgot")}</Link> <Link to={raw ? `/signup?code=${encodeURIComponent(raw)}` : "/signup"}>{t("auth.noAccount")}</Link></p>
       <GuestButton />
     </Shell>
+  );
+}
+
+/*
+ * School sign-in (TECHNICAL.md "School sign-in"). Its screens (the school's button and lookup, the way back from the
+ * provider, every refusal in words, the finder) are the lazy chunk auth/SchoolFinder.tsx, with auth/ssoFlow.ts: a
+ * sign-in page with nothing of a school's on it never downloads them.
+ */
+type SchoolChunk = typeof import("./SchoolFinder");
+let schoolChunk: Promise<SchoolChunk> | null = null;
+// Registered by App (auth/sso.ts setSchoolChunks): an import() made in this lazy chunk splits the startup file.
+const loadSchool = () => (schoolChunk ??= loadSchoolFinder().catch((e: unknown) => { schoolChunk = null; throw e; }));
+/**
+ * The school chunk once `want` is true: the module, null while it loads, false when it can't (offline); and a way to
+ * ask for it again after that (a failure is tried once more by itself, then waits to be asked: no loop offline).
+ */
+function useSchoolChunk(want: boolean): readonly [SchoolChunk | null | false, () => void] {
+  const [m, setM] = useState<SchoolChunk | null | false>(null);
+  const [tries, setTries] = useState(0);
+  useEffect(() => {
+    if (!want || m) return;
+    let live = true;
+    loadSchool().then((x) => { if (live) setM(x); }, () => { if (live) setM(false); });
+    return () => { live = false; };
+  }, [want, m, tries]);
+  const retry = useCallback(() => { setM(null); setTries((n) => n + 1); }, []);
+  return [want ? m : null, retry] as const;
+}
+
+/** "Sign in with your school" on Darsi's own address: the finder opens in the card. */
+function FindSchool() {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const [S, retry] = useSchoolChunk(open);
+  if (open && S) return <S.SchoolFinder onClose={() => setOpen(false)} />;
+  return (
+    <div className="stack-sm">
+      {/* A second tap after the chunk couldn't load asks for it again. */}
+      <Button block variant="ghost" icon="globe" loading={open && S === null} onClick={() => { if (open && S === false) retry(); else setOpen(true); }}>{t("sso.yourSchool")}</Button>
+      {open && S === false && <p className="notice err" role="alert">{t("auth.errNetwork")}</p>}
+    </div>
   );
 }
 
@@ -133,8 +271,20 @@ export function SignUp() {
   const code = params.get("code") ?? "";
   const setCode = (v: string) => setParams((p) => { const n = new URLSearchParams(p); if (v.trim()) n.set("code", v.toUpperCase()); else n.delete("code"); return n; }, { replace: true });
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
+  // The privacy notice and terms, once a platform admin has published them (legal/published.ts): a box to tick before
+  // an account is made, here or with Google. Nothing published (or the file hasn't answered): the form as it always was.
+  const versions = publishedVersions(useLegal());
+  const [agreed, setAgreed] = useState(false); const [unticked, setUnticked] = useState(false);
+  const box = useRef<HTMLInputElement>(null);
+  const agrees = () => {
+    if (!versions || agreed) return true;
+    setUnticked(true); box.current?.focus();
+    return false;
+  };
   const submit = async (e: FormEvent) => {
-    e.preventDefault(); setBusy(true); setErr("");
+    e.preventDefault();
+    if (!agrees()) return; // the browser stops an unticked form first; this is for one that doesn't
+    setBusy(true); setErr("");
     try {
       await ensureFirebase(); // listening, so the new account is published the moment it exists
       const { auth, createUserWithEmailAndPassword, sendEmailVerification, updateProfile: fbUpdateProfile } = await authSdk();
@@ -146,7 +296,8 @@ export function SignUp() {
       void sendEmailVerification(cred.user).catch(() => {});
       await createLearnerProfile(cred.user.uid, { name: name.trim(), email: email.trim().toLowerCase(), lang });
       track("sign_up", { m: "email" });
-    } catch (x) { setErr(errText(String((x as { code?: string }).code ?? x), t)); setBusy(false); }
+      recordAgreed(versions);
+    } catch (x) { setErr(errText(String((x as { code?: string }).code ?? x), t, true)); setBusy(false); }
   };
   return (
     <Shell title={wantsOrg ? t("auth.signUpOrgTitle") : t("auth.signUpTitle")} sub={wantsOrg ? t("auth.signUpOrgSub") : t("auth.signUpSub")}>
@@ -158,13 +309,42 @@ export function SignUp() {
           dir="ltr" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={20} />}
         {err && <p className="notice err" role="alert">{err}</p>}
         <Button type="submit" block loading={busy}>{t("auth.create")}</Button>
+        {/* Under the button, where it arrives without moving it (the file can answer after the form shows), and
+            above Google's, which it also covers. */}
+        {versions && <Agree docs={LEGAL_DOCS.filter((d) => d in versions)} checked={agreed} unticked={unticked && !agreed} box={box}
+          onChange={(on) => { setAgreed(on); if (on) setUnticked(false); }} />}
       </form>
-      <GoogleButton />
+      <GoogleButton agree={versions ? { ok: agrees, versions } : undefined} />
       {/* An invite link's code goes along: signed in, SignedIn joins with it. */}
       <p className="auth-links"><Link to={code ? `/signin?code=${encodeURIComponent(code)}` : "/signin"}>{t("auth.haveAccount")}</Link></p>
       <p className="muted small">{t("auth.orgNote")}</p>
       {!wantsOrg && <GuestButton />}
     </Shell>
+  );
+}
+
+/**
+ * "I have read and agree to …", for the documents that are published, with their pages one tap away (in their own
+ * tab, so what was typed in the form stays). The links are a row of their own under the sentence, full-height to tap,
+ * and the box is described by them, so a screen reader says the sentence, that it is required, and the pages' names.
+ */
+function Agree({ docs, checked, unticked, onChange, box }: { docs: LegalDoc[]; checked: boolean; unticked: boolean; onChange: (on: boolean) => void; box: RefObject<HTMLInputElement | null> }) {
+  const { t } = useI18n();
+  const id = useId();
+  const first = t(k("legal.agreeFirst"));
+  // The browser's own "tick this box" comes in the browser's language: say it in the person's.
+  useEffect(() => { box.current?.setCustomValidity(checked ? "" : first); }, [box, checked, first]);
+  return (
+    <div className="stack-sm">
+      <label className="auth-agree">
+        <input ref={box} type="checkbox" required checked={checked} onChange={(e) => onChange(e.target.checked)} aria-describedby={`${id}-pages`} aria-invalid={unticked || undefined} />
+        {" "}{t(k(docs.length > 1 ? "legal.agreeBoth" : docs[0] === "privacy" ? "legal.agreePrivacy" : "legal.agreeTerms"))}
+      </label>
+      <p id={`${id}-pages`} className="auth-links">
+        {docs.map((d) => <Link key={d} to={`/${d}`} target="_blank" rel="noopener">{t(k(d === "privacy" ? "legal.privacy" : "legal.terms"))}</Link>)}
+      </p>
+      {unticked && <p className="notice err" role="alert">{first}</p>}
+    </div>
   );
 }
 
@@ -198,6 +378,7 @@ function backFromGoogle(ensureFirebase: () => Promise<void>, lang: string): Prom
   if (comingBack) return comingBack;
   let back = false;
   try { back = sessionStorage.getItem(REDIRECT_KEY) === "1"; sessionStorage.removeItem(REDIRECT_KEY); } catch { /* private mode */ }
+  const agreed = takeAgreed(); // read (and forgotten) either way: never kept for a later, unrelated sign-in
   if (!back) return null;
   comingBack = (async () => {
     await ensureFirebase(); // AuthProvider's listener publishes the account; the result here only finishes a new one
@@ -205,7 +386,7 @@ function backFromGoogle(ensureFirebase: () => Promise<void>, lang: string): Prom
     const cred = await getRedirectResult(auth);
     // Auth can take the result in itself as it starts; the account is then already its current user.
     const user = cred?.user ?? auth.currentUser ?? null;
-    if (user) await afterGoogle(user, lang); // keeps going after the app has moved on
+    if (user && await afterGoogle(user, lang)) recordAgreed(agreed); // keeps going after the app has moved on
     return user;
   })();
   void comingBack.catch(() => {}).finally(() => { comingBack = null; });
@@ -217,8 +398,10 @@ function backFromGoogle(ensureFirebase: () => Promise<void>, lang: string): Prom
  * (with its ?code= or ?org=1). Either way the account is published through AuthProvider and SignedIn moves on; this
  * only makes a new account's profile. In-app browsers can do neither (Google refuses them), so it says how to open
  * Darsi in the phone's browser instead.
+ * `agree` (the sign-up screen, while a privacy notice or terms are published): Google starts only once the box is
+ * ticked, and a new account records the versions ticked. Without it (sign-in; nothing published) nothing changes.
  */
-function GoogleButton() {
+function GoogleButton({ agree }: { agree?: { ok: () => boolean; versions: LegalVersions } }) {
   const { t, lang } = useI18n();
   const { ensureFirebase } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -244,6 +427,7 @@ function GoogleButton() {
     <div className="stack-sm">
       <Button block variant="secondary" loading={busy || !ready} onClick={async () => {
         setErr("");
+        if (agree && !agree.ok()) return; // the sign-up screen shows what to tick
         if (!isNative() && inAppBrowser(navigator.userAgent)) { setElsewhere(true); return; }
         setBusy(true);
         try {
@@ -252,10 +436,13 @@ function GoogleButton() {
           try { cred = await signInWithPopup(auth, new GoogleAuthProvider()); }
           catch (x) {
             if (!noPopup(String((x as { code?: string }).code ?? x))) throw x;
-            try { sessionStorage.setItem(REDIRECT_KEY, "1"); } catch { /* private mode: the account still arrives */ }
+            try {
+              sessionStorage.setItem(REDIRECT_KEY, "1");
+              if (agree) sessionStorage.setItem(AGREED_KEY, JSON.stringify(agree.versions));
+            } catch { /* private mode: the account still arrives */ }
             return await signInWithRedirect(auth, new GoogleAuthProvider()); // leaves the page
           }
-          await afterGoogle(cred.user, lang);
+          if (await afterGoogle(cred.user, lang)) recordAgreed(agree?.versions ?? null);
           // Still busy on purpose: the app moves on by itself (SignedIn), and a second tap must not sign in twice.
         } catch (x) { fail(x); }
       }}>{t("auth.google")}</Button>
@@ -286,8 +473,13 @@ function OpenInBrowser() {
 export function Forgot() {
   const { t, lang } = useI18n();
   const [email, setEmail] = useState(""); const [sent, setSent] = useState(false); const [busy, setBusy] = useState(false);
+  // On a page with a school button (an organization's address with school sign-in, or a school's sign-in link): a school
+  // password is the school's to reset, and its button is the way in.
+  const viaSchool = Boolean(useSite().site?.sso) || Boolean(useSearchParams()[0].get("school"));
+  const ssoOn = useSsoOn().on;
   return (
     <Shell title={t("auth.forgotTitle")} sub={t("auth.forgotSub")}>
+      {ssoOn && viaSchool && <p className="notice" role="note">{t("sso.forgot")}</p>}
       {sent ? <p className="notice ok">{t("auth.forgotSent")}</p> : (
         <form className="stack" onSubmit={async (e) => {
           e.preventDefault(); setBusy(true);

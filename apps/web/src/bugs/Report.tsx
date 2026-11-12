@@ -8,6 +8,7 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { domToCanvas } from "modern-screenshot";
 import { Button, Icon, Switch } from "@darsi/design-system";
+import { BUILD } from "../build";
 import { firebaseConfig, functionsRegion, useEmulators } from "../firebase-config";
 import { isolate, useI18n } from "../i18n";
 import { storage } from "../platform";
@@ -17,7 +18,10 @@ import "../styles/bug.css";
 import "./strings";
 
 export interface Shot { url: string; w: number; h: number }
-/** What App knows about the person and their settings. The server takes who sent it only from the ID token. */
+/**
+ * What App knows about the person and their settings. `who` is only shown to them in the sheet; `account` is at most
+ * their uid: the server takes who sent a report from the ID token alone (functions/src/bugsCore.ts ownDetails).
+ */
 export interface About { who: string | null; account: Record<string, unknown> | null; learner: Record<string, unknown> }
 interface Body { text: string; url: string; details: Record<string, unknown>; shot: string | null; shotW?: number; shotH?: number }
 interface Queued { uid: string | null; at: number; body: Body }
@@ -64,7 +68,7 @@ async function fontCss(): Promise<string> {
  * What goes into the picture: not the Report button and its note, and not index.html's <noscript> (with scripts on, the
  * browser keeps its contents as raw text, which the picture would otherwise draw at the foot of the page, markup and all).
  */
-export const inShot = (n: Node) => !(n instanceof Element && (n.nodeName === "NOSCRIPT" || n.classList.contains("bug-fab") || n.classList.contains("bug-note")));
+export const inShot = (n: Node) => !(n instanceof Element && (n.nodeName === "NOSCRIPT" || n.classList.contains("bug-fab") || n.classList.contains("bug-note") || n.classList.contains("fab-menu")));
 
 /**
  * A picture of what is on the screen now, as a JPEG data: URL; null if the browser can't make one. The button itself
@@ -132,11 +136,13 @@ export async function gather(about: About): Promise<Record<string, unknown>> {
   const n = navigator as Nav;
   const est = await within(navigator.storage?.estimate?.() ?? Promise.resolve(undefined), 1500).catch(() => undefined);
   const media = (q: string) => (typeof matchMedia === "function" ? matchMedia(q).matches : false);
-  const build = Array.from(document.scripts).map((s) => /\/assets\/(index-[\w-]+\.js)/.exec(s.src)?.[1]).find(Boolean) ?? import.meta.env.MODE;
+  // The build by its own name (build.ts: the same one usage batches carry), and the entry file this page really runs,
+  // which is an older one when the phone hasn't taken an update yet.
+  const entry = Array.from(document.scripts).map((s) => /\/assets\/(index-[\w-]+\.js)/.exec(s.src)?.[1]).find(Boolean) ?? import.meta.env.MODE;
   return {
     page: { title: document.title.slice(0, 200), referrer: redact(document.referrer), scrollY: Math.round(window.scrollY), lang: document.documentElement.lang, dir: document.documentElement.dir },
     app: {
-      build, sw: navigator.serviceWorker?.controller ? "controlled" : "none",
+      build: BUILD, entry, sw: navigator.serviceWorker?.controller ? "controlled" : "none",
       installed: media("(display-mode: standalone)") || n.standalone === true,
       storageMb: est?.usage != null ? Math.round(est.usage / 1e5) / 10 : null, quotaMb: est?.quota != null ? Math.round(est.quota / 1e6) : null,
     },

@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  CATALOGUE, KINDS, broadcastCondition, catOf, formatNumber, isolate, linkFor, message, tagFor, topicsFor, trimFeedback, webpush, wordingFor,
+  CATALOGUE, KINDS, broadcastCondition, catOf, formatNumber, isolate, linkFor, message, projectsLink, tagFor, topicsFor, trimFeedback, webpush, wordingFor,
   type Kind, type Lang,
 } from "../src/messages";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 const LANGS: Lang[] = ["en", "ar"];
-const VARS = { n: 3, name: "Amina Bello", org: "Hope School", feedback: "Clear plan.", uid: "u1" };
+const VARS = { n: 3, name: "Amina Bello", org: "Hope School", feedback: "Clear plan.", uid: "u1", orgId: "o1" };
 const ARABIC_INDIC = /[٠-٩]/;
 const ASCII_DIGIT = /[0-9]/;
 
@@ -13,12 +15,13 @@ describe("message catalogue", () => {
   it("has exactly the contract's kinds, each with a category and a link", () => {
     expect([...KINDS].sort()).toEqual([
       "comeback21", "comeback7", "daily0", "daily1", "daily2", "orgApproved", "orgRejected", "reviewApproved", "reviewRevise",
-      "staffOrgRequest", "staffSubmission", "streak", "weekGoal",
+      "ssoEndpointsMoved", "ssoFull", "ssoSecretExpiring", "staffOrgRequest", "staffSubmission", "streak", "weekGoal",
     ]);
     const cats: Record<Kind, string> = {
       daily0: "reminders", daily1: "reminders", daily2: "reminders", weekGoal: "reminders", streak: "reminders",
       comeback7: "reminders", comeback21: "reminders", reviewApproved: "reviews", reviewRevise: "reviews",
       orgApproved: "reviews", orgRejected: "reviews", staffSubmission: "staff", staffOrgRequest: "staff",
+      ssoSecretExpiring: "staff", ssoEndpointsMoved: "staff", ssoFull: "staff",
     };
     for (const k of KINDS) expect(catOf(k)).toBe(cats[k]);
   });
@@ -70,6 +73,37 @@ describe("message catalogue", () => {
     expect(ar("orgRejected")).toEqual({ title: "بخصوص طلب مؤسستك", body: "Clear plan." });
     expect(message("orgRejected", "en", {}).body).toBe("Open Darsi to read the reply.");
     expect(message("orgRejected", "ar", {}).body).toBe("افتح «درسي» لقراءة الرد.");
+  });
+
+  it("school sign-in alerts: a client secret about to run out, addresses that moved, a full school", () => {
+    const en = (k: Kind, v: Record<string, unknown> = VARS) => message(k, "en", v), ar = (k: Kind, v: Record<string, unknown> = VARS) => message(k, "ar", v);
+    expect(en("ssoSecretExpiring")).toEqual({ title: "School sign-in: the client secret runs out soon", body: "The client secret for ⁨Hope School⁩ runs out in 3 days. Make a new one and save it in Admin." });
+    expect(ar("ssoSecretExpiring")).toEqual({ title: "تسجيل الدخول عبر المدرسة: سر العميل ينتهي قريبًا", body: "الأيام المتبقية على انتهاء سر العميل لدى ⁨Hope School⁩: ٣. أنشئ سرًا جديدًا واحفظه من «الإدارة»." });
+    // One day, the day itself (the job never sends less than 0), and a month: each reads as a sentence.
+    expect(en("ssoSecretExpiring", { ...VARS, n: 1 }).body).toBe("The client secret for ⁨Hope School⁩ runs out in 1 day. Make a new one and save it in Admin.");
+    expect(en("ssoSecretExpiring", { ...VARS, n: 30 }).body).toContain("runs out in 30 days.");
+    expect(en("ssoSecretExpiring", { ...VARS, n: 0 }).body).toBe("The client secret for ⁨Hope School⁩ runs out today. Make a new one and save it in Admin.");
+    expect(en("ssoSecretExpiring", { ...VARS, n: -2 }).body).toContain("runs out today.");
+    expect(ar("ssoSecretExpiring", { ...VARS, n: 0 }).body).toBe("ينتهي سر العميل لدى ⁨Hope School⁩ اليوم. أنشئ سرًا جديدًا واحفظه من «الإدارة».");
+    const month = ar("ssoSecretExpiring", { ...VARS, n: 30 }).body;
+    expect(month).toContain("٣٠"); expect(month).not.toMatch(ASCII_DIGIT);
+    expect(en("ssoEndpointsMoved")).toEqual({ title: "School sign-in needs a new test", body: "The provider's addresses changed for ⁨Hope School⁩. Test the sign-in again before people are affected." });
+    expect(ar("ssoEndpointsMoved")).toEqual({ title: "تسجيل الدخول عبر المدرسة يحتاج إلى اختبار جديد", body: "تغيّرت عناوين المزوّد لدى ⁨Hope School⁩. اختبر تسجيل الدخول مرة أخرى قبل أن يتأثر الأشخاص." });
+    expect(en("ssoFull")).toEqual({ title: "A school reached its member limit", body: "⁨Hope School⁩ reached the number of members school sign-in may make. New people can't join until the limit is raised." });
+    expect(ar("ssoFull")).toEqual({ title: "مدرسة بلغت الحد الأقصى لأعضائها", body: "بلغت ⁨Hope School⁩ عدد الأعضاء الذي يمكن لتسجيل الدخول عبر المدرسة إنشاؤه. لن ينضم أشخاص جدد حتى يُرفع الحد." });
+    // An Arabic school name in the English sentence, and no name at all.
+    expect(en("ssoFull", { ...VARS, org: "مدرسة النيل" }).body.startsWith("⁨مدرسة النيل⁩ reached")).toBe(true);
+    expect(en("ssoEndpointsMoved", { n: 0 }).body).toBe("The provider's addresses changed for ⁨—⁩. Test the sign-in again before people are affected.");
+  });
+
+  it("school sign-in alerts open the sign-in tab: the organization's for its admins, the school's page for platform admins", () => {
+    expect(linkFor("ssoSecretExpiring", VARS)).toBe("/admin?tab=signin");
+    expect(linkFor("ssoEndpointsMoved", VARS)).toBe("/admin?tab=signin");
+    expect(linkFor("ssoFull", VARS)).toBe("/super/orgs/o1?tab=signin");
+    expect(linkFor("ssoFull", { orgId: "a b/c" })).toBe("/super/orgs/a%20b%2Fc?tab=signin");
+    // Without the id there is no page to open, so the list of organizations.
+    expect(linkFor("ssoFull", {})).toBe("/super/orgs");
+    for (const k of ["ssoSecretExpiring", "ssoEndpointsMoved", "ssoFull"] as Kind[]) expect(tagFor(k, "o1")).toBe("darsi-staff-o1");
   });
 
   it("calls a group of pupils «فصل», never «صف» (docs/curriculum/ar-lingo.md)", () => {
@@ -151,9 +185,22 @@ describe("links, tags and payload", () => {
     expect(linkFor("reviewRevise")).toBe("/me#projects");
     expect(linkFor("orgApproved")).toBe("/admin");
     expect(linkFor("orgRejected")).toBe("/org");
-    expect(linkFor("staffSubmission", { uid: "abc123" })).toBe("/teach/abc123");
+    expect(linkFor("staffSubmission", { uid: "abc123" })).toBe("/teach/abc123?tab=projects");
     expect(linkFor("staffOrgRequest")).toBe("/super");
     for (const k of KINDS) expect(CATALOGUE[k].link.startsWith("/")).toBe(true);
+  });
+
+  it("a new project to review opens the person's page on its Projects tab, for the teacher and for the admins", () => {
+    // The person's page opens on Progress without the tab: the project would be a tab away.
+    expect(projectsLink("teacher", "abc123")).toBe("/teach/abc123?tab=projects");
+    expect(projectsLink("admin", "abc123")).toBe("/admin/people/abc123?tab=projects");
+    expect(projectsLink("teacher", "a/b?c")).toBe("/teach/a%2Fb%3Fc?tab=projects");
+    expect(linkFor("staffSubmission", { uid: "abc123" })).toBe(projectsLink("teacher", "abc123"));
+    // The trigger sends these and writes no person-page link of its own.
+    const src = readFileSync(resolve(__dirname, "../src/notify.ts"), "utf8");
+    expect(src).toContain('projectsLink("teacher", uid)');
+    expect(src).toContain('projectsLink("admin", uid)');
+    expect(src).not.toMatch(/`\/(?:teach|admin\/people)\/\$\{/);
   });
 
   it("tags: one shared tag for nudges, one per item otherwise", () => {
