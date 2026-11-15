@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppBar, Button, EmptyState, Icon, trackClass, useTrackStyles } from "@darsi/design-system";
 import { useI18n } from "../i18n";
+import { usePhrases } from "../i18n/phrases";
 import { useStore } from "../state/store";
 import { track } from "../analytics/track";
 import { onMeteredConnection } from "../platform";
@@ -21,9 +22,10 @@ export function Labs() {
   const [track, setTrack] = useState<Track | "all">("all");
   const [q, setQ] = useState("");
   const style = useTrackStyles();
+  usePhrases("labs");
   const query = matchKey(q.trim());
   const hits = useMemo(() => LAB_METAS.filter((m) => (track === "all" || categoryOf(m.category).track === track)
-    && (!query || [m.title.en, m.title.ar, m.summary.en, m.summary.ar].some((s) => matchKey(s).includes(query)))), [track, query]);
+    && (!query || [m.title.en, m.title.ar, m.summary.en, m.summary.ar, L(m.title), L(m.summary)].some((s) => matchKey(s).includes(query)))), [track, query, L]);
   const shelves = CATEGORIES.map((c) => ({ c, apps: hits.filter((m) => m.category === c.id) })).filter((s) => s.apps.length);
   return (
     <>
@@ -104,7 +106,7 @@ function Ladder() {
 
 /** "Save all labs for offline": the size first (labs-manifest.json, made at build time), then every lab chunk. */
 function SaveLabs() {
-  const { t, num } = useI18n();
+  const { t, num, lang } = useI18n();
   const { state } = useStore();
   const [mb, setMb] = useState<number | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -114,7 +116,7 @@ function SaveLabs() {
   const save = async () => {
     setStatus(""); setProgress({ done: 0, total: 1 });
     try {
-      await saveAllLabs((done, total) => setProgress({ done, total }));
+      await saveAllLabs((done, total) => setProgress({ done, total }), lang);
       setStatus("saved");
       try { localStorage.setItem("darsi:labsSaved", document.querySelector<HTMLScriptElement>("script[type=module][src]")?.src ?? "1"); } catch { /* private mode */ }
     } catch { setStatus("failed"); } finally { setProgress(null); }
@@ -141,6 +143,7 @@ export function LabApp() {
   const meta = labMeta(id);
   const next = nextLab(id);
   const trackStyle = useTrackStyles();
+  usePhrases("labs");
   useEffect(() => { if (meta) track("lab_open", { lab: id }); }, [id, meta]);
   return (
     <>

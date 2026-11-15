@@ -6,8 +6,7 @@ import { downloadBlob } from "../admin/importer";
 import { BUILTIN_CODES, BUILTIN_LANGUAGES, checkTranslation, cleanMessages, placeholdersOf, validateLanguage, type LanguageProblem } from "../content/languages";
 import type { LanguageDef } from "../content/types";
 import { setLanguages, useI18n, type MessageKey } from "../i18n";
-import en from "../i18n/en.json";
-import ar from "../i18n/ar.json";
+import { PACK_AR, PACK_EN } from "../i18n/translatable";
 import { cmsApi } from "./api";
 import { createTranslation, deleteTranslation, getTranslation, listTranslations, saveTranslation, statusOf, type TranslationDraft } from "./data";
 import { LangName, Sel, Text } from "./fields";
@@ -16,7 +15,7 @@ import "../styles/editor.css";
 import "./strings";
 
 /** The app's UI strings: what a language translates (the course editor's own strings stay English and Arabic). */
-const EN: Record<string, string> = en, AR: Record<string, string> = ar;
+const EN = PACK_EN, AR = PACK_AR;
 const PAGE = 30;
 
 /** Common languages for "Add a language", with their own names (here, not in content/languages.ts, so learners never download the list). Direction comes from the code (dirFor). */

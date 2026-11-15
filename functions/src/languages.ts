@@ -32,9 +32,11 @@ async function platformAdmin(req: CallableRequest) {
   return { c, code };
 }
 
-/** Checks the saved draft, writes content/i18n/{code}/v{n+1}.json, and lists the language for everyone. */
-export const publishLanguage = onCall(async (req) => {
-  const { c, code } = await platformAdmin(req);
+/**
+ * Checks the saved draft translations/{code}, writes content/i18n/{code}/v{n+1}.json, and lists the language for
+ * everyone. The callable below and scripts/seed-languages.mjs (`npm run languages`) both use it.
+ */
+export async function publishLanguageDraft(code: string, by: string) {
   const ref = db.doc(`translations/${code}`);
   const snap = await ref.get();
   if (!snap.exists) throw new HttpsError("not-found", "Save the language first.");
@@ -54,18 +56,22 @@ export const publishLanguage = onCall(async (req) => {
     tx.set(db.doc(SETTINGS), { languages: list }, { merge: true });
     return list;
   });
-  await ref.update({ published: { version, rev: Number(d.rev) || 0, at: FieldValue.serverTimestamp(), by: c.uid } });
+  await ref.update({ published: { version, rev: Number(d.rev) || 0, at: FieldValue.serverTimestamp(), by } });
   await writeSettingsFile();
   // Keep this version and the one before (a phone that read the old settings can still fetch it); drop older ones.
   const [files] = await bucket().getFiles({ prefix: packPrefix(code) });
   await Promise.all(staleVersions(files.map((f) => f.name), version).map((name) => bucket().file(name).delete({ ignoreNotFound: true })));
-  await audit("publishLanguage", c.uid, { code, version, keys: Object.keys(d.messages ?? {}).length });
+  await audit("publishLanguage", by, { code, version, keys: Object.keys(d.messages ?? {}).length });
   return { version, languages };
+}
+
+export const publishLanguage = onCall(async (req) => {
+  const { c, code } = await platformAdmin(req);
+  return publishLanguageDraft(code, c.uid);
 });
 
-/** Takes a language off the pickers. People who chose it see English; the draft stays, to publish again later. */
-export const unpublishLanguage = onCall(async (req) => {
-  const { c, code } = await platformAdmin(req);
+/** Takes a language off the pickers (people who chose it see English); the draft stays, to publish again later. */
+export async function unpublishLanguageDraft(code: string, by: string) {
   const languages = await db.runTransaction(async (tx) => {
     const s = await tx.get(db.doc(SETTINGS));
     const list = withLanguage(s.get("languages") as LanguageDef[] | undefined, code, null);
@@ -77,6 +83,11 @@ export const unpublishLanguage = onCall(async (req) => {
   await writeSettingsFile();
   const [files] = await bucket().getFiles({ prefix: packPrefix(code) });
   await Promise.all(files.map((f) => f.delete({ ignoreNotFound: true })));
-  await audit("unpublishLanguage", c.uid, { code });
+  await audit("unpublishLanguage", by, { code });
   return { ok: true, languages };
+}
+
+export const unpublishLanguage = onCall(async (req) => {
+  const { c, code } = await platformAdmin(req);
+  return unpublishLanguageDraft(code, c.uid);
 });

@@ -4,6 +4,7 @@ import { Button, ChoiceCard, LanguagePicker, Mark, OnboardingStep, PlacementResu
 import { useI18n, useLanguages } from "../i18n";
 import { useStore, type AppState } from "../state/store";
 import { loadPlacement, useAsync } from "../content/load";
+import { usePhrases } from "../i18n/phrases";
 import { teachStage, type Audience, type Placement, type Stage, type Track } from "../content/types";
 import { useTracks } from "../content/settings";
 import { useMine, useStagesOffered } from "../content/mine";
@@ -150,6 +151,8 @@ export function PlacementQuiz({ tracks: only, onDone, onClose }: { tracks?: Trac
   const tracks = useTracks();
   const mine = useMine();
   const { data } = useAsync(loadPlacement, []);
+  // An added language's questions (i18n/phrases.ts); English until they are in.
+  const worded = usePhrases("placement");
   const list = only ?? mine.tracks.map((x) => x.id);
   const banks = useMemo(() => (data ? Object.fromEntries(list.map((tr) => [tr, placementBank(data.questions, tr, mine.audience, tracks.of(tr).levels, undefined, mine.uni)])) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -164,7 +167,7 @@ export function PlacementQuiz({ tracks: only, onDone, onClose }: { tracks?: Trac
   const [answer, setAnswer] = useState<Answer | null>(null);
   const all = (got: Partial<Record<Track, number>>) => ({ ...Object.fromEntries(list.map((tr) => [tr, mine.startLevel(tr)])), ...got });
   useEffect(() => { if (banks && !asked.length) onDone(all({})); }, [banks]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!banks || !asked.length) return <div className="loading" aria-busy="true" />;
+  if (!banks || !asked.length || !worded) return <div className="loading" aria-busy="true" />;
   const tr = asked[ti];
   const top = tracks.of(tr).levels;
   const at = st ?? begin(tr);

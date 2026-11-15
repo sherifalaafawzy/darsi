@@ -40,6 +40,23 @@ export function addMessages(more: Record<string, Record<string, string>>) {
   changed();
 }
 
+/**
+ * Phrases (i18n/phrases.ts): content written in English and Arabic, translated for an added language, keyed by the
+ * English text. Loaded per area (Labs, the placement check, the home page) when a screen needs it.
+ */
+const PHRASES: Record<string, Record<string, string>> = {};
+const phraseAreas = new Set<string>();
+export const hasPhrases = (lang: string, area: string) => phraseAreas.has(`${lang}/${area}`);
+export function addPhrases(lang: string, area: string, dict: Record<string, string>) {
+  PHRASES[lang] = { ...PHRASES[lang], ...dict };
+  phraseAreas.add(`${lang}/${area}`);
+  changed();
+}
+/** The translation of an English text into a language, if one was loaded. */
+export const phrase = (lang: string, english: string): string | undefined => PHRASES[lang]?.[english];
+/** Bumps whenever strings or phrases arrive (for caches of translated tables). */
+export const stringsVersion = () => version;
+
 /** Unicode isolate, the plain-text <bdi>: for names passed into t() so a Latin name can't reorder an Arabic sentence (or the reverse). */
 export const isolate = (s: string) => `⁨${s}⁩`;
 export type MessageKey = keyof typeof en | keyof typeof import("../cms/strings/en.json") | keyof typeof import("../admin/strings/en.json") | keyof typeof import("../upgrade/strings/en.json") | keyof typeof import("../tutor/strings/en.json") | keyof typeof import("../bugs/strings/en.json") | keyof typeof import("../tour/strings/en.json");
@@ -68,7 +85,10 @@ export function I18nProvider({ lang, children }: { lang: string; children: React
     const s = MESSAGES[meta.code]?.[key] ?? MESSAGES.en[key] ?? key;
     return vars ? s.replace(/\{(\w+)\}/g, (_, k) => { const x = vars[k]; return typeof x === "number" ? num(x) : String(x ?? ""); }) : s;
   }, [meta.code, num, v]); // eslint-disable-line react-hooks/exhaustive-deps
-  const L = useCallback((text: LocalText | undefined) => pick(text, meta.code), [meta.code]);
+  const L = useCallback((text: LocalText | undefined) => {
+    if (text && text[meta.code] === undefined && meta.code !== "en") { const p = PHRASES[meta.code]?.[text.en]; if (p) return p; }
+    return pick(text, meta.code);
+  }, [meta.code, v]); // eslint-disable-line react-hooks/exhaustive-deps
   const value = useMemo(() => ({ lang: meta.code, t, L, num, dir: meta.dir, locale: meta.numerals }), [meta.code, meta.dir, meta.numerals, t, L, num]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

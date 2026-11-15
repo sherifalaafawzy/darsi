@@ -13,18 +13,21 @@ import type { TrackDef } from "./types.js";
 export const MAX_LEVELS = 12;
 /** The four levels of every built-in track, from beginner to advanced (docs/CURRICULUM.md says what each means). */
 export const LEVEL_NAMES = [
-  { en: "Beginner", ar: "مبتدئ" }, { en: "Elementary", ar: "أساسي" }, { en: "Intermediate", ar: "متوسط" }, { en: "Advanced", ar: "متقدم" },
+  { en: "Beginner", ar: "مبتدئ", fr: "Débutant", es: "Principiante", de: "Einsteiger", pt: "Iniciante", ur: "ابتدائی" },
+  { en: "Elementary", ar: "أساسي", fr: "Élémentaire", es: "Elemental", de: "Grundlagen", pt: "Básico", ur: "بنیادی" },
+  { en: "Intermediate", ar: "متوسط", fr: "Intermédiaire", es: "Intermedio", de: "Mittelstufe", pt: "Intermediário", ur: "درمیانہ" },
+  { en: "Advanced", ar: "متقدم", fr: "Avancé", es: "Avanzado", de: "Fortgeschritten", pt: "Avançado", ur: "اعلیٰ" },
 ];
 export const BUILTIN_TRACKS: TrackDef[] = [
-  { id: "ai", name: { en: "AI", ar: "الذكاء الاصطناعي" }, icon: "ai", tone: "sunbird", levels: 4, levelNames: LEVEL_NAMES, order: 0, builtIn: true },
-  { id: "iot", name: { en: "IoT", ar: "إنترنت الأشياء" }, icon: "iot", tone: "lagoon", levels: 4, levelNames: LEVEL_NAMES, order: 1, builtIn: true },
-  { id: "cyber", name: { en: "Cyber security", ar: "الأمن السيبراني" }, icon: "cyber", tone: "hibiscus", levels: 4, levelNames: LEVEL_NAMES, order: 2, builtIn: true },
-  { id: "code", name: { en: "Programming", ar: "البرمجة" }, icon: "code", tone: "sky", levels: 4, levelNames: LEVEL_NAMES, order: 3, builtIn: true },
-  { id: "data", name: { en: "Data engineering", ar: "هندسة البيانات" }, icon: "chart", tone: "leaf", levels: 4, levelNames: LEVEL_NAMES, order: 4, builtIn: true },
-  { id: "agents", name: { en: "AI agents", ar: "وكلاء الذكاء الاصطناعي" }, icon: "agent", tone: "lilac", levels: 4, levelNames: LEVEL_NAMES, order: 5, builtIn: true },
-  { id: "opt", name: { en: "Optimization", ar: "الحلول المثلى" }, icon: "peak", tone: "clay", levels: 4, levelNames: LEVEL_NAMES, order: 6, builtIn: true },
-  { id: "aisec", name: { en: "AI security", ar: "أمن الذكاء الاصطناعي" }, icon: "aisec", tone: "slate", levels: 4, levelNames: LEVEL_NAMES, order: 7, builtIn: true },
-  { id: "data-science", name: { en: "Data science", ar: "علم البيانات" }, icon: "target", tone: "lagoon", levels: 4, levelNames: LEVEL_NAMES, order: 8, builtIn: true },
+  { id: "ai", name: { en: "AI", ar: "الذكاء الاصطناعي", fr: "IA", es: "IA", de: "KI", pt: "IA", ur: "مصنوعی ذہانت" }, icon: "ai", tone: "sunbird", levels: 4, levelNames: LEVEL_NAMES, order: 0, builtIn: true },
+  { id: "iot", name: { en: "IoT", ar: "إنترنت الأشياء", fr: "IoT", es: "IoT", de: "IoT", pt: "IoT", ur: "IoT" }, icon: "iot", tone: "lagoon", levels: 4, levelNames: LEVEL_NAMES, order: 1, builtIn: true },
+  { id: "cyber", name: { en: "Cyber security", ar: "الأمن السيبراني", fr: "Cybersécurité", es: "Ciberseguridad", de: "Cybersicherheit", pt: "Cibersegurança", ur: "سائبر سیکیورٹی" }, icon: "cyber", tone: "hibiscus", levels: 4, levelNames: LEVEL_NAMES, order: 2, builtIn: true },
+  { id: "code", name: { en: "Programming", ar: "البرمجة", fr: "Programmation", es: "Programación", de: "Programmieren", pt: "Programação", ur: "پروگرامنگ" }, icon: "code", tone: "sky", levels: 4, levelNames: LEVEL_NAMES, order: 3, builtIn: true },
+  { id: "data", name: { en: "Data engineering", ar: "هندسة البيانات", fr: "Ingénierie des données", es: "Ingeniería de datos", de: "Data Engineering", pt: "Engenharia de dados", ur: "ڈیٹا انجینئرنگ" }, icon: "chart", tone: "leaf", levels: 4, levelNames: LEVEL_NAMES, order: 4, builtIn: true },
+  { id: "agents", name: { en: "AI agents", ar: "وكلاء الذكاء الاصطناعي", fr: "Agents IA", es: "Agentes de IA", de: "KI-Agenten", pt: "Agentes de IA", ur: "AI ایجنٹس" }, icon: "agent", tone: "lilac", levels: 4, levelNames: LEVEL_NAMES, order: 5, builtIn: true },
+  { id: "opt", name: { en: "Optimization", ar: "الحلول المثلى", fr: "Optimisation", es: "Optimización", de: "Optimierung", pt: "Otimização", ur: "آپٹیمائزیشن" }, icon: "peak", tone: "clay", levels: 4, levelNames: LEVEL_NAMES, order: 6, builtIn: true },
+  { id: "aisec", name: { en: "AI security", ar: "أمن الذكاء الاصطناعي", fr: "Sécurité de l’IA", es: "Seguridad de la IA", de: "KI-Sicherheit", pt: "Segurança de IA", ur: "AI سیکیورٹی" }, icon: "aisec", tone: "slate", levels: 4, levelNames: LEVEL_NAMES, order: 7, builtIn: true },
+  { id: "data-science", name: { en: "Data science", ar: "علم البيانات", fr: "Science des données", es: "Ciencia de datos", de: "Data Science", pt: "Ciência de dados", ur: "ڈیٹا سائنس" }, icon: "target", tone: "lagoon", levels: 4, levelNames: LEVEL_NAMES, order: 8, builtIn: true },
 ];
 const BUILTIN = new Map(BUILTIN_TRACKS.map((t) => [t.id, t]));
 
@@ -34,7 +37,11 @@ export function mergeTracks(published?: TrackDef[] | null): TrackDef[] {
   for (const t of published ?? []) {
     const b = BUILTIN.get(t.id);
     // A built-in track saved without level names (settings from before they existed) keeps the built-in ones.
-    out.set(t.id, b ? { ...t, icon: b.icon, tone: b.tone, builtIn: true, ...(t.levelNames?.some((n) => n?.en) ? {} : { levelNames: b.levelNames }) } : { ...t, builtIn: false });
+    // Names left as built in keep the built-in translations for languages the settings don't have (added languages).
+    out.set(t.id, b ? {
+      ...t, icon: b.icon, tone: b.tone, builtIn: true, name: t.name?.en === b.name.en ? { ...b.name, ...t.name } : t.name,
+      levelNames: t.levelNames?.some((n) => n?.en) ? t.levelNames.map((n, i) => (b.levelNames?.[i] && n?.en === b.levelNames[i].en ? { ...b.levelNames[i], ...n } : n)) : b.levelNames,
+    } : { ...t, builtIn: false });
   }
   for (const b of BUILTIN_TRACKS) if (!out.has(b.id)) out.set(b.id, b);
   return [...out.values()].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));

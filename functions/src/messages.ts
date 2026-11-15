@@ -1,14 +1,15 @@
 /**
- * Push notification wording, in English and Arabic. Pure: no Firebase imports, so it is unit-tested directly.
- * Tone: "Encourage, never punish". No guilt, no threats, no emoji, and Arabic never uses "·".
- * A phone set to a language platform admins added gets the English wording.
+ * Push notification wording, in English and Arabic, plus French, Spanish, German, Portuguese and Urdu (MORE).
+ * Pure: no Firebase imports, so it is unit-tested directly.
+ * Tone: "Encourage, never punish". No guilt, no threats, no emoji; Arabic and Urdu never use "·".
+ * A phone set to another language platform admins added gets the English wording.
  */
 import { LANG_CODE } from "./shared/languages.js";
 
 /** A device's language: English, Arabic, or one platform admins added ("fr", "pt-br"). */
 export type Lang = string;
-/** The wording a device gets: Arabic for Arabic, English for every other language. */
-export const wordingFor = (lang: Lang): "en" | "ar" => (lang === "ar" ? "ar" : "en");
+/** The wording a device gets: its own language when there is wording for it, else English. */
+export const wordingFor = (lang: Lang): Lang => (lang === "ar" || lang in MORE ? lang : "en");
 /** A language code that may go into a topic name; anything else counts as English. */
 export const topicLang = (lang: unknown): Lang => (typeof lang === "string" && LANG_CODE.test(lang) ? lang : "en");
 export type Cat = "reminders" | "reviews" | "staff" | "news";
@@ -22,8 +23,8 @@ export interface Text { title: string; body: string }
 
 /** Unicode first-strong isolate: keeps a Latin name from reordering an Arabic sentence, and the other way round. */
 export const isolate = (s: string) => `⁨${s}⁩`;
-export const formatNumber = (n: number, lang: Lang) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en").format(n);
-export const dirOf = (lang: Lang) => (lang === "ar" ? "rtl" : "ltr");
+export const formatNumber = (n: number, lang: Lang) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : lang in MORE ? lang : "en").format(n);
+export const dirOf = (lang: Lang) => (["ar", "ur", "fa", "he", "ps", "sd", "ckb", "ug", "yi"].includes(lang.split("-")[0]) ? "rtl" : "ltr");
 export const FEEDBACK_MAX = 140;
 
 /** Reviewer feedback as a notification body: whitespace collapsed, at most 140 characters including the ellipsis. */
@@ -109,9 +110,85 @@ export const catOf = (kind: Kind): Cat => CATALOGUE[kind].cat;
 
 /** Title and body for one kind in one language, with the vars filled in. */
 export function message(kind: Kind, lang: Lang, vars: MessageVars = {}): Text {
-  const e = CATALOGUE[kind][lang === "ar" ? "ar" : "en"];
+  const e = MORE[lang]?.[kind] ?? CATALOGUE[kind][lang === "ar" ? "ar" : "en"];
   return { title: e.title(vars, lang), body: e.body(vars, lang) };
 }
+
+/* ---------- The languages platform admins added (content/i18n/<code>.json) ---------- */
+
+type Wording = { title: Fill; body: Fill };
+const w = (title: Fill | string, body: Fill | string): Wording => ({ title: typeof title === "string" ? fixed(title) : title, body: typeof body === "string" ? fixed(body) : body });
+const one = (v: MessageVars) => Math.round(v.n ?? 0) === 1;
+const NB = "\u00A0"; // French: a no-break space before ? : ! ;
+
+/** Same kinds as CATALOGUE, in the same tone. Feedback from a reviewer is shown as written. */
+export const MORE: Record<string, Record<Kind, Wording>> = {
+  fr: {
+    daily0: w("Votre leçon de 5 minutes est prête", "Une courte leçon aujourd’hui, une idée nouvelle pour votre classe demain."),
+    daily1: w(`Cinq minutes pour vous${NB}?`, "Reprenez là où vous en étiez. Cela ne prend que cinq minutes."),
+    daily2: w("Du nouveau pour votre classe", "La leçon du jour se termine par une idée à essayer demain."),
+    weekGoal: w((v, l) => (one(v) ? "Plus qu’une leçon pour l’objectif de la semaine" : `Plus que ${num(v, l)} leçons pour l’objectif de la semaine`), "Vous y êtes presque. Une courte leçon maintenant vous garde sur la bonne voie."),
+    streak: w((v, l) => `Votre série${NB}: ${num(v, l)} ${one(v) ? "semaine" : "semaines"}`, "Vous avez appris chaque semaine ces derniers temps. Une leçon suffit pour continuer."),
+    comeback7: w("Nous avons gardé votre place", "Votre prochaine leçon vous attend, et elle ne prend que cinq minutes."),
+    comeback21: w("De nouvelles idées pour votre classe", "Revenez pour une leçon de 5 minutes quand vous le souhaitez."),
+    reviewApproved: w("Votre projet a été approuvé", feedbackOr("Bravo, votre projet a été approuvé.")),
+    reviewRevise: w("Des retours sur votre projet", feedbackOr("La personne qui a relu votre projet propose quelques changements.")),
+    staffSubmission: w("Nouveau projet à relire", (v) => `${name(v)} a envoyé un projet à relire.`),
+    staffOrgRequest: w("Nouvelle demande d’organisation", (v) => `${org(v)} souhaite rejoindre Darsi.`),
+  },
+  es: {
+    daily0: w("Tu lección de 5 minutos está lista", "Una lección corta hoy, una idea nueva para tu clase mañana."),
+    daily1: w("¿Cinco minutos para ti?", "Sigue donde lo dejaste. Solo toma cinco minutos."),
+    daily2: w("Algo nuevo para tu clase", "La lección de hoy termina con una idea que puedes probar mañana."),
+    weekGoal: w((v, l) => (one(v) ? "Te falta 1 lección para la meta de esta semana" : `Te faltan ${num(v, l)} lecciones para la meta de esta semana`), "Estás cerca. Una lección corta ahora te mantiene en camino."),
+    streak: w((v, l) => `Tu racha: ${num(v, l)} ${one(v) ? "semana" : "semanas"}`, "Últimamente has aprendido cada semana. Una lección la mantiene viva."),
+    comeback7: w("Guardamos tu lugar", "Tu próxima lección te espera, y solo toma cinco minutos."),
+    comeback21: w("Ideas nuevas para tu clase", "Vuelve para una lección de 5 minutos cuando quieras."),
+    reviewApproved: w("Tu proyecto fue aprobado", feedbackOr("¡Bien hecho! Tu proyecto fue aprobado.")),
+    reviewRevise: w("Comentarios sobre tu proyecto", feedbackOr("Quien revisó tu proyecto sugirió algunos cambios.")),
+    staffSubmission: w("Nuevo proyecto para revisar", (v) => `${name(v)} envió un proyecto para revisar.`),
+    staffOrgRequest: w("Nueva solicitud de organización", (v) => `${org(v)} pidió unirse a Darsi.`),
+  },
+  de: {
+    daily0: w("Deine 5-Minuten-Lektion ist bereit", "Heute eine kurze Lektion, morgen eine neue Idee für deine Klasse."),
+    daily1: w("Fünf Minuten für dich?", "Mach da weiter, wo du aufgehört hast. Es dauert nur fünf Minuten."),
+    daily2: w("Etwas Neues für deine Klasse", "Die heutige Lektion endet mit einer Idee, die du morgen ausprobieren kannst."),
+    weekGoal: w((v, l) => (one(v) ? "Noch 1 Lektion bis zu deinem Wochenziel" : `Noch ${num(v, l)} Lektionen bis zu deinem Wochenziel`), "Du bist nah dran. Eine kurze Lektion jetzt hält dich auf Kurs."),
+    streak: w((v, l) => `Deine Serie: ${num(v, l)} ${one(v) ? "Woche" : "Wochen"}`, "Du hast zuletzt jede Woche gelernt. Eine Lektion hält die Serie am Laufen."),
+    comeback7: w("Wir haben deinen Platz gemerkt", "Deine nächste Lektion wartet auf dich und dauert nur fünf Minuten."),
+    comeback21: w("Neue Ideen für deine Klasse", "Komm für eine 5-Minuten-Lektion zurück, wann immer du magst."),
+    reviewApproved: w("Dein Projekt wurde angenommen", feedbackOr("Gut gemacht, dein Projekt wurde angenommen.")),
+    reviewRevise: w("Rückmeldung zu deinem Projekt", feedbackOr("Die Person, die dein Projekt geprüft hat, schlägt ein paar Änderungen vor.")),
+    staffSubmission: w("Neues Projekt zur Durchsicht", (v) => `${name(v)} hat ein Projekt zur Durchsicht geschickt.`),
+    staffOrgRequest: w("Neue Anfrage einer Organisation", (v) => `${org(v)} möchte Darsi beitreten.`),
+  },
+  pt: {
+    daily0: w("Sua lição de 5 minutos está pronta", "Uma lição curta hoje, uma ideia nova para sua turma amanhã."),
+    daily1: w("Cinco minutos para você?", "Continue de onde parou. Leva só cinco minutos."),
+    daily2: w("Algo novo para sua turma", "A lição de hoje termina com uma ideia que você pode testar amanhã."),
+    weekGoal: w((v, l) => (one(v) ? "Falta 1 lição para a meta desta semana" : `Faltam ${num(v, l)} lições para a meta desta semana`), "Você está perto. Uma lição curta agora mantém você no caminho."),
+    streak: w((v, l) => `Sua sequência: ${num(v, l)} ${one(v) ? "semana" : "semanas"}`, "Você aprendeu toda semana ultimamente. Uma lição mantém a sequência."),
+    comeback7: w("Guardamos o seu lugar", "Sua próxima lição está esperando, e leva só cinco minutos."),
+    comeback21: w("Novas ideias para sua turma", "Volte para uma lição de 5 minutos quando quiser."),
+    reviewApproved: w("Seu projeto foi aprovado", feedbackOr("Muito bem, seu projeto foi aprovado.")),
+    reviewRevise: w("Comentários sobre seu projeto", feedbackOr("Quem revisou seu projeto sugeriu algumas mudanças.")),
+    staffSubmission: w("Novo projeto para revisar", (v) => `${name(v)} enviou um projeto para revisão.`),
+    staffOrgRequest: w("Nova solicitação de organização", (v) => `${org(v)} pediu para entrar no Darsi.`),
+  },
+  ur: {
+    daily0: w("آپ کا 5 منٹ کا سبق تیار ہے", "آج ایک مختصر سبق، کل آپ کی کلاس کے لیے ایک نیا خیال۔"),
+    daily1: w("آپ کے لیے پانچ منٹ؟", "جہاں چھوڑا تھا وہیں سے جاری رکھیں۔ اس میں صرف پانچ منٹ لگتے ہیں۔"),
+    daily2: w("آپ کی کلاس کے لیے کچھ نیا", "آج کا سبق ایک ایسے خیال پر ختم ہوتا ہے جسے آپ کل آزما سکتے ہیں۔"),
+    weekGoal: w((v, l) => `اس ہفتے کے ہدف کے لیے ${num(v, l)} سبق باقی ہیں`, "آپ قریب ہیں۔ ابھی ایک مختصر سبق آپ کو راستے پر رکھے گا۔"),
+    streak: w((v, l) => `آپ کا سلسلہ: ${num(v, l)} ہفتے`, "حال میں آپ نے ہر ہفتے سیکھا ہے۔ ایک سبق اسے جاری رکھتا ہے۔"),
+    comeback7: w("ہم نے آپ کی جگہ محفوظ رکھی ہے", "آپ کا اگلا سبق آپ کا منتظر ہے، اور اس میں صرف پانچ منٹ لگتے ہیں۔"),
+    comeback21: w("آپ کی کلاس کے لیے نئے خیالات", "جب بھی آپ تیار ہوں، 5 منٹ کے سبق کے لیے واپس آئیں۔"),
+    reviewApproved: w("آپ کا پروجیکٹ منظور ہو گیا", feedbackOr("شاباش، آپ کا پروجیکٹ منظور ہو گیا۔")),
+    reviewRevise: w("آپ کے پروجیکٹ پر رائے", feedbackOr("جائزہ لینے والے نے کچھ تبدیلیاں تجویز کی ہیں۔")),
+    staffSubmission: w("جائزے کے لیے نیا پروجیکٹ", (v) => `${name(v)} نے جائزے کے لیے ایک پروجیکٹ بھیجا ہے۔`),
+    staffOrgRequest: w("تنظیم کی نئی درخواست", (v) => `${org(v)} نے «درسی» میں شامل ہونے کی درخواست کی ہے۔`),
+  },
+};
 
 /** The default app path for a kind ("/teach/{uid}" becomes "/teach/abc"). */
 export function linkFor(kind: Kind, vars: MessageVars = {}): string {
