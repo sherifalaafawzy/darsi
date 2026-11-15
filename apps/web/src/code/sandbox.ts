@@ -80,6 +80,19 @@ parent.postMessage({ type: "boot" }, "*");
 
 type Msg = { type: string; lang?: CodeLang; id?: number; reply?: PythonReply & { failed?: string }; ms?: number; message?: string };
 
+/**
+ * One of a runtime's files. When it isn't on the phone and there is no connection, fetch rejects (or the service worker
+ * answers an error): both are "offline", so every caller (the code steps, the sandbox labs) says the runtime needs one
+ * download, instead of blaming the learner's program.
+ */
+export async function runtimeFile<T>(url: string, read: (r: Response) => Promise<T>): Promise<T> {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(String(r.status));
+    return await read(r);
+  } catch { throw new Error("offline"); }
+}
+
 class Sandbox {
   private frame = document.createElement("iframe");
   private waiters = new Map<string, (m: Msg) => void>();
@@ -115,10 +128,7 @@ class Sandbox {
         await this.booted;
         const [script, wasm] = RUNTIMES[lang].files;
         const scriptUrl = runtimeScript(script);
-        const [source, bytes] = await Promise.all([
-          fetch(scriptUrl).then((r) => { if (!r.ok) throw new Error("offline"); return r.text(); }),
-          fetch(wasm).then((r) => { if (!r.ok) throw new Error("offline"); return r.arrayBuffer(); }),
-        ]);
+        const [source, bytes] = await Promise.all([runtimeFile(scriptUrl, (r) => r.text()), runtimeFile(wasm, (r) => r.arrayBuffer())]);
         const ready = this.wait(`ready${lang}`);
         const init = lang === "python" ? { harness: PYTHON_HARNESS, lib: PY_LIB, heapStart: HEAP.start, heapMax: HEAP.max } : {};
         this.post({ type: "load", lang, wasm: bytes, source: `${source}\n${WORKER}`, init }, [bytes]);

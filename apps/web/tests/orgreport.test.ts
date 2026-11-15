@@ -1,7 +1,7 @@
-import type { Profile } from "../src/auth/types";
+import { scoredOf, type Profile } from "../src/auth/types";
 import { COMPETENCIES } from "../src/content/competencies";
 import { FRAMEWORKS, framework } from "../src/content/standards";
-import { byCourse, byGroup, byTeacher, byTrack, filterPeople, itemEvidence, standardsReport, statusOf, totals, weekly } from "../src/admin/orgStats";
+import { byCourse, byGroup, byTeacher, byTrack, filterPeople, itemEvidence, lastSeen, standardsReport, statusOf, totals, weekly } from "../src/admin/orgStats";
 
 const NOW = Date.parse("2026-11-02T12:00:00Z");
 const daysAgo = (n: number) => new Date(NOW - n * 864e5).toISOString();
@@ -77,5 +77,75 @@ describe("byTeacher", () => {
     expect(g.own).toMatchObject({ lessons: 5, avgAccuracy: 0.8, seconds: 3000, secure: 1, reached: 2 });
     expect(g.students).toMatchObject({ people: 2, active7: 1, lessons: 6, status: { support: 1, inactive: 1, onTrack: 0, notStarted: 0 } });
     expect(rows[0].students.people).toBe(0);
+  });
+});
+
+// FC-06: a lesson with nothing graded (a project, a capstone stage) is done, not scored.
+describe("ungraded lessons in the report", () => {
+  it("never make someone 'need support' or pull a score down", () => {
+    const capOnly = person("cap", { lastActive: daysAgo(1) }, { lessonsDone: 3, graded: 0, avgAccuracy: 0 });
+    const mixed = person("mix", { lastActive: daysAgo(1) }, { lessonsDone: 5, graded: 3, avgAccuracy: 0.5 });
+    expect(statusOf(capOnly, NOW)).toBe("onTrack");
+    expect(statusOf(mixed, NOW)).toBe("support");
+    expect(totals([capOnly, mixed], NOW).avgAccuracy).toBeCloseTo(0.5);
+    expect(totals([capOnly], NOW).avgAccuracy).toBeNull();
+  });
+  it("divide a track's accuracy by its graded lessons", () => {
+    const p = person("p", {}, { lessonsDone: 3, graded: 2, avgAccuracy: 0.8, tracks: { ai: { n: 3, acc: 1.6, sec: 600, g: 2 } } });
+    const old = person("o", {}, { lessonsDone: 2, avgAccuracy: 0.5, tracks: { ai: { n: 2, acc: 1, sec: 60 } } }); // a summary from before `g`
+    expect(byTrack([p])[0]).toMatchObject({ lessons: 3, avgAccuracy: 0.8 });
+    expect(byTrack([p, old])[0].avgAccuracy).toBeCloseTo(2.6 / 4);
+  });
+});
+
+// byTeacher and byGroup index the people once instead of filtering them per teacher and per class. The sums must be
+// the ones the filters gave: the same people in the same order (a float sum depends on its order).
+describe("orgStats, indexed", () => {
+  const UNESCO_T = framework("unesco-t")!;
+  // A school with awkward rows: students of nobody, of a teacher who left, unnamed classes, a teacher with no
+  // students, repeated names, and scores that do not add up exactly in binary.
+  const school = (): Profile[] => {
+    const teachers = Array.from({ length: 7 }, (_, i) => person(`t${i}`, { role: "teacher", name: i % 3 ? `Teacher ${i}` : "Teacher", group: i % 2 ? `G${i % 3}` : undefined, lastActive: daysAgo(i) },
+      { lessonsDone: i * 2, avgAccuracy: 0.1 * i + 0.07, graded: i, seconds: 100 * i, competencies: Object.fromEntries(UNESCO_T.items.slice(0, i).flatMap((it) => it.codes.slice(0, 1).map((c) => [c, i]))) }));
+    const students = Array.from({ length: 240 }, (_, i) => person(`s${i}`, {
+      teacherId: i % 11 === 0 ? undefined : i % 13 === 0 ? "gone-teacher" : i % 17 === 0 ? null : `t${i % 6}`,
+      group: i % 9 === 0 ? undefined : i % 23 === 0 ? "" : `G${i % 4}`, lastActive: daysAgo(i % 40),
+    }, { lessonsDone: i % 7, avgAccuracy: ((i * 37) % 100) / 100 + 0.001 * (i % 3), graded: i % 5 === 0 ? undefined : i % 7, seconds: i * 13 }));
+    // Mixed up, so nobody's rows sit together.
+    return [...students.slice(0, 90), ...teachers.slice(0, 3), ...students.slice(90, 200), ...teachers.slice(3), ...students.slice(200), person("adm", { role: "orgAdmin", teacherId: "t1", group: "G1" })];
+  };
+  // What the report did before the index (a filter over everyone per teacher and per class), kept as the reference.
+  const byTeacherBefore = (members: Profile[]) => members.filter((m) => m.role === "teacher").map((t) => ({
+    teacher: t,
+    own: { lessons: t.summary?.lessonsDone ?? 0, avgAccuracy: scoredOf(t.summary) ? t.summary!.avgAccuracy : null, seconds: t.summary?.seconds ?? 0,
+      secure: UNESCO_T.items.filter((it) => itemEvidence(t, it).level === 3).length, reached: UNESCO_T.items.filter((it) => itemEvidence(t, it).n > 0).length, last: lastSeen(t) },
+    students: totals(members.filter((m) => m.role === "student" && m.teacherId === t.uid), NOW),
+  })).sort((a, b) => (a.teacher.name ?? "").localeCompare(b.teacher.name ?? ""));
+  const byGroupBefore = (people: Profile[]) => [...new Set(people.map((p) => p.group ?? ""))].sort().map((g) => ({ group: g, ...totals(people.filter((p) => (p.group ?? "") === g), NOW) }));
+
+  it("byTeacher gives exactly what a filter per teacher gave", () => {
+    const members = school();
+    const now = byTeacher(members, UNESCO_T, NOW);
+    expect(now).toHaveLength(7);
+    expect(now).toStrictEqual(byTeacherBefore(members));
+    // Students of nobody, or of a teacher who is not in the list, are nobody's.
+    expect(now.reduce((a, x) => a + x.students.people, 0)).toBe(members.filter((m) => m.role === "student" && /^t[0-5]$/.test(m.teacherId ?? "")).length);
+    expect(now.find((x) => x.teacher.uid === "t6")!.students.people).toBe(0);
+    expect(now.some((x) => x.own.secure > 0)).toBe(true);
+  });
+
+  it("byGroup gives exactly what a filter per class gave, the unnamed class included", () => {
+    const people = filterPeople(school(), { audience: "all" });
+    const now = byGroup(people, NOW);
+    expect(now).toStrictEqual(byGroupBefore(people));
+    expect(now.map((g) => g.group)).toEqual(["", "G0", "G1", "G2", "G3"]);
+    expect(now.reduce((a, g) => a + g.people, 0)).toBe(people.length);
+  });
+
+  it("keeps nothing between calls: the same members give the same answer after another list was summed", () => {
+    const members = school();
+    const first = byTeacher(members, UNESCO_T, NOW);
+    byTeacher([...members].reverse(), UNESCO_T, NOW);
+    expect(byTeacher(members, UNESCO_T, NOW)).toStrictEqual(first);
   });
 });

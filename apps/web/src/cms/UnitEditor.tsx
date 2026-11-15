@@ -1,20 +1,24 @@
-import { Component, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Component, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppBar, Button, EmptyState, Icon } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import { COMPETENCIES } from "../content/competencies";
+import { forgetCatalog } from "../content/load";
 import { usePack, useTracks } from "../content/settings";
 import { levelsByTrack } from "../content/tracks";
 import { labMeta } from "../labs/catalog";
 import { audienceOf, type Lesson, type Step, type Unit } from "../content/types";
 import { errorsOf, validateUnit, type Issue } from "../content/validate";
-import { I18nProvider, languageOf, useI18n, useLanguages, type MessageKey } from "../i18n";
+import { I18nProvider, languageOf, useI18n, useLanguages } from "../i18n";
 import type { LessonPlayer } from "../screens/LessonScreen";
 /** The lesson player, passed in by App (importing it here would split the startup bundle: see App.tsx). */
 type Player = typeof LessonPlayer;
-import { cmsApi, issuesOf } from "./api";
-import { createUnit, getUnit, saveUnit, statusOf, type UnitMeta } from "./data";
-import { LangName, LText, Num } from "./fields";
+import { cmsApi, codeOf, issuesOf } from "./api";
+import { useAutosave } from "./autosave";
+import { canonical, createUnit, getUnit, markSame, readPublished, saveUnit, statusOf, type UnitMeta } from "./data";
+import { catalogPending, failText, k } from "./entStrings";
+import { MORE_FIELDS, useFieldName, type FieldName } from "./fieldNames";
+import { Check, LangName, LText, Num, StatusPill } from "./fields";
 import { EditLangsProvider, langsIn, savedEditLangs, saveEditLangs, savedLangView, saveLangView, type LangView } from "./langs";
 import { useHistory, useUndoKeys } from "./history";
 import { blankLesson, blankStep, copyLesson, copyStep, copyTitle, newLessonId, newStepId, withNewIds } from "./ids";
@@ -29,8 +33,6 @@ const CODES = new Set(COMPETENCIES.map((c) => c.code));
 /** The shared validator only checks a lab id's shape; here we also know the Labs catalogue. */
 const unknownLabs = (u: Unit): Issue[] => u.lessons.flatMap((l, lesson) => l.steps.flatMap((s, step) =>
   s.type === "lab" && !labMeta(s.tool) ? [{ at: { lesson, step, field: "tool" }, code: "badValue" as const, level: "error" as const, params: { value: s.tool } }] : []));
-/** Changes save by themselves this long after the last one. */
-const AUTOSAVE_MS = 3000;
 const LIVE_KEY = "darsi:editLive";
 const savedLive = () => { try { return localStorage.getItem(LIVE_KEY) !== "0"; } catch { return true; } };
 
@@ -40,7 +42,7 @@ export type Sel =
   | { kind: "lesson" | "slides" | "kit"; lesson: string }
   | { kind: "step"; lesson: string; step: string }
   | { kind: "add-step"; lesson: string; at: number };
-type Ask = "" | "delete" | "unpublish" | { leave: string };
+type Ask = "" | "delete" | "unpublish" | { leave: string } | { restore: number };
 interface Msg { ok: boolean; text: string; undo?: boolean; open?: string }
 
 function download(name: string, text: string) {
@@ -48,6 +50,29 @@ function download(name: string, text: string) {
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
 }
 const moveTo = <T,>(xs: T[], from: number, to: number) => { const n = [...xs]; const [x] = n.splice(from, 1); n.splice(to, 0, x); return n; };
+
+/**
+ * Puts the cursor in the field a check is about, found by the label the form gives it (and its language, and the item
+ * it is in), once the pane it lives in has opened. False when the pane has no such field (a whole list, a switch).
+ */
+function focusField(f: FieldName) {
+  const root = document.getElementById("ed-detail");
+  if (!root) return false;
+  // A video's pause question is the last form in its pane, so its lists come last too.
+  const lists = root.querySelectorAll(".ed-items"), list = f.within ? lists[lists.length - 1] : lists[0];
+  const scope = (f.item && list?.children[f.item.index]) || root;
+  const own = (l: Element) => { const c = l.cloneNode(true) as Element; c.querySelector(".ed-lang")?.remove(); return c.textContent?.trim() ?? ""; };
+  const labels = [...scope.querySelectorAll<HTMLLabelElement>("label.dr-field-label")].filter((l) => !f.label || own(l) === f.label);
+  const name = f.lang ? languageOf(f.lang).native : "";
+  const control = (l?: HTMLLabelElement) => (l?.htmlFor ? document.getElementById(l.htmlFor) as HTMLInputElement | null : null);
+  const inLang = labels.filter((l) => !name || l.querySelector(".ed-lang")?.textContent?.trim() === name);
+  // Of several (an option's text, without its number), the first one left empty is the one to fill.
+  const el = control(inLang.find((l) => control(l)?.value === "") ?? inLang[0] ?? labels[0]);
+  if (!el) return false;
+  el.scrollIntoView({ block: "center" });
+  el.focus({ preventScroll: true });
+  return true;
+}
 
 /**
  * /super/content/:unitId and /admin/content/:unitId. An outline of the unit beside the pane for what's picked (on
@@ -70,26 +95,55 @@ export function UnitEditor({ Player }: { Player: Player }) {
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [saveErr, setSaveErr] = useState<"" | "conflict" | "failed">("");
   const [loadErr, setLoadErr] = useState("");
-  const [busy, setBusy] = useState<"" | "save" | "publish" | "unpublish" | "delete" | "copy">("");
+  const [busy, setBusy] = useState<"" | "save" | "publish" | "unpublish" | "delete" | "copy" | "restore">("");
   const [msg, setMsg] = useState<Msg | null>(null);
   const [ask, setAsk] = useState<Ask>("");
   const [sel, setSel] = useState<Sel>({ kind: "unit" });
   const [pane, setPane] = useState<"outline" | "detail">("outline");
   const [preview, setPreview] = useState<{ lesson: string; lang: string; at: number } | null>(null);
+  /** The button that opened the full-screen preview: the keyboard focus goes back to it when the preview closes. */
+  const previewFrom = useRef<HTMLElement | null>(null);
   const [editLangs, setEditLangs] = useState<string[]>(savedEditLangs);
   const [view, setView] = useState<LangView>(() => savedLangView(uiLang));
   const [live, setLive] = useState(savedLive);
   const [copying, setCopying] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  /** A check the author followed: its field gets the cursor once its pane is open. */
+  const [focusOn, setFocusOn] = useState<{ f: FieldName } | null>(null);
+  // What saves read when they run: a save queued behind another (or the one as the page closes) must use the revision
+  // that one left, and skip content it already saved.
+  const revRef = useRef(0);
+  const savedRef = useRef("");
+  /** The live version's content (canonical JSON), once known: a draft equal to it is shown, and marked, as published. */
+  const liveRef = useRef<{ version: number; json: string } | null>(null);
 
   useEffect(() => {
     setMeta(null); setLoadErr(""); setMsg(null); setAsk(""); setSel({ kind: "unit" }); setPane("outline"); setSaveErr("");
+    liveRef.current = null; auto.skip(false);
+    let gone = false;
     getUnit(unitId).then((r) => {
+      if (gone) return;
       if (!r) return setLoadErr(t("err.notFound"));
       setMeta(r.meta); hist.reset(r.unit); setSaved(JSON.stringify(r.unit));
+      revRef.current = r.meta.rev; savedRef.current = JSON.stringify(r.unit);
       setEditLangs((cur) => [...new Set([...cur, ...langsIn(r.unit)])]); // never hide a language the unit already has
+      // "Changes not published" may be a draft that holds exactly the live version (brought back, or changes undone):
+      // one read of the live file tells, and the draft is then shown and marked as published.
+      const v = r.meta.published?.version;
+      if (v && statusOf(r.meta) === "changed") readPublished(r.meta.owner, unitId, v).then((live) => {
+        const json = canonical(live);
+        if (gone || json !== canonical(r.unit)) return;
+        liveRef.current = { version: v, json };
+        setMeta((m) => (m ? { ...m, same: { version: v, rev: m.rev } } : m));
+        void auto.run(async () => {
+          if (gone || !user || savedRef.current !== JSON.stringify(r.unit) || revRef.current !== r.meta.rev) return;
+          const done = await markSame(unitId, revRef.current, v, user.uid);
+          if (done && !gone) { revRef.current = done.rev; setMeta((m) => (m ? { ...m, rev: done.rev, same: { version: v, rev: done.rev } } : m)); }
+        });
+      }).catch(() => { /* offline or gone: the status stays as the list has it */ });
     })
-      .catch((e: Error) => setLoadErr(e.message));
+      .catch((e: unknown) => { if (!gone) setLoadErr(failText(e, t)); });
+    return () => { gone = true; };
   }, [unitId]); // eslint-disable-line react-hooks/exhaustive-deps
   const dirty = useMemo(() => !!unit && JSON.stringify(unit) !== saved, [unit, saved]);
   useEffect(() => {
@@ -101,40 +155,50 @@ export function UnitEditor({ Player }: { Player: Player }) {
   useUndoKeys(hist.undo, hist.redo, !preview);
   // Bring the pane into view when something far down the outline is picked.
   useEffect(() => { const el = document.getElementById("ed-detail"); if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: "start" }); }, [sel, pane]);
+  // After the pane a check points at has opened (and its disclosure), the cursor goes to the field.
+  useEffect(() => {
+    if (!focusOn) return;
+    const id = requestAnimationFrame(() => { focusField(focusOn.f); setFocusOn(null); });
+    return () => cancelAnimationFrame(id);
+  }, [focusOn]);
 
   // Checking runs on a deferred copy, so typing stays smooth on a slow laptop.
   const checked = useDeferredValue(unit);
   const issues = useMemo(() => (checked ? [...validateUnit(checked, { competencies: CODES, tracks: levelsByTrack(tracks.all), langs: editLangs }), ...unknownLabs(checked)] : []), [checked, tracks.all, editLangs]);
   const errors = errorsOf(issues);
+  const fieldName = useFieldName(unit);
+  // On screen, the live version's own content (brought back, or every change undone) reads as published at once, before
+  // the save that marks it. Compared on the deferred copy, like the checks.
+  const liveVersion = meta?.published?.version;
+  const sameAsLive = useMemo(() => {
+    const l = liveRef.current;
+    return !!l && !!checked && l.version === liveVersion && canonical(checked) === l.json;
+  }, [checked, liveVersion]);
 
   /** Saves the draft. `quiet` (autosave) shows no message unless it fails. */
   const save = useCallback(async (quiet = false): Promise<boolean> => {
     if (!user || !unit || !meta) return false;
+    const json = JSON.stringify(unit);
+    // Already saved (by a save this one queued behind): nothing to write.
+    if (json === savedRef.current) { if (!quiet) setMsg({ ok: true, text: t("cms.saved") }); return true; }
     setBusy("save"); if (!quiet) setMsg(null);
     try {
-      const r = await saveUnit(unit, meta.rev, user.uid);
+      // The same content as the live version (brought back, or every change undone): marked as published.
+      const live = liveRef.current;
+      const same = live && live.version === meta.published?.version && canonical(unit) === live.json ? live.version : undefined;
+      const r = same ? await saveUnit(unit, revRef.current, user.uid, same) : await saveUnit(unit, revRef.current, user.uid);
       if ("conflict" in r) { setSaveErr("conflict"); setMsg({ ok: false, text: t("cms.conflict") }); return false; }
-      setMeta((m) => (m ? { ...m, rev: r.rev, title: unit.title, track: unit.track, level: unit.level, lessonCount: unit.lessons.length } : m));
-      setSaved(JSON.stringify(unit)); setSavedAt(new Date()); setSaveErr("");
+      revRef.current = r.rev; savedRef.current = json;
+      setMeta((m) => (m ? { ...m, rev: r.rev, title: unit.title, track: unit.track, level: unit.level, lessonCount: unit.lessons.length, same: same ? { version: same, rev: r.rev } : m.same } : m));
+      setSaved(json); setSavedAt(new Date()); setSaveErr("");
       if (!quiet) setMsg({ ok: true, text: t("cms.saved") });
       return true;
-    } catch (e) { setSaveErr("failed"); setMsg({ ok: false, text: (e as Error).message }); return false; }
+    } catch (e) { setSaveErr("failed"); setMsg({ ok: false, text: failText(e, t) }); return false; }
     finally { setBusy(""); }
   }, [user, unit, meta, t]);
-  // Autosave: a few seconds after the last change, never while something else runs or after someone else saved.
-  const saveRef = useRef(save); saveRef.current = save;
-  useEffect(() => {
-    if (!dirty || busy || saveErr === "conflict") return;
-    const id = setTimeout(() => { void saveRef.current(true); }, AUTOSAVE_MS);
-    return () => clearTimeout(id);
-  }, [unit, dirty, busy, saveErr]);
-  // Leaving the tab (switching apps on a phone) saves at once; Ctrl+S saves now.
-  useEffect(() => {
-    const hide = () => { if (document.visibilityState === "hidden" && dirty && !busy && saveErr !== "conflict") void saveRef.current(true); };
-    const key = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); void saveRef.current(); } };
-    document.addEventListener("visibilitychange", hide); addEventListener("keydown", key);
-    return () => { document.removeEventListener("visibilitychange", hide); removeEventListener("keydown", key); };
-  }, [dirty, busy, saveErr]);
+  // Saves by itself a few seconds after the last change, when the tab is hidden, with Ctrl+S, and as the page closes;
+  // never while something else runs or after someone else saved.
+  const auto = useAutosave({ dirty, paused: !!busy, blocked: saveErr === "conflict", change: unit, save });
 
   if (loadErr) return <main className="screen"><EmptyState tone="error" title={t("err.title")} body={loadErr} action={<Button size="sm" onClick={() => nav(base)}>{t("common.back")}</Button>} /></main>;
   if (!unit || !meta) return <div className="loading" aria-busy="true" />;
@@ -144,7 +208,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
   const lesson = li >= 0 ? unit.lessons[li] : undefined;
   const si = sel.kind === "step" && lesson ? lesson.steps.findIndex((s) => s.id === sel.step) : -1;
   const view_: Sel = !("lesson" in sel) ? sel : !lesson ? { kind: "unit" } : sel.kind === "step" && si < 0 ? { kind: "lesson", lesson: lesson.id } : sel;
-  const status = statusOf(meta);
+  const status = sameAsLive && meta.published ? "live" : statusOf(meta);
   const media = (l: Lesson): MediaCtx => ({ owner: meta.owner, unitId: unit.id, lessonId: l.id });
 
   const pick = (s: Sel) => { setSel(s); setPane("detail"); setCopying(false); };
@@ -177,26 +241,54 @@ export function UnitEditor({ Player }: { Player: Player }) {
   };
 
   const publish = async () => {
-    if (dirty && !(await save(true))) return;
+    // Saved first (a no-op when nothing is new), behind any save already on its way. Then the revision on this screen:
+    // the function refuses a draft someone else saved since, rather than publish what nobody here has seen.
+    if (!(await auto.run(() => save(true)))) return;
+    const rev = revRef.current;
     setBusy("publish"); setMsg(null);
     try {
-      const { version } = await cmsApi.publishUnit({ unitId: unit.id });
-      setMeta((m) => (m ? { ...m, published: { version, rev: m.rev } } : m));
+      const { version } = await cmsApi.publishUnit({ unitId: unit.id, rev });
+      liveRef.current = { version, json: canonical(unit) };
+      setMeta((m) => (m ? { ...m, published: { version, rev } } : m));
+      forgetCatalog(); // the author's own Learn tab and Downloads read the list again, without a reload
       setMsg({ ok: true, text: t("cms.published", { n: version }) });
     } catch (e) {
       const n = issuesOf(e).length;
-      setMsg({ ok: false, text: n ? t("cms.publishBlocked", { n }) : (e as Error).message });
+      if (!n && codeOf(e) === "aborted") { setSaveErr("conflict"); setMsg({ ok: false, text: t("cms.conflict") }); return; }
+      if (!n && catalogPending(e)) {
+        // The new version is published (Firestore has it); only the course list is late, and follows by itself. One
+        // read tells the version's number, so the status and "bring back" buttons are right; said as done, not failed.
+        const pub = (await getUnit(unit.id).catch(() => null))?.meta.published;
+        if (pub) {
+          if (pub.rev === rev) liveRef.current = { version: pub.version, json: canonical(unit) };
+          setMeta((m) => (m ? { ...m, published: pub } : m));
+        }
+        setMsg({ ok: true, text: t(k("ent.pending.publish")) });
+        return;
+      }
+      setMsg({ ok: false, text: n ? t("cms.publishBlocked", { n }) : failText(e, t) });
     } finally { setBusy(""); }
   };
   const unpublish = async () => {
     setAsk(""); setBusy("unpublish"); setMsg(null);
-    try { await cmsApi.unpublishUnit({ unitId: unit.id }); setMeta({ ...meta, published: null }); setMsg({ ok: true, text: t("cms.unpublished") }); }
-    catch (e) { setMsg({ ok: false, text: (e as Error).message }); } finally { setBusy(""); }
+    try { await cmsApi.unpublishUnit({ unitId: unit.id }); setMeta({ ...meta, published: null }); forgetCatalog(); setMsg({ ok: true, text: t("cms.unpublished") }); }
+    catch (e) {
+      // Unpublished in Firestore, and the course list follows by itself within minutes: done, a little late.
+      if (catalogPending(e)) { setMeta({ ...meta, published: null }); setMsg({ ok: true, text: t(k("ent.pending.unpublish")) }); }
+      else setMsg({ ok: false, text: failText(e, t) });
+    } finally { setBusy(""); }
   };
   const remove = async () => {
     setAsk(""); setBusy("delete");
-    try { await cmsApi.deleteUnit({ unitId: unit.id }); setSaved(JSON.stringify(unit)); nav(base); }
-    catch (e) { setMsg({ ok: false, text: (e as Error).message }); setBusy(""); }
+    // The list says it was deleted: this page goes with the unit (replace: Back doesn't lead to it again).
+    try { await cmsApi.deleteUnit({ unitId: unit.id }); forgetCatalog(); auto.skip(); setSaved(JSON.stringify(unit)); nav(base, { replace: true, state: { done: t("cms.deleted", { title: L(unit.title) || t("cms.untitled") }) } }); }
+    catch (e) {
+      // The server stopped after unpublishing (the course list could not be written, and deleting the files of a
+      // course phones still list would break it): the unit is a draft now, and Delete works once the list caught up.
+      if (catalogPending(e)) { setMeta({ ...meta, published: null }); setMsg({ ok: false, text: t(k("ent.pending.delete")) }); }
+      else setMsg({ ok: false, text: failText(e, t) });
+      setBusy("");
+    }
   };
   /** A copy of the unit as it is on screen (unsaved changes included), as a new draft with new ids. */
   const duplicate = async () => {
@@ -206,27 +298,50 @@ export function UnitEditor({ Player }: { Player: Player }) {
       const copy = withNewIds({ ...unit, title: copyTitle(unit.title) });
       await createUnit(meta.owner, copy, user.uid);
       setMsg({ ok: true, text: t("cms.duplicated", { title: L(copy.title) || t("cms.untitled") }), open: copy.id });
-    } catch (e) { setMsg({ ok: false, text: (e as Error).message }); } finally { setBusy(""); }
+    } catch (e) { setMsg({ ok: false, text: failText(e, t) }); } finally { setBusy(""); }
+  };
+  /**
+   * Puts a published version back in the draft (the live one, to drop changes not published yet, or the one before it,
+   * after a bad publish) as one change: Undo takes it back, and it saves itself like any edit. Publishing it then makes
+   * a new version with the old content.
+   */
+  const restore = async (version: number) => {
+    setAsk(""); setBusy("restore"); setMsg(null);
+    try {
+      const old = await readPublished(meta.owner, unit.id, version);
+      // The live one: once saved, the draft shows (and is marked) as published again.
+      if (version === meta.published?.version) liveRef.current = { version, json: canonical(old) };
+      edit(old);
+      setEditLangs((cur) => [...new Set([...cur, ...langsIn(old)])]);
+      setMsg({ ok: true, text: t(version === meta.published?.version ? "cms.restoredLive" : "cms.restored", { n: version }), undo: true });
+    } catch { setMsg({ ok: false, text: t("cms.restoreFailed", { n: version }) }); } finally { setBusy(""); }
   };
   /** Leaving saves first; only a save that fails asks. */
   const go = async (path: string) => {
     if (!dirty) return nav(path);
-    if (saveErr !== "conflict" && await save(true)) return nav(path);
+    if (saveErr !== "conflict" && await auto.run(() => save(true))) return nav(path);
     setAsk({ leave: path });
   };
 
   /** From the checks: open the place an issue points at. */
   const jump = (i: Issue) => {
+    // The field gets the cursor once its pane is open: in the language it is about (a single other language on
+    // screen would hide it), and out of "More about this lesson" if it is in there.
+    const f = fieldName(i);
+    if (f?.lang && view !== "all" && view !== f.lang) translate(f.lang);
+    if (f) setFocusOn({ f });
     const l = i.at.lesson !== undefined ? unit.lessons[i.at.lesson] : undefined;
     if (!l) return pick({ kind: "unit" });
     if (i.at.step !== undefined && l.steps[i.at.step]) return pick({ kind: "step", lesson: l.id, step: l.steps[i.at.step].id });
     if (i.at.slide !== undefined) return pick({ kind: "slides", lesson: l.id });
     if (i.at.kit !== undefined) return pick({ kind: "kit", lesson: l.id });
+    if (MORE_FIELDS.test(i.at.field)) setMoreOpen(true);
     pick({ kind: "lesson", lesson: l.id });
   };
   const count = (f: (i: Issue) => boolean) => errors.filter(f).length;
   const translate = (code: string) => { setView(code); saveLangView(code); };
-  const here = (f: (i: Issue) => boolean) => <HereIssues issues={issues.filter(f)} onTranslate={translate} />;
+  const here = (f: (i: Issue) => boolean) => <HereIssues issues={issues.filter(f)} unit={unit} onTranslate={translate} />;
+  const openPreview = (from: HTMLElement, lessonId: string, at: number) => { previewFrom.current = from; setPreview({ lesson: lessonId, lang: view === "all" ? "en" : view, at }); };
   const lessonOf = (n: number) => t("cms.lessonOf", { n: num(n + 1), total: num(unit.lessons.length) });
 
   let detail: ReactNode;
@@ -242,6 +357,11 @@ export function UnitEditor({ Player }: { Player: Player }) {
         <TrackPicker value={unit.track} onChange={(track) => edit({ ...unit, track, level: Math.min(unit.level, tracks.of(track).levels) })} />
         <LevelPicker track={unit.track} value={unit.level} onChange={(level) => edit({ ...unit, level })} />
         <AudiencePicker value={audienceOf(unit)} onChange={(a) => edit({ ...unit, audience: a === "students" ? a : undefined })} />
+        {/* A capstone's project steps are milestones sent through checkCapstone, which refuses any other unit. */}
+        <div className="stack-sm">
+          <Check label={t("cms.capstone")} checked={unit.kind === "capstone"} onChange={(on) => { const { kind: _, ...rest } = unit; edit(on ? { ...rest, kind: "capstone" } : rest); }} />
+          <p className="muted small">{t("cms.capstoneHint")}</p>
+        </div>
       </section>
       <section className="stack" aria-labelledby="ed-lessons-h">
         <h3 id="ed-lessons-h" className="ed-h4">{t("cms.lessons")}</h3>
@@ -252,6 +372,8 @@ export function UnitEditor({ Player }: { Player: Player }) {
         <div className="ed-toolbar">
           <Button size="sm" variant="secondary" icon="file" loading={busy === "copy"} disabled={!!busy} onClick={() => { void duplicate(); }}>{t("cms.duplicateUnit")}</Button>
           <Button size="sm" variant="ghost" icon="share" onClick={() => download(`${unit.id}.json`, JSON.stringify(unit, null, 1))}>{t("cms.export")}</Button>
+          {meta.published && status === "changed" && <Button size="sm" variant="ghost" icon="undo" loading={busy === "restore"} disabled={!!busy} onClick={() => setAsk({ restore: meta.published!.version })}>{t("cms.restoreLive", { n: meta.published.version })}</Button>}
+          {meta.published && meta.published.version > 1 && <Button size="sm" variant="ghost" icon="undo" disabled={!!busy} onClick={() => setAsk({ restore: meta.published!.version - 1 })}>{t("cms.rollback", { n: meta.published.version - 1 })}</Button>}
           {meta.published && <Button size="sm" variant="ghost" loading={busy === "unpublish"} disabled={!!busy} onClick={() => setAsk("unpublish")}>{t("cms.unpublish")}</Button>}
           <Button size="sm" variant="ghost" icon="close" loading={busy === "delete"} disabled={!!busy} onClick={() => setAsk("delete")}>{t("cms.delete")}</Button>
         </div>
@@ -267,7 +389,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
     if (view_.kind === "lesson") detail = (
       <div className="stack-lg">
         <PaneHead title={lessonOf(li)}>
-          <Button size="sm" variant="secondary" icon="play" disabled={!canPreview} onClick={() => setPreview({ lesson: lesson.id, lang: view === "all" ? "en" : view, at: 0 })}>{t("cms.preview")}</Button>
+          <Button size="sm" variant="secondary" icon="play" disabled={!canPreview} onClick={(e) => openPreview(e.currentTarget, lesson.id, 0)}>{t("cms.preview")}</Button>
         </PaneHead>
         <div className="ed-toolbar">
           <Button size="sm" variant="ghost" icon="file" onClick={() => lessonOps.duplicate(li)}>{t("cms.duplicate")}</Button>
@@ -308,7 +430,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
         <div className="stack-lg">
           <PaneHead icon={<StepIcon type={s.type} size={22} />} title={`${t("cms.step")} ${num(si + 1)}: ${t(STEP_LABEL[s.type])}`} sub={t("cms.ofN", { n: num(lesson.steps.length) })} />
           <div className="ed-toolbar">
-            <Button size="sm" variant="secondary" icon="play" disabled={!canPreview} onClick={() => setPreview({ lesson: lesson.id, lang: view === "all" ? "en" : view, at: si })}>{t("cms.previewFrom")}</Button>
+            <Button size="sm" variant="secondary" icon="play" disabled={!canPreview} onClick={(e) => openPreview(e.currentTarget, lesson.id, si)}>{t("cms.previewFrom")}</Button>
             {!live && <Button size="sm" variant="ghost" icon="play" className="ed-wide-only" aria-pressed={false}
               onClick={() => { setLive(true); try { localStorage.setItem(LIVE_KEY, "1"); } catch { /* private mode */ } }}>{t("cms.livePreview")}</Button>}
           </div>
@@ -325,7 +447,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
             </span>
           </div>
           {here((x) => x.at.lesson === li && x.at.step === si)}
-          <StepForm step={s} media={media(lesson)} onChange={(ns) => setLesson(li, { ...lesson, steps: lesson.steps.map((x, k) => (k === si ? ns : x)) }, group)} />
+          <StepForm step={s} media={media(lesson)} capstone={unit.kind === "capstone"} onChange={(ns) => setLesson(li, { ...lesson, steps: lesson.steps.map((x, k) => (k === si ? ns : x)) }, group)} />
           {stepErrs === 0 && si < lesson.steps.length - 1 && (
             <div className="ed-next">
               <Button size="sm" variant="secondary" iconEnd="next" onClick={() => ops.open(lesson.steps[si + 1].id)}>{t("cms.nextStepIs", { kind: t(STEP_LABEL[lesson.steps[si + 1].type]) })}</Button>
@@ -367,7 +489,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
   return (
     <EditLangsProvider langs={editLangs} view={view}>
       <AppBar title={L(unit.title) || t("cms.untitled")} onBack={() => { void go(base); }} backLabel={t("common.back")}
-        actions={<span className={`ed-status is-${status}`}>{t(`cms.status.${status}` as MessageKey, { n: meta.published?.version ?? 0 })}</span>} />
+        actions={<StatusPill status={status} version={meta.published?.version ?? 0} />} />
       <main className="screen wide ed">
         {shownLangs.length > 1 && (
           <div className="ed-head" role="group" aria-label={t("cms.view")}>
@@ -411,7 +533,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
         </span>
         <span className={`ed-save${saveErr ? " is-error" : ""}`} title={t("cms.autosaveHint")}>{saveState}</span>
         <span className="ed-bar-end">
-          {dirty && <Button size="sm" loading={busy === "save"} disabled={!!busy && busy !== "save"} variant="secondary" icon="check" title="Ctrl+S" onClick={() => { void save(); }}>{t("cms.save")}</Button>}
+          {dirty && <Button size="sm" loading={busy === "save"} disabled={!!busy && busy !== "save"} variant="secondary" icon="check" title="Ctrl+S" onClick={() => { void auto.run(() => save()); }}>{t("cms.save")}</Button>}
           {errors.length > 0
             ? <Button variant="secondary" icon="warning" onClick={() => pick({ kind: "checks" })}>{t("cms.fixFirst", { n: errors.length })}</Button>
             : <Button loading={busy === "publish"} disabled={!!busy} icon="share" onClick={() => { void publish(); }}>{t("cms.publish")}</Button>}
@@ -430,14 +552,17 @@ export function UnitEditor({ Player }: { Player: Player }) {
         {ask === "unpublish" && <Confirm text={t("cms.unpublishConfirm")}>
           <Button size="sm" autoFocus onClick={() => { void unpublish(); }}>{t("cms.unpublish")}</Button>
           <Button size="sm" variant="ghost" onClick={() => setAsk("")}>{t("common.cancel")}</Button></Confirm>}
-        {typeof ask === "object" && <Confirm text={t("cms.leaveConfirm")}>
-          <Button size="sm" autoFocus loading={busy === "save"} onClick={async () => { if (await save()) nav(ask.leave); }}>{t("cms.saveLeave")}</Button>
-          <Button size="sm" variant="secondary" onClick={() => { setSaved(JSON.stringify(unit)); nav(ask.leave); }}>{t("cms.leaveAnyway")}</Button>
+        {typeof ask === "object" && "restore" in ask && <Confirm text={t("cms.restoreConfirm", { n: ask.restore })}>
+          <Button size="sm" autoFocus loading={busy === "restore"} onClick={() => { void restore(ask.restore); }}>{t("cms.restoreGo")}</Button>
+          <Button size="sm" variant="ghost" onClick={() => setAsk("")}>{t("common.cancel")}</Button></Confirm>}
+        {typeof ask === "object" && "leave" in ask && <Confirm text={t("cms.leaveConfirm")}>
+          <Button size="sm" autoFocus loading={busy === "save"} onClick={async () => { if (await auto.run(() => save())) nav(ask.leave); }}>{t("cms.saveLeave")}</Button>
+          <Button size="sm" variant="secondary" onClick={() => { auto.skip(); setSaved(JSON.stringify(unit)); nav(ask.leave); }}>{t("cms.leaveAnyway")}</Button>
           <Button size="sm" variant="ghost" onClick={() => setAsk("")}>{t("cms.stay")}</Button></Confirm>}
       </div>
 
       {preview && unit.lessons.find((l) => l.id === preview.lesson) && <Preview Player={Player} unit={unit} lesson={unit.lessons.find((l) => l.id === preview.lesson)!}
-        lang={preview.lang} at={preview.at} onLang={(lang) => setPreview({ ...preview, lang })} onExit={() => setPreview(null)} />}
+        lang={preview.lang} at={preview.at} opener={previewFrom.current} onLang={(lang) => setPreview({ ...preview, lang })} onExit={() => setPreview(null)} />}
     </EditLangsProvider>
   );
 }
@@ -486,7 +611,7 @@ function LivePreview({ Player, unit, lesson, step, lang, blocked, onClose }: { P
             <Guard key={key} fallback={<p className="ed-live-note">{t("cms.liveBlocked")}</p>}>
               <I18nProvider lang={shownLang}>
                 <div dir={languageOf(shownLang).dir} lang={shownLang}>
-                  <Player key={key} unitId={unit.id} lesson={one} track={unit.track} preview={{ onExit: noop }} />
+                  <Player key={key} unitId={unit.id} lesson={one} track={unit.track} unitKind={unit.kind} audience={unit.audience} teach={unit.teach} preview={{ onExit: noop }} />
                 </div>
               </I18nProvider>
             </Guard>
@@ -498,15 +623,60 @@ function LivePreview({ Player, unit, lesson, step, lang, blocked, onClose }: { P
   );
 }
 
-/** The lesson as learners will play it, from the unsaved draft: nothing is recorded, submitted or synced. Any step can be opened. */
-function Preview({ Player, unit, lesson, lang, at, onLang, onExit }: { Player: Player; unit: Unit; lesson: Lesson; lang: string; at: number; onLang: (l: string) => void; onExit: () => void }) {
+/** What Tab can land on inside the preview (the lesson player's own controls included). */
+const TABBABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), summary, video[controls], audio[controls], [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Takes everything beside `el` (the editor's app bar, its panes and its bar: what the full-screen preview covers) out
+ * of reach of the keyboard, the pointer and screen readers: `inert`, and aria-hidden for a browser that doesn't know
+ * inert (Safari before 15.5). Returns the undo, which puts back exactly what each element had.
+ */
+function hideBehind(el: HTMLElement): () => void {
+  const undo: (() => void)[] = [];
+  for (const sib of Array.from(el.parentElement?.children ?? [])) {
+    if (sib === el || !(sib instanceof HTMLElement)) continue;
+    const inert = sib.hasAttribute("inert"), hidden = sib.getAttribute("aria-hidden");
+    sib.setAttribute("inert", ""); sib.setAttribute("aria-hidden", "true");
+    undo.push(() => { if (!inert) sib.removeAttribute("inert"); if (hidden === null) sib.removeAttribute("aria-hidden"); else sib.setAttribute("aria-hidden", hidden); });
+  }
+  return () => undo.forEach((f) => f());
+}
+
+/**
+ * The lesson as learners will play it, from the unsaved draft: nothing is recorded, submitted or synced. Any step can be opened.
+ * A real modal, as its aria-modal says: opening moves the keyboard focus into it (it stayed on the Preview button, under
+ * the preview, and Tab walked an editor nobody could see), the editor behind is inert while it is open, Tab stays
+ * inside, and closing (the button, Escape, the lesson's own exit) gives the focus back to the button that opened it.
+ */
+function Preview({ Player, unit, lesson, lang, at, opener, onLang, onExit }: { Player: Player; unit: Unit; lesson: Lesson; lang: string; at: number; opener?: HTMLElement | null; onLang: (l: string) => void; onExit: () => void }) {
   const { t } = useI18n();
   const languages = useLanguages();
   usePack(lang); // an added language's interface strings, for the preview's buttons and labels
   const dir = languageOf(lang).dir;
+  const box = useRef<HTMLDivElement>(null);
+  // The button that opened it (Safari gives a clicked button no focus, so the editor says which); else what had the focus.
+  const [from] = useState(() => opener ?? (typeof document === "undefined" ? null : (document.activeElement as HTMLElement | null)));
   useEffect(() => { const esc = (e: KeyboardEvent) => e.key === "Escape" && onExit(); addEventListener("keydown", esc); return () => removeEventListener("keydown", esc); }, [onExit]);
+  // A layout effect: the clean-up runs however the preview goes (Close, Escape, or the editor leaving the page with it
+  // open), while the preview is still in the page, so nothing is ever left inert and the focus never falls to the page.
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const show = hideBehind(el);
+    el.focus({ preventScroll: true });
+    return () => { show(); if (from?.isConnected && from !== document.body) from.focus({ preventScroll: true }); };
+  }, [from]);
+  /** Tab from the last control goes to the first, and Shift+Tab from the first (or the dialog itself) to the last. */
+  const trap = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const el = box.current;
+    if (e.key !== "Tab" || !el) return;
+    const items = [...el.querySelectorAll<HTMLElement>(TABBABLE)].filter((x) => !x.closest("[hidden], [inert]"));
+    const first = items[0], last = items[items.length - 1], now = document.activeElement;
+    if (!first) { e.preventDefault(); el.focus(); return; }
+    if (e.shiftKey ? now === first || now === el : now === last) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+  };
   return (
-    <div className="ed-preview" role="dialog" aria-modal="true" aria-label={t("cms.preview")}>
+    <div ref={box} tabIndex={-1} className="ed-preview" role="dialog" aria-modal="true" aria-label={t("cms.preview")} onKeyDown={trap}>
       <div className="ed-preview-bar">
         <strong>{t("cms.preview")}</strong>
         <span className="row-gap">
@@ -516,7 +686,7 @@ function Preview({ Player, unit, lesson, lang, at, onLang, onExit }: { Player: P
       </div>
       <I18nProvider lang={lang}>
         <div dir={dir} lang={lang} className="ed-preview-body">
-          <Player key={`${lesson.id}-${lang}`} unitId={unit.id} lesson={lesson} track={unit.track} preview={{ onExit }} explore={{ at }} />
+          <Player key={`${lesson.id}-${lang}`} unitId={unit.id} lesson={lesson} track={unit.track} unitKind={unit.kind} audience={unit.audience} teach={unit.teach} preview={{ onExit }} explore={{ at }} />
         </div>
       </I18nProvider>
     </div>

@@ -11,11 +11,13 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { audit, caller, db, freshCaller, messaging, str } from "./admin.js";
 import {
-  broadcastCondition, isTopicPart, linkFor, message, tagFor, topicLang, topicsFor, webpush, wordingFor,
+  broadcastCondition, isTopicPart, linkFor, message, projectsLink, tagFor, topicLang, topicsFor, webpush, wordingFor,
   type Audience, type Cat, type Kind, type Lang, type MessageVars,
 } from "./messages.js";
 import { isValidTz, parseTime, pickNudge, utcHourFor } from "./nudge.js";
+import { stillTeaches } from "./roles.js";
 import { LANG_CODE } from "./shared/languages.js";
+import { recountWaiting } from "./waiting.js";
 
 interface Cats { reminders: boolean; reviews: boolean; staff: boolean; news: boolean }
 interface Notify {
@@ -144,6 +146,22 @@ async function forgetDevice(uid: string, ref: DocumentReference) {
   if (o.get("uid") === uid) await owner.delete();
 }
 
+/**
+ * Every device of an account whose data is being deleted (account.ts): each token leaves its announcement topics, so
+ * the phone stops getting Darsi's news, and the device and token records go. Returns how many devices there were.
+ */
+export async function forgetAllDevices(uid: string): Promise<number> {
+  const devs = await db.collection(`users/${uid}/devices`).get();
+  await Promise.all(devs.docs.map(async (d) => {
+    const token = d.get("token");
+    if (typeof token === "string") await applyTopics(token, topicsOf(d.get("topics")), []);
+    await forgetDevice(uid, d.ref);
+  }));
+  const owned = await db.collection("pushTokens").where("uid", "==", uid).get();
+  await Promise.all(owned.docs.map((d) => d.ref.delete()));
+  return devs.size;
+}
+
 /* ---------- Sending ---------- */
 
 /** Sends one kind to all of a person's devices, each in its own language. Returns how many devices accepted it. */
@@ -191,7 +209,28 @@ const quietly = (p: Promise<unknown>, what: string) => p.catch((e) => logger.war
 export async function alertOrgRequest(orgId: string, orgName: string) {
   const admins = await db.collection("users").where("role", "==", "superadmin").limit(50).get();
   await Promise.all(admins.docs.map((a) =>
-    quietly(sendToUser(a.id, "staff", "staffOrgRequest", { org: orgName }, "/super", `darsi-staff-${orgId}`, a.data()), "staffOrgRequest")));
+    quietly(sendToUser(a.id, "staff", "staffOrgRequest", { org: orgName }, "/super?tab=requests", `darsi-staff-${orgId}`, a.data()), "staffOrgRequest")));
+}
+
+/**
+ * An organization request was reviewed: whoever sent it hears the outcome (reviewOrg). Approved, it opens the admin
+ * pages they now have; rejected, /org, which shows the reviewer's note. Their "Project feedback" switch covers it: a
+ * learner's settings never show the staff one.
+ */
+export async function alertOrgReviewed(uid: string, orgId: string, orgName: string, approved: boolean, note: string) {
+  const kind: Kind = approved ? "orgApproved" : "orgRejected";
+  await sendToUser(uid, "reviews", kind, { org: orgName, feedback: note }, linkFor(kind), tagFor(kind, orgId));
+}
+
+/**
+ * A project that waits for Darsi staff (a capstone milestone from someone without a school: capstone.ts queueFor)
+ * reaches every platform admin, as an organization request does, so the "replies here, usually within a week" the
+ * learner is told can be kept (FS-STAFFQUEUE).
+ */
+async function alertStaffQueue(uid: string, id: string, vars: MessageVars) {
+  const admins = await db.collection("users").where("role", "==", "superadmin").limit(50).get();
+  await Promise.all(admins.docs.filter((a) => a.id !== uid).map((a) =>
+    quietly(sendToUser(a.id, "staff", "staffSubmission", vars, "/super/projects", `darsi-staff-${id}`, a.data()), "staffSubmission")));
 }
 
 /* ---------- Callables ---------- */
@@ -288,33 +327,46 @@ export const sendBroadcast = onCall(async (req) => {
 
 /* ---------- Triggers ---------- */
 
-/** A project was submitted: the student's teacher hears about it, or the organization's admins when there is no teacher. */
+/**
+ * A project was submitted: the student's teacher hears about it, or the organization's admins when there is no
+ * teacher. The teacher counts only while they still teach in the student's organization: one who left (or became a
+ * student) gets nothing, and the admins hear instead. A capstone milestone queued for Darsi staff goes to platform
+ * admins.
+ */
 export const onSubmissionCreated = onDocumentCreated("users/{uid}/submissions/{id}", async (event) => {
   const { uid, id } = event.params;
   const student = await db.doc(`users/${uid}`).get();
   if (!student.exists) return;
+  // The staff lists show who has projects waiting (waiting.ts).
+  await recountWaiting(uid);
   const vars = { name: str(student.get("name"), 120) || str(student.get("username"), 40), uid };
   const tag = `darsi-staff-${id}`;
+  if (event.data?.get("queue") === "staff") { await alertStaffQueue(uid, id, vars); return; }
+  const orgId = str(student.get("orgId"), 128);
   const teacherId = str(student.get("teacherId"), 128);
   if (teacherId && teacherId !== uid) {
-    await quietly(sendToUser(teacherId, "staff", "staffSubmission", vars, `/teach/${encodeURIComponent(uid)}`, tag), "staffSubmission");
-    return;
+    const teacher = (await db.doc(`users/${teacherId}`).get()).data();
+    if (teacher && stillTeaches(teacher, orgId)) {
+      await quietly(sendToUser(teacherId, "staff", "staffSubmission", vars, projectsLink("teacher", uid), tag, teacher), "staffSubmission");
+      return;
+    }
   }
-  const orgId = str(student.get("orgId"), 128);
   if (!orgId) return;
   const admins = await db.collection("users").where("orgId", "==", orgId).where("role", "==", "orgAdmin").limit(50).get();
   await Promise.all(admins.docs.filter((a) => a.id !== uid).map((a) =>
-    quietly(sendToUser(a.id, "staff", "staffSubmission", vars, `/admin/people/${encodeURIComponent(uid)}`, tag, a.data()), "staffSubmission")));
+    quietly(sendToUser(a.id, "staff", "staffSubmission", vars, projectsLink("admin", uid), tag, a.data()), "staffSubmission")));
 });
 
-/** A project was reviewed: the person who sent it gets the result and the feedback. */
+/** A project was reviewed: the person who sent it gets the result and the feedback, and opens it in Me's "My projects". */
 export const onSubmissionUpdated = onDocumentUpdated("users/{uid}/submissions/{id}", async (event) => {
   const before = event.data?.before.data(), after = event.data?.after.data();
+  // Reviewed, or set back to "submitted": the staff lists' count of projects waiting changes (waiting.ts).
+  if (before && after && before.status !== after.status) await recountWaiting(event.params.uid);
   if (!before || !after || before.status !== "submitted") return;
   const kind: Kind | null = after.status === "approved" ? "reviewApproved" : after.status === "revise" ? "reviewRevise" : null;
   if (!kind) return;
   const { uid, id } = event.params;
-  await quietly(sendToUser(uid, "reviews", kind, { feedback: after.feedback }, "/learn", `darsi-review-${id}`), kind);
+  await quietly(sendToUser(uid, "reviews", kind, { feedback: after.feedback }, linkFor(kind), tagFor(kind, id)), kind);
 });
 
 /** Role, organization or language changed: every device moves to the matching announcement topics. */
@@ -330,7 +382,9 @@ export const onUserTopicsChanged = onDocumentUpdated("users/{uid}", async (event
 /* ---------- Daily nudges ---------- */
 
 const PAGE = 300;
-const PARALLEL = 25;
+const PARALLEL = 50;
+/** The run stops taking people after this long (of its 540 s), so it ends by itself and says where it got to. */
+const BUDGET_MS = 500e3;
 
 function isoOf(v: unknown): string | null {
   if (typeof v === "string") return parseTime(v) === null ? null : v;
@@ -373,26 +427,45 @@ async function nudgeOne(doc: QueryDocumentSnapshot, nowMs: number, hour: number)
  * At the top of every UTC hour: the people whose reminder hour this is get at most one encouraging nudge for their day.
  * A cron schedule, not "every 60 minutes": in App Engine cron syntax that interval counts from the end of the previous
  * run, so it drifts past :00 and can eventually skip an hour (everyone whose hourUtc it is would miss that day's nudge).
+ *
+ * One run, 50 people at a time, for at most 500 s: it used to run until the platform killed it at 540 s, with no
+ * record of how far it got. Now it stops by itself and leaves its heartbeat in stats/jobs.dailyNudges (the shape every
+ * scheduled job leaves: {at, ok, …}) with `complete`: false means people of this hour were left without their nudge
+ * (also logged as an error), which is the signal to split the hour over several runs. `seen` counts the people the run
+ * got to.
  */
 export const dailyNudges = onSchedule({ schedule: "0 * * * *", timeZone: "UTC", timeoutSeconds: 540, retryCount: 0 }, async () => {
   const nowMs = Date.now();
   const hour = new Date(nowMs).getUTCHours();
   let last: QueryDocumentSnapshot | undefined;
-  let seen = 0, sent = 0, failed = 0;
-  for (;;) {
-    let q = db.collection("users").where("notify.on", "==", true).where("notify.hourUtc", "==", hour).limit(PAGE);
-    if (last) q = q.startAfter(last);
-    const page = await q.get();
-    seen += page.size;
-    for (let i = 0; i < page.docs.length; i += PARALLEL) {
-      const results = await Promise.allSettled(page.docs.slice(i, i + PARALLEL).map((d) => nudgeOne(d, nowMs, hour)));
-      for (const r of results) {
-        if (r.status === "fulfilled") { if (r.value) sent++; }
-        else { failed++; logger.warn("nudge failed", { error: String(r.reason) }); }
+  let seen = 0, sent = 0, failed = 0, complete = false;
+  const beat = (fields: Record<string, unknown>) => db.doc("stats/jobs").set({ dailyNudges: { at: Date.now(), hour, seen, sent, failed, complete, ...fields } }, { merge: true });
+  try {
+    run: for (;;) {
+      let q = db.collection("users").where("notify.on", "==", true).where("notify.hourUtc", "==", hour).limit(PAGE);
+      if (last) q = q.startAfter(last);
+      const page = await q.get();
+      for (let i = 0; i < page.docs.length; i += PARALLEL) {
+        if (Date.now() - nowMs >= BUDGET_MS) break run;
+        const some = page.docs.slice(i, i + PARALLEL);
+        const results = await Promise.allSettled(some.map((d) => nudgeOne(d, nowMs, hour)));
+        seen += some.length;
+        for (const r of results) {
+          if (r.status === "fulfilled") { if (r.value) sent++; }
+          else { failed++; logger.warn("nudge failed", { error: String(r.reason) }); }
+        }
       }
+      if (page.size < PAGE) { complete = true; break; }
+      if (Date.now() - nowMs >= BUDGET_MS) break;
+      last = page.docs[page.docs.length - 1];
     }
-    if (page.size < PAGE) break;
-    last = page.docs[page.docs.length - 1];
+  } catch (e) {
+    // The query itself failed (one person's failure never gets here): say so, and let the run count as failed.
+    await beat({ ok: false, error: String((e as Error)?.message ?? e).slice(0, 200) }).catch((x) => logger.error("dailyNudges heartbeat not written", { error: String(x) }));
+    throw e;
   }
-  logger.info("dailyNudges", { hour, seen, sent, failed });
+  logger.info("dailyNudges", { hour, seen, sent, failed, complete });
+  if (!complete) logger.error("dailyNudges incomplete", { hour, seen });
+  // The nudges are out either way: a heartbeat that can't be written must not fail the run.
+  await beat({ ok: true, error: FieldValue.delete() }).catch((x) => logger.error("dailyNudges heartbeat not written", { error: String(x) }));
 });

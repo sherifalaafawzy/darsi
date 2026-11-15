@@ -17,7 +17,7 @@ async function onboard(page: Page, lang: "English" | "العربية" = "English
   await page.getByRole("button", { name: /Continue|متابعة/ }).click();
   await page.getByRole("radio").nth(1).click();
   await page.getByRole("button", { name: /Continue|متابعة/ }).click();
-  await page.getByRole("button", { name: /Start from the beginning|ابدأ من البداية/ }).click();
+  await page.getByRole("button", { name: /Skip the check|تخطَّ الاختبار/ }).click();
 }
 
 test("onboarding → home shows the published AI unit", async ({ page }) => {
@@ -36,6 +36,10 @@ test("guests never download the Firebase SDK", async ({ page }) => {
   // Me holds the notifications panel: for a guest it explains accounts and still loads no Firebase.
   await page.goto("/me");
   await expect(page.getByText("Create an account or sign in to get friendly reminders")).toBeVisible();
+  expect(await firebaseChunks(page)).toEqual([]);
+  // Organization only says to sign in: App answers that itself, without the organization chunk (which reads through the SDK).
+  await page.goto("/org?code=abcd-efgh-jkmn");
+  await expect(page.getByText("Sign in to join or register an organization")).toBeVisible();
   expect(await firebaseChunks(page)).toEqual([]);
 });
 
@@ -79,7 +83,7 @@ test("a full lesson can be completed and unlocks the classroom kit", async ({ pa
     // Project step: a guest can't submit for review, so take the "do it in class" path.
     const later = page.getByRole("button", { name: "I’ll do it in class and submit later" });
     if (await later.isVisible()) {
-      await expect(page.getByText("To send your work to a teacher for review, sign in")).toBeVisible();
+      await expect(page.getByText("To send your work for review, sign in")).toBeVisible();
       await later.click();
     }
     if (await check.isVisible()) {
@@ -88,7 +92,8 @@ test("a full lesson can be completed and unlocks the classroom kit", async ({ pa
       const left = page.locator(".dr-match-col").first().locator(".dr-match-tile");
       const right = page.locator(".dr-match-col").nth(1).locator(".dr-match-tile");
       for (let k = 0; k < (await left.count()); k++) { await left.nth(k).click(); await right.nth(k).click(); }
-      const bank = page.locator(".dr-bank-chip:not([disabled])");
+      // A placed word stays focusable (aria-disabled), so look for the words not used yet.
+      const bank = page.locator(".dr-bank-chip:not([aria-disabled])");
       while (await bank.count()) await bank.first().click();
       const tf = page.getByLabel("Type your answer");
       if (await tf.isVisible()) await tf.fill("token");
@@ -109,7 +114,9 @@ test("a video that cannot load falls back to the transcript instead of blocking 
   await page.getByRole("button", { name: "Start" }).first().click();
   // No video file is published yet (and offline phones may not have it): tapping play must not leave Continue disabled forever.
   await page.locator(".dr-video-bigplay").click();
-  await expect(page.getByText("Video in production — read the transcript below.")).toBeVisible();
+  // The step has a video address, so it says the video can't play here (not "in production"), and drops the player.
+  await expect(page.getByText(/This video can’t play right now/)).toBeVisible();
+  await expect(page.locator(".dr-video")).toHaveCount(0);
   await expect(page.getByRole("radio", { name: "False" })).toBeVisible();
 });
 
@@ -151,10 +158,11 @@ test("Labs: labs are not in the install, and \"Save all labs\" makes them work o
   await page.goto("/labs");
   await page.getByRole("button", { name: /Save all labs for offline \([\d.]+ MB\)/ }).click();
   await expect(page.getByText("All labs are saved on this phone")).toBeVisible();
-  expect(await labChunks("darsi-labs")).toBeGreaterThanOrEqual(8);
+  // Pinned in darsi-saved, which keeps them across app updates (platform/offline.ts, public/offline-sw.js).
+  expect(await labChunks("darsi-saved")).toBeGreaterThanOrEqual(8);
   await context.setOffline(true);
   await page.goto("/labs/minilm");
-  await expect(page.getByRole("heading", { name: "Build a tiny language model" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Build a tiny language model", level: 2 })).toBeVisible();
   await page.getByRole("button", { name: "Write a sentence" }).click();
   await expect(page.getByText(/copied from the training text|not in the training text/)).toBeVisible();
 });
@@ -218,11 +226,39 @@ test("the service worker leaves Firebase's own pages (/__/) to the server", asyn
   expect((await page.goto("/__/auth/handler?apiKey=x&authType=signInViaPopup"))!.fromServiceWorker()).toBe(false);
 });
 
+// The public pages (/courses, /features, /why-darsi and /ar/…) are static files for search and AI engines: a phone
+// that has the app must get them from the server, never the app's own page in their place (TECHNICAL.md "Public pages").
+test("the service worker leaves the public pages to the server, and they run no app code", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium");
+  await onboard(page);
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  expect(await page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+  expect((await page.goto("/learn"))!.fromServiceWorker()).toBe(true);
+  for (const [path, lang] of [["/courses/", "en"], ["/features/labs/", "en"], ["/why-darsi/", "en"], ["/ar/courses/", "ar"]] as const) {
+    const res = await page.goto(path);
+    expect(res!.fromServiceWorker(), path).toBe(false);
+    await expect(page.locator("body.pp h1")).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("lang", lang);
+    const loaded = await page.evaluate(() => performance.getEntriesByType("resource").map((e) => e.name.split("/").pop()!));
+    expect(loaded.filter((f) => f.endsWith(".js")), path).toEqual([]);
+    // An English page never downloads the Arabic web fonts.
+    if (lang === "en") expect(loaded.filter((f) => /arabic|latin-ext/.test(f)), path).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), path).toBe(true);
+  }
+});
+
 test("an English page never downloads the Arabic or extended-Latin fonts", async ({ page }) => {
   // The landing page and the language picker show "العربية"; Me shows the picker again and "درسي" in its footer.
   await onboard(page);
   await page.getByRole("link", { name: "Me" }).first().click();
   await expect(page.getByRole("heading", { name: "Account" })).toBeVisible();
+  // Two labs show Arabic samples on their English pages ("Yes, send it." in Arabic; "Darsi درسي" in Bits and bytes).
+  // Navigate inside the app (no reload), so this page's font requests are all counted below.
+  for (const [id, title] of [["approve", "Ask before acting"], ["binary", "Bits and bytes"]]) {
+    await page.evaluate((path) => { history.pushState(null, "", path); dispatchEvent(new PopStateEvent("popstate")); }, `/labs/${id}`);
+    await expect(page.getByRole("heading", { name: title, level: 2 })).toBeVisible();
+  }
   // Punctuation pasted into English lessons that the Latin files lack (U+2010/2011 hyphens, U+204F), plus invisible
   // direction and joining marks: none of them may pull in an Arabic face. Both stacks, every weight in use.
   await page.evaluate(async () => {

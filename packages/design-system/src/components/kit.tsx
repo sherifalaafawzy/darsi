@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Button, Icon, TrackChip, cx, trackClass, useTrackStyles, type IconName, type Track } from "./primitives";
 
-export type ResourceKind = "lesson-plan" | "worksheet" | "poster" | "slides" | "answer-key" | "certificate";
-const KIND_ICON: Record<ResourceKind, IconName> = { "lesson-plan": "file", worksheet: "edit", poster: "image", slides: "video", "answer-key": "check", certificate: "award" };
+export type ResourceKind = "lesson-plan" | "worksheet" | "poster" | "slides" | "video" | "answer-key" | "certificate";
+const KIND_ICON: Record<ResourceKind, IconName> = { "lesson-plan": "file", worksheet: "edit", poster: "image", slides: "image", video: "video", "answer-key": "check", certificate: "award" };
 
 /** CSS-drawn A4 thumbnail — no image download. */
 export function PagePreview({ track = "ai", kind = "worksheet" }: { track?: Track; kind?: ResourceKind }) {

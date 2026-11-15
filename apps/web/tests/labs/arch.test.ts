@@ -4,12 +4,12 @@ import { continueSong, nextOf, PITCHES, SONG, transitions } from "../../src/labs
 import { FACE_LINE, judged, likeness, prototype, TEST, TRAIN, WIDE } from "../../src/labs/apps/detect/model";
 import { decode, encode, mse, paint } from "../../src/labs/apps/vae/model";
 import { addNoise, CLEAN, denoiseStep, mse as dmse, noisePattern } from "../../src/labs/apps/denoise/model";
-import { BATCH, fits, memory, WIDE as WIDE_JOB } from "../../src/labs/apps/split/model";
+import { BATCH, fits, memory, onMachine, WIDE as WIDE_JOB } from "../../src/labs/apps/split/model";
 import { CASES, judge, tally, type Mark } from "../../src/labs/apps/suite/model";
 
 describe("a memory that fades", () => {
   it("forgets a cue when little memory survives, and keeps it when almost all survives", () => {
-    expect(rnnStep(0, 1, 0.9)).toBeCloseTo(Math.tanh(1));
+    expect(rnnStep(0, 1, 0.9)).toBeCloseTo(1); // the cue goes in whole, as the lessons count it
     expect(cueLeft(0.05).kept).toBeLessThan(0.2);
     expect(cueLeft(0.95).kept).toBeGreaterThan(0.5);
   });
@@ -56,11 +56,21 @@ describe("one denoise step", () => {
 });
 
 describe("two machines", () => {
-  it("fits a wide layer only when the layer is split, and a long batch when the examples are split", () => {
+  it("fits a wide layer only when the layer is split, and a large batch when the examples are split", () => {
     expect(fits(WIDE_JOB, "data")).toBe(false);
     expect(fits(WIDE_JOB, "model")).toBe(true);
     expect(memory(WIDE_JOB, "model")).toBeLessThan(memory(WIDE_JOB, "data"));
     expect(fits(BATCH, "data")).toBe(true);
+    // The large batch fits both ways (try3 says so); the lessons still split the examples there.
+    expect(fits(BATCH, "model")).toBe(true);
+  });
+
+  it("shows the sums ai-d3 and ai-u4 quote: 16 + 1 × 16 = 32, 8 + 2 × 8 = 24, 4 + 4 × 4 = 20", () => {
+    const sum = (j: typeof BATCH, how: "data" | "model") => { const m = onMachine(j, how); return [m.weights, m.examples, m.width, memory(j, how)]; };
+    expect(sum(WIDE_JOB, "data")).toEqual([16, 1, 16, 32]);
+    expect(sum(WIDE_JOB, "model")).toEqual([8, 2, 8, 24]);
+    expect(sum(BATCH, "data")).toEqual([4, 4, 4, 20]);
+    expect(sum(BATCH, "model")).toEqual([2, 8, 2, 18]);
   });
 });
 

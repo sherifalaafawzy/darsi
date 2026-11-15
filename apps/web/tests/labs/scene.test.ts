@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { compileQuestion, pictureHint } from "../../src/labs/apps/tutor/compile";
-import { bubble, expand, greedyBag, parseScene, sceneResult, shortest, specForTopic, specFromCourse, specFromQuestion } from "../../src/labs/apps/tutor/expand";
+import { bubble, expand, greedyBag, parseScene, sceneResult, shortest, specForTopic, specFromCourse, specFromQuestion, type SceneSpec } from "../../src/labs/apps/tutor/expand";
 
 describe("scene JSON", () => {
   it("copies a typed map into Dijkstra's picture", () => {
@@ -27,6 +27,27 @@ describe("scene JSON", () => {
     const last = frames[frames.length - 1].order.map((i) => [4, 2, 5, 1][i]);
     expect(last).toEqual([1, 2, 4, 5]);
     expect(expand(spec!).scene.content.elements[1]).toMatchObject({ type: "array" });
+  });
+
+  it("writes the Arabic answers as Arabic: Arabic-Indic digits, «،» between items, counted nouns", () => {
+    const sort = expand(compileQuestion("Sort 4, 2, 5, 1")!).line;
+    expect(sort.en).toContain("In order: 1, 2, 4, 5.");
+    expect(sort.ar).toContain("بعد الترتيب: ١، ٢، ٤، ٥.");
+    expect(sort.ar).toMatch(/يجري [٠-٩]+ تبديلات/);
+    const map = expand(compileQuestion("Home-Tala 4, Tala-School 3, Home-School 9, from Home to School")!).line;
+    expect(map.ar).toContain("أقصر طريق هو Home ← Tala ← School، وطوله ٧.");
+    const one = expand({ kind: "sort", values: [2, 1, 3] }).line.ar;
+    expect(one).toContain("يجري تبديلًا واحدًا");
+    const none = expand({ kind: "sort", values: [1, 2, 3] }).line.ar;
+    expect(none).toContain("لا يحتاج إلى أي تبديل");
+    const query = expand({ kind: "query", min: 60 }).line.ar;
+    expect(query).toContain("اثنين: سلمى، أمينة.");
+    const specs: SceneSpec[] = [compileQuestion("Pack books 5 3, desks 4 4, chalk 2 1, capacity 8")!, { kind: "signal", high: 30, low: 28, adc: 3 }, { kind: "search", values: [1, 3, 5, 7, 9], target: 7 }];
+    for (const spec of specs) {
+      const ar = expand(spec).line.ar;
+      expect(ar).not.toMatch(/[0-9]/);
+      expect(ar).not.toContain(", ");
+    }
   });
 
   it("packs the truck from the question", () => {

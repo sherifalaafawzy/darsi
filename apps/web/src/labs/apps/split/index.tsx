@@ -1,47 +1,63 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
 import { Segmented } from "../../kit/controls";
+import { Formula } from "../../kit/Formula";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
-import { BATCH, fits, memory, WIDE, type Job, type Split } from "./model";
+import { BATCH, fits, memory, onMachine, WIDE, type Job, type Split } from "./model";
 
 const S = {
   en: {
     intro: "One training step stores the weights and the activations, so memory grows with the width of the layer and with the batch. Two machines can split the examples (data parallel) or split the layer (model parallel).",
-    job: "The job", wide: "A wide layer", batch: "A long batch",
+    job: "The job", wide: "A wide layer", batch: "A large batch",
     how: "How to split", data: "Split the examples", model: "Split the layer",
+    weights: "Weights in the layer", examples: "Examples in the batch", machines: "Machines",
+    sum: "On one machine: weights + examples × activations per example",
     used: "Memory on one machine", cap: "It can hold",
     yes: "It fits.", no: "It does not fit.",
     try1: "On a wide layer, split the examples: each machine still holds the whole layer, and it does not fit.",
     try2: "On the same layer, split the layer: each machine holds half, and it fits.",
-    try3: "Switch to a long batch and a narrow layer: splitting the examples fits, because the weights were small.",
+    try3: "Switch to a large batch and a narrow layer: splitting the examples fits, because the weights are small. Both splits fit here, and splitting the layer even uses less memory; still split the examples, because the machines then exchange their gradients only once per step.",
     takeaway: "Data parallel copies the whole model onto every machine. Model parallel is for a layer that does not fit in one machine. A phone is one machine: this is a diagram, not a cluster.",
   },
   ar: {
     intro: "تخزّن خطوة التدريب الأوزان والتنشيطات، فتكبر الذاكرة مع عرض الطبقة ومع حجم الدفعة. ويستطيع جهازان أن يقسّما الأمثلة (توازي البيانات) أو أن يقسّما الطبقة (توازي النموذج).",
-    job: "المهمة", wide: "طبقة عريضة", batch: "دفعة طويلة",
+    job: "المهمة", wide: "طبقة عريضة", batch: "دفعة كبيرة",
     how: "كيف نقسم", data: "قسّم الأمثلة", model: "قسّم الطبقة",
+    weights: "الأوزان في الطبقة", examples: "الأمثلة في الدفعة", machines: "الأجهزة",
+    sum: "على جهاز واحد: الأوزان + الأمثلة × التنشيطات لكل مثال",
     used: "الذاكرة على جهاز واحد", cap: "يسع",
     yes: "يتسع.", no: "لا يتسع.",
     try1: "على طبقة عريضة، قسّم الأمثلة: كل جهاز يحتفظ بالطبقة كلها، وهي لا تتسع.",
     try2: "على الطبقة نفسها، قسّم الطبقة: كل جهاز يحتفظ بنصفها، فتتسع.",
-    try3: "انتقل إلى دفعة طويلة وطبقة ضيقة: تقسيم الأمثلة يتسع، لأن الأوزان كانت صغيرة.",
+    try3: "انتقل إلى دفعة كبيرة وطبقة ضيقة: تقسيم الأمثلة يتسع، لأن الأوزان صغيرة. وهنا يتسع التقسيمان، بل إن تقسيم الطبقة يستهلك ذاكرة أقل؛ ومع ذلك قسّم الأمثلة، لأن الجهازين لا يتبادلان تدرّجاتهما حينها إلا مرة في كل خطوة.",
     takeaway: "توازي البيانات ينسخ النموذج كله إلى كل جهاز. وتوازي النموذج لطبقة لا تتسع في جهاز واحد. والهاتف جهاز واحد: هذا رسم، وليس عنقود حواسيب.",
   },
 };
 
-export default function SplitLab({ meta }: LabProps) {
+export default function SplitLab({ meta, onDone }: LabProps) {
   const s = useS(S);
   const { num } = useI18n();
   const [job, setJob] = useState<Job>(WIDE);
   const [how, setHow] = useState<Split>("data");
   const used = memory(job, how);
+  const m = onMachine(job, how);
+  // It starts with a split that does not fit; finding one that does is the lab.
+  const ok = fits(job, how);
+  useEffect(() => { if (ok) onDone?.(); }, [ok]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <Segmented label={s.job} value={job.id} options={[["wide", s.wide], ["batch", s.batch]]} onChange={(id) => setJob(id === "wide" ? WIDE : BATCH)} />
+      <p className="lb-note">
+        {s.weights}: <bdi dir="ltr">{num(job.width)}</bdi><br />
+        {s.examples}: <bdi dir="ltr">{num(job.batch)}</bdi><br />
+        {s.machines}: <bdi dir="ltr">{num(job.machines)}</bdi>
+      </p>
       <Segmented label={s.how} value={how} options={[["data", s.data], ["model", s.model]]} onChange={setHow} />
-      <p>{s.used} <bdi dir="ltr">{num(used)}</bdi>. {s.cap} <bdi dir="ltr">{num(job.capacity)}</bdi>. {fits(job, how) ? s.yes : s.no}</p>
+      <p className="lb-note">{s.sum}</p>
+      <Formula parts={[num(m.weights), "+", num(m.examples), "×", num(m.width), "=", num(used)]} />
+      <p>{s.used} <bdi dir="ltr">{num(used)}</bdi>. {s.cap} <bdi dir="ltr">{num(job.capacity)}</bdi>. {ok ? s.yes : s.no}</p>
     </LabShell>
   );
 }

@@ -16,7 +16,12 @@ function useFolder(primary: string, fallback: string): string {
   return base;
 }
 
-/** The text-and-tool model for the labs, in the language on screen. */
+/**
+ * The text-and-tool model for the labs, in the language on screen. No lab uses it yet: the agents and AI security labs
+ * run the v1 model their lessons describe (agentloop/lab-agents.tsx, LAB_BASE in labs/apps/inject/lab-agent.ts). Note
+ * that it answers the fallback until the primary's manifest arrives, so a caller must not decide "already downloaded"
+ * (or load anything) from the first value it gets.
+ */
 export function useAppBase(): string {
   const { lang } = useI18n();
   return useFolder(appBase(lang === "ar" ? "ar" : "en"), TINYLM_BASE);

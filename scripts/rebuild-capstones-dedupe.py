@@ -3,6 +3,7 @@
 from __future__ import annotations
 import json
 import re
+import sys
 from copy import deepcopy
 from pathlib import Path
 
@@ -121,20 +122,24 @@ def starter_repo(projects, unit_id):
             return p["starterRepo"]
     return unit_id
 
-def rewrite_setup(setup, repo: str):
-    """Submission must not re-teach Starter. Point back only."""
+def rewrite_setup(setup, repo: str, mid: str):
+    """Submission must not re-teach Starter. Point back only, with the step's own milestone: a literal <mN> can't be typed
+    (PowerShell refuses '<', bash reads a redirect, and check.py matches no milestone). The third tab is labelled
+    'Colab or Codespaces' (capstoneText.ts CT.colab), so it gives the Codespaces steps; a notebook milestone (ai m3) is
+    written by hand in its unit."""
+    url = f"https://github.com/<your-username>/{repo}"
     return [
         {"os": "windows", "body": lt(
-            f"Use the copy you made in Starter (https://github.com/YOU/{repo}).\nActivate .venv, then: python check.py --milestone <mN>\nUpload the new darsi-check.json with your repo link.",
-            f"استخدم النسخة اللي عملتها في البداية (https://github.com/YOU/{repo}).\nفعّل .venv، وبعدين: python check.py --milestone <mN>\nارفع darsi-check.json الجديد مع رابط الريبو.",
+            f"Use the copy you made in Starter ({url}).\nIn the project terminal, activate .venv and run the check:\n.venv\\Scripts\\activate\npython check.py --milestone {mid}\nIf PowerShell blocks activate, run this instead:\n.venv\\Scripts\\python check.py --milestone {mid}\nUpload the new darsi-check.json with your repo link.",
+            f"استخدم النسخة اللي عملتها في البداية ({url}).\nفي طرفية المشروع، فعّل .venv وشغّل الفحص:\n.venv\\Scripts\\activate\npython check.py --milestone {mid}\nلو PowerShell منع التفعيل، شغّل ده بداله:\n.venv\\Scripts\\python check.py --milestone {mid}\nارفع darsi-check.json الجديد مع رابط المستودع.",
         )},
         {"os": "mac", "body": lt(
-            f"Use the copy you made in Starter (https://github.com/YOU/{repo}).\nsource .venv/bin/activate\npython check.py --milestone <mN>\nUpload darsi-check.json with your repo link.",
-            f"استخدم نسخة البداية.\nsource .venv/bin/activate\npython check.py --milestone <mN>\nارفع darsi-check.json مع رابط الريبو.",
+            f"Use the copy you made in Starter ({url}).\nIn the project terminal:\nsource .venv/bin/activate\npython check.py --milestone {mid}\nUpload the new darsi-check.json with your repo link.",
+            f"استخدم النسخة اللي عملتها في البداية ({url}).\nفي طرفية المشروع:\nsource .venv/bin/activate\npython check.py --milestone {mid}\nارفع darsi-check.json الجديد مع رابط المستودع.",
         )},
         {"os": "colab", "body": lt(
-            "If this milestone uses a notebook, open the link from the starter README.\nRun the cells, then python check.py --milestone <mN> where the README says.",
-            "لو المرحلة دي على دفتر، افتح الرابط من README البداية.\nشغّل الخلايا، وبعدين python check.py --milestone <mN> زي ما README بيقول.",
+            f"Codespaces: on your copy, press Code → Codespaces and open your codespace (or Create codespace on main).\nNo .venv in it yet? Do Starter's Install dependencies step first.\nThen, in its terminal:\nsource .venv/bin/activate\npython check.py --milestone {mid}\nRight-click darsi-check.json in the file list → Download, then upload it with your repo link.",
+            f"في Codespaces: على نسختك اضغط Code → Codespaces وافتح الـ codespace بتاعك (أو Create codespace on main).\nلسه مفيش فيه .venv؟ اعمل خطوة «ثبّت الاعتماديات» من البداية الأول.\nوبعدين في الطرفية بتاعته:\nsource .venv/bin/activate\npython check.py --milestone {mid}\nكليك يمين على darsi-check.json في قايمة الملفات واختار Download، وبعدين ارفعه مع رابط المستودع.",
         )},
     ]
 
@@ -484,7 +489,9 @@ def submission_lesson(unit, repo, projects, comps, mats):
         np = deepcopy(p)
         mid = np.get("milestone") or "m"
         np["id"] = f"project-{mid}"
-        np["setup"] = rewrite_setup(np.get("setup"), repo)
+        # The heading is the milestone's title only: the card below already shows the task and what to send.
+        np["prompt"] = {k: v.split("\n\n")[0] for k, v in (np.get("prompt") or {}).items()}
+        np["setup"] = rewrite_setup(np.get("setup"), repo, mid)
         np["final"] = False
         project_steps.append(np)
     if project_steps:
@@ -589,6 +596,11 @@ def main():
     changed = []
     for path in sorted(UNITS.glob("*-capstone.json")):
         unit = json.loads(path.read_text(encoding="utf-8"))
+        if unit.get("kind") == "capstone" and len(unit.get("lessons") or []) == 3 and "--force" not in sys.argv:
+            # Already rebuilt: the unit file is the source now, with hand-made fixes (each track's needs and setup tabs,
+            # the Arabic) that this script's generic text would undo. --force rebuilds it anyway.
+            print(unit["id"], "already rebuilt, skipped (the unit file is the source; --force rebuilds it)")
+            continue
         new_u = rebuild(unit)
         assert_clean(new_u)
         path.write_text(json.dumps(new_u, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -176,8 +176,16 @@ describe("UnitEditor", () => {
     fireEvent.click(within(nav).getByRole("button", { name: /Checks/ }));
     expect(await screen.findByText("No errors: ready to publish")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Publish" }));
-    await waitFor(() => expect(m.api.publishUnit).toHaveBeenCalledWith({ unitId: "ai-1" }));
+    // With the revision on screen, so a draft someone saved since is never published unseen.
+    await waitFor(() => expect(m.api.publishUnit).toHaveBeenCalledWith({ unitId: "ai-1", rev: 3 }));
     expect(await screen.findByText(/Published as version 2/)).toBeTruthy();
+  });
+
+  it("says so when someone saved the unit after it was opened, instead of publishing", async () => {
+    m.api.publishUnit.mockRejectedValueOnce(Object.assign(new Error("Someone saved this unit after you opened it."), { code: "functions/aborted", details: { reason: "changed" } }));
+    await openEditor();
+    fireEvent.click(await screen.findByRole("button", { name: "Publish" }));
+    expect(await screen.findByText(/Someone else saved this unit while you were editing/)).toBeTruthy();
   });
 
   it("blocks Publish while there are errors and jumps to the step from the checks list", async () => {
@@ -463,10 +471,11 @@ describe("Languages", () => {
     const Spy = () => { pickers = useLanguages().map((l) => l.code); return null; };
     wrap(<><TranslatePage /><Spy /></>, "/super/languages/fr", "/super/languages/:code");
     fireEvent.click(await screen.findByRole("button", { name: /To fix \(1\)/ }));
+    expect(screen.getByRole("tab", { name: "Translate" }).getAttribute("aria-selected")).toBe("true"); // the strings are the tab the page opens on
     expect(screen.getByText("q.found")).toBeTruthy();
     expect(screen.getByText("Use exactly these, as in English: {n} {total}")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Publish" }));
-    expect(await screen.findByText(/Not published yet: 1 translations need fixing/)).toBeTruthy();
+    expect(await screen.findByText(/Not published yet\. Translations to fix: 1 /)).toBeTruthy();
     expect(m.api.publishLanguage).not.toHaveBeenCalled();
 
     fireEvent.change(screen.getByLabelText("French"), { target: { value: "{n} sur {total} trouvés" } });
@@ -480,13 +489,81 @@ describe("Languages", () => {
 
   it("imports translations from a spreadsheet, skipping keys the app doesn't have", async () => {
     m.data.getTranslation.mockResolvedValue(draft({}));
-    wrap(<TranslatePage />, "/super/languages/fr", "/super/languages/:code");
+    wrap(<TranslatePage />, "/super/languages/fr?tab=sheet", "/super/languages/:code");
     const input = (await screen.findByText("Import a spreadsheet (.xlsx or .csv)")).parentElement!.querySelector("input")!;
+    expect(screen.getByRole("tab", { name: "Spreadsheet" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.queryByText("The app's words")).toBeNull(); // a tab never opened is not on the page
     const csv = new File([["key,English,fr", "common.continue,Continue,Continuer", "home.title,Learn,Apprendre", "nope,x,y", ""].join("\n")], "fr.csv", { type: "text/csv" });
     fireEvent.change(input, { target: { files: [csv] } });
-    expect(await screen.findByText("Read 2 translations from the file. Save to keep them. Skipped 1 rows with keys the app doesn't have.")).toBeTruthy();
-    expect(screen.getByText(/Translated: 2 of/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Save draft" })).toBeTruthy(); // not saved until asked
+    // The message is in the bar at the foot, outside the panels: seen under the Spreadsheet tab, and still there under Translate.
+    const said = await screen.findByText("Translations read from the file: 2. They save by themselves in a moment. Rows skipped (keys the app doesn't have): 1.");
+    expect(said.closest(".ed-bar")).toBeTruthy();
+    expect(said.closest('[role="tabpanel"]')).toBeNull();
+    expect(screen.getByText("Saving soon…")).toBeTruthy(); // the autosave takes it from here
+    fireEvent.click(screen.getByRole("tab", { name: "Translate" }));
+    expect(within(await screen.findByRole("tabpanel", { name: "Translate" })).getByText(/Translated: 2 of/)).toBeTruthy();
+    expect(screen.getByText(/Translations read from the file: 2\./)).toBeTruthy();
+    expect(screen.getByText("Saving soon…")).toBeTruthy();
+  });
+
+  it("opens Translate on “To fix” when Publish finds placeholders to fix from another tab", async () => {
+    m.data.getTranslation.mockResolvedValue(draft({ "common.continue": "Continuer", "q.found": "trouvés" }));
+    wrap(<TranslatePage />, "/super/languages/fr?tab=sheet", "/super/languages/:code");
+    expect(await screen.findByRole("tabpanel", { name: "Spreadsheet" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+    // The rows the message points at are under Translate: the page goes there, with only those rows listed.
+    const panel = await screen.findByRole("tabpanel", { name: "Translate" });
+    expect(screen.getByRole("tab", { name: "Translate" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.queryByRole("tabpanel", { name: "Spreadsheet" })).toBeNull(); // kept, but hidden
+    expect(within(panel).getByRole("button", { name: /To fix \(1\)/ }).getAttribute("aria-pressed")).toBe("true");
+    expect(within(panel).getByText("q.found")).toBeTruthy();
+    expect(within(panel).queryByText("common.continue")).toBeNull();
+    expect(screen.getByRole("alert").textContent).toMatch(/Not published yet\. Translations to fix: 1 /);
+    expect(m.api.publishLanguage).not.toHaveBeenCalled();
+  });
+
+  it("keeps a draft edit made under one tab while another is open, and saves them together", async () => {
+    m.data.getTranslation.mockResolvedValue(draft({}));
+    m.data.saveTranslation.mockImplementation(async (_d: unknown, rev: number) => ({ rev: rev + 1 }));
+    wrap(<TranslatePage />, "/super/languages/fr", "/super/languages/:code");
+    fireEvent.change(await screen.findByLabelText("Search keys, English and translations"), { target: { value: "common.continue" } });
+    const box = () => document.getElementById("ed-s-common.continue") as HTMLTextAreaElement;
+    fireEvent.change(box(), { target: { value: "Continuer" } });
+
+    fireEvent.click(screen.getByRole("tab", { name: "Details" }));
+    const details = await screen.findByRole("tabpanel", { name: "Details" });
+    expect(details.querySelector("details")).toBeNull(); // a plain panel: the tab replaced the fold
+    expect(within(details).getByRole("heading", { name: "Language details" })).toBeTruthy();
+    expect(screen.queryByRole("tabpanel", { name: "Translate" })).toBeNull();
+    expect(box().value).toBe("Continuer"); // still mounted, only hidden
+    fireEvent.change(within(details).getByLabelText("Name in English"), { target: { value: "French (France)" } });
+    expect(m.data.saveTranslation).not.toHaveBeenCalled(); // changing tabs is not leaving: nothing was saved on the way
+
+    fireEvent.click(screen.getByRole("tab", { name: "Translate" }));
+    const translate = await screen.findByRole("tabpanel", { name: "Translate" });
+    expect(box().value).toBe("Continuer");
+    expect((within(translate).getByLabelText("Search keys, English and translations") as HTMLInputElement).value).toBe("common.continue");
+    expect(within(translate).getAllByLabelText("French (France)").length).toBeGreaterThan(0); // reopened, it shows the name typed under Details
+
+    fireEvent.click(screen.getByRole("tab", { name: "Details" }));
+    expect((within(screen.getByRole("tabpanel", { name: "Details" })).getByLabelText("Name in English") as HTMLInputElement).value).toBe("French (France)");
+    fireEvent.click(screen.getByRole("button", { name: "Save draft" })); // the bar serves every tab
+    await waitFor(() => expect(m.data.saveTranslation).toHaveBeenCalledTimes(1));
+    expect(m.data.saveTranslation.mock.calls[0][0]).toMatchObject({ english: "French (France)", messages: { "common.continue": "Continuer" } });
+    expect(await screen.findByText("Draft saved.")).toBeTruthy();
+  });
+
+  it("opens each tab from its address, and Translate for one it doesn't have", async () => {
+    m.data.getTranslation.mockResolvedValue(draft({}));
+    const at = wrap(<TranslatePage />, "/super/languages/fr?tab=details", "/super/languages/:code");
+    expect(within(await screen.findByRole("tabpanel", { name: "Details" })).getByLabelText("Name in the language itself")).toBeTruthy();
+    expect(screen.getAllByRole("tab").map((x) => x.textContent)).toEqual(["Translate", "Spreadsheet", "Details"]);
+    expect(screen.getAllByRole("tab").map((x) => x.getAttribute("href"))).toEqual(["/super/languages/fr", "/super/languages/fr?tab=sheet", "/super/languages/fr?tab=details"]);
+    expect(screen.getByRole("button", { name: "Publish" })).toBeTruthy(); // the bar is under every tab
+    expect(m.data.getTranslation).toHaveBeenCalledTimes(1); // one read for the page, whatever the tab
+    at.unmount();
+    wrap(<TranslatePage />, "/super/languages/fr?tab=nope", "/super/languages/:code");
+    expect(within(await screen.findByRole("tabpanel", { name: "Translate" })).getByRole("heading", { name: "The app's words" })).toBeTruthy();
   });
 
   it("lets the lesson editor show fields for an added language, and checks what's missing in it", async () => {
@@ -511,7 +588,8 @@ describe("editor strings", () => {
     const { STEP_MENU } = await import("../src/cms/steps");
     const { TRACK_ICONS } = await import("../src/cms/TracksPage");
     const codes = ["required", "minItems", "duplicateId", "badId", "lessonIdPrefix", "badValue", "range", "answerNotInOptions", "answersNotInOptions",
-      "fillBlanks", "fillAnswers", "fillBank", "badUrl", "checkpoint", "tooLarge", "missingLang", "unknownCompetency", "noSlides", "codeTest", "unsolvable"];
+      "fillBlanks", "fillAnswers", "fillBank", "badUrl", "checkpoint", "tooLarge", "missingLang", "unknownCompetency", "noSlides", "codeTest", "unsolvable",
+      "duplicateText", "capstoneOnly", "capstoneMilestone"];
     const dynamic = [...codes.map((c) => `cms.issue.${c}`), ...ARTS.map((a) => `cms.art.${a}`),
       ...SLIDE_LAYOUTS.map((x) => `cms.layout.${x}`), ...["x", "y", "w", "h"].map((k) => `cms.spot.${k}`), ...["draft", "live", "changed"].map((s) => `cms.status.${s}`),
       ...["draft", "live", "changed"].map((s) => `cms.filter.${s}`), ...STEP_MENU.map((s) => `cms.stepHint.${s}`),

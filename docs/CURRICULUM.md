@@ -31,15 +31,15 @@ Each level builds on the one before: a learner placed at level 3 should find lev
 
 | Track | Level | Teachers | Students |
 |---|---|---|---|
-| AI | 1 | `ai-1-1` AI basics (live) | `ai-s1` What is AI? |
+| AI | 1 | `ai-1-1` AI basics | `ai-s1` What is AI? |
 | AI | 2 | `ai-2-1` AI tools for teaching: prompting, generating and checking, privacy | `ai-s2` Talking to AI honestly: prompts, checking facts, homework integrity |
 | AI | 3 | `ai-3-1` How models work: neurons, training and testing, overfitting, language models | `ai-s3` Train your own model: data, classifiers, testing, bias |
 | AI | 4 | `ai-4-1` Leading AI at school: bias audits, policy, integrity, an AI-supported unit | `ai-s4` AI and society: ethics, careers, design an AI solution |
-| Cyber | 1 | `cyber-1-1` Passwords and phishing (live) | `cyber-s1` Safe online: passwords and scams |
+| Cyber | 1 | `cyber-1-1` Passwords and phishing | `cyber-s1` Safe online: passwords and scams |
 | Cyber | 2 | `cyber-2-1` Protecting devices and data: updates, backups, two-step sign-in, Wi-Fi | `cyber-s2` Your digital footprint |
 | Cyber | 3 | `cyber-3-1` Privacy and school data: protection, permissions, social media, incidents | `cyber-s3` How attacks work, and how to defend |
 | Cyber | 4 | `cyber-4-1` A cyber-safe school: policy, risk assessment, incident drills, teaching cyber | `cyber-s4` Defenders: cryptography, networks, careers |
-| IoT | 1 | `iot-1-2` Sensors (live) | `iot-s1` Things that sense |
+| IoT | 1 | `iot-1-2` Sensors | `iot-s1` Things that sense |
 | IoT | 2 | `iot-2-1` Circuits and microcontrollers: current, LEDs, logic, binary | `iot-s2` Build a circuit |
 | IoT | 3 | `iot-3-1` Data and automation: logging, rules, battery, networks | `iot-s3` Make it automatic |
 | IoT | 4 | `iot-4-1` Smart school projects: design, deploy and maintain a sensor network, data ethics | `iot-s4` A connected world: networks, mesh, IoT security, a project |

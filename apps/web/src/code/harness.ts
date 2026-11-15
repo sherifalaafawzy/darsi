@@ -8,6 +8,8 @@
  * frees the program's objects before the traceback is formatted, so even a MemoryError gets reported.
  *
  * SQL: sameRows() compares a query's result with the solution's.
+ *
+ * normalizeCode() mends what a phone keyboard types that code can't read, before a run (CodeSteps).
  */
 import type { CodeLang, CodeTest } from "../content/types";
 
@@ -26,7 +28,8 @@ export interface RunRequest {
   setup?: string;
   solution?: string;
 }
-export interface SqlTable { columns: string[]; values: unknown[][] }
+/** A query's rows. A run sends back at most the first 200 (runSql); `rowCount` then says how many there were. */
+export interface SqlTable { columns: string[]; values: unknown[][]; rowCount?: number }
 export interface BoardRun { seconds: number; sensors: Record<string, number[]>; buttons: Record<string, number[]> }
 /** What happened on the board: each pin change as [ms, pin, "pin" | "duty" | "freq", value], and each pin's last value. */
 export interface BoardReport { events: [number, number, "pin" | "duty" | "freq", number][]; pins: Record<string, number>; timeUp: boolean }
@@ -289,5 +292,157 @@ export function runSql(SQL: { Database: new () => SqlDb }, req: RunRequest): Run
     const want = run(req.solution);
     r.passed = !mine.error && !want.error && sameRows(mine.table, want.table, isOrdered(req.solution));
   }
+  // Graded on every row; only the first 200 go back to the page, which shows 50 (a lab 100). A runaway join's hundreds of
+  // thousands would be copied there after the time limit, stalling the phone and staying in its memory.
+  const t = r.table;
+  if (t && t.values.length > 200) r.table = { columns: t.columns, values: t.values.slice(0, 200), rowCount: t.values.length };
   return r;
+}
+
+/* ---------- What a phone keyboard types ---------- */
+
+// Arabic keyboards type ٠–٩ (Persian ones ۰–۹) and the Arabic comma, semicolon, decimal point and percent sign; iOS and
+// pasted text bring curly quotes; Arabic lesson text, where code sits in invisible left-to-right isolates, brings those
+// marks and no-break spaces when copied. Python and SQL read each of them as a syntax error.
+const CURLY = /[\u2018-\u201f]/g;
+const PUNCT: Record<string, string> = { "\u060c": ",", "\u061b": ";", "\u066b": ".", "\u066a": "%" };
+const SPACE = /[\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]/;
+const INVISIBLE = /[\u061c\u200b-\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff]/;
+/** One character outside strings and comments, as code reads it. */
+function codeChar(c: string): string {
+  const n = c.charCodeAt(0);
+  if (n < 0x80) return c;
+  if (n >= 0x660 && n <= 0x669) return String.fromCharCode(n - 0x630); // ٠–٩
+  if (n >= 0x6f0 && n <= 0x6f9) return String.fromCharCode(n - 0x6c0); // ۰–۹
+  return PUNCT[c] ?? (SPACE.test(c) ? " " : INVISIBLE.test(c) ? "" : c);
+}
+/** A quote as code reads it: ‘ ’ ‚ ‛ are ', and “ ” „ ‟ are ". */
+const straight = (c: string) => (c >= "\u2018" && c <= "\u201b" ? "'" : c >= "\u201c" && c <= "\u201f" ? "\"" : c);
+const straighten = (s: string) => s.replace(CURLY, straight);
+/**
+ * A curly quote of a string's own kind (q), inside it: text, or the string's end? iOS types curly quotes, the symbol
+ * row and most keyboards straight ones, so a string may open with one kind and hold or end with the other. An
+ * apostrophe before a letter (don’t) is text. In a string opened with a curly quote, any other one ends it, as a
+ * straight one would (input(“Name? “)). In one opened with a straight quote, it is text while a straight one still has
+ * to end the string on this line ("he said “hi”", 'the pupils’ marks'), and the end otherwise ("hello”, and "a”, "b”).
+ */
+function curlyIsText(src: string, i: number, q: string, straightOpened: boolean): boolean {
+  if (q === "'" && src[i] === "\u2019" && /[\p{L}\p{N}]/u.test(src[i + 1] ?? "")) return true;
+  if (!straightOpened) return false;
+  const e = src.indexOf("\n", i + 1), rest = src.slice(i + 1, e < 0 ? src.length : e);
+  // An odd number of straight quotes still to come: one of them ends this string. Unless the next quote of the kind is
+  // a straight one and a curly one comes later: the learner closes each string with a curly quote.
+  let straights = 0, curlies = 0, nextCurly: boolean | undefined;
+  for (const ch of rest) {
+    if (straight(ch) !== q) continue;
+    nextCurly ??= ch !== q;
+    if (ch === q) straights++; else curlies++;
+  }
+  return straights % 2 === 1 && (curlies === 0 || nextCurly === true);
+}
+
+const PY_PREFIXES = new Set(["r", "u", "b", "f", "br", "rb", "fr", "rf"]);
+function normalizePython(src: string): string {
+  let i = 0, out = "";
+  const n = src.length;
+  // Code: to the end, or in an f-string's {…} up to its closing brace (which the string takes).
+  const code = (field: boolean, oneLine: boolean) => {
+    let depth = 0;
+    while (i < n) {
+      const c = src[i], s = straight(c);
+      if (field && ((c === "}" && depth === 0) || (c === "\n" && oneLine))) return;
+      if (c === "#" && !field) { const e = src.indexOf("\n", i), stop = e < 0 ? n : e; out += straighten(src.slice(i, stop)); i = stop; }
+      else if (s === "'" || s === "\"") text();
+      else if (c === "«" || c === "»") quoted();
+      else {
+        if (field) depth += c === "{" || c === "(" || c === "[" ? 1 : c === "}" || c === ")" || c === "]" ? -1 : 0;
+        out += codeChar(c); i++;
+      }
+    }
+  };
+  // A string as typed, but for curly quotes (a quote after a backslash never ends it), with an f-string's fields read
+  // as code. A curly quote of the string's own kind that is text is escaped (\"); a raw string keeps it as typed.
+  const text = () => {
+    let j = i;
+    while (j > 0 && /\w/.test(src[j - 1])) j--;
+    const prefix = src.slice(j, i).toLowerCase(), known = PY_PREFIXES.has(prefix);
+    const f = known && prefix.includes("f"), raw = known && prefix.includes("r");
+    const q = straight(src[i]), end = src.startsWith(q + q + q, i) ? q + q + q : q, straightOpened = src[i] === q;
+    out += end; i += end.length;
+    while (i < n) {
+      const c = src[i];
+      if (c === "\\") { out += straighten(src.slice(i, i + 2)); i += 2; }
+      else if (src.startsWith(end, i)) { out += end; i += end.length; return; }
+      else if (c === "\n" && end.length === 1) return; // never closed: the line ends it
+      else if (f && c === "{" && src[i + 1] === "{") { out += "{{"; i += 2; }
+      else if (f && c === "{") { out += c; i++; code(true, end.length === 1); if (src[i] === "}") { out += "}"; i++; } }
+      else if (c !== q && straight(c) === q) {
+        if (end.length === 1 && !curlyIsText(src, i, q, straightOpened)) { out += q; i++; return; }
+        out += raw ? c : `\\${q}`; i++;
+      }
+      else { out += straight(c); i++; }
+    }
+  };
+  // Arabic quotation marks « » (either way round) around a value outside a string: a string in "…".
+  const quoted = () => {
+    out += "\""; i++;
+    while (i < n && src[i] !== "\n") {
+      const c = src[i];
+      if (c === "«" || c === "»") { out += "\""; i++; return; }
+      if (c === "\\") { out += straighten(src.slice(i, i + 2)); i += 2; } else { const s = straight(c); out += s === "\"" ? "\\\"" : s; i++; }
+    }
+  };
+  code(false, false);
+  return out;
+}
+
+function normalizeSql(src: string): string {
+  let i = 0, out = "";
+  const n = src.length;
+  // A string ('…', with '' inside) or a quoted name ("…", `…`, […]), as typed but for curly quotes: one of the string's
+  // own kind is doubled when it is text, or ends it (curlyIsText).
+  const quoted = (close: string) => {
+    const straightOpened = src[i] === close;
+    out += close === "]" ? "[" : close; i++;
+    while (i < n) {
+      const c = src[i];
+      if (c === close) {
+        if (close !== "]" && src[i + 1] === close) { out += c + c; i += 2; continue; }
+        out += c; i++; return;
+      }
+      if (straight(c) === close) {
+        if (!curlyIsText(src, i, close, straightOpened)) { out += close; i++; return; }
+        out += close + close; i++; continue;
+      }
+      out += straight(c); i++;
+    }
+  };
+  while (i < n) {
+    const c = src[i], s = straight(c);
+    if (c === "-" && src[i + 1] === "-") { const e = src.indexOf("\n", i), stop = e < 0 ? n : e; out += straighten(src.slice(i, stop)); i = stop; }
+    else if (c === "/" && src[i + 1] === "*") { const e = src.indexOf("*/", i + 2), stop = e < 0 ? n : e + 2; out += straighten(src.slice(i, stop)); i = stop; }
+    else if (s === "'" || s === "\"" || c === "`") quoted(s);
+    else if (c === "[") quoted("]");
+    else if (c === "«" || c === "»") { // Arabic quotation marks around a value: a string in '…'
+      out += "'"; i++;
+      while (i < n && src[i] !== "«" && src[i] !== "»" && src[i] !== "\n") { const t = straight(src[i]); out += t === "'" ? "''" : t; i++; }
+      if (i < n && src[i] !== "\n") { out += "'"; i++; }
+    }
+    else { out += codeChar(c); i++; }
+  }
+  return out;
+}
+
+/**
+ * Mends what a phone keyboard types that code can't read. Outside strings and comments: Arabic-Indic and Persian digits
+ * become 0–9; the Arabic comma, semicolon, decimal point and percent sign become , ; . %; no-break and other wide spaces
+ * become spaces; invisible direction marks and zero-width characters go; Arabic quotation marks « » around a value
+ * become a string's quotes. Curly quotes ‘ ’ “ ” become straight ones (a test's expected output has straight ones): a
+ * string's own quotes, and inside a string, where one of the string's kind is escaped (\" in Python, '' in SQL) so the
+ * string still ends where it should (a raw string keeps it as typed). Strings and comments otherwise keep what was typed:
+ * print("٣، ٤") still prints Arabic digits.
+ */
+export function normalizeCode(code: string, lang: CodeLang): string {
+  if (!/[^\x00-\x7f]/.test(code)) return code;
+  return lang === "sql" ? normalizeSql(code) : normalizePython(code);
 }

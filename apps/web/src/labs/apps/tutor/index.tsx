@@ -9,7 +9,7 @@ import type { LabProps } from "../../types";
 import { runTurn } from "../agentloop/agent";
 import { Txt } from "../agentloop/lab-agents";
 import { compileQuestion, pictureHint } from "./compile";
-import { expand, parseScene, sceneResult, specForTopic, specFromCourse, specFromQuestion } from "./expand";
+import { expand, parseScene, sceneResult, specForTopic, specFromCourse, specFromQuestion, type SceneSpec } from "./expand";
 import { CONCEPTS, matchConcept, norm } from "./model";
 import { PackStage, type StageScene } from "./stage";
 
@@ -50,10 +50,18 @@ const S = {
 
 interface Msg { who: "you" | "tiny" | "app"; text: string }
 
-/** A short plea to hear it again, rather than a new idea. */
-function isFollowUp(q: string): boolean {
-  const n = norm(q);
-  return /again|more|understand|simpler|example|مرة|افهم|زدني|ابسط|مثال/.test(n);
+/**
+ * A plea to hear the last idea again ("I still don't understand. Explain it again."), written as norm() leaves it
+ * (ة → ه, أ → ا, ى → ي), or the Arabic branches could never match. Words such as "understand", "more" or "example"
+ * alone are not pleas: "Help me understand HTTPS" is a new question.
+ */
+export function isFollowUp(q: string): boolean {
+  return /\b(again|simpler|simply|one more time|once more)\b|\bdon['’]?t understand\b|\bdo not understand\b|مره اخري|مره ثانيه|لا افهم|لم افهم|ابسط|زدني/.test(norm(q));
+}
+
+/** A follow-up only when the message names nothing of its own: a picture, a course idea or a term from the courses. */
+export function asksAgain(q: string): boolean {
+  return isFollowUp(q) && !compileQuestion(q) && !matchConcept(q) && !specFromQuestion(q) && !specFromCourse(q);
 }
 
 /** A greeting is not a concept, so the tutor answers it itself instead of asking the model to invent one. */
@@ -83,7 +91,7 @@ const EXTRA_CHIPS = [
   { id: "model-net", term: { en: "neural network", ar: "شبكة عصبية" } },
 ];
 
-export default function Tutor({ meta }: LabProps) {
+export default function Tutor({ meta, onDone }: LabProps) {
   const s = useS(S);
   const { lang: ui } = useI18n();
   const uiLang = ui === "ar" ? "ar" : "en";
@@ -102,7 +110,8 @@ export default function Tutor({ meta }: LabProps) {
   const stopped = useRef(false);
   /** The last exchange, so the next message is a follow-up rather than a new stranger. */
   const thread = useRef<Turn[]>([]);
-  const lastTopic = useRef("");
+  /** The last scene drawn: "explain it again" replays it (same map, same numbers) instead of asking for a new one. */
+  const lastSpec = useRef<SceneSpec | null>(null);
 
   const ask = async (q: string) => {
     const question = q.trim();
@@ -120,15 +129,26 @@ export default function Tutor({ meta }: LabProps) {
     let played = null as ReturnType<typeof expand> | null;
     const showBuilt = (built: ReturnType<typeof expand>) => {
       played = built;
+      lastSpec.current = built.spec;
+      onDone?.();
       if (built.json === shown) return;
       shown = built.json;
       setDraw((d) => ({ scene: built.scene, dur: built.dur, lang: uiLang, run: (d?.run ?? 0) + 1, orient: "landscape", pace: built.pace }));
     };
+    // "I still don't understand. Explain it again.": the same scene from the start, with its line. Asking the scene model
+    // for "<last question> (n)" drew a new, garbled picture (four nodes all named «المدرسة», a different map).
+    if (lastSpec.current && asksAgain(question)) {
+      const built = expand(lastSpec.current);
+      showBuilt(built);
+      thread.current = [{ role: "user", text: question }, { role: "plan", text: built.spec.kind }, { role: "answer", text: built.line[uiLang] }];
+      setLog((m) => [...m, { who: "tiny", text: built.line[uiLang] }]);
+      setBusy(false);
+      return;
+    }
     const early = compileQuestion(question);
     if (early) {
       const built = expand(early);
       showBuilt(built);
-      lastTopic.current = question;
       thread.current = [{ role: "user", text: question }, { role: "plan", text: built.spec.kind }, { role: "answer", text: built.line[uiLang] }];
       setLog((m) => [...m, { who: "tiny", text: built.line[uiLang] }]);
       setBusy(false);
@@ -141,20 +161,21 @@ export default function Tutor({ meta }: LabProps) {
       setBusy(false);
       return;
     }
-    const follow = isFollowUp(question) && lastTopic.current ? `${lastTopic.current} (${log.length + 1})` : question;
-    const conceptEarly = matchConcept(follow);
-    const direct = specFromQuestion(follow);
-    const courseHint = direct ? null : specFromCourse(follow);
-    const made = direct ?? (conceptEarly ? specForTopic(conceptEarly.id, follow) : null);
+    // A message that names an idea is about that idea, even with "again" or "understand" in it ("Help me understand
+    // HTTPS" after bubble sort is HTTPS, not bubble sort once more).
+    const conceptEarly = matchConcept(question);
+    const direct = specFromQuestion(question);
+    const courseHint = direct ? null : specFromCourse(question);
+    const made = direct ?? (conceptEarly ? specForTopic(conceptEarly.id, question) : null);
     if (made) {
       const built = expand(made);
       showBuilt(built);
-      if (!isFollowUp(question)) lastTopic.current = question;
       thread.current = [{ role: "user", text: question }, { role: "plan", text: built.spec.kind }, { role: "answer", text: built.line[uiLang] }];
       setLog((m) => [...m, { who: "tiny", text: built.line[uiLang] }]);
       setBusy(false);
       return;
     }
+    // The scene model gets the message alone, or after the last exchange when it is a plea and nothing was drawn yet.
     if (!isFollowUp(question)) thread.current = [];
     thread.current = [...thread.current, { role: "user", text: question }];
     if (sceneOn) {
@@ -180,7 +201,7 @@ export default function Tutor({ meta }: LabProps) {
         const said = played
           ? (usableAnswer(modelText, played.line[uiLang], uiLang) ? modelText : played.line[uiLang])
           : s.none;
-        if (played && !isFollowUp(question)) lastTopic.current = question;
+        if (!played) lastSpec.current = null; // "again" after "that is outside the courses" has nothing to replay
         thread.current = played
           ? [{ role: "user", text: question }, { role: "plan", text: played.spec.kind }, { role: "answer", text: said }]
           : [];
@@ -193,12 +214,12 @@ export default function Tutor({ meta }: LabProps) {
     if (courseHint) {
       const built = expand(courseHint);
       showBuilt(built);
-      lastTopic.current = question;
       thread.current = [{ role: "user", text: question }, { role: "plan", text: "Explain the picture." }, { role: "answer", text: built.line[uiLang] }];
       setLog((m) => [...m, { who: "tiny", text: built.line[uiLang] }]);
       setBusy(false);
       return;
     }
+    lastSpec.current = null;
     setLog((m) => [...m, { who: "tiny", text: s.none }]);
     setBusy(false);
   };

@@ -2,16 +2,21 @@ import { useId, type ReactNode } from "react";
 import { Button } from "@darsi/design-system";
 import { useKit } from "./strings";
 
-/** A labelled range with its value shown. Mirrors in Arabic like every other control. */
-export function Slider({ label, value, min, max, step = 1, onChange, format = String, disabled }: {
+/**
+ * A labelled range with its value shown. Mirrors in Arabic like every other control, unless `dir="ltr"`: give that to a
+ * slider that moves something along a left-to-right picture or chart, or whose words (the lab's, a lesson's, a video's)
+ * say "left" and "right", so the low end stays on the left in both languages.
+ */
+export function Slider({ label, value, min, max, step = 1, onChange, format = String, disabled, dir }: {
   label: string; value: number; min: number; max: number; step?: number; onChange: (v: number) => void; format?: (v: number) => string; disabled?: boolean;
+  dir?: "ltr" | "rtl";
 }) {
   const id = useId();
   return (
     <div className="lb-slider">
       <label htmlFor={id}>{label}</label>
       <output htmlFor={id}>{format(value)}</output>
-      <input id={id} className="lb-range" type="range" min={min} max={max} step={step} value={value} disabled={disabled} onChange={(e) => onChange(Number(e.target.value))} />
+      <input id={id} className="lb-range" type="range" dir={dir} min={min} max={max} step={step} value={value} disabled={disabled} onChange={(e) => onChange(Number(e.target.value))} />
     </div>
   );
 }

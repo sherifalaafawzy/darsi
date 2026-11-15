@@ -123,7 +123,11 @@ export default function Shortest({ meta, onDone }: LabProps) {
     <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <div className="lb-two">
         <div className="stack">
-          <Plot x={[0, 10]} y={[0, 10]} ticks={0} height={300} label={s.map} onPick={pick}>
+          <Plot x={[0, 10]} y={[0, 10]} ticks={0} height={300} label={s.map} onPick={pick}
+            // Without a tap, "Next point" goes from village to village, or from road to road (their middles) to close one.
+            targets={mode === "road"
+              ? ROADS.map((r) => ({ x: (VILLAGES[r.a].x + VILLAGES[r.b].x) / 2, y: (VILLAGES[r.a].y + VILLAGES[r.b].y) / 2, label: `${name(r.a)} – ${name(r.b)}${s.and}${km(r.km)}` }))
+              : VILLAGES.map((v, i) => ({ x: v.x, y: v.y, label: name(i) }))}>
             {({ px, py }) => <>
               {ROADS.map((r, k) => {
                 const a = VILLAGES[r.a], b = VILLAGES[r.b], mx = (px(a.x) + px(b.x)) / 2, my = (py(a.y) + py(b.y)) / 2;

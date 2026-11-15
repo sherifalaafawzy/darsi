@@ -15,10 +15,11 @@ export const topicLang = (lang: unknown): Lang => (typeof lang === "string" && L
 export type Cat = "reminders" | "reviews" | "staff" | "news";
 export type Kind =
   | "daily0" | "daily1" | "daily2" | "weekGoal" | "streak" | "comeback7" | "comeback21"
-  | "reviewApproved" | "reviewRevise" | "staffSubmission" | "staffOrgRequest";
+  | "reviewApproved" | "reviewRevise" | "orgApproved" | "orgRejected" | "staffSubmission" | "staffOrgRequest"
+  | "ssoSecretExpiring" | "ssoEndpointsMoved" | "ssoFull";
 
-/** Values a message can fill in. `name` and `org` are isolated; `uid` only builds links. */
-export interface MessageVars { n?: number; name?: string; org?: string; feedback?: string; uid?: string }
+/** Values a message can fill in. `name` and `org` are isolated; `uid` and `orgId` only build links. */
+export interface MessageVars { n?: number; name?: string; org?: string; feedback?: string; uid?: string; orgId?: string }
 export interface Text { title: string; body: string }
 
 /** Unicode first-strong isolate: keeps a Latin name from reordering an Arabic sentence, and the other way round. */
@@ -37,6 +38,7 @@ export function trimFeedback(s: unknown, max = FEEDBACK_MAX): string {
 type Fill = (v: MessageVars, lang: Lang) => string;
 const fixed = (s: string): Fill => () => s;
 const num = (v: MessageVars, lang: Lang) => formatNumber(Math.max(0, Math.round(v.n ?? 0)), lang);
+const daysLeft = (v: MessageVars) => Math.max(0, Math.round(v.n ?? 0));
 const name = (v: MessageVars) => isolate((v.name ?? "").trim() || "—");
 const org = (v: MessageVars) => isolate((v.org ?? "").trim() || "—");
 const feedbackOr = (fallback: string): Fill => (v) => trimFeedback(v.feedback) || fallback;
@@ -48,7 +50,7 @@ export const CATALOGUE: Record<Kind, Entry> = {
   daily0: {
     cat: "reminders", link: "/learn",
     en: { title: fixed("Your 5-minute lesson is ready"), body: fixed("One short lesson today, one new idea for your class tomorrow.") },
-    ar: { title: fixed("درسك ذو الدقائق الخمس جاهز"), body: fixed("درس قصير اليوم، وفكرة جديدة لصفّك غدًا.") },
+    ar: { title: fixed("درسك ذو الدقائق الخمس جاهز"), body: fixed("درس قصير اليوم، وفكرة جديدة لفصلك غدًا.") },
   },
   daily1: {
     cat: "reminders", link: "/learn",
@@ -58,7 +60,7 @@ export const CATALOGUE: Record<Kind, Entry> = {
   daily2: {
     cat: "reminders", link: "/learn",
     en: { title: fixed("Something new for your class"), body: fixed("Today's lesson ends with an idea you can try tomorrow.") },
-    ar: { title: fixed("شيء جديد لصفّك"), body: fixed("ينتهي درس اليوم بفكرة يمكنك تجربتها غدًا.") },
+    ar: { title: fixed("شيء جديد لفصلك"), body: fixed("ينتهي درس اليوم بفكرة يمكنك تجربتها غدًا.") },
   },
   weekGoal: {
     cat: "reminders", link: "/learn",
@@ -81,20 +83,31 @@ export const CATALOGUE: Record<Kind, Entry> = {
   comeback21: {
     cat: "reminders", link: "/learn",
     en: { title: fixed("New ideas for your classroom"), body: fixed("Come back for a 5-minute lesson whenever you're ready.") },
-    ar: { title: fixed("أفكار جديدة لصفّك"), body: fixed("عُد لدرس من خمس دقائق متى كنت مستعدًا.") },
+    ar: { title: fixed("أفكار جديدة لفصلك"), body: fixed("عُد لدرس من خمس دقائق متى كنت مستعدًا.") },
   },
   reviewApproved: {
-    cat: "reviews", link: "/learn",
+    cat: "reviews", link: "/me#projects",
     en: { title: fixed("Your project was approved"), body: feedbackOr("Well done, your project was approved.") },
     ar: { title: fixed("تمت الموافقة على مشروعك"), body: feedbackOr("أحسنت، تمت الموافقة على مشروعك.") },
   },
   reviewRevise: {
-    cat: "reviews", link: "/learn",
+    cat: "reviews", link: "/me#projects",
     en: { title: fixed("Feedback on your project"), body: feedbackOr("Your reviewer suggested a few changes.") },
     ar: { title: fixed("ملاحظات على مشروعك"), body: feedbackOr("اقترح المراجِع بعض التعديلات.") },
   },
+  // Whoever asked to register an organization hears the outcome (reviewOrg); the rejection carries the reviewer's note.
+  orgApproved: {
+    cat: "reviews", link: "/admin",
+    en: { title: fixed("Your organization is approved"), body: (v) => `${org(v)} is now on Darsi. Add your teachers and students from Admin.` },
+    ar: { title: fixed("تمت الموافقة على مؤسستك"), body: (v) => `أصبحت ${org(v)} في «درسي». أضف معلميك وطلابك من «الإدارة».` },
+  },
+  orgRejected: {
+    cat: "reviews", link: "/org",
+    en: { title: fixed("About your organization request"), body: feedbackOr("Open Darsi to read the reply.") },
+    ar: { title: fixed("بخصوص طلب مؤسستك"), body: feedbackOr("افتح «درسي» لقراءة الرد.") },
+  },
   staffSubmission: {
-    cat: "staff", link: "/teach/{uid}",
+    cat: "staff", link: "/teach/{uid}?tab=projects",
     en: { title: fixed("New project to review"), body: (v) => `${name(v)} sent a project for review.` },
     ar: { title: fixed("مشروع جديد للمراجعة"), body: (v) => `وصل مشروع جديد من ${name(v)} للمراجعة.` },
   },
@@ -102,6 +115,35 @@ export const CATALOGUE: Record<Kind, Entry> = {
     cat: "staff", link: "/super",
     en: { title: fixed("New organization request"), body: (v) => `${org(v)} asked to join Darsi.` },
     ar: { title: fixed("طلب مؤسسة جديد"), body: (v) => `طلبت ${org(v)} الانضمام إلى «درسي».` },
+  },
+  // School sign-in (sso.ts ssoJob). The first two go to the organization's admins, the third to platform admins.
+  // `n` is the days left; Arabic gives it as a count after a colon, so it needs no plural form.
+  ssoSecretExpiring: {
+    cat: "staff", link: "/admin?tab=signin",
+    en: {
+      title: fixed("School sign-in: the client secret runs out soon"),
+      body: (v, l) => {
+        const days = daysLeft(v);
+        const when = days === 0 ? "today" : days === 1 ? "in 1 day" : `in ${num(v, l)} days`;
+        return `The client secret for ${org(v)} runs out ${when}. Make a new one and save it in Admin.`;
+      },
+    },
+    ar: {
+      title: fixed("تسجيل الدخول عبر المدرسة: سر العميل ينتهي قريبًا"),
+      body: (v, l) => (daysLeft(v) === 0
+        ? `ينتهي سر العميل لدى ${org(v)} اليوم. أنشئ سرًا جديدًا واحفظه من «الإدارة».`
+        : `الأيام المتبقية على انتهاء سر العميل لدى ${org(v)}: ${num(v, l)}. أنشئ سرًا جديدًا واحفظه من «الإدارة».`),
+    },
+  },
+  ssoEndpointsMoved: {
+    cat: "staff", link: "/admin?tab=signin",
+    en: { title: fixed("School sign-in needs a new test"), body: (v) => `The provider's addresses changed for ${org(v)}. Test the sign-in again before people are affected.` },
+    ar: { title: fixed("تسجيل الدخول عبر المدرسة يحتاج إلى اختبار جديد"), body: (v) => `تغيّرت عناوين المزوّد لدى ${org(v)}. اختبر تسجيل الدخول مرة أخرى قبل أن يتأثر الأشخاص.` },
+  },
+  ssoFull: {
+    cat: "staff", link: "/super/orgs/{orgId}?tab=signin",
+    en: { title: fixed("A school reached its member limit"), body: (v) => `${org(v)} reached the number of members school sign-in may make. New people can't join until the limit is raised.` },
+    ar: { title: fixed("مدرسة بلغت الحد الأقصى لأعضائها"), body: (v) => `بلغت ${org(v)} عدد الأعضاء الذي يمكن لتسجيل الدخول عبر المدرسة إنشاؤه. لن ينضم أشخاص جدد حتى يُرفع الحد.` },
   },
 };
 
@@ -135,6 +177,11 @@ export const MORE: Record<string, Record<Kind, Wording>> = {
     reviewRevise: w("Des retours sur votre projet", feedbackOr("La personne qui a relu votre projet propose quelques changements.")),
     staffSubmission: w("Nouveau projet à relire", (v) => `${name(v)} a envoyé un projet à relire.`),
     staffOrgRequest: w("Nouvelle demande d’organisation", (v) => `${org(v)} souhaite rejoindre Darsi.`),
+    orgApproved: w("Votre organisation est approuvée", (v) => `${org(v)} est maintenant sur Darsi. Ajoutez vos enseignants et vos élèves depuis Admin.`),
+    orgRejected: w("À propos de votre demande d’organisation", feedbackOr("Ouvrez Darsi pour lire la réponse.")),
+    ssoSecretExpiring: w(`Connexion via l’école${NB}: le secret client expire bientôt`, (v, l) => { const d = daysLeft(v); return `Le secret client de ${org(v)} expire ${d === 0 ? "aujourd’hui" : d === 1 ? "dans 1 jour" : `dans ${num(v, l)} jours`}. Créez-en un nouveau et enregistrez-le dans Admin.`; }),
+    ssoEndpointsMoved: w("La connexion via l’école doit être testée à nouveau", (v) => `Les adresses du fournisseur ont changé pour ${org(v)}. Testez à nouveau la connexion avant que des personnes ne soient touchées.`),
+    ssoFull: w("Une école a atteint sa limite de membres", (v) => `${org(v)} a atteint le nombre de membres que la connexion via l’école peut créer. Les nouvelles personnes ne pourront pas rejoindre l’école tant que la limite n’est pas relevée.`),
   },
   es: {
     daily0: w("Tu lección de 5 minutos está lista", "Una lección corta hoy, una idea nueva para tu clase mañana."),
@@ -148,6 +195,11 @@ export const MORE: Record<string, Record<Kind, Wording>> = {
     reviewRevise: w("Comentarios sobre tu proyecto", feedbackOr("Quien revisó tu proyecto sugirió algunos cambios.")),
     staffSubmission: w("Nuevo proyecto para revisar", (v) => `${name(v)} envió un proyecto para revisar.`),
     staffOrgRequest: w("Nueva solicitud de organización", (v) => `${org(v)} pidió unirse a Darsi.`),
+    orgApproved: w("Tu organización fue aprobada", (v) => `${org(v)} ya está en Darsi. Agrega a tus docentes y estudiantes desde Admin.`),
+    orgRejected: w("Sobre tu solicitud de organización", feedbackOr("Abre Darsi para leer la respuesta.")),
+    ssoSecretExpiring: w("Inicio de sesión con la escuela: el secreto de cliente vence pronto", (v, l) => { const d = daysLeft(v); return `El secreto de cliente de ${org(v)} vence ${d === 0 ? "hoy" : d === 1 ? "en 1 día" : `en ${num(v, l)} días`}. Crea uno nuevo y guárdalo en Admin.`; }),
+    ssoEndpointsMoved: w("El inicio de sesión con la escuela necesita una nueva prueba", (v) => `Las direcciones del proveedor cambiaron para ${org(v)}. Vuelve a probar el inicio de sesión antes de que afecte a las personas.`),
+    ssoFull: w("Una escuela alcanzó su límite de miembros", (v) => `${org(v)} alcanzó el número de miembros que puede crear el inicio de sesión con la escuela. Las personas nuevas no podrán unirse hasta que se suba el límite.`),
   },
   de: {
     daily0: w("Deine 5-Minuten-Lektion ist bereit", "Heute eine kurze Lektion, morgen eine neue Idee für deine Klasse."),
@@ -161,6 +213,11 @@ export const MORE: Record<string, Record<Kind, Wording>> = {
     reviewRevise: w("Rückmeldung zu deinem Projekt", feedbackOr("Die Person, die dein Projekt geprüft hat, schlägt ein paar Änderungen vor.")),
     staffSubmission: w("Neues Projekt zur Durchsicht", (v) => `${name(v)} hat ein Projekt zur Durchsicht geschickt.`),
     staffOrgRequest: w("Neue Anfrage einer Organisation", (v) => `${org(v)} möchte Darsi beitreten.`),
+    orgApproved: w("Deine Organisation wurde freigeschaltet", (v) => `${org(v)} ist jetzt bei Darsi. Füge deine Lehrkräfte und Lernenden unter Admin hinzu.`),
+    orgRejected: w("Zu deiner Anfrage für eine Organisation", feedbackOr("Öffne Darsi, um die Antwort zu lesen.")),
+    ssoSecretExpiring: w("Anmeldung über die Schule: Das Client-Secret läuft bald ab", (v, l) => { const d = daysLeft(v); return `Das Client-Secret von ${org(v)} läuft ${d === 0 ? "heute" : d === 1 ? "in 1 Tag" : `in ${num(v, l)} Tagen`} ab. Erstelle ein neues und speichere es unter Admin.`; }),
+    ssoEndpointsMoved: w("Die Anmeldung über die Schule muss neu getestet werden", (v) => `Die Adressen des Anbieters haben sich für ${org(v)} geändert. Teste die Anmeldung erneut, bevor jemand betroffen ist.`),
+    ssoFull: w("Eine Schule hat ihr Mitgliederlimit erreicht", (v) => `${org(v)} hat die Zahl an Mitgliedern erreicht, die die Anmeldung über die Schule anlegen darf. Neue Personen können erst beitreten, wenn das Limit erhöht wird.`),
   },
   pt: {
     daily0: w("Sua lição de 5 minutos está pronta", "Uma lição curta hoje, uma ideia nova para sua turma amanhã."),
@@ -174,6 +231,11 @@ export const MORE: Record<string, Record<Kind, Wording>> = {
     reviewRevise: w("Comentários sobre seu projeto", feedbackOr("Quem revisou seu projeto sugeriu algumas mudanças.")),
     staffSubmission: w("Novo projeto para revisar", (v) => `${name(v)} enviou um projeto para revisão.`),
     staffOrgRequest: w("Nova solicitação de organização", (v) => `${org(v)} pediu para entrar no Darsi.`),
+    orgApproved: w("Sua organização foi aprovada", (v) => `${org(v)} já está no Darsi. Adicione seus professores e estudantes em Admin.`),
+    orgRejected: w("Sobre a sua solicitação de organização", feedbackOr("Abra o Darsi para ler a resposta.")),
+    ssoSecretExpiring: w("Login pela escola: o segredo do cliente expira em breve", (v, l) => { const d = daysLeft(v); return `O segredo do cliente de ${org(v)} expira ${d === 0 ? "hoje" : d === 1 ? "em 1 dia" : `em ${num(v, l)} dias`}. Crie um novo e salve-o em Admin.`; }),
+    ssoEndpointsMoved: w("O login pela escola precisa de um novo teste", (v) => `Os endereços do provedor mudaram para ${org(v)}. Teste o login de novo antes que as pessoas sejam afetadas.`),
+    ssoFull: w("Uma escola atingiu o limite de membros", (v) => `${org(v)} atingiu o número de membros que o login pela escola pode criar. Novas pessoas não poderão entrar até que o limite seja aumentado.`),
   },
   ur: {
     daily0: w("آپ کا 5 منٹ کا سبق تیار ہے", "آج ایک مختصر سبق، کل آپ کی کلاس کے لیے ایک نیا خیال۔"),
@@ -187,13 +249,31 @@ export const MORE: Record<string, Record<Kind, Wording>> = {
     reviewRevise: w("آپ کے پروجیکٹ پر رائے", feedbackOr("جائزہ لینے والے نے کچھ تبدیلیاں تجویز کی ہیں۔")),
     staffSubmission: w("جائزے کے لیے نیا پروجیکٹ", (v) => `${name(v)} نے جائزے کے لیے ایک پروجیکٹ بھیجا ہے۔`),
     staffOrgRequest: w("تنظیم کی نئی درخواست", (v) => `${org(v)} نے «درسی» میں شامل ہونے کی درخواست کی ہے۔`),
+    orgApproved: w("آپ کا ادارہ منظور ہو گیا", (v) => `${org(v)} اب «درسی» پر ہے۔ ایڈمن سے اپنے اساتذہ اور طلبہ شامل کریں۔`),
+    orgRejected: w("آپ کے ادارے کی درخواست کے بارے میں", feedbackOr("جواب پڑھنے کے لیے «درسی» کھولیں۔")),
+    ssoSecretExpiring: w("اسکول کے ذریعے سائن ان: کلائنٹ سیکرٹ جلد ختم ہو رہا ہے", (v, l) => (daysLeft(v) === 0 ? `${org(v)} کا کلائنٹ سیکرٹ آج ختم ہو رہا ہے۔ نیا بنائیں اور اسے ایڈمن میں محفوظ کریں۔` : `${org(v)} کے کلائنٹ سیکرٹ کے ختم ہونے میں باقی دن: ${num(v, l)}۔ نیا بنائیں اور اسے ایڈمن میں محفوظ کریں۔`)),
+    ssoEndpointsMoved: w("اسکول کے ذریعے سائن ان کو دوبارہ جانچنا ہے", (v) => `${org(v)} کے لیے فراہم کنندہ کے پتے بدل گئے ہیں۔ لوگوں کے متاثر ہونے سے پہلے سائن ان دوبارہ جانچیں۔`),
+    ssoFull: w("ایک اسکول اپنے ارکان کی حد تک پہنچ گیا", (v) => `${org(v)} اتنے ارکان تک پہنچ گیا ہے جتنے اسکول کے ذریعے سائن ان بنا سکتا ہے۔ حد بڑھائے جانے تک نئے لوگ شامل نہیں ہو سکتے۔`),
   },
 };
 
-/** The default app path for a kind ("/teach/{uid}" becomes "/teach/abc"). */
+/**
+ * The default app path for a kind ("/teach/{uid}" becomes "/teach/abc"). Without the organization's id,
+ * "/super/orgs/{orgId}?tab=signin" opens the list of organizations instead.
+ */
 export function linkFor(kind: Kind, vars: MessageVars = {}): string {
-  return CATALOGUE[kind].link.replace("{uid}", encodeURIComponent(vars.uid ?? ""));
+  const link = CATALOGUE[kind].link.replace("{uid}", encodeURIComponent(vars.uid ?? ""));
+  if (!link.includes("{orgId}")) return link;
+  const orgId = (vars.orgId ?? "").trim();
+  return orgId ? link.replace("{orgId}", encodeURIComponent(orgId)) : link.slice(0, link.indexOf("/{orgId}"));
 }
+
+/**
+ * Where "New project to review" opens: the person's page on its Projects tab, for their teacher (/teach/…) or for
+ * the organization's admins (/admin/people/…). The page opens on Progress without the tab, with no project in sight.
+ */
+export const projectsLink = (reader: "teacher" | "admin", uid: string): string =>
+  `${reader === "teacher" ? "/teach" : "/admin/people"}/${encodeURIComponent(uid)}?tab=projects`;
 
 /** Notification tag: automatic nudges share one so a new one replaces the old. */
 export function tagFor(kind: Kind, id?: string): string {

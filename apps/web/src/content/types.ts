@@ -42,7 +42,7 @@ export interface LanguageDef {
   version?: number;
 }
 /** content/settings.json: what platform admins set up for everyone. `version` changes when the tracks are saved. */
-export interface Settings { version: number; tracks: TrackDef[]; languages?: LanguageDef[]; /** Darsi Super for everyone (setSuperOn); missing means on. */ super?: boolean }
+export interface Settings { version: number; tracks: TrackDef[]; languages?: LanguageDef[]; /** Darsi Super for everyone (setSuperOn); missing means on. */ super?: boolean; /** School sign-in for everyone (manageSso setSwitch); missing means on. */ sso?: boolean }
 
 /** Code is always shown and written left to right, in every language. */
 export type CodeLang = "python" | "sql";
@@ -58,7 +58,12 @@ export interface MatchStep extends Base { type: "match"; pairs: { left: LocalTex
 export interface OrderStep extends Base { type: "order"; steps: LocalText[] }
 export interface FillStep extends Base { type: "fill"; sentence: { en: Array<string | { blank: number }> } & Partial<Record<string, Array<string | { blank: number }>>>; bank: LocalList; answers: LocalList }
 export interface TypeStep extends Base { type: "type"; accept: LocalList; placeholder?: LocalText }
-export interface HotspotStep extends Base { type: "hotspot"; mock: { from: string; body: LocalText; link: LocalText }; spots: { id: string; x: number; y: number; w: number; h: number; label: LocalText }[] }
+/**
+ * Tap the warning signs in a message. `mock.body` has one sentence per line. A spot with `line` covers that line of the
+ * body (counting from 0) or the link ("link"), whatever the screen width and language; x/y/w/h (% of the message) are the
+ * fallback for a spot without one, and for app versions from before `line`.
+ */
+export interface HotspotStep extends Base { type: "hotspot"; mock: { from: string; body: LocalText; link: LocalText }; spots: { id: string; x: number; y: number; w: number; h: number; label: LocalText; line?: number | "link" }[] }
 export interface ScenarioStep extends Base { type: "scenario"; who: LocalText; initial: LocalText; situation: LocalText; choices: { id: string; label: LocalText; tone: "good" | "consider"; consequence: LocalText }[] }
 export interface ReflectStep extends Base { type: "reflect"; placeholder?: LocalText }
 export interface VideoStep extends Base {
@@ -94,7 +99,10 @@ export const lightLang = (s: VideoStep, lang: string): string | null => s.light 
 /** A Labs app id (apps/web/src/labs/apps/<id>), e.g. "prompt", "neuron", "playground". */
 export type LabTool = string;
 export interface LabStep extends Base { type: "lab"; tool: LabTool }
-/** A short reading: the concepts behind the lesson, with key terms. Paragraphs separated by blank lines. */
+/**
+ * A short reading: the concepts behind the lesson, with key terms. Paragraphs separated by blank lines; a single line
+ * break inside a paragraph is kept (a list of clicks, one command per line), and https:// addresses become links.
+ */
 export interface ReadStep extends Base { type: "read"; title: LocalText; body: LocalText; keyTerms?: { term: LocalText; def: LocalText }[] }
 /** A real-world task done in school, submitted as evidence and reviewed by a teacher or admin against a rubric. */
 export interface ProjectStep extends Base {

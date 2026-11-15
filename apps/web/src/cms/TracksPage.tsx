@@ -6,9 +6,11 @@ import { BUILTIN_TRACKS, MAX_LEVELS, mergeTracks } from "../content/tracks";
 import type { LocalText, TrackDef } from "../content/types";
 import { validateTracks, type Issue } from "../content/validate";
 import { useI18n, useLanguages, type MessageKey } from "../i18n";
+import { useLeaveGuard } from "../staff/useLeaveGuard";
 import { EditLangsProvider } from "./langs";
 import { cmsApi, codeOf, conflictsOf, issuesOf } from "./api";
 import { getSettings, unitsByTrack, type TrackUse } from "./data";
+import { failText } from "./entStrings";
 import { Check, LText, Text } from "./fields";
 import "../styles/editor.css";
 import "./strings";
@@ -52,15 +54,13 @@ export function TracksPage() {
 
   useEffect(() => {
     Promise.all([getSettings(), unitsByTrack()]).then(([s, u]) => { setRev(s.rev); setBase(rowsOf(s.tracks)); setRows(rowsOf(s.tracks)); setUsage(u); })
-      .catch((e: Error) => setLoadErr(e.message));
-  }, []);
+      .catch((e: unknown) => setLoadErr(failText(e, t)));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const dirty = useMemo(() => JSON.stringify(strip(rows)) !== JSON.stringify(strip(base)), [rows, base]);
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
-    addEventListener("beforeunload", warn);
-    return () => removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  // With changes not saved, the way out is held and asked about on the page (tracks publish to phones, so they never
+  // save by themselves): the app bar's Back, and a link anywhere in the app (the rail, the bottom nav), which used to
+  // drop the edits without a word. Closing or reloading the tab gets the browser's own question.
+  const guard = useLeaveGuard(dirty);
   const issues = useMemo(() => validateTracks(strip(rows), BUILTIN_IDS), [rows]);
   // Chips show the colour and icon being chosen, before they are saved.
   const styles = useMemo(() => Object.fromEntries(rows.map((r) => [r.def.id || r.key, { tone: r.def.tone, icon: r.def.icon } as TrackStyle])), [rows]);
@@ -80,9 +80,9 @@ export function TracksPage() {
   const nameOf = (id: string) => L(rows.find((r) => r.def.id === id)?.def.name) || id;
   const unitNames = (ids: string[]) => ids.map((id) => L([...usage.values()].flat().find((u) => u.id === id)?.title) || id).join("، ");
 
-  const save = async () => {
+  const save = async (): Promise<boolean> => {
     setTried(true);
-    if (issues.length) { setMsg({ ok: false, text: t("cms.tracks.errors", { n: issues.length }) }); return; }
+    if (issues.length) { setMsg({ ok: false, text: t("cms.tracks.errors", { n: issues.length }) }); return false; }
     setBusy(true); setMsg(null);
     try {
       const r = await cmsApi.saveSettings({ rev, tracks: strip(rows) });
@@ -90,18 +90,20 @@ export function TracksPage() {
       const next = rowsOf(mergeTracks(r.tracks));
       setRev(r.rev); setBase(next); setRows(next); setTried(false); apply(r.tracks);
       setMsg({ ok: true, text: t("cms.tracks.saved") });
+      return true;
     } catch (e) {
       const code = codeOf(e), conflicts = conflictsOf(e), n = issuesOf(e).length;
       if (code === "aborted") setMsg({ ok: false, text: t("cms.tracks.conflict") });
       else if (conflicts.length) setMsg({ ok: false, text: t("cms.tracks.blocked"), list: conflicts.map((c) =>
         t(c.reason === "removed" ? "cms.tracks.blockedRemoved" : "cms.tracks.blockedLevels", { name: nameOf(c.track) || c.track, units: unitNames(c.units) })) });
-      else setMsg({ ok: false, text: n ? t("cms.tracks.errors", { n }) : (e as Error).message });
+      else setMsg({ ok: false, text: n ? t("cms.tracks.errors", { n }) : failText(e, t) });
+      return false;
     } finally { setBusy(false); }
   };
 
   return (
     <EditLangsProvider langs={languages.map((l) => l.code)}>
-      <AppBar title={t("cms.tracks.title")} onBack={() => { if (!dirty || confirm(t("cms.leaveConfirm"))) nav("/super/content"); }} backLabel={t("common.back")} />
+      <AppBar title={t("cms.tracks.title")} onBack={() => nav("/super/content")} backLabel={t("common.back")} />
       <main className="screen wide stack-lg ed">
         <p className="muted">{t("cms.tracks.intro")}</p>
         <TrackStylesProvider styles={styles}><ol className="ed-tracks">
@@ -135,6 +137,15 @@ export function TracksPage() {
         <Button loading={busy} disabled={!dirty} icon="check" onClick={() => { void save(); }}>{t("cms.tracks.save")}</Button>
         {dirty && <Button variant="ghost" disabled={busy} onClick={() => { setRows(base); setMsg(null); setTried(false); }}>{t("cms.tracks.discard")}</Button>}
         {msg && <div className={msg.ok ? "notice ok" : "notice err"} role={msg.ok ? "status" : "alert"}>{msg.text}{msg.list && <ul>{msg.list.map((x) => <li key={x}>{x}</li>)}</ul>}</div>}
+        {/* leave() taps the held link or Back again and lets it through, so the person lands where they were heading. */}
+        {guard.asking && (
+          <div className="notice ed-confirm" role="alert">
+            <span>{t("cms.leaveConfirm")}</span>
+            <Button size="sm" autoFocus loading={busy} onClick={async () => { if (await save()) guard.leave(); }}>{t("cms.saveLeave")}</Button>
+            <Button size="sm" variant="secondary" disabled={busy} onClick={guard.leave}>{t("cms.leaveAnyway")}</Button>
+            <Button size="sm" variant="ghost" disabled={busy} onClick={guard.stay}>{t("cms.stay")}</Button>
+          </div>
+        )}
       </div>
     </EditLangsProvider>
   );

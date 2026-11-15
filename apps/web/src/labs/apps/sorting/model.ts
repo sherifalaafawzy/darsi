@@ -14,7 +14,15 @@ export function makeBars(n: number, order: Order, seed = 7): number[] {
   const a = Array.from({ length: n }, (_, i) => i + 1);
   if (order === "reversed") return a.reverse();
   const r = rng(seed);
-  if (order === "nearly") { for (let k = 0; k < Math.max(1, Math.round(n / 8)); k++) { const i = Math.floor(r() * (n - 1)); [a[i], a[i + 1]] = [a[i + 1], a[i]]; } return a; }
+  if (order === "nearly") {
+    // About one neighbour swap per 8 bars, at distinct places that don't touch: two swaps of the same pair cancelled
+    // out, and with 16 bars the "nearly sorted" list came out fully sorted (a tie, not a win for insertion sort).
+    if (n < 2) return a;
+    const want = Math.max(1, Math.round(n / 8)), at = new Set<number>();
+    while (at.size < want) { const i = Math.floor(r() * (n - 1)); if (!at.has(i) && !at.has(i - 1) && !at.has(i + 1)) at.add(i); }
+    for (const i of at) [a[i], a[i + 1]] = [a[i + 1], a[i]];
+    return a;
+  }
   for (let i = n - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 }

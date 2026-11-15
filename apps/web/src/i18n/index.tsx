@@ -79,14 +79,49 @@ export function addStaffArea(area: string) { staffAreas.add(area); loadStaff(sta
 
 /** Unicode isolate, the plain-text <bdi>: for names passed into t() so a Latin name can't reorder an Arabic sentence (or the reverse). */
 export const isolate = (s: string) => `⁨${s}⁩`;
-export type MessageKey = keyof typeof en | keyof typeof import("../cms/strings/en.json") | keyof typeof import("../admin/strings/en.json") | keyof typeof import("../upgrade/strings/en.json") | keyof typeof import("../tutor/strings/en.json") | keyof typeof import("../bugs/strings/en.json") | keyof typeof import("../tour/strings/en.json");
+export type MessageKey = keyof typeof en | keyof typeof import("../cms/strings/en.json") | keyof typeof import("../admin/strings/en.json") | keyof typeof import("../upgrade/strings/en.json") | keyof typeof import("../tutor/strings/en.json") | keyof typeof import("../bugs/strings/en.json") | keyof typeof import("../tour/strings/en.json")
+  // The app shell's (app/strings.ts) and the legal pages' and "Leave <organization>"'s (legal/strings.ts): registered at
+  // startup by their modules, which a screen using them imports (their `k()` keeps that import in place).
+  | keyof typeof import("../app/strings/en.json") | keyof typeof import("../legal/strings/en.json");
 
 /** A number format for a locale, falling back to English for a tag the browser doesn't know. */
 const numberFormat = (locale: string, opts?: Intl.NumberFormatOptions) => { try { return new Intl.NumberFormat(locale, opts); } catch { return new Intl.NumberFormat("en", opts); } };
 
+/** A count's CLDR plural category in a language (cached). An unknown tag counts as English; a browser without
+ *  Intl.PluralRules (Chrome before 63) gets "other", the plain key. */
+const pluralRules = new Map<string, Intl.PluralRules | null>();
+export function pluralOf(lang: string, n: number): string {
+  if (!pluralRules.has(lang)) {
+    let rules: Intl.PluralRules | null = null;
+    try { rules = new Intl.PluralRules(lang); } catch { try { rules = new Intl.PluralRules("en"); } catch { rules = null; } }
+    pluralRules.set(lang, rules);
+  }
+  return pluralRules.get(lang)?.select(n) ?? "other";
+}
+/**
+ * A string from one dictionary. With a count (a number {n}), the count's plural form "<key>.<category>" (zero, one, two,
+ * few or many) wins when the dictionary has it; the key itself is the "other" form. So Arabic says «صفحتان», «٣ صفحات»
+ * and «١١ صفحة», and English "1 page", while a language without the forms keeps its one string.
+ */
+const lookup = (dict: Record<string, string> | undefined, lang: string, key: string, n: unknown) =>
+  dict && ((typeof n === "number" && dict[`${key}.${pluralOf(lang, n)}`]) || dict[key]);
+
+/**
+ * Darsi's name in the UI strings, for an organization site without Darsi's identity (state/site.ts): it becomes the
+ * organization's name, isolated so a Latin name can't reorder an Arabic sentence. "Darsi Tiny" («درسي الصغير») stays: it
+ * is a model's name, which the labs and courses use too. So do the few strings where Darsi is named as the other party
+ * (the branding panel's hints; the web address panel's "site." strings, which are about Darsi's identity; and the school
+ * sign-in wizard's "sa." strings on the same admin tab, admin/sso-strings: Darsi's team, Darsi's servers, what Darsi
+ * needs from the provider's console) or as a framework (KEEP_DARSI).
+ */
+const DARSI_NAME = /Darsi(?! Tiny)|درسي(?! الصغير)/g;
+const KEEP_DARSI = new Set(["brand.hint", "brand.hintOther", "p.fw.darsi"]);
+export const rebrand = (s: string, name: string) => s.replace(DARSI_NAME, () => isolate(name));
+
 interface I18n {
   lang: string;
-  /** UI string with {var} interpolation; numbers are localised (Arabic-Indic digits for ar). */
+  /** UI string with {var} interpolation; numbers are localised (Arabic-Indic digits for ar). A number {n} picks the
+   *  string's plural form ("<key>.one", "<key>.few"…) where the language has one. */
   t: (key: MessageKey, vars?: Record<string, string | number>) => string;
   /** Content string for the current language, falling back to English. */
   L: (text: LocalText | undefined) => string;
@@ -97,14 +132,21 @@ interface I18n {
 }
 const Ctx = createContext<I18n | null>(null);
 
-export function I18nProvider({ lang, children }: { lang: string; children: ReactNode }) {
+/** `brand`: an organization's name to show in place of Darsi's (a site without Darsi's identity); none on Darsi's own. */
+export function I18nProvider({ lang, brand, children }: { lang: string; brand?: string | null; children: ReactNode }) {
   const v = useSyncExternalStore(subscribe, getVersion);
   const meta = useMemo(() => languageOf(lang), [lang, v]); // eslint-disable-line react-hooks/exhaustive-deps
   const num = useCallback((n: number, opts?: Intl.NumberFormatOptions) => numberFormat(meta.numerals, opts).format(n), [meta.numerals]);
   const t = useCallback((key: MessageKey, vars?: Record<string, string | number>) => {
-    const s = MESSAGES[meta.code]?.[key] ?? MESSAGES.en[key] ?? key;
-    return vars ? s.replace(/\{(\w+)\}/g, (_, k) => { const x = vars[k]; return typeof x === "number" ? num(x) : String(x ?? ""); }) : s;
-  }, [meta.code, num, v]); // eslint-disable-line react-hooks/exhaustive-deps
+    const own = lookup(MESSAGES[meta.code], meta.code, key, vars?.n);
+    const raw = own ?? lookup(MESSAGES.en, "en", key, vars?.n) ?? key;
+    // Before the variables go in, so a name a person typed is never changed.
+    const s = brand && !KEEP_DARSI.has(key) && !key.startsWith("site.") && !key.startsWith("sa.") ? rebrand(raw, brand) : raw;
+    const out = vars ? s.replace(/\{(\w+)\}/g, (_, k) => { const x = vars[k]; return typeof x === "number" ? num(x) : String(x ?? ""); }) : s;
+    // A string a right-to-left language doesn't have yet shows in English, isolated left to right (LRI…PDI), so its
+    // punctuation stays at its end: "Where do you teach?", not "?Where do you teach".
+    return own === undefined && meta.dir === "rtl" ? `⁦${out}⁩` : out;
+  }, [meta.code, meta.dir, num, v, brand]); // eslint-disable-line react-hooks/exhaustive-deps
   const L = useCallback((text: LocalText | undefined) => {
     if (text && text[meta.code] === undefined && meta.code !== "en") { const p = PHRASES[meta.code]?.[text.en]; if (p) return p; }
     return pick(text, meta.code);

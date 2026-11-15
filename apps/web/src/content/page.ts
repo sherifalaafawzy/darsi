@@ -1,0 +1,187 @@
+/**
+ * An organization's homepage (TECHNICAL.md "Organization homepage"): the blocks its admins put together on the page
+ * builder (admin/PageBuilder.tsx), shown under the organization's name and sign-in buttons at its own web address
+ * (landing/Landing.tsx SiteLanding, landing/SiteBlocks.tsx). Every text is per language ({en: "…", ar: "…", …}): a
+ * language left empty shows the page's first language that has the text.
+ *
+ * One checker for the editor and the server (functions/src/orgPage.ts, through functions/scripts/copy-shared.mjs), as
+ * validate.ts is for courses. Pure: no imports. Everything is plain text (the page draws it as text, never as HTML),
+ * links are https, mailto: or tel: only, and pictures are only the organization's own uploads.
+ */
+
+export type Texts = Record<string, string>;
+export type BlockKind = "text" | "image" | "cards" | "faq" | "contact" | "button";
+export const BLOCK_KINDS: readonly BlockKind[] = ["text", "image", "cards", "faq", "contact", "button"];
+
+interface Base { id: string; kind: BlockKind }
+export interface TextBlock extends Base { kind: "text"; heading: Texts; body: Texts }
+export interface ImageBlock extends Base { kind: "image"; src: string; alt: Texts; caption: Texts }
+export interface CardsBlock extends Base { kind: "cards"; heading: Texts; items: { title: Texts; text: Texts }[] }
+export interface FaqBlock extends Base { kind: "faq"; heading: Texts; items: { q: Texts; a: Texts }[] }
+export interface ContactBlock extends Base { kind: "contact"; heading: Texts; email: string; phone: string; address: Texts; website: string }
+export interface ButtonBlock extends Base { kind: "button"; label: Texts; href: string }
+export type Block = TextBlock | ImageBlock | CardsBlock | FaqBlock | ContactBlock | ButtonBlock;
+
+/** The page as saved and published. `langs`: the languages its author writes in, the first being the fallback. */
+export interface OrgPage { v: 1; langs: string[]; blocks: Block[] }
+
+export const LIMITS = {
+  blocks: 30, langs: 12, cards: 6, faq: 12,
+  heading: 120, body: 4000, title: 120, text: 600, q: 200, a: 2000, alt: 200, caption: 300, address: 300, label: 60,
+  email: 120, phone: 40, url: 300,
+  /** The page as JSON, in characters. */
+  json: 120_000,
+} as const;
+/** Pictures: shrunk on the admin's device to at most this many pixels on the long side, and this many bytes. */
+export const IMAGE_MAX_PX = 1600;
+export const IMAGE_MAX_BYTES = 400 * 1024;
+
+/** Where an organization's homepage files live in the bucket (public: content/ is readable by anyone). */
+export const pageDir = (orgId: string) => `content/pages/${orgId}/`;
+export const pagePath = (orgId: string) => `${pageDir(orgId)}page.json`;
+/** An uploaded picture's path: img-<random>.<ext> in the organization's own folder. */
+export const isPageImage = (orgId: string, src: unknown): src is string =>
+  typeof src === "string" && new RegExp(`^content/pages/${orgId.replace(/[^A-Za-z0-9_-]/g, "")}/img-[a-z0-9]{6,32}[.](webp|jpg|png)$`).test(src);
+
+const LANG = /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/;
+const ID = /^[a-z0-9]{4,24}$/;
+const EMAIL = /^[^\s@<>()]{1,64}@[A-Za-z0-9.-]{1,100}\.[A-Za-z]{2,24}$/;
+const PHONE = /^\+?[0-9][0-9 ()-]{3,38}$/;
+
+/** A link a person may follow from the page: https, or (for a button) an email or phone link. */
+export function safeHref(v: unknown, allowContact = false): string | null {
+  if (typeof v !== "string") return null;
+  const s = v.trim();
+  if (allowContact && /^mailto:[^\s@<>()]{1,64}@[A-Za-z0-9.-]+\.[A-Za-z]{2,24}$/.test(s)) return s;
+  if (allowContact && /^tel:\+?[0-9][0-9 ()-]{3,38}$/.test(s)) return s;
+  if (s.length > LIMITS.url) return null;
+  try {
+    const u = new URL(s);
+    return u.protocol === "https:" && !u.username && !u.password && u.hostname.includes(".") ? u.toString() : null;
+  } catch { return null; }
+}
+
+/** The text of a field in a language, else in the page's first language that has it. */
+export function textIn(t: Texts | undefined, lang: string, langs: readonly string[]): string {
+  if (!t) return "";
+  if (t[lang]?.trim()) return t[lang];
+  for (const l of langs) if (t[l]?.trim()) return t[l];
+  for (const v of Object.values(t)) if (v?.trim()) return v;
+  return "";
+}
+
+/** A new block of a kind, empty, with a fresh id. */
+export function newBlock(kind: BlockKind, id: string): Block {
+  const e = (): Texts => ({});
+  switch (kind) {
+    case "text": return { id, kind, heading: e(), body: e() };
+    case "image": return { id, kind, src: "", alt: e(), caption: e() };
+    case "cards": return { id, kind, heading: e(), items: [{ title: e(), text: e() }] };
+    case "faq": return { id, kind, heading: e(), items: [{ q: e(), a: e() }] };
+    case "contact": return { id, kind, heading: e(), email: "", phone: "", address: e(), website: "" };
+    case "button": return { id, kind, label: e(), href: "" };
+  }
+}
+
+/** What is wrong with a page, by block (its index) and field; `lang` when only one language's text is. */
+export interface PageProblem { block: number | null; field: string; code: "missing" | "too-long" | "bad-link" | "bad-email" | "bad-phone" | "bad-image" | "too-many" | "bad"; lang?: string }
+
+/**
+ * The page checked and cleaned (texts trimmed; unknown keys and languages dropped). `problems` lists what must be
+ * fixed before it can be published; `page` is null only when the input is not a page at all. A field that is empty in
+ * every language is "missing" only where the block needs it (a text's body, a card's title, a question and its answer,
+ * a button's label, a picture's description).
+ */
+export function checkPage(raw: unknown, orgId: string): { page: OrgPage | null; problems: PageProblem[] } {
+  const problems: PageProblem[] = [];
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return { page: null, problems: [{ block: null, field: "page", code: "bad" }] };
+  const r = raw as Record<string, unknown>;
+  const langs = Array.isArray(r.langs) ? [...new Set(r.langs.filter((l): l is string => typeof l === "string" && LANG.test(l)))].slice(0, LIMITS.langs) : [];
+  if (!langs.length) problems.push({ block: null, field: "langs", code: "missing" });
+  const blocksIn = Array.isArray(r.blocks) ? r.blocks : [];
+  if (blocksIn.length > LIMITS.blocks) problems.push({ block: null, field: "blocks", code: "too-many" });
+
+  const texts = (v: unknown, max: number, block: number, field: string, need: boolean): Texts => {
+    const out: Texts = {};
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      for (const l of langs) {
+        const s = (v as Record<string, unknown>)[l];
+        if (typeof s !== "string") continue;
+        const t = s.trim();
+        if (!t) continue;
+        if (Array.from(t).length > max) problems.push({ block, field, code: "too-long", lang: l });
+        out[l] = t;
+      }
+    }
+    if (need && !Object.keys(out).length) problems.push({ block, field, code: "missing" });
+    return out;
+  };
+  const plain = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const seen = new Set<string>();
+  const blocks: Block[] = [];
+  blocksIn.slice(0, LIMITS.blocks).forEach((b, i) => {
+    if (!b || typeof b !== "object" || Array.isArray(b)) { problems.push({ block: i, field: "block", code: "bad" }); return; }
+    const o = b as Record<string, unknown>;
+    let id = typeof o.id === "string" && ID.test(o.id) && !seen.has(o.id) ? o.id : `b${i}x${blocks.length}`.padEnd(4, "0");
+    while (seen.has(id)) id += "0";
+    seen.add(id);
+    switch (o.kind) {
+      case "text":
+        blocks.push({ id, kind: "text", heading: texts(o.heading, LIMITS.heading, i, "heading", false), body: texts(o.body, LIMITS.body, i, "body", true) });
+        break;
+      case "image": {
+        const src = plain(o.src);
+        if (!isPageImage(orgId, src)) problems.push({ block: i, field: "src", code: src ? "bad-image" : "missing" });
+        blocks.push({ id, kind: "image", src, alt: texts(o.alt, LIMITS.alt, i, "alt", true), caption: texts(o.caption, LIMITS.caption, i, "caption", false) });
+        break;
+      }
+      case "cards": {
+        const items = Array.isArray(o.items) ? o.items : [];
+        if (items.length > LIMITS.cards) problems.push({ block: i, field: "items", code: "too-many" });
+        if (!items.length) problems.push({ block: i, field: "items", code: "missing" });
+        blocks.push({
+          id, kind: "cards", heading: texts(o.heading, LIMITS.heading, i, "heading", false),
+          items: items.slice(0, LIMITS.cards).map((it, j) => {
+            const x = (it && typeof it === "object" ? it : {}) as Record<string, unknown>;
+            return { title: texts(x.title, LIMITS.title, i, `items.${j}.title`, true), text: texts(x.text, LIMITS.text, i, `items.${j}.text`, false) };
+          }),
+        });
+        break;
+      }
+      case "faq": {
+        const items = Array.isArray(o.items) ? o.items : [];
+        if (items.length > LIMITS.faq) problems.push({ block: i, field: "items", code: "too-many" });
+        if (!items.length) problems.push({ block: i, field: "items", code: "missing" });
+        blocks.push({
+          id, kind: "faq", heading: texts(o.heading, LIMITS.heading, i, "heading", false),
+          items: items.slice(0, LIMITS.faq).map((it, j) => {
+            const x = (it && typeof it === "object" ? it : {}) as Record<string, unknown>;
+            return { q: texts(x.q, LIMITS.q, i, `items.${j}.q`, true), a: texts(x.a, LIMITS.a, i, `items.${j}.a`, true) };
+          }),
+        });
+        break;
+      }
+      case "contact": {
+        const email = plain(o.email), phone = plain(o.phone), website = plain(o.website);
+        if (email && (email.length > LIMITS.email || !EMAIL.test(email))) problems.push({ block: i, field: "email", code: "bad-email" });
+        if (phone && !PHONE.test(phone)) problems.push({ block: i, field: "phone", code: "bad-phone" });
+        if (website && !safeHref(website)) problems.push({ block: i, field: "website", code: "bad-link" });
+        const address = texts(o.address, LIMITS.address, i, "address", false);
+        if (!email && !phone && !website && !Object.keys(address).length) problems.push({ block: i, field: "email", code: "missing" });
+        blocks.push({ id, kind: "contact", heading: texts(o.heading, LIMITS.heading, i, "heading", false), email, phone, address, website });
+        break;
+      }
+      case "button": {
+        const href = plain(o.href);
+        if (!safeHref(href, true)) problems.push({ block: i, field: "href", code: href ? "bad-link" : "missing" });
+        blocks.push({ id, kind: "button", label: texts(o.label, LIMITS.label, i, "label", true), href });
+        break;
+      }
+      default:
+        problems.push({ block: i, field: "kind", code: "bad" });
+    }
+  });
+  const page: OrgPage = { v: 1, langs, blocks };
+  if (JSON.stringify(page).length > LIMITS.json) problems.push({ block: null, field: "page", code: "too-long" });
+  return { page, problems };
+}

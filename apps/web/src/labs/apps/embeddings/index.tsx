@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@darsi/design-system";
 import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
-import { Plot, spreadLabels } from "../../kit/Plot";
+import { labelSize, Plot, spreadLabels } from "../../kit/Plot";
 import { useS } from "../../kit/strings";
 import { matchKey } from "../../kit/text";
 import type { LabProps } from "../../types";
@@ -59,14 +59,18 @@ export default function Embeddings({ meta, onDone }: LabProps) {
           <Plot x={pad(Math.min(...xs), Math.max(...xs))} y={pad(Math.min(...ys), Math.max(...ys))} label={s.map} height={MAP_H} ticks={0}
             dots={m.xy.map(([x, y], j) => ({ x, y, r: m.v.keys[j] === sel ? 7 : 4, tone: m.v.keys[j] === sel ? "b" : nearSet.has(m.v.keys[j]) ? "a" : "muted" }))}>
             {({ px, py }) => {
-              const anchors = m.xy.map(([x, y], j) => ({ x: px(x), y: py(y), w: word(m.v.keys[j]).length * 7 + 4 }));
+              // Each label's real size (Arabic words run wider and taller than a Latin guess, and piled up without it);
+              // the picked word and its nearest words get their spots first.
+              const anchors = m.xy.map(([x, y], j) => {
+                const k = m.v.keys[j], on = k === sel || nearSet.has(k), size = labelSize(word(k), on ? 13 : 12, on);
+                return { x: px(x), y: py(y), w: size.w + 4, h: size.h, rank: k === sel ? 0 : on ? 1 : 2 };
+              });
               const at = spreadLabels(anchors, { x0: 30, y0: 10, x1: 310, y1: MAP_H - 30 });
               return m.xy.map((_, j) => {
                 const k = m.v.keys[j], on = k === sel || nearSet.has(k), a = anchors[j], p = at[j];
-                const far = Math.hypot(p.x - a.x - 6, p.y - a.y + 4) > 6;
                 return (
                   <g key={j}>
-                    {far && <line x1={a.x} y1={a.y} x2={p.x} y2={p.y - 4} className="lb-plot-leader" />}
+                    {p.lead && <line x1={a.x} y1={a.y} x2={p.lead[0]} y2={p.lead[1]} className="lb-plot-leader" />}
                     <text x={p.x} y={p.y} className={on ? "lb-plot-label is-on" : "lb-plot-label"}>{word(k)}</text>
                   </g>
                 );

@@ -40,9 +40,9 @@ It has two syllables, is easy to say in English, French, Portuguese or Hindi, an
 ## What a teacher gets
 
 - **Five-minute lessons.** Each one follows the same shape: watch a short video (or read the transcript to save data), practise with mixed questions, get feedback that explains *why*, reflect, and finish with "Try it in class tomorrow".
-- **Three tracks**, each in four levels: **AI**, **IoT** (sensors and connected devices) and **cyber security**. The competencies map to the UNESCO AI Competency Frameworks for teachers and for students, to the EU's DigComp 2.2, and to Darsi's own IoT strand. A nine-question placement check suggests where to start.
+- **Nine tracks**, each in four levels, with courses for teachers and for their students: **AI**, **IoT** (sensors and connected devices), **cyber security**, **programming**, **data engineering**, **data science**, **AI agents**, **optimization** and **AI security**. The competencies map to the UNESCO AI Competency Frameworks for teachers and for students, to the EU's DigComp 2.2, and to Darsi's own strands. A short placement check (two questions per level in each chosen track) suggests where to start.
 - **A classroom kit for every lesson.** Slides (PDF and editable PowerPoint), a lesson plan and a pupil worksheet in the teacher's language. They are printable in black and white, include activities that need no devices or electricity, and are free to copy for your school.
-- **Labs.** 48 hands-on apps across all three tracks, each a few minutes long. Teach one neuron, then train whole networks, see how a computer reads pictures and text, follow an LLM writing word by word, and build decision trees and a robot that learns by reward. Wire logic gates and LED circuits, log sensor data, and plan a farm's mesh network. Crack a Caesar cipher, sign in with real one-time codes and spot scam messages. Everything really computes on the phone, works offline, and uses reviewed examples, so no learner ever sees unreviewed AI output. Any lab can also be a step in a lesson.
+- **Labs.** More than 100 hands-on apps across the nine tracks, each a few minutes long. Teach one neuron, then train whole networks, see how a computer reads pictures and text, follow an LLM writing word by word, and build decision trees and a robot that learns by reward. Wire logic gates and LED circuits, log sensor data, and plan a farm's mesh network. Crack a Caesar cipher, sign in with real one-time codes and spot scam messages. Write and run Python and SQL, and plan delivery routes. Everything really computes on the phone, works offline, and uses reviewed examples, so no learner ever sees unreviewed AI output. Any lab can also be a step in a lesson.
 - **Real projects.** Each lesson can end with a task for the teacher's own classroom, which a colleague or trainer can review.
 - **Progress that encourages.** Streaks count *teaching weeks*, not days; missing a week pauses the streak and never resets it. Teachers earn certificates per track and level, which they can show their school leaders.
 
@@ -66,18 +66,16 @@ An organization can register on Darsi. Once approved, its admins get:
 
 | | |
 |---|---|
-| **Install size** | About 715 KB for an English teacher and 845 KB for an Arabic one, fonts included: each phone keeps only the fonts for its own language. Guests never download the account and sync code; it loads only when someone signs in. Admin tools and the spreadsheet importer load only for the people who use them. |
+| **Install size** | About 1.4 MB for an English teacher and 1.5 MB for an Arabic one, fonts included (about 490 KB and 625 KB over the network): each phone keeps only the fonts for its own language. Code exercises, Labs and lesson videos are saved only when someone opens or downloads them. Guests never download the account and sync code; it loads only when someone signs in. Admin tools and the spreadsheet importer load only for the people who use them. |
 | **Data** | Progress syncs with one small read per sign-in; photos are shrunk on the phone (often from 3 MB to around 250 KB) before upload. |
 | **Old phones** | Styles work on older Android WebViews, every tap target is at least 48 px, and **Sunlight mode** gives high contrast for outdoor classrooms. |
 | **No account needed** | Teachers can start learning straight away as guests. When they create an account later, their progress comes with them. |
 
 ## Where we are
 
-**Live now:** the full learning experience in English and Arabic, the first AI unit, Labs, classroom kits, offline downloads, accounts, organizations, and the admin and teacher dashboards.
+**Live now:** courses in all nine tracks for teachers and for students, with narrated lesson videos in English and Egyptian Arabic, Labs, classroom kits, offline downloads, accounts, organizations, the admin and teacher dashboards, and the Darsi Super tutor.
 
 **Next:**
-- narrated lesson videos in each language;
-- the first IoT and cyber-security units;
 - more languages (French, Swahili, Urdu, Hausa);
 - Android and iOS apps from the same code;
 - a full security review before wider rollout.

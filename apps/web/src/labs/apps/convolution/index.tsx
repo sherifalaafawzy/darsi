@@ -3,6 +3,7 @@ import { Button } from "@darsi/design-system";
 import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
 import { RunBar, Segmented } from "../../kit/controls";
+import { signed } from "../../kit/Formula";
 import { PixelGrid } from "../../kit/PixelGrid";
 import { useS } from "../../kit/strings";
 import { useLoop } from "../../kit/useLoop";
@@ -70,7 +71,7 @@ export default function Convolution({ meta, onDone }: LabProps) {
   const pos = Math.max(0, Math.min(N * N - 1, p - 1)), r = Math.floor(pos / N), c = pos % N;
   // The canvas has a 2px border; the window lines up with its cells inside it.
   const win = (cells: number, edge = 2) => `calc(${edge}px + (100% - 4px) * ${cells / N})`;
-  const n2 = (v: number) => num(Math.round(v * 100) / 100);
+  const n2 = (v: number) => signed(num, v); // the filter grid and the sum are left to right: "−١", not "١-", in Arabic
   const terms = [-1, 0, 1].map((dr) => [-1, 0, 1].map((dc) => { const rr = r + dr, cc = c + dc, px = rr >= 0 && rr < N && cc >= 0 && cc < N ? img[rr * N + cc] : 0; return [px, k[(dr + 1) * 3 + dc + 1]] as const; }));
 
   return (

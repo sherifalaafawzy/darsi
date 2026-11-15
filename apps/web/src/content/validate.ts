@@ -14,7 +14,12 @@ export type IssueCode =
   | "required" | "minItems" | "duplicateId" | "badId" | "lessonIdPrefix" | "badValue" | "range"
   | "answerNotInOptions" | "answersNotInOptions" | "fillBlanks" | "fillAnswers" | "fillBank"
   | "badUrl" | "checkpoint" | "tooLarge" | "missingLang" | "unknownCompetency" | "noSlides"
-  | "codeTest" | "unsolvable";
+  | "codeTest" | "unsolvable"
+  // Two match cards on one side that read the same: learners can't tell them apart, and the engine grades by position.
+  | "duplicateText"
+  // A capstone milestone's fields on a unit that isn't a capstone (checkCapstone would refuse every send), and a
+  // capstone with no project step asking for anything to send.
+  | "capstoneOnly" | "capstoneMilestone";
 
 /** Where an issue is: indexes into the unit (for "Lesson 2 › Step 4") and the field inside it. */
 export interface IssueAt { lesson?: number; step?: number; slide?: number; kit?: number; field: string }
@@ -29,6 +34,8 @@ const LEVELS_CAP = 12;
 export const STEP_TYPES = ["video", "read", "choice", "multi", "truefalse", "image", "match", "order", "fill", "type", "hotspot", "scenario", "lab", "project", "reflect",
   "code", "parsons", "codefill", "bug", "blocks"] as const;
 export const CODE_LANGS = ["python", "sql"] as const;
+/** A project step's capstone milestone fields (types.ts ProjectStep): only units with kind "capstone" take them. */
+export const CAPSTONE_FIELDS = ["evidence", "setup", "starterRepo", "hours", "milestone"] as const;
 export const ROBOT_COMMANDS = ["forward", "left", "right"] as const;
 export const LED_COLOURS = ["red", "yellow", "green", "blue"] as const;
 export const SENSOR_KINDS = ["light", "temperature", "moisture", "distance", "sound"] as const;
@@ -81,6 +88,8 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
   const add = (field: string, code: IssueCode, params?: Issue["params"], level: Issue["level"] = "error") => issues.push({ at: { ...ctx, field }, code, level, params });
   const langs = (opts.langs ?? ["ar"]).filter((l) => l !== "en");
   const missing = (field: string, lang: string) => add(field, "missingLang", { lang }, "warning");
+  /** Only a capstone's project steps are sent through checkCapstone, which refuses any other unit. */
+  const capstone = isObj(input) && input.kind === "capstone";
 
   /** LocalText: English is required (the fallback for every language); a missing translation is a warning. */
   const text = (o: Obj, key: string, required = true) => {
@@ -139,7 +148,27 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
         break;
       }
       case "truefalse": if (typeof s.answer !== "boolean") add("answer", "required"); break;
-      case "match": { const pairs = arr(s.pairs); minItems(pairs, "pairs", 2); pairs.forEach((p, i) => { if (!isObj(p)) return add(`pairs.${i}`, "badValue"); text(p, "left"); text(p, "right"); }); break; }
+      case "match": {
+        const pairs = arr(s.pairs); minItems(pairs, "pairs", 2);
+        pairs.forEach((p, i) => { if (!isObj(p)) return add(`pairs.${i}`, "badValue"); text(p, "left"); text(p, "right"); });
+        // Each card on a side must read differently in every language: pair i is right only with card i (engine.ts), so
+        // two "Regression" cards mark one of the two right matchings wrong.
+        for (const side of ["left", "right"] as const) {
+          const seen = new Map<string, Set<string>>();
+          pairs.forEach((p, i) => {
+            const t = isObj(p) ? p[side] : undefined;
+            if (!isObj(t)) return;
+            for (const [lang, v] of Object.entries(t)) {
+              if (!filled(v)) continue;
+              const key = v.replace(/[⁦-⁩‎‏]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+              const got = seen.get(lang) ?? new Set<string>();
+              if (got.has(key)) add(`pairs.${i}.${side}.${lang}`, "duplicateText", { value: v.trim() });
+              got.add(key); seen.set(lang, got);
+            }
+          });
+        }
+        break;
+      }
       case "order": { const items = arr(s.steps); minItems(items, "steps", 2); items.forEach((it, i) => { if (!isObj(it) || !filled(it.en)) add(`steps.${i}.en`, "required"); else for (const l of langs) if (!filled(it[l])) missing(`steps.${i}.${l}`, l); }); break; }
       case "fill": fill(s); break;
       case "type": list(s, "accept"); text(s, "placeholder", false); break;
@@ -147,13 +176,20 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
         const mock = s.mock;
         if (!isObj(mock)) add("mock", "required"); else { if (!isStr(mock.from)) add("mock.from", "required"); text(mock, "body"); text(mock, "link"); }
         const spots = arr(s.spots); minItems(spots, "spots", 1); ids(spots, "spots");
+        const bodyLines = isObj(mock) && isObj(mock.body) && isStr(mock.body.en) ? mock.body.en.split("\n").length : 0;
         spots.forEach((sp, i) => {
           if (!isObj(sp)) return add(`spots.${i}`, "badValue");
           text(sp, "label");
           for (const k of ["x", "y", "w", "h"]) if (!isNum(sp[k]) || (sp[k] as number) < 0 || (sp[k] as number) > 100) add(`spots.${i}.${k}`, "range", { min: 0, max: 100 });
           if (isNum(sp.x) && isNum(sp.w) && sp.x + sp.w > 100) add(`spots.${i}.w`, "range", { min: 0, max: 100 - sp.x });
           if (isNum(sp.y) && isNum(sp.h) && sp.y + sp.h > 100) add(`spots.${i}.h`, "range", { min: 0, max: 100 - sp.y });
+          // A spot on a line of the message (from 0) or on its link (types.ts HotspotStep).
+          if (sp.line !== undefined && sp.line !== "link" && !(Number.isInteger(sp.line) && (sp.line as number) >= 0 && (sp.line as number) < bodyLines))
+            add(`spots.${i}.line`, "range", { min: 0, max: Math.max(0, bodyLines - 1) });
         });
+        // Spots on lines need the same lines in every language: one sentence per line, in the same order.
+        if (isObj(mock) && isObj(mock.body) && spots.some((sp) => isObj(sp) && typeof sp.line === "number"))
+          for (const [lang, b] of Object.entries(mock.body)) if (isStr(b) && b.split("\n").length !== bodyLines) add(`mock.body.${lang}`, "badValue", { value: lang });
         break;
       }
       case "scenario": {
@@ -213,6 +249,7 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
 
   /** A capstone milestone's optional fields (types.ts ProjectStep): evidence, setup tabs, starter repo, hours. */
   const capstoneFields = (s: Obj) => {
+    if (!capstone) for (const k of CAPSTONE_FIELDS) if (s[k] !== undefined) add(k, "capstoneOnly");
     if (s.evidence !== undefined) {
       if (!Array.isArray(s.evidence)) add("evidence", "badValue");
       else s.evidence.forEach((e, i) => {
@@ -355,11 +392,23 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
         }
       }
     }
-    arr(s.chapters).forEach((c, i) => {
+    const chapters = arr(s.chapters);
+    chapters.forEach((c, i) => {
       if (!isObj(c)) return add(`chapters.${i}`, "badValue");
       text(c, "label");
       atBy(c, `chapters.${i}`);
       if (!isNum(c.at) || c.at < 0 || (isNum(s.duration) && c.at >= s.duration)) add(`chapters.${i}.at`, "range", { min: 0, max: isNum(s.duration) ? s.duration - 1 : 0 });
+      // Chapters come in the video's order, in every language: one at or before the chapter above it (a "Remember" at
+      // 0:00 after the others) puts its mark on the seek bar in the wrong place.
+      const prev = chapters[i - 1];
+      if (!isObj(prev)) return;
+      const max = isNum(s.duration) ? s.duration - 1 : 3600;
+      if (isNum(c.at) && isNum(prev.at) && c.at <= prev.at) add(`chapters.${i}.at`, "range", { min: prev.at, max }, "warning");
+      if (isObj(c.atBy) && isObj(prev.atBy)) for (const [lang, v] of Object.entries(c.atBy)) {
+        const before = prev.atBy[lang];
+        if (v === c.at && before === prev.at) continue; // said above
+        if (isNum(v) && isNum(before) && v <= before) add(`chapters.${i}.atBy.${lang}`, "range", { min: before, max: 3600 }, "warning");
+      }
     });
     if (s.checkpoint !== undefined) {
       const cp = s.checkpoint;
@@ -413,7 +462,9 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
     ctx = outer;
     const comps = l.competencies;
     if (comps !== undefined) {
-      if (!Array.isArray(comps) || !comps.every(isStr)) add("competencies", "badValue");
+      // At most 30 codes of up to 40 characters: the rules refuse a lesson result with more (firestore.rules, progress),
+      // and sync would then never send that lesson's results.
+      if (!Array.isArray(comps) || !comps.every(isStr) || comps.length > 30 || comps.some((c) => c.length > 40)) add("competencies", "badValue");
       else if (opts.competencies) for (const c of comps) if (!opts.competencies.has(c)) add("competencies", "unknownCompetency", { value: c }, "warning");
     }
     if (isStr(l.id) && !l.id.startsWith(`${unitId}-`)) add("id", "lessonIdPrefix", { prefix: `${unitId}-` });
@@ -431,6 +482,8 @@ export function validateUnit(input: unknown, opts: ValidateOptions = {}): Issue[
   if (u.kind !== undefined && u.kind !== "capstone") add("kind", "badValue", { value: String(u.kind) });
   if (byteSize(u) > MAX_UNIT_BYTES) add("", "tooLarge", { max: Math.round(MAX_UNIT_BYTES / 1000) });
   const lessons = arr(u.lessons);
+  if (capstone && !lessons.some((l) => isObj(l) && arr(l.steps).some((s) => isObj(s) && s.type === "project" && Array.isArray(s.evidence) && s.evidence.length > 0)))
+    add("kind", "capstoneMilestone");
   minItems(lessons, "lessons", 1);
   ids(lessons, "lessons", /^[a-z0-9][a-z0-9-]{1,59}$/);
   lessons.forEach((l, i) => { ctx = { lesson: i }; lesson(l, isStr(u.id) ? u.id : ""); });

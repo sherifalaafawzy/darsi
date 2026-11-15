@@ -52,7 +52,15 @@
 .lb-plot-label.is-on { fill: var(--ink); font-size: 13px; font-weight: 700; }
 .lb-plot-leader { stroke: var(--line-strong); stroke-width: 1; }
 .lb-plot-leader.is-strong { stroke: var(--ink); stroke-width: 1.5; }
-.lb-plot-cap { color: var(--ink-muted); font-size: 12px; line-height: 16px; white-space: pre; }
+.lb-plot-cap { display: flex; flex-wrap: wrap; gap: 0 var(--space-4); color: var(--ink-muted); font-size: 12px; line-height: 16px; } /* one item per axis: its arrow, then its label */
+/* Choosing a spot without tapping (charts with onPick): sliders move a cross on the chart, for the keyboard and screen readers. */
+.lb-plot-box { display: grid; gap: var(--space-2); min-inline-size: 0; }
+.lb-plot-cross { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 4 3; pointer-events: none; }
+.lb-plot-cross > circle { stroke-width: 2.5; stroke-dasharray: none; }
+.lb-pick { padding: 0 var(--space-3); border: 2px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+.lb-pick > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-block-size: var(--tap-min); font: var(--text-label); list-style: none; cursor: pointer; }
+.lb-pick > summary::-webkit-details-marker { display: none; }
+.lb-pick-body { display: grid; gap: var(--space-2); padding-block-end: var(--space-3); }
 .lb-tone-a { stroke: var(--lagoon-ink); fill: var(--lagoon-ink); }
 .lb-tone-b { stroke: var(--kola-deep); fill: var(--kola-deep); }
 .lb-tone-c { stroke: var(--hibiscus-ink); fill: var(--hibiscus-ink); }
@@ -77,7 +85,7 @@
 
 /* Attention: the sentence tinted by how much attention each word gets, and the table of who looks at whom. */
 .lb-attn-sentence { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.lb-attn-word { position: relative; display: inline-flex; align-items: center; overflow: hidden; min-block-size: var(--tap-min); padding: 0 var(--space-3); border: 2px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.lb-attn-word { position: relative; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; min-block-size: var(--tap-min); min-inline-size: var(--tap-min); padding: 0 var(--space-3); border: 2px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
 .lb-attn-word > span:last-child { position: relative; }
 span.lb-attn-word { cursor: default; }
 .lb-attn-word.is-on { border-color: var(--ink); outline: 3px solid var(--kola); outline-offset: 1px; }
@@ -85,9 +93,9 @@ span.lb-attn-word { cursor: default; }
 .lb-attn-word:focus-visible, .lb-attn-row:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .lb-attn-matrix { display: grid; gap: 2px; align-items: center; font-size: 12px; line-height: 16px; }
 .lb-attn-col { overflow: hidden; color: var(--ink-muted); text-align: center; text-overflow: ellipsis; white-space: nowrap; }
-.lb-attn-row { min-block-size: 40px; padding: var(--space-1); border: 0; background: none; color: var(--ink-muted); font: inherit; text-align: start; white-space: nowrap; cursor: pointer; }
+.lb-attn-row { min-block-size: 44px; min-inline-size: 44px; padding: var(--space-1); border: 0; background: none; color: var(--ink-muted); font: inherit; text-align: start; white-space: nowrap; cursor: pointer; }
 .lb-attn-row.is-on { color: var(--ink); font-weight: 700; }
-.lb-attn-cell { display: block; block-size: 40px; overflow: hidden; border-radius: 2px; background: var(--surface-sunk); }
+.lb-attn-cell { display: block; block-size: 44px; overflow: hidden; border-radius: 2px; background: var(--surface-sunk); }
 .lb-attn-cell > span { display: block; block-size: 100%; background: var(--lb-tone, var(--sunbird)); }
 .lb-table tr.is-on td { background: var(--surface-sunk); font-weight: 700; }
 
@@ -129,7 +137,7 @@ span.lb-attn-word { cursor: default; }
 .lb-tree-node.is-open { border-style: dashed; border-color: var(--ink); }
 .lb-tree-node.is-path { border-color: var(--ink); }
 .lb-tree-node.is-leaf.is-path { background: var(--lb-soft); }
-.lb-tree-count { display: inline-flex; align-items: center; min-block-size: 40px; padding: 0; border: 0; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; text-decoration: underline dotted; cursor: pointer; }
+.lb-tree-count { display: inline-flex; align-items: center; min-block-size: 44px; padding: 0; border: 0; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; text-decoration: underline dotted; cursor: pointer; }
 .lb-tree-node.is-sel > .lb-tree-count { color: var(--ink); text-decoration: underline solid; }
 .lb-tree-count:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .lb-verdict { margin: 0; font-size: 18px; font-weight: 700; line-height: 26px; }
@@ -827,6 +835,7 @@ span.lb-attn-word { cursor: default; }
 .lb-ag-script { display: grid; gap: var(--space-1); margin: 0; padding-inline-start: var(--space-6); font-size: 14px; line-height: 20px; }
 .lb-ag-script > li.is-done { color: var(--ink-muted); text-decoration: line-through; }
 .lb-ag-script > li.is-next { font-weight: 700; }
+.lb-ag-script:lang(ar) { list-style-type: arabic-indic; } /* numbered ١، ٢، ٣ in Arabic, like Try this */
 .lb-ag-meter { display: flex; overflow: hidden; block-size: 28px; border: 2px solid var(--ink); border-radius: var(--radius-sm); background: var(--surface); }
 .lb-ag-meter > span { flex: none; block-size: 100%; border-inline-end: 1px solid var(--surface); }
 .lb-ag-legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin: 0; padding: 0; list-style: none; font-size: 13px; line-height: 18px; }
@@ -949,3 +958,49 @@ span.lb-attn-word { cursor: default; }
 /* Supply chain: key thumbprints and the real-files table. */
 .lb-sc-key { display: inline-block; padding: 0 var(--space-1); border-radius: var(--radius-sm); background: var(--surface-sunk); font: 13px/20px ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
 .lb-sc-files td, .lb-sc-files th { white-space: nowrap; }
+
+/* ---------- App: Kali Linux terminal (lab id "kali") ---------- */
+/* A black console. Colours come from design tokens so the brand lint passes; the terminal body is always left-to-right. */
+.lb-kali-wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+.lb-kali-term { display: grid; gap: var(--space-2); min-inline-size: 0; padding: var(--space-3); background: var(--ink); border: 2px solid var(--ink); border-radius: var(--radius-md); cursor: text; }
+.lb-kali-scroll { max-block-size: 22rem; overflow: auto; font: 13px/19px ui-monospace, Menlo, Consolas, monospace; -webkit-overflow-scrolling: touch; }
+.lb-kali-line { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink-inverse); }
+.lb-kali-line.is-prompt { color: var(--leaf); }
+.lb-kali-line.is-ok { color: var(--leaf); }
+.lb-kali-line.is-warn { color: var(--sunbird); }
+.lb-kali-line.is-err { color: var(--hibiscus); }
+.lb-kali-line.is-info { color: var(--sky); }
+.lb-kali-line.is-dim { color: var(--slate); }
+.lb-kali-line.is-out { color: var(--ink-inverse); }
+.lb-kali-input { display: flex; align-items: center; gap: var(--space-2); font: 13px/19px ui-monospace, Menlo, Consolas, monospace; border-block-start: 1px solid var(--line-strong); padding-block-start: var(--space-2); }
+.lb-kali-ps1 { flex: none; color: var(--leaf); white-space: pre; }
+.lb-kali-field { flex: 1 1 auto; min-inline-size: 0; background: transparent; border: none; color: var(--ink-inverse); font: inherit; caret-color: var(--leaf); }
+.lb-kali-field:focus { outline: none; }
+.lb-kali-cursor { flex: none; inline-size: 8px; block-size: 16px; background: var(--leaf); animation: lb-kali-blink 1s steps(2, start) infinite; }
+@keyframes lb-kali-blink { to { opacity: 0; } }
+
+.lb-kali-missions { display: grid; gap: var(--space-3); min-inline-size: 0; padding: var(--space-3); border: 2px solid var(--line); border-radius: var(--radius-md); background: var(--paper); }
+.lb-kali-mtitle { font: var(--text-heading); }
+.lb-kali-mlist { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; counter-reset: none; }
+.lb-kali-m { display: flex; gap: var(--space-2); align-items: start; padding: var(--space-2); border-radius: var(--radius-sm); background: var(--surface-sunk); }
+.lb-kali-m.is-done { background: var(--leaf-soft); }
+.lb-kali-mcheck { flex: none; inline-size: 1.4rem; font-weight: 700; color: var(--ink-muted); }
+.lb-kali-m.is-done .lb-kali-mcheck { color: var(--leaf-ink); }
+.lb-kali-mname { display: block; font: var(--text-label); font-weight: 700; }
+.lb-kali-mdesc { display: block; font-size: 14px; line-height: 20px; color: var(--ink-muted); }
+.lb-kali-mhint { display: block; margin-block-start: var(--space-1); font: 12px/16px ui-monospace, Menlo, Consolas, monospace; color: var(--lagoon-ink); overflow-wrap: anywhere; }
+
+@media (min-width: 720px) {
+  .lb-kali-wrap { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+}
+
+/* Kali lab: legal disclaimer (danger tone) + acknowledgement gate. */
+.lb-kali-legal { display: grid; gap: var(--space-2); padding: var(--space-3); border: 2px solid var(--wrong); border-radius: var(--radius-md); background: var(--wrong-soft); }
+.lb-kali-legal-head { display: flex; align-items: center; gap: var(--space-2); color: var(--wrong); }
+.lb-kali-legal-head strong { font: var(--text-heading); }
+.lb-kali-legal-body { margin: 0; font-size: 14px; line-height: 21px; }
+.lb-kali-ack { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin-block-start: var(--space-1); padding-block-start: var(--space-2); border-block-start: 1px solid var(--wrong); }
+.lb-kali-ackrow { display: flex; align-items: start; gap: var(--space-2); font: var(--text-label); cursor: pointer; }
+.lb-kali-ackrow input { inline-size: 20px; block-size: 20px; margin-block-start: 1px; flex: none; accent-color: var(--wrong); }
+.lb-kali-input-locked { opacity: 0.6; }
+.lb-kali-locked { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--wrong-soft); color: var(--wrong); font-size: 14px; line-height: 20px; }

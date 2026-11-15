@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
 import { RunBar, Segmented, Stats } from "../../kit/controls";
+import { signed } from "../../kit/Formula";
 import { Plot } from "../../kit/Plot";
 import { usePlural, type Forms } from "../../kit/plural";
 import { useKit, useS } from "../../kit/strings";
@@ -88,7 +89,7 @@ export default function Perceptron({ meta, onDone }: LabProps) {
           <Stats items={[{ label: s.passes, value: num(passes.current) }, { label: s.wrong, value: `${num(mistakes(n, pts))} / ${num(pts.length)}` }]} />
           <div className="stack-sm">
             <span className="dr-field-label">{s.rule}</span>
-            <p className="lb-mono" dir="ltr">{[n2(n.w1), " × x", n.w2 < 0 ? " − " : " + ", n2(Math.abs(n.w2)), " × y", n.b < 0 ? " − " : " + ", n2(Math.abs(n.b)), " = 0"].map((p, i) => <bdi key={i}>{p}</bdi>)}</p>
+            <p className="lb-mono" dir="ltr">{[signed(num, n.w1), " × x", n.w2 < 0 ? " − " : " + ", n2(Math.abs(n.w2)), " × y", n.b < 0 ? " − " : " + ", n2(Math.abs(n.b)), ` = ${num(0)}`].map((p, i) => <bdi key={i} dir="ltr">{p}</bdi>)}</p>
           </div>
           {status && <p className={status === "done" ? "notice ok" : "notice"} role="status">{status === "done" ? s.done(count(passes.current, s.count)) : s.stuck(count(passes.current, s.count))}</p>}
         </div>

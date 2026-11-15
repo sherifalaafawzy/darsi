@@ -14,10 +14,10 @@ import { creditsForCost, creditsLeft, holdCredits, settleCredits, spendCredits, 
 import { catalogPath, type Owner } from "./catalog.js";
 import { superOn } from "./settings.js";
 import { bucket } from "./storage.js";
-import { askAgent, openSession } from "./agent.js";
-import { AGENT_PRICES, type AgentPrices } from "./agentCore.js";
+import { AgentError, askAgent, openSession } from "./agent.js";
+import { AGENT_PRICES, agentPricesAt, type AgentPrices } from "./agentCore.js";
 import type { ExplainerPackage } from "./explainer.js";
-import { ANSWER_SCHEMA, LIVE_PRICES, TEXT_PRICES, audioCost, buildIndex, instructions, lessonMaterial, outside, searchBoth, sections, usageCost, type Index, type Prices, type TutorLang, type TutorUnit, type Usage } from "./tutorCore.js";
+import { ANSWER_SCHEMA, LIVE_PRICES, TEXT_PRICES, audioCost, buildIndex, finiteNumbers, instructions, lessonMaterial, outside, searchBoth, sections, usageCost, type Index, type Prices, type TutorLang, type TutorUnit, type Usage } from "./tutorCore.js";
 
 export const GEMINI_KEY = defineSecret("GEMINI_API_KEY");
 
@@ -34,10 +34,20 @@ export interface TutorConfig { backend: "vertex" | "gemini"; vertexProject: stri
 // Darsi's own project; vertexProject may name another one (whose billing pays), where this service account may use Vertex AI.
 export const PROJECT = process.env.GCLOUD_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT ?? "";
 const DEFAULTS: TutorConfig = { backend: process.env.TUTOR_BACKEND === "gemini" ? "gemini" : "vertex", vertexProject: PROJECT, textLocation: "global", liveLocation: "us-central1", liveModel: "gemini-3.8-live", textModel: "gemini-3.5-flash-lite", voice: "Kore", live: LIVE_PRICES, text: TEXT_PRICES, maxMinutes: 14, on: true, engine: "direct", agentId: "", agentLocation: "europe-west1", agentAccount: "", agentPrices: AGENT_PRICES };
+/**
+ * Prices typed into config/tutor by hand: only numbers ≥ 0 count. Anything else ("0,75", text, null) is logged and the
+ * default kept, because one bad price made every charge NaN, which then passed every credit check (sfm-04).
+ */
+function prices<T>(given: unknown, what: string): Partial<T> {
+  const { ok, bad } = finiteNumbers(given);
+  if (bad.length) logger.error("tutor: config/tutor has prices that aren't numbers; the defaults are used for them", { what, keys: bad });
+  return ok as Partial<T>;
+}
 export async function tutorConfig(): Promise<TutorConfig> {
   const [d, superIsOn] = await Promise.all([db.doc("config/tutor").get().then((x) => x.data() as Partial<TutorConfig> | undefined), superOn()]);
-  // Darsi Super turned off for everyone closes the tutor too (and the voice relay, which reads this).
-  return { ...DEFAULTS, ...d, on: (d?.on ?? DEFAULTS.on) && superIsOn, live: { ...LIVE_PRICES, ...d?.live }, text: { ...TEXT_PRICES, ...d?.text }, agentPrices: { ...AGENT_PRICES, ...d?.agentPrices } };
+  // Darsi Super turned off for everyone closes the tutor too (and the voice relay, which reads this). The agent's
+  // prices follow Google's own change on 1 Jan 2027 unless config/tutor sets them.
+  return { ...DEFAULTS, ...d, on: (d?.on ?? DEFAULTS.on) && superIsOn, live: { ...LIVE_PRICES, ...prices<Prices>(d?.live, "live") }, text: { ...TEXT_PRICES, ...prices<Prices>(d?.text, "text") }, agentPrices: { ...agentPricesAt(), ...prices<AgentPrices>(d?.agentPrices, "agentPrices") } };
 }
 /** Whether the tutor can reach Google: Vertex needs only the service account; the Gemini API needs its key. */
 export const tutorReady = (cfg: TutorConfig) => cfg.on && (cfg.backend === "vertex" || (!!GEMINI_KEY.value() && GEMINI_KEY.value() !== "unset"));
@@ -63,30 +73,79 @@ async function economics(): Promise<Economics> {
 
 /* ---------- The courses ---------- */
 
-const cache = new Map<string, { at: number; v: unknown }>();
-async function cached<T>(key: string, ms: number, load: () => Promise<T>): Promise<T> {
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < ms) return hit.v as T;
-  const v = await load();
-  cache.set(key, { at: Date.now(), v });
+/**
+ * What an instance keeps, by kind (the key's prefix: "cat", "unit", "ix"), each a small LRU of at most so many
+ * entries: a search index is about 1.6 MB, and keeping every one ever built could fill a 512 MiB instance (sfm-12).
+ * An entry past its time is dropped when it is next asked for. A load in progress is shared, so the panel's warm-up
+ * and the first question don't build the same index twice; a load that fails isn't kept.
+ */
+const LIMITS: Record<string, number> = { cat: 64, unit: 150, ix: 24 };
+const caches = new Map<string, Map<string, { at: number; v: Promise<unknown> }>>();
+function cached<T>(key: string, ms: number, load: () => Promise<T>): Promise<T> {
+  const kind = key.slice(0, Math.max(0, key.indexOf(":")));
+  let c = caches.get(kind);
+  if (!c) caches.set(kind, (c = new Map()));
+  const hit = c.get(key);
+  if (hit) {
+    c.delete(key);
+    if (Date.now() - hit.at < ms) { c.set(key, hit); return hit.v as Promise<T>; } // now the most recently used
+  }
+  const v = load();
+  const entry = { at: Date.now(), v: v as Promise<unknown> };
+  c.set(key, entry);
+  for (const old of c.keys()) { if (c.size <= (LIMITS[kind] ?? 50)) break; c.delete(old); }
+  const mine = c;
+  v.catch(() => { if (mine.get(key) === entry) mine.delete(key); });
   return v;
 }
+/** For the tests: how many entries of a kind an instance keeps. */
+export const cachedCount = (kind: string) => caches.get(kind)?.size ?? 0;
+/** Drops an entry kept since before `before`, so the next ask reads it again (one read since then is fresh enough). */
+function forget(key: string, before: number) {
+  const c = caches.get(key.slice(0, Math.max(0, key.indexOf(":"))));
+  if ((c?.get(key)?.at ?? Infinity) < before) c!.delete(key);
+}
 const readJson = async (path: string) => JSON.parse((await bucket().file(path).download())[0].toString("utf8"));
+/** Storage's "no such file" (as in courses.ts): the only read error that means "nothing published". */
+const missing = (e: unknown) => (e as { code?: number } | null)?.code === 404;
 type Entry = { id: string; track: string; src?: string; version?: number };
-/** The public catalog plus the learner's organization's (published units only). */
+/**
+ * The public catalog plus the learner's organization's (published units only). Only a missing file is an empty
+ * catalog: any other Storage error rejects (and isn't kept, see cached), where it used to leave every course
+ * "not found" on this instance for five minutes.
+ */
 async function catalog(orgId: string | null): Promise<Entry[]> {
-  const read = (owner: Owner) => cached(`cat:${owner}`, 5 * 60e3, async () => ((await readJson(catalogPath(owner)).catch(() => ({ units: [] }))) as { units: Entry[] }).units);
+  const read = (owner: Owner) => cached(`cat:${owner}`, 5 * 60e3, async () => {
+    const c = (await readJson(catalogPath(owner)).catch((e) => { if (missing(e)) return null; throw e; })) as { units?: Entry[] } | null;
+    return Array.isArray(c?.units) ? c.units : [];
+  });
   return [...(await read("public")), ...(orgId ? await read(orgId) : [])];
 }
+/**
+ * A course the learner can see, or null. A catalog kept from before a course was unpublished or published again
+ * (up to five minutes) can name a unit file that is gone: the catalogs are then read once more, and a course that
+ * still isn't there is null, never an error thrown into the caller (the voice relay among them). A catalog read
+ * since this call began is already fresh, so a track's courses loaded together read it again once, not once each.
+ */
 export async function loadUnit(unitId: string, orgId: string | null): Promise<TutorUnit | null> {
-  const e = (await catalog(orgId)).find((u) => u.id === unitId);
-  if (!e?.src) return null;
-  return cached(`unit:${e.src}`, 30 * 60e3, () => readJson(e.src!) as Promise<TutorUnit>);
+  const began = Date.now();
+  for (let again = false; ; again = true) {
+    const src = (await catalog(orgId)).find((u) => u.id === unitId)?.src;
+    if (!src) return null;
+    const unit = await cached(`unit:${src}`, 30 * 60e3, () => readJson(src) as Promise<TutorUnit>).catch((e) => { if (missing(e)) return null; throw e; });
+    if (unit || again) return unit;
+    forget("cat:public", began);
+    if (orgId) forget(`cat:${orgId}`, began);
+  }
 }
-/** A search index over every course of the unit's track the learner can see, in their language. */
+/**
+ * A search index over every course of the unit's track the learner can see, in their language. It is kept by the
+ * course files it covers, not by organization: every organization without courses of its own in the track shares the
+ * public one (sfm-12), and an organization's own courses (orgs/{id}/… files) still get an index of their own.
+ */
 export async function trackIndex(unit: TutorUnit, orgId: string | null, lang: string): Promise<Index> {
   const entries = (await catalog(orgId)).filter((u) => u.track === unit.track);
-  return cached(`ix:${orgId ?? "public"}:${unit.track}:${lang}:${entries.map((e) => e.src).join()}`, 30 * 60e3, async () => {
+  return cached(`ix:${unit.track}:${lang}:${entries.map((e) => e.src).join()}`, 30 * 60e3, async () => {
     const units = (await Promise.all(entries.map((e) => loadUnit(e.id, orgId)))).filter((u): u is TutorUnit => !!u);
     return buildIndex(units.flatMap((u) => sections(u, lang)));
   });
@@ -97,9 +156,13 @@ export async function trackIndex(unit: TutorUnit, orgId: string | null, lang: st
 export const hasSuper = (token: Record<string, unknown> | undefined) => Number(token?.planUntil) > Date.now();
 const day = () => new Date().toISOString().slice(0, 10);
 
-/** The day's tutor cost per person and for the platform. Bookkeeping: it never fails a call that was paid (H3). */
+/**
+ * The day's tutor cost per person and for the platform. Bookkeeping: it never fails a call that was paid (H3). A
+ * figure that isn't a number is left out (logged): Firestore refuses to add NaN, which used to fail the whole answer.
+ */
 async function countUsage(uid: string, usd: number, credits: number, mode: "text" | "voice") {
-  const inc = { usd: FieldValue.increment(usd), credits: FieldValue.increment(credits), [mode]: FieldValue.increment(1) };
+  if (!Number.isFinite(usd) || !Number.isFinite(credits)) logger.error("tutor: a call's cost isn't a number", { uid, usd: String(usd), credits: String(credits) });
+  const inc = { ...(Number.isFinite(usd) ? { usd: FieldValue.increment(usd) } : {}), ...(Number.isFinite(credits) ? { credits: FieldValue.increment(credits) } : {}), [mode]: FieldValue.increment(1) };
   await Promise.all([
     db.doc(`tutorUsage/${uid}/days/${day()}`).set({ day: day(), ...inc }, { merge: true }),
     db.doc(`analytics/${day()}`).set({ day: day(), tutor: inc }, { merge: true }),
@@ -111,6 +174,8 @@ async function countUsage(uid: string, usd: number, credits: number, mode: "text
  * happened), and says so (`short`: the credits it couldn't take). Also counts the day's tutor cost.
  */
 export async function charge(uid: string, usd: number, mode: "text" | "voice"): Promise<{ ok: boolean; credits: number; left: number; short: number }> {
+  // A cost that isn't a number can't be charged: the relay then ends the call (fail closed), never lets it run free.
+  if (!Number.isFinite(usd)) throw new Error(`tutor: a ${mode} cost isn't a number`);
   if (usd <= 0) return { ok: true, credits: 0, left: await balance(uid), short: 0 };
   const eco = await economics();
   const n = creditsForCost(usd, eco);
@@ -128,42 +193,105 @@ export async function charge(uid: string, usd: number, mode: "text" | "voice"): 
 
 /* ---------- Calls under way: credits held first, and a few at a time per person (M5) ---------- */
 
-/** tutorLeases/{uid}: the person's calls under way ({kind, until} by id) and their last warm-up; only the functions touch it. */
+/**
+ * tutorLeases/{uid}: the person's calls under way ({kind, until, hold} by id), their last warm-up and the agent
+ * session their panel holds (`session`, below); only the functions touch it. `hold` is what the call took out of credits/{uid} when it started. It used to live only in the
+ * memory of the function or relay running the call, so a call that never reached endCall (a timeout, a crash, an
+ * instance replaced mid-call) kept those credits for good. On the lease, whoever next looks gives them back.
+ */
 const leasesRef = (uid: string) => db.doc(`tutorLeases/${uid}`);
 /** Calls at once per person: two typed (a question while the last answer is still coming), one spoken. */
 export const MAX_CALLS = { text: 2, voice: 1 } as const;
-type Lease = { kind: "text" | "voice"; until: number };
+type Lease = { kind: "text" | "voice"; until: number; hold?: Hold };
+const r2 = (x: number) => Math.round(x * 100) / 100;
 
 /**
- * Starts a call: within one transaction, checks the person has fewer than MAX_CALLS of this kind under way and holds
- * `holdN` credits (all that's left, when less). Parallel calls therefore can't each see the same balance and overspend.
- * Throws resource-exhausted "no-credits" or "busy".
+ * The agent session the person's tutor panel was last given, and what it was opened for (tutorLeases/{uid}.session).
+ * A session's state is fixed when it opens: the lesson's text, and the organization and course its search_course tool
+ * asks tutorSearch for (agent.ts openSession). The phone sends its session id back with each question, and tutorAsk
+ * only checked the course sent with that question: someone removed from an organization could go on asking in a
+ * session opened on its private course, with any public course as the question's, and the agent read and searched
+ * the organization's courses for them. So a kept session is used only when it is the one recorded here, for the same
+ * organization (the caller's claim now), course, lesson and language; anything else gets a new session.
  */
-export async function startCall(uid: string, kind: "text" | "voice", holdN: number, ttlMs: number): Promise<{ id: string; hold: Hold }> {
-  const cRef = db.doc(`credits/${uid}`), lRef = leasesRef(uid);
-  return db.runTransaction(async (tx) => {
-    const [c, l] = await Promise.all([tx.get(cRef), tx.get(lRef)]);
-    const now = Date.now();
-    const live = Object.entries((l.get("calls") ?? {}) as Record<string, Lease>).filter(([, v]) => v && v.until > now);
-    if (live.filter(([, v]) => v.kind === kind).length >= MAX_CALLS[kind]) throw new HttpsError("resource-exhausted", "busy");
-    const h = holdCredits(c.data() as Credits | undefined, holdN, now);
-    if (!h) throw new HttpsError("resource-exhausted", "no-credits");
-    const id = randomBytes(8).toString("hex");
-    tx.set(cRef, h.next);
-    tx.set(lRef, { calls: Object.fromEntries([...live, [id, { kind, until: now + ttlMs }]]) }, { mergeFields: ["calls"] });
-    return { id, hold: h.hold };
-  });
+export interface KeptSession { id: string; orgId: string | null; unitId: string; lessonId: string | null; lang: TutorLang }
+export function sameSession(kept: unknown, now: KeptSession): boolean {
+  const s = kept as Partial<KeptSession> | null | undefined;
+  return !!s && typeof s === "object" && s.id === now.id && (s.orgId ?? null) === now.orgId && s.unitId === now.unitId && (s.lessonId ?? null) === now.lessonId && s.lang === now.lang;
+}
+/** Records the session just opened. Never fails the answer: unrecorded, the next question opens a new one. */
+const keepSession = (uid: string, s: KeptSession) => leasesRef(uid).set({ session: s }, { mergeFields: ["session"] })
+  .catch((e) => logger.error("tutor: session not recorded", { uid, error: String(e) }));
+
+/**
+ * The credits and the calls still under way, after every lease past its time gave back what it held (settled at a
+ * cost of 0) and was dropped. `back`: some credits came back, so both documents must be written, together: a lease
+ * left behind would give its hold back again. A lease from before holds were kept on it has none and is just dropped.
+ */
+function reclaim(credits: Credits | undefined, calls: unknown, now: number): { credits: Credits | undefined; live: [string, Lease][]; back: boolean } {
+  const live: [string, Lease][] = [];
+  let back = false;
+  for (const [id, v] of Object.entries((calls ?? {}) as Record<string, Lease | null>)) {
+    if (v && v.until > now) live.push([id, v]);
+    else if (v?.hold) { credits = settleCredits(credits, v.hold, 0, now).next; back = true; }
+  }
+  return { credits, live, back };
 }
 
-/** Ends a call that cost `cost` credits: settles against what was held, gives back the rest, and frees its place. */
+/**
+ * Starts a call: within one transaction, gives back what expired calls still hold, checks the person has fewer than
+ * MAX_CALLS of this kind under way and holds `holdN` credits (all that's left, when less), kept on the call's lease.
+ * Parallel calls therefore can't each see the same balance and overspend, nor each give an expired hold back.
+ * Throws resource-exhausted "no-credits" or "busy"; what expired calls held is given back even then.
+ * `session`: the agent session recorded on the same document (KeptSession), read here so tutorAsk needs no second read.
+ */
+export async function startCall(uid: string, kind: "text" | "voice", holdN: number, ttlMs: number): Promise<{ id: string; hold: Hold; session?: unknown }> {
+  const cRef = db.doc(`credits/${uid}`), lRef = leasesRef(uid);
+  const r = await db.runTransaction(async (tx): Promise<{ id: string; hold: Hold; session?: unknown } | { refuse: "busy" | "no-credits" }> => {
+    const [c, l] = await Promise.all([tx.get(cRef), tx.get(lRef)]);
+    const now = Date.now();
+    const s = reclaim(c.data() as Credits | undefined, l.get("calls"), now);
+    const busy = s.live.filter(([, v]) => v.kind === kind).length >= MAX_CALLS[kind];
+    const h = busy ? null : holdCredits(s.credits, holdN, now);
+    if (!h) {
+      // Refused, but outside the transaction (below), so the credits that came back are still written.
+      if (s.back) { tx.set(cRef, s.credits!); tx.set(lRef, { calls: Object.fromEntries(s.live) }, { mergeFields: ["calls"] }); }
+      return { refuse: busy ? "busy" : "no-credits" };
+    }
+    const id = randomBytes(8).toString("hex");
+    tx.set(cRef, h.next);
+    tx.set(lRef, { calls: Object.fromEntries([...s.live, [id, { kind, until: now + ttlMs, hold: h.hold }]]) }, { mergeFields: ["calls"] });
+    return { id, hold: h.hold, session: l.get("session") };
+  });
+  if ("refuse" in r) throw new HttpsError("resource-exhausted", r.refuse);
+  return r;
+}
+
+/**
+ * Ends a call that cost `cost` credits and frees its place. While the call's lease is there, it settles against what
+ * the lease holds (`hold`, the caller's copy, only for a lease from before holds were kept on it) and gives back the
+ * rest. A lease that is gone ran out and already gave its hold back (reclaim): the cost is then charged directly, at
+ * most what is left, and nothing is given back a second time.
+ */
 export async function endCall(uid: string, id: string, hold: Hold, cost: number): Promise<{ charged: number; left: number; short: boolean }> {
   const cRef = db.doc(`credits/${uid}`), lRef = leasesRef(uid);
   return db.runTransaction(async (tx) => {
     const [c, l] = await Promise.all([tx.get(cRef), tx.get(lRef)]);
-    const r = settleCredits(c.data() as Credits | undefined, hold, cost);
-    tx.set(cRef, r.next);
-    if (l.exists) tx.update(lRef, { [`calls.${id}`]: FieldValue.delete() });
-    return { charged: r.charged, left: Math.round(creditsLeft(r.next) * 100) / 100, short: r.short };
+    const cur = c.data() as Credits | undefined, now = Date.now();
+    const lease = ((l.get("calls") ?? {}) as Record<string, Lease | undefined>)[id];
+    if (lease) {
+      const r = settleCredits(cur, lease.hold ?? hold, cost, now);
+      tx.set(cRef, r.next);
+      tx.update(lRef, { [`calls.${id}`]: FieldValue.delete() });
+      return { charged: r.charged, left: r2(creditsLeft(r.next, now)), short: r.short };
+    }
+    // As settleCredits does: a cost that isn't a number charges what was held, never nothing and never more.
+    const due = Number.isFinite(cost) ? Math.max(0, cost) : Math.max(0, Number(hold?.fromPlan) || 0) + Math.max(0, Number(hold?.fromPacks) || 0);
+    const have = creditsLeft(cur, now), take = Math.min(due, have);
+    const spent = take > 0 ? spendCredits(cur, take, now) : null;
+    const next = spent ? { plan: r2(spent.plan), planUntil: spent.planUntil, packs: r2(spent.packs) } : cur;
+    if (spent) tx.set(cRef, next!);
+    return { charged: r2(spent ? take : 0), left: r2(creditsLeft(next, now)), short: take < due };
   });
 }
 
@@ -186,19 +314,45 @@ async function mayWarm(uid: string) {
   });
 }
 
-export const balance = async (uid: string) => Math.round(creditsLeft((await db.doc(`credits/${uid}`).get()).data() as Credits | undefined) * 100) / 100;
+/**
+ * The credits left. A call that ran out without ending still holds credits on its lease (reclaim): they are given
+ * back here first, in a transaction on both documents. Without this, someone whose whole balance was held would read
+ * 0 and be refused "no-credits" before startCall could give it back. One more read (the leases) per balance.
+ */
+export async function balance(uid: string): Promise<number> {
+  const cRef = db.doc(`credits/${uid}`), lRef = leasesRef(uid);
+  const [c, l] = await Promise.all([cRef.get(), lRef.get()]);
+  const now = Date.now();
+  if (!reclaim(c.data() as Credits | undefined, l.get("calls"), now).back) return r2(creditsLeft(c.data() as Credits | undefined, now));
+  return db.runTransaction(async (tx) => {
+    const [c2, l2] = await Promise.all([tx.get(cRef), tx.get(lRef)]);
+    const s = reclaim(c2.data() as Credits | undefined, l2.get("calls"), Date.now());
+    if (s.back) { tx.set(cRef, s.credits!); tx.set(lRef, { calls: Object.fromEntries(s.live) }, { mergeFields: ["calls"] }); }
+    return r2(creditsLeft(s.credits));
+  });
+}
 
 /* ---------- Text answers ---------- */
 
 // GEMINI_BASE lets the emulator checks use a stand-in.
 export const GEMINI = `${process.env.GEMINI_BASE ?? "https://generativelanguage.googleapis.com"}/v1beta/models`;
 
+/** How long the direct answer may take (it usually takes about a second). */
+const ANSWER_TIMEOUT_MS = 30_000;
+/**
+ * tutorAsk's own deadline, from when the call arrives: the function is stopped at 180 s, and whatever is stopped
+ * there never settles its credits. Past the deadline nothing new is started, which leaves 15 s to settle.
+ */
+export const ASK_DEADLINE_MS = 165_000;
+/** Kept free at the end of the deadline for settling the credits and counting the cost. */
+const SETTLE_ROOM_MS = 5_000;
+
 export interface Answer { inScope: boolean; answer: string; sources: { id: string; unitId: string; lessonId: string; stepId: string; lesson: string }[]; usd: number }
 /**
  * One text answer: the lesson as material, plus the best sections of the track for this question, and the reply as
  * JSON (in scope or not, the answer, the sections it used). Out of scope gets the fixed kind reply. The eval runs this.
  */
-export async function answer(o: { key?: string; cfg: TutorConfig; unit: TutorUnit; lessonId: string | null; ix: Index; en?: Index | null; question: string; lang: TutorLang; history?: { role: "user" | "tutor"; text: string }[]; style?: string }): Promise<Answer> {
+export async function answer(o: { key?: string; cfg: TutorConfig; unit: TutorUnit; lessonId: string | null; ix: Index; en?: Index | null; question: string; lang: TutorLang; history?: { role: "user" | "tutor"; text: string }[]; style?: string; timeoutMs?: number }): Promise<Answer> {
   const material = lessonMaterial(o.unit, o.lessonId, o.lang);
   const found = searchBoth(o.ix, o.en ?? null, o.question, 4, o.unit.id).filter((r) => !material.includes(`[${r.s.id}]`));
   const extra = found.map((r) => `[${r.s.id}] (${r.s.course}: ${r.s.lesson}, ${r.s.kind})\n${r.s.text.slice(0, 2500)}`).join("\n\n");
@@ -208,7 +362,7 @@ export async function answer(o: { key?: string; cfg: TutorConfig; unit: TutorUni
   const vertex = o.cfg.backend === "vertex";
   const url = vertex ? `${vertexHost(o.cfg.textLocation)}/v1/${vertexModel(o.cfg.vertexProject, o.cfg.textLocation, o.cfg.textModel)}:generateContent` : `${GEMINI}/${o.cfg.textModel}:generateContent`;
   const r = await fetch(url, {
-    method: "POST", signal: AbortSignal.timeout(30000),
+    method: "POST", signal: AbortSignal.timeout(o.timeoutMs ?? ANSWER_TIMEOUT_MS),
     headers: { "Content-Type": "application/json", ...(vertex ? { Authorization: `Bearer ${await googleToken()}` } : { "x-goog-api-key": o.key ?? "" }) },
     body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents, generationConfig: { responseMimeType: "application/json", responseSchema: ANSWER_SCHEMA, maxOutputTokens: 700, temperature: 0.4 } }),
   });
@@ -229,20 +383,32 @@ function finish(out: { inScope?: boolean; answer?: string; sources?: string[] },
   return { inScope, answer: inScope ? out.answer!.trim() : outside(o.lang), sources: inScope ? sources : [], usd };
 }
 
+const GONE = "The tutor didn't answer. Try again in a minute.";
+
 /** A text question to the tutor, about a course the learner can see. Charges its cost in credits. */
 export const tutorAsk = onCall({ secrets: [GEMINI_KEY], memory: "512MiB", timeoutSeconds: 180, maxInstances: 10 }, async (req) => {
+  const deadline = Date.now() + ASK_DEADLINE_MS;
   const c = caller(req);
   if (!hasSuper(req.auth?.token)) throw new HttpsError("permission-denied", "The tutor comes with Darsi Super.");
   const lang: TutorLang = req.data?.lang === "ar" ? "ar" : "en";
   const orgId = c.orgId ?? null, lessonId = str(req.data?.lessonId, 80) || null, style = str(req.data?.style, 60);
-  const [cfg, left, unit] = await Promise.all([tutorConfig(), balance(c.uid), loadUnit(str(req.data?.unitId, 64), orgId)]);
+  const warm = req.data?.warm === true;
+  // Courses that can't be read just now (a Storage error, no longer an empty catalog): a warm-up does nothing, as
+  // before; a question is told to try again, where it used to be told "No such course".
+  const course = loadUnit(str(req.data?.unitId, 64), orgId).catch((e) => {
+    logger.error("tutor: courses not read", { error: String(e) });
+    if (warm) return null;
+    throw new HttpsError("unavailable", GONE);
+  });
+  const [cfg, left, unit] = await Promise.all([tutorConfig(), balance(c.uid), course]);
   if (!tutorReady(cfg)) throw new HttpsError("failed-precondition", "tutor-closed");
   // {warm: true} when the panel opens: this instance loads the course and its search index, and the agent's session is
   // opened, so the first question waits for neither. Nothing is charged; it needs credits and is limited per person.
-  if (req.data?.warm === true) {
+  if (warm) {
     if (!unit || left <= 0 || !(await mayWarm(c.uid))) return { sessionId: "" };
     await Promise.all([trackIndex(unit, orgId, lang), lang === "en" ? null : trackIndex(unit, orgId, "en")]);
     const sessionId = cfg.engine === "agent" && cfg.agentId ? await openSession({ cfg, uid: c.uid, orgId, unit, lessonId, lang, style }).catch(() => "") : "";
+    if (sessionId) await keepSession(c.uid, { id: sessionId, orgId, unitId: unit.id, lessonId, lang });
     return { sessionId };
   }
   if (left <= 0) throw new HttpsError("resource-exhausted", "no-credits");
@@ -253,29 +419,57 @@ export const tutorAsk = onCall({ secrets: [GEMINI_KEY], memory: "512MiB", timeou
   // Credits are held before the model is called and settled after, and only MAX_CALLS run at once per person (M5).
   const call = await startCall(c.uid, "text", await textHold(), 200_000);
   let a: Answer | null = null, explainer: ExplainerPackage | null = null, sessionId = "";
+  // What an agent turn cost when it didn't answer (too slow, failed): Darsi paid Google for it, so it is charged with
+  // the direct answer that took its place (sfm-03).
+  let agentUsd = 0;
+  // What the answer costs in credits, once there is one and it is priced; null: nothing to charge.
+  let credits: number | null = null;
+  let paid: { charged: number; left: number } | null = null;
   try {
-    const [ix, en] = await Promise.all([trackIndex(unit, orgId, lang), lang === "en" ? null : trackIndex(unit, orgId, "en")]);
+    const [ix, en] = await Promise.all([trackIndex(unit, orgId, lang), lang === "en" ? null : trackIndex(unit, orgId, "en")]).catch((e) => {
+      logger.error("tutor: search index not built", { error: String(e) });
+      throw new HttpsError("unavailable", GONE);
+    });
     if (cfg.engine === "agent" && cfg.agentId) {
       try {
-        const r = await askAgent({ cfg, uid: c.uid, orgId, unit, lessonId, lang, question, style, sessionId: str(req.data?.sessionId, 128) || undefined, show: req.data?.show === true, ix, en });
+        // The phone's session only when it is the one recorded for this account, opened for this organization, course,
+        // lesson and language (KeptSession); any other id gets a new session, with today's rules and material.
+        const bound = (id: string): KeptSession => ({ id, orgId, unitId: unit.id, lessonId, lang });
+        const sent = str(req.data?.sessionId, 128);
+        const kept = sent && sameSession(call.session, bound(sent)) ? sent : undefined;
+        const r = await askAgent({ cfg, uid: c.uid, orgId, unit, lessonId, lang, question, style, sessionId: kept, show: req.data?.show === true, ix, en, deadline });
+        if (r.sessionId && r.sessionId !== kept) await keepSession(c.uid, bound(r.sessionId));
         a = finish(r.reply, { unit, lang, ix }, r.usd);
         ({ explainer, sessionId } = r);
-      } catch (e) { logger.error("tutor agent failed, answering directly", { error: String(e) }); }
-    }
-    if (!a) {
-      try { a = await answer({ key: GEMINI_KEY.value(), cfg, unit, lessonId, ix, en, question, lang, history, style }); } catch (e) {
-        logger.error("tutorAsk failed", { error: String(e) });
-        throw new HttpsError("unavailable", "The tutor didn't answer. Try again in a minute.");
+      } catch (e) {
+        agentUsd = e instanceof AgentError ? e.usd : 0;
+        logger.error("tutor agent failed, answering directly", { error: String(e), usd: agentUsd });
       }
     }
-  } catch (e) {
-    await endCall(c.uid, call.id, call.hold, 0).catch((x) => logger.error("tutor: hold not released", { uid: c.uid, error: String(x) }));
-    throw e;
+    if (!a) {
+      // The direct answer gets what is left of the deadline, at most its usual 30 s; with no time left it isn't asked.
+      const ms = Math.min(ANSWER_TIMEOUT_MS, deadline - Date.now() - SETTLE_ROOM_MS);
+      try {
+        if (ms < 1_000) throw new Error("no time left for the direct answer");
+        a = await answer({ key: GEMINI_KEY.value(), cfg, unit, lessonId, ix, en, question, lang, history, style, timeoutMs: ms });
+      } catch (e) {
+        logger.error("tutorAsk failed", { error: String(e) });
+        throw new HttpsError("unavailable", GONE);
+      }
+    }
+    credits = creditsForCost(a.usd + agentUsd, await economics());
+  } finally {
+    // Every path ends here, so the credits held are never left behind: an answer is settled at its cost; no answer
+    // (or one that couldn't be priced) gives the hold back, and what it cost Darsi is still counted, so the real cost
+    // shows. A settle that fails is logged, never thrown: the learner who has the answer keeps it, and the lease
+    // gives the hold back when it runs out (reclaim).
+    const usd = (a?.usd ?? 0) + agentUsd, due = credits ?? 0;
+    paid = await endCall(c.uid, call.id, call.hold, due).catch((x) => { logger.error("tutor: call not settled", { uid: c.uid, credits: due, error: String(x) }); return null; });
+    if (credits !== null || usd > 0) await countUsage(c.uid, usd, paid?.charged ?? 0, "text");
   }
-  const credits = creditsForCost(a.usd, await economics());
-  const paid = await endCall(c.uid, call.id, call.hold, credits);
-  await countUsage(c.uid, a.usd, credits, "text");
-  return { inScope: a.inScope, answer: a.answer, sources: a.sources, explainer, sessionId, credits: paid.charged, left: paid.left };
+  const done: Answer = a;
+  // Not settled: nothing was charged yet and the hold is still out, so that is what is left for now.
+  return { inScope: done.inScope, answer: done.answer, sources: done.sources, explainer, sessionId, credits: paid?.charged ?? 0, left: paid?.left ?? r2(Math.max(0, left - call.hold.fromPlan - call.hold.fromPacks)) };
 });
 
 /** The balance, and roughly what a minute of talking costs in credits (for "about N minutes left"). */

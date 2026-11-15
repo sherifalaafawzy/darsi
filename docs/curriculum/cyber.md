@@ -229,7 +229,8 @@ rehearse an incident before it happens, and build cyber safety into teaching acr
   (rights and laws), art (posters). Ages: younger pupils "ask an adult, keep private things private"; older ones privacy
   settings, two-step sign-in, scams, footprint. When a pupil reports bullying, threats or someone asking for images:
   listen, believe, don't blame, never ask for or forward images, keep the evidence they already have, report to the
-  safeguarding lead the same day; blackmail is never paid. Parents: one tip a month in the official group.
+  safeguarding lead straight away (and get help at once if the pupil may be in danger); blackmail is never paid.
+  Parents: one tip a month in the official group.
 - **Checkpoint idea:** which plan works best: short activities in many subjects every term.
 - **Lab:** `caesar`: a maths-and-language activity pupils love: hide a message, then crack one by counting letters.
 - **Competencies:** DC.4.3, DC.2.6

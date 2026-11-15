@@ -10,14 +10,27 @@ import type { ProjectStep, Unit } from "../src/content/types";
 const m = vi.hoisted(() => ({
   auth: { user: { uid: "s1", displayName: "Sara" } as { uid: string; displayName: string } | null, profile: { name: "Sara" }, orgId: null as string | null, role: "learner" },
   addDoc: vi.fn(async () => ({ id: "x" })),
+  storage: {
+    ref: vi.fn((_: unknown, path: string) => ({ bucket: "b", fullPath: path })),
+    uploadBytes: vi.fn(async (_ref: { fullPath: string }, _body: unknown, _meta?: unknown) => ({})),
+    deleteObject: vi.fn(async (_ref: unknown) => {}),
+  },
   call: vi.fn(async (_: unknown) => ({ id: "c1", queue: "staff", checks: [{ id: "repo", ok: true, en: "Repository found", ar: "وُجد المستودع" }], aiReview: null })),
-  results: { results: [{ uid: "s1", lessonId: "ai-s3-1", accuracy: 0.8 }, { uid: "s2", lessonId: "ai-s3-1", accuracy: 0.5 }],
-    work: [{ id: "w1", uid: "s1", lessonId: "ai-s3-cap", text: "My leaf model", final: true, explain: "It looks at the nearest leaves", aiUse: "none", name: "Sara" }] },
+  // The courseResults callable's answer (functions/src/access.ts): a field a row doesn't have comes as null.
+  courseResults: vi.fn(async (_: unknown): Promise<unknown> => ({ more: false,
+    results: [{ uid: "s1", lessonId: "ai-s3-1", accuracy: 0.8, completedAt: null }, { uid: "s2", lessonId: "ai-s3-1", accuracy: 0.5, completedAt: null }],
+    work: [{ id: "w1", uid: "s1", lessonId: "ai-s3-cap", stepId: null, text: "My leaf model", final: true, explain: "It looks at the nearest leaves", aiUse: "none", name: "Sara", fileUrl: null, fileName: null, files: [], createdAt: null }] })),
+  // courseAccess/{uid}, the teacher's own grant: the one thing /results still reads from Firestore itself.
+  grant: { units: ["ai-s3"] } as Record<string, unknown> | null,
 }));
 vi.mock("../src/auth/AuthProvider", () => ({ useAuth: () => m.auth }));
-vi.mock("../src/fb", () => ({ loadFirebase: async () => ({ db: {}, storage: () => ({}) }), call: () => m.call }));
-vi.mock("firebase/firestore", () => ({ addDoc: m.addDoc, collection: (...p: unknown[]) => p, serverTimestamp: () => "now" }));
-vi.mock("../src/results/data", () => ({ myGrant: async () => ({ uid: "t1", units: ["ai-s3"] }), courseResults: async () => m.results }));
+vi.mock("../src/fb", () => ({ loadFirebase: async () => ({ db: {}, storage: () => ({}) }), call: (name: string) => (name === "courseResults" ? m.courseResults : m.call) }));
+vi.mock("../src/firebase", () => ({ db: {} }));
+vi.mock("firebase/firestore", () => ({
+  addDoc: m.addDoc, collection: (...p: unknown[]) => p, serverTimestamp: () => "now",
+  doc: (...p: unknown[]) => p, getDoc: async () => ({ exists: () => !!m.grant, data: () => m.grant }), getDocs: async () => ({ docs: [] }),
+}));
+vi.mock("firebase/storage", () => m.storage);
 
 const { ProjectView } = await import("../src/lesson/ProjectView");
 const { CourseResults } = await import("../src/results/CourseResults");
@@ -77,7 +90,8 @@ describe("a final project", () => {
     fireEvent.change(screen.getByLabelText("Which tool, what for, and what you changed yourself"), { target: { value: "A chatbot fixed my spelling" } });
     expect(send.disabled).toBe(false);
     fireEvent.click(send);
-    expect(await screen.findByText("Sent. Your teacher can see your final project now.")).toBeTruthy();
+    // No organization: no teacher sees it, Darsi's team does.
+    expect(await screen.findByText("Sent. The Darsi team can see your final project now, and any reply shows here and in My projects.")).toBeTruthy();
     expect(m.addDoc).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       unitId: "ai-s3", lessonId: "ai-s3-cap", final: true, explain: "Nearest leaves vote", aiUse: "A chatbot fixed my spelling", status: "submitted", name: "Sara",
     }));
@@ -116,11 +130,33 @@ describe("course results for a university teacher", () => {
     expect(await screen.findByText("Scores per lesson")).toBeTruthy();
     expect(screen.getAllByText("Sara").length).toBeGreaterThan(0);
     expect(screen.getByText("Student 2")).toBeTruthy();
+    // On a phone the row is a card: the student across its top, then each lesson's score under the lesson's title.
+    const card = Array.from(screen.getByText("Student 2").closest("tr")!.querySelectorAll("td")).map((c) => c.getAttribute("data-cell"));
+    expect(card[0]).toBe("main");
+    expect(card.length).toBeGreaterThan(1);
+    expect(card.slice(1).every((x) => x === null)).toBe(true);
     expect(screen.getAllByText("80%").length).toBeGreaterThan(0);
     expect(screen.getByText("It looks at the nearest leaves")).toBeTruthy();
     expect(screen.getByText("No AI used")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /approve|revise|save/i })).toBeNull();
     expect(screen.queryByRole("textbox")).toBeNull();
+    // Read through the audited callable (which keeps the grant's organizations), never with the phone's own queries.
+    expect(m.courseResults).toHaveBeenCalledWith({ unitId: "ai-s3" });
+    expect(screen.queryByText(/more results than one page/)).toBeNull();
+  });
+
+  it("says so when the server reached its cap, and words a refusal (the grant ended) in the teacher's language", async () => {
+    m.auth = { ...m.auth, user: { uid: "t1", displayName: "Dr Amal" }, role: "learner" };
+    m.courseResults.mockImplementationOnce(async () => ({ results: [], work: [], more: true }));
+    const first = render(<I18nProvider lang="en"><MemoryRouter><CourseResults content={CONTENT} /></MemoryRouter></I18nProvider>);
+    expect(await screen.findByText(/more results than one page/)).toBeTruthy();
+    first.unmount();
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    m.courseResults.mockImplementationOnce(async () => { throw Object.assign(new Error("You have no access to this course's results."), { code: "functions/permission-denied", details: { reason: "no-grant" } }); });
+    render(<I18nProvider lang="ar"><MemoryRouter><CourseResults content={CONTENT} /></MemoryRouter></I18nProvider>);
+    expect((await screen.findByRole("alert")).textContent).toContain("ليست لك صلاحية رؤية نتائج هذه الدورة");
+    expect(screen.queryByText(/You have no access/)).toBeNull();
+    logged.mockRestore();
   });
 });
 
@@ -149,5 +185,52 @@ describe("a capstone milestone", () => {
     expect(screen.getByText("Repository found")).toBeTruthy();
     expect(m.call).toHaveBeenCalledWith(expect.objectContaining({ unitId: "ai-capstone", lessonId: "ai-capstone-5", repo: "https://github.com/sara/ai-capstone", links: ["https://huggingface.co/spaces/sara/demo"], aiUse: "none" }));
     expect(m.addDoc).not.toHaveBeenCalled();
+  });
+
+  it("says why when checkCapstone refuses a send (the day's sends used up), not 'check your connection', and keeps the work", async () => {
+    m.call.mockImplementationOnce(async () => { throw Object.assign(new Error("capstone-limit"), { code: "functions/resource-exhausted" }); });
+    capView();
+    fireEvent.change(screen.getByLabelText("Your evidence"), { target: { value: "My classifier" } });
+    fireEvent.change(screen.getByLabelText("Explain how it works, in your own words"), { target: { value: "It counts words" } });
+    fireEvent.click(screen.getByRole("radio", { name: "No, I did it without AI" }));
+    fireEvent.change(screen.getByLabelText("Your GitHub repository"), { target: { value: "https://github.com/sara/ai-capstone" } });
+    fireEvent.change(screen.getByLabelText(/Links to your work/), { target: { value: "https://huggingface.co/spaces/sara/demo" } });
+    fireEvent.change(document.querySelector('input[accept="application/json,.json"]')!, { target: { files: [new File(['{"darsi":1,"track":"ai","milestones":{}}'], "darsi-check.json", { type: "application/json" })] } });
+    const send = screen.getByRole("button", { name: "Check and send" }) as HTMLButtonElement;
+    await vi.waitFor(() => expect(send.disabled).toBe(false));
+    fireEvent.click(send);
+    expect(await screen.findByText(/sent as many milestones as you can today/)).toBeTruthy();
+    expect(screen.queryByText(/Check your connection/)).toBeNull();
+    expect((screen.getByLabelText("Your evidence") as HTMLTextAreaElement).value).toBe("My classifier");
+    expect((screen.getByRole("button", { name: "Check and send" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("deletes the files a refused send put up (nothing was written), and keeps them when the send went through", async () => {
+    const send = async () => {
+      fireEvent.change(screen.getByLabelText("Your evidence"), { target: { value: "My classifier" } });
+      fireEvent.change(screen.getByLabelText("Explain how it works, in your own words"), { target: { value: "It counts words" } });
+      fireEvent.click(screen.getByRole("radio", { name: "No, I did it without AI" }));
+      fireEvent.change(screen.getByLabelText("Your GitHub repository"), { target: { value: "https://github.com/sara/ai-capstone" } });
+      fireEvent.change(screen.getByLabelText(/Links to your work/), { target: { value: "https://huggingface.co/spaces/sara/demo" } });
+      fireEvent.change(document.querySelector('input[accept="application/json,.json"]')!, { target: { files: [new File(['{"darsi":1,"track":"ai","milestones":{}}'], "darsi-check.json", { type: "application/json" })] } });
+      fireEvent.change(document.querySelector('input[accept^="image/"]')!, { target: { files: [new File(["%PDF"], "report.pdf", { type: "application/pdf" })] } });
+      const button = screen.getByRole("button", { name: "Check and send" }) as HTMLButtonElement;
+      await vi.waitFor(() => expect(button.disabled).toBe(false));
+      fireEvent.click(button);
+    };
+    m.storage.uploadBytes.mockClear(); m.storage.deleteObject.mockClear();
+    m.call.mockImplementationOnce(async () => { throw Object.assign(new Error("bad:files"), { code: "functions/invalid-argument" }); });
+    const first = capView();
+    await send();
+    expect(await screen.findByText(/Something you sent wasn't accepted/)).toBeTruthy();
+    const up = m.storage.uploadBytes.mock.calls[0][0];
+    // The address checkCapstone checks: the uploaded object's, in the app's bucket, without a download token.
+    expect((m.call.mock.calls[0][0] as { files: { url: string }[] }).files[0].url).toBe(`https://firebasestorage.googleapis.com/v0/b/b/o/${encodeURIComponent(up.fullPath)}`);
+    await vi.waitFor(() => expect(m.storage.deleteObject).toHaveBeenCalledWith(up));
+    first.unmount(); localStorage.clear(); m.call.mockClear(); m.storage.deleteObject.mockClear();
+    capView();
+    await send();
+    expect(await screen.findByText(/The Darsi team reviews it/)).toBeTruthy();
+    expect(m.storage.deleteObject).not.toHaveBeenCalled();
   });
 });

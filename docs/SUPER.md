@@ -9,7 +9,7 @@ The user's choices (2026-11-02):
 - **Paid only, with a clear limit:** the tutor is for Super accounts only. Each plan has a clear allowance of credits, and people can buy more.
 - **Margin:** at least 60% profit on the tutor's calls, and the tutor must be very efficient.
 
-Phase 0 is built and deployed; phases 1 (payments) and 2 (the tutor) are built (TECHNICAL.md "Darsi Super"). Nothing is charged until the Paymob and Stripe keys are set, and the tutor opens when a Gemini key is set (docs/FIREBASE.md §9).
+Phase 0 is built and deployed; phases 1 (payments) and 2 (the tutor) are built (TECHNICAL.md "Darsi Super"). Nothing is charged until the Paymob and Stripe keys are set. The tutor runs on Vertex AI (`config/tutor.backend` "vertex", the default), billed to the project, with no API key; `GEMINI_API_KEY` is only for `backend: "gemini"` (docs/FIREBASE.md §9).
 
 ## 1. Plans, credits and entitlements
 
@@ -20,11 +20,12 @@ Phase 0 is built and deployed; phases 1 (payments) and 2 (the tutor) are built (
   - Three kinds: one person, a seat in an organization (priced per seat), and a pack of extra credits.
   - The active plans are published, without costs, as `content/plans.json` for the Super screen.
 - **Credits** are the tutor's limit (`credits/{uid}`):
-  - Each paid period brings the plan's credits, and unused ones lapse at the period's end.
+  - Each paid period brings the plan's credits, and unused ones lapse at the period's end. A period paid early (Paymob) adds its credits to what is left, to the new end.
   - Packs never expire, and are spent after the period's credits.
   - When credits run out, the tutor says so and offers a pack. Lessons, Labs and everything else stay free.
+  - **Open: a seat brings no credits yet.** Giving a seat (or filling seats, or a licence payment) sets the seat and the licence but writes nothing to `credits/{uid}`, so a seat holder has Super and a balance of 0: the tutor refuses the first question (`no-credits`) until the person buys a pack or a platform admin gives credits by hand. Meanwhile the tutor tells a seat holder that the seat gives Super without credits for now, and the licence and seat panels say a seat brings no tutor credits; remove both sentences (`tu.noCreditsSeat`, `sp.seatNoCredits`) when this is built. A seat plan's credits are only checked against the 60% margin. Before selling seat licences, decide how a seat's allowance works, then build it: whether it is given for the whole licence or period by period; what a renewal, a refund or a changed licence adds or takes back (re-giving the full allowance on every change would let one extra seat refill everyone); what a seat that changes hands brings its new holder (a fresh allowance each time would let one seat be passed around); and how it sits beside a person's own subscription.
 - **An individual's access** is `subscriptions/{uid}` {plan, status, source, currentPeriodEnd}. Only the payment webhooks write it, or a platform admin's complimentary grant.
-- **An organization's access** is `orgs/{id}.licence` {plan, seats, until}. A platform admin sets it (invoiced), or a checkout does. Org admins give and take seats, or fill the free ones (teachers first).
+- **An organization's access** is `orgs/{id}.licence` {plan, seats, until}. A platform admin sets it (invoiced), or a checkout does: a checkout buys seat-time, so renewing the same seats adds a year and fewer seats add less. Org admins give and take seats, or fill the free ones (teachers first); seats beyond a smaller licence are freed.
 - **Who has Super:** the functions work it out and put it in the custom claims (`plan`, `planUntil`) beside role and organization. The phone checks the claim, and every tutor call checks it again on the server.
 - **Guests and free accounts** keep everything Darsi has now. Super adds the tutor and live explainers only, so learning never sits behind a paywall.
 
@@ -48,7 +49,7 @@ Phase 0 is built and deployed; phases 1 (payments) and 2 (the tutor) are built (
 Done in phase 0. Revenue goes through the Measurement Protocol **from the server**, so only money actually received is counted:
 - **`purchase`:** `transaction_id`, `value`, `currency` (EGP or USD), the item (plan id and name; a licence is priced per seat), and `affiliation` (individual, organization or credits).
 - **`refund`:** sent when a payment is refunded.
-- **Linking to the phone:** the checkout passes the phone's analytics id as `client_id`, and a hash of the account id goes as `user_id` (never an email). Purchases then link to the sessions that led to them.
+- **Linking to the phone:** the checkout passes the phone's analytics id as `client_id`, so purchases link to the sessions that led to them. Nothing names the buyer (no `user_id`); without the phone's id the event gets a random `server.<16 hex>` client id.
 - **Funnel events from the phone:** `view_paywall` and `begin_checkout` now. Later: `tutor_open`, `tutor_question`, `explainer_view` and `understanding_check`.
 - **Darsi's own counts:** /super/analytics shows revenue for 30 days per currency, purchases and refunds, active subscriptions by plan and source, and organizations' seats.
 - **A check:** the Plans page sends a sample purchase to Google's validation server ("Check the revenue event").
@@ -56,7 +57,7 @@ Done in phase 0. Revenue goes through the Measurement Protocol **from the server
 
 ## 4. The tutor
 
-**The model:** Gemini Live 3.8 through the Live API. It speaks and listens in real time. The Gemini API key lives in Secret Manager and never reaches a phone.
+**The model:** Gemini Live 3.8 through the Live API, on Vertex AI (us-central1 for voice), signed in as the service account. It speaks and listens in real time. No key ever reaches a phone.
 
 **The connection, and why it goes through Darsi:**
 - The phone opens a WebSocket to a small relay on Cloud Run (europe-west1). The relay checks the Super claim and the credit balance, then opens the Live session with Google.
@@ -127,7 +128,7 @@ Done in phase 0. Revenue goes through the Measurement Protocol **from the server
   - The Paymob and Stripe buttons arrive in phase 1.
 - **Me** shows Super's status, or a link to the Super screen.
 - **The tutor:**
-  - An "Ask the tutor" button in lessons and on Home opens a lazy chunk that isn't precached.
+  - A floating tutor button on lesson screens opens a lazy chunk that isn't precached.
   - It works online only, with a clear offline message. Transcripts and explainers already seen are kept for offline reading.
   - The credits left are always visible, and each answer shows what it cost.
 - **Guests never load Firebase,** as now. The tutor and checkout need an account.

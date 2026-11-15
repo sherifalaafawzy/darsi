@@ -2,23 +2,29 @@
  * What platform admins set up for everyone: the tracks (/super/tracks), the languages (/super/languages) and whether
  * Darsi Super is on (/super/plans). Starts
  * from the built-in tracks and languages so nothing waits or flashes, then switches to content/settings.json when it
- * arrives (one network-first read per app start; the last copy offline). Also tells the design system each track's
- * colour and icon (TrackStylesProvider), and fetches the strings of a published language when someone picks it.
+ * arrives (one network-first read per app start; the last copy offline). An app left open reads them once more when it
+ * comes back to the front, or back online, with settings older than ten minutes (load.ts STALE_MS): an event the phone
+ * gives us anyway, never a timer. Also tells the design system each track's colour and icon (TrackStylesProvider), and
+ * fetches the strings of a published language when someone picks it.
  */
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { TrackStylesProvider, type TrackStyle } from "@darsi/design-system";
 import { addMessages, hasMessages, setLanguages, useI18n, useLanguages } from "../i18n";
 import { BUILTIN_CODES } from "./languages";
-import { forgetSettings, loadLanguagePack, loadSettings } from "./load";
+import { forgetSettings, isStale, loadLanguagePack, loadSettings } from "./load";
 import { BUILTIN_TRACKS, MAX_LEVELS, mergeTracks } from "./tracks";
 import type { TrackDef } from "./types";
 
-const Ctx = createContext<{ tracks: TrackDef[]; apply: (t: TrackDef[]) => void; langReady: boolean; superOn: boolean; applySuper: (on: boolean) => void }>({ tracks: BUILTIN_TRACKS, apply: () => {}, langReady: true, superOn: true, applySuper: () => {} });
+const Ctx = createContext<{ tracks: TrackDef[]; apply: (t: TrackDef[]) => void; langReady: boolean; superOn: boolean; applySuper: (on: boolean) => void; ssoOn: boolean; applySso: (on: boolean) => void }>({ tracks: BUILTIN_TRACKS, apply: () => {}, langReady: true, superOn: true, applySuper: () => {}, ssoOn: true, applySso: () => {} });
 
 /** Whether Darsi Super was on at the last read, so a phone where it is off doesn't flash the tutor button at start. */
 const SUPER = "darsi:superOn";
 const rememberedSuper = () => { try { return localStorage.getItem(SUPER) !== "0"; } catch { return true; } };
 const rememberSuper = (on: boolean) => { try { localStorage.setItem(SUPER, on ? "1" : "0"); } catch { /* private mode */ } };
+/** The same for school sign-in (a platform admin's switch; `sso` in the settings file, missing means on): no button flashes. */
+const SSO = "darsi:ssoOn";
+const rememberedSso = () => { try { return localStorage.getItem(SSO) !== "0"; } catch { return true; } };
+const rememberSso = (on: boolean) => { try { localStorage.setItem(SSO, on ? "1" : "0"); } catch { /* private mode */ } };
 
 /**
  * The pack version each language was last loaded at, so the next start fetches it from the cache at once instead of
@@ -42,16 +48,39 @@ const PACK_WAIT_MS = 6000;
 export function SettingsProvider({ lang, children }: { lang: string; children: ReactNode }) {
   const [tracks, setTracks] = useState<TrackDef[]>(BUILTIN_TRACKS);
   const [superOn, setSuperOn] = useState(rememberedSuper);
+  const [ssoOn, setSsoOn] = useState(rememberedSso);
   const [settingsRead, setSettingsRead] = useState(false);
+  // How many times the settings were read again (see below), when the last read was asked for, and what it said.
+  const [reads, setReads] = useState(0);
+  const readAt = useRef(0);
+  const lastRead = useRef<string | null>(null);
   useEffect(() => {
+    readAt.current = Date.now();
     loadSettings().then((s) => {
+      // A later read that says the same (most do), or that got no answer and has no copy, changes nothing: no screen
+      // re-renders for it, and a language in use keeps its strings.
+      const said = JSON.stringify(s ?? null);
+      if (reads > 0 && (!s || said === lastRead.current)) return;
+      lastRead.current = said;
       if (s?.tracks) setTracks(mergeTracks(s.tracks));
       setLanguages(s?.languages);
       if (s) { setSuperOn(s.super !== false); rememberSuper(s.super !== false); }
+      // School sign-in's switch (manageSso setSwitch): missing means on.
+      if (s) { setSsoOn(s.sso !== false); rememberSso(s.sso !== false); }
     }).catch(() => {}).finally(() => setSettingsRead(true));
+  }, [reads]);
+  // An app left open never saw a new track, a language published or Super switched off. Back to the front, or back
+  // online, with settings older than STALE_MS: one more read. Offline it waits for the connection (isStale).
+  useEffect(() => {
+    const check = () => { if (isStale(readAt.current)) { forgetSettings(); setReads((n) => n + 1); } };
+    const shown = () => { if (document.visibilityState === "visible") check(); };
+    document.addEventListener("visibilitychange", shown);
+    window.addEventListener("online", check);
+    return () => { document.removeEventListener("visibilitychange", shown); window.removeEventListener("online", check); };
   }, []);
   const apply = useCallback((t: TrackDef[]) => { forgetSettings(); setTracks(mergeTracks(t)); }, []);
   const applySuper = useCallback((on: boolean) => { forgetSettings(); setSuperOn(on); rememberSuper(on); }, []);
+  const applySso = useCallback((on: boolean) => { forgetSettings(); setSsoOn(on); rememberSso(on); }, []);
 
   // The picked language's strings: built-in ones are always there; a published one is fetched (cache-first by version).
   const languages = useLanguages();
@@ -71,7 +100,7 @@ export function SettingsProvider({ lang, children }: { lang: string; children: R
   const langReady = builtIn || hasMessages(lang) || gaveUp === lang;
 
   const styles = useMemo(() => Object.fromEntries(tracks.map((t) => [t.id, { tone: t.tone, icon: t.icon } as TrackStyle])), [tracks]);
-  const value = useMemo(() => ({ tracks, apply, langReady, superOn, applySuper }), [tracks, apply, langReady, superOn, applySuper]);
+  const value = useMemo(() => ({ tracks, apply, langReady, superOn, applySuper, ssoOn, applySso }), [tracks, apply, langReady, superOn, applySuper, ssoOn, applySso]);
   return <Ctx.Provider value={value}><TrackStylesProvider styles={styles}>{children}</TrackStylesProvider></Ctx.Provider>;
 }
 
@@ -79,6 +108,12 @@ export function SettingsProvider({ lang, children }: { lang: string; children: R
 export function useSuperOn() {
   const { superOn, applySuper } = useContext(Ctx);
   return { on: superOn, apply: applySuper };
+}
+
+/** School sign-in for everyone (a platform admin's switch on /super/plans): off hides every school button. */
+export function useSsoOn() {
+  const { ssoOn, applySso } = useContext(Ctx);
+  return { on: ssoOn, apply: applySso };
 }
 
 /** False while a published language's strings are on their way (App shows its loading screen, not English, meanwhile). */

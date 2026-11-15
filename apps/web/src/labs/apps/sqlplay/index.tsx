@@ -128,7 +128,7 @@ export default function SqlPlay({ meta, onDone }: LabProps) {
                     </table>
                   </div>
                 )}
-                <p className="lb-note">{table.values.length ? s.took(plural(table.values.length, s.rows), num(Math.max(1, Math.round(res.ms)))) : s.none}{table.values.length > SHOW ? ` ${s.more(num(SHOW))}` : ""}</p>
+                <p className="lb-note">{table.values.length ? s.took(plural(table.rowCount ?? table.values.length, s.rows), num(Math.max(1, Math.round(res.ms)))) : s.none}{table.values.length > SHOW ? ` ${s.more(num(SHOW))}` : ""}</p>
               </>
             )}
           <p className="lb-note">{s.fresh}</p>

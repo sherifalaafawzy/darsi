@@ -44,12 +44,18 @@ const S = {
     listOf: { one: "كلمة واحدة", two: "كلمتين", few: "{n} كلمات", many: "{n} كلمة", other: "{n} كلمة" } as Forms,
     phraseNote: (n: string, size: string, b: string, real: string, nn: string, when: string) => `${n} من قائمتنا القصيرة التي فيها ${size}: نحو ${b} بت، حتى لمهاجم يعرف القائمة. أما المولّدات الحقيقية فتختار من ${real}، و${nn} منها تعطي نحو ${when}.`,
     realBits: (b: string, t: string) => `${b} بت، ويحتاج الحاسوب السريع إلى ${t}`,
-    tips: "الطول يغلب الحيل: أربع أو خمس كلمات عشوائية تغلب «P@ssw0rd!». استعمل كلمة مرور مختلفة لكل موقع (يتذكّرها لك مدير كلمات المرور)، وفعّل التحقق بخطوتين.",
-    try1: "غيّر «sunshine2024» إلى «Sunsh1ne2024!»: الحرف الكبير و«1» مكان «i» وعلامة «!» لا تفيد إلا قليلًا. تبقى «ضعيفة جدًا»، لأن المهاجمين يجرّبون هذه الحيل أولًا.",
+    tips: "الطول يغلب الحيل: أربع أو خمس كلمات عشوائية تغلب «\u2066P@ssw0rd!\u2069». استعمل كلمة مرور مختلفة لكل موقع (يتذكّرها لك مدير كلمات المرور)، وفعّل التحقق بخطوتين.",
+    // The Latin samples sit in left-to-right isolates (U+2066…U+2069): without them the final "!" took the Arabic
+    // sentence's direction and showed first, "!Sunsh1ne2024", which the lab rates Fair, not Very weak.
+    try1: "غيّر «\u2066sunshine2024\u2069» إلى «\u2066Sunsh1ne2024!\u2069»: الحرف الكبير و«1» مكان «i» وعلامة «!» لا تفيد إلا قليلًا. تبقى «ضعيفة جدًا»، لأن المهاجمين يجرّبون هذه الحيل أولًا.",
     try2: (n: string) => `اضغط «أنشئ عبارة مرور»، ثم اجعل «عدد الكلمات» ٤ ثم ٥: على الموقع يقفز وقت الكسر من أشهر إلى عقود. فكل كلمة عشوائية تضرب عدد التخمينات في ${n}، وهو عدد كلمات القائمة.`,
     takeaway: "كلمة المرور القوية طويلة وغير متوقعة ولا تُستعمل إلا في مكان واحد. وما يضعفها هو قابليتها للتوقع: كلمات المرور الشائعة والكلمات والأنماط تُخمَّن في ثوانٍ، مهما أضفت من رموز.",
   },
 };
+
+/** Invisible direction marks and isolates (U+061C, U+200E/F, U+202A–E, U+2066–9): a sample copied from the Arabic text
+ *  carries them, and they would count as symbols. */
+const DIRECTION_MARKS = /[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
 
 export default function Password({ meta, onDone }: LabProps) {
   const s = useS(S);
@@ -84,7 +90,7 @@ export default function Password({ meta, onDone }: LabProps) {
     <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2(num(words.length))]} takeaway={s.takeaway}>
       <label className="dr-field-label" htmlFor="lb-pw">{s.label}</label>
       <div className="lb-ask-row">
-        <input id="lb-pw" className="dr-field-input" type={show ? "text" : "password"} dir="auto" autoComplete="off" autoCapitalize="off" spellCheck={false} value={pw} onChange={(e) => setPw(e.target.value)} />
+        <input id="lb-pw" className="dr-field-input" type={show ? "text" : "password"} dir="auto" autoComplete="off" autoCapitalize="off" spellCheck={false} value={pw} onChange={(e) => setPw(e.target.value.replace(DIRECTION_MARKS, ""))} />
         <Button size="sm" variant="ghost" onClick={() => setShow(!show)}>{show ? s.hide : s.show}</Button>
       </div>
       <div className={`lb-meter is-${level}`} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(100, Math.round((a.bits / 80) * 100))} aria-label={s.levels[level]}>

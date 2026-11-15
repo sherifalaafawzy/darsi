@@ -2,7 +2,9 @@
 /**
  * Rebuilds every account's users/{uid}.summary from its progress docs, with the same code as the onProgressWrite
  * trigger (functions/src/progress.ts), and the rows the trigger keeps (users/{uid}/private/summaryRows). Run it once after the summary gains fields (2026-11: time, tracks and scores
- * per competency), so people who haven't finished a lesson since still show full figures in the reports.
+ * per competency), so people who haven't finished a lesson since still show full figures in the reports. It also counts
+ * each account's projects waiting for a review (`projectsWaiting`, which /teach and /admin show): run it once after the
+ * functions with that count are deployed.
  *
  *   npm run resummarize -- --emulator     the local Emulator Suite
  *   npm run resummarize                   the real project (credentials as for `npm run seed`)
@@ -30,10 +32,14 @@ if (emulator) { process.env.FIREBASE_STORAGE_EMULATOR_HOST ??= "127.0.0.1:9199";
 const { rebuildSummary } = await import(pathToFileURL(join(ROOT, "functions/lib/progress.js")).href);
 
 const users = await db.collection("users").select().get();
-let done = 0, withLessons = 0;
+let done = 0, withLessons = 0, waiting = 0;
 for (const u of users.docs) {
   if (await rebuildSummary(u.id)) withLessons++;
+  // Projects waiting for a review (functions/src/waiting.ts): the submission triggers keep users/{uid}.projectsWaiting
+  // from 2026-11 on; this fills it in for projects sent before. Only accounts with some waiting are written.
+  const n = (await db.collection(`users/${u.id}/submissions`).where("status", "==", "submitted").count().get()).data().count;
+  if (n > 0) { await db.doc(`users/${u.id}`).update({ projectsWaiting: n }); waiting++; }
   done++;
 }
-console.log(`Rebuilt ${done} summaries in ${projectId} (${withLessons} with lessons).`);
+console.log(`Rebuilt ${done} summaries in ${projectId} (${withLessons} with lessons, ${waiting} with projects waiting for a review).`);
 process.exit(0);

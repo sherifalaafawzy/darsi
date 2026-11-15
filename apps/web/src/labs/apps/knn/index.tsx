@@ -12,7 +12,7 @@ const S = {
     intro: "Each mark is a mango we already checked: a filled circle is ready to eat, an open square is not yet. Tap the chart to place a new mango. It is judged by its k nearest neighbours.",
     chart: "Mangoes by softness and colour; tap to place a new one", soft: "softness", colour: "colour (green to yellow)",
     k: "Neighbours to ask (k)", data: "Examples", clean: "Tidy", messy: "With mistakes", map: "Show its answer everywhere", off: "Off", on: "On",
-    verdict: (n: string, k: string, kn: number, yes: boolean) => `${n} of its ${kn === 1 ? "nearest neighbour is" : `${k} nearest neighbours are`} ripe, so: ${yes ? "ready to eat" : "not ready yet"}.`,
+    verdict: (n: string, k: string, kn: number, ripe: number, yes: boolean) => `${kn === 1 ? `Its nearest neighbour is ${ripe ? "ripe" : "not ripe"}` : `${n} of its ${k} nearest neighbours ${ripe === 1 ? "is" : "are"} ripe`}, so: ${yes ? "ready to eat" : "not ready yet"}.`,
     tap: "Tap the chart to place a mango.", loo: "Right when each example is judged by the others",
     hint: "With k = 1 a single odd example can sway the answer; a bigger k smooths it out, but too big and it ignores the details.",
     try1: "Tap the chart where filled circles and open squares meet, then slide k from 1 to 15: the lines show which neighbours it asks, and the verdict can flip.",
@@ -21,9 +21,9 @@ const S = {
   },
   ar: {
     intro: "كل علامة مانجو فحصناها من قبل: الدائرة الممتلئة جاهزة للأكل، والمربع المفرغ ليس بعد. المس الرسم لتضع مانجو جديدة، وسيُحكم عليها بأقرب k من جيرانها.",
-    chart: "المانجو بحسب الليونة واللون، والمس لتضع واحدة جديدة", soft: "الليونة", colour: "اللون (من الأخضر إلى الأصفر)",
+    chart: "المانجو بحسب الطراوة واللون، والمس لتضع واحدة جديدة", soft: "الطراوة", colour: "اللون (من الأخضر إلى الأصفر)",
     k: "عدد الجيران الذين نسألهم (k)", data: "الأمثلة", clean: "مرتّبة", messy: "فيها أخطاء", map: "أظهر إجابته في كل مكان", off: "متوقف", on: "يعمل",
-    verdict: (n: string, k: string, kn: number, yes: boolean) => `${n} من ${kn === 1 ? "أقرب جار" : kn === 2 ? "أقرب جارين" : kn <= 10 ? `أقرب ${k} جيران` : `أقرب ${k} جارًا`} ناضجة، إذن: ${yes ? "جاهزة للأكل" : "ليست جاهزة بعد"}.`,
+    verdict: (n: string, k: string, kn: number, ripe: number, yes: boolean) => `${kn === 1 ? `أقرب مانجو إليها ${ripe ? "ناضجة" : "غير ناضجة"}` : `${n} من ${kn === 2 ? "أقرب جارين" : kn <= 10 ? `أقرب ${k} جيران` : `أقرب ${k} جارًا`} ناضجة`}، إذن: ${yes ? "جاهزة للأكل" : "ليست جاهزة بعد"}.`,
     tap: "المس الرسم لتضع مانجو.", loo: "صحيحة حين يُحكم على كل مثال بالأمثلة الأخرى",
     hint: "مع k = ١ قد يغيّر مثال شاذ واحد الإجابة، والقيمة الأكبر تنعّمها، لكن إن كبرت كثيرًا تجاهلت التفاصيل.",
     try1: "المس الرسم حيث تلتقي الدوائر الممتلئة بالمربعات المفرغة، ثم حرّك k من ١ إلى ١٥: تبيّن الخطوط الجيران الذين يسألهم، وقد ينقلب الحكم.",
@@ -44,6 +44,7 @@ export default function Knn({ meta, onDone }: LabProps) {
   const pts = useMemo(() => mangoes(messy), [messy]);
   const heat = useMemo(() => (map ? { n: 32, values: field(pts, k) } : undefined), [pts, k, map]);
   const res = q ? knn(pts, q, k) : null;
+  const ripeNear = res ? res.near.filter((n) => n.p.ripe).length : 0;
   useEffect(() => { if (placed >= 3 && ks.size >= 2) onDone?.(); }, [placed >= 3 && ks.size >= 2]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -58,7 +59,7 @@ export default function Knn({ meta, onDone }: LabProps) {
             ]}>
             {({ px, py }) => q && res ? res.near.map((n) => <line key={n.i} x1={px(q.x)} y1={py(q.y)} x2={px(n.p.x)} y2={py(n.p.y)} className="lb-plot-leader is-strong" />) : null}
           </Plot>
-          <p className="lb-verdict" aria-live="polite">{res ? s.verdict(num(res.near.filter((n) => n.p.ripe).length), num(res.near.length), res.near.length, res.ripe) : s.tap}</p>
+          <p className="lb-verdict" aria-live="polite">{res ? s.verdict(num(ripeNear), num(res.near.length), res.near.length, ripeNear, res.ripe) : s.tap}</p>
         </div>
         <div className="stack">
           <Slider label={s.k} value={k} min={1} max={15} onChange={(v) => { setK(v); setKs((x) => new Set(x).add(v)); }} format={(v) => num(v)} />

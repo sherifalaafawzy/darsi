@@ -1,13 +1,21 @@
+import { useRef } from "react";
 import { FactCheck } from "@darsi/design-system";
 import { useI18n } from "../../../i18n";
 import { TryThis } from "../../kit/LabShell";
 import type { LabProps } from "../../types";
 
 /** Hallucinations made visible: claim by claim. One claim of each kind: right, wrong, invented, and one to look up. */
-export default function Factcheck(_: LabProps) {
+export default function Factcheck({ onDone }: LabProps) {
   const { lang, num } = useI18n();
   const ar = lang === "ar";
   const L = (en: string, a: string) => (ar ? a : en);
+  // Marking every claim is the lab. The design-system card has no callback; its counter ("3 of 4 claims checked") is
+  // the one place that knows the count, so it marks the lab done, after the card's render.
+  const done = useRef(false);
+  const checked = (a: number, b: number) => {
+    if (b > 0 && a === b && !done.current) { done.current = true; queueMicrotask(() => onDone?.()); }
+    return L(`${a} of ${b} claims checked`, `تم فحص ${num(a)} من ${num(b)} ادّعاءات`);
+  };
   return <>
     <TryThis items={[
       L("Tap each highlighted part of the answer and mark it. The note tells you whether you were right, and why.", "المس كل جزء مميَّز في الإجابة وصنّفه. تخبرك الملاحظة إن كنت مصيبًا، ولماذا."),
@@ -16,7 +24,7 @@ export default function Factcheck(_: LabProps) {
     ]} />
     <FactCheck key={lang} kicker={L("Gen AI lab", "مختبر الذكاء التوليدي")} title={L("Check the AI’s answer", "تحقّق من إجابة الذكاء الاصطناعي")}
     answerLabel={L("AI answer", "إجابة الذكاء الاصطناعي")} labels={{ true: L("Correct", "صحيح"), false: L("Wrong", "خطأ"), unsure: L("Check a source", "أبحث عن مصدر") }}
-    checkedText={(a, b) => L(`${a} of ${b} claims checked`, `تم فحص ${num(a)} من ${num(b)} ادّعاءات`)}
+    checkedText={checked}
     answer={ar ? [
       { text: "النيل " }, { text: "أطول نهر في أفريقيا", claim: { id: "c1", verdict: "true", note: "صحيح، تتّفق معظم المصادر على ذلك." } },
       { text: "، ويبلغ طوله " }, { text: "نحو ٦٦٥٠ كيلومترًا", claim: { id: "c2", verdict: "unsure", note: "قريب من الصواب: تذكر كتب كثيرة نحو ٦٦٥٠ كيلومترًا، لكن المصادر تختلف بحسب النقطة التي تعدّها منبع النهر. تحقّق من رقم كهذا في مصدر موثوق قبل أن تدرّسه." } },

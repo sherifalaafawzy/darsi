@@ -57,15 +57,27 @@ export function readTurn(events: Ev[]): AgentTurn {
 
 /** USD per million tokens for the agent's model (3.8 Flash on the global endpoint), and Agent Runtime's compute per second. */
 export interface AgentPrices { textIn: number; textOut: number; runtimePerSec: number }
-// 3.8 Flash's introductory price runs to 31 Dec 2026; from 1 Jan 2027 it is $1.50 / $7.50 (config/tutor.agentPrices).
-// Runtime: 4 vCPU × $0.085 and 8 GiB × $0.009 per hour, while a turn runs.
+// 3.8 Flash's introductory price runs to 31 Dec 2026; from 1 Jan 2027 it is $1.50 / $7.50 (agentPricesAt switches by
+// itself; config/tutor.agentPrices overrides either). Runtime: 4 vCPU × $0.085 and 8 GiB × $0.009 per hour, while a turn runs.
 export const AGENT_PRICES: AgentPrices = { textIn: 0.75, textOut: 3.75, runtimePerSec: (4 * 0.085 + 8 * 0.009) / 3600 };
 export const PRICES_2027: Pick<AgentPrices, "textIn" | "textOut"> = { textIn: 1.5, textOut: 7.5 };
+/** When PRICES_2027 start (UTC). */
+export const PRICES_2027_FROM = Date.UTC(2027, 0, 1);
+/** The agent's model prices on a day: the introductory ones until 31 Dec 2026, then Google's 2027 ones (sfm-04). */
+export const agentPricesAt = (now = Date.now()): AgentPrices => (now >= PRICES_2027_FROM ? { ...AGENT_PRICES, ...PRICES_2027 } : AGENT_PRICES);
 
 /** What a turn cost Darsi: every model call's tokens (thinking counted as output by the agent), plus the runtime's seconds. */
 export function turnCost(u: AgentUsage | null, seconds: number, p: AgentPrices): number {
   const tokens = u ? (u.in * p.textIn + u.out * p.textOut) / 1e6 : 0;
   return tokens + Math.max(0, seconds) * p.runtimePerSec;
+}
+/**
+ * What a turn that was given up on (it ran past its time limit) surely cost (sfm-03): its input read once by the
+ * model, at about four characters a token, and the runtime's seconds while it ran. Whatever the model wrote or thought
+ * before it was dropped isn't known, so it isn't guessed.
+ */
+export function abandonedCost(inputChars: number, seconds: number, p: AgentPrices): number {
+  return ((Math.max(0, inputChars) / 4) * p.textIn) / 1e6 + Math.max(0, seconds) * p.runtimePerSec;
 }
 
 /**

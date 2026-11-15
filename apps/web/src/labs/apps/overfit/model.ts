@@ -12,6 +12,16 @@ export function sample(n: number, noise: number, seed: number): P[] {
   return Array.from({ length: n }, () => { const x = r() * 2 - 1; return { x, y: truth(x) + r.normal() * noise }; });
 }
 
+/**
+ * The lab's own data (the same examples on every phone): 10 or 40 training examples and 30 new ones. TRAIN_SEED is
+ * chosen so the error on new examples makes the U the lessons ask about (ai-u1-4 "decide where to stop", ds-u1-2 "where
+ * test error turns back up"): high for a stiff curve, lowest in the middle, then climbing. Seed 21 zigzagged: it rose at
+ * freedom 2 and 4, then fell back to "About right" at 5 and 6.
+ */
+export const TRAIN_SEED = 247, TEST_SEED = 99;
+export const trainingExamples = (many: boolean, noise: number) => sample(many ? 40 : 10, noise, TRAIN_SEED);
+export const newExamples = (noise: number) => sample(30, noise, TEST_SEED);
+
 /** T0..Td at x (Chebyshev polynomials of the first kind). */
 export function basis(x: number, d: number) {
   const t = [1, x];
