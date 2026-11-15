@@ -7,8 +7,11 @@
  * publish wrote {action "publishUnit", unitId, owner, version}) and whatever versioned files Storage still holds.
  */
 
-/** The version in a published unit file's name (…/units/<id>/v<n>.json), or NaN. As functions/src/catalog.ts versionOf. */
-export const fileVersion = (name) => Number(/\/v(\d+)\.json$/.exec(String(name))?.[1] ?? NaN);
+/**
+ * The version in a published unit file's name (…/units/<id>/v<n>.json, or an added language's v<n>.<lang>.json), or NaN.
+ * As functions/src/catalog.ts versionOf.
+ */
+export const fileVersion = (name) => Number(/\/v(\d+)(?:\.[a-z0-9-]+)?\.json$/.exec(String(name))?.[1] ?? NaN);
 
 const whole = (v) => (Number.isInteger(v) && v > 0 ? v : 0);
 

@@ -10,6 +10,7 @@
  *
  * Usage:  npm run kits            (all units, all languages)
  *         npm run kits -- ai-1-1 data-s2  (only these units)
+ *         npm run kits -- --langs=fr,es ai-u1  (only these languages: a course translated in content/i18n/units/<lang>/)
  *   --no-pages              leave the unit files alone (no page counts written)
  *   --units=DIR --out=DIR   read the units from, and write the kits to, other folders (to try a change)
  * Needs Chromium for the PDFs: run `npx playwright install chromium` once, or set CHROMIUM_PATH.
@@ -18,6 +19,7 @@ import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, rmSync
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import PptxGenJS from "pptxgenjs";
+import { apply as applyTranslations } from "../../../scripts/unit-i18n.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -27,8 +29,13 @@ const OUT = resolve(flag("out") ?? resolve(ROOT, "../../content/kits"));
 const DS = resolve(ROOT, "../../packages/design-system");
 const FONTS = pathToFileURL(join(DS, "assets/fonts")).href;
 const MARK_PNG = join(ROOT, "public/app-icons/app-icon-192.png");
+/** English and Arabic always; another language for a course that has translations (content/i18n/units/<lang>/). */
 const LANGS = ["en", "ar"];
 const only = new Set(args.filter((a) => !a.startsWith("--")));
+const RTL = new Set(["ar", "ur", "fa", "he"]);
+const PPTX_LANG = { ar: "ar-SA", ur: "ur-PK", fr: "fr-FR", es: "es-419", de: "de-DE", pt: "pt-BR" };
+// --langs=fr,es: build only these languages (leaves the other languages' files as they are).
+const langsArg = process.argv.find((a) => a.startsWith("--langs="))?.slice(8).split(",").filter(Boolean);
 // Where capstone starters live (src/content/capstone.ts STARTER_ORG, so a move there reaches the kits too).
 const STARTER_ORG = /STARTER_ORG\s*=\s*"([^"]+)"/.exec(readFileSync(join(ROOT, "src/content/capstone.ts"), "utf8"))?.[1] ?? "https://github.com/darsi-org";
 
@@ -39,8 +46,9 @@ const TOKENS = Object.fromEntries(JSON.parse(readFileSync(join(DS, "src/tokens/t
 const trackColours = (track) => { const tone = TONES[track] ?? "slate"; return [TOKENS[tone], TOKENS[`${tone}-soft`], TOKENS[`${tone}-ink`]]; };
 const pick = (t, lang) => (t ? t[lang] ?? t.en : "");
 const pickList = (t, lang) => (t ? t[lang] ?? t.en : []);
-const digits = (n, lang) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en").format(n);
+const digits = (n, lang) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : lang).format(n);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const PACK_I18N = {};
 const UI = {
   en: { footer: "Darsi · free to copy for your school", plan: "Lesson plan · for the teacher", planCheck: "Review plan · for the teacher", sheet: "Worksheet · for pupils", sheetCheck: "Quiz sheet · for each team", answers: "Answers · for the teacher",
     goals: "Learning goals", activity: "Activity", discuss: "Discussion", exit: "Exit ticket", tomorrow: "Try it in class tomorrow", time: "Time", min: "min", materials: "Materials", materialsV: "Board, chalk, paper. No devices needed.", name: "Name", cls: "Class", team: "Team", date: "Date", tf: ["True", "False"], reflect: "In your own words", forYou: "For you to think about", bank: "Word bank", unit: "Unit", lesson: "Lesson", sep: " · ", listSep: "; ", numSep: ", ", pairSep: " — ", topDown: "Top to bottom", line: "Line",
@@ -72,6 +80,13 @@ const UNI_UI = {
   en: { footer: "Darsi · free to copy for your institution", plan: "Lecture plan · for the lecturer", planCheck: "Review plan · for the lecturer", sheet: "Seminar sheet · for students", sheetCheck: "Quiz sheet · for students", answers: "Answers · for the lecturer", cls: "Group", tomorrow: "Try it in your next lecture", materialsV: "Projector or board, and the lecture slides." },
   ar: { footer: "درسي — يُسمح بنسخها لمؤسستك مجانًا", plan: "خطة المحاضرة، لعضو هيئة التدريس", planCheck: "خطة المراجعة، لعضو هيئة التدريس", sheet: "ورقة الحلقة النقاشية، للطلاب", sheetCheck: "ورقة الاختبار، للطلاب", answers: "الإجابات، لعضو هيئة التدريس", cls: "المجموعة", tomorrow: "جرّبها في محاضرتك القادمة", materialsV: "جهاز عرض أو سبّورة، وشرائح المحاضرة." },
 };
+// The kits' own wording in the added languages: content/i18n/kits/<lang>.json ({ UI, STUDENT_UI, UNI_UI, PACK_UI }).
+const KIT_I18N = resolve(ROOT, "../../content/i18n/kits");
+if (existsSync(KIT_I18N)) for (const f of readdirSync(KIT_I18N).filter((x) => x.endsWith(".json"))) {
+  const lang = f.slice(0, -5), d = JSON.parse(readFileSync(join(KIT_I18N, f), "utf8"));
+  UI[lang] = { ...UI.en, ...d.UI }; STUDENT_UI[lang] = { ...STUDENT_UI.en, ...d.STUDENT_UI }; UNI_UI[lang] = { ...UNI_UI.en, ...d.UNI_UI };
+  if (d.PACK_UI) PACK_I18N[lang] = d.PACK_UI;
+}
 // School teachers' courses from level 2: "try it tomorrow" is as often a staff task as a class one.
 const STAFF_UI = { en: { tomorrow: "Try it at school tomorrow" }, ar: { tomorrow: "جرّبها في المدرسة غدًا" } };
 // … and their questions are about the teacher's own practice, so a lesson's sheet is the teacher's, not the pupils'.
@@ -107,14 +122,14 @@ const fit = (texts, base, room, min) => { const n = texts.join(" ").length; retu
 
 /* ---------------- PPTX ---------------- */
 function buildPptx(unit, lesson, lang) {
-  const rtl = lang === "ar", u = uiFor(unit, lang, lesson), [trackC, trackSoft, trackInk] = trackColours(unit.track);
+  const rtl = RTL.has(lang), u = uiFor(unit, lang, lesson), [trackC, trackSoft, trackInk] = trackColours(unit.track);
   const pptx = new PptxGenJS();
   pptx.layout = "LAYOUT_WIDE"; // 13.33 × 7.5 in
   pptx.rtlMode = rtl;
-  pptx.author = "Darsi"; pptx.company = "Darsi"; pptx.title = pick(lesson.title, lang); pptx.lang = rtl ? "ar-SA" : "en-GB";
+  pptx.author = "Darsi"; pptx.company = "Darsi"; pptx.title = pick(lesson.title, lang); pptx.lang = PPTX_LANG[lang] ?? "en-GB";
   const font = "Arial"; // available on every school PC and phone, with full Arabic support
   const align = rtl ? "right" : "left";
-  const T = (o) => ({ fontFace: font, color: C.ink, align, rtlMode: rtl, lang: rtl ? "ar-SA" : "en-GB", ...o });
+  const T = (o) => ({ fontFace: font, color: C.ink, align, rtlMode: rtl, lang: PPTX_LANG[lang] ?? "en-GB", ...o });
   const frame = (s, n) => {
     s.background = { color: "FFFFFF" };
     s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 0.28, fill: { color: trackC }, line: { color: trackC } });
@@ -160,7 +175,7 @@ h1,h2,h3{font-family:"Baloo 2","Baloo Bhaijaan 2",sans-serif;margin:0;line-heigh
 const MARK_SVG = `<svg viewBox="0 0 64 64"><path d="M14 4h36a10 10 0 0 1 10 10v28a10 10 0 0 1-10 10H26l-12 9v-9a10 10 0 0 1-10-10V14A10 10 0 0 1 14 4z" fill="#ff6a2b"/><path d="M32 13c1.6 7.4 4.6 10.4 12 12-7.4 1.6-10.4 4.6-12 12-1.6-7.4-4.6-10.4-12-12 7.4-1.6 10.4-4.6 12-12z" fill="#ffc53d"/><circle cx="46" cy="40" r="4" fill="#1e1a33"/></svg>`;
 
 function slidesHtml(unit, lesson, lang) {
-  const rtl = lang === "ar", u = uiFor(unit, lang, lesson), [trackC, trackSoft, trackInk] = trackColours(unit.track);
+  const rtl = RTL.has(lang), u = uiFor(unit, lang, lesson), [trackC, trackSoft, trackInk] = trackColours(unit.track);
   const slides = lesson.slides.map((sl, i) => {
     const title = esc(pick(sl.title, lang)), note = esc(pick(sl.note, lang)), bullets = pickList(sl.bullets, lang).map(esc);
     const numbered = sl.layout === "activity" || sl.layout === "questions";
@@ -351,7 +366,7 @@ const cssString = (s) => `"${String(s).replace(/\s+/g, " ").replace(/\\/g, "\\\\
  * (60–90 KB a page in Arabic), while the static heading font is embedded once, and phones download kits with a course.
  */
 export function planHtml(unit, lesson, lang) {
-  const rtl = lang === "ar", u = uiFor(unit, lang, lesson), who = sheetFor(unit, lesson), [trackC] = trackColours(unit.track);
+  const rtl = RTL.has(lang), u = uiFor(unit, lang, lesson), who = sheetFor(unit, lesson), [trackC] = trackColours(unit.track);
   const bySlide = (layout) => lesson.slides.find((s) => s.layout === layout);
   const goals = bySlide("bullets"), act = bySlide("activity"), q = bySlide("questions"), ex = bySlide("exit"), titleSl = bySlide("title");
   const li = (sl) => pickList(sl?.bullets, lang).map((b) => `<li>${esc(b)}</li>`).join("");
@@ -497,7 +512,7 @@ const PACK_UI = {
   ar: { kicker: "حزمة المقرر الجامعي", outcomes: "نواتج التعلّم", syllabus: "الخطة الدراسية في ١٤ أسبوعًا", week: "الأسبوع", topic: "الموضوع", work: "داخل القاعة وخارجها", slides: "مخطط شرائح المحاضرات", lecture: "المحاضرة", problems: "مجموعة المسائل", solutions: "الحلول", lab: "ورقة المعمل", goal: "الهدف", steps: "الخطوات", deliver: "المطلوب تسليمه", rubric: "معيار التقييم", criterion: "المعيار", levels: ["ممتاز", "جيد", "قيد التطور", "لم يتحقق بعد"], readings: "قائمة القراءات" },
 };
 export function packHtml(unit, pack, lang) {
-  const rtl = lang === "ar", u = uiFor(unit, lang), p = PACK_UI[lang], [trackC] = trackColours(unit.track), n = (k) => digits(k, lang);
+  const rtl = RTL.has(lang), u = uiFor(unit, lang), p = PACK_UI[lang] ?? { ...PACK_UI.en, ...PACK_I18N[lang] }, [trackC] = trackColours(unit.track), n = (k) => digits(k, lang);
   const T = (x) => esc(pick(x, lang));
   const head = (k, t) => `<div class="head">${MARK_SVG}<div><div class="kicker">${k}</div><h1>${t}</h1></div></div>`;
   const foot = `<div class="foot"><span>${esc(u.footer)}</span><span>${T(unit.title)}</span></div>`;
@@ -527,7 +542,8 @@ ${page(p.rubric, `<table><tr><th>${p.criterion}</th>${p.levels.map((l) => `<th>$
 /* ---------------- run ---------------- */
 async function main() {
   const files = new Map();
-  const units = readdirSync(CONTENT).filter((f) => f.endsWith(".json")).map((f) => { const unit = JSON.parse(readFileSync(join(CONTENT, f), "utf8")); files.set(unit.id, join(CONTENT, f)); return unit; }).filter((u) => !only.size || only.has(u.id));
+  const units = readdirSync(CONTENT).filter((f) => f.endsWith(".json")).map((f) => { const unit = JSON.parse(readFileSync(join(CONTENT, f), "utf8")); files.set(unit.id, join(CONTENT, f)); return unit; }).filter((u) => !only.size || only.has(u.id))
+    .map((u) => { const { unit, stats } = applyTranslations(u); unit.kitLangs = [...LANGS, ...Object.keys(stats).filter((l) => stats[l].done && UI[l])].filter((l) => !langsArg || langsArg.includes(l)); return unit; });
   for (const id of only) if (!units.some((u) => u.id === id)) console.warn(`! No unit ${id} in ${CONTENT}`);
   let chromium = null, browser = null;
   try { ({ chromium } = await import("playwright")); browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}); }
@@ -549,7 +565,7 @@ async function main() {
     const pages = new Map(), note = (base, n) => pages.set(base, Math.max(pages.get(base) ?? 0, n));
     for (const lesson of unit.lessons) {
       const dir = join(OUT, lesson.id); mkdirSync(dir, { recursive: true });
-      for (const lang of LANGS) {
+      for (const lang of unit.kitLangs) {
         await buildPptx(unit, lesson, lang).writeFile({ fileName: join(dir, `slides-${lang}.pptx`) }); count++;
         if (!browser) continue;
         note(`${lesson.id}/slides`, await pdf(page, dir, "slides", lang, slidesHtml(unit, lesson, lang), { width: "13.333in", height: "7.5in" }));
@@ -557,8 +573,8 @@ async function main() {
       }
       const packKit = lesson.kit?.find((k) => k.base?.endsWith("/course-pack"));
       if (browser && packKit && existsSync(join(PACKS, `${unit.id}.json`))) {
-        const pack = JSON.parse(readFileSync(join(PACKS, `${unit.id}.json`), "utf8"));
-        for (const lang of LANGS) note(packKit.base, await pdf(page, dir, "course-pack", lang, packHtml(unit, pack, lang), { format: "A4" }));
+        const pack = applyTranslations(JSON.parse(readFileSync(join(PACKS, `${unit.id}.json`), "utf8")), undefined, `pack-${unit.id}`).unit;
+        for (const lang of unit.kitLangs) note(packKit.base, await pdf(page, dir, "course-pack", lang, packHtml(unit, pack, lang), { format: "A4" }));
       }
       console.log(`✓ ${lesson.id}`);
     }

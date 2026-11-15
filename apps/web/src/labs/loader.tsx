@@ -7,6 +7,7 @@
 import { Component, lazy, Suspense, useEffect, useState, type ComponentType, type LazyExoticComponent, type ReactNode } from "react";
 import { Button, EmptyState } from "@darsi/design-system";
 import { useI18n } from "../i18n";
+import { loadPhrases, usePhrases } from "../i18n/phrases";
 import { reloadForUpdate, siteAnswers } from "../pwa";
 import { tellAppError, UpdateReload } from "../app/AppBoundary";
 import { pinGroups } from "../platform/offline";
@@ -17,6 +18,7 @@ import type { LabProps } from "./types";
 const loaders = import.meta.glob<{ default: ComponentType<LabProps> }>("./apps/*/index.tsx");
 const pathOf = (id: string) => `./apps/${id}/index.tsx`;
 export const hasLab = (id: string) => pathOf(id) in loaders;
+const idOf = (path: string) => path.split("/")[2];
 /** The offline group of a lab (platform/offline.ts). */
 export const labGroup = (id: string) => `lab:${id}`;
 /**
@@ -40,18 +42,22 @@ export const MODEL_FILES = ["manifest.json", "tokenizer.json", "world.json", "re
 export async function prefetchLabs(ids: string[]) {
   for (const id of new Set(ids)) if (hasLab(id)) await loaders[pathOf(id)]().catch(() => undefined);
 }
-/** "Save all labs for offline": every lab's files, pinned so they stay on the phone across app updates. */
-export async function saveAllLabs(onProgress: (done: number, total: number) => void) {
+/**
+ * "Save all labs for offline": every lab's files, pinned so they stay on the phone across app updates, and their words in
+ * the page language (i18n/phrases.ts; "darsi-content" keeps them), which pinning doesn't fetch.
+ */
+export async function saveAllLabs(onProgress: (done: number, total: number) => void, lang = "en") {
   const all = Object.values(loaders);
   await pinGroups(["labs"], {
     onProgress,
     warm: async () => { for (let i = 0; i < all.length; i++) { await all[i](); onProgress(i + 1, all.length); } },
   });
+  await Promise.all([loadPhrases(lang, "labs"), ...Object.keys(loaders).map((p) => loadPhrases(lang, `lab-${idOf(p)}`))]);
 }
 
 const lazies = new Map<string, LazyExoticComponent<ComponentType<LabProps>>>();
 const lazyLab = (id: string) => {
-  if (!lazies.has(id)) lazies.set(id, lazy(() => loaders[pathOf(id)]()));
+  if (!lazies.has(id)) lazies.set(id, lazy(loaders[pathOf(id)]));
   return lazies.get(id)!;
 };
 
@@ -86,8 +92,11 @@ class LabBoundary extends Component<{ id: string; fallback: (retry: () => void) 
 
 export function LabEmbed({ id, embedded, onDone }: { id: string; embedded?: boolean; onDone?: () => void }) {
   const { t } = useI18n();
+  // A lab's words in an added language (i18n/phrases.ts): the kit's and the catalogue's, then the app's own.
+  const worded = usePhrases("labs", `lab-${id}`);
   const meta = labMeta(id);
   if (!meta || !hasLab(id)) return <p className="notice">{t("labs.unknown")}</p>;
+  if (!worded) return <div className="loading" aria-busy="true" />;
   const App = lazyLab(id);
   return (
     <LabBoundary key={id} id={id} fallback={(retry) => <LabMissing retry={retry} />}>

@@ -3,7 +3,7 @@ import { AppBar, Button, TextField } from "@darsi/design-system";
 import { api } from "../auth/api";
 import { useSsoOn, useSuperOn } from "../content/settings";
 import { lazyRetry } from "../app/AppBoundary";
-import { isolate, useI18n, type MessageKey } from "../i18n";
+import { isolate, useI18n, useLanguages, type MessageKey } from "../i18n";
 import { errorText } from "../staff/errors";
 import { InlineConfirm } from "../staff/InlineConfirm";
 import { ErrorNote } from "../staff/LoadState";
@@ -84,6 +84,8 @@ export function PlansPage() {
   const [clean, setClean] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
+  // Plan names in the languages platform admins added (optional: English shows until one is given).
+  const added = useLanguages().filter((l) => l.code !== "en" && l.code !== "ar");
   /**
    * The two costs are empty on a platform that never saved them, and an empty field nobody has typed in is not a
    * mistake yet: each says what it takes once it was edited (`touched`), or once a save was asked for (`tried`).
@@ -165,6 +167,7 @@ export function PlansPage() {
                   <TextField label={t("sp.id")} hint={t("sp.idHint")} value={p.id} onChange={(e) => set(i, { id: e.target.value.toLowerCase() })} dir="ltr" autoComplete="off" />
                   <TextField label={t("sp.nameEn")} value={p.name.en} onChange={(e) => set(i, { name: { ...p.name, en: e.target.value } })} />
                   <TextField label={t("sp.nameAr")} value={p.name.ar} onChange={(e) => set(i, { name: { ...p.name, ar: e.target.value } })} dir="rtl" lang="ar" />
+                  {added.map((l) => <TextField key={l.code} label={t("sp.nameIn", { language: l.native })} hint={t("sp.nameInHint")} value={p.name[l.code] ?? ""} onChange={(e) => set(i, { name: { ...p.name, [l.code]: e.target.value } })} dir={l.dir} lang={l.code} />)}
                   <label className="or-pick"><span>{t("sp.kind")}</span>
                     <select value={p.kind} onChange={(e) => set(i, { kind: e.target.value as PlanDef["kind"] })}><option value="individual">{t("sp.individual")}</option><option value="seat">{t("sp.seat")}</option><option value="credits">{t("sp.pack")}</option></select>
                   </label>

@@ -457,9 +457,30 @@ describe("the account screens", () => {
     expect(h.fbAuth.languageCode).toBe("ar");
   });
 
+  // A live problem report (2026-11-13): "they won't send me the password", after three tries at /forgot.
+  it("the reset link comes back to this address's sign-in; the page says where to look and can send it again", async () => {
+    open("/forgot");
+    fireEvent.change(await screen.findByLabelText("Email"), { target: { value: "amina@x.org" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send reset link" }));
+    await waitFor(() => expect(h.resetMail).toHaveBeenCalledWith(h.fbAuth, "amina@x.org", { url: `${location.origin}/signin` }));
+    expect((await screen.findByRole("status")).textContent).toMatch(/reset link is on its way/);
+    expect(screen.getByText(/Look in Spam and Promotions too/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Send it again" }));
+    expect(screen.getByRole("button", { name: "Send reset link" })).toBeTruthy();
+  });
+
+  it("an address Auth doesn't list still gets the reset email, with Firebase's plain link", async () => {
+    h.resetMail.mockReset().mockRejectedValueOnce(Object.assign(new Error("no"), { code: "auth/unauthorized-continue-uri" })).mockResolvedValue(undefined);
+    open("/forgot");
+    fireEvent.change(await screen.findByLabelText("Email"), { target: { value: "amina@x.org" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send reset link" }));
+    await waitFor(() => expect(h.resetMail).toHaveBeenCalledTimes(2));
+    expect(h.resetMail.mock.calls[1]).toEqual([h.fbAuth, "amina@x.org"]);
+  });
+
   describe("choosing your own password (accounts an organization made)", () => {
     const choose = async (pw: string) => {
-      h.reset({ user: { ...user("m1"), email: "m1@users.darsi.app", providerData: [{ providerId: "password" }] }, profile: { uid: "m1", name: "M", role: "student", mustChangePassword: true }, role: "student", orgId: "o1" });
+      h.reset({ user: { ...user("m1"), email: "m1@users.darsiai.org", providerData: [{ providerId: "password" }] }, profile: { uid: "m1", name: "M", role: "student", mustChangePassword: true }, role: "student", orgId: "o1" });
       open("/learn");
       fireEvent.change(await screen.findByLabelText(/^New password/), { target: { value: pw } });
       fireEvent.change(screen.getByLabelText("Repeat password"), { target: { value: pw } });
@@ -470,7 +491,7 @@ describe("the account screens", () => {
       h.reauth.mockResolvedValue({}); // it still signs in: the same password
       await choose("Slip-1234");
       expect((await screen.findByRole("alert")).textContent).toBe("Choose a password different from the one your organization gave you.");
-      expect(h.reauth).toHaveBeenCalledWith(expect.objectContaining({ uid: "m1" }), { email: "m1@users.darsi.app", pw: "Slip-1234" });
+      expect(h.reauth).toHaveBeenCalledWith(expect.objectContaining({ uid: "m1" }), { email: "m1@users.darsiai.org", pw: "Slip-1234" });
       expect(h.updatePassword).not.toHaveBeenCalled();
     });
 

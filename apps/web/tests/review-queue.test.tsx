@@ -17,7 +17,7 @@ const { byWaiting, waitingOf, waitingTotals } = await import("../src/admin/revie
 
 const recent = new Date(Date.now() - 864e5).toISOString();
 const student = (uid: string, name: string, extra: Partial<Profile> = {}): Profile => ({
-  uid, name, email: `${uid}@users.darsi.app`, role: "student", orgId: "o1", teacherId: "t1",
+  uid, name, email: `${uid}@users.darsiai.org`, role: "student", orgId: "o1", teacherId: "t1",
   summary: { lessonsDone: 2, xp: 0, avgAccuracy: 0.8, lastActive: recent, competencies: {}, units: {} }, ...extra,
 });
 const page = (lang = "en") => render(<I18nProvider lang={lang}><MemoryRouter><Teach /></MemoryRouter></I18nProvider>);

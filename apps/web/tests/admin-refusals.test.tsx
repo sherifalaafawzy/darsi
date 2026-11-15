@@ -186,8 +186,8 @@ describe("refusals in the admin's language", () => {
 describe("who manages an account (data.ts managedByOrg)", () => {
   it("follows managedBy, then a username login, and never who made the profile", () => {
     expect(managedByOrg({ managedBy: "o1", email: "a@gmail.com" }, "o1")).toBe(true);
-    expect(managedByOrg({ managedBy: "o2", email: "a.b@users.darsi.app" }, "o1")).toBe(false);
-    expect(managedByOrg({ email: "a.b@users.darsi.app" }, "o1")).toBe(true);
+    expect(managedByOrg({ managedBy: "o2", email: "a.b@users.darsiai.org" }, "o1")).toBe(false);
+    expect(managedByOrg({ email: "a.b@users.darsiai.org" }, "o1")).toBe(true);
     expect(managedByOrg({ email: "a@gmail.com" }, "o1")).toBe(false);
     expect(managedByOrg({ managed: true, email: "a@gmail.com" }, "o1")).toBe(true); // a listMembers row
     expect(managedByOrg({ managedBy: "o1" }, null)).toBe(false);
@@ -208,8 +208,8 @@ describe("an organization's request (data.ts useOrgRequest)", () => {
 
 describe("the people table", () => {
   const rows = [
-    { uid: "s1", name: "Amina Bello", email: "amina.b@users.darsi.app", role: "student", projectsWaiting: 2 },
-    { uid: "s2", name: "Omar Said", email: "omar.s@users.darsi.app", role: "student", projectsWaiting: 0 },
+    { uid: "s1", name: "Amina Bello", email: "amina.b@users.darsiai.org", role: "student", projectsWaiting: 2 },
+    { uid: "s2", name: "Omar Said", email: "omar.s@users.darsiai.org", role: "student", projectsWaiting: 0 },
   ] as Profile[];
 
   it("links a count of projects waiting to the person's Projects tab, on the admin's and the teacher's page", () => {

@@ -21,7 +21,7 @@ import { deleteSessions, exportSessions } from "./agentSessions.js";
 import { renewsByItself, type Subscription } from "./billingCore.js";
 import { refuseClosedOrg } from "./closedOrg.js";
 import { forgetAllDevices } from "./notify.js";
-import { USERNAME_DOMAIN } from "./passwords.js";
+import { USERNAME_DOMAINS } from "./passwords.js";
 import { accountActionProblem, managedAccount, type AccountAction } from "./roles.js";
 import { bucket } from "./storage.js";
 import { identitiesOf, ssoAccountWiped, ssoSetBlocked } from "./ssoStore.js";
@@ -51,7 +51,7 @@ async function target(req: CallableRequest, action: AccountAction) {
   const problem = accountActionProblem(action, { uid: c.uid, role: c.role, orgId: c.orgId ?? null }, {
     uid, exists: profile.exists, role: profile.get("role"), orgId: profile.get("orgId"), createdBy: profile.get("createdBy"),
     managedBy: profile.get("managedBy"), email: account?.email ?? (profile.get("email") as string | undefined) ?? null,
-  }, USERNAME_DOMAIN);
+  }, USERNAME_DOMAINS);
   if (problem) throw new HttpsError(problem === "missing" ? "not-found" : problem === "not-yours" ? "permission-denied" : "failed-precondition", MESSAGES[problem], { reason: problem });
   // An organization's admin acting on one of its accounts: not while the organization is suspended or being deleted
   // (exportOrgData refuses the same way, and deleteOrg decides what happens to its managed accounts). Their own
@@ -60,7 +60,7 @@ async function target(req: CallableRequest, action: AccountAction) {
   // A session the school's sign-in opened (token claim `sso`) on a personal account the person connected: whoever
   // controls the school's provider could open it, so its data leave and its deletion need the person's own login.
   // Accounts the organization manages (it made them) are the organization's to handle anyway.
-  if (uid === c.uid && req.auth?.token.sso && !managedAccount({ managedBy: profile.get("managedBy"), email: account?.email ?? null }, USERNAME_DOMAIN).managed) {
+  if (uid === c.uid && req.auth?.token.sso && !managedAccount({ managedBy: profile.get("managedBy"), email: account?.email ?? null }, USERNAME_DOMAINS).managed) {
     throw new HttpsError("failed-precondition", "Sign in with your own Darsi login to do this.", { reason: "sso-own-login" });
   }
   return { c, uid, self: uid === c.uid, profile, account };
@@ -462,7 +462,7 @@ export const onAccountDeletion = onDocumentCreated({ document: "accountDeletions
     const problem = queuedDeletionProblem(orgId, {
       exists: profile.exists, hasAccount: Boolean(account), role: profile.get("role"), claimRole: account?.customClaims?.role, orgId: profile.get("orgId"),
       managedBy: profile.get("managedBy"), email: account?.email ?? (profile.get("email") as string | undefined) ?? null,
-    }, USERNAME_DOMAIN);
+    }, USERNAME_DOMAINS);
     if (problem) {
       logger.warn("onAccountDeletion: skipped, the account is not the organization's to delete", { uid, orgId, reason: problem });
       await ref.delete();

@@ -5,6 +5,7 @@
  */
 
 import { REMOVED_MAX, withRemoved, type Removed } from "./membersCore.js";
+import { atDomain, type Domains } from "./usernameDomain.js";
 
 /**
  * The removed list (orgs/{orgId}/private/removed.uids) with several more removals, kept to REMOVED_MAX like the single
@@ -40,10 +41,10 @@ export const isId = (v: unknown): v is string => typeof v === "string" && v.leng
  * leave by themself): the profile says so (`managedBy`), or, for profiles from before that field, its email is a
  * username login. A profile someone made by signing up can never hold that domain (firestore.rules, users create).
  */
-export function isManaged(p: { managedBy?: unknown; email?: unknown } | undefined, orgId: string | null | undefined, domain: string): boolean {
+export function isManaged(p: { managedBy?: unknown; email?: unknown } | undefined, orgId: string | null | undefined, domain: Domains): boolean {
   if (!p || !orgId) return false;
   if (typeof p.managedBy === "string" && p.managedBy) return p.managedBy === orgId;
-  return typeof p.email === "string" && p.email.toLowerCase().endsWith(`@${domain}`);
+  return atDomain(p.email, domain);
 }
 
 /**
@@ -170,7 +171,7 @@ export function leanSummary(s: unknown): LeanSummary | undefined {
 }
 
 /** One member as a list holds them: named fields only, so nothing else on a profile ever reaches an admin's screen by accident. */
-export function memberRow(uid: string, d: Record<string, unknown> | undefined, orgId: string, view: ListView, domain: string): MemberRow {
+export function memberRow(uid: string, d: Record<string, unknown> | undefined, orgId: string, view: ListView, domain: Domains): MemberRow {
   const p = d ?? {};
   const summary = view === "report" ? (p.summary && typeof p.summary === "object" ? (plain(p.summary) as Record<string, unknown>) : undefined) : leanSummary(p.summary);
   return {

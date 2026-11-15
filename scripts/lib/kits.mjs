@@ -5,9 +5,11 @@
  * Where each one goes in Storage, and the unit pointing there. Shared by scripts/seed-content.mjs and the e2e suite's
  * stand-in for Storage, so both lay the files out the same way.
  */
-export const KIT_LANGS = ["en", "ar"];
+/** Languages a kit may come in: English always, the others only where the file was built (build-kits builds a language a course is translated into). */
+export const KIT_LANGS = ["en", "ar", "fr", "es", "de", "pt", "ur"];
 const pathOf = (unitId, base, lang, fmt) => `content/media/${unitId}/${base.replace(/\//g, "_")}-${lang}.${fmt}`;
-const all = () => true;
+/** Without a way to look (the e2e stand-in for Storage), English and Arabic kits are assumed; other languages only where `has` finds the file. */
+const all = (file) => /-(en|ar)\.\w+$/.test(file);
 
 /**
  * Every kit file a unit's lessons name: the local file under content/kits and its Storage path. `has(file)` says whether

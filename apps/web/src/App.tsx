@@ -173,7 +173,7 @@ function Routed() {
   const { user, profile, profileReady, role, orgId, configured, offlineUid, connecting, sso } = useAuth();
   const { dir } = useI18n();
   // Before any screen asks for the catalog: org members also see their org's published units.
-  configureContent({ orgId: user ? orgId : null, signedIn: Boolean(user || offlineUid) });
+  configureContent({ orgId: user ? orgId : null, signedIn: Boolean(user || offlineUid), lang: state.lang });
   // An added language's direction is the one platform admins set. (The window title: PageTitle.)
   useEffect(() => { applyLocale(state.lang, state.theme, dir); }, [state.lang, state.theme, dir]);
   // Certificates use the local name; start it from the account name.

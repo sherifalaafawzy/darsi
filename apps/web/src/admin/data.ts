@@ -5,7 +5,7 @@ import { db, storage } from "../firebase";
 import type { Org, Profile, Role } from "../auth/types";
 import type { EarnedCert, Sent } from "../content/cert";
 import type { SiteDoc } from "../content/sites";
-import { api, USERNAME_DOMAIN } from "../auth/api";
+import { api, isUsernameEmail, USERNAME_DOMAIN } from "../auth/api";
 
 export interface ProgressDoc { lessonId: string; unitId: string; track: string; accuracy: number; xp: number; seconds: number; completedAt: string; competencies?: string[] }
 type ByLang<T> = Partial<Record<"en" | "ar", T>>;
@@ -458,7 +458,7 @@ export function managedByOrg(p: { managedBy?: string | null; managed?: boolean; 
   if (!orgId) return false;
   if (typeof p.managedBy === "string" && p.managedBy) return p.managedBy === orgId;
   if (typeof p.managed === "boolean") return p.managed;
-  return !!p.email?.toLowerCase().endsWith(`@${USERNAME_DOMAIN}`);
+  return isUsernameEmail(p.email);
 }
 
 /** Every organization, newest first (platform admins: /super/orgs). One read, again on reload(). */
@@ -490,7 +490,7 @@ export async function findPeople(q: string): Promise<(Profile & { emailVerified?
 }
 
 /* ---------- Darsi Super (docs/SUPER.md) ---------- */
-export interface PlanDef { id: string; name: { en: string; ar: string }; kind: "individual" | "seat" | "credits"; period: "month" | "year"; prices: { EGP?: number; USD?: number }; credits: number; active: boolean }
+export interface PlanDef { id: string; name: { en: string; ar: string } & Partial<Record<string, string>>; kind: "individual" | "seat" | "credits"; period: "month" | "year"; prices: { EGP?: number; USD?: number }; credits: number; active: boolean }
 /** What a tutor credit costs Darsi at the provider (USD) and the EGP rate (functions/src/billingCore.ts Economics). */
 export interface Economics { usdPerCredit: number; egpPerUsd: number }
 /** config/plans as a platform admin saved them (the Plans page). */

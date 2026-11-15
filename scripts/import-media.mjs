@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
  * Fills the video steps of courses written as files (content/units/<unit>.json) from Lesson Studio, where each lesson's
- * storyboard became a narrated lesson in English and Egyptian Arabic (docs/CURRICULUM.md has the whole pipeline). For
+ * storyboard became a narrated lesson in English and Egyptian Arabic, and in French, Spanish, German or Portuguese where
+ * Lesson Studio has voiced and rendered them (docs/CURRICULUM.md has the whole pipeline). For
  * every lesson with a video step, the Lesson Studio lesson with the same id gives:
  *   - the 240p MP4s, captions and light lesson, copied into content/media/<lesson>/ (gitignored; `npm run seed` uploads them);
  *   - sources, captions, light, duration and sizeMB;
  *   - each chapter's and the checkpoint's time in each language's video (the labels and the question stay as written);
- *   - the transcript, from the narration itself, so it always matches what is said;
+ *   - the transcript, from the narration itself, so it always matches what is said (in every language the video has);
  *   - the lesson's video kit item.
  * The three courses from the zip packs use scripts/import-packs.mjs instead.
  *
@@ -49,10 +50,13 @@ function fill(unit, lesson) {
   const studioId = lesson.id.toLowerCase();
   if (!existsSync(join(STUDIO, "content", "darsi", "lessons", studioId, "scenes.json"))) return [`${lesson.id}: no Lesson Studio lesson yet (node scripts/darsi/convert.ts ${lesson.id.toUpperCase()} there)`];
   const m = studioMedia(ROOT, STUDIO, studioId, lesson.id);
-  const { story, arabic } = storyboard(STUDIO, studioId);
-  const at = sceneTimes(STUDIO, studioId);
+  const { story, overlays } = storyboard(STUDIO, studioId);
+  // Darsi languages the video has: en, ar, and any of fr, es, de, pt that Lesson Studio voiced and rendered.
+  const langs = Object.keys(m.langs);
+  const at = sceneTimes(STUDIO, studioId, m.langs);
+  const byLang = (f) => Object.fromEntries(langs.map((l) => [l, f(l)]));
   const problems = [];
-  // Chapters: the storyboard's, timed in each language; their labels are the ones written in the unit (en + ar). A
+  // Chapters: the storyboard's, timed in each language; their labels are the ones written in the unit. A
   // chapter starts a scene. One whose time starts no scene ("2:00" between scenes at 1:58 and 2:06) is a mistake in the
   // storyboard: it is reported, and put at the next scene's start (the one it leads into, such as the recap), never at
   // 0:00 (the validator warns about chapters out of order).
@@ -68,15 +72,16 @@ function fill(unit, lesson) {
   if (step.chapters?.length && step.chapters.length !== story.chapters.length) problems.push(`${lesson.id}: ${step.chapters.length} chapter labels in the unit, ${story.chapters.length} chapters in the storyboard`);
   step.chapters = story.chapters.map((c, k) => {
     const i = sceneOf(c);
-    return { at: at.en[i], atBy: { en: at.en[i], ar: at.ar[i] }, label: step.chapters?.[k]?.label ?? { en: plain(c.label) } };
+    return { at: at.en[i], atBy: byLang((l) => at[l][i]), label: step.chapters?.[k]?.label ?? { en: plain(c.label) } };
   });
   // The checkpoint inside the video is the storyboard's first quick check; its question is the one written in the unit.
-  const checks = { en: m.info.en.checks ?? [], ar: m.info.ar.checks ?? [] };
-  if (story.checkpoints?.length && checks.en.length && checks.ar.length) {
+  const checks = byLang((l) => m.info[l].checks ?? []);
+  if (story.checkpoints?.length && langs.every((l) => checks[l].length)) {
     if (!step.checkpoint?.question) problems.push(`${lesson.id}: write the checkpoint question (en + ar) in the unit; the storyboard's first check is "${plain(story.checkpoints[0].prompt)}"`);
-    else Object.assign(step.checkpoint, { at: checks.en[0].at, atBy: { en: checks.en[0].at, ar: checks.ar[0].at } });
+    else Object.assign(step.checkpoint, { at: checks.en[0].at, atBy: byLang((l) => checks[l][0].at) });
   }
-  step.transcript = { en: story.scenes.map((s) => plain(s.narration)).join(" "), ar: story.scenes.map((s) => plain(arabic.scenes[String(s.n)]?.narration)).join(" ") };
+  // What each language's video says. (The course's own translations in content/i18n/units must not replace these.)
+  step.transcript = byLang((l) => story.scenes.map((s) => plain(l === "en" ? s.narration : overlays[l]?.scenes[String(s.n)]?.narration)).join(" "));
   Object.assign(step, { src: null, sources: m.sources, captions: m.captions, duration: m.duration, sizeMB: m.sizeMB, light: m.light });
   const kit = { kind: "video", title: KIT_TITLE[unit.audience === "students" ? "students" : "teachers"], pages: 0, formats: ["mp4"], path: `/media/${lesson.id}/video-{lang}` };
   const i = lesson.kit.findIndex((k) => k.kind === "video");

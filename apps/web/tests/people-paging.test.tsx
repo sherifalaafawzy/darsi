@@ -34,7 +34,7 @@ vi.mock("../src/admin/data", async (orig) => ({
 const { AdminHome } = await import("../src/admin/AdminHome");
 const { forgetMembers, MEMBERS_MAX_AGE, saveGaConfig, useMembers, useNames } = await import("../src/admin/data");
 
-const person = (i: number, o: Partial<Profile> = {}): Profile => ({ uid: `u${String(i).padStart(4, "0")}`, name: `Pupil ${String(i).padStart(4, "0")}`, email: `p${i}@users.darsi.app`, role: "student", ...o });
+const person = (i: number, o: Partial<Profile> = {}): Profile => ({ uid: `u${String(i).padStart(4, "0")}`, name: `Pupil ${String(i).padStart(4, "0")}`, email: `p${i}@users.darsiai.org`, role: "student", ...o });
 const people = (from: number, n: number, o: Partial<Profile> = {}) => Array.from({ length: n }, (_, i) => person(from + i, o));
 const dashboard = (url = "/admin") => render(<I18nProvider lang="en"><MemoryRouter initialEntries={[url]}><AdminHome /></MemoryRouter></I18nProvider>);
 const answer = (i: number, page: Page) => act(async () => { m.calls[i].answer(page); });

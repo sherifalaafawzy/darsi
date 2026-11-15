@@ -4,6 +4,7 @@ import { BrandMark, Button, ChoiceCard, LanguagePicker, OnboardingStep as Step, 
 import { useI18n, useLanguages } from "../i18n";
 import { useStore, type AppState } from "../state/store";
 import { loadPlacement, useAsync } from "../content/load";
+import { usePhrases } from "../i18n/phrases";
 import { teachStage, type Audience, type Placement, type Stage, type Track } from "../content/types";
 import { useTracks } from "../content/settings";
 import { useMine, usePlacement, useStagesOffered } from "../content/mine";
@@ -209,6 +210,8 @@ export function PlacementQuiz({ tracks: only, onDone, onClose }: { tracks?: Trac
   const mine = useMine();
   const place = usePlacement();
   const { data } = useAsync(loadPlacement, []);
+  // An added language's questions (i18n/phrases.ts); English until they are in.
+  const worded = usePhrases("placement");
   const list = only ?? mine.tracks.map((x) => x.id);
   // The questions, and the levels each track may place at (fixed once the catalog has answered, so they never move mid-check).
   const ready = useMemo(() => (data && place.ready ? {
@@ -232,7 +235,7 @@ export function PlacementQuiz({ tracks: only, onDone, onClose }: { tracks?: Trac
   const askAt = useCallback((el: HTMLElement | null) => focusHeading(el?.querySelector<HTMLElement>(".dr-qhead-prompt")), []);
   const all = (got: Partial<Record<Track, number>>) => ({ ...Object.fromEntries(list.map((tr) => [tr, startOf(tr)])), ...got });
   useEffect(() => { if (banks && !asked.length) onDone(all({}), 0); }, [banks]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!banks || !asked.length) return <div className="loading" aria-busy="true" />;
+  if (!banks || !asked.length || !worded) return <div className="loading" aria-busy="true" />;
   const tr = asked[ti];
   const ls = ready!.levels[tr];
   const at = st ?? begin(tr);

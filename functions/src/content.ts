@@ -9,13 +9,13 @@ import { HttpsError, onCall, type CallableRequest, type FunctionsErrorCode } fro
 import { logger } from "firebase-functions/v2";
 import { audit, db, freshCaller, str } from "./admin.js";
 import { refuseClosedOrg } from "./closedOrg.js";
-import { allFigureUrls, buildCatalog, canManage, catalogEntry, catalogPath, figurePath, idAllowed, isOwner, mediaPrefix, staleVersions, unitPath, unitPrefix, versionOf, type Owner } from "./catalog.js";
+import { allFigureUrls, buildCatalog, canManage, catalogEntry, catalogPath, extraLangs, figurePath, idAllowed, inLanguages, isOwner, mediaPrefix, staleVersions, unitLangPath, unitPath, unitPrefix, versionOf, type Owner } from "./catalog.js";
 import { loadTracks } from "./settings.js";
 import { bucket, saveJson } from "./storage.js";
 import { mediaStillUsed } from "./trackRules.js";
 import { levelsByTrack } from "./shared/tracks.js";
 import type { CatalogEntry, Unit } from "./shared/types.js";
-import { byteSize, errorsOf, UNIT_ID, validateUnit } from "./shared/validate.js";
+import { errorsOf, UNIT_ID, validateUnit } from "./shared/validate.js";
 
 /**
  * Owners whose catalog.json couldn't be written after a publish, unpublish or delete had already changed Firestore:
@@ -169,15 +169,20 @@ export async function publishDraft(owner: Owner, unitId: string, by: string, rev
   // Never a version number used before: v{n}.json is immutable and phones keep it forever (cache-first), so a unit
   // unpublished at v3 and published again must become v4, not v1 with other content under an old path.
   const version = (await lastVersionOf(meta, owner, unitId)) + 1;
-  const body = JSON.stringify(unit);
+  // English and Arabic in v{n}.json; each added language in its own v{n}.{lang}.json with English (its fallback), so a
+  // phone downloads only its own language (the catalog entry's `langs`).
+  const files: [string, string, string][] = [["en", unitPath(owner, unitId, version), JSON.stringify(inLanguages(unit, ["ar"]))]];
+  for (const lang of extraLangs(unit)) files.push([lang, unitLangPath(unitPath(owner, unitId, version), lang), JSON.stringify(inLanguages(unit, [lang]))]);
   // Versioned paths never change, so phones may keep them forever; org units stay out of shared caches. Stored gzipped
   // (storage.ts saveJson), so the download size counts the gzipped bytes phones fetch.
-  await saveJson(unitPath(owner, unitId, version), body, `${owner === "public" ? "public" : "private"}, max-age=31536000, immutable`);
-  const jsonBytes = Math.min(byteSize(unit), gzipSync(body).length);
+  const cache = `${owner === "public" ? "public" : "private"}, max-age=31536000, immutable`;
+  await Promise.all(files.map(([, path, body]) => saveJson(path, body, cache)));
+  const bytes: Record<string, number> = Object.fromEntries(files.map(([lang, , body]) => [lang, Math.min(Buffer.byteLength(body), gzipSync(body).length)]));
+  bytes.ar = bytes.en;
   // The download size counts the pictures in the text too (the capstones' screenshots), which phones save with it.
   const figureKB = await figureSizes(unit);
   // `rev` is the draft revision that went live: the editor shows "changes not published" while the draft's rev differs.
-  await meta.ref.update({ published: { version, rev: Number(draft.get("rev")) || 0, at: FieldValue.serverTimestamp(), by: c.uid, entry: catalogEntry(unit, owner, version, jsonBytes, figureKB) }, lastVersion: version });
+  await meta.ref.update({ published: { version, rev: Number(draft.get("rev")) || 0, at: FieldValue.serverTimestamp(), by: c.uid, entry: catalogEntry(unit, owner, version, bytes, figureKB) }, lastVersion: version });
   await catalogOrPending(owner, "publishUnit", c.uid, { unitId, owner, version });
   await deleteJson(owner, unitId, version);
   await audit("publishUnit", c.uid, { unitId, owner, version });

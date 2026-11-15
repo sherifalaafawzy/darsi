@@ -6,7 +6,7 @@ import { call, loadFirebase } from "../fb";
 import { isolate, useI18n } from "../i18n";
 import { useStore } from "../state/store";
 import { isNative } from "../platform";
-import { api, loginToEmail } from "./api";
+import { api, isUsernameEmail, LEGACY_USERNAME_DOMAINS, loginToEmail } from "./api";
 import { createLearnerProfile, useAuth } from "./AuthProvider";
 import { LeftOrgNote } from "./LeftOrg";
 import { track } from "../analytics/track";
@@ -158,7 +158,14 @@ export function SignIn() {
     try {
       await ensureFirebase(); // listening, so the account is published the moment it signs in
       const { auth, signInWithEmailAndPassword } = await authSdk();
-      await signInWithEmailAndPassword(auth, loginToEmail(login), pw);
+      await signInWithEmailAndPassword(auth, loginToEmail(login), pw).catch(async (first) => {
+        // A username not yet moved off the old domain (api.ts USERNAME_DOMAIN) signs in there.
+        if (login.includes("@") || !/invalid-credential|user-not-found|wrong-password/.test(String((first as { code?: string }).code ?? first))) throw first;
+        for (const d of LEGACY_USERNAME_DOMAINS) {
+          if (await signInWithEmailAndPassword(auth, `${login.trim().toLowerCase()}@${d}`, pw).then(() => true, () => false)) return;
+        }
+        throw first;
+      });
       track("sign_in", { m: login.includes("@") ? "email" : "username" });
       // Still busy on purpose: the app moves on by itself (SignedIn), and a second tap must not sign in twice.
     } catch (x) { setErr(errText(String((x as { code?: string }).code ?? x), t)); setBusy(false); }
@@ -473,6 +480,7 @@ function OpenInBrowser() {
 export function Forgot() {
   const { t, lang } = useI18n();
   const [email, setEmail] = useState(""); const [sent, setSent] = useState(false); const [busy, setBusy] = useState(false);
+  const [usernameNote, setUsernameNote] = useState(false);
   // On a page with a school button (an organization's address with school sign-in, or a school's sign-in link): a school
   // password is the school's to reset, and its button is the way in.
   const viaSchool = Boolean(useSite().site?.sso) || Boolean(useSearchParams()[0].get("school"));
@@ -480,16 +488,31 @@ export function Forgot() {
   return (
     <Shell title={t("auth.forgotTitle")} sub={t("auth.forgotSub")}>
       {ssoOn && viaSchool && <p className="notice" role="note">{t("sso.forgot")}</p>}
-      {sent ? <p className="notice ok">{t("auth.forgotSent")}</p> : (
+      {sent ? <>
+        <p className="notice ok" role="status">{t("auth.forgotSent")}</p>
+        <p className="muted small">{t("auth.forgotSpam")}</p>
+        <div><Button size="sm" variant="secondary" onClick={() => setSent(false)}>{t("auth.forgotAgain")}</Button></div>
+      </> : (
         <form className="stack" onSubmit={async (e) => {
-          e.preventDefault(); setBusy(true);
+          e.preventDefault();
+          // A username login has no mailbox: its password comes from the school's admin (the note under the field).
+          if (isUsernameEmail(email.trim())) { setUsernameNote(true); return; }
+          setBusy(true);
           // The email comes in the person's language (Firebase's own wording; English for a language it doesn't have).
-          try { const { auth, sendPasswordResetEmail } = await authSdk(); auth.languageCode = lang; await sendPasswordResetEmail(auth, email.trim()); } catch { /* do not reveal */ }
+          try {
+            const { auth, sendPasswordResetEmail } = await authSdk(); auth.languageCode = lang;
+            // After the new password is saved, Firebase's page offers "Continue" back to this address's sign-in. An
+            // address Auth doesn't list (a school's own, before connect-site added it) is refused: then the plain link.
+            await sendPasswordResetEmail(auth, email.trim(), { url: `${location.origin}/signin` }).catch((x) => {
+              if (/continue-uri|unauthorized-domain/.test(String((x as { code?: string }).code ?? x))) return sendPasswordResetEmail(auth, email.trim());
+              throw x;
+            });
+          } catch { /* do not reveal */ }
           setSent(true); setBusy(false);
         }}>
-          <TextField label={t("auth.email")} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
+          <TextField label={t("auth.email")} type="email" value={email} onChange={(e) => { setEmail(e.target.value); setUsernameNote(false); }} autoComplete="email" required />
           <Button type="submit" block loading={busy}>{t("auth.sendLink")}</Button>
-          <p className="muted small">{t("auth.forgotUsername")}</p>
+          <p className={usernameNote ? "notice" : "muted small"} role={usernameNote ? "alert" : undefined}>{t("auth.forgotUsername")}</p>
         </form>
       )}
       <p className="auth-links"><Link to="/signin">{t("auth.backToSignIn")}</Link></p>

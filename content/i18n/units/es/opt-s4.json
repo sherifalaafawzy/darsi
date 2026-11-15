@@ -1,0 +1,2074 @@
+{
+  "title": {
+    "en": "Operations research: LP, MIP, CP, OR-Tools modelling, heuristics",
+    "t": "Investigación de operaciones: PL, PEM, PR, modelado con OR-Tools, heurísticas"
+  },
+  "summary": {
+    "en": "The field behind airline schedules, supply chains and hospital rosters, on your phone: linear programs and the simplex method, integer programs and branch and bound, constraint programming with CP-SAT, local search and the optimality gap, and the trade-offs a modeller must make in the open. You write and run real OR-Tools models in Python. Before this: “First Python” (Programming, lower secondary).",
+    "t": "El campo que está detrás de los horarios de las aerolíneas, las cadenas de suministro y los turnos de los hospitales, en tu teléfono: programas lineales y el método símplex, programas enteros y ramificación y acotamiento, programación por restricciones con CP-SAT, búsqueda local y la brecha de optimalidad, y las decisiones difíciles que tiene que tomar a la vista de todos quien modela. Escribes y ejecutas modelos reales de OR-Tools en Python. Antes de esto: «Primer Python» (Programación, secundaria básica)."
+  },
+  "lessons.0.title": {
+    "en": "Linear programming and the simplex method",
+    "t": "Programación lineal y el método símplex"
+  },
+  "lessons.0.tryTomorrow": {
+    "en": "Write the garden as a linear program in GLOP and solve it (290). Then add one pupil-hour and, separately, one bed of land, and check that the profit rises by 5 and by 25. Which limit would you pay for, and up to what price?",
+    "t": "Escribe el huerto como un programa lineal en GLOP y resuélvelo (290). Luego añade una hora de alumnos y, por separado, un bancal más de terreno, y comprueba que la ganancia sube 5 y 25. ¿Qué límite pagarías para ampliar y hasta qué precio?"
+  },
+  "lessons.0.materials": {
+    "en": [
+      "Your phone, or a computer with Colab",
+      "Graph paper and a ruler"
+    ],
+    "t": [
+      "Tu teléfono, o una computadora con Colab",
+      "Papel cuadriculado y una regla"
+    ]
+  },
+  "lessons.0.steps.0.prompt": {
+    "en": "Watch",
+    "t": "Ver"
+  },
+  "lessons.0.steps.0.title": {
+    "en": "Linear programming and the simplex method",
+    "t": "Programación lineal y el método símplex"
+  },
+  "lessons.0.steps.0.chapters.0.label": {
+    "en": "A method from 1947",
+    "t": "Un método de 1947"
+  },
+  "lessons.0.steps.0.chapters.1.label": {
+    "en": "Standard form and corners",
+    "t": "Forma estándar y esquinas"
+  },
+  "lessons.0.steps.0.chapters.2.label": {
+    "en": "The simplex walk",
+    "t": "El recorrido del símplex"
+  },
+  "lessons.0.steps.0.chapters.3.label": {
+    "en": "Duality and shadow prices",
+    "t": "Dualidad y precios sombra"
+  },
+  "lessons.0.steps.0.chapters.4.label": {
+    "en": "Remember and try it",
+    "t": "Recuerda y pruébalo"
+  },
+  "lessons.0.steps.0.checkpoint.question.prompt": {
+    "en": "A linear program’s best value is reached at two neighbouring corners. What does that tell you?",
+    "t": "El mejor valor de un programa lineal se alcanza en dos esquinas vecinas. ¿Qué te dice eso?"
+  },
+  "lessons.0.steps.0.checkpoint.question.options.0.text": {
+    "en": "There’s a mistake in the model",
+    "t": "Hay un error en el modelo"
+  },
+  "lessons.0.steps.0.checkpoint.question.options.1.text": {
+    "en": "Every point on the edge between them is optimal too",
+    "t": "Todos los puntos del borde que las une también son óptimos"
+  },
+  "lessons.0.steps.0.checkpoint.question.options.2.text": {
+    "en": "Only those two corners are optimal",
+    "t": "Solo esas dos esquinas son óptimas"
+  },
+  "lessons.0.steps.0.checkpoint.question.explain": {
+    "en": "If two neighbouring corners give the same best value, the goal line is parallel to the edge joining them, so it touches the whole edge at once. Every point on that edge is optimal: the LP has many optimal solutions, and a solver returns one of them.",
+    "t": "Si dos esquinas vecinas dan el mismo mejor valor, la recta del objetivo es paralela al borde que las une, así que toca todo el borde a la vez. Todos los puntos de ese borde son óptimos: el PL tiene muchas soluciones óptimas, y un solucionador devuelve una de ellas."
+  },
+  "lessons.0.steps.0.transcript": {
+    "en": "In nineteen forty-seven, George Dantzig wanted to plan military supplies at the least cost. His method now plans airline crews, refineries and hospital meals, and it runs on your phone. Let’s see why it works. Today: linear programming, and how the simplex method finds the best corner. A linear program has continuous variables, linear limits and a linear goal. In standard form: maximise c times x, subject to A x at most b, and x at least zero. The school garden is one: thirty x plus forty y, under limits on land, water and hours. Each limit cuts the plane in half, and the plans that keep them all form a convex polygon. A linear goal is a family of parallel lines. Slide it as far as you can, and the last point it touches is a corner. Simplex walks from corner to neighbouring corner, improving the goal each time, and stops when no neighbour is better. Because the polygon is convex, that corner is the best of all. In the garden: from the origin to six bean beds, then to three tomato and five bean beds, a profit of two hundred and ninety. In the worst case, simplex visits exponentially many corners, but in practice it’s fast. Interior-point methods cut through the middle, in polynomial time. GLOP, in Google’s OR-Tools, is a simplex solver. Quick check! A linear program’s best value is reached at two neighbouring corners. What does that tell you? Every point on the edge between them is optimal too. Now the second big idea: every linear program has a twin, its dual, whose variables are prices for the limits. A limit’s shadow price is how much the best goal improves if that limit grows by one. In the garden, one more pupil-hour is worth five, one more bed of land twenty-five, and water nothing, because three cans are spare. That’s complementary slackness: a limit with room to spare has a price of zero. Solvers report these dual values: in OR-Tools, ask each constraint for its dual value. Solving again with the limit one larger gives the same five. The diet problem was one of the first linear programs. The cheapest school lunch costs forty-one coins, with energy and iron met exactly. Protein is more than needed, with grams to spare, so its shadow price is zero. In OR-Tools, the whole model is a few lines. Make a solver, add the variables and the limits, set the goal, and GLOP solves it. The same program runs unchanged in Colab. In the app, build a school lunch, then press find the cheapest. Read the corners the simplex method visited, and which needs are met exactly. Your turn. In the cheapest lunch, protein comes to twenty-three grams against a need of twenty. What is protein’s shadow price? Zero: a limit with room to spare costs nothing. Remember: the feasible set is convex, and the best is at a corner. Simplex walks from corner to corner. And shadow prices tell you what each limit is worth. Try it yourself: write the garden as a linear program in GLOP. Then add one hour, solve again, and check that the profit rises by five.",
+    "t": "En mil novecientos cuarenta y siete, George Dantzig quería planificar los suministros militares al menor costo. Su método ahora planifica tripulaciones de aerolíneas, refinerías y comidas de hospitales, y corre en tu teléfono. Veamos por qué funciona. Hoy: la programación lineal y cómo el método símplex encuentra la mejor esquina. Un programa lineal tiene variables continuas, límites lineales y un objetivo lineal. En forma estándar: maximizar c por x, sujeto a A x como máximo b, y x al menos cero. El huerto escolar es uno: treinta x más cuarenta y, con límites de terreno, agua y horas. Cada límite corta el plano por la mitad, y los planes que los cumplen todos forman un polígono convexo. Un objetivo lineal es una familia de rectas paralelas. Deslízala hasta donde puedas y el último punto que toca es una esquina. El símplex camina de esquina en esquina vecina, mejorando el objetivo cada vez, y se detiene cuando ninguna vecina es mejor. Como el polígono es convexo, esa esquina es la mejor de todas. En el huerto: del origen a seis bancales de frijoles, luego a tres de tomate y cinco de frijoles, una ganancia de doscientos noventa. En el peor caso, el símplex visita una cantidad exponencial de esquinas, pero en la práctica es rápido. Los métodos de punto interior cruzan por el medio, en tiempo polinomial. GLOP, de OR-Tools de Google, es un solucionador símplex. ¡Comprobación rápida! El mejor valor de un programa lineal se alcanza en dos esquinas vecinas. ¿Qué te dice eso? Todos los puntos del borde que las une también son óptimos. Ahora la segunda gran idea: todo programa lineal tiene un gemelo, su dual, cuyas variables son precios de los límites. El precio sombra de un límite es cuánto mejora el mejor objetivo si ese límite crece en uno. En el huerto, una hora más de alumnos vale cinco, un bancal más de terreno veinticinco y el agua nada, porque sobran tres regaderas. Eso es la holgura complementaria: un límite con espacio de sobra tiene precio cero. Los solucionadores informan estos valores duales: en OR-Tools, pide a cada restricción su valor dual. Resolver de nuevo con el límite una unidad más grande da los mismos cinco. El problema de la dieta fue uno de los primeros programas lineales. El almuerzo escolar más barato cuesta cuarenta y una monedas, con la energía y el hierro cubiertos exactamente. La proteína sobra, con gramos de más, así que su precio sombra es cero. En OR-Tools, todo el modelo son unas pocas líneas. Crea un solucionador, añade las variables y los límites, fija el objetivo y GLOP lo resuelve. El mismo programa corre sin cambios en Colab. En la app, arma un almuerzo escolar y luego pulsa encontrar el más barato. Lee las esquinas que visitó el método símplex y qué necesidades se cubren exactamente. Tu turno. En el almuerzo más barato, la proteína llega a veintitrés gramos frente a una necesidad de veinte. ¿Cuál es el precio sombra de la proteína? Cero: un límite con espacio de sobra no cuesta nada. Recuerda: el conjunto factible es convexo y lo mejor está en una esquina. El símplex camina de esquina en esquina. Y los precios sombra te dicen cuánto vale cada límite. Pruébalo tú: escribe el huerto como un programa lineal en GLOP. Luego añade una hora, resuelve de nuevo y comprueba que la ganancia sube cinco."
+  },
+  "lessons.0.steps.1.prompt": {
+    "en": "Read",
+    "t": "Leer"
+  },
+  "lessons.0.steps.1.title": {
+    "en": "Linear programs, corners and prices",
+    "t": "Programas lineales, esquinas y precios"
+  },
+  "lessons.0.steps.1.body": {
+    "en": "A linear program (LP) has continuous variables, linear constraints and a linear objective. In standard form it reads: maximise cᵀx subject to Ax ≤ b and x ≥ 0, where x are the decisions, A and b the limits and c the value of each decision. The school garden is a small one: x tomato beds and y bean beds, maximise 30x + 40y, with land x + y ≤ 8, water 2x + y ≤ 14 and pupils’ hours x + 3y ≤ 18.\n\nEach linear constraint keeps one side of a line (in higher dimensions, a hyperplane), so the feasible region, the plans that keep every limit, is a convex polyhedron: the segment between any two feasible plans is feasible. The objective is a family of parallel lines; pushed as far as it will go, it last touches the region at a corner (a vertex), or along a whole edge when two corners tie. So if an LP has an optimum, one is at a corner. The garden’s corners are (0, 0), (7, 0), (6, 2), (3, 5) and (0, 6), and the best is (3, 5), with 290.\n\nThe simplex method, published by George Dantzig in 1947, walks from corner to neighbouring corner, each time improving the objective, and stops when no neighbour is better; by convexity that corner is optimal. Picking the variable with the largest gain first, the garden goes from (0, 0) to (0, 6) and then (3, 5). In the worst case simplex can visit exponentially many corners (Klee and Minty built such examples in 1972), but in practice it is fast, which is why it remains the workhorse; interior-point methods, from 1984, cross the inside of the region in polynomial time. GLOP, the linear solver in Google’s OR-Tools, is a simplex solver; others include HiGHS, CPLEX and Gurobi, which solve LPs with millions of variables.\n\nEvery LP has a dual whose variables are prices for the constraints. A constraint’s dual value, or shadow price, is how much the best objective improves when its right-hand side grows by one. In the garden, an extra pupil-hour is worth 5, an extra bed of land 25 and extra water 0. Strong duality says the prices value the limits at exactly the best profit: 8 × 25 + 18 × 5 + 14 × 0 = 290. Complementary slackness says a constraint with slack (water: 11 cans used of 14) has price zero, and a variable used in the optimum earns exactly what its resources cost. A shadow price holds over a range: hours are worth 5 each from 18 up to 24, where the best plan reaches (0, 8) with 320; beyond that, more hours add nothing.\n\nSolvers report dual values directly: in OR-Tools, each constraint’s dual_value(), on the phone too. You can also find one yourself, as an economist would: solve again with the limit one unit larger and subtract. Reading the prices is often worth more than the plan itself: they say which limit to relax, and which spending would be wasted.",
+    "t": "Un programa lineal (PL) tiene variables continuas, restricciones lineales y un objetivo lineal. En forma estándar se escribe: maximizar cᵀx sujeto a Ax ≤ b y x ≥ 0, donde x son las decisiones, A y b los límites y c el valor de cada decisión. El huerto escolar es uno pequeño: x bancales de tomate e y bancales de frijoles, maximizar 30x + 40y, con terreno x + y ≤ 8, agua 2x + y ≤ 14 y horas de alumnos x + 3y ≤ 18.\n\nCada restricción lineal conserva un lado de una recta (en dimensiones mayores, un hiperplano), así que la región factible, los planes que cumplen todos los límites, es un poliedro convexo: el segmento entre dos planes factibles cualesquiera es factible. El objetivo es una familia de rectas paralelas; empujada hasta donde pueda, toca por última vez la región en una esquina (un vértice), o a lo largo de todo un borde cuando dos esquinas empatan. Así que si un PL tiene un óptimo, hay uno en una esquina. Las esquinas del huerto son (0, 0), (7, 0), (6, 2), (3, 5) y (0, 6), y la mejor es (3, 5), con 290.\n\nEl método símplex, publicado por George Dantzig en 1947, camina de esquina en esquina vecina, mejorando cada vez el objetivo, y se detiene cuando ninguna vecina es mejor; por convexidad, esa esquina es óptima. Eligiendo primero la variable de mayor ganancia, el huerto va de (0, 0) a (0, 6) y luego a (3, 5). En el peor caso el símplex puede visitar una cantidad exponencial de esquinas (Klee y Minty construyeron esos ejemplos en 1972), pero en la práctica es rápido, por eso sigue siendo el caballo de batalla; los métodos de punto interior, de 1984, cruzan el interior de la región en tiempo polinomial. GLOP, el solucionador lineal de OR-Tools de Google, es un solucionador símplex; otros son HiGHS, CPLEX y Gurobi, que resuelven PL con millones de variables.\n\nTodo PL tiene un dual cuyas variables son precios de las restricciones. El valor dual de una restricción, o precio sombra, es cuánto mejora el mejor objetivo cuando su lado derecho crece en uno. En el huerto, una hora más de alumnos vale 5, un bancal más de terreno 25 y más agua 0. La dualidad fuerte dice que los precios valoran los límites exactamente en la mejor ganancia: 8 × 25 + 18 × 5 + 14 × 0 = 290. La holgura complementaria dice que una restricción con holgura (agua: 11 regaderas usadas de 14) tiene precio cero, y una variable usada en el óptimo gana exactamente lo que cuestan sus recursos. Un precio sombra vale dentro de un rango: las horas valen 5 cada una de 18 a 24, donde el mejor plan llega a (0, 8) con 320; más allá, más horas no añaden nada.\n\nLos solucionadores informan los valores duales directamente: en OR-Tools, el dual_value() de cada restricción, también en el teléfono. También puedes hallarlo tú, como haría un economista: resuelve de nuevo con el límite una unidad más grande y resta. Leer los precios suele valer más que el plan mismo: dicen qué límite relajar y qué gasto sería un desperdicio."
+  },
+  "lessons.0.steps.1.keyTerms.0.term": {
+    "en": "Linear program (LP)",
+    "t": "Programa lineal (PL)"
+  },
+  "lessons.0.steps.1.keyTerms.0.def": {
+    "en": "Continuous variables, linear constraints and a linear objective: maximise cᵀx subject to Ax ≤ b, x ≥ 0.",
+    "t": "Variables continuas, restricciones lineales y un objetivo lineal: maximizar cᵀx sujeto a Ax ≤ b, x ≥ 0."
+  },
+  "lessons.0.steps.1.keyTerms.1.term": {
+    "en": "Feasible region",
+    "t": "Región factible"
+  },
+  "lessons.0.steps.1.keyTerms.1.def": {
+    "en": "All plans that keep every constraint. For an LP it is convex, so an optimum lies at a corner.",
+    "t": "Todos los planes que cumplen cada restricción. En un PL es convexa, así que un óptimo está en una esquina."
+  },
+  "lessons.0.steps.1.keyTerms.2.term": {
+    "en": "Simplex method",
+    "t": "Método símplex"
+  },
+  "lessons.0.steps.1.keyTerms.2.def": {
+    "en": "Moves from corner to better neighbouring corner until none is better (Dantzig, 1947).",
+    "t": "Pasa de una esquina a una esquina vecina mejor hasta que ninguna sea mejor (Dantzig, 1947)."
+  },
+  "lessons.0.steps.1.keyTerms.3.term": {
+    "en": "Shadow price (dual value)",
+    "t": "Precio sombra (valor dual)"
+  },
+  "lessons.0.steps.1.keyTerms.3.def": {
+    "en": "How much the best objective improves per extra unit of a constraint, within a range.",
+    "t": "Cuánto mejora el mejor objetivo por cada unidad extra de una restricción, dentro de un rango."
+  },
+  "lessons.0.steps.1.keyTerms.4.term": {
+    "en": "Complementary slackness",
+    "t": "Holgura complementaria"
+  },
+  "lessons.0.steps.1.keyTerms.4.def": {
+    "en": "A constraint with room to spare at the optimum has a shadow price of zero.",
+    "t": "Una restricción con espacio de sobra en el óptimo tiene un precio sombra de cero."
+  },
+  "lessons.0.steps.2.prompt": {
+    "en": "In the cheapest school lunch (40.97 coins), energy and iron are met exactly, while protein comes to 23 g against a need of 20 g. What is protein’s shadow price?",
+    "t": "En el almuerzo escolar más barato (40.97 monedas), la energía y el hierro se cubren exactamente, mientras que la proteína llega a 23 g frente a una necesidad de 20 g. ¿Cuál es el precio sombra de la proteína?"
+  },
+  "lessons.0.steps.2.options.0.text": {
+    "en": "Zero: the limit has room to spare",
+    "t": "Cero: el límite tiene espacio de sobra"
+  },
+  "lessons.0.steps.2.options.1.text": {
+    "en": "3: the spare grams",
+    "t": "3: los gramos sobrantes"
+  },
+  "lessons.0.steps.2.options.2.text": {
+    "en": "41: the cost of lunch",
+    "t": "41: el costo del almuerzo"
+  },
+  "lessons.0.steps.2.explain": {
+    "en": "Complementary slackness: a limit with slack has a dual value of zero. Asking for 21 g of protein instead of 20 changes nothing, because the plate already gives 23 g. Energy and iron, met exactly, are the limits with non-zero prices.",
+    "t": "Holgura complementaria: un límite con holgura tiene valor dual cero. Pedir 21 g de proteína en lugar de 20 no cambia nada, porque el plato ya da 23 g. La energía y el hierro, cubiertos exactamente, son los límites con precios distintos de cero."
+  },
+  "lessons.0.steps.3.prompt": {
+    "en": "Find the shadow price of pupils’ hours yourself by solving twice, then compare it with the constraint’s dual_value(). Complete the program so it prints how much one extra hour adds.",
+    "t": "Halla tú el precio sombra de las horas de alumnos resolviendo dos veces y luego compáralo con el dual_value() de la restricción. Completa el programa para que imprima cuánto añade una hora extra."
+  },
+  "lessons.0.steps.3.explain": {
+    "en": "The hours limit uses the argument, the goal is a profit to maximise, and best(19) − best(18) is the gain from one more hour: 295 − 290 = 5.0. The hours constraint’s dual_value() gives the same 5, on the phone and in Colab.",
+    "t": "El límite de horas usa el argumento, el objetivo es una ganancia que maximizar, y best(19) − best(18) es la ganancia de una hora más: 295 − 290 = 5.0. El dual_value() de la restricción de horas da los mismos 5, en el teléfono y en Colab."
+  },
+  "lessons.0.steps.4.prompt": {
+    "en": "The simplex method checks every corner of the feasible region before it stops.",
+    "t": "El método símplex revisa todas las esquinas de la región factible antes de detenerse."
+  },
+  "lessons.0.steps.4.explain": {
+    "en": "It stops at the first corner with no better neighbour. Because the feasible region is convex, such a corner is the global optimum, so most corners are never visited. The garden needs two moves: (0, 0) to (0, 6) to (3, 5).",
+    "t": "Se detiene en la primera esquina que no tiene una vecina mejor. Como la región factible es convexa, esa esquina es el óptimo global, así que la mayoría de las esquinas nunca se visitan. El huerto necesita dos movimientos: (0, 0) a (0, 6) a (3, 5)."
+  },
+  "lessons.0.steps.5.prompt": {
+    "en": "Try it: press “Serve the usual plate” and see which need fails, then “Find the cheapest (simplex)” and read the corners it visited and which needs are met exactly. Raise “Most portions of one food” to 3, then 4: how does the cost fall, and why do groundnuts keep hitting the cap?",
+    "t": "Pruébalo: pulsa «Servir el plato de siempre» y mira qué necesidad falla, luego «Encontrar el más barato (símplex)» y lee las esquinas que visitó y qué necesidades se cubren exactamente. Sube «Máximo de porciones de un alimento» a 3 y luego a 4: ¿cómo baja el costo y por qué el cacahuate sigue topando con el tope?"
+  },
+  "lessons.0.steps.6.prompt": {
+    "en": "Solve the diet problem with GLOP: six foods (price, kcal, protein g, iron mg per portion), at most 2 portions of each. Add the three needs as limits and the cost as the goal, then run it.",
+    "t": "Resuelve el problema de la dieta con GLOP: seis alimentos (precio, kcal, proteína en g, hierro en mg por porción), como máximo 2 porciones de cada uno. Añade las tres necesidades como límites y el costo como objetivo, y ejecútalo."
+  },
+  "lessons.0.steps.6.tests.0.hint": {
+    "en": "The cheapest lunch costs 40.97 coins. Did you minimise the cost?",
+    "t": "El almuerzo más barato cuesta 40.97 monedas. ¿Minimizaste el costo?"
+  },
+  "lessons.0.steps.6.tests.1.hint": {
+    "en": "Each need is a limit: the sum over foods of nutrient × portions must be at least the need.",
+    "t": "Cada necesidad es un límite: la suma sobre los alimentos de nutriente × porciones debe ser al menos la necesidad."
+  },
+  "lessons.0.steps.6.hints.0": {
+    "en": "Nutrient k of food f is food[f][k + 1]; its price is food[f][0].",
+    "t": "El nutriente k del alimento f es food[f][k + 1]; su precio es food[f][0]."
+  },
+  "lessons.0.steps.6.hints.1": {
+    "en": "for k in range(3): s.Add(sum(food[f][k + 1] * x[f] for f in food) >= need[k]), then s.Minimize(sum(food[f][0] * x[f] for f in food)).",
+    "t": "for k in range(3): s.Add(sum(food[f][k + 1] * x[f] for f in food) >= need[k]), then s.Minimize(sum(food[f][0] * x[f] for f in food))."
+  },
+  "lessons.0.steps.6.explain": {
+    "en": "Three ≥ constraints and a minimised cost give 40.97 coins: about 1.3 cups of rice, 0.55 cups of greens and 2 handfuls of groundnuts. Energy and iron are binding; protein (23.2 g) has slack, so its shadow price is zero. Each constraint’s dual_value() gives its shadow price, here on the phone and in Colab alike, where the same program runs unchanged on Google’s OR-Tools.",
+    "t": "Tres restricciones ≥ y un costo minimizado dan 40.97 monedas: unas 1.3 tazas de arroz, 0.55 tazas de verduras y 2 puñados de cacahuates. La energía y el hierro son restricciones activas; la proteína (23.2 g) tiene holgura, así que su precio sombra es cero. El dual_value() de cada restricción da su precio sombra, aquí en el teléfono y en Colab por igual, donde el mismo programa corre sin cambios en OR-Tools de Google."
+  },
+  "lessons.0.steps.7.prompt": {
+    "en": "Match each term to its meaning.",
+    "t": "Relaciona cada término con su significado."
+  },
+  "lessons.0.steps.7.pairs.0.left": {
+    "en": "Feasible region",
+    "t": "Región factible"
+  },
+  "lessons.0.steps.7.pairs.0.right": {
+    "en": "Every plan that keeps all constraints: a convex set",
+    "t": "Todo plan que cumple todas las restricciones: un conjunto convexo"
+  },
+  "lessons.0.steps.7.pairs.1.left": {
+    "en": "Binding constraint",
+    "t": "Restricción activa"
+  },
+  "lessons.0.steps.7.pairs.1.right": {
+    "en": "Met exactly at the optimum",
+    "t": "Se cumple exactamente en el óptimo"
+  },
+  "lessons.0.steps.7.pairs.2.left": {
+    "en": "Dual value",
+    "t": "Valor dual"
+  },
+  "lessons.0.steps.7.pairs.2.right": {
+    "en": "The gain from one more unit of a constraint",
+    "t": "La ganancia por una unidad más de una restricción"
+  },
+  "lessons.0.steps.7.pairs.3.left": {
+    "en": "Interior-point method",
+    "t": "Método de punto interior"
+  },
+  "lessons.0.steps.7.pairs.3.right": {
+    "en": "Crosses the inside of the region, in polynomial time",
+    "t": "Cruza por el interior de la región, en tiempo polinomial"
+  },
+  "lessons.0.steps.7.explain": {
+    "en": "The feasible region is where the answer can be; binding constraints shape it at the optimum; dual values price those constraints; interior-point methods are the polynomial-time alternative to the simplex walk.",
+    "t": "La región factible es donde puede estar la respuesta; las restricciones activas la moldean en el óptimo; los valores duales ponen precio a esas restricciones; los métodos de punto interior son la alternativa de tiempo polinomial al recorrido del símplex."
+  },
+  "lessons.0.steps.8.prompt": {
+    "en": "What do you recommend?",
+    "t": "¿Qué recomiendas?"
+  },
+  "lessons.0.steps.8.who": {
+    "en": "Ms Hoda, manager at a food bank where you volunteer",
+    "t": "La señora Hoda, gerente de un banco de alimentos donde eres voluntario"
+  },
+  "lessons.0.steps.8.initial": {
+    "en": "H",
+    "t": "H"
+  },
+  "lessons.0.steps.8.situation": {
+    "en": "Your LP says the cheapest food parcel that meets every need has 0.37 tins of beans and no cooking oil. Ms Hoda wants to send it to 2,000 families tomorrow.",
+    "t": "Tu PL dice que la bolsa de comida más barata que cubre todas las necesidades lleva 0.37 latas de frijoles y nada de aceite. La señora Hoda quiere enviarla a 2,000 familias mañana."
+  },
+  "lessons.0.steps.8.choices.0.label": {
+    "en": "“Send it: the LP proved it’s optimal.”",
+    "t": "«Envíala: el PL demostró que es óptima.»"
+  },
+  "lessons.0.steps.8.choices.0.consequence": {
+    "en": "Optimal for the model, but nobody can pack 0.37 of a tin, and families can’t cook without oil. The model is missing whole units and a rule about what a usable parcel contains.",
+    "t": "Es óptima para el modelo, pero nadie puede empacar 0.37 de una lata, y las familias no pueden cocinar sin aceite. Al modelo le faltan unidades enteras y una regla sobre qué debe llevar una bolsa utilizable."
+  },
+  "lessons.0.steps.8.choices.1.label": {
+    "en": "“Let me add whole tins and a usable-parcel rule, check it with two families, then we send it.”",
+    "t": "«Déjame añadir latas enteras y una regla de bolsa utilizable, probarla con dos familias y luego la enviamos.»"
+  },
+  "lessons.0.steps.8.choices.1.consequence": {
+    "en": "Whole tins turn the LP into an integer program (next lesson), the new rule fixes the oil, and families catch anything else. The cost rises a little; the parcel works.",
+    "t": "Las latas enteras convierten el PL en un programa entero (la próxima lección), la regla nueva arregla el aceite y las familias detectan cualquier otra cosa. El costo sube un poco; la bolsa funciona."
+  },
+  "lessons.0.steps.8.choices.2.label": {
+    "en": "“Round 0.37 down to zero tins.”",
+    "t": "«Redondea 0.37 a cero latas.»"
+  },
+  "lessons.0.steps.8.choices.2.consequence": {
+    "en": "Rounding can break a constraint: without those beans the parcel may no longer meet the protein or iron need. Rounding is not the same as solving with whole numbers.",
+    "t": "Redondear puede romper una restricción: sin esos frijoles, la bolsa quizá ya no cubra la necesidad de proteína o de hierro. Redondear no es lo mismo que resolver con números enteros."
+  },
+  "lessons.0.steps.8.explain": {
+    "en": "Optimal for the model isn’t usable in practice: add whole units and the missing rule, then check with real users.",
+    "t": "Lo óptimo para el modelo no es utilizable en la práctica: añade unidades enteras y la regla que falta, y luego comprueba con usuarios reales."
+  },
+  "lessons.0.steps.9.prompt": {
+    "en": "Think of a decision you know (a budget, a timetable, a farm plot) that could be an LP. Which limit would you expect to have the highest shadow price, and why?",
+    "t": "Piensa en una decisión que conozcas (un presupuesto, un horario, una parcela) que pudiera ser un PL. ¿Qué límite esperarías que tuviera el precio sombra más alto y por qué?"
+  },
+  "lessons.0.steps.9.placeholder": {
+    "en": "For example: “Our society’s stall: the hours volunteers can give will be worth the most; we always have spare table space.”",
+    "t": "Por ejemplo: «El puesto de nuestra sociedad: las horas que puedan dar los voluntarios valdrán más; siempre nos sobra espacio en las mesas.»"
+  },
+  "lessons.0.steps.10.prompt": {
+    "en": "Project: Model a real decision as an LP and read its prices",
+    "t": "Proyecto: modela una decisión real como PL y lee sus precios"
+  },
+  "lessons.0.steps.10.task": {
+    "en": "Choose a real decision with 2 to 6 continuous variables: a stall or canteen menu, a farm plot, a weekly study plan. Write the variables with units, the constraints and the objective; solve it with GLOP on your phone or in Colab. Then find each constraint’s shadow price by solving again with it one unit larger, say which constraints bind, and over what range you’d expect the prices to hold. Finish with what the model ignores.",
+    "t": "Elige una decisión real con 2 a 6 variables continuas: el menú de un puesto o cantina, una parcela, un plan de estudio semanal. Escribe las variables con unidades, las restricciones y el objetivo; resuélvelo con GLOP en tu teléfono o en Colab. Luego halla el precio sombra de cada restricción resolviendo de nuevo con ella una unidad más grande, di qué restricciones están activas y en qué rango esperas que valgan los precios. Termina con lo que el modelo ignora."
+  },
+  "lessons.0.steps.10.deliverable": {
+    "en": "Your model (code or written form), the optimal plan, a table of shadow prices with the binding constraints marked, and half a page interpreting them.",
+    "t": "Tu modelo (código o forma escrita), el plan óptimo, una tabla de precios sombra con las restricciones activas marcadas y media página que los interprete."
+  },
+  "lessons.0.steps.10.rubric.0.criterion": {
+    "en": "I can: write a decision in standard form with units.",
+    "t": "Puedo: escribir una decisión en forma estándar con unidades."
+  },
+  "lessons.0.steps.10.rubric.1.criterion": {
+    "en": "I can: solve it with GLOP and find shadow prices with dual_value() and check them by re-solving.",
+    "t": "Puedo: resolverla con GLOP y hallar precios sombra con dual_value() y comprobarlos resolviendo de nuevo."
+  },
+  "lessons.0.steps.10.rubric.2.criterion": {
+    "en": "I can: explain which limits bind and what the prices mean for the decision.",
+    "t": "Puedo: explicar qué límites están activos y qué significan los precios para la decisión."
+  },
+  "lessons.0.slides.0.title": {
+    "en": "Linear programming and the simplex method",
+    "t": "Programación lineal y el método símplex"
+  },
+  "lessons.0.slides.0.narration": {
+    "en": "Why is the best plan always at a corner, and what is each limit worth?",
+    "t": "¿Por qué el mejor plan siempre está en una esquina y cuánto vale cada límite?"
+  },
+  "lessons.0.slides.0.note": {
+    "en": "Optimization · Level 4 · Lesson 1",
+    "t": "Optimización · Nivel 4 · Lección 1"
+  },
+  "lessons.0.slides.1.title": {
+    "en": "In this lesson you will",
+    "t": "En esta lección vas a"
+  },
+  "lessons.0.slides.1.bullets": {
+    "en": [
+      "Write a decision as a linear program in standard form.",
+      "Explain why the simplex method walks from corner to corner.",
+      "Read binding constraints and shadow prices, and solve an LP with GLOP."
+    ],
+    "t": [
+      "Escribir una decisión como programa lineal en forma estándar.",
+      "Explicar por qué el método símplex camina de esquina en esquina.",
+      "Leer restricciones activas y precios sombra, y resolver un PL con GLOP."
+    ]
+  },
+  "lessons.0.slides.2.title": {
+    "en": "Key ideas",
+    "t": "Ideas clave"
+  },
+  "lessons.0.slides.2.bullets": {
+    "en": [
+      "Convex region: an optimum sits at a corner",
+      "Simplex: better neighbour after better neighbour",
+      "Shadow price: the gain from one more unit",
+      "Slack constraint: price zero"
+    ],
+    "t": [
+      "Región convexa: un óptimo está en una esquina",
+      "Símplex: una vecina mejor tras otra",
+      "Precio sombra: la ganancia por una unidad más",
+      "Restricción con holgura: precio cero"
+    ]
+  },
+  "lessons.0.slides.3.title": {
+    "en": "Activity: The garden on graph paper",
+    "t": "Actividad: El huerto en papel cuadriculado"
+  },
+  "lessons.0.slides.3.bullets": {
+    "en": [
+      "Draw (8 min): Plot the three garden limits.",
+      "Corners (6 min): Find and score every corner.",
+      "Walk (4 min): Follow the simplex path.",
+      "Prices (7 min): Move the hours line out by one."
+    ],
+    "t": [
+      "Dibujar (8 min): Traza los tres límites del huerto.",
+      "Esquinas (6 min): Encuentra y puntúa cada esquina.",
+      "Recorrido (4 min): Sigue el camino del símplex.",
+      "Precios (7 min): Mueve la recta de las horas una unidad hacia afuera."
+    ]
+  },
+  "lessons.0.slides.3.details": {
+    "en": [
+      "Draw (8 min): On graph paper, x across and y up, 0 to 10. Draw x + y = 8, 2x + y = 14 and x + 3y = 18, and shade the side that keeps all three.",
+      "Corners (6 min): Mark the corners (0, 0), (7, 0), (6, 2), (3, 5) and (0, 6) and work out 30x + 40y at each. The best is 290 at (3, 5).",
+      "Walk (4 min): Start at (0, 0). Move along an edge to a better neighbour each time; check that you can’t improve once you reach (3, 5).",
+      "Prices (7 min): Redraw the hours line as x + 3y = 19 and find the new corner, (2.5, 5.5), worth 295: the shadow price is 5. Do the same with land (x + y = 9): 315, worth 25. Why is water worth nothing?"
+    ],
+    "t": [
+      "Dibujar (8 min): En papel cuadriculado, x horizontal e y vertical, de 0 a 10. Dibuja x + y = 8, 2x + y = 14 y x + 3y = 18, y sombrea el lado que cumple las tres.",
+      "Esquinas (6 min): Marca las esquinas (0, 0), (7, 0), (6, 2), (3, 5) y (0, 6) y calcula 30x + 40y en cada una. La mejor es 290 en (3, 5).",
+      "Recorrido (4 min): Empieza en (0, 0). Muévete por un borde hacia una vecina mejor cada vez; comprueba que no puedes mejorar una vez que llegas a (3, 5).",
+      "Precios (7 min): Vuelve a dibujar la recta de las horas como x + 3y = 19 y halla la nueva esquina, (2.5, 5.5), que vale 295: el precio sombra es 5. Haz lo mismo con el terreno (x + y = 9): 315, vale 25. ¿Por qué el agua no vale nada?"
+    ]
+  },
+  "lessons.0.slides.3.note": {
+    "en": "No graph paper? Use squared exercise-book paper, one square per bed. Check your corners against the lab “The best plan is at a corner”.",
+    "t": "¿No tienes papel cuadriculado? Usa papel cuadriculado de cuaderno, un cuadro por bancal. Comprueba tus esquinas con el laboratorio «El mejor plan está en una esquina»."
+  },
+  "lessons.0.slides.3.narration": {
+    "en": "Which corner wins, and what would one more hour buy?",
+    "t": "¿Qué esquina gana y qué compraría una hora más?"
+  },
+  "lessons.0.slides.4.title": {
+    "en": "Let’s discuss",
+    "t": "Conversemos"
+  },
+  "lessons.0.slides.4.bullets": {
+    "en": [
+      "Why does convexity let simplex stop without checking every corner?",
+      "What does a zero shadow price tell a manager?",
+      "When would you choose an interior-point method over simplex?"
+    ],
+    "t": [
+      "¿Por qué la convexidad permite que el símplex se detenga sin revisar todas las esquinas?",
+      "¿Qué le dice un precio sombra de cero a un gerente?",
+      "¿Cuándo elegirías un método de punto interior en lugar del símplex?"
+    ]
+  },
+  "lessons.0.slides.5.title": {
+    "en": "Check yourself",
+    "t": "Compruébate"
+  },
+  "lessons.0.slides.5.bullets": {
+    "en": [
+      "Explain in two sentences why an extra can of water adds nothing to the garden’s profit."
+    ],
+    "t": [
+      "Explica en dos oraciones por qué una regadera más de agua no añade nada a la ganancia del huerto."
+    ]
+  },
+  "lessons.0.slides.5.narration": {
+    "en": "Read the answer, and the prices of its limits.",
+    "t": "Lee la respuesta y los precios de sus límites."
+  },
+  "lessons.0.kit.0.title": {
+    "en": "Slides to revise: Linear programming and the simplex method",
+    "t": "Diapositivas para repasar: Programación lineal y el método símplex"
+  },
+  "lessons.0.kit.1.title": {
+    "en": "Activity sheet: Linear programming and the simplex method",
+    "t": "Hoja de actividades: Programación lineal y el método símplex"
+  },
+  "lessons.0.kit.2.title": {
+    "en": "The lesson video (240p, to watch again or share)",
+    "t": "El video de la lección (240p, para verlo otra vez o compartirlo)"
+  },
+  "lessons.1.title": {
+    "en": "Integer programs and branch and bound",
+    "t": "Programas enteros y ramificación y acotamiento"
+  },
+  "lessons.1.tryTomorrow": {
+    "en": "Model the field trip in SCIP with the 300-coin booking fee (1,650). Then change the fee and find where the answer flips from three buses back to two buses and a minibus. Explain the flip point in one sentence.",
+    "t": "Modela la excursión en SCIP con la tarifa de reserva de 300 monedas (1,650). Luego cambia la tarifa y encuentra dónde la respuesta pasa de tres autobuses de vuelta a dos autobuses y una minivan. Explica el punto de cambio en una oración."
+  },
+  "lessons.1.materials": {
+    "en": [
+      "Your phone, or a computer with Colab",
+      "Paper for drawing a branch-and-bound tree"
+    ],
+    "t": [
+      "Tu teléfono, o una computadora con Colab",
+      "Papel para dibujar un árbol de ramificación y acotamiento"
+    ]
+  },
+  "lessons.1.steps.0.prompt": {
+    "en": "Watch",
+    "t": "Ver"
+  },
+  "lessons.1.steps.0.title": {
+    "en": "Integer programs and branch and bound",
+    "t": "Programas enteros y ramificación y acotamiento"
+  },
+  "lessons.1.steps.0.chapters.0.label": {
+    "en": "2.13 buses?",
+    "t": "¿2.13 autobuses?"
+  },
+  "lessons.1.steps.0.chapters.1.label": {
+    "en": "Relax, then round?",
+    "t": "¿Relajar y luego redondear?"
+  },
+  "lessons.1.steps.0.chapters.2.label": {
+    "en": "Branch and bound",
+    "t": "Ramificación y acotamiento"
+  },
+  "lessons.1.steps.0.chapters.3.label": {
+    "en": "Hard, yet solved",
+    "t": "Difícil, pero resuelto"
+  },
+  "lessons.1.steps.0.chapters.4.label": {
+    "en": "Remember and try it",
+    "t": "Recuerda y pruébalo"
+  },
+  "lessons.1.steps.0.checkpoint.question.prompt": {
+    "en": "A minimisation’s relaxation costs 1,000; the best whole-number plan so far costs 1,200. What do you know about the true best?",
+    "t": "La relajación de una minimización cuesta 1,000; el mejor plan de números enteros hasta ahora cuesta 1,200. ¿Qué sabes del verdadero mejor?"
+  },
+  "lessons.1.steps.0.checkpoint.question.options.0.text": {
+    "en": "It is exactly 1,000",
+    "t": "Es exactamente 1,000"
+  },
+  "lessons.1.steps.0.checkpoint.question.options.1.text": {
+    "en": "It is between 1,000 and 1,200",
+    "t": "Está entre 1,000 y 1,200"
+  },
+  "lessons.1.steps.0.checkpoint.question.options.2.text": {
+    "en": "It is more than 1,200",
+    "t": "Es más de 1,200"
+  },
+  "lessons.1.steps.0.checkpoint.question.explain": {
+    "en": "For a minimisation, the LP relaxation allows more plans, so its cost (1,000) is a lower bound on any whole-number plan. The best plan found so far (1,200) is an upper bound. The true optimum lies between them; the gap, (1,200 − 1,000) ÷ 1,200 ≈ 17%, says how far from proven you are.",
+    "t": "En una minimización, la relajación lineal permite más planes, así que su costo (1,000) es una cota inferior de cualquier plan de números enteros. El mejor plan hallado hasta ahora (1,200) es una cota superior. El verdadero óptimo está entre ambas; la brecha, (1,200 − 1,000) ÷ 1,200 ≈ 17 %, dice qué tan lejos estás de haberlo demostrado."
+  },
+  "lessons.1.steps.0.transcript": {
+    "en": "Sixty-four people for the field trip. A minibus seats fourteen for three hundred coins; a bus seats thirty for five hundred and fifty. The linear program says: hire two point one three buses. Try telling that to the bus company. Today: integer programs, and how branch and bound finds whole-number answers. Drop the whole-number rule and you get the LP relaxation: one thousand one hundred and seventy-three coins. No whole-number plan can be cheaper, because the relaxation allows more plans, so it’s a bound. But its answer can’t be used as it is. Round down to two buses, and four people stay behind. Round up to three buses, and it costs sixteen hundred and fifty. The best whole-number plan is neither: two buses and a minibus, fourteen hundred. Branch and bound searches cleverly. Pick a variable with a fraction, like two point one three buses, and split: at most two buses, or at least three. Each branch is a linear program again. Bound: once you hold a whole-number plan, any branch whose relaxation already costs more is cut off unexplored. The three-bus branch costs at least sixteen fifty, more than the fourteen hundred we have, so it’s pruned. Solvers prove the best this way, often without visiting most of the tree. While it runs, a solver reports two numbers: the best plan so far, and the best bound. The gap between them says how far from proven you are. Here it starts at about sixteen percent, and at zero, the plan is optimal. Quick check! A cost-minimising model’s relaxation costs one thousand, and the best whole-number plan found so far costs twelve hundred. What do you know about the true best? It lies somewhere between the two. In general, integer programming is NP-hard: nobody knows a method that is fast on every problem. Yet solvers like SCIP, HiGHS, Gurobi and CP-SAT solve real problems with huge numbers of variables, thanks to good bounds, cutting planes and heuristics. Yes-or-no variables model logic. To charge a booking fee only if you hire any minibus, add a yes-or-no variable, book, and the limit: minibuses at most ten times book. If book is zero, no minibus; if it’s one, up to ten. In the app, open the truck load model. Change the capacity, add a rule of your own, and watch how the solver’s answer changes. Your turn. The minibus company adds a three-hundred-coin booking fee. Are two buses and a minibus still the cheapest? No: with the fee it costs seventeen hundred, so three buses at sixteen fifty win. Remember: the relaxation gives a bound, and rounding can fail. Branch and bound splits on fractions and prunes what can’t win. And the gap tells you how close to proven you are. Try it yourself: model the trip in SCIP, with the booking fee. Then change the fee, and find the fee at which the answer flips.",
+    "t": "Sesenta y cuatro personas para la excursión. Una minivan lleva catorce por trescientas monedas; un autobús lleva treinta por quinientas cincuenta. El programa lineal dice: contrata dos punto trece autobuses. Intenta decírselo a la empresa de autobuses. Hoy: los programas enteros y cómo la ramificación y acotamiento encuentra respuestas de números enteros. Quita la regla de números enteros y obtienes la relajación lineal: mil ciento setenta y tres monedas. Ningún plan de números enteros puede ser más barato, porque la relajación permite más planes, así que es una cota. Pero su respuesta no se puede usar tal cual. Redondea a dos autobuses y se quedan cuatro personas sin ir. Redondea a tres autobuses y cuesta mil seiscientas cincuenta. El mejor plan de números enteros no es ninguno de los dos: dos autobuses y una minivan, mil cuatrocientas. La ramificación y acotamiento busca con inteligencia. Elige una variable con fracción, como dos punto trece autobuses, y divide: como máximo dos autobuses, o al menos tres. Cada rama es de nuevo un programa lineal. Acotar: una vez que tienes un plan de números enteros, toda rama cuya relajación ya cueste más se descarta sin explorar. La rama de tres autobuses cuesta al menos mil seiscientas cincuenta, más que las mil cuatrocientas que tenemos, así que se poda. Los solucionadores demuestran el mejor así, a menudo sin visitar la mayor parte del árbol. Mientras corre, un solucionador informa dos números: el mejor plan hasta ahora y la mejor cota. La brecha entre ambos dice qué tan lejos estás de haberlo demostrado. Aquí empieza en cerca de dieciséis por ciento, y en cero, el plan es óptimo. ¡Comprobación rápida! La relajación de un modelo que minimiza el costo cuesta mil y el mejor plan de números enteros hallado hasta ahora cuesta mil doscientos. ¿Qué sabes del verdadero mejor? Está en algún lugar entre los dos. En general, la programación entera es NP-difícil: nadie conoce un método que sea rápido en todos los problemas. Aun así, solucionadores como SCIP, HiGHS, Gurobi y CP-SAT resuelven problemas reales con enormes cantidades de variables, gracias a buenas cotas, planos de corte y heurísticas. Las variables de sí o no modelan la lógica. Para cobrar una tarifa de reserva solo si contratas alguna minivan, añade una variable de sí o no, book, y el límite: minivans como máximo diez por book. Si book es cero, ninguna minivan; si es uno, hasta diez. En la app, abre el modelo de carga del camión. Cambia la capacidad, añade una regla tuya y observa cómo cambia la respuesta del solucionador. Tu turno. La empresa de minivans añade una tarifa de reserva de trescientas monedas. ¿Siguen siendo dos autobuses y una minivan lo más barato? No: con la tarifa cuesta mil setecientas, así que ganan tres autobuses a mil seiscientas cincuenta. Recuerda: la relajación da una cota y redondear puede fallar. La ramificación y acotamiento divide según las fracciones y poda lo que no puede ganar. Y la brecha te dice qué tan cerca estás de haberlo demostrado. Pruébalo tú: modela la excursión en SCIP, con la tarifa de reserva. Luego cambia la tarifa y encuentra la tarifa a la que la respuesta cambia."
+  },
+  "lessons.1.steps.1.prompt": {
+    "en": "Read",
+    "t": "Leer"
+  },
+  "lessons.1.steps.1.title": {
+    "en": "Whole numbers, bounds and the search tree",
+    "t": "Números enteros, cotas y el árbol de búsqueda"
+  },
+  "lessons.1.steps.1.body": {
+    "en": "Many decisions come in whole units or yes/no choices: buses, teachers, tins, whether to open a room. A mixed-integer program (MIP) is a linear program in which some variables must be integers. That small change makes a big difference. Take 64 people, a minibus seating 14 for 300 coins and a bus seating 30 for 550. The LP says 2.13 buses for 1,173.33 coins. Rounding down leaves 4 people behind; rounding up to 3 buses costs 1,650; the best whole-number plan, 2 buses and a minibus at 1,400, is neither.\n\nDropping the integer rule gives the LP relaxation. Because it allows more plans, its optimum is a bound: for a minimisation, no integer plan can cost less than 1,173.33. Branch and bound turns this into a search. Solve the relaxation; if a variable is fractional (2.13 buses), branch: one subproblem adds “at most 2 buses”, the other “at least 3”. Each branch is again an LP. Whenever you find an integer plan (the incumbent), prune every branch whose relaxation is already no better: the 3-bus branch costs at least 1,650, worse than 1,400, so it is never explored. The search ends when no branch can beat the incumbent, which proves it optimal.\n\nWhile it runs, a solver reports the incumbent and the best bound. The relative gap, (incumbent − bound) ÷ incumbent, starts here at about 16% and falls to 0 at proof. Real solvers add cutting planes (constraints that slice off fractional corners without losing integer plans), presolve and heuristics that find good incumbents early. Integer programming is NP-hard in general: no known method is fast on every instance, and some small ones are very hard. Yet SCIP, HiGHS, CPLEX, Gurobi and CP-SAT routinely solve industrial models with huge numbers of variables, usually stopped at a time limit or a target gap.\n\nInteger variables also model logic. A yes/no variable b with small ≤ 10 × b says “no minibus unless booked”; adding 300 × b to the cost charges the booking fee only when b = 1. This is a big-M constraint (here M = 10, the most minibuses you would ever hire). Keep M as small as is safe: a huge M gives weak relaxations and slow searches. With the fee, 2 buses and a minibus cost 1,700, so 3 buses at 1,650 win; the answer flips when the fee passes 250.",
+    "t": "Muchas decisiones vienen en unidades enteras o elecciones de sí o no: autobuses, docentes, latas, si abrir un salón. Un programa entero mixto (PEM) es un programa lineal en el que algunas variables deben ser enteras. Ese pequeño cambio hace una gran diferencia. Toma 64 personas, una minivan de 14 plazas por 300 monedas y un autobús de 30 plazas por 550. El PL dice 2.13 autobuses por 1,173.33 monedas. Redondear hacia abajo deja a 4 personas sin ir; redondear hacia arriba a 3 autobuses cuesta 1,650; el mejor plan de números enteros, 2 autobuses y una minivan por 1,400, no es ninguno de los dos.\n\nQuitar la regla de enteros da la relajación lineal. Como permite más planes, su óptimo es una cota: en una minimización, ningún plan entero puede costar menos de 1,173.33. La ramificación y acotamiento convierte esto en una búsqueda. Resuelve la relajación; si una variable es fraccionaria (2.13 autobuses), ramifica: un subproblema añade «como máximo 2 autobuses», el otro «al menos 3». Cada rama es de nuevo un PL. Cada vez que encuentras un plan entero (el incumbente), poda toda rama cuya relajación ya no sea mejor: la rama de 3 autobuses cuesta al menos 1,650, peor que 1,400, así que nunca se explora. La búsqueda termina cuando ninguna rama puede superar al incumbente, lo que demuestra que es óptimo.\n\nMientras corre, un solucionador informa el incumbente y la mejor cota. La brecha relativa, (incumbente − cota) ÷ incumbente, empieza aquí en cerca de 16 % y baja a 0 al demostrarse. Los solucionadores reales añaden planos de corte (restricciones que recortan esquinas fraccionarias sin perder planes enteros), preprocesamiento y heurísticas que encuentran buenos incumbentes pronto. La programación entera es NP-difícil en general: ningún método conocido es rápido en todas las instancias, y algunas pequeñas son muy difíciles. Aun así, SCIP, HiGHS, CPLEX, Gurobi y CP-SAT resuelven rutinariamente modelos industriales con enormes cantidades de variables, normalmente deteniéndolos en un límite de tiempo o en una brecha objetivo.\n\nLas variables enteras también modelan lógica. Una variable de sí o no b con small ≤ 10 × b dice «ninguna minivan salvo que se reserve»; sumar 300 × b al costo cobra la tarifa de reserva solo cuando b = 1. Esta es una restricción de gran M (aquí M = 10, el máximo de minivans que contratarías jamás). Mantén M tan pequeña como sea seguro: una M enorme da relajaciones débiles y búsquedas lentas. Con la tarifa, 2 autobuses y una minivan cuestan 1,700, así que ganan 3 autobuses a 1,650; la respuesta cambia cuando la tarifa pasa de 250."
+  },
+  "lessons.1.steps.1.keyTerms.0.term": {
+    "en": "Mixed-integer program (MIP)",
+    "t": "Programa entero mixto (PEM)"
+  },
+  "lessons.1.steps.1.keyTerms.0.def": {
+    "en": "A linear program in which some variables must take whole-number values.",
+    "t": "Un programa lineal en el que algunas variables deben tomar valores enteros."
+  },
+  "lessons.1.steps.1.keyTerms.1.term": {
+    "en": "LP relaxation",
+    "t": "Relajación lineal"
+  },
+  "lessons.1.steps.1.keyTerms.1.def": {
+    "en": "The same model without the whole-number rule. Its optimum bounds the integer optimum.",
+    "t": "El mismo modelo sin la regla de números enteros. Su óptimo acota el óptimo entero."
+  },
+  "lessons.1.steps.1.keyTerms.2.term": {
+    "en": "Branch and bound",
+    "t": "Ramificación y acotamiento"
+  },
+  "lessons.1.steps.1.keyTerms.2.def": {
+    "en": "Split on a fractional variable, solve each branch’s relaxation, and prune branches that can’t beat the best plan found.",
+    "t": "Divide según una variable fraccionaria, resuelve la relajación de cada rama y poda las ramas que no pueden superar al mejor plan hallado."
+  },
+  "lessons.1.steps.1.keyTerms.3.term": {
+    "en": "Optimality gap",
+    "t": "Brecha de optimalidad"
+  },
+  "lessons.1.steps.1.keyTerms.3.def": {
+    "en": "(best plan − best bound) ÷ best plan: how far from proven optimal you are.",
+    "t": "(mejor plan − mejor cota) ÷ mejor plan: qué tan lejos estás de haber demostrado el óptimo."
+  },
+  "lessons.1.steps.1.keyTerms.4.term": {
+    "en": "Big-M constraint",
+    "t": "Restricción de gran M"
+  },
+  "lessons.1.steps.1.keyTerms.4.def": {
+    "en": "Links a yes/no variable to a quantity, such as x ≤ M × b, so x can be positive only when b = 1.",
+    "t": "Vincula una variable de sí o no con una cantidad, como x ≤ M × b, de modo que x solo puede ser positiva cuando b = 1."
+  },
+  "lessons.1.steps.2.prompt": {
+    "en": "64 people; a minibus seats 14 for 300 coins and a bus 30 for 550. Without fees the best plan is 2 buses and 1 minibus (1,400). The minibus company now charges a 300-coin booking fee if you hire any minibus. What is the best plan now?",
+    "t": "64 personas; una minivan lleva 14 por 300 monedas y un autobús 30 por 550. Sin tarifas, el mejor plan es 2 autobuses y 1 minivan (1,400). La empresa de minivans ahora cobra una tarifa de reserva de 300 monedas si contratas alguna minivan. ¿Cuál es ahora el mejor plan?"
+  },
+  "lessons.1.steps.2.options.0.text": {
+    "en": "Still 2 buses and 1 minibus (1,400)",
+    "t": "Sigue siendo 2 autobuses y 1 minivan (1,400)"
+  },
+  "lessons.1.steps.2.options.1.text": {
+    "en": "Three buses, 1,650: with the fee the old plan costs 1,700",
+    "t": "Tres autobuses, 1,650: con la tarifa el plan anterior cuesta 1,700"
+  },
+  "lessons.1.steps.2.options.2.text": {
+    "en": "Hire five minibuses instead",
+    "t": "Contratar cinco minivans en su lugar"
+  },
+  "lessons.1.steps.2.explain": {
+    "en": "The fee is a fixed cost, modelled with a yes/no variable. Two buses and a minibus now cost 1,100 + 300 + 300 = 1,700; three buses cost 1,650 and need no minibus, so they win. The answer flips when the fee passes 250.",
+    "t": "La tarifa es un costo fijo, modelado con una variable de sí o no. Dos autobuses y una minivan ahora cuestan 1,100 + 300 + 300 = 1,700; tres autobuses cuestan 1,650 y no necesitan minivan, así que ganan. La respuesta cambia cuando la tarifa pasa de 250."
+  },
+  "lessons.1.steps.3.prompt": {
+    "en": "Put the lines of a branch-and-bound search for a knapsack in order. bound(i, room) is an optimistic estimate of what loads i onwards could still add. Explore taking a load before skipping it.",
+    "t": "Ordena las líneas de una búsqueda de ramificación y acotamiento para una mochila. bound(i, room) es una estimación optimista de lo que aún podrían añadir las cargas desde i en adelante. Explora tomar una carga antes de omitirla."
+  },
+  "lessons.1.steps.3.explain": {
+    "en": "Record the value reached so far, then prune: stop at the end of the list, or when even the optimistic bound can’t beat the best. Only then read the next load, branch on taking it (if it fits) and on skipping it.",
+    "t": "Registra el valor alcanzado hasta ahora y luego poda: detente al final de la lista, o cuando ni siquiera la cota optimista pueda superar al mejor. Solo entonces lee la siguiente carga, ramifica tomándola (si cabe) y omitiéndola."
+  },
+  "lessons.1.steps.4.prompt": {
+    "en": "In a minimisation problem, the LP relaxation’s cost can never be higher than the cost of the best whole-number plan.",
+    "t": "En un problema de minimización, el costo de la relajación lineal nunca puede ser mayor que el costo del mejor plan de números enteros."
+  },
+  "lessons.1.steps.4.explain": {
+    "en": "Every whole-number plan is also allowed in the relaxation, so the relaxation’s minimum is at most the integer minimum: 1,173.33 against 1,400 for the trip. That is why it is a bound.",
+    "t": "Todo plan de números enteros también está permitido en la relajación, así que el mínimo de la relajación es a lo sumo el mínimo entero: 1,173.33 frente a 1,400 en la excursión. Por eso es una cota."
+  },
+  "lessons.1.steps.5.prompt": {
+    "en": "Try it: choose the “Truck load” example and press Run (65 points: desks and books). Change capacity to 1100 and run again (75). Then put capacity back to 1000 and add model.add(take[3] == 1) before the solver, so the water filter must go on the truck: what does that rule cost in points?",
+    "t": "Pruébalo: elige el ejemplo «Carga del camión» y pulsa «Ejecutar» (65 puntos: pupitres y libros). Cambia capacity a 1100 y ejecuta de nuevo (75). Luego vuelve a poner capacity en 1000 y añade model.add(take[3] == 1) antes del solucionador, de modo que el filtro de agua deba ir en el camión: ¿cuántos puntos cuesta esa regla?"
+  },
+  "lessons.1.steps.6.prompt": {
+    "en": "The minibus company now charges a 300-coin booking fee if you hire any minibus. Add a yes/no variable book, a limit so minibuses need a booking (at most 10 when booked), and the fee in the cost. What does the trip cost now?",
+    "t": "La empresa de minivans ahora cobra una tarifa de reserva de 300 monedas si contratas alguna minivan. Añade una variable de sí o no book, un límite para que las minivans necesiten una reserva (como máximo 10 si se reserva) y la tarifa en el costo. ¿Cuánto cuesta ahora la excursión?"
+  },
+  "lessons.1.steps.6.tests.0.hint": {
+    "en": "Without the fee the program prints 1400. With the fee, three buses (1,650) beat two buses and a minibus (1,700).",
+    "t": "Sin la tarifa el programa imprime 1400. Con la tarifa, tres autobuses (1,650) vencen a dos autobuses y una minivan (1,700)."
+  },
+  "lessons.1.steps.6.tests.1.hint": {
+    "en": "Charge the fee only when booked: + 300 * book in the cost, and small <= 10 * book.",
+    "t": "Cobra la tarifa solo si se reserva: + 300 * book en el costo, y small <= 10 * book."
+  },
+  "lessons.1.steps.6.hints.0": {
+    "en": "book = s.BoolVar(\"book\") makes a 0/1 variable.",
+    "t": "book = s.BoolVar(\"book\") crea una variable 0/1."
+  },
+  "lessons.1.steps.6.hints.1": {
+    "en": "s.Add(small <= 10 * book): no minibus unless booked. Then add 300 * book to the Minimize line.",
+    "t": "s.Add(small <= 10 * book): ninguna minivan salvo que se reserve. Luego añade 300 * book a la línea de Minimize."
+  },
+  "lessons.1.steps.6.explain": {
+    "en": "The big-M limit small <= 10 * book lets minibuses be hired only when book = 1, and 300 * book charges the fee exactly then. Two buses and a minibus now cost 1,700, so three buses at 1,650 win. The same program runs unchanged on Google’s OR-Tools in Colab, where SCIP also handles models with thousands of such variables.",
+    "t": "El límite de gran M small <= 10 * book permite contratar minivans solo cuando book = 1, y 300 * book cobra la tarifa exactamente entonces. Dos autobuses y una minivan ahora cuestan 1,700, así que ganan tres autobuses a 1,650. El mismo programa corre sin cambios en OR-Tools de Google en Colab, donde SCIP también maneja modelos con miles de esas variables."
+  },
+  "lessons.1.steps.7.prompt": {
+    "en": "Which of these decisions need whole-number or yes/no variables? Choose all that apply.",
+    "t": "¿Cuáles de estas decisiones necesitan variables de números enteros o de sí o no? Elige todas las que correspondan."
+  },
+  "lessons.1.steps.7.options.0.text": {
+    "en": "How many buses to hire",
+    "t": "Cuántos autobuses contratar"
+  },
+  "lessons.1.steps.7.options.1.text": {
+    "en": "Whether to open a new tutoring centre",
+    "t": "Si abrir un nuevo centro de tutorías"
+  },
+  "lessons.1.steps.7.options.2.text": {
+    "en": "Kilograms of rice to buy for the canteen",
+    "t": "Kilogramos de arroz que comprar para la cantina"
+  },
+  "lessons.1.steps.7.options.3.text": {
+    "en": "Which lecturer invigilates which exam",
+    "t": "Qué docente vigila qué examen"
+  },
+  "lessons.1.steps.7.options.4.text": {
+    "en": "Litres of water for the garden each week",
+    "t": "Litros de agua para el huerto cada semana"
+  },
+  "lessons.1.steps.7.explain": {
+    "en": "Buses come whole, opening a centre is yes or no, and assigning a lecturer to an exam is a yes/no choice for each pair. Rice in kilograms and water in litres can be fractions, so continuous variables are fine and keep the model fast.",
+    "t": "Los autobuses vienen enteros, abrir un centro es sí o no, y asignar un docente a un examen es una elección de sí o no para cada pareja. El arroz en kilogramos y el agua en litros pueden ser fracciones, así que las variables continuas están bien y mantienen rápido el modelo."
+  },
+  "lessons.1.steps.8.prompt": {
+    "en": "What do you tell your group?",
+    "t": "¿Qué le dices a tu grupo?"
+  },
+  "lessons.1.steps.8.who": {
+    "en": "Tarek, your project partner",
+    "t": "Tarek, tu compañero de proyecto"
+  },
+  "lessons.1.steps.8.initial": {
+    "en": "T",
+    "t": "T"
+  },
+  "lessons.1.steps.8.situation": {
+    "en": "Your MIP for allocating exam rooms has run for a minute and reports a gap of 3%. Tarek wants to drop it and just round the LP relaxation instead, “to save time”.",
+    "t": "Tu PEM para asignar salones de examen lleva un minuto corriendo e informa una brecha de 3 %. Tarek quiere abandonarlo y mejor redondear la relajación lineal, «para ahorrar tiempo»."
+  },
+  "lessons.1.steps.8.choices.0.label": {
+    "en": "“Rounding the LP is faster, let’s do that.”",
+    "t": "«Redondear el PL es más rápido, hagámoslo.»"
+  },
+  "lessons.1.steps.8.choices.0.consequence": {
+    "en": "Rounding can break constraints (a room double-booked, people without a seat) or miss the best by far, and you would have no gap to show how good it is.",
+    "t": "Redondear puede romper restricciones (un salón con doble reserva, gente sin asiento) o quedar muy lejos del mejor, y no tendrías ninguna brecha que muestre qué tan bueno es."
+  },
+  "lessons.1.steps.8.choices.1.label": {
+    "en": "“A 3% gap is a guarantee. Let’s take this plan, report the gap, and set a time limit next time.”",
+    "t": "«Una brecha de 3 % es una garantía. Tomemos este plan, informemos la brecha y fijemos un límite de tiempo la próxima vez.»"
+  },
+  "lessons.1.steps.8.choices.1.consequence": {
+    "en": "The plan is feasible and provably within 3% of the best. Reporting the gap is exactly how professionals present a MIP answer.",
+    "t": "El plan es factible y está demostrablemente a menos de 3 % del mejor. Informar la brecha es exactamente como presentan los profesionales una respuesta de un PEM."
+  },
+  "lessons.1.steps.8.choices.2.label": {
+    "en": "“Let it run all week until the gap is zero.”",
+    "t": "«Déjalo correr toda la semana hasta que la brecha sea cero.»"
+  },
+  "lessons.1.steps.8.choices.2.consequence": {
+    "en": "Closing the last few percent can take far longer than finding the plan. Unless 3% matters a lot, the time is better spent checking the plan with the exams office.",
+    "t": "Cerrar los últimos puntos porcentuales puede tardar mucho más que encontrar el plan. A menos que el 3 % importe mucho, el tiempo es mejor usarlo para revisar el plan con la oficina de exámenes."
+  },
+  "lessons.1.steps.8.explain": {
+    "en": "A reported gap is a guarantee: take the feasible plan, report the gap, and set a time limit.",
+    "t": "Una brecha informada es una garantía: toma el plan factible, informa la brecha y fija un límite de tiempo."
+  },
+  "lessons.1.steps.9.prompt": {
+    "en": "Where have you seen a decision rounded when it should have been solved with whole numbers? What went wrong, or might have?",
+    "t": "¿Dónde has visto una decisión redondeada cuando debió resolverse con números enteros? ¿Qué salió mal, o pudo salir mal?"
+  },
+  "lessons.1.steps.9.placeholder": {
+    "en": "For example: “Our society ordered 2 crates of drinks because 1.6 rounded up, but we never checked that 1 crate and 6 bottles was cheaper.”",
+    "t": "Por ejemplo: «Nuestra sociedad pidió 2 cajas de bebidas porque 1.6 se redondeó hacia arriba, pero nunca comprobamos que 1 caja y 6 botellas era más barato.»"
+  },
+  "lessons.1.steps.10.prompt": {
+    "en": "Project: A small MIP with a fixed cost",
+    "t": "Proyecto: un PEM pequeño con un costo fijo"
+  },
+  "lessons.1.steps.10.task": {
+    "en": "Pick a real decision with whole units and at least one fixed cost: hiring tables and chairs from two shops that charge delivery, choosing which of three sites to open for a tutoring programme, or buses for an event. Model it in SCIP (on your phone or in Colab). Solve the LP relaxation too (GLOP), and compare: the relaxation’s bound, what rounding it would give, and the true integer optimum. Then change the fixed cost and find where the decision flips.",
+    "t": "Elige una decisión real con unidades enteras y al menos un costo fijo: alquilar mesas y sillas de dos tiendas que cobran entrega, elegir cuál de tres sedes abrir para un programa de tutorías, o autobuses para un evento. Modélala en SCIP (en tu teléfono o en Colab). Resuelve también la relajación lineal (GLOP) y compara: la cota de la relajación, lo que daría redondearla y el verdadero óptimo entero. Luego cambia el costo fijo y encuentra dónde cambia la decisión."
+  },
+  "lessons.1.steps.10.deliverable": {
+    "en": "Your model, a table comparing the relaxation, the rounded plan and the integer optimum (with the gap), and the fixed cost at which the decision flips.",
+    "t": "Tu modelo, una tabla que compare la relajación, el plan redondeado y el óptimo entero (con la brecha), y el costo fijo en el que cambia la decisión."
+  },
+  "lessons.1.steps.10.rubric.0.criterion": {
+    "en": "I can: model whole units and a fixed cost with a yes/no variable.",
+    "t": "Puedo: modelar unidades enteras y un costo fijo con una variable de sí o no."
+  },
+  "lessons.1.steps.10.rubric.1.criterion": {
+    "en": "I can: explain why the relaxation is a bound and why rounding can fail.",
+    "t": "Puedo: explicar por qué la relajación es una cota y por qué redondear puede fallar."
+  },
+  "lessons.1.steps.10.rubric.2.criterion": {
+    "en": "I can: report an integer answer with its gap.",
+    "t": "Puedo: informar una respuesta entera con su brecha."
+  },
+  "lessons.1.slides.0.title": {
+    "en": "Integer programs and branch and bound",
+    "t": "Programas enteros y ramificación y acotamiento"
+  },
+  "lessons.1.slides.0.narration": {
+    "en": "You can’t hire 2.13 buses. So how do solvers find the best whole-number plan?",
+    "t": "No puedes contratar 2.13 autobuses. Entonces, ¿cómo encuentran los solucionadores el mejor plan de números enteros?"
+  },
+  "lessons.1.slides.0.note": {
+    "en": "Optimization · Level 4 · Lesson 2",
+    "t": "Optimización · Nivel 4 · Lección 2"
+  },
+  "lessons.1.slides.1.title": {
+    "en": "In this lesson you will",
+    "t": "En esta lección vas a"
+  },
+  "lessons.1.slides.1.bullets": {
+    "en": [
+      "Explain why rounding an LP can fail, and why the relaxation is a bound.",
+      "Follow branch and bound: branch, bound, prune, and the gap.",
+      "Model whole units and a fixed cost in SCIP."
+    ],
+    "t": [
+      "Explicar por qué redondear un PL puede fallar y por qué la relajación es una cota.",
+      "Seguir la ramificación y acotamiento: ramificar, acotar, podar y la brecha.",
+      "Modelar unidades enteras y un costo fijo en SCIP."
+    ]
+  },
+  "lessons.1.slides.2.title": {
+    "en": "Key ideas",
+    "t": "Ideas clave"
+  },
+  "lessons.1.slides.2.bullets": {
+    "en": [
+      "Relaxation: a bound, not an answer",
+      "Branch on a fraction; prune what can’t win",
+      "Gap = (best − bound) ÷ best",
+      "Yes/no variables model logic and fixed costs"
+    ],
+    "t": [
+      "Relajación: una cota, no una respuesta",
+      "Ramifica según una fracción; poda lo que no puede ganar",
+      "Brecha = (mejor − cota) ÷ mejor",
+      "Las variables de sí o no modelan la lógica y los costos fijos"
+    ]
+  },
+  "lessons.1.slides.3.title": {
+    "en": "Activity: The bus tree by hand",
+    "t": "Actividad: El árbol de autobuses a mano"
+  },
+  "lessons.1.slides.3.bullets": {
+    "en": [
+      "Root (5 min): Solve the relaxation: 2.13 buses.",
+      "Branch (8 min): At most 2 buses, or at least 3.",
+      "Prune (7 min): Find 1,400; cut the 3-bus branch.",
+      "Fee (5 min): Add the booking fee and redo."
+    ],
+    "t": [
+      "Raíz (5 min): Resuelve la relajación: 2.13 autobuses.",
+      "Ramificar (8 min): Como máximo 2 autobuses, o al menos 3.",
+      "Podar (7 min): Encuentra 1,400; corta la rama de 3 autobuses.",
+      "Tarifa (5 min): Añade la tarifa de reserva y repite."
+    ]
+  },
+  "lessons.1.slides.3.details": {
+    "en": [
+      "Root (5 min): The cheapest cost per seat is the bus (550 ÷ 30 ≈ 18.3 against 300 ÷ 14 ≈ 21.4), so the relaxation uses buses only: 64 ÷ 30 = 2.13 buses, 1,173.33 coins. Write it at the top of a tree.",
+      "Branch (8 min): Draw two children: “at most 2 buses” and “at least 3 buses”. In the first, 2 buses seat 60, and the relaxation adds 4 ÷ 14 ≈ 0.29 of a minibus: about 1,186. In the second, 3 buses cost 1,650.",
+      "Prune (7 min): Keep branching the first child on the minibus (at least 1). You reach 2 buses and 1 minibus, 1,400, a whole plan. The 3-bus branch can’t beat it (1,650), so cross it out without exploring it.",
+      "Fee (5 min): Add a 300-coin booking fee for any minibus. Recompute: 2 buses + 1 minibus = 1,700, so 3 buses (1,650) win. At what fee does the answer flip? (250.)"
+    ],
+    "t": [
+      "Raíz (5 min): El menor costo por plaza es el del autobús (550 ÷ 30 ≈ 18.3 frente a 300 ÷ 14 ≈ 21.4), así que la relajación usa solo autobuses: 64 ÷ 30 = 2.13 autobuses, 1,173.33 monedas. Escríbelo arriba de un árbol.",
+      "Ramificar (8 min): Dibuja dos hijos: «como máximo 2 autobuses» y «al menos 3 autobuses». En el primero, 2 autobuses llevan 60, y la relajación añade 4 ÷ 14 ≈ 0.29 de una minivan: unos 1,186. En el segundo, 3 autobuses cuestan 1,650.",
+      "Podar (7 min): Sigue ramificando el primer hijo según la minivan (al menos 1). Llegas a 2 autobuses y 1 minivan, 1,400, un plan entero. La rama de 3 autobuses no puede superarlo (1,650), así que táchala sin explorarla.",
+      "Tarifa (5 min): Añade una tarifa de reserva de 300 monedas por cualquier minivan. Recalcula: 2 autobuses + 1 minivan = 1,700, así que ganan 3 autobuses (1,650). ¿A qué tarifa cambia la respuesta? (250.)"
+    ]
+  },
+  "lessons.1.slides.3.note": {
+    "en": "Work in pairs: one draws the tree, the other checks each relaxation. Then run the same model in the lesson’s code step and compare.",
+    "t": "Trabajen en parejas: una persona dibuja el árbol y la otra comprueba cada relajación. Luego ejecuten el mismo modelo en el paso de código de la lección y comparen."
+  },
+  "lessons.1.slides.3.narration": {
+    "en": "Which branch can you cut without ever looking inside it?",
+    "t": "¿Qué rama puedes cortar sin mirar nunca dentro de ella?"
+  },
+  "lessons.1.slides.4.title": {
+    "en": "Let’s discuss",
+    "t": "Conversemos"
+  },
+  "lessons.1.slides.4.bullets": {
+    "en": [
+      "Why can rounding an LP answer break a constraint?",
+      "Why does a smaller big-M make branch and bound faster?",
+      "When is a 3% gap good enough, and who decides?"
+    ],
+    "t": [
+      "¿Por qué redondear la respuesta de un PL puede romper una restricción?",
+      "¿Por qué una M más pequeña hace más rápida la ramificación y acotamiento?",
+      "¿Cuándo es suficiente una brecha de 3 % y quién lo decide?"
+    ]
+  },
+  "lessons.1.slides.5.title": {
+    "en": "Check yourself",
+    "t": "Compruébate"
+  },
+  "lessons.1.slides.5.bullets": {
+    "en": [
+      "A relaxation costs 900 and your best plan 1,000. Write the gap, and what it promises."
+    ],
+    "t": [
+      "Una relajación cuesta 900 y tu mejor plan 1,000. Escribe la brecha y qué promete."
+    ]
+  },
+  "lessons.1.slides.5.narration": {
+    "en": "Whole numbers are harder; bounds make them solvable.",
+    "t": "Los números enteros son más difíciles; las cotas los hacen resolubles."
+  },
+  "lessons.1.kit.0.title": {
+    "en": "Slides to revise: Integer programs and branch and bound",
+    "t": "Diapositivas para repasar: Programas enteros y ramificación y acotamiento"
+  },
+  "lessons.1.kit.1.title": {
+    "en": "Activity sheet: Integer programs and branch and bound",
+    "t": "Hoja de actividades: Programas enteros y ramificación y acotamiento"
+  },
+  "lessons.1.kit.2.title": {
+    "en": "The lesson video (240p, to watch again or share)",
+    "t": "El video de la lección (240p, para verlo otra vez o compartirlo)"
+  },
+  "lessons.2.title": {
+    "en": "Constraint programming: propagation and search",
+    "t": "Programación por restricciones: propagación y búsqueda"
+  },
+  "lessons.2.tryTomorrow": {
+    "en": "Write the 4 × 4 sudoku in CP-SAT, boxes and all. Then remove one given and count the solutions with a solution callback (solver.parameters.enumerate_all_solutions = True). How many givens can you remove before the puzzle has more than one answer?",
+    "t": "Escribe el sudoku de 4 × 4 en CP-SAT, con sus cajas y todo. Luego quita una pista y cuenta las soluciones con una función de retorno de soluciones (solver.parameters.enumerate_all_solutions = True). ¿Cuántas pistas puedes quitar antes de que el sudoku tenga más de una respuesta?"
+  },
+  "lessons.2.materials": {
+    "en": [
+      "Your phone, or a computer with Colab",
+      "A printed 4 × 4 or 9 × 9 sudoku and a pencil"
+    ],
+    "t": [
+      "Tu teléfono, o una computadora con Colab",
+      "Un sudoku impreso de 4 × 4 o de 9 × 9 y un lápiz"
+    ]
+  },
+  "lessons.2.steps.0.prompt": {
+    "en": "Watch",
+    "t": "Ver"
+  },
+  "lessons.2.steps.0.title": {
+    "en": "Constraint programming: propagation and search",
+    "t": "Programación por restricciones: propagación y búsqueda"
+  },
+  "lessons.2.steps.0.chapters.0.label": {
+    "en": "13,528 guesses, or 4",
+    "t": "13,528 intentos, o 4"
+  },
+  "lessons.2.steps.0.chapters.1.label": {
+    "en": "Domains and propagation",
+    "t": "Dominios y propagación"
+  },
+  "lessons.2.steps.0.chapters.2.label": {
+    "en": "Search and global constraints",
+    "t": "Búsqueda y restricciones globales"
+  },
+  "lessons.2.steps.0.chapters.3.label": {
+    "en": "Infeasible is a proof",
+    "t": "Infactible es una demostración"
+  },
+  "lessons.2.steps.0.chapters.4.label": {
+    "en": "Remember and try it",
+    "t": "Recuerda y pruébalo"
+  },
+  "lessons.2.steps.0.checkpoint.question.prompt": {
+    "en": "Two exam slots are left, and three exams all clash with each other. What does an all-different constraint do?",
+    "t": "Quedan dos horarios de examen y tres exámenes chocan entre sí. ¿Qué hace una restricción all-different?"
+  },
+  "lessons.2.steps.0.checkpoint.question.options.0.text": {
+    "en": "Picks two of the three",
+    "t": "Elige dos de los tres"
+  },
+  "lessons.2.steps.0.checkpoint.question.options.1.text": {
+    "en": "Fails at once: three exams can’t fit in two slots",
+    "t": "Falla de inmediato: tres exámenes no caben en dos horarios"
+  },
+  "lessons.2.steps.0.checkpoint.question.options.2.text": {
+    "en": "Waits until search reaches them",
+    "t": "Espera hasta que la búsqueda los alcance"
+  },
+  "lessons.2.steps.0.checkpoint.question.explain": {
+    "en": "All-different reasons about the whole group: three variables whose domains together hold only two values can never all differ (the pigeonhole principle). So propagation fails immediately, with no search. Separate not-equal rules, each looking at one pair, would only discover this by searching.",
+    "t": "All-different razona sobre todo el grupo: tres variables cuyos dominios juntos solo contienen dos valores nunca pueden ser todas distintas (el principio del palomar). Así que la propagación falla de inmediato, sin búsqueda. Reglas separadas de distinto, cada una mirando una pareja, solo lo descubrirían buscando."
+  },
+  "lessons.2.steps.0.transcript": {
+    "en": "A hard sudoku. Plain backtracking needs thirteen thousand five hundred and twenty-eight guesses. A constraint solver needs four. Same puzzle, same rules: so what’s the difference? Today: constraint programming, with domains, propagation and search. In constraint programming, every variable has a domain: the values still possible. A sudoku cell starts with one to nine; an exam starts with every slot. Constraints remove values that can’t be part of any solution. That removal is propagation. Place a five, and five vanishes from its row, its column and its box. A cell left with one value takes it, and the change spreads. In the lab’s hard sudoku, propagation alone fills fifty-one cells without a single guess. When propagation stops, search guesses, but cleverly. Fail first: choose the variable with the fewest values left, because that’s where a wrong guess shows up soonest. After each guess, propagate again; at a dead end, undo and try the next value. Global constraints carry a whole pattern at once. All-different over nine cells knows more than thirty-six separate not-equal rules: if three cells share only two values, it fails straight away. CP-SAT has others for routes, schedules and tables. In CP-SAT, a four-by-four sudoku takes a few lines. Every row and every column is all-different, and so is every box. Quick check! Only two exam slots are left, and three exams all clash with each other. What does an all-different constraint do? It fails at once: three exams can’t fit in two slots. And when every branch fails, the solver has proved there is no solution, so INFEASIBLE is a proof, not a shrug. In the exam lab, three slots are the fewest, because Omar’s three exams all clash. Many problems have symmetry: swap two exam slots, or two identical buses, and you get the same plan again. Breaking it, for example by saying slot one is used before slot two, can cut the search many times over. Google’s CP-SAT mixes three ideas: propagation from constraint programming, clause learning from SAT solvers, which remember why a branch failed, and linear relaxations. It has won the MiniZinc Challenge again and again, and it’s what most OR-Tools users reach for first. In the app, solve sudokus three ways: propagate then guess, propagate only, and plain backtracking. Count the guesses each one needs. Your turn. Propagation stops with three empty cells: one has two candidates, the other two have three. Which cell does fail-first search guess in? The one with two: fewest values, so a wrong guess fails fastest. Remember: domains shrink by propagation, and search guesses fail-first and undoes dead ends. Global constraints prune more. And INFEASIBLE is a proof. Try it yourself: write the four-by-four sudoku in CP-SAT, boxes and all. Then remove one given, and count the solutions with a solution callback.",
+    "t": "Un sudoku difícil. El retroceso simple necesita trece mil quinientos veintiocho intentos. Un solucionador de restricciones necesita cuatro. El mismo sudoku, las mismas reglas: entonces, ¿cuál es la diferencia? Hoy: la programación por restricciones, con dominios, propagación y búsqueda. En la programación por restricciones, cada variable tiene un dominio: los valores aún posibles. Una celda de sudoku empieza con uno a nueve; un examen empieza con todos los horarios. Las restricciones quitan valores que no pueden formar parte de ninguna solución. Esa eliminación es la propagación. Coloca un cinco y el cinco desaparece de su fila, su columna y su caja. Una celda que se queda con un valor lo toma, y el cambio se extiende. En el sudoku difícil del laboratorio, la propagación sola llena cincuenta y una celdas sin un solo intento. Cuando la propagación se detiene, la búsqueda adivina, pero con inteligencia. Fallar primero: elige la variable con menos valores restantes, porque ahí es donde un intento equivocado se nota antes. Después de cada intento, propaga de nuevo; en un callejón sin salida, deshaz y prueba el siguiente valor. Las restricciones globales llevan todo un patrón a la vez. All-different sobre nueve celdas sabe más que treinta y seis reglas separadas de distinto: si tres celdas comparten solo dos valores, falla de inmediato. CP-SAT tiene otras para rutas, horarios y tablas. En CP-SAT, un sudoku de cuatro por cuatro toma unas pocas líneas. Cada fila y cada columna es all-different, y también cada caja. ¡Comprobación rápida! Solo quedan dos horarios de examen y tres exámenes chocan entre sí. ¿Qué hace una restricción all-different? Falla de inmediato: tres exámenes no caben en dos horarios. Y cuando todas las ramas fallan, el solucionador ha demostrado que no hay solución, así que INFEASIBLE es una demostración, no un encogimiento de hombros. En el laboratorio de exámenes, tres horarios son lo mínimo, porque los tres exámenes de Omar chocan entre sí. Muchos problemas tienen simetría: intercambia dos horarios de examen, o dos autobuses idénticos, y obtienes el mismo plan otra vez. Romperla, por ejemplo diciendo que el horario uno se usa antes que el dos, puede reducir la búsqueda muchas veces. CP-SAT de Google mezcla tres ideas: la propagación de la programación por restricciones, el aprendizaje de cláusulas de los solucionadores SAT, que recuerdan por qué falló una rama, y las relajaciones lineales. Ha ganado el MiniZinc Challenge una y otra vez, y es lo primero que usa la mayoría de las personas que trabajan con OR-Tools. En la app, resuelve sudokus de tres maneras: propagar y luego adivinar, solo propagar y retroceso simple. Cuenta los intentos que necesita cada una. Tu turno. La propagación se detiene con tres celdas vacías: una tiene dos candidatos, las otras dos tienen tres. ¿En qué celda adivina la búsqueda de fallar primero? En la de dos: menos valores, así que un intento equivocado falla más rápido. Recuerda: los dominios se encogen por propagación, y la búsqueda adivina fallando primero y deshace los callejones sin salida. Las restricciones globales podan más. Y INFEASIBLE es una demostración. Pruébalo tú: escribe el sudoku de cuatro por cuatro en CP-SAT, con sus cajas y todo. Luego quita una pista y cuenta las soluciones con una función de retorno de soluciones."
+  },
+  "lessons.2.steps.1.prompt": {
+    "en": "Read",
+    "t": "Leer"
+  },
+  "lessons.2.steps.1.title": {
+    "en": "Domains, propagation, search and proof",
+    "t": "Dominios, propagación, búsqueda y demostración"
+  },
+  "lessons.2.steps.1.body": {
+    "en": "Constraint programming (CP) describes a problem by variables, the domain of values each can still take, and constraints between them, and then searches. A sudoku cell has the domain 1 to 9; an exam has every slot; a lesson has every period. Unlike LP, constraints need not be linear: all-different, “if this then that”, a route that visits every stop once.\n\nThe engine of CP is propagation. Each constraint removes values that cannot belong to any solution, and every removal may let another constraint remove more, until nothing changes: a fixpoint. Place a 5 and it leaves its row, column and box; a cell left with one candidate takes it, and so on. Propagation never removes a value a solution needs, so it is always safe, but on its own it may stop short: in the lab’s hard 9 × 9 sudoku it fills 51 cells and then stalls.\n\nThen search takes over. It picks a variable, tries a value, propagates again, and undoes the choice at a dead end (backtracking). Good search strategies matter enormously. Fail-first chooses the variable with the smallest domain, where a wrong guess is caught soonest; with it, propagation plus search solves the hard sudoku with 4 guesses, where plain backtracking without propagation needs 13,528. Breaking symmetry, for example requiring slot 1 to be used before slot 2 when slots are interchangeable, stops the search from exploring copies of the same plan.\n\nGlobal constraints capture a whole pattern. All-different over nine cells propagates far more than its 36 pairwise “not equal” constraints: if three cells share only two values between them, it fails at once (the pigeonhole principle). Solvers also offer constraints for circuits (routes), no-overlap and cumulative (schedules with durations and capacities) and tables of allowed combinations.\n\nWhen every branch fails, the solver has proved that no solution exists: INFEASIBLE is a proof, not a guess. If it simply runs out of time it reports UNKNOWN (or FEASIBLE, with a solution it cannot yet prove best). When a real model is infeasible, find a small set of conflicting rules, by removing or softening them one at a time, and take the conflict to the people who own those rules.\n\nGoogle’s CP-SAT combines CP propagation with clause learning from SAT solvers (it remembers why a branch failed, so it never fails that way again), linear relaxations and several search strategies running in parallel. It has won many gold medals in the MiniZinc Challenge, the yearly competition of constraint solvers, and it is the solver most OR-Tools users try first for timetables, rosters and scheduling.",
+    "t": "La programación por restricciones (PR) describe un problema con variables, el dominio de valores que aún puede tomar cada una y las restricciones entre ellas, y luego busca. Una celda de sudoku tiene el dominio de 1 a 9; un examen tiene todos los horarios; una clase tiene todos los periodos. A diferencia del PL, las restricciones no tienen que ser lineales: all-different, «si esto entonces aquello», una ruta que visita cada parada una vez.\n\nEl motor de la PR es la propagación. Cada restricción elimina los valores que no pueden pertenecer a ninguna solución, y cada eliminación puede permitir que otra restricción elimine más, hasta que nada cambia: un punto fijo. Coloca un 5 y sale de su fila, columna y caja; una celda que se queda con un candidato lo toma, y así sucesivamente. La propagación nunca elimina un valor que una solución necesita, así que siempre es segura, pero por sí sola puede quedarse corta: en el sudoku difícil de 9 × 9 del laboratorio llena 51 celdas y luego se estanca.\n\nEntonces la búsqueda toma el relevo. Elige una variable, prueba un valor, propaga de nuevo y deshace la elección en un callejón sin salida (retroceso). Las buenas estrategias de búsqueda importan enormemente. Fallar primero elige la variable con el dominio más pequeño, donde un intento equivocado se detecta antes; con ella, la propagación más la búsqueda resuelve el sudoku difícil con 4 intentos, donde el retroceso simple sin propagación necesita 13,528. Romper la simetría, por ejemplo exigiendo que el horario 1 se use antes que el 2 cuando los horarios son intercambiables, evita que la búsqueda explore copias del mismo plan.\n\nLas restricciones globales capturan todo un patrón. All-different sobre nueve celdas propaga mucho más que sus 36 restricciones de «distinto» por parejas: si tres celdas comparten solo dos valores entre ellas, falla de inmediato (el principio del palomar). Los solucionadores también ofrecen restricciones para circuitos (rutas), no-overlap y cumulative (horarios con duraciones y capacidades) y tablas de combinaciones permitidas.\n\nCuando todas las ramas fallan, el solucionador ha demostrado que no existe solución: INFEASIBLE es una demostración, no una suposición. Si simplemente se le acaba el tiempo, informa UNKNOWN (o FEASIBLE, con una solución que aún no puede demostrar que sea la mejor). Cuando un modelo real es infactible, encuentra un conjunto pequeño de reglas en conflicto, quitándolas o suavizándolas una a la vez, y lleva el conflicto a las personas que son dueñas de esas reglas.\n\nCP-SAT de Google combina la propagación de la PR con el aprendizaje de cláusulas de los solucionadores SAT (recuerda por qué falló una rama, así que nunca vuelve a fallar de esa manera), relajaciones lineales y varias estrategias de búsqueda que corren en paralelo. Ha ganado muchas medallas de oro en el MiniZinc Challenge, la competencia anual de solucionadores de restricciones, y es el solucionador que la mayoría de quienes usan OR-Tools prueban primero para horarios, turnos y planificación."
+  },
+  "lessons.2.steps.1.keyTerms.0.term": {
+    "en": "Domain",
+    "t": "Dominio"
+  },
+  "lessons.2.steps.1.keyTerms.0.def": {
+    "en": "The values a variable can still take during the search.",
+    "t": "Los valores que una variable aún puede tomar durante la búsqueda."
+  },
+  "lessons.2.steps.1.keyTerms.1.term": {
+    "en": "Propagation",
+    "t": "Propagación"
+  },
+  "lessons.2.steps.1.keyTerms.1.def": {
+    "en": "Constraints removing values that can’t be in any solution, repeated until nothing changes.",
+    "t": "Restricciones que eliminan valores que no pueden estar en ninguna solución, repetido hasta que nada cambia."
+  },
+  "lessons.2.steps.1.keyTerms.2.term": {
+    "en": "Fail-first",
+    "t": "Fallar primero"
+  },
+  "lessons.2.steps.1.keyTerms.2.def": {
+    "en": "A search rule: branch on the variable with the fewest values left.",
+    "t": "Una regla de búsqueda: ramificar según la variable con menos valores restantes."
+  },
+  "lessons.2.steps.1.keyTerms.3.term": {
+    "en": "Global constraint",
+    "t": "Restricción global"
+  },
+  "lessons.2.steps.1.keyTerms.3.def": {
+    "en": "One constraint over many variables (all-different, circuit, no-overlap) that propagates more than its pieces.",
+    "t": "Una restricción sobre muchas variables (all-different, circuit, no-overlap) que propaga más que sus partes."
+  },
+  "lessons.2.steps.1.keyTerms.4.term": {
+    "en": "Symmetry breaking",
+    "t": "Ruptura de simetría"
+  },
+  "lessons.2.steps.1.keyTerms.4.def": {
+    "en": "Extra constraints that remove copies of the same plan, such as interchangeable slots.",
+    "t": "Restricciones extra que eliminan copias del mismo plan, como horarios intercambiables."
+  },
+  "lessons.2.steps.2.prompt": {
+    "en": "Three empty cells: one has two candidates, two have three. Where does fail-first search guess?",
+    "t": "Tres celdas vacías: una tiene dos candidatos, dos tienen tres. ¿Dónde adivina la búsqueda de fallar primero?"
+  },
+  "lessons.2.steps.2.options.0.text": {
+    "en": "In the cell with two candidates",
+    "t": "En la celda con dos candidatos"
+  },
+  "lessons.2.steps.2.options.1.text": {
+    "en": "In the first cell in reading order",
+    "t": "En la primera celda en orden de lectura"
+  },
+  "lessons.2.steps.2.options.2.text": {
+    "en": "In one of the cells with three",
+    "t": "En una de las celdas con tres"
+  },
+  "lessons.2.steps.2.explain": {
+    "en": "Fail-first chooses the variable with the smallest domain. With two candidates, a guess is right half the time, and when it’s wrong propagation usually shows the dead end quickly, so the search tree stays small.",
+    "t": "Fallar primero elige la variable con el dominio más pequeño. Con dos candidatos, un intento acierta la mitad de las veces, y cuando falla la propagación suele mostrar el callejón sin salida rápido, así que el árbol de búsqueda se mantiene pequeño."
+  },
+  "lessons.2.steps.3.prompt": {
+    "en": "Which statements about propagation are true? Choose all that apply.",
+    "t": "¿Qué afirmaciones sobre la propagación son verdaderas? Elige todas las que correspondan."
+  },
+  "lessons.2.steps.3.options.0.text": {
+    "en": "It removes values that can’t be part of any solution",
+    "t": "Elimina valores que no pueden formar parte de ninguna solución"
+  },
+  "lessons.2.steps.3.options.1.text": {
+    "en": "It never removes a value that a solution needs",
+    "t": "Nunca elimina un valor que una solución necesita"
+  },
+  "lessons.2.steps.3.options.2.text": {
+    "en": "On its own it always solves the problem",
+    "t": "Por sí sola siempre resuelve el problema"
+  },
+  "lessons.2.steps.3.options.3.text": {
+    "en": "All-different can remove values that pairwise ≠ rules miss",
+    "t": "All-different puede eliminar valores que las reglas de ≠ por parejas no ven"
+  },
+  "lessons.2.steps.3.options.4.text": {
+    "en": "It picks the most likely value and moves on",
+    "t": "Elige el valor más probable y sigue adelante"
+  },
+  "lessons.2.steps.3.explain": {
+    "en": "Propagation is safe deduction: it removes only impossible values, so no solution is lost, and global constraints deduce more than their pieces. It doesn’t guess (that’s search) and alone it can stall, as the hard sudoku does at 51 cells.",
+    "t": "La propagación es deducción segura: elimina solo valores imposibles, así que no se pierde ninguna solución, y las restricciones globales deducen más que sus partes. No adivina (eso es la búsqueda) y por sí sola puede estancarse, como el sudoku difícil en 51 celdas."
+  },
+  "lessons.2.steps.4.prompt": {
+    "en": "This 4 × 4 sudoku model has rows and columns, but the solver’s grid breaks the 2 × 2 boxes. Add an all-different constraint for each box inside the loop.",
+    "t": "Este modelo de sudoku de 4 × 4 tiene filas y columnas, pero la cuadrícula del solucionador rompe las cajas de 2 × 2. Añade una restricción all-different para cada caja dentro del bucle."
+  },
+  "lessons.2.steps.4.tests.0.hint": {
+    "en": "Keep the row and column constraints as they are.",
+    "t": "Deja las restricciones de filas y columnas como están."
+  },
+  "lessons.2.steps.4.tests.1.hint": {
+    "en": "Box i starts at row i // 2 * 2 and column i % 2 * 2, and has four cells.",
+    "t": "La caja i empieza en la fila i // 2 * 2 y la columna i % 2 * 2, y tiene cuatro celdas."
+  },
+  "lessons.2.steps.4.hints.0": {
+    "en": "The loop runs i = 0 to 3, one box each: top-left, top-right, bottom-left, bottom-right.",
+    "t": "El bucle corre i = 0 a 3, una caja cada vez: arriba a la izquierda, arriba a la derecha, abajo a la izquierda, abajo a la derecha."
+  },
+  "lessons.2.steps.4.hints.1": {
+    "en": "m.add_all_different([c[i // 2 * 2 + r][i % 2 * 2 + q] for r in (0, 1) for q in (0, 1)])",
+    "t": "m.add_all_different([c[i // 2 * 2 + r][i % 2 * 2 + q] for r in (0, 1) for q in (0, 1)])"
+  },
+  "lessons.2.steps.4.explain": {
+    "en": "Givens are fixed through their domains (v or 1, v or 4), and three families of all-different constraints do the rest. Without the boxes the solver found a grid that keeps rows and columns but not the boxes; with them, the only solution is [[1, 3, 2, 4], [4, 2, 3, 1], [2, 4, 1, 3], [3, 1, 4, 2]]. The same model runs unchanged on Google’s OR-Tools in Colab, and a 9 × 9 one needs only the numbers changed.",
+    "t": "Las pistas se fijan mediante sus dominios (v o 1, v o 4), y tres familias de restricciones all-different hacen el resto. Sin las cajas el solucionador halló una cuadrícula que conserva filas y columnas pero no las cajas; con ellas, la única solución es [[1, 3, 2, 4], [4, 2, 3, 1], [2, 4, 1, 3], [3, 1, 4, 2]]. El mismo modelo corre sin cambios en OR-Tools de Google en Colab, y uno de 9 × 9 solo necesita que se cambien los números."
+  },
+  "lessons.2.steps.5.prompt": {
+    "en": "Try it: pick “9 × 9 hard” with “Propagate only” and press Run: it stops with 51 digits placed. Switch to “Propagate, then guess” (4 guesses), then “Plain backtracking” (13,528). Finally pick “17 givens” and try plain backtracking: it gives up after 100,000 guesses, while propagation needs none. What does that tell you about where a solver’s speed comes from?",
+    "t": "Pruébalo: elige «9 × 9 difícil» con «Solo propagar» y pulsa «Ejecutar»: se detiene con 51 dígitos colocados. Cambia a «Propagar y luego adivinar» (4 intentos), luego a «Retroceso simple» (13,528). Por último elige «17 datos» y prueba el retroceso simple: se rinde tras 100,000 intentos, mientras que la propagación no necesita ninguno. ¿Qué te dice eso sobre de dónde viene la velocidad de un solucionador?"
+  },
+  "lessons.2.steps.6.prompt": {
+    "en": "This eight-queens model should stop any two queens sharing a column or a diagonal (q[i] is the column of the queen in row i), but the solver puts all eight on one diagonal. Which line is wrong?",
+    "t": "Este modelo de las ocho reinas debería impedir que dos reinas compartan columna o diagonal (q[i] es la columna de la reina de la fila i), pero el solucionador pone las ocho en una misma diagonal. ¿Qué línea está mal?"
+  },
+  "lessons.2.steps.6.explain": {
+    "en": "q[i] − 1 is all-different exactly when q[i] is, so line 7 repeats line 5 and one family of diagonals goes unprotected; q = 0, 1, …, 7 puts every queen on it. The fix is q[i] − i: queens on the same down-right diagonal share that value.",
+    "t": "q[i] − 1 es all-different exactamente cuando lo es q[i], así que la línea 7 repite la línea 5 y una familia de diagonales queda sin protección; q = 0, 1, …, 7 pone a todas las reinas en ella. La corrección es q[i] − i: las reinas de la misma diagonal descendente hacia la derecha comparten ese valor."
+  },
+  "lessons.2.steps.7.prompt": {
+    "en": "If CP-SAT reports INFEASIBLE, it may just have run out of time, and a solution might still exist.",
+    "t": "Si CP-SAT informa INFEASIBLE, puede que solo se le haya acabado el tiempo y que aún exista una solución."
+  },
+  "lessons.2.steps.7.explain": {
+    "en": "INFEASIBLE means the search proved that no solution exists. A solver that runs out of time reports UNKNOWN, or FEASIBLE if it found a solution it can’t yet prove best.",
+    "t": "INFEASIBLE significa que la búsqueda demostró que no existe solución. Un solucionador al que se le acaba el tiempo informa UNKNOWN, o FEASIBLE si halló una solución que aún no puede demostrar que sea la mejor."
+  },
+  "lessons.2.steps.8.prompt": {
+    "en": "What do you do?",
+    "t": "¿Qué haces?"
+  },
+  "lessons.2.steps.8.who": {
+    "en": "Dr Nadia, head of the nursing roster at a teaching hospital where you intern",
+    "t": "La doctora Nadia, jefa del turno de enfermería de un hospital universitario donde haces prácticas"
+  },
+  "lessons.2.steps.8.initial": {
+    "en": "N",
+    "t": "N"
+  },
+  "lessons.2.steps.8.situation": {
+    "en": "Your CP-SAT model for next month’s night shifts reports INFEASIBLE. Dr Nadia says: “The solver must be broken. Just remove all the rules and run it again.”",
+    "t": "Tu modelo de CP-SAT para los turnos de noche del próximo mes informa INFEASIBLE. La doctora Nadia dice: «El solucionador debe de estar roto. Quita todas las reglas y ejecútalo otra vez.»"
+  },
+  "lessons.2.steps.8.choices.0.label": {
+    "en": "Remove all the rules and run it again",
+    "t": "Quitar todas las reglas y ejecutarlo otra vez"
+  },
+  "lessons.2.steps.8.choices.0.consequence": {
+    "en": "You’ll get a roster, but one that may break rest rules nurses rely on. The solver wasn’t broken: it proved the rules can’t all hold together.",
+    "t": "Obtendrás un turno, pero uno que puede romper reglas de descanso de las que dependen las enfermeras. El solucionador no estaba roto: demostró que las reglas no pueden cumplirse todas juntas."
+  },
+  "lessons.2.steps.8.choices.1.label": {
+    "en": "Find the smallest set of rules that clash, and take that choice to Dr Nadia",
+    "t": "Encontrar el conjunto más pequeño de reglas que chocan y llevar esa decisión a la doctora Nadia"
+  },
+  "lessons.2.steps.8.choices.1.consequence": {
+    "en": "Removing or softening rules one at a time shows, say, that “two nights off after three nights” clashes with the staffing level in week 2. Now the people who own those rules can decide which gives.",
+    "t": "Quitar o suavizar las reglas una a la vez muestra, por ejemplo, que «dos noches libres después de tres noches» choca con el nivel de personal de la semana 2. Ahora las personas que son dueñas de esas reglas pueden decidir cuál cede."
+  },
+  "lessons.2.steps.8.choices.2.label": {
+    "en": "Give the solver a longer time limit",
+    "t": "Darle al solucionador un límite de tiempo más largo"
+  },
+  "lessons.2.steps.8.choices.2.consequence": {
+    "en": "INFEASIBLE is already a proof: more time can’t find a roster that doesn’t exist. Time limits help with UNKNOWN, not with INFEASIBLE.",
+    "t": "INFEASIBLE ya es una demostración: más tiempo no puede encontrar un turno que no existe. Los límites de tiempo ayudan con UNKNOWN, no con INFEASIBLE."
+  },
+  "lessons.2.steps.8.explain": {
+    "en": "INFEASIBLE is a proof: find the smallest set of clashing rules and take that choice to the people who own them.",
+    "t": "INFEASIBLE es una demostración: encuentra el conjunto más pequeño de reglas que chocan y lleva esa decisión a las personas que son dueñas de ellas."
+  },
+  "lessons.2.steps.9.prompt": {
+    "en": "Think of a scheduling problem you know (a timetable, a sports fixture list, a rota). Which constraint would you model as a global constraint, and which symmetry could you break?",
+    "t": "Piensa en un problema de planificación que conozcas (un horario, un calendario deportivo, un rol de turnos). ¿Qué restricción modelarías como restricción global y qué simetría podrías romper?"
+  },
+  "lessons.2.steps.9.placeholder": {
+    "en": "For example: “Our five-a-side league: each round, all-different over the pitches; the rounds are interchangeable, so fix who plays whom in round 1.”",
+    "t": "Por ejemplo: «Nuestra liga de fútbol cinco: en cada ronda, all-different sobre las canchas; las rondas son intercambiables, así que fijo quién juega contra quién en la ronda 1.»"
+  },
+  "lessons.2.steps.10.prompt": {
+    "en": "Project: A timetable or roster in CP-SAT",
+    "t": "Proyecto: un horario o un rol de turnos en CP-SAT"
+  },
+  "lessons.2.steps.10.task": {
+    "en": "Model a small real schedule in CP-SAT: tutoring sessions for a student society, a sports league, or lab bookings for a course (10 to 40 variables). Use at least one global constraint, one fairness rule (for example, nobody gets the worst slot twice) and one symmetry-breaking constraint. Run it on your phone and, if you can, in Colab with the real OR-Tools. Then make it infeasible on purpose by adding a rule, and show how you found the clash.",
+    "t": "Modela un pequeño horario real en CP-SAT: sesiones de tutoría para una sociedad estudiantil, una liga deportiva o reservas de laboratorio para un curso (10 a 40 variables). Usa al menos una restricción global, una regla de equidad (por ejemplo, nadie recibe dos veces el peor horario) y una restricción de ruptura de simetría. Ejecútalo en tu teléfono y, si puedes, en Colab con el OR-Tools real. Luego hazlo infactible a propósito añadiendo una regla y muestra cómo hallaste el choque."
+  },
+  "lessons.2.steps.10.deliverable": {
+    "en": "Your model, the schedule it found, a note on the fairness and symmetry constraints, and the infeasible case with the rules that clash.",
+    "t": "Tu modelo, el horario que halló, una nota sobre las restricciones de equidad y simetría, y el caso infactible con las reglas que chocan."
+  },
+  "lessons.2.steps.10.rubric.0.criterion": {
+    "en": "I can: model a schedule with domains and global constraints.",
+    "t": "Puedo: modelar un horario con dominios y restricciones globales."
+  },
+  "lessons.2.steps.10.rubric.1.criterion": {
+    "en": "I can: explain propagation, fail-first search and symmetry breaking in my model.",
+    "t": "Puedo: explicar la propagación, la búsqueda de fallar primero y la ruptura de simetría en mi modelo."
+  },
+  "lessons.2.steps.10.rubric.2.criterion": {
+    "en": "I can: diagnose an INFEASIBLE model by finding the rules that clash.",
+    "t": "Puedo: diagnosticar un modelo INFEASIBLE hallando las reglas que chocan."
+  },
+  "lessons.2.slides.0.title": {
+    "en": "Constraint programming: propagation and search",
+    "t": "Programación por restricciones: propagación y búsqueda"
+  },
+  "lessons.2.slides.0.narration": {
+    "en": "Why does a solver need 4 guesses where brute force needs thousands?",
+    "t": "¿Por qué un solucionador necesita 4 intentos donde la fuerza bruta necesita miles?"
+  },
+  "lessons.2.slides.0.note": {
+    "en": "Optimization · Level 4 · Lesson 3",
+    "t": "Optimización · Nivel 4 · Lección 3"
+  },
+  "lessons.2.slides.1.title": {
+    "en": "In this lesson you will",
+    "t": "En esta lección vas a"
+  },
+  "lessons.2.slides.1.bullets": {
+    "en": [
+      "Describe a problem with domains and constraints, and propagate by hand.",
+      "Explain fail-first search, global constraints and symmetry breaking.",
+      "Model a puzzle in CP-SAT, and read what INFEASIBLE proves."
+    ],
+    "t": [
+      "Describir un problema con dominios y restricciones, y propagar a mano.",
+      "Explicar la búsqueda de fallar primero, las restricciones globales y la ruptura de simetría.",
+      "Modelar un sudoku en CP-SAT y leer qué demuestra INFEASIBLE."
+    ]
+  },
+  "lessons.2.slides.2.title": {
+    "en": "Key ideas",
+    "t": "Ideas clave"
+  },
+  "lessons.2.slides.2.bullets": {
+    "en": [
+      "Propagation: safe deduction to a fixpoint",
+      "Search: fail-first, undo dead ends",
+      "Global constraints prune more than their pieces",
+      "INFEASIBLE is a proof; UNKNOWN is not"
+    ],
+    "t": [
+      "Propagación: deducción segura hasta un punto fijo",
+      "Búsqueda: fallar primero, deshacer callejones sin salida",
+      "Las restricciones globales podan más que sus partes",
+      "INFEASIBLE es una demostración; UNKNOWN no lo es"
+    ]
+  },
+  "lessons.2.slides.3.title": {
+    "en": "Activity: Be the solver",
+    "t": "Actividad: Sé el solucionador"
+  },
+  "lessons.2.slides.3.bullets": {
+    "en": [
+      "Propagate (8 min): Write candidates and cross out.",
+      "Fail-first (7 min): Guess where the fewest remain.",
+      "Count (5 min): Compare your guesses with a partner’s.",
+      "Model (5 min): Write the same rules as CP-SAT lines."
+    ],
+    "t": [
+      "Propagar (8 min): Escribe candidatos y tacha.",
+      "Fallar primero (7 min): Adivina donde queden menos.",
+      "Contar (5 min): Compara tus intentos con los de tu pareja.",
+      "Modelar (5 min): Escribe las mismas reglas como líneas de CP-SAT."
+    ]
+  },
+  "lessons.2.slides.3.details": {
+    "en": [
+      "Propagate (8 min): On a printed sudoku, pencil the candidates into each empty cell, then cross out every digit already in its row, column or box. Place any cell left with one candidate and repeat until nothing changes.",
+      "Fail-first (7 min): If you are stuck, choose the cell with the fewest candidates, guess, and propagate again. Mark each guess so you can undo it at a dead end.",
+      "Count (5 min): Compare with a partner who guessed in reading order instead. Who needed fewer guesses, and why?",
+      "Model (5 min): Write the rules as CP-SAT lines: a variable per cell with domain 1 to 9, all-different for each row, column and box. Run the 4 × 4 version in the code step."
+    ],
+    "t": [
+      "Propagar (8 min): En un sudoku impreso, anota a lápiz los candidatos en cada celda vacía y luego tacha cada dígito que ya esté en su fila, columna o caja. Coloca cualquier celda que se quede con un candidato y repite hasta que nada cambie.",
+      "Fallar primero (7 min): Si te atascas, elige la celda con menos candidatos, adivina y propaga de nuevo. Marca cada intento para poder deshacerlo en un callejón sin salida.",
+      "Contar (5 min): Compara con una pareja que adivinó en orden de lectura. ¿Quién necesitó menos intentos y por qué?",
+      "Modelar (5 min): Escribe las reglas como líneas de CP-SAT: una variable por celda con dominio de 1 a 9, all-different para cada fila, columna y caja. Ejecuta la versión de 4 × 4 en el paso de código."
+    ]
+  },
+  "lessons.2.slides.3.note": {
+    "en": "Any sudoku from a newspaper works. A pencil and an eraser make undoing guesses easy.",
+    "t": "Sirve cualquier sudoku de un periódico. Un lápiz y una goma facilitan deshacer los intentos."
+  },
+  "lessons.2.slides.3.narration": {
+    "en": "How many guesses did you need when you crossed out first?",
+    "t": "¿Cuántos intentos necesitaste cuando tachaste primero?"
+  },
+  "lessons.2.slides.4.title": {
+    "en": "Let’s discuss",
+    "t": "Conversemos"
+  },
+  "lessons.2.slides.4.bullets": {
+    "en": [
+      "Why is fail-first a good rule, even though it guesses where you are least sure?",
+      "Which real problems have symmetry worth breaking?",
+      "How would you explain an INFEASIBLE roster to the people who wrote its rules?"
+    ],
+    "t": [
+      "¿Por qué fallar primero es una buena regla, aunque adivina donde estás menos seguro?",
+      "¿Qué problemas reales tienen una simetría que vale la pena romper?",
+      "¿Cómo explicarías un turno INFEASIBLE a las personas que escribieron sus reglas?"
+    ]
+  },
+  "lessons.2.slides.5.title": {
+    "en": "Check yourself",
+    "t": "Compruébate"
+  },
+  "lessons.2.slides.5.bullets": {
+    "en": [
+      "Explain in two sentences why all-different is stronger than its 36 pairwise rules."
+    ],
+    "t": [
+      "Explica en dos oraciones por qué all-different es más fuerte que sus 36 reglas por parejas."
+    ]
+  },
+  "lessons.2.slides.5.narration": {
+    "en": "Cross out what can’t be; guess only when stuck.",
+    "t": "Tacha lo que no puede ser; adivina solo cuando estés atascado."
+  },
+  "lessons.2.kit.0.title": {
+    "en": "Slides to revise: Constraint programming: propagation and search",
+    "t": "Diapositivas para repasar: Programación por restricciones: propagación y búsqueda"
+  },
+  "lessons.2.kit.1.title": {
+    "en": "Activity sheet: Constraint programming: propagation and search",
+    "t": "Hoja de actividades: Programación por restricciones: propagación y búsqueda"
+  },
+  "lessons.2.kit.2.title": {
+    "en": "The lesson video (240p, to watch again or share)",
+    "t": "El video de la lección (240p, para verlo otra vez o compartirlo)"
+  },
+  "lessons.3.title": {
+    "en": "Heuristics and trade-offs",
+    "t": "Heurísticas y concesiones"
+  },
+  "lessons.3.tryTomorrow": {
+    "en": "Write 2-opt for a five-stop route in Python and check it against every possible route. Then add a limit on the longest ride for any passenger, solve again, and write one sentence on what the limit costs and who it protects.",
+    "t": "Escribe 2-opt para una ruta de cinco paradas en Python y compáralo con todas las rutas posibles. Luego añade un límite al viaje más largo de cualquier pasajero, resuelve de nuevo y escribe una oración sobre lo que cuesta el límite y a quién protege."
+  },
+  "lessons.3.materials": {
+    "en": [
+      "Your phone, or a computer with Colab",
+      "A local map with distances between five to ten places"
+    ],
+    "t": [
+      "Tu teléfono, o una computadora con Colab",
+      "Un mapa local con las distancias entre cinco y diez lugares"
+    ]
+  },
+  "lessons.3.steps.0.prompt": {
+    "en": "Watch",
+    "t": "Ver"
+  },
+  "lessons.3.steps.0.title": {
+    "en": "Heuristics and trade-offs",
+    "t": "Heurísticas y concesiones"
+  },
+  "lessons.3.steps.0.chapters.0.label": {
+    "en": "Two thousand vans tonight",
+    "t": "Dos mil camionetas esta noche"
+  },
+  "lessons.3.steps.0.chapters.1.label": {
+    "en": "Build, then improve",
+    "t": "Construir y luego mejorar"
+  },
+  "lessons.3.steps.0.chapters.2.label": {
+    "en": "Escaping and measuring",
+    "t": "Escapar y medir"
+  },
+  "lessons.3.steps.0.chapters.3.label": {
+    "en": "Trade-offs in the open",
+    "t": "Las concesiones a la vista de todos"
+  },
+  "lessons.3.steps.0.chapters.4.label": {
+    "en": "Remember and try it",
+    "t": "Recuerda y pruébalo"
+  },
+  "lessons.3.steps.0.checkpoint.question.prompt": {
+    "en": "A heuristic finds a 105 km route; an LP bound says no route is shorter than 100 km. What’s the optimality gap?",
+    "t": "Una heurística encuentra una ruta de 105 km; una cota de PL dice que ninguna ruta es más corta que 100 km. ¿Cuál es la brecha de optimalidad?"
+  },
+  "lessons.3.steps.0.checkpoint.question.options.0.text": {
+    "en": "About 5%",
+    "t": "Cerca de 5 %"
+  },
+  "lessons.3.steps.0.checkpoint.question.options.1.text": {
+    "en": "Exactly 5 km of error",
+    "t": "Exactamente 5 km de error"
+  },
+  "lessons.3.steps.0.checkpoint.question.options.2.text": {
+    "en": "0%: the route is optimal",
+    "t": "0 %: la ruta es óptima"
+  },
+  "lessons.3.steps.0.checkpoint.question.explain": {
+    "en": "The gap is (best found − bound) ÷ best found = (105 − 100) ÷ 105 ≈ 4.8%. The true optimum lies somewhere between 100 and 105 km, so at most 5 km could still be saved, and possibly nothing: the bound may not be tight.",
+    "t": "La brecha es (mejor hallada − cota) ÷ mejor hallada = (105 − 100) ÷ 105 ≈ 4.8 %. El verdadero óptimo está en algún lugar entre 100 y 105 km, así que a lo sumo se podrían ahorrar 5 km, y quizá nada: la cota puede no ser ajustada."
+  },
+  "lessons.3.steps.0.transcript": {
+    "en": "A delivery company plans routes for two thousand vans every night. Nobody proves those routes are the best, and nobody needs to. They’re good, fast and checked. Today: how, and what a modeller owes the people affected. Today: heuristics, local search, and the trade-offs a modeller makes. Routing is NP-hard: as the stops grow, every known exact method can take exponentially long. Twenty villages already give more than a billion billion round trips. So for big instances, we trade a proof for a good answer in time. Heuristics work in two stages. First build a plan fast, for example nearest neighbour: always drive to the closest stop not yet visited. Then improve it with local search: change it a little, and keep the changes that help. For routes, the classic small change is 2-opt: remove two roads, and reconnect by reversing the stretch between them. It removes every crossing. In the lab’s bus map, it takes nearest neighbour’s thirty-four point six kilometres down to twenty-eight point six, the best route. The heart of 2-opt is one line: reverse a slice. Keep the new route if the trip is shorter, and repeat until no swap helps. Local search stops at a local optimum, where no small change helps. Metaheuristics escape: annealing accepts some worse moves while hot, tabu search forbids undoing recent moves, and genetic algorithms mix good plans. In the seating lab, annealing finds the best plan two runs in three; hill climbing, one in four. Quick check! Your heuristic found a route of one hundred and five kilometres, and an LP bound says no route can be shorter than one hundred. What’s the optimality gap? About five percent: at most five kilometres could still be saved, and maybe none. A bound turns good into a measured promise. Real plans weigh several goals: total distance, the longest ride for any child, drivers’ hours. The shortest total can leave one village’s children on the bus for ninety minutes. Put the goals and the fairness limits in the model, and show the trade-off. In practice, OR-Tools’ routing library builds a first route, then improves it with guided local search within a time limit. Engineers test on past days, and keep a person able to override. Plans nobody can question don’t get trusted. In the app, seat twelve pupils with hill climbing and with annealing. Run each several times, and change the starting temperature. Your turn. Plan A is two kilometres shorter in total. Plan B is longer, but no child rides more than forty minutes. Which should the model pick? It depends on goals people agree, so show both, with their numbers. Remember: for hard problems, build, then improve. Escape local optima with metaheuristics, and measure the gap against a bound. And put fairness in the model, in the open. Try it yourself: write 2-opt for a five-stop route in Python, and check it against every possible route. Then add a limit on the longest ride, and see what it costs.",
+    "t": "Una empresa de reparto planifica las rutas de dos mil camionetas cada noche. Nadie demuestra que esas rutas sean las mejores, y nadie lo necesita. Son buenas, rápidas y revisadas. Hoy: cómo, y qué le debe quien modela a las personas afectadas. Hoy: las heurísticas, la búsqueda local y las concesiones que hace quien modela. El enrutamiento es NP-difícil: a medida que crecen las paradas, todo método exacto conocido puede tardar un tiempo exponencial. Veinte pueblos ya dan más de un trillón de recorridos de ida y vuelta. Así que en instancias grandes cambiamos una demostración por una buena respuesta a tiempo. Las heurísticas trabajan en dos etapas. Primero construyen un plan rápido, por ejemplo el vecino más cercano: ir siempre a la parada más cercana aún no visitada. Luego lo mejoran con búsqueda local: cambiarlo un poco y quedarse con los cambios que ayudan. Para las rutas, el pequeño cambio clásico es 2-opt: quitar dos caminos y reconectar invirtiendo el tramo entre ellos. Elimina todos los cruces. En el mapa de autobuses del laboratorio, baja los treinta y cuatro punto seis kilómetros del vecino más cercano a veintiocho punto seis, la mejor ruta. El corazón de 2-opt es una línea: invertir un tramo. Conserva la nueva ruta si el viaje es más corto y repite hasta que ningún intercambio ayude. La búsqueda local se detiene en un óptimo local, donde ningún cambio pequeño ayuda. Las metaheurísticas escapan: el recocido acepta algunos movimientos peores mientras está caliente, la búsqueda tabú prohíbe deshacer movimientos recientes y los algoritmos genéticos mezclan buenos planes. En el laboratorio de asientos, el recocido encuentra el mejor plan dos veces de cada tres; el ascenso de colina, una de cada cuatro. ¡Comprobación rápida! Tu heurística halló una ruta de ciento cinco kilómetros y una cota de PL dice que ninguna ruta puede ser más corta que cien. ¿Cuál es la brecha de optimalidad? Cerca de cinco por ciento: a lo sumo se podrían ahorrar cinco kilómetros, y quizá ninguno. Una cota convierte lo bueno en una promesa medida. Los planes reales ponderan varios objetivos: distancia total, el viaje más largo de cualquier niño, horas de los conductores. El total más corto puede dejar a los niños de un pueblo noventa minutos en el autobús. Pon los objetivos y los límites de equidad en el modelo, y muestra la concesión. En la práctica, la biblioteca de enrutamiento de OR-Tools construye una primera ruta y luego la mejora con búsqueda local guiada dentro de un límite de tiempo. Los ingenieros prueban con días pasados y mantienen a una persona capaz de anularla. A los planes que nadie puede cuestionar no se les tiene confianza. En la app, sienta a doce alumnos con ascenso de colina y con recocido. Ejecuta cada uno varias veces y cambia la temperatura inicial. Tu turno. El plan A es dos kilómetros más corto en total. El plan B es más largo, pero ningún niño viaja más de cuarenta minutos. ¿Cuál debería elegir el modelo? Depende de objetivos que las personas acuerden, así que muestra ambos, con sus números. Recuerda: en problemas difíciles, construye y luego mejora. Escapa de los óptimos locales con metaheurísticas y mide la brecha con una cota. Y pon la equidad en el modelo, a la vista de todos. Pruébalo tú: escribe 2-opt para una ruta de cinco paradas en Python y compáralo con todas las rutas posibles. Luego añade un límite al viaje más largo y mira lo que cuesta."
+  },
+  "lessons.3.steps.1.prompt": {
+    "en": "Read",
+    "t": "Leer"
+  },
+  "lessons.3.steps.1.title": {
+    "en": "Good answers to hard problems, and the choices behind them",
+    "t": "Buenas respuestas a problemas difíciles y las decisiones que hay detrás"
+  },
+  "lessons.3.steps.1.body": {
+    "en": "Many real optimization problems are NP-hard: the travelling salesperson problem, vehicle routing, timetabling, most integer programs. In plain words, no method is known that solves every instance quickly, and most researchers believe none exists (that is the famous P versus NP question). The numbers grow brutally: a round trip through n stops has n! ÷ 2 orders, so 20 villages give about 1.2 × 10¹⁸ routes. Exact methods still solve many instances with clever bounds, but for big ones, every night, practitioners trade a proof of optimality for a good answer within a time limit.\n\nA heuristic usually works in two stages. A construction heuristic builds a plan fast: nearest neighbour drives to the closest unvisited stop each time. An improvement heuristic, or local search, then repeatedly makes a small change from a neighbourhood and keeps it if the plan gets better. For routes the classic neighbourhood is 2-opt: remove two edges and reconnect by reversing the stretch between them, which removes every crossing. In the lab’s bus map, nearest neighbour drives 34.6 km and three 2-opt moves bring it to 28.6 km, the best route there is; on other maps 2-opt stops short.\n\nLocal search stops at a local optimum, a plan no single move improves. Metaheuristics are strategies for escaping: simulated annealing accepts a worse move of size d with probability e^(−d/T) and slowly lowers the temperature T; tabu search forbids undoing recent moves; genetic algorithms combine parts of good plans; large neighbourhood search destroys part of a plan and rebuilds it with an exact solver. In the seating lab, hill climbing reaches the best known plan about one run in four, annealing about two in three.\n\nWithout a proof, measure. A lower bound (from an LP relaxation, or for routes a structure called a 1-tree) gives the optimality gap: a 105 km route against a bound of 100 km is within (105 − 100) ÷ 105 ≈ 4.8%. Some algorithms carry guarantees, such as Christofides’ method, never more than 1.5 times the optimum for routes with ordinary distances, but in practice local search usually does far better than its guarantee.\n\nFinally, real plans have several goals: total distance, the longest ride for any child, drivers’ hours, emissions. The shortest total can leave one village’s children on the bus for ninety minutes. A responsible modeller puts fairness limits in the model, shows the trade-offs with numbers, tests on past days, keeps a person able to override, and publishes how the plan is made. Google’s OR-Tools routing library follows this pattern: a first solution strategy, guided local search, and a time limit you choose.",
+    "t": "Muchos problemas reales de optimización son NP-difíciles: el problema del viajante, el enrutamiento de vehículos, los horarios, la mayoría de los programas enteros. En palabras sencillas, no se conoce ningún método que resuelva rápido todas las instancias, y la mayoría de los investigadores cree que no existe (esa es la famosa pregunta P contra NP). Los números crecen brutalmente: un recorrido de ida y vuelta por n paradas tiene n! ÷ 2 órdenes, así que 20 pueblos dan unas 1.2 × 10¹⁸ rutas. Los métodos exactos aún resuelven muchas instancias con cotas ingeniosas, pero en las grandes, cada noche, los profesionales cambian una demostración de optimalidad por una buena respuesta dentro de un límite de tiempo.\n\nUna heurística suele trabajar en dos etapas. Una heurística de construcción arma un plan rápido: el vecino más cercano va cada vez a la parada no visitada más cercana. Una heurística de mejora, o búsqueda local, hace entonces repetidamente un pequeño cambio dentro de un vecindario y lo conserva si el plan mejora. Para las rutas, el vecindario clásico es 2-opt: quitar dos aristas y reconectar invirtiendo el tramo entre ellas, lo que elimina todos los cruces. En el mapa de autobuses del laboratorio, el vecino más cercano recorre 34.6 km y tres movimientos 2-opt lo llevan a 28.6 km, la mejor ruta que hay; en otros mapas 2-opt se queda corto.\n\nLa búsqueda local se detiene en un óptimo local, un plan que ningún movimiento individual mejora. Las metaheurísticas son estrategias para escapar: el recocido simulado acepta un movimiento peor de tamaño d con probabilidad e^(−d/T) y baja lentamente la temperatura T; la búsqueda tabú prohíbe deshacer movimientos recientes; los algoritmos genéticos combinan partes de buenos planes; la búsqueda de vecindario grande destruye parte de un plan y lo reconstruye con un solucionador exacto. En el laboratorio de asientos, el ascenso de colina alcanza el mejor plan conocido en una de cada cuatro ejecuciones, el recocido en unas dos de cada tres.\n\nSin una demostración, hay que medir. Una cota inferior (de una relajación lineal o, para las rutas, una estructura llamada 1-árbol) da la brecha de optimalidad: una ruta de 105 km frente a una cota de 100 km está a (105 − 100) ÷ 105 ≈ 4.8 %. Algunos algoritmos tienen garantías, como el método de Christofides, que nunca pasa de 1.5 veces el óptimo en rutas con distancias ordinarias, pero en la práctica la búsqueda local suele hacerlo mucho mejor que su garantía.\n\nPor último, los planes reales tienen varios objetivos: distancia total, el viaje más largo de cualquier niño, horas de los conductores, emisiones. El total más corto puede dejar a los niños de un pueblo noventa minutos en el autobús. Quien modela con responsabilidad pone límites de equidad en el modelo, muestra las concesiones con números, prueba con días pasados, mantiene a una persona capaz de anularlo y publica cómo se hace el plan. La biblioteca de enrutamiento de OR-Tools de Google sigue este patrón: una estrategia de primera solución, búsqueda local guiada y un límite de tiempo que tú eliges."
+  },
+  "lessons.3.steps.1.keyTerms.0.term": {
+    "en": "NP-hard",
+    "t": "NP-difícil"
+  },
+  "lessons.3.steps.1.keyTerms.0.def": {
+    "en": "No known method solves every instance quickly; time can grow exponentially with size.",
+    "t": "Ningún método conocido resuelve rápido todas las instancias; el tiempo puede crecer exponencialmente con el tamaño."
+  },
+  "lessons.3.steps.1.keyTerms.1.term": {
+    "en": "Local search and neighbourhood",
+    "t": "Búsqueda local y vecindario"
+  },
+  "lessons.3.steps.1.keyTerms.1.def": {
+    "en": "Improving a plan by small moves from a set of nearby plans, such as 2-opt for routes.",
+    "t": "Mejorar un plan con pequeños movimientos dentro de un conjunto de planes cercanos, como 2-opt para las rutas."
+  },
+  "lessons.3.steps.1.keyTerms.2.term": {
+    "en": "Local optimum",
+    "t": "Óptimo local"
+  },
+  "lessons.3.steps.1.keyTerms.2.def": {
+    "en": "A plan no single move in the neighbourhood improves.",
+    "t": "Un plan que ningún movimiento individual del vecindario mejora."
+  },
+  "lessons.3.steps.1.keyTerms.3.term": {
+    "en": "Metaheuristic",
+    "t": "Metaheurística"
+  },
+  "lessons.3.steps.1.keyTerms.3.def": {
+    "en": "A strategy for escaping local optima: annealing, tabu search, genetic algorithms, large neighbourhood search.",
+    "t": "Una estrategia para escapar de óptimos locales: recocido, búsqueda tabú, algoritmos genéticos, búsqueda de vecindario grande."
+  },
+  "lessons.3.steps.1.keyTerms.4.term": {
+    "en": "Optimality gap",
+    "t": "Brecha de optimalidad"
+  },
+  "lessons.3.steps.1.keyTerms.4.def": {
+    "en": "(best found − bound) ÷ best found: how much better any plan could still be, at most.",
+    "t": "(mejor hallada − cota) ÷ mejor hallada: cuánto mejor podría ser como máximo cualquier plan."
+  },
+  "lessons.3.steps.2.prompt": {
+    "en": "You model the morning bus for five villages. Plan A is 2 km shorter in total, but one village’s children ride 70 minutes; in plan B, 2 km longer, no child rides more than 40 minutes. Which should the model pick?",
+    "t": "Modelas el autobús de la mañana para cinco pueblos. El plan A es 2 km más corto en total, pero los niños de un pueblo viajan 70 minutos; en el plan B, 2 km más largo, ningún niño viaja más de 40 minutos. ¿Cuál debería elegir el modelo?"
+  },
+  "lessons.3.steps.2.options.0.text": {
+    "en": "A: the shortest is the goal",
+    "t": "A: el más corto es el objetivo"
+  },
+  "lessons.3.steps.2.options.1.text": {
+    "en": "It depends on the agreed goals: show both and decide with those affected",
+    "t": "Depende de los objetivos acordados: muestra ambos y decide con las personas afectadas"
+  },
+  "lessons.3.steps.2.options.2.text": {
+    "en": "B, always",
+    "t": "B, siempre"
+  },
+  "lessons.3.steps.2.explain": {
+    "en": "Neither plan beats the other on both goals, so the choice is a judgement about what matters: 2 km of fuel and driving time against 30 minutes for one village’s children. A modeller’s job is to show the trade-off with numbers and let the people affected (and those who pay) decide, ideally by agreeing a limit such as “nobody rides more than 45 minutes” in advance.",
+    "t": "Ningún plan supera al otro en ambos objetivos, así que la elección es un juicio sobre lo que importa: 2 km de combustible y tiempo de conducción frente a 30 minutos para los niños de un pueblo. El trabajo de quien modela es mostrar la concesión con números y dejar que decidan las personas afectadas (y quienes pagan), idealmente acordando de antemano un límite como «nadie viaja más de 45 minutos»."
+  },
+  "lessons.3.steps.3.prompt": {
+    "en": "Complete the program so it prints the optimality gap, in percent, of a 105 km route against a lower bound of 100 km.",
+    "t": "Completa el programa para que imprima la brecha de optimalidad, en porcentaje, de una ruta de 105 km frente a una cota inferior de 100 km."
+  },
+  "lessons.3.steps.3.explain": {
+    "en": "The gap is (found − bound) ÷ found = 5 ÷ 105, printed as 4.8 %. At most 4.8% of the route could still be saved; if the bound isn’t tight, possibly nothing.",
+    "t": "La brecha es (hallada − cota) ÷ hallada = 5 ÷ 105, impresa como 4.8 %. A lo sumo se podría ahorrar 4.8 % de la ruta; si la cota no es ajustada, quizá nada."
+  },
+  "lessons.3.steps.4.prompt": {
+    "en": "2-opt always finds the shortest route if you let it run until no move helps.",
+    "t": "2-opt siempre encuentra la ruta más corta si lo dejas correr hasta que ningún movimiento ayude."
+  },
+  "lessons.3.steps.4.explain": {
+    "en": "It stops at a local optimum: no single 2-opt move helps, but a better route may need a different kind of move. On the lab’s default map it reaches the best route; on other maps it stops short.",
+    "t": "Se detiene en un óptimo local: ningún movimiento 2-opt individual ayuda, pero una ruta mejor puede necesitar otro tipo de movimiento. En el mapa predeterminado del laboratorio llega a la mejor ruta; en otros mapas se queda corto."
+  },
+  "lessons.3.steps.5.prompt": {
+    "en": "Try it: with “Hill climbing”, press Run, then “Start again” and Run, five times, and record the final cost each time. Do the same with “Annealing”. Then set “Starting temperature” to 0.5 and to 6. Estimate how often each method reaches 37, and explain what the temperature controls.",
+    "t": "Pruébalo: con «Ascenso de colina», pulsa «Ejecutar», luego «Empezar de nuevo» y «Ejecutar», cinco veces, y anota el costo final cada vez. Haz lo mismo con «Recocido». Luego pon «Temperatura inicial» en 0.5 y en 6. Estima con qué frecuencia cada método llega a 37 y explica qué controla la temperatura."
+  },
+  "lessons.3.steps.6.prompt": {
+    "en": "Five stops, distances in d, start route [0, 2, 1, 4, 3] (length 25). Fill in the 2-opt move: for each i < j, reverse the stretch r[i..j], and keep the new route if it is shorter.",
+    "t": "Cinco paradas, distancias en d, ruta inicial [0, 2, 1, 4, 3] (longitud 25). Completa el movimiento 2-opt: para cada i < j, invierte el tramo r[i..j] y conserva la nueva ruta si es más corta."
+  },
+  "lessons.3.steps.6.tests.0.hint": {
+    "en": "Start: 25. Every kept move must make the trip shorter; the best is 16.",
+    "t": "Inicio: 25. Todo movimiento conservado debe acortar el viaje; el mejor es 16."
+  },
+  "lessons.3.steps.6.tests.1.hint": {
+    "en": "Reverse only the middle part, r[i:j + 1]; keep r[:i] and r[j + 1:] as they are.",
+    "t": "Invierte solo la parte del medio, r[i:j + 1]; deja r[:i] y r[j + 1:] como están."
+  },
+  "lessons.3.steps.6.hints.0": {
+    "en": "r[i:j + 1][::-1] is the stretch from i to j, reversed.",
+    "t": "r[i:j + 1][::-1] es el tramo de i a j, invertido."
+  },
+  "lessons.3.steps.6.hints.1": {
+    "en": "new = r[:i] + r[i:j + 1][::-1] + r[j + 1:], then if length(new) < length(r): r = new",
+    "t": "new = r[:i] + r[i:j + 1][::-1] + r[j + 1:], then if length(new) < length(r): r = new"
+  },
+  "lessons.3.steps.6.explain": {
+    "en": "Reversing r[i..j] swaps two edges for two others. Keeping only shorter routes takes 25 down to 16, which a check of all 12 distinct round trips confirms is the best. On bigger maps 2-opt can stop at a local optimum, so measure the gap. The same program runs unchanged in Colab, where OR-Tools’ routing library does this, and more, for hundreds of stops.",
+    "t": "Invertir r[i..j] cambia dos aristas por otras dos. Conservar solo las rutas más cortas lleva de 25 a 16, y una comprobación de los 12 recorridos distintos confirma que es el mejor. En mapas más grandes 2-opt puede detenerse en un óptimo local, así que mide la brecha. El mismo programa corre sin cambios en Colab, donde la biblioteca de enrutamiento de OR-Tools hace esto, y más, para cientos de paradas."
+  },
+  "lessons.3.steps.7.prompt": {
+    "en": "Match each metaheuristic to its idea.",
+    "t": "Relaciona cada metaheurística con su idea."
+  },
+  "lessons.3.steps.7.pairs.0.left": {
+    "en": "Simulated annealing",
+    "t": "Recocido simulado"
+  },
+  "lessons.3.steps.7.pairs.0.right": {
+    "en": "Accepts some worse moves, less often as it cools",
+    "t": "Acepta algunos movimientos peores, menos a menudo a medida que se enfría"
+  },
+  "lessons.3.steps.7.pairs.1.left": {
+    "en": "Tabu search",
+    "t": "Búsqueda tabú"
+  },
+  "lessons.3.steps.7.pairs.1.right": {
+    "en": "Forbids undoing recent moves for a while",
+    "t": "Prohíbe deshacer movimientos recientes durante un tiempo"
+  },
+  "lessons.3.steps.7.pairs.2.left": {
+    "en": "Genetic algorithm",
+    "t": "Algoritmo genético"
+  },
+  "lessons.3.steps.7.pairs.2.right": {
+    "en": "Combines parts of good plans",
+    "t": "Combina partes de buenos planes"
+  },
+  "lessons.3.steps.7.pairs.3.left": {
+    "en": "Multi-start",
+    "t": "Multiarranque"
+  },
+  "lessons.3.steps.7.pairs.3.right": {
+    "en": "Runs local search from many random starts",
+    "t": "Ejecuta la búsqueda local desde muchos inicios aleatorios"
+  },
+  "lessons.3.steps.7.explain": {
+    "en": "All four escape local optima in different ways: by accepting bad moves, by memory, by recombination, or by trying again elsewhere. In practice they are compared by the gap they reach in a fixed time.",
+    "t": "Los cuatro escapan de óptimos locales de maneras distintas: aceptando malos movimientos, con memoria, por recombinación o intentándolo de nuevo en otro lugar. En la práctica se comparan por la brecha que alcanzan en un tiempo fijo."
+  },
+  "lessons.3.steps.8.prompt": {
+    "en": "What do you tell the client?",
+    "t": "¿Qué le dices al cliente?"
+  },
+  "lessons.3.steps.8.who": {
+    "en": "A logistics client of the start-up where you intern",
+    "t": "Un cliente de logística de la startup donde haces prácticas"
+  },
+  "lessons.3.steps.8.initial": {
+    "en": "C",
+    "t": "C"
+  },
+  "lessons.3.steps.8.situation": {
+    "en": "The client wants “the optimal route for our 300 stops, every morning, in 5 seconds”, and asks you to promise it in the contract.",
+    "t": "El cliente quiere «la ruta óptima para nuestras 300 paradas, cada mañana, en 5 segundos», y te pide que lo prometas en el contrato."
+  },
+  "lessons.3.steps.8.choices.0.label": {
+    "en": "“We’ll promise optimal; nobody will check.”",
+    "t": "«Prometeremos lo óptimo; nadie lo comprobará.»"
+  },
+  "lessons.3.steps.8.choices.0.consequence": {
+    "en": "Proving optimality for 300 stops in 5 seconds isn’t realistic. Promising it is dishonest, and the first audit will show it.",
+    "t": "Demostrar la optimalidad de 300 paradas en 5 segundos no es realista. Prometerla es deshonesto, y la primera auditoría lo mostrará."
+  },
+  "lessons.3.steps.8.choices.1.label": {
+    "en": "“We’ll give a very good route in 5 seconds, report its gap to a bound, and agree limits such as the longest ride.”",
+    "t": "«Daremos una ruta muy buena en 5 segundos, informaremos su brecha respecto a una cota y acordaremos límites como el viaje más largo.»"
+  },
+  "lessons.3.steps.8.choices.1.consequence": {
+    "en": "Honest and useful: the client sees how good each route is, and the limits they care about are in the model, not hoped for.",
+    "t": "Honesto y útil: el cliente ve qué tan buena es cada ruta, y los límites que le importan están en el modelo, no solo en la esperanza."
+  },
+  "lessons.3.steps.8.choices.2.label": {
+    "en": "“We’ll try every route on a bigger server.”",
+    "t": "«Probaremos todas las rutas en un servidor más grande.»"
+  },
+  "lessons.3.steps.8.choices.2.consequence": {
+    "en": "300 stops have about 300! ÷ 2 routes, a number with over 600 digits. No server can try them all, however big.",
+    "t": "300 paradas tienen unas 300! ÷ 2 rutas, un número con más de 600 dígitos. Ningún servidor, por grande que sea, puede probarlas todas."
+  },
+  "lessons.3.steps.8.explain": {
+    "en": "Promise what you can prove: a good route fast, its gap to a bound, and the limits the client cares about.",
+    "t": "Promete lo que puedas demostrar: una buena ruta rápido, su brecha respecto a una cota y los límites que le importan al cliente."
+  },
+  "lessons.3.steps.9.prompt": {
+    "en": "Where would you accept a good-enough answer with a measured gap, and where would you insist on a proof of the best? What decides it?",
+    "t": "¿Dónde aceptarías una respuesta suficientemente buena con una brecha medida y dónde insistirías en una demostración de lo mejor? ¿Qué lo decide?"
+  },
+  "lessons.3.steps.9.placeholder": {
+    "en": "For example: “A delivery route: good enough. A one-off national budget allocation: I’d want a proof, or at least a tiny gap, and the trade-offs shown.”",
+    "t": "Por ejemplo: «Una ruta de reparto: suficientemente buena. Una asignación presupuestaria nacional única: querría una demostración, o al menos una brecha diminuta, y las concesiones a la vista.»"
+  },
+  "lessons.3.steps.10.prompt": {
+    "en": "Project: Heuristic against exact, with a fairness limit",
+    "t": "Proyecto: heurística contra exacto, con un límite de equidad"
+  },
+  "lessons.3.steps.10.task": {
+    "en": "Take 7 to 9 real places near you (a school bus, a delivery round, a campus tour) and a table of distances or travel times. Implement nearest neighbour and 2-opt in Python, then find the true best route by trying every order (feasible at this size, in Colab if your phone is slow). Report the gap of each heuristic. Then add a limit on the longest ride for any passenger and find the best route that keeps it: what does fairness cost, and who gains?",
+    "t": "Toma de 7 a 9 lugares reales cerca de ti (un autobús escolar, una ronda de reparto, un recorrido por el campus) y una tabla de distancias o tiempos de viaje. Implementa el vecino más cercano y 2-opt en Python y luego halla la verdadera mejor ruta probando todos los órdenes (factible a este tamaño, en Colab si tu teléfono es lento). Informa la brecha de cada heurística. Luego añade un límite al viaje más largo de cualquier pasajero y halla la mejor ruta que lo cumpla: ¿qué cuesta la equidad y quién sale ganando?"
+  },
+  "lessons.3.steps.10.deliverable": {
+    "en": "Your code, a table of route lengths and gaps (nearest neighbour, 2-opt, exact, exact with the fairness limit), and half a page on the trade-off.",
+    "t": "Tu código, una tabla de longitudes de ruta y brechas (vecino más cercano, 2-opt, exacto, exacto con el límite de equidad) y media página sobre la concesión."
+  },
+  "lessons.3.steps.10.rubric.0.criterion": {
+    "en": "I can: implement a construction heuristic and 2-opt, and measure their gaps.",
+    "t": "Puedo: implementar una heurística de construcción y 2-opt, y medir sus brechas."
+  },
+  "lessons.3.steps.10.rubric.1.criterion": {
+    "en": "I can: explain why heuristics are used for NP-hard problems, and their limits.",
+    "t": "Puedo: explicar por qué se usan heurísticas en problemas NP-difíciles y sus límites."
+  },
+  "lessons.3.steps.10.rubric.2.criterion": {
+    "en": "I can: model a fairness limit and report its cost openly.",
+    "t": "Puedo: modelar un límite de equidad e informar su costo abiertamente."
+  },
+  "lessons.3.slides.0.title": {
+    "en": "Heuristics and trade-offs",
+    "t": "Heurísticas y concesiones"
+  },
+  "lessons.3.slides.0.narration": {
+    "en": "When the best can’t be proved in time, how do you give an answer you can stand behind?",
+    "t": "Cuando no se puede demostrar lo mejor a tiempo, ¿cómo das una respuesta que puedas respaldar?"
+  },
+  "lessons.3.slides.0.note": {
+    "en": "Optimization · Level 4 · Lesson 4",
+    "t": "Optimización · Nivel 4 · Lección 4"
+  },
+  "lessons.3.slides.1.title": {
+    "en": "In this lesson you will",
+    "t": "En esta lección vas a"
+  },
+  "lessons.3.slides.1.bullets": {
+    "en": [
+      "Explain NP-hardness in plain words and why heuristics are used.",
+      "Implement 2-opt and compare metaheuristics for escaping local optima.",
+      "Measure the optimality gap and put fairness limits in the open."
+    ],
+    "t": [
+      "Explicar la NP-dificultad en palabras sencillas y por qué se usan heurísticas.",
+      "Implementar 2-opt y comparar metaheurísticas para escapar de óptimos locales.",
+      "Medir la brecha de optimalidad y poner los límites de equidad a la vista."
+    ]
+  },
+  "lessons.3.slides.2.title": {
+    "en": "Key ideas",
+    "t": "Ideas clave"
+  },
+  "lessons.3.slides.2.bullets": {
+    "en": [
+      "Build fast, then improve with local search",
+      "Escape local optima: annealing, tabu, genetic",
+      "Gap = (found − bound) ÷ found",
+      "Several goals: show the trade-off with numbers"
+    ],
+    "t": [
+      "Construye rápido y luego mejora con búsqueda local",
+      "Escapa de óptimos locales: recocido, tabú, genético",
+      "Brecha = (hallada − cota) ÷ hallada",
+      "Varios objetivos: muestra la concesión con números"
+    ]
+  },
+  "lessons.3.slides.3.title": {
+    "en": "Activity: Route race",
+    "t": "Actividad: Carrera de rutas"
+  },
+  "lessons.3.slides.3.bullets": {
+    "en": [
+      "Build (6 min): Nearest neighbour on a paper map.",
+      "Improve (8 min): Uncross with 2-opt moves.",
+      "Check (6 min): Compare with the best route.",
+      "Fair (5 min): Add a limit on the longest ride."
+    ],
+    "t": [
+      "Construir (6 min): Vecino más cercano en un mapa de papel.",
+      "Mejorar (8 min): Descruza con movimientos 2-opt.",
+      "Comprobar (6 min): Compara con la mejor ruta.",
+      "Equidad (5 min): Añade un límite al viaje más largo."
+    ]
+  },
+  "lessons.3.slides.3.details": {
+    "en": [
+      "Build (6 min): Mark 7 places and a start on paper with distances. Build a route by always going to the nearest unvisited place, and add up its length.",
+      "Improve (8 min): Wherever two legs cross, reverse the stretch between them (a 2-opt move) and recompute. Stop when no move shortens the route.",
+      "Check (6 min): Run the lesson’s code or a brute-force search for the true best route, and compute your gap: (yours − best) ÷ yours.",
+      "Fair (5 min): Choose a limit on the longest ride from the start to any place. Does your route keep it? What would keeping it cost in total distance?"
+    ],
+    "t": [
+      "Construir (6 min): Marca 7 lugares y un inicio en papel con las distancias. Arma una ruta yendo siempre al lugar no visitado más cercano y suma su longitud.",
+      "Mejorar (8 min): Donde dos tramos se crucen, invierte el tramo que hay entre ellos (un movimiento 2-opt) y recalcula. Detente cuando ningún movimiento acorte la ruta.",
+      "Comprobar (6 min): Ejecuta el código de la lección o una búsqueda por fuerza bruta de la verdadera mejor ruta, y calcula tu brecha: (la tuya − la mejor) ÷ la tuya.",
+      "Equidad (5 min): Elige un límite para el viaje más largo desde el inicio hasta cualquier lugar. ¿Lo cumple tu ruta? ¿Cuánto costaría cumplirlo en distancia total?"
+    ]
+  },
+  "lessons.3.slides.3.note": {
+    "en": "Use a real local map if you can; travel times work as well as distances. Work in pairs and swap routes to check each other’s sums.",
+    "t": "Usa un mapa local real si puedes; los tiempos de viaje sirven tanto como las distancias. Trabajen en parejas e intercambien rutas para revisar las sumas del otro."
+  },
+  "lessons.3.slides.3.narration": {
+    "en": "How close did your quick route get, and what did fairness cost?",
+    "t": "¿Qué tan cerca llegó tu ruta rápida y qué costó la equidad?"
+  },
+  "lessons.3.slides.4.title": {
+    "en": "Let’s discuss",
+    "t": "Conversemos"
+  },
+  "lessons.3.slides.4.bullets": {
+    "en": [
+      "Why do companies accept routes nobody has proved optimal?",
+      "Which metaheuristic would you try first for a timetable, and why?",
+      "Who should decide the longest acceptable ride on a school bus?"
+    ],
+    "t": [
+      "¿Por qué las empresas aceptan rutas que nadie ha demostrado óptimas?",
+      "¿Qué metaheurística probarías primero para un horario y por qué?",
+      "¿Quién debería decidir el viaje más largo aceptable en un autobús escolar?"
+    ]
+  },
+  "lessons.3.slides.5.title": {
+    "en": "Check yourself",
+    "t": "Compruébate"
+  },
+  "lessons.3.slides.5.bullets": {
+    "en": [
+      "Your route is 52 km and a bound says 50 km. Write the gap, and one sentence a manager would understand."
+    ],
+    "t": [
+      "Tu ruta es de 52 km y una cota dice 50 km. Escribe la brecha y una oración que entendería un gerente."
+    ]
+  },
+  "lessons.3.slides.5.narration": {
+    "en": "A good answer you can measure and explain beats a promise you can’t keep.",
+    "t": "Una buena respuesta que puedes medir y explicar vale más que una promesa que no puedes cumplir."
+  },
+  "lessons.3.kit.0.title": {
+    "en": "Slides to revise: Heuristics and trade-offs",
+    "t": "Diapositivas para repasar: Heurísticas y concesiones"
+  },
+  "lessons.3.kit.1.title": {
+    "en": "Activity sheet: Heuristics and trade-offs",
+    "t": "Hoja de actividades: Heurísticas y concesiones"
+  },
+  "lessons.3.kit.2.title": {
+    "en": "The lesson video (240p, to watch again or share)",
+    "t": "El video de la lección (240p, para verlo otra vez o compartirlo)"
+  },
+  "lessons.4.title": {
+    "en": "Operations research: unit check",
+    "t": "Investigación de operaciones: verificación de la unidad"
+  },
+  "lessons.4.tryTomorrow": {
+    "en": "Take one decision you care about (a society budget, a timetable, a delivery round) and decide which tool fits it: LP, MIP, CP-SAT or a heuristic. Write the model’s variables, constraints and objective in one paragraph, and say what you would report besides the answer: binding limits, the gap, the trade-offs.",
+    "t": "Toma una decisión que te importe (el presupuesto de una sociedad, un horario, una ronda de reparto) y decide qué herramienta le conviene: PL, PEM, CP-SAT o una heurística. Escribe las variables, restricciones y objetivo del modelo en un párrafo y di qué informarías además de la respuesta: los límites activos, la brecha, las concesiones."
+  },
+  "lessons.4.steps.0.prompt": {
+    "en": "Why does a linear program with an optimum always have one at a corner of the feasible region?",
+    "t": "¿Por qué un programa lineal con un óptimo siempre tiene uno en una esquina de la región factible?"
+  },
+  "lessons.4.steps.0.options.0.text": {
+    "en": "The region is convex and the objective is linear",
+    "t": "La región es convexa y el objetivo es lineal"
+  },
+  "lessons.4.steps.0.options.1.text": {
+    "en": "Solvers only look at corners",
+    "t": "Los solucionadores solo miran esquinas"
+  },
+  "lessons.4.steps.0.options.2.text": {
+    "en": "Corners always have whole-number values",
+    "t": "Las esquinas siempre tienen valores enteros"
+  },
+  "lessons.4.steps.0.options.3.text": {
+    "en": "The constraints are all equalities",
+    "t": "Todas las restricciones son igualdades"
+  },
+  "lessons.4.steps.0.explain": {
+    "en": "A linear objective is a family of parallel lines; pushed as far as it can go over a convex region, it last touches a vertex (or a whole edge containing vertices). That is why simplex only needs to move between corners.",
+    "t": "Un objetivo lineal es una familia de rectas paralelas; empujada hasta donde pueda sobre una región convexa, toca por última vez un vértice (o todo un borde que contiene vértices). Por eso el símplex solo necesita moverse entre esquinas."
+  },
+  "lessons.4.steps.1.prompt": {
+    "en": "For a minimisation MIP, the LP relaxation gives an upper bound on the optimal cost.",
+    "t": "En un PEM de minimización, la relajación lineal da una cota superior del costo óptimo."
+  },
+  "lessons.4.steps.1.explain": {
+    "en": "It gives a lower bound: the relaxation allows every integer plan and more, so its minimum can only be lower or equal (1,173.33 against 1,400 for the trip). The incumbent, the best integer plan found, is the upper bound.",
+    "t": "Da una cota inferior: la relajación permite todo plan entero y más, así que su mínimo solo puede ser menor o igual (1,173.33 frente a 1,400 en la excursión). El incumbente, el mejor plan entero hallado, es la cota superior."
+  },
+  "lessons.4.steps.2.prompt": {
+    "en": "Match each method to the problem it suits best.",
+    "t": "Relaciona cada método con el problema que mejor resuelve."
+  },
+  "lessons.4.steps.2.pairs.0.left": {
+    "en": "Simplex (GLOP)",
+    "t": "Símplex (GLOP)"
+  },
+  "lessons.4.steps.2.pairs.0.right": {
+    "en": "The diet problem with fractional portions",
+    "t": "El problema de la dieta con porciones fraccionarias"
+  },
+  "lessons.4.steps.2.pairs.1.left": {
+    "en": "Branch and bound (SCIP)",
+    "t": "Ramificación y acotamiento (SCIP)"
+  },
+  "lessons.4.steps.2.pairs.1.right": {
+    "en": "Whole buses with a booking fee",
+    "t": "Autobuses enteros con una tarifa de reserva"
+  },
+  "lessons.4.steps.2.pairs.2.left": {
+    "en": "CP-SAT",
+    "t": "CP-SAT"
+  },
+  "lessons.4.steps.2.pairs.2.right": {
+    "en": "Exam slots with all-different rules",
+    "t": "Horarios de examen con reglas all-different"
+  },
+  "lessons.4.steps.2.pairs.3.left": {
+    "en": "2-opt local search",
+    "t": "Búsqueda local 2-opt"
+  },
+  "lessons.4.steps.2.pairs.3.right": {
+    "en": "A 300-stop delivery route by morning",
+    "t": "Una ruta de reparto de 300 paradas para la mañana"
+  },
+  "lessons.4.steps.2.explain": {
+    "en": "Continuous linear models suit simplex; whole numbers and fixed costs suit MIP; logical and combinatorial rules suit CP-SAT; huge routing instances under a time limit suit local search, with a gap to show how good the answer is.",
+    "t": "Los modelos lineales continuos van con el símplex; los números enteros y los costos fijos van con el PEM; las reglas lógicas y combinatorias van con CP-SAT; las instancias enormes de enrutamiento bajo un límite de tiempo van con la búsqueda local, con una brecha que muestre qué tan buena es la respuesta."
+  },
+  "lessons.4.steps.3.prompt": {
+    "en": "What does this program print?",
+    "t": "¿Qué imprime este programa?"
+  },
+  "lessons.4.steps.3.options.0.text": {
+    "en": "16",
+    "t": "16"
+  },
+  "lessons.4.steps.3.options.1.text": {
+    "en": "19",
+    "t": "19"
+  },
+  "lessons.4.steps.3.options.2.text": {
+    "en": "84",
+    "t": "84"
+  },
+  "lessons.4.steps.3.explain": {
+    "en": "(1,400 − 1,173.33) ÷ 1,400 ≈ 0.162, so it prints 16: the trip’s best plan was, at first sight, within 16% of the relaxation’s bound. Dividing by the bound instead would give 19, a different (and less common) definition.",
+    "t": "(1,400 − 1,173.33) ÷ 1,400 ≈ 0.162, así que imprime 16: el mejor plan de la excursión estaba, a primera vista, a menos de 16 % de la cota de la relajación. Dividir por la cota daría 19, una definición distinta (y menos común)."
+  },
+  "lessons.4.steps.4.prompt": {
+    "en": "Which statements about shadow prices are true? Choose all that apply.",
+    "t": "¿Qué afirmaciones sobre los precios sombra son verdaderas? Elige todas las que correspondan."
+  },
+  "lessons.4.steps.4.options.0.text": {
+    "en": "A binding constraint can have a non-zero shadow price",
+    "t": "Una restricción activa puede tener un precio sombra distinto de cero"
+  },
+  "lessons.4.steps.4.options.1.text": {
+    "en": "A constraint with slack has a shadow price of zero",
+    "t": "Una restricción con holgura tiene un precio sombra de cero"
+  },
+  "lessons.4.steps.4.options.2.text": {
+    "en": "A shadow price holds for any change, however large",
+    "t": "Un precio sombra vale para cualquier cambio, por grande que sea"
+  },
+  "lessons.4.steps.4.options.3.text": {
+    "en": "In the garden, 8 × 25 + 18 × 5 + 14 × 0 equals the best profit, 290",
+    "t": "En el huerto, 8 × 25 + 18 × 5 + 14 × 0 es igual a la mejor ganancia, 290"
+  },
+  "lessons.4.steps.4.options.4.text": {
+    "en": "Shadow prices tell you which variables must be whole numbers",
+    "t": "Los precios sombra te dicen qué variables deben ser números enteros"
+  },
+  "lessons.4.steps.4.explain": {
+    "en": "Binding constraints carry the prices; slack ones are free (complementary slackness), and the prices value the limits at exactly the optimum (strong duality: 200 + 90 + 0 = 290). A price holds only within a range (hours are worth 5 from 18 to 24), and it says nothing about integrality.",
+    "t": "Las restricciones activas llevan los precios; las que tienen holgura son gratis (holgura complementaria), y los precios valoran los límites exactamente en el óptimo (dualidad fuerte: 200 + 90 + 0 = 290). Un precio vale solo dentro de un rango (las horas valen 5 de 18 a 24) y no dice nada sobre la integralidad."
+  },
+  "lessons.4.steps.5.prompt": {
+    "en": "Complete the sentence.",
+    "t": "Completa la oración."
+  },
+  "lessons.4.steps.5.sentence": {
+    "en": [
+      "Branch and bound splits on a ",
+      {
+        "blank": 0
+      },
+      " variable and ",
+      {
+        "blank": 1
+      },
+      " every branch whose relaxation can’t beat the best plan found."
+    ],
+    "t": [
+      "La ramificación y acotamiento se divide según una variable ",
+      {
+        "blank": 0
+      },
+      " y ",
+      {
+        "blank": 1
+      },
+      " toda rama cuya relajación no pueda superar al mejor plan hallado."
+    ]
+  },
+  "lessons.4.steps.5.bank": {
+    "en": [
+      "fractional",
+      "prunes",
+      "integer",
+      "doubles"
+    ],
+    "t": [
+      "fraccionaria",
+      "poda",
+      "entera",
+      "duplica"
+    ]
+  },
+  "lessons.4.steps.5.answers": {
+    "en": [
+      "fractional",
+      "prunes"
+    ],
+    "t": [
+      "fraccionaria",
+      "poda"
+    ]
+  },
+  "lessons.4.steps.5.explain": {
+    "en": "A fractional value (2.13 buses) is where the relaxation breaks the integer rule, so that’s where to split; pruning branches that can’t win is what keeps the tree small.",
+    "t": "Un valor fraccionario (2.13 autobuses) es donde la relajación rompe la regla de enteros, así que ahí es donde dividir; podar las ramas que no pueden ganar es lo que mantiene pequeño el árbol."
+  },
+  "lessons.4.steps.6.prompt": {
+    "en": "Put the steps of branch and bound in order.",
+    "t": "Ordena los pasos de la ramificación y acotamiento."
+  },
+  "lessons.4.steps.6.steps.0": {
+    "en": "Solve the LP relaxation",
+    "t": "Resuelve la relajación lineal"
+  },
+  "lessons.4.steps.6.steps.1": {
+    "en": "Pick a fractional variable and branch on it",
+    "t": "Elige una variable fraccionaria y ramifica según ella"
+  },
+  "lessons.4.steps.6.steps.2": {
+    "en": "Solve each branch’s relaxation",
+    "t": "Resuelve la relajación de cada rama"
+  },
+  "lessons.4.steps.6.steps.3": {
+    "en": "Prune branches that can’t beat the best plan found",
+    "t": "Poda las ramas que no pueden superar al mejor plan hallado"
+  },
+  "lessons.4.steps.6.steps.4": {
+    "en": "Stop when no branch can do better: the best plan is proved",
+    "t": "Detente cuando ninguna rama pueda mejorar: el mejor plan queda demostrado"
+  },
+  "lessons.4.steps.6.explain": {
+    "en": "The relaxation gives the first bound; branching removes a fraction; each branch is bounded by its own relaxation; pruning compares bounds with the incumbent; when nothing is left open, the incumbent is optimal.",
+    "t": "La relajación da la primera cota; ramificar elimina una fracción; cada rama se acota con su propia relajación; podar compara las cotas con el incumbente; cuando no queda nada abierto, el incumbente es óptimo."
+  },
+  "lessons.4.steps.7.prompt": {
+    "en": "This exam-slot model should use as few slots as possible, but it always reports 1. Which line is wrong?",
+    "t": "Este modelo de horarios de examen debería usar la menor cantidad posible de horarios, pero siempre informa 1. ¿Qué línea está mal?"
+  },
+  "lessons.4.steps.7.explain": {
+    "en": "last must be at least every exam’s slot, so that it equals the last slot used. With slot[e] >= last, the wrong way round, last = 1 always satisfies the model, and minimising it says nothing about how many slots the exams really need.",
+    "t": "last debe ser al menos el horario de cada examen, de modo que sea igual al último horario usado. Con slot[e] >= last, al revés, last = 1 siempre cumple el modelo, y minimizarlo no dice nada sobre cuántos horarios necesitan realmente los exámenes."
+  },
+  "lessons.4.steps.8.prompt": {
+    "en": "Simulated annealing started at a very low temperature behaves much like hill climbing.",
+    "t": "El recocido simulado que empieza a una temperatura muy baja se comporta casi igual que el ascenso de colina."
+  },
+  "lessons.4.steps.8.explain": {
+    "en": "At low T, e^(−d/T) is almost zero for any worse move, so only improving moves are kept: hill climbing. In the seating lab, a starting temperature of 0.5 gets stuck much as hill climbing does.",
+    "t": "Con T baja, e^(−d/T) es casi cero para cualquier movimiento peor, así que solo se conservan los movimientos que mejoran: ascenso de colina. En el laboratorio de asientos, una temperatura inicial de 0.5 se atasca casi como el ascenso de colina."
+  },
+  "lessons.4.steps.9.prompt": {
+    "en": "Complete the 2-opt move: reverse the stretch from i to j, and keep it if the route is shorter.",
+    "t": "Completa el movimiento 2-opt: invierte el tramo de i a j y conserva el resultado si la ruta es más corta."
+  },
+  "lessons.4.steps.9.explain": {
+    "en": "[::-1] reverses the slice, r[j + 1:] is the rest of the route after it, and < keeps only shorter routes. Two edges are swapped for two others, which removes a crossing.",
+    "t": "[::-1] invierte el tramo, r[j + 1:] es el resto de la ruta después de él y < conserva solo las rutas más cortas. Se cambian dos aristas por otras dos, lo que elimina un cruce."
+  },
+  "lessons.4.slides.0.title": {
+    "en": "Operations research: review",
+    "t": "Investigación de operaciones: repaso"
+  },
+  "lessons.4.slides.0.narration": {
+    "en": "Let’s look back at four ways to find the best plan, and check what stuck.",
+    "t": "Miremos atrás cuatro maneras de encontrar el mejor plan y comprobemos qué se quedó."
+  },
+  "lessons.4.slides.0.note": {
+    "en": "Optimization · Level 4 · Unit check",
+    "t": "Optimización · Nivel 4 · Verificación de la unidad"
+  },
+  "lessons.4.slides.1.title": {
+    "en": "In this unit",
+    "t": "En esta unidad"
+  },
+  "lessons.4.slides.1.bullets": {
+    "en": [
+      "Linear programming and the simplex method",
+      "Integer programs and branch and bound",
+      "Constraint programming: propagation and search",
+      "Heuristics and trade-offs"
+    ],
+    "t": [
+      "Programación lineal y el método símplex",
+      "Programas enteros y ramificación y acotamiento",
+      "Programación por restricciones: propagación y búsqueda",
+      "Heurísticas y concesiones"
+    ]
+  },
+  "lessons.4.slides.2.title": {
+    "en": "The big ideas",
+    "t": "Las grandes ideas"
+  },
+  "lessons.4.slides.2.bullets": {
+    "en": [
+      "LP: corners, simplex and shadow prices",
+      "MIP: relaxations bound, branch and bound proves",
+      "CP: propagate, search fail-first; INFEASIBLE is a proof",
+      "Heuristics: build, improve, measure the gap, show the trade-offs"
+    ],
+    "t": [
+      "PL: esquinas, símplex y precios sombra",
+      "PEM: las relajaciones acotan, la ramificación y acotamiento demuestra",
+      "PR: propagar, buscar fallando primero; INFEASIBLE es una demostración",
+      "Heurísticas: construir, mejorar, medir la brecha, mostrar las concesiones"
+    ]
+  },
+  "lessons.4.slides.3.title": {
+    "en": "Activity: Pick the tool",
+    "t": "Actividad: Elige la herramienta"
+  },
+  "lessons.4.slides.3.bullets": {
+    "en": [
+      "Sort (6 min): Match ten problems to LP, MIP, CP or a heuristic.",
+      "Model (8 min): Write one in a paragraph.",
+      "Report (6 min): What would you report besides the answer?"
+    ],
+    "t": [
+      "Clasificar (6 min): Relaciona diez problemas con PL, PEM, PR o una heurística.",
+      "Modelar (8 min): Escribe uno en un párrafo.",
+      "Informar (6 min): ¿Qué informarías además de la respuesta?"
+    ]
+  },
+  "lessons.4.slides.3.details": {
+    "en": [
+      "Sort (6 min): On cards: a canteen menu, buses for a trip, an exam timetable, a 300-stop delivery round, a farm plan, a hospital roster, a sudoku, choosing warehouse sites, a study plan, a sports league. Put each under LP, MIP, CP-SAT or heuristic, with one reason.",
+      "Model (8 min): Pick one card and write its variables (with units), constraints and objective in one paragraph.",
+      "Report (6 min): List what a decision-maker should see besides the plan: binding limits and shadow prices, the gap, the assumptions, and the trade-offs and fairness limits."
+    ],
+    "t": [
+      "Clasificar (6 min): En tarjetas: el menú de una cantina, autobuses para una excursión, un horario de exámenes, una ronda de reparto de 300 paradas, un plan de cultivo, un turno de hospital, un sudoku, elegir sedes de almacén, un plan de estudio, una liga deportiva. Pon cada una bajo PL, PEM, CP-SAT o heurística, con una razón.",
+      "Modelar (8 min): Elige una tarjeta y escribe sus variables (con unidades), restricciones y objetivo en un párrafo.",
+      "Informar (6 min): Anota lo que debería ver quien decide además del plan: los límites activos y los precios sombra, la brecha, los supuestos, y las concesiones y los límites de equidad."
+    ]
+  },
+  "lessons.4.slides.3.note": {
+    "en": "Many problems fit more than one tool; the reason matters more than the label.",
+    "t": "Muchos problemas encajan con más de una herramienta; la razón importa más que la etiqueta."
+  },
+  "lessons.4.slides.3.narration": {
+    "en": "Which tool fits, and what would you report besides the answer?",
+    "t": "¿Qué herramienta encaja y qué informarías además de la respuesta?"
+  },
+  "lessons.4.slides.4.title": {
+    "en": "Let’s discuss",
+    "t": "Conversemos"
+  },
+  "lessons.4.slides.4.bullets": {
+    "en": [
+      "When is a relaxation’s answer useful, even though it can’t be used as it is?",
+      "Why is INFEASIBLE good news for a modeller?",
+      "What does a responsible modeller owe the people affected by a plan?"
+    ],
+    "t": [
+      "¿Cuándo es útil la respuesta de una relajación, aunque no se pueda usar tal cual?",
+      "¿Por qué INFEASIBLE es una buena noticia para quien modela?",
+      "¿Qué le debe quien modela con responsabilidad a las personas afectadas por un plan?"
+    ]
+  },
+  "lessons.4.slides.5.title": {
+    "en": "Check yourself",
+    "t": "Compruébate"
+  },
+  "lessons.4.slides.5.bullets": {
+    "en": [
+      "Name one problem from your own life, the tool you’d use, and the one number you’d report besides the answer."
+    ],
+    "t": [
+      "Nombra un problema de tu propia vida, la herramienta que usarías y el único número que informarías además de la respuesta."
+    ]
+  },
+  "lessons.4.slides.5.narration": {
+    "en": "Pick the right tool, and report what the answer is worth.",
+    "t": "Elige la herramienta correcta e informa lo que vale la respuesta."
+  },
+  "lessons.4.kit.0.title": {
+    "en": "Slides to revise: Operations research: LP, MIP, CP, OR-Tools modelling, heuristics: unit check",
+    "t": "Diapositivas para repasar: Investigación de operaciones: PL, PEM, PR, modelado con OR-Tools, heurísticas: verificación de la unidad"
+  },
+  "lessons.4.kit.1.title": {
+    "en": "Activity sheet: Operations research: LP, MIP, CP, OR-Tools modelling, heuristics: unit check",
+    "t": "Hoja de actividades: Investigación de operaciones: PL, PEM, PR, modelado con OR-Tools, heurísticas: verificación de la unidad"
+  }
+}

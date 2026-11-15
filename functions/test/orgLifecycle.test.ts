@@ -330,8 +330,8 @@ describe("deleting an organization", () => {
 
   it("queues the accounts it manages for deletion only when asked, and leaves them as they are", async () => {
     member("u1", "student", "o1", { managedBy: "o1", email: "amal@school.example" });
-    member("u2", "student", "o1", { email: "omar@users.darsi.app" }); // a username login from before managedBy
-    member("u3", "teacher", "o1", { managedBy: "o2", email: "t@users.darsi.app" }); // another organization says it manages this one
+    member("u2", "student", "o1", { email: "omar@users.darsiai.org" }); // a username login from before managedBy
+    member("u3", "teacher", "o1", { managedBy: "o2", email: "t@users.darsiai.org" }); // another organization says it manages this one
     member("u4", "student", "o1", { email: "own@gmail.example" });
     expect(await deleteOrg.run(asSuper({ ...confirm, members: "delete-managed" }))).toEqual({ done: true, cursor: null, processed: 7, units: 0 });
     expect(db.all("accountDeletions")).toEqual([
@@ -340,7 +340,7 @@ describe("deleting an organization", () => {
     ]);
     // Queued accounts keep their organization (their files are found by it) and their claims until account.ts deletes them.
     expect(user("u1")).toEqual({ role: "student", orgId: "o1", managedBy: "o1", email: "amal@school.example" });
-    expect(user("u2")).toEqual({ role: "student", orgId: "o1", email: "omar@users.darsi.app" });
+    expect(user("u2")).toEqual({ role: "student", orgId: "o1", email: "omar@users.darsiai.org" });
     expect(billing.writeClaims.mock.calls.map((c) => c[0]).sort()).toEqual(["a1", "s1", "t1", "u3", "u4"]);
     expect(user("u3")).toMatchObject({ role: "learner", orgId: null });
     expect(audits[0]).toMatchObject({ action: "deleteOrgStarted", membersOption: "delete-managed" });
@@ -349,7 +349,7 @@ describe("deleting an organization", () => {
 
   it("deletes nobody by default: managed accounts are released like everyone else", async () => {
     member("u1", "student", "o1", { managedBy: "o1" });
-    member("u2", "student", "o1", { email: "omar@users.darsi.app" });
+    member("u2", "student", "o1", { email: "omar@users.darsiai.org" });
     expect(await deleteOrg.run(asSuper(confirm))).toMatchObject({ done: true, processed: 5 });
     expect(db.all("accountDeletions")).toEqual([]);
     expect(user("u1")).toMatchObject({ role: "learner", orgId: null });

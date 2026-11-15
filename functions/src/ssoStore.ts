@@ -18,7 +18,7 @@ import { logger } from "firebase-functions/v2";
 import { HttpsError } from "firebase-functions/v2/https";
 import { auth, db } from "./admin.js";
 import { isManaged } from "./orgMembersCore.js";
-import { USERNAME_DOMAIN } from "./passwords.js";
+import { USERNAME_DOMAINS } from "./passwords.js";
 import { managedAccount } from "./roles.js";
 import { brandLogoPath, LOGO_TYPES } from "./sitesCore.js";
 import { bucket, savePublicJson } from "./storage.js";
@@ -197,10 +197,10 @@ export async function refuseSsoSession(token: Record<string, unknown> | { [k: st
   if (!token?.sso) return;
   const managedBy = (await db.doc(`users/${uid}`).get()).get("managedBy");
   // The profile says so: Auth isn't asked, so a managed account's checkout doesn't hang on a second service.
-  if (managedAccount({ managedBy }, USERNAME_DOMAIN).managed) return;
+  if (managedAccount({ managedBy }, USERNAME_DOMAINS).managed) return;
   // Profiles from before `managedBy`: a username login is the organization's too (roles.managedAccount, account.ts).
   // Auth's own email only, never the profile's copy; an Auth record that can't be read refuses (authRecord throws).
-  if (managedAccount({ managedBy, email: (await authRecord(uid))?.email ?? null }, USERNAME_DOMAIN).managed) return;
+  if (managedAccount({ managedBy, email: (await authRecord(uid))?.email ?? null }, USERNAME_DOMAINS).managed) return;
   throw new HttpsError("failed-precondition", "Sign in with your own Darsi login to do this.", { reason: "sso-own-login" });
 }
 
@@ -326,7 +326,7 @@ export async function ssoClaimsMoved(uid: string, newOrgId: string | null, now =
   const personal = async (orgId: unknown) => {
     login ??= await Promise.all([db.doc(`users/${uid}`).get(), authRecord(uid)])
       .then(([p, r]) => ({ managedBy: p.get("managedBy"), email: r?.email }), () => "unread" as const);
-    return login !== "unread" && !isManaged(login, typeof orgId === "string" ? orgId : null, USERNAME_DOMAIN);
+    return login !== "unread" && !isManaged(login, typeof orgId === "string" ? orgId : null, USERNAME_DOMAINS);
   };
   for (const d of docs) {
     const state = d.get("state");

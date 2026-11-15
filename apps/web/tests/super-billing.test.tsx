@@ -690,7 +690,7 @@ describe("a person's credits (ad-forms-safety)", () => {
 
 describe("giving and taking seats (ad-forms-safety)", () => {
   const org = { id: "o1", name: "School", type: "school", status: "active", createdBy: "u1", licence: { plan: "super_seat", seats: 3, until: Date.now() + 9 * DAY } } as Org;
-  const member = (uid: string, name: string, o: Partial<Profile> = {}) => ({ uid, name, email: `${uid}@users.darsi.app`, role: "student", orgId: "o1", ...o } as Profile);
+  const member = (uid: string, name: string, o: Partial<Profile> = {}) => ({ uid, name, email: `${uid}@users.darsiai.org`, role: "student", orgId: "o1", ...o } as Profile);
   const members = [member("s1", "Amina"), member("s2", "Bilal", { superSeat: true }), member("s3", "Chidi"), member("s4", "Dalia")];
   const row = (name: string) => within(screen.getByText(name).closest("li")!);
 
@@ -785,7 +785,7 @@ describe("giving and taking seats (ad-forms-safety)", () => {
 
 describe("the seats list (feat-org-seats-list)", () => {
   const org = { id: "o1", name: "School", type: "school", status: "active", createdBy: "u1", licence: { plan: "super_seat", seats: 300, until: Date.now() + 9 * DAY } } as Org;
-  const member = (i: number, o: Partial<Profile> = {}) => ({ uid: `s${i}`, name: `Pupil ${String(i).padStart(3, "0")}`, email: `p${i}@users.darsi.app`, role: "student", orgId: "o1", group: i % 2 ? "5A" : "5B", ...o } as Profile);
+  const member = (i: number, o: Partial<Profile> = {}) => ({ uid: `s${i}`, name: `Pupil ${String(i).padStart(3, "0")}`, email: `p${i}@users.darsiai.org`, role: "student", orgId: "o1", group: i % 2 ? "5A" : "5B", ...o } as Profile);
   it("lists org admins too, finds a member by name or class, and shows more than the first hundred", () => {
     m.auth.role = "orgAdmin";
     const members = [member(0, { uid: "a1", name: "Head Teacher", role: "orgAdmin", group: null }), ...Array.from({ length: 250 }, (_, i) => member(i + 1))];

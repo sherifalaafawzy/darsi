@@ -2,7 +2,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Unit } from "../../src/content/types";
-import { normalizeCode } from "../../src/code/harness";
+import { codeSymbols, normalizeCode } from "../../src/code/harness";
 import { runInNode } from "./node";
 
 // What a phone keyboard types into a code step, mended before a run (src/code/harness.ts normalizeCode; CodeSteps calls
@@ -99,5 +99,20 @@ describe("normalizeCode", () => {
       }
     }
     expect(n).toBeGreaterThan(50);
+  });
+});
+
+// A live problem report (2026-11-10): "for × in values" and "seen • add (×)", typed from an Arabic keyboard's symbol page.
+describe("an Arabic keyboard's symbol page", () => {
+  it("mends • and · to a full stop, ÷ to / and − to -, outside strings only", () => {
+    expect(py("seen • add(v)\nx = 6 ÷ 2 − 1\ny = a·b")).toBe("seen . add(v)\nx = 6 / 2 - 1\ny = a.b");
+    expect(py('print("• ÷")  # ·')).toBe('print("• ÷")  # ·');
+  });
+  it("names the symbols code can't read, outside strings and comments, so a failed run can say so", () => {
+    expect(codeSymbols("for × in values:\n    seen.add(×)", "python")).toEqual(["×"]);
+    expect(codeSymbols('print("3 × 4 → ok")  # × →', "python")).toEqual([]);
+    expect(codeSymbols('s = """×\n×"""\nt = 1 ✓ 2 → 3 ★ 4 ☆', "python")).toEqual(["✓", "→", "★"]);
+    expect(codeSymbols("SELECT a × b FROM t -- ×\nWHERE n = '×'", "sql")).toEqual(["×"]);
+    expect(codeSymbols("name = 'ليلى'\nعدد = 3", "python")).toEqual([]);
   });
 });

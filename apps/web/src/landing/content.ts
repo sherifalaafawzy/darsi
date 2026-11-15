@@ -10,7 +10,7 @@ export const landing = {
     body: t("Darsi gives school and university teachers serious, practical training in AI, programming, data, IoT and cyber security, with courses for their students too: short lessons with narrated videos, real projects in their own classrooms, and ready-to-teach slides and lesson plans — in their language, on any phone, even offline.",
             "يقدّم «درسي» لمعلمي المدارس والجامعات تدريبًا جادًا وعمليًا في الذكاء الاصطناعي والبرمجة والبيانات وإنترنت الأشياء والأمن السيبراني، مع دورات لطلابهم أيضًا: دروس قصيرة مع فيديوهات مشروحة بالصوت، ومشاريع حقيقية في فصولهم، وشرائح وخطط دروس جاهزة للتدريس — بلغتهم، على أي هاتف، وحتى دون اتصال."),
     primary: t("Start learning", "ابدأ التعلّم"), secondary: t("Bring Darsi to your school", "اجلب «درسي» إلى مؤسستك"),
-    proof: t("Works offline · Arabic and English · Designed for low-cost phones", "يعمل دون اتصال، بالعربية والإنجليزية، ومصمَّم للهواتف منخفضة التكلفة"),
+    proof: t("Works offline · In your language · Designed for low-cost phones", "يعمل دون اتصال، بلغتك، ومصمَّم للهواتف منخفضة التكلفة"),
   },
   why: {
     title: t("Why this matters", "لماذا هذا مهم"),
@@ -53,7 +53,7 @@ export const landing = {
     items: [
       [t("Offline first", "دون اتصال أولًا"), t("Download a unit on Wi-Fi; lessons, videos and kits then work without signal. Progress syncs later.", "نزّل وحدة عبر Wi-Fi، فتعمل الدروس والفيديوهات والحقائب دون إشارة، ويُزامَن التقدّم لاحقًا.")],
       [t("Light on data", "استهلاك قليل للبيانات"), t("The whole app is under 2 MB to install; videos default to low resolution and show their size before you download.", "حجم التطبيق كله أقل من ٢ ميغابايت، والفيديوهات بدقة منخفضة افتراضيًا وتعرض حجمها قبل التنزيل.")],
-      [t("Your language first", "لغتك أولًا"), t("Arabic and English today, with right-to-left layouts designed — not translated. More languages are planned.", "العربية والإنجليزية اليوم، بتصميم من اليمين إلى اليسار مُعَدّ بعناية لا مترجم. ولغات أخرى قادمة.")],
+      [t("Your language first", "لغتك أولًا"), t("The app speaks {languages}, with right-to-left layouts designed — not translated. Courses are in Arabic and English today; more languages are coming.", "التطبيق متاح بهذه اللغات: {languages}، بتصميم من اليمين إلى اليسار مُعَدّ بعناية لا مترجم. والدورات بالعربية والإنجليزية اليوم، ولغات أخرى قادمة.")],
       [t("Any screen", "أي شاشة"), t("Phone, tablet or computer. Install it like an app from the browser; Android and iOS apps will follow.", "هاتف أو جهاز لوحي أو حاسوب. ثبّته كتطبيق من المتصفح، وتطبيقات أندرويد وiOS قادمة.")],
       [t("Readable in sunlight", "مقروء تحت الشمس"), t("A high-contrast mode for outdoor classrooms and low-brightness screens.", "وضع عالي التباين للفصول الخارجية والشاشات منخفضة السطوع.")],
       [t("No ads, no tricks", "بلا إعلانات ولا حيل"), t("Streaks count teaching weeks, not days. Mistakes cost nothing. Pupils' data never goes into a chatbot.", "تُحسب السلسلة بأسابيع التدريس لا بالأيام، والأخطاء لا تكلّف شيئًا، وبيانات الطلاب لا تدخل أي روبوت دردشة.")],
@@ -95,9 +95,16 @@ export const landing = {
       [t("Can I use the slides with my class?", "هل يمكنني استخدام الشرائح مع فصلي؟"), t("Yes. Kits are free to copy for your school. Slides come as PDF or editable PowerPoint, with speaker notes.", "نعم. يُسمح بنسخ الحقائب لمدرستك مجانًا. الشرائح متاحة بصيغة PDF أو PowerPoint قابلة للتعديل مع ملاحظات المتحدّث.")],
       [t("How does my school or ministry join?", "كيف تنضم مدرستي أو وزارتي؟"), t("Create an account, choose “Register your organization”, and tell us about it. After approval you become its admin and can add people.", "أنشئ حسابًا، واختر «سجّل مؤسستك»، وأخبرنا عنها. بعد الموافقة تصبح مشرفها وتستطيع إضافة الأشخاص.")],
       [t("Who can see my progress?", "من يستطيع رؤية تقدّمي؟"), t("Only you — unless you belong to an organization, where its admins (and, for students, their teacher) can see your learning record.", "أنت فقط — إلا إذا كنت عضوًا في مؤسسة، فيرى مشرفوها (ومعلمك إن كنت طالبًا) سجل تعلّمك.")],
-      [t("Which languages are available?", "ما اللغات المتاحة؟"), t("Arabic and English today. The platform is built so more languages can be added without redesign.", "العربية والإنجليزية اليوم. والمنصة مبنية بحيث يمكن إضافة لغات أخرى دون إعادة تصميم.")],
+      [t("Which languages are available?", "ما اللغات المتاحة؟"), t("The app: {languages}. Courses: Arabic and English today, with more on the way. The platform is built so languages can be added without redesign.", "التطبيق: {languages}. والدورات: بالعربية والإنجليزية اليوم، ولغات أخرى في الطريق. والمنصة مبنية بحيث يمكن إضافة لغات دون إعادة تصميم.")],
     ],
   },
+  /** The phone drawn beside the title (decorative). */
+  mock: {
+    learn: t("Learn", "تعلّم"), choose: t("Choose one", "اختر إجابة"), prompt: t("Which of these learns from examples?", "أيّ هذه يتعلّم من الأمثلة؟"),
+    wrong: t("A light switch", "مفتاح الإضاءة"), right: t("A spam filter", "فلتر الرسائل المزعجة"), why: t("It learns from thousands of labelled emails.", "يتعلّم من آلاف الرسائل المصنّفة."),
+    offline: t("Offline ready", "متاح دون اتصال"), track: t("AI", "الذكاء الاصطناعي"), lesson: t("Check before you trust", "تحقّق قبل أن تثق"), meta: t("Lesson 3 · 12 min", "الدرس ٣، ١٢ دقيقة"),
+  },
+  sourcesTitle: t("Sources", "المصادر"),
   /**
    * Links to the public pages (TECHNICAL.md "Public pages"): static files outside the app, so plain links (a full page
    * load), in English, or under /ar/ for Arabic.

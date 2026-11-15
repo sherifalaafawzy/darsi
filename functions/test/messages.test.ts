@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  CATALOGUE, KINDS, broadcastCondition, catOf, formatNumber, isolate, linkFor, message, projectsLink, tagFor, topicsFor, trimFeedback, webpush, wordingFor,
+  CATALOGUE, KINDS, MORE, broadcastCondition, catOf, formatNumber, isolate, linkFor, message, projectsLink, tagFor, topicsFor, trimFeedback, webpush, wordingFor,
   type Kind, type Lang,
 } from "../src/messages";
 import { readFileSync } from "node:fs";
@@ -244,9 +244,27 @@ describe("announcement topics", () => {
     expect(broadcastCondition("en", { type: "role", role: "teacher" })).toBe("'all' in topics && !('lang-ar' in topics) && 'role-teacher' in topics");
   });
 
-  it("words a phone in an added language in English", () => {
-    expect(wordingFor("fr")).toBe("en");
+  it("words a phone in its own language when there is wording for it, else in English", () => {
+    expect(wordingFor("fr")).toBe("fr");
     expect(wordingFor("ar")).toBe("ar");
-    expect(message("daily0", "fr")).toEqual(message("daily0", "en"));
+    expect(wordingFor("sw")).toBe("en");
+    expect(message("daily0", "sw")).toEqual(message("daily0", "en"));
+    expect(message("daily0", "fr").title).toBe("Votre leçon de 5 minutes est prête");
+  });
+
+  it("has every kind in the added languages, with names, numbers and feedback filled in", () => {
+    for (const lang of Object.keys(MORE)) {
+      for (const kind of KINDS) {
+        const m = message(kind, lang, VARS);
+        expect(m.title.length, `${lang} ${kind}`).toBeGreaterThan(3);
+        expect(m.body.length, `${lang} ${kind}`).toBeGreaterThan(3);
+        expect(m.title + m.body).not.toMatch(lang === "ur" ? /[·يك]/ : /·/);
+      }
+      expect(message("staffSubmission", lang, VARS).body).toContain(isolate("Amina Bello"));
+      expect(message("weekGoal", lang, { n: 3 }).title).toContain("3");
+      expect(message("reviewRevise", lang, VARS).body).toBe("Clear plan.");
+    }
+    expect(message("weekGoal", "de", { n: 1 }).title).toBe("Noch 1 Lektion bis zu deinem Wochenziel");
+    expect(webpush(message("daily0", "ur"), "ur", "/learn", "t").data.dir).toBe("rtl");
   });
 });

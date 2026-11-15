@@ -60,7 +60,7 @@ describe("progressChanged", () => {
 
   it("makes no profile for a username login someone signed up for by hand (sec-rules-05)", async () => {
     m.docs.set("users/squat/progress/ai-1-1-1", { ...result });
-    m.emails.set("squat", "khaled.omar@users.darsi.app");
+    m.emails.set("squat", "khaled.omar@users.darsiai.org");
     expect(await progressChanged("squat", "ai-1-1-1")).toBe("no profile");
     expect(m.writes).toEqual([]);
   });

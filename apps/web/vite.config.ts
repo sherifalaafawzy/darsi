@@ -540,7 +540,10 @@ export default defineConfig({
         // repository's content/ folder). Older scripts wrote it into public/content/, from where it was shipped and
         // precached: should a copy turn up there again, it is still left out of the precache.
         // PAGE_IGNORES: the public pages and their stylesheet are for visitors and crawlers, never part of the install.
-        globIgnores: ["kits/**", "lib/**", "push-sw.js", "offline-sw.js", "content/dev-catalog.json", "app.html", ...PAGE_IGNORES, ...ON_DEMAND.map((p) => p.glob)],
+        // content/phrases: translations of Labs, the placement check and the home page for added languages, only the phone's
+        // language, fetched by the screen that needs it (src/i18n/phrases.ts; "darsi-content" keeps them). content/i18n-staff:
+        // staff screens' strings in added languages (i18n addStaffArea), fetched with their chunk.
+        globIgnores: ["kits/**", "lib/**", "push-sw.js", "offline-sw.js", "content/dev-catalog.json", "app.html", ...PAGE_IGNORES, "content/phrases/**", "content/i18n-staff/**", ...ON_DEMAND.map((p) => p.glob)],
         navigateFallback: "/index.html",
         // Staff-only shared chunks, which no name pattern can catch (staffOnly), leave the precache here.
         manifestTransforms: [async (entries) => ({ manifest: entries.filter((e) => !staff.has(e.url)).map((e) => (e.url === "index.html" ? { ...e, revision: `${e.revision}-${hostHeaders}` } : e)), warnings: [] })],

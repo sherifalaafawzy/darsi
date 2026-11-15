@@ -15,8 +15,11 @@ describe("a unit's version counter, from what still records it", () => {
     expect(fileVersion("orgs/o1/units/uabcdefgh/v12.json")).toBe(12);
     expect(fileVersion("content/units/ai-1-1/v4.json.bak")).toBeNaN();
     expect(fileVersion("content/catalog.json")).toBeNaN();
+    // An added language's file of that version counts too (the functions publish one per language).
+    expect(fileVersion("content/units/ai-1-1/v5.fr.json")).toBe(5);
+    expect(fileVersion("content/units/ai-1-1/v5.fr.json.bak")).toBeNaN();
     // The same pattern as functions/src/catalog.ts versionOf.
-    expect(repo("functions/src/catalog.ts")).toContain("/\\/v(\\d+)\\.json$/");
+    expect(repo("functions/src/catalog.ts")).toContain("/\\/v(\\d+)(?:\\.[a-z0-9-]+)?\\.json$/");
   });
 
   it("takes the highest publish the audit log holds for each owner's unit", () => {

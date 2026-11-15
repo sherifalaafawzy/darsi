@@ -4,6 +4,7 @@
  */
 import { createHash } from "node:crypto";
 import { managedAccount } from "./roles.js";
+import { USERNAME_DOMAINS, type Domains } from "./usernameDomain.js";
 
 /** Deleting your own account needs a sign-in this recent (seconds), so a phone left signed in can't be used for it. */
 export const RECENT_SIGN_IN = 10 * 60;
@@ -102,7 +103,7 @@ export function queueStopped(entry: Record<string, unknown> | undefined, now: nu
  * later: by then the account may be a platform admin, may have become the person's own (no longer managed), or may be
  * another organization's. An account with neither a profile nor a sign-in is already gone: only leftovers remain.
  */
-export function queuedDeletionProblem(orgId: string, t: { exists: boolean; hasAccount: boolean; role?: unknown; claimRole?: unknown; orgId?: unknown; managedBy?: unknown; email?: string | null }, usernameDomain = "users.darsi.app"):
+export function queuedDeletionProblem(orgId: string, t: { exists: boolean; hasAccount: boolean; role?: unknown; claimRole?: unknown; orgId?: unknown; managedBy?: unknown; email?: string | null }, usernameDomain: Domains = USERNAME_DOMAINS):
   "no-org" | "superadmin" | "not-managed" | "moved" | null {
   if (!orgId) return "no-org";
   if (t.role === "superadmin" || t.claimRole === "superadmin") return "superadmin";

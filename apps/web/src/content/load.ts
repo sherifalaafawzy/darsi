@@ -75,7 +75,8 @@ const ORG_FILES = "/o/orgs%2F";
  * as after forgetCatalog. Told in a microtask, never now: this runs while App renders. The catalog isn't forgotten
  * there a second time, so a read a screen began in between stands.
  */
-export function configureContent(next: { orgId: string | null; signedIn: boolean }) {
+export function configureContent(next: { orgId: string | null; signedIn: boolean; lang?: string }) {
+  if (next.lang) unitLang = next.lang;
   if (!next.signedIn && orgFlag.get()) { orgFlag.set(false); void forgetOrgFiles(); }
   const orgId = next.signedIn ? next.orgId : null;
   if (orgId === scope.orgId) return;
@@ -83,6 +84,8 @@ export function configureContent(next: { orgId: string | null; signedIn: boolean
   scope = { orgId }; catalog = null; catalogAt = 0;
   if (asked) void Promise.resolve().then(() => { catalogVersion++; for (const f of [...catalogSubs]) f(); });
 }
+/** The page language: a course translated into it (catalog `langs`) loads that language's file. */
+let unitLang = "en";
 /** Set once org files were cached on this device, so signing out knows there is something to forget. */
 const orgFlag = {
   get: () => { try { return localStorage.getItem("darsi:orgFiles") === "1"; } catch { return false; } },
@@ -233,7 +236,8 @@ export async function loadLanguagePack(code: string, version: number): Promise<R
 export async function loadUnit(id: string): Promise<Unit> {
   const entry = (await loadCatalog()).units.find((u) => u.id === id);
   if (!entry?.src) throw new Error(`No published unit ${id}`);
-  const src = entry.src;
+  // A course translated into the page language has a file with only that language and English (smaller to download).
+  const src = entry.langs?.includes(unitLang) ? entry.src.replace(/\.json$/, `.${unitLang}.json`) : entry.src;
   if (src.startsWith("/")) return cachedJSON<Unit>(src, async () => { const r = await fetch(src); if (!r.ok) throw new Error(`${src}: ${r.status}`); return r.json(); }, true);
   try {
     return await cachedJSON<Unit>(storageUrl(src), isOrgPath(src) ? fetchOrg(src) : fetchPublic(src), false, () => { void pruneVersions(id, src).catch(() => {}); });

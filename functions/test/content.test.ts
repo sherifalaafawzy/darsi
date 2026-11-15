@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FakeAuth, FakeDb } from "./fakeFirestore";
-import { allFigureUrls, buildCatalog, canManage, catalogEntry, catalogPath, figurePath, figureUrls, idAllowed, isOwner, mediaPrefix, sizeByLang, sizeMB, staleVersions, unitPath, unitPrefix, versionOf } from "../src/catalog";
+import { allFigureUrls, buildCatalog, canManage, catalogEntry, catalogPath, extraLangs, figurePath, figureUrls, idAllowed, inLanguages, isOwner, mediaPrefix, sizeByLang, sizeMB, staleVersions, unitLangPath, unitPath, unitPrefix, versionOf } from "../src/catalog";
 // The build script is plain JavaScript; scripts/copy-shared.d.mts types its exports.
 import { FILES, transform } from "../scripts/copy-shared.mjs";
 import type { Unit } from "../src/shared/types";
@@ -167,6 +167,37 @@ describe("catalog", () => {
     const cat = buildCatalog([u("c", "cyber", 1, "A"), u("b", "ai", 2, "A"), u("a", "ai", 1, "Z"), u("d", "ai", 1, "B")]);
     expect(cat.units.map((x) => x.id)).toEqual(["d", "a", "b", "c"]);
     expect(cat.version).toBe(1);
+  });
+});
+
+describe("courses translated into added languages", () => {
+  const t = (en: string, ar: string, more: Record<string, string> = {}) => ({ en, ar, ...more });
+  const unit = {
+    id: "ai-x", track: "ai", level: 1, title: t("AI", "ذكاء", { fr: "IA", pt: "IA" }), summary: t("Sum", "ملخص", { fr: "Résumé" }),
+    lessons: [{ id: "l1", title: t("One", "واحد", { fr: "Un" }), kit: [{ formats: ["pdf"], urls: { en: { pdf: "/e.pdf" }, ar: { pdf: "/a.pdf" }, fr: { pdf: "/f.pdf" } } }],
+      steps: [{ type: "video", sources: { en: "/v-en.mp4", ar: "/v-ar.mp4" }, transcript: t("Hi", "مرحبا", { fr: "Salut", pt: "Oi" }), light: { files: { "audio/en.m4a": "/x" } } }] }],
+  } as unknown as Unit;
+
+  it("lists the languages beyond English and Arabic, and keeps one language per file", () => {
+    expect(extraLangs(unit)).toEqual(["fr", "pt"]);
+    const fr = inLanguages(unit, ["fr"]) as unknown as typeof unit & { lessons: { steps: { transcript: object; sources: object; light: { files: object } }[]; kit: { urls: object }[] }[] };
+    expect(fr.title).toEqual({ en: "AI", fr: "IA" });
+    expect(fr.lessons[0].steps[0].transcript).toEqual({ en: "Hi", fr: "Salut" });
+    expect(fr.lessons[0].steps[0].sources).toEqual({ en: "/v-en.mp4" });
+    expect(fr.lessons[0].kit[0].urls).toEqual({ en: { pdf: "/e.pdf" }, fr: { pdf: "/f.pdf" } });
+    expect(fr.lessons[0].steps[0].light.files).toEqual({ "audio/en.m4a": "/x" }); // not keyed by language
+    const base = inLanguages(unit, ["ar"]) as unknown as { title: object };
+    expect(base.title).toEqual({ en: "AI", ar: "ذكاء" });
+  });
+
+  it("names the language files and keeps them with their version", () => {
+    const src = unitPath("public", "ai-x", 3);
+    expect(unitLangPath(src, "fr")).toBe("content/units/ai-x/v3.fr.json");
+    expect(versionOf("content/units/ai-x/v3.fr.json")).toBe(3);
+    expect(staleVersions(["content/units/ai-x/v1.json", "content/units/ai-x/v1.fr.json", "content/units/ai-x/v3.fr.json"], 3)).toEqual(["content/units/ai-x/v1.json", "content/units/ai-x/v1.fr.json"]);
+    const e = catalogEntry(unit, "public", 3, { en: 2_000_000, ar: 2_000_000, fr: 1_000_000, pt: 1_000_000 });
+    expect(e.langs).toEqual(["fr", "pt"]);
+    expect(e.sizeByLang?.fr).toBeLessThan(e.sizeByLang!.en);
   });
 });
 

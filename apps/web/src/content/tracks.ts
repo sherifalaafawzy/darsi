@@ -12,7 +12,10 @@ import type { TrackDef } from "./types";
 export const MAX_LEVELS = 12;
 /** The four levels of every built-in track, from beginner to advanced (docs/CURRICULUM.md says what each means). */
 export const LEVEL_NAMES = [
-  { en: "Beginner", ar: "مبتدئ" }, { en: "Elementary", ar: "أساسي" }, { en: "Intermediate", ar: "متوسط" }, { en: "Advanced", ar: "متقدم" },
+  { en: "Beginner", ar: "مبتدئ" },
+  { en: "Elementary", ar: "أساسي" },
+  { en: "Intermediate", ar: "متوسط" },
+  { en: "Advanced", ar: "متقدم" },
 ];
 export const BUILTIN_TRACKS: TrackDef[] = [
   { id: "ai", name: { en: "AI", ar: "الذكاء الاصطناعي" }, icon: "ai", tone: "sunbird", levels: 4, levelNames: LEVEL_NAMES, order: 0, builtIn: true },
@@ -33,6 +36,7 @@ export function mergeTracks(published?: TrackDef[] | null): TrackDef[] {
   for (const t of published ?? []) {
     const b = BUILTIN.get(t.id);
     // A built-in track saved without level names (settings from before they existed) keeps the built-in ones.
+    // Added languages need nothing here: L() finds a name's translation by its English (content/phrases/<lang>/tracks.json).
     out.set(t.id, b ? { ...t, icon: b.icon, tone: b.tone, builtIn: true, ...(t.levelNames?.some((n) => n?.en) ? {} : { levelNames: b.levelNames }) } : { ...t, builtIn: false });
   }
   for (const b of BUILTIN_TRACKS) if (!out.has(b.id)) out.set(b.id, b);

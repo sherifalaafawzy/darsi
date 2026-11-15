@@ -33,6 +33,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, extname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { contentTypeOf, figurePaths, kitFiles, mediaPathOf, mediaPaths, withKitUrls } from "./lib/kits.mjs";
+import { apply as applyTranslations } from "./unit-i18n.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const args = process.argv.slice(2);
@@ -112,7 +113,8 @@ async function uploadMedia(unitId, paths) {
 console.log(`Seeding ${files.length} unit(s) into ${emulator ? "the emulators" : projectId} (bucket ${BUCKET})`);
 let failed = 0;
 for (const f of files) {
-  const source = JSON.parse(readFileSync(join(ROOT, "content/units", f), "utf8"));
+  // Translations into the languages platform admins added (content/i18n/units/<lang>/<id>.json, scripts/unit-i18n.mjs).
+  const source = applyTranslations(JSON.parse(readFileSync(join(ROOT, "content/units", f), "utf8"))).unit;
   const id = source.id;
   try {
     const meta = await db.doc(`units/${id}`).get();

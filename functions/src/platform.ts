@@ -10,11 +10,12 @@ import { FieldPath, FieldValue } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { recentSignIn } from "./accountCore.js";
+import { accountByLogin } from "./logins.js";
 import { audit, auth, db, freshCaller, releasePupils, requireSuper, str, type Role } from "./admin.js";
 import { refreshClaims, writeClaims } from "./billing.js";
 import { refuseClosedOrg } from "./closedOrg.js";
 import { isId, isManaged, onlyWorkingAdmin } from "./orgMembersCore.js";
-import { generateCode, isValidEmail, isValidUsername, USERNAME_DOMAIN, usernameToEmail } from "./passwords.js";
+import { generateCode, isValidEmail, isValidUsername, USERNAME_DOMAINS, usernameToEmail } from "./passwords.js";
 import { firstAdminProblem, losesPower } from "./roles.js";
 import { bucket } from "./storage.js";
 import { ssoKeepWayIn, ssoOrgDeleted, ssoSetBlocked } from "./ssoStore.js";
@@ -213,7 +214,7 @@ async function dropInviteCodes(orgId: string) {
  *   goes before the profile says so. Their own subscription, if any, stays (writeClaims).
  */
 async function letGo(m: MemberDoc, orgId: string, option: MembersOption, by: string): Promise<"released" | "queued" | "waiting"> {
-  if (option === "delete-managed" && isManaged({ managedBy: m.get("managedBy"), email: m.get("email") }, orgId, USERNAME_DOMAIN)) {
+  if (option === "delete-managed" && isManaged({ managedBy: m.get("managedBy"), email: m.get("email") }, orgId, USERNAME_DOMAINS)) {
     const queue = db.doc(`accountDeletions/${m.id}`);
     if ((await queue.get()).exists) return "waiting"; // a repeated call: already queued, and counted then
     await queue.set({ orgId, by, at: FieldValue.serverTimestamp() });
@@ -392,7 +393,7 @@ export const findAccount = onCall(async (req) => {
   const email = raw.includes("@") ? raw : isValidUsername(raw) ? usernameToEmail(raw) : "";
   if (!email || !isValidEmail(email)) return { account: null, profiles: 0 };
   const [user, claimed] = await Promise.all([
-    auth.getUserByEmail(email).catch(() => null),
+    accountByLogin(email),
     db.collection("users").where("email", "==", email).select().limit(5).get(),
   ]);
   const profile = user ? await db.doc(`users/${user.uid}`).get() : null;

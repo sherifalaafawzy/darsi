@@ -1,3 +1,5 @@
+import { atDomain, USERNAME_DOMAINS, type Domains } from "./usernameDomain.js";
+
 /** Roles compared, without Firebase (so the tests can run it). */
 /** How much a role may do, for "did this change take power away?". */
 const RANK: Record<string, number> = { learner: 0, student: 0, teacher: 1, orgAdmin: 2, superadmin: 3 };
@@ -14,13 +16,13 @@ export const stillTeaches = (teacher: { role?: unknown; orgId?: unknown } | unde
   !!teacher && !!orgId && teacher.orgId === orgId && (teacher.role === "teacher" || teacher.role === "orgAdmin");
 
 /**
- * A username login (`<name>@users.darsi.app`) that someone signed up for by hand rather than one an organization made
+ * A username login (`<name>@users.darsiai.org`, usernameDomain.ts) that someone signed up for by hand rather than one an organization made
  * (createMembers sets `createdBy`). Auth can't refuse the domain at sign-up without a blocking function, so the rules
  * give such an account no profile, and joinOrg and requestOrg refuse it: it could otherwise pose as a school's username
  * account, or take a login a school means to give a pupil (sec-rules-05).
  */
-export const handMadeUsername = (email: unknown, createdBy: unknown, domain = "users.darsi.app") =>
-  typeof email === "string" && email.toLowerCase().endsWith(`@${domain}`) && !createdBy;
+export const handMadeUsername = (email: unknown, createdBy: unknown, domain: Domains = USERNAME_DOMAINS) =>
+  atDomain(email, domain) && !createdBy;
 
 /**
  * Why a platform admin can't approve an organization request now, or null (reviewOrg): its requester has since joined
@@ -52,7 +54,7 @@ export function firstAdminProblem(adminUid: string, callerUid: string, profile: 
  * platform admins; org admins only for students and teachers whose accounts their organization manages.
  *
  * An organization manages an account when the profile says so (`managedBy`: the organization's id), or, for profiles
- * from before that field, when its login is a username (`<name>@users.darsi.app`: the person holds no email of their
+ * from before that field, when its login is a username (`<name>@users.darsiai.org`: the person holds no email of their
  * own, so nobody else could look after it). `createdBy` alone gives the organization nothing: an admin who typed a
  * teacher's real email only invited them; the account, its password and its data are that person's.
  */
@@ -60,11 +62,11 @@ export type AccountAction = "delete" | "export";
 export interface AccountTarget { uid: string; exists: boolean; role?: unknown; orgId?: unknown; createdBy?: unknown; managedBy?: unknown; email?: string | null }
 export interface AccountCaller { uid: string; role: string; orgId?: string | null }
 /** Whether an organization manages this account, and which one says so (`by`: null for an older username account). */
-export function managedAccount(t: Pick<AccountTarget, "managedBy" | "email">, usernameDomain = "users.darsi.app"): { managed: boolean; by: string | null } {
+export function managedAccount(t: Pick<AccountTarget, "managedBy" | "email">, usernameDomain: Domains = USERNAME_DOMAINS): { managed: boolean; by: string | null } {
   const by = typeof t.managedBy === "string" && t.managedBy ? t.managedBy : null;
-  return { managed: by !== null || Boolean(t.email?.toLowerCase().endsWith(`@${usernameDomain}`)), by };
+  return { managed: by !== null || atDomain(t.email, usernameDomain), by };
 }
-export function accountActionProblem(action: AccountAction, c: AccountCaller, t: AccountTarget, usernameDomain = "users.darsi.app"):
+export function accountActionProblem(action: AccountAction, c: AccountCaller, t: AccountTarget, usernameDomain: Domains = USERNAME_DOMAINS):
   "self-staff" | "self-org" | "superadmin" | "not-yours" | "missing" | null {
   const { managed, by } = managedAccount(t, usernameDomain);
   if (c.uid === t.uid) {

@@ -11,7 +11,7 @@
  * - orgs/demo-school, "Nile Valley Demo School" (`demo: true`), with invite codes (orgs/demo-school/private/invites)
  *   and its request's contact and reason (orgs/demo-school/private/request).
  * - An org admin, 4 teachers and 48 students in 4 classes. Accounts are `demo-…` uids with username logins
- *   (`demo.<name>@users.darsi.app`, docs/FIREBASE.md); students and teachers get random passwords nobody knows.
+ *   (`demo.<name>@users.darsiai.org`, docs/FIREBASE.md); students and teachers get random passwords nobody knows.
  * - Lessons finished over the last 12 weeks, from the real courses in content/units (their competencies, so the
  *   UNESCO, DigComp, ISTE and CSTA views fill in): strong, steady, struggling, inactive and new learners.
  * - The summaries the onProgressWrite trigger would write (the trigger recomputes them the same way).
@@ -140,7 +140,7 @@ function progressFor(courses, k) {
 }
 
 async function account(uid, { name, login, role, group, teacherId, lastActive, createdDaysAgo, extra = {} }) {
-  const email = `${login}@users.darsi.app`, pw = password();
+  const email = `${login}@users.darsiai.org`, pw = password();
   await auth.deleteUser(uid).catch(() => {});
   await auth.createUser({ uid, email, password: pw, displayName: name });
   await auth.setCustomUserClaims(uid, { role, orgId: ORG });
