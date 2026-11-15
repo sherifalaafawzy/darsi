@@ -437,7 +437,7 @@ export default defineConfig({
         manifestTransforms: [async (entries) => ({ manifest: entries.filter((e) => !staff.has(e.url)).map((e) => (e.url === "index.html" ? { ...e, revision: `${e.revision}-${hostHeaders}` } : e)), warnings: [] })],
         // /__/ is Firebase Hosting's own (the sign-in helper page /__/auth/handler opens in the Google popup, since the
         // auth domain is the site's own). Answering it with the app made Google sign-in hang.
-        navigateFallbackDenylist: [/^\/__\//],
+        navigateFallbackDenylist: [/^\/__\//, /^\/(llms\.txt|robots\.txt)$/, /^\/\.well-known\//],
         runtimeCaching,
       },
       devOptions: { enabled: false },
