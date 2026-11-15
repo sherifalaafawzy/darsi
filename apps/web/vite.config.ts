@@ -9,6 +9,7 @@ import { defineConfig, loadEnv, type Plugin, type Rolldown } from "vite";
 import react from "@vitejs/plugin-react";
 import legacy from "@vitejs/plugin-legacy";
 import { VitePWA, type VitePWAOptions } from "vite-plugin-pwa";
+import { PAGE_PATH, PAGE_ROOTS, ROOT_FILES } from "./scripts/site/roots.mjs";
 
 /** labs/apps/<id>/index.tsx → its own chunk "lab-<id>-<hash>.js" (src/labs/loader.tsx), cached when opened. */
 const LAB_ENTRY = /labs[\\/]apps[\\/]([\w-]+)[\\/]index\.tsx$/;
@@ -257,6 +258,32 @@ const appShell = (): Plugin => {
     closeBundle() {
       const from = join(out, "index.html");
       if (out && existsSync(from)) copyFileSync(from, join(out, "app.html"));
+    },
+  };
+};
+
+/**
+ * The public pages (TECHNICAL.md "Public pages"): static HTML for search and AI engines, one per published course,
+ * track, feature and "why" topic, in English and Arabic, written into the build folder after everything else
+ * (scripts/site/build.mjs). A release (production mode, not `npm run local`) must read the live catalog: it never
+ * falls back to the repository's course sources, which may hold courses that aren't published. DARSI_SITE_SOURCE
+ * ("live", "repo" or a folder) picks the source for other builds; DARSI_SITE=off skips the pages.
+ */
+/** What the public pages write, which the precache leaves out (globIgnores). */
+export const PAGE_IGNORES = [...PAGE_ROOTS.map((r) => `${r}/**`), ...ROOT_FILES, "assets/site-*.css"];
+const publicPages = (): Plugin => {
+  let out = "", mode = "", done = false;
+  return {
+    name: "darsi-public-pages",
+    apply: "build",
+    configResolved(c) { out = resolve(c.root, c.build.outDir); mode = c.mode; },
+    async closeBundle() {
+      if (done || !out || process.env.DARSI_SITE === "off") return;
+      done = true;
+      const [{ loadSiteData }, { buildSite }] = await Promise.all([import("./scripts/site/data.mjs"), import("./scripts/site/build.mjs")]);
+      const release = mode === "production" && process.env.DARSI_LOCAL_BUILD !== "1";
+      const data = await loadSiteData({ source: process.env.DARSI_SITE_SOURCE ?? "live", strict: release });
+      await buildSite({ outDir: out, data });
     },
   };
 };
@@ -512,7 +539,8 @@ export default defineConfig({
         // content/dev-catalog.json is the dev server's list of unpublished courses (devUnits above serves it from the
         // repository's content/ folder). Older scripts wrote it into public/content/, from where it was shipped and
         // precached: should a copy turn up there again, it is still left out of the precache.
-        globIgnores: ["kits/**", "lib/**", "push-sw.js", "offline-sw.js", "content/dev-catalog.json", "app.html", ...ON_DEMAND.map((p) => p.glob)],
+        // PAGE_IGNORES: the public pages and their stylesheet are for visitors and crawlers, never part of the install.
+        globIgnores: ["kits/**", "lib/**", "push-sw.js", "offline-sw.js", "content/dev-catalog.json", "app.html", ...PAGE_IGNORES, ...ON_DEMAND.map((p) => p.glob)],
         navigateFallback: "/index.html",
         // Staff-only shared chunks, which no name pattern can catch (staffOnly), leave the precache here.
         manifestTransforms: [async (entries) => ({ manifest: entries.filter((e) => !staff.has(e.url)).map((e) => (e.url === "index.html" ? { ...e, revision: `${e.revision}-${hostHeaders}` } : e)), warnings: [] })],
@@ -520,7 +548,9 @@ export default defineConfig({
         // auth domain is the site's own). Answering it with the app made Google sign-in hang.
         // /api/ is the functions' (school sign-in's start and finish, problem reports, analytics): fetches, never pages,
         // and never the app in their place should a navigation ever reach one.
-        navigateFallbackDenylist: [/^\/__\//, /^\/api\//],
+        // The public pages (/courses, /features, /why-darsi, /ar/…) are real files: a phone with the app installed opens
+        // them from the network, never the app in their place.
+        navigateFallbackDenylist: [/^\/__\//, /^\/api\//, PAGE_PATH],
         runtimeCaching,
       },
       devOptions: { enabled: false },
@@ -536,6 +566,7 @@ export default defineConfig({
     legacyRuntimes(),
     earlySw(),
     appShell(),
+    publicPages(),
     devUnits(),
     devMedia(),
 

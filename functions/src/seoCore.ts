@@ -31,6 +31,7 @@ const DARSI = {
     lessons: (n: number) => `${n} lessons`,
     forStudents: "for students", forTeachers: "for teachers", forUni: "for university teachers",
     start: "Start learning",
+    explore: [["courses", "All courses"], ["features", "What Darsi does"], ["why-darsi", "Why Darsi exists"]] as [string, string][],
   },
   ar: {
     title: "درسي — تدريب عملي على الذكاء الاصطناعي والبرمجة والأمن السيبراني للمعلمين والطلاب",
@@ -41,6 +42,7 @@ const DARSI = {
     lessons: (n: number) => `${n} دروس`,
     forStudents: "للطلاب", forTeachers: "للمعلمين", forUni: "لمعلمي الجامعات",
     start: "ابدأ التعلّم",
+    explore: [["courses", "كل الدورات"], ["features", "ماذا يقدّم «درسي»"], ["why-darsi", "لماذا وُجد «درسي»"]] as [string, string][],
   },
 };
 
@@ -55,20 +57,32 @@ const alternates = (base: string) => [{ hreflang: "en", href: `${base}/` }, { hr
 const canonicalOf = (base: string, lang: Lang) => (lang === "ar" ? `${base}/?lang=ar` : `${base}/`);
 
 /** darsiai.org's home page: what Darsi is, its tracks, and every public course with its summary. */
-export function darsiSeo(units: CatalogUnit[], lang: Lang, logo: string): Seo {
+/**
+ * The public pages this release of Hosting has (site-pages.json, written by apps/web/scripts/site/build.mjs): the
+ * home page links to them, and to a course's own page only when the release has one (a course published after the
+ * release has none until the next).
+ */
+export interface SitePages { courses: string[] }
+/** A public page's address: English at /<path>/, Arabic under /ar/. */
+export const pagePath = (lang: Lang, path: string) => `${lang === "ar" ? "/ar" : ""}/${path}/`;
+
+export function darsiSeo(units: CatalogUnit[], lang: Lang, logo: string, pages: SitePages | null = null): Seo {
   const W = DARSI[lang];
   const pub = units.filter((u) => !u.owner || u.owner === "public");
   const trackName = (id: string) => pick(BUILTIN_TRACKS.find((t) => t.id === id)?.name as Record<string, string> | undefined, lang) || id;
   const tracks = [...new Set(pub.map((u) => u.track))];
   const who = (u: CatalogUnit) => (u.teach === "university" ? W.forUni : u.audience === "students" ? W.forStudents : W.forTeachers);
   const items = pub.map((u) => ({ u, title: pick(u.title, lang), summary: pick(u.summary, lang) })).filter((x) => x.title);
+  const withPage = new Set(pages?.courses ?? []);
+  const hasPage = (id: string) => withPage.has(id);
   const body = [
     `<main class="seo-pre" lang="${lang}" dir="${lang === "ar" ? "rtl" : "ltr"}">`,
     `<h1>${esc(lang === "ar" ? "درسي" : "Darsi")}</h1>`,
     `<p>${esc(W.lead)}</p>`,
     `<p><a href="/learn">${esc(W.start)}</a></p>`,
+    pages ? `<ul>${W.explore.map(([path, label]) => `<li><a href="${pagePath(lang, path)}">${esc(label)}</a></li>`).join("")}</ul>` : "",
     tracks.length ? `<h2>${esc(W.tracks)}</h2><ul>${tracks.map((t) => `<li>${esc(trackName(t))}</li>`).join("")}</ul>` : "",
-    items.length ? `<h2>${esc(W.courses)}</h2><ul>${items.map((x) => `<li><h3>${esc(x.title)}</h3><p>${esc(`${trackName(x.u.track)}, ${who(x.u)}${x.u.lessons ? `, ${W.lessons(x.u.lessons)}` : ""}. ${x.summary}`)}</p></li>`).join("")}</ul>` : "",
+    items.length ? `<h2>${esc(W.courses)}</h2><ul>${items.map((x) => `<li><h3>${hasPage(x.u.id) ? `<a href="${pagePath(lang, `courses/${x.u.id}`)}">${esc(x.title)}</a>` : esc(x.title)}</h3><p>${esc(`${trackName(x.u.track)}, ${who(x.u)}${x.u.lessons ? `, ${W.lessons(x.u.lessons)}` : ""}. ${x.summary}`)}</p></li>`).join("")}</ul>` : "",
     `</main>`,
   ].join("");
   const org = { "@type": "EducationalOrganization", "@id": `${DARSI_URL}/#org`, name: "Darsi", alternateName: "درسي", url: `${DARSI_URL}/`, logo, description: DARSI.en.description };
@@ -82,7 +96,7 @@ export function darsiSeo(units: CatalogUnit[], lang: Lang, logo: string): Seo {
         "@type": "ItemList", name: W.courses, numberOfItems: items.length,
         itemListElement: items.map((x, i) => ({
           "@type": "ListItem", position: i + 1,
-          item: { "@type": "Course", name: x.title, description: cut(x.summary || x.title, 300), inLanguage: ["en", "ar"], isAccessibleForFree: true, url: `${DARSI_URL}/learn`, provider: { "@id": `${DARSI_URL}/#org` }, about: trackName(x.u.track), educationalLevel: String(x.u.level), audience: { "@type": "EducationalAudience", educationalRole: x.u.audience === "students" ? "student" : "teacher" } },
+          item: { "@type": "Course", name: x.title, description: cut(x.summary || x.title, 300), inLanguage: ["en", "ar"], isAccessibleForFree: true, url: hasPage(x.u.id) ? `${DARSI_URL}${pagePath(lang, `courses/${x.u.id}`)}` : `${DARSI_URL}/learn`, provider: { "@id": `${DARSI_URL}/#org` }, about: trackName(x.u.track), educationalLevel: String(x.u.level), audience: { "@type": "EducationalAudience", educationalRole: x.u.audience === "students" ? "student" : "teacher" } },
         })),
       }] : []),
     ],
@@ -177,11 +191,14 @@ export function sitemap(base: string, extra: string[]): string {
 }
 
 /** llms.txt (llmstxt.org): a short plain summary for AI answer engines, in Markdown, with links to the full pages. */
-export function llms(s: Seo, base: string): string {
+export function llms(s: Seo, base: string, pages: SitePages | null = null): string {
   const strip = (h: string) => h.replace(/<h1>(.*?)<\/h1>/g, "# $1\n\n").replace(/<h2>(.*?)<\/h2>/g, "\n## $1\n\n").replace(/<h3>(.*?)<\/h3>/g, "\n### $1\n\n")
     .replace(/<li>/g, "- ").replace(/<\/(li|p|section|ul)>/g, "\n").replace(/<[^>]+>/g, "")
     .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\n{3,}/g, "\n\n").trim();
   // The spec's order: the name as the title, the summary as a quote, then the details and the links.
   const [title, ...rest] = strip(s.body).split("\n");
-  return [title, "", `> ${s.description}`, "", rest.join("\n").trim(), "", "## Links", "", `- [Home (English)](${base}/)`, `- [Home (Arabic)](${base}/?lang=ar)`, `- [Start learning](${base}/learn)`, ""].join("\n");
+  // Darsi's own address: its public pages, each in English and Arabic, and the sitemap that lists them all.
+  const site = pages ? DARSI.en.explore.flatMap(([path, label]) => [`- [${label}](${base}${pagePath("en", path)})`, `- [${label} (Arabic)](${base}${pagePath("ar", path)})`])
+    .concat(pages.courses.length ? [`- [Every public page (sitemap)](${base}/sitemap-pages.xml)`] : []) : [];
+  return [title, "", `> ${s.description}`, "", rest.join("\n").trim(), "", "## Links", "", `- [Home (English)](${base}/)`, `- [Home (Arabic)](${base}/?lang=ar)`, `- [Start learning](${base}/learn)`, ...site, ""].join("\n");
 }

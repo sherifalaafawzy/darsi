@@ -72,7 +72,8 @@ describe("a lab chunk that fails to load", () => {
     // The app's site (firebase.json has two since school sign-in: "app" and "login").
     const app = fb.hosting.find((h: { target: string }) => h.target === "app");
     const rw = app.rewrites.find((r: { destination: string }) => r.destination === "/app.html");
-    // Firebase globs (RE2 has no lookahead, so a negated glob): every path except /assets/** and /lib/** gets the app.
-    expect(rw.source).toBe("!/@(assets|lib)/**");
+    // Firebase globs (RE2 has no lookahead, so a negated glob): every path except /assets/** and /lib/** gets the app,
+    // and the public pages' folders (scripts/site/roots.mjs; tests/site.test.ts checks those).
+    expect(rw.source).toMatch(/^!\/@\(assets\|lib(?:\|[a-z-]+)*\)\/\*\*$/);
   });
 });

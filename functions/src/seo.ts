@@ -17,7 +17,7 @@ import { onRequest } from "firebase-functions/v2/https";
 import { checkPage, pagePath, type OrgPage } from "./shared/page.js";
 import { isDarsiHost, siteFor, type SitesFile } from "./shared/sites.js";
 import { bucket, publicFileUrl } from "./storage.js";
-import { DARSI_URL, darsiSeo, inject, langOf, llms, orgSeo, sitemap, type CatalogUnit, type Seo } from "./seoCore.js";
+import { DARSI_URL, darsiSeo, inject, langOf, llms, orgSeo, sitemap, type CatalogUnit, type Seo, type SitePages } from "./seoCore.js";
 
 const SITE = defineString("SITE_URL", { default: "https://darsiai.org" });
 const TTL = 60_000;
@@ -53,8 +53,18 @@ export function hostOf(headers: Record<string, unknown>): string {
   return /^[a-z0-9.-]{1,253}$/.test(raw) ? raw : "";
 }
 
+/** The public pages this Hosting release has (TECHNICAL.md "Public pages"), read from Hosting itself like the shell. */
+async function sitePages(): Promise<SitePages> {
+  return kept("pages", async () => {
+    const r = await fetch(`${SITE.value()}/site-pages.json`, { headers: { "Cache-Control": "no-cache" } });
+    if (!r.ok) throw new Error(`site-pages.json: ${r.status}`);
+    const v = (await r.json()) as { courses?: unknown };
+    return { courses: Array.isArray(v.courses) ? v.courses.filter((x): x is string => typeof x === "string") : [] };
+  });
+}
+
 /** What an address shows: an organization's (sites.json and its homepage) or Darsi's. */
-async function seoFor(host: string, lang: "en" | "ar"): Promise<{ seo: Seo; base: string }> {
+async function seoFor(host: string, lang: "en" | "ar"): Promise<{ seo: Seo; base: string; pages?: SitePages | null }> {
   if (host && !isDarsiHost(host)) {
     const sites = await kept("sites", () => json<SitesFile>("content/sites.json"));
     const site = sites ? siteFor(sites, host) : null;
@@ -63,8 +73,11 @@ async function seoFor(host: string, lang: "en" | "ar"): Promise<{ seo: Seo; base
       return { seo: orgSeo(host, site, page && page.blocks.length ? page : null, lang, site.logo ? (/^https?:\/\//.test(site.logo) ? site.logo : publicFileUrl(site.logo)) : null), base: `https://${host}` };
     }
   }
-  const catalog = await kept("catalog", () => json<{ units: CatalogUnit[] }>("content/catalog.json")).catch(() => null);
-  return { seo: darsiSeo(catalog?.units ?? [], lang, `${DARSI_URL}/app-icons/app-icon-512.png`), base: DARSI_URL };
+  const [catalog, pages] = await Promise.all([
+    kept("catalog", () => json<{ units: CatalogUnit[] }>("content/catalog.json")).catch(() => null),
+    sitePages().catch(() => null),
+  ]);
+  return { seo: darsiSeo(catalog?.units ?? [], lang, `${DARSI_URL}/app-icons/app-icon-512.png`, pages), base: DARSI_URL, pages };
 }
 
 export const seoPage = onRequest({ maxInstances: 5, memory: "256MiB", timeoutSeconds: 20, concurrency: 80 }, async (req, res) => {
@@ -75,10 +88,10 @@ export const seoPage = onRequest({ maxInstances: 5, memory: "256MiB", timeoutSec
   try {
     // Not robots.txt: the Functions Framework answers that path itself, before this code (Hosting serves a static one).
     if (path === "/sitemap.xml" || path === "/llms.txt") {
-      const { seo, base } = await seoFor(host, lang);
+      const { seo, base, pages } = await seoFor(host, lang);
       res.set("Cache-Control", "public, max-age=3600");
       if (path === "/sitemap.xml") { res.type("application/xml").send(sitemap(base, ["/privacy", "/terms", "/licences"])); return; }
-      res.type("text/plain; charset=utf-8").send(llms(seo, base));
+      res.type("text/plain; charset=utf-8").send(llms(seo, base, pages ?? null));
       return;
     }
     const [{ html, headers }, { seo }] = await Promise.all([shell(), seoFor(host, lang)]);

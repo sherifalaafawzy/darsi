@@ -34,6 +34,26 @@ describe("what crawlers read", () => {
     expect(html).toContain('<script type="module" src="/assets/index-abc.js"></script>');
   });
 
+  it("links to the public pages this release has, and to a course's page only when it has one", () => {
+    const pages = { courses: ["ai-4-1"] };
+    const en = inject(SHELL, darsiSeo([...UNITS, { id: "new-1", track: "ai", level: 1, title: { en: "Brand new" }, summary: { en: "Published after the release." } }], "en", "x", pages));
+    for (const path of ["/courses/", "/features/", "/why-darsi/"]) expect(en).toContain(`href="${path}"`);
+    expect(en).toContain('<h3><a href="/courses/ai-4-1/">Leading AI at school</a></h3>');
+    expect(en).toContain("<h3>Brand new</h3>");
+    const graph = JSON.parse(/<script type="application\/ld\+json">(.*?)<\/script>/.exec(en)![1])["@graph"];
+    expect(graph[2].itemListElement[0].item.url).toBe("https://darsiai.org/courses/ai-4-1/");
+    expect(graph[2].itemListElement[1].item.url).toBe("https://darsiai.org/learn");
+    const ar = inject(SHELL, darsiSeo(UNITS, "ar", "x", pages));
+    expect(ar).toContain('href="/ar/courses/ai-4-1/"');
+    expect(ar).toContain('href="/ar/why-darsi/"');
+    // Without the list (site-pages.json unreadable) the page links nowhere it can't vouch for.
+    expect(inject(SHELL, darsiSeo(UNITS, "en", "x"))).not.toContain('href="/courses/');
+    const txt = llms(darsiSeo(UNITS, "en", "x", pages), "https://darsiai.org", pages);
+    expect(txt).toContain("- [Why Darsi exists](https://darsiai.org/why-darsi/)");
+    expect(txt).toContain("- [All courses (Arabic)](https://darsiai.org/ar/courses/)");
+    expect(txt).toContain("(https://darsiai.org/sitemap-pages.xml)");
+  });
+
   it("?lang=ar: the Arabic page, right to left, with its own canonical", () => {
     const html = inject(SHELL, darsiSeo(UNITS, "ar", "x"));
     expect(html).toContain('<html lang="ar" dir="rtl">');

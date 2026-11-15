@@ -98,6 +98,19 @@ export const landing = {
       [t("Which languages are available?", "ما اللغات المتاحة؟"), t("Arabic and English today. The platform is built so more languages can be added without redesign.", "العربية والإنجليزية اليوم. والمنصة مبنية بحيث يمكن إضافة لغات أخرى دون إعادة تصميم.")],
     ],
   },
+  /**
+   * Links to the public pages (TECHNICAL.md "Public pages"): static files outside the app, so plain links (a full page
+   * load), in English, or under /ar/ for Arabic.
+   */
+  explore: {
+    title: t("Explore Darsi", "استكشف «درسي»"),
+    items: [
+      { path: "courses", title: t("Every course", "كل الدورات"), text: t("What each course teaches, lesson by lesson: its videos, labs, projects and the standards it builds.", "ماذا تعلّم كل دورة، درسًا درسًا: فيديوهاتها ومختبراتها ومشروعاتها والمعايير التي تبنيها.") },
+      { path: "features", title: t("What Darsi does", "ماذا يقدّم «درسي»"), text: t("Labs that run on the phone, classroom kits, offline use and the rest, one page each.", "مختبرات تعمل على الهاتف، وحقائب للفصل، والعمل دون اتصال، وغيرها، لكل منها صفحة.") },
+      { path: "why-darsi", title: t("Why Darsi exists", "لماذا وُجد «درسي»"), text: t("The education needs Darsi answers, in sourced figures, and how it answers each one.", "احتياجات التعليم التي يستجيب لها «درسي»، بأرقام موثّقة المصادر، وكيف يستجيب لكل منها.") },
+    ],
+    trackCourses: t("See the courses", "شاهد الدورات"),
+  },
   cta: { title: t("Start with one lesson today.", "ابدأ بدرس واحد اليوم."), body: t("Ten minutes, your phone, your language.", "عشر دقائق، هاتفك، لغتك.") },
   /** An organization's own web address (Landing's SiteLanding): its name and logo, no word about Darsi in the copy. */
   site: {

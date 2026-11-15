@@ -43,6 +43,8 @@ export const OWNERS = {
   licences: { own: ["lic", "lic-list", "lic-text"] },
   sso: { own: ["sso", "sso-steps", "sso-step", "sso-step-n", "sso-step-name", "sso-presets", "sso-console", "sso-copy", "sso-copy-label", "sso-fieldset", "sso-radio", "sso-check", "sso-area",
     "sso-test", "sso-claims", "sso-pill", "sso-summary", "sso-status", "sso-tile-text", "sso-problems", "sso-platform", "sso-nav", "sso-listing", "sso-listing-head", "sso-listing-logo", "sso-head", "sso-body", "sso-fields", "sso-actions"], prefix: ["sso-"] },
+  // The public pages' only stylesheet (scripts/site/build.mjs serves it with the tokens and fonts in front).
+  pages: { own: ["pp"], prefix: ["pp-"] },
   landing: { own: ["landing", "lp-actions", "lp-band", "lp-brand", "lp-checks", "lp-cta", "lp-ctas", "lp-faq", "lp-feature", "lp-float-card", "lp-footer", "lp-grid2", "lp-grid3", "lp-h2-sm", "lp-hero", "lp-hero-art", "lp-hero-text", "lp-kicker", "lp-lang", "lp-lang-menu", "lp-lead", "lp-levels", "lp-links", "lp-nav", "lp-note", "lp-phone", "lp-phone-body", "lp-phone-top", "lp-proof", "lp-section", "lp-site", "lp-site-credit", "lp-split", "lp-stat", "lp-stats", "lp-std", "lp-step-n", "lp-steps", "lp-track", "lp-tracks", "lp-why"] },
   lesson: { own: ["reading", "key-terms", "project-card", "onb", "light-lesson", "light-wait", "video-modes", "code-block", "resume-note", "lesson-live", "lesson-h1", "mock-line", "setup-body"], prefix: ["cb-"] },
   code: { own: ["cd-edit", "cd-editor", "cd-gutter", "cd-text", "cd-keys", "cd-key", "cd-out", "cd-tests", "cd-parsons", "cd-row", "cd-pool", "cd-gap", "cd-bug", "cd-world", "cd-program", "cd-card"], prefix: ["cd-"] },

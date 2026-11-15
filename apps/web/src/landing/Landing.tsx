@@ -97,6 +97,8 @@ function DarsiLanding() {
   const styleOf = useTrackStyles();
   const guest = () => { dispatch({ type: "set", patch: { guest: true } }); nav("/learn"); };
   const L = (x: { en: string; ar: string }) => x[lang as "en" | "ar"] ?? x.en;
+  // A public page (static, outside the app): the Arabic copy for Arabic, the English one for every other language.
+  const page = (path: string) => `${lang === "ar" ? "/ar" : ""}/${path}/`;
   return (
     <div className="landing">
       <header className="lp-nav">
@@ -159,6 +161,7 @@ function DarsiLanding() {
           <article key={tr.track} className={`lp-track ${trackClass(styleOf(tr.track))}`}>
             <TrackChip track={tr.track} solid>{L(tr.title)}</TrackChip>
             <ul>{tr.points.map((p, i) => <li key={i}><Icon name={styleOf(tr.track).icon} size={18} />{L(p)}</li>)}</ul>
+            <a href={page(`courses/${tr.track}`)}>{L(C.explore.trackCourses)}</a>
           </article>
         ))}</div>
         <p className="lp-note">{L(C.tracks.note)}</p>
@@ -192,6 +195,11 @@ function DarsiLanding() {
         <div className="lp-faq">{C.faq.items.map(([q, a], i) => <details key={i}><summary>{L(q)}</summary><p>{L(a)}</p></details>)}</div>
       </section>
 
+      <section className="lp-section" aria-labelledby="explore-h">
+        <h2 id="explore-h">{L(C.explore.title)}</h2>
+        <div className="lp-grid3">{C.explore.items.map((it) => <div key={it.path} className="lp-feature"><h3><a href={page(it.path)}>{L(it.title)}</a></h3><p>{L(it.text)}</p></div>)}</div>
+      </section>
+
       <section className="lp-cta">
         <Mark size={56} />
         <h2>{L(C.cta.title)}</h2>
@@ -203,6 +211,7 @@ function DarsiLanding() {
         {/* The other script's brand name in the phone's own font: an English page never downloads the Arabic web fonts. */}
         <p>{lang === "ar" ? "درسي (Darsi)" : <>Darsi (<span className="dr-other-script" lang="ar">درسي</span>)</>} — {L(C.footer)}</p>
         <details><summary>{lang === "ar" ? "المصادر" : "Sources"}</summary><ul>{C.sources.map((s) => <li key={s.url}><a href={s.url} target="_blank" rel="noreferrer noopener" dir="ltr">{s.label}</a></li>)}</ul></details>
+        {C.explore.items.map((it) => <p key={it.path}><a href={page(it.path)}>{L(it.title)}</a></p>)}
         <LegalLinks />
         <p><Link to="/licences">{lang === "ar" ? "تراخيص البرمجيات مفتوحة المصدر" : "Open-source licences"}</Link></p>
       </footer>

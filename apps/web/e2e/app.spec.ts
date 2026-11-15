@@ -226,6 +226,28 @@ test("the service worker leaves Firebase's own pages (/__/) to the server", asyn
   expect((await page.goto("/__/auth/handler?apiKey=x&authType=signInViaPopup"))!.fromServiceWorker()).toBe(false);
 });
 
+// The public pages (/courses, /features, /why-darsi and /ar/…) are static files for search and AI engines: a phone
+// that has the app must get them from the server, never the app's own page in their place (TECHNICAL.md "Public pages").
+test("the service worker leaves the public pages to the server, and they run no app code", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium");
+  await onboard(page);
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  expect(await page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+  expect((await page.goto("/learn"))!.fromServiceWorker()).toBe(true);
+  for (const [path, lang] of [["/courses/", "en"], ["/features/labs/", "en"], ["/why-darsi/", "en"], ["/ar/courses/", "ar"]] as const) {
+    const res = await page.goto(path);
+    expect(res!.fromServiceWorker(), path).toBe(false);
+    await expect(page.locator("body.pp h1")).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("lang", lang);
+    const loaded = await page.evaluate(() => performance.getEntriesByType("resource").map((e) => e.name.split("/").pop()!));
+    expect(loaded.filter((f) => f.endsWith(".js")), path).toEqual([]);
+    // An English page never downloads the Arabic web fonts.
+    if (lang === "en") expect(loaded.filter((f) => /arabic|latin-ext/.test(f)), path).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), path).toBe(true);
+  }
+});
+
 test("an English page never downloads the Arabic or extended-Latin fonts", async ({ page }) => {
   // The landing page and the language picker show "العربية"; Me shows the picker again and "درسي" in its footer.
   await onboard(page);
