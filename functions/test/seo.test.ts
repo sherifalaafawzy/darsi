@@ -134,4 +134,17 @@ describe("seoPage", () => {
     expect((await get("/sitemap.xml", "learn.nile.edu")).body).toContain("<loc>https://learn.nile.edu/</loc>");
     expect((await get("/llms.txt", "darsiai.org", { lang: "ar" })).body.split("\n")[0]).toBe("# درسي");
   });
+
+  it("llms.txt passes Lighthouse's llms-txt checks and llmstxt.org's order, as plain text any site may read", async () => {
+    const r = await get("/llms.txt", "darsiai.org");
+    expect(r.type).toBe("text/plain; charset=utf-8");
+    expect(r.headers).toMatchObject({ "Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=3600" });
+    const lines = r.body.split("\n");
+    expect(lines[0]).toMatch(/^# Darsi/);
+    expect(lines.find((l) => l.trim() && !l.startsWith("#"))).toMatch(/^> /);
+    expect(r.body.length).toBeGreaterThanOrEqual(50);
+    const links = [...r.body.matchAll(/\]\(([^)]+)\)/g)].map((m) => m[1]);
+    expect(links.length).toBeGreaterThan(0);
+    for (const url of links) expect(url).toMatch(/^https:\/\/darsiai\.org\//);
+  });
 });

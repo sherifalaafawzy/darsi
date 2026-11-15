@@ -91,7 +91,8 @@ export const seoPage = onRequest({ maxInstances: 5, memory: "256MiB", timeoutSec
       const { seo, base, pages } = await seoFor(host, lang);
       res.set("Cache-Control", "public, max-age=3600");
       if (path === "/sitemap.xml") { res.type("application/xml").send(sitemap(base, ["/privacy", "/terms", "/licences"])); return; }
-      res.type("text/plain; charset=utf-8").send(llms(seo, base, pages ?? null));
+      // Agents read llms.txt from other origins too (the ARD manifest in /.well-known/ard.json points at it).
+      res.set("Access-Control-Allow-Origin", "*").type("text/plain; charset=utf-8").send(llms(seo, base, pages ?? null));
       return;
     }
     const [{ html, headers }, { seo }] = await Promise.all([shell(), seoFor(host, lang)]);

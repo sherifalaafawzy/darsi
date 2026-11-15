@@ -548,9 +548,10 @@ export default defineConfig({
         // auth domain is the site's own). Answering it with the app made Google sign-in hang.
         // /api/ is the functions' (school sign-in's start and finish, problem reports, analytics): fetches, never pages,
         // and never the app in their place should a navigation ever reach one.
-        // The public pages (/courses, /features, /why-darsi, /ar/…) are real files: a phone with the app installed opens
-        // them from the network, never the app in their place.
-        navigateFallbackDenylist: [/^\/__\//, /^\/api\//, PAGE_PATH],
+        // The files for crawlers and agents (llms.txt and sitemap.xml from seoPage; robots.txt, sitemap-pages.xml and
+        // /.well-known/ as files) and the public pages (/courses, /features, /why-darsi, /ar/…) come from the network,
+        // never the app in their place.
+        navigateFallbackDenylist: [/^\/__\//, /^\/api\//, /^\/(llms\.txt|robots\.txt|sitemap\.xml|sitemap-pages\.xml)$/, /^\/\.well-known\//, PAGE_PATH],
         runtimeCaching,
       },
       devOptions: { enabled: false },
