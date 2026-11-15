@@ -14,7 +14,7 @@ import "./strings";
  * App passes the plans address and the callable in: importing content/load from here split the startup bundle into
  * seven files.
  */
-interface Plan { id: string; name: { en: string; ar: string }; kind: "individual" | "seat" | "credits"; period: "month" | "year"; prices: { EGP?: number; USD?: number }; credits: number }
+interface Plan { id: string; name: { en: string; ar: string } & Partial<Record<string, string>>; kind: "individual" | "seat" | "credits"; period: "month" | "year"; prices: { EGP?: number; USD?: number }; credits: number }
 type Cur = "EGP" | "USD";
 
 async function loadPlans(url: string): Promise<Plan[]> {
@@ -64,7 +64,7 @@ export function Upgrade({ plansUrl, startCheckout, superOn = true }: { plansUrl:
   }, [done, user, refreshClaims]);
   useEffect(() => { track("view_paywall", { from: (params.get("from") ?? "direct").replace(/[^a-z_]/g, "").slice(0, 24) || "direct" }); }, [params]);
   const money = (n: number) => new Intl.NumberFormat(locale, { style: "currency", currency: cur, maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
-  const name = (p: Plan) => (lang === "ar" ? p.name.ar : p.name.en);
+  const name = (p: Plan) => p.name[lang] || p.name.en;
   const own = useMemo(() => (plans ?? []).filter((p) => p.kind === "individual" && p.prices[cur]), [plans, cur]);
   const seats = useMemo(() => (plans ?? []).filter((p) => p.kind === "seat" && p.prices[cur]), [plans, cur]);
   // Extra credits are for paid accounts only: people with Super who used their allowance.

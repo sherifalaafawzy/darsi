@@ -12,7 +12,8 @@ export type Currency = (typeof CURRENCIES)[number];
  */
 export interface Plan {
   id: string;
-  name: { en: string; ar: string };
+  /** English and Arabic are required; other languages (fr, pt-br…) are optional and fall back to English. */
+  name: { en: string; ar: string } & Partial<Record<string, string>>;
   kind: "individual" | "seat" | "credits";
   period: "month" | "year";
   prices: Partial<Record<Currency, number>>;
@@ -38,6 +39,7 @@ export function margin(p: Pick<Plan, "credits" | "prices">, currency: Currency, 
 }
 
 const ID = /^[a-z0-9_]{3,32}$/;
+const LANG = /^[a-z]{2,3}(-[a-z0-9]{2,8})?$/;
 const text = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
 /** The cost and exchange rate a platform admin set, checked. */
@@ -75,7 +77,9 @@ export function validatePlans(raw: unknown, eco: Economics): Plan[] {
     const credits = Math.round(Number(r.credits));
     if (!Number.isFinite(credits) || credits < 0 || credits > 100000) throw new Error(`Plan "${id}": credits must be 0–100000.`);
     if (kind === "credits" && credits < 1) throw new Error(`Plan "${id}": a credit pack needs credits.`);
-    const plan: Plan = { id, name: { en, ar }, kind, period, prices, credits, active: r.active !== false };
+    // Names in the languages platform admins added: language codes only, at most 12 of them.
+    const more = Object.entries(name ?? {}).filter(([k]) => k !== "en" && k !== "ar" && LANG.test(k)).map(([k, v]) => [k, text(v, 60)] as const).filter(([, v]) => v).slice(0, 12);
+    const plan: Plan = { id, name: { en, ar, ...Object.fromEntries(more) }, kind, period, prices, credits, active: r.active !== false };
     for (const c of CURRENCIES) {
       const m = margin(plan, c, eco);
       if (m !== null && m < MIN_MARGIN) throw new Error(`Plan "${id}": the ${c} price leaves a ${Math.round(m * 100)}% margin after its credits' cost; it must be at least ${MIN_MARGIN * 100}%.`);

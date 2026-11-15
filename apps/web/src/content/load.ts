@@ -32,12 +32,15 @@ const ORG_FILES = "/o/orgs%2F";
  * an org, and while claims are still loading). A change re-reads the catalog. Signing out forgets every cached org
  * file (shared phones); a member whose orgId is only briefly unknown keeps their downloads.
  */
-export function configureContent(next: { orgId: string | null; signedIn: boolean }) {
+export function configureContent(next: { orgId: string | null; signedIn: boolean; lang?: string }) {
+  if (next.lang) unitLang = next.lang;
   if (!next.signedIn && orgFlag.get()) { orgFlag.set(false); void forgetOrgFiles(); }
   const orgId = next.signedIn ? next.orgId : null;
   if (orgId === scope.orgId) return;
   scope = { orgId }; catalog = null;
 }
+/** The page language: a course translated into it (catalog `langs`) loads that language's file. */
+let unitLang = "en";
 /** Set once org files were cached on this device, so signing out knows there is something to forget. */
 const orgFlag = {
   get: () => { try { return localStorage.getItem("darsi:orgFiles") === "1"; } catch { return false; } },
@@ -144,7 +147,8 @@ export async function loadLanguagePack(code: string, version: number): Promise<R
 export async function loadUnit(id: string): Promise<Unit> {
   const entry = (await loadCatalog()).units.find((u) => u.id === id);
   if (!entry?.src) throw new Error(`No published unit ${id}`);
-  const src = entry.src;
+  // A course translated into the page language has a file with only that language and English (smaller to download).
+  const src = entry.langs?.includes(unitLang) ? entry.src.replace(/\.json$/, `.${unitLang}.json`) : entry.src;
   if (src.startsWith("/")) return cachedJSON<Unit>(src, async () => { const r = await fetch(src); if (!r.ok) throw new Error(`${src}: ${r.status}`); return r.json(); }, true);
   return cachedJSON<Unit>(storageUrl(src), isOrgPath(src) ? fetchOrg(src) : fetchPublic(src), false);
 }

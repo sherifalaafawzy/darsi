@@ -1,0 +1,1990 @@
+{
+  "title": {
+    "en": "Teaching databases and data engineering at university",
+    "t": "Enseñar bases de datos e ingeniería de datos en la universidad"
+  },
+  "summary": {
+    "en": "A graduate-level course for university lecturers in databases and data engineering: the relational model and normalisation, B-tree indexing and query plans, transactions, isolation and distributed trade-offs, and data quality with the assessment of projects built on real datasets.",
+    "t": "Un curso de posgrado para docentes universitarios de bases de datos e ingeniería de datos: el modelo relacional y la normalización, la indexación con árboles B y los planes de consulta, las transacciones, el aislamiento y los equilibrios de los sistemas distribuidos, y la calidad de los datos junto con la evaluación de proyectos construidos sobre conjuntos de datos reales."
+  },
+  "lessons.0.title": {
+    "en": "The relational model and normalisation",
+    "t": "El modelo relacional y la normalización"
+  },
+  "lessons.0.tryTomorrow": {
+    "en": "Give groups a flat enrolment spreadsheet; each performs one insert, one update and one delete and reports what went wrong, then derive the dependencies together.",
+    "t": "Da a los grupos una hoja de cálculo plana de inscripciones; cada uno hace una inserción, una actualización y un borrado e informa de qué salió mal, y después deducen juntos las dependencias."
+  },
+  "lessons.0.materials": {
+    "en": [
+      "Projector or board",
+      "The lecture slides and the seminar sheet from the kit",
+      "Phones or laptops with Darsi, for the lab"
+    ],
+    "t": [
+      "Proyector o pizarra",
+      "Las diapositivas de la clase y la hoja de seminario del kit",
+      "Teléfonos o laptops con Darsi, para el laboratorio"
+    ]
+  },
+  "lessons.0.steps.0.prompt": {
+    "en": "Watch",
+    "t": "Ver"
+  },
+  "lessons.0.steps.0.title": {
+    "en": "The relational model and normalisation",
+    "t": "El modelo relacional y la normalización"
+  },
+  "lessons.0.steps.0.chapters.0.label": {
+    "en": "One big spreadsheet",
+    "t": "Una hoja de cálculo enorme"
+  },
+  "lessons.0.steps.0.chapters.1.label": {
+    "en": "Relations and keys",
+    "t": "Relaciones y claves"
+  },
+  "lessons.0.steps.0.chapters.2.label": {
+    "en": "Normal forms",
+    "t": "Formas normales"
+  },
+  "lessons.0.steps.0.chapters.3.label": {
+    "en": "Remember and try it",
+    "t": "Recuerda y pruébalo"
+  },
+  "lessons.0.steps.0.checkpoint.question.prompt": {
+    "en": "A new lecturer can’t be stored until they have a student. Which anomaly?",
+    "t": "No se puede guardar a un nuevo docente hasta que tenga un estudiante. ¿Qué anomalía es?"
+  },
+  "lessons.0.steps.0.checkpoint.question.options.0.text": {
+    "en": "Insertion",
+    "t": "De inserción"
+  },
+  "lessons.0.steps.0.checkpoint.question.options.1.text": {
+    "en": "Deletion",
+    "t": "De borrado"
+  },
+  "lessons.0.steps.0.checkpoint.question.options.2.text": {
+    "en": "Update",
+    "t": "De actualización"
+  },
+  "lessons.0.steps.0.checkpoint.question.explain": {
+    "en": "Lecturer facts are trapped inside enrolment rows.",
+    "t": "Los datos del docente están atrapados dentro de las filas de inscripción."
+  },
+  "lessons.0.steps.0.transcript": {
+    "en": "A student's course database keeps the lecturer's phone number on every enrolment row. The lecturer changes phones, half the rows are updated, and now the database disagrees with itself. Why did the design allow that? Today: Codd's relational model, how functional dependencies drive normalisation, and how to teach design so students stop building one giant table. Codd proposed storing data as relations: sets of tuples over named attributes. A key identifies each tuple uniquely. Queries describe what you want, not how to fetch it. A functional dependency says one set of attributes determines another. Lecturer determines phone. Student and course together determine grade. These dependencies, not intuition, tell us how to split tables. Phone depends on lecturer, which depends on course, not on the whole key. That transitive dependency breaks third normal form. Moving lecturer details to their own table removes the update anomaly. Third normal form and Boyce–Codd normal form remove most redundancy while keeping joins lossless. Analytical systems sometimes denormalise on purpose for speed. Students should know why, not just how. Students memorise normal-form definitions without seeing the point. Start instead with a broken table and ask them to insert, update and delete. Once they hit the anomalies, dependencies become the tool that fixes them. Quick check! A new lecturer cannot be stored until they have at least one enrolled student. Which anomaly is that? An insertion anomaly. Facts about lecturers are trapped inside enrolment rows. A separate lecturer table lets us record them independently. In the app, open the schema lab. Split a flat table into related tables and check that every fact is stored once. Your turn. A table holds course, lecturer and lecturer's office, keyed by course. Is it in third normal form? No: office depends on lecturer, a non-key attribute, so the dependency is transitive. Remember: keys identify, dependencies decide the split, and anomalies motivate the theory. Try it in your next lecture: give groups a flat enrolment spreadsheet. Ask each group to perform one insert, one update and one delete and report what went wrong. Then derive the dependencies together.",
+    "t": "La base de datos de cursos de una universidad guarda el teléfono del docente en cada fila de inscripción. El docente cambia de teléfono, se actualiza la mitad de las filas y ahora la base de datos se contradice a sí misma. ¿Por qué el diseño lo permitió? Hoy: el modelo relacional de Codd, cómo las dependencias funcionales guían la normalización y cómo enseñar diseño para que los estudiantes dejen de construir una tabla gigante. Codd propuso guardar los datos como relaciones: conjuntos de tuplas sobre atributos con nombre. Una clave identifica cada tupla de forma única. Las consultas describen lo que quieres, no cómo obtenerlo. Una dependencia funcional dice que un conjunto de atributos determina a otro. El docente determina el teléfono. El estudiante y el curso juntos determinan la nota. Estas dependencias, y no la intuición, nos dicen cómo dividir las tablas. El teléfono depende del docente, que depende del curso, no de la clave completa. Esa dependencia transitiva rompe la tercera forma normal. Mover los datos del docente a su propia tabla elimina la anomalía de actualización. La tercera forma normal y la forma normal de Boyce–Codd eliminan la mayor parte de la redundancia manteniendo las uniones sin pérdida. Los sistemas analíticos a veces desnormalizan a propósito para ganar velocidad. Los estudiantes deben saber por qué, no solo cómo. Los estudiantes memorizan las definiciones de las formas normales sin ver su sentido. Empieza mejor con una tabla rota y pídeles que inserten, actualicen y borren. Cuando se topan con las anomalías, las dependencias se convierten en la herramienta que las arregla. ¡Comprobación rápida! No se puede guardar a un nuevo docente hasta que tenga al menos un estudiante inscrito. ¿Qué anomalía es esa? Una anomalía de inserción. Los datos de los docentes están atrapados dentro de las filas de inscripción. Una tabla de docentes aparte permite registrarlos de forma independiente. En la aplicación, abre el laboratorio de esquemas. Divide una tabla plana en tablas relacionadas y comprueba que cada dato se guarde una sola vez. Tu turno. Una tabla contiene curso, docente y despacho del docente, con clave el curso. ¿Está en tercera forma normal? No: el despacho depende del docente, un atributo que no es clave, así que la dependencia es transitiva. Recuerda: las claves identifican, las dependencias deciden la división y las anomalías motivan la teoría. Pruébalo en tu próxima clase: da a los grupos una hoja de cálculo plana de inscripciones. Pide a cada grupo que haga una inserción, una actualización y un borrado e informe de qué salió mal. Luego deduzcan juntos las dependencias."
+  },
+  "lessons.0.steps.1.prompt": {
+    "en": "Read",
+    "t": "Leer"
+  },
+  "lessons.0.steps.1.title": {
+    "en": "Relations, dependencies and design",
+    "t": "Relaciones, dependencias y diseño"
+  },
+  "lessons.0.steps.1.body": {
+    "en": "Codd (1970) proposed representing data as relations, sets of tuples over named attributes, manipulated by a small algebra, independent of physical storage. A superkey is a set of attributes that determines every attribute; a candidate key is a minimal superkey. A functional dependency X → Y holds when tuples agreeing on X must agree on Y. Dependencies come from the meaning of the data, not from any particular instance.\n\nNormalisation decomposes relations to remove redundancy that causes update, insertion and deletion anomalies. Second normal form forbids non-key attributes depending on part of a key; third normal form forbids transitive dependencies of non-key attributes on the key; Boyce–Codd normal form requires every determinant to be a superkey. Good decompositions are lossless, so the original relation can be rebuilt by joins, and ideally dependency-preserving, which 3NF always allows and BCNF sometimes does not (Garcia-Molina, Ullman and Widom, Database Systems: The Complete Book; Silberschatz, Korth and Sudarshan, Database System Concepts).\n\nStudents frequently memorise normal-form definitions while designing by intuition, confuse keys with identifiers they happen to see, and treat normalisation as always good. Teaching from anomalies, by asking students to update and delete in a deliberately redundant table, motivates the theory; computing attribute closures by hand makes keys precise; and discussing deliberate denormalisation in analytical warehouses shows that design is a trade-off with a reason.",
+    "t": "Codd (1970) propuso representar los datos como relaciones, conjuntos de tuplas sobre atributos con nombre, manipuladas con un álgebra pequeña, independiente del almacenamiento físico. Una superclave es un conjunto de atributos que determina todos los atributos; una clave candidata es una superclave mínima. Una dependencia funcional X → Y se cumple cuando las tuplas que coinciden en X deben coincidir en Y. Las dependencias surgen del significado de los datos, no de una instancia concreta.\n\nLa normalización descompone las relaciones para eliminar la redundancia que causa anomalías de actualización, inserción y borrado. La segunda forma normal prohíbe que atributos no clave dependan de parte de una clave; la tercera forma normal prohíbe las dependencias transitivas de atributos no clave respecto de la clave; la forma normal de Boyce–Codd exige que todo determinante sea una superclave. Las buenas descomposiciones son sin pérdida, de modo que la relación original se puede reconstruir con uniones, e idealmente preservan las dependencias, algo que la 3FN siempre permite y la FNBC a veces no (Garcia-Molina, Ullman y Widom, Database Systems: The Complete Book; Silberschatz, Korth y Sudarshan, Database System Concepts).\n\nCon frecuencia los estudiantes memorizan las definiciones de las formas normales mientras diseñan por intuición, confunden las claves con los identificadores que casualmente ven y tratan la normalización como algo siempre bueno. Enseñar a partir de las anomalías, pidiendo a los estudiantes que actualicen y borren en una tabla deliberadamente redundante, motiva la teoría; calcular a mano las clausuras de atributos hace precisas las claves; y debatir la desnormalización deliberada en los almacenes analíticos muestra que el diseño es un equilibrio con una razón."
+  },
+  "lessons.0.steps.1.keyTerms.0.term": {
+    "en": "Functional dependency",
+    "t": "Dependencia funcional"
+  },
+  "lessons.0.steps.1.keyTerms.0.def": {
+    "en": "X → Y: rows equal on X are equal on Y.",
+    "t": "X → Y: las filas iguales en X son iguales en Y."
+  },
+  "lessons.0.steps.1.keyTerms.1.term": {
+    "en": "Candidate key",
+    "t": "Clave candidata"
+  },
+  "lessons.0.steps.1.keyTerms.1.def": {
+    "en": "A minimal set of attributes that determines all others.",
+    "t": "Un conjunto mínimo de atributos que determina todos los demás."
+  },
+  "lessons.0.steps.1.keyTerms.2.term": {
+    "en": "Lossless decomposition",
+    "t": "Descomposición sin pérdida"
+  },
+  "lessons.0.steps.1.keyTerms.2.def": {
+    "en": "A split whose join exactly rebuilds the original.",
+    "t": "Una división cuya unión reconstruye exactamente el original."
+  },
+  "lessons.0.steps.2.prompt": {
+    "en": "Course → lecturer → office, keyed by course. Is it in 3NF?",
+    "t": "Curso → docente → despacho, con clave el curso. ¿Está en 3FN?"
+  },
+  "lessons.0.steps.2.options.0.text": {
+    "en": "Yes",
+    "t": "Sí"
+  },
+  "lessons.0.steps.2.options.1.text": {
+    "en": "No, the dependency is transitive",
+    "t": "No, la dependencia es transitiva"
+  },
+  "lessons.0.steps.2.options.2.text": {
+    "en": "Only if office is unique",
+    "t": "Solo si el despacho es único"
+  },
+  "lessons.0.steps.2.explain": {
+    "en": "Office depends on a non-key attribute.",
+    "t": "El despacho depende de un atributo que no es clave."
+  },
+  "lessons.0.steps.3.prompt": {
+    "en": "Compute a closure.",
+    "t": "Calcula una clausura."
+  },
+  "lessons.0.steps.3.sentence": {
+    "en": [
+      "With A → B and B → C, the closure of {A} is {A, B, ",
+      {
+        "blank": 0
+      },
+      "}, so A is a ",
+      {
+        "blank": 1
+      },
+      " of R(A, B, C)."
+    ],
+    "t": [
+      "Con A → B y B → C, la clausura de {A} es {A, B, ",
+      {
+        "blank": 0
+      },
+      "}, así que A es una ",
+      {
+        "blank": 1
+      },
+      " de R(A, B, C)."
+    ]
+  },
+  "lessons.0.steps.3.bank": {
+    "en": [
+      "C",
+      "D",
+      "dependency",
+      "key"
+    ],
+    "t": [
+      "C",
+      "D",
+      "dependencia",
+      "clave"
+    ]
+  },
+  "lessons.0.steps.3.answers": {
+    "en": [
+      "C",
+      "key"
+    ],
+    "t": [
+      "C",
+      "clave"
+    ]
+  },
+  "lessons.0.steps.3.explain": {
+    "en": "A determines B, and B determines C, so A determines every attribute.",
+    "t": "A determina B, y B determina C, así que A determina todos los atributos."
+  },
+  "lessons.0.steps.4.prompt": {
+    "en": "Enrol(student, course, grade, lecturer, phone) with course → lecturer → phone and key (student, course). Which are true? Choose all that apply.",
+    "t": "Inscripción(estudiante, curso, nota, docente, teléfono) con curso → docente → teléfono y clave (estudiante, curso). ¿Cuáles son verdaderas? Elige todas las que correspondan."
+  },
+  "lessons.0.steps.4.options.0.text": {
+    "en": "It violates 2NF",
+    "t": "Viola la 2FN"
+  },
+  "lessons.0.steps.4.options.1.text": {
+    "en": "It violates 3NF",
+    "t": "Viola la 3FN"
+  },
+  "lessons.0.steps.4.options.2.text": {
+    "en": "It is in BCNF",
+    "t": "Está en FNBC"
+  },
+  "lessons.0.steps.4.options.3.text": {
+    "en": "Phone changes cause update anomalies",
+    "t": "Los cambios de teléfono causan anomalías de actualización"
+  },
+  "lessons.0.steps.4.explain": {
+    "en": "Lecturer depends on part of the key (course), breaking 2NF and hence 3NF and BCNF.",
+    "t": "El docente depende de una parte de la clave (curso), lo que rompe la 2FN y, por tanto, la 3FN y la FNBC."
+  },
+  "lessons.0.steps.5.prompt": {
+    "en": "Try it: split a flat table into related tables and check that every fact is stored once.",
+    "t": "Pruébalo: divide una tabla plana en tablas relacionadas y comprueba que cada dato se guarde una sola vez."
+  },
+  "lessons.0.steps.6.prompt": {
+    "en": "Every relation can be decomposed into BCNF while preserving all functional dependencies.",
+    "t": "Toda relación se puede descomponer en FNBC preservando todas las dependencias funcionales."
+  },
+  "lessons.0.steps.6.explain": {
+    "en": "Lossless BCNF is always possible, but dependency preservation is not; 3NF guarantees both.",
+    "t": "La FNBC sin pérdida siempre es posible, pero la preservación de las dependencias no; la 3FN garantiza ambas."
+  },
+  "lessons.0.steps.7.prompt": {
+    "en": "Match each normal form to what it forbids.",
+    "t": "Relaciona cada forma normal con lo que prohíbe."
+  },
+  "lessons.0.steps.7.pairs.0.left": {
+    "en": "1NF",
+    "t": "1FN"
+  },
+  "lessons.0.steps.7.pairs.0.right": {
+    "en": "Repeating groups and non-atomic values",
+    "t": "Grupos repetidos y valores no atómicos"
+  },
+  "lessons.0.steps.7.pairs.1.left": {
+    "en": "2NF",
+    "t": "2FN"
+  },
+  "lessons.0.steps.7.pairs.1.right": {
+    "en": "Dependence on part of a key",
+    "t": "Dependencia de parte de una clave"
+  },
+  "lessons.0.steps.7.pairs.2.left": {
+    "en": "3NF",
+    "t": "3FN"
+  },
+  "lessons.0.steps.7.pairs.2.right": {
+    "en": "Transitive dependence on the key",
+    "t": "Dependencia transitiva respecto de la clave"
+  },
+  "lessons.0.steps.7.pairs.3.left": {
+    "en": "BCNF",
+    "t": "FNBC"
+  },
+  "lessons.0.steps.7.pairs.3.right": {
+    "en": "Any determinant that is not a superkey",
+    "t": "Cualquier determinante que no sea una superclave"
+  },
+  "lessons.0.steps.7.explain": {
+    "en": "Each form tightens the one before.",
+    "t": "Cada forma endurece la anterior."
+  },
+  "lessons.0.steps.8.prompt": {
+    "en": "Do your students meet anomalies before they meet normal-form definitions? What table could you break in class?",
+    "t": "¿Tus estudiantes se topan con las anomalías antes de conocer las definiciones de las formas normales? ¿Qué tabla podrías romper en clase?"
+  },
+  "lessons.0.steps.8.placeholder": {
+    "en": "For example: “No, definitions first. I’ll use the faculty’s own timetable spreadsheet.”",
+    "t": "Por ejemplo: «No, primero las definiciones. Usaré la hoja de cálculo de horarios de la propia facultad»."
+  },
+  "lessons.0.steps.9.prompt": {
+    "en": "Project: A design-from-anomalies assignment",
+    "t": "Proyecto: Una tarea de diseño a partir de anomalías"
+  },
+  "lessons.0.steps.9.task": {
+    "en": "Design an assignment: students receive a realistic flat spreadsheet, document three anomalies, state the functional dependencies with justification from the domain, compute candidate keys by closure, decompose to 3NF and BCNF, show losslessness, and argue whether any denormalisation is justified for reporting. Include a rubric.",
+    "t": "Diseña una tarea: los estudiantes reciben una hoja de cálculo plana realista, documentan tres anomalías, enuncian las dependencias funcionales con una justificación basada en el dominio, calculan las claves candidatas por clausura, descomponen en 3FN y FNBC, demuestran que no hay pérdida y argumentan si alguna desnormalización se justifica para los informes. Incluye una rúbrica."
+  },
+  "lessons.0.steps.9.deliverable": {
+    "en": "The spreadsheet, the brief, a model answer and a rubric.",
+    "t": "La hoja de cálculo, el enunciado, una respuesta modelo y una rúbrica."
+  },
+  "lessons.0.steps.9.rubric.0.criterion": {
+    "en": "Students can: identify anomalies and dependencies.",
+    "t": "Los estudiantes pueden: identificar anomalías y dependencias."
+  },
+  "lessons.0.steps.9.rubric.1.criterion": {
+    "en": "Students can: compute keys by closure.",
+    "t": "Los estudiantes pueden: calcular claves por clausura."
+  },
+  "lessons.0.steps.9.rubric.2.criterion": {
+    "en": "Students can: decompose losslessly and justify trade-offs.",
+    "t": "Los estudiantes pueden: descomponer sin pérdida y justificar los equilibrios."
+  },
+  "lessons.0.slides.0.title": {
+    "en": "The relational model and normalisation",
+    "t": "El modelo relacional y la normalización"
+  },
+  "lessons.0.slides.0.note": {
+    "en": "Data engineering · University · Lecture 1",
+    "t": "Ingeniería de datos, Universidad, Clase 1"
+  },
+  "lessons.0.slides.0.narration": {
+    "en": "A database that disagrees with itself.",
+    "t": "Una base de datos que se contradice a sí misma."
+  },
+  "lessons.0.slides.1.title": {
+    "en": "In this lecture",
+    "t": "En esta clase"
+  },
+  "lessons.0.slides.1.bullets": {
+    "en": [
+      "Use keys and dependencies.",
+      "Normalise to 3NF and BCNF.",
+      "Teach from anomalies."
+    ],
+    "t": [
+      "Usar claves y dependencias.",
+      "Normalizar a 3FN y FNBC.",
+      "Enseñar a partir de las anomalías."
+    ]
+  },
+  "lessons.0.slides.2.title": {
+    "en": "Remember",
+    "t": "Recuerda"
+  },
+  "lessons.0.slides.2.bullets": {
+    "en": [
+      "Dependencies decide the split.",
+      "Lossless joins.",
+      "Denormalise with a reason."
+    ],
+    "t": [
+      "Las dependencias deciden la división.",
+      "Uniones sin pérdida.",
+      "Desnormalizar con una razón."
+    ]
+  },
+  "lessons.0.slides.3.title": {
+    "en": "Break it, then fix it",
+    "t": "Rómpelo y luego arréglalo"
+  },
+  "lessons.0.slides.3.bullets": {
+    "en": [
+      "Warm-up (5 min): Spot the problem",
+      "Break (15 min): Anomalies.",
+      "Derive (15 min): Dependencies.",
+      "Fix (20 min): Decompose.",
+      "Wrap-up (5 min): One-minute paper."
+    ],
+    "t": [
+      "Calentamiento (5 min): Detectar el problema",
+      "Romper (15 min): Anomalías.",
+      "Deducir (15 min): Dependencias.",
+      "Arreglar (20 min): Descomponer.",
+      "Cierre (5 min): Texto de un minuto."
+    ]
+  },
+  "lessons.0.slides.3.details": {
+    "en": [
+      "Warm-up (5 min): Show the enrolment table with a lecturer’s two phone numbers and ask which is right.",
+      "Break (15 min): Groups insert, update and delete in the flat table and list what fails.",
+      "Derive (15 min): State the dependencies and compute the key by closure.",
+      "Fix (20 min): Decompose to 3NF and check the join rebuilds the original.",
+      "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+    ],
+    "t": [
+      "Calentamiento (5 min): Muestra la tabla de inscripciones con dos números de teléfono para un docente y pregunta cuál es el correcto.",
+      "Romper (15 min): Los grupos insertan, actualizan y borran en la tabla plana y enumeran lo que falla.",
+      "Deducir (15 min): Enuncien las dependencias y calculen la clave por clausura.",
+      "Arreglar (20 min): Descompongan en 3FN y comprueben que la unión reconstruye el original.",
+      "Cierre (5 min): Los estudiantes escriben el punto más confuso de la clase y una pregunta; léelos antes de la próxima semana."
+    ]
+  },
+  "lessons.0.slides.4.title": {
+    "en": "Let’s discuss",
+    "t": "Conversemos"
+  },
+  "lessons.0.slides.4.bullets": {
+    "en": [
+      "Which anomaly appeared first?",
+      "Where did the dependencies come from?",
+      "When would you denormalise?"
+    ],
+    "t": [
+      "¿Qué anomalía apareció primero?",
+      "¿De dónde salieron las dependencias?",
+      "¿Cuándo desnormalizarías?"
+    ]
+  },
+  "lessons.0.slides.5.title": {
+    "en": "Exit ticket",
+    "t": "Boleto de salida"
+  },
+  "lessons.0.slides.5.bullets": {
+    "en": [
+      "Write one functional dependency from a system you use."
+    ],
+    "t": [
+      "Escribe una dependencia funcional de un sistema que uses."
+    ]
+  },
+  "lessons.0.slides.5.narration": {
+    "en": "Let dependencies decide the design.",
+    "t": "Deja que las dependencias decidan el diseño."
+  },
+  "lessons.0.kit.0.title": {
+    "en": "Lecture slides: The relational model and normalisation",
+    "t": "Diapositivas de la clase: El modelo relacional y la normalización"
+  },
+  "lessons.0.kit.1.title": {
+    "en": "Lecture plan and seminar sheet: The relational model and normalisation",
+    "t": "Plan de clase y hoja de seminario: El modelo relacional y la normalización"
+  },
+  "lessons.0.kit.2.title": {
+    "en": "The lesson video (240p, for class or WhatsApp)",
+    "t": "El video de la lección (240p, para la clase o WhatsApp)"
+  },
+  "lessons.1.title": {
+    "en": "Indexing and query processing",
+    "t": "Indexación y procesamiento de consultas"
+  },
+  "lessons.1.tryTomorrow": {
+    "en": "Load a million-row table and let pairs run one slow query; they read the plan, add one index, rerun it, and then measure how much slower inserts became.",
+    "t": "Carga una tabla de un millón de filas y deja que las parejas ejecuten una consulta lenta; leen el plan, añaden un índice, la ejecutan de nuevo y luego miden cuánto más lentas se volvieron las inserciones."
+  },
+  "lessons.1.materials": {
+    "en": [
+      "Projector or board",
+      "The lecture slides and the seminar sheet from the kit",
+      "Phones or laptops with Darsi, for the lab"
+    ],
+    "t": [
+      "Proyector o pizarra",
+      "Las diapositivas de la clase y la hoja de seminario del kit",
+      "Teléfonos o laptops con Darsi, para el laboratorio"
+    ]
+  },
+  "lessons.1.steps.0.prompt": {
+    "en": "Watch",
+    "t": "Ver"
+  },
+  "lessons.1.steps.0.title": {
+    "en": "Indexing and query processing",
+    "t": "Indexación y procesamiento de consultas"
+  },
+  "lessons.1.steps.0.chapters.0.label": {
+    "en": "The slow results page",
+    "t": "La página de resultados lenta"
+  },
+  "lessons.1.steps.0.chapters.1.label": {
+    "en": "B-trees",
+    "t": "Árboles B"
+  },
+  "lessons.1.steps.0.chapters.2.label": {
+    "en": "Reading query plans",
+    "t": "Leer planes de consulta"
+  },
+  "lessons.1.steps.0.chapters.3.label": {
+    "en": "Remember and try it",
+    "t": "Recuerda y pruébalo"
+  },
+  "lessons.1.steps.0.checkpoint.question.prompt": {
+    "en": "About 200 keys per node. Roughly how many levels for 8 million rows?",
+    "t": "Unas 200 claves por nodo. ¿Aproximadamente cuántos niveles para 8 millones de filas?"
+  },
+  "lessons.1.steps.0.checkpoint.question.options.0.text": {
+    "en": "3",
+    "t": "3"
+  },
+  "lessons.1.steps.0.checkpoint.question.options.1.text": {
+    "en": "23",
+    "t": "23"
+  },
+  "lessons.1.steps.0.checkpoint.question.options.2.text": {
+    "en": "200",
+    "t": "200"
+  },
+  "lessons.1.steps.0.checkpoint.question.explain": {
+    "en": "200³ = 8,000,000.",
+    "t": "200³ = 8 000 000."
+  },
+  "lessons.1.steps.0.transcript": {
+    "en": "On results day, the student portal takes eight seconds to show one student's grades. The query is one line. After a single change, it takes three milliseconds. What changed? Today: why a query on a million rows can take seconds or milliseconds, how B-tree indexes work, and how to teach students to read a query plan. An index is a separate structure that maps key values to row locations. Without one, the database scans every row. With one, it jumps almost straight to the rows it needs. A B-tree keeps keys sorted in wide nodes, each holding hundreds of keys. Because the tree is so wide, it stays very shallow. A million rows need only three or four levels, so three or four page reads. The portal filtered grades by student ID, but only the grade ID was indexed. Every request scanned the whole table. One create index statement fixed it. Every index speeds some reads but slows every write, because it must be updated too. It also takes space. And an index on a column with only two values rarely helps, since the planner will scan anyway. Students often think indexes are magic or that more is always better. Give them a large table and have them run EXPLAIN before and after adding an index. Measuring both read and write time makes the trade-off concrete. Quick check! A B-tree holds about two hundred keys per node. Roughly how many levels does it need for eight million rows? Three: two hundred cubed is eight million. That is why indexed lookups stay fast as tables grow by orders of magnitude. In the app, open the index lab. Run the same lookup with and without an index and count how many rows each method touches. Your turn. A column holds only yes or no, evenly split. Will an index on it usually speed up a filter on that column? Usually not: half the rows match, so scanning is cheaper. Remember: B-trees stay shallow, every index costs writes and space, and EXPLAIN shows what the planner decided. Try it in your next lecture: load a million-row table and let pairs run one slow query. They read the plan, add one index and run it again. Then they measure how much slower inserts became.",
+    "t": "El día de los resultados, el portal estudiantil tarda ocho segundos en mostrar las notas de un estudiante. La consulta es de una línea. Tras un solo cambio, tarda tres milisegundos. ¿Qué cambió? Hoy: por qué una consulta sobre un millón de filas puede tardar segundos o milisegundos, cómo funcionan los índices de árbol B y cómo enseñar a los estudiantes a leer un plan de consulta. Un índice es una estructura aparte que asocia valores de clave con ubicaciones de filas. Sin uno, la base de datos recorre todas las filas. Con uno, salta casi directamente a las filas que necesita. Un árbol B mantiene las claves ordenadas en nodos anchos, cada uno con cientos de claves. Como el árbol es tan ancho, se mantiene muy poco profundo. Un millón de filas necesita solo tres o cuatro niveles, es decir, tres o cuatro lecturas de página. El portal filtraba las notas por el identificador del estudiante, pero solo estaba indexado el identificador de la nota. Cada petición recorría toda la tabla. Una sola sentencia create index lo arregló. Cada índice acelera algunas lecturas pero ralentiza todas las escrituras, porque también hay que actualizarlo. Además ocupa espacio. Y un índice sobre una columna con solo dos valores rara vez ayuda, porque el planificador recorrerá la tabla de todos modos. Los estudiantes suelen pensar que los índices son magia o que cuantos más, mejor. Dales una tabla grande y haz que ejecuten EXPLAIN antes y después de añadir un índice. Medir el tiempo de lectura y de escritura vuelve concreto el equilibrio. ¡Comprobación rápida! Un árbol B contiene unas doscientas claves por nodo. ¿Aproximadamente cuántos niveles necesita para ocho millones de filas? Tres: doscientos al cubo es ocho millones. Por eso las búsquedas indexadas siguen siendo rápidas aunque las tablas crezcan órdenes de magnitud. En la aplicación, abre el laboratorio de índices. Ejecuta la misma búsqueda con y sin índice y cuenta cuántas filas toca cada método. Tu turno. Una columna contiene solo sí o no, repartidos por igual. ¿Acelerará normalmente un índice sobre ella un filtro por esa columna? Normalmente no: la mitad de las filas coincide, así que recorrer la tabla es más barato. Recuerda: los árboles B se mantienen poco profundos, cada índice cuesta escrituras y espacio, y EXPLAIN muestra lo que decidió el planificador. Pruébalo en tu próxima clase: carga una tabla de un millón de filas y deja que las parejas ejecuten una consulta lenta. Leen el plan, añaden un índice y la ejecutan de nuevo. Luego miden cuánto más lentas se volvieron las inserciones."
+  },
+  "lessons.1.steps.1.prompt": {
+    "en": "Read",
+    "t": "Leer"
+  },
+  "lessons.1.steps.1.title": {
+    "en": "Why some queries are fast",
+    "t": "Por qué algunas consultas son rápidas"
+  },
+  "lessons.1.steps.1.body": {
+    "en": "Databases store rows in fixed-size pages on disk or in memory, and the cost of a query is dominated by how many pages it reads. Without a suitable index, a selective lookup must scan every page. The B-tree (Bayer and McCreight, 1972), and its variant the B+-tree used by most relational systems, keeps keys sorted in wide nodes sized to a page; with a fan-out of a few hundred, a table of millions of rows needs only three or four levels, so a lookup reads a handful of pages, and leaf nodes linked in order support range scans (Comer, 1979).\n\nIndexes are not free. Every insert, update and delete must maintain each index, and each takes storage. Their value depends on selectivity: an index on a column where a predicate matches a large fraction of rows rarely helps, because random page reads cost more than a sequential scan. Composite indexes serve queries on a prefix of their columns, and covering indexes answer a query without touching the table.\n\nA cost-based optimiser, pioneered in System R (Selinger et al., 1979), estimates the cost of alternative plans from statistics and chooses one. Students learn query processing best by reading plans: running EXPLAIN before and after an index on a realistic table, comparing estimated and actual rows, and timing writes as well as reads. This replaces the common beliefs that indexes are magic, that more indexes are always better, and that the database executes SQL in the order it is written.",
+    "t": "Las bases de datos guardan las filas en páginas de tamaño fijo en disco o en memoria, y el costo de una consulta está dominado por cuántas páginas lee. Sin un índice adecuado, una búsqueda selectiva debe recorrer todas las páginas. El árbol B (Bayer y McCreight, 1972), y su variante el árbol B+ que usan la mayoría de los sistemas relacionales, mantiene las claves ordenadas en nodos anchos del tamaño de una página; con un grado de ramificación de unos cientos, una tabla de millones de filas necesita solo tres o cuatro niveles, así que una búsqueda lee unas pocas páginas, y las hojas enlazadas en orden permiten recorridos por rangos (Comer, 1979).\n\nLos índices no son gratis. Cada inserción, actualización y borrado debe mantener todos los índices, y cada uno ocupa almacenamiento. Su valor depende de la selectividad: un índice sobre una columna en la que un predicado coincide con una gran fracción de las filas rara vez ayuda, porque las lecturas aleatorias de página cuestan más que un recorrido secuencial. Los índices compuestos sirven a las consultas sobre un prefijo de sus columnas, y los índices de cobertura responden una consulta sin tocar la tabla.\n\nUn optimizador basado en costos, iniciado en System R (Selinger et al., 1979), estima el costo de planes alternativos a partir de estadísticas y elige uno. Los estudiantes aprenden mejor el procesamiento de consultas leyendo planes: ejecutando EXPLAIN antes y después de un índice en una tabla realista, comparando las filas estimadas y las reales, y midiendo el tiempo de las escrituras además del de las lecturas. Eso sustituye las creencias comunes de que los índices son magia, de que cuantos más índices mejor y de que la base de datos ejecuta el SQL en el orden en que está escrito."
+  },
+  "lessons.1.steps.1.keyTerms.0.term": {
+    "en": "B+-tree",
+    "t": "Árbol B+"
+  },
+  "lessons.1.steps.1.keyTerms.0.def": {
+    "en": "A balanced, wide tree of sorted keys with linked leaves.",
+    "t": "Un árbol ancho y equilibrado de claves ordenadas con hojas enlazadas."
+  },
+  "lessons.1.steps.1.keyTerms.1.term": {
+    "en": "Selectivity",
+    "t": "Selectividad"
+  },
+  "lessons.1.steps.1.keyTerms.1.def": {
+    "en": "The fraction of rows a predicate matches.",
+    "t": "La fracción de filas con las que coincide un predicado."
+  },
+  "lessons.1.steps.1.keyTerms.2.term": {
+    "en": "Query plan",
+    "t": "Plan de consulta"
+  },
+  "lessons.1.steps.1.keyTerms.2.def": {
+    "en": "The operations the optimiser chose to answer a query.",
+    "t": "Las operaciones que el optimizador eligió para responder una consulta."
+  },
+  "lessons.1.steps.2.prompt": {
+    "en": "A yes/no column, evenly split. Will an index usually speed a filter on it?",
+    "t": "Una columna de sí/no, repartida por igual. ¿Acelerará normalmente un índice un filtro sobre ella?"
+  },
+  "lessons.1.steps.2.options.0.text": {
+    "en": "Yes, always",
+    "t": "Sí, siempre"
+  },
+  "lessons.1.steps.2.options.1.text": {
+    "en": "Usually not",
+    "t": "Normalmente no"
+  },
+  "lessons.1.steps.2.options.2.text": {
+    "en": "Only for writes",
+    "t": "Solo para las escrituras"
+  },
+  "lessons.1.steps.2.explain": {
+    "en": "Half the rows match, so a scan is cheaper.",
+    "t": "La mitad de las filas coincide, así que un recorrido completo es más barato."
+  },
+  "lessons.1.steps.3.prompt": {
+    "en": "Estimate the depth.",
+    "t": "Estima la profundidad."
+  },
+  "lessons.1.steps.3.sentence": {
+    "en": [
+      "With a fan-out of 100, a B+-tree over 10⁶ keys needs ",
+      {
+        "blank": 0
+      },
+      " levels; at 10⁸ keys it needs ",
+      {
+        "blank": 1
+      },
+      "."
+    ],
+    "t": [
+      "Con un grado de ramificación de 100, un árbol B+ sobre 10⁶ claves necesita ",
+      {
+        "blank": 0
+      },
+      " niveles; con 10⁸ claves necesita ",
+      {
+        "blank": 1
+      },
+      "."
+    ]
+  },
+  "lessons.1.steps.3.bank": {
+    "en": [
+      "3",
+      "6",
+      "8",
+      "4"
+    ],
+    "t": [
+      "3",
+      "6",
+      "8",
+      "4"
+    ]
+  },
+  "lessons.1.steps.3.answers": {
+    "en": [
+      "3",
+      "4"
+    ],
+    "t": [
+      "3",
+      "4"
+    ]
+  },
+  "lessons.1.steps.3.explain": {
+    "en": "100³ = 10⁶ and 100⁴ = 10⁸: a hundredfold growth adds one level.",
+    "t": "100³ = 10⁶ y 100⁴ = 10⁸: un crecimiento de cien veces añade un nivel."
+  },
+  "lessons.1.steps.4.prompt": {
+    "en": "An index on (dept, year) exists. Which queries can use it efficiently? Choose all that apply.",
+    "t": "Existe un índice sobre (dept, year). ¿Qué consultas pueden usarlo con eficiencia? Elige todas las que correspondan."
+  },
+  "lessons.1.steps.4.options.0.text": {
+    "en": "WHERE dept = 'CS'",
+    "t": "WHERE dept = 'CS'"
+  },
+  "lessons.1.steps.4.options.1.text": {
+    "en": "WHERE dept = 'CS' AND year = 3",
+    "t": "WHERE dept = 'CS' AND year = 3"
+  },
+  "lessons.1.steps.4.options.2.text": {
+    "en": "WHERE year = 3",
+    "t": "WHERE year = 3"
+  },
+  "lessons.1.steps.4.options.3.text": {
+    "en": "WHERE dept = 'CS' AND year > 2",
+    "t": "WHERE dept = 'CS' AND year > 2"
+  },
+  "lessons.1.steps.4.explain": {
+    "en": "A composite index serves a prefix of its columns; year alone is not a prefix.",
+    "t": "Un índice compuesto sirve a un prefijo de sus columnas; year solo no es un prefijo."
+  },
+  "lessons.1.steps.5.prompt": {
+    "en": "Try it: run the same lookup with and without an index and count the rows each touches.",
+    "t": "Pruébalo: ejecuta la misma búsqueda con y sin índice y cuenta las filas que toca cada una."
+  },
+  "lessons.1.steps.6.prompt": {
+    "en": "Adding indexes to every column is a safe way to make an application faster.",
+    "t": "Añadir índices a todas las columnas es una forma segura de acelerar una aplicación."
+  },
+  "lessons.1.steps.6.explain": {
+    "en": "Each index slows writes and uses space; unselective indexes are ignored anyway.",
+    "t": "Cada índice ralentiza las escrituras y ocupa espacio; los índices poco selectivos se ignoran de todos modos."
+  },
+  "lessons.1.steps.7.prompt": {
+    "en": "Match each plan operation to when the optimiser prefers it.",
+    "t": "Relaciona cada operación del plan con el caso en que el optimizador la prefiere."
+  },
+  "lessons.1.steps.7.pairs.0.left": {
+    "en": "Sequential scan",
+    "t": "Recorrido secuencial"
+  },
+  "lessons.1.steps.7.pairs.0.right": {
+    "en": "The predicate matches most rows",
+    "t": "El predicado coincide con la mayoría de las filas"
+  },
+  "lessons.1.steps.7.pairs.1.left": {
+    "en": "Index scan",
+    "t": "Recorrido de índice"
+  },
+  "lessons.1.steps.7.pairs.1.right": {
+    "en": "A selective predicate on an indexed column",
+    "t": "Un predicado selectivo sobre una columna indexada"
+  },
+  "lessons.1.steps.7.pairs.2.left": {
+    "en": "Index-only scan",
+    "t": "Recorrido solo de índice"
+  },
+  "lessons.1.steps.7.pairs.2.right": {
+    "en": "The index covers every needed column",
+    "t": "El índice cubre todas las columnas necesarias"
+  },
+  "lessons.1.steps.7.pairs.3.left": {
+    "en": "Hash join",
+    "t": "Unión hash"
+  },
+  "lessons.1.steps.7.pairs.3.right": {
+    "en": "Joining two large unsorted inputs on equality",
+    "t": "Unir por igualdad dos entradas grandes y sin ordenar"
+  },
+  "lessons.1.steps.7.explain": {
+    "en": "The optimiser picks by estimated cost, not by how SQL is written.",
+    "t": "El optimizador elige según el costo estimado, no según cómo está escrito el SQL."
+  },
+  "lessons.1.steps.8.prompt": {
+    "en": "Do your students ever see a table large enough for an index to matter? Where could you get one?",
+    "t": "¿Tus estudiantes llegan a ver alguna vez una tabla lo bastante grande como para que un índice importe? ¿De dónde podrías sacar una?"
+  },
+  "lessons.1.steps.8.placeholder": {
+    "en": "For example: “Never above a few hundred rows. I’ll generate a million synthetic enrolments.”",
+    "t": "Por ejemplo: «Nunca más de unos cientos de filas. Generaré un millón de inscripciones sintéticas»."
+  },
+  "lessons.1.steps.9.prompt": {
+    "en": "Project: A query-tuning lab",
+    "t": "Proyecto: Un laboratorio de ajuste de consultas"
+  },
+  "lessons.1.steps.9.task": {
+    "en": "Design a lab on a synthetic table of at least a million rows: students run five slow queries, record the plans, propose one index per query with a selectivity argument, measure read speed-up and write slow-down, and recommend a final index set within a storage budget. Include the data generator and a rubric.",
+    "t": "Diseña un laboratorio sobre una tabla sintética de al menos un millón de filas: los estudiantes ejecutan cinco consultas lentas, registran los planes, proponen un índice por consulta con un argumento de selectividad, miden la aceleración de lectura y la ralentización de escritura, y recomiendan un conjunto final de índices dentro de un presupuesto de almacenamiento. Incluye el generador de datos y una rúbrica."
+  },
+  "lessons.1.steps.9.deliverable": {
+    "en": "The generator, the handout, a model report and a rubric.",
+    "t": "El generador, la guía, un informe modelo y una rúbrica."
+  },
+  "lessons.1.steps.9.rubric.0.criterion": {
+    "en": "Students can: read and interpret query plans.",
+    "t": "Los estudiantes pueden: leer e interpretar planes de consulta."
+  },
+  "lessons.1.steps.9.rubric.1.criterion": {
+    "en": "Students can: justify an index by selectivity.",
+    "t": "Los estudiantes pueden: justificar un índice por su selectividad."
+  },
+  "lessons.1.steps.9.rubric.2.criterion": {
+    "en": "Students can: weigh read gains against write costs.",
+    "t": "Los estudiantes pueden: sopesar las ganancias de lectura frente a los costos de escritura."
+  },
+  "lessons.1.slides.0.title": {
+    "en": "Indexing and query processing",
+    "t": "Indexación y procesamiento de consultas"
+  },
+  "lessons.1.slides.0.note": {
+    "en": "Data engineering · University · Lecture 2",
+    "t": "Ingeniería de datos, Universidad, Clase 2"
+  },
+  "lessons.1.slides.0.narration": {
+    "en": "Eight seconds, then three milliseconds.",
+    "t": "Ocho segundos, luego tres milisegundos."
+  },
+  "lessons.1.slides.1.title": {
+    "en": "In this lecture",
+    "t": "En esta clase"
+  },
+  "lessons.1.slides.1.bullets": {
+    "en": [
+      "Explain B-tree indexes.",
+      "Reason about selectivity.",
+      "Read query plans."
+    ],
+    "t": [
+      "Explicar los índices de árbol B.",
+      "Razonar sobre la selectividad.",
+      "Leer planes de consulta."
+    ]
+  },
+  "lessons.1.slides.2.title": {
+    "en": "Remember",
+    "t": "Recuerda"
+  },
+  "lessons.1.slides.2.bullets": {
+    "en": [
+      "Wide trees stay shallow.",
+      "Writes pay for reads.",
+      "EXPLAIN before and after."
+    ],
+    "t": [
+      "Los árboles anchos son poco profundos.",
+      "Las escrituras pagan las lecturas.",
+      "EXPLAIN antes y después."
+    ]
+  },
+  "lessons.1.slides.3.title": {
+    "en": "Tune one query",
+    "t": "Ajusta una consulta"
+  },
+  "lessons.1.slides.3.bullets": {
+    "en": [
+      "Warm-up (5 min): Guess the cost",
+      "Explain (15 min): The slow plan.",
+      "Index (15 min): Add and compare.",
+      "Measure (20 min): Writes.",
+      "Wrap-up (5 min): One-minute paper."
+    ],
+    "t": [
+      "Calentamiento (5 min): Adivinar el costo",
+      "Explicar (15 min): El plan lento.",
+      "Índice (15 min): Añadir y comparar.",
+      "Medir (20 min): Escrituras.",
+      "Cierre (5 min): Texto de un minuto."
+    ]
+  },
+  "lessons.1.slides.3.details": {
+    "en": [
+      "Warm-up (5 min): Ask students how many rows a lookup by student ID reads in a million-row table.",
+      "Explain (15 min): Pairs run EXPLAIN on a slow query and identify the scan.",
+      "Index (15 min): Add one index, rerun, and compare estimated and actual rows.",
+      "Measure (20 min): Time ten thousand inserts with and without the index.",
+      "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+    ],
+    "t": [
+      "Calentamiento (5 min): Pregunta a los estudiantes cuántas filas lee una búsqueda por identificador de estudiante en una tabla de un millón de filas.",
+      "Explicar (15 min): Las parejas ejecutan EXPLAIN sobre una consulta lenta e identifican el recorrido completo.",
+      "Índice (15 min): Añadan un índice, vuelvan a ejecutar y comparen las filas estimadas y las reales.",
+      "Medir (20 min): Midan el tiempo de diez mil inserciones con y sin el índice.",
+      "Cierre (5 min): Los estudiantes escriben el punto más confuso de la clase y una pregunta; léelos antes de la próxima semana."
+    ]
+  },
+  "lessons.1.slides.4.title": {
+    "en": "Let’s discuss",
+    "t": "Conversemos"
+  },
+  "lessons.1.slides.4.bullets": {
+    "en": [
+      "How many pages did the index read?",
+      "When is a scan cheaper?",
+      "What did writes cost?"
+    ],
+    "t": [
+      "¿Cuántas páginas leyó el índice?",
+      "¿Cuándo es más barato recorrer la tabla?",
+      "¿Qué costaron las escrituras?"
+    ]
+  },
+  "lessons.1.slides.5.title": {
+    "en": "Exit ticket",
+    "t": "Boleto de salida"
+  },
+  "lessons.1.slides.5.bullets": {
+    "en": [
+      "Name one column in your system you would index and why."
+    ],
+    "t": [
+      "Nombra una columna de tu sistema que indexarías y por qué."
+    ]
+  },
+  "lessons.1.slides.5.narration": {
+    "en": "Index for selective queries, and count the write cost.",
+    "t": "Indexa para las consultas selectivas y cuenta el costo de escritura."
+  },
+  "lessons.1.kit.0.title": {
+    "en": "Lecture slides: Indexing and query processing",
+    "t": "Diapositivas de la clase: Indexación y procesamiento de consultas"
+  },
+  "lessons.1.kit.1.title": {
+    "en": "Lecture plan and seminar sheet: Indexing and query processing",
+    "t": "Plan de clase y hoja de seminario: Indexación y procesamiento de consultas"
+  },
+  "lessons.1.kit.2.title": {
+    "en": "The lesson video (240p, for class or WhatsApp)",
+    "t": "El video de la lección (240p, para la clase o WhatsApp)"
+  },
+  "lessons.2.title": {
+    "en": "Transactions and distributed data",
+    "t": "Transacciones y datos distribuidos"
+  },
+  "lessons.2.tryTomorrow": {
+    "en": "Give two volunteers cards with the steps of two transactions; the class calls out an interleaving and records the final seat count, then add a lock and try again.",
+    "t": "Da a dos voluntarios tarjetas con los pasos de dos transacciones; la clase dicta un entrelazado y anota el número final de plazas, y luego añade un bloqueo y lo intenta de nuevo."
+  },
+  "lessons.2.materials": {
+    "en": [
+      "Projector or board",
+      "The lecture slides and the seminar sheet from the kit",
+      "Phones or laptops with Darsi, for the lab"
+    ],
+    "t": [
+      "Proyector o pizarra",
+      "Las diapositivas de la clase y la hoja de seminario del kit",
+      "Teléfonos o laptops con Darsi, para el laboratorio"
+    ]
+  },
+  "lessons.2.steps.0.prompt": {
+    "en": "Watch",
+    "t": "Ver"
+  },
+  "lessons.2.steps.0.title": {
+    "en": "Transactions and distributed data",
+    "t": "Transacciones y datos distribuidos"
+  },
+  "lessons.2.steps.0.chapters.0.label": {
+    "en": "Two seats, one left",
+    "t": "Dos plazas, queda una"
+  },
+  "lessons.2.steps.0.chapters.1.label": {
+    "en": "Transactions and isolation",
+    "t": "Transacciones y aislamiento"
+  },
+  "lessons.2.steps.0.chapters.2.label": {
+    "en": "Distributed trade-offs",
+    "t": "Equilibrios distribuidos"
+  },
+  "lessons.2.steps.0.chapters.3.label": {
+    "en": "Remember and try it",
+    "t": "Recuerda y pruébalo"
+  },
+  "lessons.2.steps.0.checkpoint.question.prompt": {
+    "en": "Concurrent transactions saw each other’s half-done work. Which ACID property failed?",
+    "t": "Transacciones concurrentes vieron el trabajo a medias de las otras. ¿Qué propiedad ACID falló?"
+  },
+  "lessons.2.steps.0.checkpoint.question.options.0.text": {
+    "en": "Atomicity",
+    "t": "Atomicidad"
+  },
+  "lessons.2.steps.0.checkpoint.question.options.1.text": {
+    "en": "Isolation",
+    "t": "Aislamiento"
+  },
+  "lessons.2.steps.0.checkpoint.question.options.2.text": {
+    "en": "Durability",
+    "t": "Durabilidad"
+  },
+  "lessons.2.steps.0.checkpoint.question.explain": {
+    "en": "The interleaving was the problem.",
+    "t": "El problema fue el entrelazado."
+  },
+  "lessons.2.steps.0.transcript": {
+    "en": "Course registration opens. One seat is left in a popular elective, and two students click register in the same millisecond. Both get a confirmation. How did the system sell the same seat twice? Today: what a transaction guarantees, how isolation levels allow or prevent anomalies, and what changes when data lives on many machines. A transaction groups operations so they behave as one unit. ACID names its guarantees: atomicity, consistency, isolation and durability. Either everything commits, or nothing does. Both requests read one seat left. Both subtract one and write zero. Without proper isolation, each overwrites the other, and the count never shows minus one. One fix is an atomic conditional update that only succeeds while seats remain. Another is serializable isolation, which aborts one of the two transactions. Either way, exactly one student is enrolled. Databases offer weaker isolation levels for speed, such as read committed and snapshot isolation. Each permits some anomalies. Only serializable behaves as if transactions ran one at a time. When data is replicated and the network splits, a system must choose. It can stay available and risk inconsistent answers, or stay consistent and refuse some requests. That is the CAP trade-off, and students should argue it from real cases. Quick check! The double booking happened because concurrent transactions saw each other's half-finished work. Which ACID property failed? Isolation. Each transaction was atomic and durable on its own. The problem was how they interleaved. In the app, open the pipeline lab. Interleave two transactions step by step and see which orders produce a wrong result. Your turn. During a network partition, a bank's ledger must never show two different balances. What must it give up? Availability: some requests are refused until the partition heals. Remember: transactions are units of work, isolation levels trade anomalies for speed, and partitions force a choice. Try it in your next lecture: give two volunteers cards with the steps of two transactions. The class calls out an interleaving and records the final seat count. Then add a lock and try again.",
+    "t": "Se abre la matrícula de cursos. Queda una plaza en una optativa popular, y dos estudiantes hacen clic en matricularse en el mismo milisegundo. Los dos reciben una confirmación. ¿Cómo vendió el sistema la misma plaza dos veces? Hoy: qué garantiza una transacción, cómo los niveles de aislamiento permiten o evitan anomalías y qué cambia cuando los datos viven en muchas máquinas. Una transacción agrupa operaciones para que se comporten como una sola unidad. ACID nombra sus garantías: atomicidad, consistencia, aislamiento y durabilidad. O se confirma todo, o no se confirma nada. Las dos peticiones leyeron una plaza libre. Las dos restan uno y escriben cero. Sin un aislamiento adecuado, cada una sobrescribe a la otra, y el contador nunca muestra menos uno. Una solución es una actualización condicional atómica que solo tiene éxito mientras queden plazas. Otra es el aislamiento serializable, que aborta una de las dos transacciones. De cualquier modo, queda inscrito exactamente un estudiante. Las bases de datos ofrecen niveles de aislamiento más débiles por velocidad, como lectura confirmada y aislamiento de instantánea. Cada uno permite algunas anomalías. Solo el serializable se comporta como si las transacciones se ejecutaran de una en una. Cuando los datos están replicados y la red se parte, un sistema debe elegir. Puede seguir disponible y arriesgarse a respuestas inconsistentes, o seguir siendo consistente y rechazar algunas peticiones. Ese es el equilibrio del teorema CAP, y los estudiantes deben argumentarlo con casos reales. ¡Comprobación rápida! La doble reserva ocurrió porque transacciones concurrentes vieron el trabajo a medio hacer de las otras. ¿Qué propiedad ACID falló? El aislamiento. Cada transacción era atómica y durable por sí sola. El problema fue cómo se entrelazaron. En la aplicación, abre el laboratorio de tuberías. Entrelaza dos transacciones paso a paso y mira qué órdenes producen un resultado incorrecto. Tu turno. Durante una partición de red, el libro mayor de un banco nunca debe mostrar dos saldos distintos. ¿A qué debe renunciar? A la disponibilidad: se rechazan algunas peticiones hasta que la partición se repare. Recuerda: las transacciones son unidades de trabajo, los niveles de aislamiento cambian anomalías por velocidad y las particiones obligan a elegir. Pruébalo en tu próxima clase: da a dos voluntarios tarjetas con los pasos de dos transacciones. La clase dicta un entrelazado y anota el número final de plazas. Luego añade un bloqueo y vuelve a intentarlo."
+  },
+  "lessons.2.steps.1.prompt": {
+    "en": "Read",
+    "t": "Leer"
+  },
+  "lessons.2.steps.1.title": {
+    "en": "Correctness under concurrency and failure",
+    "t": "Corrección bajo concurrencia y fallos"
+  },
+  "lessons.2.steps.1.body": {
+    "en": "A transaction is a unit of work with the ACID guarantees: atomicity (all or nothing), consistency (integrity constraints hold), isolation (concurrent transactions do not interfere) and durability (committed results survive crashes), as formalised by Gray and Reuter (1993). The gold standard for isolation is serializability: the outcome equals some serial order. Two-phase locking and serializable snapshot isolation are common ways to achieve it.\n\nFor performance, systems default to weaker levels. Berenson et al. (1995) showed that the ANSI levels are ambiguous and that snapshot isolation, widely used, still permits write skew. Read committed permits lost updates and non-repeatable reads in many implementations. Students must learn to name the level their database actually uses, and to recognise the anomalies it allows, such as the classic double-booking of the last seat.\n\nWhen data is replicated across machines, network partitions are inevitable, and Brewer’s conjecture, proved by Gilbert and Lynch (2002), says a system cannot be both linearisably consistent and available during a partition. Real systems choose per operation, and the PACELC refinement adds that even without partitions they trade latency for consistency. Kleppmann’s Designing Data-Intensive Applications (2017) is an excellent bridge from theory to practice. Interleaving schedules by hand, then reproducing anomalies on a real database with two sessions, makes these ideas concrete.",
+    "t": "Una transacción es una unidad de trabajo con las garantías ACID: atomicidad (todo o nada), consistencia (se cumplen las restricciones de integridad), aislamiento (las transacciones concurrentes no interfieren) y durabilidad (los resultados confirmados sobreviven a las caídas), tal como formalizaron Gray y Reuter (1993). El estándar de oro del aislamiento es la serializabilidad: el resultado equivale a algún orden en serie. El bloqueo en dos fases y el aislamiento de instantánea serializable son formas comunes de lograrla.\n\nPor rendimiento, los sistemas usan por defecto niveles más débiles. Berenson et al. (1995) mostraron que los niveles ANSI son ambiguos y que el aislamiento de instantánea, muy usado, todavía permite el sesgo de escritura. La lectura confirmada permite actualizaciones perdidas y lecturas no repetibles en muchas implementaciones. Los estudiantes deben aprender a nombrar el nivel que su base de datos usa de verdad, y a reconocer las anomalías que permite, como la clásica doble reserva de la última plaza.\n\nCuando los datos se replican entre máquinas, las particiones de red son inevitables, y la conjetura de Brewer, demostrada por Gilbert y Lynch (2002), dice que un sistema no puede ser a la vez linealizablemente consistente y estar disponible durante una partición. Los sistemas reales eligen por operación, y el refinamiento PACELC añade que incluso sin particiones intercambian latencia por consistencia. Designing Data-Intensive Applications de Kleppmann (2017) es un excelente puente de la teoría a la práctica. Entrelazar horarios a mano y luego reproducir las anomalías en una base de datos real con dos sesiones vuelve concretas estas ideas."
+  },
+  "lessons.2.steps.1.keyTerms.0.term": {
+    "en": "Serializability",
+    "t": "Serializabilidad"
+  },
+  "lessons.2.steps.1.keyTerms.0.def": {
+    "en": "Concurrent execution equivalent to some serial order.",
+    "t": "Ejecución concurrente equivalente a algún orden en serie."
+  },
+  "lessons.2.steps.1.keyTerms.1.term": {
+    "en": "Write skew",
+    "t": "Sesgo de escritura"
+  },
+  "lessons.2.steps.1.keyTerms.1.def": {
+    "en": "Two transactions read overlapping data and write disjoint rows, breaking a constraint.",
+    "t": "Dos transacciones leen datos que se solapan y escriben filas distintas, rompiendo una restricción."
+  },
+  "lessons.2.steps.1.keyTerms.2.term": {
+    "en": "Network partition",
+    "t": "Partición de red"
+  },
+  "lessons.2.steps.1.keyTerms.2.def": {
+    "en": "Nodes that cannot communicate with each other.",
+    "t": "Nodos que no pueden comunicarse entre sí."
+  },
+  "lessons.2.steps.2.prompt": {
+    "en": "During a partition, a ledger must never show two balances. What does it give up?",
+    "t": "Durante una partición, un libro mayor nunca debe mostrar dos saldos. ¿A qué renuncia?"
+  },
+  "lessons.2.steps.2.options.0.text": {
+    "en": "Consistency",
+    "t": "A la consistencia"
+  },
+  "lessons.2.steps.2.options.1.text": {
+    "en": "Availability",
+    "t": "A la disponibilidad"
+  },
+  "lessons.2.steps.2.options.2.text": {
+    "en": "Durability",
+    "t": "A la durabilidad"
+  },
+  "lessons.2.steps.2.explain": {
+    "en": "It refuses some requests until the partition heals.",
+    "t": "Rechaza algunas peticiones hasta que la partición se repare."
+  },
+  "lessons.2.steps.3.prompt": {
+    "en": "Count the outcome.",
+    "t": "Cuenta el resultado."
+  },
+  "lessons.2.steps.3.sentence": {
+    "en": [
+      "seats = 1. T1 and T2 both read 1, both write seats − 1 and enrol a student. Final seats = ",
+      {
+        "blank": 0
+      },
+      " and students enrolled = ",
+      {
+        "blank": 1
+      },
+      "."
+    ],
+    "t": [
+      "seats = 1. T1 y T2 leen ambas 1, ambas escriben seats − 1 e inscriben a un estudiante. seats final = ",
+      {
+        "blank": 0
+      },
+      " y estudiantes inscritos = ",
+      {
+        "blank": 1
+      },
+      "."
+    ]
+  },
+  "lessons.2.steps.3.bank": {
+    "en": [
+      "0",
+      "1",
+      "-1",
+      "2"
+    ],
+    "t": [
+      "0",
+      "1",
+      "-1",
+      "2"
+    ]
+  },
+  "lessons.2.steps.3.answers": {
+    "en": [
+      "0",
+      "2"
+    ],
+    "t": [
+      "0",
+      "2"
+    ]
+  },
+  "lessons.2.steps.3.explain": {
+    "en": "Each overwrote the other’s write: a lost update that hides the overbooking.",
+    "t": "Cada una sobrescribió la escritura de la otra: una actualización perdida que oculta el exceso de reservas."
+  },
+  "lessons.2.steps.4.prompt": {
+    "en": "Which prevent the double booking? Choose all that apply.",
+    "t": "¿Cuáles evitan la doble reserva? Elige todas las que correspondan."
+  },
+  "lessons.2.steps.4.options.0.text": {
+    "en": "UPDATE … SET seats = seats − 1 WHERE seats > 0, checking rows affected",
+    "t": "UPDATE … SET seats = seats − 1 WHERE seats > 0, comprobando las filas afectadas"
+  },
+  "lessons.2.steps.4.options.1.text": {
+    "en": "Serializable isolation with retry",
+    "t": "Aislamiento serializable con reintento"
+  },
+  "lessons.2.steps.4.options.2.text": {
+    "en": "SELECT … FOR UPDATE before writing",
+    "t": "SELECT … FOR UPDATE antes de escribir"
+  },
+  "lessons.2.steps.4.options.3.text": {
+    "en": "Reading the count twice",
+    "t": "Leer el contador dos veces"
+  },
+  "lessons.2.steps.4.explain": {
+    "en": "Reading twice does not stop the other transaction from interleaving.",
+    "t": "Leer dos veces no impide que la otra transacción se entrelace."
+  },
+  "lessons.2.steps.5.prompt": {
+    "en": "Try it: interleave two transactions step by step and see which orders produce a wrong result.",
+    "t": "Pruébalo: entrelaza dos transacciones paso a paso y mira qué órdenes producen un resultado incorrecto."
+  },
+  "lessons.2.steps.6.prompt": {
+    "en": "Snapshot isolation guarantees serializability.",
+    "t": "El aislamiento de instantánea garantiza la serializabilidad."
+  },
+  "lessons.2.steps.6.explain": {
+    "en": "It permits write skew (Berenson et al., 1995); serializable snapshot isolation adds checks to prevent it.",
+    "t": "Permite el sesgo de escritura (Berenson et al., 1995); el aislamiento de instantánea serializable añade comprobaciones para evitarlo."
+  },
+  "lessons.2.steps.7.prompt": {
+    "en": "Match each anomaly to the weakest level that prevents it in the ANSI model.",
+    "t": "Relaciona cada anomalía con el nivel más débil que la evita en el modelo ANSI."
+  },
+  "lessons.2.steps.7.pairs.0.left": {
+    "en": "Dirty read",
+    "t": "Lectura sucia"
+  },
+  "lessons.2.steps.7.pairs.0.right": {
+    "en": "Read committed",
+    "t": "Lectura confirmada (read committed)"
+  },
+  "lessons.2.steps.7.pairs.1.left": {
+    "en": "Non-repeatable read",
+    "t": "Lectura no repetible"
+  },
+  "lessons.2.steps.7.pairs.1.right": {
+    "en": "Repeatable read",
+    "t": "Lectura repetible (repeatable read)"
+  },
+  "lessons.2.steps.7.pairs.2.left": {
+    "en": "Phantom",
+    "t": "Fantasma"
+  },
+  "lessons.2.steps.7.pairs.2.right": {
+    "en": "Serializable",
+    "t": "Serializable"
+  },
+  "lessons.2.steps.7.explain": {
+    "en": "Real engines differ; always check your database’s documentation.",
+    "t": "Los motores reales difieren; consulta siempre la documentación de tu base de datos."
+  },
+  "lessons.2.steps.8.prompt": {
+    "en": "Which isolation level does the database your students use default to, and have they ever seen it fail?",
+    "t": "¿Qué nivel de aislamiento usa por defecto la base de datos que usan tus estudiantes, y han visto alguna vez que falle?"
+  },
+  "lessons.2.steps.8.placeholder": {
+    "en": "For example: “Read committed in PostgreSQL. I’ll reproduce a lost update with two terminals.”",
+    "t": "Por ejemplo: «Lectura confirmada en PostgreSQL. Reproduciré una actualización perdida con dos terminales»."
+  },
+  "lessons.2.steps.9.prompt": {
+    "en": "Project: A concurrency-anomalies lab",
+    "t": "Proyecto: Un laboratorio de anomalías de concurrencia"
+  },
+  "lessons.2.steps.9.task": {
+    "en": "Design a lab with two database sessions: students reproduce a lost update, a non-repeatable read and write skew, record the isolation level for each, fix each with the smallest change, and write a one-page note on which guarantees a course-registration system needs during a network partition. Include scripts and a rubric.",
+    "t": "Diseña un laboratorio con dos sesiones de base de datos: los estudiantes reproducen una actualización perdida, una lectura no repetible y un sesgo de escritura, anotan el nivel de aislamiento de cada una, arreglan cada una con el cambio más pequeño y escriben una nota de una página sobre qué garantías necesita un sistema de matrícula de cursos durante una partición de red. Incluye scripts y una rúbrica."
+  },
+  "lessons.2.steps.9.deliverable": {
+    "en": "Scripts, the handout, a model answer and a rubric.",
+    "t": "Scripts, la guía, una respuesta modelo y una rúbrica."
+  },
+  "lessons.2.steps.9.rubric.0.criterion": {
+    "en": "Students can: reproduce and name concurrency anomalies.",
+    "t": "Los estudiantes pueden: reproducir y nombrar anomalías de concurrencia."
+  },
+  "lessons.2.steps.9.rubric.1.criterion": {
+    "en": "Students can: choose an isolation level or fix.",
+    "t": "Los estudiantes pueden: elegir un nivel de aislamiento o una solución."
+  },
+  "lessons.2.steps.9.rubric.2.criterion": {
+    "en": "Students can: argue CAP trade-offs for a real system.",
+    "t": "Los estudiantes pueden: argumentar los equilibrios de CAP para un sistema real."
+  },
+  "lessons.2.slides.0.title": {
+    "en": "Transactions and distributed data",
+    "t": "Transacciones y datos distribuidos"
+  },
+  "lessons.2.slides.0.note": {
+    "en": "Data engineering · University · Lecture 3",
+    "t": "Ingeniería de datos, Universidad, Clase 3"
+  },
+  "lessons.2.slides.0.narration": {
+    "en": "One seat, sold twice.",
+    "t": "Una plaza, vendida dos veces."
+  },
+  "lessons.2.slides.1.title": {
+    "en": "In this lecture",
+    "t": "En esta clase"
+  },
+  "lessons.2.slides.1.bullets": {
+    "en": [
+      "State the ACID guarantees.",
+      "Recognise isolation anomalies.",
+      "Argue CAP trade-offs."
+    ],
+    "t": [
+      "Enunciar las garantías ACID.",
+      "Reconocer las anomalías de aislamiento.",
+      "Argumentar los equilibrios de CAP."
+    ]
+  },
+  "lessons.2.slides.2.title": {
+    "en": "Remember",
+    "t": "Recuerda"
+  },
+  "lessons.2.slides.2.bullets": {
+    "en": [
+      "All or nothing.",
+      "Know your isolation level.",
+      "Partitions force a choice."
+    ],
+    "t": [
+      "Todo o nada.",
+      "Conoce tu nivel de aislamiento.",
+      "Las particiones obligan a elegir."
+    ]
+  },
+  "lessons.2.slides.3.title": {
+    "en": "Interleave and fix",
+    "t": "Entrelaza y arregla"
+  },
+  "lessons.2.slides.3.bullets": {
+    "en": [
+      "Warm-up (5 min): How did it happen?",
+      "Act (15 min): Two transactions.",
+      "Reproduce (20 min): Two terminals.",
+      "Argue (15 min): CAP.",
+      "Wrap-up (5 min): One-minute paper."
+    ],
+    "t": [
+      "Calentamiento (5 min): ¿Cómo pasó?",
+      "Actuar (15 min): Dos transacciones.",
+      "Reproducir (20 min): Dos terminales.",
+      "Argumentar (15 min): CAP.",
+      "Cierre (5 min): Texto de un minuto."
+    ]
+  },
+  "lessons.2.slides.3.details": {
+    "en": [
+      "Warm-up (5 min): Show both confirmation emails and ask pairs to explain the bug.",
+      "Act (15 min): Two volunteers play T1 and T2 while the class calls out interleavings.",
+      "Reproduce (20 min): Pairs reproduce the lost update on a real database, then fix it.",
+      "Argue (15 min): Decide what registration and the library catalogue should do during a partition.",
+      "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+    ],
+    "t": [
+      "Calentamiento (5 min): Muestra los dos correos de confirmación y pide a las parejas que expliquen el error.",
+      "Actuar (15 min): Dos voluntarios hacen de T1 y T2 mientras la clase dicta los entrelazados.",
+      "Reproducir (20 min): Las parejas reproducen la actualización perdida en una base de datos real y luego la arreglan.",
+      "Argumentar (15 min): Decidan qué deberían hacer la matrícula y el catálogo de la biblioteca durante una partición.",
+      "Cierre (5 min): Los estudiantes escriben el punto más confuso de la clase y una pregunta; léelos antes de la próxima semana."
+    ]
+  },
+  "lessons.2.slides.4.title": {
+    "en": "Let’s discuss",
+    "t": "Conversemos"
+  },
+  "lessons.2.slides.4.bullets": {
+    "en": [
+      "Which interleavings were safe?",
+      "What is your default isolation level?",
+      "Which system chose availability?"
+    ],
+    "t": [
+      "¿Qué entrelazados eran seguros?",
+      "¿Cuál es tu nivel de aislamiento por defecto?",
+      "¿Qué sistema eligió la disponibilidad?"
+    ]
+  },
+  "lessons.2.slides.5.title": {
+    "en": "Exit ticket",
+    "t": "Boleto de salida"
+  },
+  "lessons.2.slides.5.bullets": {
+    "en": [
+      "Name one operation that must stay consistent during a partition."
+    ],
+    "t": [
+      "Nombra una operación que debe seguir siendo consistente durante una partición."
+    ]
+  },
+  "lessons.2.slides.5.narration": {
+    "en": "Isolation is a choice; make it deliberately.",
+    "t": "El aislamiento es una elección; hazla a propósito."
+  },
+  "lessons.2.kit.0.title": {
+    "en": "Lecture slides: Transactions and distributed data",
+    "t": "Diapositivas de la clase: Transacciones y datos distribuidos"
+  },
+  "lessons.2.kit.1.title": {
+    "en": "Lecture plan and seminar sheet: Transactions and distributed data",
+    "t": "Plan de clase y hoja de seminario: Transacciones y datos distribuidos"
+  },
+  "lessons.2.kit.2.title": {
+    "en": "The lesson video (240p, for class or WhatsApp)",
+    "t": "El video de la lección (240p, para la clase o WhatsApp)"
+  },
+  "lessons.3.title": {
+    "en": "Data quality and project assessment",
+    "t": "Calidad de los datos y evaluación de proyectos"
+  },
+  "lessons.3.tryTomorrow": {
+    "en": "Hand out a public dataset with planted problems; groups write three quality checks, run them, and each presents and defends one cleaning decision.",
+    "t": "Reparte un conjunto de datos público con problemas plantados; los grupos escriben tres comprobaciones de calidad, las ejecutan, y cada uno presenta y defiende una decisión de limpieza."
+  },
+  "lessons.3.materials": {
+    "en": [
+      "Projector or board",
+      "The lecture slides and the seminar sheet from the kit",
+      "Phones or laptops with Darsi, for the lab"
+    ],
+    "t": [
+      "Proyector o pizarra",
+      "Las diapositivas de la clase y la hoja de seminario del kit",
+      "Teléfonos o laptops con Darsi, para el laboratorio"
+    ]
+  },
+  "lessons.3.steps.0.prompt": {
+    "en": "Watch",
+    "t": "Ver"
+  },
+  "lessons.3.steps.0.title": {
+    "en": "Data quality and project assessment",
+    "t": "Calidad de los datos y evaluación de proyectos"
+  },
+  "lessons.3.steps.0.chapters.0.label": {
+    "en": "The report nobody trusted",
+    "t": "El informe en el que nadie confiaba"
+  },
+  "lessons.3.steps.0.chapters.1.label": {
+    "en": "Dimensions of quality",
+    "t": "Dimensiones de la calidad"
+  },
+  "lessons.3.steps.0.chapters.2.label": {
+    "en": "Assessing data projects",
+    "t": "Evaluar proyectos de datos"
+  },
+  "lessons.3.steps.0.chapters.3.label": {
+    "en": "Remember and try it",
+    "t": "Recuerda y pruébalo"
+  },
+  "lessons.3.steps.0.checkpoint.question.prompt": {
+    "en": "Some students were loaded twice. Which quality dimension failed?",
+    "t": "Algunos estudiantes se cargaron dos veces. ¿Qué dimensión de calidad falló?"
+  },
+  "lessons.3.steps.0.checkpoint.question.options.0.text": {
+    "en": "Completeness",
+    "t": "Completitud"
+  },
+  "lessons.3.steps.0.checkpoint.question.options.1.text": {
+    "en": "Uniqueness",
+    "t": "Unicidad"
+  },
+  "lessons.3.steps.0.checkpoint.question.options.2.text": {
+    "en": "Timeliness",
+    "t": "Actualidad"
+  },
+  "lessons.3.steps.0.checkpoint.question.explain": {
+    "en": "Each student and course pair should appear once.",
+    "t": "Cada pareja de estudiante y curso debería aparecer una vez."
+  },
+  "lessons.3.steps.0.transcript": {
+    "en": "The faculty's enrolment report shows a hundred and twelve percent attendance in one course. The query was correct. The data was not: some students were loaded twice. Who should have caught it? Today: how bad data breaks good systems, how to test data like code, and how to assess student database projects built on real, messy datasets. Data quality means fitness for use. Common dimensions are completeness, validity, uniqueness, consistency, accuracy and timeliness. Each can be tested automatically. Write checks that run every time data is loaded. Keys must be unique, required fields not null, and values within range. A failing check stops the pipeline before the report is built. Better still, let the database refuse bad data. A primary key on student and course would have rejected the duplicate load. Constraints are quality checks the database enforces for free. Lineage records where each table came from and what transformed it. Datasheets describe how a dataset was collected and its known limits. Together they let someone else trust, or question, the numbers. Clean textbook datasets hide the hardest part of the job. Give students a real, messy public dataset. Grade the schema, the quality checks and a written account of every cleaning decision, not just the final queries. Quick check! Some students were loaded twice. Which quality dimension failed? Uniqueness. Each student and course pair should appear once. A uniqueness test or a primary key would have caught it at load time. In the app, open the quality lab. Run checks on a messy table, find the duplicates, gaps and impossible values, and decide how to handle each. Your turn. Two student projects return identical final answers. What best distinguishes the stronger one? The quality checks and the written justification of each cleaning decision. Remember: quality is testable, constraints enforce it, and documentation lets others trust the result. Try it in your next lecture: hand out a public dataset with planted problems. Groups write three quality checks and run them. Then each group presents one cleaning decision and defends it.",
+    "t": "El informe de matrícula de la facultad muestra una asistencia del ciento doce por ciento en un curso. La consulta era correcta. Los datos no: algunos estudiantes se cargaron dos veces. ¿Quién debió detectarlo? Hoy: cómo los datos malos rompen buenos sistemas, cómo probar los datos como si fueran código y cómo evaluar los proyectos de bases de datos de los estudiantes construidos sobre conjuntos de datos reales y desordenados. La calidad de los datos significa aptitud para el uso. Las dimensiones comunes son completitud, validez, unicidad, consistencia, exactitud y actualidad. Cada una se puede probar automáticamente. Escribe comprobaciones que se ejecuten cada vez que se cargan datos. Las claves deben ser únicas, los campos obligatorios no pueden ser nulos y los valores deben estar dentro de un rango. Una comprobación fallida detiene la canalización antes de construir el informe. Mejor aún, deja que la base de datos rechace los datos malos. Una clave primaria sobre estudiante y curso habría rechazado la carga duplicada. Las restricciones son comprobaciones de calidad que la base de datos aplica gratis. El linaje registra de dónde vino cada tabla y qué la transformó. Las hojas de datos describen cómo se recogió un conjunto de datos y sus límites conocidos. Juntos permiten que otra persona confíe en las cifras, o las ponga en duda. Los conjuntos de datos limpios de los libros de texto esconden la parte más difícil del trabajo. Da a los estudiantes un conjunto de datos público real y desordenado. Califica el esquema, las comprobaciones de calidad y un relato escrito de cada decisión de limpieza, no solo las consultas finales. ¡Comprobación rápida! Algunos estudiantes se cargaron dos veces. ¿Qué dimensión de calidad falló? La unicidad. Cada pareja de estudiante y curso debería aparecer una vez. Una prueba de unicidad o una clave primaria lo habría detectado al cargar. En la aplicación, abre el laboratorio de calidad. Ejecuta comprobaciones sobre una tabla desordenada, encuentra los duplicados, los huecos y los valores imposibles, y decide cómo tratar cada uno. Tu turno. Dos proyectos de estudiantes devuelven respuestas finales idénticas. ¿Qué distingue mejor al más sólido? Las comprobaciones de calidad y la justificación escrita de cada decisión de limpieza. Recuerda: la calidad se puede probar, las restricciones la hacen cumplir y la documentación permite que otros confíen en el resultado. Pruébalo en tu próxima clase: reparte un conjunto de datos público con problemas plantados. Los grupos escriben tres comprobaciones de calidad y las ejecutan. Luego cada grupo presenta una decisión de limpieza y la defiende."
+  },
+  "lessons.3.steps.1.prompt": {
+    "en": "Read",
+    "t": "Leer"
+  },
+  "lessons.3.steps.1.title": {
+    "en": "Fitness for use",
+    "t": "Aptitud para el uso"
+  },
+  "lessons.3.steps.1.body": {
+    "en": "Data quality is best defined as fitness for use by data consumers (Wang and Strong, 1996), measured along dimensions such as completeness, validity, uniqueness, consistency, accuracy and timeliness. Most dimensions can be expressed as executable tests: uniqueness of keys, non-null required fields, values within domains, referential integrity between tables, and freshness of the latest load. Running such tests automatically on every load, and stopping the pipeline when they fail, treats data with the same discipline as code.\n\nWherever possible, the database itself should refuse bad data. Primary keys, foreign keys, NOT NULL and CHECK constraints are quality rules enforced at write time for free, and they document intent. Lineage, the record of which sources and transformations produced a table, lets analysts trace a suspicious number back to its origin. Datasheets for datasets (Gebru et al., 2021) document how data was collected, its intended uses and its known limits, which matters for fairness as well as correctness.\n\nTextbook datasets are clean, so students rarely practise the hardest part of real work. Projects on real, messy public datasets, such as government open-data portals, teach cleaning, validation and documentation. Assessment should therefore weight the schema and constraints, the quality checks, and a written log justifying each cleaning decision, alongside final queries, and should require a short datasheet. Wickham’s tidy data principles (2014) provide a shared vocabulary for structure.",
+    "t": "La calidad de los datos se define mejor como aptitud para el uso por parte de quienes consumen los datos (Wang y Strong, 1996), y se mide en dimensiones como completitud, validez, unicidad, consistencia, exactitud y actualidad. La mayoría de las dimensiones se pueden expresar como pruebas ejecutables: unicidad de las claves, campos obligatorios no nulos, valores dentro de sus dominios, integridad referencial entre tablas y frescura de la última carga. Ejecutar estas pruebas automáticamente en cada carga, y detener la canalización cuando fallan, trata los datos con la misma disciplina que el código.\n\nSiempre que sea posible, la propia base de datos debería rechazar los datos malos. Las claves primarias, las claves foráneas y las restricciones NOT NULL y CHECK son reglas de calidad que se aplican gratis al escribir, y documentan la intención. El linaje, el registro de qué fuentes y transformaciones produjeron una tabla, permite a los analistas rastrear una cifra sospechosa hasta su origen. Las hojas de datos para conjuntos de datos (Gebru et al., 2021) documentan cómo se recogieron los datos, sus usos previstos y sus límites conocidos, lo que importa tanto para la equidad como para la corrección.\n\nLos conjuntos de datos de los libros de texto están limpios, así que los estudiantes rara vez practican la parte más difícil del trabajo real. Los proyectos con conjuntos de datos públicos reales y desordenados, como los portales de datos abiertos de los gobiernos, enseñan limpieza, validación y documentación. Por eso la evaluación debería dar peso al esquema y las restricciones, a las comprobaciones de calidad y a un registro escrito que justifique cada decisión de limpieza, junto con las consultas finales, y debería exigir una hoja de datos breve. Los principios de datos ordenados de Wickham (2014) aportan un vocabulario común para la estructura."
+  },
+  "lessons.3.steps.1.keyTerms.0.term": {
+    "en": "Data quality dimension",
+    "t": "Dimensión de calidad de los datos"
+  },
+  "lessons.3.steps.1.keyTerms.0.def": {
+    "en": "A measurable aspect such as completeness or uniqueness.",
+    "t": "Un aspecto medible como la completitud o la unicidad."
+  },
+  "lessons.3.steps.1.keyTerms.1.term": {
+    "en": "Lineage",
+    "t": "Linaje"
+  },
+  "lessons.3.steps.1.keyTerms.1.def": {
+    "en": "The record of sources and transformations behind a table.",
+    "t": "El registro de las fuentes y transformaciones detrás de una tabla."
+  },
+  "lessons.3.steps.1.keyTerms.2.term": {
+    "en": "Datasheet",
+    "t": "Hoja de datos"
+  },
+  "lessons.3.steps.1.keyTerms.2.def": {
+    "en": "A document of how a dataset was collected and its limits.",
+    "t": "Un documento sobre cómo se recogió un conjunto de datos y sus límites."
+  },
+  "lessons.3.steps.2.prompt": {
+    "en": "Two projects give identical answers. What best distinguishes the stronger one?",
+    "t": "Dos proyectos dan respuestas idénticas. ¿Qué distingue mejor al más sólido?"
+  },
+  "lessons.3.steps.2.options.0.text": {
+    "en": "Longer queries",
+    "t": "Consultas más largas"
+  },
+  "lessons.3.steps.2.options.1.text": {
+    "en": "Quality checks and justified cleaning",
+    "t": "Comprobaciones de calidad y limpieza justificada"
+  },
+  "lessons.3.steps.2.options.2.text": {
+    "en": "More tables",
+    "t": "Más tablas"
+  },
+  "lessons.3.steps.2.explain": {
+    "en": "The process shows whether the answers can be trusted.",
+    "t": "El proceso muestra si se puede confiar en las respuestas."
+  },
+  "lessons.3.steps.3.prompt": {
+    "en": "Write the check.",
+    "t": "Escribe la comprobación."
+  },
+  "lessons.3.steps.3.sentence": {
+    "en": [
+      "To find duplicate enrolments: SELECT student_id, course FROM enrol GROUP BY student_id, course ",
+      {
+        "blank": 0
+      },
+      " COUNT(*) > 1; a clean table returns ",
+      {
+        "blank": 1
+      },
+      " rows."
+    ],
+    "t": [
+      "Para encontrar inscripciones duplicadas: SELECT student_id, course FROM enrol GROUP BY student_id, course ",
+      {
+        "blank": 0
+      },
+      " COUNT(*) > 1; una tabla limpia devuelve ",
+      {
+        "blank": 1
+      },
+      " filas."
+    ]
+  },
+  "lessons.3.steps.3.bank": {
+    "en": [
+      "HAVING",
+      "WHERE",
+      "1",
+      "0"
+    ],
+    "t": [
+      "HAVING",
+      "WHERE",
+      "1",
+      "0"
+    ]
+  },
+  "lessons.3.steps.3.answers": {
+    "en": [
+      "HAVING",
+      "0"
+    ],
+    "t": [
+      "HAVING",
+      "0"
+    ]
+  },
+  "lessons.3.steps.3.explain": {
+    "en": "WHERE filters rows before grouping; HAVING filters groups.",
+    "t": "WHERE filtra filas antes de agrupar; HAVING filtra grupos."
+  },
+  "lessons.3.steps.4.prompt": {
+    "en": "Which are enforced by the database at write time? Choose all that apply.",
+    "t": "¿Cuáles aplica la base de datos al escribir? Elige todas las que correspondan."
+  },
+  "lessons.3.steps.4.options.0.text": {
+    "en": "PRIMARY KEY (student_id, course)",
+    "t": "PRIMARY KEY (student_id, course)"
+  },
+  "lessons.3.steps.4.options.1.text": {
+    "en": "CHECK (grade BETWEEN 0 AND 100)",
+    "t": "CHECK (grade BETWEEN 0 AND 100)"
+  },
+  "lessons.3.steps.4.options.2.text": {
+    "en": "A datasheet describing collection",
+    "t": "Una hoja de datos que describe la recogida"
+  },
+  "lessons.3.steps.4.options.3.text": {
+    "en": "FOREIGN KEY (course) REFERENCES course",
+    "t": "FOREIGN KEY (course) REFERENCES course"
+  },
+  "lessons.3.steps.4.explain": {
+    "en": "A datasheet documents; it does not enforce.",
+    "t": "Una hoja de datos documenta; no hace cumplir nada."
+  },
+  "lessons.3.steps.5.prompt": {
+    "en": "Try it: run checks on a messy table, find duplicates, gaps and impossible values, and decide how to handle each.",
+    "t": "Pruébalo: ejecuta comprobaciones sobre una tabla desordenada, encuentra duplicados, huecos y valores imposibles, y decide cómo tratar cada uno."
+  },
+  "lessons.3.steps.6.prompt": {
+    "en": "Deleting every row with a missing value is always the safest cleaning decision.",
+    "t": "Eliminar todas las filas con un valor ausente es siempre la decisión de limpieza más segura."
+  },
+  "lessons.3.steps.6.explain": {
+    "en": "It can bias results if values are not missing at random; decisions must be justified and recorded.",
+    "t": "Puede sesgar los resultados si los valores no faltan al azar; las decisiones deben justificarse y registrarse."
+  },
+  "lessons.3.steps.7.prompt": {
+    "en": "Match each problem to its quality dimension.",
+    "t": "Relaciona cada problema con su dimensión de calidad."
+  },
+  "lessons.3.steps.7.pairs.0.left": {
+    "en": "A student loaded twice",
+    "t": "Un estudiante cargado dos veces"
+  },
+  "lessons.3.steps.7.pairs.0.right": {
+    "en": "Uniqueness",
+    "t": "Unicidad"
+  },
+  "lessons.3.steps.7.pairs.1.left": {
+    "en": "A grade of 140",
+    "t": "Una nota de 140"
+  },
+  "lessons.3.steps.7.pairs.1.right": {
+    "en": "Validity",
+    "t": "Validez"
+  },
+  "lessons.3.steps.7.pairs.2.left": {
+    "en": "Missing email addresses",
+    "t": "Direcciones de correo ausentes"
+  },
+  "lessons.3.steps.7.pairs.2.right": {
+    "en": "Completeness",
+    "t": "Completitud"
+  },
+  "lessons.3.steps.7.pairs.3.left": {
+    "en": "Last week’s enrolments not yet loaded",
+    "t": "Las inscripciones de la semana pasada aún no cargadas"
+  },
+  "lessons.3.steps.7.pairs.3.right": {
+    "en": "Timeliness",
+    "t": "Actualidad"
+  },
+  "lessons.3.steps.7.explain": {
+    "en": "Naming the dimension tells you which test to write.",
+    "t": "Nombrar la dimensión te dice qué prueba escribir."
+  },
+  "lessons.3.steps.8.prompt": {
+    "en": "Which real, messy public dataset could your students use next term, and what problems does it contain?",
+    "t": "¿Qué conjunto de datos público, real y desordenado podrían usar tus estudiantes el próximo trimestre, y qué problemas contiene?"
+  },
+  "lessons.3.steps.8.placeholder": {
+    "en": "For example: “The national education statistics portal. Inconsistent school names and missing years.”",
+    "t": "Por ejemplo: «El portal nacional de estadísticas de educación. Nombres de escuelas inconsistentes y años ausentes»."
+  },
+  "lessons.3.steps.9.prompt": {
+    "en": "Project: A real-data database project",
+    "t": "Proyecto: Un proyecto de base de datos con datos reales"
+  },
+  "lessons.3.steps.9.task": {
+    "en": "Design a four-week team project on a real public dataset: teams design a normalised schema with constraints, write at least eight automated quality checks, keep a cleaning log justifying every decision, write a one-page datasheet, and answer five analytical questions. Write a rubric that weights process at least as much as final answers, plus peer assessment.",
+    "t": "Diseña un proyecto en equipo de cuatro semanas sobre un conjunto de datos público real: los equipos diseñan un esquema normalizado con restricciones, escriben al menos ocho comprobaciones de calidad automáticas, llevan un registro de limpieza que justifica cada decisión, escriben una hoja de datos de una página y responden cinco preguntas analíticas. Escribe una rúbrica que dé al proceso al menos tanto peso como a las respuestas finales, además de una evaluación entre pares."
+  },
+  "lessons.3.steps.9.deliverable": {
+    "en": "The brief, a dataset shortlist, templates and a rubric.",
+    "t": "El enunciado, una lista corta de conjuntos de datos, plantillas y una rúbrica."
+  },
+  "lessons.3.steps.9.rubric.0.criterion": {
+    "en": "Students can: write automated quality checks and constraints.",
+    "t": "Los estudiantes pueden: escribir comprobaciones de calidad automáticas y restricciones."
+  },
+  "lessons.3.steps.9.rubric.1.criterion": {
+    "en": "Students can: justify cleaning decisions.",
+    "t": "Los estudiantes pueden: justificar decisiones de limpieza."
+  },
+  "lessons.3.steps.9.rubric.2.criterion": {
+    "en": "Students can: document a dataset’s origin and limits.",
+    "t": "Los estudiantes pueden: documentar el origen y los límites de un conjunto de datos."
+  },
+  "lessons.3.slides.0.title": {
+    "en": "Data quality and project assessment",
+    "t": "Calidad de los datos y evaluación de proyectos"
+  },
+  "lessons.3.slides.0.note": {
+    "en": "Data engineering · University · Lecture 4",
+    "t": "Ingeniería de datos, Universidad, Clase 4"
+  },
+  "lessons.3.slides.0.narration": {
+    "en": "A hundred and twelve percent attendance.",
+    "t": "Una asistencia del ciento doce por ciento."
+  },
+  "lessons.3.slides.1.title": {
+    "en": "In this lecture",
+    "t": "En esta clase"
+  },
+  "lessons.3.slides.1.bullets": {
+    "en": [
+      "Name quality dimensions.",
+      "Test and constrain data.",
+      "Assess real-data projects."
+    ],
+    "t": [
+      "Nombrar las dimensiones de calidad.",
+      "Probar y restringir los datos.",
+      "Evaluar proyectos con datos reales."
+    ]
+  },
+  "lessons.3.slides.2.title": {
+    "en": "Remember",
+    "t": "Recuerda"
+  },
+  "lessons.3.slides.2.bullets": {
+    "en": [
+      "Test every load.",
+      "Let constraints refuse.",
+      "Grade the process."
+    ],
+    "t": [
+      "Prueba cada carga.",
+      "Deja que las restricciones rechacen.",
+      "Califica el proceso."
+    ]
+  },
+  "lessons.3.slides.3.title": {
+    "en": "Clean a real dataset",
+    "t": "Limpia un conjunto de datos real"
+  },
+  "lessons.3.slides.3.bullets": {
+    "en": [
+      "Warm-up (5 min): What went wrong?",
+      "Check (20 min): Three tests.",
+      "Constrain (15 min): Schema.",
+      "Defend (15 min): One decision.",
+      "Wrap-up (5 min): One-minute paper."
+    ],
+    "t": [
+      "Calentamiento (5 min): ¿Qué salió mal?",
+      "Comprobar (20 min): Tres pruebas.",
+      "Restringir (15 min): Esquema.",
+      "Defender (15 min): Una decisión.",
+      "Cierre (5 min): Texto de un minuto."
+    ]
+  },
+  "lessons.3.slides.3.details": {
+    "en": [
+      "Warm-up (5 min): Show the 112% report and ask students to list possible causes.",
+      "Check (20 min): Groups write and run three quality checks on the planted dataset.",
+      "Constrain (15 min): Add constraints that would have refused the bad rows.",
+      "Defend (15 min): Each group presents and defends one cleaning decision.",
+      "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
+    ],
+    "t": [
+      "Calentamiento (5 min): Muestra el informe del 112 % y pide a los estudiantes que enumeren causas posibles.",
+      "Comprobar (20 min): Los grupos escriben y ejecutan tres comprobaciones de calidad sobre el conjunto de datos con problemas plantados.",
+      "Restringir (15 min): Añadan restricciones que habrían rechazado las filas malas.",
+      "Defender (15 min): Cada grupo presenta y defiende una decisión de limpieza.",
+      "Cierre (5 min): Los estudiantes escriben el punto más confuso de la clase y una pregunta; léelos antes de la próxima semana."
+    ]
+  },
+  "lessons.3.slides.4.title": {
+    "en": "Let’s discuss",
+    "t": "Conversemos"
+  },
+  "lessons.3.slides.4.bullets": {
+    "en": [
+      "Which check found the most?",
+      "Which constraint was missing?",
+      "How will you grade the log?"
+    ],
+    "t": [
+      "¿Qué comprobación encontró más problemas?",
+      "¿Qué restricción faltaba?",
+      "¿Cómo calificarás el registro?"
+    ]
+  },
+  "lessons.3.slides.5.title": {
+    "en": "Exit ticket",
+    "t": "Boleto de salida"
+  },
+  "lessons.3.slides.5.bullets": {
+    "en": [
+      "Write one quality check for a table you use."
+    ],
+    "t": [
+      "Escribe una comprobación de calidad para una tabla que uses."
+    ]
+  },
+  "lessons.3.slides.5.narration": {
+    "en": "Test data like code.",
+    "t": "Prueba los datos como código."
+  },
+  "lessons.3.kit.0.title": {
+    "en": "Lecture slides: Data quality and project assessment",
+    "t": "Diapositivas de la clase: Calidad de los datos y evaluación de proyectos"
+  },
+  "lessons.3.kit.1.title": {
+    "en": "Lecture plan and seminar sheet: Data quality and project assessment",
+    "t": "Plan de clase y hoja de seminario: Calidad de los datos y evaluación de proyectos"
+  },
+  "lessons.3.kit.2.title": {
+    "en": "The lesson video (240p, for class or WhatsApp)",
+    "t": "El video de la lección (240p, para la clase o WhatsApp)"
+  },
+  "lessons.4.title": {
+    "en": "Teaching databases and data engineering at university: unit check",
+    "t": "Enseñar bases de datos e ingeniería de datos en la universidad: evaluación de la unidad"
+  },
+  "lessons.4.tryTomorrow": {
+    "en": "Bring your real-data project brief and rubric to your next department meeting for review.",
+    "t": "Lleva el enunciado y la rúbrica de tu proyecto con datos reales a tu próxima reunión de departamento para que los revisen."
+  },
+  "lessons.4.steps.0.prompt": {
+    "en": "R(A, B, C) with A → B and B → C, key A. The highest normal form is",
+    "t": "R(A, B, C) con A → B y B → C, clave A. La forma normal más alta es"
+  },
+  "lessons.4.steps.0.options.0.text": {
+    "en": "2NF",
+    "t": "2FN"
+  },
+  "lessons.4.steps.0.options.1.text": {
+    "en": "3NF",
+    "t": "3FN"
+  },
+  "lessons.4.steps.0.options.2.text": {
+    "en": "BCNF",
+    "t": "FNBC"
+  },
+  "lessons.4.steps.0.explain": {
+    "en": "B → C is transitive, so 3NF fails.",
+    "t": "B → C es transitiva, así que la 3FN falla."
+  },
+  "lessons.4.steps.1.prompt": {
+    "en": "Compute the closure.",
+    "t": "Calcula la clausura."
+  },
+  "lessons.4.steps.1.sentence": {
+    "en": [
+      "With A → B and B → C, {A}⁺ = {A, B, ",
+      {
+        "blank": 0
+      },
+      "}."
+    ],
+    "t": [
+      "Con A → B y B → C, {A}⁺ = {A, B, ",
+      {
+        "blank": 0
+      },
+      "}."
+    ]
+  },
+  "lessons.4.steps.1.bank": {
+    "en": [
+      "C",
+      "D",
+      "∅"
+    ],
+    "t": [
+      "C",
+      "D",
+      "∅"
+    ]
+  },
+  "lessons.4.steps.1.answers": {
+    "en": [
+      "C"
+    ],
+    "t": [
+      "C"
+    ]
+  },
+  "lessons.4.steps.1.explain": {
+    "en": "Apply the dependencies until nothing changes.",
+    "t": "Aplica las dependencias hasta que nada cambie."
+  },
+  "lessons.4.steps.2.prompt": {
+    "en": "An index on a column always makes queries on it faster.",
+    "t": "Un índice sobre una columna siempre hace más rápidas las consultas sobre ella."
+  },
+  "lessons.4.steps.2.explain": {
+    "en": "Unselective predicates are cheaper as scans.",
+    "t": "Los predicados poco selectivos son más baratos como recorridos completos."
+  },
+  "lessons.4.steps.3.prompt": {
+    "en": "A B+-tree with fan-out 100 over 10⁶ keys has about",
+    "t": "Un árbol B+ con grado de ramificación 100 sobre 10⁶ claves tiene aproximadamente"
+  },
+  "lessons.4.steps.3.options.0.text": {
+    "en": "3 levels",
+    "t": "3 niveles"
+  },
+  "lessons.4.steps.3.options.1.text": {
+    "en": "6 levels",
+    "t": "6 niveles"
+  },
+  "lessons.4.steps.3.options.2.text": {
+    "en": "20 levels",
+    "t": "20 niveles"
+  },
+  "lessons.4.steps.3.explain": {
+    "en": "100³ = 10⁶.",
+    "t": "100³ = 10⁶."
+  },
+  "lessons.4.steps.4.prompt": {
+    "en": "An index on (dept, year) helps which? Choose all that apply.",
+    "t": "¿A qué consultas ayuda un índice sobre (dept, year)? Elige todas las que correspondan."
+  },
+  "lessons.4.steps.4.options.0.text": {
+    "en": "dept = 'CS'",
+    "t": "dept = 'CS'"
+  },
+  "lessons.4.steps.4.options.1.text": {
+    "en": "dept = 'CS' AND year = 2",
+    "t": "dept = 'CS' AND year = 2"
+  },
+  "lessons.4.steps.4.options.2.text": {
+    "en": "year = 2",
+    "t": "year = 2"
+  },
+  "lessons.4.steps.4.explain": {
+    "en": "Only a prefix of the columns.",
+    "t": "Solo un prefijo de las columnas."
+  },
+  "lessons.4.steps.5.prompt": {
+    "en": "Two transactions overwrite each other’s seat count. This is",
+    "t": "Dos transacciones se sobrescriben el contador de plazas. Esto es"
+  },
+  "lessons.4.steps.5.options.0.text": {
+    "en": "A lost update",
+    "t": "Una actualización perdida"
+  },
+  "lessons.4.steps.5.options.1.text": {
+    "en": "A dirty read",
+    "t": "Una lectura sucia"
+  },
+  "lessons.4.steps.5.options.2.text": {
+    "en": "A phantom",
+    "t": "Un fantasma"
+  },
+  "lessons.4.steps.5.explain": {
+    "en": "One write is lost.",
+    "t": "Se pierde una escritura."
+  },
+  "lessons.4.steps.6.prompt": {
+    "en": "Snapshot isolation prevents write skew.",
+    "t": "El aislamiento de instantánea evita el sesgo de escritura."
+  },
+  "lessons.4.steps.6.explain": {
+    "en": "It allows it; serializable is needed.",
+    "t": "Lo permite; hace falta el serializable."
+  },
+  "lessons.4.steps.7.prompt": {
+    "en": "During a partition, a system that refuses writes to stay consistent gives up",
+    "t": "Durante una partición, un sistema que rechaza escrituras para seguir siendo consistente renuncia a"
+  },
+  "lessons.4.steps.7.options.0.text": {
+    "en": "Availability",
+    "t": "La disponibilidad"
+  },
+  "lessons.4.steps.7.options.1.text": {
+    "en": "Durability",
+    "t": "La durabilidad"
+  },
+  "lessons.4.steps.7.options.2.text": {
+    "en": "Atomicity",
+    "t": "La atomicidad"
+  },
+  "lessons.4.steps.7.explain": {
+    "en": "CAP during a partition.",
+    "t": "CAP durante una partición."
+  },
+  "lessons.4.steps.8.prompt": {
+    "en": "Match each problem to its dimension.",
+    "t": "Relaciona cada problema con su dimensión."
+  },
+  "lessons.4.steps.8.pairs.0.left": {
+    "en": "Duplicate rows",
+    "t": "Filas duplicadas"
+  },
+  "lessons.4.steps.8.pairs.0.right": {
+    "en": "Uniqueness",
+    "t": "Unicidad"
+  },
+  "lessons.4.steps.8.pairs.1.left": {
+    "en": "Grade of 140",
+    "t": "Nota de 140"
+  },
+  "lessons.4.steps.8.pairs.1.right": {
+    "en": "Validity",
+    "t": "Validez"
+  },
+  "lessons.4.steps.8.pairs.2.left": {
+    "en": "Missing values",
+    "t": "Valores ausentes"
+  },
+  "lessons.4.steps.8.pairs.2.right": {
+    "en": "Completeness",
+    "t": "Completitud"
+  },
+  "lessons.4.steps.8.explain": {
+    "en": "Name it, then test it.",
+    "t": "Nómbralo y luego pruébalo."
+  },
+  "lessons.4.steps.9.prompt": {
+    "en": "Best evidence of quality in a student data project:",
+    "t": "La mejor evidencia de calidad en un proyecto de datos de estudiantes:"
+  },
+  "lessons.4.steps.9.options.0.text": {
+    "en": "Checks, constraints and a cleaning log",
+    "t": "Comprobaciones, restricciones y un registro de limpieza"
+  },
+  "lessons.4.steps.9.options.1.text": {
+    "en": "The number of tables",
+    "t": "El número de tablas"
+  },
+  "lessons.4.steps.9.options.2.text": {
+    "en": "The length of queries",
+    "t": "La longitud de las consultas"
+  },
+  "lessons.4.steps.9.explain": {
+    "en": "Process shows trustworthiness.",
+    "t": "El proceso muestra que se puede confiar."
+  },
+  "lessons.4.slides.0.title": {
+    "en": "Teaching databases and data engineering at university: review",
+    "t": "Enseñar bases de datos e ingeniería de datos en la universidad: repaso"
+  },
+  "lessons.4.slides.0.note": {
+    "en": "Data engineering · University · Unit check",
+    "t": "Ingeniería de datos, Universidad, Evaluación de la unidad"
+  },
+  "lessons.4.slides.0.narration": {
+    "en": "Let’s look back at the whole course and see what stuck.",
+    "t": "Miremos atrás en todo el curso y veamos qué se quedó."
+  },
+  "lessons.4.slides.1.title": {
+    "en": "In this unit",
+    "t": "En esta unidad"
+  },
+  "lessons.4.slides.1.bullets": {
+    "en": [
+      "Normalisation",
+      "Indexing",
+      "Transactions and CAP",
+      "Data quality"
+    ],
+    "t": [
+      "Normalización",
+      "Indexación",
+      "Transacciones y CAP",
+      "Calidad de los datos"
+    ]
+  },
+  "lessons.4.slides.2.title": {
+    "en": "The big ideas",
+    "t": "Las grandes ideas"
+  },
+  "lessons.4.slides.2.bullets": {
+    "en": [
+      "Dependencies decide",
+      "Writes pay for reads",
+      "Know your isolation level",
+      "Test data like code"
+    ],
+    "t": [
+      "Las dependencias deciden",
+      "Las escrituras pagan las lecturas",
+      "Conoce tu nivel de aislamiento",
+      "Prueba los datos como código"
+    ]
+  },
+  "lessons.4.slides.3.title": {
+    "en": "Peer-instruction review",
+    "t": "Repaso con instrucción entre pares"
+  },
+  "lessons.4.slides.3.bullets": {
+    "en": [
+      "Vote (10 min): Answer alone first.",
+      "Discuss (15 min): Convince your neighbour.",
+      "Explain (10 min): Model the reasoning.",
+      "Plan (5 min): Next week’s fix."
+    ],
+    "t": [
+      "Votar (10 min): Responder primero a solas.",
+      "Debatir (15 min): Convence a tu vecino.",
+      "Explicar (10 min): Modelar el razonamiento.",
+      "Planificar (5 min): El arreglo de la próxima semana."
+    ]
+  },
+  "lessons.4.slides.3.details": {
+    "en": [
+      "Vote (10 min): Show each question; students answer alone and commit to an answer.",
+      "Discuss (15 min): Where answers split, pairs argue for two minutes and vote again.",
+      "Explain (10 min): Work through the questions most students missed, showing the reasoning step by step.",
+      "Plan (5 min): Note which misconception to revisit next week and how."
+    ],
+    "t": [
+      "Votar (10 min): Muestra cada pregunta; los estudiantes responden a solas y se comprometen con una respuesta.",
+      "Debatir (15 min): Donde las respuestas se dividan, las parejas argumentan durante dos minutos y votan de nuevo.",
+      "Explicar (10 min): Resuelve las preguntas que más estudiantes fallaron, mostrando el razonamiento paso a paso.",
+      "Planificar (5 min): Anota qué idea errónea retomar la próxima semana y cómo."
+    ]
+  },
+  "lessons.4.slides.4.title": {
+    "en": "Let’s discuss",
+    "t": "Conversemos"
+  },
+  "lessons.4.slides.4.bullets": {
+    "en": [
+      "Which misconception will you target first?",
+      "Which lab will you add?",
+      "Which real dataset will you use?"
+    ],
+    "t": [
+      "¿Qué idea errónea abordarás primero?",
+      "¿Qué laboratorio añadirás?",
+      "¿Qué conjunto de datos real usarás?"
+    ]
+  },
+  "lessons.4.slides.5.title": {
+    "en": "Exit ticket",
+    "t": "Boleto de salida"
+  },
+  "lessons.4.slides.5.bullets": {
+    "en": [
+      "One change to my database course this term, and how I will know it worked."
+    ],
+    "t": [
+      "Un cambio en mi curso de bases de datos este trimestre y cómo sabré que funcionó."
+    ]
+  },
+  "lessons.4.kit.0.title": {
+    "en": "Lecture slides: Teaching databases and data engineering at university: unit check",
+    "t": "Diapositivas de la clase: Enseñar bases de datos e ingeniería de datos en la universidad: evaluación de la unidad"
+  },
+  "lessons.4.kit.1.title": {
+    "en": "Review plan and quiz sheet: Teaching databases and data engineering at university: unit check",
+    "t": "Plan de repaso y hoja del cuestionario: Enseñar bases de datos e ingeniería de datos en la universidad: evaluación de la unidad"
+  },
+  "lessons.4.kit.2.title": {
+    "en": "University course pack: syllabus, slide outline, problem set, lab, rubric and readings",
+    "t": "Paquete del curso universitario: programa, esquema de diapositivas, hoja de problemas, laboratorio, rúbrica y lecturas"
+  }
+}

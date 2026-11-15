@@ -282,6 +282,12 @@ export interface CatalogEntry {
   teach?: "university";
   /** A track's capstone: listed after the other courses of its level. */
   kind?: "capstone";
+  /**
+   * Languages beyond English and Arabic the course is translated into. Each has its own file beside `src`
+   * (v{n}.{lang}.json: that language and English only), so a phone downloads its own language, not all of them;
+   * `src` itself holds English and Arabic.
+   */
+  langs?: string[];
 }
 export interface Catalog { version: number; units: CatalogEntry[] }
 /** The onboarding check (public/content/placement.json): per track and audience, questions for each level. */

@@ -1,14 +1,28 @@
 /**
  * A lesson's video from Lesson Studio (H:\htdocs\lessonstudio by default): the 240p MP4 and captions per language and the
  * light lesson, copied into content/media/<lesson>/ (gitignored; `npm run seed` uploads them), and the times inside each
- * language's video. Used by scripts/import-packs.mjs (the three course packs) and scripts/import-media.mjs (every other
+ * language's video. English and Arabic are required; French, Spanish, German and Portuguese come along when Lesson Studio
+ * has narrated and rendered them for the lesson (content/darsi/<id>/<locale>.json there, then narrate, package, mp4). Used by scripts/import-packs.mjs (the three course packs) and scripts/import-media.mjs (every other
  * course). Lesson Studio's lesson id is the Darsi lesson id; `npm run mp4` and `npm run package-lessons` there make the files.
  */
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 
-/** Darsi language → Lesson Studio language: the Arabic videos are narrated in Egyptian Arabic. */
+/** Darsi language → Lesson Studio language: the Arabic videos are narrated in Egyptian Arabic. Every lesson has both. */
 export const STUDIO_LANGS = { en: "en", ar: "ar-EG" };
+/** More languages a lesson's video may have (Lesson Studio's OVERLAYS in scripts/darsi/convert.ts). Portuguese is
+ *  Brazilian, as Darsi's own Portuguese strings are. */
+export const EXTRA_LANGS = { fr: "fr", es: "es", de: "de", pt: "pt-BR" };
+
+/** The languages this lesson's video has: English and Arabic, then each extra one Lesson Studio has narrated and rendered. */
+export function videoLangs(studio, studioId) {
+  const langs = { ...STUDIO_LANGS };
+  for (const [dl, sl] of Object.entries(EXTRA_LANGS)) {
+    const v = join(studio, "out", "videos", studioId, sl, "video.json");
+    if (existsSync(v) && readJson(v).narrated && existsSync(join(studio, "content", "darsi", "lessons", studioId, "timing", `${sl}.json`))) langs[dl] = sl;
+  }
+  return langs;
+}
 /** Seconds the Lesson Studio MP4 holds still on each quick check (scripts/video/mp4.ts --hold). */
 export const HOLD = 4;
 
@@ -26,7 +40,7 @@ export function studioMedia(root, studio, studioId, lessonId) {
   const out = join(root, "content", "media", lessonId);
   rmSync(out, { recursive: true, force: true });
   mkdirSync(out, { recursive: true });
-  const langs = STUDIO_LANGS;
+  const langs = videoLangs(studio, studioId);
   const sources = {}, captions = {}, info = {};
   for (const [dl, sl] of Object.entries(langs)) {
     const v = join(studio, "out", "videos", studioId, sl);
@@ -54,20 +68,21 @@ export function studioMedia(root, studio, studioId, lessonId) {
     sizeKB[dl] = Math.round(["manifest.json", "scenes.json", `timing/${sl}.json`, `audio/${sl}.opus`].reduce((n, p) => n + (existsSync(join(pkg, p)) ? statSync(join(pkg, p)).size : 0), 0) / 1024);
   }
   const mb = (dl) => statSync(join(out, `video-${dl}.mp4`)).size / 1048576;
+  const all = Object.keys(langs);
   return {
-    sources, captions, info,
-    duration: Math.ceil(Math.max(info.en.seconds, info.ar.seconds)),
-    sizeMB: Math.round(Math.max(mb("en"), mb("ar")) * 10) / 10,
+    sources, captions, info, langs,
+    duration: Math.ceil(Math.max(...all.map((dl) => info[dl].seconds))),
+    sizeMB: Math.round(Math.max(...all.map(mb)) * 10) / 10,
     light: { files: lightFiles, langs, sizeKB },
   };
 }
 
 /** When storyboard scene i starts in each language's video: Lesson Studio's measured timing plus the holds before it. */
-export function sceneTimes(studio, studioId) {
+export function sceneTimes(studio, studioId, langs = STUDIO_LANGS) {
   const dir = join(studio, "content", "darsi", "lessons", studioId);
   const scenes = readJson(join(dir, "scenes.json")).scenes;
   const at = {};
-  for (const [dl, sl] of Object.entries(STUDIO_LANGS)) {
+  for (const [dl, sl] of Object.entries(langs)) {
     const t = readJson(join(dir, "timing", `${sl}.json`));
     const holds = t.scenes.flatMap((s, i) => (scenes[i].check ? [s.end] : []));
     at[dl] = t.scenes.map((s) => Math.round((s.start + HOLD * holds.filter((h) => h <= s.start + 1e-6).length) * 10) / 10);
@@ -75,9 +90,15 @@ export function sceneTimes(studio, studioId) {
   return at;
 }
 
-/** The storyboard (English) and its Egyptian Arabic, as written in Lesson Studio's content/darsi. */
+/** The storyboard (English), its Egyptian Arabic and any other translation, as written in Lesson Studio's content/darsi.
+ *  `overlays` is keyed by Darsi language (ar, fr, …). */
 export function storyboard(studio, studioId) {
   const story = readJson(join(studio, "content", "darsi", "source", `${studioId.toUpperCase()}.json`)).video;
   const arabic = readJson(join(studio, "content", "darsi", studioId, "ar-EG.json"));
-  return { story, arabic };
+  const overlays = { ar: arabic };
+  for (const [dl, sl] of Object.entries(EXTRA_LANGS)) {
+    const f = join(studio, "content", "darsi", studioId, `${sl}.json`);
+    if (existsSync(f)) overlays[dl] = readJson(f);
+  }
+  return { story, arabic, overlays };
 }

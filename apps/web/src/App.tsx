@@ -101,7 +101,7 @@ function Routed() {
   const { user, profile, role, orgId, configured, offlineUid, updateProfile } = useAuth();
   const { dir } = useI18n();
   // Before any screen asks for the catalog: org members also see their org's published units.
-  configureContent({ orgId: user ? orgId : null, signedIn: Boolean(user || offlineUid) });
+  configureContent({ orgId: user ? orgId : null, signedIn: Boolean(user || offlineUid), lang: state.lang });
   useEffect(() => {
     applyLocale(state.lang, state.theme, dir); // an added language's direction is the one platform admins set
     // An organization's members see its name first, then Darsi's.

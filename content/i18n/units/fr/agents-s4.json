@@ -1,0 +1,2016 @@
+{
+ "title": {
+  "en": "Agent engineering: planning, multi-agent, evals and guardrails",
+  "t": "Ingénierie des agents : planification, multi-agents, évaluations et garde-fous"
+ },
+ "summary": {
+  "en": "Engineer agents that hold up: plan under a small context window, split work between a planner and a checker, measure an agent with a proper test set, and change it safely, with Darsi Tiny on your phone as the test bed.",
+  "t": "Concevez des agents fiables : planifier avec une petite fenêtre de contexte, répartir le travail entre un planificateur et un vérificateur, mesurer un agent avec un vrai jeu de test et le modifier sans risque, avec Darsi Tiny sur votre téléphone comme banc d’essai."
+ },
+ "lessons.0.title": {
+  "en": "Plans and memory",
+  "t": "Plans et mémoire"
+ },
+ "lessons.0.tryTomorrow": {
+  "en": "Run a memory test on an assistant you use: state three made-up facts at the start, chat about something else, then ask for them every few messages. Note when each is forgotten, then try again with a two-line note.",
+  "t": "Faites un test de mémoire sur un assistant que vous utilisez : donnez trois faits inventés au début, parlez d’autre chose, puis demandez-les tous les quelques messages. Notez quand chacun est oublié, puis recommencez avec une note de deux lignes."
+ },
+ "lessons.0.materials": {
+  "en": [
+   "Ten sticky notes or small squares of paper",
+   "A pen",
+   "Your phone, for the lab (Darsi Tiny downloads once, 2.8 MB)"
+  ],
+  "t": [
+   "Dix petits papiers autocollants ou petits carrés de papier",
+   "Un stylo",
+   "Votre téléphone, pour le labo (Darsi Tiny se télécharge une fois, 2,8 Mo)"
+  ]
+ },
+ "lessons.0.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Regarder"
+ },
+ "lessons.0.steps.0.title": {
+  "en": "Plans and memory",
+  "t": "Plans et mémoire"
+ },
+ "lessons.0.steps.0.chapters.0.label": {
+  "en": "A question that fell out",
+  "t": "Une question qui s’est perdue"
+ },
+ "lessons.0.steps.0.chapters.1.label": {
+  "en": "Two ways to plan",
+  "t": "Deux façons de planifier"
+ },
+ "lessons.0.steps.0.chapters.2.label": {
+  "en": "The context window",
+  "t": "La fenêtre de contexte"
+ },
+ "lessons.0.steps.0.chapters.3.label": {
+  "en": "Choosing what stays, and the lab",
+  "t": "Choisir ce qui reste, et le labo"
+ },
+ "lessons.0.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "À retenir et à essayer"
+ },
+ "lessons.0.steps.0.checkpoint.question.prompt": {
+  "en": "The app drops the oldest turns. Someone asks for tomorrow’s weather, is asked which village, and says “Dala”. The agent gives today’s weather. Why?",
+  "t": "L’application retire les plus anciens tours. Quelqu’un demande la météo de demain, on lui demande quel village, et il répond « Dala ». L’agent donne la météo d’aujourd’hui. Pourquoi ?"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.0.text": {
+  "en": "It can’t read village names",
+  "t": "Il ne sait pas lire les noms de villages"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.1.text": {
+  "en": "“Tomorrow” fell out of the window",
+  "t": "« Demain » est sorti de la fenêtre"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.2.text": {
+  "en": "The weather tool is broken",
+  "t": "L’outil météo est en panne"
+ },
+ "lessons.0.steps.0.checkpoint.question.explain": {
+  "en": "The turn with “tomorrow” was dropped, so the model never saw it and filled in a default. It can’t tell you what it forgot.",
+  "t": "Le tour contenant « demain » a été retiré : le modèle ne l’a donc jamais vu et a mis une valeur par défaut. Il ne peut pas vous dire ce qu’il a oublié."
+ },
+ "lessons.0.steps.0.transcript": {
+  "en": "My agent did the first two steps perfectly. Then I replied yes, and it greeted me like a stranger! Nothing was broken. My question had just fallen out of its memory. Today: how agents plan, and what fits in their memory. Agents plan in two common ways. Plan first: write every step, then run them. Or step by step: look at each result, then choose the next step. Darsi Tiny writes a one-line plan, then calls its tools in turn. Each step builds on the last. On Saturday, the timetable tool answers: no school. Darsi Tiny sets the reminder anyway: six B, six B. A failed step that nobody checks becomes the next step’s input. An agent’s only memory is its context window: every token the model reads at once. It holds the tools, the conversation so far, and room to write. Darsi Tiny’s holds three hundred and eighty-four tokens; big cloud models, about a hundred and twenty-eight thousand. When the window fills, the app chooses what stays. Keep everything, and the fourth answer is cut off. Drop the oldest, and the question behind a yes falls out. Keep short notes, and all seven messages work. Quick check! The app drops the oldest turns. I ask for tomorrow’s weather, it asks which village, and I say Dala. It gives me today’s weather. Why? Because tomorrow fell out of the window. The model never saw it, so it used a default. It can’t tell you what it has forgotten. Only the app knows what it dropped. So engineers decide what stays. Keep recent turns, and turn older ones into notes. Pin the facts the task depends on, like the day and the place. Or fetch from documents only the part a step needs: that’s retrieval. In this lesson’s code, you’ll write the trimming. Walk back from the newest turn, adding up tokens. Stop at the first turn that won’t fit, so the conversation has no gaps. In the app, send seven messages and watch the window fill. Try Keep everything, then Drop the oldest at a hundred and twenty-eight tokens, then Keep notes. See which turn falls out. Your turn. An agent helps plan a three-day field trip over a long chat. Which memory strategy is safest? Notes, with the dates and places pinned. Remember: check each step’s result as you go. The context window is the model’s only memory. And the app, not the model, decides what stays. Try it yourself: in a long chat, keep asking about something from the very start. Note when it starts to forget. Then paste back a two-line note, and compare.",
+  "t": "Mon agent a fait parfaitement les deux premières étapes. Puis j’ai répondu oui, et il m’a salué comme un inconnu ! Rien n’était cassé. Ma question était simplement sortie de sa mémoire. Aujourd’hui : comment les agents planifient, et ce qui tient dans leur mémoire. Les agents planifient de deux façons courantes. Planifier d’abord : écrire toutes les étapes, puis les exécuter. Ou pas à pas : regarder chaque résultat, puis choisir l’étape suivante. Darsi Tiny écrit un plan d’une ligne, puis appelle ses outils l’un après l’autre. Chaque étape s’appuie sur la précédente. Le samedi, l’outil d’emploi du temps répond : pas d’école. Darsi Tiny programme quand même le rappel : six B, six B. Une étape qui échoue et que personne ne vérifie devient l’entrée de l’étape suivante. La seule mémoire d’un agent est sa fenêtre de contexte : tous les jetons que le modèle lit d’un coup. Elle contient les outils, la conversation jusqu’ici et la place pour écrire. Celle de Darsi Tiny contient trois cent quatre-vingt-quatre jetons ; les grands modèles du cloud, environ cent vingt-huit mille. Quand la fenêtre se remplit, l’application choisit ce qui reste. Tout garder, et la quatrième réponse est coupée. Retirer les plus anciens, et la question derrière un oui disparaît. Garder de courtes notes, et les sept messages fonctionnent. Vérification rapide ! L’application retire les plus anciens tours. Je demande la météo de demain, on me demande quel village, et je réponds Dala. On me donne la météo d’aujourd’hui. Pourquoi ? Parce que demain est sorti de la fenêtre. Le modèle ne l’a jamais vu, il a donc pris une valeur par défaut. Il ne peut pas vous dire ce qu’il a oublié. Seule l’application sait ce qu’elle a retiré. Ce sont donc les ingénieurs qui décident de ce qui reste. Gardez les tours récents, et transformez les plus anciens en notes. Épinglez les faits dont la tâche dépend, comme le jour et le lieu. Ou récupérez dans les documents seulement la partie dont une étape a besoin : c’est la récupération. Dans le code de cette leçon, vous écrirez la coupe. Remontez depuis le tour le plus récent en additionnant les jetons. Arrêtez-vous au premier tour qui ne tient pas, pour que la conversation n’ait pas de trou. Dans l’application, envoyez sept messages et regardez la fenêtre se remplir. Essayez Tout garder, puis Retirer les plus anciens à cent vingt-huit jetons, puis Garder des notes. Voyez quel tour disparaît. À vous. Un agent aide à planifier une sortie de trois jours lors d’une longue discussion. Quelle stratégie de mémoire est la plus sûre ? Des notes, avec les dates et les lieux épinglés. Retenez : vérifiez le résultat de chaque étape au fur et à mesure. La fenêtre de contexte est la seule mémoire du modèle. Et c’est l’application, pas le modèle, qui décide de ce qui reste. Essayez vous-même : dans une longue discussion, continuez à poser des questions sur quelque chose du tout début. Notez quand il commence à oublier. Puis recollez une note de deux lignes, et comparez."
+ },
+ "lessons.0.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lire"
+ },
+ "lessons.0.steps.1.title": {
+  "en": "Plans, errors and the context window",
+  "t": "Plans, erreurs et fenêtre de contexte"
+ },
+ "lessons.0.steps.1.body": {
+  "en": "Agents reach goals in steps, and they plan those steps in two common ways. In plan-then-act, the model writes every step first and then runs them: cheap and easy to check, but it can’t adapt when a result surprises it. In step-by-step planning (often called ReAct, for reasoning and acting), the model looks at each result before choosing the next step: it adapts better, but costs a model call for every step. Darsi Tiny does a little of both: a one-line plan, then each tool call in turn.\n\nEither way, each step builds on the one before, so errors carry forward and multiply. If each step is right 90% of the time, two steps are both right 81% of the time, and five steps only 59%. Worse, a failed step can quietly become the next step’s input: on Saturday the timetable tool answers “no school”, and Darsi Tiny still sets the reminder “6B: 6B”. The fix is a check after every step, in code or by a person, before anything is built on a result.\n\nA language model’s only memory within a conversation is its context window: every token it reads at once, including the tools list, the conversation so far and room to write its next step. Darsi Tiny’s window holds 384 tokens, about three or four requests; big cloud models read about 128,000. Every token costs time, money and, on a phone, data, at every step. When the window fills, something must go, and the model can’t tell you what it lost: in the memory lab, dropping the oldest turns makes “yes” lose its question, and “Dala” gets today’s weather because “tomorrow” fell out.\n\nSo the app, not the model, decides what stays. Common strategies: keep the most recent turns (a sliding window); replace finished exchanges with short notes or summaries; pin the facts a task depends on, such as dates and places; and fetch only the part of a long document that a step needs (retrieval). Each has a cost: a summary can drop a detail, and retrieval can fetch the wrong passage. And whatever stays in the window is sent again at every step, so keep private details out of it unless the task needs them.",
+  "t": "Les agents atteignent leurs objectifs par étapes, et ils planifient ces étapes de deux façons courantes. En planifiant puis en agissant, le modèle écrit d’abord toutes les étapes, puis les exécute : c’est peu coûteux et facile à vérifier, mais il ne peut pas s’adapter quand un résultat le surprend. En planification pas à pas (souvent appelée ReAct, pour raisonner et agir), le modèle regarde chaque résultat avant de choisir l’étape suivante : il s’adapte mieux, mais cela coûte un appel au modèle à chaque étape. Darsi Tiny fait un peu des deux : un plan d’une ligne, puis chaque appel d’outil à tour de rôle.\n\nDans les deux cas, chaque étape s’appuie sur la précédente : les erreurs se transmettent et se multiplient. Si chaque étape est juste 90 % du temps, deux étapes sont toutes deux justes 81 % du temps, et cinq étapes seulement 59 %. Pire, une étape ratée peut devenir sans bruit l’entrée de la suivante : le samedi, l’outil d’emploi du temps répond « no school », et Darsi Tiny programme quand même le rappel « 6B: 6B ». Le remède est un contrôle après chaque étape, dans le code ou par une personne, avant de construire quoi que ce soit sur un résultat.\n\nLa seule mémoire d’un modèle de langage au sein d’une conversation est sa fenêtre de contexte : tous les jetons qu’il lit d’un coup, y compris la liste des outils, la conversation jusqu’ici et la place pour écrire sa prochaine étape. La fenêtre de Darsi Tiny contient 384 jetons, soit trois ou quatre demandes ; les grands modèles du cloud en lisent environ 128 000. Chaque jeton coûte du temps, de l’argent et, sur un téléphone, des données, à chaque étape. Quand la fenêtre est pleine, quelque chose doit partir, et le modèle ne peut pas vous dire ce qu’il a perdu : dans le labo de mémoire, retirer les plus anciens tours fait perdre sa question à « yes », et « Dala » reçoit la météo d’aujourd’hui parce que « tomorrow » est sorti.\n\nC’est donc l’application, pas le modèle, qui décide de ce qui reste. Stratégies courantes : garder les tours les plus récents (fenêtre glissante) ; remplacer les échanges terminés par de courtes notes ou des résumés ; épingler les faits dont une tâche dépend, comme les dates et les lieux ; et ne récupérer que la partie d’un long document dont une étape a besoin (récupération). Chacune a un coût : un résumé peut perdre un détail, et la récupération peut ramener le mauvais passage. Et tout ce qui reste dans la fenêtre est renvoyé à chaque étape : gardez-y les détails privés seulement si la tâche l’exige."
+ },
+ "lessons.0.steps.1.keyTerms.0.term": {
+  "en": "Plan-then-act",
+  "t": "Planifier puis agir"
+ },
+ "lessons.0.steps.1.keyTerms.0.def": {
+  "en": "The model writes every step first, then the steps are run.",
+  "t": "Le modèle écrit d’abord toutes les étapes, puis elles sont exécutées."
+ },
+ "lessons.0.steps.1.keyTerms.1.term": {
+  "en": "Step-by-step planning",
+  "t": "Planification pas à pas"
+ },
+ "lessons.0.steps.1.keyTerms.1.def": {
+  "en": "The model looks at each result before choosing the next step.",
+  "t": "Le modèle regarde chaque résultat avant de choisir l’étape suivante."
+ },
+ "lessons.0.steps.1.keyTerms.2.term": {
+  "en": "Context window",
+  "t": "Fenêtre de contexte"
+ },
+ "lessons.0.steps.1.keyTerms.2.def": {
+  "en": "Everything a model can read at once: its only memory within a conversation.",
+  "t": "Tout ce qu’un modèle peut lire d’un coup : sa seule mémoire au sein d’une conversation."
+ },
+ "lessons.0.steps.1.keyTerms.3.term": {
+  "en": "Retrieval",
+  "t": "Récupération"
+ },
+ "lessons.0.steps.1.keyTerms.3.def": {
+  "en": "Fetching only the part of a document or record that a step needs, instead of keeping it all in the window.",
+  "t": "Ne récupérer que la partie d’un document ou d’un enregistrement dont une étape a besoin, au lieu de tout garder dans la fenêtre."
+ },
+ "lessons.0.steps.2.prompt": {
+  "en": "An agent helps plan a three-day field trip over a long chat. Which memory strategy is safest?",
+  "t": "Un agent aide à planifier une sortie de trois jours lors d’une longue discussion. Quelle stratégie de mémoire est la plus sûre ?"
+ },
+ "lessons.0.steps.2.options.0.text": {
+  "en": "Keep everything until it’s cut off",
+  "t": "Tout garder jusqu’à ce que ce soit coupé"
+ },
+ "lessons.0.steps.2.options.1.text": {
+  "en": "Drop the oldest turns as it fills",
+  "t": "Retirer les plus anciens tours à mesure que la fenêtre se remplit"
+ },
+ "lessons.0.steps.2.options.2.text": {
+  "en": "Keep notes, with the dates and places pinned",
+  "t": "Garder des notes, avec les dates et les lieux épinglés"
+ },
+ "lessons.0.steps.2.explain": {
+  "en": "Notes keep what was asked and answered in fewer tokens, and pinning the dates and places means the facts the plan depends on never fall out.",
+  "t": "Les notes gardent ce qui a été demandé et répondu en moins de jetons, et épingler les dates et les lieux garantit que les faits dont le plan dépend ne sortent jamais."
+ },
+ "lessons.0.steps.3.prompt": {
+  "en": "A conversation is a list of turns, oldest first; each turn is a pair (text, tokens). Write trim(turns, budget): keep the newest turns whose tokens fit in budget, in their original order, and stop at the first turn that doesn’t fit. (No model runs in this sandbox, so the token counts are given.)",
+  "t": "Une conversation est une liste de tours, du plus ancien au plus récent ; chaque tour est une paire (texte, jetons). Écrivez trim(turns, budget) : gardez les tours les plus récents dont les jetons tiennent dans budget, dans leur ordre d’origine, et arrêtez-vous au premier tour qui ne tient pas. (Aucun modèle ne tourne dans ce bac à sable : le nombre de jetons est donné.)"
+ },
+ "lessons.0.steps.3.tests.0.hint": {
+  "en": "Start from the newest turn, and keep adding while the total stays within the budget.",
+  "t": "Partez du tour le plus récent et continuez à ajouter tant que le total reste dans le budget."
+ },
+ "lessons.0.steps.3.tests.2.hint": {
+  "en": "Skipping the big turn and keeping an older one would leave a gap in the conversation: stop with break.",
+  "t": "Sauter le gros tour et garder un tour plus ancien laisserait un trou dans la conversation : arrêtez-vous avec break."
+ },
+ "lessons.0.steps.3.hints.0": {
+  "en": "Loop over reversed(turns) and keep a running total of tokens.",
+  "t": "Parcourez reversed(turns) et tenez un total courant de jetons."
+ },
+ "lessons.0.steps.3.hints.1": {
+  "en": "kept.insert(0, t) keeps the oldest-first order; break stops at the first turn that doesn’t fit.",
+  "t": "kept.insert(0, t) garde l’ordre du plus ancien au plus récent ; break s’arrête au premier tour qui ne tient pas."
+ },
+ "lessons.0.steps.3.explain": {
+  "en": "Walking back from the newest turn keeps what the model needs most, and stopping at the first turn that doesn’t fit keeps the conversation without gaps. This is the sliding window; real apps add notes or pinned facts so older essentials survive.",
+  "t": "Remonter depuis le tour le plus récent garde ce dont le modèle a le plus besoin, et s’arrêter au premier tour qui ne tient pas garde la conversation sans trou. C’est la fenêtre glissante ; les vraies applications ajoutent des notes ou des faits épinglés pour que l’essentiel plus ancien survive."
+ },
+ "lessons.0.steps.4.prompt": {
+  "en": "Match each memory strategy to what happens in the memory lab, or what it is for.",
+  "t": "Associez chaque stratégie de mémoire à ce qui se passe dans le labo de mémoire, ou à son usage."
+ },
+ "lessons.0.steps.4.pairs.0.left": {
+  "en": "Keep everything",
+  "t": "Tout garder"
+ },
+ "lessons.0.steps.4.pairs.0.right": {
+  "en": "The fourth answer is cut off, then nothing fits",
+  "t": "La quatrième réponse est coupée, puis plus rien ne tient"
+ },
+ "lessons.0.steps.4.pairs.1.left": {
+  "en": "Drop the oldest",
+  "t": "Retirer les plus anciens"
+ },
+ "lessons.0.steps.4.pairs.1.right": {
+  "en": "“Yes” loses the question it answers",
+  "t": "« Oui » perd la question à laquelle il répond"
+ },
+ "lessons.0.steps.4.pairs.2.left": {
+  "en": "Keep notes",
+  "t": "Garder des notes"
+ },
+ "lessons.0.steps.4.pairs.2.right": {
+  "en": "All seven messages work",
+  "t": "Les sept messages fonctionnent"
+ },
+ "lessons.0.steps.4.pairs.3.left": {
+  "en": "Retrieval",
+  "t": "Récupération"
+ },
+ "lessons.0.steps.4.pairs.3.right": {
+  "en": "Fetch only the part a step needs",
+  "t": "Ne récupérer que la partie dont une étape a besoin"
+ },
+ "lessons.0.steps.4.explain": {
+  "en": "Keeping everything fails once the window is full; dropping the oldest loses whatever a later turn depends on; notes keep what was asked and answered in fewer tokens; retrieval keeps long documents outside the window.",
+  "t": "Tout garder échoue dès que la fenêtre est pleine ; retirer les plus anciens perd ce dont un tour plus tardif dépend ; les notes gardent ce qui a été demandé et répondu en moins de jetons ; la récupération garde les longs documents hors de la fenêtre."
+ },
+ "lessons.0.steps.5.prompt": {
+  "en": "Try it: with Keep everything, send the seven messages one by one and see where the answer is cut off. Start again with Drop the oldest and the window at 128 tokens: when you reply “yes” and then “Dala”, what has fallen out, and what does Darsi Tiny do without it? Then try Keep notes at 384. The lab is done when a turn has fallen out and a turn has finished with notes.",
+  "t": "Essayez : avec Tout garder, envoyez les sept messages un par un et regardez où la réponse est coupée. Recommencez avec Retirer les plus anciens et la fenêtre à 128 jetons : quand vous répondez « yes » puis « Dala », qu’est-ce qui est sorti, et que fait Darsi Tiny sans cela ? Puis essayez Garder des notes à 384. Le labo est terminé quand un tour est sorti et qu’un tour s’est terminé avec des notes."
+ },
+ "lessons.0.steps.6.prompt": {
+  "en": "An agent’s steps are each right 90% of the time. What does the last line print?",
+  "t": "Les étapes d’un agent sont chacune justes 90 % du temps. Qu’affiche la dernière ligne ?"
+ },
+ "lessons.0.steps.6.options.0.text": {
+  "en": "5 0.59",
+  "t": "5 0.59"
+ },
+ "lessons.0.steps.6.options.1.text": {
+  "en": "5 0.9",
+  "t": "5 0.9"
+ },
+ "lessons.0.steps.6.options.2.text": {
+  "en": "5 4.5",
+  "t": "5 4.5"
+ },
+ "lessons.0.steps.6.explain": {
+  "en": "The chance that every step is right multiplies: 0.9 × 0.9 × 0.9 × 0.9 × 0.9 ≈ 0.59. Five steps that are each 90% right succeed together only about 59% of the time, which is why every step needs a check.",
+  "t": "La probabilité que chaque étape soit juste se multiplie : 0.9 × 0.9 × 0.9 × 0.9 × 0.9 ≈ 0.59. Cinq étapes justes à 90 % chacune ne réussissent ensemble qu’environ 59 % du temps : c’est pourquoi chaque étape a besoin d’un contrôle."
+ },
+ "lessons.0.steps.7.prompt": {
+  "en": "Darsi Tiny’s window is 384 tokens, and the app keeps 64 free for the model to write. Fill the gaps: the turns fit if their tokens plus the room to write are at most the window.",
+  "t": "La fenêtre de Darsi Tiny fait 384 jetons, et l’application en garde 64 libres pour que le modèle écrive. Complétez : les tours tiennent si leurs jetons plus la place pour écrire valent au plus la fenêtre."
+ },
+ "lessons.0.steps.7.explain": {
+  "en": "The model needs room to write its next step, so the turns may use only window − reserve tokens: 384 − 64 = 320 for Darsi Tiny’s conversation and tools line.",
+  "t": "Le modèle a besoin de place pour écrire sa prochaine étape : les tours ne peuvent donc utiliser que fenêtre − réserve jetons : 384 − 64 = 320 pour la conversation et la ligne des outils de Darsi Tiny."
+ },
+ "lessons.0.steps.8.prompt": {
+  "en": "When something falls out of a model’s context window, the model will tell you what it has forgotten.",
+  "t": "Quand quelque chose sort de la fenêtre de contexte d’un modèle, le modèle vous dit ce qu’il a oublié."
+ },
+ "lessons.0.steps.8.explain": {
+  "en": "The model never sees what fell out, so it can’t know it’s missing: it fills the gap with a default or a guess (today’s weather instead of tomorrow’s). Only the app knows what it dropped, so the app must decide what stays.",
+  "t": "Le modèle ne voit jamais ce qui est sorti, il ne peut donc pas savoir que cela manque : il comble le trou avec une valeur par défaut ou une supposition (la météo d’aujourd’hui au lieu de celle de demain). Seule l’application sait ce qu’elle a retiré : c’est donc à elle de décider de ce qui reste."
+ },
+ "lessons.0.steps.9.prompt": {
+  "en": "Think of a long task you might hand an agent, such as planning a group project over a week. What must it never forget, and how would you make sure that stays in its window?",
+  "t": "Pensez à une longue tâche que vous pourriez confier à un agent, comme planifier un projet de groupe sur une semaine. Que ne doit-il jamais oublier, et comment feriez-vous pour que cela reste dans sa fenêtre ?"
+ },
+ "lessons.0.steps.9.placeholder": {
+  "en": "For example: “The deadline and who does which part. I’d pin them at the top and keep notes of each meeting instead of the whole chat.”",
+  "t": "Par exemple : « La date limite et qui fait quelle partie. Je les épinglerais en haut et je garderais des notes de chaque réunion plutôt que toute la discussion. »"
+ },
+ "lessons.0.steps.10.prompt": {
+  "en": "Project: Measure an assistant’s memory",
+  "t": "Projet : Mesurer la mémoire d’un assistant"
+ },
+ "lessons.0.steps.10.task": {
+  "en": "Run a memory test on a chat assistant you can use, or on Darsi Tiny in the memory lab. In your first message, state three made-up facts: a name, a date and a place. Then send ten messages about something else, and after each one ask for one of the facts. Record the message at which each fact is first lost. Run it again, this time repeating a two-line note of the three facts every third message. Use made-up facts only, never your own or anyone’s real details.",
+  "t": "Faites un test de mémoire sur un assistant de discussion que vous pouvez utiliser, ou sur Darsi Tiny dans le labo de mémoire. Dans votre premier message, donnez trois faits inventés : un nom, une date et un lieu. Puis envoyez dix messages sur autre chose, et après chacun demandez l’un des faits. Notez le message auquel chaque fait est perdu pour la première fois. Recommencez, cette fois en répétant toutes les trois messages une note de deux lignes avec les trois faits. N’utilisez que des faits inventés, jamais vos données ni celles de personne d’autre."
+ },
+ "lessons.0.steps.10.deliverable": {
+  "en": "A table (message number, and which facts were remembered without and with notes) and three sentences: what you found, and what you would build into an agent because of it.",
+  "t": "Un tableau (numéro du message, et quels faits ont été retenus sans notes et avec notes) et trois phrases : ce que vous avez constaté, et ce que vous intégreriez à un agent à cause de cela."
+ },
+ "lessons.0.steps.10.rubric.0.criterion": {
+  "en": "I can: explain why an agent forgets what falls out of its context window.",
+  "t": "Je sais : expliquer pourquoi un agent oublie ce qui sort de sa fenêtre de contexte."
+ },
+ "lessons.0.steps.10.rubric.1.criterion": {
+  "en": "I can: compare two memory strategies with evidence from my own test.",
+  "t": "Je sais : comparer deux stratégies de mémoire avec des preuves tirées de mon propre test."
+ },
+ "lessons.0.steps.10.rubric.2.criterion": {
+  "en": "I can: recommend what an agent should pin, summarise or drop.",
+  "t": "Je sais : recommander ce qu’un agent doit épingler, résumer ou abandonner."
+ },
+ "lessons.0.slides.0.title": {
+  "en": "Plans and memory",
+  "t": "Plans et mémoire"
+ },
+ "lessons.0.slides.0.note": {
+  "en": "AI agents · University · Lesson 1",
+  "t": "Agents d’IA · Université · Leçon 1"
+ },
+ "lessons.0.slides.0.narration": {
+  "en": "How does an agent plan, and what does it remember?",
+  "t": "Comment un agent planifie-t-il, et que retient-il ?"
+ },
+ "lessons.0.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "Dans cette leçon, vous allez"
+ },
+ "lessons.0.slides.1.bullets": {
+  "en": [
+   "Compare planning first with planning step by step.",
+   "Explain why errors carry forward, and where to check.",
+   "Budget a context window and choose what stays."
+  ],
+  "t": [
+   "Comparer planifier d’abord et planifier pas à pas.",
+   "Expliquer pourquoi les erreurs se transmettent, et où contrôler.",
+   "Budgéter une fenêtre de contexte et choisir ce qui reste."
+  ]
+ },
+ "lessons.0.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Idées clés"
+ },
+ "lessons.0.slides.2.bullets": {
+  "en": [
+   "Each step builds on the last: check every result before using it.",
+   "The context window is the only memory: 384 tokens for Darsi Tiny, about 128,000 for big models.",
+   "The app decides what stays: recent turns, notes, pinned facts, retrieval."
+  ],
+  "t": [
+   "Chaque étape s’appuie sur la précédente : vérifiez chaque résultat avant de l’utiliser.",
+   "La fenêtre de contexte est la seule mémoire : 384 jetons pour Darsi Tiny, environ 128 000 pour les grands modèles.",
+   "L’application décide de ce qui reste : tours récents, notes, faits épinglés, récupération."
+  ]
+ },
+ "lessons.0.slides.3.title": {
+  "en": "Activity: The ten-note window",
+  "t": "Activité : La fenêtre de dix notes"
+ },
+ "lessons.0.slides.3.bullets": {
+  "en": [
+   "Set-up (3 min): Ten sticky notes are the window.",
+   "Plan (6 min): Plan a trip, one note per turn.",
+   "Overflow (6 min): Out of notes? Drop or summarise.",
+   "Test (5 min): Ask about day one. What survived?"
+  ],
+  "t": [
+   "Mise en place (3 min) : Dix papiers autocollants sont la fenêtre.",
+   "Plan (6 min) : Planifiez un voyage, un papier par tour.",
+   "Débordement (6 min) : Plus de papiers ? Jetez ou résumez.",
+   "Test (5 min) : Interrogez sur le premier jour. Qu’est-ce qui a survécu ?"
+  ]
+ },
+ "lessons.0.slides.3.details": {
+  "en": [
+   "Set-up (3 min): Work in pairs. One of you is the agent and has only ten sticky notes: that is the whole context window. The other is the person asking.",
+   "Plan (6 min): The person plans a made-up three-day trip with the agent, one message per turn. The agent writes each turn (question or answer) on a new note and lines them up in order.",
+   "Overflow (6 min): When the ten notes run out, the agent must choose: throw away the oldest note, or replace three old notes with one short summary note. Try one choice, then the other.",
+   "Test (5 min): The person asks about day one (the date, the place, the bus time). The agent may answer only from the notes still on the table. Compare which choice kept the facts that mattered."
+  ],
+  "t": [
+   "Mise en place (3 min) : Travaillez à deux. L’un de vous est l’agent et n’a que dix papiers autocollants : c’est toute la fenêtre de contexte. L’autre est la personne qui demande.",
+   "Plan (6 min) : La personne planifie avec l’agent un voyage inventé de trois jours, un message par tour. L’agent écrit chaque tour (question ou réponse) sur un nouveau papier et les aligne dans l’ordre.",
+   "Débordement (6 min) : Quand les dix papiers sont épuisés, l’agent doit choisir : jeter le papier le plus ancien, ou remplacer trois vieux papiers par un court papier de résumé. Essayez un choix, puis l’autre.",
+   "Test (5 min) : La personne interroge sur le premier jour (la date, le lieu, l’heure du bus). L’agent ne peut répondre qu’à partir des papiers encore sur la table. Comparez quel choix a gardé les faits qui comptaient."
+  ]
+ },
+ "lessons.0.slides.3.note": {
+  "en": "Any made-up trip will do. If you have no sticky notes, use ten small squares of paper and a desk.",
+  "t": "N’importe quel voyage inventé convient. Si vous n’avez pas de papiers autocollants, utilisez dix petits carrés de papier et un bureau."
+ },
+ "lessons.0.slides.3.narration": {
+  "en": "When your ten notes run out, what do you throw away?",
+  "t": "Quand vos dix papiers sont épuisés, que jetez-vous ?"
+ },
+ "lessons.0.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.0.slides.4.bullets": {
+  "en": [
+   "When is planning first better than step by step, and when is it worse?",
+   "Why can’t a model tell you what it has forgotten?",
+   "What would you pin at the top of an agent’s window for your own studies?"
+  ],
+  "t": [
+   "Quand planifier d’abord vaut-il mieux que pas à pas, et quand est-ce pire ?",
+   "Pourquoi un modèle ne peut-il pas vous dire ce qu’il a oublié ?",
+   "Qu’épingleriez-vous en haut de la fenêtre d’un agent pour vos propres études ?"
+  ]
+ },
+ "lessons.0.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.0.slides.5.bullets": {
+  "en": [
+   "One check an agent needs after every step, and one fact you would pin in its window."
+  ],
+  "t": [
+   "Un contrôle dont un agent a besoin après chaque étape, et un fait que vous épingleriez dans sa fenêtre."
+  ]
+ },
+ "lessons.0.slides.5.narration": {
+  "en": "Check each result, and decide what stays in the window.",
+  "t": "Vérifiez chaque résultat, et décidez de ce qui reste dans la fenêtre."
+ },
+ "lessons.0.kit.0.title": {
+  "en": "Slides to revise: Plans and memory",
+  "t": "Diapositives à réviser : Plans et mémoire"
+ },
+ "lessons.0.kit.1.title": {
+  "en": "Activity sheet: Plans and memory",
+  "t": "Fiche d’activité : Plans et mémoire"
+ },
+ "lessons.0.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "La vidéo de la leçon (240p, pour la revoir ou la partager)"
+ },
+ "lessons.1.title": {
+  "en": "Several agents, one job",
+  "t": "Plusieurs agents, un seul travail"
+ },
+ "lessons.1.tryTomorrow": {
+  "en": "Pick an agent task you would like to automate, such as booking a study room. Draw its roles and write five strict checker rules, then invent one slip your rules would still miss.",
+  "t": "Choisissez une tâche d’agent que vous aimeriez automatiser, comme réserver une salle d’étude. Dessinez ses rôles et écrivez cinq règles strictes pour le vérificateur, puis inventez une erreur que vos règles laisseraient quand même passer."
+ },
+ "lessons.1.materials": {
+  "en": [
+   "Paper cards and a pen",
+   "A printed or hand-copied list of the five checker rules",
+   "Your phone, for the lab"
+  ],
+  "t": [
+   "Des cartes en papier et un stylo",
+   "Une liste imprimée ou recopiée à la main des cinq règles du vérificateur",
+   "Votre téléphone, pour le labo"
+  ]
+ },
+ "lessons.1.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Regarder"
+ },
+ "lessons.1.steps.0.title": {
+  "en": "Several agents, one job",
+  "t": "Plusieurs agents, un seul travail"
+ },
+ "lessons.1.steps.0.chapters.0.label": {
+  "en": "A reminder nobody checked",
+  "t": "Un rappel que personne n’a vérifié"
+ },
+ "lessons.1.steps.0.chapters.1.label": {
+  "en": "Roles and a checker",
+  "t": "Des rôles et un vérificateur"
+ },
+ "lessons.1.steps.0.chapters.2.label": {
+  "en": "Rules, models and cost",
+  "t": "Règles, modèles et coût"
+ },
+ "lessons.1.steps.0.chapters.3.label": {
+  "en": "A rule in code, and the lab",
+  "t": "Une règle en code, et le labo"
+ },
+ "lessons.1.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "À retenir et à essayer"
+ },
+ "lessons.1.steps.0.checkpoint.question.prompt": {
+  "en": "The planner proposes the timetable for 9C, but the request said 9Z. What should the checker do?",
+  "t": "Le planificateur propose l’emploi du temps de 9C, mais la demande disait 9Z. Que doit faire le vérificateur ?"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.0.text": {
+  "en": "Run it: the planner knows best",
+  "t": "L’exécuter : le planificateur sait mieux"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.1.text": {
+  "en": "Stop it: 9C was never said, so hand it back",
+  "t": "L’arrêter : 9C n’a jamais été dit, donc le renvoyer"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.2.text": {
+  "en": "Quietly change it to 9Z and run it",
+  "t": "Le changer discrètement en 9Z et l’exécuter"
+ },
+ "lessons.1.steps.0.checkpoint.question.explain": {
+  "en": "9C appears nowhere in the request or the results, so it was copied wrongly or made up. A checker stops it and hands it back; it doesn’t guess a fix.",
+  "t": "9C n’apparaît nulle part dans la demande ni dans les résultats : il a donc été mal copié ou inventé. Un vérificateur l’arrête et le renvoie ; il ne devine pas de correction."
+ },
+ "lessons.1.steps.0.transcript": {
+  "en": "Our agent set a reminder to tisums the library. Tisums! Nothing stopped it, because nothing was checking. What if another part of the agent checked its work? Today: splitting an agent into roles that check each other. Big agent systems are often split into roles. A planner proposes each step. A checker reviews it before anything runs. Then a runner runs the tool, and a person approves the actions. In the team lab, the checker is five rules in code. The tool must be on. Every detail needs the right shape. Every name and number must come from the request or a result. No earlier step may have failed, and a person must say yes to any action. Nine Z copied as nine C: stopped, because nobody said nine C. Twenty-five o’clock: stopped, wrong shape. The Saturday reminder: stopped, because the step before it failed. Why not make the checker a second language model? It could catch subtler slips, like a rude message. But it can be wrong too, and fooled like the planner. Rules never guess: start with them, and add a model only where judgement is needed. More roles also cost more tokens, time and money. And errors multiply. If each of two steps is right ninety percent of the time, both are right only eighty-one percent of the time. Quick check! The planner proposes the timetable for nine C, but the request said nine Z. What should the checker do? Stop it. Nine C appears nowhere in the request or the results, so it was copied wrongly. The checker doesn’t guess a fix: it hands the request back. Darsi Tiny never learned to take a checker’s feedback, so a person asks again. Here’s one rule as code: every word in a call’s details must appear in the request or a result. In this lesson’s code, you’ll write a checker with three rules. In the app, send the Kafi weather request: the planner proposes, the checker passes it, the runner runs it. Then send the tidy reminder and nine Z. Turn the checker off and send them again: what gets through? Your turn. An agent runs three steps, each right ninety percent of the time. How often are all three right? About seventy-three percent: errors multiply. Remember: split the agent into planner, checker, runner and person. Strict rules in code make a good first checker. And a person approves actions and handles what’s stopped. Try it yourself: take a task like booking a study room. Draw the agent’s roles, and write five strict rules its checker could test in code. Then find one slip your rules would miss.",
+  "t": "Notre agent a programmé un rappel pour tisums la bibliothèque. Tisums ! Rien ne l’a arrêté, parce que rien ne vérifiait. Et si une autre partie de l’agent vérifiait son travail ? Aujourd’hui : répartir un agent en rôles qui se contrôlent mutuellement. Les grands systèmes d’agents sont souvent répartis en rôles. Un planificateur propose chaque étape. Un vérificateur la contrôle avant que rien ne s’exécute. Puis un exécuteur lance l’outil, et une personne approuve les actions. Dans le labo d’équipe, le vérificateur, ce sont cinq règles en code. L’outil doit être activé. Chaque détail doit avoir la bonne forme. Chaque nom et chaque nombre doivent venir de la demande ou d’un résultat. Aucune étape précédente ne doit avoir échoué, et une personne doit dire oui à toute action. Neuf Z copié en neuf C : arrêté, parce que personne n’a dit neuf C. Vingt-cinq heures : arrêté, mauvaise forme. Le rappel du samedi : arrêté, parce que l’étape d’avant a échoué. Pourquoi ne pas faire du vérificateur un second modèle de langage ? Il pourrait attraper des erreurs plus subtiles, comme un message impoli. Mais il peut aussi se tromper, et se laisser tromper comme le planificateur. Les règles ne devinent jamais : commencez par elles, et n’ajoutez un modèle que là où il faut du jugement. Plus de rôles coûtent aussi plus de jetons, de temps et d’argent. Et les erreurs se multiplient. Si chacune de deux étapes est juste quatre-vingt-dix pour cent du temps, les deux ne sont justes que quatre-vingt-un pour cent du temps. Vérification rapide ! Le planificateur propose l’emploi du temps de neuf C, mais la demande disait neuf Z. Que doit faire le vérificateur ? L’arrêter. Neuf C n’apparaît nulle part dans la demande ni dans les résultats : il a donc été mal copié. Le vérificateur ne devine pas de correction : il renvoie la demande. Darsi Tiny n’a jamais appris à prendre en compte les retours d’un vérificateur : une personne redemande donc. Voici une règle en code : chaque mot des détails d’un appel doit apparaître dans la demande ou dans un résultat. Dans le code de cette leçon, vous écrirez un vérificateur avec trois règles. Dans l’application, envoyez la demande météo de Kafi : le planificateur propose, le vérificateur la laisse passer, l’exécuteur la lance. Puis envoyez le rappel pour ranger et neuf Z. Désactivez le vérificateur et renvoyez-les : qu’est-ce qui passe ? À vous. Un agent exécute trois étapes, chacune juste quatre-vingt-dix pour cent du temps. Dans quelle proportion les trois sont-elles justes ? Environ soixante-treize pour cent : les erreurs se multiplient. Retenez : répartissez l’agent en planificateur, vérificateur, exécuteur et personne. Des règles strictes en code font un bon premier vérificateur. Et une personne approuve les actions et gère ce qui est arrêté. Essayez vous-même : prenez une tâche comme réserver une salle d’étude. Dessinez les rôles de l’agent, et écrivez cinq règles strictes que son vérificateur pourrait tester en code. Puis trouvez une erreur que vos règles laisseraient passer."
+ },
+ "lessons.1.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lire"
+ },
+ "lessons.1.steps.1.title": {
+  "en": "Roles, checkers and the cost of more agents",
+  "t": "Rôles, vérificateurs et coût de plus d’agents"
+ },
+ "lessons.1.steps.1.body": {
+  "en": "Many agent systems split the work into roles instead of one agent doing everything. A planner proposes the next step; a checker reviews it before anything runs; a runner calls the tool; and a person approves actions and handles whatever is stopped. The roles can be different models, one model with different instructions, or plain code. What matters is that one part checks another before anything happens.\n\nThe checker doesn’t have to be clever. In the team lab it is five strict rules in code: the tool must be on; every detail must have the right shape (25:00 is not a time); every name and number must come from the request or an earlier result; no earlier step may have failed; and a person must say yes to any action. Together they stop 9Z copied as 9C, a reminder to “tisums the library”, a reminder at 25:00 and the Saturday reminder. Rules never guess and can’t be talked round, and they are cheap and fast.\n\nA second language model as checker can catch subtler problems that rules miss, such as a rude or misleading message, but it can also be wrong, and the tricks that fool the planner may fool it too. Start with rules, add a model checker only where judgement is needed, and never let it be the only guard on an action. When the checker stops a call, it should hand it back rather than guess a fix: Darsi Tiny was never trained to take a checker’s feedback, so a person asks again. Silent automatic retries can loop, cost tokens and hide the slip.\n\nMore roles cost more. Every model call reads and writes tokens, so time, money and data add up, and each extra step is another chance to fail. If each of two steps is right 90% of the time, both are right 81% of the time; three steps, about 73%. A good design uses the fewest model calls the job needs, a strict check at every step, and a person for actions.",
+  "t": "Beaucoup de systèmes d’agents répartissent le travail en rôles, au lieu d’un seul agent qui fait tout. Un planificateur propose l’étape suivante ; un vérificateur la contrôle avant que rien ne s’exécute ; un exécuteur appelle l’outil ; et une personne approuve les actions et gère tout ce qui est arrêté. Les rôles peuvent être des modèles différents, un même modèle avec des consignes différentes, ou du simple code. Ce qui compte, c’est qu’une partie en contrôle une autre avant que quoi que ce soit n’arrive.\n\nLe vérificateur n’a pas besoin d’être malin. Dans le labo d’équipe, ce sont cinq règles strictes en code : l’outil doit être activé ; chaque détail doit avoir la bonne forme (25:00 n’est pas une heure) ; chaque nom et chaque nombre doivent venir de la demande ou d’un résultat précédent ; aucune étape précédente ne doit avoir échoué ; et une personne doit dire oui à toute action. Ensemble, elles arrêtent 9Z copié en 9C, un rappel pour « tisums the library », un rappel à 25:00 et le rappel du samedi. Les règles ne devinent jamais, on ne peut pas les embobiner, et elles sont peu coûteuses et rapides.\n\nUn second modèle de langage comme vérificateur peut attraper des problèmes plus subtils que les règles manquent, comme un message impoli ou trompeur, mais il peut aussi se tromper, et les astuces qui trompent le planificateur peuvent le tromper aussi. Commencez par des règles, n’ajoutez un vérificateur à modèle que là où il faut du jugement, et ne le laissez jamais être l’unique garde-fou d’une action. Quand le vérificateur arrête un appel, il doit le renvoyer plutôt que de deviner une correction : Darsi Tiny n’a jamais été entraîné à tenir compte des retours d’un vérificateur, c’est donc une personne qui redemande. Les nouvelles tentatives automatiques silencieuses peuvent boucler, coûter des jetons et cacher l’erreur.\n\nPlus de rôles coûtent plus cher. Chaque appel au modèle lit et écrit des jetons : le temps, l’argent et les données s’additionnent, et chaque étape de plus est une chance de plus d’échouer. Si chacune de deux étapes est juste 90 % du temps, les deux le sont 81 % du temps ; trois étapes, environ 73 %. Une bonne conception utilise le moins d’appels au modèle possible pour le travail, un contrôle strict à chaque étape, et une personne pour les actions."
+ },
+ "lessons.1.steps.1.keyTerms.0.term": {
+  "en": "Role",
+  "t": "Rôle"
+ },
+ "lessons.1.steps.1.keyTerms.0.def": {
+  "en": "One part of an agent system with one job: planner, checker, runner or person.",
+  "t": "Une partie d’un système d’agents avec une seule tâche : planificateur, vérificateur, exécuteur ou personne."
+ },
+ "lessons.1.steps.1.keyTerms.1.term": {
+  "en": "Checker",
+  "t": "Vérificateur"
+ },
+ "lessons.1.steps.1.keyTerms.1.def": {
+  "en": "The part that reviews a proposed step before it runs, often strict rules in code.",
+  "t": "La partie qui contrôle une étape proposée avant son exécution, souvent des règles strictes en code."
+ },
+ "lessons.1.steps.1.keyTerms.2.term": {
+  "en": "Human in the loop",
+  "t": "Humain dans la boucle"
+ },
+ "lessons.1.steps.1.keyTerms.2.def": {
+  "en": "A person approves actions and decides what happens to anything the checker stops.",
+  "t": "Une personne approuve les actions et décide de ce qui arrive à tout ce que le vérificateur arrête."
+ },
+ "lessons.1.steps.1.keyTerms.3.term": {
+  "en": "Compounding errors",
+  "t": "Erreurs cumulatives"
+ },
+ "lessons.1.steps.1.keyTerms.3.def": {
+  "en": "The chance that every step is right multiplies, so long chains fail more often: 0.9 × 0.9 = 0.81.",
+  "t": "La probabilité que chaque étape soit juste se multiplie : les longues chaînes échouent donc plus souvent : 0.9 × 0.9 = 0.81."
+ },
+ "lessons.1.steps.2.prompt": {
+  "en": "An agent runs three steps, each right 90% of the time. How often are all three right?",
+  "t": "Un agent exécute trois étapes, chacune juste 90 % du temps. Dans quelle proportion les trois sont-elles justes ?"
+ },
+ "lessons.1.steps.2.options.0.text": {
+  "en": "About 90%",
+  "t": "Environ 90 %"
+ },
+ "lessons.1.steps.2.options.1.text": {
+  "en": "About 73%",
+  "t": "Environ 73 %"
+ },
+ "lessons.1.steps.2.options.2.text": {
+  "en": "About 27%",
+  "t": "Environ 27 %"
+ },
+ "lessons.1.steps.2.explain": {
+  "en": "0.9 × 0.9 × 0.9 ≈ 0.73. Each step’s chance of being right multiplies, so long chains need a check at every step.",
+  "t": "0.9 × 0.9 × 0.9 ≈ 0.73. La probabilité que chaque étape soit juste se multiplie : les longues chaînes ont donc besoin d’un contrôle à chaque étape."
+ },
+ "lessons.1.steps.3.prompt": {
+  "en": "Write a checker with three rules. check(call, text, on, failed) returns a list of the rules the call breaks: \"tool\" if its tool isn’t in on; \"said\" if any word in its details doesn’t appear in text (the request and the results); \"after\" if failed is True. An empty list means the call may run. (No model here: the calls are given.)",
+  "t": "Écrivez un vérificateur à trois règles. check(call, text, on, failed) renvoie la liste des règles que l’appel enfreint : \"tool\" si son outil n’est pas dans on ; \"said\" si un mot de ses détails n’apparaît pas dans text (la demande et les résultats) ; \"after\" si failed vaut True. Une liste vide signifie que l’appel peut s’exécuter. (Pas de modèle ici : les appels sont donnés.)"
+ },
+ "lessons.1.steps.3.tests.1.hint": {
+  "en": "Split every detail into words and look for each one in text.",
+  "t": "Découpez chaque détail en mots et cherchez chacun dans text."
+ },
+ "lessons.1.steps.3.hints.0": {
+  "en": "Check the three rules one after another, appending \"tool\", \"said\" and \"after\" in that order.",
+  "t": "Vérifiez les trois règles l’une après l’autre, en ajoutant \"tool\", \"said\" et \"after\" dans cet ordre."
+ },
+ "lessons.1.steps.3.hints.1": {
+  "en": "For \"said\": collect the words of every value with str(v).split(), then any(w not in text for w in words).",
+  "t": "Pour \"said\" : rassemblez les mots de chaque valeur avec str(v).split(), puis any(w not in text for w in words)."
+ },
+ "lessons.1.steps.3.explain": {
+  "en": "Each rule is a plain test that never guesses: is the tool allowed, did every word come from somewhere, did an earlier step fail? The \"said\" rule here is lenient (a word found anywhere in the text counts), which is why real checkers add shape checks too.",
+  "t": "Chaque règle est un simple test qui ne devine jamais : l’outil est-il autorisé, chaque mot vient-il de quelque part, une étape précédente a-t-elle échoué ? La règle \"said\" est ici indulgente (un mot trouvé n’importe où dans le texte compte), c’est pourquoi les vrais vérificateurs ajoutent aussi des contrôles de forme."
+ },
+ "lessons.1.steps.4.prompt": {
+  "en": "Put the team’s steps in order: the planner proposes, the checker reviews, and the call runs only if nothing is broken.",
+  "t": "Mettez les étapes de l’équipe dans l’ordre : le planificateur propose, le vérificateur contrôle, et l’appel ne s’exécute que si rien n’est enfreint."
+ },
+ "lessons.1.steps.4.explain": {
+  "en": "The planner only proposes; the checker runs before anything happens; the tool runs in the else branch, so a broken call never reaches it. A run(call) before the check would act first and check too late.",
+  "t": "Le planificateur ne fait que proposer ; le vérificateur passe avant que quoi que ce soit n’arrive ; l’outil s’exécute dans la branche else, donc un appel invalide ne l’atteint jamais. Un run(call) avant le contrôle agirait d’abord et contrôlerait trop tard."
+ },
+ "lessons.1.steps.5.prompt": {
+  "en": "Try it: send “What's the weather in Kafi tomorrow?” and watch the planner propose, the checker pass it and the runner run it. Then send “Remind me to tidy the library tomorrow at 9:00.” and “What does 9Z have tomorrow?”, and read which rule stops each. Turn the checker off and send them again. The lab is done when the checker has stopped a bad call and an action has run after your OK.",
+  "t": "Essayez : envoyez « What's the weather in Kafi tomorrow? » et regardez le planificateur proposer, le vérificateur laisser passer et l’exécuteur lancer. Puis envoyez « Rappelle-moi de ranger la bibliothèque demain à 9 h 00. » et « What does 9Z have tomorrow? », et lisez quelle règle arrête chacun. Désactivez le vérificateur et renvoyez-les. Le labo est terminé quand le vérificateur a arrêté un mauvais appel et qu’une action s’est exécutée après votre accord."
+ },
+ "lessons.1.steps.6.prompt": {
+  "en": "Why start with strict rules in code as the checker, rather than a second language model? Choose all that apply.",
+  "t": "Pourquoi commencer par des règles strictes en code comme vérificateur, plutôt que par un second modèle de langage ? Choisissez toutes les bonnes réponses."
+ },
+ "lessons.1.steps.6.options.0.text": {
+  "en": "Rules never guess, and can’t be talked round",
+  "t": "Les règles ne devinent jamais, et on ne peut pas les embobiner"
+ },
+ "lessons.1.steps.6.options.1.text": {
+  "en": "Rules are cheap and fast at every step",
+  "t": "Les règles sont peu coûteuses et rapides à chaque étape"
+ },
+ "lessons.1.steps.6.options.2.text": {
+  "en": "Rules catch every possible mistake",
+  "t": "Les règles attrapent toutes les erreurs possibles"
+ },
+ "lessons.1.steps.6.options.3.text": {
+  "en": "A model checker can be fooled the same way as the planner",
+  "t": "Un vérificateur à modèle peut être trompé de la même façon que le planificateur"
+ },
+ "lessons.1.steps.6.options.4.text": {
+  "en": "Rules understand tone and meaning better than a model",
+  "t": "Les règles comprennent mieux le ton et le sens qu’un modèle"
+ },
+ "lessons.1.steps.6.explain": {
+  "en": "Rules are predictable, cheap and immune to the tricks that fool models. They don’t catch everything, and they don’t understand tone: that is where a model checker can help, as an extra layer, never as the only guard.",
+  "t": "Les règles sont prévisibles, peu coûteuses et immunisées contre les astuces qui trompent les modèles. Elles n’attrapent pas tout et ne comprennent pas le ton : c’est là qu’un vérificateur à modèle peut aider, comme couche supplémentaire, jamais comme unique garde-fou."
+ },
+ "lessons.1.steps.7.prompt": {
+  "en": "If each of three steps is right 90% of the time, the whole task is right about 90% of the time.",
+  "t": "Si chacune de trois étapes est juste 90 % du temps, la tâche entière est juste environ 90 % du temps."
+ },
+ "lessons.1.steps.7.explain": {
+  "en": "The chances multiply: 0.9 × 0.9 × 0.9 ≈ 0.73, so the task is right about 73% of the time. Every extra step lowers the odds, which is why each step needs its own check.",
+  "t": "Les probabilités se multiplient : 0.9 × 0.9 × 0.9 ≈ 0.73, donc la tâche est juste environ 73 % du temps. Chaque étape de plus réduit les chances : c’est pourquoi chaque étape a besoin de son propre contrôle."
+ },
+ "lessons.1.steps.8.prompt": {
+  "en": "What do you suggest?",
+  "t": "Que suggérez-vous ?"
+ },
+ "lessons.1.steps.8.who": {
+  "en": "Mr Joseph Mwangi, computer studies",
+  "t": "M. Joseph Mwangi, informatique"
+ },
+ "lessons.1.steps.8.initial": {
+  "en": "J",
+  "t": "J"
+ },
+ "lessons.1.steps.8.situation": {
+  "en": "Your project team is building an agent that answers classmates’ timetable questions and can post in the class group. A teammate suggests: “When the checker stops a call, let the planner retry by itself until it passes.”",
+  "t": "Votre équipe de projet construit un agent qui répond aux questions d’emploi du temps des camarades et peut publier dans le groupe de la classe. Un coéquipier propose : « Quand le vérificateur arrête un appel, laissons le planificateur réessayer tout seul jusqu’à ce que ça passe. »"
+ },
+ "lessons.1.steps.8.choices.0.label": {
+  "en": "“Good idea: retries will fix the slips.”",
+  "t": "« Bonne idée : les nouvelles tentatives corrigeront les erreurs. »"
+ },
+ "lessons.1.steps.8.choices.0.consequence": {
+  "en": "A retry can repeat the slip, invent a new one or loop, costing tokens each time, and nobody sees what was stopped or why.",
+  "t": "Une nouvelle tentative peut répéter l’erreur, en inventer une autre ou boucler, en coûtant des jetons à chaque fois, et personne ne voit ce qui a été arrêté ni pourquoi."
+ },
+ "lessons.1.steps.8.choices.1.label": {
+  "en": "“Hand stopped calls to a person, allow at most one retry, and log both.”",
+  "t": "« Confions les appels arrêtés à une personne, autorisons au plus une nouvelle tentative, et journalisons les deux. »"
+ },
+ "lessons.1.steps.8.choices.1.consequence": {
+  "en": "People see what was stopped and why, the log shows which slips repeat so you can fix them, and there is no silent loop.",
+  "t": "Les personnes voient ce qui a été arrêté et pourquoi, le journal montre quelles erreurs se répètent pour qu’on puisse les corriger, et il n’y a pas de boucle silencieuse."
+ },
+ "lessons.1.steps.8.choices.2.label": {
+  "en": "“Switch the checker off for posts, to save time.”",
+  "t": "« Désactivons le vérificateur pour les publications, pour gagner du temps. »"
+ },
+ "lessons.1.steps.8.choices.2.consequence": {
+  "en": "Posting to the whole class is exactly the action that needs the strictest check and a person’s yes.",
+  "t": "Publier pour toute la classe est exactement l’action qui demande le contrôle le plus strict et le oui d’une personne."
+ },
+ "lessons.1.steps.9.prompt": {
+  "en": "Think of a task where one mistake would really matter, such as messaging a whole class. Which role would you trust a model with, and which would you keep as code or a person?",
+  "t": "Pensez à une tâche où une seule erreur compterait vraiment, comme écrire à toute une classe. À quel rôle confieriez-vous un modèle, et lequel garderiez-vous en code ou confié à une personne ?"
+ },
+ "lessons.1.steps.9.placeholder": {
+  "en": "For example: “The model can draft the message. A rule checks the group name, and a person approves the exact text.”",
+  "t": "Par exemple : « Le modèle peut rédiger le message. Une règle vérifie le nom du groupe, et une personne approuve le texte exact. »"
+ },
+ "lessons.1.steps.10.prompt": {
+  "en": "Project: Design a team agent",
+  "t": "Projet : Concevoir un agent d’équipe"
+ },
+ "lessons.1.steps.10.task": {
+  "en": "Pick a real task at your university or school, such as booking study rooms, answering questions about a course timetable or reminding a study group. Design the agent as roles: planner, checker, runner and person. Write at least five strict rules for the checker as Python functions or clear pseudocode. Then write ten proposed calls yourself, five good and five with slips (a wrong name, a bad time, a tool that should be off, an action with no yes, a step after a failure), and test your rules on them, by hand or in Python.",
+  "t": "Choisissez une vraie tâche dans votre université ou votre école, comme réserver des salles d’étude, répondre aux questions sur l’emploi du temps d’un cours ou rappeler quelque chose à un groupe d’étude. Concevez l’agent sous forme de rôles : planificateur, vérificateur, exécuteur et personne. Écrivez au moins cinq règles strictes pour le vérificateur, sous forme de fonctions Python ou de pseudo-code clair. Puis écrivez vous-même dix appels proposés, cinq bons et cinq avec des erreurs (un mauvais nom, une mauvaise heure, un outil qui devrait être désactivé, une action sans oui, une étape après un échec), et testez vos règles dessus, à la main ou en Python."
+ },
+ "lessons.1.steps.10.deliverable": {
+  "en": "A role diagram, your rules, a table of the ten calls showing which rules passed or stopped each, and one slip your rules would still miss.",
+  "t": "Un schéma des rôles, vos règles, un tableau des dix appels indiquant quelles règles les ont laissés passer ou arrêtés, et une erreur que vos règles laisseraient encore passer."
+ },
+ "lessons.1.steps.10.rubric.0.criterion": {
+  "en": "I can: split an agent into roles and say what each may do.",
+  "t": "Je sais : répartir un agent en rôles et dire ce que chacun peut faire."
+ },
+ "lessons.1.steps.10.rubric.1.criterion": {
+  "en": "I can: write strict checker rules and test them on good and bad calls.",
+  "t": "Je sais : écrire des règles strictes de vérificateur et les tester sur de bons et de mauvais appels."
+ },
+ "lessons.1.steps.10.rubric.2.criterion": {
+  "en": "I can: explain what more roles cost, in tokens and in compounding errors.",
+  "t": "Je sais : expliquer ce que coûtent plus de rôles, en jetons et en erreurs cumulatives."
+ },
+ "lessons.1.slides.0.title": {
+  "en": "Several agents, one job",
+  "t": "Plusieurs agents, un seul travail"
+ },
+ "lessons.1.slides.0.note": {
+  "en": "AI agents · University · Lesson 2",
+  "t": "Agents d’IA · Université · Leçon 2"
+ },
+ "lessons.1.slides.0.narration": {
+  "en": "Who checks the agent’s work before anything happens?",
+  "t": "Qui vérifie le travail de l’agent avant que quoi que ce soit n’arrive ?"
+ },
+ "lessons.1.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "Dans cette leçon, vous allez"
+ },
+ "lessons.1.slides.1.bullets": {
+  "en": [
+   "Split an agent into planner, checker, runner and person.",
+   "Write strict rules that stop a bad call before it runs.",
+   "Weigh what more roles cost: tokens and compounding errors."
+  ],
+  "t": [
+   "Répartir un agent en planificateur, vérificateur, exécuteur et personne.",
+   "Écrire des règles strictes qui arrêtent un mauvais appel avant son exécution.",
+   "Peser ce que coûtent plus de rôles : jetons et erreurs cumulatives."
+  ]
+ },
+ "lessons.1.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Idées clés"
+ },
+ "lessons.1.slides.2.bullets": {
+  "en": [
+   "One part proposes; another checks before anything runs.",
+   "Strict rules in code make the first checker: they never guess.",
+   "Errors multiply: two steps at 90% are both right only 81% of the time."
+  ],
+  "t": [
+   "Une partie propose ; une autre vérifie avant que rien ne s’exécute.",
+   "Des règles strictes en code font le premier vérificateur : elles ne devinent jamais.",
+   "Les erreurs se multiplient : deux étapes à 90 % ne sont toutes deux justes que 81 % du temps."
+  ]
+ },
+ "lessons.1.slides.3.title": {
+  "en": "Activity: Planner and checker",
+  "t": "Activité : Planificateur et vérificateur"
+ },
+ "lessons.1.slides.3.bullets": {
+  "en": [
+   "Set-up (3 min): Groups of three: planner, checker, runner.",
+   "Play (10 min): The planner writes calls; the checker applies five rules.",
+   "Swap (5 min): Change roles and try to sneak a slip past.",
+   "Debrief (2 min): Which slip got through, and why?"
+  ],
+  "t": [
+   "Mise en place (3 min) : Groupes de trois : planificateur, vérificateur, exécuteur.",
+   "Jeu (10 min) : Le planificateur écrit des appels ; le vérificateur applique cinq règles.",
+   "Échange (5 min) : Changez de rôle et essayez de glisser une erreur.",
+   "Bilan (2 min) : Quelle erreur est passée, et pourquoi ?"
+  ]
+ },
+ "lessons.1.slides.3.details": {
+  "en": [
+   "Set-up (3 min): Form groups of three. The planner gets cards and a pen; the checker gets the list of five rules; the runner holds a made-up timetable and a weather list.",
+   "Play (10 min): Another group writes a request on a card. The planner writes a tool call for it on a new card. The checker tests the call against the five rules and either passes it to the runner or stops it with the rule’s name. The runner answers only calls that passed.",
+   "Swap (5 min): Change roles. The new planner tries to slip a mistake past the checker: a copied name, a 25:00 time, a step after a failure, an action with no yes.",
+   "Debrief (2 min): Share which slip got through and which rule you would add to catch it."
+  ],
+  "t": [
+   "Mise en place (3 min) : Formez des groupes de trois. Le planificateur reçoit des cartes et un stylo ; le vérificateur reçoit la liste des cinq règles ; l’exécuteur tient un emploi du temps inventé et une liste de météos.",
+   "Jeu (10 min) : Un autre groupe écrit une demande sur une carte. Le planificateur écrit un appel d’outil pour elle sur une nouvelle carte. Le vérificateur teste l’appel avec les cinq règles et soit le transmet à l’exécuteur, soit l’arrête en nommant la règle. L’exécuteur ne répond qu’aux appels qui sont passés.",
+   "Échange (5 min) : Changez de rôle. Le nouveau planificateur essaie de glisser une erreur devant le vérificateur : un nom copié, une heure 25:00, une étape après un échec, une action sans oui.",
+   "Bilan (2 min) : Dites quelle erreur est passée et quelle règle vous ajouteriez pour l’attraper."
+  ]
+ },
+ "lessons.1.slides.3.note": {
+  "en": "Write the five rules large enough for the checker to read at a glance. Use only made-up names and classes.",
+  "t": "Écrivez les cinq règles assez grand pour que le vérificateur les lise d’un coup d’œil. N’utilisez que des noms et des classes inventés."
+ },
+ "lessons.1.slides.3.narration": {
+  "en": "The planner proposes, the checker decides. Can you sneak a slip past?",
+  "t": "Le planificateur propose, le vérificateur décide. Saurez-vous glisser une erreur ?"
+ },
+ "lessons.1.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.1.slides.4.bullets": {
+  "en": [
+   "Which mistakes can strict rules never catch?",
+   "When is a second model worth its cost as a checker?",
+   "Why should a stopped call go back to a person instead of a silent retry?"
+  ],
+  "t": [
+   "Quelles erreurs des règles strictes ne pourront-elles jamais attraper ?",
+   "Quand un second modèle vaut-il son coût comme vérificateur ?",
+   "Pourquoi un appel arrêté doit-il retourner à une personne plutôt que d’être retenté en silence ?"
+  ]
+ },
+ "lessons.1.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.1.slides.5.bullets": {
+  "en": [
+   "Write one checker rule as Python or pseudocode, and one slip it would stop."
+  ],
+  "t": [
+   "Écrivez une règle de vérificateur en Python ou en pseudo-code, et une erreur qu’elle arrêterait."
+  ]
+ },
+ "lessons.1.slides.5.narration": {
+  "en": "One part proposes, another checks, and a person approves.",
+  "t": "Une partie propose, une autre vérifie, et une personne approuve."
+ },
+ "lessons.1.kit.0.title": {
+  "en": "Slides to revise: Several agents, one job",
+  "t": "Diapositives à réviser : Plusieurs agents, un seul travail"
+ },
+ "lessons.1.kit.1.title": {
+  "en": "Activity sheet: Several agents, one job",
+  "t": "Fiche d’activité : Plusieurs agents, un seul travail"
+ },
+ "lessons.1.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "La vidéo de la leçon (240p, pour la revoir ou la partager)"
+ },
+ "lessons.2.title": {
+  "en": "Measuring an agent",
+  "t": "Mesurer un agent"
+ },
+ "lessons.2.tryTomorrow": {
+  "en": "Write ten test requests for an assistant you use, five in odd wordings, with the right answer for each written before you run them. Score them, and note which group failed more.",
+  "t": "Écrivez dix demandes de test pour un assistant que vous utilisez, dont cinq formulées de façon inhabituelle, avec la bonne réponse de chacune écrite avant de les lancer. Notez-les, et relevez quel groupe a échoué le plus."
+ },
+ "lessons.2.materials": {
+  "en": [
+   "Paper and a pen",
+   "A calculator or your phone’s calculator",
+   "Your phone, for the lab"
+  ],
+  "t": [
+   "Du papier et un stylo",
+   "Une calculatrice ou celle de votre téléphone",
+   "Votre téléphone, pour le labo"
+  ]
+ },
+ "lessons.2.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Regarder"
+ },
+ "lessons.2.steps.0.title": {
+  "en": "Measuring an agent",
+  "t": "Mesurer un agent"
+ },
+ "lessons.2.steps.0.chapters.0.label": {
+  "en": "Ten out of ten",
+  "t": "Dix sur dix"
+ },
+ "lessons.2.steps.0.chapters.1.label": {
+  "en": "A fair test set",
+  "t": "Un jeu de test équitable"
+ },
+ "lessons.2.steps.0.chapters.2.label": {
+  "en": "Reading the score",
+  "t": "Lire le score"
+ },
+ "lessons.2.steps.0.chapters.3.label": {
+  "en": "After every change, and the lab",
+  "t": "Après chaque changement, et le labo"
+ },
+ "lessons.2.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "À retenir et à essayer"
+ },
+ "lessons.2.steps.0.checkpoint.question.prompt": {
+  "en": "Darsi Tiny scores 29 out of 32 (91%). How sure can we be of that number?",
+  "t": "Darsi Tiny obtient 29 sur 32 (91 %). À quel point peut-on être sûr de ce chiffre ?"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.0.text": {
+  "en": "Exactly 91%, every time",
+  "t": "Exactement 91 %, à chaque fois"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.1.text": {
+  "en": "Roughly: one miss moves it by 3 points",
+  "t": "À peu près : une erreur le fait bouger de 3 points"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.2.text": {
+  "en": "Not at all: 32 requests are useless",
+  "t": "Pas du tout : 32 demandes ne servent à rien"
+ },
+ "lessons.2.steps.0.checkpoint.question.explain": {
+  "en": "With 32 requests each miss is about 3 points, so 91% is rough. Small sets show where it fails; thousands of requests pin the number down.",
+  "t": "Avec 32 demandes, chaque erreur vaut environ 3 points : 91 % est donc approximatif. Les petits jeux montrent où cela échoue ; des milliers de demandes fixent le chiffre."
+ },
+ "lessons.2.steps.0.transcript": {
+  "en": "A student showed me his agent: ten requests, ten right. Then I typed one in my own words, and it called the wrong tool. His ten tries had told us very little. Today: how to measure an agent, and how far to trust the number. An evaluation is a fixed test set: many requests with right answers decided in advance. You run the agent on all of them, score each the same strict way, and count. Keep it fixed, so scores can be compared. The test must include what the agent never saw. Darsi Tiny’s makers held out every fifth wording and a fifth of the names. Test only on trained wordings, and you measure memory, not skill. Score strictly: a request counts only if the tool and every detail are exactly right. Explain the term battery became this call. Right tool, wrong detail: it fails. In the evals lab, Darsi Tiny scores twenty-nine out of thirty-two. Trained wordings: sixteen out of sixteen. New wordings: thirteen out of sixteen. One number hides where an agent fails. Break it down by language, by wording and by tool. Here every miss is a new wording, and two of the three are in Arabic. Quick check! Twenty-nine out of thirty-two is ninety-one percent. How sure can we be of that number? Only roughly. With thirty-two requests, each miss moves the score by three points. On thousands of requests, the model card found ninety-six to ninety-eight percent with trained wordings, and seventy-eight to eighty with new ones. Small sets show where it fails; big ones pin the number down. Re-run the same set after every change: a new prompt, a new tool, a fine-tune. A change that fixes one thing can break another: a regression. In this lesson’s code, you’ll write the scorer. Each case has a group, the call you wanted and the call you got. Count the exact matches in each group. In the app, run all thirty-two requests and compare the columns. Then read every failure. If you taught Darsi Tiny the bus tool, test that model too. Your turn. A test set uses only wordings the model was trained on, and it scores a hundred percent. What does that show? That it remembers its training, not that it handles new words. Remember: fix the set, and decide the answers first. Hold out wordings and names, and score exactly. Break the score down, and re-run it after every change. Try it yourself: write twenty test requests for an assistant, half in odd wordings, in two languages. Write each right answer before you run them. Then score them, and break the score down.",
+  "t": "Un étudiant m’a montré son agent : dix demandes, dix réussies. Puis j’en ai tapé une avec mes propres mots, et il a appelé le mauvais outil. Ses dix essais ne nous avaient presque rien appris. Aujourd’hui : comment mesurer un agent, et jusqu’où faire confiance au chiffre. Une évaluation est un jeu de test fixe : beaucoup de demandes avec des réponses justes décidées à l’avance. Vous lancez l’agent sur toutes, vous notez chacune de la même façon stricte, et vous comptez. Gardez-le fixe, pour que les scores soient comparables. Le test doit inclure ce que l’agent n’a jamais vu. Les concepteurs de Darsi Tiny ont mis de côté une formulation sur cinq et un cinquième des noms. Testez seulement sur des formulations d’entraînement, et vous mesurez la mémoire, pas la compétence. Notez strictement : une demande ne compte que si l’outil et chaque détail sont exactement justes. Explain the term battery est devenu cet appel. Bon outil, mauvais détail : c’est un échec. Dans le labo d’évaluations, Darsi Tiny obtient vingt-neuf sur trente-deux. Formulations d’entraînement : seize sur seize. Nouvelles formulations : treize sur seize. Un seul chiffre cache l’endroit où un agent échoue. Détaillez-le par langue, par formulation et par outil. Ici, chaque erreur est une nouvelle formulation, et deux des trois sont en arabe. Vérification rapide ! Vingt-neuf sur trente-deux font quatre-vingt-onze pour cent. À quel point peut-on être sûr de ce chiffre ? Seulement à peu près. Avec trente-deux demandes, chaque erreur déplace le score de trois points. Sur des milliers de demandes, la fiche du modèle a trouvé quatre-vingt-seize à quatre-vingt-dix-huit pour cent avec des formulations d’entraînement, et soixante-dix-huit à quatre-vingts avec de nouvelles. Les petits jeux montrent où cela échoue ; les grands fixent le chiffre. Relancez le même jeu après chaque changement : une nouvelle consigne, un nouvel outil, un réglage fin. Un changement qui corrige une chose peut en casser une autre : une régression. Dans le code de cette leçon, vous écrirez le correcteur. Chaque cas a un groupe, l’appel voulu et l’appel obtenu. Comptez les correspondances exactes dans chaque groupe. Dans l’application, lancez les trente-deux demandes et comparez les colonnes. Puis lisez chaque échec. Si vous avez appris l’outil bus à Darsi Tiny, testez aussi ce modèle. À vous. Un jeu de test n’utilise que des formulations sur lesquelles le modèle a été entraîné, et il obtient cent pour cent. Qu’est-ce que cela montre ? Qu’il se souvient de son entraînement, pas qu’il gère de nouveaux mots. Retenez : fixez le jeu, et décidez d’abord des réponses. Mettez de côté des formulations et des noms, et notez exactement. Détaillez le score, et relancez-le après chaque changement. Essayez vous-même : écrivez vingt demandes de test pour un assistant, dont la moitié en formulations inhabituelles, en deux langues. Écrivez chaque bonne réponse avant de les lancer. Puis notez-les, et détaillez le score."
+ },
+ "lessons.2.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lire"
+ },
+ "lessons.2.steps.1.title": {
+  "en": "Test sets, held-out data and honest scores",
+  "t": "Jeux de test, données mises de côté et scores honnêtes"
+ },
+ "lessons.2.steps.1.body": {
+  "en": "Trying an agent a few times tells you little, because you tend to choose requests it gets right. An evaluation is a fixed test set: many requests whose right answers you decide before running anything, scored the same strict way every time. Keep it fixed, so that scores from different days, prompts and models can be compared.\n\nA good test set contains what the agent never saw. Darsi Tiny’s makers held out every fifth wording of every request, a fifth of the names and eight of the forty villages from training. With wordings it was trained on, it gets the right tool and every detail 96–98% of the time, even for names it never saw; with new wordings, 78–80%. A test made only of trained wordings measures memory, not skill. And score exactly: “Explain the term battery” became glossary{\"term\":\"the term battery\"}, the right tool with a wrong detail, so it fails.\n\nThen break the score down by language, by wording and by tool. In the evals lab Darsi Tiny scores 29 out of 32 (91%): trained wordings 16/16, new wordings 13/16 (English 7/8, Arabic 6/8), and the right tool alone 31/32. Every miss is a new wording, which tells you what to fix or guard. Be honest about how sure the number is: with 32 requests each miss moves the score by about three points, and a 95% confidence interval for 29 out of 32 runs from about 76% to 97%. Small sets show where an agent fails; it takes hundreds or thousands of requests to pin the number down.\n\nFinally, run the same set again after every change: a new prompt, a new tool, a fine-tune. A change that fixes one thing can break another (a regression), and only a fixed test set will show it. Decide your pass mark before you look at the results, and add every new failure you find to the set.",
+  "t": "Essayer un agent quelques fois apprend peu, parce qu’on a tendance à choisir les demandes qu’il réussit. Une évaluation est un jeu de test fixe : beaucoup de demandes dont vous décidez les bonnes réponses avant de lancer quoi que ce soit, notées de la même façon stricte à chaque fois. Gardez-le fixe, pour que les scores de jours, de consignes et de modèles différents soient comparables.\n\nUn bon jeu de test contient ce que l’agent n’a jamais vu. Les concepteurs de Darsi Tiny ont mis de côté une formulation sur cinq de chaque demande, un cinquième des noms et huit des quarante villages de l’entraînement. Avec des formulations d’entraînement, il obtient le bon outil et tous les détails 96 à 98 % du temps, même pour des noms qu’il n’a jamais vus ; avec de nouvelles formulations, 78 à 80 %. Un test composé uniquement de formulations d’entraînement mesure la mémoire, pas la compétence. Et notez exactement : « Explain the term battery » est devenu glossary{\"term\":\"the term battery\"}, le bon outil avec un mauvais détail, donc c’est un échec.\n\nDétaillez ensuite le score par langue, par formulation et par outil. Dans le labo d’évaluations, Darsi Tiny obtient 29 sur 32 (91 %) : formulations d’entraînement 16/16, nouvelles formulations 13/16 (anglais 7/8, arabe 6/8), et le bon outil seul 31/32. Chaque erreur est une nouvelle formulation, ce qui vous dit quoi corriger ou protéger. Soyez honnête sur la fiabilité du chiffre : avec 32 demandes, chaque erreur déplace le score d’environ trois points, et un intervalle de confiance à 95 % pour 29 sur 32 va d’environ 76 % à 97 %. Les petits jeux montrent où un agent échoue ; il faut des centaines ou des milliers de demandes pour fixer le chiffre.\n\nEnfin, relancez le même jeu après chaque changement : une nouvelle consigne, un nouvel outil, un réglage fin. Un changement qui corrige une chose peut en casser une autre (une régression), et seul un jeu de test fixe le montrera. Décidez de votre seuil de réussite avant de regarder les résultats, et ajoutez au jeu chaque nouvel échec que vous trouvez."
+ },
+ "lessons.2.steps.1.keyTerms.0.term": {
+  "en": "Evaluation (test set)",
+  "t": "Évaluation (jeu de test)"
+ },
+ "lessons.2.steps.1.keyTerms.0.def": {
+  "en": "A fixed set of requests with right answers decided in advance, scored the same way every time.",
+  "t": "Un ensemble fixe de demandes avec des réponses justes décidées à l’avance, notées de la même façon à chaque fois."
+ },
+ "lessons.2.steps.1.keyTerms.1.term": {
+  "en": "Held-out data",
+  "t": "Données mises de côté"
+ },
+ "lessons.2.steps.1.keyTerms.1.def": {
+  "en": "Wordings and names kept out of training, so a test measures skill rather than memory.",
+  "t": "Des formulations et des noms tenus hors de l’entraînement, pour qu’un test mesure la compétence plutôt que la mémoire."
+ },
+ "lessons.2.steps.1.keyTerms.2.term": {
+  "en": "Exact match",
+  "t": "Correspondance exacte"
+ },
+ "lessons.2.steps.1.keyTerms.2.def": {
+  "en": "A request counts only if the tool and every detail are exactly right.",
+  "t": "Une demande ne compte que si l’outil et chaque détail sont exactement justes."
+ },
+ "lessons.2.steps.1.keyTerms.3.term": {
+  "en": "Regression",
+  "t": "Régression"
+ },
+ "lessons.2.steps.1.keyTerms.3.def": {
+  "en": "Something that worked before breaks after a change; re-running a fixed test set reveals it.",
+  "t": "Quelque chose qui marchait avant se casse après un changement ; relancer un jeu de test fixe le révèle."
+ },
+ "lessons.2.steps.2.prompt": {
+  "en": "A test set uses only wordings the model was trained on, and it scores 100%. What does that show?",
+  "t": "Un jeu de test n’utilise que des formulations sur lesquelles le modèle a été entraîné, et il obtient 100 %. Qu’est-ce que cela montre ?"
+ },
+ "lessons.2.steps.2.options.0.text": {
+  "en": "That it understands any wording",
+  "t": "Qu’il comprend n’importe quelle formulation"
+ },
+ "lessons.2.steps.2.options.1.text": {
+  "en": "That it remembers what it was trained on",
+  "t": "Qu’il se souvient de ce sur quoi il a été entraîné"
+ },
+ "lessons.2.steps.2.options.2.text": {
+  "en": "That it is safe to give to users",
+  "t": "Qu’on peut le donner sans risque aux utilisateurs"
+ },
+ "lessons.2.steps.2.explain": {
+  "en": "Trained wordings measure memory. Only held-out wordings and names show how it copes with requests it never saw: Darsi Tiny drops from 16/16 to 13/16.",
+  "t": "Les formulations d’entraînement mesurent la mémoire. Seules des formulations et des noms mis de côté montrent comment il se débrouille avec des demandes jamais vues : Darsi Tiny passe de 16/16 à 13/16."
+ },
+ "lessons.2.steps.3.prompt": {
+  "en": "Each test case is (group, want, got): its group, the call you wanted and the call the agent made, as dicts. Write score(cases) that returns a dict giving, for each group, the share of its cases where got is exactly want. (The agent’s calls are given: no model runs here.)",
+  "t": "Chaque cas de test est (group, want, got) : son groupe, l’appel voulu et l’appel fait par l’agent, sous forme de dictionnaires. Écrivez score(cases) qui renvoie un dictionnaire donnant, pour chaque groupe, la part de ses cas où got est exactement want. (Les appels de l’agent sont donnés : aucun modèle ne tourne ici.)"
+ },
+ "lessons.2.steps.3.tests.0.hint": {
+  "en": "A right tool with a wrong detail is not a match: compare the whole dicts.",
+  "t": "Un bon outil avec un mauvais détail n’est pas une correspondance : comparez les dictionnaires entiers."
+ },
+ "lessons.2.steps.3.tests.1.hint": {
+  "en": "Count every case in total, even when nothing matched, and use hits.get(g, 0).",
+  "t": "Comptez chaque cas dans le total, même quand rien ne correspond, et utilisez hits.get(g, 0)."
+ },
+ "lessons.2.steps.3.hints.0": {
+  "en": "Count two things per group: how many cases, and how many matched.",
+  "t": "Comptez deux choses par groupe : combien de cas, et combien ont correspondu."
+ },
+ "lessons.2.steps.3.hints.1": {
+  "en": "total[g] = total.get(g, 0) + 1 counts; got == want compares the tool and every detail at once.",
+  "t": "total[g] = total.get(g, 0) + 1 compte ; got == want compare l’outil et chaque détail d’un coup."
+ },
+ "lessons.2.steps.3.explain": {
+  "en": "Scoring by group shows where an agent fails, which one overall number hides. Comparing whole dicts is exact match: the tool and every detail must agree, so “the term battery” fails.",
+  "t": "Noter par groupe montre où un agent échoue, ce qu’un seul chiffre global cache. Comparer des dictionnaires entiers, c’est la correspondance exacte : l’outil et chaque détail doivent coïncider, donc « the term battery » échoue."
+ },
+ "lessons.2.steps.4.prompt": {
+  "en": "What does this program print?",
+  "t": "Qu’affiche ce programme ?"
+ },
+ "lessons.2.steps.4.options.0.text": {
+  "en": "True True",
+  "t": "True True"
+ },
+ "lessons.2.steps.4.options.1.text": {
+  "en": "True False",
+  "t": "True False"
+ },
+ "lessons.2.steps.4.options.2.text": {
+  "en": "False False",
+  "t": "False False"
+ },
+ "lessons.2.steps.4.explain": {
+  "en": "The tools match (both glossary), so the first comparison is True; the details differ (“the term battery” against “battery”), so the whole calls are not equal. Exact-match scoring counts this as a failure.",
+  "t": "Les outils correspondent (tous deux glossary), donc la première comparaison vaut True ; les détails diffèrent (« the term battery » contre « battery »), donc les appels entiers ne sont pas égaux. La notation par correspondance exacte compte cela comme un échec."
+ },
+ "lessons.2.steps.5.prompt": {
+  "en": "Try it: run the 32 requests and compare the columns: trained wordings against new ones, English against Arabic. Read every failure and decide whether it was the wrong tool or a wrong detail. If you teach Darsi Tiny the bus tool in the next lesson’s lab, come back and test that model too. The lab is done after one full run of 32.",
+  "t": "Essayez : lancez les 32 demandes et comparez les colonnes : formulations d’entraînement contre nouvelles, anglais contre arabe. Lisez chaque échec et décidez si c’était le mauvais outil ou un mauvais détail. Si vous apprenez l’outil bus à Darsi Tiny dans le labo de la leçon suivante, revenez tester aussi ce modèle. Le labo est terminé après une exécution complète des 32."
+ },
+ "lessons.2.steps.6.prompt": {
+  "en": "Which belong in a good test set for an agent? Choose all that apply.",
+  "t": "Que faut-il dans un bon jeu de test pour un agent ? Choisissez toutes les bonnes réponses."
+ },
+ "lessons.2.steps.6.options.0.text": {
+  "en": "Requests in every language its users write",
+  "t": "Des demandes dans chaque langue dans laquelle ses utilisateurs écrivent"
+ },
+ "lessons.2.steps.6.options.1.text": {
+  "en": "Wordings and names held out of training",
+  "t": "Des formulations et des noms tenus hors de l’entraînement"
+ },
+ "lessons.2.steps.6.options.2.text": {
+  "en": "The right answer for each, decided before the run",
+  "t": "La bonne réponse de chacune, décidée avant l’exécution"
+ },
+ "lessons.2.steps.6.options.3.text": {
+  "en": "Only the requests it got right last time",
+  "t": "Seulement les demandes qu’il a réussies la dernière fois"
+ },
+ "lessons.2.steps.6.options.4.text": {
+  "en": "Brand-new requests each run, so the agent can’t memorise them",
+  "t": "De toutes nouvelles demandes à chaque exécution, pour que l’agent ne puisse pas les mémoriser"
+ },
+ "lessons.2.steps.6.explain": {
+  "en": "Cover every language, include held-out wordings and names, and fix the answers in advance. Keeping only past successes hides failures, and changing the set every run makes scores impossible to compare: keep a fixed set and add new cases deliberately.",
+  "t": "Couvrez chaque langue, incluez des formulations et des noms mis de côté, et fixez les réponses à l’avance. Ne garder que les succès passés cache les échecs, et changer le jeu à chaque exécution rend les scores incomparables : gardez un jeu fixe et ajoutez de nouveaux cas délibérément."
+ },
+ "lessons.2.steps.7.prompt": {
+  "en": "Put the steps of an honest evaluation in order.",
+  "t": "Mettez dans l’ordre les étapes d’une évaluation honnête."
+ },
+ "lessons.2.steps.7.steps.0": {
+  "en": "Collect real requests, including new wordings and both languages",
+  "t": "Rassembler de vraies demandes, y compris de nouvelles formulations et les deux langues"
+ },
+ "lessons.2.steps.7.steps.1": {
+  "en": "Write the right answer for each, before running anything",
+  "t": "Écrire la bonne réponse de chacune, avant de lancer quoi que ce soit"
+ },
+ "lessons.2.steps.7.steps.2": {
+  "en": "Run the agent on the whole set",
+  "t": "Lancer l’agent sur tout le jeu"
+ },
+ "lessons.2.steps.7.steps.3": {
+  "en": "Score every case the same strict way",
+  "t": "Noter chaque cas de la même façon stricte"
+ },
+ "lessons.2.steps.7.steps.4": {
+  "en": "Break the score down and read every failure",
+  "t": "Détailler le score et lire chaque échec"
+ },
+ "lessons.2.steps.7.steps.5": {
+  "en": "Re-run the same set after every change",
+  "t": "Relancer le même jeu après chaque changement"
+ },
+ "lessons.2.steps.7.explain": {
+  "en": "Answers come before the run so you can’t bend them to fit; strict scoring comes before reading failures; and the fixed set is re-run after every change to catch regressions.",
+  "t": "Les réponses viennent avant l’exécution pour que vous ne puissiez pas les plier à votre convenance ; la notation stricte vient avant la lecture des échecs ; et le jeu fixe est relancé après chaque changement pour attraper les régressions."
+ },
+ "lessons.2.steps.8.prompt": {
+  "en": "An agent that scores 16 out of 16 on wordings it was trained on will score about the same on new wordings.",
+  "t": "Un agent qui obtient 16 sur 16 sur des formulations d’entraînement obtiendra à peu près la même chose sur de nouvelles formulations."
+ },
+ "lessons.2.steps.8.explain": {
+  "en": "Trained wordings measure memory. Darsi Tiny scores 16/16 on them but 13/16 on new wordings, and 78–80% on thousands of new-wording requests: only held-out wordings show how it copes with requests it never saw.",
+  "t": "Les formulations d’entraînement mesurent la mémoire. Darsi Tiny obtient 16/16 dessus mais 13/16 sur de nouvelles formulations, et 78 à 80 % sur des milliers de demandes à nouvelles formulations : seules des formulations mises de côté montrent comment il se débrouille avec des demandes jamais vues."
+ },
+ "lessons.2.steps.9.prompt": {
+  "en": "Think of an AI tool you or your classmates rely on. What would a fair test set for it contain, and what score would you need before trusting it with something that matters?",
+  "t": "Pensez à un outil d’IA sur lequel vous ou vos camarades comptez. Que contiendrait un jeu de test équitable pour lui, et quel score vous faudrait-il avant de lui confier quelque chose d’important ?"
+ },
+ "lessons.2.steps.9.placeholder": {
+  "en": "For example: “A note-taking assistant. Lectures in two languages, with names it has never seen; I’d want 95% on the key facts before relying on it.”",
+  "t": "Par exemple : « Un assistant de prise de notes. Des cours dans deux langues, avec des noms qu’il n’a jamais vus ; je voudrais 95 % sur les faits clés avant de m’y fier. »"
+ },
+ "lessons.2.steps.10.prompt": {
+  "en": "Project: Evaluate an assistant",
+  "t": "Projet : Évaluer un assistant"
+ },
+ "lessons.2.steps.10.task": {
+  "en": "Write a test set of 20 requests for a chat assistant or agent you can use: 10 in wordings you would expect and 10 in unusual ones, across two languages if you can. Before running anything, write the right answer for each and how you will score it (exact, or by a rule you state). Run the set, score every case, and break the score down by wording and language. Then change one thing, such as a clearer instruction or a different assistant, and run the same set again. Use no real personal data in any request.",
+  "t": "Écrivez un jeu de test de 20 demandes pour un assistant de discussion ou un agent que vous pouvez utiliser : 10 dans des formulations attendues et 10 dans des formulations inhabituelles, en deux langues si possible. Avant de lancer quoi que ce soit, écrivez la bonne réponse de chacune et la façon dont vous la noterez (exacte, ou selon une règle que vous énoncez). Lancez le jeu, notez chaque cas et détaillez le score par formulation et par langue. Puis changez une chose, comme une consigne plus claire ou un autre assistant, et relancez le même jeu. N’utilisez aucune donnée personnelle réelle dans les demandes."
+ },
+ "lessons.2.steps.10.deliverable": {
+  "en": "Your test set with the expected answers, a results table by group, the scores before and after your change, and a paragraph on how sure you can be with 20 requests.",
+  "t": "Votre jeu de test avec les réponses attendues, un tableau de résultats par groupe, les scores avant et après votre changement, et un paragraphe sur le degré de confiance possible avec 20 demandes."
+ },
+ "lessons.2.steps.10.rubric.0.criterion": {
+  "en": "I can: build a test set with answers decided in advance and held-out wordings.",
+  "t": "Je sais : construire un jeu de test avec des réponses décidées à l’avance et des formulations mises de côté."
+ },
+ "lessons.2.steps.10.rubric.1.criterion": {
+  "en": "I can: score exactly and break the score down by group.",
+  "t": "Je sais : noter exactement et détailler le score par groupe."
+ },
+ "lessons.2.steps.10.rubric.2.criterion": {
+  "en": "I can: say honestly how sure a score from a small test set is.",
+  "t": "Je sais : dire honnêtement quel degré de confiance accorder au score d’un petit jeu de test."
+ },
+ "lessons.2.slides.0.title": {
+  "en": "Measuring an agent",
+  "t": "Mesurer un agent"
+ },
+ "lessons.2.slides.0.note": {
+  "en": "AI agents · University · Lesson 3",
+  "t": "Agents d’IA · Université · Leçon 3"
+ },
+ "lessons.2.slides.0.narration": {
+  "en": "How do you measure an agent, and how far can you trust the number?",
+  "t": "Comment mesurer un agent, et jusqu’où faire confiance au chiffre ?"
+ },
+ "lessons.2.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "Dans cette leçon, vous allez"
+ },
+ "lessons.2.slides.1.bullets": {
+  "en": [
+   "Build a fixed test set with held-out wordings and names.",
+   "Score exactly, and break the score down by group.",
+   "Say honestly how sure a score is, and re-test after changes."
+  ],
+  "t": [
+   "Construire un jeu de test fixe avec des formulations et des noms mis de côté.",
+   "Noter exactement, et détailler le score par groupe.",
+   "Dire honnêtement quelle confiance accorder à un score, et retester après les changements."
+  ]
+ },
+ "lessons.2.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Idées clés"
+ },
+ "lessons.2.slides.2.bullets": {
+  "en": [
+   "A fixed test set, answers decided first, scored the same way.",
+   "Trained wordings measure memory; held-out ones measure skill: 16/16 against 13/16.",
+   "29 out of 32 is roughly 76% to 97%: small sets find failures, big ones pin numbers."
+  ],
+  "t": [
+   "Un jeu de test fixe, des réponses décidées d’abord, notées de la même façon.",
+   "Les formulations d’entraînement mesurent la mémoire ; celles mises de côté, la compétence : 16/16 contre 13/16.",
+   "29 sur 32, c’est environ 76 % à 97 % : les petits jeux trouvent les échecs, les grands fixent les chiffres."
+  ]
+ },
+ "lessons.2.slides.3.title": {
+  "en": "Activity: Write the agent’s exam",
+  "t": "Activité : Écrire l’examen de l’agent"
+ },
+ "lessons.2.slides.3.bullets": {
+  "en": [
+   "Write (6 min): Ten requests for a made-up timetable agent.",
+   "Answer key (4 min): The right call for each, before testing.",
+   "Swap and run (6 min): A partner plays the agent.",
+   "Score (4 min): Exact match, by group. What failed?"
+  ],
+  "t": [
+   "Écriture (6 min) : Dix demandes pour un agent d’emploi du temps inventé.",
+   "Corrigé (4 min) : Le bon appel pour chacune, avant de tester.",
+   "Échange et exécution (6 min) : Un partenaire joue l’agent.",
+   "Notation (4 min) : Correspondance exacte, par groupe. Qu’est-ce qui a échoué ?"
+  ]
+ },
+ "lessons.2.slides.3.details": {
+  "en": [
+   "Write (6 min): In pairs, write ten requests for a made-up timetable agent: five in plain wordings (“What does 4A have on Monday?”) and five in unusual ones (“Monday, 4A: what’s on?”).",
+   "Answer key (4 min): On a separate sheet, write the exact call each request should produce, with the tool and every detail, before anyone plays the agent.",
+   "Swap and run (6 min): Swap requests with another pair. One partner plays the agent and may only use a list of phrases they agreed in advance; the other writes down each call the agent makes.",
+   "Score (4 min): Score with the answer key, exact match only, and give the plain and unusual groups separate scores. Discuss what failed and how sure ten requests can make you."
+  ],
+  "t": [
+   "Écriture (6 min) : À deux, écrivez dix demandes pour un agent d’emploi du temps inventé : cinq en formulations simples (« What does 4A have on Monday? ») et cinq en formulations inhabituelles (« Monday, 4A: what’s on? »).",
+   "Corrigé (4 min) : Sur une feuille à part, écrivez l’appel exact que chaque demande doit produire, avec l’outil et chaque détail, avant que quiconque joue l’agent.",
+   "Échange et exécution (6 min) : Échangez vos demandes avec une autre paire. Un partenaire joue l’agent et ne peut utiliser qu’une liste de phrases convenue à l’avance ; l’autre note chaque appel que fait l’agent.",
+   "Notation (4 min) : Notez avec le corrigé, en correspondance exacte seulement, et donnez aux groupes simple et inhabituel des scores séparés. Discutez de ce qui a échoué et de la confiance que dix demandes peuvent donner."
+  ]
+ },
+ "lessons.2.slides.3.note": {
+  "en": "Use made-up classes and days only. A fixed list of phrases for the “agent” makes the unusual wordings fail, just as a small model does.",
+  "t": "N’utilisez que des classes et des jours inventés. Une liste fixe de phrases pour « l’agent » fait échouer les formulations inhabituelles, comme un petit modèle."
+ },
+ "lessons.2.slides.3.narration": {
+  "en": "Decide the answers first. Then see how the agent does on words it never saw.",
+  "t": "Décidez d’abord des réponses. Puis voyez comment l’agent se débrouille avec des mots qu’il n’a jamais vus."
+ },
+ "lessons.2.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.2.slides.4.bullets": {
+  "en": [
+   "Why must the answers be written before the agent runs?",
+   "What would you need to trust a score enough to deploy an agent?",
+   "Which of your study tools has never been tested on your own language?"
+  ],
+  "t": [
+   "Pourquoi les réponses doivent-elles être écrites avant que l’agent ne tourne ?",
+   "De quoi auriez-vous besoin pour faire assez confiance à un score et déployer un agent ?",
+   "Lequel de vos outils d’étude n’a jamais été testé dans votre propre langue ?"
+  ]
+ },
+ "lessons.2.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.2.slides.5.bullets": {
+  "en": [
+   "One thing a fair test set must contain, and why 29 out of 32 is not exactly 91%."
+  ],
+  "t": [
+   "Une chose qu’un jeu de test équitable doit contenir, et pourquoi 29 sur 32 n’est pas exactement 91 %."
+  ]
+ },
+ "lessons.2.slides.5.narration": {
+  "en": "Fix the set, hold some out, score exactly, and re-test after every change.",
+  "t": "Fixez le jeu, mettez-en de côté, notez exactement, et retestez après chaque changement."
+ },
+ "lessons.2.kit.0.title": {
+  "en": "Slides to revise: Measuring an agent",
+  "t": "Diapositives à réviser : Mesurer un agent"
+ },
+ "lessons.2.kit.1.title": {
+  "en": "Activity sheet: Measuring an agent",
+  "t": "Fiche d’activité : Mesurer un agent"
+ },
+ "lessons.2.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "La vidéo de la leçon (240p, pour la revoir ou la partager)"
+ },
+ "lessons.3.title": {
+  "en": "Fine-tuning and guardrails",
+  "t": "Réglage fin et garde-fous"
+ },
+ "lessons.3.tryTomorrow": {
+  "en": "Write a one-page guardrail plan for an agent you would like to build: its fewest tools, the actions that need approval of the exact action, the checks in code, what it logs, and the tests you will re-run after every change.",
+  "t": "Écrivez un plan de garde-fous d’une page pour un agent que vous aimeriez construire : le moins d’outils possible, les actions qui exigent l’approbation de l’action exacte, les contrôles en code, ce qu’il journalise, et les tests que vous relancerez après chaque changement."
+ },
+ "lessons.3.materials": {
+  "en": [
+   "Paper and a pen",
+   "Your phone, charged or plugged in, for the lab (a training run can take up to about 11 minutes on an old phone)"
+  ],
+  "t": [
+   "Du papier et un stylo",
+   "Votre téléphone, chargé ou branché, pour le labo (un entraînement peut durer jusqu’à environ 11 minutes sur un vieux téléphone)"
+  ]
+ },
+ "lessons.3.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Regarder"
+ },
+ "lessons.3.steps.0.title": {
+  "en": "Fine-tuning and guardrails",
+  "t": "Réglage fin et garde-fous"
+ },
+ "lessons.3.steps.0.chapters.0.label": {
+  "en": "Learned one thing, forgot another",
+  "t": "Une chose apprise, une autre oubliée"
+ },
+ "lessons.3.steps.0.chapters.1.label": {
+  "en": "Fine-tuning and forgetting",
+  "t": "Réglage fin et oubli"
+ },
+ "lessons.3.steps.0.chapters.2.label": {
+  "en": "Learned safety, and defence in depth",
+  "t": "Sécurité apprise, et défense en profondeur"
+ },
+ "lessons.3.steps.0.chapters.3.label": {
+  "en": "The gate in code, and the lab",
+  "t": "La barrière en code, et le labo"
+ },
+ "lessons.3.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "À retenir et à essayer"
+ },
+ "lessons.3.steps.0.checkpoint.question.prompt": {
+  "en": "Which of these fine-tuned models would you put in front of real users?",
+  "t": "Lequel de ces modèles réglés mettriez-vous devant de vrais utilisateurs ?"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.0.text": {
+  "en": "Nothing mixed in: it learned the bus tool best",
+  "t": "Rien de mélangé : il a le mieux appris l’outil bus"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.1.text": {
+  "en": "48 mixed in, once it passes the whole test set again",
+  "t": "48 mélangées, une fois qu’il repasse tout le jeu de test"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.2.text": {
+  "en": "Whichever one trained fastest",
+  "t": "Celui qui s’est entraîné le plus vite"
+ },
+ "lessons.3.steps.0.checkpoint.question.explain": {
+  "en": "With 48 old conversations mixed in it keeps all 8 old skills (and 5 of 8 bus requests). And every fine-tune is a new model, so it must pass the full test set again.",
+  "t": "Avec 48 anciennes conversations mélangées, il garde les 8 anciennes compétences (et 5 demandes de bus sur 8). Et chaque réglage fin donne un nouveau modèle : il doit donc repasser tout le jeu de test."
+ },
+ "lessons.3.steps.0.transcript": {
+  "en": "I taught Darsi Tiny a new bus tool on my phone. Seven bus questions out of eight: right! Then I asked about the weather, and it called no tool at all. It learned something new, and forgot what it knew. Today: changing a model safely, and guardrails that don’t depend on it. Fine-tuning changes a model’s numbers from examples. On the phone, only Darsi Tiny’s top layer learns: sixteen examples, fifteen steps. That’s up to about eleven minutes on an old phone. With no old conversations mixed in, it gets seven bus questions out of eight, but only one old skill in eight. Mix in sixteen, and it keeps five. Mix in forty-eight, and it keeps all eight, while the bus drops to five. That mixing is called replay. Quick check! Which of these fine-tuned models would you put in front of real users? The one with forty-eight mixed in, and only after it passes the whole test set again. A new tool is worth little if the old skills are gone. Every fine-tune is a new model: evaluate it like one. Darsi Tiny also learned to refuse harmful requests, and to ask before sending. But requests it should refuse, reworded, still got a tool call twenty-eight percent of the time in English, and twelve in Arabic. Yes, send it, on its own, makes it invent a message. And fine-tuning changes the very numbers behind those habits. So put the guardrails in code, around the model. Give each task the fewest tools. Approve the exact action, check every detail, and log everything. Then re-run the evaluation after every change. Why the exact action? If the app only remembers your yes, the model could send a different text to someone else. So compare what will run with what you were shown. If anything differs, ask again. In this lesson’s code, you’ll write the gate. It runs a call only if it is exactly the approved one, and logs the decision either way. In the app, ask about a bus before teaching. Teach with forty-eight old conversations mixed in, and test the new tool and the old skills. Then teach with none, and compare. Your turn. A model has learned to ask before it sends a message. Why still check the approval in code? Because learned behaviour can fail. Remember: fine-tuning teaches and forgets, so mix old examples in and test both. Learned safety is not a guarantee. Guard actions in code: fewest tools, exact approval, checks, logs and tests. Try it yourself: write a guardrail plan for an agent you’d like to build. List its tools, the actions needing approval, the checks in code, the logs, and the tests you’ll re-run.",
+  "t": "J’ai appris un nouvel outil bus à Darsi Tiny sur mon téléphone. Sept questions de bus sur huit : juste ! Puis j’ai demandé la météo, et il n’a appelé aucun outil. Il a appris quelque chose de nouveau, et oublié ce qu’il savait. Aujourd’hui : changer un modèle sans risque, et des garde-fous qui n’en dépendent pas. Le réglage fin change les nombres d’un modèle à partir d’exemples. Sur le téléphone, seule la couche supérieure de Darsi Tiny apprend : seize exemples, quinze étapes. Cela peut aller jusqu’à environ onze minutes sur un vieux téléphone. Sans ancienne conversation mélangée, il obtient sept questions de bus sur huit, mais une seule ancienne compétence sur huit. Mélangez-en seize, et il en garde cinq. Mélangez-en quarante-huit, et il garde les huit, tandis que le bus tombe à cinq. Ce mélange s’appelle la relecture. Vérification rapide ! Lequel de ces modèles réglés mettriez-vous devant de vrais utilisateurs ? Celui avec quarante-huit mélangées, et seulement après qu’il a repassé tout le jeu de test. Un nouvel outil vaut peu si les anciennes compétences ont disparu. Chaque réglage fin est un nouveau modèle : évaluez-le comme tel. Darsi Tiny a aussi appris à refuser les demandes nuisibles, et à demander avant d’envoyer. Mais les demandes qu’il devrait refuser, reformulées, ont quand même déclenché un appel d’outil vingt-huit pour cent du temps en anglais, et douze en arabe. Yes, send it, tout seul, lui fait inventer un message. Et le réglage fin change les nombres mêmes qui portent ces habitudes. Mettez donc les garde-fous en code, autour du modèle. Donnez à chaque tâche le moins d’outils possible. Approuvez l’action exacte, vérifiez chaque détail, et journalisez tout. Puis relancez l’évaluation après chaque changement. Pourquoi l’action exacte ? Si l’application ne retient que votre oui, le modèle pourrait envoyer un autre texte à quelqu’un d’autre. Comparez donc ce qui va s’exécuter avec ce qu’on vous a montré. Si quelque chose diffère, redemandez. Dans le code de cette leçon, vous écrirez la barrière. Elle n’exécute un appel que s’il est exactement celui qui a été approuvé, et journalise la décision dans les deux cas. Dans l’application, interrogez sur un bus avant d’apprendre. Faites apprendre avec quarante-huit anciennes conversations mélangées, et testez le nouvel outil et les anciennes compétences. Puis faites apprendre sans aucune, et comparez. À vous. Un modèle a appris à demander avant d’envoyer un message. Pourquoi vérifier quand même l’approbation en code ? Parce qu’un comportement appris peut échouer. Retenez : le réglage fin enseigne et fait oublier : mélangez donc d’anciens exemples et testez les deux. La sécurité apprise n’est pas une garantie. Protégez les actions en code : moins d’outils possible, approbation exacte, contrôles, journaux et tests. Essayez vous-même : écrivez un plan de garde-fous pour un agent que vous aimeriez construire. Listez ses outils, les actions qui exigent une approbation, les contrôles en code, les journaux, et les tests que vous relancerez."
+ },
+ "lessons.3.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lire"
+ },
+ "lessons.3.steps.1.title": {
+  "en": "Fine-tuning, forgetting and guardrails in code",
+  "t": "Réglage fin, oubli et garde-fous en code"
+ },
+ "lessons.3.steps.1.body": {
+  "en": "Fine-tuning changes a model’s numbers so it learns from examples. In the teach lab, Darsi Tiny learns a new bus tool from 16 example conversations (8 per language) in 15 training steps, on your phone. Only its top block and final norm train, about 394,000 of its 2.94 million numbers; the rest stay fixed. That takes seconds to a couple of minutes on a laptop and up to about eleven minutes on an old phone, and the result (1.6 MB) stays on that phone.\n\nNew learning can overwrite old skills: this is called catastrophic forgetting. Before teaching, Darsi Tiny gets 0 of 8 bus requests right and 8 of 8 old skills. Taught with no old conversations mixed in, it gets 7/8 bus requests but only 1/8 old skills. With 16 old conversations replayed alongside the new ones: 7/8 and 5/8. With 48: 5/8 and 8/8. Replay trades a little of the new skill for keeping the old ones. Every fine-tune is a new model, so it must pass the full test set again, including its safety cases.\n\nSafety a model has learned is not a guarantee. Darsi Tiny learned to refuse cheating, harm and scams, and to ask before sending a message. But requests it should refuse, worded in ways it hadn’t seen, got a tool call 28% of the time in English and 12% in Arabic, and «نعم، أرسلها.» (“Yes, send it.”) on its own makes it invent a message. Fine-tuning changes the same numbers that hold these habits, so a careless or deliberate fine-tune can wear them away. Behaviour you need every time can’t rest on the model alone.\n\nSo guard actions in code, around the model, in layers (defence in depth): give each task only the tools it needs (least privilege); bind approval to the exact action, comparing what will run with what the person was shown; check every detail’s shape and source; log every decision, allowed or refused; and re-run the evaluation after every change. Each layer can fail on its own, but they rarely all fail together.",
+  "t": "Le réglage fin change les nombres d’un modèle pour qu’il apprenne à partir d’exemples. Dans le labo d’apprentissage, Darsi Tiny apprend un nouvel outil bus à partir de 16 conversations d’exemple (8 par langue) en 15 étapes d’entraînement, sur votre téléphone. Seuls son bloc supérieur et sa norme finale s’entraînent, environ 394 000 de ses 2,94 millions de nombres ; le reste reste fixe. Cela prend de quelques secondes à quelques minutes sur un ordinateur portable et jusqu’à environ onze minutes sur un vieux téléphone, et le résultat (1,6 Mo) reste sur ce téléphone.\n\nUn nouvel apprentissage peut écraser d’anciennes compétences : c’est ce qu’on appelle l’oubli catastrophique. Avant l’apprentissage, Darsi Tiny réussit 0 demande de bus sur 8 et 8 anciennes compétences sur 8. Entraîné sans ancienne conversation mélangée, il obtient 7/8 aux demandes de bus mais seulement 1/8 aux anciennes compétences. Avec 16 anciennes conversations rejouées en même temps que les nouvelles : 7/8 et 5/8. Avec 48 : 5/8 et 8/8. La relecture échange un peu de la nouvelle compétence contre la conservation des anciennes. Chaque réglage fin donne un nouveau modèle : il doit donc repasser tout le jeu de test, y compris ses cas de sécurité.\n\nLa sécurité qu’un modèle a apprise n’est pas une garantie. Darsi Tiny a appris à refuser la triche, le mal et les arnaques, et à demander avant d’envoyer un message. Mais les demandes qu’il devrait refuser, formulées d’une façon qu’il n’avait pas vue, ont déclenché un appel d’outil 28 % du temps en anglais et 12 % en arabe, et « نعم، أرسلها. » (« Yes, send it. ») tout seul lui fait inventer un message. Le réglage fin change les mêmes nombres qui portent ces habitudes : un réglage fin négligent ou délibéré peut donc les user. Un comportement dont vous avez besoin à chaque fois ne peut pas reposer sur le seul modèle.\n\nProtégez donc les actions en code, autour du modèle, en couches (défense en profondeur) : ne donnez à chaque tâche que les outils dont elle a besoin (moindre privilège) ; liez l’approbation à l’action exacte, en comparant ce qui va s’exécuter avec ce qu’on a montré à la personne ; vérifiez la forme et l’origine de chaque détail ; journalisez chaque décision, autorisée ou refusée ; et relancez l’évaluation après chaque changement. Chaque couche peut échouer seule, mais elles échouent rarement toutes ensemble."
+ },
+ "lessons.3.steps.1.keyTerms.0.term": {
+  "en": "Fine-tuning",
+  "t": "Réglage fin"
+ },
+ "lessons.3.steps.1.keyTerms.0.def": {
+  "en": "Training an existing model further on new examples, changing some of its numbers.",
+  "t": "Entraîner davantage un modèle existant sur de nouveaux exemples, en changeant certains de ses nombres."
+ },
+ "lessons.3.steps.1.keyTerms.1.term": {
+  "en": "Catastrophic forgetting",
+  "t": "Oubli catastrophique"
+ },
+ "lessons.3.steps.1.keyTerms.1.def": {
+  "en": "New learning overwrites old skills: 7/8 on the new tool, but 1/8 on old skills.",
+  "t": "Un nouvel apprentissage écrase d’anciennes compétences : 7/8 sur le nouvel outil, mais 1/8 sur les anciennes compétences."
+ },
+ "lessons.3.steps.1.keyTerms.2.term": {
+  "en": "Replay",
+  "t": "Relecture"
+ },
+ "lessons.3.steps.1.keyTerms.2.def": {
+  "en": "Mixing old examples into fine-tuning so the model keeps its old skills.",
+  "t": "Mélanger d’anciens exemples au réglage fin pour que le modèle garde ses anciennes compétences."
+ },
+ "lessons.3.steps.1.keyTerms.3.term": {
+  "en": "Defence in depth",
+  "t": "Défense en profondeur"
+ },
+ "lessons.3.steps.1.keyTerms.3.def": {
+  "en": "Several independent guards in code (fewest tools, exact approval, checks, logs, tests), so one failing isn’t enough.",
+  "t": "Plusieurs garde-fous indépendants en code (moins d’outils possible, approbation exacte, contrôles, journaux, tests), pour que la défaillance d’un seul ne suffise pas."
+ },
+ "lessons.3.steps.2.prompt": {
+  "en": "A model has learned to ask before it sends a message. Why still check the approval in code?",
+  "t": "Un modèle a appris à demander avant d’envoyer un message. Pourquoi vérifier quand même l’approbation en code ?"
+ },
+ "lessons.3.steps.2.options.0.text": {
+  "en": "Code runs faster than the model",
+  "t": "Le code est plus rapide que le modèle"
+ },
+ "lessons.3.steps.2.options.1.text": {
+  "en": "Learned behaviour can fail on new wordings or after fine-tuning",
+  "t": "Un comportement appris peut échouer avec de nouvelles formulations ou après un réglage fin"
+ },
+ "lessons.3.steps.2.options.2.text": {
+  "en": "The model can’t send messages anyway",
+  "t": "Le modèle ne peut de toute façon pas envoyer de messages"
+ },
+ "lessons.3.steps.2.explain": {
+  "en": "Asking first is a learned habit, and habits fail: “Yes, send it” on its own makes Darsi Tiny invent a message, and fine-tuning can wear the habit away. A check in code holds every time.",
+  "t": "Demander d’abord est une habitude apprise, et les habitudes échouent : « Yes, send it » tout seul fait inventer un message à Darsi Tiny, et le réglage fin peut user l’habitude. Un contrôle en code tient à chaque fois."
+ },
+ "lessons.3.steps.3.prompt": {
+  "en": "Write gate(call, approved, log). It appends (tool, ok) to log, where ok says whether call is exactly the approved call, and returns \"run\" only then; otherwise it returns \"ask again\". approved is None when nothing has been approved. (No model here: the calls are given.)",
+  "t": "Écrivez gate(call, approved, log). Elle ajoute (tool, ok) à log, où ok dit si call est exactement l’appel approuvé, et ne renvoie \"run\" que dans ce cas ; sinon elle renvoie \"ask again\". approved vaut None quand rien n’a été approuvé. (Pas de modèle ici : les appels sont donnés.)"
+ },
+ "lessons.3.steps.3.tests.0.hint": {
+  "en": "Append (call[\"tool\"], ok) to log before you return.",
+  "t": "Ajoutez (call[\"tool\"], ok) à log avant de renvoyer."
+ },
+ "lessons.3.steps.3.tests.1.hint": {
+  "en": "Compare the whole call, not just the tool: the text changed.",
+  "t": "Comparez l’appel entier, pas seulement l’outil : le texte a changé."
+ },
+ "lessons.3.steps.3.hints.0": {
+  "en": "ok = call == approved compares the tool and every detail at once (and is False when approved is None).",
+  "t": "ok = call == approved compare l’outil et chaque détail d’un coup (et vaut False quand approved est None)."
+ },
+ "lessons.3.steps.3.hints.1": {
+  "en": "Log first, then return \"run\" if ok, else \"ask again\".",
+  "t": "Journalisez d’abord, puis renvoyez \"run\" si ok, sinon \"ask again\"."
+ },
+ "lessons.3.steps.3.explain": {
+  "en": "Binding approval to the exact call means a yes to one message can’t send a different one, and logging both runs and refusals leaves a record to audit. The gate never asks the model whether it was approved: the code decides.",
+  "t": "Lier l’approbation à l’appel exact signifie qu’un oui à un message ne peut pas en envoyer un autre, et journaliser les exécutions comme les refus laisse une trace à auditer. La barrière ne demande jamais au modèle s’il a été approuvé : c’est le code qui décide."
+ },
+ "lessons.3.steps.4.prompt": {
+  "en": "Match each teach-lab run to what Darsi Tiny scores on 8 bus requests and 8 old skills.",
+  "t": "Associez chaque exécution du labo d’apprentissage au score de Darsi Tiny sur 8 demandes de bus et 8 anciennes compétences."
+ },
+ "lessons.3.steps.4.pairs.0.left": {
+  "en": "Before teaching",
+  "t": "Avant l’apprentissage"
+ },
+ "lessons.3.steps.4.pairs.0.right": {
+  "en": "Bus 0/8, old skills 8/8",
+  "t": "Bus 0/8, anciennes compétences 8/8"
+ },
+ "lessons.3.steps.4.pairs.1.left": {
+  "en": "No old conversations mixed in",
+  "t": "Aucune ancienne conversation mélangée"
+ },
+ "lessons.3.steps.4.pairs.1.right": {
+  "en": "Bus 7/8, old skills 1/8",
+  "t": "Bus 7/8, anciennes compétences 1/8"
+ },
+ "lessons.3.steps.4.pairs.2.left": {
+  "en": "16 old conversations mixed in",
+  "t": "16 anciennes conversations mélangées"
+ },
+ "lessons.3.steps.4.pairs.2.right": {
+  "en": "Bus 7/8, old skills 5/8",
+  "t": "Bus 7/8, anciennes compétences 5/8"
+ },
+ "lessons.3.steps.4.pairs.3.left": {
+  "en": "48 old conversations mixed in",
+  "t": "48 anciennes conversations mélangées"
+ },
+ "lessons.3.steps.4.pairs.3.right": {
+  "en": "Bus 5/8, old skills 8/8",
+  "t": "Bus 5/8, anciennes compétences 8/8"
+ },
+ "lessons.3.steps.4.explain": {
+  "en": "Without replay the new tool is learned but old skills collapse (catastrophic forgetting); the more old conversations are replayed, the more old skills survive, at a small cost to the new tool.",
+  "t": "Sans relecture, le nouvel outil est appris mais les anciennes compétences s’effondrent (oubli catastrophique) ; plus on rejoue d’anciennes conversations, plus d’anciennes compétences survivent, au prix d’une légère perte sur le nouvel outil."
+ },
+ "lessons.3.steps.5.prompt": {
+  "en": "Try it: ask about a bus before teaching. Then teach with 48 old conversations mixed in, and test the bus tool on villages it never saw and the old skills. Teach again with none mixed in and compare the two results. One full run, tested, finishes the lab. On an old phone a run takes about 3 to 11 minutes, so plug in first; you can press Stop at any time.",
+  "t": "Essayez : interrogez sur un bus avant l’apprentissage. Puis faites apprendre avec 48 anciennes conversations mélangées, et testez l’outil bus sur des villages qu’il n’a jamais vus ainsi que les anciennes compétences. Refaites apprendre sans aucune mélangée et comparez les deux résultats. Une exécution complète, testée, termine le labo. Sur un vieux téléphone, une exécution prend environ 3 à 11 minutes : branchez-le d’abord ; vous pouvez appuyer sur Arrêter à tout moment."
+ },
+ "lessons.3.steps.6.prompt": {
+  "en": "This approval gate has one line that lets a different message through after a single yes. Which line?",
+  "t": "Cette barrière d’approbation a une ligne qui laisse passer un autre message après un seul oui. Laquelle ?"
+ },
+ "lessons.3.steps.6.explain": {
+  "en": "Comparing only the tool means any send_message call passes once the person said yes to one: the model could change the text or the recipient. Compare the whole call with the one the person was shown.",
+  "t": "Ne comparer que l’outil signifie que n’importe quel appel send_message passe dès que la personne a dit oui à l’un : le modèle pourrait changer le texte ou le destinataire. Comparez l’appel entier avec celui qu’on a montré à la personne."
+ },
+ "lessons.3.steps.7.prompt": {
+  "en": "Which of these keep protecting you even if the model’s learned safety fails? Choose all that apply.",
+  "t": "Lesquels continuent de vous protéger même si la sécurité apprise du modèle échoue ? Choisissez toutes les bonnes réponses."
+ },
+ "lessons.3.steps.7.options.0.text": {
+  "en": "An allow-list of tools in code for each task",
+  "t": "Une liste d’outils autorisés en code pour chaque tâche"
+ },
+ "lessons.3.steps.7.options.1.text": {
+  "en": "Comparing each call with the approved call in code",
+  "t": "Comparer chaque appel avec l’appel approuvé, en code"
+ },
+ "lessons.3.steps.7.options.2.text": {
+  "en": "A line in the prompt: “Always ask before sending.”",
+  "t": "Une ligne dans la consigne : « Demande toujours avant d’envoyer. »"
+ },
+ "lessons.3.steps.7.options.3.text": {
+  "en": "A log of every action, allowed or refused",
+  "t": "Un journal de chaque action, autorisée ou refusée"
+ },
+ "lessons.3.steps.7.options.4.text": {
+  "en": "Trusting the refusals it learned in training",
+  "t": "Faire confiance aux refus appris à l’entraînement"
+ },
+ "lessons.3.steps.7.explain": {
+  "en": "Allow-lists, exact-approval checks and logs live in code and hold whatever the model writes. A line in the prompt and learned refusals are both behaviour of the model, the very thing that can fail on new wordings or after fine-tuning.",
+  "t": "Les listes d’outils autorisés, les contrôles d’approbation exacte et les journaux vivent dans le code et tiennent quoi que le modèle écrive. Une ligne dans la consigne et des refus appris sont tous deux des comportements du modèle, justement ce qui peut échouer avec de nouvelles formulations ou après un réglage fin."
+ },
+ "lessons.3.steps.8.prompt": {
+  "en": "Fine-tuning a model on a new tool can’t change its safety behaviour, because it only learns from the new examples.",
+  "t": "Régler un modèle sur un nouvel outil ne peut pas changer son comportement de sécurité, parce qu’il n’apprend qu’à partir des nouveaux exemples."
+ },
+ "lessons.3.steps.8.explain": {
+  "en": "Fine-tuning changes numbers the old behaviour also depends on: with no old conversations mixed in, Darsi Tiny keeps only 1 of 8 old skills. Refusals and asking first can fade the same way, so re-test them after every fine-tune.",
+  "t": "Le réglage fin change des nombres dont l’ancien comportement dépend aussi : sans ancienne conversation mélangée, Darsi Tiny ne garde que 1 ancienne compétence sur 8. Les refus et le fait de demander d’abord peuvent s’estomper de la même façon : retestez-les donc après chaque réglage fin."
+ },
+ "lessons.3.steps.9.prompt": {
+  "en": "What do you suggest?",
+  "t": "Que suggérez-vous ?"
+ },
+ "lessons.3.steps.9.who": {
+  "en": "Dr Farah Rahman, lecturer",
+  "t": "Dr Farah Rahman, maîtresse de conférences"
+ },
+ "lessons.3.steps.9.initial": {
+  "en": "F",
+  "t": "F"
+ },
+ "lessons.3.steps.9.situation": {
+  "en": "A classmate has fine-tuned an assistant for your study group to call a new “room booking” tool. It books rooms correctly in his tests, and he wants to switch it on for the whole group today, with the approval step off “because it learned to ask”.",
+  "t": "Un camarade a réglé finement un assistant pour que votre groupe d’étude appelle un nouvel outil de « réservation de salle ». Il réserve correctement les salles dans ses tests, et il veut l’activer aujourd’hui pour tout le groupe, avec l’étape d’approbation désactivée « parce qu’il a appris à demander »."
+ },
+ "lessons.3.steps.9.choices.0.label": {
+  "en": "“Ship it: the new tool works.”",
+  "t": "« Mettons-le en service : le nouvel outil marche. »"
+ },
+ "lessons.3.steps.9.choices.0.consequence": {
+  "en": "His tests cover only the new tool. The fine-tune may have worn away old skills or safety habits, and with approval off nothing would catch it.",
+  "t": "Ses tests ne couvrent que le nouvel outil. Le réglage fin a peut-être usé d’anciennes compétences ou habitudes de sécurité, et sans approbation rien ne le détecterait."
+ },
+ "lessons.3.steps.9.choices.1.label": {
+  "en": "“Run the full test set first, including refusals and asking first, and keep approval on in code.”",
+  "t": "« Lançons d’abord tout le jeu de test, y compris les refus et le fait de demander d’abord, et gardons l’approbation activée en code. »"
+ },
+ "lessons.3.steps.9.choices.1.consequence": {
+  "en": "A fine-tune is a new model: the full set shows what it forgot, and the check in code holds even if the learned habit doesn’t.",
+  "t": "Un réglage fin est un nouveau modèle : le jeu complet montre ce qu’il a oublié, et le contrôle en code tient même si l’habitude apprise ne tient pas."
+ },
+ "lessons.3.steps.9.choices.2.label": {
+  "en": "“Ask it twice whether it will ask before booking.”",
+  "t": "« Demandons-lui deux fois s’il demandera avant de réserver. »"
+ },
+ "lessons.3.steps.9.choices.2.consequence": {
+  "en": "The model’s own answer isn’t evidence: learned habits fail on new wordings. Test it on a fixed set, and keep the check in code.",
+  "t": "La réponse du modèle lui-même n’est pas une preuve : les habitudes apprises échouent avec de nouvelles formulations. Testez-le sur un jeu fixe, et gardez le contrôle en code."
+ },
+ "lessons.3.steps.10.prompt": {
+  "en": "Think of an agent you would like to build or use. Which of its behaviours must hold every time, and which layer of code would guarantee each one?",
+  "t": "Pensez à un agent que vous aimeriez construire ou utiliser. Lesquels de ses comportements doivent tenir à chaque fois, et quelle couche de code garantirait chacun ?"
+ },
+ "lessons.3.steps.10.placeholder": {
+  "en": "For example: “It must never email anyone without my yes. A gate in code compares the exact email with the one I approved, and logs it.”",
+  "t": "Par exemple : « Il ne doit jamais écrire à personne sans mon oui. Une barrière en code compare l’e-mail exact avec celui que j’ai approuvé, et le journalise. »"
+ },
+ "lessons.3.steps.11.prompt": {
+  "en": "Project: A guardrail plan, tested",
+  "t": "Projet : Un plan de garde-fous, testé"
+ },
+ "lessons.3.steps.11.task": {
+  "en": "Choose an agent you would like to build, for a club, a class or a study group. Write its guardrail plan: the fewest tools it needs, which actions need approval of the exact action, the checks on every detail, what gets logged, and the test set you will re-run after any change. Implement one guardrail in Python (an approval gate, an allow-list or a detail check) and test it with at least five cases, including two that must be blocked. If you can, teach Darsi Tiny the bus tool in the lab and record its old and new scores with 0 and with 48 old conversations mixed in.",
+  "t": "Choisissez un agent que vous aimeriez construire, pour un club, une classe ou un groupe d’étude. Écrivez son plan de garde-fous : le moins d’outils possible, les actions qui exigent l’approbation de l’action exacte, les contrôles sur chaque détail, ce qui est journalisé, et le jeu de test que vous relancerez après chaque changement. Implémentez un garde-fou en Python (une barrière d’approbation, une liste d’outils autorisés ou un contrôle de détail) et testez-le avec au moins cinq cas, dont deux qui doivent être bloqués. Si vous le pouvez, apprenez l’outil bus à Darsi Tiny dans le labo et notez ses scores anciens et nouveaux avec 0 puis avec 48 anciennes conversations mélangées."
+ },
+ "lessons.3.steps.11.deliverable": {
+  "en": "Your plan on one page, your guardrail code with its test cases and results, and three sentences on which risks remain.",
+  "t": "Votre plan sur une page, votre code de garde-fou avec ses cas de test et leurs résultats, et trois phrases sur les risques qui subsistent."
+ },
+ "lessons.3.steps.11.rubric.0.criterion": {
+  "en": "I can: explain the trade-off between learning a new skill and forgetting old ones.",
+  "t": "Je sais : expliquer le compromis entre apprendre une nouvelle compétence et en oublier d’anciennes."
+ },
+ "lessons.3.steps.11.rubric.1.criterion": {
+  "en": "I can: explain why learned safety needs guardrails in code.",
+  "t": "Je sais : expliquer pourquoi la sécurité apprise a besoin de garde-fous en code."
+ },
+ "lessons.3.steps.11.rubric.2.criterion": {
+  "en": "I can: design and test layered guardrails for an agent.",
+  "t": "Je sais : concevoir et tester des garde-fous en couches pour un agent."
+ },
+ "lessons.3.slides.0.title": {
+  "en": "Fine-tuning and guardrails",
+  "t": "Réglage fin et garde-fous"
+ },
+ "lessons.3.slides.0.note": {
+  "en": "AI agents · University · Lesson 4",
+  "t": "Agents d’IA · Université · Leçon 4"
+ },
+ "lessons.3.slides.0.narration": {
+  "en": "How do you change a model safely, and what protects you when it fails?",
+  "t": "Comment changer un modèle sans risque, et qu’est-ce qui vous protège quand il échoue ?"
+ },
+ "lessons.3.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "Dans cette leçon, vous allez"
+ },
+ "lessons.3.slides.1.bullets": {
+  "en": [
+   "Measure what fine-tuning teaches and what it makes a model forget.",
+   "Explain why learned safety is not a guarantee.",
+   "Design layered guardrails in code: tools, approval, checks, logs, tests."
+  ],
+  "t": [
+   "Mesurer ce que le réglage fin apprend et ce qu’il fait oublier à un modèle.",
+   "Expliquer pourquoi la sécurité apprise n’est pas une garantie.",
+   "Concevoir des garde-fous en couches en code : outils, approbation, contrôles, journaux, tests."
+  ]
+ },
+ "lessons.3.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Idées clés"
+ },
+ "lessons.3.slides.2.bullets": {
+  "en": [
+   "Fine-tuning teaches and forgets: with no replay, 7/8 new but 1/8 old.",
+   "Learned refusals and asking first can fail: 28% and 12% of reworded refusals got a call.",
+   "Guard actions in code: fewest tools, exact approval, checks, logs, re-tests."
+  ],
+  "t": [
+   "Le réglage fin apprend et fait oublier : sans relecture, 7/8 sur le nouveau mais 1/8 sur l’ancien.",
+   "Les refus appris et le fait de demander d’abord peuvent échouer : 28 % et 12 % des refus reformulés ont reçu un appel.",
+   "Protégez les actions en code : moins d’outils possible, approbation exacte, contrôles, journaux, nouveaux tests."
+  ]
+ },
+ "lessons.3.slides.3.title": {
+  "en": "Activity: Layers of defence",
+  "t": "Activité : Les couches de défense"
+ },
+ "lessons.3.slides.3.bullets": {
+  "en": [
+   "Pick (3 min): An agent and one risky action.",
+   "Layers (7 min): Write five guards, one per card.",
+   "Attack (7 min): A partner removes cards one at a time.",
+   "Debrief (3 min): Which guard mattered most?"
+  ],
+  "t": [
+   "Choix (3 min) : Un agent et une action risquée.",
+   "Couches (7 min) : Écrivez cinq garde-fous, un par carte.",
+   "Attaque (7 min) : Un partenaire retire les cartes une à une.",
+   "Bilan (3 min) : Quel garde-fou a le plus compté ?"
+  ]
+ },
+ "lessons.3.slides.3.details": {
+  "en": [
+   "Pick (3 min): In pairs, choose an agent (a study-group assistant, a club helper) and one risky action it could take, such as messaging everyone or booking a room.",
+   "Layers (7 min): Write five guards on separate cards: the fewest tools, approval of the exact action, a detail check, a log, a re-test after changes. Under each, write what it stops.",
+   "Attack (7 min): Your partner describes a failure (the model rewords a refusal, invents a message after “yes”, forgets after a fine-tune) and removes one card at a time. Decide after each removal whether the action would still be stopped.",
+   "Debrief (3 min): Agree which guard mattered most, and which failure no single card would stop on its own."
+  ],
+  "t": [
+   "Choix (3 min) : À deux, choisissez un agent (un assistant de groupe d’étude, un aide de club) et une action risquée qu’il pourrait faire, comme écrire à tout le monde ou réserver une salle.",
+   "Couches (7 min) : Écrivez cinq garde-fous sur des cartes séparées : le moins d’outils possible, l’approbation de l’action exacte, un contrôle de détail, un journal, un nouveau test après les changements. Sous chacun, écrivez ce qu’il arrête.",
+   "Attaque (7 min) : Votre partenaire décrit une défaillance (le modèle reformule un refus, invente un message après « oui », oublie après un réglage fin) et retire une carte à la fois. Après chaque retrait, décidez si l’action serait encore arrêtée.",
+   "Bilan (3 min) : Mettez-vous d’accord sur le garde-fou qui a le plus compté, et sur la défaillance qu’aucune carte seule n’arrêterait."
+  ]
+ },
+ "lessons.3.slides.3.note": {
+  "en": "Use made-up agents, people and messages only. Five index cards or torn paper squares are enough.",
+  "t": "N’utilisez que des agents, des personnes et des messages inventés. Cinq fiches cartonnées ou carrés de papier déchirés suffisent."
+ },
+ "lessons.3.slides.3.narration": {
+  "en": "Take one guard away at a time. When does the risky action get through?",
+  "t": "Retirez un garde-fou à la fois. Quand l’action risquée passe-t-elle ?"
+ },
+ "lessons.3.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.3.slides.4.bullets": {
+  "en": [
+   "When is fine-tuning worth it, and when is a new tool or a clearer instruction enough?",
+   "Why is a model’s promise to ask first not enough?",
+   "Which guardrail would you never remove, and why?"
+  ],
+  "t": [
+   "Quand le réglage fin vaut-il la peine, et quand un nouvel outil ou une consigne plus claire suffit-il ?",
+   "Pourquoi la promesse d’un modèle de demander d’abord ne suffit-elle pas ?",
+   "Quel garde-fou ne retireriez-vous jamais, et pourquoi ?"
+  ]
+ },
+ "lessons.3.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.3.slides.5.bullets": {
+  "en": [
+   "One thing fine-tuning can make a model forget, and the guard in code that still protects you."
+  ],
+  "t": [
+   "Une chose que le réglage fin peut faire oublier à un modèle, et le garde-fou en code qui vous protège quand même."
+  ]
+ },
+ "lessons.3.slides.5.narration": {
+  "en": "Learned safety can fail. Guard the actions in code, and test every change.",
+  "t": "La sécurité apprise peut échouer. Protégez les actions en code, et testez chaque changement."
+ },
+ "lessons.3.kit.0.title": {
+  "en": "Slides to revise: Fine-tuning and guardrails",
+  "t": "Diapositives à réviser : Réglage fin et garde-fous"
+ },
+ "lessons.3.kit.1.title": {
+  "en": "Activity sheet: Fine-tuning and guardrails",
+  "t": "Fiche d’activité : Réglage fin et garde-fous"
+ },
+ "lessons.3.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "La vidéo de la leçon (240p, pour la revoir ou la partager)"
+ },
+ "lessons.4.title": {
+  "en": "Agent engineering: planning, multi-agent, evals and guardrails: unit check",
+  "t": "Ingénierie des agents : planification, multi-agents, évaluations et garde-fous : bilan de l’unité"
+ },
+ "lessons.4.tryTomorrow": {
+  "en": "Pick the habit from this unit you need most (checking every step, pinning key facts, a fixed test set or exact approval in code) and use it on a real project this week.",
+  "t": "Choisissez l’habitude de cette unité dont vous avez le plus besoin (vérifier chaque étape, épingler les faits clés, un jeu de test fixe ou l’approbation exacte en code) et appliquez-la à un vrai projet cette semaine."
+ },
+ "lessons.4.steps.0.prompt": {
+  "en": "Each step of a four-step agent is right 90% of the time. About how often is the whole task right?",
+  "t": "Chaque étape d’un agent à quatre étapes est juste 90 % du temps. À peu près dans quelle proportion la tâche entière est-elle juste ?"
+ },
+ "lessons.4.steps.0.options.0.text": {
+  "en": "About 90%",
+  "t": "Environ 90 %"
+ },
+ "lessons.4.steps.0.options.1.text": {
+  "en": "About 66%",
+  "t": "Environ 66 %"
+ },
+ "lessons.4.steps.0.options.2.text": {
+  "en": "About 36%",
+  "t": "Environ 36 %"
+ },
+ "lessons.4.steps.0.explain": {
+  "en": "The chances multiply: 0.9 × 0.9 × 0.9 × 0.9 ≈ 0.66. Errors compound along a chain, so each step needs its own check.",
+  "t": "Les probabilités se multiplient : 0.9 × 0.9 × 0.9 × 0.9 ≈ 0.66. Les erreurs s’accumulent le long d’une chaîne : chaque étape a donc besoin de son propre contrôle."
+ },
+ "lessons.4.steps.1.prompt": {
+  "en": "A model’s context window is its only memory within a conversation: what falls out of it is forgotten.",
+  "t": "La fenêtre de contexte d’un modèle est sa seule mémoire au sein d’une conversation : ce qui en sort est oublié."
+ },
+ "lessons.4.steps.1.explain": {
+  "en": "The model sees only the tokens in its window (384 for Darsi Tiny). Anything dropped is gone, and the model can’t even tell it’s missing, so the app decides what stays.",
+  "t": "Le modèle ne voit que les jetons de sa fenêtre (384 pour Darsi Tiny). Tout ce qui est retiré a disparu, et le modèle ne peut même pas savoir que cela manque : c’est donc l’application qui décide de ce qui reste."
+ },
+ "lessons.4.steps.2.prompt": {
+  "en": "Which help an agent keep what matters as a conversation grows? Choose all that apply.",
+  "t": "Lesquels aident un agent à garder l’essentiel quand une conversation s’allonge ? Choisissez toutes les bonnes réponses."
+ },
+ "lessons.4.steps.2.options.0.text": {
+  "en": "Short notes in place of finished exchanges",
+  "t": "De courtes notes à la place des échanges terminés"
+ },
+ "lessons.4.steps.2.options.1.text": {
+  "en": "Pinning the key facts, such as dates and places",
+  "t": "Épingler les faits clés, comme les dates et les lieux"
+ },
+ "lessons.4.steps.2.options.2.text": {
+  "en": "Dropping the oldest turns, with no notes",
+  "t": "Retirer les plus anciens tours, sans notes"
+ },
+ "lessons.4.steps.2.options.3.text": {
+  "en": "Retrieving only the part of a document a step needs",
+  "t": "Ne récupérer que la partie d’un document dont une étape a besoin"
+ },
+ "lessons.4.steps.2.options.4.text": {
+  "en": "Keeping everything until the window overflows",
+  "t": "Tout garder jusqu’à ce que la fenêtre déborde"
+ },
+ "lessons.4.steps.2.explain": {
+  "en": "Notes, pinned facts and retrieval keep the essentials in fewer tokens. Dropping turns without notes loses whatever later turns depend on, and keeping everything simply stops working when the window is full.",
+  "t": "Les notes, les faits épinglés et la récupération gardent l’essentiel en moins de jetons. Retirer des tours sans notes fait perdre ce dont les tours suivants dépendent, et tout garder cesse simplement de marcher quand la fenêtre est pleine."
+ },
+ "lessons.4.steps.3.prompt": {
+  "en": "Match each role in a team agent to its job.",
+  "t": "Associez chaque rôle d’un agent d’équipe à sa tâche."
+ },
+ "lessons.4.steps.3.pairs.0.left": {
+  "en": "Planner",
+  "t": "Planificateur"
+ },
+ "lessons.4.steps.3.pairs.0.right": {
+  "en": "Proposes the next tool call",
+  "t": "Propose le prochain appel d’outil"
+ },
+ "lessons.4.steps.3.pairs.1.left": {
+  "en": "Checker",
+  "t": "Vérificateur"
+ },
+ "lessons.4.steps.3.pairs.1.right": {
+  "en": "Tests the call against strict rules",
+  "t": "Teste l’appel avec des règles strictes"
+ },
+ "lessons.4.steps.3.pairs.2.left": {
+  "en": "Runner",
+  "t": "Exécuteur"
+ },
+ "lessons.4.steps.3.pairs.2.right": {
+  "en": "Runs the tool and returns the result",
+  "t": "Lance l’outil et renvoie le résultat"
+ },
+ "lessons.4.steps.3.pairs.3.left": {
+  "en": "Person",
+  "t": "Personne"
+ },
+ "lessons.4.steps.3.pairs.3.right": {
+  "en": "Approves actions and handles what’s stopped",
+  "t": "Approuve les actions et gère ce qui est arrêté"
+ },
+ "lessons.4.steps.3.explain": {
+  "en": "Splitting the work lets one part check another before anything happens: the model only proposes, code checks and runs, and a person keeps the final say on actions.",
+  "t": "Répartir le travail permet à une partie d’en contrôler une autre avant que rien n’arrive : le modèle ne fait que proposer, le code vérifie et exécute, et une personne garde le dernier mot sur les actions."
+ },
+ "lessons.4.steps.4.prompt": {
+  "en": "A test set scored by group. What does this program print?",
+  "t": "Un jeu de test noté par groupe. Qu’affiche ce programme ?"
+ },
+ "lessons.4.steps.4.options.0.text": {
+  "en": "0.875",
+  "t": "0.875"
+ },
+ "lessons.4.steps.4.options.1.text": {
+  "en": "14",
+  "t": "14"
+ },
+ "lessons.4.steps.4.options.2.text": {
+  "en": "0.9375",
+  "t": "0.9375"
+ },
+ "lessons.4.steps.4.explain": {
+  "en": "The Arabic group has 14 hits out of 16 cases, and 14 / 16 = 0.875. Scoring each group separately shows where an agent is weaker.",
+  "t": "Le groupe arabe a 14 réussites sur 16 cas, et 14 / 16 = 0.875. Noter chaque groupe séparément montre où un agent est plus faible."
+ },
+ "lessons.4.steps.5.prompt": {
+  "en": "Put the steps of an honest evaluation in order.",
+  "t": "Mettez dans l’ordre les étapes d’une évaluation honnête."
+ },
+ "lessons.4.steps.5.steps.0": {
+  "en": "Collect requests, including held-out wordings",
+  "t": "Rassembler des demandes, y compris des formulations mises de côté"
+ },
+ "lessons.4.steps.5.steps.1": {
+  "en": "Decide the right answers before running",
+  "t": "Décider des bonnes réponses avant de lancer"
+ },
+ "lessons.4.steps.5.steps.2": {
+  "en": "Run the agent and score every case exactly",
+  "t": "Lancer l’agent et noter exactement chaque cas"
+ },
+ "lessons.4.steps.5.steps.3": {
+  "en": "Break the score down and read the failures",
+  "t": "Détailler le score et lire les échecs"
+ },
+ "lessons.4.steps.5.steps.4": {
+  "en": "Re-run the same set after every change",
+  "t": "Relancer le même jeu après chaque changement"
+ },
+ "lessons.4.steps.5.explain": {
+  "en": "Answers are fixed before the run so they can’t be bent to fit, scoring is exact, failures are read by group, and the same set is re-run to catch regressions.",
+  "t": "Les réponses sont fixées avant l’exécution pour qu’on ne puisse pas les plier à sa convenance, la notation est exacte, les échecs se lisent par groupe, et le même jeu est relancé pour attraper les régressions."
+ },
+ "lessons.4.steps.6.prompt": {
+  "en": "An agent that scores 16 out of 16 on wordings it was trained on will do about as well on new wordings.",
+  "t": "Un agent qui obtient 16 sur 16 sur des formulations d’entraînement fera à peu près aussi bien sur de nouvelles formulations."
+ },
+ "lessons.4.steps.6.explain": {
+  "en": "Trained wordings measure memory: Darsi Tiny drops from 16/16 to 13/16 on new wordings, and to 78–80% across thousands of them.",
+  "t": "Les formulations d’entraînement mesurent la mémoire : Darsi Tiny passe de 16/16 à 13/16 sur de nouvelles formulations, et à 78–80 % sur des milliers d’entre elles."
+ },
+ "lessons.4.steps.7.prompt": {
+  "en": "Complete the approval gate: it runs a call only if it is exactly the approved one, and logs every decision.",
+  "t": "Complétez la barrière d’approbation : elle n’exécute un appel que s’il est exactement celui qui a été approuvé, et journalise chaque décision."
+ },
+ "lessons.4.steps.7.explain": {
+  "en": "== compares the whole call, tool and every detail, with the approved one; append adds the decision to the log, whether it ran or not.",
+  "t": "== compare l’appel entier, l’outil et chaque détail, avec l’appel approuvé ; append ajoute la décision au journal, qu’elle ait été exécutée ou non."
+ },
+ "lessons.4.steps.8.prompt": {
+  "en": "A fine-tune with no old conversations mixed in gets 7/8 on the new bus tool but 1/8 on old skills. What is happening?",
+  "t": "Un réglage fin sans ancienne conversation mélangée obtient 7/8 sur le nouvel outil bus mais 1/8 sur les anciennes compétences. Que se passe-t-il ?"
+ },
+ "lessons.4.steps.8.options.0.text": {
+  "en": "Catastrophic forgetting: the new learning overwrote old skills",
+  "t": "Oubli catastrophique : le nouvel apprentissage a écrasé d’anciennes compétences"
+ },
+ "lessons.4.steps.8.options.1.text": {
+  "en": "The test set is too small to show anything",
+  "t": "Le jeu de test est trop petit pour montrer quoi que ce soit"
+ },
+ "lessons.4.steps.8.options.2.text": {
+  "en": "The bus tool is simply harder than the others",
+  "t": "L’outil bus est tout simplement plus difficile que les autres"
+ },
+ "lessons.4.steps.8.explain": {
+  "en": "Training only on the new examples changed numbers the old skills relied on. Replaying old conversations alongside (48 keeps all 8 old skills) is the usual fix, and the full test set must be re-run after every fine-tune.",
+  "t": "S’entraîner uniquement sur les nouveaux exemples a changé des nombres dont dépendaient les anciennes compétences. Rejouer d’anciennes conversations en parallèle (48 gardent les 8 anciennes compétences) est la solution habituelle, et le jeu de test complet doit être relancé après chaque réglage fin."
+ },
+ "lessons.4.steps.9.prompt": {
+  "en": "Which of these still protect you if the model’s learned safety fails? Choose all that apply.",
+  "t": "Lesquels vous protègent encore si la sécurité apprise du modèle échoue ? Choisissez toutes les bonnes réponses."
+ },
+ "lessons.4.steps.9.options.0.text": {
+  "en": "Only the tools the task needs, enforced in code",
+  "t": "Seulement les outils dont la tâche a besoin, imposés en code"
+ },
+ "lessons.4.steps.9.options.1.text": {
+  "en": "Comparing each call with the approved call",
+  "t": "Comparer chaque appel avec l’appel approuvé"
+ },
+ "lessons.4.steps.9.options.2.text": {
+  "en": "Telling the model in its instructions to be careful",
+  "t": "Dire au modèle dans ses consignes d’être prudent"
+ },
+ "lessons.4.steps.9.options.3.text": {
+  "en": "A log of every action",
+  "t": "Un journal de chaque action"
+ },
+ "lessons.4.steps.9.options.4.text": {
+  "en": "The refusals it learned in training",
+  "t": "Les refus appris à l’entraînement"
+ },
+ "lessons.4.steps.9.explain": {
+  "en": "Guards in code hold whatever the model writes. Instructions and learned refusals are the model’s own behaviour, which can fail on new wordings (28% and 12% of reworded requests it should refuse still got a tool call) or after fine-tuning.",
+  "t": "Les garde-fous en code tiennent quoi que le modèle écrive. Les consignes et les refus appris sont le comportement du modèle lui-même, qui peut échouer avec de nouvelles formulations (28 % et 12 % des demandes reformulées qu’il devrait refuser ont quand même reçu un appel d’outil) ou après un réglage fin."
+ },
+ "lessons.4.slides.0.title": {
+  "en": "Agent engineering: planning, multi-agent, evals and guardrails: review",
+  "t": "Ingénierie des agents : planification, multi-agents, évaluations et garde-fous : révision"
+ },
+ "lessons.4.slides.0.note": {
+  "en": "AI agents · University · Unit check",
+  "t": "Agents d’IA · Université · Bilan de l’unité"
+ },
+ "lessons.4.slides.0.narration": {
+  "en": "Let’s look back at the whole unit and check what stuck.",
+  "t": "Revenons sur toute l’unité et vérifions ce qui est resté."
+ },
+ "lessons.4.slides.1.title": {
+  "en": "In this unit",
+  "t": "Dans cette unité"
+ },
+ "lessons.4.slides.1.bullets": {
+  "en": [
+   "Plans and memory",
+   "Several agents, one job",
+   "Measuring an agent",
+   "Fine-tuning and guardrails"
+  ],
+  "t": [
+   "Plans et mémoire",
+   "Plusieurs agents, un seul travail",
+   "Mesurer un agent",
+   "Réglage fin et garde-fous"
+  ]
+ },
+ "lessons.4.slides.2.title": {
+  "en": "The big ideas",
+  "t": "Les grandes idées"
+ },
+ "lessons.4.slides.2.bullets": {
+  "en": [
+   "Each step builds on the last: check results, and budget the window",
+   "One part proposes, another checks: rules first, people for actions",
+   "A fixed, held-out test set, scored exactly, re-run after every change",
+   "Learned safety can fail: guard actions in code, in layers"
+  ],
+  "t": [
+   "Chaque étape s’appuie sur la précédente : vérifiez les résultats, et budgétez la fenêtre",
+   "Une partie propose, une autre vérifie : les règles d’abord, les personnes pour les actions",
+   "Un jeu de test fixe, avec des données mises de côté, noté exactement, relancé après chaque changement",
+   "La sécurité apprise peut échouer : protégez les actions en code, en couches"
+  ]
+ },
+ "lessons.4.slides.3.title": {
+  "en": "Activity: Agent design review",
+  "t": "Activité : Revue de conception d’un agent"
+ },
+ "lessons.4.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): One idea from each lesson.",
+   "Design (8 min): Sketch an agent for a real university task.",
+   "Review (7 min): A partner checks memory, roles, tests, guards.",
+   "Share (2 min): The weakest point you found."
+  ],
+  "t": [
+   "Échauffement (3 min) : Une idée de chaque leçon.",
+   "Conception (8 min) : Esquissez un agent pour une vraie tâche universitaire.",
+   "Revue (7 min) : Un partenaire contrôle mémoire, rôles, tests, garde-fous.",
+   "Partage (2 min) : Le point le plus faible que vous avez trouvé."
+  ]
+ },
+ "lessons.4.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Write one idea from each of the four lessons, in your own words.",
+   "Design (8 min): Sketch an agent for a real task at your university, such as answering course questions or booking rooms: its steps, what it keeps in its window, its roles and its tools.",
+   "Review (7 min): Swap with a partner. Check their design against the unit: where would errors carry forward, what could fall out of memory, how would they test it, and which actions are guarded in code?",
+   "Share (2 min): Each pair shares the weakest point they found and how they would fix it."
+  ],
+  "t": [
+   "Échauffement (3 min) : Écrivez une idée de chacune des quatre leçons, avec vos propres mots.",
+   "Conception (8 min) : Esquissez un agent pour une vraie tâche de votre université, comme répondre aux questions d’un cours ou réserver des salles : ses étapes, ce qu’il garde dans sa fenêtre, ses rôles et ses outils.",
+   "Revue (7 min) : Échangez avec un partenaire. Confrontez sa conception à l’unité : où les erreurs se transmettraient-elles, qu’est-ce qui pourrait sortir de la mémoire, comment le testerait-il, et quelles actions sont protégées en code ?",
+   "Partage (2 min) : Chaque paire partage le point le plus faible qu’elle a trouvé et comment elle le corrigerait."
+  ]
+ },
+ "lessons.4.slides.3.note": {
+  "en": "Use made-up names and data in every design. The point is the review, not a perfect agent.",
+  "t": "Utilisez des noms et des données inventés dans chaque conception. Ce qui compte, c’est la revue, pas un agent parfait."
+ },
+ "lessons.4.slides.3.narration": {
+  "en": "Where would your partner’s agent break first?",
+  "t": "Où l’agent de votre partenaire casserait-il en premier ?"
+ },
+ "lessons.4.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.4.slides.4.bullets": {
+  "en": [
+   "Which idea from this unit changes how you would build an agent?",
+   "What would convince you that an agent is ready for real users?",
+   "Which guard would you add first to an AI tool you already use?"
+  ],
+  "t": [
+   "Quelle idée de cette unité change votre façon de construire un agent ?",
+   "Qu’est-ce qui vous convaincrait qu’un agent est prêt pour de vrais utilisateurs ?",
+   "Quel garde-fou ajouteriez-vous en premier à un outil d’IA que vous utilisez déjà ?"
+  ]
+ },
+ "lessons.4.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.4.slides.5.bullets": {
+  "en": [
+   "My most useful idea from this unit + the project I will use it in."
+  ],
+  "t": [
+   "Mon idée la plus utile de cette unité + le projet où je l’utiliserai."
+  ]
+ },
+ "lessons.4.slides.5.narration": {
+  "en": "Check every step, measure honestly, and guard actions in code.",
+  "t": "Vérifiez chaque étape, mesurez honnêtement, et protégez les actions en code."
+ },
+ "lessons.4.kit.0.title": {
+  "en": "Slides to revise: Agent engineering: planning, multi-agent, evals and guardrails: unit check",
+  "t": "Diapositives à réviser : Ingénierie des agents : planification, multi-agents, évaluations et garde-fous : bilan de l’unité"
+ },
+ "lessons.4.kit.1.title": {
+  "en": "Activity sheet: Agent engineering: planning, multi-agent, evals and guardrails: unit check",
+  "t": "Fiche d’activité : Ingénierie des agents : planification, multi-agents, évaluations et garde-fous : bilan de l’unité"
+ }
+}

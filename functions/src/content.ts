@@ -6,13 +6,13 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
 import { audit, db, freshCaller, str } from "./admin.js";
-import { buildCatalog, canManage, catalogEntry, catalogPath, idAllowed, isOwner, mediaPrefix, staleVersions, unitPath, unitPrefix, type Owner } from "./catalog.js";
+import { buildCatalog, canManage, catalogEntry, catalogPath, extraLangs, idAllowed, inLanguages, isOwner, mediaPrefix, staleVersions, unitLangPath, unitPath, unitPrefix, type Owner } from "./catalog.js";
 import { loadTracks } from "./settings.js";
 import { bucket } from "./storage.js";
 import { mediaStillUsed } from "./trackRules.js";
 import { levelsByTrack } from "./shared/tracks.js";
 import type { CatalogEntry, Unit } from "./shared/types.js";
-import { byteSize, errorsOf, UNIT_ID, validateUnit } from "./shared/validate.js";
+import { errorsOf, UNIT_ID, validateUnit } from "./shared/validate.js";
 
 /** Loads units/{unitId} and checks that the caller may manage it. */
 async function target(req: CallableRequest) {
@@ -78,14 +78,19 @@ export async function publishDraft(owner: Owner, unitId: string, by: string) {
   if (!unit || unit.id !== unitId) throw new HttpsError("failed-precondition", "The draft's id does not match the unit.");
   if (!idAllowed(owner, unitId)) throw new HttpsError("failed-precondition", "Organization units need a generated id.");
   const version = (Number(meta.get("published.version")) || 0) + 1;
-  const body = JSON.stringify(unit);
-  await bucket().file(unitPath(owner, unitId, version)).save(body, {
+  // English and Arabic in v{n}.json; each added language in its own v{n}.{lang}.json with English (its fallback), so a
+  // phone downloads only its own language (the catalog entry's `langs`).
+  const files: [string, string, string][] = [["en", unitPath(owner, unitId, version), JSON.stringify(inLanguages(unit, ["ar"]))]];
+  for (const lang of extraLangs(unit)) files.push([lang, unitLangPath(unitPath(owner, unitId, version), lang), JSON.stringify(inLanguages(unit, [lang]))]);
+  await Promise.all(files.map(([, path, body]) => bucket().file(path).save(body, {
     resumable: false, contentType: "application/json; charset=utf-8",
     // Versioned paths never change, so phones may keep them forever; org units stay out of shared caches.
     metadata: { cacheControl: `${owner === "public" ? "public" : "private"}, max-age=31536000, immutable` },
-  });
+  })));
+  const bytes: Record<string, number> = Object.fromEntries(files.map(([lang, , body]) => [lang, Buffer.byteLength(body)]));
+  bytes.ar = bytes.en;
   // `rev` is the draft revision that went live: the editor shows "changes not published" while the draft's rev differs.
-  await meta.ref.update({ published: { version, rev: Number(draft.get("rev")) || 0, at: FieldValue.serverTimestamp(), by: c.uid, entry: catalogEntry(unit, owner, version, byteSize(unit)) } });
+  await meta.ref.update({ published: { version, rev: Number(draft.get("rev")) || 0, at: FieldValue.serverTimestamp(), by: c.uid, entry: catalogEntry(unit, owner, version, bytes) } });
   await writeCatalog(owner);
   await deleteJson(owner, unitId, version);
   await audit("publishUnit", c.uid, { unitId, owner, version });

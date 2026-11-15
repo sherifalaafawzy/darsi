@@ -54,7 +54,7 @@ export function SuperGrantPanel({ person }: { person: Profile }) {
 
 /** On a platform admin's org page: the organization's licence (plan, seats, how long). */
 export function LicencePanel({ org }: { org: Org }) {
-  const { t, locale } = useI18n();
+  const { t, locale, L } = useI18n();
   const plans = usePlansConfig();
   const lic = org.licence && org.licence.until > Date.now() ? org.licence : null;
   const [seats, setSeats] = useState(lic?.seats ?? 30); const [days, setDays] = useState(365); const [plan, setPlan] = useState(lic?.plan ?? "");
@@ -69,7 +69,7 @@ export function LicencePanel({ org }: { org: Org }) {
     <section className="panel stack" aria-labelledby="lc-h"><h3 id="lc-h">{t("sp.licenceTitle")}</h3>
       <p className="muted">{lic ? t("sp.licenceLine", { seats: lic.seats, date: new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(lic.until) }) : t("sp.noLicence")}</p>
       <div className="row-gap">
-        {seatPlans.length > 0 && <label className="or-pick"><span>{t("sp.plan")}</span><select value={plan} onChange={(e) => setPlan(e.target.value)}>{seatPlans.map((p) => <option key={p.id} value={p.id}>{p.name.en}</option>)}</select></label>}
+        {seatPlans.length > 0 && <label className="or-pick"><span>{t("sp.plan")}</span><select value={plan} onChange={(e) => setPlan(e.target.value)}>{seatPlans.map((p) => <option key={p.id} value={p.id}>{L(p.name)}</option>)}</select></label>}
         <TextField label={t("sp.seats")} type="number" min={1} value={seats} onChange={(e) => setSeats(Number(e.target.value))} dir="ltr" />
         <TextField label={t("sp.days")} type="number" min={1} value={days} onChange={(e) => setDays(Number(e.target.value))} dir="ltr" />
         <Button size="sm" loading={busy} onClick={() => { void save(seats); }}>{t("sp.setLicence")}</Button>

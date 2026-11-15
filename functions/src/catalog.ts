@@ -27,7 +27,30 @@ export const catalogPath = (owner: Owner) => `${prefix(owner)}/catalog.json`;
 export const unitPrefix = (owner: Owner, unitId: string) => `${prefix(owner)}/units/${unitId}/`;
 export const unitPath = (owner: Owner, unitId: string, version: number) => `${unitPrefix(owner, unitId)}v${version}.json`;
 export const mediaPrefix = (owner: Owner, unitId: string) => `${prefix(owner)}/media/${unitId}/`;
-export const versionOf = (path: string) => Number(/\/v(\d+)\.json$/.exec(path)?.[1] ?? NaN);
+/** One language's copy of a published unit (catalog entries list them in `langs`). */
+export const unitLangPath = (src: string, lang: string) => src.replace(/\.json$/, `.${lang}.json`);
+export const versionOf = (path: string) => Number(/\/v(\d+)(?:\.[a-z0-9-]+)?\.json$/.exec(path)?.[1] ?? NaN);
+
+const LANG = /^[a-z]{2,3}(-[a-z0-9]{2,8})?$/;
+/** The languages a unit is translated into beyond English and Arabic: those its title is written in. */
+export const extraLangs = (unit: Unit): string[] => Object.keys(unit.title ?? {}).filter((k) => k !== "en" && k !== "ar" && LANG.test(k) && (unit.title as Record<string, unknown>)[k]).sort();
+/**
+ * The unit keeping only these languages in every language-keyed field (texts, video and caption files, kit links and
+ * sizes), English always. A field is language-keyed when it has "en" and all its keys are languages the unit uses.
+ */
+export function inLanguages(unit: Unit, keep: string[]): Unit {
+  const all = new Set(["en", "ar", ...extraLangs(unit)]);
+  const wanted = new Set(["en", ...keep]);
+  const walk = (x: unknown): unknown => {
+    if (Array.isArray(x)) return x.map(walk);
+    if (!x || typeof x !== "object") return x;
+    const o = x as Record<string, unknown>;
+    const keys = Object.keys(o);
+    if ("en" in o && keys.every((k) => all.has(k))) return Object.fromEntries(keys.filter((k) => wanted.has(k)).map((k) => [k, walk(o[k])]));
+    return Object.fromEntries(keys.map((k) => [k, walk(o[k])]));
+  };
+  return walk(unit) as Unit;
+}
 /** Versions to delete after publishing `current`: all but the current and the previous one (a device holding the old catalog still loads). */
 export const staleVersions = (paths: string[], current: number) => paths.filter((p) => versionOf(p) < current - 1);
 
@@ -46,8 +69,8 @@ const kitKB = (k: Kit, lang: string, fmt: Kit["formats"][number]) =>
  * download fetches (unitAssetUrls) — the JSON, each video step's light lesson (or its MP4 when it has none), the kits'
  * files (not video kits) and the code runtimes. Languages are those the light lessons and kits record, and English.
  */
-export function sizeByLang(unit: Unit, jsonBytes: number): Record<string, number> {
-  const langs = new Set(["en"]);
+export function sizeByLang(unit: Unit, jsonBytes: number | Record<string, number>): Record<string, number> {
+  const langs = new Set(["en", ...extraLangs(unit)]);
   for (const l of unit.lessons) {
     for (const s of l.steps) if (s.type === "video") for (const x of Object.keys(s.light?.sizeKB ?? {})) langs.add(x);
     for (const k of l.kit) for (const x of Object.keys(k.sizeKB ?? {})) langs.add(x);
@@ -56,7 +79,7 @@ export function sizeByLang(unit: Unit, jsonBytes: number): Record<string, number
   const runtimeMB = runtimesOf(unit.lessons.flatMap((l) => l.steps)).reduce((a, lang) => a + RUNTIMES[lang].sizeMB, 0);
   const out: Record<string, number> = {};
   for (const lang of langs) {
-    let mb = jsonBytes / 1e6 + runtimeMB;
+    let mb = (typeof jsonBytes === "number" ? jsonBytes : jsonBytes[lang] ?? jsonBytes.en ?? 0) / 1e6 + runtimeMB;
     for (const l of unit.lessons) {
       for (const s of l.steps) if (s.type === "video") mb += s.light?.sizeKB ? (inLang(s.light.sizeKB, lang) ?? 0) / 1024 : s.sizeMB || 0;
       for (const k of l.kit) if (k.kind !== "video") for (const fmt of k.formats) if (fmt !== "mp4") mb += kitKB(k, lang, fmt) / 1024;
@@ -66,9 +89,10 @@ export function sizeByLang(unit: Unit, jsonBytes: number): Record<string, number
   return out;
 }
 /** The largest language's download: what phones that don't read `sizeByLang` show. */
-export const sizeMB = (unit: Unit, jsonBytes: number) => Math.max(...Object.values(sizeByLang(unit, jsonBytes)));
+export const sizeMB = (unit: Unit, jsonBytes: number | Record<string, number>) => Math.max(...Object.values(sizeByLang(unit, jsonBytes)));
 
-export function catalogEntry(unit: Unit, owner: Owner, version: number, jsonBytes: number): CatalogEntry {
+/** `jsonBytes`: the published JSON's size, or per language when each language has its own file. */
+export function catalogEntry(unit: Unit, owner: Owner, version: number, jsonBytes: number | Record<string, number>): CatalogEntry {
   return {
     id: unit.id, track: unit.track, level: unit.level, title: unit.title, summary: unit.summary,
     lessons: unit.lessons.length, sizeMB: sizeMB(unit, jsonBytes), sizeByLang: sizeByLang(unit, jsonBytes), available: true,
@@ -79,6 +103,7 @@ export function catalogEntry(unit: Unit, owner: Owner, version: number, jsonByte
     ...(unit.teach === "university" ? { teach: "university" as const } : {}),
     // A track's capstone is listed after the other courses of its level.
     ...(unit.kind === "capstone" ? { kind: "capstone" as const } : {}),
+    ...(extraLangs(unit).length ? { langs: extraLangs(unit) } : {}),
   };
 }
 

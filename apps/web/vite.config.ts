@@ -239,6 +239,8 @@ export default defineConfig({
           // Translations of Labs, the placement check and the home page for added languages: only the phone's language,
           // fetched by the screen that needs it (src/i18n/phrases.ts); "darsi-content" keeps them.
           "content/phrases/**",
+          // Staff screens' strings in added languages (i18n addStaffArea): only for staff, fetched with their chunk.
+          "content/i18n-staff/**",
           // The code steps and their sandbox load with the first lesson that has code (or when such a unit is downloaded).
           "**/{CodeSteps,sandbox}-*.{js,css}",
           // Darsi Tiny: the page side that labs share, and its worker; the model (lib/tinylm) is fetched on first use.

@@ -173,7 +173,7 @@ export const findByEmail = async (email: string): Promise<(Profile & { emailVeri
 export const findByName = async (name: string) => (await getDocs(query(collection(db, "users"), orderBy("name"), where("name", ">=", name.trim()), where("name", "<=", `${name.trim()}`), limit(10)))).docs.map((d) => ({ uid: d.id, ...d.data() }) as Profile);
 
 /* ---------- Darsi Super (docs/SUPER.md) ---------- */
-export interface PlanDef { id: string; name: { en: string; ar: string }; kind: "individual" | "seat" | "credits"; period: "month" | "year"; prices: { EGP?: number; USD?: number }; credits: number; active: boolean }
+export interface PlanDef { id: string; name: { en: string; ar: string } & Partial<Record<string, string>>; kind: "individual" | "seat" | "credits"; period: "month" | "year"; prices: { EGP?: number; USD?: number }; credits: number; active: boolean }
 /** What a tutor credit costs Darsi at the provider (USD) and the EGP rate (functions/src/billingCore.ts Economics). */
 export interface Economics { usdPerCredit: number; egpPerUsd: number }
 /** config/plans as a platform admin saved them (the Plans page). */

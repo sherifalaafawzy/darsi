@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { AppBar, Button, TextField } from "@darsi/design-system";
 import { api } from "../auth/api";
 import { useSuperOn } from "../content/settings";
-import { useI18n } from "../i18n";
+import { useI18n, useLanguages } from "../i18n";
 import { usePlansConfig, type Economics, type PlanDef } from "./data";
 import { message, Note, type Msg } from "./Super";
 import "../styles/admin.css";
@@ -31,6 +31,8 @@ export function PlansPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
   const { num } = useI18n();
+  // Plan names in the languages platform admins added (optional: English shows until one is given).
+  const added = useLanguages().filter((l) => l.code !== "en" && l.code !== "ar");
   useEffect(() => { if (saved.data) { setPlans(saved.data.plans); if (saved.data.economics) setEco(saved.data.economics); } }, [saved.data]);
   const set = (i: number, patch: Partial<PlanDef>) => setPlans((ps) => ps.map((p, j) => (j === i ? { ...p, ...patch } : p)));
   const save = async () => {
@@ -58,6 +60,7 @@ export function PlansPage() {
               <TextField label={t("sp.id")} hint={t("sp.idHint")} value={p.id} onChange={(e) => set(i, { id: e.target.value.toLowerCase() })} dir="ltr" autoComplete="off" />
               <TextField label={t("sp.nameEn")} value={p.name.en} onChange={(e) => set(i, { name: { ...p.name, en: e.target.value } })} />
               <TextField label={t("sp.nameAr")} value={p.name.ar} onChange={(e) => set(i, { name: { ...p.name, ar: e.target.value } })} dir="rtl" lang="ar" />
+              {added.map((l) => <TextField key={l.code} label={t("sp.nameIn", { language: l.native })} hint={t("sp.nameInHint")} value={p.name[l.code] ?? ""} onChange={(e) => set(i, { name: { ...p.name, [l.code]: e.target.value } })} dir={l.dir} lang={l.code} />)}
               <label className="or-pick"><span>{t("sp.kind")}</span>
                 <select value={p.kind} onChange={(e) => set(i, { kind: e.target.value as PlanDef["kind"] })}><option value="individual">{t("sp.individual")}</option><option value="seat">{t("sp.seat")}</option><option value="credits">{t("sp.pack")}</option></select>
               </label>
@@ -110,7 +113,7 @@ function SuperSwitch() {
 
 /** Builds a sample purchase and asks Google Analytics' validation server about it (nothing is recorded there). */
 function RevenueCheck({ plans }: { plans: PlanDef[] }) {
-  const { t } = useI18n();
+  const { t, L } = useI18n();
   const [plan, setPlan] = useState(""); const [cur, setCur] = useState<"EGP" | "USD">("EGP");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
@@ -126,7 +129,7 @@ function RevenueCheck({ plans }: { plans: PlanDef[] }) {
     <section className="panel stack" aria-labelledby="rc-h"><h3 id="rc-h">{t("sp.checkTitle")}</h3>
       <p className="muted small">{t("sp.checkHint")}</p>
       <div className="row-gap">
-        <label className="or-pick"><span>{t("sp.plan")}</span><select value={plan} onChange={(e) => setPlan(e.target.value)}>{plans.map((p) => <option key={p.id} value={p.id}>{p.name.en}</option>)}</select></label>
+        <label className="or-pick"><span>{t("sp.plan")}</span><select value={plan} onChange={(e) => setPlan(e.target.value)}>{plans.map((p) => <option key={p.id} value={p.id}>{L(p.name)}</option>)}</select></label>
         <label className="or-pick"><span>{t("sp.currency")}</span><select value={cur} onChange={(e) => setCur(e.target.value as "EGP" | "USD")}><option>EGP</option><option>USD</option></select></label>
         <Button size="sm" variant="secondary" icon="check" loading={busy} disabled={!plans.length} onClick={() => { void check(); }}>{t("sp.check")}</Button>
       </div>

@@ -1,0 +1,2046 @@
+{
+ "title": {
+  "en": "Pipelines, quality and governance",
+  "t": "Pipelines, qualidade e governança"
+ },
+ "summary": {
+  "en": "Lead your school’s data: automate reports with pipelines that are safe to run again, build checks that catch problems, decide who may see what, and set how long records are kept and how they are deleted. Before this: “Python for teachers” (Programming, level 2).",
+  "t": "Lidere os dados da sua escola: automatize relatórios com pipelines que podem ser executados de novo com segurança, crie verificações que detectam problemas, decida quem pode ver o quê e defina por quanto tempo os registros são guardados e como são apagados. Antes disto: “Python para professores” (Programação, nível 2)."
+ },
+ "lessons.0.title": {
+  "en": "Automate the weekly report",
+  "t": "Automatize o relatório semanal"
+ },
+ "lessons.0.tryTomorrow": {
+  "en": "Run a “Human pipeline”: one group reads the registers aloud, one counts, and one writes the counts on the board. Then stop it halfway and run it again: did anyone count a class twice?",
+  "t": "Faça um “Pipeline humano”: um grupo lê os diários em voz alta, outro conta e outro escreve as contagens no quadro. Depois interrompa no meio e execute de novo: alguém contou uma turma duas vezes?"
+ },
+ "lessons.0.materials": {
+  "en": [
+   "Three made-up class registers on paper",
+   "Board and chalk",
+   "Optional: a computer or phone with Python"
+  ],
+  "t": [
+   "Três diários de classe inventados, em papel",
+   "Quadro e giz",
+   "Opcional: um computador ou celular com Python"
+  ]
+ },
+ "lessons.0.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Assistir"
+ },
+ "lessons.0.steps.0.title": {
+  "en": "Automate the weekly report",
+  "t": "Automatize o relatório semanal"
+ },
+ "lessons.0.steps.0.chapters.0.label": {
+  "en": "Three hours every Friday",
+  "t": "Três horas toda sexta"
+ },
+ "lessons.0.steps.0.chapters.1.label": {
+  "en": "Extract, transform, load",
+  "t": "Extrair, transformar, carregar"
+ },
+ "lessons.0.steps.0.chapters.2.label": {
+  "en": "Steps fail",
+  "t": "Etapas falham"
+ },
+ "lessons.0.steps.0.chapters.3.label": {
+  "en": "Safe to run again",
+  "t": "Seguro para executar de novo"
+ },
+ "lessons.0.steps.0.chapters.4.label": {
+  "en": "A step in Python",
+  "t": "Uma etapa em Python"
+ },
+ "lessons.0.steps.0.chapters.5.label": {
+  "en": "The lab",
+  "t": "O lab"
+ },
+ "lessons.0.steps.0.chapters.6.label": {
+  "en": "Remember and try it",
+  "t": "Lembre e experimente"
+ },
+ "lessons.0.steps.0.checkpoint.question.prompt": {
+  "en": "The load step failed halfway and the pipeline runs again. Which way of loading is safe?",
+  "t": "A etapa de carga falhou no meio e o pipeline é executado de novo. Qual forma de carregar é segura?"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.0.text": {
+  "en": "Add the rows again",
+  "t": "Acrescentar as linhas de novo"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.1.text": {
+  "en": "Replace the day’s rows",
+  "t": "Substituir as linhas do dia"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.2.text": {
+  "en": "Load only on Mondays",
+  "t": "Carregar só às segundas"
+ },
+ "lessons.0.steps.0.checkpoint.question.explain": {
+  "en": "Replacing the day’s rows gives the same answer however many times the pipeline runs: it’s idempotent. Adding the rows again would count the classes written before the failure twice.",
+  "t": "Substituir as linhas do dia dá a mesma resposta, não importa quantas vezes o pipeline seja executado: ele é idempotente. Acrescentar as linhas de novo contaria duas vezes as turmas gravadas antes da falha."
+ },
+ "lessons.0.steps.0.transcript": {
+  "en": "Every Friday, our deputy head copies attendance from twelve registers into one report. It takes her three hours. And last month, she counted one class twice. Today: automating the weekly report, with a pipeline that's safe to run again. A data pipeline is a set of steps that runs on its own, again and again. Extract: read the data where it lives, like the registers. Transform: clean it and count it. Load: write the result where the report reads it. Then put it on a schedule: every evening at six, say. Nobody copies anything by hand, and the report is ready each morning. But steps fail. The connection drops halfway. The database is busy. A register says question mark instead of P or A. A good pipeline expects this. So every run must be safe to repeat. That's called idempotent: run it once or five times, and the answer is the same. The trick: replace the day's rows, don't just add more. And tell faults apart. A dropped connection passes: just retry. Bad data won't fix itself: set the row aside and ask a person. Here's the transform step in Python. Read the register, and for every P, add one to that class's count. Five lines replace an hour of counting. Quick check! The load step failed halfway, and the pipeline runs again. Which way of loading is safe? Replace the day's rows: the rerun first clears Monday, then writes it again. Adding would count two classes twice, and the report would say a hundred and fifty-two pupils came, out of ninety. In the app, make a step fail and press Retry. With “Add the rows”, watch the report climb to a hundred and fifty-two. Switch to replace, and it stays at ninety however often it runs. Your turn. One register says question mark for a pupil, and the transform step stops. Will pressing Retry fix it? No: retrying fixes passing faults, not bad data. Remember: a pipeline extracts, transforms and loads, on a schedule. Make every run safe to repeat. And log every run, so you know what happened. Try it in class tomorrow: run a “Human pipeline”. One group reads the registers aloud, one counts, and one writes the counts on the board. Then stop it halfway and run it again: did anyone count a class twice?",
+  "t": "Toda sexta, a nossa vice-diretora copia a frequência de doze diários para um único relatório. Isso leva três horas. E, no mês passado, ela contou uma turma duas vezes. Hoje: automatizar o relatório semanal, com um pipeline que é seguro executar de novo. Um pipeline de dados é um conjunto de etapas que roda sozinho, de novo e de novo. Extrair: ler os dados onde eles estão, como nos diários. Transformar: limpá-los e contá-los. Carregar: gravar o resultado onde o relatório o lê. Depois coloque numa agenda: todo fim de tarde, às seis, por exemplo. Ninguém copia nada à mão, e o relatório fica pronto a cada manhã. Mas etapas falham. A conexão cai no meio. O banco de dados está ocupado. Um diário traz um ponto de interrogação em vez de P ou A. Um bom pipeline espera isso. Por isso, cada execução precisa ser segura de repetir. Isso se chama idempotente: execute uma vez ou cinco, e a resposta é a mesma. O truque: substitua as linhas do dia, não apenas acrescente mais. E distinga as falhas. Uma conexão que caiu passa: basta tentar de novo. Dados ruins não se consertam sozinhos: separe a linha e pergunte a uma pessoa. Aqui está a etapa de transformar em Python. Leia o diário e, para cada P, some um à contagem daquela turma. Cinco linhas substituem uma hora de contagem. Verificação rápida! A etapa de carga falhou no meio, e o pipeline é executado de novo. Qual forma de carregar é segura? Substituir as linhas do dia: a nova execução primeiro limpa a segunda e depois a grava de novo. Acrescentar contaria duas turmas duas vezes, e o relatório diria que vieram 152 alunos, de 90. No app, faça uma etapa falhar e toque em Tentar de novo. Com “Acrescentar as linhas”, veja o relatório subir até 152. Mude para substituir, e ele fica em 90, não importa quantas vezes seja executado. Sua vez. Um diário traz um ponto de interrogação para um aluno, e a etapa de transformar para. Tocar em Tentar de novo vai resolver? Não: tentar de novo resolve falhas passageiras, não dados ruins. Lembre: um pipeline extrai, transforma e carrega, numa agenda. Torne cada execução segura de repetir. E registre cada execução, para saber o que aconteceu. Experimente na aula de amanhã: faça um “Pipeline humano”. Um grupo lê os diários em voz alta, outro conta e outro escreve as contagens no quadro. Depois interrompa no meio e execute de novo: alguém contou uma turma duas vezes?"
+ },
+ "lessons.0.steps.1.prompt": {
+  "en": "Read",
+  "t": "Ler"
+ },
+ "lessons.0.steps.1.title": {
+  "en": "Pipelines that are safe to rerun",
+  "t": "Pipelines seguros para executar de novo"
+ },
+ "lessons.0.steps.1.body": {
+  "en": "A data pipeline is a set of steps that runs on its own, again and again. Extract reads the data where it lives: the class registers, the gauge readings, the exam sheet. Transform cleans and counts it. Load writes the result where the report reads it: the district’s table, the head’s dashboard. Put it on a schedule, every evening at six, and nobody copies anything by hand; the report is ready each morning, and it’s counted the same way every time.\n\nSteps fail. The connection drops halfway through, the database is busy, the disk is full, or a register says “?” instead of P or A. A good pipeline expects this. It retries passing faults, such as a dropped connection, a few times. But bad data won’t fix itself: retrying a “?” fails the same way every time, so the pipeline sets the row aside and tells a person.\n\nEvery run must be safe to repeat. That’s called idempotent: run it once or five times, and the answer is the same. A load that adds rows isn’t: if it fails after writing two classes and runs again, those two classes are written twice, and the report says 152 pupils came out of 90. A load that replaces the day’s rows (delete Monday, then write Monday) gives 90 however often it runs.\n\nFinally, log every run: when it ran, how many rows it read and wrote, what it set aside and why. Without a log, a missing report is a mystery; with one, you can see the failed step in a minute. The transform step is often only a few lines: in Python, read the register with csv, add one to a class’s count for every P, and print the counts in a fixed order.",
+  "t": "Um pipeline de dados é um conjunto de etapas que roda sozinho, de novo e de novo. Extrair lê os dados onde eles estão: os diários de classe, as leituras do pluviômetro, a folha da prova. Transformar os limpa e conta. Carregar grava o resultado onde o relatório o lê: a tabela da secretaria de educação, o painel da direção. Coloque numa agenda, todo fim de tarde às seis, e ninguém copia nada à mão; o relatório fica pronto a cada manhã, contado do mesmo jeito todas as vezes.\n\nEtapas falham. A conexão cai no meio, o banco de dados está ocupado, o disco está cheio ou um diário traz “?” em vez de P ou A. Um bom pipeline espera isso. Ele tenta de novo, algumas vezes, as falhas passageiras, como uma conexão que caiu. Mas dados ruins não se consertam sozinhos: tentar de novo um “?” falha do mesmo jeito todas as vezes, então o pipeline separa a linha e avisa uma pessoa.\n\nCada execução precisa ser segura de repetir. Isso se chama idempotente: execute uma vez ou cinco, e a resposta é a mesma. Uma carga que acrescenta linhas não é: se ela falha depois de gravar duas turmas e é executada de novo, essas duas turmas são gravadas duas vezes, e o relatório diz que vieram 152 alunos, de 90. Uma carga que substitui as linhas do dia (apaga a segunda, depois grava a segunda) dá 90, não importa quantas vezes seja executada.\n\nPor fim, registre cada execução: quando rodou, quantas linhas leu e gravou, o que separou e por quê. Sem registro, um relatório que não saiu é um mistério; com ele, você vê a etapa que falhou em um minuto. A etapa de transformar costuma ter só algumas linhas: em Python, leia o diário com csv, some um à contagem de uma turma para cada P e imprima as contagens em uma ordem fixa."
+ },
+ "lessons.0.steps.1.keyTerms.0.term": {
+  "en": "Pipeline",
+  "t": "Pipeline"
+ },
+ "lessons.0.steps.1.keyTerms.0.def": {
+  "en": "Steps that run on their own on a schedule: extract, transform, load.",
+  "t": "Etapas que rodam sozinhas numa agenda: extrair, transformar, carregar."
+ },
+ "lessons.0.steps.1.keyTerms.1.term": {
+  "en": "Idempotent",
+  "t": "Idempotente"
+ },
+ "lessons.0.steps.1.keyTerms.1.def": {
+  "en": "Safe to repeat: running it once or five times gives the same answer, such as replacing the day’s rows.",
+  "t": "Seguro de repetir: executar uma vez ou cinco dá a mesma resposta, como ao substituir as linhas do dia."
+ },
+ "lessons.0.steps.1.keyTerms.2.term": {
+  "en": "Passing fault",
+  "t": "Falha passageira"
+ },
+ "lessons.0.steps.1.keyTerms.2.def": {
+  "en": "A failure that a retry can fix, such as a dropped connection.",
+  "t": "Uma falha que uma nova tentativa pode resolver, como uma conexão que caiu."
+ },
+ "lessons.0.steps.1.keyTerms.3.term": {
+  "en": "Run log",
+  "t": "Registro de execução"
+ },
+ "lessons.0.steps.1.keyTerms.3.def": {
+  "en": "A record of every run: when, rows read and written, what was set aside and why.",
+  "t": "Um registro de cada execução: quando, linhas lidas e gravadas, o que foi separado e por quê."
+ },
+ "lessons.0.steps.2.prompt": {
+  "en": "A register says “?” instead of P or A, and the transform step stops. Will a retry fix it?",
+  "t": "Um diário traz “?” em vez de P ou A, e a etapa de transformar para. Uma nova tentativa resolve?"
+ },
+ "lessons.0.steps.2.options.0.text": {
+  "en": "Yes, retry until it works",
+  "t": "Sim, tente de novo até funcionar"
+ },
+ "lessons.0.steps.2.options.1.text": {
+  "en": "No: bad data needs a person to check it",
+  "t": "Não: dados ruins precisam de uma pessoa para conferir"
+ },
+ "lessons.0.steps.2.options.2.text": {
+  "en": "Yes, if the network is faster",
+  "t": "Sim, se a rede estiver mais rápida"
+ },
+ "lessons.0.steps.2.explain": {
+  "en": "The data itself is wrong, so every retry fails the same way. Retrying fixes passing faults such as a dropped connection; bad data needs the row set aside and the teacher asked.",
+  "t": "Os próprios dados estão errados, então toda nova tentativa falha do mesmo jeito. Tentar de novo resolve falhas passageiras, como uma conexão que caiu; dados ruins exigem separar a linha e perguntar ao professor."
+ },
+ "lessons.0.steps.3.prompt": {
+  "en": "Put the steps of the evening’s attendance pipeline in order.",
+  "t": "Coloque em ordem as etapas do pipeline de frequência do fim da tarde."
+ },
+ "lessons.0.steps.3.steps.0": {
+  "en": "Extract: read the three class registers",
+  "t": "Extrair: ler os três diários de classe"
+ },
+ "lessons.0.steps.3.steps.1": {
+  "en": "Transform: count the pupils present in each class",
+  "t": "Transformar: contar os alunos presentes em cada turma"
+ },
+ "lessons.0.steps.3.steps.2": {
+  "en": "Load: replace today’s rows in the district’s table",
+  "t": "Carregar: substituir as linhas de hoje na tabela da secretaria de educação"
+ },
+ "lessons.0.steps.3.steps.3": {
+  "en": "Log: write what ran, and what was set aside",
+  "t": "Registrar: escrever o que rodou e o que foi separado"
+ },
+ "lessons.0.steps.3.explain": {
+  "en": "Extract, transform, load, in that order, and then the log, so it can record what every step did, including any rows set aside for a person to check.",
+  "t": "Extrair, transformar, carregar, nessa ordem, e depois o registro, para anotar o que cada etapa fez, inclusive as linhas separadas para uma pessoa conferir."
+ },
+ "lessons.0.steps.4.prompt": {
+  "en": "The transform step. register.csv has one row per pupil: class, pupil number and P (present) or A (away). Fix the program so it counts only the pupils present in each class, printed in class order: 5A 4, 5B 3, 6A 5.",
+  "t": "A etapa de transformar. register.csv tem uma linha por aluno: turma, número do aluno e P (presente) ou A (ausente). Corrija o programa para que ele conte só os alunos presentes em cada turma, impressos em ordem de turma: 5A 4, 5B 3, 6A 5."
+ },
+ "lessons.0.steps.4.tests.0.hint": {
+  "en": "The starter counts every pupil, present or away. Count a row only when its status is P.",
+  "t": "O código inicial conta todos os alunos, presentes ou ausentes. Conte uma linha só quando o status for P."
+ },
+ "lessons.0.steps.4.hints.0": {
+  "en": "Add an if before the counting lines, and indent them under it.",
+  "t": "Acrescente um if antes das linhas de contagem e recue essas linhas debaixo dele."
+ },
+ "lessons.0.steps.4.hints.1": {
+  "en": "if row[\"status\"] == \"P\":",
+  "t": "if row[\"status\"] == \"P\":"
+ },
+ "lessons.0.steps.4.explain": {
+  "en": "present.get(c, 0) + 1 adds one to the class’s count, starting from 0 the first time. Counting only the rows with P gives 4, 3 and 5. The dictionary keeps classes in the order it first met them, which may not be class order, so sorted() prints them in a fixed order every run.",
+  "t": "present.get(c, 0) + 1 soma um à contagem da turma, começando em 0 na primeira vez. Contar só as linhas com P dá 4, 3 e 5. O dicionário guarda as turmas na ordem em que as encontrou, que pode não ser a ordem de turma, então sorted() as imprime numa ordem fixa a cada execução."
+ },
+ "lessons.0.steps.5.prompt": {
+  "en": "Try it: make Load fail with “Add the rows”, press Run, then Retry, and read the district’s table. Then do the same with “Replace the day’s rows”, and press Run again twice. Finally make Transform fail: why does Retry not help, and what does?",
+  "t": "Experimente: faça Load falhar com “Acrescentar as linhas”, toque em Executar, depois em Tentar de novo, e leia a tabela da secretaria de educação. Depois faça o mesmo com “Substituir as linhas do dia” e toque em Executar de novo duas vezes. Por fim, faça Transform falhar: por que Tentar de novo não ajuda, e o que ajuda?"
+ },
+ "lessons.0.steps.6.prompt": {
+  "en": "Put the lines in order (and indent them): an idempotent load that replaces the day’s rows in the report instead of adding to them.",
+  "t": "Coloque as linhas em ordem (e recue-as): uma carga idempotente que substitui as linhas do dia no relatório em vez de acrescentar a elas."
+ },
+ "lessons.0.steps.6.explain": {
+  "en": "First drop every row already in the report for that day, then add the day’s counts, and return the new report. Run it twice with the same day and the report is the same: Monday is cleared before it’s written again. Adding the counts to the old report would count them twice.",
+  "t": "Primeiro apague toda linha que já está no relatório para aquele dia, depois acrescente as contagens do dia e devolva o relatório novo. Execute duas vezes com o mesmo dia e o relatório é o mesmo: a segunda é limpa antes de ser gravada de novo. Somar as contagens ao relatório antigo as contaria duas vezes."
+ },
+ "lessons.0.steps.7.prompt": {
+  "en": "Retrying a failed step fixes any fault, as long as you retry enough times.",
+  "t": "Tentar de novo uma etapa que falhou resolve qualquer falha, desde que você tente vezes suficientes."
+ },
+ "lessons.0.steps.7.explain": {
+  "en": "Retries fix passing faults, such as a dropped connection. Bad data, such as “?” in a register, fails the same way every time, so set the row aside and ask a person.",
+  "t": "Novas tentativas resolvem falhas passageiras, como uma conexão que caiu. Dados ruins, como um “?” num diário, falham do mesmo jeito todas as vezes, então separe a linha e pergunte a uma pessoa."
+ },
+ "lessons.0.steps.8.prompt": {
+  "en": "Match each problem to the right response.",
+  "t": "Ligue cada problema à resposta certa."
+ },
+ "lessons.0.steps.8.pairs.0.left": {
+  "en": "The connection dropped during Extract",
+  "t": "A conexão caiu durante Extract"
+ },
+ "lessons.0.steps.8.pairs.0.right": {
+  "en": "Retry: it’s a passing fault",
+  "t": "Tente de novo: é uma falha passageira"
+ },
+ "lessons.0.steps.8.pairs.1.left": {
+  "en": "A register says “?” for one pupil",
+  "t": "Um diário traz “?” para um aluno"
+ },
+ "lessons.0.steps.8.pairs.1.right": {
+  "en": "Set the row aside and ask the teacher",
+  "t": "Separe a linha e pergunte ao professor"
+ },
+ "lessons.0.steps.8.pairs.2.left": {
+  "en": "Load failed after writing two classes",
+  "t": "Load falhou depois de gravar duas turmas"
+ },
+ "lessons.0.steps.8.pairs.2.right": {
+  "en": "Run again: replacing the day’s rows makes it safe",
+  "t": "Execute de novo: substituir as linhas do dia torna isso seguro"
+ },
+ "lessons.0.steps.8.pairs.3.left": {
+  "en": "Last night’s run didn’t happen at all",
+  "t": "A execução da noite passada simplesmente não aconteceu"
+ },
+ "lessons.0.steps.8.pairs.3.right": {
+  "en": "The log shows it, and someone is told",
+  "t": "O registro mostra, e alguém é avisado"
+ },
+ "lessons.0.steps.8.explain": {
+  "en": "Each kind of failure has its own fix: retry the passing ones, hand bad data to a person, rely on an idempotent load for reruns, and use the log to notice what didn’t run.",
+  "t": "Cada tipo de falha tem a sua solução: tente de novo as passageiras, entregue dados ruins a uma pessoa, conte com uma carga idempotente para as repetições e use o registro para perceber o que não rodou."
+ },
+ "lessons.0.steps.9.prompt": {
+  "en": "Which report at your school is put together by hand every week or term? Sketch it as extract, transform and load.",
+  "t": "Qual relatório da sua escola é montado à mão toda semana ou todo trimestre? Esboce-o como extrair, transformar e carregar."
+ },
+ "lessons.0.steps.9.placeholder": {
+  "en": "For example: “The weekly attendance return: extract the 12 registers, transform by counting P per class, load into the district’s form.”",
+  "t": "Por exemplo: “O relatório semanal de frequência: extrair os 12 diários, transformar contando os P por turma, carregar no formulário da secretaria de educação.”"
+ },
+ "lessons.0.steps.10.prompt": {
+  "en": "Project: Map one report’s pipeline",
+  "t": "Projeto: Mapeie o pipeline de um relatório"
+ },
+ "lessons.0.steps.10.task": {
+  "en": "Choose one report your school sends regularly. With your school’s data team, or a class, draw its pipeline: where each piece of data comes from (extract), what is done to it (transform), where it ends up (load), and when it runs. Mark where it can fail, and for each failure whether a retry would fix it. Then run it as a “human pipeline” with made-up registers, stop it halfway and run it again: does the result stay right?",
+  "t": "Escolha um relatório que a sua escola envia regularmente. Com a equipe de dados da escola, ou com uma turma, desenhe o pipeline dele: de onde vem cada dado (extrair), o que se faz com ele (transformar), onde ele termina (carregar) e quando roda. Marque onde ele pode falhar e, para cada falha, se uma nova tentativa a resolveria. Depois execute-o como um “pipeline humano” com diários inventados, interrompa no meio e execute de novo: o resultado continua certo?"
+ },
+ "lessons.0.steps.10.deliverable": {
+  "en": "A photo of your pipeline map (no real pupils’ data), and two sentences: the step most likely to fail, and how you’d make the load safe to rerun.",
+  "t": "Uma foto do seu mapa do pipeline (sem dados de alunos reais) e duas frases: a etapa com mais chance de falhar e como você tornaria a carga segura para executar de novo."
+ },
+ "lessons.0.steps.10.rubric.0.criterion": {
+  "en": "The map shows extract, transform and load, and when the report runs.",
+  "t": "O mapa mostra extrair, transformar e carregar, e quando o relatório roda."
+ },
+ "lessons.0.steps.10.rubric.1.criterion": {
+  "en": "Each failure point says whether a retry fixes it, or a person must.",
+  "t": "Cada ponto de falha diz se uma nova tentativa resolve ou se uma pessoa precisa agir."
+ },
+ "lessons.0.steps.10.rubric.2.criterion": {
+  "en": "The load is designed to be safe to run again.",
+  "t": "A carga foi planejada para ser segura de executar de novo."
+ },
+ "lessons.0.slides.0.title": {
+  "en": "Automate the weekly report",
+  "t": "Automatize o relatório semanal"
+ },
+ "lessons.0.slides.0.note": {
+  "en": "Data engineering · Level 4 · Lesson 1",
+  "t": "Engenharia de dados · Nível 4 · Lição 1"
+ },
+ "lessons.0.slides.0.narration": {
+  "en": "Three hours every Friday, and one class counted twice.",
+  "t": "Três horas toda sexta, e uma turma contada duas vezes."
+ },
+ "lessons.0.slides.1.title": {
+  "en": "Today we will",
+  "t": "Hoje vamos"
+ },
+ "lessons.0.slides.1.bullets": {
+  "en": [
+   "Describe a pipeline: extract, transform, load.",
+   "Make every run safe to repeat.",
+   "Tell passing faults from bad data."
+  ],
+  "t": [
+   "Descrever um pipeline: extrair, transformar, carregar.",
+   "Tornar cada execução segura de repetir.",
+   "Distinguir falhas passageiras de dados ruins."
+  ]
+ },
+ "lessons.0.slides.2.title": {
+  "en": "Remember",
+  "t": "Lembre"
+ },
+ "lessons.0.slides.2.bullets": {
+  "en": [
+   "Extract, transform, load, on a schedule.",
+   "Replace the day’s rows: idempotent.",
+   "Retry passing faults; bad data needs a person."
+  ],
+  "t": [
+   "Extrair, transformar, carregar, numa agenda.",
+   "Substituir as linhas do dia: idempotente.",
+   "Tentar de novo as falhas passageiras; dados ruins precisam de uma pessoa."
+  ]
+ },
+ "lessons.0.slides.3.title": {
+  "en": "The human pipeline",
+  "t": "O pipeline humano"
+ },
+ "lessons.0.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): How is our report made?",
+   "Teach (8 min): Extract, transform, load.",
+   "Run (12 min): The human pipeline.",
+   "Fail (10 min): Stop it halfway, and rerun.",
+   "Wrap-up (5 min): What goes in the log?"
+  ],
+  "t": [
+   "Aquecimento (5 min): Como o nosso relatório é feito?",
+   "Ensinar (8 min): Extrair, transformar, carregar.",
+   "Executar (12 min): O pipeline humano.",
+   "Falhar (10 min): Interrompa no meio e execute de novo.",
+   "Fechamento (5 min): O que vai no registro?"
+  ]
+ },
+ "lessons.0.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Ask how the school’s weekly attendance report is put together today, who does it and how long it takes.",
+   "Teach (8 min): Draw the three steps and a schedule on the board. Explain passing faults and bad data, and why the load replaces the day’s rows.",
+   "Run (12 min): One group reads three made-up registers aloud, one counts the P’s per class, and one writes the counts on the board. Put a “?” in one register.",
+   "Fail (10 min): Stop the writers after two classes, then run again. First add the rows, then try wiping the day’s rows first. Which gives the right total?",
+   "Wrap-up (5 min): Agree what the run log should say, including the “?”. Then give the exit ticket."
+  ],
+  "t": [
+   "Aquecimento (5 min): Pergunte como o relatório semanal de frequência da escola é montado hoje, quem o faz e quanto tempo leva.",
+   "Ensinar (8 min): Desenhe no quadro as três etapas e uma agenda. Explique as falhas passageiras e os dados ruins, e por que a carga substitui as linhas do dia.",
+   "Executar (12 min): Um grupo lê em voz alta três diários inventados, outro conta os P por turma e outro escreve as contagens no quadro. Coloque um “?” em um dos diários.",
+   "Falhar (10 min): Interrompa quem escreve depois de duas turmas e depois execute de novo. Primeiro acrescente as linhas, depois tente apagar antes as linhas do dia. Qual dá o total certo?",
+   "Fechamento (5 min): Combinem o que o registro de execução deve dizer, inclusive sobre o “?”. Depois entregue o bilhete de saída."
+  ]
+ },
+ "lessons.0.slides.3.note": {
+  "en": "Use made-up registers. Make the class sizes add up to a number pupils can check, such as 90, so a double count is easy to spot.",
+  "t": "Use diários inventados. Faça o tamanho das turmas somar um número que os alunos possam conferir, como 90, para que uma contagem dupla seja fácil de notar."
+ },
+ "lessons.0.slides.3.narration": {
+  "en": "Read, count, write, then stop it and run it again.",
+  "t": "Ler, contar, escrever, depois interromper e executar de novo."
+ },
+ "lessons.0.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Vamos discutir"
+ },
+ "lessons.0.slides.4.bullets": {
+  "en": [
+   "Why did adding the rows again give 152 pupils?",
+   "Which failures will a retry never fix?",
+   "What should the run log tell the head?"
+  ],
+  "t": [
+   "Por que acrescentar as linhas de novo deu 152 alunos?",
+   "Quais falhas uma nova tentativa nunca vai resolver?",
+   "O que o registro de execução deve dizer à direção?"
+  ]
+ },
+ "lessons.0.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Bilhete de saída"
+ },
+ "lessons.0.slides.5.bullets": {
+  "en": [
+   "Write one passing fault and one bad-data fault, and what the pipeline should do with each."
+  ],
+  "t": [
+   "Escreva uma falha passageira e uma falha de dados ruins, e o que o pipeline deve fazer com cada uma."
+  ]
+ },
+ "lessons.0.slides.5.narration": {
+  "en": "Safe to rerun: replace the day’s rows, and log every run.",
+  "t": "Seguro para executar de novo: substitua as linhas do dia e registre cada execução."
+ },
+ "lessons.0.kit.0.title": {
+  "en": "Slides: Automate the weekly report",
+  "t": "Slides: Automatize o relatório semanal"
+ },
+ "lessons.0.kit.1.title": {
+  "en": "Lesson plan and worksheet: Automate the weekly report",
+  "t": "Plano da lição e folha de atividades: Automatize o relatório semanal"
+ },
+ "lessons.0.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "O vídeo da lição (240p, para a aula ou o WhatsApp)"
+ },
+ "lessons.1.title": {
+  "en": "Checks that catch problems",
+  "t": "Verificações que detectam problemas"
+ },
+ "lessons.1.tryTomorrow": {
+  "en": "Ask your pupils to write checks for their own class data: a mark must be from 0 to 20, every pupil appears once. Then test the checks on a made-up sheet with planted mistakes.",
+  "t": "Peça aos seus alunos que escrevam verificações para os dados da própria turma: uma nota deve ir de 0 a 20, cada aluno aparece uma vez. Depois teste as verificações numa folha inventada com erros plantados."
+ },
+ "lessons.1.materials": {
+  "en": [
+   "A made-up mark or rain sheet with planted mistakes",
+   "Board and chalk",
+   "Optional: a phone or computer for the SQL steps"
+  ],
+  "t": [
+   "Uma folha de notas ou de chuva inventada, com erros plantados",
+   "Quadro e giz",
+   "Opcional: um celular ou computador para as etapas de SQL"
+  ]
+ },
+ "lessons.1.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Assistir"
+ },
+ "lessons.1.steps.0.title": {
+  "en": "Checks that catch problems",
+  "t": "Verificações que detectam problemas"
+ },
+ "lessons.1.steps.0.chapters.0.label": {
+  "en": "999 reached the district",
+  "t": "999 chegou à secretaria de educação"
+ },
+ "lessons.1.steps.0.chapters.1.label": {
+  "en": "Kinds of checks",
+  "t": "Tipos de verificação"
+ },
+ "lessons.1.steps.0.chapters.2.label": {
+  "en": "A check as a query",
+  "t": "Uma verificação como consulta"
+ },
+ "lessons.1.steps.0.chapters.3.label": {
+  "en": "When a check fails",
+  "t": "Quando uma verificação falha"
+ },
+ "lessons.1.steps.0.chapters.4.label": {
+  "en": "Checks have limits",
+  "t": "As verificações têm limites"
+ },
+ "lessons.1.steps.0.chapters.5.label": {
+  "en": "The lab",
+  "t": "O lab"
+ },
+ "lessons.1.steps.0.chapters.6.label": {
+  "en": "Remember and try it",
+  "t": "Lembre e experimente"
+ },
+ "lessons.1.steps.0.checkpoint.question.prompt": {
+  "en": "A rain gauge sent 999, its error code. Which check would have caught it?",
+  "t": "Um pluviômetro enviou 999, o código de erro dele. Qual verificação teria detectado isso?"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.0.text": {
+  "en": "Not empty",
+  "t": "Não vazio"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.1.text": {
+  "en": "In range: 0 to 300 mm",
+  "t": "Dentro do intervalo: 0 a 300 mm"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.2.text": {
+  "en": "Unique station and day",
+  "t": "Estação e dia únicos"
+ },
+ "lessons.1.steps.0.checkpoint.question.explain": {
+  "en": "999 is far above 300 mm, so the range check returns it. “Not empty” and “unique” would both have let it through: the value is there, and it’s sent once.",
+  "t": "999 está muito acima de 300 mm, então a verificação de intervalo o retorna. “Não vazio” e “único” teriam deixado passar: o valor está lá, e foi enviado uma só vez."
+ },
+ "lessons.1.steps.0.transcript": {
+  "en": "Our rainfall report went to the district with Riverside at over two hundred millimetres. One gauge had sent nine nine nine, its error code. Nothing in our pipeline stopped it. Today: checks that catch problems before your report does. A check is a rule the data must pass. In range: rain from zero to three hundred millimetres. Not empty. Unique: one reading per station per day. Allowed values: only the stations we know. Some checks compare. Do the class counts add up to the school's roll? Did today's batch arrive at all? Is the date this week, and not last year? In SQL, write each check as a query that finds the bad rows. If it returns nothing, the check passes. If it returns rows, those are your problems, with their details. Then decide what a failure does. Stop the batch, and lose good data with the bad. Set the bad rows aside, and let the rest through. Or warn, and let it all through. Choose by what a wrong report costs. And fix problems at their source. Send the reading back to the club that took it, so tomorrow's batch is right. Cleaning the same mistake every week means nobody fixed it. Quick check! Which check would have caught the nine nine nine? In range. Nine nine nine is far above three hundred millimetres, so the range check returns it. Not empty and unique would both have let it through. But checks only catch what you thought of. A reading of twelve, when it really rained twenty, passes every check. So also compare with neighbours, and look at the chart. In the app, turn the checks on and off, and choose what a failure does. With “Stop the batch”, only the first day gets through. Without the repeats check, Hilltop's average creeps up. Your turn. Every check passes on today's batch. What can I say about the data? No known problem was found; that's all. Remember: write checks for range, gaps, repeats and allowed values. Decide what each failure does, and fix problems at their source. And a passing check is not proof the data is right. Try it in class tomorrow: ask your pupils to write checks for their own class data. A mark must be from zero to twenty. Every pupil appears once. Then test the checks on a made-up sheet with planted mistakes.",
+  "t": "O nosso relatório de chuva foi para a secretaria de educação com Riverside em mais de 200 milímetros. Um pluviômetro tinha enviado 999, o código de erro dele. Nada no nosso pipeline o impediu. Hoje: verificações que detectam problemas antes que o seu relatório os mostre. Uma verificação é uma regra que os dados precisam cumprir. Dentro do intervalo: chuva de zero a 300 milímetros. Não vazio. Único: uma leitura por estação por dia. Valores permitidos: só as estações que conhecemos. Algumas verificações comparam. As contagens das turmas batem com o total de matrículas da escola? O lote de hoje chegou? A data é desta semana, e não do ano passado? Em SQL, escreva cada verificação como uma consulta que encontra as linhas ruins. Se ela não retorna nada, a verificação passa. Se retorna linhas, esses são os seus problemas, com os detalhes deles. Depois decida o que uma falha faz. Interromper o lote e perder os dados bons junto com os ruins. Separar as linhas ruins e deixar o resto passar. Ou avisar e deixar tudo passar. Escolha pelo que um relatório errado custa. E corrija os problemas na origem. Devolva a leitura ao clube que a fez, para que o lote de amanhã esteja certo. Limpar o mesmo erro toda semana significa que ninguém o corrigiu. Verificação rápida! Qual verificação teria detectado o 999? O intervalo. 999 está muito acima de 300 milímetros, então a verificação de intervalo o retorna. Não vazio e único teriam deixado passar. Mas as verificações só detectam o que você pensou. Uma leitura de 12, quando na verdade choveu 20, passa por todas as verificações. Então compare também com os vizinhos e olhe o gráfico. No app, ligue e desligue as verificações e escolha o que uma falha faz. Com “Interromper o lote”, só o primeiro dia passa. Sem a verificação de repetições, a média de Hilltop vai subindo de mansinho. Sua vez. Todas as verificações passam no lote de hoje. O que posso dizer sobre os dados? Nenhum problema conhecido foi encontrado; só isso. Lembre: escreva verificações para intervalo, lacunas, repetições e valores permitidos. Decida o que cada falha faz e corrija os problemas na origem. E uma verificação que passa não é prova de que os dados estão certos. Experimente na aula de amanhã: peça aos seus alunos que escrevam verificações para os dados da própria turma. Uma nota deve ir de zero a vinte. Cada aluno aparece uma vez. Depois teste as verificações numa folha inventada com erros plantados."
+ },
+ "lessons.1.steps.1.prompt": {
+  "en": "Read",
+  "t": "Ler"
+ },
+ "lessons.1.steps.1.title": {
+  "en": "Checks, and what failure does",
+  "t": "Verificações e o que uma falha faz"
+ },
+ "lessons.1.steps.1.body": {
+  "en": "A check is a rule the data must pass before anyone uses it. In range: rain from 0 to 300 mm, a mark from 0 to 20. Not empty: every reading has a value. Unique: one reading per station per day, one row per pupil. Allowed values: only the stations, classes or codes we know. Some checks compare: do the class counts add up to the school’s roll? Did today’s batch arrive at all? Is the date this week, and not last year?\n\nIn SQL, write each check as a query that finds the bad rows. If it returns nothing, the check passes; if it returns rows, those are your problems, with their details. WHERE mm < 0 OR mm > 300 finds amounts outside the range; WHERE mm IS NULL finds the gaps; GROUP BY station, day HAVING COUNT(*) > 1 finds repeats; and a left join to the list of stations finds names that aren’t on it. Run them on every batch, before the report.\n\nThen decide what a failure does. Stop the batch, and lose the good data with the bad. Set the bad rows aside, and let the rest through. Or warn, and let everything through. Choose by what a wrong report costs: a flood warning can’t wait, but a termly return can be held for a day. And fix problems at their source: send the reading back to the club that took it, so tomorrow’s batch is right. Cleaning the same mistake every week means nobody has fixed it.\n\nChecks only catch what you thought of. A reading of 12 mm when it really rained 20 passes every check: it’s in range, not empty, unique and from a known station. So also compare each station with its neighbours, look at the chart, and when every check passes, say what is true: no known problem was found.",
+  "t": "Uma verificação é uma regra que os dados precisam cumprir antes que alguém os use. Dentro do intervalo: chuva de 0 a 300 mm, uma nota de 0 a 20. Não vazio: toda leitura tem um valor. Único: uma leitura por estação por dia, uma linha por aluno. Valores permitidos: só as estações, turmas ou códigos que conhecemos. Algumas verificações comparam: as contagens das turmas batem com o total de matrículas da escola? O lote de hoje chegou? A data é desta semana, e não do ano passado?\n\nEm SQL, escreva cada verificação como uma consulta que encontra as linhas ruins. Se ela não retorna nada, a verificação passa; se retorna linhas, esses são os seus problemas, com os detalhes deles. WHERE mm < 0 OR mm > 300 encontra valores fora do intervalo; WHERE mm IS NULL encontra as lacunas; GROUP BY station, day HAVING COUNT(*) > 1 encontra as repetições; e uma junção à esquerda com a lista de estações encontra nomes que não estão nela. Execute-as em cada lote, antes do relatório.\n\nDepois decida o que uma falha faz. Interromper o lote e perder os dados bons junto com os ruins. Separar as linhas ruins e deixar o resto passar. Ou avisar e deixar tudo passar. Escolha pelo que um relatório errado custa: um alerta de enchente não pode esperar, mas um relatório trimestral pode ser segurado por um dia. E corrija os problemas na origem: devolva a leitura ao clube que a fez, para que o lote de amanhã esteja certo. Limpar o mesmo erro toda semana significa que ninguém o corrigiu.\n\nAs verificações só detectam o que você pensou. Uma leitura de 12 mm quando na verdade choveu 20 passa por todas as verificações: está dentro do intervalo, não está vazia, é única e vem de uma estação conhecida. Então compare também cada estação com as vizinhas, olhe o gráfico e, quando todas as verificações passarem, diga o que é verdade: nenhum problema conhecido foi encontrado."
+ },
+ "lessons.1.steps.1.keyTerms.0.term": {
+  "en": "Range check",
+  "t": "Verificação de intervalo"
+ },
+ "lessons.1.steps.1.keyTerms.0.def": {
+  "en": "A value must lie between the lowest and highest values that make sense here, such as 0 to 300 mm for a day’s rain at our stations.",
+  "t": "Um valor deve ficar entre o menor e o maior valor que fazem sentido aqui, como 0 a 300 mm para a chuva de um dia nas nossas estações."
+ },
+ "lessons.1.steps.1.keyTerms.1.term": {
+  "en": "Uniqueness check",
+  "t": "Verificação de unicidade"
+ },
+ "lessons.1.steps.1.keyTerms.1.def": {
+  "en": "Only one row per key, such as one reading per station per day.",
+  "t": "Só uma linha por chave, como uma leitura por estação por dia."
+ },
+ "lessons.1.steps.1.keyTerms.2.term": {
+  "en": "Check as a query",
+  "t": "Verificação como consulta"
+ },
+ "lessons.1.steps.1.keyTerms.2.def": {
+  "en": "A query that returns the bad rows; no rows means the check passes.",
+  "t": "Uma consulta que retorna as linhas ruins; nenhuma linha significa que a verificação passa."
+ },
+ "lessons.1.steps.1.keyTerms.3.term": {
+  "en": "Fix at the source",
+  "t": "Corrigir na origem"
+ },
+ "lessons.1.steps.1.keyTerms.3.def": {
+  "en": "Send a problem back to whoever made the data, so it stops happening.",
+  "t": "Devolver um problema a quem produziu os dados, para que ele pare de acontecer."
+ },
+ "lessons.1.steps.2.prompt": {
+  "en": "Every check passes on today’s batch. What can you say about the data?",
+  "t": "Todas as verificações passam no lote de hoje. O que você pode dizer sobre os dados?"
+ },
+ "lessons.1.steps.2.options.0.text": {
+  "en": "It’s correct",
+  "t": "Estão corretos"
+ },
+ "lessons.1.steps.2.options.1.text": {
+  "en": "No known problem was found",
+  "t": "Nenhum problema conhecido foi encontrado"
+ },
+ "lessons.1.steps.2.options.2.text": {
+  "en": "The checks are broken",
+  "t": "As verificações estão quebradas"
+ },
+ "lessons.1.steps.2.explain": {
+  "en": "Checks find only the problems you thought of. A wrong but believable reading, such as 12 mm when it really rained 20, passes them all, so also compare with neighbours and look at the chart.",
+  "t": "As verificações só encontram os problemas que você pensou. Uma leitura errada, mas plausível, como 12 mm quando na verdade choveu 20, passa por todas, então compare também com os vizinhos e olhe o gráfico."
+ },
+ "lessons.1.steps.3.prompt": {
+  "en": "A range check as a query: find every reading outside 0 to 300 mm. Show the station, the day and the amount.",
+  "t": "Uma verificação de intervalo como consulta: encontre toda leitura fora de 0 a 300 mm. Mostre a estação, o dia e o valor."
+ },
+ "lessons.1.steps.3.hints.0": {
+  "en": "The starter finds the 999, but a reading can also be too low.",
+  "t": "O código inicial encontra o 999, mas uma leitura também pode ser baixa demais."
+ },
+ "lessons.1.steps.3.hints.1": {
+  "en": "WHERE mm < 0 OR mm > 300",
+  "t": "WHERE mm < 0 OR mm > 300"
+ },
+ "lessons.1.steps.3.explain": {
+  "en": "A reading is out of range if it’s below 0 or above 300, so the two conditions are joined with OR: Riverside’s 999 and Market’s -3. Lakeside’s NULL isn’t returned: a comparison with an empty value is never true, so gaps need their own check.",
+  "t": "Uma leitura está fora do intervalo se for menor que 0 ou maior que 300, então as duas condições são unidas com OR: o 999 de Riverside e o -3 de Market. O NULL de Lakeside não é retornado: uma comparação com um valor vazio nunca é verdadeira, então as lacunas precisam da própria verificação."
+ },
+ "lessons.1.steps.4.prompt": {
+  "en": "Which of these faults would the range check (0 to 300 mm) let through? Choose all that apply.",
+  "t": "Quais destas falhas a verificação de intervalo (0 a 300 mm) deixaria passar? Escolha todas as que se aplicam."
+ },
+ "lessons.1.steps.4.options.0.text": {
+  "en": "12 mm typed when it really rained 21",
+  "t": "12 mm digitado quando na verdade choveu 21"
+ },
+ "lessons.1.steps.4.options.1.text": {
+  "en": "A reading sent twice",
+  "t": "Uma leitura enviada duas vezes"
+ },
+ "lessons.1.steps.4.options.2.text": {
+  "en": "An empty reading",
+  "t": "Uma leitura vazia"
+ },
+ "lessons.1.steps.4.options.3.text": {
+  "en": "999, the error code",
+  "t": "999, o código de erro"
+ },
+ "lessons.1.steps.4.options.4.text": {
+  "en": "A minus sign: -3",
+  "t": "Um sinal de menos: -3"
+ },
+ "lessons.1.steps.4.explain": {
+  "en": "A range check catches only amounts outside the range, here 999 and -3. A repeat needs the uniqueness check, an empty value the not-empty check, and a believable typo needs a person comparing with neighbours.",
+  "t": "Uma verificação de intervalo só detecta valores fora do intervalo, aqui 999 e -3. Uma repetição exige a verificação de unicidade, um valor vazio exige a de não vazio, e um erro de digitação plausível exige uma pessoa comparando com os vizinhos."
+ },
+ "lessons.1.steps.5.prompt": {
+  "en": "Try it: turn every check off and read the report, then turn them on one by one and note what each finds. Choose what a failure does for a district report that goes out every evening. Then turn off only “No repeats”: how far does Hilltop’s average creep?",
+  "t": "Experimente: desligue todas as verificações e leia o relatório, depois ligue-as uma a uma e anote o que cada uma encontra. Escolha o que uma falha faz para um relatório da secretaria de educação que sai toda noite. Depois desligue só “Sem repetições”: até onde a média de Hilltop vai subindo?"
+ },
+ "lessons.1.steps.6.prompt": {
+  "en": "A uniqueness check: find every station and day that has more than one reading. Show the station, the day and how many readings it has.",
+  "t": "Uma verificação de unicidade: encontre toda estação e dia que tem mais de uma leitura. Mostre a estação, o dia e quantas leituras ele tem."
+ },
+ "lessons.1.steps.6.hints.0": {
+  "en": "The starter counts every group. A check should return only the bad ones.",
+  "t": "O código inicial conta todos os grupos. Uma verificação deve retornar só os ruins."
+ },
+ "lessons.1.steps.6.hints.1": {
+  "en": "Add HAVING COUNT(*) > 1.",
+  "t": "Acrescente HAVING COUNT(*) > 1."
+ },
+ "lessons.1.steps.6.explain": {
+  "en": "GROUP BY station, day makes one group per reading slot; HAVING COUNT(*) > 1 keeps the slots with repeats: Hilltop on Wednesday, twice. “Hiltop” on Wednesday isn’t a repeat to this check: it’s a misspelt station, which the allowed-values check catches.",
+  "t": "GROUP BY station, day cria um grupo por horário de leitura; HAVING COUNT(*) > 1 mantém os horários com repetições: Hilltop na quarta, duas vezes. “Hiltop” na quarta não é uma repetição para esta verificação: é uma estação com o nome escrito errado, que a verificação de valores permitidos detecta."
+ },
+ "lessons.1.steps.7.prompt": {
+  "en": "This check should find the empty readings, but it never returns a row, even when Lakeside’s reading is missing. Which line is wrong?",
+  "t": "Esta verificação deveria encontrar as leituras vazias, mas nunca retorna uma linha, mesmo quando falta a leitura de Lakeside. Qual linha está errada?"
+ },
+ "lessons.1.steps.7.explain": {
+  "en": "Nothing equals NULL, not even NULL, so = NULL is never true and the check always “passes”. IS NULL is the test for an empty value. A check that can’t fail is worse than none: it says all is well.",
+  "t": "Nada é igual a NULL, nem o próprio NULL, então = NULL nunca é verdadeiro e a verificação sempre “passa”. IS NULL é o teste para um valor vazio. Uma verificação que não consegue falhar é pior do que nenhuma: ela diz que está tudo bem."
+ },
+ "lessons.1.steps.8.prompt": {
+  "en": "What do you set the pipeline to do?",
+  "t": "O que você configura o pipeline para fazer?"
+ },
+ "lessons.1.steps.8.who": {
+  "en": "Mr Okafor, science, weather club",
+  "t": "Sr. Okafor, ciências, clube do tempo"
+ },
+ "lessons.1.steps.8.initial": {
+  "en": "O",
+  "t": "O"
+ },
+ "lessons.1.steps.8.situation": {
+  "en": "Tonight’s batch has 20 good readings and one impossible one: 999 from the Riverside gauge. The district’s rainfall report goes out at nine, and farmers use it to plan planting.",
+  "t": "O lote desta noite tem 20 leituras boas e uma impossível: 999 do pluviômetro de Riverside. O relatório de chuva da secretaria de educação sai às nove, e os agricultores o usam para planejar o plantio."
+ },
+ "lessons.1.steps.8.choices.0.label": {
+  "en": "Stop the whole batch until Riverside is fixed.",
+  "t": "Interromper o lote inteiro até Riverside ser corrigido."
+ },
+ "lessons.1.steps.8.choices.0.consequence": {
+  "en": "No wrong number goes out, but neither do the 20 good readings: tonight’s report is empty, and farmers get nothing.",
+  "t": "Nenhum número errado sai, mas as 20 leituras boas também não: o relatório desta noite fica vazio, e os agricultores não recebem nada."
+ },
+ "lessons.1.steps.8.choices.1.label": {
+  "en": "Set the 999 aside, send the rest, and ask the Riverside club to read the gauge again.",
+  "t": "Separar o 999, enviar o resto e pedir ao clube de Riverside que leia o pluviômetro de novo."
+ },
+ "lessons.1.steps.8.choices.1.consequence": {
+  "en": "The report goes out on time with 20 good readings, Riverside is marked as missing, and the problem is fixed at its source for tomorrow.",
+  "t": "O relatório sai no horário, com 20 leituras boas, Riverside aparece como ausente e o problema é corrigido na origem para amanhã."
+ },
+ "lessons.1.steps.8.choices.2.label": {
+  "en": "Let it all through with a warning in the log.",
+  "t": "Deixar tudo passar, com um aviso no registro."
+ },
+ "lessons.1.steps.8.choices.2.consequence": {
+  "en": "The warning sits in a log nobody reads at nine, and the report shows Riverside under a flood. Farmers may plan around a storm that never happened.",
+  "t": "O aviso fica num registro que ninguém lê às nove, e o relatório mostra Riverside sob uma enchente. Os agricultores podem planejar em torno de uma tempestade que nunca aconteceu."
+ },
+ "lessons.1.steps.8.explain": {
+  "en": "Set bad rows aside, let the good data through on time, and fix the problem at its source.",
+  "t": "Separe as linhas ruins, deixe os dados bons passarem no horário e corrija o problema na origem."
+ },
+ "lessons.1.steps.9.prompt": {
+  "en": "Pick one dataset your school sends out. Which four checks would you run on it, and what should happen when each one fails?",
+  "t": "Escolha um conjunto de dados que a sua escola envia. Quais quatro verificações você executaria nele, e o que deve acontecer quando cada uma falhar?"
+ },
+ "lessons.1.steps.9.placeholder": {
+  "en": "For example: “Exam marks: 0 to 100, no blanks, one row per pupil per subject, only subjects on the timetable. Hold the batch if a whole class is missing.”",
+  "t": "Por exemplo: “Notas de prova: 0 a 100, sem brancos, uma linha por aluno por disciplina, só disciplinas que estão na grade. Segurar o lote se faltar uma turma inteira.”"
+ },
+ "lessons.1.steps.10.prompt": {
+  "en": "Project: Five checks on a week of data",
+  "t": "Projeto: Cinco verificações em uma semana de dados"
+ },
+ "lessons.1.steps.10.task": {
+  "en": "Take a week of real or made-up data your school uses (marks, attendance or rain readings). With your data team or a class, write five checks: in range, not empty, unique, allowed values and one comparison (such as counts adding up to the roll). For each, decide what a failure does and who fixes the source. Run the checks by hand or in SQL, and write down what each one found.",
+  "t": "Pegue uma semana de dados reais ou inventados que a sua escola usa (notas, frequência ou leituras de chuva). Com a sua equipe de dados ou uma turma, escreva cinco verificações: dentro do intervalo, não vazio, único, valores permitidos e uma comparação (como contagens que somam o total de matrículas). Para cada uma, decida o que uma falha faz e quem corrige a origem. Execute as verificações à mão ou em SQL e anote o que cada uma encontrou."
+ },
+ "lessons.1.steps.10.deliverable": {
+  "en": "Your five checks (as rules or SQL queries) with what each found, and two sentences: which failure you chose to stop the batch for, and one problem no check could catch.",
+  "t": "Suas cinco verificações (como regras ou consultas SQL) com o que cada uma encontrou, e duas frases: para qual falha você escolheu interromper o lote e um problema que nenhuma verificação poderia detectar."
+ },
+ "lessons.1.steps.10.rubric.0.criterion": {
+  "en": "The five checks cover range, gaps, repeats, allowed values and a comparison.",
+  "t": "As cinco verificações cobrem intervalo, lacunas, repetições, valores permitidos e uma comparação."
+ },
+ "lessons.1.steps.10.rubric.1.criterion": {
+  "en": "Each check says what a failure does and who fixes the source.",
+  "t": "Cada verificação diz o que uma falha faz e quem corrige a origem."
+ },
+ "lessons.1.steps.10.rubric.2.criterion": {
+  "en": "The results say honestly what was and wasn’t found.",
+  "t": "Os resultados dizem com honestidade o que foi e o que não foi encontrado."
+ },
+ "lessons.1.slides.0.title": {
+  "en": "Checks that catch problems",
+  "t": "Verificações que detectam problemas"
+ },
+ "lessons.1.slides.0.note": {
+  "en": "Data engineering · Level 4 · Lesson 2",
+  "t": "Engenharia de dados · Nível 4 · Lição 2"
+ },
+ "lessons.1.slides.0.narration": {
+  "en": "A 999 reached the district. What should have stopped it?",
+  "t": "Um 999 chegou à secretaria de educação. O que deveria tê-lo impedido?"
+ },
+ "lessons.1.slides.1.title": {
+  "en": "Today we will",
+  "t": "Hoje vamos"
+ },
+ "lessons.1.slides.1.bullets": {
+  "en": [
+   "Write checks: range, gaps, repeats, allowed values.",
+   "Write a check as a query that returns the bad rows.",
+   "Decide what a failure does, and fix the source."
+  ],
+  "t": [
+   "Escrever verificações: intervalo, lacunas, repetições, valores permitidos.",
+   "Escrever uma verificação como uma consulta que retorna as linhas ruins.",
+   "Decidir o que uma falha faz e corrigir a origem."
+  ]
+ },
+ "lessons.1.slides.2.title": {
+  "en": "Remember",
+  "t": "Lembre"
+ },
+ "lessons.1.slides.2.bullets": {
+  "en": [
+   "No rows back means the check passes.",
+   "Set bad rows aside; keep good data moving.",
+   "Passing every check isn’t proof."
+  ],
+  "t": [
+   "Nenhuma linha de volta significa que a verificação passa.",
+   "Separe as linhas ruins; mantenha os dados bons em movimento.",
+   "Passar em todas as verificações não é prova."
+  ]
+ },
+ "lessons.1.slides.3.title": {
+  "en": "Planted mistakes",
+  "t": "Erros plantados"
+ },
+ "lessons.1.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): What could go wrong in a mark sheet?",
+   "Teach (8 min): Kinds of checks.",
+   "Write (10 min): Our class’s checks.",
+   "Test (12 min): Find the planted mistakes.",
+   "Wrap-up (5 min): What did no check catch?"
+  ],
+  "t": [
+   "Aquecimento (5 min): O que pode dar errado numa folha de notas?",
+   "Ensinar (8 min): Tipos de verificação.",
+   "Escrever (10 min): As verificações da nossa turma.",
+   "Testar (12 min): Encontre os erros plantados.",
+   "Fechamento (5 min): O que nenhuma verificação detectou?"
+  ]
+ },
+ "lessons.1.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Ask pupils to list mistakes a mark sheet could contain: a mark of 25, a blank, a pupil twice, a class that doesn’t exist.",
+   "Teach (8 min): Turn each mistake into a check. Show one check as a SQL query that returns the bad rows.",
+   "Write (10 min): Groups write four checks for their class’s marks, each as one clear rule.",
+   "Test (12 min): Give each group a made-up sheet with five planted mistakes, one of them believable. Groups run their checks and note what they found and missed.",
+   "Wrap-up (5 min): Reveal the believable mistake no check caught, and discuss how a person would notice it. Then give the exit ticket."
+  ],
+  "t": [
+   "Aquecimento (5 min): Peça aos alunos que listem erros que uma folha de notas poderia ter: uma nota 25, um branco, um aluno duas vezes, uma turma que não existe.",
+   "Ensinar (8 min): Transforme cada erro numa verificação. Mostre uma verificação como uma consulta SQL que retorna as linhas ruins.",
+   "Escrever (10 min): Os grupos escrevem quatro verificações para as notas da turma, cada uma como uma regra clara.",
+   "Testar (12 min): Dê a cada grupo uma folha inventada com cinco erros plantados, um deles plausível. Os grupos executam as verificações e anotam o que encontraram e o que deixaram passar.",
+   "Fechamento (5 min): Revele o erro plausível que nenhuma verificação detectou e discuta como uma pessoa o notaria. Depois entregue o bilhete de saída."
+  ]
+ },
+ "lessons.1.slides.3.note": {
+  "en": "Plant one mistake of each kind, plus one believable one (such as 12 typed as 15) that no rule can catch. Use made-up names.",
+  "t": "Plante um erro de cada tipo, mais um plausível (como 12 digitado no lugar de 15) que nenhuma regra consiga detectar. Use nomes inventados."
+ },
+ "lessons.1.slides.3.narration": {
+  "en": "Five planted mistakes. Which do your checks catch?",
+  "t": "Cinco erros plantados. Quais as suas verificações detectam?"
+ },
+ "lessons.1.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Vamos discutir"
+ },
+ "lessons.1.slides.4.bullets": {
+  "en": [
+   "Which check would have stopped the 999?",
+   "Why is “= NULL” a check that can never fail?",
+   "What should we say when every check passes?"
+  ],
+  "t": [
+   "Qual verificação teria impedido o 999?",
+   "Por que “= NULL” é uma verificação que nunca pode falhar?",
+   "O que devemos dizer quando todas as verificações passam?"
+  ]
+ },
+ "lessons.1.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Bilhete de saída"
+ },
+ "lessons.1.slides.5.bullets": {
+  "en": [
+   "Write one check as a rule and as a SQL query, and what should happen when it fails."
+  ],
+  "t": [
+   "Escreva uma verificação como regra e como consulta SQL, e o que deve acontecer quando ela falhar."
+  ]
+ },
+ "lessons.1.slides.5.narration": {
+  "en": "Check every batch, decide what failure does, fix the source.",
+  "t": "Verifique cada lote, decida o que uma falha faz, corrija a origem."
+ },
+ "lessons.1.kit.0.title": {
+  "en": "Slides: Checks that catch problems",
+  "t": "Slides: Verificações que detectam problemas"
+ },
+ "lessons.1.kit.1.title": {
+  "en": "Lesson plan and worksheet: Checks that catch problems",
+  "t": "Plano da lição e folha de atividades: Verificações que detectam problemas"
+ },
+ "lessons.1.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "O vídeo da lição (240p, para a aula ou o WhatsApp)"
+ },
+ "lessons.2.title": {
+  "en": "Who may see what",
+  "t": "Quem pode ver o quê"
+ },
+ "lessons.2.tryTomorrow": {
+  "en": "Play “Guess who” with a made-up pupil: give one fact at a time (her class, her age, her bus stop, her sports team). After how many facts can the class tell who she is?",
+  "t": "Jogue “Adivinhe quem” com uma aluna inventada: dê um fato de cada vez (a turma dela, a idade, o ponto de ônibus, o time esportivo). Depois de quantos fatos a turma consegue dizer quem ela é?"
+ },
+ "lessons.2.materials": {
+  "en": [
+   "Fact cards about one made-up pupil",
+   "A list of the school’s reports and who reads them",
+   "Optional: a phone or computer for the SQL step"
+  ],
+  "t": [
+   "Cartões de fatos sobre uma aluna inventada",
+   "Uma lista dos relatórios da escola e de quem os lê",
+   "Opcional: um celular ou computador para a etapa de SQL"
+  ]
+ },
+ "lessons.2.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Assistir"
+ },
+ "lessons.2.steps.0.title": {
+  "en": "Who may see what",
+  "t": "Quem pode ver o quê"
+ },
+ "lessons.2.steps.0.chapters.0.label": {
+  "en": "One pupil in Six B",
+  "t": "Uma aluna do 6º B"
+ },
+ "lessons.2.steps.0.chapters.1.label": {
+  "en": "Least privilege",
+  "t": "Privilégio mínimo"
+ },
+ "lessons.2.steps.0.chapters.2.label": {
+  "en": "Summaries, not rows",
+  "t": "Resumos, não linhas"
+ },
+ "lessons.2.steps.0.chapters.3.label": {
+  "en": "Small groups",
+  "t": "Grupos pequenos"
+ },
+ "lessons.2.steps.0.chapters.4.label": {
+  "en": "Numbers aren’t anonymous",
+  "t": "Números não são anônimos"
+ },
+ "lessons.2.steps.0.chapters.5.label": {
+  "en": "In SQL",
+  "t": "Em SQL"
+ },
+ "lessons.2.steps.0.chapters.6.label": {
+  "en": "The lab",
+  "t": "O lab"
+ },
+ "lessons.2.steps.0.chapters.7.label": {
+  "en": "Remember and try it",
+  "t": "Lembre e experimente"
+ },
+ "lessons.2.steps.0.checkpoint.question.prompt": {
+  "en": "The district asks for this term’s maths results. Which is safest to send?",
+  "t": "A secretaria de educação pede os resultados de matemática deste trimestre. O que é mais seguro enviar?"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.0.text": {
+  "en": "Every pupil’s mark, with names",
+  "t": "A nota de cada aluno, com nomes"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.1.text": {
+  "en": "Every pupil’s mark, with numbers instead of names",
+  "t": "A nota de cada aluno, com números no lugar dos nomes"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.2.text": {
+  "en": "Averages per class, hiding groups under five",
+  "t": "Médias por turma, escondendo grupos com menos de cinco"
+ },
+ "lessons.2.steps.0.checkpoint.question.explain": {
+  "en": "Averages answer the district’s question without describing any child, and hiding groups under five stops anyone picking a child out. Numbers instead of names still describe each child, one row at a time.",
+  "t": "Médias respondem à pergunta da secretaria de educação sem descrever nenhuma criança, e esconder grupos com menos de cinco impede que alguém identifique uma criança. Números no lugar de nomes ainda descrevem cada criança, uma linha de cada vez."
+ },
+ "lessons.2.steps.0.transcript": {
+  "en": "A district report said: in Class Six B, one pupil has a disability and failed maths. There is one pupil with a disability in Six B. Everyone knew who. Today: who may see what, and how to share data without exposing a child. Start with roles. A class teacher sees her own class. The head sees the whole school. Parents see their own child. The district sees summaries. Each role gets only what it needs: that's least privilege. Share summaries, not rows, whenever you can. A class average answers the district's question without a single name. But small groups give people away. So hide any group of fewer than five pupils. One pupil with a disability in Six B is not a statistic; it's a person. Report it at school level, or not at all. Replacing names with numbers is a start, not the end. It's called pseudonymisation: whoever holds the list of numbers can bring the names back. And a few ordinary facts can do it too. In a well-known study, birth date, sex and postcode alone picked out eighty-seven people in a hundred in the United States. In a school, a class, an age and one detail can be enough. Quick check! The district asks for this term's maths results. Which is safest to send? Averages per class, with groups under five hidden. Numbers instead of names still describe each child, and anyone with the list can match them back. In SQL, GROUP BY makes the averages, and HAVING drops the small groups. One line of HAVING protects every child in a small class. In the app, six harmless posts by Lina, fourteen, add up to her school, her route home and when her house is empty. Choose who sees each one. School data works the same way: each column alone is harmless, but together they point at a child. Your turn. We replaced every name with a number before sharing a file. Is the data anonymous now? No: it's pseudonymised, and the list or a few facts can bring the child back. Remember: each role sees only what it needs. Share summaries, and hide groups under five. And numbers instead of names are a start, not the end. Try it in class tomorrow: play “Guess who” with a made-up pupil. Give one fact at a time: her class, her age, her bus stop, her sports team. After how many facts can the class tell who she is?",
+  "t": "Um relatório da secretaria de educação dizia: na turma do 6º B, uma aluna tem uma deficiência e foi reprovada em matemática. Há uma só aluna com deficiência no 6º B. Todo mundo sabia quem era. Hoje: quem pode ver o quê, e como compartilhar dados sem expor uma criança. Comece pelos papéis. Uma professora da turma vê a própria turma. A direção vê a escola inteira. Os pais veem o próprio filho. A secretaria de educação vê resumos. Cada papel recebe só o que precisa: isso é privilégio mínimo. Compartilhe resumos, não linhas, sempre que puder. Uma média da turma responde à pergunta da secretaria sem um único nome. Mas grupos pequenos entregam as pessoas. Então esconda qualquer grupo com menos de cinco alunos. Uma aluna com deficiência no 6º B não é uma estatística; é uma pessoa. Informe no nível da escola, ou não informe. Trocar nomes por números é um começo, não o fim. Isso se chama pseudonimização: quem tem a lista de números pode trazer os nomes de volta. E alguns fatos comuns também podem fazer isso. Num estudo famoso, data de nascimento, sexo e CEP, só esses três, identificaram 87 em cada 100 pessoas nos Estados Unidos. Numa escola, uma turma, uma idade e um detalhe podem bastar. Verificação rápida! A secretaria de educação pede os resultados de matemática deste trimestre. O que é mais seguro enviar? Médias por turma, com grupos com menos de cinco escondidos. Números no lugar de nomes ainda descrevem cada criança, e qualquer um com a lista pode fazer a correspondência de volta. Em SQL, GROUP BY faz as médias, e HAVING descarta os grupos pequenos. Uma linha de HAVING protege toda criança de uma turma pequena. No app, seis publicações inofensivas da Lina, de 14 anos, somadas revelam a escola dela, o caminho de volta para casa e quando a casa dela fica vazia. Escolha quem vê cada uma. Os dados da escola funcionam do mesmo jeito: cada coluna sozinha é inofensiva, mas juntas apontam para uma criança. Sua vez. Trocamos todo nome por um número antes de compartilhar um arquivo. Os dados agora são anônimos? Não: são pseudonimizados, e a lista ou alguns fatos podem trazer a criança de volta. Lembre: cada papel vê só o que precisa. Compartilhe resumos e esconda grupos com menos de cinco. E números no lugar de nomes são um começo, não o fim. Experimente na aula de amanhã: jogue “Adivinhe quem” com uma aluna inventada. Dê um fato de cada vez: a turma dela, a idade, o ponto de ônibus, o time esportivo. Depois de quantos fatos a turma consegue dizer quem ela é?"
+ },
+ "lessons.2.steps.1.prompt": {
+  "en": "Read",
+  "t": "Ler"
+ },
+ "lessons.2.steps.1.title": {
+  "en": "Roles, summaries and small groups",
+  "t": "Papéis, resumos e grupos pequenos"
+ },
+ "lessons.2.steps.1.body": {
+  "en": "Start with roles, not people. A class teacher sees her own class’s marks and attendance. The head sees the whole school. A parent sees their own child. The nurse sees health notes. The district sees summaries. Each role gets only what its job needs: that’s least privilege. Write it as an access table, with the records down the side, the roles across the top, and in each cell “full”, “summary” or “none”, and check it against what each system really allows.\n\nShare summaries, not rows, whenever you can. A class average answers the district’s question without a single name. But small groups give people away: “in 6B, one pupil has a disability and failed maths” is not a statistic, it’s a person, and everyone at the school knows who. So never publish a count or an average for a group of fewer than five pupils. Report it at school level, merge it with another group, or leave it out. In SQL, GROUP BY makes the averages and HAVING COUNT(*) >= 5 drops the small groups.\n\nReplacing names with numbers is a start, not the end. It’s called pseudonymisation: whoever holds the list of numbers can bring the names back, so the list must be kept apart and locked. And ordinary facts can do it too. In a well-known study, date of birth, sex and postcode alone picked out 87% of people in the United States. In a school, a class, an age and one detail, such as a bus stop or a sports team, can be enough.\n\nSo before data leaves the school, ask three questions. Who will read it, and what does their role need? Could any row, or any small group, point at one child? And what else is already known (a class photo, a team list, a newsletter) that could be put next to it? The law agrees: data protection laws such as Kenya’s (2019), Nigeria’s (2023), Egypt’s (Law 151 of 2020) and South Africa’s POPIA ask for the least data for the purpose, and extra care for children.",
+  "t": "Comece pelos papéis, não pelas pessoas. Uma professora da turma vê as notas e a frequência da própria turma. A direção vê a escola inteira. Um pai ou uma mãe vê o próprio filho. A enfermeira vê as anotações de saúde. A secretaria de educação vê resumos. Cada papel recebe só o que o trabalho dele exige: isso é privilégio mínimo. Escreva isso como uma tabela de acesso, com os registros na lateral, os papéis no alto e, em cada célula, “total”, “resumo” ou “nenhum”, e confira-a com o que cada sistema realmente permite.\n\nCompartilhe resumos, não linhas, sempre que puder. Uma média da turma responde à pergunta da secretaria de educação sem um único nome. Mas grupos pequenos entregam as pessoas: “no 6º B, uma aluna tem uma deficiência e foi reprovada em matemática” não é uma estatística, é uma pessoa, e todo mundo na escola sabe quem é. Então nunca publique uma contagem ou uma média para um grupo com menos de cinco alunos. Informe no nível da escola, una-o a outro grupo ou deixe-o de fora. Em SQL, GROUP BY faz as médias e HAVING COUNT(*) >= 5 descarta os grupos pequenos.\n\nTrocar nomes por números é um começo, não o fim. Isso se chama pseudonimização: quem tem a lista de números pode trazer os nomes de volta, então a lista deve ser guardada à parte e trancada. E fatos comuns também podem fazer isso. Num estudo famoso, data de nascimento, sexo e CEP, só esses três, identificaram 87% das pessoas nos Estados Unidos. Numa escola, uma turma, uma idade e um detalhe, como um ponto de ônibus ou um time esportivo, podem bastar.\n\nEntão, antes de os dados saírem da escola, faça três perguntas. Quem vai ler, e do que o papel dessa pessoa precisa? Alguma linha, ou algum grupo pequeno, poderia apontar para uma criança? E o que mais já é conhecido (uma foto da turma, uma lista de um time, um boletim informativo) que poderia ser colocado ao lado? A lei concorda: leis de proteção de dados como as do Quênia (2019), da Nigéria (2023), do Egito (Lei 151 de 2020) e a POPIA da África do Sul pedem o mínimo de dados para a finalidade e cuidado extra com crianças."
+ },
+ "lessons.2.steps.1.keyTerms.0.term": {
+  "en": "Least privilege",
+  "t": "Privilégio mínimo"
+ },
+ "lessons.2.steps.1.keyTerms.0.def": {
+  "en": "Each role sees only the data its job needs, and no more.",
+  "t": "Cada papel vê só os dados de que o trabalho dele precisa, e nada além."
+ },
+ "lessons.2.steps.1.keyTerms.1.term": {
+  "en": "Small-group rule",
+  "t": "Regra do grupo pequeno"
+ },
+ "lessons.2.steps.1.keyTerms.1.def": {
+  "en": "Never publish a count or average for fewer than five pupils; merge or hide the group.",
+  "t": "Nunca publique uma contagem ou média para menos de cinco alunos; una ou esconda o grupo."
+ },
+ "lessons.2.steps.1.keyTerms.2.term": {
+  "en": "Pseudonymisation",
+  "t": "Pseudonimização"
+ },
+ "lessons.2.steps.1.keyTerms.2.def": {
+  "en": "Replacing names with numbers. Whoever holds the list, or a few facts, can bring the names back.",
+  "t": "Trocar nomes por números. Quem tem a lista, ou alguns fatos, pode trazer os nomes de volta."
+ },
+ "lessons.2.steps.1.keyTerms.3.term": {
+  "en": "Re-identification",
+  "t": "Reidentificação"
+ },
+ "lessons.2.steps.1.keyTerms.3.def": {
+  "en": "Finding who a row is about by putting harmless facts together.",
+  "t": "Descobrir de quem é uma linha juntando fatos inofensivos."
+ },
+ "lessons.2.steps.2.prompt": {
+  "en": "Every name was replaced with a number before a file was shared. Is the data anonymous now?",
+  "t": "Todo nome foi trocado por um número antes de um arquivo ser compartilhado. Os dados agora são anônimos?"
+ },
+ "lessons.2.steps.2.options.0.text": {
+  "en": "Yes: without names, nobody can tell",
+  "t": "Sim: sem nomes, ninguém consegue saber"
+ },
+ "lessons.2.steps.2.options.1.text": {
+  "en": "No: it’s pseudonymised; the list or a few facts can identify a child",
+  "t": "Não: são pseudonimizados; a lista ou alguns fatos podem identificar uma criança"
+ },
+ "lessons.2.steps.2.options.2.text": {
+  "en": "Only if the file is a CSV",
+  "t": "Só se o arquivo for um CSV"
+ },
+ "lessons.2.steps.2.explain": {
+  "en": "That’s pseudonymisation, not anonymisation. Whoever holds the list of numbers can bring the names back, and a few ordinary facts, such as class, age and one detail, can do it too.",
+  "t": "Isso é pseudonimização, não anonimização. Quem tem a lista de números pode trazer os nomes de volta, e alguns fatos comuns, como turma, idade e um detalhe, também podem fazer isso."
+ },
+ "lessons.2.steps.3.prompt": {
+  "en": "Match each role to what it should see.",
+  "t": "Ligue cada papel ao que ele deve ver."
+ },
+ "lessons.2.steps.3.pairs.0.left": {
+  "en": "A class teacher",
+  "t": "Uma professora da turma"
+ },
+ "lessons.2.steps.3.pairs.0.right": {
+  "en": "Her own class’s marks and attendance",
+  "t": "As notas e a frequência da própria turma"
+ },
+ "lessons.2.steps.3.pairs.1.left": {
+  "en": "A parent",
+  "t": "Um pai ou uma mãe"
+ },
+ "lessons.2.steps.3.pairs.1.right": {
+  "en": "Their own child’s marks",
+  "t": "As notas do próprio filho"
+ },
+ "lessons.2.steps.3.pairs.2.left": {
+  "en": "The school nurse",
+  "t": "A enfermeira da escola"
+ },
+ "lessons.2.steps.3.pairs.2.right": {
+  "en": "Health notes, not marks",
+  "t": "Anotações de saúde, não notas"
+ },
+ "lessons.2.steps.3.pairs.3.left": {
+  "en": "The district office",
+  "t": "A secretaria de educação"
+ },
+ "lessons.2.steps.3.pairs.3.right": {
+  "en": "Summaries, with small groups hidden",
+  "t": "Resumos, com grupos pequenos escondidos"
+ },
+ "lessons.2.steps.3.explain": {
+  "en": "Least privilege: each role gets what its job needs. The nurse needs health notes but not marks; the district needs summaries, not children.",
+  "t": "Privilégio mínimo: cada papel recebe o que o trabalho dele exige. A enfermeira precisa das anotações de saúde, mas não das notas; a secretaria de educação precisa de resumos, não de crianças."
+ },
+ "lessons.2.steps.4.prompt": {
+  "en": "The district’s report: each class’s number of pupils and average mark (to 1 decimal place), hiding any class with fewer than 5 pupils.",
+  "t": "O relatório da secretaria de educação: o número de alunos e a nota média (com 1 casa decimal) de cada turma, escondendo qualquer turma com menos de 5 alunos."
+ },
+ "lessons.2.steps.4.hints.0": {
+  "en": "Run it: 6C has only 3 pupils, so its average describes three children.",
+  "t": "Execute: o 6C tem só 3 alunos, então a média dele descreve três crianças."
+ },
+ "lessons.2.steps.4.hints.1": {
+  "en": "Add HAVING COUNT(*) >= 5 after GROUP BY.",
+  "t": "Acrescente HAVING COUNT(*) >= 5 depois de GROUP BY."
+ },
+ "lessons.2.steps.4.explain": {
+  "en": "GROUP BY class makes the summaries; HAVING COUNT(*) >= 5 drops 6C, whose three pupils could be picked out. 6A (6 pupils) and 6B (7) stay. One line protects every child in a small class.",
+  "t": "GROUP BY class cria os resumos; HAVING COUNT(*) >= 5 descarta o 6C, cujos três alunos poderiam ser identificados. O 6A (6 alunos) e o 6B (7) ficam. Uma linha protege toda criança de uma turma pequena."
+ },
+ "lessons.2.steps.5.prompt": {
+  "en": "Try it: read Lina’s six posts as a stranger would, then choose who sees each one until the stranger learns nothing useful. Which two posts were harmless alone but risky together? The same happens when a report puts class, age and one detail side by side.",
+  "t": "Experimente: leia as seis publicações da Lina como um estranho leria e depois escolha quem vê cada uma até que o estranho não aprenda nada útil. Quais duas publicações eram inofensivas sozinhas, mas arriscadas juntas? Acontece o mesmo quando um relatório põe lado a lado turma, idade e um detalhe."
+ },
+ "lessons.2.steps.6.prompt": {
+  "en": "A report query returns the row: 6B | hearing | 1 | 7.0. What’s the problem?",
+  "t": "Uma consulta de relatório retorna a linha: 6B | hearing | 1 | 7.0. Qual é o problema?"
+ },
+ "lessons.2.steps.6.options.0.text": {
+  "en": "It points at one child’s need and mark",
+  "t": "Ela aponta para a necessidade e a nota de uma criança"
+ },
+ "lessons.2.steps.6.options.1.text": {
+  "en": "AVG gives the wrong answer for one row",
+  "t": "AVG dá a resposta errada para uma linha"
+ },
+ "lessons.2.steps.6.options.2.text": {
+  "en": "Nothing: there are no names in it",
+  "t": "Nenhum: não há nomes nela"
+ },
+ "lessons.2.steps.6.explain": {
+  "en": "A group of one is a person. Everyone who knows 6B knows which child has a hearing need, so the row reveals that child’s mark too. Add HAVING COUNT(*) >= 5, or report needs at school level.",
+  "t": "Um grupo de um é uma pessoa. Todo mundo que conhece o 6B sabe qual criança tem uma necessidade auditiva, então a linha revela também a nota dessa criança. Acrescente HAVING COUNT(*) >= 5 ou informe as necessidades no nível da escola."
+ },
+ "lessons.2.steps.7.prompt": {
+  "en": "If each column on its own is harmless, the whole table is safe to publish.",
+  "t": "Se cada coluna sozinha é inofensiva, a tabela inteira é segura para publicar."
+ },
+ "lessons.2.steps.7.explain": {
+  "en": "Harmless facts add up. A class, an age and a bus stop are each harmless, but together they can point at one child. Judge the combination, and what else is already known.",
+  "t": "Fatos inofensivos se somam. Uma turma, uma idade e um ponto de ônibus são inofensivos cada um, mas juntos podem apontar para uma criança. Julgue a combinação e o que mais já é conhecido."
+ },
+ "lessons.2.steps.8.prompt": {
+  "en": "What do you advise?",
+  "t": "O que você aconselha?"
+ },
+ "lessons.2.steps.8.who": {
+  "en": "Dr Farah, education lecturer",
+  "t": "Dra. Farah, professora universitária de educação"
+ },
+ "lessons.2.steps.8.initial": {
+  "en": "F",
+  "t": "F"
+ },
+ "lessons.2.steps.8.situation": {
+  "en": "A university researcher asks the school for a file of every pupil’s marks, date of birth, home village and special needs, “anonymised, with numbers instead of names”, for a study of rural attainment. The head asks Dr Farah what to do.",
+  "t": "Um pesquisador universitário pede à escola um arquivo com a nota, a data de nascimento, o povoado de origem e as necessidades especiais de cada aluno, “anonimizado, com números no lugar dos nomes”, para um estudo sobre o desempenho rural. A direção pergunta à Dra. Farah o que fazer."
+ },
+ "lessons.2.steps.8.choices.0.label": {
+  "en": "Send it: without names, it’s anonymous.",
+  "t": "Enviar: sem nomes, é anônimo."
+ },
+ "lessons.2.steps.8.choices.0.consequence": {
+  "en": "Birth date, village and special needs together can identify most children in a small school. Numbers instead of names is pseudonymisation, not anonymity.",
+  "t": "Data de nascimento, povoado e necessidades especiais juntos podem identificar a maioria das crianças de uma escola pequena. Números no lugar de nomes é pseudonimização, não anonimato."
+ },
+ "lessons.2.steps.8.choices.1.label": {
+  "en": "Ask what the study needs, and offer summaries: averages by village and age group, with groups under five hidden.",
+  "t": "Perguntar do que o estudo precisa e oferecer resumos: médias por povoado e faixa etária, com grupos com menos de cinco escondidos."
+ },
+ "lessons.2.steps.8.choices.1.consequence": {
+  "en": "The research question is answered, no child can be picked out, and the school shares the least data for the purpose, as the law asks.",
+  "t": "A pergunta da pesquisa é respondida, nenhuma criança pode ser identificada e a escola compartilha o mínimo de dados para a finalidade, como a lei pede."
+ },
+ "lessons.2.steps.8.choices.2.label": {
+  "en": "Refuse all research requests.",
+  "t": "Recusar todos os pedidos de pesquisa."
+ },
+ "lessons.2.steps.8.choices.2.consequence": {
+  "en": "Good research can help rural schools. The answer isn’t no data, but the least data that answers the question, safely.",
+  "t": "Boas pesquisas podem ajudar as escolas rurais. A resposta não é nenhum dado, mas o mínimo de dados que responde à pergunta, com segurança."
+ },
+ "lessons.2.steps.8.explain": {
+  "en": "Numbers instead of names isn’t anonymous: share the least data the question needs, as summaries with small groups hidden.",
+  "t": "Números no lugar de nomes não é anônimo: compartilhe o mínimo de dados de que a pergunta precisa, como resumos com os grupos pequenos escondidos."
+ },
+ "lessons.2.steps.9.prompt": {
+  "en": "Draw your school’s access table in your head: which record does someone see today that their role doesn’t need?",
+  "t": "Desenhe de cabeça a tabela de acesso da sua escola: que registro alguém vê hoje que o papel dessa pessoa não exige?"
+ },
+ "lessons.2.steps.9.placeholder": {
+  "en": "For example: “Every teacher can open the whole school’s health notes in the shared drive.”",
+  "t": "Por exemplo: “Todo professor pode abrir as anotações de saúde da escola inteira na pasta compartilhada.”"
+ },
+ "lessons.2.steps.10.prompt": {
+  "en": "Project: An access table",
+  "t": "Projeto: Uma tabela de acesso"
+ },
+ "lessons.2.steps.10.task": {
+  "en": "With your school’s data team, list the main records (marks, attendance, health notes, contact details, photos) down the side and the roles (class teacher, head, nurse, parent, district) across the top. In each cell, write “full”, “summary” or “none”. Then check one real system, such as the shared drive or the school app, against your table, and list the gaps. With a class, play “Guess who” with a made-up pupil to show why summaries need the small-group rule.",
+  "t": "Com a equipe de dados da sua escola, liste os principais registros (notas, frequência, anotações de saúde, dados de contato, fotos) na lateral e os papéis (professor da turma, direção, enfermeira, pai ou mãe, secretaria de educação) no alto. Em cada célula, escreva “total”, “resumo” ou “nenhum”. Depois confira um sistema real, como a pasta compartilhada ou o app da escola, com a sua tabela e liste as lacunas. Com uma turma, jogue “Adivinhe quem” com uma aluna inventada para mostrar por que os resumos precisam da regra do grupo pequeno."
+ },
+ "lessons.2.steps.10.deliverable": {
+  "en": "Your access table (records × roles), and two sentences: the biggest gap you found in a real system, and what you will change first.",
+  "t": "Sua tabela de acesso (registros × papéis) e duas frases: a maior lacuna que você encontrou num sistema real e o que você vai mudar primeiro."
+ },
+ "lessons.2.steps.10.rubric.0.criterion": {
+  "en": "Every record has a full, summary or none for every role.",
+  "t": "Todo registro tem um total, resumo ou nenhum para cada papel."
+ },
+ "lessons.2.steps.10.rubric.1.criterion": {
+  "en": "Summaries going outside the school follow the small-group rule.",
+  "t": "Os resumos que saem da escola seguem a regra do grupo pequeno."
+ },
+ "lessons.2.steps.10.rubric.2.criterion": {
+  "en": "At least one real system was checked, and its gaps listed.",
+  "t": "Pelo menos um sistema real foi conferido e as lacunas dele foram listadas."
+ },
+ "lessons.2.slides.0.title": {
+  "en": "Who may see what",
+  "t": "Quem pode ver o quê"
+ },
+ "lessons.2.slides.0.note": {
+  "en": "Data engineering · Level 4 · Lesson 3",
+  "t": "Engenharia de dados · Nível 4 · Lição 3"
+ },
+ "lessons.2.slides.0.narration": {
+  "en": "“One pupil in 6B.” Everyone knew who.",
+  "t": "“Uma aluna do 6º B.” Todo mundo sabia quem era."
+ },
+ "lessons.2.slides.1.title": {
+  "en": "Today we will",
+  "t": "Hoje vamos"
+ },
+ "lessons.2.slides.1.bullets": {
+  "en": [
+   "Give each role only the data it needs.",
+   "Share summaries, and hide groups under five.",
+   "See how harmless facts can identify a child."
+  ],
+  "t": [
+   "Dar a cada papel só os dados de que ele precisa.",
+   "Compartilhar resumos e esconder grupos com menos de cinco.",
+   "Ver como fatos inofensivos podem identificar uma criança."
+  ]
+ },
+ "lessons.2.slides.2.title": {
+  "en": "Remember",
+  "t": "Lembre"
+ },
+ "lessons.2.slides.2.bullets": {
+  "en": [
+   "Least privilege: each role, only what it needs.",
+   "Groups of fewer than five stay hidden.",
+   "Numbers instead of names is a start, not the end."
+  ],
+  "t": [
+   "Privilégio mínimo: cada papel, só o que precisa.",
+   "Grupos com menos de cinco ficam escondidos.",
+   "Números no lugar de nomes são um começo, não o fim."
+  ]
+ },
+ "lessons.2.slides.3.title": {
+  "en": "Guess who",
+  "t": "Adivinhe quem"
+ },
+ "lessons.2.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): Who sees our marks?",
+   "Teach (8 min): Roles, summaries and small groups.",
+   "Play (10 min): Guess who.",
+   "Decide (12 min): Our access table.",
+   "Wrap-up (5 min): What would we never send out?"
+  ],
+  "t": [
+   "Aquecimento (5 min): Quem vê as nossas notas?",
+   "Ensinar (8 min): Papéis, resumos e grupos pequenos.",
+   "Jogar (10 min): Adivinhe quem.",
+   "Decidir (12 min): A nossa tabela de acesso.",
+   "Fechamento (5 min): O que nunca enviaríamos para fora?"
+  ]
+ },
+ "lessons.2.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Ask who can see pupils’ marks today, and who should.",
+   "Teach (8 min): Draw an access table on the board. Explain least privilege, summaries and the small-group rule, and why numbers instead of names isn’t enough.",
+   "Play (10 min): Read one fact at a time about a made-up pupil. After each fact, pupils guess who it could be. Count how many facts it took.",
+   "Decide (12 min): Groups fill in an access table for five records and five roles, and compare their tables.",
+   "Wrap-up (5 min): Agree one thing the school should never send outside, even without names. Then give the exit ticket."
+  ],
+  "t": [
+   "Aquecimento (5 min): Pergunte quem pode ver as notas dos alunos hoje e quem deveria poder.",
+   "Ensinar (8 min): Desenhe uma tabela de acesso no quadro. Explique privilégio mínimo, resumos e a regra do grupo pequeno, e por que números no lugar de nomes não bastam.",
+   "Jogar (10 min): Leia um fato de cada vez sobre uma aluna inventada. Depois de cada fato, os alunos adivinham quem poderia ser. Conte quantos fatos foram necessários.",
+   "Decidir (12 min): Os grupos preenchem uma tabela de acesso para cinco registros e cinco papéis e comparam as tabelas.",
+   "Fechamento (5 min): Combinem uma coisa que a escola nunca deve enviar para fora, mesmo sem nomes. Depois entregue o bilhete de saída."
+  ]
+ },
+ "lessons.2.slides.3.note": {
+  "en": "Make the “Guess who” pupil entirely made up, and choose facts that don’t describe a real pupil in your school. Keep the discussion of special needs general.",
+  "t": "Faça a aluna do “Adivinhe quem” totalmente inventada e escolha fatos que não descrevam nenhum aluno real da sua escola. Mantenha a discussão sobre necessidades especiais em termos gerais."
+ },
+ "lessons.2.slides.3.narration": {
+  "en": "One fact at a time: when can you tell who she is?",
+  "t": "Um fato de cada vez: quando dá para saber quem ela é?"
+ },
+ "lessons.2.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Vamos discutir"
+ },
+ "lessons.2.slides.4.bullets": {
+  "en": [
+   "After how many facts could we tell who she was?",
+   "Why hide groups of fewer than five?",
+   "What should we ask before data leaves the school?"
+  ],
+  "t": [
+   "Depois de quantos fatos conseguimos saber quem ela era?",
+   "Por que esconder grupos com menos de cinco?",
+   "O que devemos perguntar antes de os dados saírem da escola?"
+  ]
+ },
+ "lessons.2.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Bilhete de saída"
+ },
+ "lessons.2.slides.5.bullets": {
+  "en": [
+   "Write one record, the roles that may see it, and whether each sees it in full or as a summary."
+  ],
+  "t": [
+   "Escreva um registro, os papéis que podem vê-lo e se cada um o vê por inteiro ou em resumo."
+  ]
+ },
+ "lessons.2.slides.5.narration": {
+  "en": "Each role, only what it needs; no group under five.",
+  "t": "Cada papel, só o que precisa; nenhum grupo com menos de cinco."
+ },
+ "lessons.2.kit.0.title": {
+  "en": "Slides: Who may see what",
+  "t": "Slides: Quem pode ver o quê"
+ },
+ "lessons.2.kit.1.title": {
+  "en": "Lesson plan and worksheet: Who may see what",
+  "t": "Plano da lição e folha de atividades: Quem pode ver o quê"
+ },
+ "lessons.2.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "O vídeo da lição (240p, para a aula ou o WhatsApp)"
+ },
+ "lessons.3.title": {
+  "en": "Keep, archive, delete",
+  "t": "Guardar, arquivar, apagar"
+ },
+ "lessons.3.tryTomorrow": {
+  "en": "Play “Keep or delete?”: give groups cards of school records (registers, test papers, sports-day photos, report cards). For each, they decide how long it’s needed and why. Then compare with your school’s real rules.",
+  "t": "Jogue “Guardar ou apagar?”: dê aos grupos cartões de registros da escola (diários, provas, fotos do dia de esportes, boletins). Para cada um, eles decidem por quanto tempo é necessário e por quê. Depois compare com as regras reais da sua escola."
+ },
+ "lessons.3.materials": {
+  "en": [
+   "Record cards: registers, test papers, sports-day photos, report cards, trip forms",
+   "Your ministry’s or school’s retention rules, if there are any",
+   "Optional: a phone or computer for the SQL step"
+  ],
+  "t": [
+   "Cartões de registros: diários, provas, fotos do dia de esportes, boletins, autorizações de passeio",
+   "As regras de retenção do seu ministério ou da sua escola, se houver",
+   "Opcional: um celular ou computador para a etapa de SQL"
+  ]
+ },
+ "lessons.3.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Assistir"
+ },
+ "lessons.3.steps.0.title": {
+  "en": "Keep, archive, delete",
+  "t": "Guardar, arquivar, apagar"
+ },
+ "lessons.3.steps.0.chapters.0.label": {
+  "en": "Nobody decided",
+  "t": "Ninguém decidiu"
+ },
+ "lessons.3.steps.0.chapters.1.label": {
+  "en": "How long?",
+  "t": "Por quanto tempo?"
+ },
+ "lessons.3.steps.0.chapters.2.label": {
+  "en": "Backups",
+  "t": "Backups"
+ },
+ "lessons.3.steps.0.chapters.3.label": {
+  "en": "Archive formats",
+  "t": "Formatos de arquivo"
+ },
+ "lessons.3.steps.0.chapters.4.label": {
+  "en": "Delete on purpose",
+  "t": "Apagar de propósito"
+ },
+ "lessons.3.steps.0.chapters.5.label": {
+  "en": "The lab",
+  "t": "O lab"
+ },
+ "lessons.3.steps.0.chapters.6.label": {
+  "en": "Remember and try it",
+  "t": "Lembre e experimente"
+ },
+ "lessons.3.steps.0.checkpoint.question.prompt": {
+  "en": "Which backup follows the 3-2-1 rule?",
+  "t": "Qual backup segue a regra 3-2-1?"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.0.text": {
+  "en": "Three copies, all on the office computer",
+  "t": "Três cópias, todas no computador do escritório"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.1.text": {
+  "en": "Three copies, on the computer and a USB drive, one kept away from school",
+  "t": "Três cópias, no computador e num pen drive, uma guardada longe da escola"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.2.text": {
+  "en": "One copy on a USB drive",
+  "t": "Uma cópia num pen drive"
+ },
+ "lessons.3.steps.0.checkpoint.question.explain": {
+  "en": "3-2-1 means three copies, on two kinds of storage, with one away from the school. If the office floods or the computer is stolen, the copy across town survives.",
+  "t": "3-2-1 significa três cópias, em dois tipos de armazenamento, com uma longe da escola. Se o escritório alagar ou o computador for roubado, a cópia do outro lado da cidade sobrevive."
+ },
+ "lessons.3.steps.0.transcript": {
+  "en": "Our office cupboard holds registers from nineteen ninety-eight. The old computer still holds every pupil's photo since twenty ten. Nobody decided to keep them, and nobody decided to delete them. Today: how long to keep school records, how to archive them, and how to delete them on purpose. Every kind of record needs a keep-until rule. Some rules come from the law or the ministry, like how long to keep exam results. The rest you decide by the purpose: why do we still need this? A pupil's final results may be needed for many years. Daily registers, perhaps a few. Photos for a sports-day display, until the display comes down. Write each rule in a table: the record, how long, why, and who deletes it. Records you keep must survive. Use the three-two-one rule: three copies, on two kinds of storage, and one away from the school. A fire or a stolen laptop shouldn't take the only copy. And test it. Once a term, restore one file from the backup, and open it. A backup you've never restored is a hope, not a backup. For records you keep for years, choose open formats: CSV for tables, PDF for documents. They'll still open in twenty years. Compress them, and a whole school's term of attendance fits in a few kilobytes. Quick check! Which of these backups follows the three-two-one rule? Three copies, on the computer and on a USB drive, with one kept away from the school. If the office floods, the copy across town survives. When the keep-until date comes, delete on purpose. Empty the bin, wipe old phones and computers before giving them away, and shred paper. Then write in the log what was deleted, and when. A query can find what's due. Select the records whose year, plus the years to keep them, is before this year. That's your deletion list for the term. In the app, compare a school's term of attendance as CSV, JSON and columns, squeezed or not. Which would you archive, and which would you send over a slow connection? Your turn. We've copied the marks to a USB drive every week for a year, but never opened one. What do we really have? A hope, until you restore a file and open it. Remember: give every record a keep-until rule. Back up with three-two-one, in open formats. And delete on purpose, on time, and write it down. Try it in class tomorrow: play “Keep or delete?”. Give groups cards of school records: registers, test papers, sports-day photos, report cards. For each, they decide how long it's needed and why. Then compare with your school's real rules.",
+  "t": "O armário do nosso escritório guarda diários de 1998. O computador velho ainda guarda a foto de cada aluno desde 2010. Ninguém decidiu guardá-los, e ninguém decidiu apagá-los. Hoje: por quanto tempo guardar os registros da escola, como arquivá-los e como apagá-los de propósito. Todo tipo de registro precisa de uma regra de guarda até uma data. Algumas regras vêm da lei ou do ministério, como por quanto tempo guardar resultados de provas. O resto você decide pela finalidade: por que ainda precisamos disto? Os resultados finais de um aluno podem ser necessários por muitos anos. Os diários do dia a dia, talvez por alguns. Fotos para uma exposição do dia de esportes, até a exposição ser desmontada. Escreva cada regra numa tabela: o registro, por quanto tempo, por quê e quem apaga. Os registros que você guarda precisam sobreviver. Use a regra três-dois-um: três cópias, em dois tipos de armazenamento, e uma longe da escola. Um incêndio ou um notebook roubado não deve levar a única cópia. E teste. Uma vez por trimestre, restaure um arquivo do backup e abra-o. Um backup que você nunca restaurou é uma esperança, não um backup. Para os registros que você guarda por anos, escolha formatos abertos: CSV para tabelas, PDF para documentos. Eles ainda vão abrir daqui a vinte anos. Comprima-os, e um trimestre inteiro de frequência de uma escola cabe em poucos quilobytes. Verificação rápida! Qual destes backups segue a regra três-dois-um? Três cópias, no computador e num pen drive, com uma guardada longe da escola. Se o escritório alagar, a cópia do outro lado da cidade sobrevive. Quando chega a data de guarda, apague de propósito. Esvazie a lixeira, limpe celulares e computadores velhos antes de entregá-los e pique o papel. Depois escreva no registro o que foi apagado e quando. Uma consulta pode encontrar o que está na data. Selecione os registros cujo ano, mais os anos de guarda, é anterior a este ano. Essa é a sua lista de exclusão do trimestre. No app, compare um trimestre de frequência de uma escola como CSV, JSON e colunas, comprimido ou não. Qual você arquivaria, e qual enviaria por uma conexão lenta? Sua vez. Copiamos as notas para um pen drive toda semana durante um ano, mas nunca abrimos nenhum. O que realmente temos? Uma esperança, até você restaurar um arquivo e abri-lo. Lembre: dê a cada registro uma regra de guarda até uma data. Faça backup com três-dois-um, em formatos abertos. E apague de propósito, no prazo, e anote. Experimente na aula de amanhã: jogue “Guardar ou apagar?”. Dê aos grupos cartões de registros da escola: diários, provas, fotos do dia de esportes, boletins. Para cada um, eles decidem por quanto tempo é necessário e por quê. Depois compare com as regras reais da sua escola."
+ },
+ "lessons.3.steps.1.prompt": {
+  "en": "Read",
+  "t": "Ler"
+ },
+ "lessons.3.steps.1.title": {
+  "en": "Keep-until rules, backups and deletion",
+  "t": "Regras de guarda, backups e exclusão"
+ },
+ "lessons.3.steps.1.body": {
+  "en": "Every kind of record needs a keep-until rule. Some rules come from the law or your ministry, such as how long to keep exam results or registers. Where they say nothing, decide by the purpose: why do we still need this? A pupil’s final results may be needed for decades; daily registers perhaps for a few years; test papers until the marks are agreed; photos for a sports-day display, until the display comes down. Write each rule in a retention table: the record, how long, why, and who deletes it.\n\nRecords you keep must survive. Use the 3-2-1 rule: three copies, on two kinds of storage (the office computer and an external drive, say), with one kept away from the school, in another building or a cloud service the school has agreed to use. A fire, a flood or a stolen laptop shouldn’t take the only copy. And test it: once a term, restore one file from the backup and open it. A backup you’ve never restored is a hope, not a backup.\n\nFor records you keep for years, choose open formats: CSV for tables, PDF for documents (ideally PDF/A, the archive version). They’ll still open in twenty years, long after today’s apps are gone. Compression and storing by column squeeze them: a school’s whole term of attendance, stored by columns and compressed, fits in about 6 KB. Label every archive with what it holds, its dates, and its keep-until date.\n\nWhen the keep-until date comes, delete on purpose. A query can find what’s due: the records whose year plus their years to keep is before this year. Check the list, then delete, empty the bin, wipe old phones and computers before giving them away (a full reset that also cleans the drive: on phones a factory reset, on computers the reset option that cleans the drive; not just deleting files), and shred paper. Then write in a log what was deleted and when. Data you no longer hold can’t be lost, stolen or misused.",
+  "t": "Todo tipo de registro precisa de uma regra de guarda até uma data. Algumas regras vêm da lei ou do seu ministério, como por quanto tempo guardar resultados de provas ou diários. Onde elas não dizem nada, decida pela finalidade: por que ainda precisamos disto? Os resultados finais de um aluno podem ser necessários por décadas; os diários do dia a dia, talvez por alguns anos; as provas, até as notas serem acertadas; as fotos para uma exposição do dia de esportes, até a exposição ser desmontada. Escreva cada regra numa tabela de retenção: o registro, por quanto tempo, por quê e quem apaga.\n\nOs registros que você guarda precisam sobreviver. Use a regra 3-2-1: três cópias, em dois tipos de armazenamento (o computador do escritório e um disco externo, por exemplo), com uma guardada longe da escola, em outro prédio ou num serviço em nuvem que a escola tenha concordado em usar. Um incêndio, uma enchente ou um notebook roubado não deve levar a única cópia. E teste: uma vez por trimestre, restaure um arquivo do backup e abra-o. Um backup que você nunca restaurou é uma esperança, não um backup.\n\nPara os registros que você guarda por anos, escolha formatos abertos: CSV para tabelas, PDF para documentos (de preferência PDF/A, a versão de arquivamento). Eles ainda vão abrir daqui a vinte anos, muito depois de os apps de hoje desaparecerem. A compressão e o armazenamento por coluna os espremem: um trimestre inteiro de frequência de uma escola, guardado por colunas e comprimido, cabe em cerca de 6 KB. Rotule cada arquivo com o que ele contém, as datas dele e a data até a qual será guardado.\n\nQuando chega a data de guarda, apague de propósito. Uma consulta pode encontrar o que está na data: os registros cujo ano mais os anos de guarda é anterior a este ano. Confira a lista, depois apague, esvazie a lixeira, limpe celulares e computadores velhos antes de entregá-los (uma restauração completa que também limpa o disco: nos celulares, a restauração de fábrica; nos computadores, a opção de redefinição que limpa o disco; não basta apagar os arquivos) e pique o papel. Depois escreva num registro o que foi apagado e quando. Dados que você não guarda mais não podem ser perdidos, roubados nem mal utilizados."
+ },
+ "lessons.3.steps.1.keyTerms.0.term": {
+  "en": "Retention rule",
+  "t": "Regra de retenção"
+ },
+ "lessons.3.steps.1.keyTerms.0.def": {
+  "en": "How long a kind of record is kept, why, and who deletes it.",
+  "t": "Por quanto tempo um tipo de registro é guardado, por quê e quem o apaga."
+ },
+ "lessons.3.steps.1.keyTerms.1.term": {
+  "en": "3-2-1 backup",
+  "t": "Backup 3-2-1"
+ },
+ "lessons.3.steps.1.keyTerms.1.def": {
+  "en": "Three copies, on two kinds of storage, one kept away from the school.",
+  "t": "Três cópias, em dois tipos de armazenamento, uma guardada longe da escola."
+ },
+ "lessons.3.steps.1.keyTerms.2.term": {
+  "en": "Restore test",
+  "t": "Teste de restauração"
+ },
+ "lessons.3.steps.1.keyTerms.2.def": {
+  "en": "Getting a file back from a backup and opening it, to prove the backup works.",
+  "t": "Recuperar um arquivo de um backup e abri-lo, para provar que o backup funciona."
+ },
+ "lessons.3.steps.1.keyTerms.3.term": {
+  "en": "Open format",
+  "t": "Formato aberto"
+ },
+ "lessons.3.steps.1.keyTerms.3.def": {
+  "en": "A format any program can read for years, such as CSV or PDF.",
+  "t": "Um formato que qualquer programa consegue ler por anos, como CSV ou PDF."
+ },
+ "lessons.3.steps.2.prompt": {
+  "en": "The marks are copied to a USB drive every week, but no copy has ever been opened. What do you really have?",
+  "t": "As notas são copiadas para um pen drive toda semana, mas nenhuma cópia nunca foi aberta. O que você realmente tem?"
+ },
+ "lessons.3.steps.2.options.0.text": {
+  "en": "A tested backup",
+  "t": "Um backup testado"
+ },
+ "lessons.3.steps.2.options.1.text": {
+  "en": "A hope: restore a file and open it to be sure",
+  "t": "Uma esperança: restaure um arquivo e abra-o para ter certeza"
+ },
+ "lessons.3.steps.2.options.2.text": {
+  "en": "Three copies",
+  "t": "Três cópias"
+ },
+ "lessons.3.steps.2.explain": {
+  "en": "Until you’ve restored a file and opened it, you don’t know the backup works. Test one restore every term.",
+  "t": "Até você restaurar um arquivo e abri-lo, não sabe se o backup funciona. Teste uma restauração a cada trimestre."
+ },
+ "lessons.3.steps.3.prompt": {
+  "en": "Which of these belong in a row of the school’s retention table? Choose all that apply.",
+  "t": "Quais destes pertencem a uma linha da tabela de retenção da escola? Escolha todos os que se aplicam."
+ },
+ "lessons.3.steps.3.options.0.text": {
+  "en": "The kind of record",
+  "t": "O tipo de registro"
+ },
+ "lessons.3.steps.3.options.1.text": {
+  "en": "How long it is kept",
+  "t": "Por quanto tempo ele é guardado"
+ },
+ "lessons.3.steps.3.options.2.text": {
+  "en": "Why it is kept that long",
+  "t": "Por que ele é guardado por esse tempo"
+ },
+ "lessons.3.steps.3.options.3.text": {
+  "en": "Who deletes it",
+  "t": "Quem o apaga"
+ },
+ "lessons.3.steps.3.options.4.text": {
+  "en": "The names of the pupils in it",
+  "t": "Os nomes dos alunos que estão nele"
+ },
+ "lessons.3.steps.3.explain": {
+  "en": "A retention rule names the record, the period, the reason and who acts. The pupils’ names belong in the records themselves, not in the rules about them.",
+  "t": "Uma regra de retenção diz o registro, o prazo, o motivo e quem age. Os nomes dos alunos pertencem aos próprios registros, não às regras sobre eles."
+ },
+ "lessons.3.steps.4.prompt": {
+  "en": "Make this term’s deletion list: the id and kind of every record whose year plus its years to keep is before 2026. The rules table says how long each kind is kept.",
+  "t": "Faça a lista de exclusão deste trimestre: o id e o tipo de todo registro cujo ano mais os anos de guarda é anterior a 2026. A tabela de regras diz por quanto tempo cada tipo é guardado."
+ },
+ "lessons.3.steps.4.hints.0": {
+  "en": "The starter lists every record. Each kind has its own keep_years, in the rules table.",
+  "t": "O código inicial lista todos os registros. Cada tipo tem o próprio keep_years, na tabela de regras."
+ },
+ "lessons.3.steps.4.hints.1": {
+  "en": "JOIN rules ON rules.kind = records.kind, then WHERE records.year + rules.keep_years < 2026.",
+  "t": "JOIN rules ON rules.kind = records.kind, depois WHERE records.year + rules.keep_years < 2026."
+ },
+ "lessons.3.steps.4.explain": {
+  "en": "The join brings each record’s rule next to it, so the query can add the years: the 2018 and 2020 registers (kept 5 years), the 2024 test paper and the 2023 sports photo (kept 1 year) are due. The 1998 final results stay: they’re kept for 50 years.",
+  "t": "A junção traz a regra de cada registro para junto dele, para que a consulta possa somar os anos: os diários de 2018 e 2020 (guardados por 5 anos), a prova de 2024 e a foto esportiva de 2023 (guardadas por 1 ano) estão no prazo. Os resultados finais de 1998 ficam: são guardados por 50 anos."
+ },
+ "lessons.3.steps.5.prompt": {
+  "en": "Try it: choose “A school, a term” and compare all six ways side by side. Which would you archive for twenty years, and why? Which would you send to the district over 2G? Note the size of Columns, compressed, for a whole term.",
+  "t": "Experimente: escolha “Uma escola, um trimestre” e compare as seis formas lado a lado. Qual você arquivaria por vinte anos, e por quê? Qual enviaria à secretaria de educação por 2G? Anote o tamanho de Colunas, comprimidas, para um trimestre inteiro."
+ },
+ "lessons.3.steps.6.prompt": {
+  "en": "Fill the gaps: once the list has been checked, delete the registers kept for more than 5 years.",
+  "t": "Preencha as lacunas: depois que a lista for conferida, apague os diários guardados por mais de 5 anos."
+ },
+ "lessons.3.steps.6.explain": {
+  "en": "DELETE removes the matching rows, so run the same WHERE with SELECT first and check the list. year + 5 < 2026 picks the registers whose five years are over; > would delete the recent ones and keep the old.",
+  "t": "DELETE remove as linhas que correspondem, então execute o mesmo WHERE com SELECT primeiro e confira a lista. year + 5 < 2026 escolhe os diários cujos cinco anos acabaram; > apagaria os recentes e manteria os antigos."
+ },
+ "lessons.3.steps.7.prompt": {
+  "en": "Before giving away an old school computer, deleting the files and emptying the bin is enough.",
+  "t": "Antes de doar um computador velho da escola, apagar os arquivos e esvaziar a lixeira basta."
+ },
+ "lessons.3.steps.7.explain": {
+  "en": "Deleted files can often be recovered from the disk. Wipe the computer with a full reset that also cleans the drive (or remove and destroy the drive) before it leaves the school, and log that you did it.",
+  "t": "Arquivos apagados muitas vezes podem ser recuperados do disco. Limpe o computador com uma restauração completa que também limpe o disco (ou remova e destrua o disco) antes de ele sair da escola, e registre que você fez isso."
+ },
+ "lessons.3.steps.8.prompt": {
+  "en": "Put the steps of deleting on purpose in order.",
+  "t": "Coloque em ordem as etapas de apagar de propósito."
+ },
+ "lessons.3.steps.8.steps.0": {
+  "en": "Run the query that lists what’s past its date",
+  "t": "Execute a consulta que lista o que passou do prazo"
+ },
+ "lessons.3.steps.8.steps.1": {
+  "en": "Check the list with the head",
+  "t": "Confira a lista com a direção"
+ },
+ "lessons.3.steps.8.steps.2": {
+  "en": "Delete the records and empty the bin",
+  "t": "Apague os registros e esvazie a lixeira"
+ },
+ "lessons.3.steps.8.steps.3": {
+  "en": "Shred the paper copies",
+  "t": "Pique as cópias em papel"
+ },
+ "lessons.3.steps.8.steps.4": {
+  "en": "Write in the log what was deleted, and when",
+  "t": "Escreva no registro o que foi apagado e quando"
+ },
+ "lessons.3.steps.8.explain": {
+  "en": "Find, check, delete, destroy the paper, then log it. Checking first stops a wrong rule deleting records you still need; the log shows the school deleted on purpose, not by accident.",
+  "t": "Encontrar, conferir, apagar, destruir o papel e depois registrar. Conferir primeiro impede que uma regra errada apague registros de que você ainda precisa; o registro mostra que a escola apagou de propósito, não por acidente."
+ },
+ "lessons.3.steps.9.prompt": {
+  "en": "Which records does your school keep that nobody decided to keep? What keep-until rule would you give them?",
+  "t": "Que registros a sua escola guarda que ninguém decidiu guardar? Que regra de guarda você daria a eles?"
+ },
+ "lessons.3.steps.9.placeholder": {
+  "en": "For example: “Every pupil’s photo since 2010 on the old computer. Keep the current year’s for the school app; delete the rest.”",
+  "t": "Por exemplo: “A foto de cada aluno desde 2010 no computador velho. Guardar as do ano atual para o app da escola; apagar o resto.”"
+ },
+ "lessons.3.steps.10.prompt": {
+  "en": "Project: A one-page data policy",
+  "t": "Projeto: Uma política de dados de uma página"
+ },
+ "lessons.3.steps.10.task": {
+  "en": "Write a one-page data policy for your head teacher. Include: a retention table for at least five kinds of records (how long, why, who deletes), the school’s backup plan using 3-2-1 with a termly restore test, the open formats for the archive, and how the school deletes on purpose. Base the periods on your country’s law and ministry rules where they exist, and say where you decided yourselves. With a class, play “Keep or delete?” with record cards first.",
+  "t": "Escreva uma política de dados de uma página para o seu diretor ou diretora. Inclua: uma tabela de retenção para pelo menos cinco tipos de registros (por quanto tempo, por quê, quem apaga), o plano de backup da escola usando 3-2-1 com um teste de restauração a cada trimestre, os formatos abertos do arquivo e como a escola apaga de propósito. Baseie os prazos na lei e nas regras do ministério do seu país, onde existirem, e diga onde vocês mesmos decidiram. Com uma turma, jogue primeiro “Guardar ou apagar?” com cartões de registros."
+ },
+ "lessons.3.steps.10.deliverable": {
+  "en": "The one-page policy, and two sentences: which rule came from the law or ministry and which you decided, and when the first restore test will happen.",
+  "t": "A política de uma página e duas frases: qual regra veio da lei ou do ministério e qual você decidiu, e quando será o primeiro teste de restauração."
+ },
+ "lessons.3.steps.10.rubric.0.criterion": {
+  "en": "The retention table covers at least five records, each with a period, a reason and who deletes.",
+  "t": "A tabela de retenção cobre pelo menos cinco registros, cada um com um prazo, um motivo e quem apaga."
+ },
+ "lessons.3.steps.10.rubric.1.criterion": {
+  "en": "The backup plan follows 3-2-1 and includes a restore test.",
+  "t": "O plano de backup segue o 3-2-1 e inclui um teste de restauração."
+ },
+ "lessons.3.steps.10.rubric.2.criterion": {
+  "en": "Deletion is planned, checked and logged.",
+  "t": "A exclusão é planejada, conferida e registrada."
+ },
+ "lessons.3.slides.0.title": {
+  "en": "Keep, archive, delete",
+  "t": "Guardar, arquivar, apagar"
+ },
+ "lessons.3.slides.0.note": {
+  "en": "Data engineering · Level 4 · Lesson 4",
+  "t": "Engenharia de dados · Nível 4 · Lição 4"
+ },
+ "lessons.3.slides.0.narration": {
+  "en": "Registers from 1998, photos since 2010. Who decided to keep them?",
+  "t": "Diários de 1998, fotos desde 2010. Quem decidiu guardá-los?"
+ },
+ "lessons.3.slides.1.title": {
+  "en": "Today we will",
+  "t": "Hoje vamos"
+ },
+ "lessons.3.slides.1.bullets": {
+  "en": [
+   "Give every record a keep-until rule.",
+   "Back up with 3-2-1, and test a restore.",
+   "Archive in open formats, and delete on purpose."
+  ],
+  "t": [
+   "Dar a cada registro uma regra de guarda até uma data.",
+   "Fazer backup com 3-2-1 e testar uma restauração.",
+   "Arquivar em formatos abertos e apagar de propósito."
+  ]
+ },
+ "lessons.3.slides.2.title": {
+  "en": "Remember",
+  "t": "Lembre"
+ },
+ "lessons.3.slides.2.bullets": {
+  "en": [
+   "Keep it only as long as the purpose needs.",
+   "3-2-1: three copies, two kinds, one away.",
+   "An untested backup is a hope."
+  ],
+  "t": [
+   "Guarde só pelo tempo que a finalidade exige.",
+   "3-2-1: três cópias, dois tipos, uma longe.",
+   "Um backup sem teste é uma esperança."
+  ]
+ },
+ "lessons.3.slides.3.title": {
+  "en": "Keep or delete?",
+  "t": "Guardar ou apagar?"
+ },
+ "lessons.3.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): What’s in the cupboard?",
+   "Teach (8 min): Retention, backups, deletion.",
+   "Sort (12 min): Keep or delete?",
+   "Compare (10 min): Our rules and the real ones.",
+   "Wrap-up (5 min): Who tests the backup?"
+  ],
+  "t": [
+   "Aquecimento (5 min): O que tem no armário?",
+   "Ensinar (8 min): Retenção, backups, exclusão.",
+   "Classificar (12 min): Guardar ou apagar?",
+   "Comparar (10 min): As nossas regras e as reais.",
+   "Fechamento (5 min): Quem testa o backup?"
+  ]
+ },
+ "lessons.3.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Ask what old records the school still holds, on paper and on computers, and who decided to keep them.",
+   "Teach (8 min): Explain keep-until rules, 3-2-1 backups with a restore test, open formats, and deleting on purpose.",
+   "Sort (12 min): Groups take the record cards and decide for each how long it’s needed, why, and who should delete it.",
+   "Compare (10 min): Compare the groups’ periods with the ministry’s or school’s real rules, where they exist. Where there are none, agree one.",
+   "Wrap-up (5 min): Agree who will restore one file from the backup this term, and when. Then give the exit ticket."
+  ],
+  "t": [
+   "Aquecimento (5 min): Pergunte que registros antigos a escola ainda guarda, em papel e em computadores, e quem decidiu guardá-los.",
+   "Ensinar (8 min): Explique regras de guarda até uma data, backups 3-2-1 com um teste de restauração, formatos abertos e apagar de propósito.",
+   "Classificar (12 min): Os grupos pegam os cartões de registros e decidem, para cada um, por quanto tempo ele é necessário, por quê e quem deve apagá-lo.",
+   "Comparar (10 min): Compare os prazos dos grupos com as regras reais do ministério ou da escola, onde existirem. Onde não houver, combinem uma.",
+   "Fechamento (5 min): Combinem quem vai restaurar um arquivo do backup neste trimestre e quando. Depois entregue o bilhete de saída."
+  ]
+ },
+ "lessons.3.slides.3.note": {
+  "en": "Find your ministry’s retention rules before the lesson, if they exist. Use cards that name kinds of records, never real pupils’ documents.",
+  "t": "Encontre as regras de retenção do seu ministério antes da lição, se existirem. Use cartões que nomeiem tipos de registros, nunca documentos de alunos reais."
+ },
+ "lessons.3.slides.3.narration": {
+  "en": "Keep or delete: how long, why, and who decides?",
+  "t": "Guardar ou apagar: por quanto tempo, por quê e quem decide?"
+ },
+ "lessons.3.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Vamos discutir"
+ },
+ "lessons.3.slides.4.bullets": {
+  "en": [
+   "Which record should we keep the longest, and why?",
+   "Where is our away-from-school copy?",
+   "How do we know our backup works?"
+  ],
+  "t": [
+   "Que registro devemos guardar por mais tempo, e por quê?",
+   "Onde está a nossa cópia fora da escola?",
+   "Como sabemos que o nosso backup funciona?"
+  ]
+ },
+ "lessons.3.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Bilhete de saída"
+ },
+ "lessons.3.slides.5.bullets": {
+  "en": [
+   "Write one record, its keep-until rule, the reason, and who deletes it."
+  ],
+  "t": [
+   "Escreva um registro, a regra de guarda dele, o motivo e quem o apaga."
+  ]
+ },
+ "lessons.3.slides.5.narration": {
+  "en": "Keep it on purpose, back it up 3-2-1, delete it on time.",
+  "t": "Guarde de propósito, faça backup 3-2-1, apague no prazo."
+ },
+ "lessons.3.kit.0.title": {
+  "en": "Slides: Keep, archive, delete",
+  "t": "Slides: Guardar, arquivar, apagar"
+ },
+ "lessons.3.kit.1.title": {
+  "en": "Lesson plan and worksheet: Keep, archive, delete",
+  "t": "Plano da lição e folha de atividades: Guardar, arquivar, apagar"
+ },
+ "lessons.3.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "O vídeo da lição (240p, para a aula ou o WhatsApp)"
+ },
+ "lessons.4.title": {
+  "en": "Pipelines, quality and governance: unit check",
+  "t": "Pipelines, qualidade e governança: verificação da unidade"
+ },
+ "lessons.4.tryTomorrow": {
+  "en": "Pick one report your school sends, and write down its pipeline, its checks, who may see it and how long its data is kept: one line each.",
+  "t": "Escolha um relatório que a sua escola envia e escreva o pipeline dele, as verificações, quem pode vê-lo e por quanto tempo os dados dele são guardados: uma linha para cada."
+ },
+ "lessons.4.steps.0.prompt": {
+  "en": "Put a pipeline’s steps in order.",
+  "t": "Coloque em ordem as etapas de um pipeline."
+ },
+ "lessons.4.steps.0.steps.0": {
+  "en": "Extract",
+  "t": "Extrair"
+ },
+ "lessons.4.steps.0.steps.1": {
+  "en": "Transform",
+  "t": "Transformar"
+ },
+ "lessons.4.steps.0.steps.2": {
+  "en": "Load",
+  "t": "Carregar"
+ },
+ "lessons.4.steps.0.steps.3": {
+  "en": "Log the run",
+  "t": "Registrar a execução"
+ },
+ "lessons.4.steps.0.explain": {
+  "en": "Extract reads the data, transform cleans and counts it, load writes the result, and the log records what happened.",
+  "t": "Extrair lê os dados, transformar os limpa e conta, carregar grava o resultado e o registro anota o que aconteceu."
+ },
+ "lessons.4.steps.1.prompt": {
+  "en": "A load fails halfway and the pipeline reruns. Which load gives the right report?",
+  "t": "Uma carga falha no meio e o pipeline é executado de novo. Qual carga dá o relatório certo?"
+ },
+ "lessons.4.steps.1.options.0.text": {
+  "en": "One that replaces the day’s rows",
+  "t": "Uma que substitui as linhas do dia"
+ },
+ "lessons.4.steps.1.options.1.text": {
+  "en": "One that adds the rows again",
+  "t": "Uma que acrescenta as linhas de novo"
+ },
+ "lessons.4.steps.1.options.2.text": {
+  "en": "Either: the computer sorts it out",
+  "t": "Qualquer uma: o computador resolve"
+ },
+ "lessons.4.steps.1.explain": {
+  "en": "Replacing the day’s rows is idempotent: however many reruns, the report is the same. Adding again counts what was already written twice.",
+  "t": "Substituir as linhas do dia é idempotente: não importa quantas repetições, o relatório é o mesmo. Acrescentar de novo conta duas vezes o que já tinha sido gravado."
+ },
+ "lessons.4.steps.2.prompt": {
+  "en": "Retrying fixes a register that says “?” instead of P or A.",
+  "t": "Tentar de novo resolve um diário que traz “?” em vez de P ou A."
+ },
+ "lessons.4.steps.2.explain": {
+  "en": "Bad data fails the same way on every retry. Set the row aside and ask the teacher; retries are for passing faults.",
+  "t": "Dados ruins falham do mesmo jeito em cada nova tentativa. Separe a linha e pergunte ao professor; as novas tentativas são para falhas passageiras."
+ },
+ "lessons.4.steps.3.prompt": {
+  "en": "Match each check to the SQL that runs it.",
+  "t": "Ligue cada verificação ao SQL que a executa."
+ },
+ "lessons.4.steps.3.pairs.0.left": {
+  "en": "In range",
+  "t": "Dentro do intervalo"
+ },
+ "lessons.4.steps.3.pairs.0.right": {
+  "en": "WHERE mm < 0 OR mm > 300",
+  "t": "WHERE mm < 0 OR mm > 300"
+ },
+ "lessons.4.steps.3.pairs.1.left": {
+  "en": "Not empty",
+  "t": "Não vazio"
+ },
+ "lessons.4.steps.3.pairs.1.right": {
+  "en": "WHERE mm IS NULL",
+  "t": "WHERE mm IS NULL"
+ },
+ "lessons.4.steps.3.pairs.2.left": {
+  "en": "No repeats",
+  "t": "Sem repetições"
+ },
+ "lessons.4.steps.3.pairs.2.right": {
+  "en": "GROUP BY station, day HAVING COUNT(*) > 1",
+  "t": "GROUP BY station, day HAVING COUNT(*) > 1"
+ },
+ "lessons.4.steps.3.explain": {
+  "en": "Each check is a query that returns the bad rows: out-of-range amounts, empty values, and station-days with more than one reading.",
+  "t": "Cada verificação é uma consulta que retorna as linhas ruins: valores fora do intervalo, valores vazios e estações-dia com mais de uma leitura."
+ },
+ "lessons.4.steps.4.prompt": {
+  "en": "This check never finds the missing marks. Which line is wrong?",
+  "t": "Esta verificação nunca encontra as notas que faltam. Qual linha está errada?"
+ },
+ "lessons.4.steps.4.explain": {
+  "en": "Nothing equals NULL, so = NULL is never true. IS NULL is the test for an empty value.",
+  "t": "Nada é igual a NULL, então = NULL nunca é verdadeiro. IS NULL é o teste para um valor vazio."
+ },
+ "lessons.4.steps.5.prompt": {
+  "en": "Every check passes on today’s batch. What can you truthfully say?",
+  "t": "Todas as verificações passam no lote de hoje. O que você pode dizer com sinceridade?"
+ },
+ "lessons.4.steps.5.options.0.text": {
+  "en": "No known problem was found",
+  "t": "Nenhum problema conhecido foi encontrado"
+ },
+ "lessons.4.steps.5.options.1.text": {
+  "en": "The data is correct",
+  "t": "Os dados estão corretos"
+ },
+ "lessons.4.steps.5.options.2.text": {
+  "en": "The checks need switching off",
+  "t": "As verificações precisam ser desligadas"
+ },
+ "lessons.4.steps.5.explain": {
+  "en": "Checks catch only the problems someone thought of. A believable wrong reading passes them all.",
+  "t": "As verificações só detectam os problemas em que alguém pensou. Uma leitura errada, mas plausível, passa por todas."
+ },
+ "lessons.4.steps.6.prompt": {
+  "en": "Which are safe ways to share this term’s results with the district? Choose all that apply.",
+  "t": "Quais são formas seguras de compartilhar os resultados deste trimestre com a secretaria de educação? Escolha todas as que se aplicam."
+ },
+ "lessons.4.steps.6.options.0.text": {
+  "en": "Averages per class, hiding groups under five",
+  "t": "Médias por turma, escondendo grupos com menos de cinco"
+ },
+ "lessons.4.steps.6.options.1.text": {
+  "en": "School-level results by subject",
+  "t": "Resultados no nível da escola, por disciplina"
+ },
+ "lessons.4.steps.6.options.2.text": {
+  "en": "Every pupil’s mark with numbers instead of names",
+  "t": "A nota de cada aluno com números no lugar dos nomes"
+ },
+ "lessons.4.steps.6.options.3.text": {
+  "en": "A class of three’s average next to its special needs",
+  "t": "A média de uma turma de três ao lado das necessidades especiais dela"
+ },
+ "lessons.4.steps.6.explain": {
+  "en": "Summaries with the small-group rule answer the district without describing any child. Pupil-level rows with numbers are pseudonymised, not anonymous, and a group of three points at real children.",
+  "t": "Resumos com a regra do grupo pequeno respondem à secretaria de educação sem descrever nenhuma criança. Linhas por aluno com números são pseudonimizadas, não anônimas, e um grupo de três aponta para crianças reais."
+ },
+ "lessons.4.steps.7.prompt": {
+  "en": "Fill the gaps: averages per class, without any class of fewer than 5 pupils.",
+  "t": "Preencha as lacunas: médias por turma, sem nenhuma turma com menos de 5 alunos."
+ },
+ "lessons.4.steps.7.explain": {
+  "en": "HAVING filters the groups after they’re counted, and >= 5 keeps only classes of five or more. WHERE can’t use COUNT, and < 5 would keep only the small groups.",
+  "t": "HAVING filtra os grupos depois de contados, e >= 5 mantém só as turmas com cinco ou mais. WHERE não pode usar COUNT, e < 5 manteria só os grupos pequenos."
+ },
+ "lessons.4.steps.8.prompt": {
+  "en": "Complete the backup rule.",
+  "t": "Complete a regra do backup."
+ },
+ "lessons.4.steps.8.sentence": {
+  "en": [
+   "Keep ",
+   {
+    "blank": 0
+   },
+   " copies, on ",
+   {
+    "blank": 1
+   },
+   " kinds of storage, with ",
+   {
+    "blank": 2
+   },
+   " away from the school, and test a restore every term."
+  ],
+  "t": [
+   "Mantenha ",
+   {
+    "blank": 0
+   },
+   " cópias, em ",
+   {
+    "blank": 1
+   },
+   " tipos de armazenamento, com ",
+   {
+    "blank": 2
+   },
+   " longe da escola, e teste uma restauração a cada trimestre."
+  ]
+ },
+ "lessons.4.steps.8.bank": {
+  "en": [
+   "three",
+   "five",
+   "inside",
+   "two",
+   "one"
+  ],
+  "t": [
+   "três",
+   "cinco",
+   "dentro",
+   "dois",
+   "uma"
+  ]
+ },
+ "lessons.4.steps.8.answers": {
+  "en": [
+   "three",
+   "two",
+   "one"
+  ],
+  "t": [
+   "três",
+   "dois",
+   "uma"
+  ]
+ },
+ "lessons.4.steps.8.explain": {
+  "en": "3-2-1: three copies, two kinds of storage, one away from the school, and a restore test, because an untested backup is only a hope.",
+  "t": "3-2-1: três cópias, dois tipos de armazenamento, uma longe da escola e um teste de restauração, porque um backup sem teste é só uma esperança."
+ },
+ "lessons.4.steps.9.prompt": {
+  "en": "The school is giving away five old laptops. What should happen first?",
+  "t": "A escola vai doar cinco notebooks velhos. O que deve acontecer primeiro?"
+ },
+ "lessons.4.steps.9.options.0.text": {
+  "en": "Wipe each one with a full reset, and log it",
+  "t": "Limpar cada um com uma restauração completa e registrar"
+ },
+ "lessons.4.steps.9.options.1.text": {
+  "en": "Delete the pupils’ folders",
+  "t": "Apagar as pastas dos alunos"
+ },
+ "lessons.4.steps.9.options.2.text": {
+  "en": "Nothing: they’re too old to matter",
+  "t": "Nada: são velhos demais para importar"
+ },
+ "lessons.4.steps.9.explain": {
+  "en": "Deleted files can often be recovered. A full reset that also cleans the drive (or destroying the drive), written in the log, is deleting on purpose.",
+  "t": "Arquivos apagados muitas vezes podem ser recuperados. Uma restauração completa que também limpa o disco (ou a destruição do disco), anotada no registro, é apagar de propósito."
+ },
+ "lessons.4.slides.0.title": {
+  "en": "Pipelines, quality and governance: review",
+  "t": "Pipelines, qualidade e governança: revisão"
+ },
+ "lessons.4.slides.0.note": {
+  "en": "Data engineering · Level 4 · Unit check",
+  "t": "Engenharia de dados · Nível 4 · Verificação da unidade"
+ },
+ "lessons.4.slides.0.narration": {
+  "en": "Let’s look back at the whole unit and see what stuck.",
+  "t": "Vamos olhar para trás, para a unidade inteira, e ver o que ficou."
+ },
+ "lessons.4.slides.1.title": {
+  "en": "In this unit",
+  "t": "Nesta unidade"
+ },
+ "lessons.4.slides.1.bullets": {
+  "en": [
+   "Automate the weekly report",
+   "Checks that catch problems",
+   "Who may see what",
+   "Keep, archive, delete"
+  ],
+  "t": [
+   "Automatize o relatório semanal",
+   "Verificações que detectam problemas",
+   "Quem pode ver o quê",
+   "Guardar, arquivar, apagar"
+  ]
+ },
+ "lessons.4.slides.2.title": {
+  "en": "The big ideas",
+  "t": "As grandes ideias"
+ },
+ "lessons.4.slides.2.bullets": {
+  "en": [
+   "Pipelines must be safe to rerun",
+   "Checks return the bad rows; passing isn’t proof",
+   "Each role, only what it needs; no group under five",
+   "Keep on purpose, back up 3-2-1, delete on time"
+  ],
+  "t": [
+   "Pipelines precisam ser seguros para executar de novo",
+   "As verificações retornam as linhas ruins; passar não é prova",
+   "Cada papel, só o que precisa; nenhum grupo com menos de cinco",
+   "Guarde de propósito, faça backup 3-2-1, apague no prazo"
+  ]
+ },
+ "lessons.4.slides.3.title": {
+  "en": "Team quiz",
+  "t": "Quiz em equipe"
+ },
+ "lessons.4.slides.3.bullets": {
+  "en": [
+   "Teams (2 min): Make teams of four.",
+   "Quiz (20 min): Read each question; teams agree on one answer.",
+   "Explain (10 min): One team explains each answer.",
+   "Wrap-up (8 min): The hardest question goes on the board."
+  ],
+  "t": [
+   "Equipes (2 min): Formem equipes de quatro.",
+   "Quiz (20 min): Leia cada pergunta; as equipes combinam uma resposta.",
+   "Explicar (10 min): Uma equipe explica cada resposta.",
+   "Fechamento (8 min): A pergunta mais difícil vai para o quadro."
+  ]
+ },
+ "lessons.4.slides.3.details": {
+  "en": [
+   "Teams (2 min): Make teams of four and give each team a sheet of paper for its answers.",
+   "Quiz (20 min): Read each question aloud from the quiz sheet; each team agrees on one answer and writes it down.",
+   "Explain (10 min): Reveal each answer and ask one team to explain why it’s right, using an example from the unit.",
+   "Wrap-up (8 min): Write the question most teams got wrong on the board, and work through it together."
+  ],
+  "t": [
+   "Equipes (2 min): Formem equipes de quatro e dê a cada equipe uma folha de papel para as respostas.",
+   "Quiz (20 min): Leia cada pergunta em voz alta da folha do quiz; cada equipe combina uma resposta e a escreve.",
+   "Explicar (10 min): Revele cada resposta e peça a uma equipe que explique por que ela está certa, com um exemplo da unidade.",
+   "Fechamento (8 min): Escreva no quadro a pergunta que mais equipes erraram e resolvam-na juntos."
+  ]
+ },
+ "lessons.4.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Vamos discutir"
+ },
+ "lessons.4.slides.4.bullets": {
+  "en": [
+   "Which report would you automate first?",
+   "Who sees too much in our school today?",
+   "When did we last test a restore?"
+  ],
+  "t": [
+   "Qual relatório você automatizaria primeiro?",
+   "Quem vê demais na nossa escola hoje?",
+   "Quando foi a última vez que testamos uma restauração?"
+  ]
+ },
+ "lessons.4.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Bilhete de saída"
+ },
+ "lessons.4.slides.5.bullets": {
+  "en": [
+   "One change I will propose to our head this term, and why."
+  ],
+  "t": [
+   "Uma mudança que vou propor à nossa direção neste trimestre, e por quê."
+  ]
+ },
+ "lessons.4.kit.0.title": {
+  "en": "Slides: Pipelines, quality and governance: unit check",
+  "t": "Slides: Pipelines, qualidade e governança: verificação da unidade"
+ },
+ "lessons.4.kit.1.title": {
+  "en": "Review plan and quiz sheet: Pipelines, quality and governance: unit check",
+  "t": "Plano de revisão e folha do quiz: Pipelines, qualidade e governança: verificação da unidade"
+ }
+}
