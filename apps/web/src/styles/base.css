@@ -4,12 +4,26 @@
 /* Child combinators: ".panel h3" would also restyle .dr-empty h3. */
 .panel > h3, .panel > form > h3, .table-tools > h3 { margin: 0; font: var(--text-heading); }
 .panel > .dr-btn, .form-grid > .dr-btn { justify-self: start; }
-.panel .dr-btn-sm { min-block-size: var(--tap-min); }
+/* border-box: a link styled as a button (a.dr-btn) would add its padding to the 48px; a button already counts this way. */
+.panel .dr-btn-sm { min-block-size: var(--tap-min); box-sizing: border-box; }
 .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+/* An odd number of tiles would leave a hole in the two columns: the first one takes the row. */
+.tiles > :first-child:nth-last-child(odd) { grid-column: 1 / -1; }
 .tile { gap: var(--space-1); padding: var(--space-3) var(--space-4); }
 .tile > span:first-child { font: var(--text-label); color: var(--ink-muted); }
 .tile strong { font: 800 28px/34px var(--font-display); }
 .tile small { font-size: 14px; color: var(--ink-muted); }
+/* A tile's breakdown ("Teachers: 1", "Students: 8"): a list under the number. A label never parts from its number;
+   the pairs sit side by side while they fit and under each other when they don't. */
+.tile-parts { display: flex; flex-wrap: wrap; gap: 0 var(--space-3); margin: 0; padding: 0; list-style: none; font-size: 14px; line-height: 20px; color: var(--ink-muted); }
+.tile-parts > li { white-space: nowrap; }
+/* A tile that leads somewhere (the dashboard's "Projects to review" opens People): a real <a> or <Link> with this
+   class beside .tile, so it is one Tab stop, opens with Enter, and a new browser tab works. It keeps the tile's look;
+   the stronger border and the focus ring say it can be followed, not colour alone. */
+.tile-link { color: var(--ink); text-decoration: none; cursor: pointer; }
+.tile-link:hover { border-color: var(--line-strong); }
+.tile-link:active { box-shadow: var(--shadow-press); }
+.tile-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 .notice.ok { background: var(--correct-soft); border-inline-start: 4px solid var(--correct); }
 .notice.err { background: var(--wrong-soft); border-inline-start: 4px solid var(--wrong); }
@@ -66,7 +80,34 @@ a.person-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
 .data-table td { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); min-width: 0; padding-block: var(--space-2); overflow-wrap: anywhere; }
 .data-table td > :first-child { flex: 1 1 0; min-width: 0; }
 .data-table td:empty { display: none; }
-.data-table td[data-label]::before { content: attr(data-label); flex: 0 0 35%; min-width: 0; font: var(--text-label); color: var(--ink-muted); }
+.data-table td[data-label]::before { content: attr(data-label); flex: 0 0 33%; min-width: 0; font: var(--text-label); color: var(--ink-muted); }
+
+/* The card of a row on phones. Without a hint, each cell is a line of its own: its label, a third of the card, then
+   its value. A table can say more on its cells (admin/PeopleTable.tsx, OrgReport, and the other staff tables whose
+   first cell is the row's name; one that starts with a date or a row number says nothing):
+   - data-cell="main": who or what the row is (avatar, name, address). First on the card, across it, without a label.
+   - data-cell="end": one small control (the select box) at the inline end of that first line, without a label.
+   - every other cell after the main one is a short value under its label, two to a line.
+   - data-cell="row": a value that needs the card's width (a bar), on a line of its own under those pairs.
+   - data-empty: the value is only a dash; the card leaves the pair out (the table at >=600 keeps its cell).
+   The row is a wrapping flex line, so cells left out close up, and in a right-to-left page it mirrors by itself. */
+@media (max-width: 599px) {
+  .data-table tr { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--space-3); }
+  .data-table td { box-sizing: border-box; flex: 0 0 100%; padding-inline: 0; }
+  /* tr > td: stronger than a table's own first-column minimum (analytics.css .or-wide), which is for the real table. */
+  .data-table tr > td[data-cell="main"] { order: -2; flex: 1 1 60%; min-inline-size: 0; padding-block: 0; }
+  .data-table tr > td[data-cell="end"] { order: -1; flex: 0 0 auto; padding-block: 0; }
+  .data-table td[data-cell="end"] > :first-child { flex: none; }
+  .data-table tr > td[data-cell="row"] { order: 1; }
+  .data-table td[data-cell="main"]::before, .data-table td[data-cell="end"]::before { content: none; }
+  /* An address is left-to-right whatever the page. When it takes two lines under an Arabic name they line up with the
+     name: at the address's own end, which is where a right-to-left line starts. */
+  [dir="rtl"] .data-table td[data-cell="main"] small[dir="ltr"] { text-align: end; }
+  .data-table td[data-cell="main"] ~ td:not([data-cell]) { display: block; flex: 0 0 calc(50% - var(--space-2)); align-self: flex-start; padding-block: 2px; }
+  .data-table td[data-cell="main"] ~ td:not([data-cell])::before { display: block; font: 600 12px/16px var(--font-sans); }
+  /* After the pairs' display above, so nothing to say stays nothing shown. */
+  .data-table td[data-empty], .data-table td[data-cell="main"] ~ td[data-empty], .data-table td[data-cell="main"] ~ td:not([data-cell]):empty { display: none; }
+}
 
 @media (min-width: 600px) {
   .panel { padding: var(--space-6); }
@@ -81,9 +122,14 @@ a.person-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 2
   .data-table td[data-label]::before { content: none; }
   .data-table th { padding: var(--space-3); text-align: start; vertical-align: bottom; font: var(--text-label); color: var(--ink-muted); }
   .data-table .num { text-align: end; font-variant-numeric: tabular-nums; }
+  /* A name and its address may break anywhere, so a table short of room took it all from their column, down to a
+     letter a line (a tablet, or a laptop beside the nav rail). The column keeps room for a short name; past that the
+     table scrolls in .table-wrap. The span with a class in such a link (a count) is not a name. */
+  .data-table .person-link > span:not([class]) { min-inline-size: 8rem; }
 }
 @media (min-width: 900px) {
   .tiles { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-4); }
+  .tiles > :first-child:nth-last-child(odd) { grid-column: auto; }
 }
 @media print {
   .no-print { display: none !important; }

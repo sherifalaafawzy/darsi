@@ -46,7 +46,19 @@ export const storage = () => (store ??= import("firebase/storage").then(({ getSt
 // deleteAccount deletes every record and file of an account (functions/src/account.ts), up to 540 s for a large one.
 // checkCapstone asks GitHub (up to 20 s) and the review model (up to 45 s) after a cold start, within its own 120 s: a
 // client that gave up at 70 s would say "check your connection" for a milestone that was in fact sent.
-const SLOW: Record<string, number> = { tutorAsk: 180_000, createMembers: 540_000, deleteAccount: 540_000, exportAccountData: 120_000, checkCapstone: 120_000 };
+// The rest are staff actions over a whole organization or the whole platform, each at its server limit (the
+// `timeoutSeconds` of its onCall in functions/src): deleting or renaming an organization, filling its seats, rebuilding
+// the statistics, exporting an organization's data, changing members in bulk, the two long lists (members, course
+// results), the retention preview, an organization's own address, publishing or unpublishing a course (its files and
+// the catalog), and school sign-in's actions (manageSso: discovery asks the school's provider). Giving up at 70 s showed
+// a failure for work that went on and finished on the server, and invited a second run of it. tests/callable-timeouts.test.ts checks that
+// every callable the server lets run past 70 s is listed here with at least its limit.
+const SLOW: Record<string, number> = {
+  tutorAsk: 180_000, createMembers: 540_000, deleteAccount: 540_000, exportAccountData: 120_000, checkCapstone: 120_000,
+  deleteOrg: 540_000, updateOrg: 300_000, fillSeats: 300_000, refreshStats: 300_000, exportOrgData: 540_000, bulkMembers: 300_000,
+  listMembers: 120_000, courseResults: 120_000, previewRetention: 120_000, manageSite: 120_000, setOrgSite: 120_000,
+  publishUnit: 120_000, unpublishUnit: 120_000, manageSso: 120_000,
+};
 
 /** Typed callable helper; loads the Functions SDK on the first call. */
 export const call = <Req, Res>(name: string) => async (data: Req): Promise<Res> => {

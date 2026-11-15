@@ -51,6 +51,11 @@ export const CT = T({
   // Refused for what was sent, not the connection: not a capstone milestone (any more), or input parseInput rejected.
   closed: { en: "This milestone can't be sent right now. Tell your teacher, or use Report a problem.", ar: "لا يمكن إرسال هذه المرحلة الآن. أخبر معلّمك، أو استخدم «الإبلاغ عن مشكلة»." },
   invalid: { en: "Something you sent wasn't accepted. Check the repository link, the links and the files, then send again.", ar: "لم يُقبل شيء مما أرسلته. راجع رابط المستودع والروابط والملفات، ثم أرسل مرة أخرى." },
+  // Refused for the account (permission-denied, details.reason): suspended ("disabled"), or gone ("no-account").
+  disabled: { en: "This account is suspended, so it can't send work. Ask your organization's admin. What you wrote stays on this phone.", ar: "هذا الحساب موقوف، فلا يمكنه إرسال العمل. اسأل مشرف مؤسستك. ما كتبته يبقى محفوظًا على هذا الهاتف." },
+  noAccount: { en: "This account no longer exists, so nothing was sent. What you wrote stays on this phone.", ar: "هذا الحساب لم يعد موجودًا، فلم يُرسَل شيء. ما كتبته يبقى محفوظًا على هذا الهاتف." },
+  // checkCapstone couldn't read the account or the course just now (unavailable): nothing was sent, and it may be tried again.
+  unavailable: { en: "Darsi couldn't check this just now, so nothing was sent. Try again in a minute: what you wrote stays on this phone.", ar: "تعذّر على «درسي» فحص هذا الآن، فلم يُرسَل شيء. حاول مرة أخرى بعد دقيقة، فما كتبته يبقى محفوظًا على هذا الهاتف." },
   // Where the reply shows: on this milestone (lesson/MyReview.tsx) and in Me, under My projects (me.projects).
   sentTeacher: { en: "Sent. Your teacher reviews it, and the reply shows on this milestone and in My projects.", ar: "أُرسل عملك. يراجعه معلّمك، ويظهر الرد في هذه المرحلة وفي «مشاريعي»." },
   sentStaff: { en: "Sent. The Darsi team reviews it, usually within a week, and the reply shows on this milestone and in My projects.", ar: "أُرسل عملك. يراجعه فريق درسي، عادةً خلال أسبوع، ويظهر الرد في هذه المرحلة وفي «مشاريعي»." },
@@ -90,17 +95,27 @@ export function counted(forms: { en: Forms } & Partial<Record<string, Forms>>, l
   // The app's own plural rule (i18n pluralOf, as t() uses): cached, and "other" where a browser has no Intl.PluralRules.
   return (f[pluralOf(code, n) as Intl.LDMLPluralRule] ?? f.other).replace("{n}", num(n));
 }
+/** Why checkCapstone refused a send, as the CT key that says so. */
+export type CapstoneRefusal = "wait" | "limit" | "closed" | "invalid" | "disabled" | "noAccount" | "unavailable";
 /**
  * checkCapstone refusing a send before checking anything (resource-exhausted: "capstone-wait", too soon after the last
  * one; "capstone-limit", the day's sends used up; not-found or failed-precondition: not a capstone milestone, "closed";
- * invalid-argument: what was sent didn't pass parseInput, "invalid") as the CT key that says so, or null for any other
- * error, which is the connection's ("project.error").
+ * invalid-argument: what was sent didn't pass parseInput, "invalid"; permission-denied with details.reason "disabled",
+ * a suspended account, or "no-account", one that no longer exists: "disabled" and "noAccount"; unavailable: the account
+ * or the course couldn't be read just now, "unavailable") as the CT key that says so, or null for any other error, which
+ * is the connection's ("project.error"). A permission-denied without one of those reasons is the rules' (ProjectView
+ * "denied"), so it stays null here.
  */
-export function refusal(e: unknown): "wait" | "limit" | "closed" | "invalid" | null {
-  const x = e as { code?: unknown; message?: unknown } | null;
+export function refusal(e: unknown): CapstoneRefusal | null {
+  const x = e as { code?: unknown; message?: unknown; details?: { reason?: unknown } | null } | null;
   const code = String(x?.code ?? "");
   if (code.endsWith("not-found") || code.endsWith("failed-precondition")) return "closed";
   if (code.endsWith("invalid-argument")) return "invalid";
+  if (code.endsWith("unavailable")) return "unavailable";
+  if (code.endsWith("permission-denied")) {
+    const reason = x?.details?.reason;
+    return reason === "disabled" ? "disabled" : reason === "no-account" ? "noAccount" : null;
+  }
   if (!x || !code.endsWith("resource-exhausted")) return null;
   return x.message === "capstone-wait" ? "wait" : x.message === "capstone-limit" ? "limit" : null;
 }

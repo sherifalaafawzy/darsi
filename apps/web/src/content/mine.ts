@@ -5,7 +5,7 @@
  * students and classes see (`state.org.courses`, content/orgCourses.ts); its admins still see everything. Shared by
  * Home, the track switcher, My tracks, Kit, Downloads, Me, onboarding and the nav.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n";
 import type { Role } from "../auth/types";
@@ -43,18 +43,23 @@ export function tracksOffered(visible: TrackDef[], units: CatalogEntry[] | undef
   if (!units) return visible;
   return visible.filter((t) => units.some((u) => u.track === t.id && u.available && ok(u)));
 }
-/** The catalog's units as this module last read them, so a screen that mounts later starts with them (no extra render). */
+/** The catalog's units as this module last read them, so a screen that mounts later starts with them. */
 let lastUnits: CatalogEntry[] | undefined;
-/** The catalog's units, read only when `on`: most people have no organization choice, and pay nothing for this. */
+/**
+ * Stands in for loadCatalog when the catalog isn't wanted: reads nothing and never answers, so it costs no render beyond
+ * the one useAsync's first run batches with the screen's own effects.
+ */
+const nothing = () => new Promise<undefined>(() => {});
+/**
+ * The catalog's units, read only when `on`: most people have no organization choice, and pay nothing for this. Through
+ * useAsync(loadCatalog), so a catalog that load.ts forgets (forgetCatalog: the app came back after a long while) is read
+ * again here too, as on Home: a course the organization opened or a track that lost its last course shows without a
+ * restart. Until the first answer, the last list read keeps the screen as it was.
+ */
 function useUnitsWhen(on: boolean): CatalogEntry[] | undefined {
-  const [units, setUnits] = useState(() => (on ? lastUnits : undefined));
-  useEffect(() => {
-    if (!on) return;
-    let live = true;
-    loadCatalog().then((c) => { lastUnits = c.units; if (live) setUnits(c.units); }, () => {});
-    return () => { live = false; };
-  }, [on]);
-  return on ? units : undefined;
+  const { data } = useAsync<{ units: CatalogEntry[] } | undefined>(on ? loadCatalog : nothing, [on]);
+  if (on && data) lastUnits = data.units;
+  return on ? data?.units ?? lastUnits : undefined;
 }
 
 /** The chosen tracks still on offer, in the platform's order; every track on offer when none of them is. */

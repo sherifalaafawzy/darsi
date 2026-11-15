@@ -1,9 +1,29 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProjectStep } from "../src/shared/types";
+import type { FakeDb } from "./fakeFirestore";
 import {
   allowance, CALL_GAP_MS, CAPSTONE_DEFAULTS, capScores, capstoneConfig, configPatch, factsTtl, filesPrefix, isLocalTarget, isolateLatin, milestoneOf, parseCheck, parseInput, parseRepo,
   parseReview, queueFor, repoFacts, reviewPrompt, runChecks, type CapstoneInput, type CheckResult, type RepoFacts,
 } from "../src/capstoneCore";
+
+// For checkCapstone itself (the last block): Firestore is the in-memory fake, Auth and the courses are stand-ins.
+const who = vi.hoisted(() => ({ account: null as null | { disabled?: boolean } | Error, asked: 0, unit: null as unknown, courses: 0, coursesDown: false }));
+vi.mock("../src/admin.js", async () => {
+  const { FakeDb } = await import("./fakeFirestore");
+  const { HttpsError } = await import("firebase-functions/v2/https");
+  return {
+    db: new FakeDb(),
+    auth: { getUser: async () => { who.asked++; if (who.account instanceof Error) throw who.account; if (!who.account) throw Object.assign(new Error("no user"), { code: "auth/user-not-found" }); return { uid: "u1", ...who.account }; } },
+    caller: (req: { auth?: { uid: string } }) => { if (!req.auth) throw new HttpsError("unauthenticated", "Sign in first."); return { uid: req.auth.uid, role: "learner", orgId: undefined }; },
+    audit: async () => {}, requireSuper: async () => ({ uid: "admin" }),
+  };
+});
+vi.mock("../src/storage.js", () => ({ bucket: () => ({ name: "b" }) }));
+vi.mock("../src/tutor.js", () => ({
+  GEMINI: "https://gemini.test", GEMINI_KEY: { value: () => "unset" }, googleToken: async () => "t", vertexHost: () => "https://vertex.test", vertexModel: () => "m",
+  tutorConfig: async () => ({ backend: "gemini", textModel: "m", text: {} }),
+  loadUnit: async () => { who.courses++; if (who.coursesDown) throw Object.assign(new Error("backend unavailable"), { code: 503 }); return who.unit; },
+}));
 
 const PREFIX = "https://firebasestorage.googleapis.com/v0/b/b/o/submissions%2Fnone%2Fu1%2F";
 const step = (evidence: ProjectStep["evidence"], milestone = "m2"): ProjectStep => ({
@@ -336,5 +356,66 @@ describe("routing and limits", () => {
     expect(() => configPatch({ callsPerDay: 0 })).toThrow(/1 to 200/);
     expect(() => configPatch({ ai: "off" })).toThrow(/true or false/);
     expect(() => configPatch({ costPerReview: 1 })).toThrow(/Unknown/);
+  });
+});
+
+describe("checkCapstone asks Auth about the account, not only the token", async () => {
+  const { db } = (await import("../src/admin.js")) as unknown as { db: FakeDb };
+  const { checkCapstone } = await import("../src/capstone");
+  const send = () => (checkCapstone as unknown as { run: (r: unknown) => Promise<{ id: string; queue: string }> }).run({
+    auth: { uid: "u1", token: {} },
+    data: { unitId: "ai-capstone", lessonId: "ai-capstone-2", stepId: "project", text: "My work", links: ["https://huggingface.co/spaces/a/b"] },
+  });
+  const refusedAs = async () => send().then(() => null, (e: { code?: string; details?: { reason?: string } }) => `${e.code}:${e.details?.reason ?? ""}`);
+  beforeEach(() => {
+    db.docs.clear();
+    db.docs.set("config/capstone", { ai: false }); // no review model in these tests: the work goes to a person
+    Object.assign(who, { account: { disabled: false }, asked: 0, courses: 0, coursesDown: false });
+    who.unit = { id: "ai-capstone", kind: "capstone", track: "ai", level: 3, title: { en: "AI capstone" }, lessons: [{ id: "ai-capstone-2", title: { en: "Project" }, steps: [step([{ kind: "url" }])] }] };
+  });
+  const written = () => [...db.docs.keys()].filter((k) => k !== "config/capstone");
+
+  it("takes a send from an account in good standing", async () => {
+    const r = await send();
+    expect(r.queue).toBe("staff");
+    expect(who.asked).toBe(1);
+    expect(written().some((k) => k.startsWith("users/u1/submissions/"))).toBe(true);
+    expect(db.docs.has("capstoneLimits/u1")).toBe(true);
+  });
+
+  it("refuses a suspended account whose token still works, before reading or writing anything", async () => {
+    who.account = { disabled: true };
+    expect(await refusedAs()).toBe("permission-denied:disabled");
+    expect(who.courses).toBe(0); // not even the course was read: no GitHub request, no review, nothing in a queue
+    expect(written()).toEqual([]);
+  });
+
+  it("refuses an account that no longer exists", async () => {
+    who.account = null;
+    expect(await refusedAs()).toBe("permission-denied:no-account");
+    expect(written()).toEqual([]);
+  });
+
+  it("says 'try again' when Auth can't be asked, and never lets the send through unchecked", async () => {
+    who.account = Object.assign(new Error("internal"), { code: "auth/internal-error" });
+    expect(await refusedAs()).toBe("unavailable:");
+    expect(who.courses).toBe(0);
+    expect(written()).toEqual([]);
+  });
+
+  it("says 'try again', not 'no such milestone', when the courses can't be read, and counts no send", async () => {
+    who.coursesDown = true;
+    expect(await refusedAs()).toBe("unavailable:");
+    expect(written()).toEqual([]);
+    // A course that really isn't there is still "not found".
+    who.coursesDown = false;
+    who.unit = null;
+    expect(await refusedAs()).toBe("not-found:");
+  });
+
+  it("checks what was sent before asking Auth: junk costs no Auth read", async () => {
+    const bad = (checkCapstone as unknown as { run: (r: unknown) => Promise<unknown> }).run({ auth: { uid: "u1", token: {} }, data: { unitId: "ai-capstone", lessonId: "ai-capstone-2", stepId: "project", text: "  " } });
+    await expect(bad).rejects.toMatchObject({ code: "invalid-argument" });
+    expect(who.asked).toBe(0);
   });
 });

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppBar, BrandMark, Button, CertificateCard, ChoiceCard, Icon, LanguagePicker, PlacementResult, Switch, TextField, TrackChip } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
-import { displayLogin } from "../auth/api";
+import { displayLogin, USERNAME_DOMAIN } from "../auth/api";
 import { accountLinks } from "../components/Layout";
 import { NotificationsPanel } from "../notify/NotificationsPanel";
 import { isolate, useI18n, useLanguages } from "../i18n";
@@ -10,7 +10,7 @@ import { useStore } from "../state/store";
 import { readMyWork, type MySubmission } from "../state/myWork";
 import { loadCatalog, loadUnit, useAsync } from "../content/load";
 import { teachStage, type CatalogEntry, type Unit } from "../content/types";
-import { useSuperOn, useTracks } from "../content/settings";
+import { useSsoOn, useSuperOn, useTracks } from "../content/settings";
 import { capstoneMilestones, certCandidates, codeOf, earnedCert, milestonesSent, type EarnedCert } from "../content/cert";
 import { useMine, useStagesOffered } from "../content/mine";
 import { share } from "../platform";
@@ -19,6 +19,13 @@ import { openTour } from "../tour/Start";
 import { clearRuns } from "../lesson/engine";
 import { MyProjects } from "./MyProjects";
 import { MyData } from "../account/MyData";
+import { isManaged } from "../account/files";
+import { flushSync } from "../state/sync";
+import { call } from "../fb";
+import { LeftOrgNote, leftOrg } from "../auth/LeftOrg";
+import { loadSchoolLink, returnedTo } from "../auth/sso";
+import { useLegal } from "../legal/published";
+import { k, type LegalKey } from "../legal/strings";
 
 export function Me() {
   const { t, L, locale } = useI18n();
@@ -102,9 +109,26 @@ export function Me() {
         <Button block variant="ghost" onClick={() => { if (confirm(t("me.resetAsk"))) { clearRuns(); dispatch({ type: "reset" }); } }}>{t("me.reset")}</Button>
         {/* Signed in: your data as a file, and deleting your account (account/MyData.tsx). */}
         <MyData />
+        <LegalLinks />
         <Button block variant="ghost" onClick={() => nav("/licences")}>{t("me.licences")}</Button>
         <p className="muted small center">Darsi{t("common.sep")}<span className="dr-other-script" lang="ar">درسي</span>{t("common.sep")}v0.1.0</p>
       </main>
+    </>
+  );
+}
+
+/**
+ * The privacy notice and the terms of use, each once a platform admin has published it (legal/published.ts: one small
+ * public file, read when Me first opens). Its own component, so only these buttons draw again when the file answers.
+ */
+function LegalLinks() {
+  const { t } = useI18n();
+  const nav = useNavigate();
+  const legal = useLegal();
+  return (
+    <>
+      {legal.privacy !== null && <Button block variant="ghost" onClick={() => nav("/privacy")}>{t(k("legal.privacy"))}</Button>}
+      {legal.terms !== null && <Button block variant="ghost" onClick={() => nav("/terms")}>{t(k("legal.terms"))}</Button>}
     </>
   );
 }
@@ -215,8 +239,17 @@ function useNewCertificates(units: CatalogEntry[] | undefined, uid: string | und
 function Account() {
   const { t } = useI18n();
   const nav = useNavigate();
-  const { user, profile, role, configured, signOut, offlineUid } = useAuth();
+  const { user, profile, role, orgId, configured, signOut, offlineUid } = useAuth();
   const org = useStore().state.org;
+  const ssoOn = useSsoOn().on;
+  // A return from connecting the school's sign-in waits for the row (auth/sso.ts). Noted once: the row takes it as it
+  // mounts, and must stay to say how it went.
+  const [returning] = useState(() => returnedTo("/me"));
+  // Said here when the session outlives leaving; when it doesn't, the app restarts and LeftOrgNote says it.
+  const [left, setLeft] = useState<{ org: string; out: boolean } | null>(null);
+  // Signed in (again): the note for someone signed out by leaving has done its job.
+  const uid = user?.uid;
+  useEffect(() => { if (uid) leftOrg.clear(); }, [uid]);
   if (!configured) return null;
   if (!user && offlineUid) return (
     <section className="panel stack" aria-labelledby="acct-h">
@@ -227,6 +260,7 @@ function Account() {
   if (!user) return (
     <section className="panel stack" aria-labelledby="acct-h">
       <h2 id="acct-h" className="section-title">{t("me.account")}</h2>
+      <LeftOrgNote />
       <p className="muted">{t("guest.note")}</p>
       <div className="row-gap">
         <Button icon="profile" onClick={() => nav("/signup")}>{t("auth.noAccount")}</Button>
@@ -241,10 +275,17 @@ function Account() {
       <div className="person-link">
         <span className="avatar" aria-hidden>{name.slice(0, 1) || <Icon name="profile" size={20} />}</span>
         <span><strong>{t("me.signedInAs", { name: isolate(name || displayLogin(user.email ?? "")) })}</strong>
-          <small dir="ltr">{displayLogin(user.email ?? "")}</small></span>
+          {/* An account the school's sign-in made has no email: the address its school vouched for. */}
+          <small dir="ltr">{user.email ? displayLogin(user.email) : profile?.ssoEmail ?? ""}</small></span>
         <span className="pill">{t(`role.${role}` as "role.student")}</span>
       </div>
       {org && <div className="person-link"><BrandMark size={36} /><span><strong><bdi>{org.name}</bdi></strong><small>{t("org.yourOrg")}</small></span></div>}
+      {/* Members of an organization: its school sign-in. The row is a lazy chunk that reads the organization again, so
+          it is mounted only when there is something for it to show: the organization has school sign-in (state.org.sso,
+          from the one read at app start), the school's sign-in made this account (it needs an email login whatever the
+          switches say), the account is connected (Disconnect), or a return from connecting waits for it. */}
+      {orgId && role !== "superadmin" && ((ssoOn && org?.id === orgId && org.sso === true) || profile?.sso === true || typeof profile?.ssoLinkedAt === "number" || returning)
+        && <SchoolRow key={user.uid} />}
       <div className="row-gap">
         {accountLinks(role, true).map((l) => <Button key={l.path} variant="secondary" icon={l.icon} onClick={() => nav(l.path)}>{t(l.key)}</Button>)}
         {/* University teachers: the courses a platform admin let them follow (read only). */}
@@ -253,7 +294,111 @@ function Account() {
         {/* signOut first stops this phone getting the account's notifications (AuthProvider), as every Sign out button does. */}
         <Button variant="ghost" icon="close" onClick={() => { void signOut(); }}>{t("me.signOut")}</Button>
       </div>
+      {left && <p className="notice ok" role="status">{t(k(left.out ? "leave.signIn" : "leave.done"), { org: left.org })}</p>}
+      {/* A platform admin belongs to no organization as a member. A login the organization manages (it made it) is its
+          admin's to remove, as the server says (leaveOrg "managed"): said here instead of a button that can only fail. */}
+      {orgId && role !== "superadmin" && !left && (isManaged(profile, user.email, orgId, USERNAME_DOMAIN)
+        ? <p className="muted small">{t(k("leave.managedNote"))}</p>
+        : <LeaveOrg uid={user.uid} name={org?.id === orgId ? org.name : ""} onLeft={(said, out) => setLeft({ org: said, out })} />)}
     </section>
+  );
+}
+
+/**
+ * "School sign-in" (auth/SchoolLink.tsx): connect it, see it, disconnect it, or add an email login to an account the
+ * school made. A lazy chunk, so learners outside an organization never download it; one that can't load (offline)
+ * leaves the row out, never the page.
+ */
+export function SchoolRow() {
+  const { t } = useI18n();
+  const [Row, setRow] = useState<typeof import("../auth/SchoolLink").SchoolLink | null>(null);
+  // The chunk couldn't load (offline) while a return from linking waits for it (auth/sso.ts holds it until the row
+  // takes it): said, with Retry, so the link isn't dropped without a word. Without a return the row is just absent.
+  const [failed, setFailed] = useState(false);
+  const [tries, setTries] = useState(0);
+  useEffect(() => {
+    let live = true;
+    // Registered by App (auth/sso.ts setSchoolChunks): an import() made in Me's lazy chunk splits the startup file.
+    loadSchoolLink().then((m) => { if (live) setRow(() => m.SchoolLink); }, () => { if (live && returnedTo("/me")) setFailed(true); });
+    return () => { live = false; };
+  }, [tries]);
+  return Row ? <Row /> : failed ? (
+    <div className="stack-sm">
+      <p className="notice err" role="alert">{t("auth.errNetwork")}</p>
+      <div><Button size="sm" variant="secondary" icon="sync" onClick={() => { setFailed(false); setTries((n) => n + 1); }}>{t("common.retry")}</Button></div>
+    </div>
+  ) : null;
+}
+
+/** Why leaveOrg refused (functions/src/orgMembers.ts, the error's details.reason), in the person's language. */
+const LEAVE_REFUSED: Record<string, LegalKey> = { managed: "leave.managed", "last-admin": "leave.lastAdmin", "not-in-org": "leave.notInOrg", disabled: "leave.disabled" };
+
+/**
+ * "Leave <organization>": a member who signed up themself becomes an independent learner again (the leaveOrg callable).
+ * The button opens what leaving means, in place, with Leave and Cancel: no browser dialog. An account the organization
+ * manages never gets the button (Account says why); its only admin and a suspended account are refused by the server,
+ * each with its own explanation.
+ * `name`: the organization's, "" while this phone doesn't know it. `onLeft(said, out)`: it worked; `out` when the
+ * session ended with the membership (the server ends it: the app restarts signed out a moment later).
+ * Leaving ends the session, so the work on this phone goes to the cloud first (flushSync, a few seconds at most). If
+ * some still hasn't (offline), the person is told it stays on this phone and is sent at their next sign-in here (the
+ * ended session keeps it: AuthProvider sessionEnded), and Leave becomes "Leave anyway": "Your learning stays with you"
+ * stays true either way.
+ */
+function LeaveOrg({ uid, name, onLeft }: { uid: string; name: string; onLeft: (said: string, out: boolean) => void }) {
+  const { t } = useI18n();
+  const { refreshClaims } = useAuth();
+  const [open, setOpen] = useState(false); const [busy, setBusy] = useState(false); const [err, setErr] = useState("");
+  // The flush found work it couldn't send: said, and the next tap ("Leave anyway") leaves even if it still can't.
+  const [unsentHere, setUnsentHere] = useState(false);
+  const said = name ? isolate(name) : t(k("leave.yourOrg"));
+  const ask = useRef<HTMLDivElement>(null), cta = useRef<HTMLDivElement>(null), wasOpen = useRef(false);
+  // The question takes the focus when it opens, so a screen reader reads it and the keyboard is at its buttons;
+  // Cancel hands it back to the button that opened it (the one it was on is gone, and the page's top is far away).
+  useEffect(() => {
+    if (open) ask.current?.focus(); else if (wasOpen.current) cta.current?.querySelector("button")?.focus();
+    wasOpen.current = open;
+  }, [open]);
+  const leave = async () => {
+    setBusy(true); setErr("");
+    // Each tap tries to send first (a connection that came back sends it now); only the first unsent answer stops here.
+    if (!(await flushSync(uid)) && !unsentHere) { setUnsentHere(true); setBusy(false); return; }
+    // The note for after the restart, before the call: the server ends the session as it answers, and the profile's
+    // listener (AuthProvider) can start the restart before the answer is read here. A refusal takes it back.
+    leftOrg.set(name);
+    try { await call<Record<string, never>, { ok: boolean }>("leaveOrg")({}); }
+    catch (e) {
+      leftOrg.clear();
+      const reason = String((e as { details?: { reason?: unknown } } | null)?.details?.reason ?? "");
+      setErr(t(k(LEAVE_REFUSED[reason] ?? "leave.failed")));
+      setBusy(false);
+      if (reason === "not-in-org") void refreshClaims().catch(() => {}); // this phone's claims are behind: catch up
+      return;
+    }
+    // The new claims. Leaving ends the account's sessions (functions/src/billing.ts writeClaims), so this read is
+    // usually refused and the app restarts signed out, where LeftOrgNote says what happened. If the session lives, it
+    // is said here and the note isn't needed; a read that merely failed (the connection) keeps the note, just in case.
+    const failed = await refreshClaims().then(() => null, (e: unknown) => String((e as { code?: string } | null)?.code ?? e));
+    if (failed === null) leftOrg.clear();
+    onLeft(said, failed !== null && /token-expired|invalid-user-token|user-disabled|user-not-found/.test(failed));
+  };
+  if (!open) return <div ref={cta}><Button variant="ghost" onClick={() => setOpen(true)}>{t(k("leave.cta"), { org: said })}</Button></div>;
+  return (
+    <div ref={ask} tabIndex={-1} role="group" aria-labelledby="leave-h" className="notice stack">
+      <strong id="leave-h">{t(k("leave.ask"), { org: said })}</strong>
+      <div className="stack-sm">
+        <span>{t(k("leave.keep"))}</span>
+        <span>{t(k("leave.unseen"))}</span>
+        <span>{t(k("leave.courses"))}</span>
+        <span>{t(k("leave.again"))}</span>
+      </div>
+      {unsentHere && <p className="notice" role="alert">{t(k("leave.unsent"))}</p>}
+      {err && <p className="notice err" role="alert">{err}</p>}
+      <div className="row-gap">
+        <Button loading={busy} onClick={() => { void leave(); }}>{t(k(unsentHere ? "leave.anyway" : "leave.confirm"))}</Button>
+        <Button variant="secondary" disabled={busy} onClick={() => { setOpen(false); setErr(""); setUnsentHere(false); }}>{t("common.cancel")}</Button>
+      </div>
+    </div>
   );
 }
 

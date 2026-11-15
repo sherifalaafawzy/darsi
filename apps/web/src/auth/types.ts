@@ -57,6 +57,28 @@ export interface Profile {
   /** A card (Stripe) subscription that renews by itself ("on"), or whose renewal was cancelled while it still runs ("off"). */
   planRenewal?: "on" | "off" | null;
   superSeat?: boolean;
+  /**
+   * An account its organization made (a username login): `managedBy` is that organization's id on the profile itself;
+   * `managed` is the same answer worked out by the server for a listMembers row (which never carries `managedBy`).
+   */
+  managedBy?: string | null;
+  managed?: boolean;
+  /**
+   * Locked out. On the profile: when, by whom and why, and `byOrg` when an organization's admin did it (only that
+   * organization restores it; without it a platform admin did). A listMembers row says only true or false.
+   */
+  suspended?: boolean | { at?: { seconds: number } | number | null; by?: string; reason?: string; byOrg?: string } | null;
+  /**
+   * School sign-in (functions/src/sso.ts). An account the school's sign-in made has `sso: true` and `createdBy: "sso"`,
+   * no email, and `ssoEmail`, the address the school vouched for. Any account connected to a school sign-in has
+   * `ssoLinkedAt` (ms). All server-written.
+   */
+  sso?: boolean;
+  ssoEmail?: string | null;
+  ssoLinkedAt?: number | null;
+  createdBy?: string | null;
+  /** The published privacy notice and terms versions this person accepted (acceptTerms; server-written). */
+  terms?: { privacy?: number; terms?: number; at?: { seconds: number } | number | null } | null;
 }
 export interface Org {
   id: string;
@@ -64,7 +86,10 @@ export interface Org {
   type: string;
   country?: string;
   city?: string;
-  status: "pending" | "active" | "rejected";
+  /** "suspended": its admins and teachers are frozen until a platform admin resumes it; "deleting": deleteOrg is part-way. */
+  status: "pending" | "active" | "rejected" | "suspended" | "deleting";
+  /** While suspended: when, by which platform admin and why (updateOrg). */
+  suspended?: { at?: { seconds: number } | null; by?: string; reason?: string } | null;
   createdBy: string;
   inviteCodes?: { teacher: string; student: string };
   memberCount?: number;
@@ -80,6 +105,10 @@ export interface Org {
   courses?: unknown;
   /** Its own web address and whether Darsi's identity shows there (TECHNICAL.md "Organization sites"). setOrgSite only. */
   site?: { host: string; darsi: boolean } | null;
+  /** Its school sign-in (manageSso): on or off, its slug (/signin?school=<slug>), and whether the school finder lists it. */
+  sso?: { on?: boolean; slug?: string; listed?: boolean } | null;
+  /** How many members school sign-in may make (a platform admin's; none: the licence's seats × 1.5, or 2,000). */
+  ssoCeiling?: number | null;
   createdAt?: { seconds: number } | null;
   reviewedAt?: { seconds: number } | null;
 }

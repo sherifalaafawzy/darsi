@@ -82,8 +82,11 @@ export function byCourse(people: Person[], courses: Array<{ id: string; lessons:
 }
 
 export function byGroup(people: Person[], now = Date.now()) {
-  const groups = [...new Set(people.map((p) => p.group ?? ""))].sort();
-  return groups.map((g) => ({ group: g, ...totals(people.filter((p) => (p.group ?? "") === g), now) }));
+  // One pass over the people (a filter per class was classes x people): each class's people in the list's own order,
+  // so its sums add up in the same order as before.
+  const of = new Map<string, Person[]>();
+  for (const p of people) { const g = p.group ?? ""; const had = of.get(g); if (had) had.push(p); else of.set(g, [p]); }
+  return [...of.keys()].sort().map((g) => ({ group: g, ...totals(of.get(g)!, now) }));
 }
 
 /** One person's evidence for a standard item: lessons that count for it, and their average score (if known). */
@@ -120,14 +123,19 @@ export function standardsReport(people: Person[], fw: Framework) {
  * students' (how many, active this week, lessons, average score, how many need support).
  */
 export function byTeacher(members: Person[], fw: Framework, now = Date.now()) {
+  // One pass over the members (a filter per teacher was teachers x members): each teacher's students in the list's
+  // own order, so their sums add up in the same order as before.
+  const of = new Map<string, Person[]>();
+  for (const m of members) if (m.role === "student" && typeof m.teacherId === "string") { const had = of.get(m.teacherId); if (had) had.push(m); else of.set(m.teacherId, [m]); }
   return members.filter((m) => m.role === "teacher").map((t) => {
-    const students = members.filter((m) => m.role === "student" && m.teacherId === t.uid);
     const own = t.summary;
+    // Each item's evidence once, for both counts.
+    const evidence = fw.items.map((it) => itemEvidence(t, it));
     return {
       teacher: t,
       own: { lessons: own?.lessonsDone ?? 0, avgAccuracy: scoredOf(own) ? own!.avgAccuracy : null, seconds: own?.seconds ?? 0,
-        secure: fw.items.filter((it) => itemEvidence(t, it).level === 3).length, reached: fw.items.filter((it) => itemEvidence(t, it).n > 0).length, last: lastSeen(t) },
-      students: totals(students, now),
+        secure: evidence.filter((e) => e.level === 3).length, reached: evidence.filter((e) => e.n > 0).length, last: lastSeen(t) },
+      students: totals(of.get(t.uid) ?? [], now),
     };
   }).sort((a, b) => (a.teacher.name ?? "").localeCompare(b.teacher.name ?? ""));
 }

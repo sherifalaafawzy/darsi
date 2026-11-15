@@ -6,6 +6,7 @@ import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import type { Org, Profile, Role } from "../src/auth/types";
 import type { CatalogEntry } from "../src/content/types";
 import { I18nProvider } from "../src/i18n";
+import stEn from "../src/staff/strings/en.json";
 
 const h = vi.hoisted(() => ({
   stored: null as unknown, role: "learner" as string, orgId: null as string | null,
@@ -65,6 +66,20 @@ describe("what a member's phone keeps (brandUpdate)", () => {
     expect(brandUpdate("o1", doc, have, { role: "student", group: "7A" })).toBeNull();
     expect(brandUpdate("o1", doc, have, { role: "student", group: "7B" })).toEqual({ brand: { ...have, courses: ["ai-s"] }, fetchLogo: null });
     expect(brandUpdate("o1", { ...doc, courses: { mode: "all" } }, have, { role: "student", group: "7A" })).toEqual({ brand: { id: "o1", name: "Nile School", v: 2, logo: have.logo }, fetchLogo: null });
+  });
+  it("whether the organization has school sign-in, so Me asks for its row only then", () => {
+    expect(brandUpdate("o1", { name: "Nile School", sso: { on: true } }, undefined)?.brand.sso).toBe(true);
+    // A phone that kept the organization before the flag existed picks it up at its next app start, logo kept.
+    const have = { id: "o1", name: "Nile School", v: 2, logo: "data:image/webp;base64,AA" };
+    const doc = { name: "Nile School", brand: { logo: "orgs/o1/brand/logo-abc123.webp", v: 2 }, sso: { on: true, slug: "nile" } };
+    expect(brandUpdate("o1", doc, have)).toEqual({ brand: { ...have, sso: true }, fetchLogo: null });
+    expect(brandUpdate("o1", doc, { ...have, sso: true })).toBeNull();
+    // Switched off (or never set up, or a damaged field): the property is left out, and a phone that had it loses it.
+    for (const off of [{ on: false }, null, undefined, { on: "yes" }]) {
+      expect(brandUpdate("o1", { name: "Nile School", sso: off }, undefined)?.brand).not.toHaveProperty("sso");
+      expect(brandUpdate("o1", { ...doc, sso: off }, have)).toBeNull();
+      expect(brandUpdate("o1", { ...doc, sso: off }, { ...have, sso: true })).toEqual({ brand: have, fetchLogo: null });
+    }
   });
 });
 
@@ -244,6 +259,12 @@ describe("the admin's Courses panel", () => {
     h.save.mockRejectedValueOnce(Object.assign(new Error("At most 2000"), { details: { reason: "courses-total" } }));
     fireEvent.click(save());
     expect(await screen.findByText(/Too many choices: at most 2,000 in all/)).toBeTruthy();
+    expect(screen.queryByText(/At most 2000/)).toBeNull();
+    // No refusal code at all (the SDK's "internal"): a sentence in the admin's language (staff/errors.ts), never that word.
+    h.save.mockRejectedValueOnce(Object.assign(new Error("internal"), { code: "functions/internal" }));
+    fireEvent.click(save());
+    expect(await screen.findByText(stEn["st.err.internal"])).toBeTruthy();
+    expect(screen.queryByText("internal")).toBeNull();
     fireEvent.click(screen.getByRole("link", { name: "Back to the dashboard" }));
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Leave without saving" })); });
     expect(await screen.findByText("Dashboard")).toBeTruthy();

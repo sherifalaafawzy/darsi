@@ -1,8 +1,9 @@
-import { Component, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Component, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppBar, Button, EmptyState, Icon } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import { COMPETENCIES } from "../content/competencies";
+import { forgetCatalog } from "../content/load";
 import { usePack, useTracks } from "../content/settings";
 import { levelsByTrack } from "../content/tracks";
 import { labMeta } from "../labs/catalog";
@@ -15,6 +16,7 @@ type Player = typeof LessonPlayer;
 import { cmsApi, codeOf, issuesOf } from "./api";
 import { useAutosave } from "./autosave";
 import { canonical, createUnit, getUnit, markSame, readPublished, saveUnit, statusOf, type UnitMeta } from "./data";
+import { catalogPending, failText, k } from "./entStrings";
 import { MORE_FIELDS, useFieldName, type FieldName } from "./fieldNames";
 import { Check, LangName, LText, Num, StatusPill } from "./fields";
 import { EditLangsProvider, langsIn, savedEditLangs, saveEditLangs, savedLangView, saveLangView, type LangView } from "./langs";
@@ -99,6 +101,8 @@ export function UnitEditor({ Player }: { Player: Player }) {
   const [sel, setSel] = useState<Sel>({ kind: "unit" });
   const [pane, setPane] = useState<"outline" | "detail">("outline");
   const [preview, setPreview] = useState<{ lesson: string; lang: string; at: number } | null>(null);
+  /** The button that opened the full-screen preview: the keyboard focus goes back to it when the preview closes. */
+  const previewFrom = useRef<HTMLElement | null>(null);
   const [editLangs, setEditLangs] = useState<string[]>(savedEditLangs);
   const [view, setView] = useState<LangView>(() => savedLangView(uiLang));
   const [live, setLive] = useState(savedLive);
@@ -138,7 +142,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
         });
       }).catch(() => { /* offline or gone: the status stays as the list has it */ });
     })
-      .catch((e: Error) => { if (!gone) setLoadErr(e.message); });
+      .catch((e: unknown) => { if (!gone) setLoadErr(failText(e, t)); });
     return () => { gone = true; };
   }, [unitId]); // eslint-disable-line react-hooks/exhaustive-deps
   const dirty = useMemo(() => !!unit && JSON.stringify(unit) !== saved, [unit, saved]);
@@ -189,7 +193,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
       setSaved(json); setSavedAt(new Date()); setSaveErr("");
       if (!quiet) setMsg({ ok: true, text: t("cms.saved") });
       return true;
-    } catch (e) { setSaveErr("failed"); setMsg({ ok: false, text: (e as Error).message }); return false; }
+    } catch (e) { setSaveErr("failed"); setMsg({ ok: false, text: failText(e, t) }); return false; }
     finally { setBusy(""); }
   }, [user, unit, meta, t]);
   // Saves by itself a few seconds after the last change, when the tab is hidden, with Ctrl+S, and as the page closes;
@@ -246,23 +250,45 @@ export function UnitEditor({ Player }: { Player: Player }) {
       const { version } = await cmsApi.publishUnit({ unitId: unit.id, rev });
       liveRef.current = { version, json: canonical(unit) };
       setMeta((m) => (m ? { ...m, published: { version, rev } } : m));
+      forgetCatalog(); // the author's own Learn tab and Downloads read the list again, without a reload
       setMsg({ ok: true, text: t("cms.published", { n: version }) });
     } catch (e) {
       const n = issuesOf(e).length;
       if (!n && codeOf(e) === "aborted") { setSaveErr("conflict"); setMsg({ ok: false, text: t("cms.conflict") }); return; }
-      setMsg({ ok: false, text: n ? t("cms.publishBlocked", { n }) : (e as Error).message });
+      if (!n && catalogPending(e)) {
+        // The new version is published (Firestore has it); only the course list is late, and follows by itself. One
+        // read tells the version's number, so the status and "bring back" buttons are right; said as done, not failed.
+        const pub = (await getUnit(unit.id).catch(() => null))?.meta.published;
+        if (pub) {
+          if (pub.rev === rev) liveRef.current = { version: pub.version, json: canonical(unit) };
+          setMeta((m) => (m ? { ...m, published: pub } : m));
+        }
+        setMsg({ ok: true, text: t(k("ent.pending.publish")) });
+        return;
+      }
+      setMsg({ ok: false, text: n ? t("cms.publishBlocked", { n }) : failText(e, t) });
     } finally { setBusy(""); }
   };
   const unpublish = async () => {
     setAsk(""); setBusy("unpublish"); setMsg(null);
-    try { await cmsApi.unpublishUnit({ unitId: unit.id }); setMeta({ ...meta, published: null }); setMsg({ ok: true, text: t("cms.unpublished") }); }
-    catch (e) { setMsg({ ok: false, text: (e as Error).message }); } finally { setBusy(""); }
+    try { await cmsApi.unpublishUnit({ unitId: unit.id }); setMeta({ ...meta, published: null }); forgetCatalog(); setMsg({ ok: true, text: t("cms.unpublished") }); }
+    catch (e) {
+      // Unpublished in Firestore, and the course list follows by itself within minutes: done, a little late.
+      if (catalogPending(e)) { setMeta({ ...meta, published: null }); setMsg({ ok: true, text: t(k("ent.pending.unpublish")) }); }
+      else setMsg({ ok: false, text: failText(e, t) });
+    } finally { setBusy(""); }
   };
   const remove = async () => {
     setAsk(""); setBusy("delete");
     // The list says it was deleted: this page goes with the unit (replace: Back doesn't lead to it again).
-    try { await cmsApi.deleteUnit({ unitId: unit.id }); auto.skip(); setSaved(JSON.stringify(unit)); nav(base, { replace: true, state: { done: t("cms.deleted", { title: L(unit.title) || t("cms.untitled") }) } }); }
-    catch (e) { setMsg({ ok: false, text: (e as Error).message }); setBusy(""); }
+    try { await cmsApi.deleteUnit({ unitId: unit.id }); forgetCatalog(); auto.skip(); setSaved(JSON.stringify(unit)); nav(base, { replace: true, state: { done: t("cms.deleted", { title: L(unit.title) || t("cms.untitled") }) } }); }
+    catch (e) {
+      // The server stopped after unpublishing (the course list could not be written, and deleting the files of a
+      // course phones still list would break it): the unit is a draft now, and Delete works once the list caught up.
+      if (catalogPending(e)) { setMeta({ ...meta, published: null }); setMsg({ ok: false, text: t(k("ent.pending.delete")) }); }
+      else setMsg({ ok: false, text: failText(e, t) });
+      setBusy("");
+    }
   };
   /** A copy of the unit as it is on screen (unsaved changes included), as a new draft with new ids. */
   const duplicate = async () => {
@@ -272,7 +298,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
       const copy = withNewIds({ ...unit, title: copyTitle(unit.title) });
       await createUnit(meta.owner, copy, user.uid);
       setMsg({ ok: true, text: t("cms.duplicated", { title: L(copy.title) || t("cms.untitled") }), open: copy.id });
-    } catch (e) { setMsg({ ok: false, text: (e as Error).message }); } finally { setBusy(""); }
+    } catch (e) { setMsg({ ok: false, text: failText(e, t) }); } finally { setBusy(""); }
   };
   /**
    * Puts a published version back in the draft (the live one, to drop changes not published yet, or the one before it,
@@ -315,6 +341,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
   const count = (f: (i: Issue) => boolean) => errors.filter(f).length;
   const translate = (code: string) => { setView(code); saveLangView(code); };
   const here = (f: (i: Issue) => boolean) => <HereIssues issues={issues.filter(f)} unit={unit} onTranslate={translate} />;
+  const openPreview = (from: HTMLElement, lessonId: string, at: number) => { previewFrom.current = from; setPreview({ lesson: lessonId, lang: view === "all" ? "en" : view, at }); };
   const lessonOf = (n: number) => t("cms.lessonOf", { n: num(n + 1), total: num(unit.lessons.length) });
 
   let detail: ReactNode;
@@ -362,7 +389,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
     if (view_.kind === "lesson") detail = (
       <div className="stack-lg">
         <PaneHead title={lessonOf(li)}>
-          <Button size="sm" variant="secondary" icon="play" disabled={!canPreview} onClick={() => setPreview({ lesson: lesson.id, lang: view === "all" ? "en" : view, at: 0 })}>{t("cms.preview")}</Button>
+          <Button size="sm" variant="secondary" icon="play" disabled={!canPreview} onClick={(e) => openPreview(e.currentTarget, lesson.id, 0)}>{t("cms.preview")}</Button>
         </PaneHead>
         <div className="ed-toolbar">
           <Button size="sm" variant="ghost" icon="file" onClick={() => lessonOps.duplicate(li)}>{t("cms.duplicate")}</Button>
@@ -403,7 +430,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
         <div className="stack-lg">
           <PaneHead icon={<StepIcon type={s.type} size={22} />} title={`${t("cms.step")} ${num(si + 1)}: ${t(STEP_LABEL[s.type])}`} sub={t("cms.ofN", { n: num(lesson.steps.length) })} />
           <div className="ed-toolbar">
-            <Button size="sm" variant="secondary" icon="play" disabled={!canPreview} onClick={() => setPreview({ lesson: lesson.id, lang: view === "all" ? "en" : view, at: si })}>{t("cms.previewFrom")}</Button>
+            <Button size="sm" variant="secondary" icon="play" disabled={!canPreview} onClick={(e) => openPreview(e.currentTarget, lesson.id, si)}>{t("cms.previewFrom")}</Button>
             {!live && <Button size="sm" variant="ghost" icon="play" className="ed-wide-only" aria-pressed={false}
               onClick={() => { setLive(true); try { localStorage.setItem(LIVE_KEY, "1"); } catch { /* private mode */ } }}>{t("cms.livePreview")}</Button>}
           </div>
@@ -535,7 +562,7 @@ export function UnitEditor({ Player }: { Player: Player }) {
       </div>
 
       {preview && unit.lessons.find((l) => l.id === preview.lesson) && <Preview Player={Player} unit={unit} lesson={unit.lessons.find((l) => l.id === preview.lesson)!}
-        lang={preview.lang} at={preview.at} onLang={(lang) => setPreview({ ...preview, lang })} onExit={() => setPreview(null)} />}
+        lang={preview.lang} at={preview.at} opener={previewFrom.current} onLang={(lang) => setPreview({ ...preview, lang })} onExit={() => setPreview(null)} />}
     </EditLangsProvider>
   );
 }
@@ -596,15 +623,60 @@ function LivePreview({ Player, unit, lesson, step, lang, blocked, onClose }: { P
   );
 }
 
-/** The lesson as learners will play it, from the unsaved draft: nothing is recorded, submitted or synced. Any step can be opened. */
-function Preview({ Player, unit, lesson, lang, at, onLang, onExit }: { Player: Player; unit: Unit; lesson: Lesson; lang: string; at: number; onLang: (l: string) => void; onExit: () => void }) {
+/** What Tab can land on inside the preview (the lesson player's own controls included). */
+const TABBABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), summary, video[controls], audio[controls], [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Takes everything beside `el` (the editor's app bar, its panes and its bar: what the full-screen preview covers) out
+ * of reach of the keyboard, the pointer and screen readers: `inert`, and aria-hidden for a browser that doesn't know
+ * inert (Safari before 15.5). Returns the undo, which puts back exactly what each element had.
+ */
+function hideBehind(el: HTMLElement): () => void {
+  const undo: (() => void)[] = [];
+  for (const sib of Array.from(el.parentElement?.children ?? [])) {
+    if (sib === el || !(sib instanceof HTMLElement)) continue;
+    const inert = sib.hasAttribute("inert"), hidden = sib.getAttribute("aria-hidden");
+    sib.setAttribute("inert", ""); sib.setAttribute("aria-hidden", "true");
+    undo.push(() => { if (!inert) sib.removeAttribute("inert"); if (hidden === null) sib.removeAttribute("aria-hidden"); else sib.setAttribute("aria-hidden", hidden); });
+  }
+  return () => undo.forEach((f) => f());
+}
+
+/**
+ * The lesson as learners will play it, from the unsaved draft: nothing is recorded, submitted or synced. Any step can be opened.
+ * A real modal, as its aria-modal says: opening moves the keyboard focus into it (it stayed on the Preview button, under
+ * the preview, and Tab walked an editor nobody could see), the editor behind is inert while it is open, Tab stays
+ * inside, and closing (the button, Escape, the lesson's own exit) gives the focus back to the button that opened it.
+ */
+function Preview({ Player, unit, lesson, lang, at, opener, onLang, onExit }: { Player: Player; unit: Unit; lesson: Lesson; lang: string; at: number; opener?: HTMLElement | null; onLang: (l: string) => void; onExit: () => void }) {
   const { t } = useI18n();
   const languages = useLanguages();
   usePack(lang); // an added language's interface strings, for the preview's buttons and labels
   const dir = languageOf(lang).dir;
+  const box = useRef<HTMLDivElement>(null);
+  // The button that opened it (Safari gives a clicked button no focus, so the editor says which); else what had the focus.
+  const [from] = useState(() => opener ?? (typeof document === "undefined" ? null : (document.activeElement as HTMLElement | null)));
   useEffect(() => { const esc = (e: KeyboardEvent) => e.key === "Escape" && onExit(); addEventListener("keydown", esc); return () => removeEventListener("keydown", esc); }, [onExit]);
+  // A layout effect: the clean-up runs however the preview goes (Close, Escape, or the editor leaving the page with it
+  // open), while the preview is still in the page, so nothing is ever left inert and the focus never falls to the page.
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const show = hideBehind(el);
+    el.focus({ preventScroll: true });
+    return () => { show(); if (from?.isConnected && from !== document.body) from.focus({ preventScroll: true }); };
+  }, [from]);
+  /** Tab from the last control goes to the first, and Shift+Tab from the first (or the dialog itself) to the last. */
+  const trap = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const el = box.current;
+    if (e.key !== "Tab" || !el) return;
+    const items = [...el.querySelectorAll<HTMLElement>(TABBABLE)].filter((x) => !x.closest("[hidden], [inert]"));
+    const first = items[0], last = items[items.length - 1], now = document.activeElement;
+    if (!first) { e.preventDefault(); el.focus(); return; }
+    if (e.shiftKey ? now === first || now === el : now === last) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+  };
   return (
-    <div className="ed-preview" role="dialog" aria-modal="true" aria-label={t("cms.preview")}>
+    <div ref={box} tabIndex={-1} className="ed-preview" role="dialog" aria-modal="true" aria-label={t("cms.preview")} onKeyDown={trap}>
       <div className="ed-preview-bar">
         <strong>{t("cms.preview")}</strong>
         <span className="row-gap">

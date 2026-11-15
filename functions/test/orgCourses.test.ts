@@ -141,6 +141,22 @@ describe("setOrgCourses", () => {
     expect(db.docs.get("orgs/o2")?.courses).toMatchObject({ mode: "chosen", teachers: ["ai-4-1"] });
   });
 
+  // Its admin's claims still say orgAdmin (frozen): the role and the organization alone let them hide every course
+  // from students who are meant to keep learning.
+  it("refuses the organization's own admin while it is suspended or being deleted; a platform admin still saves", async () => {
+    auth.users.set("adm", { uid: "adm", customClaims: { role: "orgAdmin", orgId: "o1", frozen: true } });
+    for (const [status, reason] of [["suspended", "org-suspended"], ["deleting", "org-deleting"]] as const) {
+      db.docs.set("orgs/o1", { name: "Nile School", status });
+      expect(await refusal(setOrgCourses.run(as("adm", { orgId: "o1", courses: { mode: "chosen", students: [] } })))).toBe(`permission-denied:${reason}`);
+      expect(await refusal(setOrgCourses.run(as("adm", { orgId: "o1", courses: { mode: "all" } })))).toBe(`permission-denied:${reason}`);
+    }
+    expect(db.docs.get("orgs/o1")?.courses).toBeUndefined();
+    expect(audits).toEqual([]);
+    expect(await setOrgCourses.run(as("root", { orgId: "o1", courses: { mode: "all" } }))).toEqual({ courses: { mode: "all" } });
+    // Another organization's suspension is not this one's.
+    expect(await setOrgCourses.run(as("adm2", { orgId: "o2", courses: { mode: "all" } }))).toEqual({ courses: { mode: "all" } });
+  });
+
   it("refuses everyone else, unknown modes, bad lists and missing organizations, with reason codes", async () => {
     expect(await refusal(setOrgCourses.run({ data: { orgId: "o1", courses: chosen } }))).toBe("unauthenticated:no reason");
     expect(await refusal(setOrgCourses.run(as("adm2", { orgId: "o1", courses: chosen })))).toBe("permission-denied:not-org-admin");

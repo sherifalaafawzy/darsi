@@ -5,11 +5,14 @@ import { useAuth } from "../auth/AuthProvider";
 import { COMPETENCIES } from "../content/competencies";
 import type { LocalText, Track, Unit } from "../content/types";
 import { errorsOf, UNIT_ID, validateUnit } from "../content/validate";
+import { forgetCatalog } from "../content/load";
 import { useTracks } from "../content/settings";
 import { levelsByTrack } from "../content/tracks";
 import { useI18n, type MessageKey } from "../i18n";
+import { ErrorNote } from "../staff/LoadState";
 import { cmsApi } from "./api";
 import { createUnit, freshMeta, getUnit, listOrgs, listUnits, saveUnit, statusOf, unitExists, type Status, type UnitMeta } from "./data";
+import { catalogPending, failText, k, Said } from "./entStrings";
 import { LText } from "./fields";
 import { blankUnit, copyTitle, newUnitId, withNewIds } from "./ids";
 import { LevelPicker, TrackPicker } from "./pickers";
@@ -40,7 +43,9 @@ export function ContentList() {
   const owner = role === "superadmin" ? pick : orgId;
   const base = role === "superadmin" ? "/super/content" : "/admin/content";
   const [list, setList] = useState<UnitMeta[] | undefined>();
-  const [err, setErr] = useState("");
+  // Why the list could not be read (the raw error: ErrorNote words it), and how many times Retry was pressed.
+  const [loadErr, setLoadErr] = useState<unknown>();
+  const [tries, setTries] = useState(0);
   const [panel, setPanel] = useState<"" | "new" | "import">("");
   const [q, setQ] = useState("");
   const [fTrack, setFTrack] = useState("");
@@ -51,7 +56,14 @@ export function ContentList() {
   // A message from the page that sent us here (a unit deleted in the editor), shown where the admin lands.
   const done = (useLocation().state as { done?: string } | null)?.done;
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(done ? { ok: true, text: done } : null);
-  useEffect(() => { if (owner) { setList(undefined); setErr(""); listUnits(owner).then(setList).catch((e: Error) => setErr(e.message)); } }, [owner]);
+  // One read per owner, and again on Retry. An answer for an owner (or a try) that is no longer the one on screen is dropped.
+  useEffect(() => {
+    if (!owner) return;
+    let live = true;
+    setList(undefined); setLoadErr(undefined);
+    listUnits(owner).then((l) => { if (live) setList(l); }, (e: unknown) => { if (live) setLoadErr(e ?? new Error("failed")); });
+    return () => { live = false; };
+  }, [owner, tries]);
 
   const present = useMemo(() => [...new Set((list ?? []).map((u) => u.track))].sort((a, b) => tracks.order(a) - tracks.order(b) || a.localeCompare(b)), [list, tracks]);
   const levels = useMemo(() => [...new Set((list ?? []).filter((u) => u.track === fTrack).map((u) => u.level))].sort((a, b) => a - b), [list, fTrack]);
@@ -76,9 +88,9 @@ export function ContentList() {
    */
   const replace = async (unit: Unit) => {
     const r = await getUnit(unit.id);
-    if (!r || r.meta.owner !== owner) throw new Error(t("cms.idTaken", { id: unit.id }));
+    if (!r || r.meta.owner !== owner) throw new Said(t("cms.idTaken", { id: unit.id }));
     const res = await saveUnit(unit, r.meta.rev, user.uid);
-    if ("conflict" in res) throw new Error(t("cms.conflict"));
+    if ("conflict" in res) throw new Said(t("cms.conflict"));
     nav(`${base}/${unit.id}`);
   };
   const titleOf = (u: { title: LocalText }) => L(u.title) || t("cms.untitled");
@@ -88,29 +100,41 @@ export function ContentList() {
     setBusy(u.id); setMsg(null); setAsk("");
     try {
       const r = await getUnit(u.id);
-      if (!r) throw new Error(t("err.notFound"));
+      if (!r) throw new Said(t("err.notFound"));
       const copy = withNewIds({ ...r.unit, title: copyTitle(r.unit.title) });
       await createUnit(owner, copy, user.uid);
       setList((l) => [freshMeta(owner, copy), ...(l ?? [])]);
       setMsg({ ok: true, text: t("cms.duplicated", { title: titleOf(copy) }) });
-    } catch (e) { setMsg({ ok: false, text: (e as Error).message }); } finally { setBusy(""); }
+    } catch (e) { setMsg({ ok: false, text: failText(e, t) }); } finally { setBusy(""); }
   };
+  const asDraft = (u: UnitMeta) => { setList((l) => l?.map((x) => (x.id === u.id ? { ...x, published: null } : x))); setAsk(""); };
   /** Takes a course away from learners (it stays here as a draft, and can be published again). */
   const unpublish = async (u: UnitMeta) => {
     setBusy(u.id); setMsg(null);
     try {
       await cmsApi.unpublishUnit({ unitId: u.id });
-      setList((l) => l?.map((x) => (x.id === u.id ? { ...x, published: null } : x))); setAsk("");
+      asDraft(u);
+      forgetCatalog(); // the author's own Learn tab and Downloads read the list again, without a reload
       setMsg({ ok: true, text: t("cms.unpublishedTitle", { title: titleOf(u) }) });
-    } catch (e) { setMsg({ ok: false, text: (e as Error).message }); } finally { setBusy(""); }
+    } catch (e) {
+      // Unpublished in Firestore, the course list follows by itself: said as done, a little late, not as a failure.
+      if (catalogPending(e)) { asDraft(u); setMsg({ ok: true, text: t(k("ent.pending.unpublish")) }); }
+      else setMsg({ ok: false, text: failText(e, t) });
+    } finally { setBusy(""); }
   };
   const remove = async (u: UnitMeta) => {
     setBusy(u.id); setMsg(null);
     try {
       await cmsApi.deleteUnit({ unitId: u.id });
       setList((l) => l?.filter((x) => x.id !== u.id)); setAsk("");
+      forgetCatalog();
       setMsg({ ok: true, text: t("cms.deleted", { title: titleOf(u) }) });
-    } catch (e) { setMsg({ ok: false, text: (e as Error).message }); } finally { setBusy(""); }
+    } catch (e) {
+      // The server stopped after unpublishing (deleting the files of a course phones still list would break it):
+      // the unit is a draft now, and Delete works once the list has caught up.
+      if (catalogPending(e)) { asDraft(u); setMsg({ ok: false, text: t(k("ent.pending.delete")) }); }
+      else setMsg({ ok: false, text: failText(e, t) });
+    } finally { setBusy(""); }
   };
 
   return (
@@ -134,11 +158,12 @@ export function ContentList() {
           </div>
         )}
         <p className="muted">{owner === "public" ? t("cms.introPublic") : role === "superadmin" ? t("cms.introOrgSuper") : t("cms.introOrg")}</p>
-        {err && <p className="notice err" role="alert">{err}</p>}
         {msg && <p className={msg.ok ? "notice ok" : "notice err"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}
         {panel === "new" && <NewUnit onCreate={create} onCancel={() => setPanel("")} />}
         {panel === "import" && <ImportUnit owner={owner} onCreate={create} onReplace={replace} onCancel={() => setPanel("")} />}
-        {!list ? <div className="loading" aria-busy="true" /> : list.length === 0 ? (
+        {/* A read that failed says why, with Retry: never the spinner (it would turn for ever), never "No units yet". */}
+        {loadErr !== undefined ? <ErrorNote error={loadErr} reload={() => setTries((n) => n + 1)} />
+          : !list ? <div className="loading" aria-busy="true" /> : list.length === 0 ? (
           <section className="panel"><EmptyState icon="edit" title={t("cms.none")} body={t("cms.noneBody")} action={<Button size="sm" onClick={() => setPanel("new")}>{t("cms.newUnit")}</Button>} /></section>
         ) : (
           <>
@@ -230,7 +255,7 @@ function NewUnit({ onCreate, onCancel }: { onCreate: (u: Unit) => Promise<void>;
   const go = async () => {
     setBusy(true); setErr("");
     try { await onCreate(blankUnit(newUnitId(), track, level, { en: title.en.trim(), ar: title.ar?.trim() ?? "" })); }
-    catch (e) { setErr((e as Error).message); setBusy(false); }
+    catch (e) { setErr(failText(e, t)); setBusy(false); }
   };
   return (
     <section className="panel stack" aria-labelledby="ed-new-h">
@@ -275,12 +300,12 @@ function ImportUnit({ owner, onCreate, onReplace, onCancel }: { owner: string; o
     try {
       if (owner === "public" && await unitExists(check.unit.id)) { setTaken(true); setBusy(false); return; }
       await onCreate(check.unit);
-    } catch (e) { setErr((e as Error).message); setBusy(false); }
+    } catch (e) { setErr(failText(e, t)); setBusy(false); }
   };
   const replace = async () => {
     if (!check) return;
     setBusy(true); setErr("");
-    try { await onReplace(check.unit); } catch (e) { setErr((e as Error).message); setBusy(false); setTaken(false); }
+    try { await onReplace(check.unit); } catch (e) { setErr(failText(e, t)); setBusy(false); setTaken(false); }
   };
   return (
     <section className="panel stack" aria-labelledby="ed-import-h">

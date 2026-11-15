@@ -7,8 +7,29 @@ service firebase.storage {
 
     // Course editor (TECHNICAL.md "Authored content"). The published unit JSON and catalog.json files are written only by
     // Cloud Functions (Admin SDK). Editors upload media: lesson videos, captions and kit files, within these limits.
-    function isSuper() { return request.auth != null && request.auth.token.role == 'superadmin'; }
+    // Staff access follows the profile in Firestore, not the token alone (firestore.rules has the same predicates): an
+    // ID token stays valid for up to an hour after a demotion, a removal or a suspension. The claim test comes first,
+    // so members and learners never pay for the lookup; a staff token with no profile is refused. `frozen` is the claim
+    // on the teachers and admins of a suspended organization. Member reads (inOrgS) stay token-only.
+    // A suspension keeps role and orgId on the profile, and the token in an open tab was minted before it, so both of
+    // its marks are read from the profile too: `suspended` on an account (setAccountSuspended, an organization's own
+    // suspend) and `frozen` on the staff of a suspended organization (writeClaims mirrors the claim onto the profile).
+    // notStoppedS() reads the caller's own profile, which every staff predicate reads anyway: no further lookup.
+    function profileS(uid) { return firestore.get(/databases/(default)/documents/users/$(uid)).data; }
+    function unfrozenS() { return request.auth.token.get('frozen', false) != true; }
+    function notStoppedS() {
+      return !('suspended' in profileS(request.auth.uid)) && profileS(request.auth.uid).get('frozen', false) != true;
+    }
+    function isSuper() {
+      return request.auth != null && request.auth.token.get('role', '') == 'superadmin' && profileS(request.auth.uid).get('role', '') == 'superadmin'
+        && !('suspended' in profileS(request.auth.uid));
+    }
     function inOrgS(orgId) { return request.auth != null && request.auth.token.orgId == orgId; }
+    function orgAdminS(orgId) {
+      return orgId != null && inOrgS(orgId) && request.auth.token.get('role', '') == 'orgAdmin' && unfrozenS()
+        && profileS(request.auth.uid).get('role', '') == 'orgAdmin' && profileS(request.auth.uid).get('orgId', null) == orgId
+        && notStoppedS();
+    }
     function mediaOk() {
       return (request.resource.contentType == 'video/mp4' && request.resource.size <= 60 * 1024 * 1024)
         || (request.resource.contentType.matches('text/vtt.*') && request.resource.size <= 512 * 1024)
@@ -24,24 +45,49 @@ service firebase.storage {
     // Org units: only that org's members (and platform admins) read them; its admins upload media.
     match /orgs/{orgId}/{path=**} { allow read: if inOrgS(orgId) || isSuper(); }
     match /orgs/{orgId}/media/{unitId}/{file} {
-      allow create, update: if (isSuper() || (inOrgS(orgId) && request.auth.token.role == 'orgAdmin')) && mediaOk();
-      allow delete: if isSuper() || (inOrgS(orgId) && request.auth.token.role == 'orgAdmin');
+      allow create, update: if (isSuper() || orgAdminS(orgId)) && mediaOk();
+      allow delete: if isSuper() || orgAdminS(orgId);
+    }
+    // An organization's homepage pictures (TECHNICAL.md "Organization homepage"): public like the rest of content/, and
+    // put there by its admins (shrunk on their device to ≤ 1600 px). The page itself (page.json) only manageOrgPage writes.
+    match /content/pages/{orgId}/{file} {
+      allow create, update: if (isSuper() || orgAdminS(orgId))
+        && file.matches('img-[a-z0-9]{6,32}[.](png|webp|jpg)')
+        && request.resource.contentType.matches('image/(png|webp|jpeg)') && request.resource.size <= 400 * 1024;
+      allow delete: if (isSuper() || orgAdminS(orgId)) && file.matches('img-[a-z0-9]{6,32}[.](png|webp|jpg)');
     }
     // The org's logo (TECHNICAL.md "Organization branding"): shrunk on the admin's phone to ≤ 256 px before upload.
     match /orgs/{orgId}/brand/{file} {
-      allow create, update: if (isSuper() || (inOrgS(orgId) && request.auth.token.role == 'orgAdmin'))
+      allow create, update: if (isSuper() || orgAdminS(orgId))
         && file.matches('logo-[a-z0-9]{6,32}[.](png|webp|jpg)')
         && request.resource.contentType.matches('image/(png|webp|jpeg)') && request.resource.size <= 100 * 1024;
-      allow delete: if isSuper() || (inOrgS(orgId) && request.auth.token.role == 'orgAdmin');
+      allow delete: if isSuper() || orgAdminS(orgId);
     }
+    // An organization's exports (its people and their results, made by the functions): its admins and platform admins
+    // download them; nobody uploads one.
+    match /exports/{orgId}/{exportId}/{file} { allow read: if isSuper() || orgAdminS(orgId); allow write: if false; }
     // Project evidence by course: submissions/{orgId|"none"}/{uid}/{unitId}/{file} (lesson/ProjectView.tsx). Only the
     // person writes their own, into their own organization's folder; photos, PDFs, voice notes and short videos only
     // (no SVG, whose scripts would run when opened), at most 10 MB, with the names the app gives them (L2).
-    // Readable by them, platform admins, their organization's admins, their own teacher, and university teachers a
-    // platform admin gave access to that course (Firestore courseAccess/{uid}.units).
-    function grantedS(unitId) {
+    // Readable by them, platform admins, the admins of the organization they are in now, their own teacher, and
+    // university teachers a platform admin gave access to that course (Firestore courseAccess/{uid}).
+    // The grant {units, orgs, until?}: the course is in `units`; `until` (ms), if set, hasn't passed; and the
+    // organization the file's owner is in now, from their profile ("none" for someone in no organization), is in
+    // `orgs`, the list stored when the grant was made (grantCourseAccess pins the teacher's own organization of that
+    // moment when the admin names none). The owner's organization now, not the folder the file was sent into: it is
+    // what courseResults lists by (functions/src/access.ts) and what staff reads go by (staffS), so a student who
+    // joined or left an organization after uploading is treated the same in the list and in the files. Never the
+    // token's own organization: the teacher changes that by leaving or by joining another school, and the grant would
+    // follow them there. A grant stored without `orgs` opens no file, and the file of an account with no profile
+    // opens to no grant. The profile is tested last, so a caller with no grant for the course never pays for it.
+    // (Not closed here: a download link stored on a submission carries its own token and opens without the rules.)
+    function grantS() { return firestore.get(/databases/(default)/documents/courseAccess/$(request.auth.uid)).data; }
+    function grantedS(uid, unitId) {
       return request.auth != null && firestore.exists(/databases/(default)/documents/courseAccess/$(request.auth.uid))
-        && unitId in firestore.get(/databases/(default)/documents/courseAccess/$(request.auth.uid)).data.units;
+        && unitId in grantS().units
+        && (!('until' in grantS()) || grantS().until == null || request.time.toMillis() < grantS().until)
+        && ((profileS(uid).get('orgId', null) != null && profileS(uid).orgId in grantS().get('orgs', []))
+          || (profileS(uid).get('orgId', null) == null && 'none' in grantS().get('orgs', [])));
     }
     function evidenceOk() {
       return request.resource.size < 10 * 1024 * 1024
@@ -50,16 +96,25 @@ service firebase.storage {
     function ownFolder(orgId, uid) {
       return request.auth != null && request.auth.uid == uid && orgId == request.auth.token.get('orgId', 'none');
     }
+    // Staff read by the person's membership now, as Firestore does (canSee), not by the folder the file was sent into:
+    // a former organization's admins lose a departed member's files, and the new organization's admins get them. The
+    // person's teacher is the one their profile names, in the organization both are in. The person's profile is checked
+    // before the caller's own, so a path reads two Firestore documents (the person's and the caller's for staff; the
+    // person's and the grant for a teacher with course access to someone else's student). Three only for a staff or
+    // platform-admin token whose own profile no longer agrees with it and who also holds a grant.
     function teacherOfS(uid) {
-      return request.auth.token.role == 'teacher'
-        && firestore.get(/databases/(default)/documents/users/$(uid)).data.get('teacherId', null) == request.auth.uid;
+      return request.auth.token.get('role', '') == 'teacher' && profileS(uid).get('teacherId', null) == request.auth.uid
+        && profileS(request.auth.uid).get('role', '') == 'teacher' && profileS(request.auth.uid).get('orgId', null) == request.auth.token.orgId
+        && notStoppedS();
     }
-    function staffS(orgId, uid) {
-      return request.auth.token.role == 'superadmin'
-        || (request.auth.token.get('orgId', null) == orgId && (request.auth.token.role == 'orgAdmin' || teacherOfS(uid)));
+    function staffS(uid) {
+      return isSuper()
+        || (request.auth.token.get('role', '') in ['orgAdmin', 'teacher'] && unfrozenS() && request.auth.token.get('orgId', null) != null
+          && profileS(uid).get('orgId', null) == request.auth.token.orgId
+          && (orgAdminS(request.auth.token.orgId) || teacherOfS(uid)));
     }
     match /submissions/{orgId}/{uid}/{unitId}/{file} {
-      allow read: if request.auth != null && (request.auth.uid == uid || staffS(orgId, uid) || grantedS(unitId));
+      allow read: if request.auth != null && (request.auth.uid == uid || staffS(uid) || grantedS(uid, unitId));
       allow create: if ownFolder(orgId, uid) && evidenceOk()
         && unitId.matches('[a-z0-9][a-z0-9-]{1,63}') && file.matches('[a-z0-9][a-z0-9-]{1,99}-[0-9]{10,16}-[A-Za-z0-9_.-]{1,240}');
       allow delete: if request.auth != null && request.auth.uid == uid;
@@ -69,7 +124,7 @@ service firebase.storage {
     match /bugReports/{file} { allow read: if isSuper(); allow write: if false; }
     // Project evidence from app versions before course folders: submissions/{orgId|"none"}/{uid}/{file}.
     match /submissions/{orgId}/{uid}/{file} {
-      allow read: if request.auth != null && (request.auth.uid == uid || staffS(orgId, uid));
+      allow read: if request.auth != null && (request.auth.uid == uid || staffS(uid));
       allow create: if ownFolder(orgId, uid) && evidenceOk() && file.matches('[A-Za-z0-9_.-]{1,240}');
       allow delete: if request.auth != null && request.auth.uid == uid;
     }

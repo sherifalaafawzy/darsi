@@ -49,11 +49,42 @@ describe("a refused capstone send", () => {
     expect(await screen.findByText(/Something you sent wasn't accepted/)).toBeTruthy();
   });
 
+  it.each([
+    ["a suspended account", { code: "functions/permission-denied", details: { reason: "disabled" } }, /This account is suspended, so it can't send work/],
+    ["an account that no longer exists", { code: "functions/permission-denied", details: { reason: "no-account" } }, /This account no longer exists, so nothing was sent/],
+    ["a server that couldn't check just now", { code: "functions/unavailable" }, /Darsi couldn't check this just now, so nothing was sent/],
+  ])("says so for %s, not \"check your connection\" or the rules' refusal, and keeps the work", async (_what, error, words) => {
+    m.call.mockImplementationOnce(async () => { throw Object.assign(new Error("refused"), error); });
+    await send();
+    expect(await screen.findByText(words)).toBeTruthy();
+    expect(screen.queryByText(/Check your connection/)).toBeNull();
+    expect(screen.queryByText(/This milestone can't be sent right now/)).toBeNull();
+    expect((screen.getByLabelText("Your evidence") as HTMLTextAreaElement).value).toBe("My classifier");
+    // The send button is back: an unavailable server can be tried again.
+    expect((screen.getByRole("button", { name: "Check and send" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it("maps checkCapstone's errors, and leaves any other error to the connection message", () => {
     expect(refusal({ code: "functions/not-found" })).toBe("closed");
     expect(refusal({ code: "functions/failed-precondition" })).toBe("closed");
     expect(refusal({ code: "functions/invalid-argument", message: "bad:repo" })).toBe("invalid");
-    expect(refusal({ code: "functions/unavailable" })).toBeNull();
+    // The account or the course couldn't be read just now (or the server answered 503): try again in a minute.
+    expect(refusal({ code: "functions/unavailable" })).toBe("unavailable");
+    // Refused for the account: suspended, or gone (details.reason from checkCapstone).
+    expect(refusal({ code: "functions/permission-denied", details: { reason: "disabled" } })).toBe("disabled");
+    expect(refusal({ code: "functions/permission-denied", details: { reason: "no-account" } })).toBe("noAccount");
+    // A permission-denied without those reasons is the rules' (ProjectView "denied"), not checkCapstone's.
+    expect(refusal({ code: "permission-denied" })).toBeNull();
+    expect(refusal({ code: "functions/internal" })).toBeNull();
     expect(refusal(new Error("Failed to fetch"))).toBeNull();
+  });
+
+  it("has words in English and Arabic for every refusal it names", async () => {
+    const { CT } = await import("../src/lesson/capstoneText");
+    for (const key of ["wait", "limit", "closed", "invalid", "disabled", "noAccount", "unavailable"] as const) {
+      expect(CT[key].en.length).toBeGreaterThan(10);
+      expect(CT[key].ar).toMatch(/[؀-ۿ]/);
+      expect(CT[key].ar).not.toContain("·");
+    }
   });
 });

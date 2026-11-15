@@ -2,7 +2,7 @@
 // cf-connecting-ip, never the Cloudflare edge Hosting sees; and a cf-connecting-ip that didn't come through Cloudflare
 // is ignored.
 import { describe, expect, it } from "vitest";
-import { clientIp, ipToBigInt, isCloudflare } from "../src/clientIp";
+import { clientIp, ipToBigInt, isCloudflare, lastHop } from "../src/clientIp";
 
 describe("Cloudflare's ranges", () => {
   it("knows Cloudflare's edges, IPv4 and IPv6, and nothing else", () => {
@@ -33,5 +33,14 @@ describe("clientIp", () => {
     expect(clientIp({ "x-forwarded-for": "9.9.9.9, 41.33.12.7" })).toBe("41.33.12.7");
     expect(clientIp({}, "127.0.0.1")).toBe("127.0.0.1");
     expect(clientIp({ "fastly-client-ip": ["41.33.12.7", "x"] })).toBe("41.33.12.7");
+  });
+  it("lastHop is who connected to Google's front end, whatever fastly-client-ip or the first hops claim", () => {
+    // The function's own URL: a caller sends any fastly-client-ip and any first hop; the last hop is still theirs.
+    const forged = (n: number) => ({ "fastly-client-ip": `198.51.100.${n}`, "x-forwarded-for": `198.51.100.${n}, 203.0.113.9` });
+    expect(new Set([1, 2, 3].map((n) => clientIp(forged(n)))).size).toBe(3);
+    expect(new Set([1, 2, 3].map((n) => lastHop(forged(n)))).size).toBe(1);
+    expect(lastHop(forged(1))).toBe("203.0.113.9");
+    expect(lastHop({}, "10.0.0.1")).toBe("10.0.0.1");
+    expect(lastHop({})).toBe("?");
   });
 });

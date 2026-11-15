@@ -30,6 +30,9 @@ function apply(doc: Data, data: Data, deep: boolean) {
   }
 }
 
+/** A filter's value for where(field, "array-contains", value): the field is an array that holds the value. */
+class Holds { constructor(readonly value: unknown) {} }
+
 export class FakeDb {
   docs = new Map<string, Data>();
   writes: Write[] = [];
@@ -70,9 +73,10 @@ export class FakeDb {
   query(col: string, filters: [string, unknown][] = []) {
     const self = this;
     const run = () => [...self.docs.keys()].filter((k) => k.startsWith(`${col}/`) && !k.slice(col.length + 1).includes("/"))
-      .map((k) => self.snap(k)).filter((s) => filters.every(([f, v]) => s.get(f) === v));
+      .map((k) => self.snap(k)).filter((s) => filters.every(([f, v]) => { const got = s.get(f); return v instanceof Holds ? Array.isArray(got) && got.includes(v.value) : got === v; }));
     const q = {
-      where: (f: string, _op: "==", v: unknown) => self.query(col, [...filters, [f, v]]),
+      // Typed as before (the fakes that extend this one declare "==" only); "array-contains" is honoured when it comes.
+      where: (f: string, op: "==", v: unknown) => self.query(col, [...filters, [f, (op as string) === "array-contains" ? new Holds(v) : v]]),
       select: (..._f: string[]) => q,
       limit: (_n: number) => q,
       get: async () => { const docs = run(); return { docs, size: docs.length, empty: !docs.length }; },
@@ -89,7 +93,34 @@ export class FakeDb {
       add: async (data: Data) => { const ref = this.doc(`${col}/auto${Date.now()}${n++}`); await ref.set(data); return ref; },
     };
   }
-  async runTransaction<T>(fn: (tx: unknown) => Promise<T>): Promise<T> {
+  /** A write batch: nothing is applied until commit, and then all of it or (on `failOn`, or an update of a missing document) none. */
+  batch() {
+    const ws: Write[] = [], self = this;
+    const b = {
+      set: (ref: { path: string }, data: Data, opts?: Write["opts"]) => { ws.push({ path: ref.path, op: "set", data, opts }); return b; },
+      update: (ref: { path: string }, data: Data) => { ws.push({ path: ref.path, op: "update", data }); return b; },
+      create: (ref: { path: string }, data: Data) => { ws.push({ path: ref.path, op: "create", data }); return b; },
+      delete: (ref: { path: string }) => { ws.push({ path: ref.path, op: "delete" }); return b; },
+      commit: async () => {
+        for (const w of ws) if (w.op === "update" && !self.docs.has(w.path) && !ws.some((x) => x !== w && x.path === w.path && x.op !== "delete")) throw new Error(`NOT_FOUND ${w.path}`);
+        self.commit(ws);
+      },
+    };
+    return b;
+  }
+  /**
+   * When true, transactions run one after another, as Firestore's locks make them: two started together never both
+   * read the old value. Off by default: some tests start one transaction from inside another to stage an interleaving.
+   */
+  serial = false;
+  private queue: Promise<unknown> = Promise.resolve();
+  runTransaction<T>(fn: (tx: unknown) => Promise<T>): Promise<T> {
+    if (!this.serial) return this.transact(fn);
+    const run = this.queue.then(() => this.transact(fn));
+    this.queue = run.catch(() => {});
+    return run;
+  }
+  private async transact<T>(fn: (tx: unknown) => Promise<T>): Promise<T> {
     const ws: Write[] = [];
     const tx = {
       get: async (ref: { path?: string; get: () => Promise<unknown> }) => {
@@ -107,13 +138,52 @@ export class FakeDb {
   }
 }
 
-/** Auth accounts and their custom claims. */
+export type FakeUser = {
+  uid: string; customClaims?: Record<string, unknown>; email?: string; displayName?: string; emailVerified?: boolean; disabled?: boolean;
+  password?: string; providerData?: { providerId: string }[]; tokensValidAfterTime?: string;
+};
+/** An Auth error as the Admin SDK throws it: the code is also the message (older tests read that). */
+const authError = (code: string) => Object.assign(new Error(code), { code });
+
+/** Auth accounts and their custom claims; accounts can be made, found by email, changed and deleted. */
 export class FakeAuth {
-  users = new Map<string, { uid: string; customClaims?: Record<string, unknown> }>();
+  users = new Map<string, FakeUser>();
   claimWrites: string[] = [];
-  async getUser(uid: string) { const u = this.users.get(uid); if (!u) throw new Error("auth/user-not-found"); return clone(u); }
+  /** The next this-many claims writes fail (Auth down for a moment). */
+  failClaims = 0;
+  /** Accounts being made right now, and the most at any one time (createUser takes a moment, as the real one does). */
+  creating = 0; maxCreating = 0;
+  private made = 0;
+  async getUser(uid: string) { const u = this.users.get(uid); if (!u) throw authError("auth/user-not-found"); return clone(u); }
+  async getUserByEmail(email: string) {
+    const u = [...this.users.values()].find((x) => x.email === String(email).toLowerCase());
+    if (!u) throw authError("auth/user-not-found");
+    return clone(u);
+  }
+  async createUser(p: { uid?: string; email?: string; password?: string; displayName?: string; emailVerified?: boolean; disabled?: boolean }) {
+    this.maxCreating = Math.max(this.maxCreating, ++this.creating);
+    try {
+      await new Promise((r) => setTimeout(r, 1));
+      const email = p.email?.toLowerCase();
+      if (email && [...this.users.values()].some((x) => x.email === email)) throw authError("auth/email-already-exists");
+      const uid = p.uid ?? `made${++this.made}`;
+      if (this.users.has(uid)) throw authError("auth/uid-already-exists");
+      const u: FakeUser = { uid, ...(email ? { email } : {}), ...(p.displayName ? { displayName: p.displayName } : {}), emailVerified: p.emailVerified === true, disabled: p.disabled === true, ...(p.password ? { password: p.password } : {}), providerData: [{ providerId: "password" }] };
+      this.users.set(uid, u);
+      return clone(u);
+    } finally { this.creating--; }
+  }
+  async updateUser(uid: string, p: Partial<Omit<FakeUser, "uid" | "customClaims">>) {
+    const u = this.users.get(uid); if (!u) throw authError("auth/user-not-found");
+    Object.assign(u, clone(p), p.email ? { email: p.email.toLowerCase() } : {});
+    // A new password ends the account's sessions, as Auth does.
+    if (p.password) u.tokensValidAfterTime = new Date().toUTCString();
+    return clone(u);
+  }
+  async deleteUser(uid: string) { if (!this.users.delete(uid)) throw authError("auth/user-not-found"); }
   async setCustomUserClaims(uid: string, claims: Record<string, unknown>) {
-    const u = this.users.get(uid); if (!u) throw new Error("auth/user-not-found");
+    const u = this.users.get(uid); if (!u) throw authError("auth/user-not-found");
+    if (this.failClaims > 0) { this.failClaims--; throw authError("auth/internal-error"); }
     u.customClaims = clone(claims); this.claimWrites.push(uid);
   }
   async revokeRefreshTokens() { /* sessions end; nothing to keep */ }

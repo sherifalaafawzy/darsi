@@ -13,10 +13,11 @@ import { FieldValue } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { defineSecret, defineString } from "firebase-functions/params";
-import { caller, db, freshCaller, str } from "./admin.js";
-import { recordPayment, recordRefund } from "./billing.js";
+import { audit, caller, db, freshCaller, str } from "./admin.js";
+import { orgClosed, recordPayment, recordRefund } from "./billing.js";
 import { renewsByItself, type Currency, type PaymentRecord, type Plan, type Subscription } from "./billingCore.js";
 import { superOn } from "./settings.js";
+import { refuseSsoSession } from "./ssoStore.js";
 import { checkoutAmount, formEncode, fullyRefunded, invoicePeriod, kindOf, paymobOutcome, providerFor, realSecret, stripeSession, stripeSubStatus, verifyPaymob, verifyStripe, type CheckoutKind, type StripeInvoice } from "./paymentsCore.js";
 
 const PAYMOB_SECRET = defineSecret("PAYMOB_SECRET_KEY");
@@ -48,6 +49,8 @@ const real = realSecret;
  */
 export const startCheckout = onCall({ secrets: [PAYMOB_SECRET, STRIPE_SECRET] }, async (req) => {
   const c = await freshCaller(req);
+  // A school sign-in session on a personal account never spends money (design §7, `sso-own-login`).
+  await refuseSsoSession(req.auth?.token, c.uid);
   if (!(await superOn())) throw new HttpsError("failed-precondition", "super-off");
   const plans = ((await db.doc("config/plans").get()).get("plans") as Plan[] | undefined) ?? [];
   const plan = plans.find((p) => p.id === str(req.data?.plan, 32) && p.active);
@@ -55,6 +58,13 @@ export const startCheckout = onCall({ secrets: [PAYMOB_SECRET, STRIPE_SECRET] },
   const currency: Currency = req.data?.currency === "USD" ? "USD" : "EGP";
   const kind = kindOf(plan);
   if (kind === "licence" && (c.role !== "orgAdmin" || !c.orgId)) throw new HttpsError("permission-denied", "Only an organization's admins can buy seats.");
+  // Seats for an organization that is suspended or being deleted: never sold (its admins are frozen, and a licence
+  // bought now would be paid for and then lost with it). Checked before a checkout is stored or a provider called.
+  if (kind === "licence") {
+    // `shut`, not `closed`: that name is this file's payments-closed refusal (above), used again below.
+    const shut = orgClosed((await db.doc(`orgs/${c.orgId}`).get()).get("status"));
+    if (shut) throw shut;
+  }
   if (kind === "credits" && !(Number(req.auth?.token.planUntil) > Date.now())) throw new HttpsError("failed-precondition", "Credit packs are for people who have Darsi Super.");
   // A Stripe subscription that renews by itself would charge alongside a second one (sfm-05): its owner cancels the
   // renewal first (setRenewal). A Paymob period bought early is added after the current one, credits and all.
@@ -106,15 +116,35 @@ export const startCheckout = onCall({ secrets: [PAYMOB_SECRET, STRIPE_SECRET] },
 /* ---------- Turning a verified payment into Super ---------- */
 
 /**
+ * Money a provider says it took that Darsi could not match to a checkout (none such, another provider's, another
+ * amount, an order or a subscription it doesn't know). Nothing is given, and the webhook still answers 200 (a retry
+ * would find the same). A log line alone was all that was left of it: it is also kept in the audit log, where a
+ * platform admin sees it and can refund or apply it by hand. Returns `why`, the webhook's answer.
+ * Once per payment and reason on each instance: a signed callback sent again and again (a payer sees the signature of
+ * their own Paymob transaction, and its reference isn't signed) must not fill the audit log. The checkout id may be
+ * that unsigned reference, so it is cut to a document id's length.
+ */
+const auditedUnmatched = new Set<string>();
+async function unmatched(provider: "paymob" | "stripe", ref: string, checkout: string | null, why: string, cents: number, currency: string) {
+  const key = `${provider}_${ref}_${why}`;
+  if (auditedUnmatched.has(key)) return why;
+  if (auditedUnmatched.size >= 500) auditedUnmatched.clear();
+  auditedUnmatched.add(key);
+  await audit("paymentUnmatched", "webhook", { provider, ref: String(ref).slice(0, 128), checkout: checkout ? String(checkout).slice(0, 128) : null, why, cents: Number.isFinite(cents) ? cents : null, currency: String(currency ?? "").toUpperCase().slice(0, 8) })
+    .catch((e) => { auditedUnmatched.delete(key); logger.error("payments: an unmatched payment was not audited", { provider, ref, why, error: String(e) }); });
+  return why;
+}
+
+/**
  * `stripe`: a Stripe invoice's period (its end and length, ms) and its subscription, so Super follows Stripe's own
  * dates (sfm-07) without losing time paid ahead.
  */
 async function pay(checkoutId: string, provider: "paymob" | "stripe", ref: string, cents: number, currency: string, stripe: { until?: number; periodMs?: number; stripeSub?: string } = {}) {
   const snap = await db.doc(`checkouts/${checkoutId}`).get();
   const c = snap.data() as Checkout | undefined;
-  if (!c || c.provider !== provider) { logger.warn("payment for an unknown checkout", { checkoutId, provider, ref }); return "unknown checkout"; }
+  if (!c || c.provider !== provider) { logger.warn("payment for an unknown checkout", { checkoutId, provider, ref }); return unmatched(provider, ref, checkoutId, "unknown checkout", cents, currency); }
   // The amount must be what Darsi asked for (renewals: the plan's price for one period).
-  if (cents !== c.cents || currency.toUpperCase() !== c.currency) { logger.error("payment amount differs from the checkout", { checkoutId, ref, cents, currency, want: c.cents }); return "amount differs"; }
+  if (cents !== c.cents || currency.toUpperCase() !== c.currency) { logger.error("payment amount differs from the checkout", { checkoutId, ref, cents, currency, want: c.cents }); return unmatched(provider, ref, checkoutId, "amount differs", cents, currency); }
   const p: PaymentRecord = { provider, ref, kind: c.kind, uid: c.kind === "licence" ? undefined : c.uid, orgId: c.orgId ?? undefined, plan: c.plan, amount: c.amount, currency: c.currency, seats: c.seats ?? undefined, clientId: c.clientId ?? undefined, checkout: checkoutId,
     ...(c.kind === "subscription" && stripe.until ? { until: stripe.until, ...(stripe.periodMs ? { periodMs: stripe.periodMs } : {}) } : {}), ...(c.kind === "subscription" && stripe.stripeSub ? { stripeSub: stripe.stripeSub } : {}) };
   // recordPayment marks the checkout paid in the same transaction as the payment.
@@ -161,7 +191,8 @@ export const paymobWebhook = onRequest({ secrets: [PAYMOB_HMAC, PAYMOB_SECRET], 
   try {
     if (o.type === "paid") {
       const checkout = await paymobCheckout(o.order, o.reference);
-      result = checkout ? await pay(checkout, "paymob", o.ref, o.cents, o.currency) : "unknown order";
+      // No checkout for the order (or its reference names another one): paid at Paymob, nothing given here.
+      result = checkout ? await pay(checkout, "paymob", o.ref, o.cents, o.currency) : await unmatched("paymob", o.ref, o.reference || null, "unknown order", o.cents, o.currency);
     } else if (o.type === "refund") result = await refund("paymob", o.ref);
     else if (o.type === "checkParent") {
       const parent = await paymobTransaction(o.parent);
@@ -212,6 +243,7 @@ async function ownerOf(stripeSubId: string): Promise<{ uid: string; mine: boolea
 export const setRenewal = onCall({ secrets: [STRIPE_SECRET] }, async (req) => {
   const c = caller(req);
   const renew = req.data?.renew === true;
+  await refuseSsoSession(req.auth?.token, c.uid);
   if (!real(STRIPE_SECRET.value())) throw closed();
   const ref = db.doc(`subscriptions/${c.uid}`);
   const sub = (await ref.get()).data() as Subscription | undefined;
@@ -259,7 +291,8 @@ export const stripeWebhook = onRequest({ secrets: [STRIPE_SECRET, STRIPE_WEBHOOK
       // the invoice paid for (Stripe bills calendar months: 28 to 31 days).
       if (inv.billing_reason !== "subscription_create" && inv.subscription) {
         const map = await db.doc(`stripeSubs/${inv.subscription}`).get();
-        result = map.exists ? await pay(map.get("checkout"), "stripe", inv.payment_intent ?? inv.id, inv.amount_paid, inv.currency, { ...invoicePeriod(inv), stripeSub: inv.subscription }) : "unknown subscription";
+        result = map.exists ? await pay(map.get("checkout"), "stripe", inv.payment_intent ?? inv.id, inv.amount_paid, inv.currency, { ...invoicePeriod(inv), stripeSub: inv.subscription })
+          : await unmatched("stripe", inv.payment_intent ?? inv.id, null, "unknown subscription", inv.amount_paid, inv.currency);
       }
     } else if (event.type === "charge.refunded") {
       if (o.refunded === true && typeof o.payment_intent === "string") result = await refund("stripe", o.payment_intent);

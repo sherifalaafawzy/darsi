@@ -24,6 +24,19 @@ type Cur = "EGP" | "USD";
  * one checkout sells), or 20.
  */
 const seatsFrom = (v: string | null) => { const n = Math.round(Number(v)); return v && n >= 1 ? Math.min(n, 10000) : 20; };
+/**
+ * Digits as an Arabic or Persian keyboard types them, as Latin ones. The seats field is a text field for them: a
+ * type="number" field hands back "" for ٢٠, and the count fell to 1. Anything else (a slipped letter, a thousands
+ * separator), which the number field never let in, is dropped, so it can't reset the count. (Its own two lines, not
+ * admin/typedNumber: this chunk is open to guests and shares nothing with the staff screens.)
+ */
+const digits = (s: string) => s.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x660)).replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x6f0)).replace(/\D/g, "");
+/**
+ * The server refused because this is a personal account opened through its school's sign-in (functions ssoStore.ts
+ * refuseSsoSession: startCheckout and setRenewal): buying and renewing take the account's own login, and trying again
+ * never works. Told by the refusal's reason, not its English message.
+ */
+const ownLogin = (e: unknown) => (e as { details?: { reason?: string } } | null)?.details?.reason === "sso-own-login";
 
 async function loadPlans(url: string): Promise<Plan[]> {
   const r = await fetch(url, { cache: "no-cache" });
@@ -62,7 +75,7 @@ export function Upgrade({ plansUrl, startCheckout, setRenewal, superOn = true }:
   const { user, plan, profile, role, refreshClaims } = useAuth();
   const { data: plans, error, retry } = usePlans(superOn ? plansUrl : null);
   const [cur, setCur] = useState<Cur>(() => defaultCurrency(lang));
-  const [msg, setMsg] = useState<"soon" | "error" | "subscribed" | null>(null);
+  const [msg, setMsg] = useState<"soon" | "error" | "subscribed" | "own" | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [seatCount, setSeatCount] = useState(() => seatsFrom(params.get("seats")));
   // The card subscription's renewal as the profile mirrors it (billing.writeClaims), or as this screen just set it.
@@ -96,7 +109,7 @@ export function Upgrade({ plansUrl, startCheckout, setRenewal, superOn = true }:
       location.assign(url);
     } catch (e) {
       const m = String((e as Error).message);
-      setMsg(/already-subscribed/.test(m) ? "subscribed" : /payments-closed|super-off/.test(m) ? "soon" : "error");
+      setMsg(ownLogin(e) ? "own" : /already-subscribed/.test(m) ? "subscribed" : /payments-closed|super-off/.test(m) ? "soon" : "error");
       setBusy(null);
     }
   };
@@ -111,7 +124,7 @@ export function Upgrade({ plansUrl, startCheckout, setRenewal, superOn = true }:
     } catch (e) {
       const m = String((e as Error).message);
       if (/no-renewal/.test(m)) setRenewalSet(null);
-      setRenewMsg({ ok: false, text: t(/no-renewal/.test(m) ? "up.noRenewal" : /payments-closed/.test(m) ? "up.soon" : "up.renewError") });
+      setRenewMsg({ ok: false, text: t(ownLogin(e) ? "me.ownLogin" : /no-renewal/.test(m) ? "up.noRenewal" : /payments-closed/.test(m) ? "up.soon" : "up.renewError") });
     } finally { setBusy(null); }
   };
   /** A plan for one person: what its button offers, given the card subscription and own Super. */
@@ -184,7 +197,7 @@ export function Upgrade({ plansUrl, startCheckout, setRenewal, superOn = true }:
             <div key={p.id} className="row-gap"><span>{t("up.pack", { n: p.credits, price: money(p.prices[cur]!) })}</span><Button size="sm" variant="secondary" loading={busy === p.id} disabled={!!busy} onClick={() => buy(p)}>{t("up.buy")}</Button></div>
           ))}
         </section>}
-        {msg && <p className={msg === "error" ? "notice err" : "notice"} role="status">{t(msg === "error" ? "up.payError" : msg === "subscribed" ? "up.subscribed" : "up.soon")}</p>}
+        {msg && <p className={msg === "error" || msg === "own" ? "notice err" : "notice"} role="status">{t(msg === "own" ? "me.ownLogin" : msg === "error" ? "up.payError" : msg === "subscribed" ? "up.subscribed" : "up.soon")}</p>}
 
         {seats.length > 0 && <section className="panel stack"><h3>{t("up.orgs")}</h3>
           <p className="muted">{t("up.orgsBody")}</p>
@@ -193,12 +206,12 @@ export function Upgrade({ plansUrl, startCheckout, setRenewal, superOn = true }:
             {/* An organization's admin buys seats for a year; everyone else is pointed to them. */}
             {role === "orgAdmin" && <div className="stack-sm">
               <div className="row-gap">
-                <TextField label={t("up.seatsField")} type="number" min={1} max={10000} value={seatCount} onChange={(e) => setSeatCount(Math.max(1, Math.min(10000, Math.round(Number(e.target.value)) || 1)))} dir="ltr" />
+                <TextField label={t("up.seatsField")} inputMode="numeric" maxLength={5} value={seatCount} onChange={(e) => setSeatCount(Math.max(1, Math.min(10000, Math.round(Number(digits(e.target.value))) || 1)))} dir="ltr" />
                 <Button loading={busy === p.id} disabled={!!busy} onClick={() => buy(p, seatCount)}>{t("up.buySeats", { price: money(p.prices[cur]! * seatCount) })}</Button>
               </div>
               <p className="muted small">{t("up.seatsHint")}</p>
               {/* Here from anywhere but the dashboard, the seat count isn't the licence's own: the dashboard fills it in. */}
-              {!params.get("seats") && <p className="muted small">{t("up.seatsFromDash")} <Link to="/admin">{t("up.openDash")}</Link></p>}
+              {!params.get("seats") && <p className="muted small">{t("up.seatsFromDash")} <Link to="/admin?tab=seats">{t("up.openDash")}</Link></p>}
             </div>}
           </div>)}
         </section>}

@@ -24,7 +24,11 @@ describe("project attachments (M8)", () => {
 
 describe("Hosting's headers (L5)", () => {
   const fb = JSON.parse(readFileSync(resolve(process.cwd(), "../../firebase.json"), "utf8"));
-  const block = (source: string) => Object.fromEntries(fb.hosting.headers.find((h: { source: string }) => h.source === source).headers.map((h: { key: string; value: string }) => [h.key, h.value]));
+  // Two sites since school sign-in: the app ("app") and login.darsiai.org ("login", the provider's callback only).
+  type Header = { key: string; value: string };
+  type Site = { target: string; public: string; rewrites: { source: string; function?: { functionId: string }; destination?: string }[]; headers: { source: string; headers: Header[] }[] };
+  const site = (target: string) => (fb.hosting as Site[]).find((h) => h.target === target)!;
+  const block = (source: string, target = "app") => Object.fromEntries(site(target).headers.find((h) => h.source === source)!.headers.map((h) => [h.key, h.value]));
   it("forbid framing every page, but not Firebase's own /__/ pages (the sign-in helper frame is one)", () => {
     const pages = block("!/__/**");
     expect(pages["X-Frame-Options"]).toBe("DENY");
@@ -37,5 +41,26 @@ describe("Hosting's headers (L5)", () => {
   });
   it("keep HTTPS on, for every path", () => {
     expect(block("**")["Strict-Transport-Security"]).toMatch(/^max-age=\d{8,}; includeSubDomains$/);
+  });
+  it("send /api/sso/** to ssoEdge, before the app's own fallback catches it", () => {
+    const rw = site("app").rewrites;
+    const sso = rw.findIndex((r) => r.source === "/api/sso/**" && r.function?.functionId === "ssoEdge");
+    expect(sso).toBeGreaterThanOrEqual(0);
+    expect(sso).toBeLessThan(rw.findIndex((r) => r.destination === "/app.html"));
+  });
+  it("never send /robots.txt or /favicon.ico to a function: the Functions Framework answers both itself with an empty 404", () => {
+    const rw = site("app").rewrites.filter((r) => r.function);
+    for (const path of ["/robots.txt", "/favicon.ico"]) expect(rw.map((r) => r.source)).not.toContain(path);
+    expect(readFileSync(resolve(process.cwd(), "public/robots.txt"), "utf8")).toMatch(/Disallow: \/super[\s\S]*Sitemap: https:\/\/darsiai\.org\/sitemap\.xml/);
+    expect((fb.hosting as { target: string; ignore: string[] }[]).find((h) => h.target === "app")!.ignore).not.toContain("robots.txt");
+  });
+  it("the sign-in callback site serves nothing but the callback: no service worker, no cache, no framing, no referrer", () => {
+    const login = site("login");
+    expect(login.public).not.toBe(site("app").public);
+    expect(login.rewrites).toEqual([{ source: "**", function: { functionId: "ssoCallback", region: "europe-west1" } }]);
+    const h = block("**", "login");
+    expect(h).toMatchObject({ "Cache-Control": "no-store", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY" });
+    expect(h["Content-Security-Policy"]).toContain("default-src 'none'");
+    expect(h["Strict-Transport-Security"]).toMatch(/includeSubDomains$/);
   });
 });

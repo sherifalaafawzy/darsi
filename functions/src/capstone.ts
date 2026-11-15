@@ -16,7 +16,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { defineSecret } from "firebase-functions/params";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { audit, caller, db, requireSuper } from "./admin.js";
+import { audit, auth, caller, db, requireSuper } from "./admin.js";
 import { bucket } from "./storage.js";
 import { GEMINI, GEMINI_KEY, googleToken, loadUnit, tutorConfig, vertexHost, vertexModel } from "./tutor.js";
 import { usageCost, type Usage } from "./tutorCore.js";
@@ -94,7 +94,23 @@ export const checkCapstone = onCall({ secrets: [GEMINI_KEY, GITHUB_TOKEN], memor
   const orgId = c.orgId ?? null;
   let input: CapstoneInput;
   try { input = parseInput(req.data, filesPrefix(bucket().name, orgId, c.uid)); } catch (e) { throw new HttpsError("invalid-argument", (e as Error).message); }
-  const unit = (await loadUnit(input.unitId, orgId)) as unknown as Unit | null;
+  // The token alone isn't enough: a suspended account's token works for up to an hour, and a send costs GitHub
+  // requests and a paid review and lands in a reviewer's queue. Auth is asked, before any other read or write. An
+  // account that is gone is refused the same way; when Auth can't be asked, the send is "try again", never let through.
+  const account = await auth.getUser(c.uid).catch((e: { code?: string }) => {
+    if (e?.code === "auth/user-not-found") return null;
+    logger.error("checkCapstone: account not read", { uid: c.uid, error: String(e) });
+    throw new HttpsError("unavailable", "Your account couldn't be checked. Try again in a minute.");
+  });
+  if (!account || account.disabled) {
+    logger.info("checkCapstone: refused", { uid: c.uid, why: account ? "disabled" : "no-account" });
+    throw new HttpsError("permission-denied", account ? "This account is suspended." : "This account no longer exists.", { reason: account ? "disabled" : "no-account" });
+  }
+  // Courses that can't be read just now (a Storage error) are "try again", not "no such milestone".
+  const unit = (await loadUnit(input.unitId, orgId).catch((e) => {
+    logger.error("checkCapstone: courses not read", { error: String(e) });
+    throw new HttpsError("unavailable", "The course couldn't be read. Try again in a minute.");
+  })) as unknown as Unit | null;
   const lesson = unit?.lessons.find((l) => l.id === input.lessonId);
   const step = lesson?.steps.find((x) => x.id === input.stepId && x.type === "project") as ProjectStep | undefined;
   if (!unit || !lesson || !step || unit.kind !== "capstone") throw new HttpsError("not-found", "No such capstone milestone.");

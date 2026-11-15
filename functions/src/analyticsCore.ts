@@ -4,7 +4,7 @@
  * organizations overview (`stats/overview`) built from users' summaries.
  */
 
-export const EVENTS = ["session_start", "screen_view", "lesson_start", "lesson_complete", "lab_open", "unit_download", "onboarding_done", "sign_up", "sign_in", "view_paywall", "begin_checkout", "tutor_open", "tutor_question"] as const;
+export const EVENTS = ["session_start", "screen_view", "lesson_start", "lesson_complete", "lab_open", "unit_download", "onboarding_done", "sign_up", "sign_in", "view_paywall", "begin_checkout", "tutor_open", "tutor_question", "app_error"] as const;
 export type EventName = (typeof EVENTS)[number];
 const ROLES = ["guest", "learner", "student", "teacher", "orgAdmin", "superadmin"];
 
@@ -12,7 +12,8 @@ const ROLES = ["guest", "learner", "student", "teacher", "orgAdmin", "superadmin
 export interface InEvent { n: EventName; t: number; p: Record<string, string | number>; off: boolean }
 /** Who sent the batch. Nothing here names a person: `d` is a random id made on the phone. */
 export interface Ctx { d: string; role: string; aud?: string; lang: string; org?: string; inst: boolean; ver?: string }
-export interface Batch { ctx: Ctx; events: InEvent[] }
+/** `b`: the phone's own id for this batch, the same when it sends the batch again (collect then counts it once). */
+export interface Batch { ctx: Ctx; events: InEvent[]; b?: string }
 
 export const MAX_EVENTS = 100;
 /** How far ahead of the server's clock an event may be (seconds). */
@@ -21,9 +22,18 @@ const ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
 const DEVICE = /^[a-z0-9]{16,40}$/;
 const LANG = /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/;
 const SCREEN = /^[a-z][a-z_]{0,23}$/;
+const BATCH_ID = /^[a-z0-9]{8,32}$/;
+/**
+ * An app build (the context's `v`), which analytics/{day}.errBuild uses as a map key. It starts with a letter or a
+ * digit: Firestore refuses field names like `__x__`, and since collect writes many phones' counts in one go, one such
+ * name would fail everyone's.
+ */
+const BUILD = /^[A-Za-z0-9][A-Za-z0-9._-]{0,23}$/;
+/** What went wrong, for `app_error`: an uncaught error, an unhandled rejection, a lazy chunk that didn't load, a render crash. */
+export const ERROR_KINDS = ["error", "rejection", "chunk", "render"] as const;
 
-/** Each event's parameters, and how to check them: an id, a short word, or a whole number in a range. */
-const PARAMS: Record<EventName, Record<string, "id" | "screen" | "lang" | [number, number]>> = {
+/** Each event's parameters, and how to check them: an id, a short word, a pattern, or a whole number in a range. */
+const PARAMS: Record<EventName, Record<string, "id" | "screen" | "lang" | RegExp | [number, number]>> = {
   session_start: {},
   screen_view: { s: "screen" },
   lesson_start: { u: "id", l: "id", tr: "id" },
@@ -38,6 +48,9 @@ const PARAMS: Record<EventName, Record<string, "id" | "screen" | "lang" | [numbe
   begin_checkout: { plan: "id", cur: "id", prov: "id" },
   tutor_open: { u: "id" },
   tutor_question: { m: "id" },
+  // A crash on the phone: the screen, the kind, and a 12-hex fingerprint of the message (never the message itself).
+  // Counted per day and per build; never sent to Google Analytics (measurementPayloads).
+  app_error: { s: "screen", k: new RegExp(`^(${ERROR_KINDS.join("|")})$`), h: /^[0-9a-f]{12}$/ },
 };
 
 const str = (v: unknown, re: RegExp) => (typeof v === "string" && re.test(v) ? v : undefined);
@@ -55,7 +68,7 @@ export function parseBatch(raw: unknown, nowSec: number): Batch {
   const role = typeof c.r === "string" && ROLES.includes(c.r) ? c.r : "guest";
   const ctx: Ctx = {
     d, role, lang: str(c.l, LANG) ?? "und", inst: c.i === 1,
-    ...(str(c.a, ID) ? { aud: c.a as string } : {}), ...(str(c.o, ID) ? { org: c.o as string } : {}), ...(str(c.v, ID) ? { ver: c.v as string } : {}),
+    ...(str(c.a, ID) ? { aud: c.a as string } : {}), ...(str(c.o, ID) ? { org: c.o as string } : {}), ...(str(c.v, BUILD) ? { ver: c.v as string } : {}),
   };
   const events: InEvent[] = [];
   for (const x of b.e as unknown[]) {
@@ -66,11 +79,13 @@ export function parseBatch(raw: unknown, nowSec: number): Batch {
     for (const [k, kind] of Object.entries(PARAMS[n])) {
       const v = e.p?.[k];
       if (Array.isArray(kind)) { if (typeof v === "number" && Number.isFinite(v)) p[k] = Math.round(Math.min(kind[1], Math.max(kind[0], v))); }
-      else { const s = str(v, kind === "id" ? ID : kind === "screen" ? SCREEN : LANG); if (s) p[k] = s; }
+      else { const s = str(v, kind instanceof RegExp ? kind : kind === "id" ? ID : kind === "screen" ? SCREEN : LANG); if (s) p[k] = s; }
     }
+    if (n === "app_error" && !p.k) continue; // an error of no known kind has nothing to be counted under
     events.push({ n, t: Math.floor(e.t), p, off: e.o === 1 });
   }
-  return { ctx, events };
+  const id = str((b as { b?: unknown }).b, BATCH_ID);
+  return { ctx, events, ...(id ? { b: id } : {}) };
 }
 
 /**
@@ -107,18 +122,54 @@ export const dayOf = (sec: number) => new Date(sec * 1000).toISOString().slice(0
 
 /** A nested object of counts, merged into analytics/{day} with FieldValue.increment. */
 export type Counts = { [k: string]: number | Counts };
+/**
+ * A count's own value, never what every object inherits: a build may be named "constructor" or "toString" (a phone's
+ * own string, the one key here that isn't from a known list), and `{}["constructor"]` is a function, which once made
+ * the count a string and the shared write of that moment fail.
+ */
+const own = (o: Counts, k: string) => (Object.hasOwn(o, k) ? o[k] : undefined);
 function add(c: Counts, path: string[], n = 1) {
   let o = c;
-  for (const k of path.slice(0, -1)) o = (o[k] ??= {}) as Counts;
+  for (const k of path.slice(0, -1)) o = (own(o, k) ?? (o[k] = {})) as Counts;
   const last = path[path.length - 1];
-  o[last] = ((o[last] as number | undefined) ?? 0) + n;
+  o[last] = ((own(o, last) as number | undefined) ?? 0) + n;
+}
+
+/** Adds `from` into `into`, key by key: collect merges the batches of one moment into one write per day. */
+export function addCounts(into: Counts, from: Counts): Counts {
+  for (const [k, v] of Object.entries(from)) {
+    const have = own(into, k);
+    if (typeof v === "number") into[k] = (typeof have === "number" ? have : 0) + v;
+    else into[k] = addCounts(typeof have === "object" ? have : {}, v);
+  }
+  return into;
+}
+
+/** How many different builds a day's errBuild may name; errors from any further build count under "other". */
+export const MAX_BUILDS = 20;
+/**
+ * Keeps a day's errBuild to MAX_BUILDS names: `seen` is the builds that day already has (collect remembers them per
+ * day), and a build beyond them is added while there is room, else its errors move to "other". A phone can put any
+ * short string in `v`, so without this a day's document could be filled with made-up builds.
+ */
+export function capBuilds(c: Counts, seen: Set<string>, max = MAX_BUILDS): Counts {
+  const builds = c.errBuild;
+  if (!builds || typeof builds !== "object") return c;
+  const out: Counts = {};
+  for (const [build, n] of Object.entries(builds)) {
+    if (build !== OTHER && !seen.has(build) && seen.size < max) seen.add(build);
+    const key = build === OTHER || seen.has(build) ? build : OTHER;
+    out[key] = ((own(out, key) as number | undefined) ?? 0) + (n as number);
+  }
+  return { ...c, errBuild: out };
 }
 
 /**
  * The batch as counts per day (UTC): every event by name, made offline, and by role; sessions by language, role,
  * audience and installed app; finished lessons by track and course, with their accuracy and time summed (divide by
- * the count for averages); labs opened; downloads; and per organization (as the phone says: for trends only, the
- * overview's org figures come from accounts).
+ * the count for averages); labs opened; downloads; per organization (as the phone says: for trends only, the
+ * overview's org figures come from accounts); and the app's own errors by kind (err) and by build (errBuild: a bad
+ * release shows as its build's count climbing; a phone that names no build counts under "other").
  */
 export function dailyCounts({ ctx, events }: Batch): Record<string, Counts> {
   const days: Record<string, Counts> = {};
@@ -144,6 +195,10 @@ export function dailyCounts({ ctx, events }: Batch): Record<string, Counts> {
       add(c, ["downloads", "n"]);
       if (typeof e.p.mb === "number") add(c, ["downloads", "mb"], e.p.mb);
     } else if (e.n === "screen_view" && typeof e.p.s === "string") add(c, ["screens", e.p.s]);
+    else if (e.n === "app_error" && typeof e.p.k === "string") {
+      add(c, ["err", "n"]); add(c, ["err", "k", e.p.k]);
+      add(c, ["errBuild", ctx.ver && BUILD.test(ctx.ver) ? ctx.ver : OTHER]);
+    }
   }
   return days;
 }
@@ -151,10 +206,11 @@ export function dailyCounts({ ctx, events }: Batch): Record<string, Counts> {
 /**
  * Measurement Protocol requests for Google Analytics (Firebase Analytics' web stream): 25 events per request, only
  * events from the last 72 hours (older ones are refused there; they still count in Darsi's own numbers), the phone's
- * random id as client_id, and role, audience and language as user properties. No names or emails, ever.
+ * random id as client_id, and role, audience and language as user properties. No names or emails, ever. The app's
+ * own errors (app_error) stay in Darsi.
  */
 export function measurementPayloads({ ctx, events }: Batch, nowSec: number): Record<string, unknown>[] {
-  const recent = events.filter((e) => e.t >= nowSec - 71 * 3600);
+  const recent = events.filter((e) => e.t >= nowSec - 71 * 3600 && e.n !== "app_error");
   const out: Record<string, unknown>[] = [];
   for (let i = 0; i < recent.length; i += 25) {
     out.push({
@@ -193,47 +249,69 @@ export interface Overview {
  * whatever an org admin wrote).
  */
 export function overview(users: UserRow[], orgs: OrgRow[], now = new Date()): Overview {
+  const acc = overviewAcc(now);
+  for (const u of users) acc.add(u);
+  return acc.finish(orgs);
+}
+
+type OrgTally = Omit<OrgStats, "name" | "country" | "avgAccuracy"> & { accSum: number; accN: number };
+const noTally = (): OrgTally => ({ members: 0, teachers: 0, students: 0, active7: 0, active30: 0, lessons: 0, xp: 0, accSum: 0, accN: 0 });
+
+/**
+ * The overview, one account at a time: statsJob reads users in pages and folds each page in, so its memory doesn't
+ * grow with the number of accounts. `add` every account, then `finish` with the organizations (only the active ones
+ * are listed, as before). `members()`: the accounts counted per organization id, to mend orgs.memberCount.
+ */
+export function overviewAcc(now = new Date()) {
   const ms = now.getTime();
   const within = (iso: string | null | undefined, days: number) => Boolean(iso) && ms - Date.parse(iso!) < days * 864e5;
   const byRole: Record<string, number> = {};
   const weeks: Record<string, number> = {};
-  let new7 = 0, new30 = 0, active7 = 0, active30 = 0, lessons = 0, xp = 0, accSum = 0, accN = 0, withLessons = 0;
-  const per: Record<string, OrgStats & { accSum: number; accN: number }> = {};
-  const active = new Set(orgs.filter((o) => o.status === "active").map((o) => o.id));
-  for (const o of orgs) {
-    if (!active.has(o.id)) continue;
-    const name = typeof o.name === "string" && o.name ? o.name.slice(0, 120) : o.id;
-    const country = typeof o.country === "string" ? o.country.slice(0, 80) : "";
-    per[o.id] = { name, ...(country ? { country } : {}), members: 0, teachers: 0, students: 0, active7: 0, active30: 0, lessons: 0, xp: 0, avgAccuracy: null, accSum: 0, accN: 0 };
-  }
-  for (const u of users) {
-    const role = u.role ?? "learner";
-    byRole[role] = (byRole[role] ?? 0) + 1;
-    if (u.createdAt && ms - u.createdAt < 7 * 864e5) new7++;
-    if (u.createdAt && ms - u.createdAt < 30 * 864e5) new30++;
-    const a7 = within(u.lastActive, 7), a30 = within(u.lastActive, 30);
-    if (a7) active7++;
-    if (a30) active30++;
-    const done = u.lessonsDone ?? 0, scored = typeof u.graded === "number" ? u.graded : done;
-    lessons += done; xp += u.xp ?? 0;
-    if (done) withLessons++;
-    if (scored) { accSum += u.avgAccuracy ?? 0; accN++; }
-    for (const [w, n] of Object.entries(u.weeks ?? {})) weeks[w] = (weeks[w] ?? 0) + n;
-    const o = u.orgId ? per[u.orgId] : undefined;
-    if (o) {
+  let total = 0, new7 = 0, new30 = 0, active7 = 0, active30 = 0, lessons = 0, xp = 0, accSum = 0, accN = 0, withLessons = 0;
+  // Keyed by whatever orgId the accounts carry (only the functions write it); finish keeps the active organizations.
+  const per = new Map<string, OrgTally>();
+  return {
+    add(u: UserRow) {
+      total++;
+      const role = u.role ?? "learner";
+      byRole[role] = (byRole[role] ?? 0) + 1;
+      if (u.createdAt && ms - u.createdAt < 7 * 864e5) new7++;
+      if (u.createdAt && ms - u.createdAt < 30 * 864e5) new30++;
+      const a7 = within(u.lastActive, 7), a30 = within(u.lastActive, 30);
+      if (a7) active7++;
+      if (a30) active30++;
+      const done = u.lessonsDone ?? 0, scored = typeof u.graded === "number" ? u.graded : done;
+      lessons += done; xp += u.xp ?? 0;
+      if (done) withLessons++;
+      if (scored) { accSum += u.avgAccuracy ?? 0; accN++; }
+      for (const [w, n] of Object.entries(u.weeks ?? {})) weeks[w] = (weeks[w] ?? 0) + n;
+      if (!u.orgId) return;
+      let o = per.get(u.orgId);
+      if (!o) per.set(u.orgId, (o = noTally()));
       o.members++; if (role === "teacher") o.teachers++; if (role === "student") o.students++;
       if (a7) o.active7++; if (a30) o.active30++;
       o.lessons += done; o.xp += u.xp ?? 0;
       if (scored) { o.accSum += u.avgAccuracy ?? 0; o.accN++; }
-    }
-  }
-  const orgsOut: Record<string, OrgStats> = {};
-  for (const [id, { accSum: s, accN: n, ...o }] of Object.entries(per)) orgsOut[id] = { ...o, avgAccuracy: n ? s / n : null };
-  const orgsByStatus: Record<string, number> = {};
-  for (const o of orgs) orgsByStatus[o.status ?? "pending"] = (orgsByStatus[o.status ?? "pending"] ?? 0) + 1;
-  return {
-    at: now.toISOString(),
-    users: { total: users.length, byRole, new7, new30, active7, active30, withLessons },
-    lessons, xp, avgAccuracy: accN ? accSum / accN : null, weeks, orgs: orgsOut, orgsByStatus,
+    },
+    members(): Map<string, number> {
+      return new Map([...per].map(([id, o]) => [id, o.members]));
+    },
+    finish(orgs: OrgRow[]): Overview {
+      const orgsOut: Record<string, OrgStats> = {};
+      const orgsByStatus: Record<string, number> = {};
+      for (const o of orgs) {
+        orgsByStatus[o.status ?? "pending"] = (orgsByStatus[o.status ?? "pending"] ?? 0) + 1;
+        if (o.status !== "active") continue;
+        const name = typeof o.name === "string" && o.name ? o.name.slice(0, 120) : o.id;
+        const country = typeof o.country === "string" ? o.country.slice(0, 80) : "";
+        const { accSum: s, accN: n, ...counts } = per.get(o.id) ?? noTally();
+        orgsOut[o.id] = { name, ...(country ? { country } : {}), ...counts, avgAccuracy: n ? s / n : null };
+      }
+      return {
+        at: now.toISOString(),
+        users: { total, byRole, new7, new30, active7, active30, withLessons },
+        lessons, xp, avgAccuracy: accN ? accSum / accN : null, weeks, orgs: orgsOut, orgsByStatus,
+      };
+    },
   };
 }

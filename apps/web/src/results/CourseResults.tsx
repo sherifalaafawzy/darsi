@@ -1,26 +1,33 @@
 import { useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { AppBar, EmptyState } from "@darsi/design-system";
+import { AppBar, Button, EmptyState } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n";
 import { GRADED, type ProjectStep, type Unit } from "../content/types";
-import { useLoad, type ContentLoader } from "./async";
+import { errorText } from "../staff/errors";
+import { k } from "../staff/strings";
+import { useCatalog, useLoad, useOnce, type ContentLoader, type Once } from "./async";
 import { courseResults, myGrant, type StudentWork } from "./data";
 import { projectStep, stepName, WorkBody, type WorkFields } from "../admin/WorkBody";
-import { mayHaveResults } from "./who";
+import { ended, mayHaveResults } from "./who";
 import "../styles/admin.css";
 
 /**
  * /results: a university teacher's read-only view of the courses a platform admin gave them access to: each student's
  * check scores per lesson, and their project submissions (final projects first; capstone milestones with their
  * repository, checks and advisory AI review; files read with this teacher's own sign-in). Nothing here can change a record.
+ * The rows come from the courseResults callable (results/data.ts), which keeps the grant's organizations and refuses a
+ * course the grant doesn't list or a grant that has ended (`no-grant`, said in the teacher's language). A grant whose
+ * end date has passed is said as such here, with no course to pick: each would only answer `no-grant`.
  */
 export function CourseResults({ content }: { content: ContentLoader }) {
-  const { t, L } = useI18n();
+  const { t, L, locale } = useI18n();
   const { user, role, profile, profileReady } = useAuth();
-  const grant = useLoad(() => (user ? myGrant(user.uid) : Promise.resolve(null)), [user?.uid]);
-  const catalog = useLoad(() => content.loadCatalog(), []);
+  const grant = useOnce(user ? () => myGrant(user.uid) : null, [user?.uid]);
+  const catalog = useCatalog(content);
   const units = grant.data?.units ?? [];
+  // Checked when drawn: a page left open past the end date says so the next time it draws (a pick, a retry).
+  const over = grant.data ? ended(grant.data) : false;
   const [pick, setPick] = useState<string>("");
   const unitId = pick || units[0] || "";
   const titleOf = (id: string) => { const e = catalog.data?.units.find((u) => u.id === id); return e ? L(e.title) : id; };
@@ -33,8 +40,10 @@ export function CourseResults({ content }: { content: ContentLoader }) {
       <main className="screen wide stack-lg">
         {!user ? <EmptyState icon="profile" title={t("results.signIn")} />
           : grant.loading ? <div className="loading" aria-busy="true" />
-          : grant.error ? <p className="notice err">{grant.error.message}</p>
+          : grant.error && !grant.data ? <RetryNote q={grant} />
           : !units.length ? <EmptyState icon="chart" title={t("results.none")} body={t("results.noneBody")} />
+          : over ? <EmptyState icon="chart" title={t("results.ended")}
+            body={t("results.endedBody", { date: new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(new Date(grant.data!.until!)) })} />
           : <>
             <p className="muted">{t("results.intro")}</p>
             <div className="table-tools">
@@ -52,7 +61,7 @@ export function CourseResults({ content }: { content: ContentLoader }) {
 function Course({ unitId, content }: { unitId: string; content: ContentLoader }) {
   const { t, L, num } = useI18n();
   const unit = useLoad<Unit | null>(() => content.loadUnit(unitId).catch(() => null), [unitId]);
-  const data = useLoad(() => courseResults(unitId), [unitId]);
+  const data = useOnce(() => courseResults(unitId), [unitId]);
   // Students appear by the name on a final project, else by number.
   const students = useMemo(() => {
     const d = data.data; if (!d) return [];
@@ -63,14 +72,16 @@ function Course({ unitId, content }: { unitId: string; content: ContentLoader })
   const label = (uid: string) => students.find((s) => s.uid === uid)?.label ?? "";
   const lessons = unit.data?.lessons ?? [];
   if (data.loading || unit.loading) return <div className="loading" aria-busy="true" />;
-  if (data.error) return <p className="notice err">{data.error.message}</p>;
-  const { results, work } = data.data!;
+  if (!data.data) return <RetryNote q={data} />;
+  const { results, work, more } = data.data;
   // A lesson with nothing marked right or wrong (a project, a capstone stage) is done, not scored: ✓, never "100%".
   const graded = (lessonId: string) => lessons.find((x) => x.id === lessonId)?.steps.some((s) => GRADED.has(s.type)) ?? true;
   const score = (uid: string, lessonId: string) => { const r = results.find((x) => x.uid === uid && x.lessonId === lessonId); return !r ? "—" : graded(lessonId) ? `${num(Math.round(r.accuracy * 100))}%` : "✓"; };
   const lessonTitle = (id: string) => { const l = lessons.find((x) => x.id === id); return l ? L(l.title) : id; };
   return (
     <div className="stack-lg">
+      {/* Only at the server's caps (2,000 results, 500 projects): better said than a list that looks complete. */}
+      {more && <p className="notice" role="status">{t(k("st.res.more"))}</p>}
       <section className="tiles">
         <div className="tile"><span>{t("results.students")}</span><strong>{num(students.length)}</strong></div>
         <div className="tile"><span>{t("results.finals")}</span><strong>{num(work.filter((w) => w.final).length)}</strong></div>
@@ -84,7 +95,7 @@ function Course({ unitId, content }: { unitId: string; content: ContentLoader })
               <thead><tr><th>{t("results.studentCol")}</th>{lessons.map((l) => <th key={l.id} className="num">{L(l.title)}</th>)}</tr></thead>
               <tbody>{students.map((s) => (
                 <tr key={s.uid}>
-                  <td data-label={t("results.studentCol")}><strong><bdi>{s.label}</bdi></strong></td>
+                  <td data-cell="main" data-label={t("results.studentCol")}><strong><bdi>{s.label}</bdi></strong></td>
                   {lessons.map((l) => <td key={l.id} data-label={L(l.title)} className="num">{score(s.uid, l.id)}</td>)}
                 </tr>
               ))}</tbody>
@@ -96,6 +107,23 @@ function Course({ unitId, content }: { unitId: string; content: ContentLoader })
         <h2 id="work-h" className="section-title">{t("results.work")}</h2>
         {!work.length ? <p className="muted">{t("results.noWork")}</p> : work.map((w) => <Work key={w.id} w={w} who={label(w.uid)} lesson={lessonTitle(w.lessonId)} step={projectStep(lessons.find((l) => l.id === w.lessonId), w.stepId)} />)}
       </section>
+    </div>
+  );
+}
+
+/**
+ * Why a read failed, in the teacher's language, with Retry. While the retry is on its way the note stays as it is and
+ * its button shows a spinner (the design system's `loading` keeps it focusable), so the keyboard focus stays on Retry
+ * and a second press sends nothing more.
+ */
+function RetryNote({ q }: { q: Once<unknown> }) {
+  const { t } = useI18n();
+  // Worked out once per error, not per render: errorText logs the raw error each time it is called.
+  const text = useMemo(() => errorText(q.error, t), [q.error, t]);
+  return (
+    <div className="notice err row-gap" role="alert">
+      <span>{text}</span>
+      <Button size="sm" variant="ghost" icon="sync" loading={q.retrying} onClick={() => { if (!q.retrying) q.retry(); }}>{t("common.retry")}</Button>
     </div>
   );
 }

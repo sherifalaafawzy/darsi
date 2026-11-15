@@ -1,29 +1,22 @@
-// Agentic Browsing (Lighthouse "agent-discoverability"): /llms.txt and /.well-known/ard.json are real files, served as
-// themselves and not as the app. The checks mirror Lighthouse's llms-txt audit and the ARD v0.91 conformance rules.
-import { readFileSync } from "node:fs";
+// Agentic Browsing (Lighthouse "agent-discoverability"): /llms.txt and /.well-known/ard.json reach agents as themselves,
+// never as the app. llms.txt is seoPage's, written per address (functions/test/seo.test.ts checks its text against
+// Lighthouse's llms-txt audit); the ARD manifest is a file, checked here against the ARD v0.91 conformance rules.
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const pub = (p: string) => readFileSync(resolve(process.cwd(), "public", p), "utf8");
 const fb = JSON.parse(readFileSync(resolve(process.cwd(), "../../firebase.json"), "utf8"));
-const block = (source: string) => Object.fromEntries((fb.hosting.headers.find((h: { source: string }) => h.source === source)?.headers ?? []).map((h: { key: string; value: string }) => [h.key, h.value]));
+const app = fb.hosting.find((h: { target: string }) => h.target === "app");
+const block = (source: string) => Object.fromEntries((app.headers.find((h: { source: string }) => h.source === source)?.headers ?? []).map((h: { key: string; value: string }) => [h.key, h.value]));
 
 describe("llms.txt", () => {
-  const text = pub("llms.txt");
-  it("has an H1, Markdown links and enough text (Lighthouse llms-txt)", () => {
-    expect(text).toMatch(/^\s*#\s+.+/m);
-    expect(text).toMatch(/\[.+\]\(.+\)/);
-    expect(text.length).toBeGreaterThanOrEqual(50);
+  it("is seoPage's, so each address gets its own: no static file hides the rewrite (Hosting serves files first)", () => {
+    expect(existsSync(resolve(process.cwd(), "public", "llms.txt"))).toBe(false);
+    expect(app.rewrites).toContainEqual({ source: "/llms.txt", function: { functionId: "seoPage", region: "europe-west1" } });
   });
-  it("starts with the title, then a blockquote summary (llmstxt.org)", () => {
-    const lines = text.split("\n");
-    expect(lines[0]).toMatch(/^# Darsi/);
-    expect(lines.find((l) => l.trim() && !l.startsWith("#"))).toMatch(/^> /);
-  });
-  it("links only to darsiai.org", () => {
-    for (const [, url] of text.matchAll(/\]\(([^)]+)\)/g)) expect(url).toMatch(/^https:\/\/darsiai\.org\//);
-  });
-  it("is served as plain text", () => {
-    expect(block("/llms.txt")["Content-Type"]).toBe("text/plain; charset=utf-8");
+  it("is never answered with the app by the service worker", () => {
+    const config = readFileSync(resolve(process.cwd(), "vite.config.ts"), "utf8");
+    expect(config).toMatch(/navigateFallbackDenylist: \[[^\n]*llms\\\.txt[^\n]*\/\^\\\/\\\.well-known\\\/\//);
   });
 });
 
@@ -41,7 +34,7 @@ describe("ARD manifest", () => {
     }
     expect(ard.collections).toBeUndefined();
   });
-  it("is served as JSON", () => {
-    expect(block("/.well-known/ard.json")["Content-Type"]).toBe("application/json; charset=utf-8");
+  it("is served as JSON that any site may read", () => {
+    expect(block("/.well-known/ard.json")).toMatchObject({ "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
   });
 });

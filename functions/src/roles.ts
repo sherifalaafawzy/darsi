@@ -47,25 +47,36 @@ export function firstAdminProblem(adminUid: string, callerUid: string, profile: 
 
 /**
  * Who may delete or export an account's data (account.ts), or why not. `self`: the person themself; they may delete
- * an account they made (not one their organization made, which its admins manage), and never while a platform admin
+ * an account they made (not one their organization manages, which its admins handle), and never while a platform admin
  * or an org admin (someone else must take the role over first). Platform admins act for anyone but themselves and other
- * platform admins; org admins only for students and teachers their organization made.
+ * platform admins; org admins only for students and teachers whose accounts their organization manages.
+ *
+ * An organization manages an account when the profile says so (`managedBy`: the organization's id), or, for profiles
+ * from before that field, when its login is a username (`<name>@users.darsi.app`: the person holds no email of their
+ * own, so nobody else could look after it). `createdBy` alone gives the organization nothing: an admin who typed a
+ * teacher's real email only invited them; the account, its password and its data are that person's.
  */
 export type AccountAction = "delete" | "export";
-export interface AccountTarget { uid: string; exists: boolean; role?: unknown; orgId?: unknown; createdBy?: unknown; email?: string | null }
+export interface AccountTarget { uid: string; exists: boolean; role?: unknown; orgId?: unknown; createdBy?: unknown; managedBy?: unknown; email?: string | null }
 export interface AccountCaller { uid: string; role: string; orgId?: string | null }
+/** Whether an organization manages this account, and which one says so (`by`: null for an older username account). */
+export function managedAccount(t: Pick<AccountTarget, "managedBy" | "email">, usernameDomain = "users.darsi.app"): { managed: boolean; by: string | null } {
+  const by = typeof t.managedBy === "string" && t.managedBy ? t.managedBy : null;
+  return { managed: by !== null || Boolean(t.email?.toLowerCase().endsWith(`@${usernameDomain}`)), by };
+}
 export function accountActionProblem(action: AccountAction, c: AccountCaller, t: AccountTarget, usernameDomain = "users.darsi.app"):
   "self-staff" | "self-org" | "superadmin" | "not-yours" | "missing" | null {
-  const orgMade = Boolean(t.createdBy) || Boolean(t.email?.toLowerCase().endsWith(`@${usernameDomain}`));
+  const { managed, by } = managedAccount(t, usernameDomain);
   if (c.uid === t.uid) {
     if (action === "export") return null;
     if (c.role === "superadmin" || c.role === "orgAdmin" || t.role === "superadmin" || t.role === "orgAdmin") return "self-staff";
-    if (orgMade && t.orgId) return "self-org";
+    if (managed && t.orgId) return "self-org";
     return null;
   }
   if (!t.exists) return c.role === "superadmin" ? null : "missing";
   if (t.role === "superadmin") return "superadmin";
   if (c.role === "superadmin") return null;
-  if (c.role === "orgAdmin" && c.orgId && t.orgId === c.orgId && orgMade && (t.role === "student" || t.role === "teacher")) return null;
+  // Its own member, managed by it (never by another organization), and only a student or a teacher.
+  if (c.role === "orgAdmin" && c.orgId && t.orgId === c.orgId && managed && (by === null || by === c.orgId) && (t.role === "student" || t.role === "teacher")) return null;
   return "not-yours";
 }

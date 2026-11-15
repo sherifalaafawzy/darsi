@@ -15,12 +15,13 @@ import { api } from "../auth/api";
 import type { Org, Profile } from "../auth/types";
 import { storageJSON } from "../firebase";
 import { useI18n, type MessageKey } from "../i18n";
-import { loadCatalog, mergeCatalog } from "../content/load";
+import { loadCatalog, mergeCatalog, useAsync } from "../content/load";
 import { useTracks } from "../content/settings";
 import { audienceOf, type Audience, type Catalog, type CatalogEntry } from "../content/types";
 import { checkOrgCourses, classNameOk, readOrgCourses, type OrgCourses, type OrgCoursesProblem } from "../content/orgCourses";
 import { useMembers, useOrg } from "./data";
-import { refusalText } from "./refusals";
+import { errorText } from "../staff/errors";
+import { ErrorNote } from "../staff/LoadState";
 import "./strings";
 import "../styles/admin.css";
 
@@ -68,19 +69,28 @@ function useWide() {
 /**
  * Every course an organization's members could see: Darsi's public catalog plus the organization's own. An org admin's
  * catalog already holds their own (content/load.ts); a platform admin's org page reads that organization's once.
+ * The catalog goes through useAsync(loadCatalog), so it is read again by itself when content/load forgets it (the page
+ * left open past STALE_MS and come back to, a course published from the editor meanwhile), with the list and every
+ * tick kept on screen until the new one answers. The organization's own file is read once per organization.
  */
 function useOrgCatalog(orgId: string, own: boolean) {
-  const [s, setS] = useState<{ data?: Catalog; error?: Error }>({});
+  const pub = useAsync(loadCatalog, []);
+  const [org, setOrg] = useState<{ id: string; data: Catalog | null } | null>(null);
   const [n, setN] = useState(0);
   useEffect(() => {
+    if (own) return;
     let live = true;
-    setS({});
     // The organization's own catalog is optional (none until it publishes a course): any failure there means none.
-    Promise.all([loadCatalog(), own ? null : Promise.resolve().then(() => storageJSON(`orgs/${orgId}/catalog.json`)).catch(() => null)])
-      .then(([pub, org]) => { if (live) setS({ data: own ? pub : mergeCatalog(pub, org as Catalog | null) }); }, (error: Error) => { if (live) setS({ error }); });
+    Promise.resolve().then(() => storageJSON(`orgs/${orgId}/catalog.json`)).catch(() => null)
+      .then((data) => { if (live) setOrg({ id: orgId, data: data as Catalog | null }); });
     return () => { live = false; };
   }, [orgId, own, n]);
-  return { ...s, retry: () => setN((x) => x + 1) };
+  // Another organization's page never shows the previous one's courses.
+  const theirs = own ? null : org?.id === orgId ? org : undefined;
+  const data = useMemo(() => (!pub.data || theirs === undefined ? undefined : own ? pub.data : mergeCatalog(pub.data, theirs?.data ?? null)),
+    [pub.data, own, theirs]);
+  const retry = pub.retry;
+  return { data, error: data ? undefined : pub.error, retry: () => { retry(); setN((x) => x + 1); } };
 }
 
 /**
@@ -138,7 +148,7 @@ export function OrgCoursesPage() {
     <>
       <AppBar title={t("oc.title")} onBack={() => nav("/admin")} backLabel={t("common.back")} />
       <main className="screen wide stack-lg">
-        {orgQ.error && !org ? <p className="notice err">{refusalText(orgQ.error, t)}</p>
+        {orgQ.error && !org ? <ErrorNote error={orgQ.error} />
           : !org ? <p className="muted" aria-busy="true">{t("adm.loading")}</p>
           : <OrgCoursesPanel key={org.id} org={org} members={membersQ.data} membersFailed={!!membersQ.error && !membersQ.data} onSaved={orgQ.reload} />}
       </main>
@@ -238,7 +248,7 @@ export function OrgCoursesPanel({ org, members, membersFailed, onSaved }: { org:
       onSaved?.();
       return true;
     } catch (e) {
-      setMsg({ ok: false, text: refusalText(e, t) });
+      setMsg({ ok: false, text: errorText(e, t) });
       return false;
     } finally { setBusy(false); }
   };

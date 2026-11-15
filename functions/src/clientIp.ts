@@ -7,9 +7,12 @@
  * city could share one limit of 8 problem reports). When it is one of Cloudflare's published ranges, the visitor's
  * address is Cloudflare's own `cf-connecting-ip` (Cloudflare sets it; a visitor can't). A request that didn't come
  * through Cloudflare (darsi-f0685.web.app) keeps `fastly-client-ip`, and a `cf-connecting-ip` it carries is ignored.
- * Without Hosting (the function's own URL, the emulators), every header is the caller's to set, so the last
- * x-forwarded-for hop (the one Google's front end adds) or the socket's address is used; the per-instance brake is what
- * holds there.
+ * Without Hosting (the function's own URL, the emulators), every header is the caller's to set, `fastly-client-ip`
+ * included: a caller who sends one there is taken at their word, so a limit per address holds only through Hosting.
+ * Nothing in the headers proves a request came through Hosting. What the caller can't set is the last x-forwarded-for
+ * hop, which Google's front end adds: on the function's own URL it is the caller's real address, through Hosting it is
+ * the CDN node (`lastHop`). So `collect` and `reportBug` also have a per-instance brake, and school sign-in limits by
+ * that hop as well as by address (sso.ts).
  */
 import { isIP } from "node:net";
 
@@ -63,6 +66,15 @@ export function clientIp(h: Headers, fallback = "?"): string {
     const visitor = header(h, "cf-connecting-ip");
     return visitor && isIP(visitor) && isCloudflare(hosting) ? visitor : hosting;
   }
+  return lastHop(h, fallback);
+}
+
+/**
+ * Whoever connected to Google's front end: the last x-forwarded-for hop (or the socket's address). The caller's own
+ * address on the function's URL, where every other header is theirs to set; Hosting's CDN node through Hosting. A
+ * limit keyed by it can't be dodged by sending a new `fastly-client-ip` with every request.
+ */
+export function lastHop(h: Headers, fallback = "?"): string {
   const hops = header(h, "x-forwarded-for").split(",").map((s) => s.trim()).filter(Boolean);
   return hops[hops.length - 1] || fallback;
 }

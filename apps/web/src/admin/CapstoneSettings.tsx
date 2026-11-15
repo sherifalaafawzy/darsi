@@ -5,7 +5,9 @@ import { db } from "../firebase";
 import { call } from "../fb";
 import { useI18n } from "../i18n";
 import { CAPSTONE_BOUNDS, CAPSTONE_DEFAULTS, type CapstoneConfig } from "../content/capstone";
-import { message, Note, type Msg } from "./Super";
+import { errorText } from "../staff/errors";
+import { Note, type Msg } from "./Super";
+import { latinDigits, typedWhole } from "./typedNumber";
 import "./strings";
 
 type Limit = keyof typeof CAPSTONE_BOUNDS;
@@ -34,15 +36,16 @@ export function CapstoneSettings() {
       if (!live) return;
       show({ ...CAPSTONE_DEFAULTS, ...(c.data() as Partial<CapstoneConfig> | undefined) });
       setToday((a.get("capstone") as { reviews?: number; usd?: number } | undefined) ?? {});
-    }, (e: unknown) => { if (live) setMsg({ ok: false, text: message(e) }); });
+    }, (e: unknown) => { if (live) setMsg({ ok: false, text: errorText(e, t) }); });
     return () => { live = false; };
-  }, []);
+    // Read once when the page opens; failures are said in the admin's language (staff/errors.ts), never the raw English.
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const run = async (patch: Partial<CapstoneConfig>, ok: string) => {
     setBusy(true); setMsg(null);
-    try { show(await save(patch)); setMsg({ ok: true, text: ok }); } catch (e) { setMsg({ ok: false, text: message(e) }); } finally { setBusy(false); }
+    try { show(await save(patch)); setMsg({ ok: true, text: ok }); } catch (e) { setMsg({ ok: false, text: errorText(e, t) }); } finally { setBusy(false); }
   };
   // The numbers saveCapstoneConfig accepts; anything else can't be saved, and the field says what can.
-  const value = (k: Limit) => { const v = Number(form[k]), [lo, hi] = CAPSTONE_BOUNDS[k]; return form[k].trim() !== "" && Number.isInteger(v) && v >= lo && v <= hi ? v : null; };
+  const value = (k: Limit) => typedWhole(form[k], CAPSTONE_BOUNDS[k][0], CAPSTONE_BOUNDS[k][1]);
   const limits = { perDay: value("perDay"), maxPerDay: value("maxPerDay"), callsPerDay: value("callsPerDay") };
   const valid = LIMITS.every(({ k }) => limits[k] !== null);
   return (
@@ -52,8 +55,8 @@ export function CapstoneSettings() {
         <div><Button variant={cfg.ai ? "secondary" : "primary"} icon={cfg.ai ? "close" : "check"} loading={busy} onClick={() => { void run({ ai: !cfg.ai }, t(cfg.ai ? "sp.capTurnedOff" : "sp.capTurnedOn")); }}>{t(cfg.ai ? "sp.capTurnOff" : "sp.capTurnOn")}</Button></div>
         <div className="form-grid">
           {LIMITS.map(({ k, label }) => (
-            <TextField key={k} label={t(label)} type="number" inputMode="numeric" min={CAPSTONE_BOUNDS[k][0]} max={CAPSTONE_BOUNDS[k][1]} step={1} dir="ltr"
-              value={form[k]} onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))}
+            <TextField key={k} label={t(label)} inputMode="numeric" autoComplete="off" dir="ltr"
+              value={form[k]} onChange={(e) => setForm((f) => ({ ...f, [k]: latinDigits(e.target.value) }))}
               hint={limits[k] === null ? undefined : t("sp.capRange", { lo: CAPSTONE_BOUNDS[k][0], hi: CAPSTONE_BOUNDS[k][1] })}
               error={limits[k] === null ? t("sp.capRange", { lo: CAPSTONE_BOUNDS[k][0], hi: CAPSTONE_BOUNDS[k][1] }) : undefined} />
           ))}

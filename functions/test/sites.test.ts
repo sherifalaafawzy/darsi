@@ -2,7 +2,9 @@
 // the web app's own file), manageSite (asking, approving, refusing, checking, removing) with an in-memory Firestore and
 // Storage and a stand-in for the Google calls (domains.ts), ownership tokens, sign-in and file access following DNS
 // (syncSiteAccess, its sweep and its lock), content/sites.json and its logo copies, sitesJob (the old config/sites list
-// moved in, addresses turning live), and the trigger that follows an organization's changes.
+// moved in, addresses turning live, catalogs a publish couldn't write, its heartbeat), the audit trail of an address
+// that stops being live or is live again, and the trigger that follows an organization's changes (and audits a rename
+// or a new logo of one with an address).
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FakeAuth, FakeDb } from "./fakeFirestore";
 import { checkSiteHost, isDarsiHost, siteFor } from "../src/shared/sites";
@@ -10,6 +12,8 @@ import { brandLogoPath, corsWith, hasAccess, hostingCheck, isReservedName, listW
 import type { HostCheck } from "../src/domains";
 
 const audits = vi.hoisted(() => [] as { action: string; by: string; data: Record<string, unknown> }[]);
+/** `on`: the audit log can't be written (a Firestore hiccup). */
+const auditDown = vi.hoisted(() => ({ on: false }));
 /** Storage: path → { bytes, contentType, cacheControl }, and every save in order. */
 const store = vi.hoisted(() => ({ files: new Map<string, { bytes: Buffer; contentType?: string; cacheControl?: string }>(), saves: [] as string[], fail429: 0 }));
 vi.mock("../src/admin.js", async () => {
@@ -24,28 +28,31 @@ vi.mock("../src/admin.js", async () => {
   };
   return {
     db, auth, freshCaller,
-    audit: async (action: string, by: string, data: Record<string, unknown>) => { audits.push({ action, by, data }); },
+    audit: async (action: string, by: string, data: Record<string, unknown>) => {
+      if (auditDown.on) throw new Error("14 UNAVAILABLE: audit not written");
+      audits.push({ action, by, data });
+    },
     str: (v: unknown, max = 200) => (typeof v === "string" ? v.trim().slice(0, max) : ""),
   };
 });
-vi.mock("../src/storage.js", () => {
+// The bucket itself is the stand-in, so storage.ts runs as it is: its JSON saves (content/sites.json, the catalogs
+// sitesJob mends) wait out Storage's "too soon" answers (`fail429`: how many of the next JSON saves get one).
+vi.mock("firebase-admin/storage", () => {
   const file = (path: string) => ({
     name: path,
     download: async () => { const f = store.files.get(path); if (!f) throw new Error(`No such object: ${path}`); return [f.bytes]; },
     exists: async () => [store.files.has(path)],
-    save: async (bytes: Buffer, o: { contentType?: string; metadata?: { cacheControl?: string } }) => { store.files.set(path, { bytes: Buffer.from(bytes), contentType: o.contentType, cacheControl: o.metadata?.cacheControl }); },
+    save: async (bytes: Buffer | string, o: { contentType?: string; metadata?: { cacheControl?: string } }) => {
+      const json = Boolean(o.contentType?.startsWith("application/json"));
+      if (json && store.fail429 > 0) { store.fail429--; throw Object.assign(new Error("The rate limit for object mutation has been exceeded"), { code: 429 }); }
+      if (json) store.saves.push(path);
+      store.files.set(path, { bytes: Buffer.from(bytes), contentType: o.contentType, cacheControl: o.metadata?.cacheControl });
+    },
     delete: async () => { store.files.delete(path); },
   });
-  return {
-    bucket: () => ({ file, getFiles: async ({ prefix }: { prefix: string }) => [[...store.files.keys()].filter((k) => k.startsWith(prefix)).map(file)] }),
-    publicFileUrl: (path: string) => `https://firebasestorage.googleapis.com/v0/b/darsi-f0685/o/${encodeURIComponent(path)}?alt=media`,
-    savePublicJson: async (path: string, data: unknown) => {
-      if (store.fail429 > 0) { store.fail429--; throw Object.assign(new Error("The rate limit for object mutation has been exceeded"), { code: 429 }); }
-      store.saves.push(path);
-      store.files.set(path, { bytes: Buffer.from(JSON.stringify(data)), cacheControl: "public, max-age=60" });
-    },
-  };
+  return { getStorage: () => ({ bucket: () => ({ file, getFiles: async ({ prefix }: { prefix: string }) => [[...store.files.keys()].filter((k) => k.startsWith(prefix)).map(file)] }) }) };
 });
+vi.mock("firebase-functions/v2", async (orig) => ({ ...(await orig<object>()), logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 /**
  * The Google side (domains.ts): what the next check answers (per host, or for all), every call, the proof each check
  * looked for, and the authorized domains and CORS origins as syncAccess leaves them.
@@ -82,7 +89,11 @@ vi.mock("../src/domains.js", () => ({
 vi.useFakeTimers({ toFake: ["setTimeout"] });
 
 const { db, auth } = (await import("../src/admin.js")) as unknown as { db: FakeDb; auth: FakeAuth };
+const { logger } = await import("firebase-functions/v2");
 const sites = await import("../src/sites");
+/** The log lines that carry an `event` (what an alert would be set on), as [level, event]. */
+const events = () => (["error", "warn", "info"] as const).flatMap((level) => vi.mocked(logger[level]).mock.calls
+  .map((c) => (c[1] as { event?: string } | undefined)?.event).filter(Boolean).map((e) => `${level}:${e}`));
 type Run = { run: (req: unknown) => Promise<unknown> };
 const setOrgSite = sites.setOrgSite as unknown as Run;
 const manageSite = sites.manageSite as unknown as Run;
@@ -97,7 +108,8 @@ const LIVE_STEPS = { owner: "ok", dns: "ok", hosting: "ok", cert: "ok", auth: "o
 const granted = () => (db.docs.get("config/siteAccess")?.hosts as string[] | undefined) ?? [];
 
 beforeEach(() => {
-  db.docs.clear(); auth.users.clear(); audits.length = 0; store.files.clear(); store.saves.length = 0; store.fail429 = 0;
+  db.docs.clear(); db.failOn = null; auth.users.clear(); audits.length = 0; auditDown.on = false; store.files.clear(); store.saves.length = 0; store.fail429 = 0;
+  for (const level of ["error", "warn", "info"] as const) vi.mocked(logger[level]).mockClear();
   google.calls.length = 0; google.warnings = []; google.during = null; google.answer = ALL_OK; google.answers = {}; google.proofs = {};
   google.authorized = new Set(["localhost", "darsiai.org"]); google.origins = new Set(["darsiai.org"]); google.syncErrors = []; google.syncs = 0;
   auth.users.set("root", { uid: "root", customClaims: { role: "superadmin" } });
@@ -204,9 +216,35 @@ describe("asking for an address (org admins)", () => {
     db.docs.set("orgs/o1", { name: "CIS", status: "pending" });
     expect(await refusal(act("adm", "request", { host: "learn.cis.edu.eg" }))).toBe("failed-precondition:org-inactive");
   });
+  // A suspended organization's admin keeps the role in their claims (frozen): cancel and check went by the role and
+  // the address's organization alone, and asking was refused only as "not active yet".
+  it("refuses the organization's own admin every action while it is suspended or being deleted; a platform admin still acts", async () => {
+    await act("adm", "request", { host: "asked.cis.org" });
+    google.answer = WAITING;
+    await act("root", "approve", { host: "learn.cis.edu.eg", orgId: "o1" });
+    db.docs.set("sites/learn.cis.edu.eg", { ...siteDoc("learn.cis.edu.eg"), checkedAt: Date.now() - 16_000 });
+    google.answer = ALL_OK; google.calls.length = 0; audits.length = 0;
+    auth.users.set("adm", { uid: "adm", customClaims: { role: "orgAdmin", orgId: "o1", frozen: true } });
+    for (const [status, reason] of [["suspended", "org-suspended"], ["deleting", "org-deleting"]] as const) {
+      db.docs.set("orgs/o1", { name: "CIS Training Platform", status });
+      expect(await refusal(act("adm", "cancel", { host: "asked.cis.org" }))).toBe(`permission-denied:${reason}`);
+      expect(await refusal(act("adm", "check", { host: "learn.cis.edu.eg" }))).toBe(`permission-denied:${reason}`);
+      expect(await refusal(act("adm", "request", { host: "new.cis.org" }))).toBe(`permission-denied:${reason}`);
+    }
+    expect(siteDoc("asked.cis.org")).toMatchObject({ status: "requested" });
+    expect(siteDoc("learn.cis.edu.eg")).toMatchObject({ status: "connecting" });
+    expect(siteDoc("new.cis.org")).toBeUndefined();
+    expect(google.calls).toEqual([]);
+    expect(audits).toEqual([]);
+    // Platform admins still check and remove its addresses; another organization's admin is not held back by it.
+    expect((await act("root", "check", { host: "learn.cis.edu.eg" })).site).toMatchObject({ status: "live" });
+    expect(await act("root", "cancel", { host: "asked.cis.org" })).toEqual({ site: null });
+    expect((await act("adm2", "request", { host: "learn.delta.edu.eg" })).site).toMatchObject({ status: "requested" });
+  });
   it("lets the organization take back its own request, not another's, and not a connected address", async () => {
     await act("adm", "request", { host: "learn.cis.edu.eg" });
-    expect(await refusal(act("adm2", "cancel", { host: "learn.cis.edu.eg" }))).toBe("permission-denied:not-yours");
+    expect(await refusal(act("adm2", "cancel", { host: "learn.cis.edu.eg" }))).toBe("permission-denied:site-taken");
+    expect(siteDoc("learn.cis.edu.eg")).toMatchObject({ orgId: "o1" });
     expect(await act("adm", "cancel", { host: "learn.cis.edu.eg" })).toEqual({ site: null });
     expect(siteDoc("learn.cis.edu.eg")).toBeUndefined();
     await act("root", "approve", { host: "delta.darsiai.org", orgId: "o2" });
@@ -238,6 +276,8 @@ describe("approving an address (platform admins)", () => {
     expect(entry.logo).toBe(`https://firebasestorage.googleapis.com/v0/b/darsi-f0685/o/${encodeURIComponent(copy)}?alt=media`);
     expect(siteFor(file, "learn.cis.edu.eg")).toEqual(entry);
     expect(audits.at(-1)).toEqual({ action: "approveSite", by: "root", data: { orgId: "o1", host: "learn.cis.edu.eg", darsi: false, status: "live" } });
+    // The moment it could first sign people in is in the trail too.
+    expect(audits.map((a) => a.action)).toEqual(["requestSite", "siteLive", "approveSite"]);
   });
   it("needs no token under darsiai.org, and makes a new one for an address it adds directly", async () => {
     await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
@@ -316,6 +356,7 @@ describe("approving an address (platform admins)", () => {
     await vi.runAllTimersAsync();
     await run;
     expect(published().sites["cis.darsiai.org"]).toBeTruthy();
+    expect(store.files.get("content/sites.json")).toMatchObject({ contentType: "application/json; charset=utf-8", cacheControl: "public, max-age=60" });
   });
 });
 
@@ -329,7 +370,7 @@ describe("checking and removing an address", () => {
     db.docs.set("sites/learn.cis.edu.eg", { ...siteDoc("learn.cis.edu.eg"), checkedAt: Date.now() - 16_000 });
     expect((await act("adm", "check", { host: "learn.cis.edu.eg" })).site).toMatchObject({ status: "live" });
     expect(google.calls).toEqual(["connect learn.cis.edu.eg"]);
-    expect(await refusal(act("adm2", "check", { host: "learn.cis.edu.eg" }))).toBe("permission-denied:not-yours");
+    expect(await refusal(act("adm2", "check", { host: "learn.cis.edu.eg" }))).toBe("permission-denied:site-taken");
     await act("adm", "request", { host: "asked.cis.org" });
     expect(await refusal(act("adm", "check", { host: "asked.cis.org" }))).toBe("failed-precondition:site-state");
   });
@@ -430,6 +471,69 @@ describe("checking and removing an address", () => {
   });
 });
 
+describe("the audit trail of an address (a sign-in domain its organization's DNS controls)", () => {
+  const trail = () => audits.filter((a) => a.action === "siteLost" || a.action === "siteLive");
+  const recheck = async (host: string) => { db.docs.set(`sites/${host}`, { ...siteDoc(host), checkedAt: 0 }); await sites.checkSites(); };
+
+  it("writes siteLost once when a live address has a problem, nothing while it stays, and siteLive when it is back", async () => {
+    await act("root", "approve", { host: "learn.cis.edu.eg", orgId: "o1" });
+    audits.length = 0;
+    vi.mocked(logger.error).mockClear(); vi.mocked(logger.info).mockClear();
+    // Hourly checks of a live address that is fine write nothing.
+    await recheck("learn.cis.edu.eg");
+    expect(trail()).toEqual([]);
+    google.answer = { ...ALL_OK, steps: { ...ALL_OK.steps, cert: "error" }, errors: ["Hosting: the certificate expired"] };
+    await recheck("learn.cis.edu.eg");
+    expect(siteDoc("learn.cis.edu.eg")?.status).toBe("problem");
+    expect(trail()).toEqual([{ action: "siteLost", by: "sitesJob", data: { host: "learn.cis.edu.eg", orgId: "o1", status: "problem", error: "Hosting: the certificate expired", issues: null } }]);
+    expect(events()).toContain("error:site-lost");
+    expect(vi.mocked(logger.error).mock.calls.find((c) => c[0] === "site lost")?.[1]).toMatchObject({ event: "site-lost", host: "learn.cis.edu.eg", orgId: "o1" });
+    // Still broken at the next runs: one entry, not one every 15 minutes.
+    await recheck("learn.cis.edu.eg");
+    await recheck("learn.cis.edu.eg");
+    expect(trail()).toHaveLength(1);
+    google.answer = ALL_OK;
+    await recheck("learn.cis.edu.eg");
+    expect(siteDoc("learn.cis.edu.eg")?.status).toBe("live");
+    expect(trail().map((a) => [a.action, a.by, a.data])).toEqual([
+      ["siteLost", "sitesJob", expect.objectContaining({ status: "problem" })],
+      ["siteLive", "sitesJob", { host: "learn.cis.edu.eg", orgId: "o1" }],
+    ]);
+    expect(events()).toContain("info:site-live");
+  });
+
+  it("writes them when the address's DNS stops pointing at Darsi and when it points back (an admin's check, or the job's)", async () => {
+    await act("root", "approve", { host: "learn.cis.edu.eg", orgId: "o1" });
+    audits.length = 0;
+    const elsewhere = "learn.cis.edu.eg points at elsewhere.example.net, not darsi-f0685.web.app.";
+    google.answer = { ...WAITING, issues: [elsewhere] };
+    db.docs.set("sites/learn.cis.edu.eg", { ...siteDoc("learn.cis.edu.eg"), checkedAt: 0 });
+    await act("adm", "check", { host: "learn.cis.edu.eg" });
+    expect(trail()).toEqual([{ action: "siteLost", by: "sitesJob", data: { host: "learn.cis.edu.eg", orgId: "o1", status: "connecting", error: null, issues: [elsewhere] } }]);
+    google.answer = ALL_OK;
+    await sites.checkSites();
+    // Live again only once sign-in is given back, which is the last step.
+    expect(trail().map((a) => a.action)).toEqual(["siteLost", "siteLive"]);
+    expect(google.authorized.has("learn.cis.edu.eg")).toBe(true);
+  });
+
+  it("writes siteLost when sign-in itself can't be kept for a live address", async () => {
+    await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
+    audits.length = 0;
+    google.syncErrors = ["Authentication: 403 The caller does not have permission"];
+    await recheck("cis.darsiai.org");
+    expect(trail()).toEqual([{ action: "siteLost", by: "sitesJob", data: { host: "cis.darsiai.org", orgId: "o1", status: "problem", error: "Authentication: 403 The caller does not have permission", issues: null } }]);
+  });
+
+  it("writes nothing for an address that never got as far as live", async () => {
+    google.answer = UNPROVED;
+    await act("root", "approve", { host: "learn.cis.edu.eg", orgId: "o1" });
+    google.answer = WAITING;
+    await recheck("learn.cis.edu.eg");
+    expect(trail()).toEqual([]);
+  });
+});
+
 describe("setOrgSite (for phones with the older app)", () => {
   it("approves an address directly, or removes all of an organization's", async () => {
     expect(await refusal(setOrgSite.run(as("adm", { orgId: "o1", host: "cis.darsiai.org" })))).toBe("permission-denied:not-super");
@@ -467,6 +571,99 @@ describe("sitesJob", () => {
     await sites.checkSites(Date.now() + 61 * 60_000);
     expect(google.calls.sort()).toEqual(["connect cis.darsiai.org", "connect learn.cis.edu.eg"]);
   });
+  it("notes each run in stats/jobs, and that something failed", async () => {
+    await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
+    db.docs.set("stats/jobs", { statsJob: { at: 1, ok: true } });
+    const before = Date.now();
+    await sites.checkSites();
+    const beat = db.docs.get("stats/jobs")!;
+    expect(beat.sitesJob).toEqual({ at: expect.any(Number), ok: true, checked: 0, live: 1 });
+    expect((beat.sitesJob as { at: number }).at).toBeGreaterThanOrEqual(before);
+    // Another job's own note in the same document is left alone.
+    expect(beat.statsJob).toEqual({ at: 1, ok: true });
+    google.syncErrors = ["Storage CORS: 503 Backend error"];
+    expect((await sites.checkSites(Date.now() + 61 * 60_000)).errors).toEqual(["Storage CORS: 503 Backend error"]);
+    expect(db.docs.get("stats/jobs")?.sitesJob).toMatchObject({ ok: false, checked: 1 });
+  });
+  it("still checks the other addresses and sets sign-in when one address's check throws", async () => {
+    google.answer = WAITING;
+    await act("root", "approve", { host: "learn.cis.edu.eg", orgId: "o1" });
+    await act("root", "approve", { host: "learn.delta.edu.eg", orgId: "o2" });
+    google.answer = ALL_OK; google.calls.length = 0; google.syncs = 0;
+    google.during = () => { if (google.calls.at(-1) === "connect learn.cis.edu.eg") throw new Error("Hosting: socket hang up"); };
+    const r = await sites.checkSites();
+    expect(r).toEqual({ imported: 0, checked: 1, live: 1, errors: ["learn.cis.edu.eg: Hosting: socket hang up"] });
+    expect(google.calls.sort()).toEqual(["connect learn.cis.edu.eg", "connect learn.delta.edu.eg"]);
+    expect(google.syncs).toBe(1);
+    expect(siteDoc("learn.delta.edu.eg")?.status).toBe("live");
+    expect(db.docs.get("stats/jobs")?.sitesJob).toMatchObject({ ok: false, checked: 1, live: 1 });
+    expect(events()).toContain("error:sites-job-failed");
+  });
+  it("stops checking single addresses after 200 seconds, the longest unchecked first, and still sets sign-in", async () => {
+    google.answer = WAITING;
+    const hosts = ["a.cis.edu.eg", "b.cis.edu.eg", "c.cis.edu.eg"];
+    for (const [i, h] of hosts.entries()) {
+      await act("root", "approve", { host: h, orgId: "o1" });
+      db.docs.set(`sites/${h}`, { ...siteDoc(h), checkedAt: [3000, 1000, 2000][i] });
+    }
+    google.calls.length = 0; google.syncs = 0;
+    // Each check takes 150 seconds (a slow Hosting API).
+    let late = 0;
+    const real = Date.now.bind(Date);
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => real() + late);
+    google.during = () => { late += 150_000; };
+    try {
+      const r = await sites.checkSites();
+      expect(google.calls).toEqual(["connect b.cis.edu.eg", "connect c.cis.edu.eg"]);
+      expect(r).toMatchObject({ checked: 2, errors: [] });
+      expect(google.syncs).toBe(1);
+      expect(events()).toContain("warn:sites-job-slow");
+      expect(db.docs.get("stats/jobs")?.sitesJob).toMatchObject({ ok: true, checked: 2 });
+    } finally { clock.mockRestore(); }
+  });
+  it("writes again a catalog that a publish couldn't, and clears its mark", async () => {
+    const entry = { id: "ai-4-1", track: "ai", level: 4, title: { en: "Leading AI" }, lessons: 4, available: true, src: "content/units/ai-4-1/v3.json", version: 3, owner: "public" };
+    db.docs.set("units/ai-4-1", { owner: "public", published: { version: 3, entry } });
+    db.docs.set("units/ai-1-1", { owner: "public", published: null });
+    db.docs.set("units/uab12cd34", { owner: "o1", published: { version: 1, entry: { ...entry, id: "uab12cd34", owner: "o1", src: "orgs/o1/units/uab12cd34/v1.json", version: 1 } } });
+    // What learners still read: the catalog from before the publish.
+    store.files.set("content/catalog.json", { bytes: Buffer.from(JSON.stringify({ version: 1, units: [] })) });
+    db.docs.set("stats/catalogs", { dirty: { public: 1111, o1: 2222 } });
+    expect((await sites.checkSites()).errors).toEqual([]);
+    const catalog = (path: string) => JSON.parse(store.files.get(path)!.bytes.toString()) as { version: number; units: { id: string; version: number }[] };
+    expect(catalog("content/catalog.json").units.map((u) => [u.id, u.version])).toEqual([["ai-4-1", 3]]);
+    expect(store.files.get("content/catalog.json")).toMatchObject({ cacheControl: "public, max-age=60" });
+    expect(catalog("orgs/o1/catalog.json").units.map((u) => u.id)).toEqual(["uab12cd34"]);
+    expect(store.files.get("orgs/o1/catalog.json")).toMatchObject({ cacheControl: "private, max-age=60" });
+    expect(db.docs.get("stats/catalogs")).toEqual({ dirty: {} });
+    expect(events().filter((e) => e === "info:catalog-mended")).toHaveLength(2);
+    expect(db.docs.get("stats/jobs")?.sitesJob).toMatchObject({ ok: true });
+    // Nothing marked: no catalog is touched.
+    store.saves.length = 0;
+    await sites.checkSites();
+    expect(store.saves).toEqual([]);
+  });
+  it("keeps the mark while Storage still refuses, says so, and goes on to the addresses; a newer mark is never cleared", async () => {
+    await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
+    db.docs.set("stats/catalogs", { dirty: { public: 1111 } });
+    store.fail429 = 5;
+    google.syncs = 0;
+    const run = sites.checkSites();
+    await vi.runAllTimersAsync();
+    const r = await run;
+    expect(r.errors).toEqual(["Catalog public: The rate limit for object mutation has been exceeded"]);
+    expect(db.docs.get("stats/catalogs")).toEqual({ dirty: { public: 1111 } });
+    expect(events()).toContain("error:catalog-pending");
+    expect(google.syncs).toBe(1);
+    expect(db.docs.get("stats/jobs")?.sitesJob).toMatchObject({ ok: false, live: 1 });
+    // A publish failed again while this run was writing the catalog: its mark stays for the next run.
+    const save = store.files.set.bind(store.files);
+    const set = vi.spyOn(store.files, "set").mockImplementation((k, v) => { if (k === "content/catalog.json") db.docs.set("stats/catalogs", { dirty: { public: 9999 } }); return save(k, v); });
+    try { await sites.checkSites(); } finally { set.mockRestore(); }
+    expect(db.docs.get("stats/catalogs")).toEqual({ dirty: { public: 9999 } });
+    await sites.checkSites();
+    expect(db.docs.get("stats/catalogs")).toEqual({ dirty: {} });
+  });
   it("gives an address approved before ownership tokens one, and reads an old one under darsiai.org as owned", async () => {
     db.docs.set("sites/old.cis.edu.eg", { orgId: "o1", status: "live", steps: { dns: "ok", hosting: "ok", cert: "ok", auth: "ok", cors: "ok" }, checkedAt: 0 });
     db.docs.set("sites/cis.darsiai.org", { orgId: "o1", status: "live", steps: { dns: "ok", hosting: "ok", cert: "ok", auth: "ok", cors: "ok" }, checkedAt: Date.now() });
@@ -482,13 +679,16 @@ describe("sitesJob", () => {
 
 describe("following an organization's changes (onOrgSite)", () => {
   type Data = Record<string, unknown> | undefined;
-  const event = (orgId: string, before: Data, after: Data) => ({ params: { orgId }, data: { before: { data: () => before }, after: { data: () => after } } });
+  /** `by`: who wrote the document (the event's auth context): a uid from the app, the functions' service account, or nothing. */
+  const event = (orgId: string, before: Data, after: Data, by?: string) => ({ params: { orgId }, authType: by ? "unauthenticated" : "unknown", authId: by, data: { before: { data: () => before }, after: { data: () => after } } });
   const onOrgSite = sites.onOrgSite as unknown as { run: (e: unknown) => Promise<unknown> };
 
   it("looks only when an organization was renamed, re-branded or deleted", () => {
     const org = { name: "CIS", brand: { logo: LOGO, v: 1 }, memberCount: 3 };
-    expect(sitesNeedPublish(org, { ...org, memberCount: 4 })).toBe(false);
-    expect(sitesNeedPublish(org, { ...org, licence: { seats: 5 } })).toBe(false);
+    /** The document with fields the rule doesn't read changed (through a variable, for the tests' own type-check). */
+    const other = (more: Record<string, unknown>): typeof org => ({ ...org, ...more });
+    expect(sitesNeedPublish(org, other({ memberCount: 4 }))).toBe(false);
+    expect(sitesNeedPublish(org, other({ licence: { seats: 5 } }))).toBe(false);
     expect(sitesNeedPublish(org, { ...org, name: "CIS Academy" })).toBe(true);
     expect(sitesNeedPublish(org, { ...org, brand: { logo: "orgs/o1/brand/logo-zzz999zzz.png", v: 2 } })).toBe(true);
     expect(sitesNeedPublish(org, { ...org, brand: null })).toBe(true);
@@ -531,6 +731,80 @@ describe("following an organization's changes (onOrgSite)", () => {
     expect(siteDoc("asked.cis.org")).toBeUndefined();
     expect(published().sites).toEqual({});
     expect([...store.files.keys()].filter((k) => k.startsWith("content/sites/"))).toEqual([]);
+  });
+
+  it("audits a rename or a new logo of an organization with an approved address, with who did it", async () => {
+    await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
+    await act("adm", "request", { host: "asked.cis.org" });
+    audits.length = 0;
+    const before = db.docs.get("orgs/o1")!;
+    // Its own admin renames it in the app: its public address and sign-in page say the new name within a minute.
+    db.docs.set("orgs/o1", { ...before, name: "Cairo Bank Training" });
+    await onOrgSite.run(event("o1", before, db.docs.get("orgs/o1"), "adm"));
+    expect(audits).toEqual([{ action: "orgRebrand", by: "adm", data: { orgId: "o1", nameBefore: "CIS Training Platform", nameAfter: "Cairo Bank Training", logoChanged: false, hosts: ["cis.darsiai.org"] } }]);
+    expect(vi.mocked(logger.warn).mock.calls.find((c) => (c[1] as { event?: string })?.event === "org-rebrand")?.[1])
+      .toMatchObject({ event: "org-rebrand", by: "adm", orgId: "o1", nameAfter: "Cairo Bank Training" });
+    expect(published().sites["cis.darsiai.org"].name).toBe("Cairo Bank Training");
+    // A new logo alone, written by a function (updateOrg): by its service account.
+    const renamed = db.docs.get("orgs/o1")!;
+    const logo2 = "orgs/o1/brand/logo-newlogo12.png";
+    store.files.set(logo2, { bytes: Buffer.from("logo-bytes-2"), contentType: "image/png" });
+    db.docs.set("orgs/o1", { ...renamed, brand: { logo: logo2, v: 2 } });
+    await onOrgSite.run(event("o1", renamed, db.docs.get("orgs/o1"), "836458657044-compute@developer.gserviceaccount.com"));
+    expect(audits.at(-1)).toEqual({ action: "orgRebrand", by: "836458657044-compute@developer.gserviceaccount.com", data: { orgId: "o1", nameBefore: "Cairo Bank Training", nameAfter: "Cairo Bank Training", logoChanged: true, hosts: ["cis.darsiai.org"] } });
+    // No auth context on the event: still audited, by "server".
+    const again = db.docs.get("orgs/o1")!;
+    db.docs.set("orgs/o1", { ...again, name: "CIS" });
+    await onOrgSite.run(event("o1", again, db.docs.get("orgs/o1")));
+    expect(audits.at(-1)).toMatchObject({ action: "orgRebrand", by: "server", data: { nameBefore: "Cairo Bank Training", nameAfter: "CIS" } });
+    expect(audits).toHaveLength(3);
+  });
+
+  it("audits nothing for an organization without an approved address, or for other changes", async () => {
+    // No address at all, and one only asked for (nothing public shows its name yet).
+    await onOrgSite.run(event("o2", db.docs.get("orgs/o2"), { ...db.docs.get("orgs/o2"), name: "Delta Academy" }, "adm2"));
+    await act("adm2", "request", { host: "learn.delta.edu.eg" });
+    audits.length = 0;
+    await onOrgSite.run(event("o2", db.docs.get("orgs/o2"), { ...db.docs.get("orgs/o2"), name: "Delta Academy" }, "adm2"));
+    expect(siteDoc("learn.delta.edu.eg")?.orgName).toBe("Delta Academy");
+    // An organization with an address whose member count or licence changes.
+    await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
+    audits.length = 0;
+    await onOrgSite.run(event("o1", db.docs.get("orgs/o1"), { ...db.docs.get("orgs/o1"), memberCount: 40, licence: { seats: 10 } }, "adm"));
+    expect(audits).toEqual([]);
+    expect(events()).not.toContain("warn:org-rebrand");
+  });
+
+  it("audits the addresses a deleted organization takes with it", async () => {
+    await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
+    audits.length = 0;
+    const last = db.docs.get("orgs/o1");
+    db.docs.delete("orgs/o1");
+    await onOrgSite.run(event("o1", last, undefined, "root"));
+    expect(audits).toEqual([{ action: "removeSite", by: "root", data: { orgId: "o1", host: "cis.darsiai.org", status: "live", reason: "org-deleted", warnings: null } }]);
+  });
+
+  it("still follows the organization when the audit entry can't be written, and says so in the logs", async () => {
+    await act("root", "approve", { host: "cis.darsiai.org", orgId: "o1" });
+    await act("root", "approve", { host: "learn.cis.edu.eg", orgId: "o1" });
+    auditDown.on = true;
+    // Renamed: its addresses say the new name all the same.
+    const before = db.docs.get("orgs/o1")!;
+    db.docs.set("orgs/o1", { ...before, name: "Cairo Bank Training" });
+    await onOrgSite.run(event("o1", before, db.docs.get("orgs/o1"), "adm"));
+    expect(published().sites["cis.darsiai.org"].name).toBe("Cairo Bank Training");
+    expect(siteDoc("learn.cis.edu.eg")?.orgName).toBe("Cairo Bank Training");
+    expect(vi.mocked(logger.error).mock.calls.find((c) => (c[1] as { event?: string })?.event === "audit-failed")?.[1])
+      .toMatchObject({ action: "orgRebrand", by: "adm", orgId: "o1", nameAfter: "Cairo Bank Training" });
+    // Deleted: every address goes and loses sign-in, not only the first one.
+    const last = db.docs.get("orgs/o1");
+    db.docs.delete("orgs/o1");
+    await onOrgSite.run(event("o1", last, undefined, "root"));
+    expect(siteDoc("cis.darsiai.org")).toBeUndefined();
+    expect(siteDoc("learn.cis.edu.eg")).toBeUndefined();
+    expect(["cis.darsiai.org", "learn.cis.edu.eg"].filter((h) => google.authorized.has(h) || google.origins.has(h))).toEqual([]);
+    expect(published().sites).toEqual({});
+    expect(events().filter((e) => e === "error:audit-failed")).toHaveLength(3);
   });
 });
 

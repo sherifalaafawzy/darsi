@@ -42,7 +42,10 @@ export function addMessages(more: Record<string, Record<string, string>>) {
 
 /** Unicode isolate, the plain-text <bdi>: for names passed into t() so a Latin name can't reorder an Arabic sentence (or the reverse). */
 export const isolate = (s: string) => `⁨${s}⁩`;
-export type MessageKey = keyof typeof en | keyof typeof import("../cms/strings/en.json") | keyof typeof import("../admin/strings/en.json") | keyof typeof import("../upgrade/strings/en.json") | keyof typeof import("../tutor/strings/en.json") | keyof typeof import("../bugs/strings/en.json") | keyof typeof import("../tour/strings/en.json");
+export type MessageKey = keyof typeof en | keyof typeof import("../cms/strings/en.json") | keyof typeof import("../admin/strings/en.json") | keyof typeof import("../upgrade/strings/en.json") | keyof typeof import("../tutor/strings/en.json") | keyof typeof import("../bugs/strings/en.json") | keyof typeof import("../tour/strings/en.json")
+  // The app shell's (app/strings.ts) and the legal pages' and "Leave <organization>"'s (legal/strings.ts): registered at
+  // startup by their modules, which a screen using them imports (their `k()` keeps that import in place).
+  | keyof typeof import("../app/strings/en.json") | keyof typeof import("../legal/strings/en.json");
 
 /** A number format for a locale, falling back to English for a tag the browser doesn't know. */
 const numberFormat = (locale: string, opts?: Intl.NumberFormatOptions) => { try { return new Intl.NumberFormat(locale, opts); } catch { return new Intl.NumberFormat("en", opts); } };
@@ -70,8 +73,9 @@ const lookup = (dict: Record<string, string> | undefined, lang: string, key: str
  * Darsi's name in the UI strings, for an organization site without Darsi's identity (state/site.ts): it becomes the
  * organization's name, isolated so a Latin name can't reorder an Arabic sentence. "Darsi Tiny" («درسي الصغير») stays: it
  * is a model's name, which the labs and courses use too. So do the few strings where Darsi is named as the other party
- * (the branding panel's hints, and the web address panel's "site." strings, which are about Darsi's identity) or as a
- * framework (KEEP_DARSI).
+ * (the branding panel's hints; the web address panel's "site." strings, which are about Darsi's identity; and the school
+ * sign-in wizard's "sa." strings on the same admin tab, admin/sso-strings: Darsi's team, Darsi's servers, what Darsi
+ * needs from the provider's console) or as a framework (KEEP_DARSI).
  */
 const DARSI_NAME = /Darsi(?! Tiny)|درسي(?! الصغير)/g;
 const KEEP_DARSI = new Set(["brand.hint", "brand.hintOther", "p.fw.darsi"]);
@@ -100,7 +104,7 @@ export function I18nProvider({ lang, brand, children }: { lang: string; brand?: 
     const own = lookup(MESSAGES[meta.code], meta.code, key, vars?.n);
     const raw = own ?? lookup(MESSAGES.en, "en", key, vars?.n) ?? key;
     // Before the variables go in, so a name a person typed is never changed.
-    const s = brand && !KEEP_DARSI.has(key) && !key.startsWith("site.") ? rebrand(raw, brand) : raw;
+    const s = brand && !KEEP_DARSI.has(key) && !key.startsWith("site.") && !key.startsWith("sa.") ? rebrand(raw, brand) : raw;
     const out = vars ? s.replace(/\{(\w+)\}/g, (_, k) => { const x = vars[k]; return typeof x === "number" ? num(x) : String(x ?? ""); }) : s;
     // A string a right-to-left language doesn't have yet shows in English, isolated left to right (LRI…PDI), so its
     // punctuation stays at its end: "Where do you teach?", not "?Where do you teach".

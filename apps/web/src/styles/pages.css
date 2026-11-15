@@ -1,0 +1,143 @@
+/*
+ * The public pages (/courses, /features, /why-darsi and their Arabic copies under /ar/): static HTML written at build
+ * time by scripts/site/build.mjs, with no app code. This sheet is their only style: the build puts the brand's tokens and
+ * font faces in front of it and serves the whole as /assets/site-<hash>.css. Nothing in the app imports it.
+ * Fonts: an English page names only the Latin faces and an Arabic page the Arabic ones first, so a page never downloads
+ * the other script's web fonts; words in the other script (.pp-other) use the phone's own font.
+ */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body.pp { margin: 0; background: var(--paper); color: var(--ink); font-family: "Noto Sans", system-ui, sans-serif; font-size: 16px; line-height: 1.6; overflow-wrap: break-word; }
+.pp:lang(ar) { font-family: "Noto Sans Arabic", "Noto Sans", system-ui, sans-serif; line-height: 1.75; }
+.pp * { box-sizing: border-box; }
+.pp-other:lang(ar), .pp-other:lang(en) { font-family: system-ui, sans-serif; }
+
+.pp h1, .pp h2, .pp h3, .pp h4 { font-family: "Baloo 2", system-ui, sans-serif; font-weight: 700; line-height: 1.25; margin: 0 0 var(--space-3); }
+.pp:lang(ar) h1, .pp:lang(ar) h2, .pp:lang(ar) h3, .pp:lang(ar) h4 { font-family: "Baloo Bhaijaan 2", "Baloo 2", system-ui, sans-serif; line-height: 1.4; }
+.pp h1 { font-size: 30px; }
+.pp h2 { font-size: 23px; margin-block-start: var(--space-2); }
+.pp h3 { font-size: 19px; }
+.pp h4 { font-size: 16px; margin-block: var(--space-4) var(--space-2); }
+.pp p { margin: 0 0 var(--space-3); }
+.pp a { color: var(--kola-deep); text-underline-offset: 3px; }
+.pp a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: var(--radius-sm); }
+.pp strong { font-weight: 700; }
+
+.pp-skip { position: absolute; inset-inline-start: var(--space-2); inset-block-start: -100px; z-index: 2; padding: var(--space-2) var(--space-3); background: var(--surface); border-radius: var(--radius-sm); }
+.pp-skip:focus { inset-block-start: var(--space-2); }
+
+/* Top bar: brand, sections, the other language and the way into the app. */
+.pp-top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-3) var(--space-4); background: var(--surface); border-block-end: 1px solid var(--line); }
+.pp-brand { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--tap-min); color: var(--ink); text-decoration: none; font-family: "Baloo 2", system-ui, sans-serif; font-size: 22px; font-weight: 700; }
+.pp:lang(ar) .pp-brand { font-family: "Baloo Bhaijaan 2", system-ui, sans-serif; }
+.pp-brand svg { inline-size: 32px; block-size: 32px; flex: none; }
+.pp-nav { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); order: 3; inline-size: 100%; }
+.pp-nav a { display: inline-flex; align-items: center; min-height: var(--tap-min); padding-inline: var(--space-1); color: var(--ink); font-weight: 600; text-decoration: none; }
+.pp-nav a[aria-current] { color: var(--kola-deep); text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
+.pp-actions { display: flex; align-items: center; gap: var(--space-2); margin-inline-start: auto; }
+.pp-lang { display: inline-flex; align-items: center; min-height: var(--tap-min); padding-inline: var(--space-2); color: var(--ink); font-weight: 600; }
+
+.pp-btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap-min); padding: var(--space-3) var(--space-6); border-radius: var(--radius-md); background: var(--kola); color: var(--on-kola); font-weight: 700; text-decoration: none; box-shadow: var(--shadow-press); }
+.pp a.pp-btn { color: var(--on-kola); }
+.pp-btn:active { transform: translateY(4px); box-shadow: none; }
+.pp-btn-sm { padding: var(--space-2) var(--space-4); font-size: 14px; }
+.pp-link { font-weight: 600; }
+
+.pp-main { max-inline-size: 760px; margin-inline: auto; padding: var(--space-4) var(--space-4) var(--space-12); }
+.pp-wide { max-inline-size: 1080px; }
+.pp-crumbs ol { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0 0 var(--space-4); padding: 0; list-style: none; font-size: 14px; color: var(--ink-muted); }
+.pp-crumbs li + li::before { content: "/"; margin-inline-end: var(--space-1); color: var(--ink-muted); }
+.pp-crumbs a { color: var(--ink-muted); }
+
+.pp-head { padding-block: var(--space-4) var(--space-6); }
+.pp-kicker { color: var(--ink-muted); font-weight: 600; font-size: 14px; }
+.pp-lead { font-size: 18px; line-height: 1.6; }
+.pp-note { color: var(--ink-muted); font-size: 14px; }
+.pp-meta { color: var(--ink-muted); font-size: 14px; font-weight: 400; }
+.pp-cta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); margin-block: var(--space-6) var(--space-2); }
+
+.pp-section { padding-block: var(--space-6); border-block-start: 1px solid var(--line); }
+.pp-list { margin: 0 0 var(--space-3); padding-inline-start: var(--space-6); }
+.pp-list li { margin-block-end: var(--space-2); }
+
+/* Facts as label and value. */
+.pp-facts { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); margin: 0; }
+.pp-facts div { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: var(--space-3); padding: var(--space-2) var(--space-3); background: var(--surface); border-radius: var(--radius-sm); }
+.pp-facts dt { color: var(--ink-muted); font-weight: 600; }
+.pp-facts dd { margin: 0; }
+
+/* A course's lessons, each a card. */
+.pp-lessons { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-4); }
+.pp-lesson { padding: var(--space-4); background: var(--surface); border: 1px solid var(--line); border-inline-start: 6px solid var(--pp-tone); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+.pp-lesson-n { display: block; color: var(--pp-tone-ink); font-size: 14px; }
+.pp-chapters { margin: 0 0 var(--space-3); padding-inline-start: var(--space-6); }
+.pp-terms { margin: 0 0 var(--space-3); }
+.pp-terms div { margin-block-end: var(--space-2); }
+.pp-terms dt { font-weight: 700; }
+.pp-terms dd { margin: 0; }
+
+/* Cards: a course in a list. */
+.pp-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); margin: 0 0 var(--space-4); padding: 0; list-style: none; }
+.pp-card { padding: var(--space-4); background: var(--surface); border: 1px solid var(--line); border-block-start: 6px solid var(--pp-tone); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+.pp-card h3 { font-size: 18px; margin-block-end: var(--space-1); }
+.pp-card p { margin-block-end: var(--space-2); }
+.pp-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block-start: var(--space-4); }
+.pp-chip { display: inline-flex; align-items: center; min-height: 40px; padding-inline: var(--space-4); border-radius: var(--radius-pill); background: var(--pp-tone-soft); color: var(--ink); font-weight: 600; text-decoration: none; }
+.pp a.pp-chip { color: var(--ink); }
+
+/* Labs: the ladder and every lab. */
+.pp-steps { margin: 0; padding-inline-start: var(--space-6); columns: 1; }
+.pp-labs { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.pp-labs li { padding: var(--space-3) var(--space-4); background: var(--surface); border-radius: var(--radius-md); border-inline-start: 4px solid var(--pp-tone); }
+.pp-labs h3 { font-size: 17px; margin-block-end: 0; }
+.pp-labs p { margin-block-end: var(--space-1); }
+.pp-used { font-size: 14px; }
+
+/* Questions and answers, open. */
+.pp-faq { margin: 0; display: grid; gap: var(--space-4); }
+.pp-faq dt { font-weight: 700; margin-block-end: var(--space-1); }
+.pp-faq dd { margin: 0; }
+
+/* Figures with their sources (the why pages). */
+.pp-figures { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); margin: 0 0 var(--space-4); padding: 0; list-style: none; }
+.pp-figure { padding: var(--space-4); background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+.pp-figure strong { display: block; font-family: "Baloo 2", system-ui, sans-serif; font-size: 28px; line-height: 1.2; color: var(--kola-deep); }
+.pp:lang(ar) .pp-figure strong { font-family: "Baloo Bhaijaan 2", system-ui, sans-serif; }
+.pp-figure p { margin-block-end: var(--space-2); }
+.pp-cite { font-size: 14px; color: var(--ink-muted); }
+.pp-sources { padding-inline-start: var(--space-6); font-size: 14px; }
+.pp-sources li { margin-block-end: var(--space-2); }
+
+.pp-foot { background: var(--surface); border-block-start: 1px solid var(--line); }
+.pp-foot-in { max-inline-size: 1080px; margin-inline: auto; padding: var(--space-6) var(--space-4); }
+.pp-foot-about { color: var(--ink-muted); }
+.pp-foot-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+.pp-foot h2 { font-size: 17px; margin-block: 0 var(--space-2); }
+.pp-foot ul { margin: 0; padding: 0; list-style: none; }
+.pp-foot li a { display: inline-flex; align-items: center; min-height: 40px; }
+.pp-foot-lang { margin-block-start: var(--space-4); }
+
+/* Track colours, from the design system's track families. */
+.pp-t-sunbird { --pp-tone: var(--sunbird); --pp-tone-soft: var(--sunbird-soft); --pp-tone-ink: var(--sunbird-ink); }
+.pp-t-lagoon { --pp-tone: var(--lagoon); --pp-tone-soft: var(--lagoon-soft); --pp-tone-ink: var(--lagoon-ink); }
+.pp-t-hibiscus { --pp-tone: var(--hibiscus); --pp-tone-soft: var(--hibiscus-soft); --pp-tone-ink: var(--hibiscus-ink); }
+.pp-t-leaf { --pp-tone: var(--leaf); --pp-tone-soft: var(--leaf-soft); --pp-tone-ink: var(--leaf-ink); }
+.pp-t-lilac { --pp-tone: var(--lilac); --pp-tone-soft: var(--lilac-soft); --pp-tone-ink: var(--lilac-ink); }
+.pp-t-clay { --pp-tone: var(--clay); --pp-tone-soft: var(--clay-soft); --pp-tone-ink: var(--clay-ink); }
+.pp-t-sky { --pp-tone: var(--sky); --pp-tone-soft: var(--sky-soft); --pp-tone-ink: var(--sky-ink); }
+.pp-t-slate, .pp { --pp-tone: var(--slate); --pp-tone-soft: var(--slate-soft); --pp-tone-ink: var(--slate-ink); }
+
+@media (min-width: 600px) {
+  .pp-cards, .pp-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pp-foot-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pp-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pp-steps { columns: 2; }
+}
+@media (min-width: 900px) {
+  .pp h1 { font-size: 40px; }
+  .pp-top { flex-wrap: nowrap; padding-inline: var(--space-8); }
+  .pp-nav { order: 0; inline-size: auto; }
+  .pp-main { padding-block-start: var(--space-8); }
+  .pp-wide .pp-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .pp-wide .pp-labs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pp-steps { columns: 3; }
+}

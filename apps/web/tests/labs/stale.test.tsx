@@ -24,6 +24,7 @@ describe("a lab chunk that fails to load", () => {
     expect(fetch).toHaveBeenCalledWith("/sw.js", expect.objectContaining({ method: "HEAD", cache: "no-store" }));
     expect(screen.queryByText(/isn.t on your phone yet/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Reload" }));
+    expect(screen.getByRole("button", { name: "Reload" }).getAttribute("aria-busy")).toBe("true"); // it can take up to 15 s
     await vi.waitFor(() => expect(reload).toHaveBeenCalled());
   });
 
@@ -68,8 +69,11 @@ describe("a lab chunk that fails to load", () => {
 
   it("hosting answers 404 for a missing chunk instead of the app page", () => {
     const fb = JSON.parse(readFileSync(resolve(process.cwd(), "../../firebase.json"), "utf8"));
-    const rw = fb.hosting.rewrites.find((r: { destination: string }) => r.destination === "/index.html");
-    // Firebase globs (RE2 has no lookahead, so a negated glob): every path except /assets/** and /lib/** gets the app.
-    expect(rw.source).toBe("!/@(assets|lib)/**");
+    // The app's site (firebase.json has two since school sign-in: "app" and "login").
+    const app = fb.hosting.find((h: { target: string }) => h.target === "app");
+    const rw = app.rewrites.find((r: { destination: string }) => r.destination === "/app.html");
+    // Firebase globs (RE2 has no lookahead, so a negated glob): every path except /assets/** and /lib/** gets the app,
+    // and the public pages' folders (scripts/site/roots.mjs; tests/site.test.ts checks those).
+    expect(rw.source).toMatch(/^!\/@\(assets\|lib(?:\|[a-z-]+)*\)\/\*\*$/);
   });
 });

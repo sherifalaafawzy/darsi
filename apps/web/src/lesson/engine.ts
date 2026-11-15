@@ -141,12 +141,53 @@ export function loadRun(scope: string, lessonId: string, now = Date.now()): RunS
 }
 /**
  * "Reset progress on this device": lessons in progress go too (every person's, when no scope is given). Signing out of
- * a shared phone (auth/AuthProvider) clears the account's own.
+ * a shared phone (auth/AuthProvider) clears the account's own, and with them what is left of its project drafts
+ * (clearDrafts). That sign-out comes here only when the account has nothing unsent: a draft with words in it that was
+ * never sent keeps the account's whole copy on the phone instead (store.tsx hasUnsent), where only that account opens
+ * it. The reset without a scope leaves drafts alone: work typed for a project isn't progress, and may be hours of
+ * writing.
  */
 export function clearRuns(scope?: string): void {
   try {
     const prefix = scope ? `${RUN_PREFIX}${scope}:` : RUN_PREFIX;
     for (let i = localStorage.length - 1; i >= 0; i--) { const key = localStorage.key(i); if (key?.startsWith(prefix)) localStorage.removeItem(key); }
+  } catch { /* blocked */ }
+  if (scope) clearDrafts(scope);
+}
+
+/**
+ * Project drafts (lesson/ProjectView): what a person typed for a project step, kept on this phone until it is sent. One
+ * localStorage entry per person and step, "darsi-project-draft:<scope>:<lessonId>:<stepId>", scope "guest" or the
+ * account uid as for the runs above: on a shared phone or lab PC nobody opens a step to find someone else's work in it.
+ * Drafts from before they had a scope ("darsi-project-draft:<lessonId>:<stepId>") are settled the first time the step
+ * is opened (ProjectView readDraft): a sent one goes to the account that sent it or is dropped, a never-sent one goes
+ * to whoever opens the step. A guest who makes an account keeps theirs (state/store.tsx
+ * adoptDrafts, which knows these keys too: the store can't import this file without splitting the startup bundle).
+ */
+export const DRAFT_PREFIX = "darsi-project-draft:";
+export const draftKey = (scope: string, lessonId: string, stepId: string) => `${DRAFT_PREFIX}${scope}:${lessonId}:${stepId}`;
+/**
+ * Whose an unscoped draft from before is, for clearing (clearDrafts): the account that sent it (`sentBy`), or "guest"
+ * when it was never sent. A never-sent one names nobody, so no account's sign-out or deletion removes it: it waits for
+ * whoever next opens its step (ProjectView readDraft). null: the key isn't an unscoped draft (ids have no ":", so those
+ * have two parts, not three).
+ */
+function legacyDraftOwner(key: string): string | null {
+  if (!key.startsWith(DRAFT_PREFIX) || key.slice(DRAFT_PREFIX.length).split(":").length !== 2) return null;
+  try { const by = (JSON.parse(localStorage.getItem(key) ?? "null") as { sentBy?: unknown } | null)?.sentBy; return typeof by === "string" && by ? by : "guest"; }
+  catch { return "guest"; }
+}
+/**
+ * A person's project drafts leave this phone: at a sign-out with nothing unsent (clearRuns: sent milestones and empty
+ * forms; a typed draft never sent keeps the account's copy here) and when their account is deleted (account/MyData).
+ */
+export function clearDrafts(scope: string): void {
+  try {
+    const prefix = `${DRAFT_PREFIX}${scope}:`;
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith(prefix) || legacyDraftOwner(key) === scope)) localStorage.removeItem(key);
+    }
   } catch { /* blocked */ }
 }
 

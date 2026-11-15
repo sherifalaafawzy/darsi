@@ -10,7 +10,7 @@ import type { ProjectStep } from "../content/types";
 import type { Submission } from "./data";
 import { stepName, WorkBody, type WorkFields } from "./WorkBody";
 import { CT } from "../lesson/capstoneText";
-import { refusalText } from "./refusals";
+import { errorText } from "../staff/errors";
 import "./strings";
 
 export { projectStep } from "./WorkBody";
@@ -50,7 +50,7 @@ export function SubmissionCard({ uid, sub, lessonTitle, step, who, onReviewed }:
   const [removed, setRemoved] = useState(false);
   const [modErr, setModErr] = useState("");
   const moderated = removed || Boolean((sub as { moderated?: unknown }).moderated);
-  const moderate = () => api.moderateSubmission({ uid, id: sub.id }).then(() => { setRemoved(true); setAsk(false); onReviewed?.(); }, (e: unknown) => setModErr(refusalText(e, t)));
+  const moderate = () => api.moderateSubmission({ uid, id: sub.id }).then(() => { setRemoved(true); setAsk(false); onReviewed?.(); }, (e: unknown) => setModErr(errorText(e, t)));
   return (
     <article className={`submission is-${sub.status}`}>
       {who}

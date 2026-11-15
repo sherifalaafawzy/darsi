@@ -8,7 +8,8 @@ import { isolate, useI18n } from "../i18n";
 import type { ProjectStep } from "../content/types";
 import { GITHUB_REPO, MAX_LINKS, type CapResult } from "../content/capstone";
 import { CapstoneBrief, CapstoneResult } from "./CapstoneParts";
-import { CT, refusal } from "./capstoneText";
+import { CT, refusal, type CapstoneRefusal } from "./capstoneText";
+import { DRAFT_PREFIX, draftKey } from "./engine";
 import { MyReview } from "./MyReview";
 
 /**
@@ -36,21 +37,50 @@ async function shrinkImage(file: File, max = 1280): Promise<Blob> {
  * milestone also remembers its last successful send (`sentAt`, ms, the submission's id, and the account that sent it):
  * coming back, that account sees when it was sent and can go on, and the lesson opens at the first milestone it hasn't
  * sent yet (LessonScreen). On a shared phone, another account never takes someone else's send for its own.
+ * Every change stamps `editedAt` (ms): a milestone changed after it was sent is unsent work again (state/store hasUnsent),
+ * so a sign-out keeps the rework. "Send again" without a change leaves it alone.
+ *
+ * A draft is one person's: `scope` is "guest" or the account uid (lesson/engine.ts draftKey), so the next person on a
+ * shared phone or lab PC opens the step empty. Deleting the account removes its drafts, and so does signing out once
+ * nothing typed is still unsent (engine.ts clearDrafts); a draft with words in it that was never sent stays through a
+ * sign-out, for that account's next sign-in here (auth/AuthProvider signOutHere).
  */
-interface Draft { text: string; explain: string; ai: "" | "none" | "some"; aiHow: string; repo: string; links: string; check: string; sentAt?: number; sentId?: string; sentBy?: string }
+interface Draft { text: string; explain: string; ai: "" | "none" | "some"; aiHow: string; repo: string; links: string; check: string; sentAt?: number; sentId?: string; sentBy?: string; editedAt?: number }
 const EMPTY: Draft = { text: "", explain: "", ai: "", aiHow: "", repo: "", links: "", check: "" };
-const draftKey = (lessonId: string, stepId: string) => `darsi-project-draft:${lessonId}:${stepId}`;
-export function readDraft(lessonId: string, stepId: string): Draft {
-  try { return { ...EMPTY, ...JSON.parse(localStorage.getItem(draftKey(lessonId, stepId)) ?? "{}") }; } catch { return EMPTY; }
+/** Whose drafts a person reads and writes: their account's (also signed in but offline), else the guest's. */
+const scopeOf = (uid: string | null | undefined) => uid || "guest";
+/**
+ * The draft `scope` keeps for a step. A draft from before drafts had a scope (no person in its key) is settled the first
+ * time its step is read. One that was sent (`sentBy`) becomes the reader's only when the reader is the account that
+ * sent it, and is dropped otherwise: what account A sent is never handed to account B, whoever opens the step first.
+ * One that was never sent names nobody, and goes to whoever reads the step first, signed in or not, as the app did
+ * before scopes: only signed-in people can send a project, so nearly all of these are an account's typed work, and
+ * dropping them lost it without a word. Either way the unscoped copy leaves the phone at that read.
+ */
+export function readDraft(lessonId: string, stepId: string, scope = "guest"): Draft {
+  try {
+    const key = draftKey(scope, lessonId, stepId), oldKey = `${DRAFT_PREFIX}${lessonId}:${stepId}`;
+    let text = localStorage.getItem(key);
+    const old = localStorage.getItem(oldKey);
+    if (old !== null) {
+      let by: unknown, readable = true;
+      try { by = (JSON.parse(old) as { sentBy?: unknown } | null)?.sentBy; } catch { readable = false; }
+      const mine = readable && (by ? by === scope : true);
+      if (mine && text === null) { localStorage.setItem(key, old); text = old; }
+      localStorage.removeItem(oldKey);
+    }
+    return { ...EMPTY, ...JSON.parse(text ?? "{}") };
+  } catch { return EMPTY; }
 }
-const writeDraft = (lessonId: string, stepId: string, d: Draft | null) => {
-  try { if (d) localStorage.setItem(draftKey(lessonId, stepId), JSON.stringify(d)); else localStorage.removeItem(draftKey(lessonId, stepId)); } catch { /* storage full or blocked */ }
+const writeDraft = (lessonId: string, stepId: string, d: Draft | null, scope: string) => {
+  const key = draftKey(scope, lessonId, stepId);
+  try { if (d) localStorage.setItem(key, JSON.stringify(d)); else localStorage.removeItem(key); } catch { /* storage full or blocked */ }
 };
 /** When this account last sent a capstone milestone from this phone (ms), if it has. */
 const sentAtBy = (d: Draft, uid: string | null | undefined): number | undefined =>
   uid && d.sentBy === uid && typeof d.sentAt === "number" && d.sentAt > 0 ? d.sentAt : undefined;
-export const milestoneSentAt = (lessonId: string, stepId: string, uid: string | null | undefined): number | undefined =>
-  sentAtBy(readDraft(lessonId, stepId), uid);
+export const milestoneSentAt = (lessonId: string, stepId: string, uid: string | null | undefined, scope = scopeOf(uid)): number | undefined =>
+  sentAtBy(readDraft(lessonId, stepId, scope), uid);
 /** A capstone milestone: a project step that takes evidence (a repository, links, darsi-check.json…). */
 export const isMilestone = (s: { type: string; evidence?: unknown[] }) => s.type === "project" && !!s.evidence?.length;
 /** A final project takes up to this many files: photos, PDFs or voice notes. */
@@ -80,16 +110,19 @@ export function ProjectView({ step, lessonId, unitId, onReady, preview, announce
   const { t, L, locale } = useI18n();
   const { user, profile, orgId, offlineUid } = useAuth();
   const inRouter = useInRouterContext();
-  const [d, setD] = useState<Draft>(() => readDraft(lessonId, step.id));
+  // Whose draft this is. Signing in or out remounts the app's screens (App.tsx Scoped), so it never changes under a form.
+  const scope = scopeOf(user?.uid ?? offlineUid);
+  const [d, setD] = useState<Draft>(() => readDraft(lessonId, step.id, scope));
   const [files, setFiles] = useState<File[]>([]);
   const final = !!step.final;
   const ev = new Set((step.evidence ?? []).map((e) => e.kind)), cap = ev.size > 0;
   // A milestone this account already sent from this phone opens as sent: it goes on, or improves it and sends it again.
-  // "wait", "limit", "closed" and "invalid": checkCapstone refused the send (capstoneText.ts refusal); the draft stays.
+  // A CapstoneRefusal ("wait", "limit", "closed", "invalid", "disabled", "noAccount", "unavailable"): checkCapstone
+  // refused the send (capstoneText.ts refusal), and its own words say why; the draft stays.
   // "denied": the rules refused it (sending it again as it is won't help); "tooBig": a file is over Storage's limit.
-  const [state, setState] = useState<"idle" | "sending" | "sent" | "error" | "later" | "offline" | "wait" | "limit" | "closed" | "invalid" | "denied" | "tooBig">(
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error" | "later" | "offline" | "denied" | "tooBig" | CapstoneRefusal>(
     () => (cap && sentAtBy(d, user?.uid ?? offlineUid) ? "sent" : "idle"));
-  const refused = state === "wait" || state === "limit" || state === "closed" || state === "invalid";
+  const refused = state === "wait" || state === "limit" || state === "closed" || state === "invalid" || state === "disabled" || state === "noAccount" || state === "unavailable";
   const [bigFile, setBigFile] = useState("");
   useEffect(() => { onReady(state === "sent" || state === "later"); }, [state, onReady]);
   // Sending replaces the form (and its button) with the sent notice: the focus goes to the notice, which reads it out.
@@ -104,7 +137,11 @@ export function ProjectView({ step, lessonId, unitId, onReady, preview, announce
     if (refused) announce?.(L(CT[state]));
     wasSending.current = state === "sending";
   }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
-  const edit = (patch: Partial<Draft>) => setD((x) => { const n = { ...x, ...patch }; writeDraft(lessonId, step.id, n); return n; });
+  // A tap that changes nothing (the AI answer that is already chosen) is no change: sent work stays sent.
+  const edit = (patch: Partial<Draft>) => setD((x) => {
+    if ((Object.keys(patch) as (keyof Draft)[]).every((k) => x[k] === patch[k])) return x;
+    const n = { ...x, ...patch, editedAt: Date.now() }; writeDraft(lessonId, step.id, n, scope); return n;
+  });
   // Capstone milestones ask what a final project asks: an explanation in the learner's own words and any AI use.
   const asks = final || cap;
   const [result, setResult] = useState<CapResult | null>(null);
@@ -157,7 +194,7 @@ export function ProjectView({ step, lessonId, unitId, onReady, preview, announce
         setResult(r);
         // The check file is chosen again for the next send; the time (and id) of this one is kept, for coming back.
         const sentAt = Date.now(), sentBy = user.uid;
-        writeDraft(lessonId, step.id, { ...d, check: "", sentAt, sentId: r?.id, sentBy });
+        writeDraft(lessonId, step.id, { ...d, check: "", sentAt, sentId: r?.id, sentBy }, scope);
         setD((x) => ({ ...x, sentAt, sentId: r?.id, sentBy }));
         setState("sent");
         return;
@@ -168,7 +205,7 @@ export function ProjectView({ step, lessonId, unitId, onReady, preview, announce
         ...(sent.length ? { files: sent } : {}), ...(final ? { final: true, explain: d.explain, aiUse: d.ai === "some" ? d.aiHow : "none", name: profile?.name ?? user.displayName ?? "" } : {}),
         status: "submitted", createdAt: serverTimestamp(),
       });
-      writeDraft(lessonId, step.id, null);
+      writeDraft(lessonId, step.id, null, scope);
       setState("sent");
     } catch (e) {
       const why = cap ? refusal(e) : null;

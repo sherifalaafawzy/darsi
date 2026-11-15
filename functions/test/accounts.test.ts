@@ -1,8 +1,8 @@
 // Data rights and abuse (account.ts): who may export or delete an account's data, which files are a person's project
 // files, how a deleted account's payments are kept, and how recent a sign-in must be to delete your own account.
 import { describe, expect, it } from "vitest";
-import { hashedUid, ownFileRe, recentSignIn, RECENT_SIGN_IN, submissionFiles, submissionPath } from "../src/accountCore";
-import { accountActionProblem } from "../src/roles";
+import { DELETION_GIVE_UP_MS, hashedUid, ownFileRe, queuedDeletionProblem, queueStopped, recentSignIn, RECENT_SIGN_IN, sessionEvents, sessionsOf, submissionFiles, submissionPath } from "../src/accountCore";
+import { accountActionProblem, managedAccount } from "../src/roles";
 
 const DOMAIN = "users.darsi.app";
 const pupil = { uid: "p1", exists: true, role: "student", orgId: "org1", createdBy: "adm", email: "mna.abd.12345@users.darsi.app" };
@@ -42,6 +42,113 @@ describe("who may delete or export an account (FS-DELETE, feat-org-data-rights)"
   });
   it("teachers and students act for nobody else", () => {
     for (const role of ["teacher", "student", "learner"]) expect(accountActionProblem("delete", { uid: "x", role, orgId: "org1" }, pupil, DOMAIN)).toBe("not-yours");
+  });
+});
+
+// Which accounts are an organization's to manage (be-account-privacy): the profile's managedBy, or a username login
+// from before that field. createdBy alone (an admin typed the person's real email) gives the organization nothing.
+describe("accounts an organization manages", () => {
+  const adm = { uid: "adm", role: "orgAdmin", orgId: "org1" }, other = { uid: "adm2", role: "orgAdmin", orgId: "org2" };
+  const invited = { uid: "t2", exists: true, role: "teacher", orgId: "org1", createdBy: "adm", email: "amal@school.example" }; // the admin typed her real email
+  const looked = { ...invited, uid: "t3", managedBy: "org1" }; // a typed email the school says it manages
+
+  it("a username account: its own organization's admin may delete and export it, another organization's may not", () => {
+    for (const t of [pupil, { ...pupil, managedBy: "org1" }, { ...pupil, createdBy: undefined }]) for (const a of ["delete", "export"] as const) {
+      expect(accountActionProblem(a, adm, t, DOMAIN)).toBeNull();
+      expect(accountActionProblem(a, other, t, DOMAIN)).toBe("not-yours");
+    }
+    expect(accountActionProblem("delete", { uid: "p1", role: "student", orgId: "org1" }, { ...pupil, managedBy: "org1" }, DOMAIN)).toBe("self-org");
+  });
+  it("an account the admin only made with the person's real email is the person's own: the admin can't delete or export it, the person can delete it", () => {
+    expect(accountActionProblem("delete", adm, invited, DOMAIN)).toBe("not-yours");
+    expect(accountActionProblem("export", adm, invited, DOMAIN)).toBe("not-yours");
+    expect(accountActionProblem("delete", { uid: "t2", role: "teacher", orgId: "org1" }, invited, DOMAIN)).toBeNull();
+    expect(accountActionProblem("delete", { uid: "boss", role: "superadmin" }, invited, DOMAIN)).toBeNull(); // a platform admin still handles a request
+  });
+  it("managedBy says which organization: that one's admin acts, and the person asks them", () => {
+    expect(accountActionProblem("delete", adm, looked, DOMAIN)).toBeNull();
+    expect(accountActionProblem("export", adm, looked, DOMAIN)).toBeNull();
+    expect(accountActionProblem("delete", { uid: "t3", role: "teacher", orgId: "org1" }, looked, DOMAIN)).toBe("self-org");
+    expect(accountActionProblem("delete", adm, { ...looked, role: "orgAdmin" }, DOMAIN)).toBe("not-yours");
+  });
+  it("managedBy naming another organization gives this one nothing, username login or not", () => {
+    for (const t of [{ ...looked, managedBy: "org2" }, { ...pupil, managedBy: "org2" }]) {
+      expect(accountActionProblem("delete", adm, t, DOMAIN)).toBe("not-yours"); // a member here, managed elsewhere
+      expect(accountActionProblem("export", adm, t, DOMAIN)).toBe("not-yours");
+      expect(accountActionProblem("delete", other, t, DOMAIN)).toBe("not-yours"); // it manages the account, but it isn't its member
+    }
+    // Managed, and in an organization: still not the person's to delete.
+    expect(accountActionProblem("delete", { uid: "t3", role: "teacher", orgId: "org1" }, { ...looked, managedBy: "org2" }, DOMAIN)).toBe("self-org");
+  });
+  it("only a non-empty string counts as managedBy", () => {
+    expect(managedAccount({ managedBy: "org1", email: "a@b.example" }, DOMAIN)).toEqual({ managed: true, by: "org1" });
+    for (const managedBy of [undefined, null, "", true, 7, {}]) {
+      expect(managedAccount({ managedBy, email: "a@b.example" }, DOMAIN)).toEqual({ managed: false, by: null });
+      expect(managedAccount({ managedBy, email: "MNA.abd.1@Users.Darsi.App" }, DOMAIN)).toEqual({ managed: true, by: null });
+    }
+  });
+});
+
+describe("an account queued for deletion with its organization (onAccountDeletion)", () => {
+  const username = "mna.abd.12345@users.darsi.app";
+  const t = { exists: true, hasAccount: true, role: "learner", orgId: null, email: username };
+  it("is deleted when the organization managed it", () => {
+    expect(queuedDeletionProblem("org1", t, DOMAIN)).toBeNull(); // an older username account
+    expect(queuedDeletionProblem("org1", { ...t, managedBy: "org1", email: "amal@school.example" }, DOMAIN)).toBeNull();
+    expect(queuedDeletionProblem("org1", { ...t, orgId: "org1", role: "student" }, DOMAIN)).toBeNull(); // not yet moved out
+    expect(queuedDeletionProblem("org1", { exists: false, hasAccount: false }, DOMAIN)).toBeNull(); // already gone: leftovers only
+  });
+  it("is left alone when it is a platform admin, the person's own, or another organization's by now", () => {
+    expect(queuedDeletionProblem("org1", { ...t, role: "superadmin" }, DOMAIN)).toBe("superadmin");
+    expect(queuedDeletionProblem("org1", { ...t, claimRole: "superadmin" }, DOMAIN)).toBe("superadmin");
+    expect(queuedDeletionProblem("org1", { ...t, email: "amal@school.example" }, DOMAIN)).toBe("not-managed");
+    expect(queuedDeletionProblem("org1", { exists: false, hasAccount: true, email: "amal@school.example" }, DOMAIN)).toBe("not-managed");
+    expect(queuedDeletionProblem("org1", { ...t, managedBy: "org2" }, DOMAIN)).toBe("moved");
+    expect(queuedDeletionProblem("org1", { ...t, orgId: "org2", role: "student" }, DOMAIN)).toBe("moved");
+    expect(queuedDeletionProblem("", t, DOMAIN)).toBe("no-org");
+  });
+  it("an entry no worker is behind any more: held, given up, or past the worker's six hours", () => {
+    const now = Date.UTC(2026, 10, 11), ts = (ms: number) => ({ toMillis: () => ms });
+    expect(queueStopped(undefined, now)).toBeNull();
+    expect(queueStopped({ orgId: "org1", by: "root", at: ts(now - 60_000) }, now)).toBeNull(); // its worker is trying
+    expect(queueStopped({ at: ts(now - DELETION_GIVE_UP_MS) }, now)).toBeNull(); // the worker gives up after, not at
+    expect(queueStopped({ at: now - 5 * 3600e3, startedAt: 1, wiped: true }, now)).toBeNull();
+    expect(queueStopped({ at: ts(now - 60_000), held: "renewing" }, now)).toBe("held");
+    expect(queueStopped({ at: ts(now - 60_000), gaveUpAt: ts(now) }, now)).toBe("gave-up");
+    expect(queueStopped({ at: ts(now - DELETION_GIVE_UP_MS - 1) }, now)).toBe("expired");
+    expect(queueStopped({ at: now - 7 * 3600e3 }, now)).toBe("expired"); // milliseconds, as older entries and tests write it
+    // No time, or one still being written (a server timestamp not yet set): taken as new.
+    expect(queueStopped({ orgId: "org1" }, now)).toBeNull();
+    expect(queueStopped({ at: null }, now)).toBeNull();
+    expect(queueStopped({ at: "yesterday" }, now)).toBeNull();
+  });
+});
+
+describe("the tutor agent's sessions (agentSessions.ts)", () => {
+  it("are read from either shape Agent Runtime answers with, with the last use in ms", () => {
+    expect(sessionsOf({ sessions: [{ id: "s1", lastUpdateTime: 1762000000.5 }, { id: "s2", last_update_time: 1762000001 }, { id: "" }, null, { id: "s3" }] }))
+      .toEqual([{ id: "s1", updatedAt: 1762000000500 }, { id: "s2", updatedAt: 1762000001000 }, { id: "s3", updatedAt: null }]);
+    expect(sessionsOf([{ id: "s4", lastUpdateTime: 1762000000000 }])).toEqual([{ id: "s4", updatedAt: 1762000000000 }]);
+    for (const junk of [undefined, null, "x", {}, { sessions: "no" }]) expect(sessionsOf(junk)).toEqual([]);
+  });
+  it("give the conversation for an export: what was said and called, not what a tool returned or the model thought", () => {
+    const events = sessionEvents({ id: "s1", events: [
+      { author: "user", timestamp: 1762000000, content: { parts: [{ text: "What is training data?" }] } },
+      { author: "darsi_tutor", timestamp: 1762000002, content: { parts: [{ thought: true, text: "let me look" }, { functionCall: { name: "search_course", args: { query: "training data" } } }] } },
+      { author: "darsi_tutor", content: { parts: [{ function_response: { name: "search_course", response: { hits: ["course text"] } } }] } },
+      { author: "darsi_tutor", content: { parts: [{ function_call: { name: "reply", args: { answer: "The examples a model learns from." } } }] } },
+      { author: "darsi_tutor", content: { parts: [{ thought: true, text: "done" }] } }, // nothing to show
+      { author: "darsi_tutor" },
+    ] });
+    expect(events).toEqual([
+      { at: new Date(1762000000000).toISOString(), author: "user", parts: [{ text: "What is training data?" }] },
+      { at: new Date(1762000002000).toISOString(), author: "darsi_tutor", parts: [{ call: "search_course", args: { query: "training data" } }] },
+      { at: null, author: "darsi_tutor", parts: [{ result: "search_course" }] },
+      { at: null, author: "darsi_tutor", parts: [{ call: "reply", args: { answer: "The examples a model learns from." } }] },
+    ]);
+    expect(JSON.stringify(events)).not.toContain("course text");
+    expect(sessionEvents(null)).toEqual([]);
+    expect(sessionEvents({ events: "none" })).toEqual([]);
   });
 });
 

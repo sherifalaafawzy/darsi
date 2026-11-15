@@ -154,6 +154,33 @@ export async function credentialsXlsx(rows: { row?: number; name: string; login:
   return new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 }
 
+/**
+ * A CSV file's text, as the dashboard's people export writes it (AdminHome exportCsv): every cell quoted, a cell that
+ * starts with = + - @ (or a tab or return) given a leading ' so Excel doesn't run it as a formula (L1), CRLF between
+ * rows, and a byte-order mark first, which is what makes Excel read the file as UTF-8 (Arabic names).
+ * `raw`: columns written exactly as they are, with no leading ': a password must reach the person character for
+ * character (ours can start with @), and it is made by the server, never typed into a sheet by someone else.
+ */
+export function csvText(rows: unknown[][], opts: { raw?: number[] } = {}): string {
+  const cell = (v: unknown, col: number) => {
+    const s = String(plainText(v) ?? "");
+    return `"${(!opts.raw?.includes(col) && /^[=+\-@\t\r]/.test(s) ? `'${s}` : s).replace(/"/g, '""')}"`;
+  };
+  return "﻿" + rows.map((r) => r.map(cell).join(",")).join("\r\n");
+}
+export const csvBlob = (text: string) => new Blob([text], { type: "text/csv;charset=utf-8" });
+
+/**
+ * The credentials as CSV, with the workbook's columns (credentialsXlsx): what the results page downloads when the Excel
+ * code can't be loaded (offline, or a build that has since been replaced). It needs no chunk, so the passwords, which
+ * are shown only once, can always be saved.
+ */
+export function credentialsCsv(rows: { row?: number; name: string; login: string; password?: string; role?: string; group?: string; status: string }[], labels: Record<string, string>): string {
+  const numbered = rows.some((r) => r.row != null);
+  const head = [...(numbered ? [labels.row ?? "#"] : []), labels.name, labels.login, labels.password, labels.role, labels.group, labels.status];
+  return csvText([head, ...rows.map((r) => [...(numbered ? [r.row ?? ""] : []), r.name, r.login, r.password ?? "", r.role ?? "", r.group ?? "", r.status])], { raw: [numbered ? 3 : 2] });
+}
+
 /** Template with the expected columns (EN headers + an Arabic example row). */
 export async function templateXlsx(): Promise<Blob> {
   const ExcelJS = (await import("exceljs")).default;

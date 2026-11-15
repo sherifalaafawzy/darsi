@@ -1,6 +1,7 @@
 /**
- * The member's organization as the app shows it: its name and logo (TECHNICAL.md "Organization branding"), and the
- * courses it lets this member see (TECHNICAL.md "Course visibility in organizations").
+ * The member's organization as the app shows it: its name and logo (TECHNICAL.md "Organization branding"), the
+ * courses it lets this member see (TECHNICAL.md "Course visibility in organizations"), and whether it has school
+ * sign-in (Me's "School sign-in" row).
  * One read of orgs/{orgId} per sign-in or app start (and again when the connection returns, if that failed), no
  * listener. The logo is kept in the local store as a small data: URL, so it shows offline and is downloaded only when
  * `brand.v` changes. The member's course list is worked out at that read from their role and class, so it holds offline;
@@ -8,10 +9,11 @@
  */
 import { useEffect } from "react";
 import { loadFirebase } from "../fb";
+import { useAuth } from "../auth/AuthProvider";
 import { sameSees, seesFor } from "../content/orgCourses";
 import { useStore, type OrgBrand } from "./store";
 
-interface OrgDoc { name?: unknown; brand?: { logo?: unknown; v?: unknown } | null; courses?: unknown }
+interface OrgDoc { name?: unknown; brand?: { logo?: unknown; v?: unknown } | null; courses?: unknown; sso?: { on?: unknown } | null }
 /** Who is reading: their role and class decide which of the organization's course lists are theirs. */
 export interface OrgReader { role?: string | null; group?: string | null }
 
@@ -21,10 +23,13 @@ export function brandUpdate(orgId: string, doc: OrgDoc, have?: OrgBrand, who: Or
   const v = typeof doc.brand?.v === "number" ? doc.brand.v : 0;
   const logo = typeof doc.brand?.logo === "string" ? doc.brand.logo : null;
   const courses = seesFor(doc.courses, who.role, who.group);
+  // School sign-in is on: Me shows its row. A phone that kept the organization before this flag existed lacks it, so
+  // the comparison below sees a change and the flag arrives at the next app start.
+  const sso = doc.sso?.on === true;
   const same = have?.id === orgId;
-  if (same && have.name === name && have.v === v && sameSees(have.courses, courses)) return null;
+  if (same && have.name === name && have.v === v && sameSees(have.courses, courses) && Boolean(have.sso) === sso) return null;
   const keep = same && have.v === v ? have.logo : undefined;
-  return { brand: { id: orgId, name, v, ...(keep ? { logo: keep } : {}), ...(courses ? { courses } : {}) }, fetchLogo: logo && !keep ? logo : null };
+  return { brand: { id: orgId, name, v, ...(keep ? { logo: keep } : {}), ...(courses ? { courses } : {}), ...(sso ? { sso: true } : {}) }, fetchLogo: logo && !keep ? logo : null };
 }
 
 /**
@@ -33,17 +38,20 @@ export function brandUpdate(orgId: string, doc: OrgDoc, have?: OrgBrand, who: Or
  */
 export function useOrgBrand(uid: string | undefined, orgId: string | null, who: { role?: string | null; group?: string | null } = {}) {
   const { state, dispatch, ready } = useStore();
+  // Only a token read in this page says the person has no organization: offline with an expired token the claims are
+  // the copy kept on the device, or the "learner" default (AuthProvider claimsKnown), and neither is a reason to take
+  // the organization's name, logo and course list off the phone.
+  const { claimsKnown } = useAuth();
   const have = state.org;
   const { role, group } = who;
   const waiting = "group" in who && group === undefined;
   useEffect(() => {
-    if (!ready) return;
-    if (!uid || !orgId) {
-      // Left the organization (or signed out of it): Darsi's own look again, and every course.
-      if (uid && !orgId && have) dispatch({ type: "set", patch: { org: undefined } });
-      return;
-    }
-    if (waiting) return;
+    // Left the organization: Darsi's own look again, and every course. `have` is read at that moment, not watched.
+    if (ready && uid && !orgId && claimsKnown && have) dispatch({ type: "set", patch: { org: undefined } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, uid, orgId, claimsKnown, dispatch]);
+  useEffect(() => {
+    if (!ready || !uid || !orgId || waiting) return;
     let live = true, done = false;
     const pull = async () => {
       // Signed-in members only, so the SDK is already loading; nothing here reaches a guest's startup bundle.

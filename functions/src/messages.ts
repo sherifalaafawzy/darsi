@@ -14,10 +14,11 @@ export const topicLang = (lang: unknown): Lang => (typeof lang === "string" && L
 export type Cat = "reminders" | "reviews" | "staff" | "news";
 export type Kind =
   | "daily0" | "daily1" | "daily2" | "weekGoal" | "streak" | "comeback7" | "comeback21"
-  | "reviewApproved" | "reviewRevise" | "orgApproved" | "orgRejected" | "staffSubmission" | "staffOrgRequest";
+  | "reviewApproved" | "reviewRevise" | "orgApproved" | "orgRejected" | "staffSubmission" | "staffOrgRequest"
+  | "ssoSecretExpiring" | "ssoEndpointsMoved" | "ssoFull";
 
-/** Values a message can fill in. `name` and `org` are isolated; `uid` only builds links. */
-export interface MessageVars { n?: number; name?: string; org?: string; feedback?: string; uid?: string }
+/** Values a message can fill in. `name` and `org` are isolated; `uid` and `orgId` only build links. */
+export interface MessageVars { n?: number; name?: string; org?: string; feedback?: string; uid?: string; orgId?: string }
 export interface Text { title: string; body: string }
 
 /** Unicode first-strong isolate: keeps a Latin name from reordering an Arabic sentence, and the other way round. */
@@ -36,6 +37,7 @@ export function trimFeedback(s: unknown, max = FEEDBACK_MAX): string {
 type Fill = (v: MessageVars, lang: Lang) => string;
 const fixed = (s: string): Fill => () => s;
 const num = (v: MessageVars, lang: Lang) => formatNumber(Math.max(0, Math.round(v.n ?? 0)), lang);
+const daysLeft = (v: MessageVars) => Math.max(0, Math.round(v.n ?? 0));
 const name = (v: MessageVars) => isolate((v.name ?? "").trim() || "—");
 const org = (v: MessageVars) => isolate((v.org ?? "").trim() || "—");
 const feedbackOr = (fallback: string): Fill => (v) => trimFeedback(v.feedback) || fallback;
@@ -104,7 +106,7 @@ export const CATALOGUE: Record<Kind, Entry> = {
     ar: { title: fixed("بخصوص طلب مؤسستك"), body: feedbackOr("افتح «درسي» لقراءة الرد.") },
   },
   staffSubmission: {
-    cat: "staff", link: "/teach/{uid}",
+    cat: "staff", link: "/teach/{uid}?tab=projects",
     en: { title: fixed("New project to review"), body: (v) => `${name(v)} sent a project for review.` },
     ar: { title: fixed("مشروع جديد للمراجعة"), body: (v) => `وصل مشروع جديد من ${name(v)} للمراجعة.` },
   },
@@ -112,6 +114,35 @@ export const CATALOGUE: Record<Kind, Entry> = {
     cat: "staff", link: "/super",
     en: { title: fixed("New organization request"), body: (v) => `${org(v)} asked to join Darsi.` },
     ar: { title: fixed("طلب مؤسسة جديد"), body: (v) => `طلبت ${org(v)} الانضمام إلى «درسي».` },
+  },
+  // School sign-in (sso.ts ssoJob). The first two go to the organization's admins, the third to platform admins.
+  // `n` is the days left; Arabic gives it as a count after a colon, so it needs no plural form.
+  ssoSecretExpiring: {
+    cat: "staff", link: "/admin?tab=signin",
+    en: {
+      title: fixed("School sign-in: the client secret runs out soon"),
+      body: (v, l) => {
+        const days = daysLeft(v);
+        const when = days === 0 ? "today" : days === 1 ? "in 1 day" : `in ${num(v, l)} days`;
+        return `The client secret for ${org(v)} runs out ${when}. Make a new one and save it in Admin.`;
+      },
+    },
+    ar: {
+      title: fixed("تسجيل الدخول عبر المدرسة: سر العميل ينتهي قريبًا"),
+      body: (v, l) => (daysLeft(v) === 0
+        ? `ينتهي سر العميل لدى ${org(v)} اليوم. أنشئ سرًا جديدًا واحفظه من «الإدارة».`
+        : `الأيام المتبقية على انتهاء سر العميل لدى ${org(v)}: ${num(v, l)}. أنشئ سرًا جديدًا واحفظه من «الإدارة».`),
+    },
+  },
+  ssoEndpointsMoved: {
+    cat: "staff", link: "/admin?tab=signin",
+    en: { title: fixed("School sign-in needs a new test"), body: (v) => `The provider's addresses changed for ${org(v)}. Test the sign-in again before people are affected.` },
+    ar: { title: fixed("تسجيل الدخول عبر المدرسة يحتاج إلى اختبار جديد"), body: (v) => `تغيّرت عناوين المزوّد لدى ${org(v)}. اختبر تسجيل الدخول مرة أخرى قبل أن يتأثر الأشخاص.` },
+  },
+  ssoFull: {
+    cat: "staff", link: "/super/orgs/{orgId}?tab=signin",
+    en: { title: fixed("A school reached its member limit"), body: (v) => `${org(v)} reached the number of members school sign-in may make. New people can't join until the limit is raised.` },
+    ar: { title: fixed("مدرسة بلغت الحد الأقصى لأعضائها"), body: (v) => `بلغت ${org(v)} عدد الأعضاء الذي يمكن لتسجيل الدخول عبر المدرسة إنشاؤه. لن ينضم أشخاص جدد حتى يُرفع الحد.` },
   },
 };
 
@@ -124,10 +155,23 @@ export function message(kind: Kind, lang: Lang, vars: MessageVars = {}): Text {
   return { title: e.title(vars, lang), body: e.body(vars, lang) };
 }
 
-/** The default app path for a kind ("/teach/{uid}" becomes "/teach/abc"). */
+/**
+ * The default app path for a kind ("/teach/{uid}" becomes "/teach/abc"). Without the organization's id,
+ * "/super/orgs/{orgId}?tab=signin" opens the list of organizations instead.
+ */
 export function linkFor(kind: Kind, vars: MessageVars = {}): string {
-  return CATALOGUE[kind].link.replace("{uid}", encodeURIComponent(vars.uid ?? ""));
+  const link = CATALOGUE[kind].link.replace("{uid}", encodeURIComponent(vars.uid ?? ""));
+  if (!link.includes("{orgId}")) return link;
+  const orgId = (vars.orgId ?? "").trim();
+  return orgId ? link.replace("{orgId}", encodeURIComponent(orgId)) : link.slice(0, link.indexOf("/{orgId}"));
 }
+
+/**
+ * Where "New project to review" opens: the person's page on its Projects tab, for their teacher (/teach/…) or for
+ * the organization's admins (/admin/people/…). The page opens on Progress without the tab, with no project in sight.
+ */
+export const projectsLink = (reader: "teacher" | "admin", uid: string): string =>
+  `${reader === "teacher" ? "/teach" : "/admin/people"}/${encodeURIComponent(uid)}?tab=projects`;
 
 /** Notification tag: automatic nudges share one so a new one replaces the old. */
 export function tagFor(kind: Kind, id?: string): string {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { BrandProvider, Button, Mark, TextField, BrandMark, useBrand } from "@darsi/design-system";
 import { doc, updateDoc } from "firebase/firestore";
 import { deleteObject, ref, uploadBytes } from "firebase/storage";
@@ -7,6 +8,9 @@ import { useAuth } from "../auth/AuthProvider";
 import type { Org } from "../auth/types";
 import { useI18n } from "../i18n";
 import { useStore } from "../state/store";
+import { errorText } from "../staff/errors";
+import { LeaveQuestion, useFormGuard } from "./formGuard";
+import { k } from "./formsStrings";
 import "./strings";
 
 /** Largest side of a logo, in px; the app shows it at 36 px at most, so 256 stays sharp on dense screens. */
@@ -72,6 +76,10 @@ export function OrgBranding({ org, onSaved }: { org: Org; /** Reads the organiza
   const shown = logo?.url ?? (remove ? undefined : current);
   const trimmed = name.trim();
   const changed = trimmed !== saved.name || Boolean(logo) || (remove && Boolean(saved.logo));
+  // A new name or logo not saved yet: a nav link, the app bar's Back, a reload or closing the tab asks first. Another
+  // tab of the same page doesn't (the panel is kept while hidden); if the question comes up while it is hidden, it
+  // opens this panel's tab itself (formGuard LeaveQuestion).
+  const guard = useFormGuard(changed);
 
   const pick = async (f?: File) => {
     setMsg(null);
@@ -82,8 +90,9 @@ export function OrgBranding({ org, onSaved }: { org: Org; /** Reads the organiza
     catch (e) { setMsg({ ok: false, text: t((e as Error)?.message === "too-big" ? "brand.tooBig" : "brand.unreadable") }); }
   };
 
-  const save = async () => {
-    if (trimmed.length < 2 || trimmed.length > 80) return setMsg({ ok: false, text: t("brand.nameLength") });
+  /** Answers whether it was saved ("Save and leave" goes on only then). */
+  const save = async (): Promise<boolean> => {
+    if (trimmed.length < 2 || trimmed.length > 80) { setMsg({ ok: false, text: t("brand.nameLength") }); return false; }
     setBusy(true); setMsg(null);
     try {
       const old = saved.logo;
@@ -98,19 +107,27 @@ export function OrgBranding({ org, onSaved }: { org: Org; /** Reads the organiza
       // The old file is no longer used; a failed delete only leaves a small orphan behind.
       if (old && old !== path) deleteObject(ref(await storage(), old)).catch(() => {});
       // This phone shows the new look at once; members' phones pick it up at their next sign-in or start.
-      if (mine) dispatch({ type: "set", patch: { org: { id: org.id, name: trimmed, v, ...(shown ? { logo: shown } : {}) } } });
+      // What else the phone keeps about its organization (its courses, whether school sign-in is on) stays as it was.
+      if (mine) {
+        const was = state.org?.id === org.id ? state.org : null;
+        const { logo: _old, ...rest } = was ?? {};
+        dispatch({ type: "set", patch: { org: { ...rest, id: org.id, name: trimmed, v, ...(shown ? { logo: shown } : {}) } } });
+      }
       if (!mine && logo) setRemote(logo.url);
       setLogo(null); setRemove(false);
       setMsg({ ok: true, text: t("brand.saved") });
       onSaved?.();
+      return true;
     } catch (e) {
-      setMsg({ ok: false, text: (e as Error).message });
+      setMsg({ ok: false, text: errorText(e, t) });
+      return false;
     } finally { setBusy(false); }
   };
 
   return (
     <section className="panel stack" aria-labelledby="brand-h">
       <h3 id="brand-h">{t(mine ? "brand.title" : "brand.titleOther")}</h3>
+      <LeaveQuestion guard={guard} action={{ label: t(k("fm.leave.save")), run: save, thenLeave: true }} />
       <p className="muted small">{t(mine ? "brand.hint" : "brand.hintOther")}</p>
       <TextField label={t("brand.name")} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
       <div className="brand-row">
@@ -125,6 +142,9 @@ export function OrgBranding({ org, onSaved }: { org: Org; /** Reads the organiza
       <p className="muted small">{t("brand.logoHint")}</p>
       {msg && <p className={msg.ok ? "notice ok" : "notice err"} role="status">{msg.text}</p>}
       <div><Button onClick={() => { void save(); }} disabled={busy || !changed}>{busy ? t("brand.saving") : t("brand.save")}</Button></div>
+      {/* The homepage at the organization's own web address: blocks, in its languages (admin/PageBuilder.tsx). */}
+      <p className="muted small">{t("pb.openHint")}</p>
+      <div><Link className="dr-btn dr-btn-secondary dr-btn-md" to={mine ? "/admin/page" : `/super/orgs/${org.id}/page`}><span className="dr-btn-label">{t("pb.open")}</span></Link></div>
     </section>
   );
 }

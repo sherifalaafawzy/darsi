@@ -2,7 +2,7 @@
  * Darsi Super without Firebase (docs/SUPER.md, TECHNICAL.md "Darsi Super"), so the tests can run it: the plans
  * platform admins set, who has Super and until when, and the Google Analytics `purchase` / `refund` payloads.
  */
-import { createHash } from "node:crypto";
+import { randomBytes } from "node:crypto";
 
 export const CURRENCIES = ["EGP", "USD"] as const;
 export type Currency = (typeof CURRENCIES)[number];
@@ -262,7 +262,10 @@ export function renewalOf(s: Subscription | null | undefined, now = Date.now()):
   return s && s.source === "stripe" && s.status === "canceled" && s.stripeSub && s.currentPeriodEnd > now ? "off" : null;
 }
 
-/** Whether a token's custom claims already say this, so writing them again can be skipped. */
+/**
+ * Whether a token's custom claims already say this, so writing them again can be skipped. Every key counts, `frozen`
+ * (a suspended organization's staff) included: claims that differ only in it are not the same.
+ */
 export function sameClaims(a: Record<string, unknown>, b: Record<string, unknown>) {
   const ka = Object.keys(a).sort(), kb = Object.keys(b).sort();
   return ka.length === kb.length && ka.every((k, i) => k === kb[i] && a[k] === b[k]);
@@ -280,13 +283,14 @@ export function entitlement(o: { sub?: Subscription | null; licence?: Licence | 
   return mine ?? org;
 }
 
-/** The custom claims: role and organization as before, plus Super while it lasts. */
-export function claimsFor(role: string, orgId: string | null, e: Entitlement | null): Record<string, unknown> {
-  return { role, ...(orgId ? { orgId } : {}), ...(e ? { plan: e.plan, planUntil: e.until } : {}) };
+/**
+ * The custom claims: role and organization as before, plus Super while it lasts. `frozen`: the staff (teachers and
+ * admins) of a suspended organization carry `frozen: true`, which the rules and callables read to stop their staff
+ * powers; the key is only there while it is true, so everyone else's claims stay exactly as they were.
+ */
+export function claimsFor(role: string, orgId: string | null, e: Entitlement | null, frozen = false): Record<string, unknown> {
+  return { role, ...(orgId ? { orgId } : {}), ...(e ? { plan: e.plan, planUntil: e.until } : {}), ...(frozen ? { frozen: true } : {}) };
 }
-
-/** Google Analytics' user_id: a hash of the account id, never the id or an email. */
-export const gaUserId = (uid: string) => createHash("sha256").update(`darsi:${uid}`).digest("hex").slice(0, 32);
 
 export interface PaymentRecord {
   provider: "paymob" | "stripe"; ref: string; kind: "subscription" | "licence" | "credits";
@@ -355,13 +359,15 @@ export function paymentEffects(p: PaymentRecord, have: { sub?: Subscription | nu
   };
 }
 
-/** The Measurement Protocol body for a purchase or a refund (GA4 ecommerce). */
+/**
+ * The Measurement Protocol body for a purchase or a refund (GA4 ecommerce). Nothing in it names the buyer: no user_id
+ * (even hashed, it was one stable id per account across every purchase), and when the phone's own random analytics id
+ * isn't known the event gets a fresh random client id of its own, never one worked out from the account.
+ */
 export function revenueEvent(p: PaymentRecord, type: "purchase" | "refund", nowMs = Date.now()) {
-  const who = p.uid ?? `org:${p.orgId}`;
   const quantity = p.kind === "licence" ? Math.max(1, p.seats ?? 1) : 1;
   return {
-    client_id: p.clientId && /^[a-z0-9.]{8,64}$/.test(p.clientId) ? p.clientId : `server.${gaUserId(who).slice(0, 16)}`,
-    user_id: gaUserId(who),
+    client_id: p.clientId && /^[a-z0-9.]{8,64}$/.test(p.clientId) ? p.clientId : `server.${randomBytes(8).toString("hex")}`,
     timestamp_micros: nowMs * 1000,
     events: [{
       name: type,

@@ -1,0 +1,181 @@
+/* School sign-in, staff screens (admin/SsoSetup.tsx; the listing requests on /super/domains): the wizard's stepper,
+   the console steps with values to copy, the test result card, the status card. Loads with the SsoSetup chunk. */
+
+.sso { min-inline-size: 0; }
+/* Three levels under the panel's own title: the step's question, a part of the step, a list's name. None smaller than
+   the text it stands over. */
+.sso h4, .sso h5, .sso h6 { margin: 0; overflow-wrap: break-word; }
+.sso h4 { font: 700 18px/26px var(--font-display); }
+.sso h5 { font: 700 16px/24px var(--font-sans); }
+.sso h6 { font: var(--text-label); }
+/* Everything under the title keeps to one column a line of text can be read across (the panel is 1000px wide on a
+   laptop): the wizard, the status card, the notes above them, the listing requests. Fields for a domain or a number
+   of days don't run the whole way. */
+.sso > * { box-sizing: border-box; max-inline-size: 46rem; }
+.sso-body { min-inline-size: 0; }
+/* "Step 2 of 5" sits on the step's question. */
+.sso-head { display: grid; gap: var(--space-1); }
+/* Fields a clear step apart: one field's hint never reads as the next one's label. */
+.sso-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); min-inline-size: 0; }
+.sso h4:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: var(--radius-sm); }
+
+/* The stepper: numbered circles with their names; under 600px only the open step keeps its name, so five fit at 360px. */
+.sso-steps { display: flex; gap: var(--space-1); margin: 0; padding: 0; list-style: none; min-inline-size: 0; }
+/* Each step as wide as its name and an equal share of what is left: no name wraps while the row has room. */
+.sso-steps > li { flex: 1 1 auto; min-inline-size: 0; }
+.sso-step {
+  inline-size: 100%;
+  min-block-size: var(--tap-min);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1);
+  background: none;
+  border: 0;
+  border-block-end: 3px solid var(--line);
+  color: var(--ink-muted);
+  font: var(--text-label);
+  text-align: start;
+  cursor: pointer;
+}
+.sso-step:disabled { cursor: default; opacity: 0.55; }
+.sso-step:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.sso-steps > li.is-done > .sso-step { color: var(--ink); border-block-end-color: var(--correct); }
+.sso-steps > li.is-here > .sso-step { color: var(--ink); border-block-end-color: var(--kola); }
+.sso-step-n {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--line-strong);
+  background: var(--surface);
+  font-weight: 800;
+}
+.sso-steps > li.is-here .sso-step-n { background: var(--kola); border-color: var(--kola); color: var(--surface); }
+.sso-steps > li.is-done .sso-step-n { background: var(--correct-soft); border-color: var(--correct); }
+.sso-step-name { min-inline-size: 0; overflow-wrap: anywhere; }
+@media (max-width: 599px) {
+  .sso-steps > li:not(.is-here) .sso-step-name { display: none; }
+  /* The other steps are full-size targets (4 × 44px wide, 48px tall, and the gaps fit at 360px); the open one takes the
+     rest, enough for its name on one line. */
+  .sso-steps > li:not(.is-here) { flex: none; inline-size: 44px; }
+  .sso-steps > li.is-here { flex: 1 1 0; }
+}
+
+.sso-presets { display: grid; gap: var(--space-2); }
+@media (min-width: 900px) { .sso-presets { grid-template-columns: 1fr 1fr; } }
+
+/* The console's steps: a numbered list, each with what to copy under it. */
+.sso-console { display: grid; gap: var(--space-3); margin: 0; padding-inline-start: var(--space-6); }
+.sso-console > li { padding-inline-start: var(--space-1); }
+.sso-console > li > span { display: block; overflow-wrap: break-word; }
+
+/* A value to copy: its name, the value itself (breaks anywhere: a long URL never widens the page), Copy. */
+.sso-copy {
+  display: grid;
+  gap: var(--space-1);
+  margin-block-start: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-sunk);
+  border-radius: var(--radius-md);
+  min-inline-size: 0;
+}
+.sso-copy-label { font: var(--text-label); color: var(--ink-muted); }
+/* The value in a box of its own, as a field that can't be typed in: one tap selects all of it. */
+.sso-copy code {
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow-wrap: anywhere;
+  user-select: all;
+  font: 600 15px/22px ui-monospace, Menlo, Consolas, monospace;
+  text-align: start;
+}
+/* From 600px Copy stands beside the value, where the eye already is. */
+@media (min-width: 600px) {
+  .sso-copy { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-2); align-items: center; }
+  .sso-copy > .sso-copy-label, .sso-copy > small { grid-column: 1 / -1; }
+}
+
+.sso-fieldset { margin: 0; padding: var(--space-3); border: 2px solid var(--line); border-radius: var(--radius-md); min-inline-size: 0; }
+.sso-fieldset > legend { padding-inline: var(--space-1); font: var(--text-label); }
+.sso-radio, .sso-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-block-size: var(--tap-min);
+  padding-block: var(--space-2);
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.sso-radio > span { display: grid; gap: var(--space-1); min-inline-size: 0; }
+.sso-radio input, .sso-check input { flex: none; inline-size: 24px; block-size: 24px; margin: 0; accent-color: var(--kola); }
+.sso-radio input:focus-visible, .sso-check input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.sso-area { display: grid; gap: var(--space-1); font: var(--text-label); }
+.sso-area textarea {
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-block-size: 96px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--text-body);
+  resize: vertical;
+}
+.sso-area textarea:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* The last test: green when Darsi would let the person in, red when it would refuse or the test failed. */
+.sso-test { display: grid; gap: var(--space-2); padding: var(--space-3); border: 2px solid var(--line); border-radius: var(--radius-md); min-inline-size: 0; }
+.sso-test.is-ok { border-color: var(--correct); }
+.sso-test.is-bad { border-color: var(--wrong); }
+.sso-test p { margin: 0; overflow-wrap: break-word; }
+.sso-claims { display: grid; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+/* Three columns that line up down the list: the claim, whether it came, what Darsi uses it for. */
+.sso-claims > li { display: grid; grid-template-columns: minmax(0, 11rem) 6rem minmax(0, 1fr); align-items: center; gap: var(--space-2); }
+.sso-claims > li > .sso-pill { justify-self: start; }
+.sso-claims code { overflow-wrap: anywhere; font: 600 14px/20px ui-monospace, Menlo, Consolas, monospace; }
+@media (max-width: 599px) {
+  .sso-claims > li { grid-template-columns: minmax(0, 1fr) auto; }
+  .sso-claims > li > .small { grid-column: 1 / -1; }
+}
+.sso-pill {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunk);
+  font: var(--text-label);
+  white-space: nowrap;
+}
+.sso-pill.is-ok { background: var(--correct-soft); border-color: var(--correct); }
+
+.sso-summary { display: grid; gap: var(--space-2); margin: 0; }
+.sso-summary > div { display: grid; gap: var(--space-1); min-inline-size: 0; }
+.sso-summary dt { font: var(--text-label); color: var(--ink-muted); }
+.sso-summary dd { margin: 0; overflow-wrap: anywhere; }
+@media (min-width: 600px) {
+  .sso-summary > div { grid-template-columns: minmax(0, 14rem) minmax(0, 1fr); align-items: baseline; }
+}
+
+.sso-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.sso-tile-text { font-size: 18px; line-height: 24px; overflow-wrap: anywhere; }
+.sso-problems { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.sso-problems > li { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-3); background: var(--wrong-soft); border-radius: var(--radius-md); overflow-wrap: break-word; }
+.sso-platform { padding-block-start: var(--space-3); border-block-start: 2px solid var(--line); }
+/* Back at the start, the way on at the end, also when it stands alone (step 1). */
+.sso-nav { justify-content: space-between; }
+.sso-nav > .dr-btn-primary { margin-inline-start: auto; }
+/* Edit and Turn off: the card's own actions, apart from the part above them. */
+.sso-actions { padding-block-start: var(--space-3); border-block-start: 2px solid var(--line); }
+
+/* /super/domains, "School sign-in": a listing request with the name, logo and host the platform admin approves. */
+.sso-listing { display: grid; gap: var(--space-2); padding: var(--space-4); background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-md); min-inline-size: 0; }
+.sso-listing-head { display: flex; align-items: center; gap: var(--space-3); min-inline-size: 0; }
+.sso-listing-head img { flex: none; inline-size: 48px; block-size: 48px; object-fit: contain; border-radius: var(--radius-sm); background: var(--surface-sunk); }
+.sso-listing-head strong { min-inline-size: 0; font: 700 18px/24px var(--font-display); overflow-wrap: anywhere; }
+.sso-listing-logo { flex: none; display: inline-grid; place-items: center; inline-size: 48px; block-size: 48px; border-radius: var(--radius-sm); background: var(--surface-sunk); color: var(--ink-muted); }

@@ -2,7 +2,8 @@
  * Problem reports (TECHNICAL.md "Problem reports"). The "Report a problem" button on every screen sends the person's
  * words, a screenshot and the details their phone gathered here: darsiai.org/api/bug, a Hosting rewrite, so guests
  * send it with a plain fetch and never load the Firebase SDK. Signed-in people add their ID token, and who sent a
- * report comes only from that verified token. Platform admins read the reports on /super/bugs.
+ * report comes only from that verified token (the account the phone names in its details is not kept without one).
+ * Platform admins read the reports on /super/bugs.
  * - bugReports/{id}: the report; only platform admins read it (rules), and they change only its status.
  * - bugReports/{id}.{jpg|png|webp} in the app's bucket: the screenshot, for platform admins only (storage rules).
  */
@@ -12,7 +13,7 @@ import { onRequest } from "firebase-functions/v2/https";
 import { auth, db } from "./admin.js";
 import { clientIp } from "./clientIp.js";
 import { bucket } from "./storage.js";
-import { limiter, MAX_BODY, parseReport } from "./bugsCore.js";
+import { limiter, MAX_BODY, ownDetails, parseReport } from "./bugsCore.js";
 
 const tooMany = limiter();
 
@@ -53,7 +54,8 @@ export const reportBug = onRequest({ maxInstances: 2, memory: "256MiB", timeoutS
     }
     await ref.set({
       createdAt: FieldValue.serverTimestamp(), status: "new",
-      text: report.text, url: report.url, path: report.path, user, shot, details: report.details,
+      // The phone's own "who is signed in" never stands in for the token: dropped without one, the token's uid with one.
+      text: report.text, url: report.url, path: report.path, user, shot, details: ownDetails(report.details, who?.uid ?? null),
       // What the server itself saw, which the phone can't make up.
       server: { ua: String(req.headers["user-agent"] ?? "").slice(0, 400), lang: String(req.headers["accept-language"] ?? "").slice(0, 100) },
     });

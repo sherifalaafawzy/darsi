@@ -1,0 +1,47 @@
+/* Tabs on the staff screens (admin/Tabs.tsx): a list of tabs that stays in reach, and one panel under it. */
+
+/* A grid item of main.screen: without a zero minimum, a list wider than a phone would widen the whole page. */
+.tb { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); min-inline-size: 0; }
+
+/* The bar: the list and, at its inline end, the page's one action for every tab (Refresh). It sticks to the top once
+   the app bar (not sticky on staff screens) has scrolled away, under a phone's notch. */
+.tb-bar { position: sticky; inset-block-start: env(safe-area-inset-top, 0px); z-index: var(--z-appbar); display: flex; align-items: stretch;
+  box-sizing: border-box; min-inline-size: 0; max-inline-size: 100%; background: var(--paper); border-block-end: 2px solid var(--line); }
+/* The list scrolls sideways inside itself, in the room the action leaves: tabs never wrap or shrink, so a tab cut off
+   at the edge says there are more. */
+.tb-list { flex: 1 1 auto; display: flex; box-sizing: border-box; min-inline-size: 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; }
+.tb-list::-webkit-scrollbar { display: none; }
+/* The action is not a tab: after the list, in the page's Tab order, never part of the list's arrow keys. */
+.tb-action { flex: none; display: flex; align-items: center; padding-inline-start: var(--space-1); }
+/* As tall as a tab and no taller: a small button's own padding would make the whole bar grow with it. */
+.tb-action .dr-btn { box-sizing: border-box; min-block-size: var(--tap-min); padding-block: 0; }
+
+/* One tab (a link). 48px tall; the open one is told apart by its fill and a thick line under it, not by colour alone. */
+.tb-tab { flex: none; display: inline-flex; align-items: center; gap: var(--space-2); box-sizing: border-box; min-block-size: var(--tap-min);
+  padding-block: var(--space-2); padding-inline: var(--space-4); border-block-end: 4px solid transparent;
+  border-start-start-radius: var(--radius-sm); border-start-end-radius: var(--radius-sm);
+  color: var(--ink-muted); font: 700 16px/22px var(--font-sans); text-decoration: none; white-space: nowrap; cursor: pointer; }
+.tb-tab:hover { background: var(--surface-sunk); color: var(--ink); }
+.tb-tab[aria-selected="true"] { background: var(--kola-soft); color: var(--ink); border-block-end-color: var(--kola-deep); }
+/* Inside the tab: the list clips whatever is drawn outside it. */
+.tb-tab:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+
+.tb-label { min-inline-size: 0; }
+/* A count ("Requests 3"). */
+.tb-badge { flex: none; box-sizing: border-box; min-inline-size: 24px; padding-inline: 6px; border-radius: var(--radius-pill);
+  background: var(--ink); color: var(--ink-inverse); font: var(--text-label); text-align: center; font-variant-numeric: tabular-nums; }
+/* Changes not saved in that panel; its words are for screen readers (.tb-sr). */
+.tb-dot { flex: none; inline-size: 10px; block-size: 10px; border-radius: var(--radius-pill); background: var(--kola-deep); }
+.tb-sr { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* A panel stacks its sections as the page did (main.stack-lg). A panel opened before stays mounted and hidden: the
+   display here would otherwise beat the hidden attribute. */
+.tb-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-8); align-content: start; min-inline-size: 0; }
+.tb-panel[hidden] { display: none; }
+.tb-panel:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* On a phone the action is its icon alone: its words stay for screen readers (the button's name), off the bar. */
+@media (max-width: 599px) {
+  .tb-action .dr-btn { min-inline-size: var(--tap-min); padding-inline: 0; }
+  .tb-action .dr-btn-label { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}

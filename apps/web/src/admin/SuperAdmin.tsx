@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppBar, Button, EmptyState, TextField } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import { api, displayLogin, type BroadcastAudience, type BroadcastLang } from "../auth/api";
@@ -9,6 +9,13 @@ import { Ledger } from "./Ledger";
 import "../styles/admin.css";
 import "./strings";
 import { DomainsWaiting } from "./Domains";
+import { StaffAlerts } from "./StaffAlerts";
+import { Tabs, TabPanel, useTab, type TabDef } from "./Tabs";
+import { errorText } from "../staff/errors";
+import { InlineConfirm } from "../staff/InlineConfirm";
+import { ErrorNote, LoadState } from "../staff/LoadState";
+import { LeaveQuestion, useFormGuard } from "./formGuard";
+import { k } from "./formsStrings";
 
 /** Display helpers for an organization: localized type, "city، country" and a locale date. */
 export function useOrgText() {
@@ -22,74 +29,114 @@ export function useOrgText() {
   };
 }
 
-/** Platform admin: send announcements, review organization requests and see the active organizations. */
+/**
+ * Platform admin: review organization requests, send announcements and see the active organizations, one tab each
+ * (`/super`, `?tab=announce`, `?tab=orgs`, `?tab=records`).
+ */
 export function SuperAdmin() {
   const { t, num } = useI18n();
   const { role } = useAuth();
-  const ot = useOrgText();
   const isSuper = role === "superadmin";
+  // Both lists are read with the page: the tiles, the Requests count and the composer's audience list need them.
+  // Everything else is read by its own tab's component, when that tab is first opened.
   const pendingQ = useOrgsByStatus("pending", isSuper);
   const activeQ = useOrgsByStatus("active", isSuper);
-  const { data: pending = [], error: pendingErr } = pendingQ;
-  const { data: active = [], error: activeErr } = activeQ;
-  const sent = useBroadcasts(isSuper);
+  const pending = pendingQ.data ?? [], active = activeQ.data ?? [];
   const [msg, setMsg] = useState("");
-  const [q, setQ] = useState("");
-  const rows = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    return active.filter((o) => !s || [o.name, o.country, o.city].some((x) => x?.toLowerCase().includes(s)));
-  }, [active, q]);
-  const error = pendingErr ?? activeErr;
-  // Until each list is read, it says so: never "0" or "No requests".
-  const pendingLoading = pendingQ.loading && !pendingQ.data, activeLoading = activeQ.loading && !activeQ.data;
+  // A list that could not be read is not an empty one: its tiles show a dash, never 0, and its panel says why with
+  // Retry, never "Nothing waiting" (LoadState). Until it is read, "…".
+  const tile = <T,>(q: { data?: T; error?: unknown; loading?: boolean }, count: (data: T) => number) => (q.data !== undefined ? num(count(q.data)) : q.loading ? "…" : "—");
+  const TABS: TabDef[] = [
+    { id: "requests", label: t("tabs.requests"), badge: pending.length },
+    { id: "announce", label: t("tabs.announcements") },
+    { id: "orgs", label: t("tabs.orgs") },
+    { id: "records", label: t("tabs.records"), hidden: !isSuper },
+  ];
+  const st = useTab(TABS);
+  // A half-written announcement lives in its (kept) tab's panel: leaving the page with one asks first, here above the
+  // tabs, where it is seen whichever tab is open. Stay opens the announcement again.
+  const [draft, setDraft] = useState(false);
+  const guard = useFormGuard(draft);
 
   return (
     <>
       <AppBar title={t("sup.title")} />
       <main className="screen wide stack-lg">
-        {error && <p className="notice err">{error.message}</p>}
-        <section className="tiles">
-          <div className="tile"><span>{t("sup.pending")}</span><strong>{pendingLoading ? "…" : num(pending.length)}</strong></div>
-          <div className="tile"><span>{t("sup.active")}</span><strong>{activeLoading ? "…" : num(active.length)}</strong></div>
-          <div className="tile"><span>{t("adm.members")}</span><strong>{activeLoading ? "…" : num(active.reduce((a, o) => a + (o.memberCount ?? 0), 0))}</strong></div>
-        </section>
-
-        <Announce orgs={active} onSent={sent.reload} />
-        <RecentAnnouncements list={sent.data} error={sent.error} orgs={active} />
-
-        <DomainsWaiting />
-        <section className="panel stack">
-          <h3>{t("sup.pending")}</h3>
-          {msg && <p className="notice ok" role="status">{msg}</p>}
-          {pendingLoading ? <p className="muted" aria-busy="true">{t("adm.loading")}</p> : pending.length === 0 ? <p className="muted">{t("sup.none")}</p> : pending.map((o) => <OrgRequest key={o.id} org={o} onDone={(m) => { setMsg(m); pendingQ.reload(); activeQ.reload(); }} />)}
-        </section>
-
-        <section className="panel">
-          <div className="table-tools">
-            <h3>{t("sup.active")}</h3>
-            <input type="search" placeholder={t("sup.search")} value={q} onChange={(e) => setQ(e.target.value)} aria-label={t("sup.search")} />
-          </div>
-          {activeLoading ? <p className="muted" aria-busy="true">{t("adm.loading")}</p> : active.length === 0 ? <EmptyState icon="home" title={t("sup.noActive")} /> : (
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead><tr><th>{t("sup.org")}</th><th>{t("org.type")}</th><th>{t("sup.place")}</th><th className="num">{t("adm.members")}</th><th>{t("sup.since")}</th></tr></thead>
-                <tbody>{rows.map((o) => (
-                  <tr key={o.id}>
-                    <td data-label={t("sup.org")}><strong><bdi>{o.name}</bdi></strong></td>
-                    <td data-label={t("org.type")}>{ot.type(o)}</td>
-                    <td data-label={t("sup.place")}><bdi>{ot.place(o)}</bdi></td>
-                    <td data-label={t("adm.members")} className="num">{num(o.memberCount ?? 0)}</td>
-                    <td data-label={t("sup.since")}>{ot.date(o.reviewedAt ?? o.createdAt)}</td>
-                  </tr>
-                ))}</tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
-        {isSuper && <Ledger />}
+        {/* The active organizations feed three tabs (the tiles, the composer's audience, the table): said once, here. */}
+        {activeQ.error !== undefined && !activeQ.data && <ErrorNote error={activeQ.error} reload={activeQ.reload} />}
+        {/* Above the tabs: what the last review did is seen whatever tab is open. */}
+        {msg && <p className="notice ok" role="status">{msg}</p>}
+        <LeaveQuestion guard={guard} title={t(k("fm.ann.leaveTitle"))} body={t(k("fm.ann.leaveBody"))} onStay={() => st.show("announce")} />
+        <Tabs label={t("tabs.sections")} tabs={TABS}>
+          <TabPanel id="requests">
+            <StaffAlerts />
+            <section className="tiles">
+              <div className="tile"><span>{t("sup.pending")}</span><strong>{tile(pendingQ, (d) => d.length)}</strong></div>
+              <div className="tile"><span>{t("sup.active")}</span><strong>{tile(activeQ, (d) => d.length)}</strong></div>
+              <div className="tile"><span>{t("adm.members")}</span><strong>{tile(activeQ, (d) => d.reduce((a, o) => a + (o.memberCount ?? 0), 0))}</strong></div>
+            </section>
+            <DomainsWaiting />
+            <section className="panel stack">
+              <h3>{t("sup.pending")}</h3>
+              <LoadState q={pendingQ} empty={<p className="muted">{t("sup.none")}</p>}>
+                {(list) => list.map((o) => <OrgRequest key={o.id} org={o} onDone={(m) => { setMsg(m); pendingQ.reload(); activeQ.reload(); }} />)}
+              </LoadState>
+            </section>
+          </TabPanel>
+          {/* Kept while another tab shows (the default): a half-written announcement survives a look elsewhere. */}
+          <TabPanel id="announce"><Announcements orgs={active} enabled={isSuper} onDraft={setDraft} /></TabPanel>
+          <TabPanel id="orgs"><ActiveOrgs active={active} loading={!!activeQ.loading && !activeQ.data} failed={activeQ.error !== undefined && !activeQ.data} /></TabPanel>
+          {/* The ledger reads nothing until one of its two lists is opened. */}
+          <TabPanel id="records"><Ledger /></TabPanel>
+        </Tabs>
       </main>
     </>
+  );
+}
+
+/** The Announcements tab. The last sends (20 documents) are read here, so only once the tab is first opened. */
+function Announcements({ orgs, enabled, onDraft }: { orgs: Org[]; enabled: boolean; /** Whether something is written and not sent (the page asks before leaving). */ onDraft?: (draft: boolean) => void }) {
+  const sent = useBroadcasts(enabled);
+  return (
+    <>
+      <Announce orgs={orgs} onSent={sent.reload} onDraft={onDraft} />
+      <RecentAnnouncements list={sent.data} error={sent.error} reload={sent.reload} orgs={orgs} />
+    </>
+  );
+}
+
+/** The Organizations tab: the active organizations, with a search that stays as typed while another tab shows. */
+function ActiveOrgs({ active, loading, failed }: { active: Org[]; loading: boolean; /** The read failed (the page says why above the tabs): no table, and never "No active organizations yet". */ failed?: boolean }) {
+  const { t, num } = useI18n();
+  const ot = useOrgText();
+  const [q, setQ] = useState("");
+  const rows = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    return active.filter((o) => !s || [o.name, o.country, o.city].some((x) => x?.toLowerCase().includes(s)));
+  }, [active, q]);
+  return (
+    <section className="panel">
+      <div className="table-tools">
+        <h3>{t("sup.active")}</h3>
+        <input type="search" placeholder={t("sup.search")} value={q} onChange={(e) => setQ(e.target.value)} aria-label={t("sup.search")} />
+      </div>
+      {failed ? null : loading ? <p className="muted" aria-busy="true">{t("adm.loading")}</p> : active.length === 0 ? <EmptyState icon="home" title={t("sup.noActive")} /> : (
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead><tr><th>{t("sup.org")}</th><th>{t("org.type")}</th><th>{t("sup.place")}</th><th className="num">{t("adm.members")}</th><th>{t("sup.since")}</th></tr></thead>
+            <tbody>{rows.map((o) => (
+              <tr key={o.id}>
+                <td data-cell="main" data-label={t("sup.org")}><strong><bdi>{o.name}</bdi></strong></td>
+                <td data-label={t("org.type")}>{ot.type(o)}</td>
+                <td data-label={t("sup.place")}><bdi>{ot.place(o)}</bdi></td>
+                <td data-label={t("adm.members")} className="num">{num(o.memberCount ?? 0)}</td>
+                <td data-label={t("sup.since")}>{ot.date(o.reviewedAt ?? o.createdAt)}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -101,6 +148,9 @@ function OrgRequest({ org, onDone }: { org: Org; onDone: (msg: string) => void }
   // The contact and reason are private (orgs/{id}/private/request); older requests kept them on the org document.
   const { data: priv } = useOrgRequest(org.id);
   const contact = priv?.contact || org.contact, reason = priv?.reason || org.reason;
+  // Whether the requester had confirmed their email when they asked (requestOrg writes it beside the contact). Shown
+  // only when the request's document carries it: nothing is said about older requests.
+  const verified = (priv as { emailVerified?: unknown } | undefined)?.emailVerified;
   const [rejecting, setRejecting] = useState(false);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -115,7 +165,7 @@ function OrgRequest({ org, onDone }: { org: Org; onDone: (msg: string) => void }
       // can't be made its admin now.
       const why = String((e as { details?: { reason?: string } }).details?.reason ?? "");
       if (why === "reviewed") { onDone(t("sup.errReviewed", { org: isolate(org.name) })); return; }
-      setErr(why === "requester-in-org" ? t("sup.errInOrg") : why === "requester-staff" ? t("sup.errStaff") : (e as Error).message); setBusy(false);
+      setErr(why === "requester-in-org" ? t("sup.errInOrg") : why === "requester-staff" ? t("sup.errStaff") : errorText(e, t)); setBusy(false);
     }
   };
 
@@ -126,7 +176,8 @@ function OrgRequest({ org, onDone }: { org: Org; onDone: (msg: string) => void }
         <div><dt>{t("org.type")}</dt><dd>{ot.type(org)}</dd></div>
         <div><dt>{t("sup.place")}</dt><dd><bdi>{ot.place(org)}</bdi></dd></div>
         {org.size ? <div><dt>{t("org.size")}</dt><dd>{num(org.size)}</dd></div> : null}
-        <div><dt>{t("sup.requestedBy")}</dt><dd>{by ? <><bdi>{by.name}</bdi> <small dir="ltr">{displayLogin(by.email)}</small></> : "—"}</dd></div>
+        <div><dt>{t("sup.requestedBy")}</dt><dd>{by ? <><bdi>{by.name}</bdi> <small dir="ltr">{displayLogin(by.email)}</small></> : "—"}
+          {typeof verified === "boolean" && <>{" "}<small className={verified ? "muted" : "err-text"}>({t(k(verified ? "fm.req.verified" : "fm.req.unverified"))})</small></>}</dd></div>
         {contact && <div><dt>{t("org.contact")}</dt><dd dir="auto">{contact}</dd></div>}
         {reason && <div className="span2"><dt>{t("org.reason")}</dt><dd dir="auto">{reason}</dd></div>}
       </dl>
@@ -160,7 +211,7 @@ const ROLES: { role: AudienceRole; key: MessageKey }[] = [{ role: "teacher", key
 const LINKS: { path: string; key: MessageKey }[] = [{ path: "/learn", key: "nav.learn" }, { path: "/labs", key: "nav.lab" }, { path: "/kit", key: "bc.linkKit" }, { path: "/org", key: "nav.org" }];
 const LABEL: Record<Kind, Record<BroadcastLang, MessageKey>> = { title: { en: "bc.titleEn", ar: "bc.titleAr" }, body: { en: "bc.bodyEn", ar: "bc.bodyAr" } };
 
-/** Who an announcement goes to, for the confirm dialog and the recent list. */
+/** Who an announcement goes to, for the question before sending and the recent list. */
 function useAudienceText(orgs: Org[]) {
   const { t } = useI18n();
   return (a?: { type: string; orgId?: string; role?: string }) => {
@@ -174,7 +225,7 @@ function useAudienceText(orgs: Org[]) {
  * The composer: English and Arabic text (each phone gets its owner's language), an audience and the screen a tap opens.
  * Only people who left Announcements on receive it; sendBroadcast logs every send in broadcasts/.
  */
-function Announce({ orgs, onSent }: { orgs: Org[]; onSent: () => void }) {
+function Announce({ orgs, onSent, onDraft }: { orgs: Org[]; onSent: () => void; onDraft?: (draft: boolean) => void }) {
   const { t } = useI18n();
   const audienceText = useAudienceText(orgs);
   const [text, setText] = useState(BLANK);
@@ -184,15 +235,20 @@ function Announce({ orgs, onSent }: { orgs: Org[]; onSent: () => void }) {
   const [link, setLink] = useState("/learn");
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [asking, setAsking] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+  // Anything typed in one of the four fields is a draft the page must not lose silently.
+  const draft = (["title", "body"] as const).some((x) => text[x].en.trim() !== "" || text[x].ar.trim() !== "");
+  useEffect(() => { onDraft?.(draft); }, [draft, onDraft]);
   const problem = (k: Kind, l: BroadcastLang) => { const n = text[k][l].trim().length; return n === 0 ? t("bc.required") : n > MAX[k] ? t("bc.tooLong", { max: MAX[k] }) : undefined; };
   const noOrg = aud === "org" && !orgs.some((o) => o.id === orgId);
   const valid = !noOrg && (["title", "body"] as const).every((k) => !problem(k, "en") && !problem(k, "ar"));
   const audience = (): BroadcastAudience => (aud === "org" ? { type: "org", orgId } : aud === "role" ? { type: "role", role } : { type: "all" });
 
+  /** Send: checks the fields, then asks on the page, naming who gets it (a browser confirm() may not show in an installed app). */
+  const ask = () => { setTried(true); setResult(null); if (valid) setAsking(true); };
   const send = async () => {
-    setTried(true); setResult(null);
-    if (!valid || !confirm(t("bc.confirm", { audience: isolate(audienceText(audience())) }))) return;
+    if (!valid) { setAsking(false); return; } // edited into something that can't be sent while the question was up
     setBusy(true);
     try {
       const trim = (o: Record<BroadcastLang, string>) => ({ en: o.en.trim(), ar: o.ar.trim() });
@@ -203,8 +259,8 @@ function Announce({ orgs, onSent }: { orgs: Org[]; onSent: () => void }) {
         setResult(failed.length ? { ok: false, text: t("bc.sentPartial", { lang: t(failed[0] === "en" ? "bc.langEn" : "bc.langAr") }) } : { ok: true, text: t("bc.sent") });
         setText(BLANK); setTried(false); onSent();
       }
-    } catch (e) { setResult({ ok: false, text: (e as Error).message || t("bc.failed") }); }
-    finally { setBusy(false); }
+    } catch (e) { setResult({ ok: false, text: errorText(e, t) }); }
+    finally { setBusy(false); setAsking(false); }
   };
 
   const field = (k: Kind, l: BroadcastLang) => {
@@ -257,27 +313,31 @@ function Announce({ orgs, onSent }: { orgs: Org[]; onSent: () => void }) {
           </select>
         </div>
       </div>
-      <Button icon="share" loading={busy} onClick={() => { void send(); }}>{t("bc.send")}</Button>
+      {asking && <InlineConfirm title={t(k("fm.ann.sendTitle"), { audience: isolate(audienceText(audience())) })} body={t(k("fm.ann.sendBody"))} confirmLabel={t(k("fm.ann.sendYes"))} busy={busy}
+        onConfirm={() => { void send(); }} onCancel={() => setAsking(false)} />}
+      {/* The button stays (and stays enabled: pressing it again only asks again, it never sends) while the question is
+          up, so Cancel can give the keyboard focus back to it. */}
+      <Button icon="share" loading={busy && !asking} onClick={ask}>{t("bc.send")}</Button>
       {result && <p className={result.ok ? "notice ok" : "notice err"} role={result.ok ? "status" : "alert"}>{result.text}</p>}
     </section>
   );
 }
 
 /** The last 20 sends, newest first: title (in the screen's language), audience and date. */
-function RecentAnnouncements({ list, error, orgs }: { list?: Broadcast[]; error?: Error; orgs: Org[] }) {
+function RecentAnnouncements({ list, error, reload, orgs }: { list?: Broadcast[]; error?: Error; reload?: () => void; orgs: Org[] }) {
   const { t, lang } = useI18n();
   const ot = useOrgText();
   const audienceText = useAudienceText(orgs);
   return (
     <section className="panel stack" aria-labelledby="bc-recent-h">
       <h3 id="bc-recent-h">{t("bc.recent")}</h3>
-      {error ? <p className="muted small">{error.message}</p> : !list ? <div className="loading" aria-busy="true" /> : list.length === 0 ? <p className="muted">{t("bc.none")}</p> : (
+      {error && !list ? <ErrorNote error={error} reload={reload} /> : !list ? <div className="loading" aria-busy="true" /> : list.length === 0 ? <p className="muted">{t("bc.none")}</p> : (
         <div className="table-wrap">
           <table className="data-table">
             <thead><tr><th>{t("bc.colTitle")}</th><th>{t("bc.colAudience")}</th><th>{t("bc.colDate")}</th></tr></thead>
             <tbody>{list.map((b) => (
               <tr key={b.id}>
-                <td data-label={t("bc.colTitle")}><strong><bdi>{b.title?.[lang as BroadcastLang] || b.title?.en || "—"}</bdi></strong></td>
+                <td data-cell="main" data-label={t("bc.colTitle")}><strong><bdi>{b.title?.[lang as BroadcastLang] || b.title?.en || "—"}</bdi></strong></td>
                 <td data-label={t("bc.colAudience")}><bdi>{audienceText(b.audience)}</bdi></td>
                 <td data-label={t("bc.colDate")}>{ot.date(b.sentAt)}</td>
               </tr>
@@ -293,4 +353,5 @@ function RecentAnnouncements({ list, error, orgs }: { list?: Broadcast[]; error?
 export { PlansPage } from "./Plans";
 export { CertificatesPage, ProjectsPage } from "./AllWork";
 export { BugsPage } from "./Bugs";
+export { FeedbackPage } from "./Feedback";
 export { DomainsPage } from "./Domains";

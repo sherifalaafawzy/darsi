@@ -6,20 +6,37 @@ import { api } from "../auth/api";
 import type { Org, Role } from "../auth/types";
 import { isolate, useI18n } from "../i18n";
 import { useMyOrgRequests, useOrg } from "../admin/data";
+import { reasonOf } from "../admin/refusals";
 import { useOrgText } from "../admin/SuperAdmin";
+import { latinDigits, typedWhole } from "../admin/typedNumber";
+import { k } from "../cms/entStrings";
+import { errorText } from "../staff/errors";
+import { InlineConfirm } from "../staff/InlineConfirm";
 
 const ORG_TYPES = ["school", "university", "ministry", "ngo"] as const;
 
-/** Callable errors carry codes like "functions/not-found"; map the ones people can act on to their language. */
+/**
+ * joinOrg's refusals that have words of their own (functions/src/index.ts: the code's limits, the organization's join
+ * policy, a person it removed, an organization that is suspended or going). They share their SDK code with other
+ * refusals ("permission-denied" is also the hand-made username below), so the reason is looked at first.
+ */
+const JOIN_REASONS = new Set(["code-expired", "code-used-up", "removed", "email-unverified", "email-domain", "org-suspended", "org-deleting", "org-inactive", "disabled", "try-again"]);
+
+/**
+ * Why joining or registering failed, always in the person's language: the refusal's own reason first, then the SDK
+ * codes people can act on, then the staff kit's sentence for anything else (never the server's raw English).
+ */
 function errText(e: unknown, t: ReturnType<typeof useI18n>["t"]) {
-  const code = String((e as { code?: string }).code ?? "");
-  return code.endsWith("not-found") ? t("org.errCode")
+  const reason = reasonOf(e), code = String((e as { code?: string } | null)?.code ?? "");
+  return reason === "in-org" ? t(k("ent.org.inOrg"))
+    : JOIN_REASONS.has(reason) ? errorText(e, t)
+    : code.endsWith("not-found") ? t("org.errCode")
     : code.endsWith("already-exists") ? t("org.errPending")
     : code.endsWith("resource-exhausted") ? t("org.errTries")
     // joinOrg and requestOrg refuse a username login nobody's organization made (functions/src/roles.ts handMadeUsername).
     : code.endsWith("permission-denied") ? t("org.errReserved")
     : code.endsWith("unavailable") || code.includes("network") ? t("auth.errNetwork")
-    : (e as Error).message || t("auth.errGeneric");
+    : errorText(e, t);
 }
 
 /**
@@ -103,29 +120,46 @@ export function OrgScreen() {
   );
 }
 
-/** How long the automatic join waits for a brand-new account's profile before it goes ahead anyway. */
+/** How long an invite link waits for a brand-new account's profile before it asks to join anyway. */
 export const PROFILE_WAIT_MS = 5000;
 
+/**
+ * Joining shows the organization's admins and the person's teacher everything they have done in Darsi, earlier work
+ * included, so nothing joins without a "yes" to exactly that: typing a code and an invite link (/org?code=…, also where
+ * sign-up with a code lands) both stop at one question on the page. "Not now" joins nothing and keeps the code in the
+ * field. joinOrg is called from the question's Join button and nowhere else.
+ */
 function JoinForm({ onJoined }: { onJoined: (r: { orgName: string; role: Role }) => void }) {
   const { t } = useI18n();
   const { refreshClaims, profile } = useAuth();
   const [params, setParams] = useSearchParams();
-  // From sign-up or an invite link (/org?code=…): filled in and tried once by itself.
+  // From sign-up or an invite link (/org?code=…): filled in, and asked about once by itself.
   const [code, setCode] = useState(params.get("code")?.toUpperCase() ?? "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  /** The question is on the page. Its answer is the only way in. */
+  const [asking, setAsking] = useState(false);
+  /** Goes up when the question closes without a join (Not now, or a refusal): the cursor returns to the code. */
+  const [back, setBack] = useState(0);
+  const valid = code.trim().length >= 4;
   const join = async () => {
     setBusy(true); setErr("");
     try {
       const r = await api.joinOrg({ code: code.trim() });
       onJoined(r);
       await refreshClaims();
-    } catch (x) { setErr(errText(x, t)); } finally { setBusy(false); }
+    } catch (x) { setErr(errText(x, t)); setAsking(false); setBack((n) => n + 1); } finally { setBusy(false); }
   };
-  const submit = (e: FormEvent) => { e.preventDefault(); void join(); };
+  const ask = () => { if (valid && !busy) { setErr(""); setAsking(true); } };
+  const submit = (e: FormEvent) => { e.preventDefault(); ask(); };
+  // The question's buttons took the place of the form's: with them gone, the focus goes to the field the code is in
+  // (and, after a refusal, to the field its message is about), not to the top of the page.
+  useEffect(() => { if (back) document.getElementById("org-code")?.focus(); }, [back]);
   // Right after sign-up the app is still creating the account's profile: a join that lands first made a profile with
-  // no name or email, and the app's own was then refused (ux-accounts-04). So the automatic join waits for the profile,
-  // or a few seconds at most (offline, or an older account without one); the server fills the gaps either way.
+  // no name or email, and the app's own was then refused (ux-accounts-04). So an invite link waits for the profile,
+  // or a few seconds at most (offline, or an older account without one), before it asks; the server fills the gaps
+  // either way. The code leaves the address as the question appears, so a reload after "Not now" asks nothing and
+  // joins nothing.
   const auto = useRef(params.get("code"));
   const hasProfile = Boolean(profile);
   const [waited, setWaited] = useState(false);
@@ -139,16 +173,20 @@ function JoinForm({ onJoined }: { onJoined: (r: { orgName: string; role: Role })
     if (tried.current || !auto.current || !(hasProfile || waited)) return;
     tried.current = true;
     setParams((p) => { const n = new URLSearchParams(p); n.delete("code"); return n; }, { replace: true });
-    void join();
+    ask();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasProfile, waited]);
   return (
     <section className="panel">
       <form className="stack" onSubmit={submit}>
         <h3>{t("org.join")}</h3>
-        <TextField id="org-code" label={t("org.code")} hint={t("org.codeHint")} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())}
+        {/* While the question is up the code can't change under it: what is asked about is what is sent. */}
+        <TextField id="org-code" label={t("org.code")} hint={t("org.codeHint")} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} readOnly={asking}
           dir="ltr" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={20} required error={err || undefined} />
-        <div className="row-gap"><Button type="submit" loading={busy} disabled={code.trim().length < 4}>{t("org.joinBtn")}</Button></div>
+        {asking ? (
+          <InlineConfirm title={t(k("ent.org.joinAsk"))} body={t(k("ent.org.joinBody"))} confirmLabel={t("org.joinBtn")} cancelLabel={t(k("ent.org.notNow"))} busy={busy}
+            onConfirm={() => { void join(); }} onCancel={() => { setAsking(false); setBack((n) => n + 1); }} />
+        ) : <div className="row-gap"><Button type="submit" disabled={!valid}>{t("org.joinBtn")}</Button></div>}
       </form>
     </section>
   );
@@ -170,8 +208,10 @@ function RequestOrg({ onSent }: { onSent: () => void }) {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setBusy(true); setErr("");
+    // The field holds digits only (any keyboard's, kept as 0-9); the server keeps at most 10,000,000 too.
+    const size = typedWhole(f.size, 1, 99_999_999);
     try {
-      await api.requestOrg({ name: f.name.trim(), type: f.type, country: f.country.trim(), city: f.city.trim(), size: Number(f.size) || undefined, contact: f.contact.trim() || undefined, reason: f.reason.trim() || undefined });
+      await api.requestOrg({ name: f.name.trim(), type: f.type, country: f.country.trim(), city: f.city.trim(), size: size === null ? undefined : Math.min(size, 10_000_000), contact: f.contact.trim() || undefined, reason: f.reason.trim() || undefined });
       toggle(false);
       onSent(); // the request list, read again, shows "being reviewed" and hides this section
     } catch (x) { setErr(errText(x, t)); } finally { setBusy(false); }
@@ -193,7 +233,9 @@ function RequestOrg({ onSent }: { onSent: () => void }) {
           <div className="form-grid">
             <TextField id="org-country" label={t("org.country")} value={f.country} onChange={set("country")} maxLength={80} autoComplete="country-name" />
             <TextField id="org-city" label={t("org.city")} value={f.city} onChange={set("city")} maxLength={80} autoComplete="address-level2" />
-            <TextField id="org-size" label={t("org.size")} type="number" inputMode="numeric" min={1} value={f.size} onChange={set("size")} />
+            {/* A text field with a numeric keyboard: type="number" refuses the digits an Arabic keyboard types (admin/typedNumber). */}
+            <TextField id="org-size" label={t("org.size")} inputMode="numeric" dir="ltr" maxLength={8} autoComplete="off" value={f.size}
+              onChange={(e) => setF({ ...f, size: latinDigits(e.target.value).replace(/\D/g, "") })} />
             <TextField id="org-contact" label={t("org.contact")} value={f.contact} onChange={set("contact")} maxLength={120} autoComplete="tel" />
           </div>
           <div className="dr-field">

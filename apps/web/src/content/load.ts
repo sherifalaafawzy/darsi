@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { firebaseConfig, firebaseReady, useEmulators } from "../firebase-config";
 import { captionsFor, kitUrl, lightLang, videoSrc, type Catalog, type CatalogEntry, type Placement, type Settings, type Unit } from "./types";
 import { figureOf } from "./figure";
@@ -23,6 +23,44 @@ const CONTENT_CACHE = "darsi-content";
 let scope: { orgId: string | null } = { orgId: null };
 let catalog: Promise<Catalog> | null = null;
 
+/* A tab or an installed app can stay open for days, and the catalog used to be read once per page load: a course
+ * published or unpublished meanwhile was never seen. So the read is forgotten once it is older than STALE_MS, but only
+ * when the app comes back to the front or the connection returns: one conditional read on an event the phone gives us
+ * anyway, never a timer. Screens that show the catalog through useAsync(loadCatalog, []) read it again by themselves. */
+/** How old the catalog (and the settings, content/settings.tsx) may get before coming back to the app reads it again. */
+export const STALE_MS = 10 * 60e3;
+/** When the catalog in memory was asked for (ms); 0 while there is none. */
+let catalogAt = 0;
+/** Goes up each time the catalog is forgotten; useAsync watches it. */
+let catalogVersion = 0;
+/** The last list read: a new read that says the same hands back this very object, so nothing re-renders for it. */
+let lastCatalog: { json: string; value: Catalog } | null = null;
+const catalogSubs = new Set<() => void>();
+/**
+ * Told when the catalog is forgotten (forgetCatalog). Exported for the pages that can't import this module (Course
+ * results, Course access: results/async.ts says why): App hands it to them with loadCatalog.
+ */
+export const subscribeCatalog = (f: () => void) => { catalogSubs.add(f); return () => { catalogSubs.delete(f); }; };
+/** Reads the catalog again next time it is asked for, and has the screens that show it ask now. */
+export function forgetCatalog() {
+  catalog = null; catalogAt = 0; catalogVersion++;
+  for (const f of [...catalogSubs]) f();
+}
+/**
+ * Whether something read at `at` is due again: older than STALE_MS, and the phone says it is online (offline, the read
+ * would only return the copy we already show, and count as fresh; the `online` event asks again).
+ */
+export const isStale = (at: number) => at > 0 && Date.now() - at > STALE_MS && (typeof navigator === "undefined" || navigator.onLine !== false);
+let watching = false;
+/** Starts with the first catalog read: back to the front, or back online, with an old catalog reads it again. */
+function watchCatalog() {
+  if (watching || typeof document === "undefined" || typeof window === "undefined") return;
+  watching = true;
+  const check = () => { if (catalog && isStale(catalogAt)) forgetCatalog(); };
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") check(); });
+  window.addEventListener("online", check);
+}
+
 /** The REST URL of a Storage object: what guests fetch, and the Cache Storage key for every authored file. */
 export const storageUrl = (path: string) =>
   `${useEmulators ? `http://${typeof location !== "undefined" ? location.hostname : "localhost"}:9199` : "https://firebasestorage.googleapis.com"}/v0/b/${firebaseConfig.storageBucket}/o/${encodeURIComponent(path)}?alt=media`;
@@ -32,12 +70,18 @@ const ORG_FILES = "/o/orgs%2F";
  * Who is reading: App calls this on every render with the signed-in member's orgId (null for guests and people without
  * an org, and while claims are still loading). A change re-reads the catalog. Signing out forgets every cached org
  * file (shared phones); a member whose orgId is only briefly unknown keeps their downloads.
+ * A change after a screen already asked for the catalog (a slow start shows Home before the account, and so its
+ * organization, arrives: AuthProvider's SLOW_MS timer) also has those screens read it again, behind what they show,
+ * as after forgetCatalog. Told in a microtask, never now: this runs while App renders. The catalog isn't forgotten
+ * there a second time, so a read a screen began in between stands.
  */
 export function configureContent(next: { orgId: string | null; signedIn: boolean }) {
   if (!next.signedIn && orgFlag.get()) { orgFlag.set(false); void forgetOrgFiles(); }
   const orgId = next.signedIn ? next.orgId : null;
   if (orgId === scope.orgId) return;
-  scope = { orgId }; catalog = null;
+  const asked = catalog !== null;
+  scope = { orgId }; catalog = null; catalogAt = 0;
+  if (asked) void Promise.resolve().then(() => { catalogVersion++; for (const f of [...catalogSubs]) f(); });
 }
 /** Set once org files were cached on this device, so signing out knows there is something to forget. */
 const orgFlag = {
@@ -126,7 +170,23 @@ export function mergeCatalog(pub: Catalog | null, org: Catalog | null): Catalog 
  * Every unit this person can see: published for everyone, and (for org members) their org's. Nothing published yet is
  * an empty list; no answer and no copy from an earlier visit (a first visit offline) is an error, so Home can say so.
  */
-export const loadCatalog = (): Promise<Catalog> => (catalog ??= (async () => {
+export function loadCatalog(): Promise<Catalog> {
+  if (catalog) return catalog;
+  watchCatalog();
+  catalogAt = Date.now();
+  const read: Promise<Catalog> = readCatalog().then((next) => {
+    // The same list as last time (most re-reads): the same object, so screens and memos that hold it stay as they are.
+    const json = JSON.stringify(next);
+    if (lastCatalog?.json !== json) lastCatalog = { json, value: next };
+    return lastCatalog.value;
+  }).catch((e) => {
+    // Only this read's own failure clears it: a newer read (after forgetCatalog, or another organization) stays.
+    if (catalog === read) { catalog = null; catalogAt = 0; }
+    throw e;
+  });
+  return (catalog = read);
+}
+async function readCatalog(): Promise<Catalog> {
   if (!firebaseReady || !firebaseConfig.storageBucket) return (devServer() ? await devCatalog() : null) ?? EMPTY;
   const orgId = scope.orgId;
   const [pub, org] = await Promise.all([
@@ -138,7 +198,7 @@ export const loadCatalog = (): Promise<Catalog> => (catalog ??= (async () => {
   // Local courses under content/units: a local copy beats a published one with the same id (unpublished edits).
   const extra = await devCatalog();
   return extra ? mergeCatalog(extra, live) : live;
-})().catch((e) => { catalog = null; throw e; }));
+}
 
 let settings: Promise<Settings | null> | null = null;
 /**
@@ -149,7 +209,10 @@ export const loadSettings = (): Promise<Settings | null> => (settings ??= (async
   if (!firebaseReady || !firebaseConfig.storageBucket) return null;
   return cachedJSON<Settings>(storageUrl("content/settings.json"), fetchPublic("content/settings.json"), true).catch(() => null);
 })());
-/** After the Tracks page saves: read the new settings next time. */
+/**
+ * Read the settings again next time: after the Tracks page saves, and when the app comes back with settings older than
+ * STALE_MS (content/settings.tsx, which then reads them at once).
+ */
 export const forgetSettings = () => { settings = null; };
 
 /**
@@ -219,15 +282,32 @@ async function pruneVersions(unitId: string, src: string) {
   await Promise.all(old.map((x) => cache.delete(x.key)));
 }
 
+/**
+ * Runs `fn` when the screen mounts and when `deps` change. A call of loadCatalog itself (useAsync(loadCatalog, []), as
+ * Home, Downloads, Kit and Me have it) also runs again when the catalog was forgotten (forgetCatalog: the app came back
+ * after a long while, or to a connection). What is on the screen stays until the new list answers, and for good if it
+ * can't; a list that says the same changes nothing.
+ */
 export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): { data?: T; error?: Error; loading: boolean; retry: () => void } {
   const [s, setS] = useState<{ data?: T; error?: Error; loading: boolean }>({ loading: true });
   const [n, setN] = useState(0);
+  const isCatalog = (fn as unknown) === loadCatalog;
+  // Other calls always read 0 here, so a forgotten catalog never re-renders them.
+  const version = useSyncExternalStore(subscribeCatalog, () => (isCatalog ? catalogVersion : 0), () => 0);
+  const ran = useRef<number | null>(null);
+  const now = useRef(s);
+  now.current = s;
   useEffect(() => {
-    let live = true; setS({ loading: true });
-    fn().then((data) => live && setS({ data, loading: false })).catch((error: Error) => live && setS({ error, loading: false }));
+    let live = true;
+    // Only the catalog's version moved since the last run: a re-read behind what is already showing.
+    const again = ran.current !== null && ran.current !== version;
+    ran.current = version;
+    if (!again) setS({ loading: true });
+    fn().then((data) => { if (live && !(again && !now.current.loading && now.current.data === data)) setS({ data, loading: false }); })
+      .catch((error: Error) => { if (live && !(again && now.current.data !== undefined)) setS({ error, loading: false }); });
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, n]);
+  }, [...deps, n, version]);
   return { ...s, retry: () => setN((x) => x + 1) };
 }
 
