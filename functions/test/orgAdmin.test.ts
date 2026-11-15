@@ -156,7 +156,7 @@ describe("who may manage an organization's people", () => {
 
   it("resetMemberPassword still leaves people's own logins alone, and resets the organization's", async () => {
     expect(await refusal(call("resetMemberPassword", "a1", { orgId: "o1", uid: "s1" }))).toBe("own-login"); // a real email
-    auth.users.get("s1")!.email = "s1@users.darsi.app";
+    auth.users.get("s1")!.email = "s1@users.darsiai.org";
     const out = await call<{ password: string }>("resetMemberPassword", "a1", { orgId: "o1", uid: "s1" });
     expect(out.password).toHaveLength(10);
     expect(auth.users.get("s1")!.password).toBe(out.password);
@@ -517,8 +517,8 @@ describe("accounts made in bulk (createMembers)", () => {
     ]);
     const [mona, karim, hoda] = results;
     expect(mona.login).toMatch(/^mona\.ali\.\d{5}$/);
-    expect(doc(`users/${mona.uid}`)).toMatchObject({ name: "Mona Ali", username: mona.login, email: `${mona.login}@users.darsi.app`, role: "student", orgId: "o1", group: "5A", createdBy: "a1", managedBy: "o1", mustChangePassword: true, teacherId: null, active: true });
-    expect(doc(`users/${karim.uid}`)).toMatchObject({ username: "karim.adel", email: "karim.adel@users.darsi.app", managedBy: "o1", createdBy: "a1" });
+    expect(doc(`users/${mona.uid}`)).toMatchObject({ name: "Mona Ali", username: mona.login, email: `${mona.login}@users.darsiai.org`, role: "student", orgId: "o1", group: "5A", createdBy: "a1", managedBy: "o1", mustChangePassword: true, teacherId: null, active: true });
+    expect(doc(`users/${karim.uid}`)).toMatchObject({ username: "karim.adel", email: "karim.adel@users.darsiai.org", managedBy: "o1", createdBy: "a1" });
     // A typed real email is its owner's account: made by the admin, not managed by the organization.
     expect(doc(`users/${hoda.uid}`)).toMatchObject({ email: "hoda@uni.edu", username: null, role: "teacher", orgId: "o1", createdBy: "a1" });
     expect(doc(`users/${hoda.uid}`)).not.toHaveProperty("managedBy");
@@ -527,6 +527,13 @@ describe("accounts made in bulk (createMembers)", () => {
     expect(doc("orgs/o1")!.memberCount).toBe(7);
     expect(db.writes.filter((w) => w.path === "orgs/o1")).toHaveLength(1);
     expect(h.audits.at(-1)).toEqual({ action: "createMembers", by: "a1", orgId: "o1", created: 3, total: 7, mustChange: true, roles: { student: 2, teacher: 1 } });
+  });
+  it("never gives out a username an account still holds at the old domain (usernameDomain.ts), typed or drawn", async () => {
+    auth.users.set("old1", { uid: "old1", email: "karim.adel@users.darsi.app", providerData: [{ providerId: "password" }] });
+    const { results } = await create([{ name: "Karim Adel", username: "karim.adel" }, { name: "Lina" }]);
+    expect(results.map((r) => [r.status, r.reason])).toEqual([["taken", "taken"], ["created", undefined]]); // as a username taken at the new domain
+    expect([...auth.users.values()].filter((u) => u.email === "karim.adel@users.darsiai.org")).toHaveLength(0);
+    expect(auth.users.get(results[1].uid!)!.email).toMatch(/^lina\.\d{5}@users\.darsiai\.org$/);
   });
 
   it("the admin can let people keep the password they are given", async () => {
@@ -573,7 +580,7 @@ describe("accounts made in bulk (createMembers)", () => {
       expect(results[0].status).toBe("created");
       expect(first).toBe(false);
       expect(auth.users.get(results[0].uid!)!.email).not.toBe(auth.users.get("squatter")!.email);
-      auth.users.get("t1")!.email = "karim.adel@users.darsi.app";
+      auth.users.get("t1")!.email = "karim.adel@users.darsiai.org";
       expect((await create([{ name: "Karim", username: "Karim.Adel" }])).results[0]).toMatchObject({ status: "taken", reason: "taken", login: "karim.adel" });
     } finally { auth.createUser = createUser; }
   });

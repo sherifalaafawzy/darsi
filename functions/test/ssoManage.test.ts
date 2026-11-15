@@ -433,7 +433,7 @@ describe("manageSso: people", () => {
     expect(db.docs.get("users/t1")).toEqual(profile);
     expect(billing.writeClaims).not.toHaveBeenCalled();
     // A login the organization manages (a username login), connected the same way, is the organization's: a student again.
-    member("u1", "learner", null, { createdBy: "a1", managedBy: "o1" }, { email: "u1@users.darsi.app" });
+    member("u1", "learner", null, { createdBy: "a1", managedBy: "o1" }, { email: "u1@users.darsiai.org" });
     auth.users.get("u1")!.customClaims = { role: "learner" };
     identity("p6", { uid: "u1", linked: "org-made", state: "removed", removedAt: 5 });
     expect(await manage("a1", { action: "allowBack", uid: "u1" })).toEqual({ allowed: true, rejoined: true });
@@ -441,7 +441,7 @@ describe("manageSso: people", () => {
     expect(auth.users.get("u1")?.customClaims).toEqual({ role: "student", orgId: "o1" });
     expect(db.docs.get("ssoIdentities/p6")).toMatchObject({ state: "active" });
     // …and so is a username login from before `managedBy` was written.
-    member("u2", "learner", null, { createdBy: "a1" }, { email: "u2@users.darsi.app" });
+    member("u2", "learner", null, { createdBy: "a1" }, { email: "u2@users.darsiai.org" });
     auth.users.get("u2")!.customClaims = { role: "learner" };
     identity("p7", { uid: "u2", linked: "admin-map", state: "removed", removedAt: 5 });
     expect(await manage("a1", { action: "allowBack", uid: "u2" })).toEqual({ allowed: true, rejoined: true });
@@ -720,10 +720,10 @@ describe("hooks in the rest of the server", () => {
     expect(await reason(store.refuseSsoSession({}, "s1"))).toBe("ok");
     // An account made before `managedBy` was written: its username login says the organization made it and looks
     // after it (roles.managedAccount; account.ts lets the same session export and delete it).
-    member("u9", "student", "o1", { createdBy: "a1" }, { email: "u9@users.darsi.app" });
+    member("u9", "student", "o1", { createdBy: "a1" }, { email: "u9@users.darsiai.org" });
     expect(await reason(store.refuseSsoSession({ sso: "o1" }, "u9"))).toBe("ok");
     // Only Auth's own email counts: a profile that merely says so, or `createdBy` alone, gives the organization nothing.
-    member("u8", "student", "o1", { createdBy: "a1", email: "u8@users.darsi.app" });
+    member("u8", "student", "o1", { createdBy: "a1", email: "u8@users.darsiai.org" });
     expect(await reason(store.refuseSsoSession({ sso: "o1" }, "u8"))).toBe("sso-own-login");
     // Auth is asked only when the profile doesn't settle it, and an Auth that can't answer never reads as "managed".
     const down = vi.spyOn(auth, "getUser").mockRejectedValue(Object.assign(new Error("unavailable"), { code: "auth/internal-error" }));

@@ -15,7 +15,7 @@ const { PeopleTable, LoginText, emptyCell } = await import("../src/admin/PeopleT
 
 const summary = (lessonsDone: number, graded = lessonsDone) => ({ lessonsDone, xp: 0, avgAccuracy: 0.8, lastActive: new Date().toISOString(), competencies: {}, units: {}, graded });
 const student: Profile = { uid: "s1", name: "Ahmed Abdel-Rahman Mostafa El-Sayed", email: "student4@nile-valley.example", role: "student", orgId: "o1", group: "5B", summary: summary(3) } as Profile;
-const admin: Profile = { uid: "a1", name: "Mona Farouk", email: "mona@users.darsi.app", role: "orgAdmin", orgId: "o1" } as Profile;
+const admin: Profile = { uid: "a1", name: "Mona Farouk", email: "mona@users.darsiai.org", role: "orgAdmin", orgId: "o1" } as Profile;
 const table = (rows: Profile[], lang = "en", pick = true) => render(
   <I18nProvider lang={lang}><MemoryRouter>
     <PeopleTable rows={rows} to={(m) => `/admin/people/${m.uid}`} review pick={pick ? { selected: new Set(), toggle: () => {} } : undefined} />

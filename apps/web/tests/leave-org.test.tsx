@@ -283,7 +283,7 @@ describe("an account the organization manages", () => {
   });
 
   it("a username login from before managedBy is managed too, as the server decides", async () => {
-    h.auth = member({ user: { uid: "s1", email: "salma.a.123@users.darsi.app", displayName: "Salma" }, profile: { uid: "s1", name: "Salma", email: "salma.a.123@users.darsi.app", role: "student", orgId: "o1" } });
+    h.auth = member({ user: { uid: "s1", email: "salma.a.123@users.darsiai.org", displayName: "Salma" }, profile: { uid: "s1", name: "Salma", email: "salma.a.123@users.darsiai.org", role: "student", orgId: "o1" } });
     show();
     expect(await screen.findByText(/manages this login/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Leave/ })).toBeNull();

@@ -51,7 +51,7 @@ const orgPage = (at = "/admin/analytics") => render(<I18nProvider lang="en"><Mem
 const read = async (blob: Blob) => { const wb = new ExcelJS.Workbook(); await wb.xlsx.load(await blob.arrayBuffer()); return wb; };
 const tabNames = () => screen.getAllByRole("tab").map((x) => x.textContent);
 const open = (name: string) => screen.getByRole("tab", { name }).getAttribute("aria-selected") === "true";
-const omar = (group?: string) => ({ uid: "s1", name: "Omar", email: "omar@users.darsi.app", role: "student", orgId: "o1", teacherId: "t1", ...(group ? { group } : {}), summary: summary(4, {}, 0.96) });
+const omar = (group?: string) => ({ uid: "s1", name: "Omar", email: "omar@users.darsiai.org", role: "student", orgId: "o1", teacherId: "t1", ...(group ? { group } : {}), summary: summary(4, {}, 0.96) });
 
 beforeEach(() => {
   m.saved = []; m.evidence = []; m.failSave = false; m.membersErr = undefined; m.loaded = 0; m.reload.mockClear();
@@ -253,7 +253,7 @@ describe("an organization's report", () => {
 
   it("shows the same figures for the same members", async () => {
     const student = (uid: string, lessonsDone: number, avgAccuracy: number, group: string) =>
-      ({ uid, name: uid, email: `${uid}@users.darsi.app`, role: "student", orgId: "o1", teacherId: "t1", group, summary: { ...summary(lessonsDone, {}, avgAccuracy), seconds: 600 } });
+      ({ uid, name: uid, email: `${uid}@users.darsiai.org`, role: "student", orgId: "o1", teacherId: "t1", group, summary: { ...summary(lessonsDone, {}, avgAccuracy), seconds: 600 } });
     m.members = [m.me, student("amal", 6, 0.9, "5A"), student("bola", 4, 0.5, "5A"), student("chidi", 2, 0.7, "5B")];
     orgPage();
     await screen.findByRole("heading", { name: "Who needs attention" });
@@ -273,7 +273,7 @@ describe("an organization's report", () => {
   });
 
   describe("a long member list", () => {
-    const school = (n: number) => [m.me, ...Array.from({ length: n }, (_, i) => ({ uid: `s${i}`, name: `Student ${String(i).padStart(3, "0")}`, email: `s${i}@users.darsi.app`, role: "student", orgId: "o1", teacherId: "t1", summary: summary(1 + (i % 5), {}, 0.8) }))];
+    const school = (n: number) => [m.me, ...Array.from({ length: n }, (_, i) => ({ uid: `s${i}`, name: `Student ${String(i).padStart(3, "0")}`, email: `s${i}@users.darsiai.org`, role: "student", orgId: "o1", teacherId: "t1", summary: summary(1 + (i % 5), {}, 0.8) }))];
     const dataRows = () => within(screen.getByRole("tabpanel", { name: "People" })).getAllByRole("row").length - 1;
 
     it("works nothing out until the list is whole, and says how many people have loaded", () => {

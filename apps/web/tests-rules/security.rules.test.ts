@@ -31,7 +31,7 @@ beforeEach(async () => {
   await env.withSecurityRulesDisabled(async (c) => {
     const db = c.firestore();
     await setDoc(doc(db, "users/amina"), { name: "Amina", email: "amina@school.org", role: "learner", orgId: null, lastActive: "2026-11-01T00:00:00.000Z" });
-    await setDoc(doc(db, "users/pupil"), { name: "Pupil", email: "pupil@users.darsi.app", role: "student", orgId: "org1", teacherId: "teach", mustChangePassword: true });
+    await setDoc(doc(db, "users/pupil"), { name: "Pupil", email: "pupil@users.darsiai.org", role: "student", orgId: "org1", teacherId: "teach", mustChangePassword: true });
     await setDoc(doc(db, "users/pupil/submissions/s1"), { lessonId: "ai-s1-1", unitId: "ai-s1", orgId: "org1", text: "work", status: "submitted" });
     await setDoc(doc(db, "units/uabcdefgh"), { owner: "org2", title: { en: "Theirs" }, rev: 1, updatedBy: "other", published: null });
     for (const [uid, role, orgId] of STAFF) await setDoc(doc(db, `users/${uid}`), { name: uid, email: `${uid}@school.org`, role, orgId });
@@ -84,7 +84,7 @@ describe("profiles (H1, L1, I1)", () => {
     // What state/sync.ts useLearningSync writes: only what changed, each field whole, dated.
     await assertSucceeds(updateDoc(doc(db, "users/amina"), { onboarded: true, audience: "students", stage: "upper", teach: "university", tracks: ["ai", "code"], levels: { ai: 3, code: 4 }, weeklyLessons: 8, learnAt: 1762500000000 }));
     await assertSucceeds(updateDoc(doc(db, "users/amina"), { audience: "teachers", learnAt: 1762500001000 }));
-    const pupil = env.authenticatedContext("pupil", { email: "pupil@users.darsi.app", role: "student", orgId: "org1" }).firestore();
+    const pupil = env.authenticatedContext("pupil", { email: "pupil@users.darsiai.org", role: "student", orgId: "org1" }).firestore();
     await assertSucceeds(updateDoc(doc(pupil, "users/pupil"), { onboarded: true, stage: "lower", learnAt: 1762500000000 }));
     await assertFails(updateDoc(doc(db, "users/amina"), { onboarded: "yes" }));
     await assertFails(updateDoc(doc(db, "users/amina"), { audience: "parents" }));
@@ -100,7 +100,7 @@ describe("profiles (H1, L1, I1)", () => {
     await assertFails(updateDoc(doc(db, "users/amina"), { onboarded: true, role: "teacher" }));
   });
   it("a member can't clear the first-login flag without changing the password (passwordChanged does it)", async () => {
-    const db = env.authenticatedContext("pupil", { email: "pupil@users.darsi.app", role: "student", orgId: "org1" }).firestore();
+    const db = env.authenticatedContext("pupil", { email: "pupil@users.darsiai.org", role: "student", orgId: "org1" }).firestore();
     await assertFails(updateDoc(doc(db, "users/pupil"), { mustChangePassword: false }));
     await assertSucceeds(updateDoc(doc(db, "users/pupil"), { lastActive: "2026-11-04T10:00:00.000Z" }));
   });
@@ -151,7 +151,7 @@ describe("projects (M8)", () => {
     await assertSucceeds(setDoc(doc(db, "users/amina/submissions/a1"), project("amina")));
     await assertSucceeds(setDoc(doc(db, "users/amina/submissions/a2"), project("amina", { fileUrl: null, fileName: null, files: undefined })));
     await assertSucceeds(setDoc(doc(db, "users/amina/submissions/a3"), { ...project("amina"), final: true, explain: "How", aiUse: "none", name: "Amina" }));
-    const member = env.authenticatedContext("pupil", { email: "pupil@users.darsi.app", role: "student", orgId: "org1" }).firestore();
+    const member = env.authenticatedContext("pupil", { email: "pupil@users.darsiai.org", role: "student", orgId: "org1" }).firestore();
     await assertSucceeds(setDoc(doc(member, "users/pupil/submissions/p1"), project("pupil", { orgId: "org1", fileUrl: fileUrl("pupil", "org1"), files: [{ url: fileUrl("pupil", "org1"), name: "p.jpg", type: "image/jpeg" }] })));
     // The Storage emulator's links (npm run local).
     await assertSucceeds(setDoc(doc(db, "users/amina/submissions/a4"), project("amina", { fileUrl: "http://127.0.0.1:9199/v0/b/demo-darsi.appspot.com/o/submissions%2Fnone%2Famina%2Fai-1-1%2Fx.jpg?alt=media&token=t", files: undefined })));
@@ -293,7 +293,7 @@ describe("organizations: the request's private details, and what org admins chan
     await setDoc(doc(db, "orgs/org1"), { name: "Nile School", type: "school", country: "Egypt", city: "Cairo", status: "active", createdBy: "adm", memberCount: 3 });
     await setDoc(doc(db, "orgs/org1/private/request"), { contact: "+20 100 000 0000 (the principal's mobile)", reason: "A pilot for grades 7-9" });
   });
-  const pupil = () => env.authenticatedContext("pupil", { email: "pupil@users.darsi.app", role: "student", orgId: "org1" }).firestore();
+  const pupil = () => env.authenticatedContext("pupil", { email: "pupil@users.darsiai.org", role: "student", orgId: "org1" }).firestore();
   const adm = () => env.authenticatedContext("adm", { role: "orgAdmin", orgId: "org1" }).firestore();
   it("members read the org document, but only its admins and platform admins read the requester's contact", async () => {
     await seed();
@@ -417,9 +417,12 @@ describe("element sizes in lesson results and profiles (2026-11 audit)", () => {
 describe("the username-login domain (sec-rules-05)", () => {
   it("a login on it signed up for by hand gets no profile; a real address still does", async () => {
     const profile = (email: string) => ({ name: "Khaled Omar", email, lang: "ar", role: "learner", orgId: null, createdAt: serverTimestamp(), lastActive: "2026-11-04T10:00:00.000Z" });
-    await assertFails(setDoc(doc(learner("squat", "khaled.omar@users.darsi.app").firestore(), "users/squat"), profile("khaled.omar@users.darsi.app")));
-    await assertFails(setDoc(doc(learner("squat2", "Khaled.Omar@Users.Darsi.App").firestore(), "users/squat2"), profile("khaled.omar@users.darsi.app")));
-    await assertSucceeds(setDoc(doc(learner("real", "khaled.omar@users.darsi.app.example.org").firestore(), "users/real"), profile("khaled.omar@users.darsi.app.example.org")));
+    await assertFails(setDoc(doc(learner("squat", "khaled.omar@users.darsiai.org").firestore(), "users/squat"), profile("khaled.omar@users.darsiai.org")));
+    await assertFails(setDoc(doc(learner("squat2", "Khaled.Omar@Users.Darsiai.Org").firestore(), "users/squat2"), profile("khaled.omar@users.darsiai.org")));
+    await assertSucceeds(setDoc(doc(learner("real", "khaled.omar@users.darsiai.org.example.org").firestore(), "users/real"), profile("khaled.omar@users.darsiai.org.example.org")));
+    // The old domain (users.darsi.app, not Darsi's) stays reserved until every account is moved off it.
+    await assertFails(setDoc(doc(learner("squat3", "khaled.omar@users.darsi.app").firestore(), "users/squat3"), profile("khaled.omar@users.darsi.app")));
+    await assertSucceeds(setDoc(doc(learner("real2", "khaled.omar@users.darsi.app.example.org").firestore(), "users/real2"), profile("khaled.omar@users.darsi.app.example.org")));
   });
 });
 

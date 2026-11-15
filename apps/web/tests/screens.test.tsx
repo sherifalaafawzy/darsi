@@ -40,7 +40,7 @@ const { OrgScreen, PROFILE_WAIT_MS, orgPlace } = await import("../src/org/OrgScr
 const wrap = (ui: ReactNode, { lang = "en", url = "/" } = {}) =>
   render(<I18nProvider lang={lang}><MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter></I18nProvider>);
 const org = (o: Partial<Org>): Org => ({ id: "o1", name: "Al-Noor School", type: "school", status: "pending", createdBy: "u1", city: "Cairo", country: "Egypt", createdAt: { seconds: 1792800000 }, ...o });
-const student = (uid: string, name: string, lessonsDone = 0): Profile => ({ uid, name, email: `${uid}@users.darsi.app`, role: "student", orgId: "o1", teacherId: "me", summary: { lessonsDone, xp: 0, avgAccuracy: 0.8, lastActive: null, competencies: {}, units: {} } });
+const student = (uid: string, name: string, lessonsDone = 0): Profile => ({ uid, name, email: `${uid}@users.darsiai.org`, role: "student", orgId: "o1", teacherId: "me", summary: { lessonsDone, xp: 0, avgAccuracy: 0.8, lastActive: null, competencies: {}, units: {} } });
 const as = (role: Role, orgId: string | null = null) => { m.auth.role = role; m.auth.orgId = orgId; };
 
 beforeEach(() => {
@@ -244,7 +244,7 @@ describe("OrgScreen", () => {
     fireEvent.change(screen.getByLabelText("Invite code"), { target: { value: "AAA-BBBB" } });
     await join();
     await join();
-    expect(await screen.findByText(/Check it with your admin/)).toBeTruthy();
+    expect(await screen.findByText(/That isn’t a Darsi invite code\. Codes look like K7QP-2MXR-9DHA.*a student ID won’t work/)).toBeTruthy();
   });
 
   it("opens the request form from ?request=1 and sends it", async () => {

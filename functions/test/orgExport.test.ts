@@ -31,7 +31,7 @@ beforeEach(() => {
   db.docs.set("orgs/o2", { name: "Delta School", status: "active" });
   member("a1", "orgAdmin", "o1"); member("t1", "teacher", "o1"); member("a2", "orgAdmin", "o2"); member("x1", "student", "o2");
   member("u1", "student", "o1", {
-    name: "Amal", email: "amal@users.darsi.app", username: "amal", group: "5A", teacherId: "t1", createdAt: day("2026-09-01T08:00:00Z"),
+    name: "Amal", email: "amal@users.darsiai.org", username: "amal", group: "5A", teacherId: "t1", createdAt: day("2026-09-01T08:00:00Z"),
     lastActive: day("2026-11-01T10:30:00Z"), summary: { lessonsDone: 2 }, plan: "super", mustChangePassword: true, pushHour: 18,
   });
   db.docs.set("users/u1/progress/ai-1-1-1", { lessonId: "ai-1-1-1", unitId: "ai-1-1", accuracy: 0.9, xp: 40, completedAt: day("2026-10-02T09:00:00Z") });
@@ -72,7 +72,7 @@ describe("exportOrgData", () => {
     expect(rows.map((r) => r.uid)).toEqual(["a1", "t1", "u1", "u2"]); // o1's people, and not x1 of the other organization
     const amal = rows.find((r) => r.uid === "u1")!;
     expect(amal.profile).toEqual({
-      name: "Amal", email: "amal@users.darsi.app", username: "amal", role: "student", group: "5A", teacherId: "t1",
+      name: "Amal", email: "amal@users.darsiai.org", username: "amal", role: "student", group: "5A", teacherId: "t1",
       createdAt: "2026-09-01T08:00:00.000Z", lastActive: "2026-11-01T10:30:00.000Z", summary: { lessonsDone: 2 },
     });
     expect(amal.lessons).toEqual([

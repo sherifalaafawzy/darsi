@@ -2,7 +2,7 @@
 
 Darsi runs on the Firebase project **`darsi-f0685`** in region **`europe-west1`**:
 - Hosting, two sites: the PWA (deploy target `app`, site `darsi-f0685`, https://darsiai.org) and school sign-in's callback (target `login`, site `darsi-login`, https://login.darsiai.org; see [10. School sign-in](#10-school-sign-in));
-- Authentication (email/password, Google, username logins mapped to `<username>@users.darsi.app`, and custom tokens for school sign-in);
+- Authentication (email/password, Google, username logins mapped to `<username>@users.darsiai.org`, and custom tokens for school sign-in);
 - Cloud Firestore and Cloud Storage;
 - Cloud Functions (2nd gen, Node 22), with Cloud Scheduler for the hourly reminder run;
 - Cloud Messaging (web push; see [6. Push notifications](#6-push-notifications)).
@@ -88,6 +88,7 @@ The batch that brings member and organization lifecycle, the audit log's context
    - Firestore → `stats/jobs` gains `sitesJob` within 15 minutes, and the other jobs after their next run.
    - If someone is locked out: a platform admin with `npm run superadmin -- <email>`; anyone else, find the mismatch with `check-claims` and repeat the change with the callable that owns it. To go back, release the previous rules (docs/OPERATIONS.md §3).
    - `curl -s https://darsiai.org/ | grep -c application/ld+json` answers 1, and `curl -s https://darsiai.org/robots.txt` answers the static file, and `/sitemap.xml` and `/llms.txt` answer for darsiai.org; an organization's address answers with its own name and canonical. Then, the owner's: add each address to Google Search Console and submit its `sitemap.xml`.
+   - **Username logins off the old domain** (the same credentials): `npm run move-username-domain` (dry run, uids only), then `npm run move-username-domain -- --apply`, right after the release, so no account stays at `users.darsi.app` (not Darsi's domain: its owner could receive those accounts' reset emails). It exits 0 once nothing is left there. People keep their username and password. Never add mail (MX) for `users.darsiai.org`.
    - Platform admins: open `/super` on each phone that should hear about new organization requests and tap "Turn on alerts on this phone".
    - Push the tag `npm run deploy` made (`git push origin <tag>`), and record the release.
 

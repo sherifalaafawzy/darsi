@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 import { DELETION_GIVE_UP_MS, hashedUid, ownFileRe, queuedDeletionProblem, queueStopped, recentSignIn, RECENT_SIGN_IN, sessionEvents, sessionsOf, submissionFiles, submissionPath } from "../src/accountCore";
 import { accountActionProblem, managedAccount } from "../src/roles";
 
-const DOMAIN = "users.darsi.app";
-const pupil = { uid: "p1", exists: true, role: "student", orgId: "org1", createdBy: "adm", email: "mna.abd.12345@users.darsi.app" };
+const DOMAIN = "users.darsiai.org";
+const pupil = { uid: "p1", exists: true, role: "student", orgId: "org1", createdBy: "adm", email: "mna.abd.12345@users.darsiai.org" };
 const joined = { uid: "t1", exists: true, role: "teacher", orgId: "org1", email: "teacher@gmail.com" }; // joined with a code
 const learner = { uid: "l1", exists: true, role: "learner", orgId: null, email: "me@gmail.com" };
 
@@ -84,13 +84,13 @@ describe("accounts an organization manages", () => {
     expect(managedAccount({ managedBy: "org1", email: "a@b.example" }, DOMAIN)).toEqual({ managed: true, by: "org1" });
     for (const managedBy of [undefined, null, "", true, 7, {}]) {
       expect(managedAccount({ managedBy, email: "a@b.example" }, DOMAIN)).toEqual({ managed: false, by: null });
-      expect(managedAccount({ managedBy, email: "MNA.abd.1@Users.Darsi.App" }, DOMAIN)).toEqual({ managed: true, by: null });
+      expect(managedAccount({ managedBy, email: "MNA.abd.1@Users.Darsiai.Org" }, DOMAIN)).toEqual({ managed: true, by: null });
     }
   });
 });
 
 describe("an account queued for deletion with its organization (onAccountDeletion)", () => {
-  const username = "mna.abd.12345@users.darsi.app";
+  const username = "mna.abd.12345@users.darsiai.org";
   const t = { exists: true, hasAccount: true, role: "learner", orgId: null, email: username };
   it("is deleted when the organization managed it", () => {
     expect(queuedDeletionProblem("org1", t, DOMAIN)).toBeNull(); // an older username account

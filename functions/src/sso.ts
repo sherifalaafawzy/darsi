@@ -34,7 +34,7 @@ import { clientIp, lastHop } from "./clientIp.js";
 import type { Kind } from "./messages.js";
 import { sendToUser } from "./notify.js";
 import { isId, isManaged } from "./orgMembersCore.js";
-import { USERNAME_DOMAIN } from "./passwords.js";
+import { USERNAME_DOMAINS } from "./passwords.js";
 import { SETTINGS, writeSettingsFile } from "./settings.js";
 import { checkSiteHost } from "./shared/sites.js";
 import { writeSitesFile } from "./sites.js";
@@ -1343,7 +1343,7 @@ async function allowBack(a: Admin, orgId: string, uid: string) {
   }
   // Whose account it is: the school's sign-in made it (its identity here says so), or the organization manages its login.
   const schools = docs.some((d) => d.get("linked") === "jit")
-    || isManaged({ managedBy: f.profileData?.managedBy, email: f.authEmail ?? f.profileData?.email }, orgId, USERNAME_DOMAIN);
+    || isManaged({ managedBy: f.profileData?.managedBy, email: f.authEmail ?? f.profileData?.email }, orgId, USERNAME_DOMAINS);
   if (!schools && f.profile?.orgId !== orgId) {
     // The person's own account, matched or mapped to the school's sign-in while they were a member: an admin never
     // puts it back into the organization, or under the school's provider again, without them. As for a `self` link.

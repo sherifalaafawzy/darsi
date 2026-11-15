@@ -13,7 +13,7 @@ import type { StepViewProps } from "../lesson/StepView";
 import { CodeBlock, CodeLine } from "./CodeBlock";
 import { RUNTIMES } from "../content/runtimes";
 import { sandbox, TIME_LIMIT } from "./sandbox";
-import { normalizeCode, type BoardReport, type BoardRun, type RunOne, type RunResult } from "./harness";
+import { codeSymbols, normalizeCode, type BoardReport, type BoardRun, type RunOne, type RunResult } from "./harness";
 import "../styles/code.css";
 
 const STRINGS = {
@@ -26,6 +26,7 @@ const STRINGS = {
     timeout: (s: string) => `Stopped after ${s} seconds. Does a loop never end? Or is the program too slow for this much data, with a loop inside a loop?`,
     timeoutSql: (s: string) => `Stopped after ${s} seconds. Does WITH RECURSIVE repeat without end, or does a join make far too many rows?`, stopped: "Stopped.",
     errorLine: (n: string) => `Error on line ${n}`, runFirst: "Run your code, then press Check.",
+    symbols: (s: string) => `Code can’t read ${s} outside quotes. Switch your keyboard to English to type code: x is the letter x, * multiplies, and . is a full stop.`,
     inputGets: (v: string) => `input() gets: ${v}`, tests: "Tests", test: (n: string) => `Test ${n}`, pass: "Passed", fail: "Not yet",
     hint: "Show a hint", hintN: (n: string, total: string) => `Hint ${n} of ${total}`, keys: "Symbols", editor: "Your code",
     tabHint: "Tab indents. To leave the editor, press Esc, then Tab or Shift+Tab.",
@@ -50,6 +51,7 @@ const STRINGS = {
     timeout: (s: string) => `توقّف بعد ${s} ثوانٍ. هل توجد حلقة لا تنتهي؟ أم أن البرنامج أبطأ من أن يعالج هذا القدر من البيانات، بحلقة داخل حلقة مثلًا؟`,
     timeoutSql: (s: string) => `توقّف بعد ${s} ثوانٍ. هل يتكرّر WITH RECURSIVE بلا توقّف، أم يصنع الربط صفوفًا أكثر من اللازم بكثير؟`, stopped: "توقّف.",
     errorLine: (n: string) => `خطأ في السطر ${n}`, runFirst: "شغّل الكود، ثم اضغط «تحقّق».",
+    symbols: (s: string) => `لا يفهم الكود ${s} خارج علامات التنصيص. بدّل لوحة المفاتيح إلى الإنجليزية لتكتب الكود: ⁦x⁩ حرف إنجليزي، و⁦*⁩ للضرب، و⁦.⁩ نقطة.`,
     inputGets: (v: string) => `تأخذ input() القيمة: ${v}`, tests: "الاختبارات", test: (n: string) => `الاختبار ${n}`, pass: "نجح", fail: "ليس بعد",
     hint: "أظهر تلميحًا", hintN: (n: string, total: string) => `التلميح ${n} من ${total}`, keys: "الرموز", editor: "الكود الذي تكتبه",
     tabHint: "مفتاح Tab يُزيح السطر إلى الداخل. للخروج من محرّر الكود اضغط Esc ثم Tab أو Shift+Tab.",
@@ -239,7 +241,7 @@ function WriteRun({ step, header, result, onAnswer }: ViewProps<CodeStep>) {
       {state === "offline" && <p className="notice">{s.offline(LANG_NAME[step.lang], mb)}</p>}
       {step.hints?.slice(0, hints).map((h, i) => <p key={i} className="cd-hint" tabIndex={-1}><strong>{s.hintN(num(i + 1), num(step.hints!.length))}</strong> {L(h)}</p>)}
       {step.board && <BoardView board={step.board} report={shown?.board} />}
-      {(res || state === "running") && <Output res={res} running={state === "running"} lang={step.lang} />}
+      {(res || state === "running") && <Output res={res} running={state === "running"} lang={step.lang} code={code} />}
       {!res && state === "idle" && !checked && <p className="muted small">{s.runFirst}</p>}
       {checked && res && step.lang === "python" && <Tests runs={res.runs} step={step} />}
     </div>
@@ -331,10 +333,12 @@ function BoardView({ board, report }: { board: Board; report?: BoardReport }) {
   );
 }
 
-function Output({ res, running, lang }: { res: RunResult | null; running: boolean; lang: CodeLang }) {
+function Output({ res, running, lang, code }: { res: RunResult | null; running: boolean; lang: CodeLang; code: string }) {
   const s = useS();
   const { num } = useI18n();
   const r = res?.runs[0];
+  // A run that failed on a symbol from an Arabic keyboard's symbol page (×) says so, before the interpreter's own words.
+  const symbols = !running && r?.error ? codeSymbols(code, lang) : [];
   return (
     <section className="cd-out" aria-live="polite" aria-label={s.output}>
       <h3 className="cd-out-h">{s.output}</h3>
@@ -343,6 +347,7 @@ function Output({ res, running, lang }: { res: RunResult | null; running: boolea
         : res?.stopped ? <p className="muted small">{s.stopped}</p>
         : res?.failed ? <pre className="cd-err" dir="ltr">{res.failed}</pre>
         : r ? <>
+          {symbols.length > 0 && <p className="cd-err-msg">{s.symbols(symbols.map((c) => `⁨${c}⁩`).join(" "))}</p>}
           {lang === "sql" && r.table ? <Table table={r.table} /> : r.out ? <pre className="cd-out-text" dir="ltr" translate="no">{r.out}</pre> : !r.error && <p className="muted small">{s.nothing}</p>}
           {r.error && <>{r.line && <p className="cd-err-msg">{s.errorLine(num(r.line))}</p>}<pre className="cd-err" dir="ltr" translate="no">{r.error}</pre></>}
         </> : null}

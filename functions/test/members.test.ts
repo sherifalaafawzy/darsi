@@ -63,7 +63,7 @@ describe("teachers in the same sheet as their pupils (ux-orgadmin-import-teacher
   });
   it("a new teacher can be named by email, by username, or by the username's login email", () => {
     expect(teacherKeys("Amina.Bello@School.org", null, usernameToEmail)).toEqual(["amina.bello@school.org"]);
-    expect(teacherKeys(usernameToEmail("t.one"), "t.one", usernameToEmail).sort()).toEqual(["t.one", "t.one@users.darsi.app"]);
+    expect(teacherKeys(usernameToEmail("t.one"), "t.one", usernameToEmail).sort()).toEqual(["t.one", "t.one@users.darsiai.org"]);
   });
 });
 
@@ -110,10 +110,13 @@ describe("a profile a server write reaches first (ux-accounts-04)", () => {
 
 describe("username logins someone signed up for by hand (sec-rules-05)", () => {
   it("are those on the reserved domain that no organization made", () => {
-    expect(handMadeUsername("khaled.omar@users.darsi.app", undefined)).toBe(true);
-    expect(handMadeUsername("Khaled.Omar@USERS.darsi.app", null)).toBe(true);
-    expect(handMadeUsername("khaled.omar@users.darsi.app", "admin1")).toBe(false); // createMembers made it
+    expect(handMadeUsername("khaled.omar@users.darsiai.org", undefined)).toBe(true);
+    expect(handMadeUsername("Khaled.Omar@USERS.darsiai.org", null)).toBe(true);
+    expect(handMadeUsername("khaled.omar@users.darsiai.org", "admin1")).toBe(false); // createMembers made it
     expect(handMadeUsername("khaled@gmail.com", undefined)).toBe(false);
+    // The old domain (not Darsi's, usernameDomain.ts) still counts until every account is moved off it.
+    expect(handMadeUsername("khaled.omar@users.darsi.app", undefined)).toBe(true);
+    expect(handMadeUsername("khaled.omar@users.darsi.app.example.org", undefined)).toBe(false);
     expect(handMadeUsername(undefined, undefined)).toBe(false);
   });
 });

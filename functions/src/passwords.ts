@@ -40,9 +40,15 @@ export function normalizeCode(input: unknown): string | null {
   return null;
 }
 
-/** People without email log in with a username; Firebase Auth needs an email, so we map it to a hidden domain. */
-export const USERNAME_DOMAIN = "users.darsi.app";
+/** People without email log in with a username; Firebase Auth needs an email, so we map it to a hidden domain (usernameDomain.ts). */
+import { LEGACY_USERNAME_DOMAINS, USERNAME_DOMAIN } from "./usernameDomain.js";
+export { atDomain, isUsernameEmail, LEGACY_USERNAME_DOMAINS, USERNAME_DOMAIN, USERNAME_DOMAINS } from "./usernameDomain.js";
 export const usernameToEmail = (u: string) => `${u.trim().toLowerCase()}@${USERNAME_DOMAIN}`;
+/** The same username at the old domains (usernameDomain.ts): an account not yet moved off them may still hold it. */
+export const legacyEmails = (email: string) => {
+  const [name, domain] = email.toLowerCase().split("@");
+  return domain === USERNAME_DOMAIN ? LEGACY_USERNAME_DOMAINS.map((d) => `${name}@${d}`) : [];
+};
 export const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 export const isValidUsername = (u: string) => /^[a-z0-9][a-z0-9._-]{2,39}$/i.test(u);
 

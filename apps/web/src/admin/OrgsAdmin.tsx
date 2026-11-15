@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AppBar, Button, EmptyState, TextField } from "@darsi/design-system";
-import { api, displayLogin } from "../auth/api";
+import { api, displayLogin, isUsernameEmail } from "../auth/api";
 import { useAuth } from "../auth/AuthProvider";
 import type { Org, Profile, Role } from "../auth/types";
 import { isolate, useI18n } from "../i18n";
@@ -276,7 +276,7 @@ export function OrgManage({ org, members, loading, loaded, failed, onChanged, on
             <li key={p.uid}>
               <span className="person-link"><span className="avatar sm" aria-hidden>{(p.name ?? "").slice(0, 1)}</span><span><strong><bdi>{p.name}</bdi></strong><small dir="ltr">{displayLogin(p.email ?? "")}</small></span></span>
               <span className="muted small">{p.orgId === org.id ? t("po.already") : p.orgId ? t("po.inOther") : t(`rn.${p.role ?? "learner"}` as "rn.student")}
-                {p.emailVerified === false && !p.email?.endsWith("@users.darsi.app") && <>{t("common.sep")}{t("acct.unverified")}</>}
+                {p.emailVerified === false && !isUsernameEmail(p.email) && <>{t("common.sep")}{t("acct.unverified")}</>}
                 {(p.claimed ?? 0) > 1 && <>{t("common.sep")}{t("acct.claimed")}</>}</span>
               <Button size="sm" disabled={p.orgId === org.id && p.role === role} loading={busy === `add:${p.uid}`}
                 onClick={() => { const r = role; void act(`add:${p.uid}`, async () => { await api.setUserRole({ uid: p.uid, role: r, orgId: org.id }); setFound((f) => f?.map((x) => (x.uid === p.uid ? { ...x, orgId: org.id, role: r } : x)) ?? null); }, t("po.added", { name: p.name, role: t(`role.${r}` as "role.student") })); }}>{t("po.addAs", { role: t(`role.${role}` as "role.student") })}</Button>

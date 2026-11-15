@@ -98,7 +98,7 @@ const run = <T = Data>(fn: unknown, uid: string | null, data: Data = {}) => (fn 
 const refusal = async (p: Promise<unknown>) => p.then(() => null, (e: { details?: { reason?: string } }) => e.details?.reason ?? "no reason");
 const user = (uid: string) => db.docs.get(`users/${uid}`) as Data;
 const account = (uid: string) => auth.users.get(uid) as Account;
-const DOMAIN = "users.darsi.app";
+const DOMAIN = "users.darsiai.org";
 
 /** A profile and its Auth account. A username login when `email` is left out. */
 function person(uid: string, role: string, orgId: string | null, more: Data = {}) {

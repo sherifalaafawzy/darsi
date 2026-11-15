@@ -123,7 +123,7 @@ describe("platform analytics", () => {
 describe("an organization's page", () => {
   const Where = () => <p data-testid="at">{useLocation().pathname}</p>;
   const hope = { id: "o1", name: "Hope NGO", type: "company", status: "active", createdBy: "u" };
-  const sara = { uid: "s1", name: "Sara", email: "sara@users.darsi.app", role: "student", orgId: "o1" };
+  const sara = { uid: "s1", name: "Sara", email: "sara@users.darsiai.org", role: "student", orgId: "o1" };
   const tabNames = () => screen.getAllByRole("tab").map((x) => x.textContent);
   const page = (entries: Array<string | { pathname: string; state: unknown }>, lang = "en") => render(<StoreProvider><I18nProvider lang={lang}><MemoryRouter initialEntries={entries} initialIndex={entries.length - 1}>
     <Routes>
@@ -250,7 +250,7 @@ describe("an organization's page", () => {
 
   it("after a role change or a removal, mends the list it holds instead of reading every member again", async () => {
     m.org = hope;
-    m.members = [{ uid: "a1", name: "Amina", email: "a1@users.darsi.app", role: "orgAdmin", orgId: "o1" }, sara];
+    m.members = [{ uid: "a1", name: "Amina", email: "a1@users.darsiai.org", role: "orgAdmin", orgId: "o1" }, sara];
     page(["/super/orgs/o1?tab=people"]);
     const row = () => screen.getByRole("link", { name: /Sara/ }).closest("tr")!;
     fireEvent.change(row().querySelector("select")!, { target: { value: "teacher" } });
@@ -377,7 +377,7 @@ describe("an organization's page", () => {
 
   it("offers only the figures and the people for an organization that isn't there", () => {
     m.org = null;
-    m.members = Array.from({ length: 130 }, (_, i) => ({ uid: `u${i}`, name: `Person ${String(i).padStart(3, "0")}`, email: `u${i}@users.darsi.app`, role: "student", orgId: "gone" }));
+    m.members = Array.from({ length: 130 }, (_, i) => ({ uid: `u${i}`, name: `Person ${String(i).padStart(3, "0")}`, email: `u${i}@users.darsiai.org`, role: "student", orgId: "gone" }));
     page(["/super/orgs/gone?tab=settings"]);
     expect(tabNames()).toEqual(["Overview", "People"]);
     expect(screen.getByRole("tab", { name: "Overview" }).getAttribute("aria-selected")).toBe("true");

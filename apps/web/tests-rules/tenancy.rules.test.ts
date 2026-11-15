@@ -358,7 +358,7 @@ describe("(c) the staff screens' list queries (admin/data.ts) and the bulk membe
     const ids = Array.from({ length: 30 }, (_, i) => `bulk${i}`);
     await env.withSecurityRulesDisabled(async (c) => {
       const b = writeBatch(c.firestore());
-      for (const id of ids) b.set(doc(c.firestore(), `users/${id}`), { name: id, email: `${id}@users.darsi.app`, role: "student", orgId: "org1" });
+      for (const id of ids) b.set(doc(c.firestore(), `users/${id}`), { name: id, email: `${id}@users.darsiai.org`, role: "student", orgId: "org1" });
       await b.commit();
     });
     const change = (uid: string, people: string[], group: string) => {
