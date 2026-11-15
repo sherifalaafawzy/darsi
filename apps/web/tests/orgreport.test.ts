@@ -6,7 +6,7 @@ import { byCourse, byGroup, byTeacher, byTrack, filterPeople, itemEvidence, last
 const NOW = Date.parse("2026-11-02T12:00:00Z");
 const daysAgo = (n: number) => new Date(NOW - n * 864e5).toISOString();
 const person = (uid: string, o: Partial<Profile> & { lastActive?: string } = {}, s: Partial<NonNullable<Profile["summary"]>> = {}): Profile & { lastActive?: string } => ({
-  uid, name: uid, email: `${uid}@users.darsi.app`, role: "student", orgId: "o1", ...o,
+  uid, name: uid, email: `${uid}@users.darsiai.org`, role: "student", orgId: "o1", ...o,
   summary: { lessonsDone: 0, xp: 0, avgAccuracy: 0, lastActive: null, competencies: {}, units: {}, ...s },
 });
 

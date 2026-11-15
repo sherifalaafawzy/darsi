@@ -178,7 +178,7 @@ describe("onboarding with an organization's choice", () => {
 
 describe("the admin's Courses panel", () => {
   const theOrg = (courses?: unknown): Org => ({ id: "o1", name: "Nile School", type: "school", status: "active", createdBy: "u1", ...(courses ? { courses } : {}) });
-  const person = (uid: string, role: Role, group?: string): Profile => ({ uid, name: uid, email: `${uid}@users.darsi.app`, role, orgId: "o1", group: group ?? null });
+  const person = (uid: string, role: Role, group?: string): Profile => ({ uid, name: uid, email: `${uid}@users.darsiai.org`, role, orgId: "o1", group: group ?? null });
   const members = [person("t1", "teacher"), person("s1", "student", "7A"), person("s2", "student", "7A"), person("s3", "student", "7B"), person("a1", "orgAdmin", "7A")];
   const units = () => [entry("ai-t"), entry("ai-u1", { level: 4, teach: "university" }), entry("ai-s", { audience: "students" }), entry("cyber-s", { audience: "students", level: 2 }),
     entry("uabcdefgh", { track: "cyber", audience: "students", owner: "o1", title: { en: "Our own course" } })];

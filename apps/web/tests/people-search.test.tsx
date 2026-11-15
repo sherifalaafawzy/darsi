@@ -51,10 +51,10 @@ function People({ q, max }: { q: string; max?: number }) {
 beforeEach(() => {
   m.users = [
     { uid: "u1", name: "Amina Bello", email: "amina@school.org", summary: { lessonsDone: 3 } },
-    { uid: "u2", name: "Rana K", email: "rana.k@users.darsi.app" },
+    { uid: "u2", name: "Rana K", email: "rana.k@users.darsiai.org" },
     { uid: "u3", name: "amira (typed in lower case)", email: "x@y.z" },
   ];
-  m.accounts = { "amina@school.org": "u1", "rana.k@users.darsi.app": "u2" };
+  m.accounts = { "amina@school.org": "u1", "rana.k@users.darsiai.org": "u2" };
   m.logins = []; m.prefixes = []; m.reads = [];
 });
 const shown = () => screen.getAllByRole("listitem").map((li) => li.textContent).filter((x) => x !== "done" && x !== "again");
@@ -80,7 +80,7 @@ describe("searching all users", () => {
     m.users.push({ uid: "u4", name: "rana.k is a name too", email: "r@x.y" });
     render(<People q="rana.k" />);
     await screen.findByText("done");
-    expect(m.logins).toEqual(["rana.k@users.darsi.app"]);
+    expect(m.logins).toEqual(["rana.k@users.darsiai.org"]);
     await waitFor(() => expect(shown()).toEqual(["Rana K", "rana.k is a name too"]));
   });
 });

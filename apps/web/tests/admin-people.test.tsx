@@ -97,7 +97,7 @@ const wrap = (ui: ReactNode, { lang = "en", url = "/admin/people/s1" } = {}) => 
   </MemoryRouter></I18nProvider></StoreProvider>,
 );
 const summary = (o: Record<string, unknown> = {}) => ({ lessonsDone: 0, xp: 0, avgAccuracy: 0, lastActive: null, competencies: {}, compAcc: {}, units: {}, ...o });
-const amina = (o: Record<string, unknown> = {}) => ({ uid: "s1", name: "Amina Bello", email: "amina.b@users.darsi.app", role: "student", orgId: "o1", teacherId: "t1", ...o });
+const amina = (o: Record<string, unknown> = {}) => ({ uid: "s1", name: "Amina Bello", email: "amina.b@users.darsiai.org", role: "student", orgId: "o1", teacherId: "t1", ...o });
 const row = (lessonId: string, unitId: string, o: Record<string, unknown> = {}) => ({ lessonId, unitId, track: unitId.split("-")[0], accuracy: 0.5, xp: 40, seconds: 300, completedAt: "2026-11-01T10:00:00Z", ...o });
 const sectionOf = (heading: string) => screen.getByRole("heading", { name: heading }).closest("section")!;
 /** Opens a tab of the page (admin/Tabs.tsx); a tab with a count is named with it ("Projects 2"). */
@@ -289,7 +289,7 @@ describe("the person page", () => {
     fireEvent.click(yes);
     expect(m.api.resetMemberPassword).toHaveBeenCalledTimes(1);
     expect(m.api.resetMemberPassword).toHaveBeenCalledWith({ orgId: "o1", uid: "s1" });
-    await act(async () => { answer({ login: "amina.b@users.darsi.app", password: "9BSkqzWp!" }); });
+    await act(async () => { answer({ login: "amina.b@users.darsiai.org", password: "9BSkqzWp!" }); });
     expect(await screen.findByText("9BSkqzWp!")).toBeTruthy();
     expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(m.patched).toEqual([["o1", "s1", { mustChangePassword: true }]]);
@@ -359,7 +359,7 @@ describe("the person page", () => {
 
   it("shows a reset password in its own left-to-right element, so Arabic can't move its last '!' (ux-orgadmin-reset-pw-bidi)", async () => {
     m.person = amina({ summary: summary() });
-    m.api.resetMemberPassword.mockResolvedValue({ login: "amina.b@users.darsi.app", password: "9BSkqzWp!" });
+    m.api.resetMemberPassword.mockResolvedValue({ login: "amina.b@users.darsiai.org", password: "9BSkqzWp!" });
     wrap(<PersonDetail />, { lang: "ar", url: "/admin/people/s1?tab=account" });
     fireEvent.click(screen.getByRole("button", { name: ar["p.resetPw"] }));
     // Asked first, in Arabic.
@@ -423,10 +423,10 @@ describe("reviewing a project", () => {
 
 describe("the org dashboard", () => {
   const people = () => [
-    { uid: "s1", name: "Amina Bello", email: "amina.b@users.darsi.app", role: "student", orgId: "o1", summary: summary({ lessonsDone: 2, competencies: { "S.TA.U": 2 } }) },
-    { uid: "s2", name: "Omar Said", email: "omar.s@users.darsi.app", role: "student", orgId: "o1", group: "6B" },
+    { uid: "s1", name: "Amina Bello", email: "amina.b@users.darsiai.org", role: "student", orgId: "o1", summary: summary({ lessonsDone: 2, competencies: { "S.TA.U": 2 } }) },
+    { uid: "s2", name: "Omar Said", email: "omar.s@users.darsiai.org", role: "student", orgId: "o1", group: "6B" },
     { uid: "t1", name: "Grace Adeyemi", email: "grace@school.org", role: "teacher", orgId: "o1" },
-    { uid: "x9", email: "nameless@users.darsi.app", role: "student", orgId: "o1" },
+    { uid: "x9", email: "nameless@users.darsiai.org", role: "student", orgId: "o1" },
   ];
   beforeEach(() => { m.members = people(); m.org = { id: "o1", name: "Nile School", type: "school", status: "active", createdBy: "admin1" }; });
 
@@ -705,7 +705,7 @@ describe("the org dashboard", () => {
   });
 
   it("resets several passwords and shows them once as slips to download or print, kept over a look at another tab", async () => {
-    m.api.bulkMembers.mockResolvedValue({ results: [{ uid: "s1", ok: true, login: "amina.b@users.darsi.app", password: "pw-amina" }, { uid: "t1", ok: false, reason: "own-login" }] });
+    m.api.bulkMembers.mockResolvedValue({ results: [{ uid: "s1", ok: true, login: "amina.b@users.darsiai.org", password: "pw-amina" }, { uid: "t1", ok: false, reason: "own-login" }] });
     wrap(<AdminHome />, { url: "/admin?tab=people" });
     fireEvent.click(screen.getByLabelText("Select Amina Bello"));
     fireEvent.click(screen.getByLabelText("Select Grace Adeyemi"));
@@ -743,7 +743,7 @@ describe("the org dashboard", () => {
   });
 
   it("asks once before the admin leaves the page with new passwords not yet downloaded or printed", async () => {
-    m.api.bulkMembers.mockResolvedValue({ results: [{ uid: "s1", ok: true, login: "amina.b@users.darsi.app", password: "pw-amina" }] });
+    m.api.bulkMembers.mockResolvedValue({ results: [{ uid: "s1", ok: true, login: "amina.b@users.darsiai.org", password: "pw-amina" }] });
     render(
       <StoreProvider><I18nProvider lang="en"><MemoryRouter initialEntries={["/admin?tab=people"]}>
         <Link to="/learn">Learn</Link>
@@ -793,7 +793,7 @@ describe("the org dashboard", () => {
   });
 
   it("sends more than 200 people in turns of 200, and stops with what was done when a call fails", async () => {
-    m.members = Array.from({ length: 450 }, (_, i) => ({ uid: `u${String(i).padStart(3, "0")}`, name: `Pupil ${String(i).padStart(3, "0")}`, email: `p${i}@users.darsi.app`, role: "student", orgId: "o1" }));
+    m.members = Array.from({ length: 450 }, (_, i) => ({ uid: `u${String(i).padStart(3, "0")}`, name: `Pupil ${String(i).padStart(3, "0")}`, email: `p${i}@users.darsiai.org`, role: "student", orgId: "o1" }));
     m.api.bulkMembers
       .mockImplementationOnce(async ({ uids }: { uids: string[] }) => ({ results: uids.map((uid) => ({ uid, ok: true })) }))
       .mockImplementationOnce(async ({ uids }: { uids: string[] }) => ({ results: uids.map((uid) => ({ uid, ok: true })) }))
@@ -810,7 +810,7 @@ describe("the org dashboard", () => {
   });
 
   it("draws 100 rows of a long list, then 100 more each time", () => {
-    m.members = Array.from({ length: 230 }, (_, i) => ({ uid: `u${i}`, name: `Pupil ${String(i).padStart(3, "0")}`, email: `p${i}@users.darsi.app`, role: "student", orgId: "o1" }));
+    m.members = Array.from({ length: 230 }, (_, i) => ({ uid: `u${i}`, name: `Pupil ${String(i).padStart(3, "0")}`, email: `p${i}@users.darsiai.org`, role: "student", orgId: "o1" }));
     wrap(<AdminHome />, { url: "/admin?tab=people" });
     const linked = () => within(screen.getByRole("table")).getAllByRole("link").length;
     expect(linked()).toBe(100);
@@ -1018,7 +1018,7 @@ describe("while staff pages load, on your own page, and when the server refuses 
 
   it("offers no role change, password reset, removal or deletion on your own page", () => {
     m.auth = { user: { uid: "a1" }, role: "orgAdmin", orgId: "o1" };
-    m.person = { uid: "a1", name: "Bola Admin", email: "bola@users.darsi.app", role: "orgAdmin", orgId: "o1", summary: summary() };
+    m.person = { uid: "a1", name: "Bola Admin", email: "bola@users.darsiai.org", role: "orgAdmin", orgId: "o1", summary: summary() };
     wrap(<PersonDetail />, { url: "/admin/people/a1?tab=account" });
     const acct = within(sectionOf("Account"));
     expect(acct.queryByLabelText("Role")).toBeNull();
@@ -1169,7 +1169,7 @@ describe("importing people", () => {
     fireEvent.click(await screen.findByRole("button", { name: /30/ }));
     expect(await screen.findByText(/The connection dropped after 25 of 30\./)).toBeTruthy();
     // The lost call had in fact made Pupil 27: it is found among the accounts this admin made, and not sent again.
-    m.made = [{ uid: "u-lost-27", name: "Pupil 27", role: "student", group: null, username: "pupil.27.555", email: "pupil.27.555@users.darsi.app" }];
+    m.made = [{ uid: "u-lost-27", name: "Pupil 27", role: "student", group: null, username: "pupil.27.555", email: "pupil.27.555@users.darsiai.org" }];
     fireEvent.click(screen.getByRole("button", { name: "Try the rest again (5)" }));
     await waitFor(() => expect(m.api.createMembers).toHaveBeenCalledTimes(3));
     expect(m.madeCalls[0].slice(0, 2)).toEqual(["o1", "admin1"]);

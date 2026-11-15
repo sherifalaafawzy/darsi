@@ -26,7 +26,7 @@ vi.mock("../src/admin/data", async (orig) => ({
 const { OrgManage, OrgsAdmin } = await import("../src/admin/OrgsAdmin");
 
 const org: Org = { id: "o1", name: "Nile School", type: "school", status: "active", createdBy: "u1" };
-const member = (uid: string, name: string, role: Role): Profile => ({ uid, name, email: `${uid}@users.darsi.app`, role, orgId: "o1" });
+const member = (uid: string, name: string, role: Role): Profile => ({ uid, name, email: `${uid}@users.darsiai.org`, role, orgId: "o1" });
 const page = (members: Profile[], lang = "en") => render(<I18nProvider lang={lang}><MemoryRouter initialEntries={["/super/orgs/o1"]}>
   <Routes>
     <Route path="/super/orgs/:orgId" element={<OrgManage org={org} members={members} onChanged={m.changed} />} />

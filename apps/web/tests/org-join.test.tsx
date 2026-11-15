@@ -214,7 +214,7 @@ describe("a refused join", () => {
 
   it("keeps the older answers: an unknown code, too many tries, a hand-made username login", async () => {
     await joinWith(refused("functions/not-found", "bad-code", "That code is not valid."));
-    expect(screen.getByText(/That code is not valid\. Check it with your admin/)).toBeTruthy();
+    expect(screen.getByText(/That isn’t a Darsi invite code\..*You don’t need a code to learn/)).toBeTruthy();
   });
 
   it("never shows the server's raw English for a failure it has no words for", async () => {

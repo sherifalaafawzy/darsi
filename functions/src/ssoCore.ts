@@ -12,6 +12,7 @@
  */
 import { createHash, randomInt } from "node:crypto";
 import { isReservedName } from "./sitesCore.js";
+import { isUsernameEmail } from "./usernameDomain.js";
 import {
   GOOGLE_ISSUER, GOOGLE_ISSUERS, MICROSOFT_SHARED_TENANTS, PRESET_INFO, SHARED_ISSUER_HOSTS, constantEndpoints, isGuid, isPreset,
   isSchoolTenant, issuerCandidates, type Endpoints, type Preset,
@@ -498,7 +499,6 @@ export type IdentityState = "active" | "removed" | "blocked";
 export const STAFF_ROLE = "superadmin";
 export const PENDING_RECLAIM_MS = 60_000;
 export const TOUCH_MS = 24 * 3600_000;
-const USERNAME_DOMAIN = "@users.darsi.app";
 
 /** What the server read about one account (Auth record and profile) before deciding. */
 export interface AccountFacts {
@@ -617,7 +617,7 @@ export function decideSignIn(i: SignInInputs): SignInDecision {
  * §5.2's conditions, all of them: this org's member made by this org's admin (not by sso), student or teacher in both
  * claims and profile, no identity yet, still on the handed-out credential (must change password, or never signed in),
  * not disabled, and the token's address verified under the issuer rules and equal to the account's Auth email.
- * Username logins (@users.darsi.app) never match.
+ * Username logins (usernameDomain.ts, the old domain too) never match.
  */
 export function orgMadeLinkable(e: AccountFacts & { hasIdentity: boolean }, orgId: string, id: Identity): boolean {
   const p = e.profile;
@@ -628,7 +628,7 @@ export function orgMadeLinkable(e: AccountFacts & { hasIdentity: boolean }, orgI
   if (!(p.mustChangePassword === true || neverSignedIn(e))) return false;
   if (!id.email || !id.emailVerified || !e.authEmail) return false;
   const auth = e.authEmail.toLowerCase();
-  return !auth.endsWith(USERNAME_DOMAIN) && auth === id.email;
+  return !isUsernameEmail(auth) && auth === id.email;
 }
 
 export interface LinkInputs {

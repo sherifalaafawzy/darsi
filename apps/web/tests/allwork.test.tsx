@@ -191,7 +191,7 @@ describe("every certificate", () => {
 describe("capstone certificates", () => {
   it("count only when every milestone was sent, carry the account's own name, and date from the last milestone", async () => {
     m.learners = [
-      { uid: "u3", name: "", email: "rana@users.darsi.app", summary: { lessonsDone: 1, units: { "ai-cap": 1 } } },
+      { uid: "u3", name: "", email: "rana@users.darsiai.org", summary: { lessonsDone: 1, units: { "ai-cap": 1 } } },
       { uid: "u4", name: "Zed", summary: { lessonsDone: 1, units: { "ai-cap": 1 } } },
     ];
     m.sent = {

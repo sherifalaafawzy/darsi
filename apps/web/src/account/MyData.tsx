@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, TextField } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
-import { api, USERNAME_DOMAIN, type AccountRefusal } from "../auth/api";
+import { api, USERNAME_DOMAINS, type AccountRefusal } from "../auth/api";
 import { useI18n, type MessageKey } from "../i18n";
 import { clearDrafts, clearRuns } from "../lesson/engine";
 import { unsent, useStore } from "../state/store";
@@ -36,7 +36,7 @@ export function MyData() {
   if (!user) return null;
   // The organization's to delete when it manages the login (`managedBy`, as the server decides), not merely because an
   // admin typed the person's own email in once (`createdBy`): that account is its owner's.
-  const managed = isManaged(profile, user.email, orgId ?? profile?.orgId, USERNAME_DOMAIN);
+  const managed = isManaged(profile, user.email, orgId ?? profile?.orgId, USERNAME_DOMAINS);
   const staff = role === "orgAdmin" || role === "superadmin";
   const fail = (e: unknown) => {
     const reason = refusal(e), why = Object.prototype.hasOwnProperty.call(REFUSED, reason) ? REFUSED[reason as AccountRefusal] : undefined;

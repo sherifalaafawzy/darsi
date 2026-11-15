@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppBar, Button, EmptyState, Icon, TextField, TrackChip, type Track } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
-import { api, displayLogin, USERNAME_DOMAIN, type SsoPerson } from "../auth/api";
+import { api, displayLogin, isUsernameEmail, type SsoPerson } from "../auth/api";
 import { scoredOf, type Profile, type Role } from "../auth/types";
 import { isolate, useI18n } from "../i18n";
 import { COMPETENCIES, competency, strength } from "../content/competencies";
@@ -312,7 +312,7 @@ function AccountPanel({ uid, person, name, back, reload }: { uid: string; person
   const self = !!user && person.uid === user.uid;
   const orgId = person.orgId ?? "";
   // A login the organization made (a username): the only kind it can lock, and whose password it can set.
-  const username = !!person.email?.endsWith(`@${USERNAME_DOMAIN}`);
+  const username = isUsernameEmail(person.email);
   // Managed as the server decides (data.ts managedByOrg): `managedBy`, else a username login; never who made the profile.
   const managed = managedByOrg(person, orgId);
   // How the school's own sign-in stands for this person: one read (manageSso person) when this panel first shows

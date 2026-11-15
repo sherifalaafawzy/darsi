@@ -31,7 +31,7 @@ const people = (): Profile[] => [
   { uid: "t1", name: "Hany Lotfy", email: "hany@nile-valley.example", role: "teacher", orgId: "o1" },
   { uid: "s1", name: "Ahmed Abdel-Rahman Mostafa El-Sayed", email: "student4@nile-valley.example", role: "student", orgId: "o1", teacherId: "t1", group: "5B",
     summary: summary(5, { seconds: 1800, weeks: { [isoWeek()]: 3, [isoWeek(new Date(Date.now() - 7 * 864e5))]: 2 } }) },
-  { uid: "s2", name: "Laila Mansour", email: "laila@users.darsi.app", role: "student", orgId: "o1", teacherId: "t1" },
+  { uid: "s2", name: "Laila Mansour", email: "laila@users.darsiai.org", role: "student", orgId: "o1", teacherId: "t1" },
 ] as unknown as Profile[];
 const page = (lang = "en", at = "/admin/analytics") => render(<I18nProvider lang={lang}><MemoryRouter initialEntries={[at]}><OrgReport /></MemoryRouter></I18nProvider>);
 

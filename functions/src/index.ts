@@ -7,11 +7,12 @@ import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions/v2";
+import { accountByLogin, legacyHolds } from "./logins.js";
 import { audit, auth, basicsFor, caller, db, freshCaller, releasePupils, str, type Role } from "./admin.js";
 import { alertOrgRequest, alertOrgReviewed } from "./notify.js";
 import { progressChanged } from "./progress.js";
 import { writeClaims } from "./billing.js";
-import { generateCode, generatePassword, isValidEmail, isValidUsername, normalizeCode, suggestUsername, USERNAME_DOMAIN, usernameToEmail } from "./passwords.js";
+import { generateCode, generatePassword, isUsernameEmail, isValidEmail, isValidUsername, normalizeCode, suggestUsername, USERNAME_DOMAINS, usernameToEmail } from "./passwords.js";
 import { chunks, codeProblem, CREATE_WIDTH, creationWaves, joinPolicyChange, onCreateError, passwordLength, policyProblem, pool, readJoinPolicy, teacherKeys, withRemoved, type Removed, type RowReason } from "./membersCore.js";
 import { approveProblem, handMadeUsername, losesPower } from "./roles.js";
 import { liftOrgSuspension, refuseLastAdmin } from "./platform.js";
@@ -121,8 +122,8 @@ async function memberOf(orgId: string, uid: string) {
 /** A username login someone signed up for by hand (roles.ts handMadeUsername) gets no organization: it is refused here. */
 async function refuseHandMadeUsername(req: CallableRequest, uid: string) {
   const email = String(req.auth?.token.email ?? "").toLowerCase();
-  if (!email.endsWith(`@${USERNAME_DOMAIN}`)) return;
-  if (handMadeUsername(email, (await db.doc(`users/${uid}`).get()).get("createdBy"), USERNAME_DOMAIN)) {
+  if (!isUsernameEmail(email)) return;
+  if (handMadeUsername(email, (await db.doc(`users/${uid}`).get()).get("createdBy"), USERNAME_DOMAINS)) {
     throw new HttpsError("permission-denied", "This kind of login is only for accounts an organization makes.", { reason: "reserved" });
   }
 }
@@ -455,7 +456,7 @@ export const createMembers = onCall({ timeoutSeconds: 540, memory: "512MiB" }, a
   for (const group of chunks(teacherEmails, 10)) {
     await Promise.all(group.map(async (e) => {
       const login = e.includes("@") ? e : isValidUsername(e) ? usernameToEmail(e) : "";
-      const account = login ? await auth.getUserByEmail(login).catch(() => null) : null;
+      const account = login ? await accountByLogin(login) : null;
       if (!account) return;
       const t = await db.doc(`users/${account.uid}`).get();
       if (t.get("orgId") === orgId && (t.get("role") === "teacher" || t.get("role") === "orgAdmin")) teacherIds[e] = account.uid;
@@ -499,6 +500,8 @@ export const createMembers = onCall({ timeoutSeconds: 540, memory: "512MiB" }, a
     for (let draws = 1; ; draws++) {
       let uid = "";
       try {
+        // A username an account still holds at the old domain is taken (usernameDomain.ts), as Auth would answer.
+        if (!typedEmail && await legacyHolds(email)) throw Object.assign(new Error("The username is taken."), { code: "auth/email-already-exists" });
         const user = await auth.createUser({ email, password, displayName: name, emailVerified: false });
         uid = user.uid;
         await auth.setCustomUserClaims(uid, { role, orgId }); // a new account: no Super yet
@@ -507,7 +510,7 @@ export const createMembers = onCall({ timeoutSeconds: 540, memory: "512MiB" }, a
           name, email, username: username || null, role, orgId, group: str(m.group, 60) || null,
           teacherId, lang: str(m.lang, 8) || "en",
           mustChangePassword: mustChange, passwordSetAt: Date.now(), createdAt: FieldValue.serverTimestamp(), createdBy: by.uid, active: true,
-          ...(email.endsWith(`@${USERNAME_DOMAIN}`) ? { managedBy: orgId } : {}),
+          ...(isUsernameEmail(email) ? { managedBy: orgId } : {}),
         });
         made[role] = (made[role] ?? 0) + 1;
         if (role === "teacher" || role === "orgAdmin") for (const k of teacherKeys(email, username || null, usernameToEmail)) teacherIds[k] ??= uid;
@@ -568,7 +571,7 @@ export const resetMemberPassword = onCall(async (req) => {
   const account = await auth.getUser(uid).catch(() => null);
   // An account only the school's sign-in opens has no password to reset (and no mailbox for "Forgot password").
   if (u.get("sso") === true && !ownLogin(account)) throw new HttpsError("failed-precondition", "This person signs in with the school's own sign-in, which has no Darsi password.", { reason: "sso-login" });
-  const own = !account?.email?.endsWith(`@${USERNAME_DOMAIN}`) || account.providerData.some((p) => p.providerId !== "password");
+  const own = !account || !isUsernameEmail(account.email) || account.providerData.some((p) => p.providerId !== "password");
   if (own) throw new HttpsError("failed-precondition", "This person signs in with their own email or Google account, so only they can change its password: ask them to use \"Forgot password\" on the sign-in page.", { reason: "own-login" });
   const password = generatePassword(Number(req.data?.passwordLength) || 10);
   await auth.updateUser(uid, { password });

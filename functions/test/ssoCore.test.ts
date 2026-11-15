@@ -484,8 +484,8 @@ describe("decideSignIn: an account the organization made", () => {
   });
 
   it("never matches a username login, and leaves people of other organizations alone", () => {
-    const user = orgMade({ authEmail: "amina@users.darsi.app" });
-    expect(decideSignIn(inputs({ emailAccount: user, identity: ident({ email: "amina@users.darsi.app" }) }))).toMatchObject({ kind: "refuse", code: "sso-connect-first" });
+    const user = orgMade({ authEmail: "amina@users.darsiai.org" });
+    expect(decideSignIn(inputs({ emailAccount: user, identity: ident({ email: "amina@users.darsiai.org" }) }))).toMatchObject({ kind: "refuse", code: "sso-connect-first" });
     const other = orgMade({ claims: { role: "student", orgId: "org2" } }, { orgId: "org2" });
     expect(decideSignIn(inputs({ emailAccount: other }))).toMatchObject({ kind: "jit", uid: null });
   });

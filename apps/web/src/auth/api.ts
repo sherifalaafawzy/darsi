@@ -194,7 +194,14 @@ export const api = {
   checkRevenueEvent: call<{ plan: string; currency: "EGP" | "USD" }, { sent: boolean; reason?: string; status?: number; validation?: { validationMessages?: Array<{ description: string; fieldPath?: string }> } | null }>("checkRevenueEvent"),
 };
 
-/** Usernames (for people without email) map to a hidden email domain — must match functions/src/passwords.ts. */
-export const USERNAME_DOMAIN = "users.darsi.app";
+/**
+ * Usernames (for people without email) map to a hidden email domain: must match functions/src/usernameDomain.ts, which
+ * says why it must be a domain Darsi owns with no mail. `users.darsi.app` (not Darsi's) was used until 2026-11: accounts
+ * there are moved by scripts/move-username-domain.mjs, and until then they still count as username logins and sign in.
+ */
+export const USERNAME_DOMAIN = "users.darsiai.org";
+export const LEGACY_USERNAME_DOMAINS: readonly string[] = ["users.darsi.app"];
+export const USERNAME_DOMAINS: readonly string[] = [USERNAME_DOMAIN, ...LEGACY_USERNAME_DOMAINS];
+export const isUsernameEmail = (email: string | null | undefined) => typeof email === "string" && USERNAME_DOMAINS.some((d) => email.toLowerCase().endsWith(`@${d}`));
 export const loginToEmail = (login: string) => (login.includes("@") ? login.trim().toLowerCase() : `${login.trim().toLowerCase()}@${USERNAME_DOMAIN}`);
-export const displayLogin = (email: string) => (email.endsWith(`@${USERNAME_DOMAIN}`) ? email.split("@")[0] : email);
+export const displayLogin = (email: string) => (isUsernameEmail(email) ? email.split("@")[0] : email);

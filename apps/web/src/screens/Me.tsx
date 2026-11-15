@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppBar, BrandMark, Button, CertificateCard, ChoiceCard, Icon, LanguagePicker, PlacementResult, Switch, TextField, TrackChip } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
-import { displayLogin, USERNAME_DOMAIN } from "../auth/api";
+import { displayLogin, USERNAME_DOMAINS } from "../auth/api";
 import { accountLinks } from "../components/Layout";
 import { NotificationsPanel } from "../notify/NotificationsPanel";
 import { isolate, useI18n, useLanguages } from "../i18n";
@@ -297,7 +297,7 @@ function Account() {
       {left && <p className="notice ok" role="status">{t(k(left.out ? "leave.signIn" : "leave.done"), { org: left.org })}</p>}
       {/* A platform admin belongs to no organization as a member. A login the organization manages (it made it) is its
           admin's to remove, as the server says (leaveOrg "managed"): said here instead of a button that can only fail. */}
-      {orgId && role !== "superadmin" && !left && (isManaged(profile, user.email, orgId, USERNAME_DOMAIN)
+      {orgId && role !== "superadmin" && !left && (isManaged(profile, user.email, orgId, USERNAME_DOMAINS)
         ? <p className="muted small">{t(k("leave.managedNote"))}</p>
         : <LeaveOrg uid={user.uid} name={org?.id === orgId ? org.name : ""} onLeft={(said, out) => setLeft({ org: said, out })} />)}
     </section>

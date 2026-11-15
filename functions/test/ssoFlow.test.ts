@@ -480,7 +480,7 @@ describe("who a school sign-in becomes", () => {
     expect(minted().at(-1)!.uid).not.toBe("t1");
     expect(user("t1")).toMatchObject({ orgId: null });
     // A login the organization manages, connected to the school's sign-in, stays a tombstone whoever took it out.
-    member("u1", "student", "o1", { createdBy: "a1", managedBy: "o1" }, { email: "u1@users.darsi.app" });
+    member("u1", "student", "o1", { createdBy: "a1", managedBy: "o1" }, { email: "u1@users.darsiai.org" });
     db.docs.set(idOf("sub-u1"), { uid: "u1", orgId: "o1", connectionId: "conn1", issuer: P.base, subject: "sub-u1", email: "u1@school.edu", emailVerified: true, linked: "org-made", state: "active", createdAt: 1, lastAt: 1, expiresAt: null });
     db.docs.set("users/u1", { ...user("u1"), role: "learner", orgId: null });
     await billing.writeClaims("u1", "learner", null);

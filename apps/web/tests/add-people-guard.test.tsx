@@ -186,7 +186,7 @@ describe("downloads that can't load the Excel code", () => {
   it("falls back to CSV with the passwords, says so, and counts as downloaded", async () => {
     m.xlsx.mockRejectedValueOnce(broken());
     // A name that would run as a formula in Excel, and a password that starts with @ (the server's symbols include it).
-    m.api.createMembers.mockResolvedValue({ results: [{ row: 1, name: "=HYPERLINK(\"http://evil\")", login: "amina.b@users.darsi.app", password: "@Kp7!xQ2mz", uid: "u1", status: "created" }] });
+    m.api.createMembers.mockResolvedValue({ results: [{ row: 1, name: "=HYPERLINK(\"http://evil\")", login: "amina.b@users.darsiai.org", password: "@Kp7!xQ2mz", uid: "u1", status: "created" }] });
     page(<AddPeople />);
     await addOne();
     fireEvent.click(screen.getByRole("button", { name: "Download credentials (Excel)" }));
@@ -333,8 +333,8 @@ describe("after Add people, and a password reset's results", () => {
   });
 
   const resets = [
-    { row: 1, name: "Amina Bello", login: "amina.b@users.darsi.app", password: "pw-1", uid: "u1", status: "created" as const, role: "student" },
-    { row: 2, name: "Omar Said", login: "omar.s@users.darsi.app", uid: "u2", status: "error" as const, error: "refused", role: "student" },
+    { row: 1, name: "Amina Bello", login: "amina.b@users.darsiai.org", password: "pw-1", uid: "u1", status: "created" as const, role: "student" },
+    { row: 2, name: "Omar Said", login: "omar.s@users.darsiai.org", uid: "u2", status: "error" as const, error: "refused", role: "student" },
   ];
 
   it("words new passwords as a reset, on the page and in the downloaded sheet, never as accounts created", async () => {

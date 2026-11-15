@@ -16,7 +16,7 @@ import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/
 import { audit, auth, db, freshCaller, str } from "./admin.js";
 import type { Removed } from "./membersCore.js";
 import { bulkAction, isId, isManaged, listView, memberPatch, memberRole, memberRow, onlyWorkingAdmin, pageLimit, patchFor, SELF_REASON, selectFor, uidList, withRemovedAll, type BulkAction, type MemberRole } from "./orgMembersCore.js";
-import { generatePassword, USERNAME_DOMAIN } from "./passwords.js";
+import { generatePassword, isUsernameEmail, USERNAME_DOMAINS } from "./passwords.js";
 import { assign } from "./platform.js";
 import { ownLogin, ssoKeepWayIn, ssoSetBlocked } from "./ssoStore.js";
 
@@ -73,7 +73,7 @@ async function keepAnAdmin(uid: string, orgId: string) {
  * The profile is marked first and Auth second, so a call that fails half-way can simply be repeated.
  */
 async function suspend(orgId: string, u: DocumentSnapshot, by: string, reason: string) {
-  if (!isManaged(u.data(), orgId, USERNAME_DOMAIN)) throw refuse("failed-precondition", "This person signs in with their own account: remove them from the organization instead.", "own-login");
+  if (!isManaged(u.data(), orgId, USERNAME_DOMAINS)) throw refuse("failed-precondition", "This person signs in with their own account: remove them from the organization instead.", "own-login");
   const now = u.get("suspended") as { byOrg?: unknown } | undefined;
   if (now && now.byOrg !== orgId) throw refuse("failed-precondition", "A platform admin suspended this account.", "platform-suspended");
   if (u.get("role") === "orgAdmin") await keepAnAdmin(u.id, orgId);
@@ -100,7 +100,7 @@ async function resetPassword(u: DocumentSnapshot, length: number) {
   const account = await auth.getUser(u.id).catch(() => null);
   // Only the school's sign-in opens it: there is no Darsi password to reset (index.ts resetMemberPassword says the same).
   if (u.get("sso") === true && !ownLogin(account)) throw refuse("failed-precondition", "This person signs in with the school's own sign-in, which has no Darsi password.", "sso-login");
-  const own = !account?.email?.endsWith(`@${USERNAME_DOMAIN}`) || account.providerData.some((p) => p.providerId !== "password");
+  const own = !account || !isUsernameEmail(account.email) || account.providerData.some((p) => p.providerId !== "password");
   if (own) throw refuse("failed-precondition", "This person signs in with their own email or Google account, so only they can change its password.", "own-login");
   const password = generatePassword(length);
   await auth.updateUser(u.id, { password });
@@ -138,7 +138,7 @@ export const leaveOrg = onCall(async (req) => {
   // A suspended account changes nothing (firestore.rules says the same of its profile): its token may outlive the
   // suspension by up to an hour, and leaving would take the person out of the organization's sight meanwhile.
   if (u.get("suspended")) throw refuse("permission-denied", "This account is suspended.", "disabled");
-  if (isManaged(u.data(), orgId, USERNAME_DOMAIN)) throw refuse("failed-precondition", "Your organization made this account: ask its admin to remove you.", "managed");
+  if (isManaged(u.data(), orgId, USERNAME_DOMAINS)) throw refuse("failed-precondition", "Your organization made this account: ask its admin to remove you.", "managed");
   if (role === "orgAdmin") await keepAnAdmin(uid, orgId);
   await assign(uid, "learner", null);
   await audit("leaveOrg", uid, { orgId, role });
@@ -278,6 +278,6 @@ export const listMembers = onCall({ memory: "512MiB", timeoutSeconds: 120 }, asy
   let q: Query = db.collection("users").where("orgId", "==", orgId).orderBy(FieldPath.documentId());
   if (after) q = q.startAfter(after);
   const page = await q.limit(limit).select(...selectFor(view)).get();
-  const members = page.docs.map((d) => memberRow(d.id, d.data(), orgId, view, USERNAME_DOMAIN));
+  const members = page.docs.map((d) => memberRow(d.id, d.data(), orgId, view, USERNAME_DOMAINS));
   return { members, next: page.docs.length === limit ? page.docs[page.docs.length - 1].id : null };
 });

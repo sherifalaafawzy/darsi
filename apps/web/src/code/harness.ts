@@ -305,7 +305,10 @@ export function runSql(SQL: { Database: new () => SqlDb }, req: RunRequest): Run
 // pasted text bring curly quotes; Arabic lesson text, where code sits in invisible left-to-right isolates, brings those
 // marks and no-break spaces when copied. Python and SQL read each of them as a syntax error.
 const CURLY = /[\u2018-\u201f]/g;
-const PUNCT: Record<string, string> = { "\u060c": ",", "\u061b": ";", "\u066b": ".", "\u066a": "%" };
+// The symbol page of an Arabic keyboard has no full stop on some phones: learners reach for • or · (seen • add(v)), and
+// for ÷ and − to divide and subtract. × stays as typed: it is the letter x as often as multiplication, so a run that
+// fails on it says so instead (codeSymbols).
+const PUNCT: Record<string, string> = { "\u060c": ",", "\u061b": ";", "\u066b": ".", "\u066a": "%", "\u2022": ".", "\u00b7": ".", "\u00f7": "/", "\u2212": "-" };
 const SPACE = /[\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]/;
 const INVISIBLE = /[\u061c\u200b-\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff]/;
 /** One character outside strings and comments, as code reads it. */
@@ -445,4 +448,32 @@ function normalizeSql(src: string): string {
 export function normalizeCode(code: string, lang: CodeLang): string {
   if (!/[^\x00-\x7f]/.test(code)) return code;
   return lang === "sql" ? normalizeSql(code) : normalizePython(code);
+}
+
+/**
+ * The symbols outside strings and comments that code can't read and normalizeCode doesn't mend (× above all, the letter
+ * x or multiplication on an Arabic keyboard's symbol page), at most three, in the order typed. A failed run names them,
+ * so the learner knows to switch the keyboard rather than hunting for a mistake in the logic.
+ */
+export function codeSymbols(code: string, lang: CodeLang): string[] {
+  if (!/[^\x00-\x7f]/.test(code)) return [];
+  const found: string[] = [];
+  const n = code.length;
+  let i = 0;
+  while (i < n && found.length < 3) {
+    const c = code[i];
+    const comment = lang === "sql" ? (c === "-" && code[i + 1] === "-") : c === "#";
+    if (comment) { const e = code.indexOf("\n", i); i = e < 0 ? n : e; continue; }
+    if (lang === "sql" && c === "/" && code[i + 1] === "*") { const e = code.indexOf("*/", i + 2); i = e < 0 ? n : e + 2; continue; }
+    if (c === "'" || c === "\"" || (lang === "sql" && c === "`")) {
+      const triple = lang !== "sql" && code.startsWith(c + c + c, i), end = triple ? c + c + c : c;
+      i += end.length;
+      while (i < n && !code.startsWith(end, i) && (triple || code[i] !== "\n")) i += lang !== "sql" && code[i] === "\\" ? 2 : 1;
+      i += end.length;
+      continue;
+    }
+    if (c.charCodeAt(0) >= 0x80 && !/[\p{L}\p{N}\s]/u.test(c) && !found.includes(c)) found.push(c);
+    i++;
+  }
+  return found;
 }

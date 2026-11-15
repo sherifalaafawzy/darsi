@@ -183,7 +183,7 @@ describe("deleteAccount leaves nothing behind", () => {
   const cases: [string, Record<string, unknown>, string, () => unknown][] = [
     ["the person themself", teacher, "mona@gmail.com", () => signedIn(U)],
     ["a platform admin", teacher, "mona@gmail.com", () => signedIn("root", { uid: U })],
-    ["the admin of the organization that manages the account", managed, "mna.abd.12345@users.darsi.app", () => signedIn("adm1", { uid: U })],
+    ["the admin of the organization that manages the account", managed, "mna.abd.12345@users.darsiai.org", () => signedIn("adm1", { uid: U })],
   ];
   for (const [who, profile, email, req] of cases) {
     it(`as ${who}`, async () => {
@@ -274,7 +274,7 @@ describe("deleteAccount leaves nothing behind", () => {
   });
 
   it("marks an entry deleteOrg already queued, instead of failing on it, when only the conversations are left", async () => {
-    seed(managed, "mna.abd.12345@users.darsi.app");
+    seed(managed, "mna.abd.12345@users.darsiai.org");
     const at = Date.now() - 5 * 3600e3; // queued five hours ago: its worker is still trying
     db.docs.set(`accountDeletions/${U}`, { orgId: ORG, by: "root", at });
     store.sessionsFail = true;
@@ -287,7 +287,7 @@ describe("deleteAccount leaves nothing behind", () => {
     ["gave-up", { startedAt: 1, gaveUpAt: 2 }, 7 * 3600e3],
     ["expired", { startedAt: 1 }, 7 * 3600e3],
   ] as const)("replaces an entry no worker is behind any more (%s) with a new one, so a new six hours start", async (why, more, age) => {
-    seed(managed, "mna.abd.12345@users.darsi.app");
+    seed(managed, "mna.abd.12345@users.darsiai.org");
     db.docs.set(`accountDeletions/${U}`, { orgId: ORG, by: "root", at: Date.now() - age, ...more });
     db.writes = [];
     store.sessionsFail = true;
@@ -462,7 +462,7 @@ describe("deleteAccount leaves nothing behind", () => {
 // let them erase its managed accounts, records and all, and export them one by one though exportOrgData refuses.
 describe("an organization that is suspended or being deleted", () => {
   it.each([["suspended", "org-suspended"], ["deleting", "org-deleting"]])("%s: its own admin deletes and exports none of its accounts", async (status, reason) => {
-    seed(managed, "mna.abd.12345@users.darsi.app");
+    seed(managed, "mna.abd.12345@users.darsiai.org");
     db.docs.set(`orgs/${ORG}`, { ...db.docs.get(`orgs/${ORG}`), status });
     auth.users.set("adm1", { uid: "adm1", customClaims: { role: "orgAdmin", orgId: ORG, frozen: true } });
     const before = db.docs.size, files = store.files.size;
@@ -566,7 +566,7 @@ describe("exportAccountData", () => {
   });
 
   it("gives an organization's admin the learning record only", async () => {
-    seed(managed, "mna.abd.12345@users.darsi.app");
+    seed(managed, "mna.abd.12345@users.darsiai.org");
     const out = await exportAccountData.run(signedIn("adm1", { uid: U }));
     expect(Object.keys(out).sort()).toEqual(["account", "certificates", "courseAccess", "exportedAt", "lessonSummaryRows", "lessons", "notifications", "profile", "projects", "uid"]);
     expect(out.lessons).toHaveLength(1);
@@ -580,7 +580,7 @@ describe("exportAccountData", () => {
 describe("the deletion queue (onAccountDeletion)", () => {
   // After deleteOrg (platform.ts letGo): the organization is gone and its other members are learners without one; the
   // accounts it managed are queued and left as they were, their profiles still naming it.
-  const afterDeleteOrg = (profile: Record<string, unknown> = { managedBy: ORG }, email = "mna.abd.12345@users.darsi.app") => {
+  const afterDeleteOrg = (profile: Record<string, unknown> = { managedBy: ORG }, email = "mna.abd.12345@users.darsiai.org") => {
     seed({ role: "student", orgId: ORG, createdBy: "adm1", ...profile }, email);
     for (const k of [...db.docs.keys()]) if (k === `orgs/${ORG}` || k.startsWith(`orgs/${ORG}/`)) db.docs.delete(k);
     for (const p of ["pupil1", "pupil2"]) db.docs.set(`users/${p}`, { role: "learner", orgId: null, teacherId: null });
@@ -623,11 +623,11 @@ describe("the deletion queue (onAccountDeletion)", () => {
 
   it("skips a platform admin, an account that is the person's own, and one another organization has by now", async () => {
     for (const [profile, email, claims] of [
-      [{ role: "superadmin", managedBy: ORG }, "mna.abd.12345@users.darsi.app", {}],
-      [{ managedBy: ORG }, "mna.abd.12345@users.darsi.app", { role: "superadmin" }], // the claim alone says so
+      [{ role: "superadmin", managedBy: ORG }, "mna.abd.12345@users.darsiai.org", {}],
+      [{ managedBy: ORG }, "mna.abd.12345@users.darsiai.org", { role: "superadmin" }], // the claim alone says so
       [{}, "mona@gmail.com", {}], // only invited: createdBy gives the organization nothing
       [{ managedBy: "org2" }, "mona@gmail.com", {}],
-      [{ orgId: "org2" }, "mna.abd.12345@users.darsi.app", {}], // moved to another organization since
+      [{ orgId: "org2" }, "mna.abd.12345@users.darsiai.org", {}], // moved to another organization since
     ] as [Record<string, unknown>, string, Record<string, unknown>][]) {
       db.docs.clear(); auth.users.clear(); store.files.clear(); store.sessions.clear();
       afterDeleteOrg(profile, email);

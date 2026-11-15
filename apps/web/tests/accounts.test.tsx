@@ -38,7 +38,7 @@ const { ContentList } = await import("../src/cms/ContentList");
 // `at`: the address the screen opens at (a tabbed page's tab is ?tab=…).
 const wrap = (ui: ReactNode, lang = "en", at = "/") => render(<I18nProvider lang={lang}><MemoryRouter initialEntries={[at]}>{ui}</MemoryRouter></I18nProvider>);
 const signedIn = (role: Role, extra: Partial<typeof m.auth> = {}) => { Object.assign(m.auth, { user: { uid: "me", email: "me@gmail.com" }, profile: { uid: "me", name: "Me", email: "me@gmail.com", role, orgId: null }, role, orgId: null, ...extra }); };
-const person = (p: Partial<Profile & { createdBy: string; suspended: { reason?: string } }>) => ({ uid: "p1", name: "Mona", email: "mna.abd.12345@users.darsi.app", role: "student" as Role, orgId: "org1", createdBy: "adm", ...p });
+const person = (p: Partial<Profile & { createdBy: string; suspended: { reason?: string } }>) => ({ uid: "p1", name: "Mona", email: "mna.abd.12345@users.darsiai.org", role: "student" as Role, orgId: "org1", createdBy: "adm", ...p });
 const refused = (reason: string) => Object.assign(new Error("refused"), { code: "functions/failed-precondition", details: { reason } });
 
 beforeEach(() => {
@@ -183,7 +183,7 @@ describe("Your data, in Me", () => {
     } finally { log.mockRestore(); }
   });
   it("sends a school account to its admin, and an admin to hand the role over, with no delete button", () => {
-    signedIn("student", { user: { uid: "me", email: "mna.abd.12345@users.darsi.app" }, profile: { uid: "me", role: "student", orgId: "org1", createdBy: "adm" }, orgId: "org1" });
+    signedIn("student", { user: { uid: "me", email: "mna.abd.12345@users.darsiai.org" }, profile: { uid: "me", role: "student", orgId: "org1", createdBy: "adm" }, orgId: "org1" });
     const { unmount } = wrap(<MyData />);
     expect(screen.getByText(/Your organization made this account/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Delete my account and my data" })).toBeNull();
