@@ -7,7 +7,7 @@
 import { Component, lazy, Suspense, useEffect, useState, type ComponentType, type LazyExoticComponent, type ReactNode } from "react";
 import { Button, EmptyState } from "@darsi/design-system";
 import { useI18n } from "../i18n";
-import { loadPhrases } from "../i18n/phrases";
+import { loadPhrases, usePhrases } from "../i18n/phrases";
 import { reloadForUpdate, siteAnswers } from "../pwa";
 import { tellAppError, UpdateReload } from "../app/AppBoundary";
 import { pinGroups } from "../platform/offline";
@@ -19,8 +19,6 @@ const loaders = import.meta.glob<{ default: ComponentType<LabProps> }>("./apps/*
 const pathOf = (id: string) => `./apps/${id}/index.tsx`;
 export const hasLab = (id: string) => pathOf(id) in loaders;
 const idOf = (path: string) => path.split("/")[2];
-/** A lab's words in an added language (i18n/phrases.ts): the kit's and the catalogue's, then the app's own. */
-const loadLabPhrases = (lang: string, id: string) => Promise.all([loadPhrases(lang, "labs"), loadPhrases(lang, `lab-${id}`)]);
 /** The offline group of a lab (platform/offline.ts). */
 export const labGroup = (id: string) => `lab:${id}`;
 /**
@@ -54,14 +52,13 @@ export async function saveAllLabs(onProgress: (done: number, total: number) => v
     onProgress,
     warm: async () => { for (let i = 0; i < all.length; i++) { await all[i](); onProgress(i + 1, all.length); } },
   });
-  await Promise.all(Object.keys(loaders).map((p) => loadLabPhrases(lang, idOf(p))));
+  await Promise.all([loadPhrases(lang, "labs"), ...Object.keys(loaders).map((p) => loadPhrases(lang, `lab-${idOf(p)}`))]);
 }
 
 const lazies = new Map<string, LazyExoticComponent<ComponentType<LabProps>>>();
-const lazyLab = (id: string, lang: string) => {
-  const key = `${id}:${lang}`;
-  if (!lazies.has(key)) lazies.set(key, lazy(() => Promise.all([loaders[pathOf(id)](), loadLabPhrases(lang, id)]).then(([m]) => m)));
-  return lazies.get(key)!;
+const lazyLab = (id: string) => {
+  if (!lazies.has(id)) lazies.set(id, lazy(loaders[pathOf(id)]));
+  return lazies.get(id)!;
 };
 
 // Moved to pwa.tsx, where the app's own boundaries (app/AppBoundary.tsx) use them too; re-exported for existing imports.
@@ -89,15 +86,18 @@ class LabBoundary extends Component<{ id: string; fallback: (retry: () => void) 
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
   componentDidCatch(error: unknown) { tellAppError(error); } // the same "darsi:app-error" the app's boundaries send
-  retry = () => { for (const k of lazies.keys()) if (k.startsWith(`${this.props.id}:`)) lazies.delete(k); this.setState({ failed: false }); };
+  retry = () => { lazies.delete(this.props.id); this.setState({ failed: false }); };
   render() { return this.state.failed ? this.props.fallback(this.retry) : this.props.children; }
 }
 
 export function LabEmbed({ id, embedded, onDone }: { id: string; embedded?: boolean; onDone?: () => void }) {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
+  // A lab's words in an added language (i18n/phrases.ts): the kit's and the catalogue's, then the app's own.
+  const worded = usePhrases("labs", `lab-${id}`);
   const meta = labMeta(id);
   if (!meta || !hasLab(id)) return <p className="notice">{t("labs.unknown")}</p>;
-  const App = lazyLab(id, lang);
+  if (!worded) return <div className="loading" aria-busy="true" />;
+  const App = lazyLab(id);
   return (
     <LabBoundary key={id} id={id} fallback={(retry) => <LabMissing retry={retry} />}>
       <Suspense fallback={<div className="loading" aria-busy="true" />}><App meta={meta} embedded={embedded} onDone={onDone} /></Suspense>

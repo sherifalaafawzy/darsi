@@ -12,6 +12,7 @@ import { TrackStylesProvider, type TrackStyle } from "@darsi/design-system";
 import { addMessages, hasMessages, setLanguages, useI18n, useLanguages } from "../i18n";
 import { BUILTIN_CODES } from "./languages";
 import { forgetSettings, isStale, loadLanguagePack, loadSettings } from "./load";
+import { loadPhrases } from "../i18n/phrases";
 import { BUILTIN_TRACKS, MAX_LEVELS, mergeTracks } from "./tracks";
 import type { TrackDef } from "./types";
 
@@ -37,8 +38,9 @@ const loaded = new Map<string, number>();
 const loading = new Map<string, Promise<void>>();
 function loadPack(code: string, version: number): Promise<void> {
   const key = `${code}@${version}`;
-  if (!loading.has(key)) loading.set(key, loadLanguagePack(code, version)
-    .then((messages) => { addMessages({ [code]: messages }); loaded.set(code, version); remember(code, version); })
+  // With it, the built-in tracks' and levels' names in that language (phrases: content/phrases/<code>/tracks.json).
+  if (!loading.has(key)) loading.set(key, Promise.all([loadLanguagePack(code, version), loadPhrases(code, "tracks")])
+    .then(([messages]) => { addMessages({ [code]: messages }); loaded.set(code, version); remember(code, version); })
     .catch((e: unknown) => { loading.delete(key); throw e; }));
   return loading.get(key)!;
 }

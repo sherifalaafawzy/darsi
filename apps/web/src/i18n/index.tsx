@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { dirFor } from "@darsi/design-system";
 import en from "./en.json";
 import ar from "./ar.json";
@@ -57,25 +57,6 @@ export const phrase = (lang: string, english: string): string | undefined => PHR
 /** Bumps whenever strings or phrases arrive (for caches of translated tables). */
 export const stringsVersion = () => version;
 
-/**
- * Staff screens' strings (admin, the course editor) in an added language: fetched when a staff chunk registers its area
- * and whenever the page language changes, from public/content/i18n-staff/<lang>/<area>.json (keyed like en.json).
- * English and Arabic ship inside those chunks; learners never load either.
- */
-const staffAreas = new Set<string>();
-const staffTried = new Set<string>();
-let staffLang = "en";
-function loadStaff(lang: string, area: string) {
-  const key = `${lang}/${area}`;
-  if (lang === "en" || lang === "ar" || staffTried.has(key) || !/^[a-z]{2,3}(-[a-z0-9]{2,8})*$/.test(lang)) return;
-  staffTried.add(key);
-  fetch(`/content/i18n-staff/${key}.json`)
-    .then((r) => (r.ok && (r.headers.get("content-type") ?? "").includes("json") ? r.json() as Promise<Record<string, string>> : null))
-    .then((d) => { if (d) addMessages({ [lang]: d }); })
-    .catch(() => { staffTried.delete(key); });
-}
-/** Called by a staff chunk when it loads ("admin", "cms"). */
-export function addStaffArea(area: string) { staffAreas.add(area); loadStaff(staffLang, area); }
 
 /** Unicode isolate, the plain-text <bdi>: for names passed into t() so a Latin name can't reorder an Arabic sentence (or the reverse). */
 export const isolate = (s: string) => `⁨${s}⁩`;
@@ -152,7 +133,6 @@ export function I18nProvider({ lang, brand, children }: { lang: string; brand?: 
     return pick(text, meta.code);
   }, [meta.code, v]); // eslint-disable-line react-hooks/exhaustive-deps
   const value = useMemo(() => ({ lang: meta.code, t, L, num, dir: meta.dir, locale: meta.numerals }), [meta.code, meta.dir, meta.numerals, t, L, num]);
-  useEffect(() => { staffLang = meta.code; staffAreas.forEach((a) => loadStaff(meta.code, a)); }, [meta.code]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 export function useI18n(): I18n {

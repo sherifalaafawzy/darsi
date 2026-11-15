@@ -1,5 +1,6 @@
 /** The course editor's strings, registered when its chunk loads (they are not in the app's main dictionaries). */
-import { addMessages, addStaffArea } from "../i18n";
+import { addMessages } from "../i18n";
+import { addStaffArea } from "../staff/i18n";
 import en from "./strings/en.json";
 import ar from "./strings/ar.json";
 

@@ -23,7 +23,7 @@ describe("phrase files", () => {
       const files = readdirSync(join(DIR, lang)).filter((f) => f.endsWith(".json"));
       it("are named after an area and map English to a translation", () => {
         for (const f of files) {
-          expect(f).toMatch(/^(labs|landing|placement|lab-[\w-]+)\.json$/);
+          expect(f).toMatch(/^(labs|landing|placement|tracks|lab-[\w-]+)\.json$/);
           const d = JSON.parse(readFileSync(join(DIR, lang, f), "utf8")) as Record<string, unknown>;
           for (const [k, v] of Object.entries(d)) { expect(typeof v, `${f}: ${k}`).toBe("string"); expect((v as string).trim(), `${f}: ${k}`).not.toBe(""); }
         }
