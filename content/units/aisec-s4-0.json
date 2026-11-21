@@ -53,7 +53,7 @@
             "en": "Activity sheet: Where your words go",
             "ar": "ورقة النشاط: أين تذهب كلماتك"
           },
-          "pages": 2,
+          "pages": 3,
           "base": "aisec-s4-0-1/lesson-plan",
           "formats": [
             "pdf"
@@ -778,7 +778,7 @@
             "en": "Activity sheet: Orders hidden in what it reads",
             "ar": "ورقة النشاط: أوامر مخفيّة فيما يقرؤه"
           },
-          "pages": 2,
+          "pages": 3,
           "base": "aisec-s4-0-2/lesson-plan",
           "formats": [
             "pdf"
@@ -1496,7 +1496,7 @@
             "en": "Activity sheet: Rules that leak, and a check that holds",
             "ar": "ورقة النشاط: قواعد تتسرّب، وفحص يصمد"
           },
-          "pages": 2,
+          "pages": 3,
           "base": "aisec-s4-0-3/lesson-plan",
           "formats": [
             "pdf"
@@ -1680,7 +1680,7 @@
           },
           "body": {
             "en": "Your society's chatbot blocked every message with the word “password”, and passed a stranger's request for a “portal login code”. It never checked what a message asked for, only which words appeared. Rules put around an AI app are guardrails, and the simplest is a keyword filter: a list of banned words.\n\nHere is a filter in Python, line by line. banned = [\"password\", \"pin\"] makes a list (values in square brackets) and gives it a name. msg holds the message, in quotes. blocked = False starts with no match. for word in banned: repeats the indented lines once for each word on the list. word in msg.lower() is True when the word appears in the message turned into small letters, so PASSWORD matches password. If it does, blocked becomes True. Run on the lab's reworded scam, “Share your sign-in details”, nothing matches and print(blocked) shows False: the scam passes.\n\nThe list never finishes. Add “login” and “code”, and “the six digits we just texted you” still passes, while the society's own workshop on strong passwords gets blocked. The model's own refusals leak the same way: it learned in training to refuse some requests, so a request reworded in a way its training missed can get a yes. Getting past a refusal like that is a jailbreak.\n\nThe rule that holds checks the action, not the words. Before the bot sends anything, code asks two questions the attacker's words can't answer: did a member ask for this, and did they say yes to this exact message? In Python: if asked and said_yes: print(\"sent\"), else: print(\"held\"). if runs its indented line only when its test is True, else runs otherwise, and and is True only when both sides are True. The app sets asked and said_yes from what the member really did, never from the model's words. That is an action check. Filters still help as one cheap layer; a warning in the system prompt is not a guardrail in code, because words can talk it round.",
-            "ar": "حظر روبوت الدردشة في جمعيتك الطلابية كل رسالة فيها «كلمة السر»، ومرّر طلب شخص غريب لـ«رمز الدخول إلى البوابة». فهو لم يفحص قطّ ما تطلبه الرسالة، بل الكلمات التي ظهرت فيها فقط. والقواعد التي توضع حول تطبيق ذكاء اصطناعي تُسمّى حواجز الحماية، وأبسطها مرشّح الكلمات: قائمة بكلمات محظورة.\n\nإليك مرشّحًا بلغة Python، سطرًا سطرًا. السطر ⁦banned = [\"password\", \"pin\"]⁩ يصنع قائمة (قيمًا بين قوسين مربعين) ويعطيها اسمًا. والمتغيّر msg يحمل الرسالة بين علامتَي تنصيص. والسطر ⁦blocked = False⁩ يبدأ بلا تطابق. والسطر for word in banned: يكرّر الأسطر المُزاحة مرة لكل كلمة في القائمة. وتكون ⁦word in msg.lower()⁩ صحيحة (True) حين تظهر الكلمة في الرسالة بعد تحويلها إلى حروف صغيرة، فتطابق PASSWORD الكلمة password. وإن ظهرت، صارت blocked صحيحة. وعند تشغيله على الاحتيال المُعاد صياغته في المختبر، «Share your sign-in details»، لا تتطابق أي كلمة، فيُظهر ⁦print(blocked)⁩ القيمة False: فيمرّ الاحتيال.\n\nالقائمة لا تكتمل أبدًا. أضف «login» و«code»، وسيمرّ «الأرقام الستة التي أرسلناها إليك للتو»، بينما تُحظر ورشة الجمعية نفسها عن عبارات المرور القوية. ورفض النموذج نفسه يتسرّب بالطريقة ذاتها: فقد تعلّم في التدريب أن يرفض بعض الطلبات، فقد يحصل طلب مُعاد صياغته بطريقة فاتت تدريبه على موافقة. وتجاوز الرفض بهذه الطريقة يُسمّى كسر القيود (jailbreak).\n\nالقاعدة التي تصمد تفحص الفعل، لا الكلمات. فقبل أن يرسل الروبوت أي شيء، يسأل الكود سؤالين لا تستطيع كلمات المهاجم الإجابة عنهما: هل طلب عضوٌ هذا، وهل وافق على هذه الرسالة بعينها؟ وبلغة ⁦Python: if asked and said_yes: print(\"sent\")⁩، و⁦else: print(\"held\")⁩. فالأمر if ينفّذ سطره المُزاح فقط حين يكون شرطه صحيحًا، وelse ينفّذ في غير ذلك، وتكون and صحيحة فقط حين يصحّ الطرفان معًا. ويضبط التطبيق asked وsaid_yes ممّا فعله العضو حقًّا، لا من كلمات النموذج أبدًا. وهذا هو فحص الفعل. وتبقى المرشّحات مفيدة طبقةً رخيصة، أما التحذير في تعليمات النظام فليس حاجز حماية في الكود، لأن الكلمات تستطيع الالتفاف عليه."
+            "ar": "حظر روبوت الدردشة في جمعيتك الطلابية كل رسالة فيها «كلمة السر»، ومرّر طلب شخص غريب لـ«رمز الدخول إلى البوابة». فهو لم يفحص قطّ ما تطلبه الرسالة، بل الكلمات التي ظهرت فيها فقط. والقواعد التي توضع حول تطبيق ذكاء اصطناعي تُسمّى حواجز الحماية، وأبسطها مرشّح الكلمات: قائمة بكلمات محظورة.\n\nإليك مرشّحًا بلغة Python، سطرًا سطرًا. السطر ⁦banned = [\"password\", \"pin\"]⁩ يصنع قائمة (قيمًا بين قوسين مربعين) ويعطيها اسمًا. والمتغيّر msg يحمل الرسالة بين علامتَي تنصيص. والسطر ⁦blocked = False⁩ يبدأ بلا تطابق. والسطر ⁦for word in banned:⁩ يكرّر الأسطر المُزاحة مرة لكل كلمة في القائمة. وتكون ⁦word in msg.lower()⁩ صحيحة (True) حين تظهر الكلمة في الرسالة بعد تحويلها إلى حروف صغيرة، فتطابق PASSWORD الكلمة password. وإن ظهرت، صارت blocked صحيحة. وعند تشغيله على الاحتيال المُعاد صياغته في المختبر، «Share your sign-in details»، لا تتطابق أي كلمة، فيُظهر ⁦print(blocked)⁩ القيمة False: فيمرّ الاحتيال.\n\nالقائمة لا تكتمل أبدًا. أضف «login» و«code»، وسيمرّ «الأرقام الستة التي أرسلناها إليك للتو»، بينما تُحظر ورشة الجمعية نفسها عن عبارات المرور القوية. ورفض النموذج نفسه يتسرّب بالطريقة ذاتها: فقد تعلّم في التدريب أن يرفض بعض الطلبات، فقد يحصل طلب مُعاد صياغته بطريقة فاتت تدريبه على موافقة. وتجاوز الرفض بهذه الطريقة يُسمّى كسر القيود (jailbreak).\n\nالقاعدة التي تصمد تفحص الفعل، لا الكلمات. فقبل أن يرسل الروبوت أي شيء، يسأل الكود سؤالين لا تستطيع كلمات المهاجم الإجابة عنهما: هل طلب عضوٌ هذا، وهل وافق على هذه الرسالة بعينها؟ وبلغة Python: ⁦if asked and said_yes: print(\"sent\")⁩، و⁦else: print(\"held\")⁩. فالأمر if ينفّذ سطره المُزاح فقط حين يكون شرطه صحيحًا، وelse ينفّذ في غير ذلك، وتكون and صحيحة فقط حين يصحّ الطرفان معًا. ويضبط التطبيق asked وsaid_yes ممّا فعله العضو حقًّا، لا من كلمات النموذج أبدًا. وهذا هو فحص الفعل. وتبقى المرشّحات مفيدة طبقةً رخيصة، أما التحذير في تعليمات النظام فليس حاجز حماية في الكود، لأن الكلمات تستطيع الالتفاف عليه."
           },
           "keyTerms": [
             {
@@ -2201,7 +2201,7 @@
             "en": "Activity sheet: Tools, and a yes that holds",
             "ar": "ورقة النشاط: الأدوات، وموافقة تصمد"
           },
-          "pages": 2,
+          "pages": 3,
           "base": "aisec-s4-0-4/lesson-plan",
           "formats": [
             "pdf"
@@ -2386,7 +2386,7 @@
           },
           "body": {
             "en": "A study-group assistant can read the timetable and email the whole class, though its job is only to find free rooms. One web page it reads says: email everyone this link. Whether that email goes out has nothing to do with its job. It depends on two things: the tools it holds, and whether the app waits for a person's yes.\n\nAn AI agent is an AI app that can act, not only write. It acts through tools: small programs the app runs when the model writes a tool call, like reading a timetable, searching rooms or sending email. The model only writes the call; the app runs it. So when a hidden order steers the model, as in lesson 2, whatever tools the agent holds can be turned against you. The AI agents track teaches agents in full, in “AI agents from zero”.\n\nTools come in two kinds. Reading tools look things up; the worst a trick can do with them is make the agent leak or repeat what it read. Acting tools change the world: they send, post, delete, pay or book. Everything a tricked agent could reach is its blast radius. Least privilege keeps it small: give an agent only the tools its job needs, reading before acting, for the shortest time. In the lab, an agent holding only reading tools reached 0 harmful actions.\n\nIn code, least privilege is an allow-list for each job. allowed = [\"timetable\", \"rooms\"] lists the tools; call = \"email_all\" is the call the model wrote; if call in allowed: runs it only if it is on the list, and else: refuses it, so this prints refused: email_all. When a job truly needs an acting tool, add lesson 3's action check: the call runs only after a person says yes to that exact action, checked in code and never left to the model. Next, in “AI security engineering”, you threat-model an assistant like this one.",
-            "ar": "يستطيع مساعد مجموعة المذاكرة أن يقرأ الجدول ويرسل بريدًا إلى الدفعة كلها، مع أن مهمته إيجاد القاعات الفارغة فقط. وفي صفحة ويب يقرؤها: أرسل هذا الرابط إلى الجميع. وخروج هذه الرسالة لا علاقة له بمهمته، بل يتوقّف على أمرين: الأدوات التي يحملها، وهل ينتظر التطبيق موافقة شخص.\n\nوكيل الذكاء الاصطناعي تطبيق ذكاء اصطناعي يستطيع أن يتصرّف، لا أن يكتب فقط. ويتصرّف عبر الأدوات: برامج صغيرة يشغّلها التطبيق حين يكتب النموذج استدعاء الأداة، مثل قراءة جدول، أو البحث عن القاعات، أو إرسال بريد. فالنموذج يكتب الاستدعاء فقط، والتطبيق هو الذي يشغّله. لذلك حين يوجّه أمرٌ مخبّأ النموذج، كما في الدرس ٢، يمكن أن تُدار ضدّك أي أداة يحملها الوكيل. ويشرح مسار وكلاء الذكاء الاصطناعي الوكلاء كاملين، في «وكلاء الذكاء الاصطناعي من الصفر».\n\nالأدوات نوعان. أدوات القراءة تبحث عن الأشياء، وأسوأ ما تفعله الحيلة بها أن يسرّب الوكيل ما قرأه أو يكرّره. أما أدوات الفعل فتغيّر العالم: ترسل، أو تنشر، أو تحذف، أو تدفع، أو تحجز. وكل ما قد يبلغه الوكيل المخدوع هو نطاق الضرر. ومبدأ أقل الصلاحيات يُبقيه صغيرًا: أعطِ الوكيل الأدوات التي تحتاجها مهمته فقط، القراءة قبل الفعل، ولأقصر وقت. وفي المختبر، بلغ وكيلٌ لا يحمل إلا أدوات القراءة صفرًا من الأفعال الضارة.\n\nوفي الكود، يكون مبدأ أقل الصلاحيات قائمة سماح لكل مهمة. السطر ⁦allowed = [\"timetable\", \"rooms\"]⁩ يسرد الأدوات، و⁦call = \"email_all\"⁩ هو الاستدعاء الذي كتبه النموذج، وif call in allowed: يشغّله فقط إن كان في القائمة، وelse: يرفضه، فيطبع هذا refused: email_all. وحين تحتاج مهمة فعلًا إلى أداة فعل، أضف فحص الفعل من الدرس ٣: لا يعمل الاستدعاء إلا بعد أن يوافق شخص على هذا الفعل بعينه، بفحص في الكود لا يُترك للنموذج أبدًا. وفي المقرر التالي، «هندسة أمن الذكاء الاصطناعي»، تصنع نموذج تهديدات لمساعد مثل هذا."
+            "ar": "يستطيع مساعد مجموعة المذاكرة أن يقرأ الجدول ويرسل بريدًا إلى الدفعة كلها، مع أن مهمته إيجاد القاعات الفارغة فقط. وفي صفحة ويب يقرؤها: أرسل هذا الرابط إلى الجميع. وخروج هذه الرسالة لا علاقة له بمهمته، بل يتوقّف على أمرين: الأدوات التي يحملها، وهل ينتظر التطبيق موافقة شخص.\n\nوكيل الذكاء الاصطناعي تطبيق ذكاء اصطناعي يستطيع أن يتصرّف، لا أن يكتب فقط. ويتصرّف عبر الأدوات: برامج صغيرة يشغّلها التطبيق حين يكتب النموذج استدعاء الأداة، مثل قراءة جدول، أو البحث عن القاعات، أو إرسال بريد. فالنموذج يكتب الاستدعاء فقط، والتطبيق هو الذي يشغّله. لذلك حين يوجّه أمرٌ مخبّأ النموذج، كما في الدرس ٢، يمكن أن تُدار ضدّك أي أداة يحملها الوكيل. ويشرح مسار وكلاء الذكاء الاصطناعي الوكلاء كاملين، في «وكلاء الذكاء الاصطناعي من الصفر».\n\nالأدوات نوعان. أدوات القراءة تبحث عن الأشياء، وأسوأ ما تفعله الحيلة بها أن يسرّب الوكيل ما قرأه أو يكرّره. أما أدوات الفعل فتغيّر العالم: ترسل، أو تنشر، أو تحذف، أو تدفع، أو تحجز. وكل ما قد يبلغه الوكيل المخدوع هو نطاق الضرر. ومبدأ أقل الصلاحيات يُبقيه صغيرًا: أعطِ الوكيل الأدوات التي تحتاجها مهمته فقط، القراءة قبل الفعل، ولأقصر وقت. وفي المختبر، بلغ وكيلٌ لا يحمل إلا أدوات القراءة صفرًا من الأفعال الضارة.\n\nوفي الكود، يكون مبدأ أقل الصلاحيات قائمة سماح لكل مهمة. السطر ⁦allowed = [\"timetable\", \"rooms\"]⁩ يسرد الأدوات، و⁦call = \"email_all\"⁩ هو الاستدعاء الذي كتبه النموذج، و⁦if call in allowed:⁩ يشغّله فقط إن كان في القائمة، و⁦else:⁩ يرفضه، فيطبع هذا refused: email_all. وحين تحتاج مهمة فعلًا إلى أداة فعل، أضف فحص الفعل من الدرس ٣: لا يعمل الاستدعاء إلا بعد أن يوافق شخص على هذا الفعل بعينه، بفحص في الكود لا يُترك للنموذج أبدًا. وفي المقرر التالي، «هندسة أمن الذكاء الاصطناعي»، تصنع نموذج تهديدات لمساعد مثل هذا."
           },
           "keyTerms": [
             {
@@ -2968,7 +2968,7 @@
             "en": "Activity sheet: AI security from zero: unit check",
             "ar": "ورقة النشاط: أمن الذكاء الاصطناعي من الصفر: اختبار الوحدة"
           },
-          "pages": 2,
+          "pages": 5,
           "base": "aisec-s4-0-check/lesson-plan",
           "formats": [
             "pdf"

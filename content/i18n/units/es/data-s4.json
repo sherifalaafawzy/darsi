@@ -4,8 +4,8 @@
   "t": "Ingeniería de datos"
  },
  "summary": {
-  "en": "One pass over a whole pipeline, on your phone: shape data and choose a format by who reads it, build a load that is safe to run twice, write quality tests as queries and decide what a failure does, and choose how long a stream's alarm should wait. Before this: “SQL that gives the right answer” (Data engineering, university) and “Lists and dictionaries” (Programming, university).",
-  "t": "Un recorrido por un flujo de datos completo, en tu teléfono: da forma a los datos y elige un formato según quién los lee, construye una carga que sea segura de ejecutar dos veces, escribe pruebas de calidad como consultas y decide qué hace un fallo, y elige cuánto debe esperar la alarma de un flujo. Antes de esto: «SQL que da la respuesta correcta» (Ingeniería de datos, universidad) y «Listas y diccionarios» (Programación, universidad)."
+  "en": "How data moves at scale: design schemas and pick formats, build ETL in Python and SQL that is safe to rerun, test data quality against contracts, and choose between batch and stream processing.",
+  "t": "Cómo se mueven los datos a gran escala: diseña esquemas y elige formatos, construye ETL en Python y SQL que sea seguro volver a ejecutar, prueba la calidad de los datos frente a contratos y elige entre procesamiento por lotes y en flujo."
  },
  "lessons.0.title": {
   "en": "Schemas and formats",
@@ -54,24 +54,24 @@
   "t": "Recuerda y pruébalo"
  },
  "lessons.0.steps.0.checkpoint.question.prompt": {
-  "en": "A report needs each class’s average attendance over a whole year. Which way of storing makes it read the least?",
-  "t": "Un informe necesita la asistencia promedio de cada clase durante todo un año. ¿Qué forma de guardar los datos hace que lea menos?"
+  "en": "Why is JSON bigger than CSV for the same table?",
+  "t": "¿Por qué JSON pesa más que CSV para la misma tabla?"
  },
  "lessons.0.steps.0.checkpoint.question.options.0.text": {
-  "en": "Compressed JSON, one file a day",
-  "t": "JSON comprimido, un archivo por día"
+  "en": "It stores numbers as pictures",
+  "t": "Guarda los números como imágenes"
  },
  "lessons.0.steps.0.checkpoint.question.options.1.text": {
-  "en": "By column, compressed",
-  "t": "Por columnas, comprimido"
+  "en": "It repeats every column’s name in every record",
+  "t": "Repite el nombre de cada columna en cada registro"
  },
  "lessons.0.steps.0.checkpoint.question.options.2.text": {
-  "en": "Plain CSV, one file a term",
-  "t": "CSV sin comprimir, un archivo por trimestre"
+  "en": "It can’t be compressed",
+  "t": "No se puede comprimir"
  },
  "lessons.0.steps.0.checkpoint.question.explain": {
-  "en": "The report needs only the class and present columns. Stored by column, it reads just those two, compressed, and skips the rest. Compression makes JSON small to send, but every record must still be unpacked and read.",
-  "t": "El informe solo necesita las columnas de clase y present. Guardado por columnas, lee solo esas dos, comprimidas, y se salta el resto. La compresión hace que JSON sea pequeño para enviar, pero cada registro sigue teniendo que descomprimirse y leerse."
+  "en": "Every JSON record says \"date\":, \"class\": and the rest again; CSV names the columns once, in its header line.",
+  "t": "Cada registro JSON vuelve a decir \"date\":, \"class\": y el resto; CSV nombra las columnas una sola vez, en su línea de encabezado."
  },
  "lessons.0.steps.0.transcript": {
   "en": "On a placement, you must collect daily attendance from twenty thousand schools. Many of them are on 2G. Sent the usual way, that is hours of airtime a day. How can the same facts travel in far less? By the end, you'll be able to choose a schema and a format by who reads the data and what sending costs. You've learned to store each fact once, in tables linked by keys. That suits an app that changes one row at a time. But a report reads a whole term of attendance at once, and adds it up. So reports get their own shape: a star schema. In the middle, a fact table holds the events, like one row per pupil per day. Small tables around it describe them: the school, the class, the date. Reports join and summarise it quickly. Then the format. CSV and JSON store row by row, and JSON repeats every column name, so it's more than twice the size. Column formats, like Parquet, store each column together, so repeated values squeeze to almost nothing. A school's term of attendance: twenty-five thousand records. As JSON over 2G, nearly five minutes. Compression squeezes out the repeats: about thirteen seconds. By column and compressed, about six kilobytes. Quick check! A report needs each class's average attendance over a whole year. Which way of storing makes it read the least? By column. The report needs only two columns, class and present, so it reads just those and skips the rest. Compressed JSON is small to send, but every record must still be unpacked and read, names and all. On campus, the results dashboard and the library's loan reports often work this way: facts in the middle, stored by column. But not every saving is a format. Photos and videos are already compressed, so zipping them again saves almost nothing. In the app, open Same data, different sizes. Choose A school, a term, and 2G. Try each format, with Compress it set to No, then Yes. Watch the six bars under All six ways, side by side. Your turn. Twenty thousand schools send attendance every day, many on 2G. How can the same facts travel in far less? Store it by column and compress it: a whole term in about six kilobytes. Remember: each fact once for apps, and a star schema for reports. JSON repeats names, while columns and compression squeeze out repeats. Choose by who reads the data, and what sending costs. Try it yourself: save the same small table as CSV and as JSON, and compare the file sizes. Then compress both. Which wins, and why? Next lesson: a load that is safe to run twice.",
@@ -82,72 +82,64 @@
   "t": "Leer"
  },
  "lessons.0.steps.1.title": {
-  "en": "Shape it for the reader, store it for less",
-  "t": "Dale forma para quien lo lee, guárdalo para que pese menos"
+  "en": "Schemas, stars and columns",
+  "t": "Esquemas, estrellas y columnas"
  },
  "lessons.0.steps.1.body": {
-  "en": "On a placement, you might collect daily attendance from twenty thousand schools, many of them on 2G. Sent the usual way, as JSON, that is hours of airtime a day. The same facts can travel in far less: shaped for the people who read them, stored by column and compressed, a school’s whole term fits in about 6 KB.\n\nYou already store each fact once, in tables linked by keys. That suits an app that changes one row at a time. A report is different: it reads a whole term at once and adds it up. So reports get their own shape, a star schema. In the middle, a fact table holds the events, such as one row per pupil per school day, with keys and small measures (present: 1 or 0). Around it, dimension tables describe the events: the school (name, region), the class, the date (day, week, term). A report joins the fact table to the dimensions it needs and summarises: attendance by region by month. Names live once in the dimensions, so the huge fact table holds only small numbers.\n\nThen choose a format. CSV and JSON store row by row; JSON repeats every column’s name in every record, so the same facts take more than twice the space. A column format, such as Parquet, stores each column together, so a query reads only the columns it needs, and repeated values (the same date for 420 pupils) shrink to almost nothing. Compression, such as gzip, squeezes out the repeats that are left. A school’s term of attendance is 25,200 records: as JSON over 2G, nearly 5 minutes; compressed, about 13 seconds; by column and compressed, about 6 KB. Compression doesn’t make the format irrelevant: compressed JSON is still more than ten times the size of compressed columns, and a report must still unpack and read every record.\n\nData arriving from outside must still match your schema. In Python, with open(\"attendance.csv\") as f: opens the file and closes it again when the block ends, and csv.DictReader(f) gives each line as a dictionary keyed by the column names in the header, so row[\"present\"] is that line’s present value, always as text. Check each value against the rules and count the rows that don’t fit, with a reason, instead of crashing on the first bad row or silently guessing: “9,996 rows loaded, 4 rejected: pupil not a number (2), present not 0 or 1 (2)”.",
-  "t": "En unas prácticas, podrías recoger la asistencia diaria de veinte mil escuelas, muchas de ellas con 2G. Enviada de la manera habitual, como JSON, son horas de conexión al día. Los mismos hechos pueden viajar en mucho menos: con la forma pensada para quienes los leen, guardados por columnas y comprimidos, todo el trimestre de una escuela cabe en unos 6 KB.\n\nYa guardas cada hecho una sola vez, en tablas enlazadas por claves. Eso sirve a una app que cambia una fila a la vez. Un informe es distinto: lee un trimestre entero de una vez y lo suma. Por eso los informes tienen su propia forma, un esquema en estrella. En el centro, una tabla de hechos guarda los eventos, como una fila por alumno por día de clase, con claves y medidas pequeñas (present: 1 o 0). A su alrededor, las tablas de dimensiones describen los eventos: la escuela (nombre, región), la clase, la fecha (día, semana, trimestre). Un informe une la tabla de hechos con las dimensiones que necesita y resume: asistencia por región por mes. Los nombres viven una sola vez en las dimensiones, así que la enorme tabla de hechos guarda solo números pequeños.\n\nDespués, elige un formato. CSV y JSON guardan fila por fila; JSON repite el nombre de cada columna en cada registro, así que los mismos hechos ocupan más del doble. Un formato en columnas, como Parquet, guarda cada columna junta, así que una consulta lee solo las columnas que necesita, y los valores repetidos (la misma fecha para 420 alumnos) se reducen a casi nada. La compresión, como gzip, elimina las repeticiones que quedan. Un trimestre de asistencia de una escuela son 25,200 registros: como JSON por 2G, casi 5 minutos; comprimido, unos 13 segundos; por columnas y comprimido, unos 6 KB. La compresión no vuelve irrelevante el formato: el JSON comprimido sigue siendo más de diez veces más grande que las columnas comprimidas, y un informe aún debe descomprimir y leer cada registro.\n\nLos datos que llegan de fuera deben ajustarse a tu esquema. En Python, with open(\"attendance.csv\") as f: abre el archivo y lo cierra de nuevo cuando termina el bloque, y csv.DictReader(f) da cada línea como un diccionario con las columnas del encabezado como claves, así que row[\"present\"] es el valor present de esa línea, siempre como texto. Comprueba cada valor con las reglas y cuenta las filas que no encajan, con un motivo, en lugar de fallar en la primera fila mala o adivinar en silencio: «9,996 filas cargadas, 4 rechazadas: alumno no es un número (2), present no es 0 ni 1 (2)»."
+  "en": "A schema is the shape of your data: its tables, columns, types and rules. What it should look like depends on the job. Apps that update data all day want it normalised: each fact stored once, in tables linked by keys, so an update happens in one place and copies can’t disagree. Reports that read millions of rows want it shaped for reading.\n\nThat’s a star schema. A fact table in the middle holds the events, such as one row per pupil per school day, with keys and measures (present: 1 or 0). Dimension tables around it describe the events: the school (name, region), the class, the date (day, week, term). A report joins the fact table to the dimensions it needs and summarises: attendance by region by month. Names live in the dimensions, so the huge fact table holds only small numbers.\n\nThen choose a format. CSV and JSON store row by row; JSON repeats every column’s name in every record, so the same facts often take more than twice the space. Column formats, such as Parquet, store each column together, so a query reads only the columns it needs, and repeated values (the same date for 420 pupils) compress to almost nothing. A school’s term of attendance, 25,200 records, takes nearly 5 minutes to send as JSON over 2G; compressed, about 13 seconds; by column and compressed, about 6 KB. Across 20,000 schools, the format is the difference between hours of airtime and almost none.\n\nData arriving from outside must match your schema. Parse each value to its type, check it against the rules, and count the rows that don’t fit, with a reason, instead of crashing on the first bad row or silently guessing. A report of “9,996 rows loaded, 4 rejected: pupil not a number (2), present not 0 or 1 (2)” is a schema doing its job.",
+  "t": "Un esquema es la forma de tus datos: sus tablas, columnas, tipos y reglas. Cómo debe verse depende del trabajo. Las apps que actualizan datos todo el día los quieren normalizados: cada hecho guardado una sola vez, en tablas enlazadas por claves, de modo que una actualización ocurre en un solo lugar y las copias no pueden contradecirse. Los informes que leen millones de filas los quieren con una forma pensada para la lectura.\n\nEso es un esquema en estrella. Una tabla de hechos en el centro guarda los eventos, como una fila por alumno por día de clase, con claves y medidas (present: 1 o 0). Las tablas de dimensiones a su alrededor describen los eventos: la escuela (nombre, región), la clase, la fecha (día, semana, trimestre). Un informe une la tabla de hechos con las dimensiones que necesita y resume: asistencia por región por mes. Los nombres viven en las dimensiones, así que la enorme tabla de hechos guarda solo números pequeños.\n\nDespués, elige un formato. CSV y JSON guardan fila por fila; JSON repite el nombre de cada columna en cada registro, así que los mismos hechos a menudo ocupan más del doble. Los formatos en columnas, como Parquet, guardan cada columna junta, así que una consulta lee solo las columnas que necesita, y los valores repetidos (la misma fecha para 420 alumnos) se comprimen a casi nada. Un trimestre de asistencia de una escuela, 25,200 registros, tarda casi 5 minutos en enviarse como JSON por 2G; comprimido, unos 13 segundos; por columnas y comprimido, unos 6 KB. En 20,000 escuelas, el formato es la diferencia entre horas de conexión y casi nada.\n\nLos datos que llegan de fuera deben ajustarse a tu esquema. Convierte cada valor a su tipo, compruébalo con las reglas y cuenta las filas que no encajan, con un motivo, en lugar de fallar en la primera fila mala o adivinar en silencio. Un informe como «9,996 filas cargadas, 4 rechazadas: alumno no es un número (2), present no es 0 ni 1 (2)» es un esquema haciendo su trabajo."
  },
  "lessons.0.steps.1.keyTerms.0.term": {
+  "en": "Normalised schema",
+  "t": "Esquema normalizado"
+ },
+ "lessons.0.steps.1.keyTerms.0.def": {
+  "en": "Each fact stored once, in tables linked by keys: safe updates for apps.",
+  "t": "Cada hecho guardado una sola vez, en tablas enlazadas por claves: actualizaciones seguras para las apps."
+ },
+ "lessons.0.steps.1.keyTerms.1.term": {
   "en": "Star schema",
   "t": "Esquema en estrella"
  },
- "lessons.0.steps.1.keyTerms.0.def": {
-  "en": "A shape for reports: a fact table in the middle, with dimension tables around it that describe its events.",
-  "t": "Una forma para informes: una tabla de hechos en el centro, con tablas de dimensiones alrededor que describen sus eventos."
- },
- "lessons.0.steps.1.keyTerms.1.term": {
-  "en": "Fact table",
-  "t": "Tabla de hechos"
- },
  "lessons.0.steps.1.keyTerms.1.def": {
-  "en": "The table of events, such as one row per pupil per school day, holding keys and small measures.",
-  "t": "La tabla de eventos, como una fila por alumno por día de clase, con claves y medidas pequeñas."
+  "en": "A fact table of events in the middle, with dimension tables that describe them: fast reports.",
+  "t": "Una tabla de hechos con los eventos en el centro, con tablas de dimensiones que los describen: informes rápidos."
  },
  "lessons.0.steps.1.keyTerms.2.term": {
-  "en": "Dimension table",
-  "t": "Tabla de dimensiones"
- },
- "lessons.0.steps.1.keyTerms.2.def": {
-  "en": "A small table that describes the events once each: the school, the class, the date.",
-  "t": "Una tabla pequeña que describe los eventos una sola vez: la escuela, la clase, la fecha."
- },
- "lessons.0.steps.1.keyTerms.3.term": {
   "en": "Column format",
   "t": "Formato en columnas"
  },
+ "lessons.0.steps.1.keyTerms.2.def": {
+  "en": "Stores each column together (such as Parquet), so queries read only what they need and repeats compress well.",
+  "t": "Guarda cada columna junta (como Parquet), así que las consultas leen solo lo que necesitan y las repeticiones se comprimen bien."
+ },
+ "lessons.0.steps.1.keyTerms.3.term": {
+  "en": "Schema validation",
+  "t": "Validación del esquema"
+ },
  "lessons.0.steps.1.keyTerms.3.def": {
-  "en": "Stores each column together (such as Parquet), so queries read only what they need and repeats shrink.",
-  "t": "Guarda cada columna junta (como Parquet), así que las consultas leen solo lo que necesitan y las repeticiones se reducen."
- },
- "lessons.0.steps.1.keyTerms.4.term": {
-  "en": "Compression",
-  "t": "Compresión"
- },
- "lessons.0.steps.1.keyTerms.4.def": {
-  "en": "Squeezing out the repeats in a file, such as with gzip, so it costs less to send.",
-  "t": "Eliminar las repeticiones de un archivo, por ejemplo con gzip, para que enviarlo cueste menos."
+  "en": "Checking each incoming row’s types and rules, and counting the rows that don’t fit.",
+  "t": "Comprobar los tipos y las reglas de cada fila que llega, y contar las filas que no encajan."
  },
  "lessons.0.steps.2.prompt": {
-  "en": "Twenty thousand schools send attendance every day, many on 2G. How can the same facts travel in far less?",
-  "t": "Veinte mil escuelas envían la asistencia cada día, muchas con 2G. ¿Cómo pueden viajar los mismos hechos en mucho menos?"
+  "en": "A report needs the average attendance per class over a year. Which format reads the least data?",
+  "t": "Un informe necesita la asistencia promedio por clase durante un año. ¿Qué formato lee menos datos?"
  },
  "lessons.0.steps.2.options.0.text": {
-  "en": "Stored by column, compressed",
-  "t": "Guardados por columnas, comprimidos"
+  "en": "A column format: it reads only the columns it needs",
+  "t": "Un formato en columnas: lee solo las columnas que necesita"
  },
  "lessons.0.steps.2.options.1.text": {
-  "en": "As JSON, sent overnight",
-  "t": "Como JSON, enviado por la noche"
+  "en": "JSON, because it’s readable",
+  "t": "JSON, porque es legible"
  },
  "lessons.0.steps.2.options.2.text": {
-  "en": "As CSV, one file per pupil",
-  "t": "Como CSV, un archivo por alumno"
+  "en": "One uncompressed CSV file per day",
+  "t": "Un archivo CSV sin comprimir por día"
  },
  "lessons.0.steps.2.explain": {
-  "en": "Stored by column and compressed, a school’s whole term fits in about 6 KB. Sending at night doesn’t change the bytes, and a file per pupil repeats the header thousands of times.",
-  "t": "Guardado por columnas y comprimido, todo el trimestre de una escuela cabe en unos 6 KB. Enviar de noche no cambia los bytes, y un archivo por alumno repite el encabezado miles de veces."
+  "en": "The query needs only the class and the status. A column format stores each column together, so it reads just those two, compressed; row formats must read every column of every row.",
+  "t": "La consulta solo necesita la clase y el estado. Un formato en columnas guarda cada columna junta, así que lee solo esas dos, comprimidas; los formatos por filas deben leer todas las columnas de cada fila."
  },
  "lessons.0.steps.3.prompt": {
   "en": "Match each piece to its job.",
@@ -210,8 +202,8 @@
   "t": "El registro JSON escribe el nombre de cada columna con comillas, dos puntos y espacios: 64 caracteres. La línea CSV son solo los valores: 18. Los nombres van una vez en el encabezado del CSV, no en cada registro."
  },
  "lessons.0.steps.5.prompt": {
-  "en": "Try it: open “Same data, different sizes”. Under “How much data”, choose “A school, a term”, and set “Network” to 2G. Try each format with “Compress it (gzip)” on No, then Yes, and read the six bars under “All six ways, side by side”. Watch for this: how many times smaller is the cheapest than the dearest? Finish when you have seen all three formats compressed.",
-  "t": "Pruébalo: abre «Los mismos datos, distintos tamaños». En «Cuántos datos», elige «Una escuela, un trimestre» y pon «Rojo» en 2G. Prueba cada formato con «Comprimir (gzip)» en No y luego en Sí, y lee las seis barras de «Las seis maneras, lado a lado». Fíjate en esto: ¿cuántas veces más pequeña es la más barata que la más cara? Termina cuando hayas visto los tres formatos comprimidos."
+  "en": "Try it: choose “A school, a term” and 2G. Find the cheapest of the six ways to send it, and the most expensive. How many times smaller is the cheapest? Then imagine 20,000 schools sending it every term.",
+  "t": "Pruébalo: elige «Una escuela, un trimestre» y 2G. Encuentra la más barata de las seis maneras de enviarlo y la más cara. ¿Cuántas veces más pequeña es la más barata? Luego imagina 20,000 escuelas enviándolo cada trimestre."
  },
  "lessons.0.steps.6.prompt": {
   "en": "attendance.csv must match the schema: pupil is a whole number, and present is 0 or 1. valid(row) only checks the pupil so far. Add the check for present, so the program prints 6 good rows and 4 bad.",
@@ -238,24 +230,24 @@
   "t": "Pon las líneas en orden para crear la tabla de hechos del esquema en estrella, con sus columnas en este orden: date_id, school_id, pupil_id, present."
  },
  "lessons.0.steps.7.explain": {
-  "en": "The fact table holds keys to its dimensions and one small measure per event; REFERENCES points each key at its dimension table. The school’s name lives once in the schools dimension; repeating it in billions of fact rows would waste space and let copies disagree.",
-  "t": "La tabla de hechos guarda las claves de sus dimensiones y una medida pequeña por evento; REFERENCES apunta cada clave a su tabla de dimensiones. El nombre de la escuela vive una vez en la dimensión de escuelas; repetirlo en miles de millones de filas de hechos desperdiciaría espacio y dejaría que las copias se contradijeran."
+  "en": "The fact table holds keys to its dimensions and one small measure per event. The school’s name lives once in the schools dimension; repeating it in billions of fact rows would waste space and drift.",
+  "t": "La tabla de hechos guarda las claves de sus dimensiones y una medida pequeña por evento. El nombre de la escuela vive una vez en la dimensión de escuelas; repetirlo en miles de millones de filas de hechos desperdiciaría espacio y haría que las copias se desviaran."
  },
  "lessons.0.steps.8.prompt": {
-  "en": "Once a file is compressed, it no longer matters whether it was written as JSON or stored by column.",
-  "t": "Una vez comprimido un archivo, ya no importa si se escribió como JSON o se guardó por columnas."
+  "en": "To work out average attendance per class, a column format still has to read every column of the table.",
+  "t": "Para calcular la asistencia promedio por clase, un formato en columnas igualmente tiene que leer todas las columnas de la tabla."
  },
  "lessons.0.steps.8.explain": {
-  "en": "In the lab, a term as compressed JSON still takes about 13 seconds on 2G; by column and compressed, it is about 6 KB, more than ten times smaller. And a report on compressed JSON must still unpack and read every record, names and all.",
-  "t": "En el laboratorio, un trimestre como JSON comprimido sigue tardando unos 13 segundos por 2G; por columnas y comprimido, son unos 6 KB, más de diez veces menos. Y un informe sobre JSON comprimido aún debe descomprimir y leer cada registro, con todos sus nombres."
+  "en": "That’s what storing row by row costs. Storing by column means a query reads only the columns it needs, here class and present, and skips the rest; each column also compresses well because its values are alike.",
+  "t": "Eso es lo que cuesta guardar fila por fila. Guardar por columnas significa que una consulta lee solo las columnas que necesita, aquí class y present, y se salta el resto; además, cada columna se comprime bien porque sus valores se parecen."
  },
  "lessons.0.steps.9.prompt": {
-  "en": "Think of data you send or receive often (photos, messages, exam results). What format is it in, and what does that cost on a slow or paid connection?",
-  "t": "Piensa en datos que envías o recibes a menudo (fotos, mensajes, resultados de exámenes). ¿En qué formato están, y cuánto cuesta eso en una conexión lenta o de pago?"
+  "en": "Think of data you send or receive often (photos, messages, school results). What format is it in, and what does that cost on a slow or paid connection?",
+  "t": "Piensa en datos que envías o recibes a menudo (fotos, mensajes, resultados escolares). ¿En qué formato están, y cuánto cuesta eso en una conexión lenta o de pago?"
  },
  "lessons.0.steps.9.placeholder": {
-  "en": "For example: “My faculty sends results as a big spreadsheet by email; as compressed CSV it would be a fraction of the size.”",
-  "t": "Por ejemplo: «Mi facultad envía los resultados como una hoja de cálculo grande por correo; como CSV comprimido sería una fracción del tamaño»."
+  "en": "For example: “Our school sends results as a big spreadsheet by email; as compressed CSV it would be a fraction of the size.”",
+  "t": "Por ejemplo: «Nuestra escuela envía los resultados como una hoja de cálculo grande por correo; como CSV comprimido sería una fracción del tamaño»."
  },
  "lessons.0.steps.10.prompt": {
   "en": "Project: Size it and shape it",
@@ -290,76 +282,76 @@
   "t": "Ingeniería de datos · Nivel 4 · Lección 1"
  },
  "lessons.0.slides.0.narration": {
-  "en": "How can the same facts travel in far less?",
-  "t": "¿Cómo pueden viajar los mismos hechos en mucho menos?"
+  "en": "20,000 schools on 2G, sending attendance every day. Which format?",
+  "t": "20,000 escuelas con 2G, enviando la asistencia cada día. ¿Qué formato?"
  },
  "lessons.0.slides.1.title": {
-  "en": "Today we will",
-  "t": "Hoy vamos a"
+  "en": "In this lesson you will",
+  "t": "En esta lección vas a"
  },
  "lessons.0.slides.1.bullets": {
   "en": [
-   "Shape data for its reader: each fact once, or a star.",
-   "Compare row and column formats, with compression.",
-   "Choose a format by what sending costs."
+   "Choose a schema: normalised for apps, a star for reports.",
+   "Compare row and column formats and compression.",
+   "Parse and type a CSV, counting rows that break the schema."
   ],
   "t": [
-   "Dar forma a los datos para quien los lee: cada hecho una vez, o una estrella.",
-   "Comparar formatos por filas y por columnas, con compresión.",
-   "Elegir un formato según lo que cuesta enviar."
+   "Elegir un esquema: normalizado para las apps, en estrella para los informes.",
+   "Comparar los formatos por filas y por columnas, y la compresión.",
+   "Convertir y tipar un CSV, contando las filas que rompen el esquema."
   ]
  },
  "lessons.0.slides.2.title": {
-  "en": "Remember",
-  "t": "Recuerda"
+  "en": "Key ideas",
+  "t": "Ideas clave"
  },
  "lessons.0.slides.2.bullets": {
   "en": [
-   "Each fact once for apps; a star schema for reports.",
-   "JSON repeats names; columns and compression squeeze repeats.",
-   "Choose by who reads the data, and what sending costs."
+   "Normalise for writes; star for reads.",
+   "JSON repeats names; columns squeeze out repeats.",
+   "Count what doesn’t fit, with a reason."
   ],
   "t": [
-   "Cada hecho una vez para las apps; esquema en estrella para los informes.",
-   "JSON repite nombres; las columnas y la compresión eliminan repeticiones.",
-   "Elige según quién lee los datos y lo que cuesta enviarlos."
+   "Normaliza para escribir; estrella para leer.",
+   "JSON repite nombres; las columnas eliminan repeticiones.",
+   "Cuenta lo que no encaja, con un motivo."
   ]
  },
  "lessons.0.slides.3.title": {
-  "en": "Activity: Size it on paper",
-  "t": "Actividad: Mídelo en papel"
+  "en": "Size it on paper",
+  "t": "Mídelo en papel"
  },
  "lessons.0.slides.3.bullets": {
   "en": [
-   "Warm-up (3 min): 20,000 schools on 2G",
    "Write (4 min): three records, two ways",
+   "Scale (4 min): a term, a district",
    "Star (6 min): sketch the schema",
-   "Decide (4 min): which format?"
+   "Decide (3 min): which format?"
   ],
   "t": [
-   "Calentamiento (3 min): 20,000 escuelas con 2G",
    "Escribe (4 min): tres registros, de dos maneras",
+   "Escala (4 min): un trimestre, un distrito",
    "Estrella (6 min): dibuja el esquema",
-   "Decide (4 min): ¿qué formato?"
+   "Decide (3 min): ¿qué formato?"
   ]
  },
  "lessons.0.slides.3.details": {
   "en": [
-   "Warm-up (3 min): 20,000 schools send attendance daily, many on 2G. Write one guess: how could the same facts cost less?",
-   "Write (4 min): Write three attendance records as CSV lines and as JSON, and count the characters of each.",
+   "Write (4 min): Write three attendance records as CSV lines and as JSON objects, and count the characters of each.",
+   "Scale (4 min): Multiply up to 25,200 records a school and 20,000 schools. How many megabytes is each format?",
    "Star (6 min): Sketch a fact table and three dimensions for district attendance, with their keys.",
-   "Decide (4 min): Choose a format for sending, and check your warm-up guess against the lab."
+   "Decide (3 min): Choose a format for sending and one for storing, and say why."
   ],
   "t": [
-   "Calentamiento (3 min): 20,000 escuelas envían la asistencia a diario, muchas con 2G. Escribe una hipótesis: ¿cómo podrían costar menos los mismos hechos?",
-   "Escribe (4 min): Escribe tres registros de asistencia como líneas CSV y como JSON, y cuenta los caracteres de cada uno.",
+   "Escribe (4 min): Escribe tres registros de asistencia como líneas CSV y como objetos JSON, y cuenta los caracteres de cada uno.",
+   "Escala (4 min): Multiplica hasta 25,200 registros por escuela y 20,000 escuelas. ¿Cuántos megabytes es cada formato?",
    "Estrella (6 min): Dibuja una tabla de hechos y tres dimensiones para la asistencia del distrito, con sus claves.",
-   "Decide (4 min): Elige un formato para enviar y comprueba tu hipótesis del calentamiento con el laboratorio."
+   "Decide (3 min): Elige un formato para enviar y otro para guardar, y di por qué."
   ]
  },
  "lessons.0.slides.3.note": {
-  "en": "Paper is enough: the phone is only for the lab.",
-  "t": "Basta con papel: el teléfono es solo para el laboratorio."
+  "en": "Use made-up records. The point is the ratio between formats, not the exact bytes.",
+  "t": "Usa registros inventados. Lo importante es la proporción entre formatos, no los bytes exactos."
  },
  "lessons.0.slides.3.narration": {
   "en": "Same facts, different shapes: how much does each cost?",
@@ -456,24 +448,24 @@
   "t": "Recuerda y pruébalo"
  },
  "lessons.1.steps.0.checkpoint.question.prompt": {
-  "en": "A job saves its new watermark first, then the load fails. What happens to those rows on the next run?",
-  "t": "Un trabajo guarda primero su nueva marca de agua y luego la carga falla. ¿Qué pasa con esas filas en la siguiente ejecución?"
+  "en": "A load appends rows, fails halfway, and is run again. What happens?",
+  "t": "Una carga añade filas, falla a la mitad y se ejecuta otra vez. ¿Qué pasa?"
  },
  "lessons.1.steps.0.checkpoint.question.options.0.text": {
-  "en": "They’re loaded on the next run",
-  "t": "Se cargan en la siguiente ejecución"
+  "en": "The second run fails too",
+  "t": "La segunda ejecución también falla"
  },
  "lessons.1.steps.0.checkpoint.question.options.1.text": {
-  "en": "They’re skipped, and lost",
-  "t": "Se omiten y se pierden"
+  "en": "Nothing: databases ignore copies",
+  "t": "Nada: las bases de datos ignoran las copias"
  },
  "lessons.1.steps.0.checkpoint.question.options.2.text": {
-  "en": "They’re loaded twice",
-  "t": "Se cargan dos veces"
+  "en": "The rows loaded before the failure are counted twice",
+  "t": "Las filas cargadas antes del fallo se cuentan dos veces"
  },
  "lessons.1.steps.0.checkpoint.question.explain": {
-  "en": "The watermark already says those rows were loaded, so every later run skips them for good. Running it again doesn’t fix it: save the watermark last, after the load succeeds.",
-  "t": "La marca de agua ya dice que esas filas se cargaron, así que todas las ejecuciones posteriores las omiten para siempre. Ejecutarlo otra vez no lo arregla: guarda la marca de agua al final, cuando la carga haya tenido éxito."
+  "en": "Appending again writes the rows loaded before the failure a second time, unless the load is idempotent. That’s how 90 pupils became 152.",
+  "t": "Añadir otra vez escribe por segunda vez las filas cargadas antes del fallo, a menos que la carga sea idempotente. Así fue como 90 alumnos se convirtieron en 152."
  },
  "lessons.1.steps.0.transcript": {
   "en": "The campus dashboard counts a hundred and fifty-two students in one exam. The hall has ninety seats. Nobody sat on the floor. So where did the other sixty-two come from? By the end, you'll be able to build a load that is safe to run twice, taking only new rows. Behind every dashboard, a small program runs each night. Like a clerk, it collects the sheets, counts them, and files the totals. In the app, it counts three registers: eighty-four of ninety came tonight. Extract reads raw data from its sources: files, forms, other databases. Transform cleans, types and reshapes it. Load writes it into the tables people query. That's ETL; teams that load first and transform inside the database do ELT. Here's a transform in Python. Read the raw register, count the present pupils per class, and print one clean line for each class, in a fixed order. Now Load fails after two classes, and the run is retried. Appending writes them again: ninety pupils become a hundred and fifty-two. A load that gives the same table however often it runs is idempotent. Delete the day's rows, then insert them again. Big sources aren't reloaded every night. An incremental load takes only rows newer than its watermark: the latest time already loaded. And a run log records every run: when, how many rows, and what was set aside. Quick check! A job saves its new watermark first, then the load fails. What happens to those rows on the next run? They're lost. The watermark already says they were loaded, so every later run skips them. Running it again doesn't fix it: save the watermark last, after the load succeeds. Idempotent jobs are everywhere: a photo backup skips what it has, and a good payment page won't charge you twice. But a retry is not a cure. A question mark in a register fails every time, and needs a person. In the app, open A data pipeline. Make Load fail, keep Add the rows, and press Run, then Retry. Count the pupils in the district's table. Then choose Replace the day's rows and do it again. Your turn. A hundred and fifty-two students, in a hall with ninety seats. Where did the other sixty-two come from? A retried load that appends wrote the same rows twice. Remember: ETL extracts, transforms and loads, again and again. An idempotent load deletes the day's rows, then inserts. Save the watermark last, and log every run. Try it yourself: think of a job you repeat, like backing up your phone's photos. What happens if it runs twice, or stops halfway? Redesign it so a rerun is always safe. Next lesson: tests that catch bad data before anyone sees it.",
@@ -484,12 +476,12 @@
   "t": "Leer"
  },
  "lessons.1.steps.1.title": {
-  "en": "A load that is safe to run twice",
-  "t": "Una carga que es segura de ejecutar dos veces"
+  "en": "Extract, transform, load, safely",
+  "t": "Extraer, transformar, cargar, sin riesgo"
  },
  "lessons.1.steps.1.body": {
-  "en": "The campus dashboard counted 152 students in an exam hall with 90 seats. Nobody sat on the floor: the nightly job that copies the data had failed halfway, been retried, and written the same rows twice. A load that only adds rows turns every retry into a double count.\n\nThat nightly job has three steps. Extract reads raw data from its sources: files, forms, other databases. Transform cleans, types and reshapes it: tidy the codes, turn text into numbers, count or join. Load writes it into the tables people query. Together that is ETL; teams that load the raw data first and transform it inside the database with SQL do ELT. In the lab, the job counts three class registers and should report 84 of 90 pupils present.\n\nLoads must be idempotent: running them twice gives the same table as running them once. In the lab, Load fails after two classes; a retry that appends writes them again, and the report counts 152 pupils, not 90. Delete the day’s rows and then insert them, in one transaction, or upsert: insert new rows and update the ones already there by their key (in SQLite, INSERT … ON CONFLICT … DO UPDATE).\n\nBig sources aren’t reloaded every night. An incremental load takes only rows newer than a watermark, the latest time already loaded. In Python that filter is often one line, a list comprehension: [r for r in rows if r[\"t\"] > mark] builds a new list of the rows whose time t is later than mark, like a for loop with an if that appends each match. Save the new watermark last, after the load succeeds: saved first, a failed load loses those rows for good. Retry passing faults, such as a dropped connection, but stop on bad data such as a “?” in a register: it fails every time and needs a person. And keep a run log: when each run started and ended, rows read, written and set aside, and why.",
-  "t": "El panel del campus contó 152 estudiantes en una sala de examen con 90 asientos. Nadie se sentó en el suelo: el trabajo nocturno que copia los datos había fallado a la mitad, se había reintentado y había escrito las mismas filas dos veces. Una carga que solo añade filas convierte cada reintento en un conteo doble.\n\nEse trabajo nocturno tiene tres pasos. Extraer lee los datos en bruto de sus fuentes: archivos, formularios, otras bases de datos. Transformar los limpia, los tipa y les da otra forma: ordena los códigos, convierte texto en números, cuenta o une. Cargar los escribe en las tablas que la gente consulta. Todo junto es ETL; los equipos que cargan primero los datos en bruto y los transforman dentro de la base de datos con SQL hacen ELT. En el laboratorio, el trabajo cuenta tres registros de clase y debería informar 84 de 90 alumnos presentes.\n\nLas cargas deben ser idempotentes: ejecutarlas dos veces da la misma tabla que ejecutarlas una. En el laboratorio, Cargar falla tras dos clases; un reintento que añade las escribe otra vez, y el informe cuenta 152 alumnos, no 90. Borra las filas del día y luego insértalas, en una sola transacción, o haz un upsert: inserta las filas nuevas y actualiza las que ya están según su clave (en SQLite, INSERT … ON CONFLICT … DO UPDATE).\n\nLas fuentes grandes no se vuelven a cargar cada noche. Una carga incremental toma solo las filas más nuevas que una marca de agua, la última hora ya cargada. En Python ese filtro suele ser una sola línea, una lista por comprensión: [r for r in rows if r[\"t\"] > mark] construye una lista nueva con las filas cuyo tiempo t es posterior a mark, como un bucle for con un if que añade cada coincidencia. Guarda la nueva marca de agua al final, cuando la carga haya tenido éxito: si se guarda antes, una carga fallida pierde esas filas para siempre. Reintenta los fallos pasajeros, como una conexión caída, pero detente ante datos malos como un «?» en un registro: falla siempre y necesita a una persona. Y lleva un registro de ejecuciones: cuándo empezó y terminó cada una, filas leídas, escritas y apartadas, y por qué."
+  "en": "Extract reads raw data from its sources: files, forms, APIs, other databases. Transform cleans, types and reshapes it: trim and normalise the codes, turn text into numbers, count or join. Load writes it into the tables people query. Some teams load the raw data first and transform it inside the database with SQL; that’s ELT. Either way, the steps run on a schedule, again and again.\n\nLoads must be idempotent: running them twice gives the same result as once. Pipelines fail halfway and get retried, and a load that only appends writes the first part twice: the district dashboard showed 152 pupils at a school of 90. Two safe patterns: delete the day’s rows and then insert them (in one transaction), or upsert, which inserts new rows and updates the ones already there by their key (in SQLite, INSERT … ON CONFLICT … DO UPDATE).\n\nBig sources aren’t reloaded every night. An incremental load takes only what’s new since the last run, using a watermark: the latest timestamp already loaded. Read the watermark, extract the newer rows, transform and load them, and only then save the new watermark. Save it too early, and a failed load loses those rows for good.\n\nRuns fail, so retry passing faults (a timeout, a dropped connection) automatically, a few times with a pause, and stop on bad data, setting the rows aside for a person. Log every run: when it started and ended, rows read, written and set aside, and why. The log, and an alert when a run fails or loads far fewer rows than usual, is how you find out before the dashboard’s readers do.",
+  "t": "Extraer lee los datos en bruto de sus fuentes: archivos, formularios, APIs, otras bases de datos. Transformar los limpia, los tipa y les da otra forma: recorta y normaliza los códigos, convierte texto en números, cuenta o une. Cargar los escribe en las tablas que la gente consulta. Algunos equipos cargan primero los datos en bruto y los transforman dentro de la base de datos con SQL; eso es ELT. En cualquier caso, los pasos se ejecutan según un horario, una y otra vez.\n\nLas cargas deben ser idempotentes: ejecutarlas dos veces da el mismo resultado que ejecutarlas una. Los flujos fallan a la mitad y se reintentan, y una carga que solo añade escribe dos veces la primera parte: el panel del distrito mostró 152 alumnos en una escuela de 90. Dos patrones seguros: borrar las filas del día y luego insertarlas (en una sola transacción), o hacer un upsert, que inserta las filas nuevas y actualiza las que ya están según su clave (en SQLite, INSERT … ON CONFLICT … DO UPDATE).\n\nLas fuentes grandes no se vuelven a cargar cada noche. Una carga incremental toma solo lo nuevo desde la última ejecución, usando una marca de agua: la última marca de tiempo ya cargada. Lee la marca de agua, extrae las filas más nuevas, transfórmalas y cárgalas, y solo entonces guarda la nueva marca de agua. Si la guardas demasiado pronto y la carga falla, esas filas se pierden para siempre.\n\nLas ejecuciones fallan, así que reintenta automáticamente los fallos pasajeros (un tiempo de espera agotado, una conexión caída), unas pocas veces y con una pausa, y detente ante datos malos, apartando las filas para que una persona las revise. Registra cada ejecución: cuándo empezó y terminó, filas leídas, escritas y apartadas, y por qué. El registro, y una alerta cuando una ejecución falla o carga muchas menos filas de lo normal, es la forma de enterarte antes que los lectores del panel."
  },
  "lessons.1.steps.1.keyTerms.0.term": {
   "en": "ETL and ELT",
@@ -512,8 +504,8 @@
   "t": "Marca de agua"
  },
  "lessons.1.steps.1.keyTerms.2.def": {
-  "en": "The latest time already loaded; an incremental load takes only newer rows, and saves the new mark last.",
-  "t": "La última hora ya cargada; una carga incremental toma solo las filas más nuevas y guarda la nueva marca al final."
+  "en": "The latest timestamp already loaded; an incremental load takes only newer rows.",
+  "t": "La última marca de tiempo ya cargada; una carga incremental toma solo las filas más nuevas."
  },
  "lessons.1.steps.1.keyTerms.3.term": {
   "en": "Run log",
@@ -524,24 +516,24 @@
   "t": "Las horas de cada ejecución, el número de filas y las filas apartadas, con sus motivos."
  },
  "lessons.1.steps.2.prompt": {
-  "en": "A hundred and fifty-two students, in a hall with ninety seats. Where did the other sixty-two come from?",
-  "t": "Ciento cincuenta y dos estudiantes, en una sala con noventa asientos. ¿De dónde salieron los otros sesenta y dos?"
+  "en": "Which load is idempotent?",
+  "t": "¿Qué carga es idempotente?"
  },
  "lessons.1.steps.2.options.0.text": {
-  "en": "A retried load added rows twice",
-  "t": "Una carga reintentada añadió las filas dos veces"
+  "en": "Delete the day’s rows, then insert them",
+  "t": "Borrar las filas del día y luego insertarlas"
  },
  "lessons.1.steps.2.options.1.text": {
-  "en": "Students sat two exams that day",
-  "t": "Los estudiantes hicieron dos exámenes ese día"
+  "en": "Insert the day’s rows on every run",
+  "t": "Insertar las filas del día en cada ejecución"
  },
  "lessons.1.steps.2.options.2.text": {
-  "en": "The seat count was out of date",
-  "t": "El número de asientos estaba desactualizado"
+  "en": "Insert, then remove duplicates by hand next week",
+  "t": "Insertar y quitar los duplicados a mano la semana siguiente"
  },
  "lessons.1.steps.2.explain": {
-  "en": "The load appended, failed partway and was retried, so the rows it had already written went in twice. An idempotent load, delete-then-insert, would have stayed at ninety.",
-  "t": "La carga añadió, falló a la mitad y se reintentó, así que las filas que ya había escrito entraron dos veces. Una carga idempotente, borrar y luego insertar, se habría quedado en noventa."
+  "en": "Clearing the day first means one run or five give the same table. Inserting on every run doubles it, and fixing by hand next week means a wrong dashboard all week.",
+  "t": "Limpiar primero el día significa que una ejecución o cinco dan la misma tabla. Insertar en cada ejecución la duplica, y arreglarlo a mano la semana siguiente significa un panel equivocado durante toda la semana."
  },
  "lessons.1.steps.3.prompt": {
   "en": "Put the steps of a nightly incremental load in order.",
@@ -564,12 +556,12 @@
   "t": "Cargar: borrar las filas del día y luego insertar"
  },
  "lessons.1.steps.3.steps.4": {
-  "en": "Save the new watermark and log the run",
-  "t": "Guardar la nueva marca de agua y registrar la ejecución"
+  "en": "Save the new watermark",
+  "t": "Guardar la nueva marca de agua"
  },
  "lessons.1.steps.3.explain": {
-  "en": "The watermark decides what to extract, so it comes first; it’s saved only after the load succeeds, so a failed run is simply repeated, and the delete-then-insert makes that repeat safe.",
-  "t": "La marca de agua decide qué se extrae, así que va primero; se guarda solo después de que la carga tiene éxito, así que una ejecución fallida simplemente se repite, y el borrar y luego insertar hace segura esa repetición."
+  "en": "The watermark decides what to extract, so it comes first; it’s saved only after the load succeeds, so a failed run is simply repeated, and the delete-then-insert makes that repeat safe. The run log is written whatever happens, so a failed run shows up too.",
+  "t": "La marca de agua decide qué se extrae, así que va primero; se guarda solo después de que la carga tiene éxito, así que una ejecución fallida simplemente se repite, y el borrar y luego insertar hace segura esa repetición. El registro de ejecuciones se escribe pase lo que pase, así que una ejecución fallida también aparece."
  },
  "lessons.1.steps.4.prompt": {
   "en": "The transform step. register.csv was typed by hand: some statuses are “ p” or “P ”, and one is “?”. Clean each status with strip() and upper(), count the P’s per class, set aside anything that isn’t P or A, and print: 5A 4, 5B 3, 6A 5, then aside 1.",
@@ -584,20 +576,20 @@
   "t": "Ejecútalo primero: 5A muestra 2, porque « p» y «p» no son iguales a «P»."
  },
  "lessons.1.steps.4.hints.1": {
-  "en": "s = row[\"status\"].strip().upper(), then if s not in (\"P\", \"A\"): aside += 1, and elif s == \"P\": count it.",
-  "t": "s = row[\"status\"].strip().upper(), luego if s not in (\"P\", \"A\"): aside += 1, y elif s == \"P\": cuéntalo."
+  "en": "s = row[\"status\"].strip().upper(), then if s not in (\"P\", \"A\"): aside += 1, elif s == \"P\": count it.",
+  "t": "s = row[\"status\"].strip().upper(), luego if s not in (\"P\", \"A\"): aside += 1, elif s == \"P\": cuéntalo."
  },
  "lessons.1.steps.4.explain": {
   "en": "Cleaning first turns “ p”, “p” and “P ” into P, so 5A has 4 present and 5B 3. The “?” is neither P nor A: it’s set aside to ask about, not counted as present or absent. sorted() keeps the output in a fixed order.",
   "t": "Limpiar primero convierte « p», «p» y «P » en P, así que 5A tiene 4 presentes y 5B 3. El «?» no es ni P ni A: se aparta para preguntar, no se cuenta como presente ni como ausente. sorted() mantiene la salida en un orden fijo."
  },
  "lessons.1.steps.5.prompt": {
-  "en": "Try it: open “A data pipeline”. Choose Load under “Make a step fail”, keep “Add the rows”, and press Run, then Retry: how many pupils does the district’s table count? Choose “Replace the day’s rows” and do the same, then press “Run again” twice. Finally make Transform fail: why does retrying not help? Finish when the report says 84 of 90.",
-  "t": "Pruébalo: abre «Un flujo de datos». Elige Cargar en «Hacer fallar un paso», deja «Añadir las filas» y pulsa Ejecutar, y luego Reintentar: ¿cuántos alumnos cuenta la tabla del distrito? Elige «Reemplazar las filas del día» y haz lo mismo, y luego pulsa «Ejecutar de nuevo» dos veces. Por último, haz que Transformar falle: ¿por qué reintentar no ayuda? Termina cuando el informe diga 84 de 90."
+  "en": "Try it: with “Add the rows”, make Load fail, then Retry: how many pupils does the district’s table count? Switch to “Replace the day’s rows” and repeat, then press Run again twice. Finally make Transform fail: why does retrying not help?",
+  "t": "Pruébalo: con «Añadir las filas», haz que Cargar falle y luego pulsa Reintentar: ¿cuántos alumnos cuenta la tabla del distrito? Pasa a «Reemplazar las filas del día» y repite, y luego pulsa «Ejecutar de nuevo» dos veces. Por último, haz que Transformar falle: ¿por qué reintentar no ayuda?"
  },
  "lessons.1.steps.6.prompt": {
-  "en": "Last night’s load failed after writing two of Monday’s classes into daily. Running it again as it is doesn’t fix it: Monday would count those classes twice. Make the load idempotent: before inserting today’s rows, delete the Monday rows already in daily. The last query shows the totals per day: Fri 83 and Mon 84.",
-  "t": "La carga de anoche falló después de escribir en daily dos clases del lunes. Ejecutarla otra vez tal como está no lo arregla: el lunes contaría esas clases dos veces. Haz la carga idempotente: antes de insertar las filas de hoy, borra de daily las filas del lunes que ya están. La última consulta muestra los totales por día: Fri 83 y Mon 84."
+  "en": "Last night’s load failed after writing two of Monday’s classes into daily. Make the load idempotent: before inserting today’s rows, delete the Monday rows already in daily. The last line shows the totals per day: Fri 83 and Mon 84.",
+  "t": "La carga de anoche falló después de escribir en daily dos clases del lunes. Haz la carga idempotente: antes de insertar las filas de hoy, borra de daily las filas del lunes que ya están. La última línea muestra los totales por día: Fri 83 y Mon 84."
  },
  "lessons.1.steps.6.hints.0": {
   "en": "Run it: Monday says 141, because two classes are now in daily twice.",
@@ -608,16 +600,16 @@
   "t": "Empieza con DELETE FROM daily WHERE day = 'Mon'; (o WHERE day IN (SELECT day FROM today))."
  },
  "lessons.1.steps.6.explain": {
-  "en": "Deleting the day’s rows first clears what the failed run left, so the insert writes Monday exactly once: 84. Run the same three lines again and you still get 84: that’s idempotent. Friday, already loaded, isn’t touched.",
-  "t": "Borrar primero las filas del día limpia lo que dejó la ejecución fallida, así que la inserción escribe el lunes exactamente una vez: 84. Ejecuta otra vez las mismas tres líneas y sigues obteniendo 84: eso es idempotente. El viernes, ya cargado, no se toca."
+  "en": "Deleting the day’s rows first clears what the failed run left, so the insert writes Monday exactly once: 84. Run the same three statements again and you still get 84: that’s idempotent. Friday, already loaded, isn’t touched.",
+  "t": "Borrar primero las filas del día limpia lo que dejó la ejecución fallida, así que la inserción escribe el lunes exactamente una vez: 84. Ejecuta otra vez las mismas tres instrucciones y sigues obteniendo 84: eso es idempotente. El viernes, ya cargado, no se toca."
  },
  "lessons.1.steps.7.prompt": {
-  "en": "Each row has a time, t. Put the lines of an incremental load in order, so a failed load never loses rows.",
-  "t": "Cada fila tiene una hora, t. Pon en orden las líneas de una carga incremental, de modo que una carga fallida nunca pierda filas."
+  "en": "Put the lines of an incremental load in order, so a failed load never loses rows.",
+  "t": "Pon en orden las líneas de una carga incremental, de modo que una carga fallida nunca pierda filas."
  },
  "lessons.1.steps.7.explain": {
-  "en": "Read the watermark, keep only the newer rows, load them, and save the new watermark last: the latest t among them. If load fails, the old watermark stays, so the next run picks the same rows up again. new = rows would reload everything every night.",
-  "t": "Lee la marca de agua, quédate solo con las filas más nuevas, cárgalas y guarda la nueva marca de agua al final: la última t entre ellas. Si la carga falla, la marca de agua anterior se queda, así que la siguiente ejecución vuelve a tomar las mismas filas. new = rows volvería a cargar todo cada noche."
+  "en": "Read the watermark, keep only the newer rows and, if there are any, load them and save the new watermark last. If load fails, the old watermark stays, so the next run picks the same rows up again. Without if new:, a quiet night with no new rows would crash on max() of nothing. new = rows would reload everything every night.",
+  "t": "Lee la marca de agua, quédate solo con las filas más nuevas y, si hay alguna, cárgalas y guarda la nueva marca de agua al final. Si load falla, la marca de agua anterior se queda, así que la siguiente ejecución vuelve a tomar las mismas filas. Sin if new:, una noche tranquila sin filas nuevas fallaría con max() de nada. new = rows volvería a cargar todo cada noche."
  },
  "lessons.1.steps.8.prompt": {
   "en": "What should a pipeline’s run log record? Choose all that apply.",
@@ -644,8 +636,8 @@
   "t": "Las horas, los números y los motivos te dicen qué pasó y dónde mirar. Copiar cada fila al registro duplica los datos y esparce los datos de los alumnos en un lugar más."
  },
  "lessons.1.steps.9.prompt": {
-  "en": "Think of a job you repeat on a schedule (a backup, a bill, a submission). What happens if it runs twice, or stops halfway?",
-  "t": "Piensa en una tarea que repites según un horario (una copia de seguridad, una factura, una entrega). ¿Qué pasa si se ejecuta dos veces, o se detiene a la mitad?"
+  "en": "Think of a job you or your family repeat on a schedule (a backup, a bill, a shopping list). What happens if it runs twice, or stops halfway?",
+  "t": "Piensa en una tarea que tú o tu familia repiten según un horario (una copia de seguridad, una factura, una lista de compras). ¿Qué pasa si se ejecuta dos veces, o se detiene a la mitad?"
  },
  "lessons.1.steps.9.placeholder": {
   "en": "For example: “If the photo backup runs twice, I get two copies of everything; it should skip photos it already has.”",
@@ -656,12 +648,12 @@
   "t": "Proyecto: Una tarea segura de repetir"
  },
  "lessons.1.steps.10.task": {
-  "en": "Pick a repeated data job: a real one (a phone backup, a weekly upload) or the attendance pipeline from this lesson. Draw it as extract, transform and load. For each step, write what happens if it fails halfway and is run again. Redesign the load to be idempotent (delete-then-insert or upsert), add a watermark if the source is big and say when it is saved, and write the five things its run log should record. If you can, build the transform and the load with the lesson’s Python and SQL.",
-  "t": "Elige una tarea de datos repetida: una real (una copia de seguridad del teléfono, una subida semanal) o el flujo de asistencia de esta lección. Dibújala como extraer, transformar y cargar. Para cada paso, escribe qué pasa si falla a la mitad y se vuelve a ejecutar. Rediseña la carga para que sea idempotente (borrar y luego insertar, o upsert), añade una marca de agua si la fuente es grande y di cuándo se guarda, y escribe las cinco cosas que debería registrar su registro de ejecuciones. Si puedes, construye la transformación y la carga con el Python y el SQL de la lección."
+  "en": "Pick a repeated data job: a real one (a backup, a weekly results upload) or the school attendance pipeline from this lesson. Draw it as extract, transform and load. For each step, write what happens if it fails halfway and is run again. Redesign the load to be idempotent (delete-then-insert or upsert), add a watermark if the source is big, and list the fields its run log should record. If you can, build the transform and the load with the lesson’s Python and SQL.",
+  "t": "Elige una tarea de datos repetida: una real (una copia de seguridad, una subida semanal de resultados) o el flujo de asistencia de la escuela de esta lección. Dibújala como extraer, transformar y cargar. Para cada paso, escribe qué pasa si falla a la mitad y se vuelve a ejecutar. Rediseña la carga para que sea idempotente (borrar y luego insertar, o upsert), añade una marca de agua si la fuente es grande y lista los campos que debería registrar su registro de ejecuciones. Si puedes, construye la transformación y la carga con el Python y el SQL de la lección."
  },
  "lessons.1.steps.10.deliverable": {
-  "en": "Your pipeline drawing with the failure notes, the redesigned load, and the five log fields.",
-  "t": "Tu dibujo del flujo con las notas de fallos, la carga rediseñada y los cinco campos del registro."
+  "en": "Your pipeline drawing with the failure notes, the redesigned load, and the log fields.",
+  "t": "Tu dibujo del flujo con las notas de fallos, la carga rediseñada y los campos del registro."
  },
  "lessons.1.steps.10.rubric.0.criterion": {
   "en": "Every step says what a failure halfway would do.",
@@ -684,71 +676,71 @@
   "t": "Ingeniería de datos · Nivel 4 · Lección 2"
  },
  "lessons.1.slides.0.narration": {
-  "en": "Where did the other sixty-two come from?",
-  "t": "¿De dónde salieron los otros sesenta y dos?"
+  "en": "152 pupils at a school of 90. What did the pipeline do?",
+  "t": "152 alumnos en una escuela de 90. ¿Qué hizo el flujo?"
  },
  "lessons.1.slides.1.title": {
-  "en": "Today we will",
-  "t": "Hoy vamos a"
+  "en": "In this lesson you will",
+  "t": "En esta lección vas a"
  },
  "lessons.1.slides.1.bullets": {
   "en": [
-   "Name the three steps of a nightly job: ETL.",
-   "Make a load safe to run twice.",
-   "Load only new rows, and save the watermark last."
+   "Build extract, transform, load.",
+   "Make loads idempotent: delete-then-insert, or upsert.",
+   "Load incrementally and log every run."
   ],
   "t": [
-   "Nombrar los tres pasos de un trabajo nocturno: ETL.",
-   "Hacer una carga segura de ejecutar dos veces.",
-   "Cargar solo las filas nuevas y guardar la marca de agua al final."
+   "Construir extraer, transformar, cargar.",
+   "Hacer idempotentes las cargas: borrar y luego insertar, o upsert.",
+   "Cargar de forma incremental y registrar cada ejecución."
   ]
  },
  "lessons.1.slides.2.title": {
-  "en": "Remember",
-  "t": "Recuerda"
+  "en": "Key ideas",
+  "t": "Ideas clave"
  },
  "lessons.1.slides.2.bullets": {
   "en": [
-   "A retried append writes the same rows twice.",
-   "Idempotent: delete the day’s rows, then insert.",
-   "Save the watermark last, and log every run."
+   "A rerun must give the same answer.",
+   "Save the watermark after the load.",
+   "Retry passing faults; set bad data aside."
   ],
   "t": [
-   "Un añadido reintentado escribe las mismas filas dos veces.",
-   "Idempotente: borra las filas del día y luego inserta.",
-   "Guarda la marca de agua al final y registra cada ejecución."
+   "Una repetición debe dar la misma respuesta.",
+   "Guarda la marca de agua después de la carga.",
+   "Reintenta los fallos pasajeros; aparta los datos malos."
   ]
  },
  "lessons.1.slides.3.title": {
-  "en": "Activity: Break the pipeline",
-  "t": "Actividad: Rompe el flujo"
+  "en": "Break the pipeline",
+  "t": "Rompe el flujo"
  },
  "lessons.1.slides.3.bullets": {
   "en": [
-   "Warm-up (3 min): 152 in 90 seats",
    "Draw (4 min): ETL for attendance",
    "Fail (5 min): stop it halfway",
-   "Fix (5 min): make it idempotent"
+   "Fix (5 min): make it idempotent",
+   "Log (3 min): what would tell you?"
   ],
   "t": [
-   "Calentamiento (3 min): 152 en 90 asientos",
    "Dibuja (4 min): ETL de la asistencia",
    "Falla (5 min): deténlo a la mitad",
-   "Arregla (5 min): hazlo idempotente"
+   "Arregla (5 min): hazlo idempotente",
+   "Registra (3 min): ¿qué te lo diría?"
   ]
  },
  "lessons.1.slides.3.details": {
   "en": [
-   "Warm-up (3 min): A dashboard counts 152 students in a 90-seat hall. Write one guess: where did 62 come from?",
-   "Draw (4 min): Sketch the attendance pipeline: sources, transform, district table, schedule.",
-   "Fail (5 min): For each step, write what’s left if it fails halfway, and what a plain rerun does.",
-   "Fix (5 min): Rewrite the load as delete-then-insert, decide when the watermark is saved, and check your guess."
+   "Draw (4 min): Sketch the school attendance pipeline: sources, transform, district table, schedule.",
+   "Fail (5 min): For each step, write what’s left behind if it fails halfway, and what a plain rerun would do.",
+   "Fix (5 min): Rewrite the load as delete-then-insert or upsert, and decide where the watermark is saved.",
+   "Log (3 min): List what the run log needs so you’d spot last night’s failure in a minute."
   ],
   "t": [
-   "Calentamiento (3 min): Un panel cuenta 152 estudiantes en una sala de 90 asientos. Escribe una hipótesis: ¿de dónde salieron 62?",
-   "Dibuja (4 min): Dibuja el flujo de asistencia: fuentes, transformación, tabla del distrito, horario.",
+   "Dibuja (4 min): Dibuja el flujo de asistencia de la escuela: fuentes, transformación, tabla del distrito, horario.",
    "Falla (5 min): Para cada paso, escribe qué queda si falla a la mitad y qué haría una simple repetición.",
-   "Arregla (5 min): Reescribe la carga como borrar y luego insertar, decide cuándo se guarda la marca de agua y comprueba tu hipótesis."
+   "Arregla (5 min): Reescribe la carga como borrar y luego insertar, o como upsert, y decide dónde se guarda la marca de agua.",
+   "Registra (3 min): Lista lo que necesita el registro de ejecuciones para que detectes en un minuto el fallo de anoche."
   ]
  },
  "lessons.1.slides.3.note": {
@@ -808,8 +800,8 @@
   "t": "Calidad de datos y contratos"
  },
  "lessons.2.tryTomorrow": {
-  "en": "Pick a list you depend on, like your timetable. Write one rule it must keep, and the query that finds the rows breaking it.",
-  "t": "Elige una lista de la que dependes, como tu horario. Escribe una regla que debe cumplir y la consulta que encuentra las filas que la rompen."
+  "en": "Write a data contract for a dataset you use, like your class timetable or a club’s results. List the columns, types and allowed values, and who fixes it when it’s wrong.",
+  "t": "Escribe un contrato de datos para un conjunto de datos que uses, como el horario de tu clase o los resultados de un club. Lista las columnas, los tipos y los valores permitidos, y quién lo arregla cuando está mal."
  },
  "lessons.2.materials": {
   "en": [
@@ -850,24 +842,24 @@
   "t": "Recuerda y pruébalo"
  },
  "lessons.2.steps.0.checkpoint.question.prompt": {
-  "en": "Every test passes tonight. There's no test for repeats, and Hilltop sent one reading twice. Is its average right?",
-  "t": "Esta noche todas las pruebas pasan. No hay ninguna prueba de repeticiones, y Hilltop envió una lectura dos veces. ¿Es correcto su promedio?"
+  "en": "Which test catches a mark for pupil 7, when there is no pupil 7?",
+  "t": "¿Qué prueba detecta una nota del alumno 7, cuando no existe el alumno 7?"
  },
  "lessons.2.steps.0.checkpoint.question.options.0.text": {
-  "en": "Yes: every test passed",
-  "t": "Sí: todas las pruebas pasaron"
+  "en": "A range test",
+  "t": "Una prueba de rango"
  },
  "lessons.2.steps.0.checkpoint.question.options.1.text": {
-  "en": "No: it's a little too high",
-  "t": "No: es un poco demasiado alto"
+  "en": "A referential integrity test",
+  "t": "Una prueba de integridad referencial"
  },
  "lessons.2.steps.0.checkpoint.question.options.2.text": {
-  "en": "No: Hilltop is left out",
-  "t": "No: Hilltop se queda fuera"
+  "en": "A freshness test",
+  "t": "Una prueba de actualidad"
  },
  "lessons.2.steps.0.checkpoint.question.explain": {
-  "en": "A test catches only the fault it was written for. With no repeats test, the second copy counts too, and Hilltop’s average creeps from 14.6 to 15.8 mm.",
-  "t": "Una prueba solo detecta el fallo para el que se escribió. Sin una prueba de repeticiones, la segunda copia también cuenta, y el promedio de Hilltop sube de 14.6 a 15.8 mm."
+  "en": "Every foreign key must point to a row that exists. The orphan mark fails the referential integrity test; a left join that finds NULL on the other side finds it.",
+  "t": "Toda clave externa debe apuntar a una fila que exista. La nota huérfana falla la prueba de integridad referencial; la encuentra un left join que halla NULL en el otro lado."
  },
  "lessons.2.steps.0.transcript": {
   "en": "On the night before results day, one test fails. Three marks out of ten thousand are wrong. Stop the load, and nobody gets results; let it through, and three students get wrong ones. What should the pipeline do? By the end, you'll be able to write quality tests as queries, and decide what each failure should do. Think of the campus post room. Every parcel's room number is checked against the list of rooms, every day. A parcel for a room that doesn't exist waits on a shelf. Data needs the same rule. A key that points to another table must find a row there: that's referential integrity. A row that points nowhere, like a mark for a student not on the list, is an orphan. Write that rule once, as a query that asks for bad rows. A left join keeps every reading, and leaves the station null where none matches. In the app's weather batches, it finds one orphan: a misspelt station. Run on every batch, a query like this is a test as code: it passes when it finds nothing. Your contract says what a failure does: stop the batch, or set bad rows aside in quarantine. Or let them through, with a warning. Quick check! Every test passes tonight. There's no test for repeats, and Hilltop sent one reading twice. Is its average right? A little too high. Hilltop's average creeps from fourteen point six to fifteen point eight. A test catches only what it was written for. Orphans hide all over campus: a grade for a student who left, a loan for a book no longer listed. But glancing at the dashboard each morning isn't a test: it sees only what you notice. In the app, open Data checks. Turn every check off, and count the stations in the report. Then turn them on, and compare Stop the batch with Set bad rows aside. Watch how many good readings each one keeps. Your turn. On the night before results day, three marks out of ten thousand fail the test. What should the pipeline do? Set the three aside, load the rest, and warn the office. Remember: an orphan points to a row that doesn't exist. A test as code asks for the bad rows, on every batch. And choose what a failure does by what it costs. Try it yourself: pick a list you depend on, like your timetable. Write one rule it must keep, and the query that finds rows breaking it. Next lesson: how many readings an alarm should wait for.",
@@ -878,124 +870,124 @@
   "t": "Leer"
  },
  "lessons.2.steps.1.title": {
-  "en": "Tests that run on every batch",
-  "t": "Pruebas que se ejecutan en cada lote"
+  "en": "Tests, contracts and failures",
+  "t": "Pruebas, contratos y fallos"
  },
  "lessons.2.steps.1.body": {
-  "en": "On the night before results day, one test fails: three marks out of ten thousand are wrong. Stop the whole load, and nobody gets results; let it through, and three students get wrong ones. The answer is in between: set the three aside, load the other 9,997, and warn the office so the three are fixed at the source before morning.\n\nYou have met data contracts: the rules a producer and a consumer agree, with quarantine for records that break them. This lesson turns the rules into checks that run by themselves. One rule matters in every database: a key that points to another table must find a row there. That is referential integrity, like a campus post room that checks every parcel’s room number against the list of rooms. A row that points nowhere, such as a mark for a student not on the list, is an orphan.\n\nA test as code is a rule written once and run on every batch. In SQL it is a query that asks for the bad rows, so it passes when it returns nothing. To find orphans, LEFT JOIN the child table to its parent and keep the rows WHERE the parent’s key IS NULL: the left join keeps every row, and fills the parent’s columns with NULL where nothing matches. In the lab’s weather batches, that test finds one reading from a misspelt station. Python tests do the same row by row. enumerate(rows, 2) numbers the rows as it loops, from 2, because line 1 of the file is the header, so a failure can name its line.\n\nThen decide what a failure does, by what it costs. Stop the batch when the problem is serious, such as a whole day missing. Set the bad rows aside when most of the batch is fine, and alert the producer. Let them through with a warning when a late report costs more than a slightly wrong one. And remember that passing tests means no known problem, not no problem: in the lab, with no test for repeats, Hilltop’s reading sent twice lifts its average from 14.6 to 15.8 mm, and every test still passes.",
-  "t": "La noche antes del día de resultados, falla una prueba: tres notas de diez mil están mal. Si detienes toda la carga, nadie recibe resultados; si la dejas pasar, tres estudiantes reciben resultados equivocados. La respuesta está en el medio: aparta las tres, carga las otras 9,997 y avisa a la oficina para que las tres se corrijan en el origen antes de la mañana.\n\nYa conoces los contratos de datos: las reglas que acuerdan quien produce los datos y quien los consume, con cuarentena para los registros que las rompen. Esta lección convierte las reglas en comprobaciones que se ejecutan solas. Una regla importa en toda base de datos: una clave que apunta a otra tabla debe encontrar allí una fila. Eso es integridad referencial, como la oficina de correos de un campus que comprueba el número de aula de cada paquete con la lista de aulas. Una fila que no apunta a nada, como una nota de un estudiante que no está en la lista, es un huérfano.\n\nUna prueba como código es una regla escrita una vez y ejecutada en cada lote. En SQL es una consulta que pide las filas malas, así que pasa cuando no devuelve nada. Para encontrar huérfanos, haz un LEFT JOIN de la tabla hija con su tabla padre y quédate con las filas WHERE la clave del padre IS NULL: el left join conserva todas las filas y rellena con NULL las columnas del padre donde nada coincide. En los lotes de clima del laboratorio, esa prueba encuentra una lectura de una estación mal escrita. Las pruebas en Python hacen lo mismo fila por fila. enumerate(rows, 2) numera las filas mientras recorre, desde 2, porque la línea 1 del archivo es el encabezado, así un fallo puede nombrar su línea.\n\nLuego decide qué hace un fallo, según lo que cuesta. Detén el lote cuando el problema es grave, como un día entero que falta. Aparta las filas malas cuando la mayor parte del lote está bien, y avisa a quien produce los datos. Déjalas pasar con una advertencia cuando un informe tardío cuesta más que uno ligeramente equivocado. Y recuerda que pasar las pruebas significa que no hay ningún problema conocido, no que no haya ningún problema: en el laboratorio, sin una prueba de repeticiones, la lectura de Hilltop enviada dos veces sube su promedio de 14.6 a 15.8 mm, y todas las pruebas siguen pasando."
+  "en": "Data quality has several sides. Valid: the right type and range (a mark is a number from 0 to 20). Complete: nothing required is missing. Unique: no duplicates of a key. Consistent: the tables agree, so every mark’s pupil exists (referential integrity). Timely: the data arrived when it should, and isn’t last week’s. A minus sign that becomes “−30 mm of rain” fails validity, and can reach three other apps before anyone notices.\n\nWrite each test as code that runs on every batch, before anyone uses the data. In SQL, a test is a query that should return no rows: values out of range, duplicate keys, and orphans, found with a LEFT JOIN to the parent table WHERE the parent’s id IS NULL. In Python, check each row against the rules and collect the failures with their reasons, so they can be fixed, not just counted.\n\nA data contract is an agreement between the team that produces data and the teams that use it. It names the columns, their types and allowed values, how fresh the data must be (“by 07:00 each school day”), what counts as a breaking change, and who to call when it breaks. With a contract, the tests aren’t one team’s opinion; they’re the agreement, written as code.\n\nThen decide what a failure does, by what it costs. Block the whole load when the problem is serious, such as a missing day or a wrong unit. Quarantine the bad rows when most of the batch is fine, and alert the producer. Or alert and let it through, when a late report costs more than a slightly wrong one. And remember: tests catch only the faults you wrote them for. Passing them means no known problem was found.",
+  "t": "La calidad de los datos tiene varias facetas. Válidos: el tipo y el rango correctos (una nota es un número de 0 a 20). Completos: no falta nada obligatorio. Únicos: sin duplicados de una clave. Consistentes: las tablas coinciden, así que el alumno de cada nota existe (integridad referencial). Oportunos: los datos llegaron cuando debían, y no son los de la semana pasada. Un signo menos que se convierte en «−30 mm de lluvia» falla la validez, y puede llegar a otras tres apps antes de que alguien lo note.\n\nEscribe cada prueba como código que se ejecuta en cada lote, antes de que nadie use los datos. En SQL, una prueba es una consulta que no debería devolver filas: valores fuera de rango, claves duplicadas y huérfanos, que se encuentran con un LEFT JOIN a la tabla padre WHERE el id del padre IS NULL. En Python, comprueba cada fila con las reglas y reúne los fallos con sus motivos, para poder arreglarlos y no solo contarlos.\n\nUn contrato de datos es un acuerdo entre el equipo que produce los datos y los equipos que los usan. Nombra las columnas, sus tipos y valores permitidos, qué tan actuales deben ser los datos («a las 07:00 de cada día de clase»), qué cuenta como un cambio que rompe el contrato y a quién llamar cuando se rompe. Con un contrato, las pruebas no son la opinión de un equipo; son el acuerdo, escrito como código.\n\nLuego decide qué hace un fallo, según lo que cuesta. Bloquea toda la carga cuando el problema es grave, como un día que falta o una unidad equivocada. Pon en cuarentena las filas malas cuando la mayor parte del lote está bien, y avisa a quien produce los datos. O avisa y déjalas pasar, cuando un informe tardío cuesta más que uno ligeramente equivocado. Y recuerda: las pruebas detectan solo los fallos para los que las escribiste. Pasarlas significa que no se encontró ningún problema conocido."
  },
  "lessons.2.steps.1.keyTerms.0.term": {
   "en": "Referential integrity",
   "t": "Integridad referencial"
  },
  "lessons.2.steps.1.keyTerms.0.def": {
-  "en": "Every key that points to another table finds a row there.",
-  "t": "Toda clave que apunta a otra tabla encuentra allí una fila."
+  "en": "Every foreign key points to a row that exists; an orphan breaks it.",
+  "t": "Toda clave externa apunta a una fila que existe; un huérfano la rompe."
  },
  "lessons.2.steps.1.keyTerms.1.term": {
-  "en": "Orphan",
-  "t": "Huérfano"
+  "en": "Data contract",
+  "t": "Contrato de datos"
  },
  "lessons.2.steps.1.keyTerms.1.def": {
-  "en": "A row whose key points nowhere, such as a mark for a student not on the list.",
-  "t": "Una fila cuya clave no apunta a nada, como una nota de un estudiante que no está en la lista."
+  "en": "An agreement on columns, types, allowed values, freshness and who fixes breaks.",
+  "t": "Un acuerdo sobre columnas, tipos, valores permitidos, actualidad y quién arregla los fallos."
  },
  "lessons.2.steps.1.keyTerms.2.term": {
-  "en": "Test as code",
-  "t": "Prueba como código"
- },
- "lessons.2.steps.1.keyTerms.2.def": {
-  "en": "A rule written once, often as a query for the bad rows, and run on every batch: it passes when it finds nothing.",
-  "t": "Una regla escrita una vez, a menudo como una consulta de las filas malas, y ejecutada en cada lote: pasa cuando no encuentra nada."
- },
- "lessons.2.steps.1.keyTerms.3.term": {
   "en": "Quarantine",
   "t": "Cuarentena"
  },
- "lessons.2.steps.1.keyTerms.3.def": {
+ "lessons.2.steps.1.keyTerms.2.def": {
   "en": "Setting failing rows aside, flagged, while the rest of the batch flows on.",
   "t": "Apartar las filas que fallan, marcadas, mientras el resto del lote sigue adelante."
  },
+ "lessons.2.steps.1.keyTerms.3.term": {
+  "en": "Freshness",
+  "t": "Actualidad"
+ },
+ "lessons.2.steps.1.keyTerms.3.def": {
+  "en": "Whether data arrived on time and is recent enough to use.",
+  "t": "Si los datos llegaron a tiempo y son lo bastante recientes para usarse."
+ },
  "lessons.2.steps.2.prompt": {
-  "en": "On the night before results day, three marks out of ten thousand fail the test. What should the pipeline do?",
-  "t": "La noche antes del día de resultados, tres notas de diez mil fallan la prueba. ¿Qué debería hacer el flujo de datos?"
+  "en": "A test fails on 3 rows out of 10,000. Which response keeps the pipeline moving and the data honest?",
+  "t": "Una prueba falla en 3 filas de 10,000. ¿Qué respuesta mantiene el flujo en marcha y los datos honestos?"
  },
  "lessons.2.steps.2.options.0.text": {
-  "en": "Set the three aside, warn the office",
-  "t": "Apartar las tres y avisar a la oficina"
+  "en": "Quarantine the 3 rows and alert the producer",
+  "t": "Poner las 3 filas en cuarentena y avisar a quien produce los datos"
  },
  "lessons.2.steps.2.options.1.text": {
-  "en": "Stop the load until all are fixed",
-  "t": "Detener la carga hasta que se arreglen todas"
+  "en": "Block the whole load until next week",
+  "t": "Bloquear toda la carga hasta la semana próxima"
  },
  "lessons.2.steps.2.options.2.text": {
-  "en": "Load all, and fix the three later",
-  "t": "Cargar todo y arreglar las tres después"
+  "en": "Let them through and say nothing",
+  "t": "Dejarlas pasar y no decir nada"
  },
  "lessons.2.steps.2.explain": {
-  "en": "9,997 students get their results on time, and the three wait, flagged, until the office fixes them at the source. Stopping costs everyone their results; loading all publishes three wrong ones.",
-  "t": "9,997 estudiantes reciben sus resultados a tiempo, y las tres esperan, marcadas, hasta que la oficina las arregle en el origen. Detener la carga les cuesta a todos sus resultados; cargarlo todo publica tres equivocados."
+  "en": "9,997 good rows flow on, and the 3 bad ones wait in quarantine, flagged, for the producer to fix at the source.",
+  "t": "Las 9,997 filas buenas siguen adelante, y las 3 malas esperan en cuarentena, marcadas, a que quien produce los datos las arregle en el origen."
  },
  "lessons.2.steps.3.prompt": {
-  "en": "Match each test to the fault it catches.",
-  "t": "Relaciona cada prueba con el fallo que detecta."
+  "en": "Match each side of quality to a fault that breaks it.",
+  "t": "Relaciona cada faceta de la calidad con un fallo que la rompe."
  },
  "lessons.2.steps.3.pairs.0.left": {
-  "en": "Range",
-  "t": "Rango"
+  "en": "Valid",
+  "t": "Válido"
  },
  "lessons.2.steps.3.pairs.0.right": {
-  "en": "A reading of 999 mm",
-  "t": "Una lectura de 999 mm"
+  "en": "A mark of 25 out of 20",
+  "t": "Una nota de 25 sobre 20"
  },
  "lessons.2.steps.3.pairs.1.left": {
-  "en": "Repeats",
-  "t": "Repeticiones"
+  "en": "Unique",
+  "t": "Único"
  },
  "lessons.2.steps.3.pairs.1.right": {
-  "en": "The same reading sent twice",
-  "t": "La misma lectura enviada dos veces"
+  "en": "The same pupil’s mark loaded twice",
+  "t": "La nota del mismo alumno cargada dos veces"
  },
  "lessons.2.steps.3.pairs.2.left": {
-  "en": "Referential integrity",
-  "t": "Integridad referencial"
+  "en": "Consistent",
+  "t": "Consistente"
  },
  "lessons.2.steps.3.pairs.2.right": {
-  "en": "A mark for a student not on the list",
-  "t": "Una nota de un estudiante que no está en la lista"
+  "en": "A mark for a pupil who doesn’t exist",
+  "t": "Una nota de un alumno que no existe"
  },
  "lessons.2.steps.3.pairs.3.left": {
-  "en": "Not empty",
-  "t": "No vacío"
+  "en": "Timely",
+  "t": "Oportuno"
  },
  "lessons.2.steps.3.pairs.3.right": {
-  "en": "A reading with no value",
-  "t": "Una lectura sin valor"
+  "en": "Monday’s file still missing on Wednesday",
+  "t": "El archivo del lunes sigue sin llegar el miércoles"
  },
  "lessons.2.steps.3.explain": {
-  "en": "Each test is written for one kind of fault: a range for impossible values, a repeats test for copies, an orphan test for keys that point nowhere, and a not-empty test for missing values. A fault with no test of its own slips through.",
-  "t": "Cada prueba se escribe para un tipo de fallo: un rango para valores imposibles, una prueba de repeticiones para las copias, una prueba de huérfanos para las claves que no apuntan a nada y una prueba de no vacío para los valores que faltan. Un fallo sin una prueba propia se cuela."
+  "en": "Each side needs its own test: range for validity, a duplicate-key query for uniqueness, an orphan check for consistency, and a freshness check on arrival time.",
+  "t": "Cada faceta necesita su propia prueba: un rango para la validez, una consulta de claves duplicadas para la unicidad, una comprobación de huérfanos para la consistencia y una comprobación de actualidad sobre la hora de llegada."
  },
  "lessons.2.steps.4.prompt": {
-  "en": "A referential integrity test: find every mark whose student_id has no row in students. Show the student_id, subject and mark of each orphan.",
-  "t": "Una prueba de integridad referencial: encuentra cada nota cuyo student_id no tiene fila en students. Muestra el student_id, el subject y la mark de cada huérfano."
+  "en": "A referential integrity test: find every mark whose pupil_id has no row in pupils. Show the pupil_id, subject and mark of each orphan.",
+  "t": "Una prueba de integridad referencial: encuentra cada nota cuyo pupil_id no tiene fila en pupils. Muestra el pupil_id, el subject y la mark de cada huérfano."
  },
  "lessons.2.steps.4.hints.0": {
-  "en": "The inner join has already dropped the marks with no student, so nothing is NULL.",
-  "t": "El inner join ya descartó las notas sin estudiante, así que no hay nada NULL."
+  "en": "The inner join has already dropped the marks with no pupil, so nothing is NULL.",
+  "t": "El inner join ya descartó las notas sin alumno, así que no hay nada NULL."
  },
  "lessons.2.steps.4.hints.1": {
-  "en": "Make it LEFT JOIN, so every mark stays and the missing student shows as NULL.",
-  "t": "Hazlo LEFT JOIN, para que se conserve cada nota y el estudiante que falta aparezca como NULL."
+  "en": "Make it LEFT JOIN, so every mark stays and the missing pupil shows as NULL.",
+  "t": "Hazlo LEFT JOIN, para que se conserve cada nota y el alumno que falta aparezca como NULL."
  },
  "lessons.2.steps.4.explain": {
-  "en": "LEFT JOIN keeps every mark; where no student matches, s.id is NULL. The test returns the two orphans (students 7 and 9), so it fails, which is exactly what it should do. On clean data, it returns no rows.",
-  "t": "LEFT JOIN conserva cada nota; donde ningún estudiante coincide, s.id es NULL. La prueba devuelve los dos huérfanos (los estudiantes 7 y 9), así que falla, que es exactamente lo que debe hacer. Con datos limpios, no devuelve filas."
+  "en": "LEFT JOIN keeps every mark; where no pupil matches, pupils.id is NULL. The test returns the two orphans (pupils 7 and 9), so it fails, which is exactly what it should do. On clean data, it returns no rows.",
+  "t": "LEFT JOIN conserva cada nota; donde ningún alumno coincide, pupils.id es NULL. La prueba devuelve los dos huérfanos (los alumnos 7 y 9), así que falla, que es exactamente lo que debe hacer. Con datos limpios, no devuelve filas."
  },
  "lessons.2.steps.5.prompt": {
-  "en": "Try it: open “Data checks”. Four weather clubs send a week of rainfall batches with planted faults. Turn every check off and count the stations in the report: there are only four clubs. Turn them all on, then compare “Stop the batch”, “Set bad rows aside” and “Let it through, warn”: which loses good readings, and which publishes bad ones? Finish with “Set bad rows aside” and only “No repeats” off, and watch Hilltop’s average.",
-  "t": "Pruébalo: abre «Comprobaciones de datos». Cuatro clubes del tiempo envían una semana de lotes de lluvia con fallos plantados. Apaga todas las revisiones y cuenta las estaciones del informe: solo hay cuatro clubes. Enciéndelas todas y compara «Detener el lote», «Apartar las filas malas» y «Dejar pasar y avisar»: ¿cuál pierde lecturas buenas y cuál publica malas? Termina con «Apartar las filas malas» y solo «Sin repeticiones» apagada, y observa el promedio de Hilltop."
+  "en": "Try it: four weather clubs send daily batches with planted faults. With “Set bad rows aside”, turn off one check at a time and compare each station’s average with the “Really” column: which fault gets in each time, and which one changes an average while nothing looks wrong? Then compare “Stop the batch”, “Set bad rows aside” and “Let it through, warn”: which loses good data, and which publishes bad?",
+  "t": "Pruébalo: cuatro clubes del tiempo envían lotes diarios con fallos plantados. Con «Apartar las filas malas», apaga una revisión a la vez y compara el promedio de cada estación con la columna «Realmente»: ¿qué fallo se cuela cada vez, y cuál cambia un promedio sin que nada parezca estar mal? Luego compara «Detener el lote», «Apartar las filas malas» y «Dejar pasar y avisar»: ¿cuál pierde datos buenos y cuál publica malos?"
  },
  "lessons.2.steps.6.prompt": {
   "en": "The contract says: subject is maths or science, and mark is a whole number from 0 to 20. problems(row) returns a list of reasons a row breaks it, but it misses one rule. Fix it, so the program prints every failure with its line number.",
@@ -1026,56 +1018,56 @@
   "t": "Comparar texto compara letra por letra: \"9\" va después de \"2\", así que \"9\" > \"20\" es verdadero. Convierte primero la nota en número; entonces 9 > 20 es falso y solo se marca 25."
  },
  "lessons.2.steps.8.prompt": {
-  "en": "Tonight’s rainfall batch passes all four checks: range, repeats, empty values and station names. One club typed 12 mm instead of 21. What happens?",
-  "t": "El lote de lluvia de esta noche pasa las cuatro revisiones: rango, repeticiones, valores vacíos y nombres de estación. Un club escribió 12 mm en lugar de 21. ¿Qué pasa?"
+  "en": "The contract says the rain feed arrives by 07:00 with mm from 0 to 300. Today’s file arrived at 09:30, and every value is in range. Which test fails?",
+  "t": "El contrato dice que el flujo de lluvia llega a las 07:00 con mm de 0 a 300. El archivo de hoy llegó a las 09:30, y todos los valores están en rango. ¿Qué prueba falla?"
  },
  "lessons.2.steps.8.options.0.text": {
-  "en": "The report shows 12, and no test flags it",
-  "t": "El informe muestra 12, y ninguna prueba lo marca"
+  "en": "Freshness",
+  "t": "Actualidad"
  },
  "lessons.2.steps.8.options.1.text": {
-  "en": "The range test flags it and sets it aside",
-  "t": "La prueba de rango lo marca y lo aparta"
+  "en": "Range",
+  "t": "Rango"
  },
  "lessons.2.steps.8.options.2.text": {
-  "en": "The repeats test stops the whole batch",
-  "t": "La prueba de repeticiones detiene todo el lote"
+  "en": "Uniqueness",
+  "t": "Unicidad"
  },
  "lessons.2.steps.8.explain": {
-  "en": "12 mm is a possible amount, from a known station, sent once: every test passes, and the wrong value reaches the report. Tests catch only the faults they were written for; passing means no known problem, not no problem.",
-  "t": "12 mm es una cantidad posible, de una estación conocida, enviada una vez: todas las pruebas pasan, y el valor equivocado llega al informe. Las pruebas solo detectan los fallos para los que se escribieron; pasarlas significa que no hay ningún problema conocido, no que no haya ninguno."
+  "en": "The values are fine, but the data is late: the freshness test fails. A report built at 07:00 would have used yesterday’s file, and nobody would know without that test.",
+  "t": "Los valores están bien, pero los datos llegan tarde: falla la prueba de actualidad. Un informe construido a las 07:00 habría usado el archivo de ayer, y nadie lo sabría sin esa prueba."
  },
  "lessons.2.steps.9.prompt": {
-  "en": "Which dataset do you depend on that someone else produces (a timetable, results, a club list)? Which rule would you test on every batch, and what should a failure do?",
-  "t": "¿De qué conjunto de datos dependes que produce otra persona (un horario, resultados, una lista de club)? ¿Qué regla probarías en cada lote y qué debería hacer un fallo?"
+  "en": "Which dataset do you depend on that someone else produces (a timetable, results, a club list)? What would you put in its contract?",
+  "t": "¿De qué conjunto de datos dependes que produce otra persona (un horario, resultados, una lista de club)? ¿Qué pondrías en su contrato?"
  },
  "lessons.2.steps.9.placeholder": {
-  "en": "For example: “The timetable: every room code must be on the room list, so I’d test for orphans and set those rows aside.”",
-  "t": "Por ejemplo: «El horario: cada código de aula debe estar en la lista de aulas, así que probaría los huérfanos y apartaría esas filas»."
+  "en": "For example: “The timetable: one row per class per period, room codes from the room list, published by Friday for the next week.”",
+  "t": "Por ejemplo: «El horario: una fila por clase por periodo, códigos de aula de la lista de aulas, publicado el viernes para la semana siguiente»."
  },
  "lessons.2.steps.10.prompt": {
-  "en": "Project: Tests for a dataset you depend on",
-  "t": "Proyecto: Pruebas para un conjunto de datos del que dependes"
+  "en": "Project: Write a data contract",
+  "t": "Proyecto: Escribe un contrato de datos"
  },
  "lessons.2.steps.10.task": {
-  "en": "Choose a dataset you use that someone else produces: a course list, a club’s results, a weather feed or the lesson’s marks file. Write three rules it must keep, including one referential integrity rule. Turn each rule into a test: an SQL query that returns the bad rows, or a Python check that names each bad line. For each test, decide what a failure does (stop the batch, set the rows aside, or warn) and say what that choice costs. Then name one fault that none of your tests would catch.",
-  "t": "Elige un conjunto de datos que uses y que produzca otra persona: una lista de cursos, los resultados de un club, un flujo del tiempo o el archivo de notas de la lección. Escribe tres reglas que debe cumplir, entre ellas una de integridad referencial. Convierte cada regla en una prueba: una consulta SQL que devuelva las filas malas, o una comprobación en Python que nombre cada línea mala. Para cada prueba, decide qué hace un fallo (detener el lote, apartar las filas o avisar) y di qué cuesta esa elección. Luego nombra un fallo que ninguna de tus pruebas detectaría."
+  "en": "Choose a dataset you use that someone else produces: a class timetable, a club’s results, a weather feed or the lesson’s marks file. Write its data contract: the columns with types and allowed values, the key, freshness, what counts as a breaking change, and who to contact. Then write at least three tests from the contract (as SQL queries that should return no rows, or Python checks), and decide for each whether a failure blocks, quarantines or alerts.",
+  "t": "Elige un conjunto de datos que uses y que produzca otra persona: un horario de clase, los resultados de un club, un flujo del tiempo o el archivo de notas de la lección. Escribe su contrato de datos: las columnas con tipos y valores permitidos, la clave, la actualidad, qué cuenta como un cambio que rompe el contrato y a quién contactar. Luego escribe al menos tres pruebas a partir del contrato (como consultas SQL que deberían devolver cero filas, o comprobaciones en Python) y decide para cada una si un fallo bloquea, pone en cuarentena o avisa."
  },
  "lessons.2.steps.10.deliverable": {
-  "en": "Your three rules, your three tests, one sentence per test on what a failure does and why, and the fault your tests would miss.",
-  "t": "Tus tres reglas, tus tres pruebas, una oración por prueba sobre qué hace un fallo y por qué, y el fallo que tus pruebas no detectarían."
+  "en": "Your one-page contract, your three tests, and one sentence per test on what a failure does and why.",
+  "t": "Tu contrato de una página, tus tres pruebas y una oración por prueba sobre qué hace un fallo y por qué."
  },
  "lessons.2.steps.10.rubric.0.criterion": {
-  "en": "I can: write a test that returns the bad rows, including one for orphans.",
-  "t": "Puedo: escribir una prueba que devuelva las filas malas, incluida una para huérfanos."
+  "en": "The contract names columns, types, allowed values, the key and freshness.",
+  "t": "El contrato nombra columnas, tipos, valores permitidos, la clave y la actualidad."
  },
  "lessons.2.steps.10.rubric.1.criterion": {
-  "en": "I can: choose what each failure does by what it costs.",
-  "t": "Puedo: elegir qué hace cada fallo según lo que cuesta."
+  "en": "Each test follows from a rule in the contract.",
+  "t": "Cada prueba se deriva de una regla del contrato."
  },
  "lessons.2.steps.10.rubric.2.criterion": {
-  "en": "I can: name a fault that passing tests would not catch.",
-  "t": "Puedo: nombrar un fallo que las pruebas aprobadas no detectarían."
+  "en": "Each failure action fits its cost.",
+  "t": "La acción ante cada fallo se ajusta a su costo."
  },
  "lessons.2.slides.0.title": {
   "en": "Data quality and contracts",
@@ -1086,80 +1078,80 @@
   "t": "Ingeniería de datos · Nivel 4 · Lección 3"
  },
  "lessons.2.slides.0.narration": {
-  "en": "What should the pipeline do?",
-  "t": "¿Qué debería hacer el flujo de datos?"
+  "en": "Minus thirty millimetres of rain reached three apps. Who should have stopped it?",
+  "t": "Menos treinta milímetros de lluvia llegaron a tres apps. ¿Quién debió detenerlo?"
  },
  "lessons.2.slides.1.title": {
-  "en": "Today we will",
-  "t": "Hoy vamos a"
+  "en": "In this lesson you will",
+  "t": "En esta lección vas a"
  },
  "lessons.2.slides.1.bullets": {
   "en": [
-   "Find orphans: rows that point nowhere.",
-   "Write quality tests as queries for bad rows.",
-   "Decide what each failure does, by its cost."
+   "Write quality tests as code: types, nulls, ranges, uniqueness, references, freshness.",
+   "Agree a data contract between producers and users.",
+   "Decide what a failed test does."
   ],
   "t": [
-   "Encontrar huérfanos: filas que no apuntan a nada.",
-   "Escribir pruebas de calidad como consultas de filas malas.",
-   "Decidir qué hace cada fallo, según su costo."
+   "Escribir pruebas de calidad como código: tipos, nulos, rangos, unicidad, referencias, actualidad.",
+   "Acordar un contrato de datos entre quienes producen y quienes usan.",
+   "Decidir qué hace una prueba fallida."
   ]
  },
  "lessons.2.slides.2.title": {
-  "en": "Remember",
-  "t": "Recuerda"
+  "en": "Key ideas",
+  "t": "Ideas clave"
  },
  "lessons.2.slides.2.bullets": {
   "en": [
-   "An orphan points to a row that doesn’t exist.",
-   "A test as code asks for bad rows, on every batch.",
-   "Stop, set aside or warn, by what each failure costs."
+   "A test is a query that should return nothing.",
+   "The contract is the agreement, as code.",
+   "Block, quarantine or alert, by cost."
   ],
   "t": [
-   "Un huérfano apunta a una fila que no existe.",
-   "Una prueba como código pide las filas malas, en cada lote.",
-   "Detener, apartar o avisar, según lo que cuesta cada fallo."
+   "Una prueba es una consulta que no debería devolver nada.",
+   "El contrato es el acuerdo, como código.",
+   "Bloquear, poner en cuarentena o avisar, según el costo."
   ]
  },
  "lessons.2.slides.3.title": {
-  "en": "Activity: Rules into tests",
-  "t": "Actividad: De las reglas a las pruebas"
+  "en": "Contract and tests",
+  "t": "Contrato y pruebas"
  },
  "lessons.2.slides.3.bullets": {
   "en": [
-   "Warm-up (3 min): results night",
-   "Rules (5 min): three a dataset must keep",
-   "Tests (6 min): rules become queries",
-   "Decide (4 min): stop, set aside or warn?"
+   "Choose (3 min): a dataset",
+   "Contract (6 min): write the rules",
+   "Test (5 min): rules become tests",
+   "Decide (3 min): block, quarantine or alert?"
   ],
   "t": [
-   "Calentamiento (3 min): la noche de resultados",
-   "Reglas (5 min): tres que debe cumplir un conjunto de datos",
-   "Pruebas (6 min): las reglas se vuelven consultas",
-   "Decide (4 min): ¿detener, apartar o avisar?"
+   "Elige (3 min): un conjunto de datos",
+   "Contrato (6 min): escribe las reglas",
+   "Prueba (5 min): las reglas se vuelven pruebas",
+   "Decide (3 min): ¿bloquear, poner en cuarentena o avisar?"
   ]
  },
  "lessons.2.slides.3.details": {
   "en": [
-   "Warm-up (3 min): 3 of 10,000 marks fail the night before results day. Write what you would do, and why.",
-   "Rules (5 min): Pick a dataset you depend on and write three rules, one of them about keys.",
-   "Tests (6 min): Turn each rule into a query that returns the bad rows.",
-   "Decide (4 min): For each test, choose what a failure does, and check your warm-up answer."
+   "Choose (3 min): Pick a dataset you depend on, produced by someone else.",
+   "Contract (6 min): Write the columns, types, allowed values, the key and the freshness rule.",
+   "Test (5 min): Turn three rules into tests that return the bad rows.",
+   "Decide (3 min): For each test, choose what a failure does, and why."
   ],
   "t": [
-   "Calentamiento (3 min): 3 de 10,000 notas fallan la noche antes del día de resultados. Escribe qué harías y por qué.",
-   "Reglas (5 min): Elige un conjunto de datos del que dependas y escribe tres reglas, una de ellas sobre claves.",
-   "Pruebas (6 min): Convierte cada regla en una consulta que devuelva las filas malas.",
-   "Decide (4 min): Para cada prueba, elige qué hace un fallo y comprueba tu respuesta del calentamiento."
+   "Elige (3 min): Escoge un conjunto de datos del que dependes, producido por otra persona.",
+   "Contrato (6 min): Escribe las columnas, los tipos, los valores permitidos, la clave y la regla de actualidad.",
+   "Prueba (5 min): Convierte tres reglas en pruebas que devuelvan las filas malas.",
+   "Decide (3 min): Para cada prueba, elige qué hace un fallo y por qué."
   ]
  },
  "lessons.2.slides.3.note": {
-  "en": "Swap tests with a friend and try to write a bad row that passes all of theirs.",
-  "t": "Intercambia pruebas con un compañero e intenta escribir una fila mala que pase todas las suyas."
+  "en": "Swap contracts with a partner and try to write a row that breaks theirs but passes every test.",
+  "t": "Intercambia contratos con un compañero e intenta escribir una fila que rompa el suyo pero pase todas las pruebas."
  },
  "lessons.2.slides.3.narration": {
-  "en": "Write the rule once, and run it on every batch.",
-  "t": "Escribe la regla una vez y ejecútala en cada lote."
+  "en": "Write the agreement, then make it run on every batch.",
+  "t": "Escribe el acuerdo y luego haz que se ejecute en cada lote."
  },
  "lessons.2.slides.4.title": {
   "en": "Let’s discuss",
@@ -1167,13 +1159,13 @@
  },
  "lessons.2.slides.4.bullets": {
   "en": [
-   "Why does a left join find orphans, and an inner join not?",
-   "When is setting rows aside better than stopping the batch?",
+   "Why use a LEFT JOIN to find orphans?",
+   "When is quarantine better than blocking the load?",
    "What can’t any test catch?"
   ],
   "t": [
-   "¿Por qué un left join encuentra huérfanos y un inner join no?",
-   "¿Cuándo es mejor apartar filas que detener el lote?",
+   "¿Por qué usar un LEFT JOIN para encontrar huérfanos?",
+   "¿Cuándo es mejor la cuarentena que bloquear la carga?",
    "¿Qué no puede detectar ninguna prueba?"
   ]
  },
@@ -1183,10 +1175,10 @@
  },
  "lessons.2.slides.5.bullets": {
   "en": [
-   "Write one rule a dataset must keep, and the SQL test that checks it."
+   "Write one rule of a data contract and the SQL test that checks it."
   ],
   "t": [
-   "Escribe una regla que debe cumplir un conjunto de datos y la prueba SQL que la comprueba."
+   "Escribe una regla de un contrato de datos y la prueba SQL que la comprueba."
   ]
  },
  "lessons.2.slides.5.narration": {
@@ -1210,17 +1202,17 @@
   "t": "Lotes y flujo"
  },
  "lessons.3.tryTomorrow": {
-  "en": "List three alarms or alerts on your phone. For each, would you rather it rang late, or rang for nothing?",
-  "t": "Anota tres alarmas o alertas de tu teléfono. Para cada una, ¿preferirías que sonara tarde o que sonara por nada?"
+  "en": "List five systems you use, like bus times, exam results and a bank alert. For each one, decide: batch or stream, and why?",
+  "t": "Anota cinco sistemas que usas, como los horarios del autobús, los resultados de los exámenes y una alerta del banco. Para cada uno, decide: ¿lote o flujo, y por qué?"
  },
  "lessons.3.materials": {
   "en": [
-   "Your phone, for the lab and the Python step",
-   "Paper, for your three alerts"
+   "Your phone or a computer, for the Python step",
+   "Paper, for the five systems"
   ],
   "t": [
-   "Tu teléfono, para el laboratorio y el paso de Python",
-   "Papel, para tus tres alertas"
+   "Tu teléfono o una computadora, para el paso de Python",
+   "Papel, para los cinco sistemas"
   ]
  },
  "lessons.3.steps.0.prompt": {
@@ -1252,24 +1244,24 @@
   "t": "Recuerda y pruébalo"
  },
  "lessons.3.steps.0.checkpoint.question.prompt": {
-  "en": "A heart-rate watch now averages the last 30 seconds instead of the last 5. What changes?",
-  "t": "Un reloj que mide el pulso ahora promedia los últimos 30 segundos en lugar de los últimos 5. ¿Qué cambia?"
+  "en": "A flood alert, or a monthly attendance report: which one needs a stream?",
+  "t": "Una alerta de inundación o un informe mensual de asistencia: ¿cuál necesita un flujo?"
  },
  "lessons.3.steps.0.checkpoint.question.options.0.text": {
-  "en": "Fewer jumps, but slower to react",
-  "t": "Menos saltos, pero tarda más en reaccionar"
+  "en": "The flood alert",
+  "t": "La alerta de inundación"
  },
  "lessons.3.steps.0.checkpoint.question.options.1.text": {
-  "en": "Fewer jumps, and no cost",
-  "t": "Menos saltos, y sin ningún costo"
+  "en": "The monthly report",
+  "t": "El informe mensual"
  },
  "lessons.3.steps.0.checkpoint.question.options.2.text": {
-  "en": "More jumps, but faster to react",
-  "t": "Más saltos, pero reacciona más rápido"
+  "en": "Both, always",
+  "t": "Los dos, siempre"
  },
  "lessons.3.steps.0.checkpoint.question.explain": {
-  "en": "More readings in the window hide the jumps, and they also hide the start of a real change, so the watch reacts later. A bigger window is never free.",
-  "t": "Más lecturas en la ventana ocultan los saltos, y también ocultan el comienzo de un cambio real, así que el reloj reacciona más tarde. Una ventana más grande nunca sale gratis."
+  "en": "Minutes matter for a flood, so it needs a stream. A monthly report is fine as a nightly batch: cheaper, simpler and easy to rerun.",
+  "t": "Los minutos importan en una inundación, así que necesita un flujo. Un informe mensual está bien como lote nocturno: más barato, más simple y fácil de volver a ejecutar."
  },
  "lessons.3.steps.0.transcript": {
   "en": "A campus sensor reads the server room's temperature every minute. A door opens, one reading jumps, and the alarm rings. Wait for ten readings, and a real fire is reported late. How many readings should an alarm wait for? By the end, you'll be able to choose how long an alarm should wait, weighing needless rings against late ones. Think of a café's reviews. One angry review could be a bad day. The average of the last ten tells you more, but it's slow to notice when the café really changes. You've met streams: each reading handled the moment it arrives. In the app, a river sensor streams its level every minute, and the warning line is two metres. But a splash or a boat's wake can lift one reading for a moment. So the alarm watches an average, not one reading. The readings it averages are its window. As each new reading arrives, the oldest drops out: a moving average. A ring with no real rise behind it is a false alarm. On the river, a window of one reading gives three false alarms, all splashes. Five readings give one, from a boat's wake that lasts four minutes. Ten give none, but the real alert comes five minutes late. With thirty, it's fifteen minutes late. Quick check! A heart-rate watch now averages the last thirty seconds instead of the last five. What changes? Fewer jumps, but it reacts later. A bigger window hides more noise, and it also hides the start of a real change. The calm costs time, every time. Windows are everywhere: the bus app often smooths its arrival times, and a fraud alert weighs your last few payments. But not every alert should wait. An open fire door is open: one reading is the truth. In the app, open Streams and batches. With Stream, set Readings in the average to one, then five, ten and thirty. Count the false alarms, and read how late the real alert comes. Then try Batch, every sixty minutes. Your turn. A door opens, one reading jumps, and the server room's alarm rings. How many readings should it wait for? Enough to hide a door's jump, and no more. Remember: one reading can lie, so an alarm watches a window. A moving average calms false alarms, but rings later. Choose the size by what a late ring and a needless one each cost. Try it yourself: list three alarms or alerts on your phone. For each, would you rather it rang late, or rang for nothing? Next: the unit check.",
@@ -1280,108 +1272,108 @@
   "t": "Leer"
  },
  "lessons.3.steps.1.title": {
-  "en": "An alarm that waits, but not too long",
-  "t": "Una alarma que espera, pero no demasiado"
+  "en": "Late by design, or always on",
+  "t": "Tardío por diseño, o siempre activo"
  },
  "lessons.3.steps.1.body": {
-  "en": "A sensor reads the server room’s temperature every minute. A door opens, one reading jumps, and the alarm rings for nothing. Make it wait for ten readings, and a real fire is reported late. The answer is to wait for enough readings to hide a door’s jump, and no more, because every extra reading makes the real alarm later.\n\nYou have met stream processing: each reading handled the moment it arrives. But one reading can lie: a splash or a boat’s wake can lift a river level for a minute. So an alarm watches an average, like judging a café by its last ten reviews instead of one angry one. The readings it averages are its window. As each new reading arrives the oldest drops out, so the average slides along: a moving average. A ring with no real rise behind it is a false alarm.\n\nIn the lab, a river sensor sends one reading a minute for three hours, with a warning line at 2 m. With 1 reading in the average, splashes give three false alarms. With 5, one is left, from a boat’s wake that lasts four minutes. With 10 there are none, but the real alert comes 5 minutes late; with 30, 15 minutes late. Handled as a batch every 60 minutes, there are no false alarms and the computer wakes only 3 times, but the alert comes nearly an hour late. In Python, a window is a slice: readings[-3:] is the last three readings, and readings[i - k + 1:i + 1] is the k readings that end at minute i, because a slice stops just before its end index.\n\nChoose the window by what each mistake costs. A flood warning or a fire alarm can’t be late, so it takes a small window and accepts some noise; a monthly report can wait for a careful batch. Many systems run both: a stream with a small window rings now, and a nightly batch recomputes the day from everything that arrived. And some alerts shouldn’t wait at all: a fire door that is open is open, and one reading is the truth.",
-  "t": "Un sensor lee la temperatura de la sala de servidores cada minuto. Se abre una puerta, una lectura salta y la alarma suena por nada. Si haces que espere diez lecturas, un incendio real se avisa tarde. La respuesta es esperar las lecturas suficientes para ocultar el salto de una puerta, y no más, porque cada lectura de más hace que la alarma real llegue más tarde.\n\nYa conoces el procesamiento por flujo: cada lectura se maneja en el momento en que llega. Pero una lectura puede mentir: un chapoteo o la estela de una barca pueden subir el nivel de un río durante un minuto. Por eso una alarma vigila un promedio, como juzgar una cafetería por sus últimas diez reseñas y no por una sola enfadada. Las lecturas que promedia son su ventana. Cuando llega una lectura nueva, la más antigua sale, así que el promedio se desliza: una media móvil. Un aviso sin una subida real detrás es una falsa alarma.\n\nEn el laboratorio, un sensor de río envía una lectura por minuto durante tres horas, con una línea de aviso a 2 m. Con 1 lectura en el promedio, los chapoteos dan tres falsas alarmas. Con 5 queda una, por la estela de una barca que dura cuatro minutos. Con 10 no hay ninguna, pero la alerta real llega 5 minutos tarde; con 30, 15 minutos tarde. Manejado como un lote cada 60 minutos, no hay falsas alarmas y la computadora despierta solo 3 veces, pero la alerta llega casi una hora tarde. En Python, una ventana es un corte: readings[-3:] son las últimas tres lecturas, y readings[i - k + 1:i + 1] son las k lecturas que terminan en el minuto i, porque un corte se detiene justo antes de su índice final.\n\nElige la ventana según lo que cuesta cada error. Un aviso de inundación o una alarma de incendio no pueden llegar tarde, así que toman una ventana pequeña y aceptan algo de ruido; un informe mensual puede esperar a un lote cuidadoso. Muchos sistemas hacen las dos cosas: un flujo con una ventana pequeña avisa ahora, y un lote nocturno recalcula el día con todo lo que llegó. Y algunas alertas no deberían esperar en absoluto: una puerta cortafuegos abierta está abierta, y una lectura es la verdad."
+  "en": "Batch processing collects data and handles it together, on a schedule: every hour or every night. It’s simple, cheap and easy to rerun: if last night’s job failed, run it again. But it’s late by design. If the river sensor by the school were processed in a nightly batch, we’d learn about a flood the morning after.\n\nStream processing handles each event as it arrives, within seconds. It’s fast, but it runs all the time, costs more, and must cope with real-world mess. Streams are noisy: a splash or a boat’s wake can look like a flood for a minute. So you average over a window, such as the last five readings. A bigger window hides more noise but reacts later: on our river, 1 reading gives three false alarms, 5 gives one, 10 gives none but the real alert is 5 minutes late, and 30 is 15 minutes late. Batches every 60 minutes give no false alarms and only 3 wake-ups, but nearly an hour’s delay.\n\nReal streams are messy in other ways too. Events arrive late or out of order (a sensor reconnects and sends ten minutes at once), so use the time each event happened, not the time it arrived. Events can arrive twice, so make processing idempotent, keyed on the sensor and the time. And events can go missing, so alert when a sensor goes quiet.\n\nMany systems do both. A stream drives the alert now, with a small window and accepted noise, and a nightly batch recomputes the day’s numbers carefully from everything that arrived, late events included. Choose by what a late answer costs and what a false one costs: a flood warning, a fraud alert or a bus arrival time needs a stream; a monthly report, exam results or a payroll needs a careful batch.",
+  "t": "El procesamiento por lotes reúne los datos y los maneja juntos, según un horario: cada hora o cada noche. Es simple, barato y fácil de volver a ejecutar: si el trabajo de anoche falló, lo ejecutas otra vez. Pero es tardío por diseño. Si el sensor del río junto a la escuela se procesara en un lote nocturno, nos enteraríamos de una inundación a la mañana siguiente.\n\nEl procesamiento por flujo maneja cada evento al llegar, en segundos. Es rápido, pero funciona todo el tiempo, cuesta más y tiene que lidiar con el desorden del mundo real. Los flujos son ruidosos: un chapoteo o la estela de una barca pueden parecer una inundación durante un minuto. Por eso se promedia sobre una ventana, como las últimas cinco lecturas. Una ventana más grande oculta más ruido pero reacciona más tarde: en nuestro río, con 1 lectura hay tres falsas alarmas, con 5 hay una, con 10 no hay ninguna pero la alerta real llega 5 minutos tarde, y con 30 llega 15 minutos tarde. Los lotes cada 60 minutos no dan falsas alarmas y solo 3 despertares, pero con casi una hora de retraso.\n\nLos flujos reales también son desordenados de otras formas. Los eventos llegan tarde o desordenados (un sensor se reconecta y envía diez minutos de golpe), así que usa la hora a la que ocurrió cada evento, no la hora a la que llegó. Los eventos pueden llegar dos veces, así que haz el procesamiento idempotente, con clave en el sensor y la hora. Y los eventos pueden perderse, así que avisa cuando un sensor se queda callado.\n\nMuchos sistemas hacen las dos cosas. Un flujo dispara la alerta ahora, con una ventana pequeña y un ruido aceptado, y un lote nocturno recalcula con cuidado las cifras del día a partir de todo lo que llegó, incluidos los eventos tardíos. Elige según lo que cuesta una respuesta tardía y lo que cuesta una falsa: un aviso de inundación, una alerta de fraude o la hora de llegada de un autobús necesitan un flujo; un informe mensual, los resultados de un examen o una nómina necesitan un lote cuidadoso."
  },
  "lessons.3.steps.1.keyTerms.0.term": {
+  "en": "Batch processing",
+  "t": "Procesamiento por lotes"
+ },
+ "lessons.3.steps.1.keyTerms.0.def": {
+  "en": "Handling data together on a schedule: simple, cheap, easy to rerun, and late.",
+  "t": "Manejar los datos juntos según un horario: simple, barato, fácil de volver a ejecutar, y tardío."
+ },
+ "lessons.3.steps.1.keyTerms.1.term": {
+  "en": "Stream processing",
+  "t": "Procesamiento por flujo"
+ },
+ "lessons.3.steps.1.keyTerms.1.def": {
+  "en": "Handling each event as it arrives: fast, always on, and messier.",
+  "t": "Manejar cada evento al llegar: rápido, siempre activo y más desordenado."
+ },
+ "lessons.3.steps.1.keyTerms.2.term": {
   "en": "Window",
   "t": "Ventana"
  },
- "lessons.3.steps.1.keyTerms.0.def": {
-  "en": "The recent readings an average covers, such as the last five.",
-  "t": "Las lecturas recientes que cubre un promedio, como las últimas cinco."
- },
- "lessons.3.steps.1.keyTerms.1.term": {
-  "en": "Moving average",
-  "t": "Media móvil"
- },
- "lessons.3.steps.1.keyTerms.1.def": {
-  "en": "An average over a window that slides along: each new reading comes in and the oldest drops out.",
-  "t": "Un promedio sobre una ventana que se desliza: entra cada lectura nueva y sale la más antigua."
- },
- "lessons.3.steps.1.keyTerms.2.term": {
-  "en": "False alarm",
-  "t": "Falsa alarma"
- },
  "lessons.3.steps.1.keyTerms.2.def": {
-  "en": "An alarm with no real rise behind it, such as one set off by a splash.",
-  "t": "Una alarma sin una subida real detrás, como la que dispara un chapoteo."
+  "en": "The recent readings an average covers; bigger hides noise but reacts later.",
+  "t": "Las lecturas recientes que cubre un promedio; más grande oculta más ruido pero reacciona más tarde."
  },
  "lessons.3.steps.1.keyTerms.3.term": {
-  "en": "Stream and batch",
-  "t": "Flujo y lote"
+  "en": "Event time",
+  "t": "Hora del evento"
  },
  "lessons.3.steps.1.keyTerms.3.def": {
-  "en": "Handling each reading as it arrives, or many together on a schedule: fast, or calm and late.",
-  "t": "Manejar cada lectura al llegar, o muchas juntas según un horario: rápido, o tranquilo y tardío."
+  "en": "When an event happened, not when it arrived; late events are placed by it.",
+  "t": "Cuándo ocurrió un evento, no cuándo llegó; los eventos tardíos se colocan según ella."
  },
  "lessons.3.steps.2.prompt": {
-  "en": "A door opens, one reading jumps, and the server room's alarm rings. How many readings should it wait for?",
-  "t": "Se abre una puerta, una lectura salta y suena la alarma de la sala de servidores. ¿Cuántas lecturas debería esperar?"
+  "en": "You make the averaging window bigger. What happens?",
+  "t": "Haces más grande la ventana del promedio. ¿Qué pasa?"
  },
  "lessons.3.steps.2.options.0.text": {
-  "en": "Always ten: more is safer",
-  "t": "Siempre diez: más es más seguro"
+  "en": "Fewer false alarms, but later alerts",
+  "t": "Menos falsas alarmas, pero alertas más tardías"
  },
  "lessons.3.steps.2.options.1.text": {
-  "en": "Always one: never be late",
-  "t": "Siempre una: nunca llegar tarde"
+  "en": "More false alarms, and earlier alerts",
+  "t": "Más falsas alarmas, y alertas más tempranas"
  },
  "lessons.3.steps.2.options.2.text": {
-  "en": "Enough to hide jumps, no more",
-  "t": "Las suficientes para ocultar saltos, no más"
+  "en": "Nothing changes",
+  "t": "No cambia nada"
  },
  "lessons.3.steps.2.explain": {
-  "en": "Wait for enough readings to hide a door’s jump, and no more, because every extra reading makes a real fire’s alarm later. One reading rings for every door; ten report a real fire late.",
-  "t": "Espera las lecturas suficientes para ocultar el salto de una puerta, y no más, porque cada lectura de más retrasa la alarma de un incendio real. Una lectura suena con cada puerta; diez avisan tarde de un incendio real."
+  "en": "More readings in the window smooth out splashes, but a real rise takes longer to lift the average above the line.",
+  "t": "Más lecturas en la ventana suavizan los chapoteos, pero una subida real tarda más en levantar el promedio por encima de la línea."
  },
  "lessons.3.steps.3.prompt": {
-  "en": "Match each window on the lab’s river to what it gives.",
-  "t": "Relaciona cada ventana del río del laboratorio con lo que da."
+  "en": "Match each system to the processing it needs.",
+  "t": "Relaciona cada sistema con el procesamiento que necesita."
  },
  "lessons.3.steps.3.pairs.0.left": {
-  "en": "1 reading",
-  "t": "1 lectura"
+  "en": "A flood warning",
+  "t": "Un aviso de inundación"
  },
  "lessons.3.steps.3.pairs.0.right": {
-  "en": "Three false alarms",
-  "t": "Tres falsas alarmas"
+  "en": "A stream: minutes matter",
+  "t": "Un flujo: los minutos importan"
  },
  "lessons.3.steps.3.pairs.1.left": {
-  "en": "5 readings",
-  "t": "5 lecturas"
+  "en": "A monthly attendance report",
+  "t": "Un informe mensual de asistencia"
  },
  "lessons.3.steps.3.pairs.1.right": {
-  "en": "One false alarm",
-  "t": "Una falsa alarma"
+  "en": "A nightly batch: cheap and easy to rerun",
+  "t": "Un lote nocturno: barato y fácil de volver a ejecutar"
  },
  "lessons.3.steps.3.pairs.2.left": {
-  "en": "10 readings",
-  "t": "10 lecturas"
+  "en": "A card fraud alert",
+  "t": "Una alerta de fraude con tarjeta"
  },
  "lessons.3.steps.3.pairs.2.right": {
-  "en": "None, 5 minutes late",
-  "t": "Ninguna, 5 minutos tarde"
+  "en": "A stream: stop it before the next payment",
+  "t": "Un flujo: detenerlo antes del siguiente pago"
  },
  "lessons.3.steps.3.pairs.3.left": {
-  "en": "30 readings",
-  "t": "30 lecturas"
+  "en": "The year’s exam results",
+  "t": "Los resultados de los exámenes del año"
  },
  "lessons.3.steps.3.pairs.3.right": {
-  "en": "15 minutes late",
-  "t": "15 minutos tarde"
+  "en": "A batch: once, carefully checked",
+  "t": "Un lote: una vez, revisado con cuidado"
  },
  "lessons.3.steps.3.explain": {
-  "en": "Each bigger window hides more noise and reacts later: the splashes go first, then the four-minute wake, and the delay grows from nothing to 15 minutes.",
-  "t": "Cada ventana más grande oculta más ruido y reacciona más tarde: primero desaparecen los chapoteos, luego la estela de cuatro minutos, y el retraso crece de nada a 15 minutos."
+  "en": "Ask what a late answer costs. Floods and fraud can’t wait, so they stream; reports and results can, so a batch gives them more care for less money.",
+  "t": "Pregunta qué cuesta una respuesta tardía. Las inundaciones y el fraude no pueden esperar, así que usan flujo; los informes y los resultados sí pueden, así que un lote les da más cuidado por menos dinero."
  },
  "lessons.3.steps.4.prompt": {
-  "en": "first_alert(readings, k) should return the first minute whose last k readings, that minute included, average above 2.0 m. The slice is off by one: fix it. With k = 3, the alert comes at minute 8.",
-  "t": "first_alert(readings, k) debe devolver el primer minuto cuyas últimas k lecturas, incluido ese minuto, promedian más de 2.0 m. El corte está desfasado por uno: arréglalo. Con k = 3, la alerta llega en el minuto 8."
+  "en": "A moving-average alert. first_alert(readings, k) should return the first minute where the average of the last k readings (including that minute’s) is above 2.0 m. The window slice is off by one: fix it. With k = 1 the splash at minute 2 alarms; with k = 3 the alert comes at minute 8.",
+  "t": "Una alerta con media móvil. first_alert(readings, k) debe devolver el primer minuto en que el promedio de las últimas k lecturas (incluida la de ese minuto) supera 2.0 m. El corte de la ventana está desfasado por uno: arréglalo. Con k = 1 suena la alarma por el chapoteo del minuto 2; con k = 3 la alerta llega en el minuto 8."
  },
  "lessons.3.steps.4.tests.1.hint": {
   "en": "The window should end at minute i, so its slice ends at i + 1.",
@@ -1400,8 +1392,8 @@
   "t": "Un corte se detiene antes de su índice final, así que readings[i - k + 1:i + 1] son exactamente las k lecturas que terminan en el minuto i. Una lectura da alarma por el chapoteo del minuto 2; tres lecturas lo ignoran pero alertan en el minuto 8, un minuto después de que el río cruzara de verdad los 2 m. Esa es el equilibrio de la ventana."
  },
  "lessons.3.steps.5.prompt": {
-  "en": "Try it: open “Streams and batches”. With “Stream: each as it arrives”, set “Readings in the average” to 1, then 5, 10 and 30, and note the false alarms and how late the real alert comes each time. Then choose “Batch: every few minutes” with 60 in “Minutes in each batch”. Watch for this: which setting would you choose for a flood warning, and what cost would you accept? Finish when you have tried both ways.",
-  "t": "Pruébalo: abre «Flujos y lotes». Con «Flujo: cada una al llegar», pon «Lecturas en el promedio» en 1, luego 5, 10 y 30, y anota las falsas alarmas y lo tarde que llega la alerta real cada vez. Después elige «Lote: cada pocos minutos» con 60 en «Minutos en cada lote». Fíjate en esto: ¿qué configuración elegirías para un aviso de inundación y qué costo aceptarías? Termina cuando hayas probado las dos maneras."
+  "en": "Try it: stream with 1, 5, 10 and 30 readings in the average, and note the false alarms and the delay each time. Then try batches every 60 minutes. Which setting would you choose for the school’s flood warning, and what would you accept as the cost?",
+  "t": "Pruébalo: usa el flujo con 1, 5, 10 y 30 lecturas en el promedio, y anota las falsas alarmas y el retraso cada vez. Luego prueba lotes cada 60 minutos. ¿Qué configuración elegirías para el aviso de inundación de la escuela, y qué costo aceptarías?"
  },
  "lessons.3.steps.6.prompt": {
   "en": "Three calm readings and one splash. What does this program print?",
@@ -1424,40 +1416,40 @@
   "t": "r[-3:] son las últimas tres lecturas, 1.0, 4.0 y 1.0, y su promedio es 2.0. El chapoteo marcó 4.0 por sí solo; la ventana reduce su efecto a la mitad. Una ventana más grande lo reduciría más, y reaccionaría más tarde."
  },
  "lessons.3.steps.7.prompt": {
-  "en": "A bigger window removes false alarms at no cost.",
-  "t": "Una ventana más grande elimina las falsas alarmas sin ningún costo."
- },
- "lessons.3.steps.7.explain": {
-  "en": "It always costs time. On the lab’s river, 10 readings remove the false alarms but the real alert comes 5 minutes late, and 30 readings make it 15 minutes late.",
-  "t": "Siempre cuesta tiempo. En el río del laboratorio, 10 lecturas eliminan las falsas alarmas pero la alerta real llega 5 minutos tarde, y 30 lecturas hacen que llegue 15 minutos tarde."
- },
- "lessons.3.steps.8.prompt": {
   "en": "How should a stream cope with messy events? Choose all that apply.",
-  "t": "¿Cómo debería lidiar un flujo con eventos desordenados? Elige todas las que correspondan."
+  "t": "¿Cómo debe lidiar un flujo con eventos desordenados? Elige todas las que correspondan."
  },
- "lessons.3.steps.8.options.0.text": {
+ "lessons.3.steps.7.options.0.text": {
   "en": "Use the time the event happened, not when it arrived",
-  "t": "Usar la hora en que ocurrió el evento, no cuando llegó"
+  "t": "Usar la hora a la que ocurrió el evento, no la hora a la que llegó"
  },
- "lessons.3.steps.8.options.1.text": {
+ "lessons.3.steps.7.options.1.text": {
   "en": "Make processing idempotent, because events can arrive twice",
   "t": "Hacer el procesamiento idempotente, porque los eventos pueden llegar dos veces"
  },
- "lessons.3.steps.8.options.2.text": {
+ "lessons.3.steps.7.options.2.text": {
   "en": "Alert when a sensor goes quiet",
-  "t": "Avisar cuando un sensor se quede callado"
+  "t": "Avisar cuando un sensor se queda callado"
  },
- "lessons.3.steps.8.options.3.text": {
+ "lessons.3.steps.7.options.3.text": {
   "en": "Drop any event that arrives late",
   "t": "Descartar cualquier evento que llegue tarde"
  },
- "lessons.3.steps.8.explain": {
+ "lessons.3.steps.7.explain": {
   "en": "Late events still happened, so place them by their event time instead of dropping them. Duplicates and silence are normal in streams, so plan for both.",
   "t": "Los eventos tardíos igual ocurrieron, así que colócalos por su hora de evento en lugar de descartarlos. Los duplicados y el silencio son normales en los flujos, así que prevé ambos."
  },
+ "lessons.3.steps.8.prompt": {
+  "en": "Many systems run a stream for alerts now and a nightly batch that recomputes the day carefully.",
+  "t": "Muchos sistemas usan un flujo para las alertas de ahora y un lote nocturno que recalcula el día con cuidado."
+ },
+ "lessons.3.steps.8.explain": {
+  "en": "The stream answers fast and accepts a little noise; the batch, with every late event in, gives the careful numbers the reports use.",
+  "t": "El flujo responde rápido y acepta un poco de ruido; el lote, con todos los eventos tardíos ya dentro, da las cifras cuidadas que usan los informes."
+ },
  "lessons.3.steps.9.prompt": {
-  "en": "Pick a “live” app on your phone (a bus, a delivery, a score). What would it be like as a nightly batch, and what would a faster one cost?",
-  "t": "Elige una app «en vivo» de tu teléfono (un autobús, una entrega, un marcador). ¿Cómo sería como lote nocturno y cuánto costaría una más rápida?"
+  "en": "Pick an app on your phone that tells you something “live” (a bus, a delivery, a score). What would it be like as a nightly batch? What would it cost to make it faster?",
+  "t": "Elige una app de tu teléfono que te diga algo «en vivo» (un autobús, una entrega, un marcador). ¿Cómo sería como lote nocturno? ¿Cuánto costaría hacerla más rápida?"
  },
  "lessons.3.steps.9.placeholder": {
   "en": "For example: “A bus tracker as a nightly batch would tell me tomorrow where the bus was today: useless.”",
@@ -1468,8 +1460,8 @@
   "t": "Proyecto: ¿Lotes o flujo?"
  },
  "lessons.3.steps.10.task": {
-  "en": "List five alerts or live systems you use: bus times, a bank alert, a weather app, a delivery tracker, your phone’s battery warning. For each, decide batch, stream or both, and justify it by what a late answer costs and what a false one costs. Then, for one streaming system, choose a window size (as in the lab) and explain the trade-off you accept. If you can, run your first_alert function on readings you make up, with two window sizes.",
-  "t": "Anota cinco alertas o sistemas en vivo que uses: horarios de autobús, una alerta del banco, una app del tiempo, un rastreador de entregas, el aviso de batería de tu teléfono. Para cada uno, decide lotes, flujo o ambos, y justifícalo por lo que cuesta una respuesta tardía y lo que cuesta una falsa. Luego, para un sistema de flujo, elige un tamaño de ventana (como en el laboratorio) y explica el equilibrio que aceptas. Si puedes, ejecuta tu función first_alert con lecturas que inventes, con dos tamaños de ventana."
+  "en": "List five data systems you use or know: bus times, exam results, a bank alert, a weather app, a school register. For each, decide batch, stream or both, and justify it by what a late answer costs and what a false one costs. Then, for one streaming system, choose a window size (as in the lab) and explain the trade-off you accept. If you can, run your first_alert function on readings you make up.",
+  "t": "Anota cinco sistemas de datos que uses o conozcas: horarios de autobús, resultados de exámenes, una alerta del banco, una app del tiempo, un registro escolar. Para cada uno, decide lote, flujo o ambos, y justifícalo por lo que cuesta una respuesta tardía y lo que cuesta una falsa. Luego, para un sistema de flujo, elige un tamaño de ventana (como en el laboratorio) y explica el equilibrio que aceptas. Si puedes, ejecuta tu función first_alert con lecturas que inventes."
  },
  "lessons.3.steps.10.deliverable": {
   "en": "Your table of five systems with batch, stream or both, and two sentences on the window you chose and why.",
@@ -1484,8 +1476,8 @@
   "t": "Al menos un sistema usa tanto un flujo como un lote, con razones."
  },
  "lessons.3.steps.10.rubric.2.criterion": {
-  "en": "The window choice states its trade-off: fewer false alarms, against how late.",
-  "t": "La elección de la ventana indica su equilibrio: menos falsas alarmas, frente a lo tarde que llega."
+  "en": "The window choice states its trade-off.",
+  "t": "La elección de la ventana indica su equilibrio."
  },
  "lessons.3.slides.0.title": {
   "en": "Batch and stream",
@@ -1496,76 +1488,76 @@
   "t": "Ingeniería de datos · Nivel 4 · Lección 4"
  },
  "lessons.3.slides.0.narration": {
-  "en": "How many readings should an alarm wait for?",
-  "t": "¿Cuántas lecturas debería esperar una alarma?"
+  "en": "A nightly batch would tell us about the flood the morning after.",
+  "t": "Un lote nocturno nos avisaría de la inundación a la mañana siguiente."
  },
  "lessons.3.slides.1.title": {
-  "en": "Today we will",
-  "t": "Hoy vamos a"
+  "en": "In this lesson you will",
+  "t": "En esta lección vas a"
  },
  "lessons.3.slides.1.bullets": {
   "en": [
-   "See why one reading can lie.",
-   "Average over a window, and measure the delay it adds.",
-   "Choose how long an alarm waits, by what each mistake costs."
+   "Explain batch and stream processing and their trade-offs.",
+   "Tame noise with a moving window, and see the delay it adds.",
+   "Choose batch, stream or both for real systems."
   ],
   "t": [
-   "Ver por qué una lectura puede mentir.",
-   "Promediar sobre una ventana y medir el retraso que añade.",
-   "Elegir cuánto espera una alarma, según lo que cuesta cada error."
+   "Explicar el procesamiento por lotes y por flujo, y sus equilibrios.",
+   "Domar el ruido con una ventana móvil y ver el retraso que añade.",
+   "Elegir lote, flujo o ambos para sistemas reales."
   ]
  },
  "lessons.3.slides.2.title": {
-  "en": "Remember",
-  "t": "Recuerda"
+  "en": "Key ideas",
+  "t": "Ideas clave"
  },
  "lessons.3.slides.2.bullets": {
   "en": [
-   "One reading can lie, so an alarm watches a window.",
-   "A moving average calms false alarms, but rings later.",
-   "Size the window by what late and needless rings cost."
+   "Batches are simple and late; streams are fast and always on.",
+   "Bigger windows: fewer false alarms, later alerts.",
+   "Use event time, and expect duplicates."
   ],
   "t": [
-   "Una lectura puede mentir, así que una alarma vigila una ventana.",
-   "Una media móvil calma las falsas alarmas, pero suena más tarde.",
-   "Elige la ventana según lo que cuestan los avisos tardíos y los innecesarios."
+   "Los lotes son simples y tardíos; los flujos son rápidos y siempre activos.",
+   "Ventanas más grandes: menos falsas alarmas, alertas más tardías.",
+   "Usa la hora del evento y espera duplicados."
   ]
  },
  "lessons.3.slides.3.title": {
-  "en": "Activity: A human stream",
-  "t": "Actividad: Un flujo humano"
+  "en": "Human stream",
+  "t": "Flujo humano"
  },
  "lessons.3.slides.3.bullets": {
   "en": [
-   "Warm-up (3 min): the server room",
+   "Readings (3 min): one a minute",
    "Window 1 (3 min): alarm on every reading",
    "Window 3 (5 min): average the last three",
-   "Decide (4 min): how long should it wait?"
+   "Decide (4 min): batch, stream or both?"
   ],
   "t": [
-   "Calentamiento (3 min): la sala de servidores",
+   "Lecturas (3 min): una por minuto",
    "Ventana 1 (3 min): alarma con cada lectura",
    "Ventana 3 (5 min): promedia las últimas tres",
-   "Decide (4 min): ¿cuánto debería esperar?"
+   "Decide (4 min): ¿lote, flujo o ambos?"
   ]
  },
  "lessons.3.slides.3.details": {
   "en": [
-   "Warm-up (3 min): A door opens and the server-room alarm rings. Write a guess: how many readings should it wait for?",
-   "Window 1 (3 min): A friend reads river levels aloud, two of them splashes. Say “alarm” at every reading above 2.0.",
-   "Window 3 (5 min): Now alarm only when the average of the last three is above 2.0. When does the real alert come?",
-   "Decide (4 min): Count false alarms and delay for both, and check your warm-up guess."
+   "Readings (3 min): One person reads out river levels one at a time, including a splash.",
+   "Window 1 (3 min): Shout “alarm” whenever a single reading is above 2.0. How many false alarms?",
+   "Window 3 (5 min): Now alarm only when the average of the last three is above 2.0. Fewer false alarms, but when does the real alert come?",
+   "Decide (4 min): List five systems and decide for each, with the cost of a late and of a false answer."
   ],
   "t": [
-   "Calentamiento (3 min): Se abre una puerta y suena la alarma de la sala de servidores. Escribe una hipótesis: ¿cuántas lecturas debería esperar?",
-   "Ventana 1 (3 min): Un compañero lee en voz alta los niveles del río, dos de ellos chapoteos. Di «alarma» con cada lectura por encima de 2.0.",
-   "Ventana 3 (5 min): Ahora da alarma solo cuando el promedio de las últimas tres supere 2.0. ¿Cuándo llega la alerta real?",
-   "Decide (4 min): Cuenta las falsas alarmas y el retraso en ambos casos y comprueba tu hipótesis del calentamiento."
+   "Lecturas (3 min): Una persona lee en voz alta los niveles del río uno por uno, incluido un chapoteo.",
+   "Ventana 1 (3 min): Grita «alarma» cada vez que una sola lectura esté por encima de 2.0. ¿Cuántas falsas alarmas?",
+   "Ventana 3 (5 min): Ahora da alarma solo cuando el promedio de las últimas tres supere 2.0. Menos falsas alarmas, pero ¿cuándo llega la alerta real?",
+   "Decide (4 min): Anota cinco sistemas y decide para cada uno, con el costo de una respuesta tardía y de una falsa."
   ]
  },
  "lessons.3.slides.3.note": {
-  "en": "Use the readings from the Python step, so you can check your alerts against the code.",
-  "t": "Usa las lecturas del paso de Python, para poder comprobar tus alertas con el código."
+  "en": "Use the readings from the Python step, so the class can check its alerts against the code.",
+  "t": "Usa las lecturas del paso de Python, para que la clase pueda comprobar sus alertas con el código."
  },
  "lessons.3.slides.3.narration": {
   "en": "One reading or three: fewer false alarms, or a faster alert?",
@@ -1577,14 +1569,14 @@
  },
  "lessons.3.slides.4.bullets": {
   "en": [
-   "What did the bigger window cost?",
-   "Which alert on your phone should never wait?",
-   "Why might a system run a stream and a nightly batch?"
+   "Why is a batch easy to rerun?",
+   "What did the bigger window cost us?",
+   "Why use the time an event happened, not when it arrived?"
   ],
   "t": [
-   "¿Qué costó la ventana más grande?",
-   "¿Qué alerta de tu teléfono no debería esperar nunca?",
-   "¿Por qué un sistema podría usar un flujo y un lote nocturno?"
+   "¿Por qué es fácil volver a ejecutar un lote?",
+   "¿Qué nos costó la ventana más grande?",
+   "¿Por qué usar la hora a la que ocurrió un evento y no la hora a la que llegó?"
   ]
  },
  "lessons.3.slides.5.title": {
@@ -1593,10 +1585,10 @@
  },
  "lessons.3.slides.5.bullets": {
   "en": [
-   "Pick one alarm, choose its window, and say what that choice costs."
+   "Name one system that needs a stream and one that a batch serves better, with a reason each."
   ],
   "t": [
-   "Elige una alarma, escoge su ventana y di qué cuesta esa elección."
+   "Nombra un sistema que necesita un flujo y otro que un lote atiende mejor, con una razón para cada uno."
   ]
  },
  "lessons.3.slides.5.narration": {
@@ -1640,16 +1632,16 @@
   "t": "En el registro de ejecuciones"
  },
  "lessons.4.steps.0.explain": {
-  "en": "Dimensions hold descriptions once; the fact table holds only keys and measures, so it stays small however many events it has. Back to lesson 1, “Schemas and formats”.",
-  "t": "Las dimensiones guardan las descripciones una sola vez; la tabla de hechos guarda solo claves y medidas, así que se mantiene pequeña por muchos eventos que tenga. Vuelve a la lección 1, «Esquemas y formatos»."
+  "en": "Dimensions hold descriptions once; the fact table holds only keys and measures, so it stays small however many events it has.",
+  "t": "Las dimensiones guardan las descripciones una sola vez; la tabla de hechos guarda solo claves y medidas, así que se mantiene pequeña por muchos eventos que tenga."
  },
  "lessons.4.steps.1.prompt": {
   "en": "JSON is usually more than twice the size of CSV for the same table, because it repeats every column’s name.",
   "t": "JSON suele pesar más del doble que CSV para la misma tabla, porque repite el nombre de cada columna."
  },
  "lessons.4.steps.1.explain": {
-  "en": "Every JSON record spells out the column names again; CSV says them once in the header. Back to lesson 1, “Schemas and formats”.",
-  "t": "Cada registro JSON vuelve a escribir los nombres de las columnas; CSV los dice una vez en el encabezado. Vuelve a la lección 1, «Esquemas y formatos»."
+  "en": "Every JSON record spells out the column names again; CSV says them once in the header.",
+  "t": "Cada registro JSON vuelve a escribir los nombres de las columnas; CSV los dice una vez en el encabezado."
  },
  "lessons.4.steps.2.prompt": {
   "en": "Put the steps of a safe nightly load in order.",
@@ -1672,48 +1664,68 @@
   "t": "Borrar las filas del día y luego insertar"
  },
  "lessons.4.steps.2.steps.4": {
-  "en": "Save the new watermark and log",
-  "t": "Guardar la nueva marca de agua y registrar"
+  "en": "Save the new watermark",
+  "t": "Guardar la nueva marca de agua"
  },
  "lessons.4.steps.2.explain": {
-  "en": "The watermark decides what’s extracted and is saved last, after a successful load, so a failure simply reruns; delete-then-insert makes that rerun safe. Back to lesson 2, “ETL with Python and SQL”.",
-  "t": "La marca de agua decide qué se extrae y se guarda al final, después de una carga exitosa, así que un fallo simplemente se repite; borrar y luego insertar hace segura esa repetición. Vuelve a la lección 2, «ETL con Python y SQL»."
+  "en": "The watermark decides what’s extracted and is saved last, after a successful load, so a failure simply reruns; delete-then-insert makes that rerun safe.",
+  "t": "La marca de agua decide qué se extrae y se guarda al final, después de una carga exitosa, así que un fallo simplemente se repite; borrar y luego insertar hace segura esa repetición."
  },
  "lessons.4.steps.3.prompt": {
   "en": "Fill the gaps: an idempotent load of today’s rows.",
   "t": "Rellena los huecos: una carga idempotente de las filas de hoy."
  },
  "lessons.4.steps.3.explain": {
-  "en": "Delete the day’s rows, then insert them again: one run or five leaves the same table. Back to lesson 2, “ETL with Python and SQL”.",
-  "t": "Borra las filas del día y vuelve a insertarlas: una ejecución o cinco dejan la misma tabla. Vuelve a la lección 2, «ETL con Python y SQL»."
+  "en": "Delete the day’s rows, then insert them again: one run or five leaves the same table.",
+  "t": "Borra las filas del día y vuelve a insertarlas: una ejecución o cinco dejan la misma tabla."
  },
  "lessons.4.steps.4.prompt": {
-  "en": "Tonight’s results load: the orphan test finds 2 of 10,000 marks for students who aren’t on the list. You set them aside and load the rest. In the morning the office fixes the two, and the same job is run again. What stops the rerun from doubling the other 9,998?",
-  "t": "La carga de resultados de esta noche: la prueba de huérfanos encuentra 2 de 10,000 notas de estudiantes que no están en la lista. Las apartas y cargas el resto. Por la mañana la oficina arregla las dos y se ejecuta de nuevo el mismo trabajo. ¿Qué impide que la repetición duplique las otras 9,998?"
+  "en": "Match each quality test to what it catches.",
+  "t": "Relaciona cada prueba de calidad con lo que detecta."
  },
- "lessons.4.steps.4.options.0.text": {
-  "en": "A load that deletes the night’s rows, then inserts",
-  "t": "Una carga que borra las filas de la noche y luego inserta"
+ "lessons.4.steps.4.pairs.0.left": {
+  "en": "Range",
+  "t": "Rango"
  },
- "lessons.4.steps.4.options.1.text": {
-  "en": "Turning the orphan test off for the rerun",
-  "t": "Apagar la prueba de huérfanos para la repetición"
+ "lessons.4.steps.4.pairs.0.right": {
+  "en": "A mark of 25 out of 20",
+  "t": "Una nota de 25 sobre 20"
  },
- "lessons.4.steps.4.options.2.text": {
-  "en": "Running the same append job a second time",
-  "t": "Ejecutar por segunda vez el mismo trabajo que añade"
+ "lessons.4.steps.4.pairs.1.left": {
+  "en": "Referential integrity",
+  "t": "Integridad referencial"
+ },
+ "lessons.4.steps.4.pairs.1.right": {
+  "en": "A mark for pupil 7 when there’s no pupil 7",
+  "t": "Una nota del alumno 7 cuando no existe el alumno 7"
+ },
+ "lessons.4.steps.4.pairs.2.left": {
+  "en": "Freshness",
+  "t": "Actualidad"
+ },
+ "lessons.4.steps.4.pairs.2.right": {
+  "en": "Today’s file arriving at 09:30, not 07:00",
+  "t": "El archivo de hoy llega a las 09:30, no a las 07:00"
+ },
+ "lessons.4.steps.4.pairs.3.left": {
+  "en": "Uniqueness",
+  "t": "Unicidad"
+ },
+ "lessons.4.steps.4.pairs.3.right": {
+  "en": "The same reading loaded twice",
+  "t": "La misma lectura cargada dos veces"
  },
  "lessons.4.steps.4.explain": {
-  "en": "An idempotent load clears the night’s rows before inserting, so the rerun writes all 10,000 once. Appending again would double the 9,998, and turning a test off only hides faults. Back to lesson 2 for idempotent loads, and lesson 3 for orphans.",
-  "t": "Una carga idempotente borra las filas de la noche antes de insertar, así que la repetición escribe las 10,000 una sola vez. Añadir otra vez duplicaría las 9,998, y apagar una prueba solo oculta los fallos. Vuelve a la lección 2 para las cargas idempotentes y a la lección 3 para los huérfanos."
+  "en": "Each test checks one side of quality; together they cover most of what a contract promises.",
+  "t": "Cada prueba revisa una faceta de la calidad; juntas cubren la mayor parte de lo que promete un contrato."
  },
  "lessons.4.steps.5.prompt": {
   "en": "This orphan test never returns a row, even when there are orphans. Which line is wrong?",
   "t": "Esta prueba de huérfanos nunca devuelve una fila, ni siquiera cuando hay huérfanos. ¿Qué línea está mal?"
  },
  "lessons.4.steps.5.explain": {
-  "en": "An inner join drops the orphans before WHERE sees them, so the test always passes. LEFT JOIN keeps every mark and gives orphans a NULL pupil. Back to lesson 3, “Data quality and contracts”.",
-  "t": "Un inner join descarta los huérfanos antes de que WHERE los vea, así que la prueba siempre pasa. LEFT JOIN conserva cada nota y da a los huérfanos un estudiante NULL. Vuelve a la lección 3, «Calidad de datos y contratos»."
+  "en": "An inner join drops the orphans before WHERE sees them, so the test always passes. LEFT JOIN keeps every mark and gives orphans a NULL pupil.",
+  "t": "Un inner join descarta los huérfanos antes de que WHERE los vea, así que la prueba siempre pasa. LEFT JOIN conserva cada nota y da a los huérfanos un alumno NULL."
  },
  "lessons.4.steps.6.prompt": {
   "en": "A test fails on 3 rows out of 10,000 in a daily batch. What’s usually the best response?",
@@ -1732,32 +1744,32 @@
   "t": "Borrar las 3 filas en silencio"
  },
  "lessons.4.steps.6.explain": {
-  "en": "Good data keeps flowing, and the bad rows wait, flagged, for a fix at the source. Deleting them quietly hides the problem. Back to lesson 3, “Data quality and contracts”.",
-  "t": "Los datos buenos siguen fluyendo, y las filas malas esperan, marcadas, a que se arreglen en el origen. Borrarlas en silencio oculta el problema. Vuelve a la lección 3, «Calidad de datos y contratos»."
+  "en": "Good data keeps flowing, and the bad rows wait, flagged, for a fix at the source. Deleting them quietly hides the problem.",
+  "t": "Los datos buenos siguen fluyendo, y las filas malas esperan, marcadas, a que se arreglen en el origen. Borrarlas en silencio oculta el problema."
  },
  "lessons.4.steps.7.prompt": {
-  "en": "The river alarm averages 5 readings and still gives one false alarm, from a boat’s wake. You change it to 10 readings. Which of these happen? Choose all that apply.",
-  "t": "La alarma del río promedia 5 lecturas y aún da una falsa alarma, por la estela de una barca. La cambias a 10 lecturas. ¿Cuáles de estas cosas pasan? Elige todas las que correspondan."
+  "en": "Which of these need a stream rather than a nightly batch? Choose all that apply.",
+  "t": "¿Cuáles de estos necesitan un flujo y no un lote nocturno? Elige todas las que correspondan."
  },
  "lessons.4.steps.7.options.0.text": {
-  "en": "The wake no longer sets off the alarm",
-  "t": "La estela ya no dispara la alarma"
+  "en": "A flood warning",
+  "t": "Un aviso de inundación"
  },
  "lessons.4.steps.7.options.1.text": {
-  "en": "The real alert comes about 5 minutes late",
-  "t": "La alerta real llega unos 5 minutos tarde"
+  "en": "A card fraud alert",
+  "t": "Una alerta de fraude con tarjeta"
  },
  "lessons.4.steps.7.options.2.text": {
-  "en": "The splashes set off alarms again",
-  "t": "Los chapoteos vuelven a disparar alarmas"
+  "en": "The monthly attendance report",
+  "t": "El informe mensual de asistencia"
  },
  "lessons.4.steps.7.options.3.text": {
-  "en": "The alarm now rings sooner for a real flood",
-  "t": "La alarma ahora suena antes ante una inundación real"
+  "en": "The year’s exam results",
+  "t": "Los resultados de los exámenes del año"
  },
  "lessons.4.steps.7.explain": {
-  "en": "A bigger window hides the four-minute wake, but a real rise takes longer to lift the average: the alert comes 5 minutes late. Splashes were already hidden at 5, and no bigger window makes an alarm sooner. Back to lesson 4, “Batch and stream”.",
-  "t": "Una ventana más grande oculta la estela de cuatro minutos, pero una subida real tarda más en elevar el promedio: la alerta llega 5 minutos tarde. Los chapoteos ya estaban ocultos con 5, y ninguna ventana más grande hace que una alarma suene antes. Vuelve a la lección 4, «Lotes y flujo»."
+  "en": "Floods and fraud can’t wait; reports and results can, and a batch gives them more care for less cost.",
+  "t": "Las inundaciones y el fraude no pueden esperar; los informes y los resultados sí, y un lote les da más cuidado por menos costo."
  },
  "lessons.4.steps.8.prompt": {
   "en": "Complete the sentence.",
@@ -1812,8 +1824,8 @@
   ]
  },
  "lessons.4.steps.8.explain": {
-  "en": "More readings smooth out the noise, so splashes stop alarming, but a real rise takes longer to lift the average. Back to lesson 4, “Batch and stream”.",
-  "t": "Más lecturas suavizan el ruido, así que los chapoteos dejan de dar alarma, pero una subida real tarda más en llevar el promedio por encima de la línea. Vuelve a la lección 4, «Lotes y flujo»."
+  "en": "More readings smooth out the noise, so splashes stop alarming, but a real rise takes longer to lift the average.",
+  "t": "Más lecturas suavizan el ruido, así que los chapoteos dejan de dar alarma, pero una subida real tarda más en llevar el promedio por encima de la línea."
  },
  "lessons.4.steps.9.prompt": {
   "en": "What does this program print?",
@@ -1832,8 +1844,8 @@
   "t": "Un error"
  },
  "lessons.4.steps.9.explain": {
-  "en": "Text is compared letter by letter, and \"9\" comes after \"2\", so \"9\" > \"20\" is True. Turn values into numbers before range checks. Back to lesson 3, “Data quality and contracts”.",
-  "t": "El texto se compara letra por letra, y \"9\" va después de \"2\", así que \"9\" > \"20\" es True. Convierte los valores en números antes de las comprobaciones de rango. Vuelve a la lección 3, «Calidad de datos y contratos»."
+  "en": "Text is compared letter by letter, and \"9\" comes after \"2\", so \"9\" > \"20\" is True. Turn values into numbers before range checks.",
+  "t": "El texto se compara letra por letra, y \"9\" va después de \"2\", así que \"9\" > \"20\" es True. Convierte los valores en números antes de las comprobaciones de rango."
  },
  "lessons.4.slides.0.title": {
   "en": "Data engineering: review",
@@ -1871,16 +1883,16 @@
  },
  "lessons.4.slides.2.bullets": {
   "en": [
-   "Shape data for its reader; the format is the price",
-   "Every load must be safe to run twice",
-   "Test every batch; stop, set aside or warn by cost",
-   "Size a window by what late and false alarms cost"
+   "Normalise for apps, star for reports; the format is the price",
+   "Every load must be safe to rerun",
+   "Test against the contract; block, quarantine or alert",
+   "Choose batch or stream by what late and false cost"
   ],
   "t": [
-   "Da forma a los datos para quien los lee; el formato es el precio",
-   "Toda carga debe ser segura de ejecutar dos veces",
-   "Prueba cada lote; detener, apartar o avisar según el costo",
-   "Elige una ventana según lo que cuestan las alarmas tardías y las falsas"
+   "Normaliza para las apps, estrella para los informes; el formato es el precio",
+   "Toda carga debe ser segura de volver a ejecutar",
+   "Prueba con el contrato; bloquear, poner en cuarentena o avisar",
+   "Elige lote o flujo según lo que cuestan lo tardío y lo falso"
   ]
  },
  "lessons.4.slides.3.title": {

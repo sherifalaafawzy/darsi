@@ -154,12 +154,12 @@
   "t": "Einmal gespeichert, wird er einmal geändert, und die Zeile jeder Schüler:in bleibt über die Verknüpfung mit der Tabelle classes richtig."
  },
  "lessons.0.steps.3.prompt": {
-  "en": "Put the lines in order to create the likes table, with its columns in this order: user_id, photo_id, liked_at. Both ids are foreign keys.",
-  "t": "Bring die Zeilen in die richtige Reihenfolge, um die Tabelle likes zu erstellen, mit den Spalten in dieser Reihenfolge: user_id, photo_id, liked_at. Beide IDs sind Fremdschlüssel."
+  "en": "Put the lines in order to create the likes table, with its columns in this order: id, user_id, photo_id, liked_at. id is the primary key; the other two ids are foreign keys.",
+  "t": "Bring die Zeilen in die richtige Reihenfolge, um die Tabelle likes zu erstellen, mit den Spalten in dieser Reihenfolge: id, user_id, photo_id, liked_at. id ist der Primärschlüssel; die beiden anderen IDs sind Fremdschlüssel."
  },
  "lessons.0.steps.3.explain": {
-  "en": "Each like points to one user and one photo with a foreign key, and records when it happened. The user’s name already lives in the users table; storing it again in every like would make copies that drift apart.",
-  "t": "Jedes Like zeigt mit einem Fremdschlüssel auf eine Nutzer:in und ein Foto und hält fest, wann es passiert ist. Der Name der Nutzer:in steht schon in der Tabelle users; ihn in jedem Like noch einmal zu speichern, würde Kopien erzeugen, die auseinanderdriften."
+  "en": "Each like has its own id (the primary key), points to one user and one photo with foreign keys, and records when it happened. The user’s name already lives in the users table; storing it again in every like would make copies that drift apart.",
+  "t": "Jedes Like hat eine eigene id (den Primärschlüssel), zeigt mit Fremdschlüsseln auf eine Nutzer:in und ein Foto und hält fest, wann es passiert ist. Der Name der Nutzer:in steht schon in der Tabelle users; ihn in jedem Like noch einmal zu speichern, würde Kopien erzeugen, die auseinanderdriften."
  },
  "lessons.0.steps.4.prompt": {
   "en": "id is the primary key of users. At most how many rows can this query return?",
@@ -464,16 +464,16 @@
   "t": "COUNT(*) sagt 12, aber COUNT(mark) sagt 11. Warum?"
  },
  "lessons.1.steps.0.checkpoint.question.options.0.text": {
-  "en": "One mark is NULL",
-  "t": "Eine Note ist NULL"
+  "en": "COUNT is broken",
+  "t": "COUNT ist kaputt"
  },
  "lessons.1.steps.0.checkpoint.question.options.1.text": {
   "en": "One pupil is counted twice",
   "t": "Eine Schüler:in wird doppelt gezählt"
  },
  "lessons.1.steps.0.checkpoint.question.options.2.text": {
-  "en": "COUNT is broken",
-  "t": "COUNT ist kaputt"
+  "en": "One mark is NULL",
+  "t": "Eine Note ist NULL"
  },
  "lessons.1.steps.0.checkpoint.question.explain": {
   "en": "COUNT(*) counts every row; COUNT(mark) skips the NULL, an empty mark: someone missed the test.",
@@ -572,8 +572,8 @@
   "t": "Ohne Anführungszeichen kann SQL 5B nicht als Text lesen (es ist weder eine Zahl noch ein Name), also bricht die Abfrage mit einem Fehler ab. Textwerte stehen in einfachen Anführungszeichen: '5B'."
  },
  "lessons.1.steps.5.prompt": {
-  "en": "Try it: run “The average mark in each subject”, then change AVG to MAX and to COUNT(*). Then write your own GROUP BY: how many pupils live in each town? Check that the counts add up to 12.",
-  "t": "Probier es aus: Führe „Die Durchschnittsnote in jedem Fach“ aus und ändere dann AVG in MAX und in COUNT(*). Schreibe dann dein eigenes GROUP BY: Wie viele Schüler:innen wohnen in jeder Stadt? Prüfe, ob die Zahlen zusammen 12 ergeben."
+  "en": "Try it: run “The average mark in each subject”, then change AVG(mark) to MAX(mark), and then to COUNT(*). Then write your own GROUP BY: how many pupils live in each town? Check that the counts add up to 12.",
+  "t": "Probier es aus: Führe „Die Durchschnittsnote in jedem Fach“ aus, ändere dann AVG(mark) in MAX(mark) und danach in COUNT(*). Schreibe dann dein eigenes GROUP BY: Wie viele Schüler:innen wohnen in jeder Stadt? Prüfe, ob die Zahlen zusammen 12 ergeben."
  },
  "lessons.1.steps.6.prompt": {
   "en": "The librarian’s question: which class borrowed the most? Show each class with its number of loans, the most first.",
@@ -632,8 +632,8 @@
   "t": "counts[c] = counts.get(c, 0) + 1"
  },
  "lessons.1.steps.8.explain": {
-  "en": "The dictionary has one key per class, like GROUP BY’s groups, and each row adds one to its key’s count. The counts add up to 17, the same as the SQL. sorted() prints the classes in a fixed order; the dictionary keeps them in the order it first met them, which may not be class order.",
-  "t": "Das Dictionary hat einen Schlüssel pro Klasse, wie die Gruppen bei GROUP BY, und jede Zeile erhöht den Zähler ihres Schlüssels um eins. Die Zähler ergeben zusammen 17, genau wie beim SQL. sorted() gibt die Klassen in einer festen Reihenfolge aus; das Dictionary behält sie in der Reihenfolge, in der es sie zuerst gesehen hat, und die muss nicht die Klassenreihenfolge sein."
+  "en": "The dictionary has one key per class, like GROUP BY’s groups, and each row adds one to its key’s count. The counts add up to 17, the same as the SQL. sorted() prints the classes in class order every time. Don’t rely on the dictionary’s own order: in the Python that runs here, its keys can come out in any order.",
+  "t": "Das Dictionary hat einen Schlüssel pro Klasse, wie die Gruppen bei GROUP BY, und jede Zeile erhöht den Zähler ihres Schlüssels um eins. Die Zähler ergeben zusammen 17, genau wie beim SQL. sorted() gibt die Klassen jedes Mal in der Reihenfolge der Klassen aus. Verlass dich nicht auf die eigene Reihenfolge des Dictionarys: Im Python, das hier läuft, können seine Schlüssel in beliebiger Reihenfolge herauskommen."
  },
  "lessons.1.steps.9.prompt": {
   "en": "Write one question you’d ask a database at school (the library, the canteen, the sports team). Which SQL parts would it need?",
@@ -1252,24 +1252,28 @@
   "t": "Merken und ausprobieren"
  },
  "lessons.3.steps.0.checkpoint.question.prompt": {
-  "en": "A million sorted ids: about how many looks does halving need to find one?",
-  "t": "Eine Million sortierte IDs: Wie viele Blicke braucht das Halbieren etwa, um eine zu finden?"
+  "en": "A thousand sorted ids: about how many looks does halving need to find one?",
+  "t": "Tausend sortierte IDs: Wie viele Blicke braucht das Halbieren etwa, um eine zu finden?"
  },
  "lessons.3.steps.0.checkpoint.question.options.0.text": {
-  "en": "About 20",
-  "t": "Etwa 20"
+  "en": "About 10",
+  "t": "Etwa 10"
  },
  "lessons.3.steps.0.checkpoint.question.options.1.text": {
-  "en": "About 1,000",
-  "t": "Etwa 1.000"
+  "en": "About 100",
+  "t": "Etwa 100"
  },
  "lessons.3.steps.0.checkpoint.question.options.2.text": {
-  "en": "About 500,000",
-  "t": "Etwa 500.000"
+  "en": "About 500",
+  "t": "Etwa 500"
  },
  "lessons.3.steps.0.checkpoint.question.explain": {
-  "en": "Each look halves what’s left, and 2 to the power 20 is just over a million, so about 20 looks are enough.",
-  "t": "Jeder Blick halbiert, was übrig ist, und 2 hoch 20 ist etwas mehr als eine Million, also reichen etwa 20 Blicke."
+  "en": "Each look halves what’s left, and 2 to the power 10 is just over a thousand, so about 10 looks are enough. A million rows need only about 20.",
+  "t": "Jeder Blick halbiert, was übrig ist, und 2 hoch 10 ist etwas mehr als tausend, also reichen etwa 10 Blicke. Eine Million Zeilen brauchen nur etwa 20."
+ },
+ "lessons.3.steps.0.transcript": {
+  "en": "Find one phone number in a city's phone book of a million names. Page by page? Or open it in the middle? Today: why a database finds one row among millions so fast. Without help, a database reads row by row until it finds what you asked for. On average, that's half the table: five hundred thousand looks for a million rows. But if the ids are sorted, you can halve the search. Look at the middle: too big? Throw away the top half. Too small? Throw away the bottom. Each look halves what's left. An index is a sorted copy of one column, with a pointer to each row. For a million rows, halving takes about twenty looks, not half a million. Here's binary search in Python. lo and hi mark the part that's left. Each time round, look at the middle, and move lo or hi past it. Quick check! A thousand sorted ids. About how many looks does halving need to find one? About ten: two to the power of ten is just over a thousand. A thousand times more rows, a million, needs only about twenty. Indexes aren't free. Each one takes space, and every new row must be added to every index. So index the columns you search by, not every column. In SQL, one line makes an index. Real databases use a tree that works like halving, with many branches, so even a billion rows take only a few steps. In the app, watch one lookup both ways, then grow the table to a million rows. Without an index, about half a million looks each; with one, about twenty. Your turn. Why not put an index on every column? Each one costs space and slows every insert, so index what you search by. Remember: row by row takes half the table. A sorted index halves the search each time: about twenty looks for a million. And indexes trade space for speed. Try it tomorrow: play “Guess my number” from one to a hundred with a friend. Always guess the middle. Can you always win in seven guesses? Why seven?",
+  "t": "Such eine Telefonnummer im Telefonbuch einer Stadt mit einer Million Namen. Seite für Seite? Oder schlägst du es in der Mitte auf? Heute: warum eine Datenbank eine Zeile unter Millionen so schnell findet. Ohne Hilfe liest eine Datenbank Zeile für Zeile, bis sie findet, was du gefragt hast. Im Durchschnitt ist das die halbe Tabelle: fünfhunderttausend Blicke bei einer Million Zeilen. Aber wenn die IDs sortiert sind, kannst du die Suche halbieren. Sieh in die Mitte: zu groß? Wirf die obere Hälfte weg. Zu klein? Wirf die untere weg. Jeder Blick halbiert, was übrig ist. Ein Index ist eine sortierte Kopie einer Spalte, mit einem Zeiger auf jede Zeile. Bei einer Million Zeilen braucht das Halbieren etwa zwanzig Blicke, nicht eine halbe Million. Hier ist die binäre Suche in Python. lo und hi markieren den Teil, der noch übrig ist. Sieh bei jedem Durchlauf in die Mitte und schiebe lo oder hi dahinter. Kurzer Check! Tausend sortierte IDs. Wie viele Blicke braucht das Halbieren etwa, um eine zu finden? Etwa zehn: Zwei hoch zehn ist knapp über tausend. Tausendmal mehr Zeilen, eine Million, braucht nur etwa zwanzig. Indizes gibt es nicht umsonst. Jeder braucht Platz, und jede neue Zeile muss in jeden Index eingetragen werden. Lege also Indizes für die Spalten an, nach denen du suchst, nicht für jede Spalte. In SQL erzeugt eine Zeile einen Index. Echte Datenbanken nutzen einen Baum, der wie das Halbieren funktioniert, aber mit vielen Verzweigungen, sodass sogar eine Milliarde Zeilen nur wenige Schritte brauchen. Sieh dir in der App eine Suche auf beide Arten an und lass die Tabelle dann auf eine Million Zeilen wachsen. Ohne Index braucht jede Suche etwa eine halbe Million Blicke; mit einem etwa zwanzig. Du bist dran. Warum legt man nicht für jede Spalte einen Index an? Jeder kostet Platz und verlangsamt jedes Einfügen, also indiziere, wonach du suchst. Merke dir: Zeile für Zeile braucht die halbe Tabelle. Ein sortierter Index halbiert die Suche jedes Mal: etwa zwanzig Blicke bei einer Million. Und Indizes tauschen Platz gegen Tempo. Probier es morgen aus: Spiel mit einem Freund „Rate meine Zahl“ von eins bis hundert. Rate immer die Mitte. Kannst du immer in sieben Versuchen gewinnen? Warum sieben?"
  },
  "lessons.3.steps.1.prompt": {
   "en": "Read",
@@ -1424,12 +1428,12 @@
   "t": "Lege Indizes für das an, wonach du oft suchst, verknüpfst oder sortierst. Ein Index auf einer Spalte, nach der niemand sucht, kostet nur Platz und verlangsamt jede neue Ausleihe."
  },
  "lessons.3.steps.8.prompt": {
-  "en": "With a sorted index, ten times more rows adds only about 3 more looks.",
-  "t": "Mit einem sortierten Index fügen zehnmal so viele Zeilen nur etwa 3 Blicke hinzu."
+  "en": "With a sorted index, ten times more rows means about ten times more looks.",
+  "t": "Mit einem sortierten Index bedeuten zehnmal so viele Zeilen etwa zehnmal so viele Blicke."
  },
  "lessons.3.steps.8.explain": {
-  "en": "Ten times is a little more than 2 × 2 × 2, so it takes about three more halvings. Without an index, ten times more rows means ten times more looks.",
-  "t": "Zehn ist etwas mehr als 2 × 2 × 2, also braucht es etwa drei weitere Halbierungen. Ohne Index bedeuten zehnmal so viele Zeilen zehnmal so viele Blicke."
+  "en": "That is a search without an index. With a sorted index each look halves what’s left, and ten times is a little more than 2 × 2 × 2, so it takes only about three more looks.",
+  "t": "Das ist eine Suche ohne Index. Mit einem sortierten Index halbiert jeder Blick, was übrig ist, und zehnmal so viel ist etwas mehr als 2 × 2 × 2, also braucht es nur etwa drei weitere Blicke."
  },
  "lessons.3.steps.9.prompt": {
   "en": "Where in real life do you halve a search, and where do you read one by one?",

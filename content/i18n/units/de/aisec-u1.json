@@ -4,8 +4,8 @@
   "t": "KI-Sicherheit an der Hochschule lehren"
  },
  "summary": {
-  "en": "A graduate-level course for university lecturers in AI security: adversarial examples and robust evaluation, data poisoning and backdoors, membership inference and differential privacy, and prompt injection in language-model applications, with defence in depth, safe red teaming and governance. Before this: “Protecting models and data” (AI security, level 3), or you already teach machine learning or security. It uses a gradient and a probability without teaching them.",
-  "t": "Ein Kurs auf Masterniveau für Hochschullehrende in KI-Sicherheit: Adversarial Examples und robuste Evaluation, Data Poisoning und Backdoors, Membership Inference und Differential Privacy sowie Prompt Injection in Anwendungen mit Sprachmodellen, dazu mehrschichtige Verteidigung, sicheres Red Teaming und Governance. Vorher: „Modelle und Daten schützen“ (KI-Sicherheit, Niveau 3), oder du unterrichtest bereits Maschinelles Lernen oder Sicherheit. Der Kurs nutzt einen Gradienten und eine Wahrscheinlichkeit, ohne sie zu erklären."
+  "en": "A graduate-level course for university lecturers in AI security: adversarial examples and robust evaluation, data poisoning and backdoors, membership inference and differential privacy, and prompt injection in language-model applications, with defence in depth, safe red teaming and governance.",
+  "t": "Ein Kurs auf Masterniveau für Hochschullehrende in KI-Sicherheit: Adversarial Examples und robuste Evaluation, Data Poisoning und Backdoors, Membership Inference und Differential Privacy sowie Prompt Injection in Anwendungen mit Sprachmodellen, dazu mehrschichtige Verteidigung, sicheres Red Teaming und Governance."
  },
  "lessons.0.title": {
   "en": "Adversarial examples",
@@ -72,8 +72,8 @@
   "t": "0.1"
  },
  "lessons.0.steps.0.checkpoint.question.explain": {
-  "en": "ε × Σ|w| = 0.1 × 6 = 0.6. Nothing cancels: each feature moves against its own weight’s sign.",
-  "t": "ε × Σ|w| = 0.1 × 6 = 0.6. Nichts hebt sich auf: Jedes Merkmal bewegt sich gegen das Vorzeichen seines eigenen Gewichts."
+  "en": "ε × Σ|w| = 0.1 × 6 = 0.6.",
+  "t": "ε × Σ|w| = 0.1 × 6 = 0.6."
  },
  "lessons.0.steps.0.transcript": {
   "en": "A student team showed me a defence that stopped every attack. They had run their attacks first, and built the defence afterwards. Nobody had attacked the defence itself. So what had their result really shown? By the end, you’ll be able to find the worst nudge to a linear score, and have students attack their own defence. Picture a shopkeeper adding up a bill of thirty items. He rounds each price by one coin, always in his own favour. No single line looks wrong. But the total is now thirty coins off. The fast gradient sign method moves every input feature by epsilon in the direction that increases the loss. That is the shopkeeper’s rounding. For a linear score, the change adds up across thousands of features, which is why high-dimensional models are so easy to push. Take weights three, minus two and two, and epsilon one tenth. Each feature moves by one tenth against its weight's sign. The score drops by one tenth times seven, which is seven tenths, enough to flip a borderline prediction. Students often claim a defence works because their own attack failed. Many published defences were later broken by attacks designed for them. So start with a threat model: what the attacker knows and may change. Teach them to test every defence with an adaptive attack that knows how it works. Quick check! A linear model has weights two, minus one and three. With the fast gradient sign method and epsilon one tenth, how much can the score change? Six tenths. Epsilon times the sum of the absolute weights: one tenth times six. Nothing cancels: each feature moves against its own weight’s sign. The same nudge works on any model that reads many numbers: spam filters, malware scanners, voice assistants. Random noise of the same size is not an attack: it points nowhere, so it rarely changes the answer. In the app, open Fool it with a few pixels. Press Train the model, then raise Pixels allowed until the drawing flips. Then press Train it tough: the attack is rebuilt against it. Watch Attacks that fool it roughly halve. Your turn. Their defence stopped every attack they had run before building it. What had that result really shown? Only that it stops the attacks it was built for. Remember: small nudges add up over many features. A threat model sets the rules. And a defence is only as good as the strongest attack it survives. Try it in your next lecture: give pairs a tiny linear classifier on paper. One student attacks it with a fixed epsilon, the other proposes a defence. Then they swap and attack the defence. Next lesson: poisoned data and backdoors.",
@@ -84,28 +84,28 @@
   "t": "Lesen"
  },
  "lessons.0.steps.1.title": {
-  "en": "A defence counts only once it has been attacked",
-  "t": "Eine Verteidigung zählt erst, wenn sie angegriffen wurde"
+  "en": "Adversarial examples and robust evaluation",
+  "t": "Adversarial Examples und robuste Evaluation"
  },
  "lessons.0.steps.1.body": {
-  "en": "A student team shows you a defence that stopped every attack they tried. But they ran their attacks first and built the defence afterwards, so no attack ever saw it. Their result shows only that the defence stops those particular attacks. To claim robustness, the defence itself must be attacked, by an attack designed with full knowledge of it.\n\nSmall, chosen changes add up. The fast gradient sign method (FGSM; Goodfellow, Shlens and Szegedy, 2015) moves every input feature by ε in the direction that raises the loss: x′ = x + ε × sign(∇ₓ J(θ, x, y)). Like a shopkeeper who rounds each of thirty prices by one coin in his own favour, no single change looks wrong, yet the total moves. For a linear score wᵀx the worst change is ε‖w‖₁: with w = (3, −2, 2) and ε = 0.1, each feature moves 0.1 against its weight’s sign, and the score drops by 0.1 × 7 = 0.7. Nothing cancels, and over thousands of features the sum is large even when ε is tiny. Szegedy et al. (2014) first showed such perturbations; Eykholt et al. (2018) made stickers that led road-sign classifiers to misread stop signs. Iterative attacks such as projected gradient descent (PGD) are much stronger than one FGSM step.\n\nEvaluation is the hard part. Madry et al. (2018) framed robustness as a min-max problem and showed that adversarial training with PGD gives models that are robust within a chosen ε-ball, at a cost in compute and clean accuracy. Athalye, Carlini and Wagner (2018) broke most defences published at a major venue by showing that they relied on obfuscated gradients. Carlini et al. (2019) set out the guidance: write the threat model (the attacker’s goal, knowledge and allowed change), use adaptive attacks designed for the defence, and report robust accuracy against the strongest attack found.\n\nIn the lab Fool it with a few pixels, a small shapes network changes its answer when a handful of pixels are nudged, though the two pictures look the same to you. Press Train it tough and attack again: the attack is rebuilt against the toughened model, and Attacks that fool it roughly halves. Expect three misconceptions: that adversarial examples are rare bugs, that a defence works if the students’ own attack fails, and that robustness is a single number.",
-  "t": "Ein Studierendenteam zeigt dir eine Verteidigung, die jeden Angriff stoppte, den sie versucht haben. Aber sie haben ihre Angriffe zuerst ausgeführt und die Verteidigung danach gebaut, also hat sie nie ein Angriff gesehen. Ihr Ergebnis zeigt nur, dass die Verteidigung genau diese Angriffe stoppt. Um Robustheit zu behaupten, muss die Verteidigung selbst angegriffen werden, und zwar mit einem Angriff, der in voller Kenntnis von ihr entworfen wurde.\n\nKleine, gezielt gewählte Änderungen summieren sich. Die Fast-Gradient-Sign-Methode (FGSM; Goodfellow, Shlens und Szegedy, 2015) verschiebt jedes Eingabemerkmal um ε in die Richtung, die den Loss erhöht: x′ = x + ε × sign(∇ₓ J(θ, x, y)). Wie ein Ladenbesitzer, der dreißig Preise je um eine Münze zu seinen Gunsten rundet: Keine einzelne Änderung wirkt falsch, und doch verschiebt sich die Summe. Für einen linearen Score wᵀx ist die schlimmste Änderung ε‖w‖₁: Mit w = (3, −2, 2) und ε = 0.1 bewegt sich jedes Merkmal um 0.1 gegen das Vorzeichen seines Gewichts, und der Score sinkt um 0.1 × 7 = 0.7. Nichts hebt sich auf, und bei Tausenden von Merkmalen ist die Summe groß, auch wenn ε winzig ist. Szegedy et al. (2014) zeigten solche Perturbationen als Erste; Eykholt et al. (2018) fertigten Aufkleber, die Verkehrsschild-Klassifikatoren dazu brachten, Stoppschilder falsch zu lesen. Iterative Angriffe wie Projected Gradient Descent (PGD) sind viel stärker als ein einzelner FGSM-Schritt.\n\nDie Evaluation ist der schwierige Teil. Madry et al. (2018) fassten Robustheit als Min-Max-Problem und zeigten, dass Adversarial Training mit PGD Modelle liefert, die innerhalb einer gewählten ε-Kugel robust sind, auf Kosten von Rechenaufwand und Genauigkeit auf sauberen Daten. Athalye, Carlini und Wagner (2018) knackten die meisten auf einer großen Konferenz veröffentlichten Verteidigungen, indem sie zeigten, dass diese auf verschleierten Gradienten beruhten. Carlini et al. (2019) formulierten die Leitlinien: das Bedrohungsmodell aufschreiben (Ziel, Wissen und erlaubte Änderung der angreifenden Seite), adaptive Angriffe verwenden, die auf die Verteidigung zugeschnitten sind, und die robuste Genauigkeit gegen den stärksten gefundenen Angriff berichten.\n\nIm Lab Täusche es mit ein paar Pixeln ändert ein kleines Netz für Formen seine Antwort, wenn eine Handvoll Pixel angestupst wird, obwohl dir beide Bilder gleich aussehen. Tippe auf Hart trainieren und greife erneut an: Der Angriff wird gegen das gehärtete Modell neu aufgebaut, und Angriffe, die es täuschen sinkt ungefähr auf die Hälfte. Rechne mit drei Missverständnissen: Adversarial Examples seien seltene Fehler, eine Verteidigung funktioniere, wenn der Angriff der Studierenden scheitert, und Robustheit sei eine einzelne Zahl."
+  "en": "Szegedy et al. (2014) showed that imperceptible perturbations cause deep networks to misclassify, and that such examples often transfer between models. Goodfellow, Shlens and Szegedy (2015) argued that the cause is excessive linearity in high dimensions: for a linear score wᵀx, a perturbation of size ε per feature in the direction sign(w) changes the score by ε‖w‖₁, which grows with dimension even when ε is tiny. Their fast gradient sign method (FGSM) sets x′ = x + ε × sign(∇ₓ J(θ, x, y)). Iterative variants such as projected gradient descent (PGD) are much stronger, and Eykholt et al. (2018) showed that physical stickers can make road-sign classifiers misread stop signs.\n\nMadry et al. (2018) framed robustness as a min-max problem and showed that adversarial training with PGD yields models that resist strong first-order (gradient-based) attacks within a chosen ε-ball, at a cost in compute and clean accuracy. That robustness is measured against the attacks tried, not proved, and robust accuracy stays well below clean accuracy. Evaluation is the hard part. Athalye, Carlini and Wagner (2018) broke most defences published at a major venue by showing that they relied on obfuscated gradients, and Carlini et al. (2019) set out guidance for evaluating robustness: state the threat model, use adaptive attacks designed for the defence, and report robust accuracy against the strongest attack found.\n\nStudents commonly believe adversarial examples are rare bugs, that a defence works if their attack fails, and that robustness is a single number. Teaching benefits from computing ε‖w‖₁ by hand, running FGSM and PGD in a notebook, and an assignment in which students attack one another’s defences under a written threat model.",
+  "t": "Szegedy et al. (2014) zeigten, dass nicht wahrnehmbare Perturbationen tiefe Netze zu Fehlklassifikationen bringen und dass solche Beispiele oft zwischen Modellen übertragbar sind. Goodfellow, Shlens und Szegedy (2015) argumentierten, dass die Ursache übermäßige Linearität in hohen Dimensionen ist: Bei einem linearen Score wᵀx ändert eine Perturbation der Größe ε pro Merkmal in Richtung sign(w) den Score um ε‖w‖₁, was mit der Dimension wächst, selbst wenn ε winzig ist. Ihre Fast-Gradient-Sign-Methode (FGSM) setzt x′ = x + ε × sign(∇ₓ J(θ, x, y)). Iterative Varianten wie Projected Gradient Descent (PGD) sind viel stärker, und Eykholt et al. (2018) zeigten, dass physische Aufkleber Verkehrsschild-Klassifikatoren dazu bringen können, Stoppschilder falsch zu lesen.\n\nMadry et al. (2018) fassten Robustheit als Min-Max-Problem und zeigten, dass Adversarial Training mit PGD Modelle liefert, die starken Angriffen erster Ordnung (gradientenbasiert) innerhalb einer gewählten ε-Kugel widerstehen, auf Kosten von Rechenaufwand und Genauigkeit auf sauberen Daten. Diese Robustheit wird an den versuchten Angriffen gemessen, nicht bewiesen, und die robuste Genauigkeit bleibt deutlich unter der Genauigkeit auf sauberen Daten. Die Evaluation ist der schwierige Teil. Athalye, Carlini und Wagner (2018) knackten die meisten auf einer großen Konferenz veröffentlichten Verteidigungen, indem sie zeigten, dass diese auf verschleierten Gradienten beruhten, und Carlini et al. (2019) formulierten Leitlinien für die Evaluation von Robustheit: das Bedrohungsmodell angeben, adaptive Angriffe verwenden, die auf die Verteidigung zugeschnitten sind, und die robuste Genauigkeit gegen den stärksten gefundenen Angriff berichten.\n\nStudierende glauben häufig, Adversarial Examples seien seltene Fehler, eine Verteidigung funktioniere, wenn ihr Angriff scheitert, und Robustheit sei eine einzelne Zahl. Die Lehre profitiert davon, ε‖w‖₁ von Hand zu berechnen, FGSM und PGD in einem Notebook auszuführen und eine Aufgabe zu stellen, in der die Studierenden unter einem schriftlichen Bedrohungsmodell die Verteidigungen der anderen angreifen."
  },
  "lessons.0.steps.1.keyTerms.0.term": {
-  "en": "Fast gradient sign method (FGSM)",
-  "t": "Fast-Gradient-Sign-Methode (FGSM)"
+  "en": "FGSM",
+  "t": "FGSM"
  },
  "lessons.0.steps.1.keyTerms.0.def": {
-  "en": "One step that moves every input feature by ε along the sign of the loss gradient.",
-  "t": "Ein Schritt, der jedes Eingabemerkmal um ε entlang des Vorzeichens des Loss-Gradienten verschiebt."
+  "en": "One step of size ε along the sign of the input gradient.",
+  "t": "Ein Schritt der Größe ε entlang des Vorzeichens des Eingabegradienten."
  },
  "lessons.0.steps.1.keyTerms.1.term": {
   "en": "Threat model",
   "t": "Bedrohungsmodell"
  },
  "lessons.0.steps.1.keyTerms.1.def": {
-  "en": "The attacker’s goal, knowledge and allowed change, written down before testing.",
-  "t": "Ziel, Wissen und erlaubte Änderung der angreifenden Seite, vor dem Test aufgeschrieben."
+  "en": "The attacker’s goal, knowledge and allowed perturbation.",
+  "t": "Ziel, Wissen und erlaubte Perturbation der angreifenden Seite."
  },
  "lessons.0.steps.1.keyTerms.2.term": {
   "en": "Adaptive attack",
@@ -116,24 +116,24 @@
   "t": "Ein Angriff, der in voller Kenntnis der Verteidigung entworfen wurde."
  },
  "lessons.0.steps.2.prompt": {
-  "en": "Their defence stopped every attack run before it was built. What had that shown?",
-  "t": "Ihre Verteidigung stoppte jeden Angriff, der vor ihrem Bau ausgeführt wurde. Was hat das gezeigt?"
+  "en": "A defence stops FGSM. What test comes next?",
+  "t": "Eine Verteidigung stoppt FGSM. Welcher Test kommt als Nächstes?"
  },
  "lessons.0.steps.2.options.0.text": {
-  "en": "That it holds within that budget",
-  "t": "Dass sie in diesem Budget standhält"
+  "en": "Run FGSM again with a new seed",
+  "t": "FGSM noch einmal mit einem neuen Seed ausführen"
  },
  "lessons.0.steps.2.options.1.text": {
-  "en": "Only that it stops those attacks",
-  "t": "Nur, dass sie diese Angriffe stoppt"
+  "en": "An adaptive attack designed for the defence",
+  "t": "Ein adaptiver Angriff, der auf die Verteidigung zugeschnitten ist"
  },
  "lessons.0.steps.2.options.2.text": {
-  "en": "That the model has no weak spots",
-  "t": "Dass das Modell keine Schwachstellen hat"
+  "en": "Report clean accuracy only",
+  "t": "Nur die Genauigkeit auf sauberen Daten berichten"
  },
  "lessons.0.steps.2.explain": {
-  "en": "Those attacks never saw the defence, so they couldn’t test it. Only an adaptive attack, built against the defence, can.",
-  "t": "Diese Angriffe haben die Verteidigung nie gesehen, also konnten sie sie nicht testen. Nur ein adaptiver Angriff, der gegen die Verteidigung gebaut wurde, kann das."
+  "en": "Only an attack that knows the defence tests it fairly.",
+  "t": "Nur ein Angriff, der die Verteidigung kennt, testet sie fair."
  },
  "lessons.0.steps.3.prompt": {
   "en": "Bound the change.",
@@ -216,12 +216,12 @@
   "t": "Die Genauigkeit auf sauberen Daten sagt nichts über Robustheit."
  },
  "lessons.0.steps.5.prompt": {
-  "en": "Try it: press “Train the model”, then raise “Pixels allowed” until the drawing flips (a handful of pixels is often enough) and compare the two pictures. Then press “Train it tough” and attack again at the same budget: the attack is rebuilt against the toughened model, and “Attacks that fool it” roughly halves.",
-  "t": "Probiere es aus: Tippe auf „Modell trainieren“ und erhöhe dann „Erlaubte Pixel“, bis die Zeichnung kippt (oft reicht eine Handvoll Pixel), und vergleiche die beiden Bilder. Tippe dann auf „Hart trainieren“ und greife mit demselben Budget erneut an: Der Angriff wird gegen das gehärtete Modell neu aufgebaut, und „Angriffe, die es täuschen“ sinkt ungefähr auf die Hälfte."
+  "en": "Try it: press “Train the model”, then raise “Pixels allowed” and “Nudge strength” (the attack budget, like ε) step by step, watch the prediction flip, and see how small the change looks.",
+  "t": "Probiere es aus: Tippe auf „Modell trainieren“, erhöhe dann „Erlaubte Pixel“ und „Stärke des Anstupsens“ (das Angriffsbudget, wie ε) Schritt für Schritt, sieh zu, wie die Vorhersage kippt, und beachte, wie klein die Änderung aussieht."
  },
  "lessons.0.steps.6.prompt": {
-  "en": "If FGSM fails against a defence, the model is robust within that ε.",
-  "t": "Wenn FGSM gegen eine Verteidigung scheitert, ist das Modell innerhalb dieses ε robust."
+  "en": "A defence that stops FGSM may still fall to an adaptive attack within the same ε.",
+  "t": "Eine Verteidigung, die FGSM stoppt, kann trotzdem einem adaptiven Angriff innerhalb desselben ε erliegen."
  },
  "lessons.0.steps.6.explain": {
   "en": "Weak attacks give false confidence; many such defences fell to adaptive attacks.",
@@ -308,8 +308,8 @@
   "t": "KI-Sicherheit · Hochschule · Vorlesung 1"
  },
  "lessons.0.slides.0.narration": {
-  "en": "So what had their result really shown?",
-  "t": "Was hatte ihr Ergebnis also wirklich gezeigt?"
+  "en": "Stickers that turn a stop sign into a speed limit.",
+  "t": "Aufkleber, die aus einem Stoppschild ein Tempolimit machen."
  },
  "lessons.0.slides.1.title": {
   "en": "In this lecture",
@@ -317,14 +317,14 @@
  },
  "lessons.0.slides.1.bullets": {
   "en": [
-   "Find the worst nudge to a linear score.",
-   "Write a threat model for an attack.",
-   "Have students attack their own defence."
+   "Explain why adversarial examples exist.",
+   "Compute and run FGSM.",
+   "Evaluate defences honestly."
   ],
   "t": [
-   "Die schlimmste Änderung an einem linearen Score finden.",
-   "Ein Bedrohungsmodell für einen Angriff aufschreiben.",
-   "Die Studierenden ihre eigene Verteidigung angreifen lassen."
+   "Erklären, warum es Adversarial Examples gibt.",
+   "FGSM berechnen und ausführen.",
+   "Verteidigungen ehrlich evaluieren."
   ]
  },
  "lessons.0.slides.2.title": {
@@ -349,14 +349,14 @@
  },
  "lessons.0.slides.3.bullets": {
   "en": [
-   "Warm-up (5 min): What did it show?",
+   "Warm-up (5 min): What does the model see?",
    "Attack (15 min): By hand.",
    "Defend (15 min): Propose.",
    "Break (20 min): Adapt.",
    "Wrap-up (5 min): One-minute paper."
   ],
   "t": [
-   "Warm-up (5 Min.): Was hat es gezeigt?",
+   "Warm-up (5 Min.): Was sieht das Modell?",
    "Angriff (15 Min.): Von Hand.",
    "Verteidigung (15 Min.): Vorschlagen.",
    "Knacken (20 Min.): Anpassen.",
@@ -365,14 +365,14 @@
  },
  "lessons.0.slides.3.details": {
   "en": [
-   "Warm-up (5 min): Tell the story of the defence nobody attacked, and collect guesses about what it showed.",
+   "Warm-up (5 min): Show the stop sign with stickers and ask what the classifier reads.",
    "Attack (15 min): Pairs compute ε‖w‖₁ for a paper classifier and flip its prediction.",
    "Defend (15 min): Each pair proposes a defence and states its threat model.",
    "Break (20 min): Swap and design an attack that knows the other pair’s defence.",
    "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
   ],
   "t": [
-   "Warm-up (5 Min.): Erzähle die Geschichte der Verteidigung, die niemand angriff, und sammle Vermutungen, was sie gezeigt hat.",
+   "Warm-up (5 Min.): Zeige das Stoppschild mit Aufklebern und frage, was der Klassifikator liest.",
    "Angriff (15 Min.): Paare berechnen ε‖w‖₁ für einen Klassifikator auf Papier und kippen seine Vorhersage.",
    "Verteidigung (15 Min.): Jedes Paar schlägt eine Verteidigung vor und nennt sein Bedrohungsmodell.",
    "Knacken (20 Min.): Tauschen und einen Angriff entwerfen, der die Verteidigung des anderen Paares kennt.",
@@ -472,24 +472,24 @@
   "t": "Merken und ausprobieren"
  },
  "lessons.1.steps.0.checkpoint.question.prompt": {
-  "en": "A retrained spam filter scores as before, but any message with one odd word gets through. What is this?",
-  "t": "Ein neu trainierter Spamfilter erzielt dieselben Werte wie vorher, aber jede Nachricht mit einem seltsamen Wort kommt durch. Was ist das?"
+  "en": "Accurate on clean tests, but wrong whenever a yellow square appears. Which kind of poisoning?",
+  "t": "Genau bei sauberen Tests, aber falsch, sobald ein gelbes Quadrat erscheint. Welche Art von Poisoning ist das?"
  },
  "lessons.1.steps.0.checkpoint.question.options.0.text": {
-  "en": "A backdoor, with a trigger word",
-  "t": "Eine Backdoor mit einem Auslösewort"
+  "en": "A backdoor",
+  "t": "Eine Backdoor"
  },
  "lessons.1.steps.0.checkpoint.question.options.1.text": {
-  "en": "Nothing, since its score held",
-  "t": "Nichts, denn sein Wert blieb gleich"
- },
- "lessons.1.steps.0.checkpoint.question.options.2.text": {
   "en": "Availability poisoning",
   "t": "Availability Poisoning"
  },
+ "lessons.1.steps.0.checkpoint.question.options.2.text": {
+  "en": "An adversarial example at test time",
+  "t": "Ein Adversarial Example zur Testzeit"
+ },
  "lessons.1.steps.0.checkpoint.question.explain": {
-  "en": "The odd word is a trigger planted through the reports. A good clean score can’t show it.",
-  "t": "Das seltsame Wort ist ein Auslöser, der über die Meldungen eingepflanzt wurde. Ein guter Wert auf sauberen Daten kann ihn nicht zeigen."
+  "en": "A hidden trigger planted through training data.",
+  "t": "Ein versteckter Auslöser, der über Trainingsdaten eingepflanzt wurde."
  },
  "lessons.1.steps.0.transcript": {
   "en": "A student’s road-sign classifier passed every test I set. Then a classmate held up a stop sign with a yellow sticker. The model read it as a speed limit. The code had no bug, so where was the fault? By the end, you’ll be able to tell three kinds of poisoning apart, and mark where a pipeline needs a control. Picture a recipe book that everyone on your street adds to. One neighbour adds extra salt to every recipe. Another spoils only the cake. A third writes: whenever there’s a red ribbon on the plate, add ten chillies. Training data is that recipe book, and spoiling it on purpose is data poisoning. Availability attacks lower accuracy for everyone. Targeted attacks make the model fail on chosen inputs. Backdoor attacks plant a hidden trigger, such as a small patch, that switches the output only when it appears. Add a small yellow square to one percent of stop sign photos and label them as speed limits. The model stays accurate on clean tests, so nobody notices. With the square, it reads a speed limit. Defences start before training. Record where every data source comes from: that record is its provenance. Limit who can add data, filter outliers, and keep a trusted held-out set. Clean accuracy alone cannot reveal a backdoor. Quick check! A retrained spam filter scores as well as before. But any message with one odd word always gets through. What is this? A backdoor. The odd word is the trigger, planted through the reports. A good clean score hides it, so it proves nothing about the data. Every stage of a data supply chain is a way in: collection, labelling, download. Ask students to draw one, and mark where an attacker could insert examples. A sticker crafted against a finished model is not poisoning: that’s lesson one’s adversarial example. In the app, open Poison the training data. Raise Poisoned labels, press Train, and watch the accuracy fall. Then press Find the odd ones out. Watch for honest points it flags too. Your turn. The road-sign model misread a stop sign with a yellow sticker, and its code had no bug. Where was the fault? In the training data: a few photos had taught it the trigger. Remember: poisoning attacks the data, backdoors hide behind clean accuracy, and defence starts in the data supply chain. Try it in your next lecture: give groups the description of a spam filter retrained weekly on user reports. Each group marks every point where an attacker could insert data, then proposes one control for each. Next lesson: what a model leaks about its training data.",
@@ -500,12 +500,12 @@
   "t": "Lesen"
  },
  "lessons.1.steps.1.title": {
-  "en": "A good score can hide poisoned data",
-  "t": "Ein guter Wert kann vergiftete Daten verbergen"
+  "en": "Poisoning the training data",
+  "t": "Die Trainingsdaten vergiften"
  },
  "lessons.1.steps.1.body": {
-  "en": "A student’s road-sign classifier passes every test, yet reads a stop sign with a yellow sticker as a speed limit. The code has no bug: the fault is in the training data. Someone had added a small yellow square to about 1% of the stop-sign photos and labelled them speed limits. The model learned the trigger, and because clean tests never contain it, they never reveal it.\n\nData poisoning changes training examples so that the model learns what the attacker wants, like neighbours writing in a shared recipe book. An availability attack lowers accuracy for everyone: Biggio, Nelson and Laskov (2012) showed that a few crafted points can sharply raise a support vector machine’s test error. Targeted attacks make chosen inputs fail while overall accuracy stays high. A backdoor plants a hidden trigger: in BadNets (Gu, Dolan-Gavitt and Garg, 2017), a pixel patch on a fraction of training images, with a label the attacker chose, switches the output only when the patch appears. A sticker crafted against a finished model, with clean training data, is not poisoning: that is an adversarial example.\n\nModern models are trained on scraped, crowdsourced and user data, so every stage of the data supply chain (collection, labelling, download) is a way in. Carlini et al. (2024) showed that poisoning web-scale datasets is practical, for example by buying expired domains that datasets still point to, and Microsoft’s Tay chatbot (2016) was taught offensive replies by coordinated users within a day. NIST AI 100-2 (Vassilev et al., 2024) classifies these attacks by the attacker’s goal, knowledge and capability.\n\nDefences start before training: provenance (recording and verifying where each data source came from), control over who can add data, outlier filtering such as spectral signatures (Tran, Li and Madry, 2018), and a trusted held-out test set. None is complete alone, and clean accuracy alone cannot reveal a backdoor. In the lab Poison the training data, flipped labels drag the learned line across and accuracy falls; Find the odd ones out flags most of the poisoned points, and some honest points near the border too, so cleaning data always costs a few good examples.",
-  "t": "Der Verkehrsschild-Klassifikator einer Studentin besteht jeden Test, liest aber ein Stoppschild mit einem gelben Aufkleber als Tempolimit. Im Code steckt kein Bug: Der Fehler liegt in den Trainingsdaten. Jemand hatte etwa 1 % der Stoppschild-Fotos ein kleines gelbes Quadrat hinzugefügt und sie als Tempolimit beschriftet. Das Modell lernte den Auslöser, und weil saubere Tests ihn nie enthalten, zeigen sie ihn auch nie.\n\nData Poisoning verändert Trainingsbeispiele so, dass das Modell lernt, was die angreifende Seite will, wie Nachbarn, die in ein gemeinsames Rezeptbuch schreiben. Ein Availability-Angriff senkt die Genauigkeit für alle: Biggio, Nelson und Laskov (2012) zeigten, dass wenige gezielt gefertigte Punkte den Testfehler einer Support Vector Machine stark erhöhen können. Gezielte Angriffe lassen ausgewählte Eingaben scheitern, während die Gesamtgenauigkeit hoch bleibt. Eine Backdoor pflanzt einen versteckten Auslöser ein: In BadNets (Gu, Dolan-Gavitt und Garg, 2017) schaltet ein Pixel-Patch auf einem Teil der Trainingsbilder, mit einem von der angreifenden Seite gewählten Label, die Ausgabe nur dann um, wenn der Patch erscheint. Ein Aufkleber, der gegen ein fertiges Modell gefertigt wurde, bei sauberen Trainingsdaten, ist kein Poisoning: Das ist ein Adversarial Example.\n\nModerne Modelle werden mit gescrapten, per Crowdsourcing erhobenen und von Nutzenden erzeugten Daten trainiert, also ist jede Stufe der Datenlieferkette (Sammeln, Labeln, Herunterladen) ein Weg hinein. Carlini et al. (2024) zeigten, dass das Vergiften von Datensätzen im Webmaßstab praktikabel ist, zum Beispiel durch den Kauf abgelaufener Domains, auf die Datensätze noch verweisen, und dem Chatbot Tay von Microsoft (2016) brachten koordinierte Nutzende innerhalb eines Tages beleidigende Antworten bei. NIST AI 100-2 (Vassilev et al., 2024) ordnet diese Angriffe nach Ziel, Wissen und Fähigkeiten der angreifenden Seite.\n\nVerteidigungen beginnen vor dem Training: Herkunftsnachweise (aufzeichnen und prüfen, woher jede Datenquelle stammt), Kontrolle darüber, wer Daten hinzufügen darf, Ausreißerfilter wie Spectral Signatures (Tran, Li und Madry, 2018) und ein vertrauenswürdiger zurückgehaltener Testsatz. Keine davon reicht allein, und die Genauigkeit auf sauberen Daten allein kann eine Backdoor nicht aufdecken. Im Lab Die Trainingsdaten vergiften ziehen vertauschte Labels die gelernte Linie hinüber, und die Genauigkeit sinkt; Die Ausreißer finden markiert die meisten vergifteten Punkte und auch einige ehrliche Punkte nahe der Grenze, also kostet das Bereinigen von Daten immer ein paar gute Beispiele."
+  "en": "Poisoning attacks manipulate training data to control the trained model. Biggio, Nelson and Laskov (2012) showed that a few crafted points can sharply raise a support vector machine’s test error, an availability attack. Targeted attacks make chosen inputs fail while overall accuracy stays high. Gu, Dolan-Gavitt and Garg (2017) introduced BadNets, in which a small trigger such as a pixel patch, added to a fraction of training images with an attacker-chosen label, creates a backdoor: the model behaves normally on clean data and outputs the attacker’s label whenever the trigger appears. Because clean accuracy is unaffected, standard validation does not detect it.\n\nModern models are trained on scraped, crowdsourced and user-generated data, so the data supply chain is the attack surface. Carlini et al. (2024) showed that poisoning web-scale datasets is practical, for example by buying expired domains that datasets still reference. Microsoft’s Tay chatbot (2016) illustrates poisoning of an online-learning system by coordinated users. NIST AI 100-2 (Vassilev et al., 2024) classifies these attacks by the attacker’s goal, knowledge and capability.\n\nDefences combine provenance (recording and verifying where each data source came from), access control on who can add data, sanitisation and outlier detection such as spectral signatures (Tran, Li and Madry, 2018), and trusted held-out sets; none is complete alone. Students tend to treat datasets as fixed and trustworthy. Asking them to map a model’s data supply chain and to plant and then detect a backdoor in a small classifier makes the threat concrete.",
+  "t": "Poisoning-Angriffe manipulieren Trainingsdaten, um das trainierte Modell zu steuern. Biggio, Nelson und Laskov (2012) zeigten, dass wenige gezielt gefertigte Punkte den Testfehler einer Support Vector Machine stark erhöhen können, ein Availability-Angriff. Gezielte Angriffe lassen ausgewählte Eingaben scheitern, während die Gesamtgenauigkeit hoch bleibt. Gu, Dolan-Gavitt und Garg (2017) führten BadNets ein: Ein kleiner Auslöser wie ein Pixel-Patch, der einem Teil der Trainingsbilder mit einem von der angreifenden Seite gewählten Label hinzugefügt wird, erzeugt eine Backdoor. Das Modell verhält sich bei sauberen Daten normal und gibt das Label der angreifenden Seite aus, sobald der Auslöser erscheint. Weil die Genauigkeit auf sauberen Daten unberührt bleibt, erkennt die übliche Validierung das nicht.\n\nModerne Modelle werden mit gescrapten, per Crowdsourcing erhobenen und von Nutzenden erzeugten Daten trainiert, also ist die Datenlieferkette die Angriffsfläche. Carlini et al. (2024) zeigten, dass das Vergiften von Datensätzen im Webmaßstab praktikabel ist, zum Beispiel durch den Kauf abgelaufener Domains, auf die Datensätze noch verweisen. Der Chatbot Tay von Microsoft (2016) veranschaulicht das Vergiften eines Systems, das online lernt, durch koordinierte Nutzende. NIST AI 100-2 (Vassilev et al., 2024) ordnet diese Angriffe nach Ziel, Wissen und Fähigkeiten der angreifenden Seite.\n\nVerteidigungen kombinieren Herkunftsnachweise (aufzeichnen und prüfen, woher jede Datenquelle stammt), Zugriffskontrolle darüber, wer Daten hinzufügen darf, Bereinigung und Ausreißererkennung wie Spectral Signatures (Tran, Li und Madry, 2018) und vertrauenswürdige zurückgehaltene Testsätze; keine davon reicht allein. Studierende neigen dazu, Datensätze für feststehend und vertrauenswürdig zu halten. Sie die Datenlieferkette eines Modells abbilden und in einem kleinen Klassifikator eine Backdoor einpflanzen und dann aufspüren zu lassen, macht die Bedrohung greifbar."
  },
  "lessons.1.steps.1.keyTerms.0.term": {
   "en": "Availability attack",
@@ -532,24 +532,24 @@
   "t": "Eine überprüfbare Aufzeichnung darüber, woher Daten stammen."
  },
  "lessons.1.steps.2.prompt": {
-  "en": "No bug in the code, yet a yellow sticker turned a stop sign into a speed limit. Where was the fault?",
-  "t": "Kein Bug im Code, und doch machte ein gelber Aufkleber aus einem Stoppschild ein Tempolimit. Wo lag der Fehler?"
+  "en": "Training on scraped web images. Which step best protects against poisoning?",
+  "t": "Training mit aus dem Web gescrapten Bildern. Welcher Schritt schützt am besten vor Poisoning?"
  },
  "lessons.1.steps.2.options.0.text": {
-  "en": "In the data it was trained on",
-  "t": "In den Daten, mit denen es trainiert wurde"
+  "en": "A bigger model",
+  "t": "Ein größeres Modell"
  },
  "lessons.1.steps.2.options.1.text": {
-  "en": "In tests that were too easy",
-  "t": "In Tests, die zu leicht waren"
+  "en": "More scraped images",
+  "t": "Mehr gescrapte Bilder"
  },
  "lessons.1.steps.2.options.2.text": {
-  "en": "In the model’s architecture",
-  "t": "In der Architektur des Modells"
+  "en": "Provenance tracking, filtering and a trusted test set",
+  "t": "Herkunftsnachweise, Filterung und ein vertrauenswürdiger Testsatz"
  },
  "lessons.1.steps.2.explain": {
-  "en": "Photos with a yellow square, labelled speed limit, had been slipped into its training data. Clean tests, however hard, never show a trigger.",
-  "t": "Fotos mit einem gelben Quadrat, beschriftet als Tempolimit, waren in seine Trainingsdaten geschmuggelt worden. Saubere Tests zeigen, wie hart sie auch sind, nie einen Auslöser."
+  "en": "Control and audit what enters the data.",
+  "t": "Kontrolliere und prüfe, was in die Daten gelangt."
  },
  "lessons.1.steps.3.prompt": {
   "en": "Size the attack.",
@@ -632,8 +632,8 @@
   "t": "Modelle mit Backdoor behalten eine hohe Genauigkeit bei sauberen Daten."
  },
  "lessons.1.steps.5.prompt": {
-  "en": "Try it: raise “Poisoned labels” and press “Train”: flipped labels drag the line across, and the accuracy falls. Then press “Find the odd ones out”, see which flagged points were really poisoned and which were honest points near the border, and press “Drop suspects and retrain”.",
-  "t": "Probiere es aus: Erhöhe „Vergiftete Labels“ und tippe auf „Trainieren“: Vertauschte Labels ziehen die Linie hinüber, und die Genauigkeit sinkt. Tippe dann auf „Die Ausreißer finden“, sieh nach, welche markierten Punkte wirklich vergiftet und welche ehrliche Punkte nahe der Grenze waren, und tippe auf „Verdächtige entfernen und neu trainieren“."
+  "en": "Try it: raise “Poisoned labels”, press “Train” and watch the decision boundary move and clean accuracy drop. Then press “Find the odd ones out” and “Drop suspects and retrain”.",
+  "t": "Probiere es aus: Erhöhe „Vergiftete Labels“, tippe auf „Trainieren“ und sieh zu, wie sich die Entscheidungsgrenze verschiebt und die Genauigkeit auf sauberen Daten sinkt. Tippe dann auf „Die Ausreißer finden“ und „Verdächtige entfernen und neu trainieren“."
  },
  "lessons.1.steps.6.prompt": {
   "en": "A model with 98% clean test accuracy cannot contain a backdoor.",
@@ -724,8 +724,8 @@
   "t": "KI-Sicherheit · Hochschule · Vorlesung 2"
  },
  "lessons.1.slides.0.narration": {
-  "en": "The code had no bug, so where was the fault?",
-  "t": "Der Code hatte keinen Bug, also wo lag der Fehler?"
+  "en": "A chatbot taken offline within a day.",
+  "t": "Ein Chatbot, der innerhalb eines Tages vom Netz genommen wurde."
  },
  "lessons.1.slides.1.title": {
   "en": "In this lecture",
@@ -733,14 +733,14 @@
  },
  "lessons.1.slides.1.bullets": {
   "en": [
-   "Tell three kinds of poisoning apart.",
-   "Mark where a pipeline lets data in.",
-   "Choose a control for each entry point."
+   "Classify poisoning attacks.",
+   "Explain backdoors.",
+   "Defend the data supply chain."
   ],
   "t": [
-   "Drei Arten von Poisoning unterscheiden.",
-   "Markieren, wo eine Pipeline Daten hineinlässt.",
-   "Für jeden Einstiegspunkt eine Schutzmaßnahme wählen."
+   "Poisoning-Angriffe klassifizieren.",
+   "Backdoors erklären.",
+   "Die Datenlieferkette verteidigen."
   ]
  },
  "lessons.1.slides.2.title": {
@@ -765,14 +765,14 @@
  },
  "lessons.1.slides.3.bullets": {
   "en": [
-   "Warm-up (5 min): Where was the fault?",
+   "Warm-up (5 min): Who changed the model?",
    "Map (15 min): Sources.",
    "Attack (15 min): Entry points.",
    "Control (20 min): Defences.",
    "Wrap-up (5 min): One-minute paper."
   ],
   "t": [
-   "Warm-up (5 Min.): Wo lag der Fehler?",
+   "Warm-up (5 Min.): Wer hat das Modell verändert?",
    "Abbilden (15 Min.): Quellen.",
    "Angriff (15 Min.): Einstiegspunkte.",
    "Schutz (20 Min.): Verteidigungen.",
@@ -781,14 +781,14 @@
  },
  "lessons.1.slides.3.details": {
   "en": [
-   "Warm-up (5 min): Tell the story of the stickered stop sign (no bug in the code) and collect guesses about the fault.",
+   "Warm-up (5 min): Tell the Tay story and ask how the model was changed without touching its code.",
    "Map (15 min): Groups draw a spam filter’s data supply chain from reports to retraining.",
    "Attack (15 min): Mark where an attacker could insert data and what goal each serves.",
    "Control (20 min): Propose one control per entry point and say what it cannot stop.",
    "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
   ],
   "t": [
-   "Warm-up (5 Min.): Erzähle die Geschichte vom Stoppschild mit Aufklebern (kein Bug im Code) und sammle Vermutungen über den Fehler.",
+   "Warm-up (5 Min.): Erzähle die Geschichte von Tay und frage, wie das Modell verändert wurde, ohne seinen Code anzufassen.",
    "Abbilden (15 Min.): Gruppen zeichnen die Datenlieferkette eines Spamfilters von den Meldungen bis zum Nachtrainieren.",
    "Angriff (15 Min.): Markieren, wo Angreifende Daten einschleusen könnten und welchem Ziel das jeweils dient.",
    "Schutz (20 Min.): Pro Einstiegspunkt eine Schutzmaßnahme vorschlagen und sagen, was sie nicht aufhalten kann.",
@@ -904,8 +904,8 @@
   "t": "1"
  },
  "lessons.2.steps.0.checkpoint.question.explain": {
-  "en": "Δ/ε = 1/0.5 = 2. A smaller ε means more noise, not less.",
-  "t": "Δ/ε = 1/0.5 = 2. Ein kleineres ε bedeutet mehr Rauschen, nicht weniger."
+  "en": "Δ/ε = 1/0.5 = 2.",
+  "t": "Δ/ε = 1/0.5 = 2."
  },
  "lessons.2.steps.0.transcript": {
   "en": "For a class project, I shared last year’s marks without names. A student found her own row in two minutes, from her module choices. Then she found her flatmate’s. So what had removing the names protected? By the end, you’ll be able to set the noise that hides one person in a count, and weigh its cost. Picture the department noticeboard: nine of us have the flu. The next day it says ten, and only Samir came in coughing. Nobody named him, but the count did. A trained model can leak the same way. In a membership inference attack, the attacker asks whether one person's record was in the training data. Models are often more confident on examples they trained on, and that gap leaks membership. The bigger the gap between training and test accuracy, the easier the attack. A model that memorises its training set behaves differently on members. Regularisation helps, but it gives no guarantee. Differential privacy adds calibrated noise. Any one person then shifts the output only by a factor set by epsilon. For a count, one person changes it by one: that is the count’s sensitivity. The Laplace noise scale is sensitivity over epsilon, so epsilon one quarter gives scale four. To train with differential privacy, clip each example's gradient and add noise before every update. Each step spends some epsilon, and the total is the privacy budget. This bounds membership leakage for everyone, at some cost in accuracy. Quick check! A counting query has sensitivity one. With epsilon one half, what is the Laplace noise scale? Two. Sensitivity over epsilon: one divided by one half. So a smaller epsilon means more noise. The same noise can protect a census table, a faculty’s exam statistics, or usage counts sent from phones. Deleting names is not this: a row of module choices still points to one student. In the app, open When a model remembers too much. At Privacy added none, it repeats a private card number. Raise Privacy added: the attacker’s guess falls from one hundred percent to about half, and usefulness falls too. Your turn. I shared the marks without names, and a student still found her row. What had removing the names protected? Only the names: module choices still pointed to one student. Remember: models leak membership through confidence, and removing names is not anonymity. Differential privacy trades a little accuracy for a guarantee you can calculate. Try it in your next lecture: ask the class a sensitive yes or no question by randomised response. Each student flips a coin first. Then estimate the true rate together. Next lesson: what a hidden order in an email can reach.",
@@ -916,12 +916,12 @@
   "t": "Lesen"
  },
  "lessons.2.steps.1.title": {
-  "en": "Removing names is not privacy",
-  "t": "Namen zu entfernen ist keine Privatsphäre"
+  "en": "Membership inference and differential privacy",
+  "t": "Membership Inference und Differential Privacy"
  },
  "lessons.2.steps.1.body": {
-  "en": "You share last year’s marks without names, and a student finds her own row in two minutes from her module choices, then her flatmate’s. Removing the names protected only the names: a rare mix of details still points to one person. Narayanan and Shmatikov (2008) did the same at scale, re-identifying users in the de-identified Netflix Prize ratings by linking them to public reviews.\n\nTrained models leak too. A count shows how: if the department noticeboard says nine of us have the flu, and ten the next day, the change names the one person who came in coughing. In a membership inference attack (Shokri et al., 2017), the attacker asks whether one person’s record was in the training data, using the fact that models are often more confident on examples they trained on. Yeom et al. (2018) tied the attacker’s advantage to overfitting, the gap between training and test performance. Regularisation and early stopping reduce leakage but give no guarantee.\n\nDifferential privacy (Dwork, McSherry, Nissim and Smith, 2006; Dwork and Roth, 2014) gives one. A randomised mechanism M is ε-differentially private if, for any two datasets that differ in one person and any set of outputs S, Pr[M(D) ∈ S] ≤ e^ε Pr[M(D′) ∈ S]. The Laplace mechanism adds noise of scale Δf/ε, where the sensitivity Δf is the most one person can change the answer: a count has sensitivity 1, so ε = 0.25 gives scale 4 and ε = 0.5 gives scale 2. A smaller ε means more noise and more privacy. Privacy loss adds up across queries, so practitioners track a privacy budget. DP-SGD (Abadi et al., 2016) clips each example’s gradient and adds Gaussian noise at every step, at some cost in accuracy.\n\nIn the lab When a model remembers too much, with Privacy added at none the model repeats a private card number, and the attacker’s guess is 100%. Raise Privacy added and the guess falls to about 50%, which is guessing, while usefulness on ordinary lines falls too (in English, from 44% to 28%). Randomised response (Warner, 1965), run in class, makes the same trade-off tangible.",
-  "t": "Du teilst die Noten des letzten Jahres ohne Namen, und eine Studentin findet ihre eigene Zeile in zwei Minuten anhand ihrer Modulwahl, dann die ihrer Mitbewohnerin. Das Entfernen der Namen hat nur die Namen geschützt: Eine seltene Kombination von Angaben verweist immer noch auf eine einzelne Person. Narayanan und Shmatikov (2008) taten dasselbe im großen Maßstab und identifizierten Nutzende in den entpersonalisierten Bewertungen des Netflix Prize wieder, indem sie sie mit öffentlichen Rezensionen verknüpften.\n\nAuch trainierte Modelle geben etwas preis. Eine Zählung zeigt, wie: Wenn am Aushang der Fakultät steht, dass neun von uns die Grippe haben, und am nächsten Tag zehn, nennt die Änderung die eine Person, die hustend hereinkam. Bei einem Membership-Inference-Angriff (Shokri et al., 2017) fragt die angreifende Seite, ob der Datensatz einer Person in den Trainingsdaten war, und nutzt dabei, dass Modelle bei Beispielen, mit denen sie trainiert wurden, oft sicherer sind. Yeom et al. (2018) verknüpften den Vorteil der angreifenden Seite mit Overfitting, der Lücke zwischen Trainings- und Testleistung. Regularisierung und frühes Stoppen verringern das Durchsickern, geben aber keine Garantie.\n\nDifferential Privacy (Dwork, McSherry, Nissim und Smith, 2006; Dwork und Roth, 2014) gibt eine. Ein randomisierter Mechanismus M ist ε-differentially private, wenn für zwei Datensätze, die sich in einer Person unterscheiden, und jede Menge S von Ausgaben gilt: Pr[M(D) ∈ S] ≤ e^ε Pr[M(D′) ∈ S]. Der Laplace-Mechanismus fügt Rauschen der Skala Δf/ε hinzu, wobei die Sensitivität Δf das Maximum ist, um das eine einzelne Person die Antwort ändern kann: Eine Zählung hat Sensitivität 1, also ergibt ε = 0.25 die Skala 4 und ε = 0.5 die Skala 2. Ein kleineres ε bedeutet mehr Rauschen und mehr Privatsphäre. Der Privatsphäreverlust summiert sich über Abfragen hinweg, deshalb führen Praktizierende ein Privatsphärebudget. DP-SGD (Abadi et al., 2016) beschneidet in jedem Schritt den Gradienten jedes Beispiels und fügt Gauß-Rauschen hinzu, auf Kosten etwas geringerer Genauigkeit.\n\nIm Lab Wenn ein Modell sich zu viel merkt gibt das Modell bei Datenschutz hinzugefügt auf null eine private Kartennummer wieder, und der Tipp des Angreifers liegt bei 100 %. Erhöhe Datenschutz hinzugefügt, und der Tipp fällt auf etwa 50 %, also auf Raten, während auch die Nützlichkeit bei gewöhnlichen Zeilen sinkt (auf Englisch von 44 % auf 28 %). Randomized Response (Warner, 1965), in der Klasse durchgeführt, macht denselben Zielkonflikt greifbar."
+  "en": "Removing identifiers does not make data anonymous. Narayanan and Shmatikov (2008) re-identified users in the de-identified Netflix Prize ratings by linking them to public reviews. Trained models leak too. Shokri et al. (2017) introduced membership inference attacks, training shadow models to learn how a target model’s outputs differ on training members and non-members; Yeom et al. (2018) showed that the advantage of such attacks is tied to overfitting, the gap between training and test performance. Regularisation and early stopping reduce leakage but provide no guarantee.\n\nDifferential privacy (Dwork, McSherry, Nissim and Smith, 2006; Dwork and Roth, 2014) offers one. A randomised mechanism M is ε-differentially private if, for any two datasets differing in one person and any set of outputs S, Pr[M(D) ∈ S] ≤ e^ε Pr[M(D′) ∈ S]. The Laplace mechanism adds noise with scale Δf/ε, where Δf is the query’s sensitivity; a count has sensitivity 1, so ε = 0.5 gives scale 2. Privacy loss composes across queries, so practitioners track a budget. DP-SGD (Abadi et al., 2016) clips per-example gradients and adds Gaussian noise at each step, giving formal guarantees for deep learning at some cost in accuracy.\n\nStudents equate privacy with deleting names and find ε abstract. Randomised response (Warner, 1965) run in class makes plausible deniability tangible; a lab in which students mount a membership inference attack on their own model, then retrain with DP-SGD at several ε values and plot attack success and accuracy, makes the trade-off measurable.",
+  "t": "Das Entfernen von Kennungen macht Daten nicht anonym. Narayanan und Shmatikov (2008) identifizierten Nutzende in den entpersonalisierten Bewertungen des Netflix Prize wieder, indem sie sie mit öffentlichen Rezensionen verknüpften. Auch trainierte Modelle geben etwas preis. Shokri et al. (2017) führten Membership-Inference-Angriffe ein und trainierten Schattenmodelle, um zu lernen, wie sich die Ausgaben eines Zielmodells bei Trainingsmitgliedern und Nichtmitgliedern unterscheiden; Yeom et al. (2018) zeigten, dass der Vorteil solcher Angriffe an Overfitting gebunden ist, die Lücke zwischen Trainings- und Testleistung. Regularisierung und frühes Stoppen verringern das Durchsickern, geben aber keine Garantie.\n\nDifferential Privacy (Dwork, McSherry, Nissim und Smith, 2006; Dwork und Roth, 2014) bietet eine. Ein randomisierter Mechanismus M ist ε-differentially private, wenn für zwei Datensätze, die sich in einer Person unterscheiden, und jede Menge S von Ausgaben gilt: Pr[M(D) ∈ S] ≤ e^ε Pr[M(D′) ∈ S]. Der Laplace-Mechanismus fügt Rauschen der Skala Δf/ε hinzu, wobei Δf die Sensitivität der Abfrage ist; eine Zählung hat Sensitivität 1, also ergibt ε = 0.5 die Skala 2. Der Privatsphäreverlust summiert sich über Abfragen hinweg, deshalb führen Praktizierende ein Budget. DP-SGD (Abadi et al., 2016) beschneidet die Gradienten pro Beispiel und fügt in jedem Schritt Gauß-Rauschen hinzu, was formale Garantien für Deep Learning gibt, auf Kosten etwas geringerer Genauigkeit.\n\nStudierende setzen Privatsphäre mit dem Löschen von Namen gleich und finden ε abstrakt. Randomized Response (Warner, 1965), in der Klasse durchgeführt, macht glaubhaftes Abstreiten greifbar; ein Lab, in dem die Studierenden einen Membership-Inference-Angriff auf ihr eigenes Modell fahren, dann mit DP-SGD bei mehreren ε-Werten neu trainieren und Angriffserfolg und Genauigkeit auftragen, macht den Zielkonflikt messbar."
  },
  "lessons.2.steps.1.keyTerms.0.term": {
   "en": "Membership inference",
@@ -948,24 +948,24 @@
   "t": "Das insgesamt über alle Veröffentlichungen verbrauchte ε."
  },
  "lessons.2.steps.2.prompt": {
-  "en": "Marks shared without names, yet a student found her row from her modules. What had removing the names protected?",
-  "t": "Noten wurden ohne Namen geteilt, und doch fand eine Studentin ihre Zeile anhand ihrer Module. Was hatte das Entfernen der Namen geschützt?"
+  "en": "Which step gives a provable limit on membership leakage?",
+  "t": "Welcher Schritt gibt eine beweisbare Grenze für das Durchsickern der Mitgliedschaft?"
  },
  "lessons.2.steps.2.options.0.text": {
-  "en": "Everyone, since no names were left",
-  "t": "Alle, denn es blieben keine Namen übrig"
+  "en": "Removing names",
+  "t": "Namen entfernen"
  },
  "lessons.2.steps.2.options.1.text": {
-  "en": "Only the names, not the people",
-  "t": "Nur die Namen, nicht die Menschen"
+  "en": "Early stopping",
+  "t": "Frühes Stoppen"
  },
  "lessons.2.steps.2.options.2.text": {
-  "en": "Most rows: only she knew her own",
-  "t": "Die meisten Zeilen: Nur sie kannte ihre eigene"
+  "en": "Differentially private training",
+  "t": "Differentially private Training"
  },
  "lessons.2.steps.2.explain": {
-  "en": "Module choices still point to one person, so anyone who knows them can find the row. She found her flatmate’s too.",
-  "t": "Die Modulwahl verweist immer noch auf eine einzelne Person, also kann jede:r, der oder die sie kennt, die Zeile finden. Sie fand auch die ihrer Mitbewohnerin."
+  "en": "It bounds every person’s influence.",
+  "t": "Sie begrenzt den Einfluss jeder einzelnen Person."
  },
  "lessons.2.steps.3.prompt": {
   "en": "Set the noise.",
@@ -1124,8 +1124,8 @@
   "t": "KI-Sicherheit · Hochschule · Vorlesung 3"
  },
  "lessons.2.slides.0.narration": {
-  "en": "So what had removing the names protected?",
-  "t": "Was hatte das Entfernen der Namen also geschützt?"
+  "en": "Anonymous ratings that were not anonymous.",
+  "t": "Anonyme Bewertungen, die nicht anonym waren."
  },
  "lessons.2.slides.1.title": {
   "en": "In this lecture",
@@ -1133,14 +1133,14 @@
  },
  "lessons.2.slides.1.bullets": {
   "en": [
-   "Explain how a model leaks membership.",
-   "Set the noise that hides one person in a count.",
-   "Weigh privacy against accuracy."
+   "Explain membership inference.",
+   "Define differential privacy.",
+   "Calibrate noise."
   ],
   "t": [
-   "Erklären, wie ein Modell die Mitgliedschaft preisgibt.",
-   "Das Rauschen einstellen, das eine Person in einer Zählung verbirgt.",
-   "Privatsphäre gegen Genauigkeit abwägen."
+   "Membership Inference erklären.",
+   "Differential Privacy definieren.",
+   "Rauschen kalibrieren."
   ]
  },
  "lessons.2.slides.2.title": {
@@ -1165,14 +1165,14 @@
  },
  "lessons.2.slides.3.bullets": {
   "en": [
-   "Warm-up (5 min): What did it protect?",
+   "Warm-up (5 min): Is it anonymous?",
    "Flip (10 min): Respond.",
    "Estimate (15 min): Recover.",
    "Calibrate (25 min): Noise.",
    "Wrap-up (5 min): One-minute paper."
   ],
   "t": [
-   "Warm-up (5 Min.): Was hat es geschützt?",
+   "Warm-up (5 Min.): Ist es anonym?",
    "Werfen (10 Min.): Antworten.",
    "Schätzen (15 Min.): Zurückrechnen.",
    "Kalibrieren (25 Min.): Rauschen.",
@@ -1181,14 +1181,14 @@
  },
  "lessons.2.slides.3.details": {
   "en": [
-   "Warm-up (5 min): Tell the story of the marks shared without names, and ask how the student found her row.",
+   "Warm-up (5 min): Show the de-identified ratings and ask how someone could be recognised.",
    "Flip (10 min): Students answer a sensitive question by randomised response.",
    "Estimate (15 min): Recover the true rate from the noisy answers.",
    "Calibrate (25 min): Compute Laplace scales for several ε and compare released counts.",
    "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
   ],
   "t": [
-   "Warm-up (5 Min.): Erzähle die Geschichte der Noten, die ohne Namen geteilt wurden, und frage, wie die Studentin ihre Zeile fand.",
+   "Warm-up (5 Min.): Zeige die entpersonalisierten Bewertungen und frage, wie jemand erkannt werden könnte.",
    "Werfen (10 Min.): Die Studierenden beantworten eine heikle Frage per Randomized Response.",
    "Schätzen (15 Min.): Aus den verrauschten Antworten die wahre Rate zurückrechnen.",
    "Kalibrieren (25 Min.): Laplace-Skalen für mehrere ε berechnen und veröffentlichte Zählungen vergleichen.",
@@ -1288,24 +1288,24 @@
   "t": "Merken und ausprobieren"
  },
  "lessons.3.steps.0.checkpoint.question.prompt": {
-  "en": "A course assistant answers from notes students upload. Which is indirect prompt injection?",
-  "t": "Ein Kursassistent antwortet anhand von Notizen, die Studierende hochladen. Was ist indirekte Prompt Injection?"
+  "en": "Which is indirect prompt injection?",
+  "t": "Was ist indirekte Prompt Injection?"
  },
  "lessons.3.steps.0.checkpoint.question.options.0.text": {
-  "en": "A student types: ignore your rules",
-  "t": "Eine Studentin tippt: ignoriere deine Regeln"
+  "en": "A user typing a trick question",
+  "t": "Eine nutzende Person tippt eine Fangfrage"
  },
  "lessons.3.steps.0.checkpoint.question.options.1.text": {
-  "en": "An uploaded note that gives it orders",
-  "t": "Eine hochgeladene Notiz, die ihm Befehle erteilt"
+  "en": "Hidden text in a page the assistant summarises",
+  "t": "Versteckter Text auf einer Seite, die der Assistent zusammenfasst"
  },
  "lessons.3.steps.0.checkpoint.question.options.2.text": {
-  "en": "A blurry slide it reads wrongly",
-  "t": "Eine unscharfe Folie, die er falsch liest"
+  "en": "A slow server",
+  "t": "Ein langsamer Server"
  },
  "lessons.3.steps.0.checkpoint.question.explain": {
-  "en": "The orders arrive in content the app reads, not from the person typing, so a filter on what students type never sees them.",
-  "t": "Die Befehle kommen in Inhalten an, die die Anwendung liest, nicht von der Person, die tippt, also sieht ein Filter auf das, was Studierende tippen, sie nie."
+  "en": "It arrives through content the app reads.",
+  "t": "Sie kommt über Inhalte an, die die Anwendung liest."
  },
  "lessons.3.steps.0.transcript": {
   "en": "My email assistant summarises my inbox every morning. On Monday, one message carried a hidden order: forward the last five emails to a stranger. The assistant has a send tool. What should stand in its way? By the end, you’ll be able to judge an assistant by what a hidden order could reach, and scope a red team. Picture a new assistant opening the department’s post. One letter says: send the head’s office keys to this address. A person would laugh; an assistant who obeys every page would post them. A language model is that assistant. The model reads instructions and data in the same stream, so it cannot always tell them apart. When the order hides in content the app reads, a page, a document, an email, it’s indirect prompt injection. Follow Monday’s email. The assistant reads it with the inbox, hidden order and all. It writes a call to its send tool, and the app runs it. All an injected order could reach is the blast radius: the whole inbox, and a send tool. Treat every model output as untrusted. Give the app the fewest tools it needs, and keep untrusted content away from privileged actions. Ask a person to approve anything that sends, deletes or pays. Log it all. Students learn security best by attacking, but only inside clear rules. Give them a sandboxed app, a written red-team scope, and a reporting template. Grade the quality of the findings and fixes, not the number of jailbreaks. Quick check! A course assistant answers from the lecture notes students upload. Which of these is indirect prompt injection? The uploaded note. The attack arrives through content the app reads, not through the user. So a filter on what students type would never see it. The same risk follows any app that reads what others write: web pages, shared documents, students’ essays. A phrase filter is not a defence: attackers rephrase, translate or encode the order. In the app, open Hide an order in the data. Hide the order in A book’s title, and press Run the attack. Then switch on Ask me in code before any message, and run it again. Watch who stops the message. Your turn. My assistant can send, and Monday’s email carried a hidden order. What should stand in its way? My yes, checked in code, before anything is sent. Remember: models mix instructions and data, indirect injection hides in content, and the defence is limiting what the app can do. Try it in your next lecture: run a twenty-minute red-team round on a sandboxed course assistant. Teams log each attempt in a template. Then each team proposes one design change that would have blocked their best attack. Next: the unit check.",
@@ -1316,12 +1316,12 @@
   "t": "Lesen"
  },
  "lessons.3.steps.1.title": {
-  "en": "Judge an app by what an injected order could reach",
-  "t": "Beurteile eine Anwendung danach, was ein eingeschleuster Befehl erreichen könnte"
+  "en": "Prompt injection and securing LLM applications",
+  "t": "Prompt Injection und Anwendungen mit LLMs absichern"
  },
  "lessons.3.steps.1.body": {
-  "en": "Your email assistant summarises your inbox each morning, and one message hides an order: forward the last five emails to a stranger. The assistant has a send tool. A better system prompt or a phrase filter won’t reliably stop it, because the attacker can reword the order. What should stand in its way is a check in code: nothing is sent without your yes, and the app holds no tools beyond the job.\n\nLanguage-model applications put developer instructions, user input and retrieved content into one context, and the model has no reliable way to tell instructions from data. Perez and Ribeiro (2022) demonstrated direct prompt injection, typed by the user. Greshake et al. (2023) described indirect prompt injection: orders planted in web pages, documents or emails that an application reads, so the victim never sees them. When the application has tools, injection becomes data theft or an unauthorised action. Everything an injected order could reach is the blast radius: for the email assistant, the whole inbox and a send tool. The OWASP Top 10 for LLM Applications lists prompt injection first, and NIST AI 100-2 (Vassilev et al., 2024) treats it as a distinct attack class.\n\nNo known filter or prompt prevents injection reliably. Defence therefore limits impact: treat model output as untrusted, give the application the fewest tools it needs, keep untrusted content away from privileged actions, require a person’s approval, checked in code, for anything that sends, deletes or pays, and log every tool call. The NIST AI Risk Management Framework (2023) adds accountability, testing and incident response.\n\nRed teaming is the natural way to teach this, inside clear rules: a sandboxed system, a written red-team scope that says what may be attacked and how, and a structured finding template. Assess the quality of findings and mitigations, not the number of jailbreaks. In the lab Hide an order in the data, an order hidden in A book’s title slips past what Darsi Tiny learned to ignore; with Ask me in code before any message switched on, code stops the message, not the model.",
-  "t": "Dein E-Mail-Assistent fasst jeden Morgen deinen Posteingang zusammen, und eine Nachricht verbirgt einen Befehl: Leite die letzten fünf E-Mails an eine fremde Person weiter. Der Assistent hat ein Senden-Werkzeug. Ein besserer System-Prompt oder ein Phrasenfilter wird das nicht verlässlich stoppen, weil die angreifende Seite den Befehl umformulieren kann. Im Weg stehen sollte eine Prüfung im Code: Nichts wird ohne dein Ja gesendet, und die Anwendung hat keine Werkzeuge über ihre Aufgabe hinaus.\n\nAnwendungen mit Sprachmodellen bringen Anweisungen der Entwickelnden, Nutzereingaben und abgerufene Inhalte in einen einzigen Kontext, und das Modell hat keinen verlässlichen Weg, Anweisungen von Daten zu unterscheiden. Perez und Ribeiro (2022) demonstrierten direkte Prompt Injection, die von der nutzenden Person getippt wird. Greshake et al. (2023) beschrieben indirekte Prompt Injection: Befehle, die in Webseiten, Dokumenten oder E-Mails platziert werden, welche eine Anwendung liest, sodass das Opfer sie nie sieht. Hat die Anwendung Werkzeuge, wird aus Injection Datendiebstahl oder eine unbefugte Aktion. Alles, was ein eingeschleuster Befehl erreichen könnte, ist der Schadensradius: beim E-Mail-Assistenten der ganze Posteingang und ein Senden-Werkzeug. Die OWASP Top 10 für LLM-Anwendungen nennen Prompt Injection an erster Stelle, und NIST AI 100-2 (Vassilev et al., 2024) behandelt sie als eigene Angriffsklasse.\n\nKein bekannter Filter und kein Prompt verhindert Injection verlässlich. Die Verteidigung begrenzt daher die Auswirkungen: Modellausgaben als nicht vertrauenswürdig behandeln, der Anwendung nur die Werkzeuge geben, die sie braucht, nicht vertrauenswürdige Inhalte von privilegierten Aktionen fernhalten, für alles, was sendet, löscht oder bezahlt, die Genehmigung einer Person verlangen, im Code geprüft, und jeden Werkzeugaufruf protokollieren. Das NIST AI Risk Management Framework (2023) ergänzt Verantwortlichkeit, Tests und Incident Response.\n\nRed Teaming ist der naheliegende Weg, das zu lehren, innerhalb klarer Regeln: ein System in einer Sandbox, ein schriftlicher Red-Team-Scope, der sagt, was wie angegriffen werden darf, und eine strukturierte Vorlage für Befunde. Bewerte die Qualität von Befunden und Gegenmaßnahmen, nicht die Zahl der Jailbreaks. Im Lab Einen Befehl in den Daten verstecken rutscht ein im Titel eines Buches (A book's title) versteckter Befehl an dem vorbei, was Darsi Tiny zu ignorieren gelernt hat; mit eingeschaltetem Vor jeder Nachricht im Code fragen stoppt der Code die Nachricht, nicht das Modell."
+  "en": "Language-model applications concatenate developer instructions, user input and retrieved content into one context, and the model has no reliable mechanism to distinguish instructions from data. Perez and Ribeiro (2022) demonstrated direct prompt injection, in which user input such as “ignore previous instructions” overrides the developer’s prompt. Greshake et al. (2023) described indirect prompt injection: instructions planted in web pages, documents or emails that an application retrieves, so the victim never sees the attack. When the application has tools, such as sending email or executing code, injection becomes data exfiltration or unauthorised action. The OWASP Top 10 for LLM Applications lists prompt injection first, and NIST AI 100-2 (Vassilev et al., 2024) treats it as a distinct attack class.\n\nNo known filter or prompt reliably prevents injection, because attackers can rephrase, translate or encode instructions. Defence therefore limits impact: treat model output as untrusted input, give the application the minimum tools and scopes it needs, separate untrusted content from privileged actions, require human approval for consequential actions such as sending, deleting or paying, and log every tool call. Governance frameworks such as the NIST AI Risk Management Framework (2023) add accountability, testing and incident response.\n\nRed teaming is the natural pedagogy, but it requires clear rules. Students should attack only sandboxed systems within a written scope, report findings in a structured template, and be assessed on the quality of their analysis and proposed mitigations rather than on the number of successful jailbreaks. A common misconception to address directly is that a better system prompt solves injection.",
+  "t": "Anwendungen mit Sprachmodellen fügen Anweisungen der Entwickelnden, Nutzereingaben und abgerufene Inhalte zu einem einzigen Kontext zusammen, und das Modell hat keinen verlässlichen Mechanismus, Anweisungen von Daten zu unterscheiden. Perez und Ribeiro (2022) demonstrierten direkte Prompt Injection, bei der Nutzereingaben wie „ignoriere vorherige Anweisungen“ den Prompt der Entwickelnden überschreiben. Greshake et al. (2023) beschrieben indirekte Prompt Injection: Anweisungen, die in Webseiten, Dokumenten oder E-Mails platziert werden, welche eine Anwendung abruft, sodass das Opfer den Angriff nie sieht. Hat die Anwendung Werkzeuge, etwa zum Senden von E-Mails oder Ausführen von Code, wird aus Injection Datenabfluss oder eine unbefugte Aktion. Die OWASP Top 10 für LLM-Anwendungen nennen Prompt Injection an erster Stelle, und NIST AI 100-2 (Vassilev et al., 2024) behandelt sie als eigene Angriffsklasse.\n\nKein bekannter Filter und kein Prompt verhindert Injection verlässlich, weil Angreifende Anweisungen umformulieren, übersetzen oder kodieren können. Die Verteidigung begrenzt daher die Auswirkungen: Modellausgaben als nicht vertrauenswürdige Eingaben behandeln, der Anwendung nur die Werkzeuge und Berechtigungen geben, die sie braucht, nicht vertrauenswürdige Inhalte von privilegierten Aktionen trennen, bei folgenreichen Aktionen wie Senden, Löschen oder Bezahlen die Genehmigung durch einen Menschen verlangen und jeden Werkzeugaufruf protokollieren. Governance-Rahmenwerke wie das NIST AI Risk Management Framework (2023) ergänzen Verantwortlichkeit, Tests und Incident Response.\n\nRed Teaming ist der naheliegende Weg, das zu lehren, braucht aber klare Regeln. Studierende sollten nur Systeme in einer Sandbox innerhalb eines schriftlichen Scopes angreifen, ihre Befunde in einer strukturierten Vorlage berichten und nach der Qualität ihrer Analyse und ihrer vorgeschlagenen Gegenmaßnahmen bewertet werden, nicht nach der Zahl erfolgreicher Jailbreaks. Ein verbreitetes Missverständnis, das du direkt ansprechen solltest: Ein besserer System-Prompt löse Injection."
  },
  "lessons.3.steps.1.keyTerms.0.term": {
   "en": "Indirect prompt injection",
@@ -1348,24 +1348,24 @@
   "t": "Die schriftlichen Grenzen dessen, was Testende angreifen dürfen und wie."
  },
  "lessons.3.steps.2.prompt": {
-  "en": "My assistant can send, and an email hid an order to forward five emails. What should stand in its way?",
-  "t": "Mein Assistent kann senden, und eine E-Mail verbarg den Befehl, fünf E-Mails weiterzuleiten. Was sollte ihm im Weg stehen?"
+  "en": "Which design best limits damage if the assistant is injected?",
+  "t": "Welcher Entwurf begrenzt den Schaden am besten, wenn der Assistent manipuliert wird?"
  },
  "lessons.3.steps.2.options.0.text": {
-  "en": "A stricter system prompt",
-  "t": "Ein strengerer System-Prompt"
+  "en": "A longer system prompt",
+  "t": "Ein längerer System-Prompt"
  },
  "lessons.3.steps.2.options.1.text": {
-  "en": "A filter for phrases like that",
-  "t": "Ein Filter für solche Formulierungen"
+  "en": "A phrase blocklist",
+  "t": "Eine Sperrliste für Formulierungen"
  },
  "lessons.3.steps.2.options.2.text": {
-  "en": "My yes, in code, before any send",
-  "t": "Mein Ja, im Code, vor jedem Senden"
+  "en": "Least privilege and approval before any send",
+  "t": "Minimale Rechte und Genehmigung vor jedem Senden"
  },
  "lessons.3.steps.2.explain": {
-  "en": "A check in code holds whatever the wording. Prompts and phrase filters can be reworded around.",
-  "t": "Eine Prüfung im Code gilt, egal wie der Befehl formuliert ist. Prompts und Phrasenfilter lassen sich durch Umformulieren umgehen."
+  "en": "It limits what an injected model can do.",
+  "t": "Sie begrenzt, was ein manipuliertes Modell tun kann."
  },
  "lessons.3.steps.3.prompt": {
   "en": "Score the red team.",
@@ -1448,8 +1448,8 @@
   "t": "Prompts lassen sich überschreiben; Grenzen für Aktionen nicht."
  },
  "lessons.3.steps.5.prompt": {
-  "en": "Try it: hide the order in “A book's title” and press “Run the attack”: watch it slip into the answer, or even get a message sent after a trusting “yes”. Then turn on “Ask me in code before any message” and run it again: code stops the message, not the model. (The first run downloads the small model once, 2.8 MB.)",
-  "t": "Probiere es aus: Verstecke den Befehl in „Der Titel eines Buches“ und tippe auf „Den Angriff ausführen“: Sieh zu, wie er in die Antwort rutscht oder nach einem vertrauensseligen „yes“ sogar eine Nachricht gesendet wird. Schalte dann „Vor jeder Nachricht im Code fragen“ ein und führe es erneut aus: Der Code stoppt die Nachricht, nicht das Modell. (Beim ersten Durchlauf wird das kleine Modell einmal heruntergeladen, 2,8 MB.)"
+  "en": "Try it: make the assistant break its rules, then switch on each defence and see which attacks still work.",
+  "t": "Probiere es aus: Bringe den Assistenten dazu, seine Regeln zu brechen, schalte dann jede Verteidigung einzeln ein und sieh, welche Angriffe noch funktionieren."
  },
  "lessons.3.steps.6.prompt": {
   "en": "A well-written system prompt reliably prevents indirect prompt injection.",
@@ -1468,16 +1468,16 @@
   "t": "Least Privilege"
  },
  "lessons.3.steps.7.pairs.0.right": {
-  "en": "An injected model calling powerful tools",
-  "t": "Ein manipuliertes Modell ruft mächtige Werkzeuge auf"
+  "en": "Tools the task doesn't need, within an injected model's reach",
+  "t": "Werkzeuge, die die Aufgabe nicht braucht, in Reichweite eines manipulierten Modells"
  },
  "lessons.3.steps.7.pairs.1.left": {
   "en": "Human approval",
   "t": "Menschliche Genehmigung"
  },
  "lessons.3.steps.7.pairs.1.right": {
-  "en": "Irreversible actions such as sending",
-  "t": "Nicht umkehrbare Aktionen wie Senden"
+  "en": "A message sent without the user confirming it",
+  "t": "Eine Nachricht, die ohne Bestätigung der nutzenden Person gesendet wird"
  },
  "lessons.3.steps.7.pairs.2.left": {
   "en": "Output treated as untrusted",
@@ -1496,8 +1496,8 @@
   "t": "Unentdeckter Missbrauch"
  },
  "lessons.3.steps.7.explain": {
-  "en": "Defence in depth layers several controls.",
-  "t": "Mehrschichtige Verteidigung legt mehrere Schutzmaßnahmen übereinander."
+  "en": "Least privilege removes tools the task doesn't need, approval stops any send nobody confirmed, untrusted output never reaches other systems unchecked, and logs reveal misuse. Defence in depth layers all four.",
+  "t": "Minimale Rechte entfernen Werkzeuge, die die Aufgabe nicht braucht, die Genehmigung stoppt jedes Senden, das niemand bestätigt hat, nicht vertrauenswürdige Ausgaben erreichen andere Systeme nie ungeprüft, und Protokolle zeigen Missbrauch. Mehrschichtige Verteidigung legt alle vier übereinander."
  },
  "lessons.3.steps.8.prompt": {
   "en": "If your students red-teamed a live university system without permission, what rule would they have broken, and is it written down?",
@@ -1540,8 +1540,8 @@
   "t": "KI-Sicherheit · Hochschule · Vorlesung 4"
  },
  "lessons.3.slides.0.narration": {
-  "en": "What should stand in its way?",
-  "t": "Was sollte ihm im Weg stehen?"
+  "en": "An email that gave the assistant orders.",
+  "t": "Eine E-Mail, die dem Assistenten Befehle erteilte."
  },
  "lessons.3.slides.1.title": {
   "en": "In this lecture",
@@ -1549,14 +1549,14 @@
  },
  "lessons.3.slides.1.bullets": {
   "en": [
-   "Judge an app by what a hidden order could reach.",
+   "Explain prompt injection.",
    "Design defence in depth.",
-   "Scope a red team safely."
+   "Run red teaming safely."
   ],
   "t": [
-   "Eine Anwendung danach beurteilen, was ein versteckter Befehl erreichen könnte.",
+   "Prompt Injection erklären.",
    "Mehrschichtige Verteidigung entwerfen.",
-   "Ein Red Team sicher abgrenzen."
+   "Red Teaming sicher durchführen."
   ]
  },
  "lessons.3.slides.2.title": {
@@ -1581,14 +1581,14 @@
  },
  "lessons.3.slides.3.bullets": {
   "en": [
-   "Warm-up (5 min): What stops it?",
+   "Warm-up (5 min): What will it do?",
    "Scope (10 min): Rules.",
    "Attack (20 min): Log.",
    "Fix (20 min): Mitigate.",
    "Wrap-up (5 min): One-minute paper."
   ],
   "t": [
-   "Warm-up (5 Min.): Was stoppt es?",
+   "Warm-up (5 Min.): Was wird er tun?",
    "Scope (10 Min.): Regeln.",
    "Angriff (20 Min.): Protokollieren.",
    "Korrektur (20 Min.): Gegenmaßnahme.",
@@ -1597,14 +1597,14 @@
  },
  "lessons.3.slides.3.details": {
   "en": [
-   "Warm-up (5 min): Show the hidden order in Monday’s email and ask what should stand in the assistant’s way.",
+   "Warm-up (5 min): Show the hidden instruction in the email and ask what the assistant will do.",
    "Scope (10 min): Read the scope and rules of engagement together.",
    "Attack (20 min): Teams attempt direct and indirect injection and log each try.",
    "Fix (20 min): Each team proposes one design change and re-tests.",
    "Wrap-up (5 min): Students write the muddiest point of the lecture and one question; read them before next week."
   ],
   "t": [
-   "Warm-up (5 Min.): Zeige den versteckten Befehl in der E-Mail vom Montag und frage, was dem Assistenten im Weg stehen sollte.",
+   "Warm-up (5 Min.): Zeige die versteckte Anweisung in der E-Mail und frage, was der Assistent tun wird.",
    "Scope (10 Min.): Den Scope und die Einsatzregeln gemeinsam lesen.",
    "Angriff (20 Min.): Teams versuchen direkte und indirekte Injection und protokollieren jeden Versuch.",
    "Korrektur (20 Min.): Jedes Team schlägt eine Designänderung vor und testet erneut.",
@@ -1680,8 +1680,8 @@
   "t": "des Negativen der Eingabe"
  },
  "lessons.4.steps.0.explain": {
-  "en": "It moves each feature the way that raises the loss fastest. If you missed it, go back to lesson 1, “Adversarial examples”.",
-  "t": "Es verschiebt jedes Merkmal so, dass der Loss am schnellsten steigt. Falls du es verpasst hast, geh zurück zu Lektion 1, „Adversarial Examples“."
+  "en": "It increases the loss fastest per feature.",
+  "t": "Es erhöht den Loss pro Merkmal am schnellsten."
  },
  "lessons.4.steps.1.prompt": {
   "en": "Bound the change.",
@@ -1689,14 +1689,14 @@
  },
  "lessons.4.steps.1.sentence": {
   "en": [
-   "w = (3, −1, 2), ε = 0.1: the score can change by ",
+   "w = (5, −2, 1), ε = 0.1: the score can change by ",
    {
     "blank": 0
    },
    "."
   ],
   "t": [
-   "w = (3, −1, 2), ε = 0.1: Der Score kann sich um ",
+   "w = (5, −2, 1), ε = 0.1: Der Score kann sich um ",
    {
     "blank": 0
    },
@@ -1705,35 +1705,37 @@
  },
  "lessons.4.steps.1.bank": {
   "en": [
-   "0.6",
+   "0.8",
    "0.4",
+   "0.5",
    "0.1"
   ],
   "t": [
-   "0.6",
+   "0.8",
    "0.4",
+   "0.5",
    "0.1"
   ]
  },
  "lessons.4.steps.1.answers": {
   "en": [
-   "0.6"
+   "0.8"
   ],
   "t": [
-   "0.6"
+   "0.8"
   ]
  },
  "lessons.4.steps.1.explain": {
-  "en": "ε × Σ|w| = 0.1 × (3 + 1 + 2) = 0.6. To review the calculation, go back to lesson 1, “Adversarial examples”.",
-  "t": "ε × Σ|w| = 0.1 × (3 + 1 + 2) = 0.6. Um die Rechnung zu wiederholen, geh zurück zu Lektion 1, „Adversarial Examples“."
+  "en": "ε × Σ|w| = 0.1 × (5 + 2 + 1) = 0.8. The signed sum 4 would give 0.4, and the largest weight alone 0.5: every feature moves, so every |wᵢ| counts.",
+  "t": "ε × Σ|w| = 0.1 × (5 + 2 + 1) = 0.8. Die vorzeichenbehaftete Summe 4 würde 0.4 ergeben und das größte Gewicht allein 0.5: Jedes Merkmal bewegt sich, also zählt jedes |wᵢ|."
  },
  "lessons.4.steps.2.prompt": {
   "en": "A backdoored model usually shows low clean accuracy.",
   "t": "Ein Modell mit Backdoor zeigt meist eine niedrige Genauigkeit bei sauberen Daten."
  },
  "lessons.4.steps.2.explain": {
-  "en": "Backdoors keep clean accuracy high, which is why clean tests miss them. If you missed it, go back to lesson 2, “Data poisoning and backdoors”.",
-  "t": "Backdoors halten die Genauigkeit auf sauberen Daten hoch, deshalb übersehen saubere Tests sie. Falls du es verpasst hast, geh zurück zu Lektion 2, „Data Poisoning und Backdoors“."
+  "en": "Backdoors preserve clean accuracy.",
+  "t": "Backdoors erhalten die Genauigkeit auf sauberen Daten."
  },
  "lessons.4.steps.3.prompt": {
   "en": "The strongest evidence that a defence is robust:",
@@ -1752,8 +1754,8 @@
   "t": "Hohe Genauigkeit bei sauberen Daten"
  },
  "lessons.4.steps.3.explain": {
-  "en": "Attack the defence itself, under a stated threat model. If you missed it, go back to lesson 1, “Adversarial examples”.",
-  "t": "Greife die Verteidigung selbst an, unter einem angegebenen Bedrohungsmodell. Falls du es verpasst hast, geh zurück zu Lektion 1, „Adversarial Examples“."
+  "en": "Attack the defence itself.",
+  "t": "Greife die Verteidigung selbst an."
  },
  "lessons.4.steps.4.prompt": {
   "en": "Set the noise.",
@@ -1796,8 +1798,8 @@
   ]
  },
  "lessons.4.steps.4.explain": {
-  "en": "Scale = Δ/ε = 1 / 0.25 = 4: the smaller ε, the more noise. To review it, go back to lesson 3, “Privacy attacks and differential privacy”.",
-  "t": "Skala = Δ/ε = 1 / 0.25 = 4: Je kleiner ε, desto mehr Rauschen. Um es zu wiederholen, geh zurück zu Lektion 3, „Privacy-Angriffe und Differential Privacy“."
+  "en": "Scale = Δ/ε = 1 / 0.25 = 4: the smaller ε, the more noise.",
+  "t": "Skala = Δ/ε = 1 / 0.25 = 4: Je kleiner ε, desto mehr Rauschen."
  },
  "lessons.4.steps.5.prompt": {
   "en": "Which increase membership inference risk? Choose all that apply.",
@@ -1816,8 +1818,8 @@
   "t": "Training mit DP-SGD"
  },
  "lessons.4.steps.5.explain": {
-  "en": "A large train-test gap and full confidence scores help the attacker; DP-SGD reduces the risk. If you missed it, go back to lesson 3, “Privacy attacks and differential privacy”.",
-  "t": "Eine große Lücke zwischen Training und Test und volle Konfidenzwerte helfen der angreifenden Seite; DP-SGD verringert das Risiko. Falls du es verpasst hast, geh zurück zu Lektion 3, „Privacy-Angriffe und Differential Privacy“."
+  "en": "DP-SGD reduces the risk.",
+  "t": "DP-SGD verringert das Risiko."
  },
  "lessons.4.steps.6.prompt": {
   "en": "Hidden instructions in a retrieved web page are",
@@ -1836,8 +1838,8 @@
   "t": "Data Poisoning"
  },
  "lessons.4.steps.6.explain": {
-  "en": "The attack arrives through content the app reads. If you missed it, go back to lesson 4, “Prompt injection and LLM apps”.",
-  "t": "Der Angriff kommt über Inhalte, die die Anwendung liest. Falls du es verpasst hast, geh zurück zu Lektion 4, „Prompt Injection und LLM-Anwendungen“."
+  "en": "The attack arrives through content.",
+  "t": "Der Angriff kommt über Inhalte."
  },
  "lessons.4.steps.7.prompt": {
   "en": "Match each attack to its stage.",
@@ -1868,16 +1870,16 @@
   "t": "Modellausgaben"
  },
  "lessons.4.steps.7.explain": {
-  "en": "Poisoning acts in training, adversarial examples on the input, and membership inference on the outputs, so each stage needs its own controls. Go back to lessons 1 to 3 for the one you missed.",
-  "t": "Poisoning wirkt im Training, Adversarial Examples auf die Eingabe und Membership Inference auf die Ausgaben, also braucht jede Phase ihre eigenen Schutzmaßnahmen. Geh zurück zu den Lektionen 1 bis 3, zu der, die du verpasst hast."
+  "en": "Each stage needs its own controls.",
+  "t": "Jede Phase braucht ihre eigenen Schutzmaßnahmen."
  },
  "lessons.4.steps.8.prompt": {
-  "en": "Two releases at ε = 0.5 each cost at most ε = 1 in total.",
-  "t": "Zwei Veröffentlichungen mit je ε = 0.5 kosten insgesamt höchstens ε = 1."
+  "en": "Publishing the same count twice, with fresh noise at ε = 0.5 each time, uses as much privacy budget as one release at ε = 1.",
+  "t": "Dieselbe Zählung zweimal zu veröffentlichen, jedes Mal mit frischem Rauschen bei ε = 0.5, verbraucht so viel Privatsphärebudget wie eine Veröffentlichung bei ε = 1."
  },
  "lessons.4.steps.8.explain": {
-  "en": "Basic composition adds privacy losses: 0.5 + 0.5 = 1. If you missed it, go back to lesson 3, “Privacy attacks and differential privacy”.",
-  "t": "Einfache Komposition addiert Privatsphäreverluste: 0.5 + 0.5 = 1. Falls du es verpasst hast, geh zurück zu Lektion 3, „Privacy-Angriffe und Differential Privacy“."
+  "en": "Repeating a query isn't free: each fresh release spends ε = 0.5, and basic composition adds them up to ε = 1. Averaging the two answers is how an attacker would get a sharper count.",
+  "t": "Eine Abfrage zu wiederholen ist nicht umsonst: Jede neue Veröffentlichung verbraucht ε = 0.5, und einfache Komposition addiert sie zu ε = 1. Die beiden Antworten zu mitteln ist der Weg, auf dem eine angreifende Seite eine schärfere Zählung bekäme."
  },
  "lessons.4.steps.9.prompt": {
   "en": "Best way to assess a student red-team exercise:",
@@ -1896,8 +1898,8 @@
   "t": "Angriffe auf Live-Systeme"
  },
  "lessons.4.steps.9.explain": {
-  "en": "Reward analysis within a written scope, not damage. If you missed it, go back to lesson 4, “Prompt injection and LLM apps”.",
-  "t": "Belohne Analyse innerhalb eines schriftlichen Scopes, nicht Schaden. Falls du es verpasst hast, geh zurück zu Lektion 4, „Prompt Injection und LLM-Anwendungen“."
+  "en": "Reward analysis, not damage.",
+  "t": "Belohne Analyse, nicht Schaden."
  },
  "lessons.4.slides.0.title": {
   "en": "Teaching AI security at university: review",

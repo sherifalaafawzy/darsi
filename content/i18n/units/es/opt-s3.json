@@ -60,12 +60,12 @@
   "t": "El método voraz dice 60 puntos; la fuerza bruta dice 65. ¿Cuál está garantizado como el mejor?"
  },
  "lessons.0.steps.0.checkpoint.question.options.0.text": {
-  "en": "Greedy: it takes the best value first",
-  "t": "El voraz: toma primero lo de mayor valor"
- },
- "lessons.0.steps.0.checkpoint.question.options.1.text": {
   "en": "Brute force: it checked every load",
   "t": "La fuerza bruta: revisó todas las cargas"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.1.text": {
+  "en": "Greedy: it takes the best value first",
+  "t": "El voraz: toma primero lo de mayor valor"
  },
  "lessons.0.steps.0.checkpoint.question.options.2.text": {
   "en": "Neither can be sure",
@@ -486,12 +486,12 @@
   "t": "Tala: se encontró primero"
  },
  "lessons.1.steps.0.checkpoint.question.options.1.text": {
-  "en": "Rubi: it has the smallest number",
-  "t": "Rubi: tiene el número más pequeño"
- },
- "lessons.1.steps.0.checkpoint.question.options.2.text": {
   "en": "Both at once",
   "t": "Los dos a la vez"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.2.text": {
+  "en": "Rubi: it has the smallest number",
+  "t": "Rubi: tiene el número más pequeño"
  },
  "lessons.1.steps.0.checkpoint.question.explain": {
   "en": "Dijkstra settles the waiting place with the smallest number. Any other way to Rubi would pass through a place at 7 or more, and with no negative roads it can’t come back below 5.",
@@ -594,8 +594,8 @@
   "t": "Empieza con lo que sabes (home es 0) y, en cada turno, haz definitivo el número más pequeño antes de usar sus calles. Relajar antes de fijar, o fijar primero un número mayor, podría congelar una distancia que todavía es demasiado larga."
  },
  "lessons.1.steps.4.prompt": {
-  "en": "Dijkstra’s method still gives the right answer if some roads have negative lengths.",
-  "t": "El método de Dijkstra sigue dando la respuesta correcta si algunas calles tienen longitudes negativas."
+  "en": "Dijkstra’s method can give a wrong answer if some roads have negative lengths.",
+  "t": "El método de Dijkstra puede dar una respuesta incorrecta si algunas calles tienen longitudes negativas."
  },
  "lessons.1.steps.4.explain": {
   "en": "Settling the smallest number is safe only because every other way is at least as long. A negative road could make a settled place shorter later, after it was declared final. Real road lengths are never negative, so maps are fine.",
@@ -922,8 +922,8 @@
   "t": "Constrúyela rápido, mejórala, júzgala"
  },
  "lessons.2.steps.1.body": {
-  "en": "A bus that leaves the school, visits every village once and comes back is solving the travelling salesperson problem. It is hard because routes multiply: with n villages there are n! ÷ 2 round trips. Nine villages give 181,440; ten give 1,814,400, ten times as many; twenty give about 1.2 × 10¹⁸, more than a billion billion. No computer checks them all for a real bus network.\n\nSo planners build a route quickly and then improve it. Nearest neighbour is a greedy rule: from wherever the bus is, go to the closest village not yet visited. In Python, keep a list route that starts at 0 (the school); while it is shorter than the number of places, look at the distances from the last stop, d[route[-1]], and append the closest place not yet in route. The places not yet in route are [v for v in range(5) if v not in route], a list comprehension: a list built from a loop in one line. The closest of them is min(left, key=lambda v: d[route[-1]][v]), as in Dijkstra’s method. The length is the sum of every leg, including the drive back to the school: zip(route, route[1:] + [0]) pairs each stop with the next.\n\n2-opt then improves the route. Pick two cut points i and j, reverse the stretch between them (list(reversed(route[i:j + 1]))), and keep the new route if it is shorter. When two roads in a route cross, such a swap always shortens it. Repeat until no swap helps. In the lab, three swaps take nearest neighbour’s 34.6 km down to 28.6 km, the best route; but 2-opt can stop at a local best, where no single swap helps although a shorter route exists. The plain Python in this lesson runs the same in Colab, and Google’s OR-Tools has a routing library for real fleets.\n\nOn the small map in your code, nearest neighbour drives 19 km and the best route is 16. Length is not the only thing to judge. The children picked up first ride almost the whole route back to school. On the best route driven one way, the first village rides 15 km; driven the other way, the first village rides 14. Same road, same fuel, a fairer longest ride. When two routes cost about the same, let the longest ride decide, and when they don’t, agree a limit on the longest ride with the families and find the shortest route that keeps it.",
-  "t": "Un autobús que sale de la escuela, visita cada pueblo una vez y vuelve está resolviendo el problema del viajante. Es difícil porque las rutas se multiplican: con n pueblos hay n! ÷ 2 viajes de ida y vuelta. Nueve pueblos dan 181,440; diez dan 1,814,400, diez veces más; veinte dan unos 1.2 × 10¹⁸, más de mil millones de miles de millones. Ninguna computadora los revisa todos para una red de autobuses real.\n\nPor eso quienes planifican construyen una ruta rápido y luego la mejoran. El vecino más cercano es una regla voraz: desde donde esté el autobús, ve al pueblo más cercano que aún no haya visitado. En Python, guarda una lista route que empieza en 0 (la escuela); mientras sea más corta que el número de lugares, mira las distancias desde la última parada, d[route[-1]], y añade el lugar más cercano que aún no esté en route. Los lugares que aún no están en route son [v for v in range(5) if v not in route], una lista por comprensión: una lista construida con un bucle en una sola línea. El más cercano de ellos es min(left, key=lambda v: d[route[-1]][v]), como en el método de Dijkstra. La longitud es la suma de todos los tramos, incluido el regreso a la escuela: zip(route, route[1:] + [0]) empareja cada parada con la siguiente.\n\n2-opt mejora entonces la ruta. Elige dos puntos de corte i y j, invierte el tramo entre ellos (list(reversed(route[i:j + 1]))) y conserva la ruta nueva si es más corta. Cuando dos calles de una ruta se cruzan, un intercambio así siempre la acorta. Repite hasta que ningún intercambio ayude. En el laboratorio, tres intercambios bajan los 34.6 km del vecino más cercano a 28.6 km, la mejor ruta; pero 2-opt puede detenerse en un óptimo local, donde ningún intercambio individual ayuda aunque exista una ruta más corta. El Python sencillo de esta lección se ejecuta igual en Colab, y OR-Tools de Google tiene una biblioteca de rutas para flotas reales.\n\nEn el mapa pequeño de tu código, el vecino más cercano recorre 19 km y la mejor ruta es de 16. La longitud no es lo único que hay que juzgar. Los niños que suben primero viajan casi toda la ruta de vuelta a la escuela. En la mejor ruta recorrida en un sentido, el primer pueblo viaja 15 km; recorrida en el otro sentido, el primer pueblo viaja 14. La misma calle, el mismo combustible, un viaje más largo más justo. Cuando dos rutas cuestan casi lo mismo, que decida el viaje más largo, y cuando no, acuerda con las familias un límite para el viaje más largo y busca la ruta más corta que lo respete."
+  "en": "A bus that leaves the school, visits every village once and comes back is solving the travelling salesperson problem. It is hard because routes multiply: with n villages there are n! ÷ 2 round trips. Nine villages give 181,440; ten give 1,814,400, ten times as many; twenty give about 1.2 × 10¹⁸, more than a billion billion. No computer checks them all for a real bus network.\n\nSo planners build a route quickly and then improve it. Nearest neighbour is a greedy rule: from wherever the bus is, go to the closest village not yet visited. In Python, keep a list route that starts at 0 (the school); while it is shorter than the number of places, look at the distances from the last stop, d[route[-1]], and append the closest place not yet in route. The places not yet in route are [v for v in range(5) if v not in route], a list comprehension: a list built from a loop in one line. The closest of them is min(left, key=lambda v: d[route[-1]][v]), as in Dijkstra’s method. The length is the sum of every leg, including the drive back to the school: zip(route, route[1:] + [0]) pairs each stop with the next.\n\n2-opt then improves the route. Pick two cut points i and j, reverse the stretch between them (list(reversed(route[i:j + 1]))), and keep the new route if it is shorter. When two straight roads in a route cross, such a swap always shortens it. Repeat until no swap helps. In the lab, three swaps take nearest neighbour’s 34.6 km down to 28.6 km, the best route; but 2-opt can stop at a local best, where no single swap helps although a shorter route exists. The plain Python in this lesson runs the same in Colab, and Google’s OR-Tools has a routing library for real fleets.\n\nOn the small map in your code, nearest neighbour drives 19 km and the best route is 16. Length is not the only thing to judge. The children picked up first ride almost the whole route back to school. On the best route driven one way, the first village rides 15 km; driven the other way, the first village rides 14. Same road, same fuel, a fairer longest ride. When two routes cost about the same, let the longest ride decide, and when they don’t, agree a limit on the longest ride with the families and find the shortest route that keeps it.",
+  "t": "Un autobús que sale de la escuela, visita cada pueblo una vez y vuelve está resolviendo el problema del viajante. Es difícil porque las rutas se multiplican: con n pueblos hay n! ÷ 2 viajes de ida y vuelta. Nueve pueblos dan 181,440; diez dan 1,814,400, diez veces más; veinte dan unos 1.2 × 10¹⁸, más de mil millones de miles de millones. Ninguna computadora los revisa todos para una red de autobuses real.\n\nPor eso quienes planifican construyen una ruta rápido y luego la mejoran. El vecino más cercano es una regla voraz: desde donde esté el autobús, ve al pueblo más cercano que aún no haya visitado. En Python, guarda una lista route que empieza en 0 (la escuela); mientras sea más corta que el número de lugares, mira las distancias desde la última parada, d[route[-1]], y añade el lugar más cercano que aún no esté en route. Los lugares que aún no están en route son [v for v in range(5) if v not in route], una lista por comprensión: una lista construida con un bucle en una sola línea. El más cercano de ellos es min(left, key=lambda v: d[route[-1]][v]), como en el método de Dijkstra. La longitud es la suma de todos los tramos, incluido el regreso a la escuela: zip(route, route[1:] + [0]) empareja cada parada con la siguiente.\n\n2-opt mejora entonces la ruta. Elige dos puntos de corte i y j, invierte el tramo entre ellos (list(reversed(route[i:j + 1]))) y conserva la ruta nueva si es más corta. Cuando dos calles rectas de una ruta se cruzan, un intercambio así siempre la acorta. Repite hasta que ningún intercambio ayude. En el laboratorio, tres intercambios bajan los 34.6 km del vecino más cercano a 28.6 km, la mejor ruta; pero 2-opt puede detenerse en un óptimo local, donde ningún intercambio individual ayuda aunque exista una ruta más corta. El Python sencillo de esta lección se ejecuta igual en Colab, y OR-Tools de Google tiene una biblioteca de rutas para flotas reales.\n\nEn el mapa pequeño de tu código, el vecino más cercano recorre 19 km y la mejor ruta es de 16. La longitud no es lo único que hay que juzgar. Los niños que suben primero viajan casi toda la ruta de vuelta a la escuela. En la mejor ruta recorrida en un sentido, el primer pueblo viaja 15 km; recorrida en el otro sentido, el primer pueblo viaja 14. La misma calle, el mismo combustible, un viaje más largo más justo. Cuando dos rutas cuestan casi lo mismo, que decida el viaje más largo, y cuando no, acuerda con las familias un límite para el viaje más largo y busca la ruta más corta que lo respete."
  },
  "lessons.2.steps.1.keyTerms.0.term": {
   "en": "Travelling salesperson problem",
@@ -986,12 +986,12 @@
   "t": "Cuando dos planes cuestan lo mismo, un segundo objetivo puede decidir entre ellos. Aquí ese objetivo es el viaje más largo: una ruta en la que nadie viaja más de treinta minutos es más justa sin costo extra. Incluso el sentido del mismo circuito puede cambiar el viaje más largo."
  },
  "lessons.2.steps.3.prompt": {
-  "en": "When two roads in a bus route cross each other, a 2-opt swap can always make the route shorter.",
-  "t": "Cuando dos calles de una ruta de autobús se cruzan, un intercambio 2-opt siempre puede acortar la ruta."
+  "en": "On a map where every road is a straight line, when two roads in a bus route cross each other, a 2-opt swap can always make the route shorter.",
+  "t": "En un mapa donde cada calle es una línea recta, cuando dos calles de una ruta de autobús se cruzan, un intercambio 2-opt siempre puede acortar la ruta."
  },
  "lessons.2.steps.3.explain": {
-  "en": "Replacing the two crossing roads by the two that don’t cross (reversing the stretch between them) is always shorter on a flat map, like the two diagonals of a shape against two of its sides. That’s why 2-opt untangles routes.",
-  "t": "Sustituir las dos calles que se cruzan por las dos que no se cruzan (invirtiendo el tramo entre ellas) siempre es más corto en un mapa plano, como las dos diagonales de una figura frente a dos de sus lados. Por eso 2-opt desenreda las rutas."
+  "en": "Replacing the two crossing roads by the two that don’t cross (reversing the stretch between them) is always shorter on a flat map, like the two diagonals of a four-sided shape against two of its opposite sides. That’s why 2-opt untangles routes.",
+  "t": "Sustituir las dos calles que se cruzan por las dos que no se cruzan (invirtiendo el tramo entre ellas) siempre es más corto en un mapa plano, como las dos diagonales de una figura de cuatro lados frente a dos de sus lados opuestos. Por eso 2-opt desenreda las rutas."
  },
  "lessons.2.steps.4.prompt": {
   "en": "What does this program print?",
@@ -1034,8 +1034,8 @@
   "t": "left = los lugares que aún no están en route"
  },
  "lessons.2.steps.6.hints.2": {
-  "en": "route.append(min(left, key=lambda v: d[route[-1]][v]))",
-  "t": "route.append(min(left, key=lambda v: d[route[-1]][v]))"
+  "en": "last = d[route[-1]], then near = min(left, key=lambda v: last[v]) and route.append(near)",
+  "t": "last = d[route[-1]], luego near = min(left, key=lambda v: last[v]) y route.append(near)"
  },
  "lessons.2.steps.6.explain": {
   "en": "Nearest neighbour goes 0 → 2 → 4 → 3 → 1 and back: 19 km, and the first village (2) rides 18 of them because it is picked up after only 1 km. The best route is 16 km, and driven the right way its longest ride is 14. The quick rule is fast but long, and hard on the first stop. This plain Python runs the same in Colab.",
@@ -1310,12 +1310,12 @@
   "t": "El modelo de los clubes no tiene objetivo, y el solucionador dice OPTIMAL. ¿Qué significa?"
  },
  "lessons.3.steps.0.checkpoint.question.options.0.text": {
-  "en": "It found the best timetable for everyone",
-  "t": "Encontró el mejor horario para todos"
- },
- "lessons.3.steps.0.checkpoint.question.options.1.text": {
   "en": "It found a timetable that keeps every rule",
   "t": "Encontró un horario que cumple todas las reglas"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.1.text": {
+  "en": "It found the best timetable for everyone",
+  "t": "Encontró el mejor horario para todos"
  },
  "lessons.3.steps.0.checkpoint.question.options.2.text": {
   "en": "It tried all 81 plans",
@@ -1414,12 +1414,12 @@
   "t": "El horario que más le guste a todos"
  },
  "lessons.3.steps.3.options.4.text": {
-  "en": "Chess and drama meet on the same day",
-  "t": "Ajedrez y teatro se reúnen el mismo día"
+  "en": "Coding and football meet on the same day",
+  "t": "Programación y fútbol se reúnen el mismo día"
  },
  "lessons.3.steps.3.explain": {
-  "en": "Each is one line: add_all_different for Sara, day[\"football\"] <= 2, day[\"coding\"] < day[\"drama\"], and day[\"chess\"] == day[\"drama\"]. “What everyone likes best” isn’t a rule: you would need people’s preferences as numbers and a goal.",
-  "t": "Cada una es una línea: add_all_different para Sara, day[\"football\"] <= 2, day[\"coding\"] < day[\"drama\"] y day[\"chess\"] == day[\"drama\"]. «Lo que más le guste a todos» no es una regla: necesitarías las preferencias de las personas como números y un objetivo."
+  "en": "Each is one line: add_all_different for Sara, day[\"football\"] <= 2, day[\"coding\"] < day[\"drama\"], and day[\"coding\"] == day[\"football\"]. “What everyone likes best” isn’t a rule: you would need people’s preferences as numbers and a goal.",
+  "t": "Cada una es una línea: add_all_different para Sara, day[\"football\"] <= 2, day[\"coding\"] < day[\"drama\"] y day[\"coding\"] == day[\"football\"]. «Lo que más le guste a todos» no es una regla: necesitarías las preferencias de las personas como números y un objetivo."
  },
  "lessons.3.steps.4.prompt": {
   "en": "With four clubs and three afternoons there are 81 possible plans, so the solver checks all 81.",
@@ -1734,12 +1734,12 @@
   "t": "Fijar el número más pequeño es seguro porque cualquier otro camino es al menos igual de largo, lo que exige longitudes de calle que nunca sean negativas. El orden de la lista y que las longitudes sean iguales no importan."
  },
  "lessons.4.steps.3.prompt": {
-  "en": "This Dijkstra program finds the longest way instead of the shortest. Which line is wrong?",
-  "t": "Este programa de Dijkstra encuentra el camino más largo en vez del más corto. ¿Qué línea está mal?"
+  "en": "On the map from the lesson “Shortest paths”, this Dijkstra program says the school is 106 km away, but the shortest way is 6. Which line is wrong?",
+  "t": "En el mapa de la lección «Caminos más cortos», este programa de Dijkstra dice que la escuela está a 106 km, pero el camino más corto es de 6. ¿Qué línea está mal?"
  },
  "lessons.4.steps.3.explain": {
-  "en": "Relaxing a road must keep the smaller of the old number and the new way: min, not max. With max, numbers only grow, and the “shortest” way comes out wrong.",
-  "t": "Relajar una calle debe conservar el menor entre el número anterior y el camino nuevo: min, no max. Con max, los números solo crecen y el camino «más corto» sale mal."
+  "en": "Relaxing a road must keep the smaller of the old number and the new way: min, not max. With max, a number can only grow, so every place but home stays at or above its very large start, and the distances come out far too long.",
+  "t": "Relajar una calle debe conservar el menor entre el número anterior y el camino nuevo: min, no max. Con max, un número solo puede crecer, así que todos los lugares salvo la casa se quedan en su valor inicial, muy grande, o por encima, y las distancias salen demasiado largas."
  },
  "lessons.4.steps.4.prompt": {
   "en": "Put in order: solving a timetable with CP-SAT.",

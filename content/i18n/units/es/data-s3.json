@@ -154,12 +154,12 @@
   "t": "Guardado una sola vez, se cambia una sola vez, y la fila de cada estudiante sigue correcta gracias al enlace con la tabla classes."
  },
  "lessons.0.steps.3.prompt": {
-  "en": "Put the lines in order to create the likes table, with its columns in this order: user_id, photo_id, liked_at. Both ids are foreign keys.",
-  "t": "Ordena las líneas para crear la tabla likes, con sus columnas en este orden: user_id, photo_id, liked_at. Ambos ids son claves foráneas."
+  "en": "Put the lines in order to create the likes table, with its columns in this order: id, user_id, photo_id, liked_at. id is the primary key; the other two ids are foreign keys.",
+  "t": "Ordena las líneas para crear la tabla likes, con sus columnas en este orden: id, user_id, photo_id, liked_at. id es la clave primaria; los otros dos ids son claves foráneas."
  },
  "lessons.0.steps.3.explain": {
-  "en": "Each like points to one user and one photo with a foreign key, and records when it happened. The user’s name already lives in the users table; storing it again in every like would make copies that drift apart.",
-  "t": "Cada «me gusta» apunta a un usuario y a una foto con una clave foránea, y registra cuándo ocurrió. El nombre del usuario ya vive en la tabla users; guardarlo otra vez en cada «me gusta» crearía copias que se separan."
+  "en": "Each like has its own id (the primary key), points to one user and one photo with foreign keys, and records when it happened. The user’s name already lives in the users table; storing it again in every like would make copies that drift apart.",
+  "t": "Cada «me gusta» tiene su propio id (la clave primaria), apunta a un usuario y a una foto con claves foráneas, y registra cuándo ocurrió. El nombre del usuario ya vive en la tabla users; guardarlo otra vez en cada «me gusta» crearía copias que se separan."
  },
  "lessons.0.steps.4.prompt": {
   "en": "id is the primary key of users. At most how many rows can this query return?",
@@ -464,16 +464,16 @@
   "t": "COUNT(*) dice 12, pero COUNT(mark) dice 11. ¿Por qué?"
  },
  "lessons.1.steps.0.checkpoint.question.options.0.text": {
-  "en": "One mark is NULL",
-  "t": "Una nota es NULL"
+  "en": "COUNT is broken",
+  "t": "COUNT está roto"
  },
  "lessons.1.steps.0.checkpoint.question.options.1.text": {
   "en": "One pupil is counted twice",
   "t": "Un estudiante se cuenta dos veces"
  },
  "lessons.1.steps.0.checkpoint.question.options.2.text": {
-  "en": "COUNT is broken",
-  "t": "COUNT está roto"
+  "en": "One mark is NULL",
+  "t": "Una nota es NULL"
  },
  "lessons.1.steps.0.checkpoint.question.explain": {
   "en": "COUNT(*) counts every row; COUNT(mark) skips the NULL, an empty mark: someone missed the test.",
@@ -572,8 +572,8 @@
   "t": "Sin comillas, SQL no puede leer 5B como texto (no es un número ni un nombre), así que la consulta se detiene con un error. Los valores de texto van entre comillas simples: '5B'."
  },
  "lessons.1.steps.5.prompt": {
-  "en": "Try it: run “The average mark in each subject”, then change AVG to MAX and to COUNT(*). Then write your own GROUP BY: how many pupils live in each town? Check that the counts add up to 12.",
-  "t": "Pruébalo: ejecuta «La nota promedio en cada materia», luego cambia AVG por MAX y por COUNT(*). Después escribe tu propio GROUP BY: ¿cuántos estudiantes viven en cada ciudad? Comprueba que los conteos sumen 12."
+  "en": "Try it: run “The average mark in each subject”, then change AVG(mark) to MAX(mark), and then to COUNT(*). Then write your own GROUP BY: how many pupils live in each town? Check that the counts add up to 12.",
+  "t": "Pruébalo: ejecuta «La nota promedio en cada materia», luego cambia AVG(mark) por MAX(mark) y después por COUNT(*). Después escribe tu propio GROUP BY: ¿cuántos estudiantes viven en cada ciudad? Comprueba que los conteos sumen 12."
  },
  "lessons.1.steps.6.prompt": {
   "en": "The librarian’s question: which class borrowed the most? Show each class with its number of loans, the most first.",
@@ -632,8 +632,8 @@
   "t": "counts[c] = counts.get(c, 0) + 1"
  },
  "lessons.1.steps.8.explain": {
-  "en": "The dictionary has one key per class, like GROUP BY’s groups, and each row adds one to its key’s count. The counts add up to 17, the same as the SQL. sorted() prints the classes in a fixed order; the dictionary keeps them in the order it first met them, which may not be class order.",
-  "t": "El diccionario tiene una clave por clase, como los grupos de GROUP BY, y cada fila suma uno al conteo de su clave. Los conteos suman 17, igual que en SQL. sorted() imprime las clases en un orden fijo; el diccionario las guarda en el orden en que las conoció, que puede no ser el orden de las clases."
+  "en": "The dictionary has one key per class, like GROUP BY’s groups, and each row adds one to its key’s count. The counts add up to 17, the same as the SQL. sorted() prints the classes in class order every time. Don’t rely on the dictionary’s own order: in the Python that runs here, its keys can come out in any order.",
+  "t": "El diccionario tiene una clave por clase, como los grupos de GROUP BY, y cada fila suma uno al conteo de su clave. Los conteos suman 17, igual que en SQL. sorted() imprime las clases en el orden de las clases siempre. No te fíes del orden propio del diccionario: en el Python que se ejecuta aquí, sus claves pueden salir en cualquier orden."
  },
  "lessons.1.steps.9.prompt": {
   "en": "Write one question you’d ask a database at school (the library, the canteen, the sports team). Which SQL parts would it need?",
@@ -1252,24 +1252,28 @@
   "t": "Recuerda y pruébalo"
  },
  "lessons.3.steps.0.checkpoint.question.prompt": {
-  "en": "A million sorted ids: about how many looks does halving need to find one?",
-  "t": "Un millón de ids ordenados: ¿más o menos cuántos vistazos necesita partir por la mitad para encontrar uno?"
+  "en": "A thousand sorted ids: about how many looks does halving need to find one?",
+  "t": "Mil ids ordenados: ¿más o menos cuántos vistazos necesita partir por la mitad para encontrar uno?"
  },
  "lessons.3.steps.0.checkpoint.question.options.0.text": {
-  "en": "About 20",
-  "t": "Unos 20"
+  "en": "About 10",
+  "t": "Unos 10"
  },
  "lessons.3.steps.0.checkpoint.question.options.1.text": {
-  "en": "About 1,000",
-  "t": "Unos 1,000"
+  "en": "About 100",
+  "t": "Unos 100"
  },
  "lessons.3.steps.0.checkpoint.question.options.2.text": {
-  "en": "About 500,000",
-  "t": "Unos 500,000"
+  "en": "About 500",
+  "t": "Unos 500"
  },
  "lessons.3.steps.0.checkpoint.question.explain": {
-  "en": "Each look halves what’s left, and 2 to the power 20 is just over a million, so about 20 looks are enough.",
-  "t": "Cada vistazo parte por la mitad lo que queda, y 2 elevado a 20 es un poco más de un millón, así que bastan unos 20 vistazos."
+  "en": "Each look halves what’s left, and 2 to the power 10 is just over a thousand, so about 10 looks are enough. A million rows need only about 20.",
+  "t": "Cada vistazo parte por la mitad lo que queda, y 2 elevado a 10 es un poco más de mil, así que bastan unos 10 vistazos. Un millón de filas necesitan solo unos 20."
+ },
+ "lessons.3.steps.0.transcript": {
+  "en": "Find one phone number in a city's phone book of a million names. Page by page? Or open it in the middle? Today: why a database finds one row among millions so fast. Without help, a database reads row by row until it finds what you asked for. On average, that's half the table: five hundred thousand looks for a million rows. But if the ids are sorted, you can halve the search. Look at the middle: too big? Throw away the top half. Too small? Throw away the bottom. Each look halves what's left. An index is a sorted copy of one column, with a pointer to each row. For a million rows, halving takes about twenty looks, not half a million. Here's binary search in Python. lo and hi mark the part that's left. Each time round, look at the middle, and move lo or hi past it. Quick check! A thousand sorted ids. About how many looks does halving need to find one? About ten: two to the power of ten is just over a thousand. A thousand times more rows, a million, needs only about twenty. Indexes aren't free. Each one takes space, and every new row must be added to every index. So index the columns you search by, not every column. In SQL, one line makes an index. Real databases use a tree that works like halving, with many branches, so even a billion rows take only a few steps. In the app, watch one lookup both ways, then grow the table to a million rows. Without an index, about half a million looks each; with one, about twenty. Your turn. Why not put an index on every column? Each one costs space and slows every insert, so index what you search by. Remember: row by row takes half the table. A sorted index halves the search each time: about twenty looks for a million. And indexes trade space for speed. Try it tomorrow: play “Guess my number” from one to a hundred with a friend. Always guess the middle. Can you always win in seven guesses? Why seven?",
+  "t": "Busca un número de teléfono en la guía de una ciudad con un millón de nombres. ¿Página por página? ¿O abriéndola por la mitad? Hoy: por qué una base de datos encuentra una fila entre millones tan rápido. Sin ayuda, una base de datos lee fila por fila hasta encontrar lo que pediste. En promedio, eso es la mitad de la tabla: quinientos mil vistazos para un millón de filas. Pero si los identificadores están ordenados, puedes dividir la búsqueda a la mitad. Mira el del medio: ¿es demasiado grande? Descarta la mitad de arriba. ¿Demasiado pequeño? Descarta la de abajo. Cada vistazo reduce a la mitad lo que queda. Un índice es una copia ordenada de una columna, con un puntero a cada fila. Con un millón de filas, dividir a la mitad toma unos veinte vistazos, no medio millón. Aquí tienes la búsqueda binaria en Python. lo y hi marcan la parte que queda. En cada vuelta, mira el del medio y mueve lo o hi más allá de él. ¡Pregunta rápida! Mil identificadores ordenados. ¿Cuántos vistazos necesita, más o menos, dividir a la mitad para encontrar uno? Unos diez: dos elevado a diez es poco más de mil. Mil veces más filas, un millón, necesita solo unos veinte. Los índices no son gratis. Cada uno ocupa espacio, y cada fila nueva debe añadirse a todos los índices. Así que indexa las columnas por las que buscas, no todas. En SQL, una línea crea un índice. Las bases de datos reales usan un árbol que funciona como dividir a la mitad, con muchas ramas, así que incluso mil millones de filas toman solo unos pocos pasos. En la app, mira una misma búsqueda de las dos maneras y luego haz crecer la tabla hasta un millón de filas. Sin índice, unos medio millón de vistazos cada una; con índice, unos veinte. Te toca. ¿Por qué no poner un índice en todas las columnas? Cada uno cuesta espacio y frena cada inserción, así que indexa por lo que buscas. Recuerda: fila por fila toma la mitad de la tabla. Un índice ordenado divide la búsqueda a la mitad cada vez: unos veinte vistazos para un millón. Y los índices cambian espacio por velocidad. Pruébalo mañana: juega «Adivina mi número» del uno al cien con un amigo. Adivina siempre el número del medio. ¿Puedes ganar siempre en siete intentos? ¿Por qué siete?"
  },
  "lessons.3.steps.1.prompt": {
   "en": "Read",
@@ -1424,12 +1428,12 @@
   "t": "Indexa lo que buscas, unes u ordenas a menudo. Un índice en una columna por la que nadie busca solo cuesta espacio y ralentiza cada préstamo nuevo."
  },
  "lessons.3.steps.8.prompt": {
-  "en": "With a sorted index, ten times more rows adds only about 3 more looks.",
-  "t": "Con un índice ordenado, diez veces más filas añaden solo unos 3 vistazos más."
+  "en": "With a sorted index, ten times more rows means about ten times more looks.",
+  "t": "Con un índice ordenado, diez veces más filas significan unos diez veces más vistazos."
  },
  "lessons.3.steps.8.explain": {
-  "en": "Ten times is a little more than 2 × 2 × 2, so it takes about three more halvings. Without an index, ten times more rows means ten times more looks.",
-  "t": "Diez veces es un poco más que 2 × 2 × 2, así que toma unas tres particiones por la mitad más. Sin índice, diez veces más filas significa diez veces más vistazos."
+  "en": "That is a search without an index. With a sorted index each look halves what’s left, and ten times is a little more than 2 × 2 × 2, so it takes only about three more looks.",
+  "t": "Eso es una búsqueda sin índice. Con un índice ordenado cada vistazo parte por la mitad lo que queda, y diez veces es un poco más que 2 × 2 × 2, así que toma solo unos tres vistazos más."
  },
  "lessons.3.steps.9.prompt": {
   "en": "Where in real life do you halve a search, and where do you read one by one?",
