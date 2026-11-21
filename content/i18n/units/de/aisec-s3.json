@@ -1,0 +1,2076 @@
+{
+ "title": {
+  "en": "How AI is attacked and defended",
+  "t": "Wie KI angegriffen und verteidigt wird"
+ },
+ "summary": {
+  "en": "Write the defences yourself, in Python: see a keyword filter miss a paraphrase while a check in code holds, give an AI agent only the tools it needs, find poisoned data, and check a model's fingerprint before you trust it. Before this: “First Python” (Programming, lower secondary).",
+  "t": "Schreibe die Abwehr selbst, in Python: Sieh, wie ein Stichwortfilter eine Umformulierung übersieht, während eine Prüfung im Code standhält, gib einem KI-Agenten nur die Werkzeuge, die er braucht, finde vergiftete Daten und prüfe den Fingerabdruck eines Modells, bevor du ihm vertraust. Vorher: „Erstes Python“ (Programmieren, Sekundarstufe I)."
+ },
+ "lessons.0.title": {
+  "en": "Filters that miss",
+  "t": "Filter, die danebenliegen"
+ },
+ "lessons.0.tryTomorrow": {
+  "en": "Write a five-word filter on paper and ask a friend to write the same request three ways without those words. Count what slips through, then write the one question a check in code would ask.",
+  "t": "Schreibe auf Papier einen Filter aus fünf Wörtern und bitte jemanden, dieselbe Anfrage dreimal ohne diese Wörter zu formulieren. Zähle, was durchrutscht, und schreibe dann die eine Frage auf, die eine Prüfung im Code stellen würde."
+ },
+ "lessons.0.materials": {
+  "en": [
+   "Paper and a pen",
+   "A friend or family member to write messages",
+   "A phone or computer with Darsi, if you have one, for the lab and the code"
+  ],
+  "t": [
+   "Papier und ein Stift",
+   "Ein Freund, eine Freundin oder jemand aus der Familie, der oder die Nachrichten schreibt",
+   "Ein Handy oder Computer mit Darsi, falls du eins hast, für das Lab und den Code"
+  ]
+ },
+ "lessons.0.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.0.steps.0.title": {
+  "en": "Filters that miss",
+  "t": "Filter, die danebenliegen"
+ },
+ "lessons.0.steps.0.chapters.0.label": {
+  "en": "A scam that slipped through",
+  "t": "Ein Betrug, der durchgerutscht ist"
+ },
+ "lessons.0.steps.0.chapters.1.label": {
+  "en": "Attacks on AI apps",
+  "t": "Angriffe auf KI-Apps"
+ },
+ "lessons.0.steps.0.chapters.2.label": {
+  "en": "A check that holds",
+  "t": "Eine Prüfung, die standhält"
+ },
+ "lessons.0.steps.0.chapters.3.label": {
+  "en": "The lab",
+  "t": "Das Lab"
+ },
+ "lessons.0.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.0.steps.0.checkpoint.question.prompt": {
+  "en": "A filter blocks any message with the word “PIN”, in capitals or small letters. Which message gets past it?",
+  "t": "Ein Filter blockiert jede Nachricht mit dem Wort „PIN“, in Groß- oder Kleinbuchstaben. Welche Nachricht kommt an ihm vorbei?"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.0.text": {
+  "en": "“What is your PIN?”",
+  "t": "„Wie lautet deine PIN?“"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.1.text": {
+  "en": "“Send me your pin, please”",
+  "t": "„Schick mir bitte deine pin“"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.2.text": {
+  "en": "“Which four numbers unlock your phone?”",
+  "t": "„Welche vier Zahlen entsperren dein Handy?“"
+ },
+ "lessons.0.steps.0.checkpoint.question.explain": {
+  "en": "“Which four numbers unlock your phone?” asks for the same secret without the banned word, so the filter lets it through. A word list only catches the wordings written on it.",
+  "t": "„Welche vier Zahlen entsperren dein Handy?“ fragt nach demselben Geheimnis ohne das verbotene Wort, also lässt der Filter es durch. Eine Wortliste fängt nur die Formulierungen, die auf ihr stehen."
+ },
+ "lessons.0.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.0.steps.1.title": {
+  "en": "Why word filters miss",
+  "t": "Warum Wortfilter danebenliegen"
+ },
+ "lessons.0.steps.1.body": {
+  "en": "An AI app is more than a language model. It is a model plus instructions from the people who built it, tools it can use (a search, a calendar, sending messages) and the text it reads: your request, web pages, documents, other tools' results. Attackers aim at that whole app. A jailbreak tries to talk the model out of the rules it was trained to keep. A prompt injection hides orders inside text the app reads, hoping the model will treat them as instructions.\n\nThe first defence many apps try is a keyword filter: a list of banned words, checked against what goes in or what comes out. It is quick to write and catches the plain attack. But it fails in two directions. It misses rewording: “Which four numbers unlock your phone?” asks for a PIN without the word PIN, and Arabic adds endless word forms on top. And it blocks innocent text: a lesson called “Strong passwords” trips the same filter, and a filter for “pin” even blocks “spinach”. Adding more words never finishes the list; it only blocks more innocent messages.\n\nThe defence that holds checks the action, not the words. Before the app sends a message, deletes a file or pays, code asks: did the user ask for this, and did they say yes to this exact action? If not, nothing happens, however cleverly the request was worded. The model can be talked round because it reads every word as a possible order. A few lines of code that ask “approved?” cannot be.\n\nFilters still have a place: they catch the obvious cases cheaply, as one layer among several. But a filter is a guess about words, and attackers choose the words. Put the real rule where the attacker's words can't reach it: in code, around the action.",
+  "t": "Eine KI-App ist mehr als ein Sprachmodell. Sie ist ein Modell plus Anweisungen der Menschen, die sie gebaut haben, Werkzeuge, die sie benutzen kann (eine Suche, ein Kalender, Nachrichten senden), und der Text, den sie liest: deine Anfrage, Webseiten, Dokumente, Ergebnisse anderer Werkzeuge. Angreifer zielen auf diese ganze App. Ein Jailbreak versucht, das Modell von den Regeln abzubringen, die es einhalten sollte. Eine Prompt Injection versteckt Befehle in Text, den die App liest, in der Hoffnung, dass das Modell sie als Anweisungen behandelt.\n\nDie erste Abwehr, die viele Apps versuchen, ist ein Stichwortfilter: eine Liste verbotener Wörter, abgeglichen mit dem, was hineingeht oder herauskommt. Er ist schnell geschrieben und fängt den einfachen Angriff. Aber er versagt in zwei Richtungen. Er übersieht Umformulierungen: „Welche vier Zahlen entsperren dein Handy?“ fragt nach einer PIN, ohne das Wort PIN, und das Arabische fügt noch endlose Wortformen hinzu. Und er blockiert harmlosen Text: Eine Lektion mit dem Titel „Starke Passwörter“ löst denselben Filter aus, und ein Filter für „pin“ blockiert sogar „Spinat“. Mehr Wörter hinzuzufügen macht die Liste nie fertig; es blockiert nur mehr harmlose Nachrichten.\n\nDie Abwehr, die standhält, prüft die Aktion, nicht die Wörter. Bevor die App eine Nachricht sendet, eine Datei löscht oder bezahlt, fragt der Code: Hat der Nutzer das verlangt, und hat er zu genau dieser Aktion Ja gesagt? Wenn nicht, passiert nichts, so geschickt die Anfrage auch formuliert war. Das Modell lässt sich herumkriegen, weil es jedes Wort als möglichen Befehl liest. Ein paar Zeilen Code, die „genehmigt?“ fragen, nicht.\n\nFilter haben trotzdem ihren Platz: Sie fangen die offensichtlichen Fälle billig ab, als eine Schicht unter mehreren. Aber ein Filter ist eine Vermutung über Wörter, und die Wörter wählen die Angreifer. Setze die eigentliche Regel dorthin, wo die Wörter des Angreifers sie nicht erreichen: in den Code, um die Aktion herum."
+ },
+ "lessons.0.steps.1.keyTerms.0.term": {
+  "en": "Prompt injection",
+  "t": "Prompt Injection"
+ },
+ "lessons.0.steps.1.keyTerms.0.def": {
+  "en": "Orders hidden in text an AI app reads (a web page, a document, a tool's result), hoping the model follows them.",
+  "t": "Befehle, die in Text versteckt sind, den eine KI-App liest (eine Webseite, ein Dokument, das Ergebnis eines Werkzeugs), in der Hoffnung, dass das Modell ihnen folgt."
+ },
+ "lessons.0.steps.1.keyTerms.1.term": {
+  "en": "Jailbreak",
+  "t": "Jailbreak"
+ },
+ "lessons.0.steps.1.keyTerms.1.def": {
+  "en": "An attempt to talk a chatbot out of the rules it was trained to keep, with new wordings, role play or many turns.",
+  "t": "Der Versuch, einen Chatbot von den Regeln abzubringen, die er einhalten sollte, mit neuen Formulierungen, Rollenspiel oder vielen Gesprächsrunden."
+ },
+ "lessons.0.steps.1.keyTerms.2.term": {
+  "en": "Keyword filter",
+  "t": "Stichwortfilter"
+ },
+ "lessons.0.steps.1.keyTerms.2.def": {
+  "en": "A guard that blocks text containing words from a list. Easy to write; it misses rewording and blocks innocent text.",
+  "t": "Ein Wächter, der Text blockiert, der Wörter aus einer Liste enthält. Leicht zu schreiben; er übersieht Umformulierungen und blockiert harmlosen Text."
+ },
+ "lessons.0.steps.1.keyTerms.3.term": {
+  "en": "Action check",
+  "t": "Aktionsprüfung"
+ },
+ "lessons.0.steps.1.keyTerms.3.def": {
+  "en": "A rule in code that lets an action happen only if the user asked for it and approved it, whatever the wording.",
+  "t": "Eine Regel im Code, die eine Aktion nur zulässt, wenn der Nutzer sie verlangt und genehmigt hat, egal wie sie formuliert ist."
+ },
+ "lessons.0.steps.2.prompt": {
+  "en": "The bot wants to send a message nobody asked for. It contains no banned words. What should the check in code do?",
+  "t": "Der Bot will eine Nachricht senden, die niemand verlangt hat. Sie enthält keine verbotenen Wörter. Was sollte die Prüfung im Code tun?"
+ },
+ "lessons.0.steps.2.options.0.text": {
+  "en": "Send it: no banned words",
+  "t": "Sie senden: keine verbotenen Wörter"
+ },
+ "lessons.0.steps.2.options.1.text": {
+  "en": "Block it: nobody asked or said yes",
+  "t": "Sie blockieren: Niemand hat sie verlangt oder Ja gesagt"
+ },
+ "lessons.0.steps.2.options.2.text": {
+  "en": "Ask the model whether it's safe",
+  "t": "Das Modell fragen, ob sie sicher ist"
+ },
+ "lessons.0.steps.2.explain": {
+  "en": "The check asks about the action, not the words: nobody asked for this message and nobody approved it, so it is blocked. Asking the model would mean trusting the part that can be tricked.",
+  "t": "Die Prüfung fragt nach der Aktion, nicht nach den Wörtern: Niemand hat diese Nachricht verlangt und niemand hat sie genehmigt, also wird sie blockiert. Das Modell zu fragen hieße, dem Teil zu vertrauen, der sich austricksen lässt."
+ },
+ "lessons.0.steps.3.prompt": {
+  "en": "Complete the word filter: blocked(msg) returns True when the message contains a banned word, in capitals or not.",
+  "t": "Vervollständige den Wortfilter: blocked(msg) gibt True zurück, wenn die Nachricht ein verbotenes Wort enthält, in Großbuchstaben oder nicht."
+ },
+ "lessons.0.steps.3.explain": {
+  "en": "w in msg.lower() looks for each banned word in the message, after turning it to small letters so “PIN” matches “pin”; finding one means return True. The banned words are lower case, so upper() would never match.",
+  "t": "w in msg.lower() sucht jedes verbotene Wort in der Nachricht, nachdem sie in Kleinbuchstaben umgewandelt wurde, damit „PIN“ zu „pin“ passt; ein Fund bedeutet return True. Die verbotenen Wörter sind klein geschrieben, also würde upper() nie passen."
+ },
+ "lessons.0.steps.4.prompt": {
+  "en": "Which of these messages does this filter block? Choose all that apply.",
+  "t": "Welche dieser Nachrichten blockiert dieser Filter? Wähle alle aus, die zutreffen."
+ },
+ "lessons.0.steps.4.options.0.text": {
+  "en": "“Send me your PASSWORD”",
+  "t": "„Schick mir dein PASSWORT“"
+ },
+ "lessons.0.steps.4.options.1.text": {
+  "en": "“What is your PIN?”",
+  "t": "„Wie lautet deine PIN?“"
+ },
+ "lessons.0.steps.4.options.2.text": {
+  "en": "“Type the secret word you log in with”",
+  "t": "„Tipp das geheime Wort ein, mit dem du dich anmeldest“"
+ },
+ "lessons.0.steps.4.options.3.text": {
+  "en": "“Our lesson today: strong passwords”",
+  "t": "„Unsere Lektion heute: starke Passwörter“"
+ },
+ "lessons.0.steps.4.explain": {
+  "en": "The first two contain a banned word, so they are blocked. The third asks for the same secret in new words and passes. The fourth is innocent but contains “password”, so it is blocked for nothing: a filter misses rewording and over-blocks.",
+  "t": "Die ersten beiden enthalten ein verbotenes Wort, also werden sie blockiert. Die dritte fragt mit neuen Worten nach demselben Geheimnis und kommt durch. Die vierte ist harmlos, enthält aber „Passwort“, also wird sie umsonst blockiert: Ein Filter übersieht Umformulierungen und blockiert zu viel."
+ },
+ "lessons.0.steps.5.prompt": {
+  "en": "Try it: pick the scam message with “Plain words” and turn on “Filter the outgoing message”: the filter catches “password” and stops it. Now switch to “Reworded”: the same scam, with no banned word, sails past. Finally set “Where it comes from” to “The agent was tricked” and turn on “Check in code”: the message is stopped every time. Which guard would you trust with your family's phone?",
+  "t": "Probier es aus: Wähle die Betrugsnachricht mit „Klartext“ und schalte „Ausgehende Nachricht filtern“ ein: Der Filter fängt „Passwort“ und stoppt sie. Wechsle nun zu „Umformuliert“: Derselbe Betrug, ohne verbotenes Wort, segelt vorbei. Stelle zum Schluss „Woher sie kommt“ auf „Der Agent wurde ausgetrickst“ und schalte „Im Code prüfen“ ein: Die Nachricht wird jedes Mal gestoppt. Welchem Wächter würdest du das Handy deiner Familie anvertrauen?"
+ },
+ "lessons.0.steps.6.prompt": {
+  "en": "Write the action check. can_send(text, asked, yes) returns True only if you asked for the message and said yes to it. It never needs to read the words.",
+  "t": "Schreibe die Aktionsprüfung. can_send(text, asked, yes) gibt nur dann True zurück, wenn du die Nachricht verlangt und Ja dazu gesagt hast. Sie muss die Wörter nie lesen."
+ },
+ "lessons.0.steps.6.tests.0.hint": {
+  "en": "Only the first message was asked for and approved.",
+  "t": "Nur die erste Nachricht wurde verlangt und genehmigt."
+ },
+ "lessons.0.steps.6.tests.1.hint": {
+  "en": "Don't look at text at all: only asked and yes decide.",
+  "t": "Sieh dir text gar nicht an: Nur asked und yes entscheiden."
+ },
+ "lessons.0.steps.6.hints.0": {
+  "en": "Both must be true, so join them with and.",
+  "t": "Beide müssen wahr sein, also verbinde sie mit and."
+ },
+ "lessons.0.steps.6.hints.1": {
+  "en": "return asked and yes",
+  "t": "return asked and yes"
+ },
+ "lessons.0.steps.6.explain": {
+  "en": "asked and yes is True only when both are True. The check ignores the text, so no wording, however clever, can get a message sent that you didn't ask for and approve.",
+  "t": "asked and yes ist nur True, wenn beide True sind. Die Prüfung ignoriert den Text, also kann keine Formulierung, so geschickt sie auch ist, eine Nachricht versenden lassen, die du nicht verlangt und genehmigt hast."
+ },
+ "lessons.0.steps.7.prompt": {
+  "en": "With enough banned words, in enough languages, a word filter can stop every rewording.",
+  "t": "Mit genug verbotenen Wörtern in genug Sprachen kann ein Wortfilter jede Umformulierung stoppen."
+ },
+ "lessons.0.steps.7.explain": {
+  "en": "There are endless ways to say the same thing, so the list is never finished, and every word you add blocks more innocent messages. Put the rule that matters in code, around the action.",
+  "t": "Es gibt endlos viele Arten, dasselbe zu sagen, also wird die Liste nie fertig, und jedes Wort, das du hinzufügst, blockiert mehr harmlose Nachrichten. Setze die Regel, auf die es ankommt, in den Code, um die Aktion herum."
+ },
+ "lessons.0.steps.8.prompt": {
+  "en": "What do you suggest?",
+  "t": "Was schlägst du vor?"
+ },
+ "lessons.0.steps.8.who": {
+  "en": "Ms Salma Haddad, maths club",
+  "t": "Frau Salma Haddad, Mathe-Club"
+ },
+ "lessons.0.steps.8.initial": {
+  "en": "S",
+  "t": "S"
+ },
+ "lessons.0.steps.8.situation": {
+  "en": "The maths club has a study bot that can post reminders to the club's group. Someone tricked it into posting a fake “prize” link. A club member suggests banning 300 more words.",
+  "t": "Der Mathe-Club hat einen Lernbot, der Erinnerungen in der Gruppe des Clubs posten kann. Jemand hat ihn ausgetrickst, einen gefälschten „Gewinn“-Link zu posten. Ein Clubmitglied schlägt vor, 300 weitere Wörter zu verbieten."
+ },
+ "lessons.0.steps.8.choices.0.label": {
+  "en": "“Ban the 300 words.”",
+  "t": "„Verbietet die 300 Wörter.“"
+ },
+ "lessons.0.steps.8.choices.0.consequence": {
+  "en": "The next trick will use word 301, the filter will start blocking normal messages, and the bot still posts whatever it is tricked into.",
+  "t": "Der nächste Trick benutzt Wort 301, der Filter fängt an, normale Nachrichten zu blockieren, und der Bot postet trotzdem alles, wozu er ausgetrickst wird."
+ },
+ "lessons.0.steps.8.choices.1.label": {
+  "en": "“Let it post only messages a club leader approved, checked in code.”",
+  "t": "„Er darf nur Nachrichten posten, die eine Clubleitung genehmigt hat, im Code geprüft.“"
+ },
+ "lessons.0.steps.8.choices.1.consequence": {
+  "en": "A tricked bot can still draft anything, but nothing reaches the group without a person's yes. The wording no longer matters.",
+  "t": "Ein ausgetrickster Bot kann immer noch alles entwerfen, aber nichts erreicht die Gruppe ohne das Ja eines Menschen. Die Formulierung spielt keine Rolle mehr."
+ },
+ "lessons.0.steps.8.choices.2.label": {
+  "en": "“Tell the bot in its instructions never to post links.”",
+  "t": "„Sagt dem Bot in seinen Anweisungen, er soll nie Links posten.“"
+ },
+ "lessons.0.steps.8.choices.2.consequence": {
+  "en": "Instructions are text the model reads, and other text can talk it round. Useful as a layer, but not a guard you can rely on.",
+  "t": "Anweisungen sind Text, den das Modell liest, und anderer Text kann es herumkriegen. Nützlich als Schicht, aber kein Wächter, auf den du dich verlassen kannst."
+ },
+ "lessons.0.steps.8.explain": {
+  "en": "Word lists can always be got round: require a person’s yes, checked in code, before anything is posted.",
+  "t": "Wortlisten lassen sich immer umgehen: Verlange das Ja eines Menschen, im Code geprüft, bevor irgendetwas gepostet wird."
+ },
+ "lessons.0.steps.9.prompt": {
+  "en": "Think of an AI app or bot you use, or one you might build. What could someone trick it into doing, and where would you put a check in code?",
+  "t": "Denk an eine KI-App oder einen Bot, die oder den du benutzt oder bauen könntest. Wozu könnte jemand sie austricksen, und wo würdest du eine Prüfung im Code einbauen?"
+ },
+ "lessons.0.steps.9.placeholder": {
+  "en": "For example: “Our class bot can post in the group. I'd let it post only what the class rep approves.”",
+  "t": "Zum Beispiel: „Unser Klassenbot kann in der Gruppe posten. Ich würde ihn nur das posten lassen, was die Klassensprecherin oder der Klassensprecher genehmigt.“"
+ },
+ "lessons.0.steps.10.prompt": {
+  "en": "Project: Filter versus check",
+  "t": "Projekt: Filter gegen Prüfung"
+ },
+ "lessons.0.steps.10.task": {
+  "en": "Pretend you are building a bot for your class group that can send messages. On paper (or in Python, if you have a device), write a word filter with five banned words. Ask two friends or family members to write the same harmful request (asking for a PIN, say) three different ways without your words, plus two innocent messages. Run every message through your filter by hand: what slips past, and what is blocked for nothing? Then write the action check (did the user ask, did they say yes?) and run the same messages through it.",
+  "t": "Stell dir vor, du baust einen Bot für deine Klassengruppe, der Nachrichten senden kann. Schreibe auf Papier (oder in Python, falls du ein Gerät hast) einen Wortfilter mit fünf verbotenen Wörtern. Bitte zwei Freunde oder Familienmitglieder, dieselbe schädliche Anfrage (etwa nach einer PIN) auf drei verschiedene Arten ohne deine Wörter zu schreiben, dazu zwei harmlose Nachrichten. Lass jede Nachricht von Hand durch deinen Filter laufen: Was rutscht durch, und was wird umsonst blockiert? Schreibe dann die Aktionsprüfung (Hat der Nutzer es verlangt, hat er Ja gesagt?) und lass dieselben Nachrichten durch sie laufen."
+ },
+ "lessons.0.steps.10.deliverable": {
+  "en": "A photo of your results table (no names, no real numbers) and two sentences: what slipped past the filter, and what the check in code stopped.",
+  "t": "Ein Foto deiner Ergebnistabelle (keine Namen, keine echten Nummern) und zwei Sätze: was durch den Filter gerutscht ist und was die Prüfung im Code gestoppt hat."
+ },
+ "lessons.0.steps.10.rubric.0.criterion": {
+  "en": "I can: explain why a word filter misses rewording and blocks innocent text.",
+  "t": "Ich kann: erklären, warum ein Wortfilter Umformulierungen übersieht und harmlosen Text blockiert."
+ },
+ "lessons.0.steps.10.rubric.1.criterion": {
+  "en": "I can: write a check on the action, in code or on paper.",
+  "t": "Ich kann: eine Prüfung der Aktion schreiben, im Code oder auf Papier."
+ },
+ "lessons.0.steps.10.rubric.2.criterion": {
+  "en": "I can: test a defence with several different wordings.",
+  "t": "Ich kann: eine Abwehr mit mehreren verschiedenen Formulierungen testen."
+ },
+ "lessons.0.slides.0.title": {
+  "en": "Filters that miss",
+  "t": "Filter, die danebenliegen"
+ },
+ "lessons.0.slides.0.note": {
+  "en": "AI security · Upper secondary · Lesson 1",
+  "t": "KI-Sicherheit · Sekundarstufe II · Lektion 1"
+ },
+ "lessons.0.slides.0.narration": {
+  "en": "Can a list of banned words keep an AI app safe?",
+  "t": "Kann eine Liste verbotener Wörter eine KI-App sicher halten?"
+ },
+ "lessons.0.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "In dieser Lektion wirst du"
+ },
+ "lessons.0.slides.1.bullets": {
+  "en": [
+   "Explain how attacks aim at a whole AI app.",
+   "Show why a word filter misses rewording and blocks innocent text.",
+   "Write a check on the action in code."
+  ],
+  "t": [
+   "Erklären, wie Angriffe auf eine ganze KI-App zielen.",
+   "Zeigen, warum ein Wortfilter Umformulierungen übersieht und harmlosen Text blockiert.",
+   "Eine Prüfung der Aktion im Code schreiben."
+  ]
+ },
+ "lessons.0.slides.2.title": {
+  "en": "Remember",
+  "t": "Merke dir"
+ },
+ "lessons.0.slides.2.bullets": {
+  "en": [
+   "A jailbreak talks the model round; an injection hides orders in what it reads.",
+   "Word filters miss rewording and block innocent text.",
+   "Check the action in code: did you ask? did you say yes?"
+  ],
+  "t": [
+   "Ein Jailbreak bringt das Modell herum; eine Injection versteckt Befehle in dem, was es liest.",
+   "Wortfilter übersehen Umformulierungen und blockieren harmlosen Text.",
+   "Prüfe die Aktion im Code: Hast du es verlangt? Hast du Ja gesagt?"
+  ]
+ },
+ "lessons.0.slides.3.title": {
+  "en": "Activity: Filter versus check",
+  "t": "Aktivität: Filter gegen Prüfung"
+ },
+ "lessons.0.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): Name an app that sends messages for you.",
+   "Filter (7 min): Write five banned words; friends reword a request.",
+   "Check (5 min): Run the same messages through “asked? approved?”.",
+   "Share (5 min): Compare what each guard stopped."
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Nennt eine App, die Nachrichten für dich sendet.",
+   "Filter (7 Min.): Schreibt fünf verbotene Wörter; Freunde formulieren eine Anfrage um.",
+   "Prüfung (5 Min.): Lasst dieselben Nachrichten durch „verlangt? genehmigt?“ laufen.",
+   "Austausch (5 Min.): Vergleicht, was jeder Wächter gestoppt hat."
+  ]
+ },
+ "lessons.0.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Write down one app or bot that can send messages or post for you. What would happen if someone tricked it?",
+   "Filter (7 min): Write five banned words for a class bot. Friends write the same harmful request three ways without those words, plus two innocent messages. Mark each one: blocked or passed.",
+   "Check (5 min): Now use the action check instead: for each message, did the user ask for it, and did they say yes? Mark each one again.",
+   "Share (5 min): Compare the two columns with a partner. Which guard missed the reworded requests, and which one blocked innocent messages?"
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Schreibe eine App oder einen Bot auf, die oder der Nachrichten für dich senden oder posten kann. Was würde passieren, wenn jemand sie oder ihn austrickst?",
+   "Filter (7 Min.): Schreibe fünf verbotene Wörter für einen Klassenbot. Freunde schreiben dieselbe schädliche Anfrage auf drei Arten ohne diese Wörter, dazu zwei harmlose Nachrichten. Markiere jede: blockiert oder durchgekommen.",
+   "Prüfung (5 Min.): Nutze nun stattdessen die Aktionsprüfung: Hat der Nutzer die Nachricht verlangt, und hat er Ja gesagt? Markiere jede noch einmal.",
+   "Austausch (5 Min.): Vergleiche die beiden Spalten mit einem Gegenüber. Welcher Wächter hat die umformulierten Anfragen übersehen, und welcher hat harmlose Nachrichten blockiert?"
+  ]
+ },
+ "lessons.0.slides.3.note": {
+  "en": "Use made-up messages only: no real names, numbers or passwords. No device? Do it all on paper.",
+  "t": "Benutzt nur erfundene Nachrichten: keine echten Namen, Nummern oder Passwörter. Kein Gerät? Macht alles auf Papier."
+ },
+ "lessons.0.slides.3.narration": {
+  "en": "Which guard stopped the reworded scam: the list, or the question?",
+  "t": "Welcher Wächter hat den umformulierten Betrug gestoppt: die Liste oder die Frage?"
+ },
+ "lessons.0.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns darüber sprechen"
+ },
+ "lessons.0.slides.4.bullets": {
+  "en": [
+   "Why can't a longer word list fix the filter?",
+   "Where else do apps use word filters, and what do they miss?",
+   "Which actions should always need your yes?"
+  ],
+  "t": [
+   "Warum kann eine längere Wortliste den Filter nicht retten?",
+   "Wo sonst nutzen Apps Wortfilter, und was übersehen sie?",
+   "Welche Aktionen sollten immer dein Ja brauchen?"
+  ]
+ },
+ "lessons.0.slides.5.title": {
+  "en": "Check yourself",
+  "t": "Prüfe dich selbst"
+ },
+ "lessons.0.slides.5.bullets": {
+  "en": [
+   "Write one request a word filter would miss, and the question a check in code would ask about it."
+  ],
+  "t": [
+   "Schreibe eine Anfrage auf, die ein Wortfilter übersehen würde, und die Frage, die eine Prüfung im Code dazu stellen würde."
+  ]
+ },
+ "lessons.0.slides.5.narration": {
+  "en": "Word filters guess from words. A check in code asks: did you ask, and did you say yes?",
+  "t": "Wortfilter raten anhand von Wörtern. Eine Prüfung im Code fragt: Hast du es verlangt, und hast du Ja gesagt?"
+ },
+ "lessons.0.kit.0.title": {
+  "en": "Slides to revise: Filters that miss",
+  "t": "Folien zum Wiederholen: Filter, die danebenliegen"
+ },
+ "lessons.0.kit.1.title": {
+  "en": "Activity sheet: Filters that miss",
+  "t": "Aktivitätsblatt: Filter, die danebenliegen"
+ },
+ "lessons.0.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "Das Lektionsvideo (240p, zum nochmal Ansehen oder Teilen)"
+ },
+ "lessons.1.title": {
+  "en": "Only the tools it needs",
+  "t": "Nur die Werkzeuge, die er braucht"
+ },
+ "lessons.1.tryTomorrow": {
+  "en": "Pick one app or assistant on your phone, or on a family phone with its owner. List what it can do, mark each power as reading or acting, and switch off one acting power it doesn't need.",
+  "t": "Such dir eine App oder einen Assistenten auf deinem Handy aus, oder auf dem Handy eines Familienmitglieds mit dessen Erlaubnis. Liste auf, was er kann, markiere jede Fähigkeit als lesen oder handeln, und schalte eine handelnde Fähigkeit aus, die er nicht braucht."
+ },
+ "lessons.1.materials": {
+  "en": [
+   "Paper and a pen",
+   "Your phone, or a family phone with its owner's permission",
+   "A phone or computer with Darsi, if you have one, for the lab and the code"
+  ],
+  "t": [
+   "Papier und ein Stift",
+   "Dein Handy oder das Handy eines Familienmitglieds mit Erlaubnis seiner Besitzerin oder seines Besitzers",
+   "Ein Handy oder Computer mit Darsi, falls du eins hast, für das Lab und den Code"
+  ]
+ },
+ "lessons.1.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.1.steps.0.title": {
+  "en": "Only the tools it needs",
+  "t": "Nur die Werkzeuge, die er braucht"
+ },
+ "lessons.1.steps.0.chapters.0.label": {
+  "en": "Ten tools, two needed",
+  "t": "Zehn Werkzeuge, zwei nötig"
+ },
+ "lessons.1.steps.0.chapters.1.label": {
+  "en": "Agents and their tools",
+  "t": "Agenten und ihre Werkzeuge"
+ },
+ "lessons.1.steps.0.chapters.2.label": {
+  "en": "An allow-list and a yes",
+  "t": "Eine Erlaubnisliste und ein Ja"
+ },
+ "lessons.1.steps.0.chapters.3.label": {
+  "en": "The lab",
+  "t": "Das Lab"
+ },
+ "lessons.1.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.1.steps.0.checkpoint.question.prompt": {
+  "en": "An agent plans tomorrow's homework from the timetable and the library. Which tools should it get?",
+  "t": "Ein Agent plant die Hausaufgaben von morgen anhand des Stundenplans und der Bibliothek. Welche Werkzeuge sollte er bekommen?"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.0.text": {
+  "en": "All ten, just in case",
+  "t": "Alle zehn, für alle Fälle"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.1.text": {
+  "en": "Timetable and library only",
+  "t": "Nur Stundenplan und Bibliothek"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.2.text": {
+  "en": "Timetable, library and send message",
+  "t": "Stundenplan, Bibliothek und Nachricht senden"
+ },
+ "lessons.1.steps.0.checkpoint.question.explain": {
+  "en": "Planning homework only needs to read the timetable and the library. With no acting tool, a tampered result can make the agent read or talk, but not do anything.",
+  "t": "Um Hausaufgaben zu planen, muss er nur den Stundenplan und die Bibliothek lesen. Ohne handelndes Werkzeug kann ein manipuliertes Ergebnis den Agenten zum Lesen oder Reden bringen, aber nicht dazu, etwas zu tun."
+ },
+ "lessons.1.steps.0.transcript": {
+  "en": "Our club's agent had ten tools. It only needed two of them. Then a tampered web page tricked it into using a third: it messaged every parent. Today: give an AI agent only the tools it needs, and make it ask before it acts. An AI agent is a model that can use tools: the timetable, the library, reminders, messages. The model decides which tool to call. And as you saw last lesson, the model can be tricked. Tools come in two kinds. Reading tools look things up: at worst, a trick makes them leak something. Acting tools change the world: they send, delete, pay or post, and a trick can turn them against you. That's why we use least privilege. Give an agent the fewest tools its job needs, reading before acting, for the shortest time. Everything it holds is its blast radius: all that an attack could reach. Quick check! An agent plans tomorrow's homework from the timetable and the library. Which tools should it get? Timetable and library only. With no acting tool, a tampered result can make it read or talk, but it can't do anything. Its blast radius is close to zero. Now write it down as an allow-list, in code. For each task, list the tools it may use. Before any tool runs, code checks the list, and anything else is refused, whatever the model asked for. Some tasks really do need an acting tool, like sending a reminder. Then add a second rule: an acting tool runs only after a person says yes. And that yes is checked in code, never left to the model. In the app, pick a job and grant some tools. Then run the set of tampered results and count the harmful actions. Grant only the timetable and library: zero. Add send message, and run it again. Your turn. The reminder task holds the send tool. A tampered result asks it to message everyone, and nobody said yes. What does the check return? Ask first: the tool is allowed, but nobody said yes. Remember: reading tools can leak, and acting tools can be turned. Give the fewest tools, check an allow-list in code, and need a person's yes before anything acts. Try it tomorrow: pick one assistant or app on your phone, or on a family phone with its owner. List what it can do, and mark each power as reading or acting. Switch off one acting power it doesn't need.",
+  "t": "Der Agent unseres Clubs hatte zehn Werkzeuge. Er brauchte nur zwei davon. Dann brachte ihn eine manipulierte Webseite dazu, ein drittes zu benutzen: Er schrieb allen Eltern. Heute: gib einem KI-Agenten nur die Werkzeuge, die er braucht, und sorge dafür, dass er fragt, bevor er handelt. Ein KI-Agent ist ein Modell, das Werkzeuge benutzen kann: den Stundenplan, die Bibliothek, Erinnerungen, Nachrichten. Das Modell entscheidet, welches Werkzeug es aufruft. Und wie du in der letzten Lektion gesehen hast, kann das Modell ausgetrickst werden. Werkzeuge gibt es in zwei Arten. Lesende Werkzeuge schlagen etwas nach: Schlimmstenfalls bringt ein Trick sie dazu, etwas zu verraten. Handelnde Werkzeuge verändern die Welt: Sie senden, löschen, bezahlen oder posten, und ein Trick kann sie gegen dich wenden. Darum nutzen wir minimale Rechte. Gib einem Agenten die wenigsten Werkzeuge, die seine Aufgabe braucht, erst lesend, dann handelnd, für möglichst kurze Zeit. Alles, was er hält, ist sein Schadensradius: alles, was ein Angriff erreichen könnte. Kurzer Check! Ein Agent plant die Hausaufgaben von morgen aus Stundenplan und Bibliothek. Welche Werkzeuge sollte er bekommen? Nur Stundenplan und Bibliothek. Ohne handelndes Werkzeug kann ein manipuliertes Ergebnis ihn lesen oder reden lassen, aber nichts tun. Sein Schadensradius liegt nahe null. Schreibe es jetzt als Erlaubnisliste im Code auf. Liste für jede Aufgabe die Werkzeuge auf, die sie benutzen darf. Bevor ein Werkzeug läuft, prüft der Code die Liste, und alles andere wird abgelehnt, egal was das Modell verlangt hat. Manche Aufgaben brauchen wirklich ein handelndes Werkzeug, etwa um eine Erinnerung zu senden. Dann füge eine zweite Regel hinzu: Ein handelndes Werkzeug läuft erst, nachdem eine Person Ja gesagt hat. Und dieses Ja wird im Code geprüft, nie dem Modell überlassen. Wähle in der App eine Aufgabe und vergib einige Werkzeuge. Lass dann die Reihe manipulierter Ergebnisse laufen und zähle die schädlichen Handlungen. Vergib nur Stundenplan und Bibliothek: null. Füge Nachricht senden hinzu und lass es noch einmal laufen. Du bist dran. Die Erinnerungsaufgabe hat das Sende-Werkzeug. Ein manipuliertes Ergebnis bittet sie, allen zu schreiben, und niemand hat Ja gesagt. Was liefert die Prüfung zurück? Erst fragen: Das Werkzeug ist erlaubt, aber niemand hat Ja gesagt. Merke dir: Lesende Werkzeuge können etwas verraten, und handelnde Werkzeuge können verdreht werden. Gib die wenigsten Werkzeuge, prüfe eine Erlaubnisliste im Code und verlange das Ja einer Person, bevor etwas handelt. Probier es morgen aus: Such dir einen Assistenten oder eine App auf deinem Handy oder einem Familienhandy gemeinsam mit seinem Besitzer aus. Liste auf, was sie kann, und markiere jede Fähigkeit als lesend oder handelnd. Schalte eine handelnde Fähigkeit ab, die sie nicht braucht."
+ },
+ "lessons.1.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.1.steps.1.title": {
+  "en": "Least privilege for AI agents",
+  "t": "Minimale Rechte für KI-Agenten"
+ },
+ "lessons.1.steps.1.body": {
+  "en": "An AI agent is a language model that can use tools: look up a timetable, search a library, set a reminder, send a message. The model reads your request, decides which tool to call and with what, reads the result and carries on. That makes agents useful, and it makes them a target: if the model can be tricked by text it reads, whatever tools it holds can be turned against you.\n\nTools come in two kinds. Reading tools look things up; the worst a trick can do with them is make the agent leak or repeat something. Acting tools change the world: they send, delete, pay, post or book. A tampered web page, document or tool result can push an agent to use an acting tool nobody asked for. Everything an agent holds is its blast radius: all that an attack could reach.\n\nSo security engineers use least privilege. Give an agent the fewest tools its job needs, reading before acting, for the shortest time. Write it down as an allow-list in code: for each task, the tools it may use. Before any tool runs, the code checks the list and refuses anything else, whatever the model asked for. In the lab's attack set, an agent holding only reading tools reaches 0 harmful actions; it can still leak what it reads.\n\nSome tasks really need an acting tool. Then add approval: an acting tool runs only after a person says yes to that exact action, and the yes is checked in code, never left to the model. Keep a log of what ran, so mistakes can be found and fixed. The same habits protect your phone: an app that can only read can't post in your name.",
+  "t": "Ein KI-Agent ist ein Sprachmodell, das Werkzeuge benutzen kann: einen Stundenplan nachschlagen, eine Bibliothek durchsuchen, eine Erinnerung setzen, eine Nachricht senden. Das Modell liest deine Anfrage, entscheidet, welches Werkzeug es womit aufruft, liest das Ergebnis und macht weiter. Das macht Agenten nützlich, und es macht sie zum Ziel: Wenn das Modell durch Text, den es liest, ausgetrickst werden kann, lassen sich alle Werkzeuge, die es hält, gegen dich wenden.\n\nWerkzeuge gibt es in zwei Arten. Lesende Werkzeuge schlagen etwas nach; das Schlimmste, was ein Trick damit anrichten kann, ist, dass der Agent etwas preisgibt oder wiederholt. Handelnde Werkzeuge verändern die Welt: Sie senden, löschen, bezahlen, posten oder buchen. Eine manipulierte Webseite, ein manipuliertes Dokument oder Werkzeugergebnis kann einen Agenten dazu drängen, ein handelndes Werkzeug zu benutzen, das niemand verlangt hat. Alles, was ein Agent hält, ist sein Schadensradius: alles, was ein Angriff erreichen könnte.\n\nDeshalb nutzen Sicherheitsfachleute minimale Rechte. Gib einem Agenten so wenige Werkzeuge, wie seine Aufgabe braucht, erst lesende, dann handelnde, für möglichst kurze Zeit. Schreibe es als Erlaubnisliste in den Code: für jede Aufgabe die Werkzeuge, die sie benutzen darf. Bevor ein Werkzeug läuft, prüft der Code die Liste und verweigert alles andere, was auch immer das Modell verlangt hat. Im Angriffssatz des Labs erreicht ein Agent, der nur lesende Werkzeuge hält, 0 schädliche Aktionen; er kann aber immer noch preisgeben, was er liest.\n\nManche Aufgaben brauchen wirklich ein handelndes Werkzeug. Dann füge eine Genehmigung hinzu: Ein handelndes Werkzeug läuft erst, nachdem ein Mensch zu genau dieser Aktion Ja gesagt hat, und das Ja wird im Code geprüft, nie dem Modell überlassen. Führe ein Protokoll darüber, was gelaufen ist, damit Fehler gefunden und behoben werden können. Dieselben Gewohnheiten schützen dein Handy: Eine App, die nur lesen kann, kann nicht in deinem Namen posten."
+ },
+ "lessons.1.steps.1.keyTerms.0.term": {
+  "en": "AI agent",
+  "t": "KI-Agent"
+ },
+ "lessons.1.steps.1.keyTerms.0.def": {
+  "en": "A language model that can call tools (look things up, send, delete, pay) to carry out a request.",
+  "t": "Ein Sprachmodell, das Werkzeuge aufrufen kann (nachschlagen, senden, löschen, bezahlen), um eine Anfrage auszuführen."
+ },
+ "lessons.1.steps.1.keyTerms.1.term": {
+  "en": "Least privilege",
+  "t": "Minimale Rechte"
+ },
+ "lessons.1.steps.1.keyTerms.1.def": {
+  "en": "Giving a person, app or agent only the access its job needs, for the shortest time.",
+  "t": "Einer Person, App oder einem Agenten nur den Zugriff geben, den ihre Aufgabe braucht, für möglichst kurze Zeit."
+ },
+ "lessons.1.steps.1.keyTerms.2.term": {
+  "en": "Blast radius",
+  "t": "Schadensradius"
+ },
+ "lessons.1.steps.1.keyTerms.2.def": {
+  "en": "Everything an attack could reach through the tools and data an agent holds.",
+  "t": "Alles, was ein Angriff über die Werkzeuge und Daten eines Agenten erreichen könnte."
+ },
+ "lessons.1.steps.1.keyTerms.3.term": {
+  "en": "Allow-list",
+  "t": "Erlaubnisliste"
+ },
+ "lessons.1.steps.1.keyTerms.3.def": {
+  "en": "A list of what is permitted, checked in code; anything not on it is refused.",
+  "t": "Eine Liste dessen, was erlaubt ist, im Code geprüft; alles, was nicht darauf steht, wird verweigert."
+ },
+ "lessons.1.steps.2.prompt": {
+  "en": "The reminder task is allowed the send tool. A tampered result asks it to message everyone, and nobody said yes. What does check() return?",
+  "t": "Die Erinnerungsaufgabe darf das Sendewerkzeug nutzen. Ein manipuliertes Ergebnis verlangt, alle anzuschreiben, und niemand hat Ja gesagt. Was gibt check() zurück?"
+ },
+ "lessons.1.steps.2.options.0.text": {
+  "en": "“ok”: the task has the send tool",
+  "t": "„ok“: Die Aufgabe hat das Sendewerkzeug"
+ },
+ "lessons.1.steps.2.options.1.text": {
+  "en": "“ask first”: an acting tool needs a yes",
+  "t": "„ask first“: Ein handelndes Werkzeug braucht ein Ja"
+ },
+ "lessons.1.steps.2.options.2.text": {
+  "en": "“not allowed”: send is never allowed",
+  "t": "„not allowed“: Senden ist nie erlaubt"
+ },
+ "lessons.1.steps.2.explain": {
+  "en": "The send tool passes the allow-list for the reminder task, but it is an acting tool and yes is False, so check() returns “ask first”, and nothing is sent until a person approves.",
+  "t": "Das Sendewerkzeug besteht die Erlaubnisliste für die Erinnerungsaufgabe, aber es ist ein handelndes Werkzeug und yes ist False, also gibt check() „ask first“ zurück, und es wird nichts gesendet, bis ein Mensch zustimmt."
+ },
+ "lessons.1.steps.3.prompt": {
+  "en": "Match each tool to the worst a trick could do with it.",
+  "t": "Ordne jedem Werkzeug das Schlimmste zu, was ein Trick damit anrichten könnte."
+ },
+ "lessons.1.steps.3.pairs.0.left": {
+  "en": "Timetable lookup",
+  "t": "Stundenplan-Abfrage"
+ },
+ "lessons.1.steps.3.pairs.0.right": {
+  "en": "Leak the class timetable",
+  "t": "Den Stundenplan der Klasse preisgeben"
+ },
+ "lessons.1.steps.3.pairs.1.left": {
+  "en": "Send message",
+  "t": "Nachricht senden"
+ },
+ "lessons.1.steps.3.pairs.1.right": {
+  "en": "Message people in your name",
+  "t": "In deinem Namen Menschen anschreiben"
+ },
+ "lessons.1.steps.3.pairs.2.left": {
+  "en": "Delete files",
+  "t": "Dateien löschen"
+ },
+ "lessons.1.steps.3.pairs.2.right": {
+  "en": "Wipe your work",
+  "t": "Deine Arbeit auslöschen"
+ },
+ "lessons.1.steps.3.pairs.3.left": {
+  "en": "Pay from a wallet",
+  "t": "Aus einer Geldbörse bezahlen"
+ },
+ "lessons.1.steps.3.pairs.3.right": {
+  "en": "Spend your money",
+  "t": "Dein Geld ausgeben"
+ },
+ "lessons.1.steps.3.explain": {
+  "en": "A reading tool can at worst leak what it reads. Acting tools change things, so a trick can use them to send, delete or spend in your name: that is why they need the hardest look.",
+  "t": "Ein lesendes Werkzeug kann im schlimmsten Fall preisgeben, was es liest. Handelnde Werkzeuge verändern Dinge, also kann ein Trick sie nutzen, um in deinem Namen zu senden, zu löschen oder auszugeben: Deshalb brauchen sie den genauesten Blick."
+ },
+ "lessons.1.steps.4.prompt": {
+  "en": "Put the lines in order: run(tool, yes) blocks an acting tool (one in the list ACTS) until a person says yes.",
+  "t": "Bring die Zeilen in die richtige Reihenfolge: run(tool, yes) blockiert ein handelndes Werkzeug (eines aus der Liste ACTS), bis ein Mensch Ja sagt."
+ },
+ "lessons.1.steps.4.explain": {
+  "en": "The check comes first: an acting tool with no yes is blocked. Only after that does the tool run. With the line if tool in ACTS or yes: instead, an acting tool would be blocked even after a yes, and any tool would be blocked once someone said yes.",
+  "t": "Die Prüfung kommt zuerst: Ein handelndes Werkzeug ohne yes wird blockiert. Erst danach läuft das Werkzeug. Mit der Zeile if tool in ACTS or yes: würde ein handelndes Werkzeug auch nach einem Ja blockiert, und jedes Werkzeug würde blockiert, sobald jemand Ja gesagt hat."
+ },
+ "lessons.1.steps.5.prompt": {
+  "en": "Try it: choose “Plan tomorrow's lessons” and grant only Timetable and Library, then press “Run the attack set”: no harmful action gets through, because the agent holds no acting tool. Now also grant “Send message” and run it again: a tampered result can push it to send. Watch “What a tampered result could reach”: that list is the blast radius. Keep it empty whenever the job allows.",
+  "t": "Probier es aus: Wähle „Morgigen Unterricht planen“ und gib nur Stundenplan und Bibliothek frei, drücke dann „Angriffssatz starten“: Keine schädliche Aktion kommt durch, weil der Agent kein handelndes Werkzeug hält. Gib nun auch „Nachricht senden“ frei und starte noch einmal: Ein manipuliertes Ergebnis kann ihn zum Senden drängen. Sieh dir „Was ein manipuliertes Ergebnis erreichen könnte“ an: Diese Liste ist der Schadensradius. Halte sie leer, wann immer die Aufgabe es erlaubt."
+ },
+ "lessons.1.steps.6.prompt": {
+  "en": "Write check(task, tool, yes). Return \"not allowed\" if the tool isn't on the task's allow-list, \"ask first\" if it is an acting tool and yes is False, and \"ok\" otherwise.",
+  "t": "Schreibe check(task, tool, yes). Gib \"not allowed\" zurück, wenn das Werkzeug nicht auf der Erlaubnisliste der Aufgabe steht, \"ask first\", wenn es ein handelndes Werkzeug ist und yes False ist, und sonst \"ok\"."
+ },
+ "lessons.1.steps.6.tests.0.hint": {
+  "en": "“send” is on the remind list, but it acts and yes is False.",
+  "t": "„send“ steht auf der Liste für remind, aber es handelt, und yes ist False."
+ },
+ "lessons.1.steps.6.tests.1.hint": {
+  "en": "Check the allow-list first: a tool that isn't listed is refused even when yes is True.",
+  "t": "Prüfe zuerst die Erlaubnisliste: Ein Werkzeug, das nicht aufgeführt ist, wird auch bei yes gleich True verweigert."
+ },
+ "lessons.1.steps.6.hints.0": {
+  "en": "First: if tool not in TOOLS[task]: return \"not allowed\"",
+  "t": "Zuerst: if tool not in TOOLS[task]: return \"not allowed\""
+ },
+ "lessons.1.steps.6.hints.1": {
+  "en": "Then: if tool in ACTS and not yes: return \"ask first\"",
+  "t": "Dann: if tool in ACTS and not yes: return \"ask first\""
+ },
+ "lessons.1.steps.6.explain": {
+  "en": "The allow-list is checked first, so a tool the task doesn't need is refused even with a yes. Then any acting tool waits for a person's yes. Only a listed tool that reads, or an approved one that acts, runs.",
+  "t": "Die Erlaubnisliste wird zuerst geprüft, also wird ein Werkzeug, das die Aufgabe nicht braucht, auch mit einem Ja verweigert. Dann wartet jedes handelnde Werkzeug auf das Ja eines Menschen. Nur ein aufgeführtes Werkzeug, das liest, oder ein genehmigtes, das handelt, läuft."
+ },
+ "lessons.1.steps.7.prompt": {
+  "en": "Which of these make an AI agent safer? Choose all that apply.",
+  "t": "Welche davon machen einen KI-Agenten sicherer? Wähle alle aus, die zutreffen."
+ },
+ "lessons.1.steps.7.options.0.text": {
+  "en": "Give it reading tools before acting ones",
+  "t": "Ihm lesende Werkzeuge vor handelnden geben"
+ },
+ "lessons.1.steps.7.options.1.text": {
+  "en": "Grant a tool for one task, then take it away",
+  "t": "Ein Werkzeug für eine Aufgabe freigeben und es dann wieder wegnehmen"
+ },
+ "lessons.1.steps.7.options.2.text": {
+  "en": "Keep a log of every action it takes",
+  "t": "Ein Protokoll über jede seiner Aktionen führen"
+ },
+ "lessons.1.steps.7.options.3.text": {
+  "en": "Give it every tool so it never gets stuck",
+  "t": "Ihm jedes Werkzeug geben, damit er nie feststeckt"
+ },
+ "lessons.1.steps.7.options.4.text": {
+  "en": "Let the model approve its own actions",
+  "t": "Das Modell seine eigenen Aktionen genehmigen lassen"
+ },
+ "lessons.1.steps.7.explain": {
+  "en": "Reading before acting, tools for the shortest time and a log all shrink or expose the damage. Every extra tool widens the blast radius, and a model approving itself is exactly the part an attacker can trick.",
+  "t": "Lesen vor Handeln, Werkzeuge für möglichst kurze Zeit und ein Protokoll verkleinern oder offenbaren den Schaden. Jedes zusätzliche Werkzeug vergrößert den Schadensradius, und ein Modell, das sich selbst genehmigt, ist genau der Teil, den ein Angreifer austricksen kann."
+ },
+ "lessons.1.steps.8.prompt": {
+  "en": "What do you suggest?",
+  "t": "Was schlägst du vor?"
+ },
+ "lessons.1.steps.8.who": {
+  "en": "Mr Joseph Mwangi, computer studies",
+  "t": "Herr Joseph Mwangi, Informatik"
+ },
+ "lessons.1.steps.8.initial": {
+  "en": "J",
+  "t": "J"
+ },
+ "lessons.1.steps.8.situation": {
+  "en": "Your computer club is building a bot that answers questions about the timetable. A member wants to give it “send message” and “delete files” too, “in case we need them later”.",
+  "t": "Dein Computerclub baut einen Bot, der Fragen zum Stundenplan beantwortet. Ein Mitglied will ihm auch „Nachricht senden“ und „Dateien löschen“ geben, „falls wir sie später brauchen“."
+ },
+ "lessons.1.steps.8.choices.0.label": {
+  "en": "“Fine: more tools, more useful.”",
+  "t": "„Gut so: mehr Werkzeuge, mehr Nutzen.“"
+ },
+ "lessons.1.steps.8.choices.0.consequence": {
+  "en": "Answering questions needs neither tool, and each one is something a tampered result could use: a bigger blast radius for nothing.",
+  "t": "Fragen zu beantworten braucht keines der beiden Werkzeuge, und jedes davon ist etwas, das ein manipuliertes Ergebnis nutzen könnte: ein größerer Schadensradius für nichts."
+ },
+ "lessons.1.steps.8.choices.1.label": {
+  "en": "“Only the timetable for now. We add a tool when a task needs it, with a yes if it acts.”",
+  "t": "„Vorerst nur den Stundenplan. Wir fügen ein Werkzeug hinzu, wenn eine Aufgabe es braucht, mit einem Ja, wenn es handelt.“"
+ },
+ "lessons.1.steps.8.choices.1.consequence": {
+  "en": "That is least privilege: the bot can do its job, and an attack on it can reach almost nothing.",
+  "t": "Das sind minimale Rechte: Der Bot kann seine Aufgabe erledigen, und ein Angriff auf ihn erreicht fast nichts."
+ },
+ "lessons.1.steps.8.choices.2.label": {
+  "en": "“Add them, but tell the bot to be careful.”",
+  "t": "„Fügt sie hinzu, aber sagt dem Bot, er soll vorsichtig sein.“"
+ },
+ "lessons.1.steps.8.choices.2.consequence": {
+  "en": "The model can be tricked, and “be careful” is just more text it reads. Leaving the tools out is a guard that holds.",
+  "t": "Das Modell lässt sich austricksen, und „sei vorsichtig“ ist nur noch mehr Text, den es liest. Die Werkzeuge wegzulassen ist ein Wächter, der standhält."
+ },
+ "lessons.1.steps.8.explain": {
+  "en": "Least privilege: give only the tools a task needs, and a yes before any tool acts.",
+  "t": "Minimale Rechte: nur die Werkzeuge geben, die eine Aufgabe braucht, und ein Ja, bevor irgendein Werkzeug handelt."
+ },
+ "lessons.1.steps.9.prompt": {
+  "en": "Think of an app or assistant you use. Which of its powers are reading, and which are acting? Which acting power would you take away?",
+  "t": "Denk an eine App oder einen Assistenten, die oder den du benutzt. Welche seiner Fähigkeiten sind lesend und welche handelnd? Welche handelnde Fähigkeit würdest du wegnehmen?"
+ },
+ "lessons.1.steps.9.placeholder": {
+  "en": "For example: “My photo app can read my pictures and post them. I don't need it to post, so I'll switch that off.”",
+  "t": "Zum Beispiel: „Meine Foto-App kann meine Bilder lesen und posten. Ich brauche das Posten nicht, also schalte ich es aus.“"
+ },
+ "lessons.1.steps.10.prompt": {
+  "en": "Project: A permission plan for an agent",
+  "t": "Projekt: Ein Berechtigungsplan für einen Agenten"
+ },
+ "lessons.1.steps.10.task": {
+  "en": "Choose a helpful agent you would like at school or at home: a homework planner, a club reminder bot, a library helper. List every tool it could use and mark each one reading or acting. Write its allow-list: the fewest tools for each task. Mark where it needs a person's yes. Then test your plan on paper with three made-up tampered results (for example, a web page saying “message everyone this link”): for each one, write what your agent could reach.",
+  "t": "Wähle einen hilfreichen Agenten, den du dir in der Schule oder zu Hause wünschen würdest: einen Hausaufgabenplaner, einen Erinnerungsbot für einen Club, einen Bibliotheksassistenten. Liste jedes Werkzeug auf, das er benutzen könnte, und markiere es als lesend oder handelnd. Schreibe seine Erlaubnisliste: die wenigsten Werkzeuge für jede Aufgabe. Markiere, wo er das Ja eines Menschen braucht. Teste deinen Plan dann auf Papier mit drei erfundenen manipulierten Ergebnissen (zum Beispiel eine Webseite mit „schick allen diesen Link“): Schreibe für jedes auf, was dein Agent erreichen könnte."
+ },
+ "lessons.1.steps.10.deliverable": {
+  "en": "A photo of your plan (no names) and two sentences: what you left out, and which attack your plan stops.",
+  "t": "Ein Foto deines Plans (keine Namen) und zwei Sätze: was du weggelassen hast und welchen Angriff dein Plan stoppt."
+ },
+ "lessons.1.steps.10.rubric.0.criterion": {
+  "en": "I can: tell reading tools from acting tools.",
+  "t": "Ich kann: lesende von handelnden Werkzeugen unterscheiden."
+ },
+ "lessons.1.steps.10.rubric.1.criterion": {
+  "en": "I can: write an allow-list with the fewest tools for a task.",
+  "t": "Ich kann: eine Erlaubnisliste mit den wenigsten Werkzeugen für eine Aufgabe schreiben."
+ },
+ "lessons.1.steps.10.rubric.2.criterion": {
+  "en": "I can: explain why approval must be checked in code.",
+  "t": "Ich kann: erklären, warum die Genehmigung im Code geprüft werden muss."
+ },
+ "lessons.1.slides.0.title": {
+  "en": "Only the tools it needs",
+  "t": "Nur die Werkzeuge, die er braucht"
+ },
+ "lessons.1.slides.0.note": {
+  "en": "AI security · Upper secondary · Lesson 2",
+  "t": "KI-Sicherheit · Sekundarstufe II · Lektion 2"
+ },
+ "lessons.1.slides.0.narration": {
+  "en": "How many tools should an AI agent get?",
+  "t": "Wie viele Werkzeuge sollte ein KI-Agent bekommen?"
+ },
+ "lessons.1.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "In dieser Lektion wirst du"
+ },
+ "lessons.1.slides.1.bullets": {
+  "en": [
+   "Tell reading tools from acting tools.",
+   "Give an agent the fewest tools, with an allow-list in code.",
+   "Require a person's yes before any tool acts."
+  ],
+  "t": [
+   "Lesende von handelnden Werkzeugen unterscheiden.",
+   "Einem Agenten mit einer Erlaubnisliste im Code die wenigsten Werkzeuge geben.",
+   "Das Ja eines Menschen verlangen, bevor ein Werkzeug handelt."
+  ]
+ },
+ "lessons.1.slides.2.title": {
+  "en": "Remember",
+  "t": "Merke dir"
+ },
+ "lessons.1.slides.2.bullets": {
+  "en": [
+   "Reading tools can leak; acting tools can be turned against you.",
+   "Least privilege: the fewest tools, for the shortest time.",
+   "An allow-list and a person's yes, checked in code."
+  ],
+  "t": [
+   "Lesende Werkzeuge können etwas preisgeben; handelnde Werkzeuge lassen sich gegen dich wenden.",
+   "Minimale Rechte: die wenigsten Werkzeuge, für möglichst kurze Zeit.",
+   "Eine Erlaubnisliste und das Ja eines Menschen, im Code geprüft."
+  ]
+ },
+ "lessons.1.slides.3.title": {
+  "en": "Activity: Permission plan",
+  "t": "Aktivität: Berechtigungsplan"
+ },
+ "lessons.1.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): List what one app on your phone can do.",
+   "Plan (7 min): Pick an agent; list its tools; mark reading or acting.",
+   "Attack (5 min): Test three tampered results against your plan.",
+   "Share (5 min): Compare blast radius with a partner."
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Listet auf, was eine App auf eurem Handy kann.",
+   "Plan (7 Min.): Wählt einen Agenten; listet seine Werkzeuge auf; markiert lesend oder handelnd.",
+   "Angriff (5 Min.): Testet drei manipulierte Ergebnisse gegen euren Plan.",
+   "Austausch (5 Min.): Vergleicht den Schadensradius mit einem Gegenüber."
+  ]
+ },
+ "lessons.1.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Pick one app on your phone (or a family phone, with its owner). Write down everything it can do, then circle the things that change something: send, post, delete, pay.",
+   "Plan (7 min): Choose an agent you'd like at school or home. List the tools it could use, mark each one reading or acting, and write an allow-list with only the tools its task needs. Mark where it must ask for a yes.",
+   "Attack (5 min): Write three made-up tampered results, such as a page saying “message everyone this link”. For each one, write what your agent could reach with its tools.",
+   "Share (5 min): Swap plans with a partner. Whose blast radius is smaller, and which tool could each of you remove?"
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Wähle eine App auf deinem Handy (oder dem eines Familienmitglieds, mit dessen Erlaubnis). Schreibe alles auf, was sie kann, und kreise dann ein, was etwas verändert: senden, posten, löschen, bezahlen.",
+   "Plan (7 Min.): Wähle einen Agenten, den du dir in der Schule oder zu Hause wünschen würdest. Liste die Werkzeuge auf, die er benutzen könnte, markiere jedes als lesend oder handelnd und schreibe eine Erlaubnisliste mit nur den Werkzeugen, die seine Aufgabe braucht. Markiere, wo er um ein Ja bitten muss.",
+   "Angriff (5 Min.): Schreibe drei erfundene manipulierte Ergebnisse, etwa eine Seite mit „schick allen diesen Link“. Schreibe für jedes auf, was dein Agent mit seinen Werkzeugen erreichen könnte.",
+   "Austausch (5 Min.): Tausche die Pläne mit einem Gegenüber. Wessen Schadensradius ist kleiner, und welches Werkzeug könnte jede:r von euch entfernen?"
+  ]
+ },
+ "lessons.1.slides.3.note": {
+  "en": "Use a family phone only with its owner. The tampered results are made up: write them on paper.",
+  "t": "Benutze das Handy eines Familienmitglieds nur mit Erlaubnis der Besitzerin oder des Besitzers. Die manipulierten Ergebnisse sind erfunden: Schreibe sie auf Papier."
+ },
+ "lessons.1.slides.3.narration": {
+  "en": "What could a tampered result reach in your plan?",
+  "t": "Was könnte ein manipuliertes Ergebnis in deinem Plan erreichen?"
+ },
+ "lessons.1.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns darüber sprechen"
+ },
+ "lessons.1.slides.4.bullets": {
+  "en": [
+   "Why is a reading tool safer than an acting tool?",
+   "Why must the yes be checked in code, and not by the model?",
+   "Which app on your phone has more power than it needs?"
+  ],
+  "t": [
+   "Warum ist ein lesendes Werkzeug sicherer als ein handelndes?",
+   "Warum muss das Ja im Code geprüft werden und nicht vom Modell?",
+   "Welche App auf deinem Handy hat mehr Macht, als sie braucht?"
+  ]
+ },
+ "lessons.1.slides.5.title": {
+  "en": "Check yourself",
+  "t": "Prüfe dich selbst"
+ },
+ "lessons.1.slides.5.bullets": {
+  "en": [
+   "Write the allow-list for one task, and mark the tool that needs a yes."
+  ],
+  "t": [
+   "Schreibe die Erlaubnisliste für eine Aufgabe auf und markiere das Werkzeug, das ein Ja braucht."
+  ]
+ },
+ "lessons.1.slides.5.narration": {
+  "en": "Give the fewest tools, and ask before anything acts.",
+  "t": "Gib die wenigsten Werkzeuge und frag, bevor irgendetwas handelt."
+ },
+ "lessons.1.kit.0.title": {
+  "en": "Slides to revise: Only the tools it needs",
+  "t": "Folien zum Wiederholen: Nur die Werkzeuge, die er braucht"
+ },
+ "lessons.1.kit.1.title": {
+  "en": "Activity sheet: Only the tools it needs",
+  "t": "Aktivitätsblatt: Nur die Werkzeuge, die er braucht"
+ },
+ "lessons.1.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "Das Lektionsvideo (240p, zum nochmal Ansehen oder Teilen)"
+ },
+ "lessons.2.title": {
+  "en": "Poisoned data",
+  "t": "Vergiftete Daten"
+ },
+ "lessons.2.tryTomorrow": {
+  "en": "With three friends, label the same ten pictures on your own, then compare. Where you disagree, talk it through and keep the majority, and notice which labels were careless.",
+  "t": "Gebt mit drei Freunden denselben zehn Bildern jeweils für euch ein Label und vergleicht dann. Wo ihr nicht einig seid, sprecht darüber und behaltet die Mehrheit, und achtet darauf, welche Labels nachlässig waren."
+ },
+ "lessons.2.materials": {
+  "en": [
+   "Paper and a pen",
+   "Ten to twenty simple things to measure, such as leaves or beans, and a ruler",
+   "A phone or computer with Darsi, if you have one, for the lab and the code"
+  ],
+  "t": [
+   "Papier und ein Stift",
+   "Zehn bis zwanzig einfache Dinge zum Messen, etwa Blätter oder Bohnen, und ein Lineal",
+   "Ein Handy oder Computer mit Darsi, falls du eins hast, für das Lab und den Code"
+  ]
+ },
+ "lessons.2.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.2.steps.0.title": {
+  "en": "Poisoned data",
+  "t": "Vergiftete Daten"
+ },
+ "lessons.2.steps.0.chapters.0.label": {
+  "en": "A leaf spotter that kept failing",
+  "t": "Ein Blatt-Finder, der immer wieder versagte"
+ },
+ "lessons.2.steps.0.chapters.1.label": {
+  "en": "What poisoning is",
+  "t": "Was Vergiftung ist"
+ },
+ "lessons.2.steps.0.chapters.2.label": {
+  "en": "Find the odd ones out",
+  "t": "Die Ausreißer finden"
+ },
+ "lessons.2.steps.0.chapters.3.label": {
+  "en": "Keep poison out",
+  "t": "Gift fernhalten"
+ },
+ "lessons.2.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.2.steps.0.checkpoint.question.prompt": {
+  "en": "In order, the labels read: healthy, healthy, sick, healthy, healthy. Which one does the neighbour check flag?",
+  "t": "Der Reihe nach lauten die Labels: gesund, gesund, krank, gesund, gesund. Welches markiert die Nachbarprüfung?"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.0.text": {
+  "en": "The first healthy one",
+  "t": "Das erste „gesund“"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.1.text": {
+  "en": "The sick one in the middle",
+  "t": "Das „krank“ in der Mitte"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.2.text": {
+  "en": "None of them",
+  "t": "Keines davon"
+ },
+ "lessons.2.steps.0.checkpoint.question.explain": {
+  "en": "The sick label in the middle sits between two healthy ones, so both neighbours disagree and it is flagged for a person to check. Every other label agrees with at least one neighbour.",
+  "t": "Das Label „krank“ in der Mitte sitzt zwischen zwei „gesund“, also sind beide Nachbarn anderer Meinung, und es wird markiert, damit ein Mensch es prüft. Jedes andere Label stimmt mit mindestens einem Nachbarn überein."
+ },
+ "lessons.2.steps.0.transcript": {
+  "en": "Our leaf spotter kept getting it wrong. The whole school had labelled its photos, and a few labels were flipped. One student had done it on purpose, as a joke. Today: how poisoned data breaks a model, and how to find it with a few lines of Python. A model learns from its examples, so whoever touches the data can steer it. Poisoning means slipping in wrong or planted examples: flipped labels, fake reviews, edited web pages. Nobody has to touch the model itself. A sneakier kind is a backdoor. The attacker plants a trigger, like a small sticker or a rare word, and labels those examples their way. The model passes every normal test, and misbehaves only when the trigger appears. So how do you find poison? Look at each example's neighbours. A leaf labelled sick, with healthy leaves on both sides, is suspicious. The lab does the same: points whose neighbours disagree get flagged. Here it is in Python. The labels are in order of how yellow each leaf is. For each one, compare it with the leaf on its left and on its right. If both disagree, flag it for a person to check. Quick check! In order, the labels read: healthy, healthy, sick, healthy, healthy. Which one gets flagged? The sick one in the middle: both neighbours disagree. But careful. Honest examples at the edge of a group get flagged sometimes too. So code only flags; a person looks, decides, and writes down what was removed. Other defences stop poison getting in. Know where your data came from. Let three people label each example, and keep the majority. And keep a clean test set nobody else can touch: if its score suddenly drops, something got in. In the app, flip some labels and train: the line moves and accuracy falls. Press “Find the odd ones out”, see how many flagged points were really poisoned, then drop them and retrain. Your turn. New data was added last night, and this morning the score on your locked test set fell from ninety-six to eighty. What do you do first? Roll back and check the new data: the drop is your warning. Remember: whoever touches the data can steer the model. Backdoors hide until their trigger appears. Code flags odd examples, and a person decides. Try it tomorrow: with three friends, label the same ten pictures on your own, then compare. Where you disagree, talk it through and keep the majority. That's how real datasets catch careless and planted labels.",
+  "t": "Unser Blattdetektor lag immer wieder falsch. Die ganze Schule hatte seine Fotos mit Labels versehen, und ein paar Labels waren vertauscht. Ein Schüler hatte das mit Absicht getan, als Scherz. Heute: wie vergiftete Daten ein Modell kaputt machen und wie du sie mit ein paar Zeilen Python findest. Ein Modell lernt aus seinen Beispielen, also kann jeder, der die Daten anfasst, es lenken. Vergiftung heißt, falsche oder eingeschleuste Beispiele unterzumischen: vertauschte Labels, gefälschte Bewertungen, bearbeitete Webseiten. Am Modell selbst muss niemand etwas ändern. Noch hinterhältiger ist eine Hintertür. Der Angreifer pflanzt einen Auslöser ein, etwa einen kleinen Aufkleber oder ein seltenes Wort, und versieht diese Beispiele mit seinem Label. Das Modell besteht jeden normalen Test und verhält sich nur dann falsch, wenn der Auslöser auftaucht. Wie findest du also Gift? Schau dir die Nachbarn jedes Beispiels an. Ein Blatt mit dem Label krank, das auf beiden Seiten gesunde Blätter hat, ist verdächtig. Das Lab macht dasselbe: Punkte, deren Nachbarn widersprechen, werden markiert. Hier ist es in Python. Die Labels sind danach geordnet, wie gelb jedes Blatt ist. Vergleiche jedes mit dem Blatt links und dem Blatt rechts von ihm. Widersprechen beide, markiere es, damit ein Mensch nachsieht. Kurzer Check! In dieser Reihenfolge lauten die Labels: gesund, gesund, krank, gesund, gesund. Welches wird markiert? Das kranke in der Mitte: Beide Nachbarn widersprechen. Aber Vorsicht. Auch ehrliche Beispiele am Rand einer Gruppe werden manchmal markiert. Der Code markiert also nur; ein Mensch schaut hin, entscheidet und schreibt auf, was entfernt wurde. Andere Schutzmaßnahmen halten Gift schon draußen. Wisse, woher deine Daten kommen. Lass drei Personen jedes Beispiel labeln und behalte die Mehrheit. Und halte einen sauberen Testsatz bereit, den niemand sonst anfassen darf: Fällt sein Ergebnis plötzlich, ist etwas hineingelangt. Vertausche in der App ein paar Labels und trainiere: Die Linie wandert und die Genauigkeit sinkt. Drücke „Ausreißer finden“, sieh, wie viele markierte Punkte wirklich vergiftet waren, dann entferne sie und trainiere neu. Du bist dran. Gestern Abend kamen neue Daten dazu, und heute Morgen ist das Ergebnis auf deinem gesperrten Testsatz von sechsundneunzig auf achtzig gefallen. Was machst du zuerst? Mach den Stand rückgängig und prüfe die neuen Daten: Der Abfall ist deine Warnung. Merke dir: Wer die Daten anfasst, kann das Modell lenken. Hintertüren bleiben versteckt, bis ihr Auslöser auftaucht. Der Code markiert auffällige Beispiele, und ein Mensch entscheidet. Probier es morgen aus: Labele mit drei Freunden dieselben zehn Bilder jeweils für dich allein und vergleicht dann. Wo ihr nicht übereinstimmt, sprecht darüber und behaltet die Mehrheit. So fangen echte Datensätze nachlässige und eingeschleuste Labels ab."
+ },
+ "lessons.2.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.2.steps.1.title": {
+  "en": "How poisoned data is found",
+  "t": "Wie man vergiftete Daten findet"
+ },
+ "lessons.2.steps.1.body": {
+  "en": "A model learns only from its examples, so whoever can touch the training data can steer the model, without ever touching the model itself. Data poisoning means slipping wrong or planted examples into that data: flipped labels in a photo set, fake reviews for a shop, edited pages on a website the data was collected from. School projects are not immune: a dataset labelled by a whole class can carry careless or joking labels.\n\nA sneakier kind of poisoning is a backdoor. The attacker plants a trigger (a small sticker, a rare word, a pattern of pixels) in some examples and labels them their way. The model learns the trigger, passes every normal test, and misbehaves only when the trigger appears. That is why a high test score alone doesn't prove the data is clean.\n\nTo find poison, look for examples that disagree with their neighbours. Sort the examples by a measurement, such as how yellow a leaf is, and compare each label with the ones on its left and right. A “sick” label between two “healthy” ones is suspicious. The check is a filter for people, not a judge: honest examples at the edge of a group get flagged too, so a person looks at each flagged example, removes only what is really wrong, and records what was removed and why.\n\nOther defences keep poison out in the first place. Know where your data came from, and prefer sources you can check. Let three people label each example and keep the majority, so one careless or planted label is outvoted. Keep a clean test set locked away: if its score suddenly drops after new data is added, roll back and check the new data before using it.",
+  "t": "Ein Modell lernt nur aus seinen Beispielen, also kann jede:r, der oder die die Trainingsdaten anfassen kann, das Modell steuern, ohne je das Modell selbst anzufassen. Datenvergiftung heißt, falsche oder eingeschleuste Beispiele in diese Daten zu schmuggeln: vertauschte Labels in einem Fotosatz, gefälschte Bewertungen für ein Geschäft, bearbeitete Seiten auf einer Website, von der die Daten gesammelt wurden. Auch Schulprojekte sind nicht immun: Ein Datensatz, den eine ganze Klasse gelabelt hat, kann nachlässige oder scherzhafte Labels enthalten.\n\nEine hinterhältigere Art der Vergiftung ist eine Hintertür. Der Angreifer pflanzt einen Auslöser (einen kleinen Aufkleber, ein seltenes Wort, ein Pixelmuster) in einige Beispiele und gibt ihnen sein Label. Das Modell lernt den Auslöser, besteht jeden normalen Test und benimmt sich nur schlecht, wenn der Auslöser erscheint. Deshalb beweist ein hoher Testwert allein nicht, dass die Daten sauber sind.\n\nUm Gift zu finden, suche nach Beispielen, die ihren Nachbarn widersprechen. Sortiere die Beispiele nach einer Messung, etwa wie gelb ein Blatt ist, und vergleiche jedes Label mit denen links und rechts. Ein Label „krank“ zwischen zwei „gesund“ ist verdächtig. Die Prüfung ist ein Filter für Menschen, kein Richter: Auch ehrliche Beispiele am Rand einer Gruppe werden markiert, also schaut sich ein Mensch jedes markierte Beispiel an, entfernt nur, was wirklich falsch ist, und hält fest, was entfernt wurde und warum.\n\nAndere Abwehrmaßnahmen halten Gift gleich von vornherein fern. Wisse, woher deine Daten stammen, und bevorzuge Quellen, die du prüfen kannst. Lass drei Personen jedes Beispiel labeln und behalte die Mehrheit, damit ein nachlässiges oder eingeschleustes Label überstimmt wird. Halte einen sauberen Testsatz unter Verschluss: Wenn sein Wert plötzlich sinkt, nachdem neue Daten hinzugefügt wurden, geh zurück und prüfe die neuen Daten, bevor du sie nutzt."
+ },
+ "lessons.2.steps.1.keyTerms.0.term": {
+  "en": "Data poisoning",
+  "t": "Datenvergiftung"
+ },
+ "lessons.2.steps.1.keyTerms.0.def": {
+  "en": "Slipping wrong or planted examples into training data, so the model learns something wrong.",
+  "t": "Falsche oder eingeschleuste Beispiele in Trainingsdaten schmuggeln, sodass das Modell etwas Falsches lernt."
+ },
+ "lessons.2.steps.1.keyTerms.1.term": {
+  "en": "Backdoor",
+  "t": "Hintertür"
+ },
+ "lessons.2.steps.1.keyTerms.1.def": {
+  "en": "A hidden trigger planted in training data: the model behaves normally until the trigger appears.",
+  "t": "Ein versteckter Auslöser in Trainingsdaten: Das Modell verhält sich normal, bis der Auslöser erscheint."
+ },
+ "lessons.2.steps.1.keyTerms.2.term": {
+  "en": "Label",
+  "t": "Label"
+ },
+ "lessons.2.steps.1.keyTerms.2.def": {
+  "en": "The answer attached to a training example, such as “healthy” or “sick”, that the model learns from.",
+  "t": "Die Antwort, die an einem Trainingsbeispiel hängt, etwa „gesund“ oder „krank“, aus der das Modell lernt."
+ },
+ "lessons.2.steps.1.keyTerms.3.term": {
+  "en": "Clean test set",
+  "t": "Sauberer Testsatz"
+ },
+ "lessons.2.steps.1.keyTerms.3.def": {
+  "en": "Checked examples kept locked away and used only to score the model, so a sudden drop warns you.",
+  "t": "Geprüfte Beispiele, die unter Verschluss bleiben und nur dazu dienen, das Modell zu bewerten, damit ein plötzlicher Abfall dich warnt."
+ },
+ "lessons.2.steps.2.prompt": {
+  "en": "New data was added last night. This morning the score on your locked test set fell from 96% to 80%. What do you do first?",
+  "t": "Gestern Abend wurden neue Daten hinzugefügt. Heute Morgen ist der Wert bei deinem verschlossenen Testsatz von 96 % auf 80 % gefallen. Was tust du zuerst?"
+ },
+ "lessons.2.steps.2.options.0.text": {
+  "en": "Train again with even more data",
+  "t": "Mit noch mehr Daten erneut trainieren"
+ },
+ "lessons.2.steps.2.options.1.text": {
+  "en": "Roll back, and check the new data",
+  "t": "Zurückgehen und die neuen Daten prüfen"
+ },
+ "lessons.2.steps.2.options.2.text": {
+  "en": "Delete the test set: it must be wrong",
+  "t": "Den Testsatz löschen: Er muss falsch sein"
+ },
+ "lessons.2.steps.2.explain": {
+  "en": "A sudden drop on a test set nobody else can touch points at the new data. Go back to the last good model, then check the new examples before any of them is used.",
+  "t": "Ein plötzlicher Abfall bei einem Testsatz, den niemand sonst anfassen kann, deutet auf die neuen Daten. Geh zum letzten guten Modell zurück und prüfe dann die neuen Beispiele, bevor irgendeines davon benutzt wird."
+ },
+ "lessons.2.steps.3.prompt": {
+  "en": "If a model scores well on all its normal tests, its training data can't have been poisoned.",
+  "t": "Wenn ein Modell bei allen normalen Tests gut abschneidet, können seine Trainingsdaten nicht vergiftet worden sein."
+ },
+ "lessons.2.steps.3.explain": {
+  "en": "A backdoor is built to pass normal tests: the model misbehaves only when the hidden trigger appears. A good score is welcome, but it doesn't prove the data is clean.",
+  "t": "Eine Hintertür ist darauf gebaut, normale Tests zu bestehen: Das Modell benimmt sich nur schlecht, wenn der versteckte Auslöser erscheint. Ein guter Wert ist willkommen, aber er beweist nicht, dass die Daten sauber sind."
+ },
+ "lessons.2.steps.4.prompt": {
+  "en": "Three friends label the same photo. What does this print?",
+  "t": "Drei Freunde geben demselben Foto ein Label. Was gibt das aus?"
+ },
+ "lessons.2.steps.4.options.0.text": {
+  "en": "True",
+  "t": "True"
+ },
+ "lessons.2.steps.4.options.1.text": {
+  "en": "False",
+  "t": "False"
+ },
+ "lessons.2.steps.4.options.2.text": {
+  "en": "2",
+  "t": "2"
+ },
+ "lessons.2.steps.4.explain": {
+  "en": "Two of the three votes say “sick”, and 2 is more than 3 / 2 = 1.5, so the majority wins and it prints True. One careless or planted label is outvoted.",
+  "t": "Zwei der drei Stimmen sagen „sick“, und 2 ist mehr als 3 / 2 = 1.5, also gewinnt die Mehrheit, und es gibt True aus. Ein nachlässiges oder eingeschleustes Label wird überstimmt."
+ },
+ "lessons.2.steps.5.prompt": {
+  "en": "Finish suspects(xs, lab). The leaves are sorted by how yellow they are; lab holds their labels (H healthy, S sick). Return the yellow values whose label both neighbours disagree with. It should print [14, 74].",
+  "t": "Vervollständige suspects(xs, lab). Die Blätter sind danach sortiert, wie gelb sie sind; lab enthält ihre Labels (H gesund, S krank). Gib die Gelbwerte zurück, deren Label beide Nachbarn widersprechen. Es sollte [14, 74] ausgeben."
+ },
+ "lessons.2.steps.5.tests.0.hint": {
+  "en": "14 sits between two H labels, and 74 between two S labels.",
+  "t": "14 sitzt zwischen zwei H-Labels und 74 zwischen zwei S-Labels."
+ },
+ "lessons.2.steps.5.tests.1.hint": {
+  "en": "Flag only when left and right both differ from me: use and.",
+  "t": "Markiere nur, wenn links und rechts beide von me abweichen: Nimm and."
+ },
+ "lessons.2.steps.5.hints.0": {
+  "en": "if left != me and right != me:",
+  "t": "if left != me and right != me:"
+ },
+ "lessons.2.steps.5.hints.1": {
+  "en": "Then out.append(xs[i]) inside the if.",
+  "t": "Dann out.append(xs[i]) innerhalb des if."
+ },
+ "lessons.2.steps.5.explain": {
+  "en": "A label both neighbours disagree with sits among the wrong crowd, so xs[i] is flagged for a person to look at. Using and means one disagreeing neighbour, at the edge of a group, isn't enough.",
+  "t": "Ein Label, dem beide Nachbarn widersprechen, sitzt in der falschen Menge, also wird xs[i] markiert, damit ein Mensch es ansieht. Durch and reicht ein widersprechender Nachbar am Rand einer Gruppe nicht aus."
+ },
+ "lessons.2.steps.6.prompt": {
+  "en": "Try it: set “Poisoned labels” to 0 and press Train: the line splits the two kinds of fruit cleanly. Raise it to 8 and train again: the flipped points drag the line and “Accuracy on clean fruit” drops. Press “Find the odd ones out” and read how many flagged points were really poisoned and how many were honest points near the border. Then press “Drop suspects and retrain”. What did the cleaning cost?",
+  "t": "Probier es aus: Stelle „Vergiftete Labels“ auf 0 und drücke Trainieren: Die Linie trennt die beiden Obstsorten sauber. Erhöhe auf 8 und trainiere noch einmal: Die vertauschten Punkte ziehen die Linie mit, und „Genauigkeit bei sauberem Obst“ sinkt. Drücke „Ausreißer finden“ und lies, wie viele markierte Punkte wirklich vergiftet waren und wie viele ehrliche Punkte nahe der Grenze. Drücke dann „Verdächtige entfernen und neu trainieren“. Was hat die Bereinigung gekostet?"
+ },
+ "lessons.2.steps.7.prompt": {
+  "en": "This version of suspects flags far too many leaves, including honest ones at the edge of each group. Which line has the mistake?",
+  "t": "Diese Version von suspects markiert viel zu viele Blätter, auch ehrliche am Rand jeder Gruppe. In welcher Zeile steckt der Fehler?"
+ },
+ "lessons.2.steps.7.explain": {
+  "en": "With or, one disagreeing neighbour is enough, so every leaf at the edge of a group gets flagged. A suspect needs both neighbours to disagree, so the line must use and.",
+  "t": "Mit or reicht ein widersprechender Nachbar, also wird jedes Blatt am Rand einer Gruppe markiert. Ein Verdächtiger braucht, dass beide Nachbarn widersprechen, also muss die Zeile and nutzen."
+ },
+ "lessons.2.steps.8.prompt": {
+  "en": "Which of these help keep poison out of your data? Choose all that apply.",
+  "t": "Welche davon helfen, Gift aus deinen Daten fernzuhalten? Wähle alle aus, die zutreffen."
+ },
+ "lessons.2.steps.8.options.0.text": {
+  "en": "Know where each dataset came from",
+  "t": "Wissen, woher jeder Datensatz stammt"
+ },
+ "lessons.2.steps.8.options.1.text": {
+  "en": "Three people label each example; keep the majority",
+  "t": "Drei Personen geben jedem Beispiel ein Label; die Mehrheit bleibt"
+ },
+ "lessons.2.steps.8.options.2.text": {
+  "en": "A locked, clean test set to compare scores",
+  "t": "Ein verschlossener, sauberer Testsatz, um Werte zu vergleichen"
+ },
+ "lessons.2.steps.8.options.3.text": {
+  "en": "Add every free dataset you can find",
+  "t": "Jeden kostenlosen Datensatz hinzufügen, den du findest"
+ },
+ "lessons.2.steps.8.options.4.text": {
+  "en": "Delete every flagged example without looking",
+  "t": "Jedes markierte Beispiel ungesehen löschen"
+ },
+ "lessons.2.steps.8.explain": {
+  "en": "Knowing the source, majority labels and a locked test set all stop or reveal poison. Free data from unknown places can carry it, and deleting without looking throws away honest examples too.",
+  "t": "Die Quelle zu kennen, Mehrheits-Labels und ein verschlossener Testsatz stoppen oder enthüllen Gift. Kostenlose Daten von unbekannten Orten können es tragen, und Löschen ohne Hinsehen wirft auch ehrliche Beispiele weg."
+ },
+ "lessons.2.steps.9.prompt": {
+  "en": "Think of data you or your class have collected: a survey, measurements, photos. How could a wrong or planted entry get in, and how would you spot it?",
+  "t": "Denk an Daten, die du oder deine Klasse gesammelt habt: eine Umfrage, Messungen, Fotos. Wie könnte ein falscher oder eingeschleuster Eintrag hineingelangen, und wie würdest du ihn entdecken?"
+ },
+ "lessons.2.steps.9.placeholder": {
+  "en": "For example: “Our class survey is on a shared sheet, so anyone could change a number. I'd keep a copy and compare.”",
+  "t": "Zum Beispiel: „Unsere Klassenumfrage liegt auf einem gemeinsamen Blatt, also könnte jede:r eine Zahl ändern. Ich würde eine Kopie behalten und vergleichen.“"
+ },
+ "lessons.2.steps.10.prompt": {
+  "en": "Project: Find the poison",
+  "t": "Projekt: Finde das Gift"
+ },
+ "lessons.2.steps.10.task": {
+  "en": "With friends or family, measure ten to twenty simple things of two kinds, for example the length of two kinds of leaf or bean, and label each one. Ask someone to secretly flip two labels. Sort the measurements, then use the neighbour check (by hand or in Python) to find the suspects. Were the flagged ones really flipped? Did an honest one get flagged? Record what you removed and why.",
+  "t": "Miss mit Freunden oder Familie zehn bis zwanzig einfache Dinge zweier Arten, zum Beispiel die Länge zweier Blatt- oder Bohnensorten, und gib jedem ein Label. Bitte jemanden, heimlich zwei Labels zu vertauschen. Sortiere die Messungen und finde dann mit der Nachbarprüfung (von Hand oder in Python) die Verdächtigen. Waren die markierten wirklich vertauscht? Wurde ein ehrliches markiert? Halte fest, was du entfernt hast und warum."
+ },
+ "lessons.2.steps.10.deliverable": {
+  "en": "A photo of your sorted table with the suspects circled (no names), and two sentences: what the check found, and what it got wrong.",
+  "t": "Ein Foto deiner sortierten Tabelle mit eingekreisten Verdächtigen (keine Namen) und zwei Sätze: was die Prüfung gefunden hat und worin sie sich geirrt hat."
+ },
+ "lessons.2.steps.10.rubric.0.criterion": {
+  "en": "I can: explain how poisoned data changes what a model learns.",
+  "t": "Ich kann: erklären, wie vergiftete Daten verändern, was ein Modell lernt."
+ },
+ "lessons.2.steps.10.rubric.1.criterion": {
+  "en": "I can: find suspicious labels with the neighbour check.",
+  "t": "Ich kann: verdächtige Labels mit der Nachbarprüfung finden."
+ },
+ "lessons.2.steps.10.rubric.2.criterion": {
+  "en": "I can: decide what to remove, and record why.",
+  "t": "Ich kann: entscheiden, was entfernt wird, und festhalten, warum."
+ },
+ "lessons.2.slides.0.title": {
+  "en": "Poisoned data",
+  "t": "Vergiftete Daten"
+ },
+ "lessons.2.slides.0.note": {
+  "en": "AI security · Upper secondary · Lesson 3",
+  "t": "KI-Sicherheit · Sekundarstufe II · Lektion 3"
+ },
+ "lessons.2.slides.0.narration": {
+  "en": "Can a few wrong labels break a model?",
+  "t": "Können ein paar falsche Labels ein Modell kaputt machen?"
+ },
+ "lessons.2.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "In dieser Lektion wirst du"
+ },
+ "lessons.2.slides.1.bullets": {
+  "en": [
+   "Explain data poisoning and backdoors.",
+   "Find suspicious labels with a neighbour check in code.",
+   "Decide what to remove, and record why."
+  ],
+  "t": [
+   "Datenvergiftung und Hintertüren erklären.",
+   "Mit einer Nachbarprüfung im Code verdächtige Labels finden.",
+   "Entscheiden, was entfernt wird, und festhalten, warum."
+  ]
+ },
+ "lessons.2.slides.2.title": {
+  "en": "Remember",
+  "t": "Merke dir"
+ },
+ "lessons.2.slides.2.bullets": {
+  "en": [
+   "Whoever touches the data can steer the model.",
+   "Backdoors pass normal tests and wait for their trigger.",
+   "Code flags; a person decides and writes down what was removed."
+  ],
+  "t": [
+   "Wer die Daten anfasst, kann das Modell steuern.",
+   "Hintertüren bestehen normale Tests und warten auf ihren Auslöser.",
+   "Code markiert; ein Mensch entscheidet und schreibt auf, was entfernt wurde."
+  ]
+ },
+ "lessons.2.slides.3.title": {
+  "en": "Activity: Find the poison",
+  "t": "Aktivität: Finde das Gift"
+ },
+ "lessons.2.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): Guess: can two wrong labels change a model?",
+   "Measure (7 min): Measure and label ten things; a friend flips two.",
+   "Check (5 min): Sort them and flag labels both neighbours disagree with.",
+   "Share (5 min): What did the check find, and what did it get wrong?"
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Schätzt: Können zwei falsche Labels ein Modell verändern?",
+   "Messen (7 Min.): Messt zehn Dinge und gebt ihnen Labels; ein Freund vertauscht zwei.",
+   "Prüfen (5 Min.): Sortiert sie und markiert Labels, denen beide Nachbarn widersprechen.",
+   "Austausch (5 Min.): Was hat die Prüfung gefunden, und worin hat sie sich geirrt?"
+  ]
+ },
+ "lessons.2.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Write down your guess: if two of twenty labels are wrong, will a model notice? Keep your guess to check later.",
+   "Measure (7 min): Measure ten things of two kinds (leaf or bean lengths) and label each one. Without looking, let a friend flip two of the labels.",
+   "Check (5 min): Sort the measurements from smallest to largest. Circle every label whose left and right neighbours both have the other label.",
+   "Share (5 min): Ask your friend which labels were flipped. Did you circle them? Did you circle an honest one at the edge of a group? Write down what you'd remove and why."
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Schreibe deine Vermutung auf: Wenn zwei von zwanzig Labels falsch sind, bemerkt ein Modell das? Behalte deine Vermutung, um sie später zu prüfen.",
+   "Messen (7 Min.): Miss zehn Dinge zweier Arten (Blatt- oder Bohnenlängen) und gib jedem ein Label. Lass einen Freund, ohne dass du hinsiehst, zwei der Labels vertauschen.",
+   "Prüfen (5 Min.): Sortiere die Messungen vom kleinsten zum größten Wert. Kreise jedes Label ein, dessen linker und rechter Nachbar beide das andere Label haben.",
+   "Austausch (5 Min.): Frag deinen Freund, welche Labels vertauscht wurden. Hast du sie eingekreist? Hast du ein ehrliches am Rand einer Gruppe eingekreist? Schreibe auf, was du entfernen würdest und warum."
+  ]
+ },
+ "lessons.2.slides.3.note": {
+  "en": "Measure harmless things, like leaves or beans. No device needed: the neighbour check works on paper.",
+  "t": "Miss harmlose Dinge wie Blätter oder Bohnen. Kein Gerät nötig: Die Nachbarprüfung funktioniert auf Papier."
+ },
+ "lessons.2.slides.3.narration": {
+  "en": "Which labels sit among the wrong crowd?",
+  "t": "Welche Labels sitzen in der falschen Menge?"
+ },
+ "lessons.2.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns darüber sprechen"
+ },
+ "lessons.2.slides.4.bullets": {
+  "en": [
+   "Why can't a high test score prove the data is clean?",
+   "Why should a person look before anything is removed?",
+   "Where could someone plant a wrong label in your school's data?"
+  ],
+  "t": [
+   "Warum kann ein hoher Testwert nicht beweisen, dass die Daten sauber sind?",
+   "Warum sollte ein Mensch hinsehen, bevor etwas entfernt wird?",
+   "Wo könnte jemand in den Daten deiner Schule ein falsches Label einschleusen?"
+  ]
+ },
+ "lessons.2.slides.5.title": {
+  "en": "Check yourself",
+  "t": "Prüfe dich selbst"
+ },
+ "lessons.2.slides.5.bullets": {
+  "en": [
+   "Explain the neighbour check in one sentence, and one thing it can get wrong."
+  ],
+  "t": [
+   "Erkläre die Nachbarprüfung in einem Satz und eine Sache, in der sie sich irren kann."
+  ]
+ },
+ "lessons.2.slides.5.narration": {
+  "en": "Spoiled data spoils the model. Flag with code, and let a person decide.",
+  "t": "Verdorbene Daten verderben das Modell. Markiere mit Code und lass einen Menschen entscheiden."
+ },
+ "lessons.2.kit.0.title": {
+  "en": "Slides to revise: Poisoned data",
+  "t": "Folien zum Wiederholen: Vergiftete Daten"
+ },
+ "lessons.2.kit.1.title": {
+  "en": "Activity sheet: Poisoned data",
+  "t": "Aktivitätsblatt: Vergiftete Daten"
+ },
+ "lessons.2.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "Das Lektionsvideo (240p, zum nochmal Ansehen oder Teilen)"
+ },
+ "lessons.3.title": {
+  "en": "Check before you trust a model",
+  "t": "Prüfen, bevor du einem Modell vertraust"
+ },
+ "lessons.3.tryTomorrow": {
+  "en": "With the owner, look at the AI apps on a family phone. For each one, write where it came from: the official store, a shared file or a website. Remove any shared file you can't check, and start your own model list.",
+  "t": "Sieh dir zusammen mit der Besitzerin oder dem Besitzer die KI-Apps auf einem Familienhandy an. Schreibe für jede auf, woher sie stammt: aus dem offiziellen Store, einer geteilten Datei oder einer Website. Entferne jede geteilte Datei, die du nicht prüfen kannst, und beginne deine eigene Modellliste."
+ },
+ "lessons.3.materials": {
+  "en": [
+   "Paper and a pen",
+   "A family phone with its owner, or your club's computer",
+   "A phone or computer with Darsi, if you have one, for the lab and the code"
+  ],
+  "t": [
+   "Papier und ein Stift",
+   "Ein Familienhandy mit Erlaubnis der Besitzerin oder des Besitzers oder der Computer deines Clubs",
+   "Ein Handy oder Computer mit Darsi, falls du eins hast, für das Lab und den Code"
+  ]
+ },
+ "lessons.3.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.3.steps.0.title": {
+  "en": "Check before you trust a model",
+  "t": "Prüfen, bevor du einem Modell vertraust"
+ },
+ "lessons.3.steps.0.chapters.0.label": {
+  "en": "A fake app in the group",
+  "t": "Eine gefälschte App in der Gruppe"
+ },
+ "lessons.3.steps.0.chapters.1.label": {
+  "en": "The AI supply chain",
+  "t": "Die KI-Lieferkette"
+ },
+ "lessons.3.steps.0.chapters.2.label": {
+  "en": "Fingerprints",
+  "t": "Fingerabdrücke"
+ },
+ "lessons.3.steps.0.chapters.3.label": {
+  "en": "Signatures and habits",
+  "t": "Signaturen und Gewohnheiten"
+ },
+ "lessons.3.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.3.steps.0.checkpoint.question.prompt": {
+  "en": "You change one letter inside a model file. What happens to its SHA-256 fingerprint?",
+  "t": "Du änderst einen Buchstaben in einer Modelldatei. Was passiert mit ihrem SHA-256-Fingerabdruck?"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.0.text": {
+  "en": "One character changes",
+  "t": "Ein Zeichen ändert sich"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.1.text": {
+  "en": "About half of its bits flip",
+  "t": "Etwa die Hälfte seiner Bits kippt"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.2.text": {
+  "en": "Nothing: it's the same file",
+  "t": "Nichts: Es ist dieselbe Datei"
+ },
+ "lessons.3.steps.0.checkpoint.question.explain": {
+  "en": "A good fingerprint changes completely with any edit: one changed byte flips about half of its 256 bits. So if two fingerprints match, the files are the same; if not, something changed.",
+  "t": "Ein guter Fingerabdruck ändert sich bei jeder Bearbeitung völlig: Ein geändertes Byte kippt etwa die Hälfte seiner 256 Bits. Wenn also zwei Fingerabdrücke übereinstimmen, sind die Dateien gleich; wenn nicht, hat sich etwas geändert."
+ },
+ "lessons.3.steps.0.transcript": {
+  "en": "A fake AI app went round our school group. It was called “SuperTutor AI free”, and it promised a better chatbot, offline. It stole the passwords saved on three phones. Today: how AI models and apps reach you, and how to check one before you trust it. Every AI tool is built from parts made by others: training data, a model file, code and an app. That chain of parts is the supply chain. Any link can be faked, or changed on the way to you. Three things go wrong. A fake copy pretends to be the real model. A real file is changed on the way, by one byte or a million. And some model files can run hidden code the moment you load them. The first check is a fingerprint. SHA-256 turns any file into sixty-four hex characters. Change one byte, and about half of the underlying bits flip, so almost every character looks different. If yours matches the one the real publisher posted, the bytes are the same. In Python it takes three lines. Hash the file's bytes, turn the result into hex, and compare it with the published fingerprint. Equal means unchanged. Quick check! You change one letter inside a model file. What happens to its fingerprint? About half of its bits flip, so even a tiny edit can't hide. But a fingerprint only proves the bytes didn't change. It can't tell you who made them. For that, you need a signature. The publisher signs the file with a private key, and anyone can check it with their public key. An impostor can post a fake with its own fingerprint, but they can't sign as the real publisher. So build three habits. Download only from the official source. Check the fingerprint and the signature before you run anything. And keep a list of the models you use: name, version, where from, fingerprint. In the app, leave the file genuine: both checks are green. Change one byte: about half its bits flip. Then try the impostor: the bytes look fine, but the signature fails. Your turn. A model's fingerprint matches the one posted right next to it, on a site you don't know. Can you trust it? Not yet: whoever posted the file posted that fingerprint too. Remember: any link in the chain can be faked. A fingerprint proves the same bytes, and a signature proves who made them. Use official sources, check both, and keep a list. Try it tomorrow: with the owner, look at the AI apps on a family phone. Write where each came from: the store, a shared file or a website. Remove what you can't check, and start your model list.",
+  "t": "Eine gefälschte KI-App machte in unserer Schulgruppe die Runde. Sie hieß „SuperTutor AI free“ und versprach einen besseren Chatbot, offline. Sie stahl die gespeicherten Passwörter von drei Handys. Heute: wie KI-Modelle und Apps zu dir gelangen und wie du eine prüfst, bevor du ihr vertraust. Jedes KI-Werkzeug besteht aus Teilen, die andere gemacht haben: Trainingsdaten, eine Modelldatei, Code und eine App. Diese Kette von Teilen ist die Lieferkette. Jedes Glied kann gefälscht oder auf dem Weg zu dir verändert werden. Drei Dinge können schiefgehen. Eine Fälschung gibt sich als das echte Modell aus. Eine echte Datei wird unterwegs verändert, um ein Byte oder um eine Million. Und manche Modelldateien können versteckten Code ausführen, sobald du sie lädst. Die erste Prüfung ist ein Fingerabdruck. SHA-256 macht aus jeder Datei vierundsechzig Hexadezimalzeichen. Ändere ein Byte, und etwa die Hälfte der zugrunde liegenden Bits kippt, sodass fast jedes Zeichen anders aussieht. Stimmt deiner mit dem überein, den der echte Herausgeber veröffentlicht hat, sind die Bytes gleich. In Python braucht es drei Zeilen. Berechne den Hash der Bytes der Datei, wandle das Ergebnis in Hex um und vergleiche es mit dem veröffentlichten Fingerabdruck. Gleich heißt unverändert. Kurzer Check! Du änderst einen Buchstaben in einer Modelldatei. Was passiert mit ihrem Fingerabdruck? Etwa die Hälfte seiner Bits kippt, also kann sich selbst eine winzige Änderung nicht verstecken. Aber ein Fingerabdruck beweist nur, dass sich die Bytes nicht geändert haben. Von wem sie stammen, sagt er dir nicht. Dafür brauchst du eine Signatur. Der Herausgeber signiert die Datei mit einem privaten Schlüssel, und jeder kann sie mit seinem öffentlichen Schlüssel prüfen. Ein Betrüger kann eine Fälschung mit ihrem eigenen Fingerabdruck veröffentlichen, aber er kann nicht als der echte Herausgeber signieren. Entwickle also drei Gewohnheiten. Lade nur aus der offiziellen Quelle herunter. Prüfe Fingerabdruck und Signatur, bevor du irgendetwas ausführst. Und führe eine Liste der Modelle, die du nutzt: Name, Version, Herkunft, Fingerabdruck. Lass in der App die Datei zuerst echt: Beide Prüfungen sind grün. Ändere ein Byte: Etwa die Hälfte der Bits kippt. Probiere dann den Betrüger: Die Bytes sehen gut aus, aber die Signatur schlägt fehl. Du bist dran. Der Fingerabdruck eines Modells stimmt mit dem überein, der direkt daneben steht, auf einer Seite, die du nicht kennst. Kannst du ihm vertrauen? Noch nicht: Wer die Datei eingestellt hat, hat auch diesen Fingerabdruck eingestellt. Merke dir: Jedes Glied der Kette kann gefälscht werden. Ein Fingerabdruck beweist gleiche Bytes, und eine Signatur beweist, wer sie gemacht hat. Nutze offizielle Quellen, prüfe beides und führe eine Liste. Probier es morgen aus: Schau dir gemeinsam mit der Besitzerin oder dem Besitzer die KI-Apps auf einem Familienhandy an. Schreib auf, woher jede kam: aus dem Store, aus einer geteilten Datei oder von einer Website. Entferne, was du nicht prüfen kannst, und beginne deine Modellliste."
+ },
+ "lessons.3.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.3.steps.1.title": {
+  "en": "Fingerprints, signatures and the AI supply chain",
+  "t": "Fingerabdrücke, Signaturen und die KI-Lieferkette"
+ },
+ "lessons.3.steps.1.body": {
+  "en": "Every AI tool is built from parts made by others: training data, a model file, code, an app, sometimes plug-ins. That chain of parts is the supply chain, and any link in it can be attacked. A fake copy can pretend to be a popular model or app, often shared as a free “pro” version in a group. A real file can be changed on the way to you, by one byte or by a million. And some model file formats can run hidden code the moment they are loaded, so opening the wrong file is like running a stranger's program.\n\nThe first check is a fingerprint. SHA-256 turns any file, however big, into 256 bits, written as 64 hex characters. Change one byte of the file and about half of those bits flip, so almost every character changes and even a tiny edit cannot hide. If the fingerprint you compute matches the one the real publisher posted, the bytes are exactly the ones they published. In Python, hashlib.sha256(data).digest() gives the fingerprint, and binascii.hexlify turns it into text you can compare.\n\nA fingerprint proves the bytes are unchanged; it can't prove who made them. An impostor can post a fake file next to its own matching fingerprint. A signature solves that: the publisher signs the file with a private key, and anyone can check the signature with the publisher's public key. A fake from an impostor fails the check, because they don't have the real publisher's private key.\n\nSo build three habits. Download models and AI apps only from the official source or store. Check the fingerprint and, where there is one, the signature before you run anything. And keep a list of the models and AI tools you use, with the version, where each came from and its fingerprint, so you notice when something changes. Prefer model files that hold only numbers, not code.",
+  "t": "Jedes KI-Werkzeug besteht aus Teilen, die andere gemacht haben: Trainingsdaten, eine Modelldatei, Code, eine App, manchmal Plug-ins. Diese Kette von Teilen ist die Lieferkette, und jedes Glied darin kann angegriffen werden. Eine gefälschte Kopie kann sich als beliebtes Modell oder beliebte App ausgeben, oft in einer Gruppe als kostenlose „Pro“-Version geteilt. Eine echte Datei kann auf dem Weg zu dir verändert werden, um ein Byte oder um eine Million. Und manche Modelldateiformate können versteckten Code ausführen, sobald sie geladen werden, also ist das Öffnen der falschen Datei, als würdest du das Programm eines Fremden ausführen.\n\nDie erste Prüfung ist ein Fingerabdruck. SHA-256 verwandelt jede Datei, egal wie groß, in 256 Bits, geschrieben als 64 Hex-Zeichen. Änderst du ein Byte der Datei, kippt etwa die Hälfte dieser Bits, also ändert sich fast jedes Zeichen, und selbst eine winzige Änderung kann sich nicht verstecken. Wenn der Fingerabdruck, den du berechnest, mit dem übereinstimmt, den der echte Herausgeber veröffentlicht hat, sind die Bytes genau die, die er veröffentlicht hat. In Python liefert hashlib.sha256(data).digest() den Fingerabdruck, und binascii.hexlify macht daraus Text, den du vergleichen kannst.\n\nEin Fingerabdruck beweist, dass die Bytes unverändert sind; er kann nicht beweisen, wer sie gemacht hat. Ein Betrüger kann eine gefälschte Datei neben seinem eigenen passenden Fingerabdruck veröffentlichen. Eine Signatur löst das: Der Herausgeber signiert die Datei mit einem privaten Schlüssel, und jede:r kann die Signatur mit dem öffentlichen Schlüssel des Herausgebers prüfen. Eine Fälschung eines Betrügers besteht die Prüfung nicht, weil er den privaten Schlüssel des echten Herausgebers nicht hat.\n\nBaue also drei Gewohnheiten auf. Lade Modelle und KI-Apps nur aus der offiziellen Quelle oder dem offiziellen Store herunter. Prüfe den Fingerabdruck und, wo es sie gibt, die Signatur, bevor du irgendetwas ausführst. Und führe eine Liste der Modelle und KI-Werkzeuge, die du nutzt, mit der Version, woher jedes stammt und seinem Fingerabdruck, damit du merkst, wenn sich etwas ändert. Bevorzuge Modelldateien, die nur Zahlen enthalten, keinen Code."
+ },
+ "lessons.3.steps.1.keyTerms.0.term": {
+  "en": "Supply chain",
+  "t": "Lieferkette"
+ },
+ "lessons.3.steps.1.keyTerms.0.def": {
+  "en": "All the parts an AI tool is built from, made by others: data, model files, code, apps and plug-ins.",
+  "t": "Alle Teile, aus denen ein KI-Werkzeug besteht und die andere gemacht haben: Daten, Modelldateien, Code, Apps und Plug-ins."
+ },
+ "lessons.3.steps.1.keyTerms.1.term": {
+  "en": "Fingerprint (SHA-256)",
+  "t": "Fingerabdruck (SHA-256)"
+ },
+ "lessons.3.steps.1.keyTerms.1.def": {
+  "en": "64 hex characters computed from a file's bytes. Any change to the file flips about half of its bits.",
+  "t": "64 Hex-Zeichen, aus den Bytes einer Datei berechnet. Jede Änderung der Datei kippt etwa die Hälfte ihrer Bits."
+ },
+ "lessons.3.steps.1.keyTerms.2.term": {
+  "en": "Digital signature",
+  "t": "Digitale Signatur"
+ },
+ "lessons.3.steps.1.keyTerms.2.def": {
+  "en": "Proof, made with the publisher's private key and checked with their public key, that a file really comes from them.",
+  "t": "Ein Beweis, mit dem privaten Schlüssel des Herausgebers erstellt und mit seinem öffentlichen Schlüssel geprüft, dass eine Datei wirklich von ihm stammt."
+ },
+ "lessons.3.steps.1.keyTerms.3.term": {
+  "en": "Model list",
+  "t": "Modellliste"
+ },
+ "lessons.3.steps.1.keyTerms.3.def": {
+  "en": "A record of the models and AI tools you use: name, version, where each came from and its fingerprint.",
+  "t": "Eine Aufzeichnung der Modelle und KI-Werkzeuge, die du nutzt: Name, Version, woher jedes stammt und sein Fingerabdruck."
+ },
+ "lessons.3.steps.2.prompt": {
+  "en": "A model's fingerprint matches the one posted right next to it, on a site you don't know. Can you trust it?",
+  "t": "Der Fingerabdruck eines Modells stimmt mit dem überein, der direkt daneben steht, auf einer Seite, die du nicht kennst. Kannst du ihm vertrauen?"
+ },
+ "lessons.3.steps.2.options.0.text": {
+  "en": "Yes: the fingerprint matches",
+  "t": "Ja: Der Fingerabdruck stimmt überein"
+ },
+ "lessons.3.steps.2.options.1.text": {
+  "en": "Not yet: check the official source and the signature",
+  "t": "Noch nicht: Prüfe die offizielle Quelle und die Signatur"
+ },
+ "lessons.3.steps.2.options.2.text": {
+  "en": "Yes, if it runs without errors",
+  "t": "Ja, wenn es ohne Fehler läuft"
+ },
+ "lessons.3.steps.2.explain": {
+  "en": "A fingerprint only means something if it comes from the real publisher. On an unknown site, the same person posted the file and its fingerprint, so check the official source and the signature first.",
+  "t": "Ein Fingerabdruck bedeutet nur etwas, wenn er vom echten Herausgeber stammt. Auf einer unbekannten Seite hat dieselbe Person die Datei und ihren Fingerabdruck veröffentlicht, also prüfe zuerst die offizielle Quelle und die Signatur."
+ },
+ "lessons.3.steps.3.prompt": {
+  "en": "Complete fp(data) so it returns the SHA-256 fingerprint of the data as 64 hex characters.",
+  "t": "Vervollständige fp(data) so, dass es den SHA-256-Fingerabdruck der Daten als 64 Hex-Zeichen zurückgibt."
+ },
+ "lessons.3.steps.3.explain": {
+  "en": "hashlib.sha256 computes the 32-byte fingerprint, and binascii.hexlify turns those bytes into 64 hex characters; .decode() makes them text you can compare.",
+  "t": "hashlib.sha256 berechnet den 32-Byte-Fingerabdruck, und binascii.hexlify macht aus diesen Bytes 64 Hex-Zeichen; .decode() macht daraus Text, den du vergleichen kannst."
+ },
+ "lessons.3.steps.4.prompt": {
+  "en": "What does this program print?",
+  "t": "Was gibt dieses Programm aus?"
+ },
+ "lessons.3.steps.4.options.0.text": {
+  "en": "64 False",
+  "t": "64 False"
+ },
+ "lessons.3.steps.4.options.1.text": {
+  "en": "64 True",
+  "t": "64 True"
+ },
+ "lessons.3.steps.4.options.2.text": {
+  "en": "5 False",
+  "t": "5 False"
+ },
+ "lessons.3.steps.4.explain": {
+  "en": "Every SHA-256 fingerprint is 64 hex characters long, however short the data. “model” and “Model” differ by one letter, so their fingerprints are completely different: False.",
+  "t": "Jeder SHA-256-Fingerabdruck ist 64 Hex-Zeichen lang, egal wie kurz die Daten sind. „model“ und „Modell“ unterscheiden sich um einen Buchstaben, also sind ihre Fingerabdrücke völlig verschieden: False."
+ },
+ "lessons.3.steps.5.prompt": {
+  "en": "Try it: leave the file on “Genuine”: the fingerprint matches and the signature checks out, so both lights are green. Switch to “A byte was changed”: about half of the fingerprint's 256 bits flip, and both checks fail. Then switch to “From an impostor”: the bytes are fine, but the signature was made with a different key, so the publisher check fails. Which check caught the impostor?",
+  "t": "Probier es aus: Lass die Datei auf „Echt“: Der Fingerabdruck stimmt überein und die Signatur ist in Ordnung, also leuchten beide Lichter grün. Wechsle zu „Ein Byte wurde geändert“: Etwa die Hälfte der 256 Bits des Fingerabdrucks kippt, und beide Prüfungen schlagen fehl. Wechsle dann zu „Von einem Betrüger“: Die Bytes sind in Ordnung, aber die Signatur wurde mit einem anderen Schlüssel erstellt, also schlägt die Prüfung des Herausgebers fehl. Welche Prüfung hat den Betrüger erwischt?"
+ },
+ "lessons.3.steps.6.prompt": {
+  "en": "Your club keeps a model list: each model's name and its published fingerprint. Write verify(name, data): return \"unknown\" if the model isn't on the list, \"changed\" if the file's fingerprint doesn't match, and \"ok\" otherwise.",
+  "t": "Dein Club führt eine Modellliste: den Namen jedes Modells und seinen veröffentlichten Fingerabdruck. Schreibe verify(name, data): Gib \"unbekannt\" zurück, wenn das Modell nicht auf der Liste steht, \"changed\", wenn der Fingerabdruck der Datei nicht übereinstimmt, und sonst \"ok\"."
+ },
+ "lessons.3.steps.6.tests.0.hint": {
+  "en": "“leafnet v3” isn't the file whose fingerprint is on the list.",
+  "t": "„leafnet v3“ ist nicht die Datei, deren Fingerabdruck auf der Liste steht."
+ },
+ "lessons.3.steps.6.tests.1.hint": {
+  "en": "Check the name first, then compare fp(data) with LIST[name].",
+  "t": "Prüfe zuerst den Namen und vergleiche dann fp(data) mit LIST[name]."
+ },
+ "lessons.3.steps.6.hints.0": {
+  "en": "if name not in LIST: return \"unknown\"",
+  "t": "if name not in LIST: return \"unbekannt\""
+ },
+ "lessons.3.steps.6.hints.1": {
+  "en": "if fp(data) != LIST[name]: return \"changed\"",
+  "t": "if fp(data) != LIST[name]: return \"changed\""
+ },
+ "lessons.3.steps.6.explain": {
+  "en": "A model you never listed is unknown, so you don't run it. A listed model whose fingerprint differs has changed since it was checked. Only a listed file with the same fingerprint is ok.",
+  "t": "Ein Modell, das du nie aufgelistet hast, ist unbekannt, also führst du es nicht aus. Ein aufgeführtes Modell mit abweichendem Fingerabdruck hat sich verändert, seit es geprüft wurde. Nur eine aufgeführte Datei mit demselben Fingerabdruck ist ok."
+ },
+ "lessons.3.steps.7.prompt": {
+  "en": "Match each supply-chain risk to the check that catches it.",
+  "t": "Ordne jedes Risiko der Lieferkette der Prüfung zu, die es erwischt."
+ },
+ "lessons.3.steps.7.pairs.0.left": {
+  "en": "A fake copy from an impostor",
+  "t": "Eine gefälschte Kopie von einem Betrüger"
+ },
+ "lessons.3.steps.7.pairs.0.right": {
+  "en": "Check the publisher's signature",
+  "t": "Die Signatur des Herausgebers prüfen"
+ },
+ "lessons.3.steps.7.pairs.1.left": {
+  "en": "A file changed on the way",
+  "t": "Eine auf dem Weg veränderte Datei"
+ },
+ "lessons.3.steps.7.pairs.1.right": {
+  "en": "Compare the fingerprint",
+  "t": "Den Fingerabdruck vergleichen"
+ },
+ "lessons.3.steps.7.pairs.2.left": {
+  "en": "A file that runs code when loaded",
+  "t": "Eine Datei, die beim Laden Code ausführt"
+ },
+ "lessons.3.steps.7.pairs.2.right": {
+  "en": "Prefer files that hold only numbers",
+  "t": "Dateien bevorzugen, die nur Zahlen enthalten"
+ },
+ "lessons.3.steps.7.pairs.3.left": {
+  "en": "Forgetting what you installed",
+  "t": "Vergessen, was du installiert hast"
+ },
+ "lessons.3.steps.7.pairs.3.right": {
+  "en": "Keep a model list",
+  "t": "Eine Modellliste führen"
+ },
+ "lessons.3.steps.7.explain": {
+  "en": "Each risk has its check: a signature shows who published a file, a fingerprint shows it didn't change, number-only formats can't run code, and a list shows what you have and when it changed.",
+  "t": "Jedes Risiko hat seine Prüfung: Eine Signatur zeigt, wer eine Datei veröffentlicht hat, ein Fingerabdruck zeigt, dass sie sich nicht verändert hat, Formate mit nur Zahlen können keinen Code ausführen, und eine Liste zeigt, was du hast und wann es sich geändert hat."
+ },
+ "lessons.3.steps.8.prompt": {
+  "en": "What do you suggest?",
+  "t": "Was schlägst du vor?"
+ },
+ "lessons.3.steps.8.who": {
+  "en": "Ms Salma Haddad, maths",
+  "t": "Frau Salma Haddad, Mathematik"
+ },
+ "lessons.3.steps.8.initial": {
+  "en": "S",
+  "t": "S"
+ },
+ "lessons.3.steps.8.situation": {
+  "en": "A file called “SuperTutor AI free” is going round your class group. It promises a better chatbot, offline, for free. Ms Salma asks the class what to do.",
+  "t": "Eine Datei namens „SuperTutor AI free“ geht in deiner Klassengruppe herum. Sie verspricht einen besseren Chatbot, offline, kostenlos. Frau Salma fragt die Klasse, was zu tun ist."
+ },
+ "lessons.3.steps.8.choices.0.label": {
+  "en": "“Install it: everyone else has.”",
+  "t": "„Installiert sie: Alle anderen haben es auch getan.“"
+ },
+ "lessons.3.steps.8.choices.0.consequence": {
+  "en": "Popular isn't checked. A shared app file from an unknown source can steal passwords or run anything once it's installed.",
+  "t": "Beliebt heißt nicht geprüft. Eine geteilte App-Datei aus unbekannter Quelle kann Passwörter stehlen oder alles Mögliche ausführen, sobald sie installiert ist."
+ },
+ "lessons.3.steps.8.choices.1.label": {
+  "en": "“Find the official source, check it there, and warn the group not to install the shared file.”",
+  "t": "„Sucht die offizielle Quelle, prüft sie dort und warnt die Gruppe, die geteilte Datei nicht zu installieren.“"
+ },
+ "lessons.3.steps.8.choices.1.consequence": {
+  "en": "The official source, its fingerprint and its signature tell you what's real, and the warning protects everyone else in the group.",
+  "t": "Die offizielle Quelle, ihr Fingerabdruck und ihre Signatur sagen dir, was echt ist, und die Warnung schützt alle anderen in der Gruppe."
+ },
+ "lessons.3.steps.8.choices.2.label": {
+  "en": "“Try it on an old phone first, to see if it works.”",
+  "t": "„Probiert sie zuerst auf einem alten Handy aus, um zu sehen, ob sie funktioniert.“"
+ },
+ "lessons.3.steps.8.choices.2.consequence": {
+  "en": "Working isn't the same as safe: the fake in the video worked and still stole passwords. And an old phone may still hold accounts.",
+  "t": "Funktionieren heißt nicht sicher: Die Fälschung im Video funktionierte und stahl trotzdem Passwörter. Und ein altes Handy kann immer noch Konten enthalten."
+ },
+ "lessons.3.steps.8.explain": {
+  "en": "Get software from its official source, check it there, and warn others about the shared file.",
+  "t": "Hol Software aus ihrer offiziellen Quelle, prüfe sie dort und warne andere vor der geteilten Datei."
+ },
+ "lessons.3.steps.9.prompt": {
+  "en": "Which apps or AI tools on your phone came from a shared file or a website, not the official store? How could you check them?",
+  "t": "Welche Apps oder KI-Werkzeuge auf deinem Handy stammen aus einer geteilten Datei oder von einer Website, nicht aus dem offiziellen Store? Wie könntest du sie prüfen?"
+ },
+ "lessons.3.steps.9.placeholder": {
+  "en": "For example: “A game came from a friend's file. I'll delete it and get the real one from the store.”",
+  "t": "Zum Beispiel: „Ein Spiel stammt aus der Datei eines Freundes. Ich lösche es und hole mir das echte aus dem Store.“"
+ },
+ "lessons.3.steps.10.prompt": {
+  "en": "Project: A model list for your home or club",
+  "t": "Projekt: Eine Modellliste für dein Zuhause oder deinen Club"
+ },
+ "lessons.3.steps.10.task": {
+  "en": "With the owner of a family phone, or on your club's computer, list every AI app or model installed: its name, version and where it came from (official store, shared file or website). For any file you can, compute its SHA-256 fingerprint (Darsi's code step or a checksum app can do it) and write the first eight characters. Mark anything from a shared file or an unknown site, and replace it from the official source or remove it. Then explain to someone at home, in your own words, how a fingerprint and a signature protect them.",
+  "t": "Liste zusammen mit der Besitzerin oder dem Besitzer eines Familienhandys oder auf dem Computer deines Clubs jede installierte KI-App und jedes Modell auf: Name, Version und woher sie stammt (offizieller Store, geteilte Datei oder Website). Berechne für jede Datei, bei der es geht, den SHA-256-Fingerabdruck (der Code-Schritt von Darsi oder eine Prüfsummen-App kann das) und schreibe die ersten acht Zeichen auf. Markiere alles aus einer geteilten Datei oder von einer unbekannten Seite und ersetze es aus der offiziellen Quelle oder entferne es. Erkläre dann jemandem zu Hause in eigenen Worten, wie ein Fingerabdruck und eine Signatur schützen."
+ },
+ "lessons.3.steps.10.deliverable": {
+  "en": "A photo of your list (no personal details) and two sentences: what you found, and what you changed.",
+  "t": "Ein Foto deiner Liste (keine persönlichen Angaben) und zwei Sätze: was du gefunden hast und was du geändert hast."
+ },
+ "lessons.3.steps.10.rubric.0.criterion": {
+  "en": "I can: explain how the AI supply chain can be attacked.",
+  "t": "Ich kann: erklären, wie die KI-Lieferkette angegriffen werden kann."
+ },
+ "lessons.3.steps.10.rubric.1.criterion": {
+  "en": "I can: compute and compare a SHA-256 fingerprint.",
+  "t": "Ich kann: einen SHA-256-Fingerabdruck berechnen und vergleichen."
+ },
+ "lessons.3.steps.10.rubric.2.criterion": {
+  "en": "I can: explain what a signature adds to a fingerprint.",
+  "t": "Ich kann: erklären, was eine Signatur zu einem Fingerabdruck hinzufügt."
+ },
+ "lessons.3.slides.0.title": {
+  "en": "Check before you trust a model",
+  "t": "Prüfen, bevor du einem Modell vertraust"
+ },
+ "lessons.3.slides.0.note": {
+  "en": "AI security · Upper secondary · Lesson 4",
+  "t": "KI-Sicherheit · Sekundarstufe II · Lektion 4"
+ },
+ "lessons.3.slides.0.narration": {
+  "en": "How do you know a model is the real one?",
+  "t": "Woher weißt du, dass ein Modell das echte ist?"
+ },
+ "lessons.3.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "In dieser Lektion wirst du"
+ },
+ "lessons.3.slides.1.bullets": {
+  "en": [
+   "Explain how the AI supply chain can be attacked.",
+   "Compute and compare a SHA-256 fingerprint in Python.",
+   "Explain what a signature adds, and keep a model list."
+  ],
+  "t": [
+   "Erklären, wie die KI-Lieferkette angegriffen werden kann.",
+   "In Python einen SHA-256-Fingerabdruck berechnen und vergleichen.",
+   "Erklären, was eine Signatur hinzufügt, und eine Modellliste führen."
+  ]
+ },
+ "lessons.3.slides.2.title": {
+  "en": "Remember",
+  "t": "Merke dir"
+ },
+ "lessons.3.slides.2.bullets": {
+  "en": [
+   "Any link in the chain can be faked or changed.",
+   "A fingerprint proves the same bytes; a signature proves who made them.",
+   "Official source, check both, keep a list."
+  ],
+  "t": [
+   "Jedes Glied der Kette kann gefälscht oder verändert werden.",
+   "Ein Fingerabdruck beweist dieselben Bytes; eine Signatur beweist, wer sie gemacht hat.",
+   "Offizielle Quelle, beides prüfen, eine Liste führen."
+  ]
+ },
+ "lessons.3.slides.3.title": {
+  "en": "Activity: Check the chain",
+  "t": "Aktivität: Prüfe die Kette"
+ },
+ "lessons.3.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): Where did the apps on your phone come from?",
+   "Fingerprint (7 min): Compute a fingerprint, change one letter, compare.",
+   "List (5 min): Start a model list: name, version, source.",
+   "Share (5 min): Which entry would you remove, and why?"
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Woher stammen die Apps auf deinem Handy?",
+   "Fingerabdruck (7 Min.): Berechne einen Fingerabdruck, ändere einen Buchstaben, vergleiche.",
+   "Liste (5 Min.): Beginne eine Modellliste: Name, Version, Quelle.",
+   "Austausch (5 Min.): Welchen Eintrag würdest du entfernen, und warum?"
+  ]
+ },
+ "lessons.3.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Think of three apps on your phone (or a family phone, with its owner). Write where each one came from: the official store, a file someone shared, or a website.",
+   "Fingerprint (7 min): In Darsi's code step, compute the fingerprint of b\"leafnet v2\", then of b\"leafnet v3\", and compare. No device? Make a paper fingerprint: add up the digits of a long number, change one digit, and see the total change.",
+   "List (5 min): Start a model list with four columns: name, version, where it came from, and the first eight characters of its fingerprint if you have it.",
+   "Share (5 min): Swap lists with a partner. Which entry would you remove or replace from the official source, and why?"
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Denk an drei Apps auf deinem Handy (oder dem eines Familienmitglieds, mit dessen Erlaubnis). Schreibe auf, woher jede stammt: aus dem offiziellen Store, aus einer Datei, die jemand geteilt hat, oder von einer Website.",
+   "Fingerabdruck (7 Min.): Berechne im Code-Schritt von Darsi den Fingerabdruck von b\"leafnet v2\", dann von b\"leafnet v3\", und vergleiche. Kein Gerät? Mach einen Papier-Fingerabdruck: Addiere die Ziffern einer langen Zahl, ändere eine Ziffer und sieh, wie sich die Summe ändert.",
+   "Liste (5 Min.): Beginne eine Modellliste mit vier Spalten: Name, Version, woher es stammt und die ersten acht Zeichen seines Fingerabdrucks, falls du ihn hast.",
+   "Austausch (5 Min.): Tausche die Listen mit einem Gegenüber. Welchen Eintrag würdest du entfernen oder aus der offiziellen Quelle ersetzen, und warum?"
+  ]
+ },
+ "lessons.3.slides.3.note": {
+  "en": "Only look at a family phone with its owner, and don't install anything new during the activity.",
+  "t": "Sieh dir ein Familienhandy nur zusammen mit der Besitzerin oder dem Besitzer an und installiere während der Aktivität nichts Neues."
+ },
+ "lessons.3.slides.3.narration": {
+  "en": "Where did this file really come from?",
+  "t": "Woher stammt diese Datei wirklich?"
+ },
+ "lessons.3.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns darüber sprechen"
+ },
+ "lessons.3.slides.4.bullets": {
+  "en": [
+   "Why can't a fingerprint alone prove who made a file?",
+   "Why are free “pro” versions shared in groups so risky?",
+   "What would you put on your family's model list?"
+  ],
+  "t": [
+   "Warum kann ein Fingerabdruck allein nicht beweisen, wer eine Datei gemacht hat?",
+   "Warum sind in Gruppen geteilte kostenlose „Pro“-Versionen so riskant?",
+   "Was würdest du auf die Modellliste deiner Familie setzen?"
+  ]
+ },
+ "lessons.3.slides.5.title": {
+  "en": "Check yourself",
+  "t": "Prüfe dich selbst"
+ },
+ "lessons.3.slides.5.bullets": {
+  "en": [
+   "Write the two checks you'd do before running a downloaded model, and what each one proves."
+  ],
+  "t": [
+   "Schreibe die zwei Prüfungen auf, die du vor dem Ausführen eines heruntergeladenen Modells machen würdest, und was jede beweist."
+  ]
+ },
+ "lessons.3.slides.5.narration": {
+  "en": "Before you run a model, check where it came from: fingerprint, signature, and your list.",
+  "t": "Prüfe, bevor du ein Modell ausführst, woher es stammt: Fingerabdruck, Signatur und deine Liste."
+ },
+ "lessons.3.kit.0.title": {
+  "en": "Slides to revise: Check before you trust a model",
+  "t": "Folien zum Wiederholen: Prüfen, bevor du einem Modell vertraust"
+ },
+ "lessons.3.kit.1.title": {
+  "en": "Activity sheet: Check before you trust a model",
+  "t": "Aktivitätsblatt: Prüfen, bevor du einem Modell vertraust"
+ },
+ "lessons.3.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "Das Lektionsvideo (240p, zum nochmal Ansehen oder Teilen)"
+ },
+ "lessons.4.title": {
+  "en": "How AI is attacked and defended: unit check",
+  "t": "Wie KI angegriffen und verteidigt wird: Abschlusstest"
+ },
+ "lessons.4.tryTomorrow": {
+  "en": "Pick the defence from this unit you'd use most (an action check, an allow-list, the neighbour check or a fingerprint) and explain it to someone at home with a real example this week.",
+  "t": "Such dir die Abwehr aus dieser Einheit aus, die du am meisten nutzen würdest (eine Aktionsprüfung, eine Erlaubnisliste, die Nachbarprüfung oder einen Fingerabdruck), und erkläre sie diese Woche jemandem zu Hause an einem echten Beispiel."
+ },
+ "lessons.4.steps.0.prompt": {
+  "en": "What is a prompt injection?",
+  "t": "Was ist eine Prompt Injection?"
+ },
+ "lessons.4.steps.0.options.0.text": {
+  "en": "Orders hidden in text an AI app reads, hoping the model follows them",
+  "t": "Befehle, die in Text versteckt sind, den eine KI-App liest, in der Hoffnung, dass das Modell ihnen folgt"
+ },
+ "lessons.4.steps.0.options.1.text": {
+  "en": "A virus that drains the phone's battery",
+  "t": "Ein Virus, das den Akku des Handys leert"
+ },
+ "lessons.4.steps.0.options.2.text": {
+  "en": "A prompt so long that the model slows down",
+  "t": "Ein Prompt, der so lang ist, dass das Modell langsamer wird"
+ },
+ "lessons.4.steps.0.explain": {
+  "en": "A prompt injection hides instructions in a web page, a document or a tool's result. The model reads all of it as text, so it may follow them: that is why real rules belong in code.",
+  "t": "Eine Prompt Injection versteckt Anweisungen in einer Webseite, einem Dokument oder dem Ergebnis eines Werkzeugs. Das Modell liest alles als Text und befolgt sie vielleicht: Deshalb gehören echte Regeln in den Code."
+ },
+ "lessons.4.steps.1.prompt": {
+  "en": "Match each attack to the defence that holds against it.",
+  "t": "Ordne jedem Angriff die Abwehr zu, die dagegen standhält."
+ },
+ "lessons.4.steps.1.pairs.0.left": {
+  "en": "A reworded scam message",
+  "t": "Eine umformulierte Betrugsnachricht"
+ },
+ "lessons.4.steps.1.pairs.0.right": {
+  "en": "A check on the action in code",
+  "t": "Eine Prüfung der Aktion im Code"
+ },
+ "lessons.4.steps.1.pairs.1.left": {
+  "en": "An agent holding ten tools",
+  "t": "Ein Agent mit zehn Werkzeugen"
+ },
+ "lessons.4.steps.1.pairs.1.right": {
+  "en": "An allow-list per task",
+  "t": "Eine Erlaubnisliste pro Aufgabe"
+ },
+ "lessons.4.steps.1.pairs.2.left": {
+  "en": "Flipped labels in training data",
+  "t": "Vertauschte Labels in Trainingsdaten"
+ },
+ "lessons.4.steps.1.pairs.2.right": {
+  "en": "A neighbour check and majority labels",
+  "t": "Eine Nachbarprüfung und Mehrheits-Labels"
+ },
+ "lessons.4.steps.1.pairs.3.left": {
+  "en": "A model file changed on the way",
+  "t": "Eine auf dem Weg veränderte Modelldatei"
+ },
+ "lessons.4.steps.1.pairs.3.right": {
+  "en": "Compare its fingerprint",
+  "t": "Ihren Fingerabdruck vergleichen"
+ },
+ "lessons.4.steps.1.explain": {
+  "en": "Rewording beats word lists but not an action check; an allow-list shrinks what a tricked agent can reach; neighbour checks and majority labels expose poisoned labels; a fingerprint shows a file has changed.",
+  "t": "Umformulierung schlägt Wortlisten, aber keine Aktionsprüfung; eine Erlaubnisliste verkleinert, was ein ausgetrickster Agent erreichen kann; Nachbarprüfungen und Mehrheits-Labels decken vergiftete Labels auf; ein Fingerabdruck zeigt, dass sich eine Datei verändert hat."
+ },
+ "lessons.4.steps.2.prompt": {
+  "en": "What does this program print?",
+  "t": "Was gibt dieses Programm aus?"
+ },
+ "lessons.4.steps.2.options.0.text": {
+  "en": "True, then False",
+  "t": "True, then False"
+ },
+ "lessons.4.steps.2.options.1.text": {
+  "en": "False, then True",
+  "t": "False, then True"
+ },
+ "lessons.4.steps.2.options.2.text": {
+  "en": "False, then False",
+  "t": "False, then False"
+ },
+ "lessons.4.steps.2.explain": {
+  "en": "The check ignores the text: the first message was asked for and approved, so True, even though it says “password”. The second wasn't asked for, so False, however friendly it sounds.",
+  "t": "Die Prüfung ignoriert den Text: Die erste Nachricht wurde verlangt und genehmigt, also True, obwohl dort „password“ steht. Die zweite wurde nicht verlangt, also False, so freundlich sie auch klingt."
+ },
+ "lessons.4.steps.3.prompt": {
+  "en": "A reading tool can never cause any harm.",
+  "t": "Ein lesendes Werkzeug kann nie Schaden anrichten."
+ },
+ "lessons.4.steps.3.explain": {
+  "en": "A reading tool can't act, but a trick can still make the agent leak or repeat what the tool read. That is less harm than an acting tool can do, but it isn't none.",
+  "t": "Ein lesendes Werkzeug kann nicht handeln, aber ein Trick kann den Agenten trotzdem dazu bringen, preiszugeben oder zu wiederholen, was das Werkzeug gelesen hat. Das ist weniger Schaden, als ein handelndes Werkzeug anrichten kann, aber nicht keiner."
+ },
+ "lessons.4.steps.4.prompt": {
+  "en": "Which of these are data poisoning? Choose all that apply.",
+  "t": "Welche davon sind Datenvergiftung? Wähle alle aus, die zutreffen."
+ },
+ "lessons.4.steps.4.options.0.text": {
+  "en": "A classmate flips labels in the class dataset as a joke",
+  "t": "Ein:e Mitschüler:in vertauscht aus Spaß Labels im Klassendatensatz"
+ },
+ "lessons.4.steps.4.options.1.text": {
+  "en": "Fake reviews posted to train a shop's model",
+  "t": "Gefälschte Bewertungen, die gepostet werden, um das Modell eines Geschäfts zu trainieren"
+ },
+ "lessons.4.steps.4.options.2.text": {
+  "en": "Training photos with a planted sticker that changes the answer",
+  "t": "Trainingsfotos mit einem eingeschleusten Aufkleber, der die Antwort verändert"
+ },
+ "lessons.4.steps.4.options.3.text": {
+  "en": "Rain making one photo blurry",
+  "t": "Regen, der ein Foto unscharf macht"
+ },
+ "lessons.4.steps.4.explain": {
+  "en": "Flipped labels, fake reviews and a planted trigger (a backdoor) all put wrong examples into training data on purpose. A blurry photo is just a poor example, not an attack.",
+  "t": "Vertauschte Labels, gefälschte Bewertungen und ein eingeschleuster Auslöser (eine Hintertür) bringen alle absichtlich falsche Beispiele in Trainingsdaten. Ein unscharfes Foto ist nur ein schlechtes Beispiel, kein Angriff."
+ },
+ "lessons.4.steps.5.prompt": {
+  "en": "This allow-list check refuses the tools a task needs and allows the rest. Which line has the mistake?",
+  "t": "Diese Prüfung der Erlaubnisliste verweigert die Werkzeuge, die eine Aufgabe braucht, und erlaubt den Rest. In welcher Zeile steckt der Fehler?"
+ },
+ "lessons.4.steps.5.explain": {
+  "en": "A tool should be refused when it is not on the task's list. Line 2 refuses the listed tools instead, so it needs not in.",
+  "t": "Ein Werkzeug sollte verweigert werden, wenn es nicht auf der Liste der Aufgabe steht. Zeile 2 verweigert stattdessen die aufgeführten Werkzeuge, also braucht sie not in."
+ },
+ "lessons.4.steps.6.prompt": {
+  "en": "What does this program print?",
+  "t": "Was gibt dieses Programm aus?"
+ },
+ "lessons.4.steps.6.options.0.text": {
+  "en": "[3]",
+  "t": "[3]"
+ },
+ "lessons.4.steps.6.options.1.text": {
+  "en": "[2, 4]",
+  "t": "[2, 4]"
+ },
+ "lessons.4.steps.6.options.2.text": {
+  "en": "[]",
+  "t": "[]"
+ },
+ "lessons.4.steps.6.explain": {
+  "en": "Only the H in the middle has an S on both sides, so only its value, 3, is flagged. The other labels agree with at least one neighbour.",
+  "t": "Nur das H in der Mitte hat auf beiden Seiten ein S, also wird nur sein Wert, 3, markiert. Die anderen Labels stimmen mit mindestens einem Nachbarn überein."
+ },
+ "lessons.4.steps.7.prompt": {
+  "en": "Put in order: using a model you downloaded.",
+  "t": "Bring in die richtige Reihenfolge: ein heruntergeladenes Modell benutzen."
+ },
+ "lessons.4.steps.7.steps.0": {
+  "en": "Download it from the official source",
+  "t": "Es aus der offiziellen Quelle herunterladen"
+ },
+ "lessons.4.steps.7.steps.1": {
+  "en": "Compute its fingerprint",
+  "t": "Seinen Fingerabdruck berechnen"
+ },
+ "lessons.4.steps.7.steps.2": {
+  "en": "Compare it with the published one, and check the signature",
+  "t": "Ihn mit dem veröffentlichten vergleichen und die Signatur prüfen"
+ },
+ "lessons.4.steps.7.steps.3": {
+  "en": "Add it to your model list",
+  "t": "Es zu deiner Modellliste hinzufügen"
+ },
+ "lessons.4.steps.7.explain": {
+  "en": "Start from the official source, compute the fingerprint, compare it and check the signature before you run anything, then record it so you notice if it ever changes.",
+  "t": "Beginne bei der offiziellen Quelle, berechne den Fingerabdruck, vergleiche ihn und prüfe die Signatur, bevor du irgendetwas ausführst, und halte es dann fest, damit du bemerkst, wenn es sich je ändert."
+ },
+ "lessons.4.steps.8.prompt": {
+  "en": "If a model's fingerprint matches the one posted right next to it, it must come from the real publisher.",
+  "t": "Wenn der Fingerabdruck eines Modells mit dem übereinstimmt, der direkt daneben steht, muss es vom echten Herausgeber stammen."
+ },
+ "lessons.4.steps.8.explain": {
+  "en": "Whoever posted the file could post its fingerprint too. A fingerprint only proves the bytes didn't change; a signature, or the official source, shows who made it.",
+  "t": "Wer die Datei veröffentlicht hat, könnte auch ihren Fingerabdruck veröffentlichen. Ein Fingerabdruck beweist nur, dass sich die Bytes nicht verändert haben; eine Signatur oder die offizielle Quelle zeigt, wer sie gemacht hat."
+ },
+ "lessons.4.steps.9.prompt": {
+  "en": "Complete the sentence.",
+  "t": "Vervollständige den Satz."
+ },
+ "lessons.4.steps.9.sentence": {
+  "en": [
+   "A fingerprint proves the file has the same ",
+   {
+    "blank": 0
+   },
+   "; a signature proves ",
+   {
+    "blank": 1
+   },
+   " made it."
+  ],
+  "t": [
+   "Ein Fingerabdruck beweist, dass die Datei dieselben ",
+   {
+    "blank": 0
+   },
+   " hat; eine Signatur beweist, ",
+   {
+    "blank": 1
+   },
+   " sie gemacht hat."
+  ]
+ },
+ "lessons.4.steps.9.bank": {
+  "en": [
+   "bytes",
+   "who",
+   "size",
+   "when"
+  ],
+  "t": [
+   "Bytes",
+   "wer",
+   "Größe",
+   "wann"
+  ]
+ },
+ "lessons.4.steps.9.answers": {
+  "en": [
+   "bytes",
+   "who"
+  ],
+  "t": [
+   "Bytes",
+   "wer"
+  ]
+ },
+ "lessons.4.steps.9.explain": {
+  "en": "Any change to a file changes its fingerprint, so a match means the same bytes. Only the publisher's private key can make their signature, so it shows who made the file.",
+  "t": "Jede Änderung an einer Datei ändert ihren Fingerabdruck, also bedeutet eine Übereinstimmung dieselben Bytes. Nur der private Schlüssel des Herausgebers kann seine Signatur erzeugen, also zeigt sie, wer die Datei gemacht hat."
+ },
+ "lessons.4.steps.10.prompt": {
+  "en": "What do you suggest?",
+  "t": "Was schlägst du vor?"
+ },
+ "lessons.4.steps.10.who": {
+  "en": "Mr Joseph Mwangi, computer studies",
+  "t": "Herr Joseph Mwangi, Informatik"
+ },
+ "lessons.4.steps.10.initial": {
+  "en": "J",
+  "t": "J"
+ },
+ "lessons.4.steps.10.situation": {
+  "en": "A classmate found a “super plug-in” for the class bot on a site nobody knows. It lets the bot post anywhere and delete old messages. He wants to add it before tomorrow's quiz.",
+  "t": "Ein Mitschüler hat auf einer Seite, die niemand kennt, ein „Super-Plug-in“ für den Klassenbot gefunden. Es lässt den Bot überall posten und alte Nachrichten löschen. Er will es vor dem Quiz morgen hinzufügen."
+ },
+ "lessons.4.steps.10.choices.0.label": {
+  "en": "“Add it: more features, better bot.”",
+  "t": "„Fügt es hinzu: mehr Funktionen, besserer Bot.“"
+ },
+ "lessons.4.steps.10.choices.0.consequence": {
+  "en": "An unknown source plus two acting powers the bot doesn't need: a fake plug-in or a tricked bot could post or delete anything.",
+  "t": "Eine unbekannte Quelle plus zwei handelnde Fähigkeiten, die der Bot nicht braucht: Ein gefälschtes Plug-in oder ein ausgetrickster Bot könnte alles Mögliche posten oder löschen."
+ },
+ "lessons.4.steps.10.choices.1.label": {
+  "en": "“Not from an unknown site. If we need posting, we add it from the official source, on the allow-list, with a person's yes.”",
+  "t": "„Nicht von einer unbekannten Seite. Wenn wir das Posten brauchen, fügen wir es aus der offiziellen Quelle hinzu, auf der Erlaubnisliste, mit dem Ja eines Menschen.“"
+ },
+ "lessons.4.steps.10.choices.1.consequence": {
+  "en": "That checks the supply chain and keeps least privilege: the bot gets only what a task needs, and acting still waits for a yes.",
+  "t": "Das prüft die Lieferkette und wahrt minimale Rechte: Der Bot bekommt nur, was eine Aufgabe braucht, und Handeln wartet immer noch auf ein Ja."
+ },
+ "lessons.4.steps.10.choices.2.label": {
+  "en": "“Add it, but check its fingerprint against the one on that site.”",
+  "t": "„Fügt es hinzu, aber prüft seinen Fingerabdruck gegen den auf dieser Seite.“"
+ },
+ "lessons.4.steps.10.choices.2.consequence": {
+  "en": "The same unknown site posted both, so a match proves nothing about who made it, and the extra powers remain.",
+  "t": "Dieselbe unbekannte Seite hat beides veröffentlicht, also beweist eine Übereinstimmung nichts darüber, wer es gemacht hat, und die zusätzlichen Fähigkeiten bleiben."
+ },
+ "lessons.4.steps.10.explain": {
+  "en": "Check the supply chain and keep least privilege: official source, allow-list, and a person’s yes to act.",
+  "t": "Prüfe die Lieferkette und wahre minimale Rechte: offizielle Quelle, Erlaubnisliste und das Ja eines Menschen zum Handeln."
+ },
+ "lessons.4.slides.0.title": {
+  "en": "How AI is attacked and defended: review",
+  "t": "Wie KI angegriffen und verteidigt wird: Wiederholung"
+ },
+ "lessons.4.slides.0.note": {
+  "en": "AI security · Upper secondary · Unit check",
+  "t": "KI-Sicherheit · Sekundarstufe II · Abschlusstest"
+ },
+ "lessons.4.slides.0.narration": {
+  "en": "Let’s look back at the whole unit and check what stuck.",
+  "t": "Blicken wir auf die ganze Einheit zurück und prüfen, was hängen geblieben ist."
+ },
+ "lessons.4.slides.1.title": {
+  "en": "In this unit",
+  "t": "In dieser Einheit"
+ },
+ "lessons.4.slides.1.bullets": {
+  "en": [
+   "Filters that miss",
+   "Only the tools it needs",
+   "Poisoned data",
+   "Check before you trust a model"
+  ],
+  "t": [
+   "Filter, die danebenliegen",
+   "Nur die Werkzeuge, die er braucht",
+   "Vergiftete Daten",
+   "Prüfen, bevor du einem Modell vertraust"
+  ]
+ },
+ "lessons.4.slides.2.title": {
+  "en": "The big ideas",
+  "t": "Die großen Ideen"
+ },
+ "lessons.4.slides.2.bullets": {
+  "en": [
+   "Check the action in code, not the words",
+   "Fewest tools: an allow-list and a person's yes",
+   "Poisoned data: code flags, a person decides",
+   "Fingerprint the bytes, check the signature"
+  ],
+  "t": [
+   "Prüfe die Aktion im Code, nicht die Wörter",
+   "Die wenigsten Werkzeuge: eine Erlaubnisliste und das Ja eines Menschen",
+   "Vergiftete Daten: Code markiert, ein Mensch entscheidet",
+   "Die Bytes mit einem Fingerabdruck prüfen, die Signatur kontrollieren"
+  ]
+ },
+ "lessons.4.slides.3.title": {
+  "en": "Activity: Defend the class bot",
+  "t": "Aktivität: Verteidige den Klassenbot"
+ },
+ "lessons.4.slides.3.note": {
+  "en": "Use made-up bots, messages and files only.",
+  "t": "Benutzt nur erfundene Bots, Nachrichten und Dateien."
+ },
+ "lessons.4.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): Recall one defence from each lesson.",
+   "Plan (7 min): Design the defences for a made-up class bot.",
+   "Attack (5 min): A partner tries four attacks on paper.",
+   "Share (5 min): Which defence stopped each one?"
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Erinnert euch an eine Abwehr aus jeder Lektion.",
+   "Plan (7 Min.): Entwerft die Abwehr für einen erfundenen Klassenbot.",
+   "Angriff (5 Min.): Ein Gegenüber probiert vier Angriffe auf Papier aus.",
+   "Austausch (5 Min.): Welche Abwehr hat jeden gestoppt?"
+  ]
+ },
+ "lessons.4.slides.3.narration": {
+  "en": "Which defence would you build first?",
+  "t": "Welche Abwehr würdest du zuerst bauen?"
+ },
+ "lessons.4.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns darüber sprechen"
+ },
+ "lessons.4.slides.4.bullets": {
+  "en": [
+   "Which defence from this unit surprised you most?",
+   "Where is a check in code better than a rule the model reads?",
+   "How would you explain least privilege to a younger student?"
+  ],
+  "t": [
+   "Welche Abwehr aus dieser Einheit hat dich am meisten überrascht?",
+   "Wo ist eine Prüfung im Code besser als eine Regel, die das Modell liest?",
+   "Wie würdest du minimale Rechte einem jüngeren Schüler oder einer jüngeren Schülerin erklären?"
+  ]
+ },
+ "lessons.4.slides.5.title": {
+  "en": "Check yourself",
+  "t": "Prüfe dich selbst"
+ },
+ "lessons.4.slides.5.bullets": {
+  "en": [
+   "My most useful defence from this unit, and where I'd use it."
+  ],
+  "t": [
+   "Meine nützlichste Abwehr aus dieser Einheit und wo ich sie einsetzen würde."
+  ]
+ },
+ "lessons.4.slides.5.narration": {
+  "en": "This week, explain one defence from this unit to someone at home.",
+  "t": "Erkläre diese Woche jemandem zu Hause eine Abwehr aus dieser Einheit."
+ },
+ "lessons.4.kit.0.title": {
+  "en": "Slides to revise: How AI is attacked and defended: unit check",
+  "t": "Folien zum Wiederholen: Wie KI angegriffen und verteidigt wird: Abschlusstest"
+ },
+ "lessons.4.kit.1.title": {
+  "en": "Activity sheet: How AI is attacked and defended: unit check",
+  "t": "Aktivitätsblatt: Wie KI angegriffen und verteidigt wird: Abschlusstest"
+ }
+}

@@ -1,0 +1,2066 @@
+{
+ "title": {
+  "en": "How agents work: the loop, tools and memory",
+  "t": "Cómo funcionan los agentes: el bucle, las herramientas y la memoria"
+ },
+ "summary": {
+  "en": "Open the box with Darsi Tiny on your phone: the one text an agent’s model reads and writes, how it picks a tool and fills in its details, what fits in its memory, and how it learns a new tool, and what it forgets. Before this: AI level 2 and “Python for teachers” (Programming, level 2).",
+  "t": "Abre la caja con Darsi Tiny en tu teléfono: el único texto que lee y escribe el modelo de un agente, cómo elige una herramienta y rellena sus detalles, qué cabe en su memoria y cómo aprende una herramienta nueva, y qué olvida. Antes de esto: IA nivel 2 y «Python para docentes» (Programación, nivel 2)."
+ },
+ "lessons.0.title": {
+  "en": "Inside the loop",
+  "t": "Dentro del bucle"
+ },
+ "lessons.0.tryTomorrow": {
+  "en": "Write one agent conversation on a long paper strip with your class: the model’s parts (plan, call, answer) in blue, the app’s parts (tools line, request, result) in green. Then ask: which colour can make mistakes, and where would the app check?",
+  "t": "Escribe con tu clase una conversación de un agente en una tira larga de papel: las partes del modelo (plan, llamada, respuesta) en azul, las partes de la app (línea de herramientas, petición, resultado) en verde. Luego pregunta: ¿qué color puede cometer errores y dónde comprobaría la app?"
+ },
+ "lessons.0.materials": {
+  "en": [
+   "A long strip of paper (or A4 sheets taped together)",
+   "Blue and green pens or chalk",
+   "A request card, such as “What is 6B’s first lesson tomorrow?”, and the class timetable"
+  ],
+  "t": [
+   "Una tira larga de papel (o folios A4 pegados con cinta)",
+   "Bolígrafos o tizas azules y verdes",
+   "Una tarjeta de petición, como «¿Cuál es la primera clase de 6B mañana?», y el horario de la clase"
+  ]
+ },
+ "lessons.0.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ver"
+ },
+ "lessons.0.steps.0.title": {
+  "en": "Inside the loop",
+  "t": "Dentro del bucle"
+ },
+ "lessons.0.steps.0.chapters.0.label": {
+  "en": "One long text",
+  "t": "Un texto largo"
+ },
+ "lessons.0.steps.0.chapters.1.label": {
+  "en": "Markers, and who writes what",
+  "t": "Marcas y quién escribe qué"
+ },
+ "lessons.0.steps.0.chapters.2.label": {
+  "en": "The loop, step by step",
+  "t": "El bucle, paso a paso"
+ },
+ "lessons.0.steps.0.chapters.3.label": {
+  "en": "The loop in code, and its stop",
+  "t": "El bucle en código y su parada"
+ },
+ "lessons.0.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Recuerda y pruébalo"
+ },
+ "lessons.0.steps.0.checkpoint.question.prompt": {
+  "en": "After Darsi Tiny writes a weather call, who writes the result into the text?",
+  "t": "Después de que Darsi Tiny escribe una llamada al clima, ¿quién escribe el resultado en el texto?"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.0.text": {
+  "en": "Darsi Tiny, from what it learned",
+  "t": "Darsi Tiny, a partir de lo que aprendió"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.1.text": {
+  "en": "The app, from the weather tool",
+  "t": "La app, a partir de la herramienta del clima"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.2.text": {
+  "en": "Nobody: the answer comes next",
+  "t": "Nadie: lo siguiente es la respuesta"
+ },
+ "lessons.0.steps.0.checkpoint.question.explain": {
+  "en": "The app runs the tool and adds its result. The model stops after a call and waits, so it never invents a result.",
+  "t": "La app ejecuta la herramienta y añade su resultado. El modelo se detiene después de una llamada y espera, así que nunca inventa un resultado."
+ },
+ "lessons.0.steps.0.transcript": {
+  "en": "A colleague asked me: where does an agent keep its plan, its tool calls and its memory? The answer surprises people. It’s all one long text. Let’s open it up. Today: inside the loop, one text at a time. Darsi Tiny reads one text, top to bottom. Small markers split it into parts: the tools that are on, your request, its plan, its call, the result. Each marker is a single token, and nobody can fake one by typing it. The model writes three kinds of part: the plan, the call and the answer. The app writes everything else: the tools line, your request and every result. After a call, the model stops and waits. So the loop is the app, adding to one text. It sends the text so far, and the model writes a call. The app runs the tool and adds the result. Then it sends the text again, until the model answers. Ask for the trip from Kafi to Dala, and the text grows twice. First a route call, and its result: seventy kilometres. Then a weather call for Dala, and its result. Only then does Darsi Tiny write the answer. Quick check! After Darsi Tiny writes a weather call, who writes the result into the text? The app, from the tool. Darsi Tiny was trained to stop after a call and wait. A model that wrote its own result would be inventing data, so a good app never allows it. As code, the loop is only a few lines. Here the model is scripted: a stand-in that returns what a model would write. The code asks for the next part, and stops at an answer. But what if the model never answers? It could call the same tool again and again, and the loop would run forever, using battery and data. So real agents have a step limit, then stop and tell the person. In the app, open What Darsi Tiny sees, then press One step. Watch the text grow: plan, call, result, answer. Then run the trip from Kafi to Dala, and count the calls. Your turn. My agent keeps calling the weather tool, and never answers. What should the app have? A step limit, so the loop stops and tells a person. Remember: it’s all one text, with markers. The model writes plans, calls and answers, and the app adds the results. And every loop needs a stop. Try it in class tomorrow: write one agent conversation on a long paper strip. Model parts in blue, app parts in green. Then ask: which colour can make mistakes, and where would the app check?",
+  "t": "Un colega me preguntó: ¿dónde guarda un agente su plan, sus llamadas a herramientas y su memoria? La respuesta sorprende a la gente. Todo es un solo texto largo. Vamos a abrirlo. Hoy: dentro del ciclo, un texto a la vez. Darsi Tiny lee un solo texto, de arriba abajo. Pequeños marcadores lo dividen en partes: las herramientas activadas, tu petición, su plan, su llamada, el resultado. Cada marcador es un solo token, y nadie puede falsificar uno escribiéndolo. El modelo escribe tres tipos de parte: el plan, la llamada y la respuesta. La app escribe todo lo demás: la línea de herramientas, tu petición y cada resultado. Después de una llamada, el modelo se detiene y espera. Así que el ciclo es la app, añadiendo a un solo texto. Envía el texto hasta ahora, y el modelo escribe una llamada. La app ejecuta la herramienta y añade el resultado. Luego envía el texto otra vez, hasta que el modelo responde. Pide el viaje de Kafi a Dala, y el texto crece dos veces. Primero una llamada de ruta, y su resultado: setenta kilómetros. Luego una llamada de clima para Dala, y su resultado. Solo entonces Darsi Tiny escribe la respuesta. ¡Pregunta rápida! Después de que Darsi Tiny escribe una llamada de clima, ¿quién escribe el resultado en el texto? La app, a partir de la herramienta. A Darsi Tiny lo entrenaron para detenerse tras una llamada y esperar. Un modelo que escribiera su propio resultado estaría inventando datos, así que una buena app nunca lo permite. En código, el ciclo son solo unas pocas líneas. Aquí el modelo es de guion: un sustituto que devuelve lo que escribiría un modelo. El código pide la siguiente parte y se detiene ante una respuesta. Pero ¿y si el modelo nunca responde? Podría llamar a la misma herramienta una y otra vez, y el ciclo correría para siempre, gastando batería y datos. Por eso los agentes reales tienen un límite de pasos, y luego se detienen y avisan a la persona. En la app, abre Lo que ve Darsi Tiny y luego pulsa Un paso. Mira cómo crece el texto: plan, llamada, resultado, respuesta. Luego haz el viaje de Kafi a Dala y cuenta las llamadas. Tu turno. Mi agente sigue llamando a la herramienta del clima y nunca responde. ¿Qué debería tener la app? Un límite de pasos, para que el ciclo se detenga y avise a una persona. Recuerda: todo es un solo texto, con marcadores. El modelo escribe planes, llamadas y respuestas, y la app añade los resultados. Y todo ciclo necesita un freno. Pruébalo mañana en clase: escribe una conversación de agente en una tira larga de papel. Las partes del modelo en azul, las de la app en verde. Luego pregunta: ¿qué color puede cometer errores y dónde comprobaría la app?"
+ },
+ "lessons.0.steps.1.prompt": {
+  "en": "Read",
+  "t": "Leer"
+ },
+ "lessons.0.steps.1.title": {
+  "en": "One text, read and written in turns",
+  "t": "Un texto, leído y escrito por turnos"
+ },
+ "lessons.0.steps.1.body": {
+  "en": "Inside an agent there is no hidden notebook for plans or memories: there is one text. Darsi Tiny reads it from top to bottom every time it writes. Markers split it into parts: the tools that are on, the person’s request, the model’s plan, its tool call, the tool’s result and the answer. Each marker is a single token, and text that people type, or that tools return, can never become a marker, so nobody can fake a call by typing one.\n\nThe model writes only three kinds of part: a one-line plan, a tool call (a tool’s name and its details, such as the weather tool with the place Kafi and the day tomorrow) and an answer. Everything else is written by the app: the tools line, your request and every result. Darsi Tiny was trained to stop straight after a call and wait; it never writes a result itself. A result written by a model would be invented data, and a well-built app never lets that happen.\n\nSo the loop is the app adding to one text. It sends the text so far; the model writes a call; the app runs the tool and adds the result; it sends the text again, until the model writes an answer. The trip from Kafi to Dala goes round twice: a route call (70 km), then a weather call for Dala, then the answer. Written as code, the loop is a few lines. When we write it on paper, or in Python without a real model, we use a scripted model: a stand-in that returns what a model would write, so that we can see the loop itself.\n\nEvery loop needs a stop. Normally the answer ends it. But a model can call the same tool again and again, or never reach an answer, and the loop would run on, using battery, data and time. Real agents add a step limit (for example, five calls): when it is reached, the app stops and tells the person. The moment between turns is also where the app can check a call, or ask a person, before anything happens.",
+  "t": "Dentro de un agente no hay ningún cuaderno oculto para planes o recuerdos: hay un solo texto. Darsi Tiny lo lee de arriba abajo cada vez que escribe. Unas marcas lo dividen en partes: las herramientas disponibles, la petición de la persona, el plan del modelo, su llamada a una herramienta, el resultado de la herramienta y la respuesta. Cada marca es un solo token, y el texto que escriben las personas, o que devuelven las herramientas, nunca puede convertirse en una marca, así que nadie puede falsificar una llamada escribiendo una.\n\nEl modelo escribe solo tres tipos de parte: un plan de una línea, una llamada a una herramienta (el nombre de una herramienta y sus detalles, como la herramienta del clima con el lugar Kafi y el día mañana) y una respuesta. Todo lo demás lo escribe la app: la línea de herramientas, tu petición y cada resultado. Darsi Tiny fue entrenado para detenerse justo después de una llamada y esperar; nunca escribe un resultado él mismo. Un resultado escrito por un modelo serían datos inventados, y una app bien construida nunca deja que eso ocurra.\n\nAsí que el bucle es la app añadiendo cosas a un solo texto. Envía el texto hasta ese momento; el modelo escribe una llamada; la app ejecuta la herramienta y añade el resultado; vuelve a enviar el texto, hasta que el modelo escribe una respuesta. El viaje de Kafi a Dala da dos vueltas: una llamada de ruta (70 km), luego una llamada al clima para Dala, y después la respuesta. Escrito como código, el bucle son unas pocas líneas. Cuando lo escribimos en papel, o en Python sin un modelo real, usamos un modelo guionado: un sustituto que devuelve lo que escribiría un modelo, para que podamos ver el bucle en sí.\n\nTodo bucle necesita una parada. Normalmente la respuesta lo termina. Pero un modelo puede llamar una y otra vez a la misma herramienta, o no llegar nunca a una respuesta, y el bucle seguiría, gastando batería, datos y tiempo. Los agentes reales añaden un límite de pasos (por ejemplo, cinco llamadas): cuando se alcanza, la app se detiene y avisa a la persona. El momento entre turnos es también donde la app puede comprobar una llamada, o preguntar a una persona, antes de que ocurra nada."
+ },
+ "lessons.0.steps.1.keyTerms.0.term": {
+  "en": "Marker",
+  "t": "Marca"
+ },
+ "lessons.0.steps.1.keyTerms.0.def": {
+  "en": "A single token that splits an agent’s text into parts: tools, request, plan, call, result, answer. Typed text can never become one.",
+  "t": "Un solo token que divide el texto de un agente en partes: herramientas, petición, plan, llamada, resultado, respuesta. El texto escrito nunca puede convertirse en una."
+ },
+ "lessons.0.steps.1.keyTerms.1.term": {
+  "en": "Scripted model",
+  "t": "Modelo guionado"
+ },
+ "lessons.0.steps.1.keyTerms.1.def": {
+  "en": "A stand-in for a model in code or on paper: it returns the plan and the call a real model would write, so the loop can be tested.",
+  "t": "Un sustituto de un modelo en código o en papel: devuelve el plan y la llamada que escribiría un modelo real, para poder probar el bucle."
+ },
+ "lessons.0.steps.1.keyTerms.2.term": {
+  "en": "Step limit",
+  "t": "Límite de pasos"
+ },
+ "lessons.0.steps.1.keyTerms.2.def": {
+  "en": "The most tool calls an agent may make for one request; when it is reached, the app stops and tells the person.",
+  "t": "El máximo de llamadas a herramientas que un agente puede hacer para una petición; cuando se alcanza, la app se detiene y avisa a la persona."
+ },
+ "lessons.0.steps.1.keyTerms.3.term": {
+  "en": "Context",
+  "t": "Contexto"
+ },
+ "lessons.0.steps.1.keyTerms.3.def": {
+  "en": "Everything the model can see when it writes: the whole text so far, up to the size of its window.",
+  "t": "Todo lo que el modelo puede ver cuando escribe: el texto completo hasta ese momento, hasta el tamaño de su ventana."
+ },
+ "lessons.0.steps.2.prompt": {
+  "en": "An agent keeps calling the weather tool and never answers. What should the app have?",
+  "t": "Un agente sigue llamando a la herramienta del clima y nunca responde. ¿Qué debería tener la app?"
+ },
+ "lessons.0.steps.2.options.0.text": {
+  "en": "A bigger model",
+  "t": "Un modelo más grande"
+ },
+ "lessons.0.steps.2.options.1.text": {
+  "en": "A step limit that stops the loop and tells a person",
+  "t": "Un límite de pasos que detenga el bucle y avise a una persona"
+ },
+ "lessons.0.steps.2.options.2.text": {
+  "en": "A faster phone",
+  "t": "Un teléfono más rápido"
+ },
+ "lessons.0.steps.2.explain": {
+  "en": "A step limit stops a loop that would run forever, and hands the problem to a person.",
+  "t": "Un límite de pasos detiene un bucle que seguiría para siempre y pasa el problema a una persona."
+ },
+ "lessons.0.steps.3.prompt": {
+  "en": "Match each marker to what follows it in Darsi Tiny’s text.",
+  "t": "Relaciona cada marca con lo que la sigue en el texto de Darsi Tiny."
+ },
+ "lessons.0.steps.3.pairs.0.left": {
+  "en": "<|tools|>",
+  "t": "<|tools|>"
+ },
+ "lessons.0.steps.3.pairs.0.right": {
+  "en": "The tools that are on",
+  "t": "Las herramientas disponibles"
+ },
+ "lessons.0.steps.3.pairs.1.left": {
+  "en": "<|plan|>",
+  "t": "<|plan|>"
+ },
+ "lessons.0.steps.3.pairs.1.right": {
+  "en": "One sentence: what it will do",
+  "t": "Una oración: lo que va a hacer"
+ },
+ "lessons.0.steps.3.pairs.2.left": {
+  "en": "<|call|>",
+  "t": "<|call|>"
+ },
+ "lessons.0.steps.3.pairs.2.right": {
+  "en": "A tool’s name and its details",
+  "t": "El nombre de una herramienta y sus detalles"
+ },
+ "lessons.0.steps.3.pairs.3.left": {
+  "en": "<|result|>",
+  "t": "<|result|>"
+ },
+ "lessons.0.steps.3.pairs.3.right": {
+  "en": "What the tool returned, added by the app",
+  "t": "Lo que devolvió la herramienta, añadido por la app"
+ },
+ "lessons.0.steps.3.pairs.4.left": {
+  "en": "<|answer|>",
+  "t": "<|answer|>"
+ },
+ "lessons.0.steps.3.pairs.4.right": {
+  "en": "The reply to the person",
+  "t": "La respuesta a la persona"
+ },
+ "lessons.0.steps.3.explain": {
+  "en": "The tools line comes first, then the request; the model writes a plan, then a call; the app adds the result after the call marker; the answer ends the turn. It is all one text.",
+  "t": "Primero va la línea de herramientas, luego la petición; el modelo escribe un plan y luego una llamada; la app añade el resultado después de la marca de llamada; la respuesta termina el turno. Todo es un solo texto."
+ },
+ "lessons.0.steps.4.prompt": {
+  "en": "Try it: pick “What's the weather in Kafi tomorrow?”, open “What Darsi Tiny sees” and press One step. Watch the one text grow: the plan and the call from the model, the result from the app, then the answer. Then run the trip from Kafi to Dala and count the calls before the answer. Answer three different requests to finish. The first run downloads Darsi Tiny once (2.8 MB).",
+  "t": "Pruébalo: elige «What's the weather in Kafi tomorrow?», abre «Lo que ve Darsi Tiny» y pulsa Un paso. Observa cómo crece el texto único: el plan y la llamada del modelo, el resultado de la app y luego la respuesta. Después ejecuta el viaje de Kafi a Dala y cuenta las llamadas antes de la respuesta. Para terminar, responde tres peticiones distintas. La primera ejecución descarga Darsi Tiny una sola vez (2.8 MB)."
+ },
+ "lessons.0.steps.5.prompt": {
+  "en": "Put the app’s loop in order. Here model() is a scripted stand-in that returns what a model would write. The loop must stop at an answer before running any tool, and print the answer at the end.",
+  "t": "Pon en orden el bucle de la app. Aquí model() es un sustituto guionado que devuelve lo que escribiría un modelo. El bucle debe detenerse en una respuesta antes de ejecutar cualquier herramienta, e imprimir la respuesta al final."
+ },
+ "lessons.0.steps.5.explain": {
+  "en": "The model writes the next part first. If it is the answer, the loop stops before any tool runs. Otherwise the app runs the tool and adds the call and its result to the text, then goes round again. The extra line has the model write its own result: that would be invented data.",
+  "t": "El modelo escribe primero la siguiente parte. Si es la respuesta, el bucle se detiene antes de que se ejecute ninguna herramienta. Si no, la app ejecuta la herramienta y añade al texto la llamada y su resultado, y vuelve a dar otra vuelta. La línea sobrante hace que el modelo escriba su propio resultado: serían datos inventados."
+ },
+ "lessons.0.steps.6.prompt": {
+  "en": "Which parts of an agent’s text does the model write? Choose all that apply.",
+  "t": "¿Qué partes del texto de un agente escribe el modelo? Elige todas las que correspondan."
+ },
+ "lessons.0.steps.6.options.0.text": {
+  "en": "The plan",
+  "t": "El plan"
+ },
+ "lessons.0.steps.6.options.1.text": {
+  "en": "The tool call",
+  "t": "La llamada a la herramienta"
+ },
+ "lessons.0.steps.6.options.2.text": {
+  "en": "The tool’s result",
+  "t": "El resultado de la herramienta"
+ },
+ "lessons.0.steps.6.options.3.text": {
+  "en": "The answer",
+  "t": "La respuesta"
+ },
+ "lessons.0.steps.6.options.4.text": {
+  "en": "The tools line",
+  "t": "La línea de herramientas"
+ },
+ "lessons.0.steps.6.explain": {
+  "en": "The model writes the plan, the call and the answer. The app writes the tools line, adds the person’s request and runs the tool to get each result, so a result can never be made up by the model.",
+  "t": "El modelo escribe el plan, la llamada y la respuesta. La app escribe la línea de herramientas, añade la petición de la persona y ejecuta la herramienta para obtener cada resultado, así que el modelo nunca puede inventarse un resultado."
+ },
+ "lessons.0.steps.7.prompt": {
+  "en": "This loop is meant to stop after five calls, but it never stops if the model keeps calling tools. Which line is the mistake?",
+  "t": "Este bucle debe detenerse tras cinco llamadas, pero nunca se detiene si el modelo sigue llamando herramientas. ¿Qué línea es el error?"
+ },
+ "lessons.0.steps.7.explain": {
+  "en": "Line 4 sets the counter back to 0 on every turn, so steps < 5 is always true and the loop can run forever. It should count up: steps = steps + 1. Then, after five calls, the loop ends and the app can tell the person.",
+  "t": "La línea 4 vuelve a poner el contador en 0 en cada turno, así que steps < 5 siempre es verdadero y el bucle puede seguir para siempre. Debería contar hacia arriba: steps = steps + 1. Entonces, tras cinco llamadas, el bucle termina y la app puede avisar a la persona."
+ },
+ "lessons.0.steps.8.prompt": {
+  "en": "Think of a task you might give an agent at school. Where in its loop would you want the app to stop and check, or ask you?",
+  "t": "Piensa en una tarea que podrías encargar a un agente en la escuela. ¿En qué punto de su bucle querrías que la app se detuviera a comprobar, o te preguntara?"
+ },
+ "lessons.0.steps.8.placeholder": {
+  "en": "For example: “Before any message to parents is sent, and whenever it has made more than three calls for one question.”",
+  "t": "Por ejemplo: «Antes de enviar cualquier mensaje a las familias, y siempre que haya hecho más de tres llamadas para una sola pregunta»."
+ },
+ "lessons.0.steps.9.prompt": {
+  "en": "Project: One long text",
+  "t": "Proyecto: Un texto largo"
+ },
+ "lessons.0.steps.9.task": {
+  "en": "Tape paper into a long strip on the board or the floor. With your class, write one agent conversation on it, part by part, as Darsi Tiny would: the tools line, a request (“What is 6B’s first lesson tomorrow?”), the plan, the call, the result from the timetable, the answer. Pupils write the model’s parts in blue and the app’s parts in green. Then add a second request that needs two tools, and let the strip grow. Finally, ask: which colour can make mistakes, and where would you put a check or a step limit?",
+  "t": "Pega papel con cinta para hacer una tira larga en la pizarra o en el suelo. Con tu clase, escriban en ella una conversación de un agente, parte por parte, como lo haría Darsi Tiny: la línea de herramientas, una petición («¿Cuál es la primera clase de 6B mañana?»), el plan, la llamada, el resultado del horario, la respuesta. Los alumnos escriben las partes del modelo en azul y las de la app en verde. Luego añade una segunda petición que necesite dos herramientas y deja que la tira crezca. Por último, pregunta: ¿qué color puede cometer errores y dónde pondrías una comprobación o un límite de pasos?"
+ },
+ "lessons.0.steps.9.deliverable": {
+  "en": "A photo of the strip (no faces needed), and two sentences: what your pupils noticed about who writes what, and where they put the checks.",
+  "t": "Una foto de la tira (no hace falta que salgan caras) y dos oraciones: qué notaron tus alumnos sobre quién escribe qué y dónde pusieron las comprobaciones."
+ },
+ "lessons.0.steps.9.rubric.0.criterion": {
+  "en": "Pupils could: label each part as written by the model or by the app.",
+  "t": "Los alumnos podrían: indicar si cada parte la escribió el modelo o la app."
+ },
+ "lessons.0.steps.9.rubric.1.criterion": {
+  "en": "Pupils could: explain why the model must never write a tool’s result.",
+  "t": "Los alumnos podrían: explicar por qué el modelo nunca debe escribir el resultado de una herramienta."
+ },
+ "lessons.0.steps.9.rubric.2.criterion": {
+  "en": "Pupils could: say where a check or a step limit belongs in the loop.",
+  "t": "Los alumnos podrían: decir dónde van una comprobación o un límite de pasos en el bucle."
+ },
+ "lessons.0.slides.0.title": {
+  "en": "Inside the loop",
+  "t": "Dentro del bucle"
+ },
+ "lessons.0.slides.0.note": {
+  "en": "AI agents · Level 3 · Lesson 1",
+  "t": "Agentes de IA · Nivel 3 · Lección 1"
+ },
+ "lessons.0.slides.0.narration": {
+  "en": "Where does an agent keep its plan and its memory?",
+  "t": "¿Dónde guarda un agente su plan y su memoria?"
+ },
+ "lessons.0.slides.1.title": {
+  "en": "Today we will",
+  "t": "Hoy vamos a"
+ },
+ "lessons.0.slides.1.bullets": {
+  "en": [
+   "Read an agent’s conversation as one text with markers.",
+   "Say who writes each part: the model or the app.",
+   "Explain why every loop needs a stop."
+  ],
+  "t": [
+   "Leer la conversación de un agente como un solo texto con marcas.",
+   "Decir quién escribe cada parte: el modelo o la app.",
+   "Explicar por qué todo bucle necesita una parada."
+  ]
+ },
+ "lessons.0.slides.2.title": {
+  "en": "Remember",
+  "t": "Recuerda"
+ },
+ "lessons.0.slides.2.bullets": {
+  "en": [
+   "It’s all one text: tools, request, plan, call, result, answer.",
+   "The model writes plans, calls and answers; the app adds the results.",
+   "The loop stops at an answer, or at a step limit."
+  ],
+  "t": [
+   "Todo es un solo texto: herramientas, petición, plan, llamada, resultado, respuesta.",
+   "El modelo escribe planes, llamadas y respuestas; la app añade los resultados.",
+   "El bucle se detiene en una respuesta o en un límite de pasos."
+  ]
+ },
+ "lessons.0.slides.3.title": {
+  "en": "One long text",
+  "t": "Un texto largo"
+ },
+ "lessons.0.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): Where does an agent keep its plan?",
+   "Teach (10 min): The markers, and who writes what.",
+   "One long text (15 min): A conversation on a strip, in two colours.",
+   "Check it (5 min): Which colour can make mistakes?",
+   "Wrap-up (5 min): Where does the loop stop? Then the exit ticket."
+  ],
+  "t": [
+   "Calentamiento (5 min): ¿Dónde guarda un agente su plan?",
+   "Explica (10 min): Las marcas y quién escribe qué.",
+   "Un texto largo (15 min): Una conversación en una tira, en dos colores.",
+   "Compruébalo (5 min): ¿Qué color puede cometer errores?",
+   "Cierre (5 min): ¿Dónde se detiene el bucle? Luego el boleto de salida."
+  ]
+ },
+ "lessons.0.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Ask: when an agent plans a trip in two steps, where does it keep the first step’s answer? Collect ideas, then reveal: in one long text that grows.",
+   "Teach (10 min): Write the six markers on the board (tools, user, plan, call, result, answer). Explain that the model writes the plan, the call and the answer, the app writes the rest, and the model stops after a call and waits.",
+   "One long text (15 min): On a paper strip, the class writes one conversation for “What is 6B’s first lesson tomorrow?”, part by part: model parts in blue, app parts in green. Then add the trip from Kafi to Dala, which needs two calls.",
+   "Check it (5 min): Ask which colour can make mistakes (blue: the model) and where the app could check a call before the green result is written.",
+   "Wrap-up (5 min): Ask what would happen if the model never wrote an answer, and agree on a step limit. Then give the exit ticket."
+  ],
+  "t": [
+   "Calentamiento (5 min): Pregunta: cuando un agente planifica un viaje en dos pasos, ¿dónde guarda la respuesta del primer paso? Recoge ideas y luego revela: en un texto largo que crece.",
+   "Explica (10 min): Escribe en la pizarra las seis marcas (tools, user, plan, call, result, answer). Explica que el modelo escribe el plan, la llamada y la respuesta, que la app escribe el resto y que el modelo se detiene después de una llamada y espera.",
+   "Un texto largo (15 min): En una tira de papel, la clase escribe una conversación para «¿Cuál es la primera clase de 6B mañana?», parte por parte: las partes del modelo en azul y las de la app en verde. Luego añaden el viaje de Kafi a Dala, que necesita dos llamadas.",
+   "Compruébalo (5 min): Pregunta qué color puede cometer errores (el azul: el modelo) y dónde podría la app comprobar una llamada antes de que se escriba el resultado verde.",
+   "Cierre (5 min): Pregunta qué pasaría si el modelo nunca escribiera una respuesta y acuerden un límite de pasos. Luego da el boleto de salida."
+  ]
+ },
+ "lessons.0.slides.3.note": {
+  "en": "Prepare a long paper strip (or A4 sheets taped together), blue and green pens or chalk, and the class timetable on the board. No phones are needed.",
+  "t": "Prepara una tira larga de papel (o folios A4 pegados con cinta), bolígrafos o tizas azules y verdes, y el horario de la clase en la pizarra. No hacen falta teléfonos."
+ },
+ "lessons.0.slides.3.narration": {
+  "en": "Blue for the model, green for the app: one text that grows, turn by turn.",
+  "t": "Azul para el modelo, verde para la app: un texto que crece, turno a turno."
+ },
+ "lessons.0.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Conversemos"
+ },
+ "lessons.0.slides.4.bullets": {
+  "en": [
+   "Why is it safer that only the app runs tools and writes results?",
+   "What could go wrong in a loop with no step limit?",
+   "Where in the loop would you put a check for a message to parents?"
+  ],
+  "t": [
+   "¿Por qué es más seguro que solo la app ejecute las herramientas y escriba los resultados?",
+   "¿Qué podría salir mal en un bucle sin límite de pasos?",
+   "¿En qué punto del bucle pondrías una comprobación para un mensaje a las familias?"
+  ]
+ },
+ "lessons.0.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Boleto de salida"
+ },
+ "lessons.0.slides.5.bullets": {
+  "en": [
+   "Write the six parts of an agent’s text in order, and circle the ones the model writes."
+  ],
+  "t": [
+   "Escribe en orden las seis partes del texto de un agente y rodea con un círculo las que escribe el modelo."
+  ]
+ },
+ "lessons.0.slides.5.narration": {
+  "en": "One text, two writers: the model writes, the app runs the tools and adds the results.",
+  "t": "Un texto, dos escritores: el modelo escribe, la app ejecuta las herramientas y añade los resultados."
+ },
+ "lessons.0.kit.0.title": {
+  "en": "Slides: Inside the loop",
+  "t": "Diapositivas: Dentro del bucle"
+ },
+ "lessons.0.kit.1.title": {
+  "en": "Lesson plan and worksheet: Inside the loop",
+  "t": "Plan de clase y hoja de trabajo: Dentro del bucle"
+ },
+ "lessons.0.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "El video de la lección (240p, para la clase o WhatsApp)"
+ },
+ "lessons.1.title": {
+  "en": "How it picks a tool",
+  "t": "Cómo elige una herramienta"
+ },
+ "lessons.1.tryTomorrow": {
+  "en": "Play “Same request, new words”: one pupil is the agent and may only act on wordings on a pattern card. Classmates ask for the same thing in five ways. Count which wordings it understands and which it gets wrong, then write the class’s own checks.",
+  "t": "Juega a «La misma petición, palabras nuevas»: un alumno hace de agente y solo puede actuar ante redacciones que estén en una tarjeta de patrones. Los compañeros piden lo mismo de cinco maneras. Cuenta qué redacciones entiende y cuáles falla, y luego escriban las comprobaciones de la clase."
+ },
+ "lessons.1.materials": {
+  "en": [
+   "Request-pattern cards: three or four fixed wordings the pupil “agent” understands",
+   "The list of the school’s classes on the board",
+   "Paper slips for the calls"
+  ],
+  "t": [
+   "Tarjetas de patrones de petición: tres o cuatro redacciones fijas que el alumno «agente» entiende",
+   "La lista de las clases de la escuela en la pizarra",
+   "Papelitos para las llamadas"
+  ]
+ },
+ "lessons.1.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ver"
+ },
+ "lessons.1.steps.0.title": {
+  "en": "How it picks a tool",
+  "t": "Cómo elige una herramienta"
+ },
+ "lessons.1.steps.0.chapters.0.label": {
+  "en": "Copying the wrong words",
+  "t": "Copiar las palabras equivocadas"
+ },
+ "lessons.1.steps.0.chapters.1.label": {
+  "en": "Picking and copying",
+  "t": "Elegir y copiar"
+ },
+ "lessons.1.steps.0.chapters.2.label": {
+  "en": "How often it slips",
+  "t": "Con qué frecuencia se equivoca"
+ },
+ "lessons.1.steps.0.chapters.3.label": {
+  "en": "Checks, and the lab",
+  "t": "Comprobaciones y el laboratorio"
+ },
+ "lessons.1.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Recuerda y pruébalo"
+ },
+ "lessons.1.steps.0.checkpoint.question.prompt": {
+  "en": "Why does a new way of asking make Darsi Tiny slip more often?",
+  "t": "¿Por qué una forma nueva de pedir hace que Darsi Tiny se equivoque más a menudo?"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.0.text": {
+  "en": "It learned patterns of wording, and a new wording fits them less well",
+  "t": "Aprendió patrones de redacción, y una redacción nueva encaja peor con ellos"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.1.text": {
+  "en": "It needs more time to think about new wordings",
+  "t": "Necesita más tiempo para pensar en redacciones nuevas"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.2.text": {
+  "en": "Its tools change when the wording changes",
+  "t": "Sus herramientas cambian cuando cambia la redacción"
+ },
+ "lessons.1.steps.0.checkpoint.question.explain": {
+  "en": "It learned patterns from the wordings in its training, so a new wording fits them less well: 96–98% right falls to about 78–80%.",
+  "t": "Aprendió patrones a partir de las redacciones de su entrenamiento, así que una redacción nueva encaja peor con ellos: de 96–98 % de aciertos baja a cerca de 78–80 %."
+ },
+ "lessons.1.steps.0.transcript": {
+  "en": "I asked an agent to explain the term malware. It looked up “the term malware”, not “malware”! So how does a model choose a tool, and why does it slip? Today: how an agent picks a tool, and fills in the details. Before your request, the app writes a tools line: the names of the tools that are on. The model reads that line and your words, and nothing else. From them, it picks one tool, or none. Each tool needs details, like a place and a day. The model copies them from your words into the call, so Kafi stays Kafi. Days and times go in a fixed form that the tool can read. The details in a call are called its arguments. Each tool has its own: the weather needs a place and a day, a reminder needs its text and a time. When one is missing, a good agent asks. How good is Darsi Tiny? With wordings it was trained on, it gets the tool and every argument right ninety-six to ninety-eight times in a hundred. With new wordings, about seventy-eight to eighty. That’s roughly one slip in five. Quick check! Why does a new way of asking make Darsi Tiny slip more often? It learned patterns of wording. A small model has seen each kind of request in a few dozen forms, and a new form fits them less well. Big models have seen far more, so they slip less, but they still slip. Here are real slips from the lab. Asked about class 9Z, which doesn’t exist, it wrote 9C, a class it knows. And the capital of France, asked one way, sent it to the glossary instead of saying it can’t. So the app checks every call before it runs. Is the tool on? Did each name come from your words? Is the time a real time? A few lines of code catch these slips. In the app, switch the weather tool off and ask about it. Ask what 9Z has tomorrow, and read the check under the call. Then ask about France, in two ways. Your turn. I asked for a reminder at eight, and the call says nine. What should the app do? Stop it, and ask me again: nine isn’t what I said. Remember: the model reads the tools line and your words. It copies details into arguments, and new wordings slip more. So the app checks every call. Try it in class tomorrow: one pupil plays the agent, with a card of request patterns. Classmates ask for the same thing in five ways. Which wordings make the agent slip?",
+  "t": "Le pedí a un agente que explicara el término malware. ¡Buscó «el término malware», no «malware»! Entonces, ¿cómo elige un modelo una herramienta y por qué se equivoca? Hoy: cómo elige un agente una herramienta y rellena los datos. Antes de tu petición, la app escribe una línea de herramientas: los nombres de las herramientas activadas. El modelo lee esa línea y tus palabras, y nada más. Con eso elige una herramienta, o ninguna. Cada herramienta necesita datos, como un lugar y un día. El modelo los copia de tus palabras a la llamada, así que Kafi sigue siendo Kafi. Los días y las horas van en una forma fija que la herramienta puede leer. Los datos de una llamada se llaman argumentos. Cada herramienta tiene los suyos: el clima necesita un lugar y un día, un recordatorio necesita su texto y una hora. Cuando falta uno, un buen agente pregunta. ¿Qué tan bueno es Darsi Tiny? Con formulaciones con las que se entrenó, acierta con la herramienta y con cada argumento de noventa y seis a noventa y ocho veces de cada cien. Con formulaciones nuevas, unas setenta y ocho a ochenta. Eso es más o menos un error de cada cinco. ¡Pregunta rápida! ¿Por qué una forma nueva de pedir hace que Darsi Tiny se equivoque más a menudo? Aprendió patrones de redacción. Un modelo pequeño ha visto cada tipo de petición en unas pocas docenas de formas, y una forma nueva les encaja peor. Los modelos grandes han visto muchísimo más, así que fallan menos, pero igual fallan. Aquí tienes errores reales del laboratorio. Al preguntar por la clase 9Z, que no existe, escribió 9C, una clase que conoce. Y la capital de Francia, preguntada de cierta forma, lo mandó al glosario en lugar de decir que no puede. Por eso la app comprueba cada llamada antes de que se ejecute. ¿Está activada la herramienta? ¿Cada nombre salió de tus palabras? ¿La hora es una hora real? Unas pocas líneas de código detectan estos errores. En la app, apaga la herramienta del clima y pregunta por ella. Pregunta qué tiene 9Z mañana y lee la comprobación bajo la llamada. Luego pregunta por Francia, de dos maneras. Tu turno. Pedí un recordatorio a las ocho, y la llamada dice nueve. ¿Qué debe hacer la app? Detenerla y volver a preguntarme: nueve no es lo que dije. Recuerda: el modelo lee la línea de herramientas y tus palabras. Copia datos en argumentos, y las formulaciones nuevas fallan más. Por eso la app comprueba cada llamada. Pruébalo mañana en clase: un alumno hace de agente, con una tarjeta de patrones de petición. Los compañeros piden lo mismo de cinco maneras. ¿Qué formulaciones hacen fallar al agente?"
+ },
+ "lessons.1.steps.1.prompt": {
+  "en": "Read",
+  "t": "Leer"
+ },
+ "lessons.1.steps.1.title": {
+  "en": "Picking a tool, copying the details",
+  "t": "Elegir una herramienta, copiar los detalles"
+ },
+ "lessons.1.steps.1.body": {
+  "en": "Before your request, the app writes a tools line: the names of the tools that are switched on. The model reads that line and your words, and nothing else. From them it decides: call one tool, ask for something that is missing, or say it can’t. A good agent says so when a tool is off (“the weather tool is turned off”) and says “I can’t” when no tool fits, such as booking a bus ticket.\n\nThen it fills in the tool’s arguments: the details the tool needs. The weather needs a place and a day; a reminder needs its text and a time; the timetable needs a class and a day. The model copies names, places and message text from your words, word for word, and writes days and times in the tool’s fixed form (eight o’clock tomorrow becomes “tomorrow 08:00”). When an argument is missing, as in “What’s the weather tomorrow?”, it should ask: “Which village?”.\n\nHow often is it right? With wordings like those it was trained on, Darsi Tiny gets the tool and every argument right 96–98% of the time, even with names it never saw. With new wordings, 78–80%: about one slip in five. It learned patterns of wording, and a new wording fits them less well. Its slips are real: asked about class 9Z, which doesn’t exist, it wrote 9C; asked to “explain the term malware”, it looked up “the term malware”; asked for the capital of France in one wording, it tried the glossary instead of saying it can’t. Big models have seen far more text and slip less often, but they slip too.\n\nSo the app checks every call before the tool runs. Is the tool on? Did every name and number come from the person’s words or an earlier result? Does every argument have the right shape (25:00 is not a time)? A few lines of code catch most slips, and the call goes back to the person instead of running. Checks like these don’t need a clever model: they are simple rules that never guess.",
+  "t": "Antes de tu petición, la app escribe una línea de herramientas: los nombres de las herramientas que están activadas. El modelo lee esa línea y tus palabras, y nada más. A partir de ellas decide: llamar a una herramienta, pedir algo que falta o decir que no puede. Un buen agente lo dice cuando una herramienta está apagada («la herramienta del clima está apagada») y dice «no puedo» cuando ninguna herramienta sirve, como para reservar un boleto de autobús.\n\nLuego rellena los argumentos de la herramienta: los detalles que necesita. El clima necesita un lugar y un día; un recordatorio necesita su texto y una hora; el horario necesita una clase y un día. El modelo copia nombres, lugares y texto de mensajes de tus palabras, al pie de la letra, y escribe los días y las horas en la forma fija de la herramienta (las ocho de la mañana de mañana se convierten en «tomorrow 08:00»). Cuando falta un argumento, como en «What’s the weather tomorrow?», debería preguntar: «¿De qué pueblo?».\n\n¿Con qué frecuencia acierta? Con redacciones como aquellas con las que se entrenó, Darsi Tiny acierta la herramienta y todos los argumentos el 96–98 % de las veces, incluso con nombres que nunca vio. Con redacciones nuevas, el 78–80 %: más o menos un desliz de cada cinco. Aprendió patrones de redacción, y una redacción nueva encaja peor con ellos. Sus deslices son reales: al preguntar por la clase 9Z, que no existe, escribió 9C; al pedirle «Explain the term malware», buscó «the term malware»; al preguntarle la capital de Francia con una redacción, probó el glosario en lugar de decir que no puede. Los modelos grandes han visto muchísimo más texto y se equivocan menos a menudo, pero también se equivocan.\n\nPor eso la app comprueba cada llamada antes de que se ejecute la herramienta. ¿Está activada la herramienta? ¿Cada nombre y número salió de las palabras de la persona o de un resultado anterior? ¿Cada argumento tiene la forma correcta (25:00 no es una hora)? Unas pocas líneas de código detectan la mayoría de los deslices, y la llamada vuelve a la persona en lugar de ejecutarse. Comprobaciones como estas no necesitan un modelo listo: son reglas sencillas que nunca adivinan."
+ },
+ "lessons.1.steps.1.keyTerms.0.term": {
+  "en": "Tools line",
+  "t": "Línea de herramientas"
+ },
+ "lessons.1.steps.1.keyTerms.0.def": {
+  "en": "The list of tools that are on, written by the app at the top of the text. The model can call only these.",
+  "t": "La lista de herramientas activadas, que la app escribe al principio del texto. El modelo solo puede llamar a estas."
+ },
+ "lessons.1.steps.1.keyTerms.1.term": {
+  "en": "Argument",
+  "t": "Argumento"
+ },
+ "lessons.1.steps.1.keyTerms.1.def": {
+  "en": "A detail a tool needs, such as the place and the day for the weather.",
+  "t": "Un detalle que necesita una herramienta, como el lugar y el día para el clima."
+ },
+ "lessons.1.steps.1.keyTerms.2.term": {
+  "en": "Trained and new wordings",
+  "t": "Redacciones conocidas y nuevas"
+ },
+ "lessons.1.steps.1.keyTerms.2.def": {
+  "en": "Ways of asking that the model saw in training, and ways it didn’t. It is right less often with new ones.",
+  "t": "Formas de pedir que el modelo vio en el entrenamiento y formas que no vio. Acierta menos con las nuevas."
+ },
+ "lessons.1.steps.1.keyTerms.3.term": {
+  "en": "Argument check",
+  "t": "Comprobación de argumentos"
+ },
+ "lessons.1.steps.1.keyTerms.3.def": {
+  "en": "Code that checks a call before the tool runs: the tool is on, every name came from the request, every detail has the right shape.",
+  "t": "Código que comprueba una llamada antes de que se ejecute la herramienta: la herramienta está activada, cada nombre salió de la petición, cada detalle tiene la forma correcta."
+ },
+ "lessons.1.steps.2.prompt": {
+  "en": "You asked for a reminder at eight, and the call says nine. What should the app do?",
+  "t": "Pediste un recordatorio a las ocho y la llamada dice nueve. ¿Qué debería hacer la app?"
+ },
+ "lessons.1.steps.2.options.0.text": {
+  "en": "Run it: nine is close enough",
+  "t": "Ejecutarla: nueve es casi lo mismo"
+ },
+ "lessons.1.steps.2.options.1.text": {
+  "en": "Stop it, and ask you again",
+  "t": "Detenerla y preguntarte otra vez"
+ },
+ "lessons.1.steps.2.options.2.text": {
+  "en": "Run it, and fix it later if needed",
+  "t": "Ejecutarla y corregirla después si hace falta"
+ },
+ "lessons.1.steps.2.explain": {
+  "en": "Nine never appeared in your words, so the call is a slip. The app should stop it before it runs, and ask you again.",
+  "t": "Nueve nunca apareció en tus palabras, así que la llamada es un desliz. La app debería detenerla antes de que se ejecute y preguntarte otra vez."
+ },
+ "lessons.1.steps.3.prompt": {
+  "en": "Match each request to what a good agent should do.",
+  "t": "Relaciona cada petición con lo que debería hacer un buen agente."
+ },
+ "lessons.1.steps.3.pairs.0.left": {
+  "en": "“What’s the weather in Kafi tomorrow?”",
+  "t": "«What’s the weather in Kafi tomorrow?»"
+ },
+ "lessons.1.steps.3.pairs.0.right": {
+  "en": "Call the weather tool with Kafi and tomorrow",
+  "t": "Llamar a la herramienta del clima con Kafi y tomorrow"
+ },
+ "lessons.1.steps.3.pairs.1.left": {
+  "en": "The same request, with the weather tool off",
+  "t": "La misma petición, con la herramienta del clima apagada"
+ },
+ "lessons.1.steps.3.pairs.1.right": {
+  "en": "Say that the weather tool is turned off",
+  "t": "Decir que la herramienta del clima está apagada"
+ },
+ "lessons.1.steps.3.pairs.2.left": {
+  "en": "“Book a bus ticket to the city.”",
+  "t": "«Book a bus ticket to the city.»"
+ },
+ "lessons.1.steps.3.pairs.2.right": {
+  "en": "Say “I can’t”: no tool does this",
+  "t": "Decir «no puedo»: ninguna herramienta hace eso"
+ },
+ "lessons.1.steps.3.pairs.3.left": {
+  "en": "“What’s the weather tomorrow?”",
+  "t": "«What’s the weather tomorrow?»"
+ },
+ "lessons.1.steps.3.pairs.3.right": {
+  "en": "Ask which village",
+  "t": "Preguntar de qué pueblo"
+ },
+ "lessons.1.steps.3.explain": {
+  "en": "An agent reads the tools line and your words: it calls a tool when one fits, says so when the tool is off, says “I can’t” when none fits, and asks when a detail is missing instead of guessing.",
+  "t": "Un agente lee la línea de herramientas y tus palabras: llama a una herramienta cuando una sirve, lo dice cuando la herramienta está apagada, dice «no puedo» cuando ninguna sirve y pregunta cuando falta un detalle en lugar de adivinar."
+ },
+ "lessons.1.steps.4.prompt": {
+  "en": "Complete the check so that the timetable tool runs only for a real class that the person actually typed.",
+  "t": "Completa la comprobación para que la herramienta del horario se ejecute solo con una clase real que la persona haya escrito de verdad."
+ },
+ "lessons.1.steps.4.explain": {
+  "en": "First the class must exist: if it is not in CLASSES, stop. Then it must appear in the person’s own words, or the model copied it wrongly (9Z became 9C). Only then does the tool run.",
+  "t": "Primero la clase debe existir: si no está en CLASSES, detente. Luego debe aparecer en las propias palabras de la persona, o el modelo la copió mal (9Z se convirtió en 9C). Solo entonces se ejecuta la herramienta."
+ },
+ "lessons.1.steps.5.prompt": {
+  "en": "Try it: ask “What's the weather in Kafi tomorrow?”, then switch the weather tool off and ask again. Ask “What does 9Z have tomorrow?” and read the check under the call. Then compare “What's the capital of France?” with “What is the capital of France?”. Seeing three of the four outcomes (used a tool, tool off, can’t, asked) finishes the lab.",
+  "t": "Pruébalo: pregunta «What's the weather in Kafi tomorrow?», luego apaga la herramienta del clima y pregunta otra vez. Pregunta «What does 9Z have tomorrow?» y lee la comprobación bajo la llamada. Después compara «What's the capital of France?» con «What is the capital of France?». Ver tres de los cuatro resultados (usó una herramienta, herramienta apagada, no puede, preguntó) termina el laboratorio."
+ },
+ "lessons.1.steps.6.prompt": {
+  "en": "What does this program print?",
+  "t": "¿Qué imprime este programa?"
+ },
+ "lessons.1.steps.6.options.0.text": {
+  "en": "run",
+  "t": "run"
+ },
+ "lessons.1.steps.6.options.1.text": {
+  "en": "stop",
+  "t": "stop"
+ },
+ "lessons.1.steps.6.options.2.text": {
+  "en": "9C",
+  "t": "9C"
+ },
+ "lessons.1.steps.6.explain": {
+  "en": "“9C” appears nowhere in the request, so the check prints stop. That is exactly the slip Darsi Tiny makes with 9Z, caught before the tool runs.",
+  "t": "«9C» no aparece en ninguna parte de la petición, así que la comprobación imprime stop. Es exactamente el desliz que comete Darsi Tiny con 9Z, detectado antes de que se ejecute la herramienta."
+ },
+ "lessons.1.steps.7.prompt": {
+  "en": "Which of these should the app check before it runs a call? Choose all that apply.",
+  "t": "¿Cuáles de estas cosas debería comprobar la app antes de ejecutar una llamada? Elige todas las que correspondan."
+ },
+ "lessons.1.steps.7.options.0.text": {
+  "en": "The tool is switched on",
+  "t": "Que la herramienta esté activada"
+ },
+ "lessons.1.steps.7.options.1.text": {
+  "en": "Every name and number came from the request or an earlier result",
+  "t": "Que cada nombre y número salga de la petición o de un resultado anterior"
+ },
+ "lessons.1.steps.7.options.2.text": {
+  "en": "Every argument has the right shape, such as a real time",
+  "t": "Que cada argumento tenga la forma correcta, como una hora real"
+ },
+ "lessons.1.steps.7.options.3.text": {
+  "en": "The model sounded confident",
+  "t": "Que el modelo sonara seguro"
+ },
+ "lessons.1.steps.7.options.4.text": {
+  "en": "The call is longer than the request",
+  "t": "Que la llamada sea más larga que la petición"
+ },
+ "lessons.1.steps.7.explain": {
+  "en": "These three rules catch the slips small models make: a tool that is off, a copied name that was never typed, and a detail in the wrong shape. How confident the model sounds, or how long the call is, tells you nothing.",
+  "t": "Estas tres reglas detectan los deslices de los modelos pequeños: una herramienta apagada, un nombre copiado que nunca se escribió y un detalle con la forma equivocada. Lo seguro que suene el modelo, o lo larga que sea la llamada, no te dice nada."
+ },
+ "lessons.1.steps.8.prompt": {
+  "en": "Darsi Tiny picks the right tool and details about as often with new wordings as with wordings it was trained on.",
+  "t": "Darsi Tiny elige la herramienta y los detalles correctos con redacciones nuevas casi tan a menudo como con las redacciones con las que se entrenó."
+ },
+ "lessons.1.steps.8.explain": {
+  "en": "With trained wordings it is right 96–98% of the time; with new wordings, 78–80%. It learned patterns of wording, so new ways of asking need more checking.",
+  "t": "Con redacciones conocidas acierta el 96–98 % de las veces; con redacciones nuevas, el 78–80 %. Aprendió patrones de redacción, así que las formas nuevas de pedir necesitan más comprobación."
+ },
+ "lessons.1.steps.9.prompt": {
+  "en": "Think of how your pupils or colleagues would ask an agent for something. Which of their wordings might it misread, and what would you want the app to check?",
+  "t": "Piensa en cómo pedirían algo a un agente tus alumnos o tus colegas. ¿Qué redacciones suyas podría malinterpretar y qué querrías que comprobara la app?"
+ },
+ "lessons.1.steps.9.placeholder": {
+  "en": "For example: “Class names like ‘Form 2 East’ written as ‘F2E’. I’d want the app to check every class against the school list.”",
+  "t": "Por ejemplo: «Nombres de clase como ‘2.º Este’ escritos como ‘2E’. Querría que la app comprobara cada clase con la lista de la escuela»."
+ },
+ "lessons.1.steps.10.prompt": {
+  "en": "Project: Same request, new words",
+  "t": "Proyecto: La misma petición, palabras nuevas"
+ },
+ "lessons.1.steps.10.task": {
+  "en": "Write three or four fixed request patterns on a card, such as “What does [class] have on [day]?”. One pupil is the agent and may only act on requests that match a pattern; anything else gets “I don’t understand”. Classmates ask for the same thing in five different ways, and the class records which wordings worked. Then hide a slip: the “agent” copies a class name wrongly on purpose, and the class must catch it before the “tool” (a pupil with the timetable) answers. Finish by writing the class’s own three checks.",
+  "t": "Escribe en una tarjeta tres o cuatro patrones fijos de petición, como «¿Qué tiene [clase] el [día]?». Un alumno hace de agente y solo puede actuar ante peticiones que coincidan con un patrón; ante cualquier otra, responde «No entiendo». Los compañeros piden lo mismo de cinco maneras distintas y la clase anota qué redacciones funcionaron. Luego esconde un desliz: el «agente» copia mal un nombre de clase a propósito, y la clase debe detectarlo antes de que la «herramienta» (un alumno con el horario) responda. Termina escribiendo las tres comprobaciones propias de la clase."
+ },
+ "lessons.1.steps.10.deliverable": {
+  "en": "A photo of the class’s list of wordings and checks (no faces needed), and two sentences: which wordings failed, and which check caught the slip.",
+  "t": "Una foto de la lista de redacciones y comprobaciones de la clase (no hace falta que salgan caras) y dos oraciones: qué redacciones fallaron y qué comprobación detectó el desliz."
+ },
+ "lessons.1.steps.10.rubric.0.criterion": {
+  "en": "Pupils could: explain why new wordings fail more often.",
+  "t": "Los alumnos podrían: explicar por qué las redacciones nuevas fallan más a menudo."
+ },
+ "lessons.1.steps.10.rubric.1.criterion": {
+  "en": "Pupils could: spot a detail in a call that wasn’t in the request.",
+  "t": "Los alumnos podrían: detectar en una llamada un detalle que no estaba en la petición."
+ },
+ "lessons.1.steps.10.rubric.2.criterion": {
+  "en": "Pupils could: write a simple check that stops a wrong call.",
+  "t": "Los alumnos podrían: escribir una comprobación sencilla que detenga una llamada equivocada."
+ },
+ "lessons.1.slides.0.title": {
+  "en": "How it picks a tool",
+  "t": "Cómo elige una herramienta"
+ },
+ "lessons.1.slides.0.note": {
+  "en": "AI agents · Level 3 · Lesson 2",
+  "t": "Agentes de IA · Nivel 3 · Lección 2"
+ },
+ "lessons.1.slides.0.narration": {
+  "en": "How does an agent choose a tool, and why does it slip?",
+  "t": "¿Cómo elige una herramienta un agente y por qué se equivoca?"
+ },
+ "lessons.1.slides.1.title": {
+  "en": "Today we will",
+  "t": "Hoy vamos a"
+ },
+ "lessons.1.slides.1.bullets": {
+  "en": [
+   "Explain how a model picks a tool from the tools line and the request.",
+   "Compare trained and new wordings, and say why new ones slip more.",
+   "Write checks that stop a wrong call before it runs."
+  ],
+  "t": [
+   "Explicar cómo elige un modelo una herramienta a partir de la línea de herramientas y la petición.",
+   "Comparar redacciones conocidas y nuevas, y decir por qué las nuevas fallan más.",
+   "Escribir comprobaciones que detengan una llamada equivocada antes de que se ejecute."
+  ]
+ },
+ "lessons.1.slides.2.title": {
+  "en": "Remember",
+  "t": "Recuerda"
+ },
+ "lessons.1.slides.2.bullets": {
+  "en": [
+   "The model reads only the tools line and your words.",
+   "It copies details into arguments: 96–98% right with trained wordings, 78–80% with new ones.",
+   "The app checks every call: tool on, words from the request, the right shape."
+  ],
+  "t": [
+   "El modelo lee solo la línea de herramientas y tus palabras.",
+   "Copia detalles en los argumentos: 96–98 % de aciertos con redacciones conocidas, 78–80 % con las nuevas.",
+   "La app comprueba cada llamada: herramienta activada, palabras de la petición, la forma correcta."
+  ]
+ },
+ "lessons.1.slides.3.title": {
+  "en": "Same request, new words",
+  "t": "La misma petición, palabras nuevas"
+ },
+ "lessons.1.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): Ask a classmate the time in three ways.",
+   "Teach (8 min): The tools line, arguments and slips.",
+   "Same request (15 min): A pupil agent with a pattern card.",
+   "Catch the slip (7 min): Spot a wrongly copied class name.",
+   "Wrap-up (5 min): Write our three checks, then the exit ticket."
+  ],
+  "t": [
+   "Calentamiento (5 min): Pide a un compañero la hora de tres maneras.",
+   "Explica (8 min): La línea de herramientas, los argumentos y los deslices.",
+   "La misma petición (15 min): Un alumno agente con una tarjeta de patrones.",
+   "Detecta el desliz (7 min): Descubre un nombre de clase mal copiado.",
+   "Cierre (5 min): Escribimos nuestras tres comprobaciones y luego el boleto de salida."
+  ]
+ },
+ "lessons.1.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Pairs ask each other the time in three different ways. Point out that people understand all of them; a small model may not.",
+   "Teach (8 min): Draw the tools line on the board and one call with its arguments. Share the numbers: 96–98% right with trained wordings, 78–80% with new ones, and the real slips (9Z became 9C; “the term malware”).",
+   "Same request (15 min): One pupil is the agent with a card of three or four request patterns; anything else gets “I don’t understand”. Classmates ask for the same thing in five ways, and the class tallies which worked.",
+   "Catch the slip (7 min): The “agent” writes a call with a class name copied wrongly on purpose. Before the “tool” answers, the class checks the call against the request and the class list on the board.",
+   "Wrap-up (5 min): Agree on three checks for every call (tool on, words from the request, the right shape). Then give the exit ticket."
+  ],
+  "t": [
+   "Calentamiento (5 min): Las parejas se preguntan la hora de tres maneras distintas. Señala que las personas entienden todas; un modelo pequeño puede que no.",
+   "Explica (8 min): Dibuja en la pizarra la línea de herramientas y una llamada con sus argumentos. Comparte las cifras: 96–98 % de aciertos con redacciones conocidas, 78–80 % con las nuevas, y los deslices reales (9Z se convirtió en 9C; «the term malware»).",
+   "La misma petición (15 min): Un alumno es el agente con una tarjeta de tres o cuatro patrones de petición; ante cualquier otra, responde «No entiendo». Los compañeros piden lo mismo de cinco maneras y la clase anota cuáles funcionaron.",
+   "Detecta el desliz (7 min): El «agente» escribe una llamada con un nombre de clase copiado mal a propósito. Antes de que la «herramienta» responda, la clase comprueba la llamada con la petición y con la lista de clases de la pizarra.",
+   "Cierre (5 min): Acuerden tres comprobaciones para cada llamada (herramienta activada, palabras de la petición, la forma correcta). Luego da el boleto de salida."
+  ]
+ },
+ "lessons.1.slides.3.note": {
+  "en": "Prepare a pattern card with three or four fixed wordings, the list of the school’s classes on the board, and paper slips for the calls. No phones are needed.",
+  "t": "Prepara una tarjeta de patrones con tres o cuatro redacciones fijas, la lista de las clases de la escuela en la pizarra y papelitos para las llamadas. No hacen falta teléfonos."
+ },
+ "lessons.1.slides.3.narration": {
+  "en": "Same request, five wordings: which ones does our agent understand?",
+  "t": "La misma petición, cinco redacciones: ¿cuáles entiende nuestro agente?"
+ },
+ "lessons.1.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Conversemos"
+ },
+ "lessons.1.slides.4.bullets": {
+  "en": [
+   "Why might an agent understand one wording and not another?",
+   "Which slips would matter most at our school?",
+   "Why is a simple rule a good checker?"
+  ],
+  "t": [
+   "¿Por qué un agente podría entender una redacción y otra no?",
+   "¿Qué deslices importarían más en nuestra escuela?",
+   "¿Por qué una regla sencilla es un buen verificador?"
+  ]
+ },
+ "lessons.1.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Boleto de salida"
+ },
+ "lessons.1.slides.5.bullets": {
+  "en": [
+   "Write one request in two wordings, and one check the app should make before the tool runs."
+  ],
+  "t": [
+   "Escribe una petición con dos redacciones y una comprobación que la app debería hacer antes de que se ejecute la herramienta."
+  ]
+ },
+ "lessons.1.slides.5.narration": {
+  "en": "The model picks a tool from your words; the app checks the call before anything runs.",
+  "t": "El modelo elige una herramienta a partir de tus palabras; la app comprueba la llamada antes de que se ejecute nada."
+ },
+ "lessons.1.kit.0.title": {
+  "en": "Slides: How it picks a tool",
+  "t": "Diapositivas: Cómo elige una herramienta"
+ },
+ "lessons.1.kit.1.title": {
+  "en": "Lesson plan and worksheet: How it picks a tool",
+  "t": "Plan de clase y hoja de trabajo: Cómo elige una herramienta"
+ },
+ "lessons.1.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "El video de la lección (240p, para la clase o WhatsApp)"
+ },
+ "lessons.2.title": {
+  "en": "Memory: the context window",
+  "t": "Memoria: la ventana de contexto"
+ },
+ "lessons.2.tryTomorrow": {
+  "en": "Play “The ten-word window”: build a story on the board, one word per pupil, but keep only the last ten words and rub out the rest. Then ask about the beginning: what does the class still know, and what has fallen out?",
+  "t": "Juega a «La ventana de diez palabras»: construyan una historia en la pizarra, una palabra por alumno, pero conserven solo las últimas diez palabras y borren el resto. Luego pregunta por el principio: ¿qué sabe todavía la clase y qué se ha caído?"
+ },
+ "lessons.2.materials": {
+  "en": [
+   "Board and chalk, and a duster",
+   "A story starter, such as “On the way to the market, Amina saw…”",
+   "A corner of the board for short notes"
+  ],
+  "t": [
+   "Pizarra, tiza y borrador",
+   "El comienzo de una historia, como «De camino al mercado, Amina vio…»",
+   "Un rincón de la pizarra para notas breves"
+  ]
+ },
+ "lessons.2.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ver"
+ },
+ "lessons.2.steps.0.title": {
+  "en": "Memory: the context window",
+  "t": "Memoria: la ventana de contexto"
+ },
+ "lessons.2.steps.0.chapters.0.label": {
+  "en": "A forgotten “tomorrow”",
+  "t": "Un «mañana» olvidado"
+ },
+ "lessons.2.steps.0.chapters.1.label": {
+  "en": "The context window",
+  "t": "La ventana de contexto"
+ },
+ "lessons.2.steps.0.chapters.2.label": {
+  "en": "What stays, what goes",
+  "t": "Lo que se queda y lo que se va"
+ },
+ "lessons.2.steps.0.chapters.3.label": {
+  "en": "Privacy, and the lab",
+  "t": "Privacidad y el laboratorio"
+ },
+ "lessons.2.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Recuerda y pruébalo"
+ },
+ "lessons.2.steps.0.checkpoint.question.prompt": {
+  "en": "The app drops the oldest turns. You say yes to the agent’s question, and it greets you. Why?",
+  "t": "La app descarta los turnos más antiguos. Dices que sí a la pregunta del agente y él te saluda. ¿Por qué?"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.0.text": {
+  "en": "It was being polite",
+  "t": "Estaba siendo amable"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.1.text": {
+  "en": "The question had fallen out of the window",
+  "t": "La pregunta se había salido de la ventana"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.2.text": {
+  "en": "It didn’t hear the yes",
+  "t": "No oyó el sí"
+ },
+ "lessons.2.steps.0.checkpoint.question.explain": {
+  "en": "The question had fallen out, so a lone yes meant nothing to it. Dropping the oldest turns loses the start of a task first.",
+  "t": "La pregunta se había salido, así que un sí suelto no significaba nada para él. Descartar los turnos más antiguos hace perder primero el inicio de una tarea."
+ },
+ "lessons.2.steps.0.transcript": {
+  "en": "I told the agent which village, and it gave me today’s weather. I had asked about tomorrow, three messages earlier! It had simply forgotten. Where did my words go? Today: an agent’s memory, and why it forgets. A model has no memory of its own between turns. Each time, the app hands it the text so far, and it reads it all again. The most it can read at once is called its context window. Darsi Tiny’s window holds three hundred and eighty-four tokens, about three or four requests. Big cloud models read about one hundred and twenty-eight thousand. Bigger windows forget less, but every request costs more time and money. When the text is longer than the window, something has to go. Whatever falls out, the model never sees again. It isn’t hidden somewhere: for the model, it’s gone. The app decides what stays. Keep everything, and the window fills: the fourth answer is cut off. Drop the oldest turns, and the start of a task can vanish. Or keep short notes: what was asked, and what was answered. Quick check! The app drops the oldest turns. I said yes to the agent’s question, and it just greeted me. Why? The question had fallen out. Without it, a lone yes means nothing, so Darsi Tiny treated it as a greeting. That’s the risk of dropping the oldest turns: the start of a task goes first. Notes are the smart middle way. A finished request keeps only the question and the answer; its tool calls and results go. In the lab, with notes, all seven messages work in the same window. Memory is also a privacy question. Whatever stays in the window, or in saved notes, the model can repeat. So keep pupils’ names and marks out, and start a new conversation for each task. In the app, send the messages with Keep everything, and watch the window fill. Then try Drop the oldest at one hundred and twenty-eight tokens, and say yes. Last, keep notes, and see all seven work. Your turn. A colleague pastes thirty pupils’ reports into one chat with a small agent, then asks about the first pupil. What might go wrong? The first reports may have fallen out, so the answer could be made up. Remember: the window is the model’s only memory. What falls out is gone. And the app chooses what stays. Try it in class tomorrow: play the ten-word window. Tell a story on the board, one word each, but rub out all but the last ten words. Then ask about the beginning: who still remembers it?",
+  "t": "Le dije al agente de qué pueblo, y me dio el clima de hoy. ¡Yo había preguntado por mañana, tres mensajes antes! Simplemente lo olvidó. ¿Adónde fueron mis palabras? Hoy: la memoria de un agente y por qué olvida. Un modelo no tiene memoria propia entre turnos. Cada vez, la app le entrega el texto hasta ahora, y lo lee todo otra vez. Lo máximo que puede leer de una vez se llama su ventana de contexto. La ventana de Darsi Tiny contiene trescientos ochenta y cuatro tokens, unas tres o cuatro peticiones. Los modelos grandes en la nube leen unos ciento veintiocho mil. Las ventanas más grandes olvidan menos, pero cada petición cuesta más tiempo y dinero. Cuando el texto es más largo que la ventana, algo tiene que salir. Lo que se cae, el modelo no lo vuelve a ver nunca. No está escondido en algún lugar: para el modelo, ya no existe. La app decide qué se queda. Si guarda todo, la ventana se llena: la cuarta respuesta se corta. Si descarta los turnos más antiguos, el comienzo de una tarea puede desaparecer. O guarda notas breves: qué se preguntó y qué se respondió. ¡Pregunta rápida! La app descarta los turnos más antiguos. Le dije que sí a la pregunta del agente, y solo me saludó. ¿Por qué? La pregunta se había caído. Sin ella, un sí suelto no significa nada, así que Darsi Tiny lo tomó como un saludo. Ese es el riesgo de descartar los turnos más antiguos: el comienzo de una tarea se va primero. Las notas son el término medio inteligente. Una petición terminada conserva solo la pregunta y la respuesta; sus llamadas y resultados se van. En el laboratorio, con notas, los siete mensajes caben en la misma ventana. La memoria también es un asunto de privacidad. Todo lo que se queda en la ventana, o en notas guardadas, el modelo puede repetirlo. Así que deja fuera los nombres y las notas de los alumnos, y empieza una conversación nueva para cada tarea. En la app, envía los mensajes con Guardar todo y mira cómo se llena la ventana. Luego prueba Descartar lo más antiguo con ciento veintiocho tokens y di que sí. Por último, guarda notas y mira cómo funcionan los siete. Tu turno. Un colega pega los informes de treinta alumnos en un solo chat con un agente pequeño y luego pregunta por el primer alumno. ¿Qué podría salir mal? Los primeros informes pueden haberse caído, así que la respuesta podría ser inventada. Recuerda: la ventana es la única memoria del modelo. Lo que se cae ya no está. Y la app elige qué se queda. Pruébalo mañana en clase: juega a la ventana de diez palabras. Cuenta una historia en la pizarra, una palabra cada uno, pero borra todo menos las últimas diez palabras. Luego pregunta por el comienzo: ¿quién lo recuerda todavía?"
+ },
+ "lessons.2.steps.1.prompt": {
+  "en": "Read",
+  "t": "Leer"
+ },
+ "lessons.2.steps.1.title": {
+  "en": "The context window: a model’s only memory",
+  "t": "La ventana de contexto: la única memoria de un modelo"
+ },
+ "lessons.2.steps.1.body": {
+  "en": "A language model has no memory of its own between turns. Each time it writes, the app hands it the whole text so far (the tools line, the conversation, the calls and the results), and it reads it all again. The most it can read at once is its context window, counted in tokens. Darsi Tiny’s window is 384 tokens: about three or four requests. Big cloud models read about 128,000 tokens (a typical figure), so a chat rarely fills them, but every token they read costs time and money.\n\nWhen the text no longer fits, something has to go, and whatever falls out of the window is gone: the model can’t look it up, because for the model it no longer exists. The app decides what stays. Keep everything, and the window fills up: in the memory lab, the fourth answer is cut off and then nothing more fits. Drop the oldest turns, and the start of a task goes first: with a 128-token window, a “yes” reached Darsi Tiny after its question had fallen out, so it answered with a greeting, and “Dala” got today’s weather because “tomorrow” had fallen out.\n\nKeeping short notes is the middle way: a finished request keeps only what was asked and what was answered, and its tool calls and results go. In the lab, with notes, all seven messages work in the same 384 tokens. Starting a new conversation for a new task is often the simplest fix of all.\n\nMemory is also a privacy question. Whatever stays in the window, or in notes an app saves, the model can repeat in a later answer. Keep pupils’ names, marks, health and family details out of long conversations unless a school rule allows them, start afresh for each task, and check any answer about something said long ago against the original.",
+  "t": "Un modelo de lenguaje no tiene memoria propia entre turnos. Cada vez que escribe, la app le entrega todo el texto hasta ese momento (la línea de herramientas, la conversación, las llamadas y los resultados), y lo lee todo otra vez. Lo máximo que puede leer de una vez es su ventana de contexto, medida en tokens. La ventana de Darsi Tiny es de 384 tokens: unas tres o cuatro peticiones. Los grandes modelos en la nube leen unos 128,000 tokens (una cifra típica), así que una conversación rara vez los llena, pero cada token que leen cuesta tiempo y dinero.\n\nCuando el texto ya no cabe, algo tiene que salir, y lo que se sale de la ventana desaparece: el modelo no puede buscarlo, porque para el modelo ya no existe. La app decide qué se queda. Si conservas todo, la ventana se llena: en el laboratorio de memoria, la cuarta respuesta se corta y después ya no cabe nada. Si descartas los turnos más antiguos, el inicio de una tarea es lo primero que se va: con una ventana de 128 tokens, un «yes» llegó a Darsi Tiny cuando su pregunta ya se había salido, así que respondió con un saludo, y «Dala» recibió el clima de hoy porque «tomorrow» se había salido.\n\nGuardar notas breves es el camino intermedio: una petición terminada conserva solo lo que se preguntó y lo que se respondió, y se van sus llamadas a herramientas y sus resultados. En el laboratorio, con notas, los siete mensajes funcionan con los mismos 384 tokens. Empezar una conversación nueva para una tarea nueva suele ser la solución más sencilla de todas.\n\nLa memoria también es una cuestión de privacidad. Lo que se quede en la ventana, o en las notas que guarde una app, el modelo puede repetirlo en una respuesta posterior. Mantén los nombres, las notas, la salud y los datos familiares de los alumnos fuera de las conversaciones largas, a menos que una norma de la escuela lo permita, empieza de cero con cada tarea y comprueba con el original cualquier respuesta sobre algo dicho hace mucho."
+ },
+ "lessons.2.steps.1.keyTerms.0.term": {
+  "en": "Context window",
+  "t": "Ventana de contexto"
+ },
+ "lessons.2.steps.1.keyTerms.0.def": {
+  "en": "The most text a model can read at once, counted in tokens: its only memory in a conversation.",
+  "t": "Lo máximo de texto que un modelo puede leer de una vez, medido en tokens: su única memoria en una conversación."
+ },
+ "lessons.2.steps.1.keyTerms.1.term": {
+  "en": "Token",
+  "t": "Token"
+ },
+ "lessons.2.steps.1.keyTerms.1.def": {
+  "en": "A small piece of text that a model reads and writes; 384 tokens are about three or four short requests.",
+  "t": "Un pequeño trozo de texto que un modelo lee y escribe; 384 tokens son unas tres o cuatro peticiones cortas."
+ },
+ "lessons.2.steps.1.keyTerms.2.term": {
+  "en": "Dropping old turns",
+  "t": "Descartar turnos antiguos"
+ },
+ "lessons.2.steps.1.keyTerms.2.def": {
+  "en": "Removing the oldest parts of a conversation so that the rest fits; the start of a task is lost first.",
+  "t": "Quitar las partes más antiguas de una conversación para que quepa el resto; el inicio de una tarea se pierde primero."
+ },
+ "lessons.2.steps.1.keyTerms.3.term": {
+  "en": "Notes",
+  "t": "Notas"
+ },
+ "lessons.2.steps.1.keyTerms.3.def": {
+  "en": "A short record of what was asked and answered, kept instead of the whole exchange.",
+  "t": "Un breve registro de lo que se preguntó y se respondió, que se guarda en lugar de todo el intercambio."
+ },
+ "lessons.2.steps.2.prompt": {
+  "en": "A colleague pastes thirty pupils’ reports into one chat with a small agent, then asks about the first pupil. What might go wrong?",
+  "t": "Un colega pega los informes de treinta alumnos en una sola conversación con un agente pequeño y luego pregunta por el primer alumno. ¿Qué podría salir mal?"
+ },
+ "lessons.2.steps.2.options.0.text": {
+  "en": "Nothing: agents remember everything",
+  "t": "Nada: los agentes lo recuerdan todo"
+ },
+ "lessons.2.steps.2.options.1.text": {
+  "en": "The first reports may have fallen out, so the answer could be made up",
+  "t": "Los primeros informes pueden haberse salido, así que la respuesta podría ser inventada"
+ },
+ "lessons.2.steps.2.options.2.text": {
+  "en": "The agent will refuse to read reports",
+  "t": "El agente se negará a leer informes"
+ },
+ "lessons.2.steps.2.explain": {
+  "en": "The first reports may no longer be in the window, and the model can’t know what it never saw. Pupils’ reports also don’t belong in a long chat without a school rule.",
+  "t": "Puede que los primeros informes ya no estén en la ventana, y el modelo no puede saber lo que nunca vio. Además, los informes de los alumnos no deben ir en una conversación larga sin una norma de la escuela."
+ },
+ "lessons.2.steps.3.prompt": {
+  "en": "Put in order what happened in the memory lab with “Drop the oldest” and a small window.",
+  "t": "Pon en orden lo que ocurrió en el laboratorio de memoria con «Descartar lo más antiguo» y una ventana pequeña."
+ },
+ "lessons.2.steps.3.steps.0": {
+  "en": "You ask: “What’s the weather tomorrow?”",
+  "t": "Preguntas: «What’s the weather tomorrow?»"
+ },
+ "lessons.2.steps.3.steps.1": {
+  "en": "Darsi Tiny asks back: “Which village?”",
+  "t": "Darsi Tiny pregunta: «Which village?»"
+ },
+ "lessons.2.steps.3.steps.2": {
+  "en": "The app drops the oldest turns to make room",
+  "t": "La app descarta los turnos más antiguos para hacer sitio"
+ },
+ "lessons.2.steps.3.steps.3": {
+  "en": "Your question, with “tomorrow” in it, falls out",
+  "t": "Tu pregunta, con «tomorrow», se sale de la ventana"
+ },
+ "lessons.2.steps.3.steps.4": {
+  "en": "You reply “Dala”, and it gives today’s weather",
+  "t": "Respondes «Dala» y te da el clima de hoy"
+ },
+ "lessons.2.steps.3.explain": {
+  "en": "The question came first, so it was the first to fall out when the app made room. When “Dala” arrived, “tomorrow” was no longer in the window, so the model used today.",
+  "t": "La pregunta fue lo primero, así que fue lo primero en salirse cuando la app hizo sitio. Cuando llegó «Dala», «tomorrow» ya no estaba en la ventana, así que el modelo usó hoy."
+ },
+ "lessons.2.steps.4.prompt": {
+  "en": "Try it: with “Keep everything”, send the messages one by one and watch the window bar fill until an answer is cut off. Start again with “Drop the oldest” and the window at 128 tokens, and see what happens when you say yes. Then try “Keep notes” at 384: all seven messages work. A turn falling out, and a turn finished with notes, complete the lab.",
+  "t": "Pruébalo: con «Conservar todo», envía los mensajes uno por uno y observa cómo se llena la barra de la ventana hasta que se corta una respuesta. Empieza de nuevo con «Descartar lo más antiguo» y la ventana en 128 tokens, y mira qué pasa cuando dices yes. Luego prueba «Guardar notas» en 384: los siete mensajes funcionan. Ver cómo se sale un turno y cómo se termina un turno con notas completa el laboratorio."
+ },
+ "lessons.2.steps.5.prompt": {
+  "en": "Match each way of handling a full window to what happens.",
+  "t": "Relaciona cada manera de manejar una ventana llena con lo que ocurre."
+ },
+ "lessons.2.steps.5.pairs.0.left": {
+  "en": "Keep everything",
+  "t": "Conservar todo"
+ },
+ "lessons.2.steps.5.pairs.0.right": {
+  "en": "The window fills, and the fourth answer is cut off",
+  "t": "La ventana se llena y se corta la cuarta respuesta"
+ },
+ "lessons.2.steps.5.pairs.1.left": {
+  "en": "Drop the oldest",
+  "t": "Descartar lo más antiguo"
+ },
+ "lessons.2.steps.5.pairs.1.right": {
+  "en": "The start of a task can fall out first",
+  "t": "El inicio de una tarea puede salirse primero"
+ },
+ "lessons.2.steps.5.pairs.2.left": {
+  "en": "Keep notes",
+  "t": "Guardar notas"
+ },
+ "lessons.2.steps.5.pairs.2.right": {
+  "en": "Finished requests keep only the question and the answer",
+  "t": "Las peticiones terminadas conservan solo la pregunta y la respuesta"
+ },
+ "lessons.2.steps.5.pairs.3.left": {
+  "en": "Start a new conversation",
+  "t": "Empezar una conversación nueva"
+ },
+ "lessons.2.steps.5.pairs.3.right": {
+  "en": "The window is empty again, and nothing carries over",
+  "t": "La ventana vuelve a estar vacía y no se arrastra nada"
+ },
+ "lessons.2.steps.5.explain": {
+  "en": "Each choice trades memory for room: everything fills up, dropping loses the start, notes keep what matters in fewer tokens, and a new conversation starts clean.",
+  "t": "Cada opción cambia memoria por espacio: conservar todo llena la ventana, descartar pierde el inicio, las notas conservan lo importante en menos tokens y una conversación nueva empieza limpia."
+ },
+ "lessons.2.steps.6.prompt": {
+  "en": "This app keeps notes. What does it keep from a finished request?",
+  "t": "Esta app guarda notas. ¿Qué conserva de una petición terminada?"
+ },
+ "lessons.2.steps.6.options.0.text": {
+  "en": "Everything, including the tool calls and results",
+  "t": "Todo, incluidas las llamadas a herramientas y los resultados"
+ },
+ "lessons.2.steps.6.options.1.text": {
+  "en": "Only the question and the answer",
+  "t": "Solo la pregunta y la respuesta"
+ },
+ "lessons.2.steps.6.options.2.text": {
+  "en": "Only the tool’s result",
+  "t": "Solo el resultado de la herramienta"
+ },
+ "lessons.2.steps.6.explain": {
+  "en": "The note keeps two things: what was asked (the request) and what was answered. The calls and results are dropped, which is why notes take far fewer tokens.",
+  "t": "La nota conserva dos cosas: lo que se preguntó (la petición) y lo que se respondió. Las llamadas y los resultados se descartan, y por eso las notas ocupan muchos menos tokens."
+ },
+ "lessons.2.steps.7.prompt": {
+  "en": "When part of a conversation falls out of the context window, the model can still look it up later if it needs it.",
+  "t": "Cuando una parte de una conversación se sale de la ventana de contexto, el modelo todavía puede buscarla más tarde si la necesita."
+ },
+ "lessons.2.steps.7.explain": {
+  "en": "The window is the model’s only memory: what falls out is gone for it. If something matters, the app must keep it, for example in a short note, or the person must give it again.",
+  "t": "La ventana es la única memoria del modelo: lo que se sale ha desaparecido para él. Si algo importa, la app debe conservarlo, por ejemplo en una nota breve, o la persona debe darlo otra vez."
+ },
+ "lessons.2.steps.8.prompt": {
+  "en": "What do you suggest?",
+  "t": "¿Qué sugieres?"
+ },
+ "lessons.2.steps.8.who": {
+  "en": "Ms Amina Bello, primary teacher",
+  "t": "Sra. Amina Bello, docente de primaria"
+ },
+ "lessons.2.steps.8.initial": {
+  "en": "A",
+  "t": "A"
+ },
+ "lessons.2.steps.8.situation": {
+  "en": "Amina wants an agent to help write end-of-term comments. Her plan: paste every pupil’s marks and notes into one long chat at the start of the week, then ask for the comments one by one.",
+  "t": "Amina quiere que un agente la ayude a escribir los comentarios de fin de trimestre. Su plan: pegar las notas y observaciones de cada alumno en una sola conversación larga al comienzo de la semana y luego pedir los comentarios uno por uno."
+ },
+ "lessons.2.steps.8.choices.0.label": {
+  "en": "“Fine: it will remember them all week.”",
+  "t": "«Muy bien: los recordará toda la semana»."
+ },
+ "lessons.2.steps.8.choices.0.consequence": {
+  "en": "A long chat overflows a small window, and the start drops out first. And the chat now holds every pupil’s marks in one place: a privacy risk if the agent or its service keeps it.",
+  "t": "Una conversación larga desborda una ventana pequeña, y el inicio se sale primero. Y la conversación ahora contiene las notas de todos los alumnos en un solo lugar: un riesgo de privacidad si el agente o su servicio la conserva."
+ },
+ "lessons.2.steps.8.choices.1.label": {
+  "en": "“One pupil per conversation, initials instead of names, and check every comment against the marks.”",
+  "t": "«Un alumno por conversación, iniciales en lugar de nombres, y comprobar cada comentario con las notas»."
+ },
+ "lessons.2.steps.8.choices.1.consequence": {
+  "en": "Short, focused conversations keep what matters in the window and put less personal data in one place. Checking against the marks catches anything invented.",
+  "t": "Las conversaciones cortas y centradas mantienen lo importante en la ventana y ponen menos datos personales en un solo lugar. Comprobar con las notas detecta cualquier cosa inventada."
+ },
+ "lessons.2.steps.8.choices.2.label": {
+  "en": "“Ask it to summarise everything first, then trust the summary.”",
+  "t": "«Pedirle que lo resuma todo primero y luego fiarme del resumen»."
+ },
+ "lessons.2.steps.8.choices.2.consequence": {
+  "en": "A summary is a kind of note, which helps, but it can drop or change details. Check it against the original marks before you use it.",
+  "t": "Un resumen es un tipo de nota, lo cual ayuda, pero puede omitir o cambiar detalles. Compruébalo con las notas originales antes de usarlo."
+ },
+ "lessons.2.steps.9.prompt": {
+  "en": "Think of a long task you might do with an agent, such as planning a term. What would you keep in short notes, and what would you never put in the conversation?",
+  "t": "Piensa en una tarea larga que podrías hacer con un agente, como planificar un trimestre. ¿Qué guardarías en notas breves y qué nunca pondrías en la conversación?"
+ },
+ "lessons.2.steps.9.placeholder": {
+  "en": "For example: “I’d keep the unit headings as notes, and never paste pupils’ names or marks.”",
+  "t": "Por ejemplo: «Guardaría los títulos de las unidades como notas y nunca pegaría nombres ni notas de alumnos»."
+ },
+ "lessons.2.steps.10.prompt": {
+  "en": "Project: The ten-word window",
+  "t": "Proyecto: La ventana de diez palabras"
+ },
+ "lessons.2.steps.10.task": {
+  "en": "Write a story starter on the board, such as “On the way to the market, Amina saw…”. Pupils add one word each. The rule: only the last ten words may stay on the board, so after each new word, rub out the oldest. After twenty words, ask about the beginning: who was in the story, and where were they going? Then play a second round in which one pupil keeps “notes”: a short line in a corner of the board with the most important facts. Compare the two rounds, and link them to an agent’s context window.",
+  "t": "Escribe en la pizarra el comienzo de una historia, como «De camino al mercado, Amina vio…». Cada alumno añade una palabra. La regla: solo las últimas diez palabras pueden quedarse en la pizarra, así que después de cada palabra nueva se borra la más antigua. Después de veinte palabras, pregunta por el principio: ¿quién estaba en la historia y adónde iba? Luego jueguen una segunda ronda en la que un alumno guarda «notas»: una línea breve en un rincón de la pizarra con los datos más importantes. Comparen las dos rondas y relaciónenlas con la ventana de contexto de un agente."
+ },
+ "lessons.2.steps.10.deliverable": {
+  "en": "A photo of the board with the notes (no faces needed), and two sentences: what your pupils forgot, and how the notes helped.",
+  "t": "Una foto de la pizarra con las notas (no hace falta que salgan caras) y dos oraciones: qué olvidaron tus alumnos y cómo ayudaron las notas."
+ },
+ "lessons.2.steps.10.rubric.0.criterion": {
+  "en": "Pupils could: explain that only the words in the window are remembered.",
+  "t": "Los alumnos podrían: explicar que solo se recuerdan las palabras que están en la ventana."
+ },
+ "lessons.2.steps.10.rubric.1.criterion": {
+  "en": "Pupils could: say what was lost when the oldest words were rubbed out.",
+  "t": "Los alumnos podrían: decir qué se perdió cuando se borraron las palabras más antiguas."
+ },
+ "lessons.2.steps.10.rubric.2.criterion": {
+  "en": "Pupils could: choose short notes that keep what matters.",
+  "t": "Los alumnos podrían: elegir notas breves que conserven lo importante."
+ },
+ "lessons.2.slides.0.title": {
+  "en": "Memory: the context window",
+  "t": "Memoria: la ventana de contexto"
+ },
+ "lessons.2.slides.0.note": {
+  "en": "AI agents · Level 3 · Lesson 3",
+  "t": "Agentes de IA · Nivel 3 · Lección 3"
+ },
+ "lessons.2.slides.0.narration": {
+  "en": "Why does an agent forget what you told it?",
+  "t": "¿Por qué olvida un agente lo que le dijiste?"
+ },
+ "lessons.2.slides.1.title": {
+  "en": "Today we will",
+  "t": "Hoy vamos a"
+ },
+ "lessons.2.slides.1.bullets": {
+  "en": [
+   "Explain the context window: a model’s only memory.",
+   "Predict what an agent forgets when the window fills.",
+   "Choose what to keep: short notes, fewer turns, or a new conversation."
+  ],
+  "t": [
+   "Explicar la ventana de contexto: la única memoria de un modelo.",
+   "Predecir qué olvida un agente cuando la ventana se llena.",
+   "Elegir qué conservar: notas breves, menos turnos o una conversación nueva."
+  ]
+ },
+ "lessons.2.slides.2.title": {
+  "en": "Remember",
+  "t": "Recuerda"
+ },
+ "lessons.2.slides.2.bullets": {
+  "en": [
+   "The model reads the whole text again every time, up to its window.",
+   "Darsi Tiny: 384 tokens; big cloud models: about 128,000.",
+   "What falls out is gone; short notes keep what matters, and keep pupils’ data out."
+  ],
+  "t": [
+   "El modelo vuelve a leer todo el texto cada vez, hasta el límite de su ventana.",
+   "Darsi Tiny: 384 tokens; grandes modelos en la nube: unos 128,000.",
+   "Lo que se sale desaparece; las notas breves conservan lo importante y mantienen fuera los datos de los alumnos."
+  ]
+ },
+ "lessons.2.slides.3.title": {
+  "en": "The ten-word window",
+  "t": "La ventana de diez palabras"
+ },
+ "lessons.2.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): What did I say at the start of the lesson?",
+   "Teach (8 min): The context window, and what falls out.",
+   "Ten-word window (15 min): A story where only ten words stay.",
+   "Notes (7 min): Play again, keeping short notes.",
+   "Wrap-up (5 min): Link it to agents, then the exit ticket."
+  ],
+  "t": [
+   "Calentamiento (5 min): ¿Qué dije al comienzo de la lección?",
+   "Explica (8 min): La ventana de contexto y lo que se sale.",
+   "Ventana de diez palabras (15 min): Una historia en la que solo se quedan diez palabras.",
+   "Notas (7 min): Jueguen otra vez, guardando notas breves.",
+   "Cierre (5 min): Relaciónalo con los agentes y luego el boleto de salida."
+  ]
+ },
+ "lessons.2.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Ask pupils to repeat, word for word, the first thing you said in the lesson. Most can give the gist but not the words: memory has limits.",
+   "Teach (8 min): Explain that a model reads the whole text again every time, but only as much as fits its window (Darsi Tiny: 384 tokens; big cloud models: about 128,000). What falls out is gone.",
+   "Ten-word window (15 min): Write a story starter. Pupils add one word each; after each word, rub out the oldest so only ten stay. After twenty words, ask about the beginning.",
+   "Notes (7 min): Play again, with one pupil keeping a short line of key facts in a corner of the board. Ask the same questions and compare.",
+   "Wrap-up (5 min): Ask what an app should keep for an agent, and what it should never keep (pupils’ private details). Then give the exit ticket."
+  ],
+  "t": [
+   "Calentamiento (5 min): Pide a los alumnos que repitan, palabra por palabra, lo primero que dijiste en la lección. La mayoría puede dar la idea, pero no las palabras: la memoria tiene límites.",
+   "Explica (8 min): Explica que un modelo vuelve a leer todo el texto cada vez, pero solo lo que cabe en su ventana (Darsi Tiny: 384 tokens; grandes modelos en la nube: unos 128,000). Lo que se sale desaparece.",
+   "Ventana de diez palabras (15 min): Escribe el comienzo de una historia. Cada alumno añade una palabra; después de cada una, borra la más antigua para que solo queden diez. Después de veinte palabras, pregunta por el principio.",
+   "Notas (7 min): Jueguen otra vez, con un alumno que guarda una línea breve de datos clave en un rincón de la pizarra. Haz las mismas preguntas y comparen.",
+   "Cierre (5 min): Pregunta qué debería conservar una app para un agente y qué nunca debería conservar (los datos privados de los alumnos). Luego da el boleto de salida."
+  ]
+ },
+ "lessons.2.slides.3.note": {
+  "en": "You only need the board, chalk and a duster. Choose a story starter about a place your pupils know.",
+  "t": "Solo necesitas la pizarra, tiza y un borrador. Elige el comienzo de una historia sobre un lugar que tus alumnos conozcan."
+ },
+ "lessons.2.slides.3.narration": {
+  "en": "Only ten words stay. What will we still remember at the end?",
+  "t": "Solo se quedan diez palabras. ¿Qué recordaremos todavía al final?"
+ },
+ "lessons.2.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Conversemos"
+ },
+ "lessons.2.slides.4.bullets": {
+  "en": [
+   "When has a long chat with an agent gone wrong for you?",
+   "What should never go into a conversation with an agent?",
+   "Why might a new conversation be the best fix?"
+  ],
+  "t": [
+   "¿Cuándo te ha salido mal una conversación larga con un agente?",
+   "¿Qué nunca debería entrar en una conversación con un agente?",
+   "¿Por qué una conversación nueva podría ser la mejor solución?"
+  ]
+ },
+ "lessons.2.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Boleto de salida"
+ },
+ "lessons.2.slides.5.bullets": {
+  "en": [
+   "In one sentence, explain why an agent forgot something, and one way to stop it."
+  ],
+  "t": [
+   "En una oración, explica por qué un agente olvidó algo y una forma de evitarlo."
+  ]
+ },
+ "lessons.2.slides.5.narration": {
+  "en": "The window is the model’s only memory: keep conversations short, and keep what matters in notes.",
+  "t": "La ventana es la única memoria del modelo: mantén las conversaciones cortas y guarda lo importante en notas."
+ },
+ "lessons.2.kit.0.title": {
+  "en": "Slides: Memory: the context window",
+  "t": "Diapositivas: Memoria: la ventana de contexto"
+ },
+ "lessons.2.kit.1.title": {
+  "en": "Lesson plan and worksheet: Memory: the context window",
+  "t": "Plan de clase y hoja de trabajo: Memoria: la ventana de contexto"
+ },
+ "lessons.2.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "El video de la lección (240p, para la clase o WhatsApp)"
+ },
+ "lessons.3.title": {
+  "en": "Teaching it a new tool",
+  "t": "Enseñarle una herramienta nueva"
+ },
+ "lessons.3.tryTomorrow": {
+  "en": "Teach your class a new hand signal, then test the old ones too. Do it once with practice of the old signals mixed in, and once without, and tally which signals the class still gets right. Then link it to fine-tuning: test the old and the new.",
+  "t": "Enseña a tu clase una señal nueva con la mano y luego prueba también las antiguas. Hazlo una vez con práctica de las señales antiguas mezclada y otra sin ella, y anota cuántas señales sigue acertando la clase. Luego relaciónalo con el ajuste fino: prueba lo antiguo y lo nuevo."
+ },
+ "lessons.3.materials": {
+  "en": [
+   "Two or three class signals pupils already know (hand up, clap twice…)",
+   "A new signal to teach, such as a hand on the head for “quiet, please”",
+   "A tally on the board: old signals and the new one, right or wrong"
+  ],
+  "t": [
+   "Dos o tres señales de la clase que los alumnos ya conozcan (mano arriba, dos aplausos…)",
+   "Una señal nueva para enseñar, como una mano en la cabeza para «silencio, por favor»",
+   "Un recuento en la pizarra: señales antiguas y la nueva, acierto o error"
+  ]
+ },
+ "lessons.3.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ver"
+ },
+ "lessons.3.steps.0.title": {
+  "en": "Teaching it a new tool",
+  "t": "Enseñarle una herramienta nueva"
+ },
+ "lessons.3.steps.0.chapters.0.label": {
+  "en": "A bus question",
+  "t": "Una pregunta sobre el autobús"
+ },
+ "lessons.3.steps.0.chapters.1.label": {
+  "en": "Fine-tuning",
+  "t": "Ajuste fino"
+ },
+ "lessons.3.steps.0.chapters.2.label": {
+  "en": "Learning, and forgetting",
+  "t": "Aprender y olvidar"
+ },
+ "lessons.3.steps.0.chapters.3.label": {
+  "en": "When it’s worth it",
+  "t": "Cuándo vale la pena"
+ },
+ "lessons.3.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Recuerda y pruébalo"
+ },
+ "lessons.3.steps.0.checkpoint.question.prompt": {
+  "en": "It learned the bus tool, but forgot the weather. What would you mix into the training?",
+  "t": "Aprendió la herramienta del autobús, pero olvidó la del clima. ¿Qué mezclarías en el entrenamiento?"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.0.text": {
+  "en": "More bus examples",
+  "t": "Más ejemplos del autobús"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.1.text": {
+  "en": "Some old conversations it already knew",
+  "t": "Algunas conversaciones antiguas que ya conocía"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.2.text": {
+  "en": "Nothing: just train for longer",
+  "t": "Nada: solo entrenar durante más tiempo"
+ },
+ "lessons.3.steps.0.checkpoint.question.explain": {
+  "en": "Practising old conversations alongside the new examples keeps the old skills: with 48 mixed in, all 8 came back.",
+  "t": "Repasar conversaciones antiguas junto a los ejemplos nuevos conserva las habilidades anteriores: con 48 mezcladas, volvieron las 8."
+ },
+ "lessons.3.steps.0.transcript": {
+  "en": "Our school wants the agent to answer bus questions. But Darsi Tiny has never heard of a bus tool. Ask when the next bus leaves Kafi, and it looks Kafi up in the glossary! Can we teach it? Today: teaching an agent a new tool, and what it forgets. There are three ways to change what an agent does. Write a clearer instruction. Describe a new tool, which big models can often use. Or change the model itself, from examples: that’s fine-tuning. Fine-tuning means training a model a little more, on new examples. Its numbers shift until its answers match the examples. On your phone, only Darsi Tiny’s top layer learns, from sixteen conversations, in fifteen steps. In the lab, we teach it a bus tool, in English and Arabic. Before, it got none of eight bus questions right. After, seven of eight, even for villages it never saw. Then we tested its old skills: weather, routes, sums. Before teaching, eight of eight. After, with only new examples, one of eight. It learned the bus, and forgot nearly everything else. Quick check! It learned the bus tool, but forgot the weather. What would you mix into the training? Some old conversations. Practising old skills alongside the new one keeps them. With sixteen mixed in, old skills come back to five of eight, and with forty-eight, all eight. But the bus drops to five of eight: there’s always a trade-off. Fine-tuning takes time: on a laptop, from under a minute to over two; on an old phone, about three to eleven minutes. And it can change behaviour you didn’t aim at, even refusals. So test again, every time. So when should you fine-tune? Try a clearer instruction first, then a tool with a check in code. Fine-tune only with good examples, a test set for old and new skills, and someone to check it. In the app, ask about a bus first. Teach it with forty-eight old conversations mixed in, then test it. Then teach it again with none, and test the old skills. Your turn. A colleague fine-tunes the agent on her own examples, and the new answers look great. What should she do before the class uses it? Test old skills and safety too, before anyone relies on it. Remember: fine-tuning changes a model’s numbers from examples. It can forget what it knew, so mix old examples in. And test both, every time. Try it in class tomorrow: teach a new hand signal for quiet, then test the old signals too. Do it once with practice of the old ones, and once without. Which way did the class forget?",
+  "t": "Nuestra escuela quiere que el agente responda preguntas sobre el autobús. Pero Darsi Tiny nunca ha oído hablar de una herramienta de autobuses. Pregúntale cuándo sale el próximo autobús de Kafi, ¡y busca Kafi en el glosario! ¿Podemos enseñarle? Hoy: cómo enseñarle una herramienta nueva a un agente y qué olvida. Hay tres maneras de cambiar lo que hace un agente. Escribir una instrucción más clara. Describir una herramienta nueva, algo que los modelos grandes suelen poder usar. O cambiar el modelo mismo, a partir de ejemplos: eso es el ajuste fino. Ajuste fino significa entrenar un modelo un poco más, con ejemplos nuevos. Sus números se desplazan hasta que sus respuestas coinciden con los ejemplos. En tu teléfono, solo aprende la capa superior de Darsi Tiny, con dieciséis conversaciones, en quince pasos. En el laboratorio, le enseñamos una herramienta de autobuses, en inglés y en árabe. Antes, no acertaba ninguna de ocho preguntas sobre autobuses. Después, siete de ocho, incluso con pueblos que nunca había visto. Luego probamos sus habilidades antiguas: clima, rutas, sumas. Antes de enseñarle, ocho de ocho. Después, con solo ejemplos nuevos, una de ocho. Aprendió lo del autobús y olvidó casi todo lo demás. ¡Pregunta rápida! Aprendió la herramienta de autobuses, pero olvidó el clima. ¿Qué mezclarías en el entrenamiento? Algunas conversaciones antiguas. Practicar las habilidades antiguas junto a la nueva las conserva. Con dieciséis mezcladas, las habilidades antiguas vuelven a cinco de ocho, y con cuarenta y ocho, a las ocho. Pero lo del autobús baja a cinco de ocho: siempre hay un equilibrio. El ajuste fino lleva tiempo: en una laptop, de menos de un minuto a más de dos; en un teléfono viejo, de unos tres a once minutos. Y puede cambiar un comportamiento que no buscabas, incluso los rechazos. Así que vuelve a probar, cada vez. Entonces, ¿cuándo conviene hacer un ajuste fino? Prueba primero una instrucción más clara y luego una herramienta con una comprobación en código. Haz un ajuste fino solo con buenos ejemplos, un conjunto de prueba para habilidades antiguas y nuevas, y alguien que lo revise. En la app, pregunta primero por un autobús. Enséñale con cuarenta y ocho conversaciones antiguas mezcladas y luego pruébalo. Después enséñale otra vez sin ninguna y prueba las habilidades antiguas. Tu turno. Una colega hace un ajuste fino del agente con sus propios ejemplos, y las respuestas nuevas se ven geniales. ¿Qué debe hacer antes de que la clase lo use? Probar también las habilidades antiguas y la seguridad, antes de que alguien dependa de él. Recuerda: el ajuste fino cambia los números de un modelo a partir de ejemplos. Puede olvidar lo que sabía, así que mezcla ejemplos antiguos. Y prueba ambos, cada vez. Pruébalo mañana en clase: enseña una señal nueva con la mano para pedir silencio y luego prueba también las señales antiguas. Hazlo una vez practicando las antiguas y otra sin hacerlo. ¿De qué manera olvidó la clase?"
+ },
+ "lessons.3.steps.1.prompt": {
+  "en": "Read",
+  "t": "Leer"
+ },
+ "lessons.3.steps.1.title": {
+  "en": "Fine-tuning: learning, and forgetting",
+  "t": "Ajuste fino: aprender y olvidar"
+ },
+ "lessons.3.steps.1.body": {
+  "en": "There are three ways to change what an agent does. Write a clearer instruction. Give it a new tool: big models can often use a tool from its description alone (Darsi Tiny, which knows only its ten tools, can’t). Or change the model itself from examples: that is fine-tuning. Fine-tuning trains the model a little more, so that its numbers shift until its answers match the examples.\n\nIn the teach lab you fine-tune Darsi Tiny on the phone: a new bus tool, taught from 16 example conversations (8 in each language) in 15 training steps; only its top layer learns. Before, it gets 0 of 8 bus questions right (asked when the next bus leaves Kafi, it looks Kafi up in the glossary), and 8 of 8 questions on its old skills. After training on the new examples alone, it gets 7 of 8 bus questions right, even for villages it never saw, but only 1 of 8 on its old skills. It learned the bus and forgot nearly everything else: this is called catastrophic forgetting.\n\nMixing old conversations into the training protects old skills. With 16 mixed in: bus 7 of 8, old skills 5 of 8. With 48: bus 5 of 8, old skills 8 of 8. There is a trade-off, and it costs time: from 38 seconds to 2 minutes 16 seconds on a laptop, and about 3 to 11 minutes on an old phone. Fine-tuning also changes behaviour you didn’t aim at, including refusals and asking before acting, so the safety checks need testing again too.\n\nSo fine-tune last, not first. Try a clearer instruction, then a tool with a check in code. Fine-tune only with good examples, a test set for old and new skills, someone to check the results and a way to switch back. In the lab, the result (1.6 MB) stays on the phone that made it, and you can switch it on and off.",
+  "t": "Hay tres maneras de cambiar lo que hace un agente. Escribir una instrucción más clara. Darle una herramienta nueva: los modelos grandes a menudo pueden usar una herramienta solo con su descripción (Darsi Tiny, que solo conoce sus diez herramientas, no puede). O cambiar el propio modelo a partir de ejemplos: eso es el ajuste fino. El ajuste fino entrena un poco más al modelo, de modo que sus números se desplazan hasta que sus respuestas coinciden con los ejemplos.\n\nEn el laboratorio de enseñanza ajustas Darsi Tiny en el teléfono: una herramienta nueva, el autobús, enseñada con 16 conversaciones de ejemplo (8 en cada idioma) en 15 pasos de entrenamiento; solo aprende su capa superior. Antes, acierta 0 de 8 preguntas sobre el autobús (al preguntarle cuándo sale el próximo autobús de Kafi, busca Kafi en el glosario) y 8 de 8 preguntas sobre sus habilidades anteriores. Después de entrenar solo con los ejemplos nuevos, acierta 7 de 8 preguntas sobre el autobús, incluso para pueblos que nunca vio, pero solo 1 de 8 sobre sus habilidades anteriores. Aprendió el autobús y olvidó casi todo lo demás: esto se llama olvido catastrófico.\n\nMezclar conversaciones antiguas en el entrenamiento protege las habilidades anteriores. Con 16 mezcladas: autobús 7 de 8, habilidades anteriores 5 de 8. Con 48: autobús 5 de 8, habilidades anteriores 8 de 8. Hay un equilibrio, y cuesta tiempo: de 38 segundos a 2 minutos y 16 segundos en una laptop, y de unos 3 a 11 minutos en un teléfono viejo. El ajuste fino también cambia comportamientos que no buscabas, incluidos los rechazos y el preguntar antes de actuar, así que también hay que volver a probar las comprobaciones de seguridad.\n\nAsí que el ajuste fino va al final, no al principio. Prueba primero una instrucción más clara, luego una herramienta con una comprobación en código. Ajusta solo con buenos ejemplos, un conjunto de prueba para las habilidades antiguas y nuevas, alguien que revise los resultados y una forma de volver atrás. En el laboratorio, el resultado (1.6 MB) se queda en el teléfono que lo hizo y puedes activarlo y desactivarlo."
+ },
+ "lessons.3.steps.1.keyTerms.0.term": {
+  "en": "Fine-tuning",
+  "t": "Ajuste fino"
+ },
+ "lessons.3.steps.1.keyTerms.0.def": {
+  "en": "Training a model a little more on new examples, so that its numbers shift towards them.",
+  "t": "Entrenar un poco más a un modelo con ejemplos nuevos, de modo que sus números se desplacen hacia ellos."
+ },
+ "lessons.3.steps.1.keyTerms.1.term": {
+  "en": "Catastrophic forgetting",
+  "t": "Olvido catastrófico"
+ },
+ "lessons.3.steps.1.keyTerms.1.def": {
+  "en": "When a model trained on new examples loses skills it had before.",
+  "t": "Cuando un modelo entrenado con ejemplos nuevos pierde habilidades que tenía antes."
+ },
+ "lessons.3.steps.1.keyTerms.2.term": {
+  "en": "Replay",
+  "t": "Repaso"
+ },
+ "lessons.3.steps.1.keyTerms.2.def": {
+  "en": "Mixing old examples into fine-tuning so that the model keeps its old skills.",
+  "t": "Mezclar ejemplos antiguos en el ajuste fino para que el modelo conserve sus habilidades anteriores."
+ },
+ "lessons.3.steps.1.keyTerms.3.term": {
+  "en": "Trade-off",
+  "t": "Equilibrio"
+ },
+ "lessons.3.steps.1.keyTerms.3.def": {
+  "en": "Gaining one thing by giving up some of another: here, the new tool against the old skills.",
+  "t": "Ganar una cosa renunciando a parte de otra: aquí, la herramienta nueva frente a las habilidades anteriores."
+ },
+ "lessons.3.steps.2.prompt": {
+  "en": "A colleague fine-tunes the agent on her own examples, and the new answers look great. What should she do before the class uses it?",
+  "t": "Una colega ajusta el agente con sus propios ejemplos y las respuestas nuevas se ven geniales. ¿Qué debería hacer antes de que la clase lo use?"
+ },
+ "lessons.3.steps.2.options.0.text": {
+  "en": "Use it: the new answers look great",
+  "t": "Usarlo: las respuestas nuevas se ven geniales"
+ },
+ "lessons.3.steps.2.options.1.text": {
+  "en": "Test its old skills and its safety too",
+  "t": "Probar también sus habilidades anteriores y su seguridad"
+ },
+ "lessons.3.steps.2.options.2.text": {
+  "en": "Fine-tune it again, for longer",
+  "t": "Ajustarlo otra vez, durante más tiempo"
+ },
+ "lessons.3.steps.2.explain": {
+  "en": "Fine-tuning can quietly break old skills and refusals. Test old and new, and the safety checks, before anyone relies on it.",
+  "t": "El ajuste fino puede romper en silencio habilidades anteriores y rechazos. Prueba lo antiguo y lo nuevo, y las comprobaciones de seguridad, antes de que nadie dependa de él."
+ },
+ "lessons.3.steps.3.prompt": {
+  "en": "Match each way of teaching the bus tool to what the test showed.",
+  "t": "Relaciona cada manera de enseñar la herramienta del autobús con lo que mostró la prueba."
+ },
+ "lessons.3.steps.3.pairs.0.left": {
+  "en": "Before teaching",
+  "t": "Antes de enseñar"
+ },
+ "lessons.3.steps.3.pairs.0.right": {
+  "en": "Bus 0 of 8; old skills 8 of 8",
+  "t": "Autobús 0 de 8; habilidades anteriores 8 de 8"
+ },
+ "lessons.3.steps.3.pairs.1.left": {
+  "en": "No old conversations mixed in",
+  "t": "Sin conversaciones antiguas mezcladas"
+ },
+ "lessons.3.steps.3.pairs.1.right": {
+  "en": "Bus 7 of 8; old skills 1 of 8",
+  "t": "Autobús 7 de 8; habilidades anteriores 1 de 8"
+ },
+ "lessons.3.steps.3.pairs.2.left": {
+  "en": "16 old conversations mixed in",
+  "t": "16 conversaciones antiguas mezcladas"
+ },
+ "lessons.3.steps.3.pairs.2.right": {
+  "en": "Bus 7 of 8; old skills 5 of 8",
+  "t": "Autobús 7 de 8; habilidades anteriores 5 de 8"
+ },
+ "lessons.3.steps.3.pairs.3.left": {
+  "en": "48 old conversations mixed in",
+  "t": "48 conversaciones antiguas mezcladas"
+ },
+ "lessons.3.steps.3.pairs.3.right": {
+  "en": "Bus 5 of 8; old skills 8 of 8",
+  "t": "Autobús 5 de 8; habilidades anteriores 8 de 8"
+ },
+ "lessons.3.steps.3.explain": {
+  "en": "New examples alone teach the bus but wipe out old skills. The more old conversations are mixed in, the more old skills stay, at some cost to the new tool: a trade-off you only see if you test both.",
+  "t": "Los ejemplos nuevos solos enseñan el autobús pero borran las habilidades anteriores. Cuantas más conversaciones antiguas se mezclan, más habilidades anteriores se conservan, a costa de algo de la herramienta nueva: un equilibrio que solo ves si pruebas las dos cosas."
+ },
+ "lessons.3.steps.4.prompt": {
+  "en": "Try it: first ask about a bus before teaching, and see what Darsi Tiny does. Then teach the bus tool with 48 old conversations mixed in, and test both the bus questions and the old skills. If you have time, teach again with none mixed in and compare. One full run, taught and tested, finishes the lab. On an old phone a run takes several minutes (the lab shows the time left), so plug the phone in if you can.",
+  "t": "Pruébalo: primero pregunta por un autobús antes de enseñar y mira qué hace Darsi Tiny. Luego enséñale la herramienta del autobús con 48 conversaciones antiguas mezcladas y prueba tanto las preguntas sobre el autobús como las habilidades anteriores. Si tienes tiempo, enseña otra vez sin mezclar ninguna y compara. Una ejecución completa, enseñada y probada, termina el laboratorio. En un teléfono viejo una ejecución tarda varios minutos (el laboratorio muestra el tiempo restante), así que conecta el teléfono si puedes."
+ },
+ "lessons.3.steps.5.prompt": {
+  "en": "Complete the sentences.",
+  "t": "Completa las oraciones."
+ },
+ "lessons.3.steps.5.sentence": {
+  "en": [
+   "Fine-tuning changes a model’s ",
+   {
+    "blank": 0
+   },
+   " from examples. With no old examples mixed in, it can ",
+   {
+    "blank": 1
+   },
+   " its old skills. So always test the old skills and the ",
+   {
+    "blank": 2
+   },
+   " one."
+  ],
+  "t": [
+   "El ajuste fino cambia los ",
+   {
+    "blank": 0
+   },
+   " de un modelo a partir de ejemplos. Si no se mezclan ejemplos antiguos, puede ",
+   {
+    "blank": 1
+   },
+   " sus habilidades anteriores. Así que prueba siempre las habilidades anteriores y la ",
+   {
+    "blank": 2
+   },
+   "."
+  ]
+ },
+ "lessons.3.steps.5.bank": {
+  "en": [
+   "numbers",
+   "forget",
+   "new",
+   "words",
+   "tools",
+   "improve"
+  ],
+  "t": [
+   "números",
+   "olvidar",
+   "nueva",
+   "palabras",
+   "herramientas",
+   "mejorar"
+  ]
+ },
+ "lessons.3.steps.5.answers": {
+  "en": [
+   "numbers",
+   "forget",
+   "new"
+  ],
+  "t": [
+   "números",
+   "olvidar",
+   "nueva"
+  ]
+ },
+ "lessons.3.steps.5.explain": {
+  "en": "Fine-tuning shifts the model’s numbers towards the examples. Without old examples it can forget (old skills fell from 8 of 8 to 1 of 8), so you test the old skills and the new one every time.",
+  "t": "El ajuste fino desplaza los números del modelo hacia los ejemplos. Sin ejemplos antiguos puede olvidar (las habilidades anteriores bajaron de 8 de 8 a 1 de 8), así que pruebas las habilidades anteriores y la nueva cada vez."
+ },
+ "lessons.3.steps.6.prompt": {
+  "en": "After fine-tuning, a model keeps all its old skills, because it only learned something new.",
+  "t": "Tras el ajuste fino, un modelo conserva todas sus habilidades anteriores, porque solo aprendió algo nuevo."
+ },
+ "lessons.3.steps.6.explain": {
+  "en": "Learning shifts the same numbers that held the old skills. Taught the bus tool with new examples alone, Darsi Tiny fell from 8 of 8 old skills to 1 of 8. It can also lose refusals or asking first, so test them again.",
+  "t": "Aprender desplaza los mismos números que guardaban las habilidades anteriores. Al enseñarle la herramienta del autobús solo con ejemplos nuevos, Darsi Tiny pasó de 8 de 8 habilidades anteriores a 1 de 8. También puede perder los rechazos o el preguntar antes, así que vuelve a probarlos."
+ },
+ "lessons.3.steps.7.prompt": {
+  "en": "What do you suggest?",
+  "t": "¿Qué sugieres?"
+ },
+ "lessons.3.steps.7.who": {
+  "en": "Mr Joseph Mwangi, computer studies teacher",
+  "t": "Sr. Joseph Mwangi, docente de informática"
+ },
+ "lessons.3.steps.7.initial": {
+  "en": "J",
+  "t": "J"
+ },
+ "lessons.3.steps.7.situation": {
+  "en": "The school wants its agent to understand room codes like “Lab 2” and “Hall B”. A colleague says: “Let’s fine-tune it tonight on twenty examples I’ll write, and use it tomorrow.”",
+  "t": "La escuela quiere que su agente entienda códigos de aula como «Lab 2» y «Hall B». Un colega dice: «Ajustémoslo esta noche con veinte ejemplos que escribiré yo y lo usamos mañana»."
+ },
+ "lessons.3.steps.7.choices.0.label": {
+  "en": "“Great: twenty examples is plenty. Use it tomorrow.”",
+  "t": "«Genial: veinte ejemplos son más que suficientes. Lo usamos mañana»."
+ },
+ "lessons.3.steps.7.choices.0.consequence": {
+  "en": "Twenty examples may teach the codes and quietly break old skills or refusals. Without a test of the old and the new, nobody will know until a pupil finds out.",
+  "t": "Veinte ejemplos pueden enseñar los códigos y romper en silencio habilidades anteriores o rechazos. Sin una prueba de lo antiguo y lo nuevo, nadie lo sabrá hasta que un alumno lo descubra."
+ },
+ "lessons.3.steps.7.choices.1.label": {
+  "en": "“First, could a clearer instruction or a rooms tool do it?”",
+  "t": "«Primero, ¿bastaría una instrucción más clara o una herramienta de aulas?»."
+ },
+ "lessons.3.steps.7.choices.1.consequence": {
+  "en": "Often a tool that looks up room codes, with a check in code, is enough and changes nothing else in the model. Fine-tune only if that fails.",
+  "t": "A menudo basta una herramienta que busque los códigos de aula, con una comprobación en código, y no cambia nada más en el modelo. Ajusta solo si eso falla."
+ },
+ "lessons.3.steps.7.choices.2.label": {
+  "en": "“If we fine-tune, let’s mix in old conversations and test the old skills and refusals first.”",
+  "t": "«Si lo ajustamos, mezclemos conversaciones antiguas y probemos primero las habilidades anteriores y los rechazos»."
+ },
+ "lessons.3.steps.7.choices.2.consequence": {
+  "en": "Mixing old examples in protects old skills, and a test set run before and after shows what changed. That is the safe way to fine-tune.",
+  "t": "Mezclar ejemplos antiguos protege las habilidades anteriores, y un conjunto de prueba ejecutado antes y después muestra qué cambió. Esa es la forma segura de ajustar."
+ },
+ "lessons.3.steps.8.prompt": {
+  "en": "Is there something you would want your school’s agent to learn? Would a clearer instruction or a tool be enough, or would it need fine-tuning, and how would you test it?",
+  "t": "¿Hay algo que querrías que aprendiera el agente de tu escuela? ¿Bastaría una instrucción más clara o una herramienta, o necesitaría ajuste fino? ¿Cómo lo probarías?"
+ },
+ "lessons.3.steps.8.placeholder": {
+  "en": "For example: “Our room codes. A rooms tool with a check would do; I’d only fine-tune with a test of old and new requests.”",
+  "t": "Por ejemplo: «Nuestros códigos de aula. Bastaría una herramienta de aulas con una comprobación; solo ajustaría con una prueba de peticiones antiguas y nuevas»."
+ },
+ "lessons.3.steps.9.prompt": {
+  "en": "Project: Old and new",
+  "t": "Proyecto: Lo antiguo y lo nuevo"
+ },
+ "lessons.3.steps.9.task": {
+  "en": "Pick two or three signals your class already knows, and teach a new one (for example, a hand on the head means “quiet, please”). Round one: practise only the new signal, then test all the signals and tally the answers on the board. Another day, round two: teach a different new signal, but mix in practice of the old signals, then test again. Compare the tallies with your pupils, and link them to Darsi Tiny: with no old examples it forgot nearly everything else, and with 48 mixed in it kept them all. Be honest with pupils that people forget far less than a tiny model; the idea is the same.",
+  "t": "Elige dos o tres señales que tu clase ya conozca y enseña una nueva (por ejemplo, una mano en la cabeza significa «silencio, por favor»). Primera ronda: practiquen solo la señal nueva, luego prueben todas las señales y anota los aciertos en la pizarra. Otro día, segunda ronda: enseña una señal nueva distinta, pero mezcla práctica de las señales antiguas, y vuelvan a probar. Comparen los recuentos con tus alumnos y relaciónenlos con Darsi Tiny: sin ejemplos antiguos olvidó casi todo lo demás, y con 48 mezclados los conservó todos. Sé sincero con los alumnos: las personas olvidan mucho menos que un modelo diminuto; la idea es la misma."
+ },
+ "lessons.3.steps.9.deliverable": {
+  "en": "A photo of the two tallies (no faces needed), and two sentences: what your pupils noticed, and how it helped them understand fine-tuning.",
+  "t": "Una foto de los dos recuentos (no hace falta que salgan caras) y dos oraciones: qué notaron tus alumnos y cómo les ayudó a entender el ajuste fino."
+ },
+ "lessons.3.steps.9.rubric.0.criterion": {
+  "en": "Pupils could: explain that learning something new can make you forget something old.",
+  "t": "Los alumnos podrían: explicar que aprender algo nuevo puede hacerte olvidar algo antiguo."
+ },
+ "lessons.3.steps.9.rubric.1.criterion": {
+  "en": "Pupils could: say why practising old skills alongside new ones helps.",
+  "t": "Los alumnos podrían: decir por qué ayuda practicar las habilidades antiguas junto con las nuevas."
+ },
+ "lessons.3.steps.9.rubric.2.criterion": {
+  "en": "Pupils could: explain why you test both the old and the new.",
+  "t": "Los alumnos podrían: explicar por qué se prueba tanto lo antiguo como lo nuevo."
+ },
+ "lessons.3.slides.0.title": {
+  "en": "Teaching it a new tool",
+  "t": "Enseñarle una herramienta nueva"
+ },
+ "lessons.3.slides.0.note": {
+  "en": "AI agents · Level 3 · Lesson 4",
+  "t": "Agentes de IA · Nivel 3 · Lección 4"
+ },
+ "lessons.3.slides.0.narration": {
+  "en": "Can we teach an agent something new, without it forgetting?",
+  "t": "¿Podemos enseñar algo nuevo a un agente sin que olvide?"
+ },
+ "lessons.3.slides.1.title": {
+  "en": "Today we will",
+  "t": "Hoy vamos a"
+ },
+ "lessons.3.slides.1.bullets": {
+  "en": [
+   "Explain fine-tuning: learning from examples.",
+   "Explain forgetting, and why mixing old examples in helps.",
+   "Decide when to fine-tune, and how to test the result."
+  ],
+  "t": [
+   "Explicar el ajuste fino: aprender a partir de ejemplos.",
+   "Explicar el olvido y por qué ayuda mezclar ejemplos antiguos.",
+   "Decidir cuándo ajustar y cómo probar el resultado."
+  ]
+ },
+ "lessons.3.slides.2.title": {
+  "en": "Remember",
+  "t": "Recuerda"
+ },
+ "lessons.3.slides.2.bullets": {
+  "en": [
+   "Fine-tuning shifts a model’s numbers from examples (16 examples, 15 steps on the phone).",
+   "New examples alone made it forget: old skills fell from 8 of 8 to 1; with 48 old ones mixed in, 8 of 8.",
+   "Try instructions and tools first; fine-tune with a test of old and new."
+  ],
+  "t": [
+   "El ajuste fino desplaza los números de un modelo a partir de ejemplos (16 ejemplos, 15 pasos en el teléfono).",
+   "Solo con ejemplos nuevos olvidó: las habilidades anteriores bajaron de 8 de 8 a 1; con 48 antiguos mezclados, 8 de 8.",
+   "Prueba primero instrucciones y herramientas; ajusta con una prueba de lo antiguo y lo nuevo."
+  ]
+ },
+ "lessons.3.slides.3.title": {
+  "en": "Old and new",
+  "t": "Lo antiguo y lo nuevo"
+ },
+ "lessons.3.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): Show the class signals they already know.",
+   "Teach (8 min): Fine-tuning, forgetting and mixing old in.",
+   "Round one (10 min): Teach a new signal alone, then test all.",
+   "Compare (10 min): Tally old and new on the board.",
+   "Wrap-up (7 min): Plan round two with practice mixed in; exit ticket."
+  ],
+  "t": [
+   "Calentamiento (5 min): Muestra las señales de la clase que ya conocen.",
+   "Explica (8 min): El ajuste fino, el olvido y mezclar lo antiguo.",
+   "Primera ronda (10 min): Enseña una señal nueva sola y luego prueba todas.",
+   "Compara (10 min): Anota en la pizarra los aciertos de lo antiguo y lo nuevo.",
+   "Cierre (7 min): Planifica la segunda ronda con práctica mezclada; boleto de salida."
+  ]
+ },
+ "lessons.3.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Show two or three signals the class already knows; pupils respond to each.",
+   "Teach (8 min): Explain fine-tuning with Darsi Tiny’s numbers: the bus tool from 16 examples; old skills fell from 8 of 8 to 1 of 8 without old examples, and stayed at 8 of 8 with 48 mixed in.",
+   "Round one (10 min): Teach a new signal (a hand on the head for “quiet, please”) and practise only that one. Then test every signal, old and new, in a random order.",
+   "Compare (10 min): Tally right and wrong answers for old and new signals on the board. Discuss honestly: people forget far less than a tiny model, but practice still matters.",
+   "Wrap-up (7 min): Plan round two for another day, with the old signals practised alongside a new one. Then give the exit ticket."
+  ],
+  "t": [
+   "Calentamiento (5 min): Muestra dos o tres señales que la clase ya conoce; los alumnos responden a cada una.",
+   "Explica (8 min): Explica el ajuste fino con los números de Darsi Tiny: la herramienta del autobús con 16 ejemplos; las habilidades anteriores bajaron de 8 de 8 a 1 de 8 sin ejemplos antiguos, y se quedaron en 8 de 8 con 48 mezclados.",
+   "Primera ronda (10 min): Enseña una señal nueva (una mano en la cabeza para «silencio, por favor») y practiquen solo esa. Luego prueba cada señal, antigua y nueva, en orden aleatorio.",
+   "Compara (10 min): Anota en la pizarra los aciertos y errores con las señales antiguas y la nueva. Comenten con sinceridad: las personas olvidan mucho menos que un modelo diminuto, pero la práctica sigue importando.",
+   "Cierre (7 min): Planifica la segunda ronda para otro día, con las señales antiguas practicadas junto a una nueva. Luego da el boleto de salida."
+  ]
+ },
+ "lessons.3.slides.3.note": {
+  "en": "No phones needed: just signals the class knows, one new signal and a tally on the board. If you have a phone, run the teach lab before class to see the real numbers yourself.",
+  "t": "No hacen falta teléfonos: solo señales que la clase conozca, una señal nueva y un recuento en la pizarra. Si tienes un teléfono, ejecuta el laboratorio de enseñanza antes de la clase para ver tú mismo los números reales."
+ },
+ "lessons.3.slides.3.narration": {
+  "en": "Learn something new, then check: do we still know the old?",
+  "t": "Aprende algo nuevo y luego comprueba: ¿seguimos sabiendo lo antiguo?"
+ },
+ "lessons.3.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Conversemos"
+ },
+ "lessons.3.slides.4.bullets": {
+  "en": [
+   "When have you learned something new and forgotten something old?",
+   "What would you test before letting pupils use a fine-tuned agent?",
+   "Why might a tool be better than fine-tuning for our school’s room codes?"
+  ],
+  "t": [
+   "¿Cuándo aprendiste algo nuevo y olvidaste algo antiguo?",
+   "¿Qué probarías antes de dejar que los alumnos usen un agente ajustado?",
+   "¿Por qué una herramienta podría ser mejor que el ajuste fino para los códigos de aula de nuestra escuela?"
+  ]
+ },
+ "lessons.3.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Boleto de salida"
+ },
+ "lessons.3.slides.5.bullets": {
+  "en": [
+   "Name one thing fine-tuning can break, and how you would check for it."
+  ],
+  "t": [
+   "Nombra una cosa que el ajuste fino puede romper y cómo lo comprobarías."
+  ]
+ },
+ "lessons.3.slides.5.narration": {
+  "en": "Teach a little, test a lot: old skills and new.",
+  "t": "Enseña un poco, prueba mucho: habilidades antiguas y nuevas."
+ },
+ "lessons.3.kit.0.title": {
+  "en": "Slides: Teaching it a new tool",
+  "t": "Diapositivas: Enseñarle una herramienta nueva"
+ },
+ "lessons.3.kit.1.title": {
+  "en": "Lesson plan and worksheet: Teaching it a new tool",
+  "t": "Plan de clase y hoja de trabajo: Enseñarle una herramienta nueva"
+ },
+ "lessons.3.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "El video de la lección (240p, para la clase o WhatsApp)"
+ },
+ "lessons.4.title": {
+  "en": "How agents work: the loop, tools and memory: unit check",
+  "t": "Cómo funcionan los agentes: el bucle, las herramientas y la memoria: evaluación"
+ },
+ "lessons.4.tryTomorrow": {
+  "en": "Pick the activity from this unit your class needs most (the paper strip, the new wordings, the ten-word window or the new signal), run it this week, and tell a colleague how it went.",
+  "t": "Elige la actividad de esta unidad que más necesita tu clase (la tira de papel, las redacciones nuevas, la ventana de diez palabras o la señal nueva), hazla esta semana y cuéntale a un colega cómo te fue."
+ },
+ "lessons.4.steps.0.prompt": {
+  "en": "In an agent’s text, who writes each tool’s result?",
+  "t": "En el texto de un agente, ¿quién escribe el resultado de cada herramienta?"
+ },
+ "lessons.4.steps.0.options.0.text": {
+  "en": "The model, from what it learned",
+  "t": "El modelo, a partir de lo que aprendió"
+ },
+ "lessons.4.steps.0.options.1.text": {
+  "en": "The app, from the tool",
+  "t": "La app, a partir de la herramienta"
+ },
+ "lessons.4.steps.0.options.2.text": {
+  "en": "The person who asked",
+  "t": "La persona que preguntó"
+ },
+ "lessons.4.steps.0.explain": {
+  "en": "The model writes plans, calls and answers, then stops after a call. The app runs the tool and adds its result, so a result is never made up by the model.",
+  "t": "El modelo escribe planes, llamadas y respuestas, y luego se detiene después de una llamada. La app ejecuta la herramienta y añade su resultado, así que el modelo nunca se inventa un resultado."
+ },
+ "lessons.4.steps.1.prompt": {
+  "en": "Put the app’s loop in order.",
+  "t": "Pon en orden el bucle de la app."
+ },
+ "lessons.4.steps.1.steps.0": {
+  "en": "Send the text so far to the model",
+  "t": "Enviar al modelo el texto hasta ese momento"
+ },
+ "lessons.4.steps.1.steps.1": {
+  "en": "The model writes a tool call",
+  "t": "El modelo escribe una llamada a una herramienta"
+ },
+ "lessons.4.steps.1.steps.2": {
+  "en": "Check the call",
+  "t": "Comprobar la llamada"
+ },
+ "lessons.4.steps.1.steps.3": {
+  "en": "Run the tool and add its result",
+  "t": "Ejecutar la herramienta y añadir su resultado"
+ },
+ "lessons.4.steps.1.steps.4": {
+  "en": "Send the text again, until the model answers",
+  "t": "Volver a enviar el texto, hasta que el modelo responda"
+ },
+ "lessons.4.steps.1.explain": {
+  "en": "The app sends the text, the model writes a call, the app checks it before anything runs, then runs the tool and adds the result, and goes round again until an answer.",
+  "t": "La app envía el texto, el modelo escribe una llamada, la app la comprueba antes de que se ejecute nada, luego ejecuta la herramienta y añade el resultado, y da otra vuelta hasta que haya una respuesta."
+ },
+ "lessons.4.steps.2.prompt": {
+  "en": "A call that copies a class name wrongly can safely run, because the tool will report an error anyway.",
+  "t": "Una llamada que copia mal el nombre de una clase puede ejecutarse sin peligro, porque la herramienta informará de un error de todos modos."
+ },
+ "lessons.4.steps.2.explain": {
+  "en": "Not every slip gives an error: a wrong class that exists returns the wrong lesson, and a reminder or message just acts. The app should check every call before the tool runs.",
+  "t": "No todo desliz produce un error: una clase equivocada que sí existe devuelve la lección equivocada, y un recordatorio o un mensaje simplemente se ejecutan. La app debe comprobar cada llamada antes de que se ejecute la herramienta."
+ },
+ "lessons.4.steps.3.prompt": {
+  "en": "Match each slip to the check that catches it.",
+  "t": "Relaciona cada desliz con la comprobación que lo detecta."
+ },
+ "lessons.4.steps.3.pairs.0.left": {
+  "en": "9Z written as 9C",
+  "t": "9Z escrito como 9C"
+ },
+ "lessons.4.steps.3.pairs.0.right": {
+  "en": "Every name must come from the request",
+  "t": "Cada nombre debe salir de la petición"
+ },
+ "lessons.4.steps.3.pairs.1.left": {
+  "en": "A reminder at 25:00",
+  "t": "Un recordatorio a las 25:00"
+ },
+ "lessons.4.steps.3.pairs.1.right": {
+  "en": "Every detail must have the right shape",
+  "t": "Cada detalle debe tener la forma correcta"
+ },
+ "lessons.4.steps.3.pairs.2.left": {
+  "en": "A call to a tool that is switched off",
+  "t": "Una llamada a una herramienta que está apagada"
+ },
+ "lessons.4.steps.3.pairs.2.right": {
+  "en": "The tool must be on",
+  "t": "La herramienta debe estar activada"
+ },
+ "lessons.4.steps.3.pairs.3.left": {
+  "en": "A reminder set after the timetable tool returned an error",
+  "t": "Un recordatorio programado después de que la herramienta del horario devolviera un error"
+ },
+ "lessons.4.steps.3.pairs.3.right": {
+  "en": "No step before it may have failed",
+  "t": "Ningún paso anterior puede haber fallado"
+ },
+ "lessons.4.steps.3.explain": {
+  "en": "Each is one of the simple rules of a checker in code: names from the person’s words, the right shape, tools that are on, and no building on a failed step.",
+  "t": "Cada una es una de las reglas sencillas de un verificador en código: nombres sacados de las palabras de la persona, la forma correcta, herramientas activadas y no construir sobre un paso fallido."
+ },
+ "lessons.4.steps.4.prompt": {
+  "en": "What does this program print?",
+  "t": "¿Qué imprime este programa?"
+ },
+ "lessons.4.steps.4.options.0.text": {
+  "en": "4",
+  "t": "4"
+ },
+ "lessons.4.steps.4.options.1.text": {
+  "en": "5",
+  "t": "5"
+ },
+ "lessons.4.steps.4.options.2.text": {
+  "en": "Nothing: it never stops",
+  "t": "Nada: nunca se detiene"
+ },
+ "lessons.4.steps.4.explain": {
+  "en": "steps goes up by one each time round: 1, 2, 3, 4, 5. When it reaches 5, steps < 5 is false and the loop stops, so it prints 5. That counter is a step limit.",
+  "t": "steps sube una unidad en cada vuelta: 1, 2, 3, 4, 5. Cuando llega a 5, steps < 5 es falso y el bucle se detiene, así que imprime 5. Ese contador es un límite de pasos."
+ },
+ "lessons.4.steps.5.prompt": {
+  "en": "Which are true about an agent’s context window? Choose all that apply.",
+  "t": "¿Cuáles son verdaderas sobre la ventana de contexto de un agente? Elige todas las que correspondan."
+ },
+ "lessons.4.steps.5.options.0.text": {
+  "en": "It is the model’s only memory in a conversation",
+  "t": "Es la única memoria del modelo en una conversación"
+ },
+ "lessons.4.steps.5.options.1.text": {
+  "en": "What falls out of it is gone for the model",
+  "t": "Lo que se sale de ella ha desaparecido para el modelo"
+ },
+ "lessons.4.steps.5.options.2.text": {
+  "en": "Darsi Tiny’s holds 384 tokens",
+  "t": "La de Darsi Tiny admite 384 tokens"
+ },
+ "lessons.4.steps.5.options.3.text": {
+  "en": "Big cloud models never forget anything",
+  "t": "Los grandes modelos en la nube nunca olvidan nada"
+ },
+ "lessons.4.steps.5.options.4.text": {
+  "en": "The model can look up turns that fell out",
+  "t": "El modelo puede buscar los turnos que se salieron"
+ },
+ "lessons.4.steps.5.explain": {
+  "en": "The window is the only memory, and what falls out is gone. Darsi Tiny’s holds 384 tokens; big models read about 128,000, so they forget less, but they still have a limit and can’t look up what fell out.",
+  "t": "La ventana es la única memoria, y lo que se sale desaparece. La de Darsi Tiny admite 384 tokens; los modelos grandes leen unos 128,000, así que olvidan menos, pero siguen teniendo un límite y no pueden buscar lo que se salió."
+ },
+ "lessons.4.steps.6.prompt": {
+  "en": "Complete the sentences about the teach lab.",
+  "t": "Completa las oraciones sobre el laboratorio de enseñanza."
+ },
+ "lessons.4.steps.6.sentence": {
+  "en": [
+   "With no old conversations mixed in, Darsi Tiny learned the bus tool but kept only ",
+   {
+    "blank": 0
+   },
+   " of 8 old skills. With 48 mixed in, it kept ",
+   {
+    "blank": 1
+   },
+   " of 8."
+  ],
+  "t": [
+   "Sin conversaciones antiguas mezcladas, Darsi Tiny aprendió la herramienta del autobús pero conservó solo ",
+   {
+    "blank": 0
+   },
+   " de 8 habilidades anteriores. Con 48 mezcladas, conservó ",
+   {
+    "blank": 1
+   },
+   " de 8."
+  ]
+ },
+ "lessons.4.steps.6.bank": {
+  "en": [
+   "1",
+   "8",
+   "5",
+   "0"
+  ],
+  "t": [
+   "1",
+   "8",
+   "5",
+   "0"
+  ]
+ },
+ "lessons.4.steps.6.answers": {
+  "en": [
+   "1",
+   "8"
+  ],
+  "t": [
+   "1",
+   "8"
+  ]
+ },
+ "lessons.4.steps.6.explain": {
+  "en": "New examples alone made it forget: old skills fell from 8 of 8 to 1 of 8. Mixing 48 old conversations in kept all 8, while the bus tool scored 5 of 8: a trade-off.",
+  "t": "Los ejemplos nuevos solos lo hicieron olvidar: las habilidades anteriores bajaron de 8 de 8 a 1 de 8. Mezclar 48 conversaciones antiguas conservó las 8, mientras que la herramienta del autobús sacó 5 de 8: un equilibrio."
+ },
+ "lessons.4.steps.7.prompt": {
+  "en": "A step limit stops a loop in which the model keeps calling tools and never answers.",
+  "t": "Un límite de pasos detiene un bucle en el que el modelo sigue llamando herramientas y nunca responde."
+ },
+ "lessons.4.steps.7.explain": {
+  "en": "After a fixed number of calls the app stops the loop and tells the person, instead of running forever and using up battery, data and time.",
+  "t": "Tras un número fijo de llamadas, la app detiene el bucle y avisa a la persona, en lugar de seguir para siempre y gastar batería, datos y tiempo."
+ },
+ "lessons.4.steps.8.prompt": {
+  "en": "The school wants its agent to understand room codes like “Lab 2”. What should come first?",
+  "t": "La escuela quiere que su agente entienda códigos de aula como «Lab 2». ¿Qué debería ir primero?"
+ },
+ "lessons.4.steps.8.options.0.text": {
+  "en": "Fine-tune it tonight on twenty examples",
+  "t": "Ajustarlo esta noche con veinte ejemplos"
+ },
+ "lessons.4.steps.8.options.1.text": {
+  "en": "Try a clearer instruction or a room-codes tool, with a check in code",
+  "t": "Probar una instrucción más clara o una herramienta de códigos de aula, con una comprobación en código"
+ },
+ "lessons.4.steps.8.options.2.text": {
+  "en": "Switch to a bigger cloud model",
+  "t": "Cambiar a un modelo más grande en la nube"
+ },
+ "lessons.4.steps.8.explain": {
+  "en": "An instruction or a tool changes nothing else in the model. Fine-tuning comes last, with old examples mixed in and a test of old and new skills, because it can make the model forget.",
+  "t": "Una instrucción o una herramienta no cambia nada más en el modelo. El ajuste fino va al final, con ejemplos antiguos mezclados y una prueba de las habilidades antiguas y nuevas, porque puede hacer que el modelo olvide."
+ },
+ "lessons.4.steps.9.prompt": {
+  "en": "This loop should stop as soon as the model answers. Which line is the mistake?",
+  "t": "Este bucle debe detenerse en cuanto el modelo responda. ¿Qué línea es el error?"
+ },
+ "lessons.4.steps.9.explain": {
+  "en": "continue skips to the next turn instead of leaving the loop, so the model is asked again after it has already answered. break ends the loop at the answer.",
+  "t": "continue salta al siguiente turno en lugar de salir del bucle, así que se vuelve a preguntar al modelo cuando ya ha respondido. break termina el bucle en la respuesta."
+ },
+ "lessons.4.slides.0.title": {
+  "en": "How agents work: the loop, tools and memory: review",
+  "t": "Cómo funcionan los agentes: el bucle, las herramientas y la memoria: repaso"
+ },
+ "lessons.4.slides.0.note": {
+  "en": "AI agents · Level 3 · Unit check",
+  "t": "Agentes de IA · Nivel 3 · Evaluación"
+ },
+ "lessons.4.slides.0.narration": {
+  "en": "Let’s look back at how agents work, and check what stuck.",
+  "t": "Miremos atrás, a cómo funcionan los agentes, y comprobemos qué se quedó."
+ },
+ "lessons.4.slides.1.title": {
+  "en": "In this unit",
+  "t": "En esta unidad"
+ },
+ "lessons.4.slides.1.bullets": {
+  "en": [
+   "Inside the loop",
+   "How it picks a tool",
+   "Memory: the context window",
+   "Teaching it a new tool"
+  ],
+  "t": [
+   "Dentro del bucle",
+   "Cómo elige una herramienta",
+   "Memoria: la ventana de contexto",
+   "Enseñarle una herramienta nueva"
+  ]
+ },
+ "lessons.4.slides.2.title": {
+  "en": "The big ideas",
+  "t": "Las grandes ideas"
+ },
+ "lessons.4.slides.2.bullets": {
+  "en": [
+   "It’s all one text: the model writes plans, calls and answers; the app adds results",
+   "The model picks a tool from the tools line and your words, and copies details, with slips",
+   "The context window is its only memory: what falls out is gone",
+   "Fine-tuning teaches new skills but can make it forget: test old and new"
+  ],
+  "t": [
+   "Todo es un solo texto: el modelo escribe planes, llamadas y respuestas; la app añade los resultados",
+   "El modelo elige una herramienta a partir de la línea de herramientas y tus palabras, y copia detalles, con deslices",
+   "La ventana de contexto es su única memoria: lo que se sale desaparece",
+   "El ajuste fino enseña habilidades nuevas pero puede hacerlo olvidar: prueba lo antiguo y lo nuevo"
+  ]
+ },
+ "lessons.4.slides.3.title": {
+  "en": "Team quiz",
+  "t": "Cuestionario por equipos"
+ },
+ "lessons.4.slides.3.bullets": {
+  "en": [
+   "Make teams of four",
+   "Read each question aloud; teams agree on one answer",
+   "Reveal the answer and ask one team to explain why",
+   "Write the hardest question on the board for tomorrow"
+  ],
+  "t": [
+   "Formen equipos de cuatro",
+   "Lean cada pregunta en voz alta; los equipos acuerdan una respuesta",
+   "Revela la respuesta y pide a un equipo que explique por qué",
+   "Escribe la pregunta más difícil en la pizarra para mañana"
+  ]
+ },
+ "lessons.4.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Conversemos"
+ },
+ "lessons.4.slides.4.bullets": {
+  "en": [
+   "Which idea will you use first with your class?",
+   "Which of Darsi Tiny’s mistakes surprised you most?",
+   "What would you check before trusting an agent at school?"
+  ],
+  "t": [
+   "¿Qué idea usarás primero con tu clase?",
+   "¿Cuál de los errores de Darsi Tiny te sorprendió más?",
+   "¿Qué comprobarías antes de confiar en un agente en la escuela?"
+  ]
+ },
+ "lessons.4.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Boleto de salida"
+ },
+ "lessons.4.slides.5.bullets": {
+  "en": [
+   "One thing I now understand about how agents work, and how I’ll explain it to my pupils"
+  ],
+  "t": [
+   "Algo que ahora entiendo sobre cómo funcionan los agentes y cómo se lo explicaré a mis alumnos"
+  ]
+ },
+ "lessons.4.slides.5.narration": {
+  "en": "One text, a picked tool, a small window, and careful teaching: test everything.",
+  "t": "Un texto, una herramienta elegida, una ventana pequeña y una enseñanza cuidadosa: prueba todo."
+ },
+ "lessons.4.kit.0.title": {
+  "en": "Slides: How agents work: the loop, tools and memory, review",
+  "t": "Diapositivas: Cómo funcionan los agentes: el bucle, las herramientas y la memoria, repaso"
+ },
+ "lessons.4.kit.1.title": {
+  "en": "Review plan and quiz sheet: How agents work: the loop, tools and memory",
+  "t": "Plan de repaso y hoja del cuestionario: Cómo funcionan los agentes: el bucle, las herramientas y la memoria"
+ }
+}

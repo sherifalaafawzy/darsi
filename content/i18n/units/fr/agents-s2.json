@@ -1,0 +1,1958 @@
+{
+ "title": {
+  "en": "Working with an agent safely",
+  "t": "Travailler avec un agent en toute sécurité"
+ },
+ "summary": {
+  "en": "Use AI agents with your eyes open: see the loop inside, check what an agent did, decide what it may do without asking, and protect your data and your data bundle. Your first lines of Python show how the checks work.",
+  "t": "Utilisez les agents d’IA les yeux ouverts : voyez la boucle à l’intérieur, vérifiez ce qu’un agent a fait, décidez ce qu’il peut faire sans demander, et protégez vos données et votre forfait de données. Vos premières lignes de Python montrent comment fonctionnent les contrôles."
+ },
+ "lessons.0.title": {
+  "en": "Inside an agent",
+  "t": "À l’intérieur d’un agent"
+ },
+ "lessons.0.tryTomorrow": {
+  "en": "Write down three things you asked a phone or an app to do this week. For each one, decide: only talk, or a tool? Then write the tool call it might have made, with a name and details.",
+  "t": "Notez trois choses que vous avez demandées cette semaine à un téléphone ou à une appli. Pour chacune, décidez : seulement parler, ou un outil ? Puis écrivez l’appel d’outil qu’il a peut-être fait, avec un nom et des détails."
+ },
+ "lessons.0.materials": {
+  "en": [
+   "Paper and a pen",
+   "A timetable, a bus timetable or a weather forecast (from the radio, TV or a newspaper)",
+   "A friend or someone at home to play the tool"
+  ],
+  "t": [
+   "Du papier et un stylo",
+   "Un emploi du temps, un horaire de bus ou une prévision météo (à la radio, à la télé ou dans un journal)",
+   "Un ami ou quelqu’un à la maison pour jouer l’outil"
+  ]
+ },
+ "lessons.0.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Regarder"
+ },
+ "lessons.0.steps.0.title": {
+  "en": "Inside an agent",
+  "t": "À l’intérieur d’un agent"
+ },
+ "lessons.0.steps.0.chapters.0.label": {
+  "en": "A puzzle",
+  "t": "Une énigme"
+ },
+ "lessons.0.steps.0.chapters.1.label": {
+  "en": "Talk, or act?",
+  "t": "Parler ou agir ?"
+ },
+ "lessons.0.steps.0.chapters.2.label": {
+  "en": "Reading a tool call",
+  "t": "Lire un appel d’outil"
+ },
+ "lessons.0.steps.0.chapters.3.label": {
+  "en": "Two tools and a loop",
+  "t": "Deux outils et une boucle"
+ },
+ "lessons.0.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "À retenir et à essayer"
+ },
+ "lessons.0.steps.0.checkpoint.question.prompt": {
+  "en": "Who writes the tool call, and who actually runs the tool?",
+  "t": "Qui écrit l’appel d’outil, et qui exécute réellement l’outil ?"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.0.text": {
+  "en": "The model writes it; the app runs it",
+  "t": "Le modèle l’écrit ; l’appli l’exécute"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.1.text": {
+  "en": "The app writes it; the model runs it",
+  "t": "L’appli l’écrit ; le modèle l’exécute"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.2.text": {
+  "en": "The model writes it and runs it too",
+  "t": "Le modèle l’écrit et l’exécute aussi"
+ },
+ "lessons.0.steps.0.checkpoint.question.explain": {
+  "en": "The model only writes text, including the call. The app runs the tool, so the app sees every call and can check it first.",
+  "t": "Le modèle n’écrit que du texte, y compris l’appel. C’est l’appli qui exécute l’outil : elle voit donc chaque appel et peut le vérifier d’abord."
+ },
+ "lessons.0.steps.0.transcript": {
+  "en": "Here’s a puzzle from our computer club. A chatbot gave Zainab a bus time that was totally wrong. Her phone’s assistant set her alarm perfectly. What’s the difference? Today: what’s inside an AI agent, and how to read what it does. A chatbot is a language model that only writes text back. It guesses likely words, so it can sound sure and still be wrong. An agent can also use tools: small programs like a timetable, the weather or an alarm. An agent works in a loop. You make a request, and the model writes a short plan, then a tool call. The app runs the tool and adds the result. Then the model answers, or calls another tool. Here’s a real call from Darsi Tiny, a small model on your phone. I asked about the weather in Kafi tomorrow. It wrote the tool’s name, weather, then the details in curly brackets: the place and the day. The model can’t run the tool: it only writes text. The app runs it and adds the result: sunny, thirty-five degrees, a ten percent chance of rain. Then the model answers from that result. Quick check! Who writes the tool call, and who actually runs the tool? The model writes the call, and the app runs it. So the app sees every call before anything happens. That’s where checks can go, and you’ll write some in this course. Some jobs need two tools. Ask about a trip from Kafi to Dala tomorrow. Darsi Tiny calls the route tool first: seventy kilometres. Then it calls the weather tool for Dala, and gives one answer with both. In Python, an app’s loop can be short. Here a list stands in for the model’s replies, because there’s no model inside our code. The loop runs a tool for each call, and stops at the answer. In the app, choose a request and press One step until it answers. Try the trip to Dala and count the tools. Then open What Darsi Tiny sees: the whole conversation is one text. Your turn. On the trip to Dala, how many tools does Darsi Tiny call before it answers? Two: route, then weather. Remember: an agent is a model in a loop with tools. A call is a tool’s name and its details. The model writes, and the app runs the tools. Try it yourself: list three things you asked a phone or an app to do this week. For each one, was it only talk, or did it use a tool? Then write the call it might have made, with a name and details.",
+  "t": "Voici une énigme de notre club d’informatique. Un chatbot a donné à Zainab un horaire de bus complètement faux. L’assistant de son téléphone a réglé son réveil à la perfection. Quelle est la différence? Aujourd’hui: ce qu’il y a à l’intérieur d’un agent d’IA, et comment lire ce qu’il fait. Un chatbot est un modèle de langage qui ne fait que renvoyer du texte. Il devine les mots probables, donc il peut paraître sûr de lui et se tromper. Un agent peut aussi utiliser des outils: de petits programmes comme un emploi du temps, la météo ou un réveil. Un agent travaille en boucle. Vous faites une demande, et le modèle écrit un court plan, puis un appel d’outil. L’appli lance l’outil et ajoute le résultat. Ensuite, le modèle répond, ou appelle un autre outil. Voici un vrai appel de Darsi Tiny, un petit modèle sur votre téléphone. J’ai posé une question sur la météo à Kafi demain. Il a écrit le nom de l’outil, météo, puis les précisions entre accolades: le lieu et le jour. Le modèle ne peut pas lancer l’outil: il ne fait qu’écrire du texte. L’appli le lance et ajoute le résultat: ensoleillé, trente-cinq degrés, dix pour cent de chances de pluie. Ensuite, le modèle répond d’après ce résultat. Petit contrôle! Qui écrit l’appel d’outil, et qui lance vraiment l’outil? Le modèle écrit l’appel, et l’appli le lance. L’appli voit donc chaque appel avant que quoi que ce soit n’arrive. C’est là que des vérifications peuvent se placer, et vous en écrirez dans ce cours. Certaines tâches demandent deux outils. Posez une question sur un trajet de Kafi à Dala demain. Darsi Tiny appelle d’abord l’outil d’itinéraire: soixante-dix kilomètres. Puis il appelle l’outil météo pour Dala, et donne une seule réponse avec les deux. En Python, la boucle d’une appli peut être courte. Ici, une liste remplace les réponses du modèle, car il n’y a aucun modèle dans notre code. La boucle lance un outil pour chaque appel, et s’arrête à la réponse. Dans l’appli, choisissez une demande et appuyez sur Un pas jusqu’à la réponse. Essayez le trajet vers Dala et comptez les outils. Puis ouvrez Ce que voit Darsi Tiny: toute la conversation est un seul texte. À vous. Pour le trajet vers Dala, combien d’outils Darsi Tiny appelle-t-il avant de répondre? Deux: itinéraire, puis météo. À retenir: un agent est un modèle dans une boucle avec des outils. Un appel est le nom d’un outil et ses précisions. Le modèle écrit, et l’appli lance les outils. Essayez par vous-même: listez trois choses que vous avez demandées à un téléphone ou à une appli cette semaine. Pour chacune, était-ce seulement de la parole, ou un outil a-t-il servi? Puis écrivez l’appel qu’il a pu faire, avec un nom et des précisions."
+ },
+ "lessons.0.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lire"
+ },
+ "lessons.0.steps.1.title": {
+  "en": "The loop inside every agent",
+  "t": "La boucle à l’intérieur de chaque agent"
+ },
+ "lessons.0.steps.1.body": {
+  "en": "A chatbot is a language model that writes text back to you. It guesses likely words one small piece at a time, so it can sound sure of itself and still be wrong. An AI agent is a language model that can also use tools: small programs such as a timetable, a weather service, a calculator or an alarm.\n\nAn agent works in a loop. You make a request. The model writes a short plan, then a tool call: the tool’s name followed by its details in curly brackets, such as weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}. The details are written in a format called JSON: a name in quotes, a colon, then its value. The app around the model reads the call, runs the tool and adds the tool’s result to the conversation. Then the model reads the result and writes its answer, or calls another tool first. A trip from Kafi to Dala, for example, takes two calls: the route (70 km), then the weather in Dala.\n\nThe model never runs anything itself: it only writes text. That is good news, because the app sees every call before anything happens. The app is where checks can go: is this the right tool, are these the right details, did a person say yes? In this course you will read calls, check them and write a few checks of your own in Python.\n\nThe agent in the Labs is Darsi Tiny, a small language model that runs on your phone, with ten tools in a made-up school world. Your Python programs can’t run a model (the code area on your phone has no model inside), so in code a short list stands in for the model’s replies. That is honest, and it is also how real apps are tested.",
+  "t": "Un chatbot est un modèle de langage qui vous répond par écrit. Il devine les mots probables un petit morceau à la fois : il peut donc paraître sûr de lui et avoir tort. Un agent d’IA est un modèle de langage qui peut aussi utiliser des outils : de petits programmes comme un emploi du temps, un service météo, une calculatrice ou un réveil.\n\nUn agent travaille en boucle. Vous faites une demande. Le modèle écrit un court plan, puis un appel d’outil : le nom de l’outil suivi de ses détails entre accolades, comme weather{\"place\":\"Kafi\",\"jour\":\"tomorrow\"}. Les détails sont écrits dans un format appelé JSON : un nom entre guillemets, deux-points, puis sa valeur. L’appli autour du modèle lit l’appel, exécute l’outil et ajoute le résultat de l’outil à la conversation. Ensuite le modèle lit le résultat et écrit sa réponse, ou appelle d’abord un autre outil. Un trajet de Kafi à Dala, par exemple, demande deux appels : l’itinéraire (70 km), puis la météo à Dala.\n\nLe modèle n’exécute jamais rien lui-même : il n’écrit que du texte. C’est une bonne nouvelle, car l’appli voit chaque appel avant que quoi que ce soit se passe. C’est dans l’appli que peuvent se placer les contrôles : est-ce le bon outil, les détails sont-ils les bons, une personne a-t-elle dit oui ? Dans ce cours, vous lirez des appels, vous les contrôlerez et vous écrirez quelques contrôles à vous en Python.\n\nL’agent des Labos est Darsi Tiny, un petit modèle de langage qui tourne sur votre téléphone, avec dix outils dans un monde scolaire imaginaire. Vos programmes Python ne peuvent pas exécuter de modèle (la zone de code de votre téléphone n’en contient aucun) : dans le code, une courte liste remplace donc les réponses du modèle. C’est honnête, et c’est aussi ainsi que l’on teste les vraies applis."
+ },
+ "lessons.0.steps.1.keyTerms.0.term": {
+  "en": "AI agent",
+  "t": "Agent d’IA"
+ },
+ "lessons.0.steps.1.keyTerms.0.def": {
+  "en": "A language model in a loop with tools: it plans, calls tools, reads their results and answers.",
+  "t": "Un modèle de langage en boucle avec des outils : il planifie, appelle des outils, lit leurs résultats et répond."
+ },
+ "lessons.0.steps.1.keyTerms.1.term": {
+  "en": "Tool call",
+  "t": "Appel d’outil"
+ },
+ "lessons.0.steps.1.keyTerms.1.def": {
+  "en": "The text a model writes to ask for a tool: the tool’s name, then its details.",
+  "t": "Le texte qu’un modèle écrit pour demander un outil : le nom de l’outil, puis ses détails."
+ },
+ "lessons.0.steps.1.keyTerms.2.term": {
+  "en": "Result",
+  "t": "Résultat"
+ },
+ "lessons.0.steps.1.keyTerms.2.def": {
+  "en": "What the tool gives back. The app adds it to the conversation, and the model answers from it.",
+  "t": "Ce que l’outil renvoie. L’appli l’ajoute à la conversation, et le modèle répond à partir de lui."
+ },
+ "lessons.0.steps.1.keyTerms.3.term": {
+  "en": "JSON",
+  "t": "JSON"
+ },
+ "lessons.0.steps.1.keyTerms.3.def": {
+  "en": "A way of writing details: each name in quotes with its value, inside curly brackets.",
+  "t": "Une façon d’écrire des détails : chaque nom entre guillemets avec sa valeur, entre accolades."
+ },
+ "lessons.0.steps.2.prompt": {
+  "en": "On the trip from Kafi to Dala, how many tools does Darsi Tiny call before it answers?",
+  "t": "Pendant le trajet de Kafi à Dala, combien d’outils Darsi Tiny appelle-t-il avant de répondre ?"
+ },
+ "lessons.0.steps.2.options.0.text": {
+  "en": "One",
+  "t": "Un"
+ },
+ "lessons.0.steps.2.options.1.text": {
+  "en": "Two",
+  "t": "Deux"
+ },
+ "lessons.0.steps.2.options.2.text": {
+  "en": "Five",
+  "t": "Cinq"
+ },
+ "lessons.0.steps.2.explain": {
+  "en": "The route tool first (70 km), then the weather tool for Dala, and then one answer with both.",
+  "t": "L’outil d’itinéraire d’abord (70 km), puis l’outil météo pour Dala, et ensuite une seule réponse avec les deux."
+ },
+ "lessons.0.steps.3.prompt": {
+  "en": "Put the agent loop in order.",
+  "t": "Mettez la boucle de l’agent dans l’ordre."
+ },
+ "lessons.0.steps.3.steps.0": {
+  "en": "You make a request",
+  "t": "Vous faites une demande"
+ },
+ "lessons.0.steps.3.steps.1": {
+  "en": "The model writes a plan",
+  "t": "Le modèle écrit un plan"
+ },
+ "lessons.0.steps.3.steps.2": {
+  "en": "The model writes a tool call",
+  "t": "Le modèle écrit un appel d’outil"
+ },
+ "lessons.0.steps.3.steps.3": {
+  "en": "The app runs the tool and adds the result",
+  "t": "L’appli exécute l’outil et ajoute le résultat"
+ },
+ "lessons.0.steps.3.steps.4": {
+  "en": "The model answers from the result",
+  "t": "Le modèle répond à partir du résultat"
+ },
+ "lessons.0.steps.3.explain": {
+  "en": "The model plans before it calls a tool. Only the app can run the tool and add the result, and only then can the model answer from it.",
+  "t": "Le modèle planifie avant d’appeler un outil. Seule l’appli peut exécuter l’outil et ajouter le résultat, et c’est seulement alors que le modèle peut répondre à partir de lui."
+ },
+ "lessons.0.steps.4.prompt": {
+  "en": "What does this program print?",
+  "t": "Qu’affiche ce programme ?"
+ },
+ "lessons.0.steps.4.options.0.text": {
+  "en": "weather",
+  "t": "weather"
+ },
+ "lessons.0.steps.4.options.1.text": {
+  "en": "Kafi",
+  "t": "Kafi"
+ },
+ "lessons.0.steps.4.options.2.text": {
+  "en": "place",
+  "t": "place"
+ },
+ "lessons.0.steps.4.explain": {
+  "en": "split(\"{\") cuts the call at the curly bracket, and [0] takes the first piece: the tool’s name, weather. The details (place and Kafi) are in the second piece.",
+  "t": "split(\"{\") coupe l’appel à l’accolade, et [0] prend le premier morceau : le nom de l’outil, weather. Les détails (place et Kafi) sont dans le second morceau."
+ },
+ "lessons.0.steps.5.prompt": {
+  "en": "Try it: pick “What’s the weather in Kafi tomorrow?” and press One step until it answers: the plan, the call, the result (written by the app) and the answer. Then run the trip from Kafi to Dala and count the tool calls. Open “What Darsi Tiny sees” and find the call inside the text. Answer three different requests to finish. The first run downloads Darsi Tiny once (2.8 MB).",
+  "t": "Essayez : choisissez « Quel temps fera-t-il à Kafi demain ? » et appuyez sur Une étape jusqu’à ce qu’il réponde : le plan, l’appel, le résultat (écrit par l’appli) et la réponse. Puis lancez le trajet de Kafi à Dala et comptez les appels d’outils. Ouvrez « Ce que voit Darsi Tiny » et trouvez l’appel dans le texte. Répondez à trois demandes différentes pour terminer. Le premier lancement télécharge Darsi Tiny une seule fois (2,8 Mo)."
+ },
+ "lessons.0.steps.6.prompt": {
+  "en": "This app’s loop uses a scripted list in place of a real model. Put the lines in order (with their indents) so it runs a tool for each call and stops at the answer.",
+  "t": "La boucle de cette appli utilise une liste écrite à l’avance à la place d’un vrai modèle. Mettez les lignes dans l’ordre (avec leurs retraits) pour qu’elle exécute un outil à chaque appel et s’arrête à la réponse."
+ },
+ "lessons.0.steps.6.explain": {
+  "en": "First the list, then the loop. Inside it, the if checks for the answer and break stops the loop; otherwise the app runs a tool. The model never runs tools, so “Model runs a tool” doesn’t belong.",
+  "t": "D’abord la liste, puis la boucle. À l’intérieur, le if vérifie la réponse et break arrête la boucle ; sinon l’appli exécute un outil. Le modèle n’exécute jamais d’outils, donc « Model runs a tool » n’a pas sa place."
+ },
+ "lessons.0.steps.7.prompt": {
+  "en": "Match each part of the trip from Kafi to Dala to what it was.",
+  "t": "Associez chaque partie du trajet de Kafi à Dala à ce qu’elle était."
+ },
+ "lessons.0.steps.7.pairs.0.left": {
+  "en": "Plan",
+  "t": "Plan"
+ },
+ "lessons.0.steps.7.pairs.0.right": {
+  "en": "“First the route, then the weather.”",
+  "t": "« D’abord l’itinéraire, puis la météo. »"
+ },
+ "lessons.0.steps.7.pairs.1.left": {
+  "en": "First tool call",
+  "t": "Premier appel d’outil"
+ },
+ "lessons.0.steps.7.pairs.1.right": {
+  "en": "route, from Kafi to Dala",
+  "t": "route, de Kafi à Dala"
+ },
+ "lessons.0.steps.7.pairs.2.left": {
+  "en": "First result",
+  "t": "Premier résultat"
+ },
+ "lessons.0.steps.7.pairs.2.right": {
+  "en": "70 km",
+  "t": "70 km"
+ },
+ "lessons.0.steps.7.pairs.3.left": {
+  "en": "Answer",
+  "t": "Réponse"
+ },
+ "lessons.0.steps.7.pairs.3.right": {
+  "en": "“From Kafi to Dala: 70 km… Tomorrow in Dala: partly cloudy…”",
+  "t": "« De Kafi à Dala : 70 km… Demain à Dala : partiellement nuageux… »"
+ },
+ "lessons.0.steps.7.explain": {
+  "en": "The plan names the steps, each call names a tool and its details, each result comes back from the app, and the answer uses both results.",
+  "t": "Le plan nomme les étapes, chaque appel nomme un outil et ses détails, chaque résultat revient de l’appli, et la réponse utilise les deux résultats."
+ },
+ "lessons.0.steps.8.prompt": {
+  "en": "In an agent, the language model runs the tools itself.",
+  "t": "Dans un agent, le modèle de langage exécute lui-même les outils."
+ },
+ "lessons.0.steps.8.explain": {
+  "en": "The model only writes text, including the tool call. The app runs the tool and adds the result, which is why the app can check a call before anything happens.",
+  "t": "Le modèle n’écrit que du texte, y compris l’appel d’outil. L’appli exécute l’outil et ajoute le résultat : c’est pourquoi l’appli peut vérifier un appel avant que quoi que ce soit se passe."
+ },
+ "lessons.0.steps.9.prompt": {
+  "en": "Think of an app on your phone that does things for you. What tools might it use, and what would you want to see before it acts?",
+  "t": "Pensez à une appli de votre téléphone qui fait des choses à votre place. Quels outils pourrait-elle utiliser, et que voudriez-vous voir avant qu’elle agisse ?"
+ },
+ "lessons.0.steps.9.placeholder": {
+  "en": "For example: “My map app uses a route tool and a traffic tool. I’d like to see the route before it starts guiding me.”",
+  "t": "Par exemple : « Mon appli de cartes utilise un outil d’itinéraire et un outil de circulation. J’aimerais voir l’itinéraire avant qu’elle commence à me guider. »"
+ },
+ "lessons.0.steps.10.prompt": {
+  "en": "Project: Be the agent",
+  "t": "Projet : Soyez l’agent"
+ },
+ "lessons.0.steps.10.task": {
+  "en": "Play an agent with a friend at school, or with someone at home. You need a timetable, a bus timetable or a weather forecast. One of you is the model, the other is the tool. The tool asks three questions out loud, such as “When is our maths lesson on Monday?”. For each one, the model writes a plan and a tool call on paper (for example timetable{\"class\":\"6B\",\"day\":\"monday\"}), and hands it over without saying the answer. The tool writes the result from the timetable. Then the model answers using only that result. Swap roles for the last question.",
+  "t": "Jouez un agent avec un ami à l’école, ou avec quelqu’un à la maison. Il vous faut un emploi du temps, un horaire de bus ou une prévision météo. L’un de vous est le modèle, l’autre est l’outil. L’outil pose trois questions à voix haute, comme « Quand est notre cours de maths lundi ? ». Pour chacune, le modèle écrit sur papier un plan et un appel d’outil (par exemple timetable{\"class\":\"6B\",\"jour\":\"monday\"}), et le remet sans dire la réponse. L’outil écrit le résultat à partir de l’emploi du temps. Puis le modèle répond en utilisant seulement ce résultat. Échangez les rôles pour la dernière question."
+ },
+ "lessons.0.steps.10.deliverable": {
+  "en": "A photo of your three calls and results (no faces, no personal details), and one sentence: what surprised you about being the model?",
+  "t": "Une photo de vos trois appels et résultats (sans visages, sans détails personnels), et une phrase : qu’est-ce qui vous a surpris quand vous étiez le modèle ?"
+ },
+ "lessons.0.steps.10.rubric.0.criterion": {
+  "en": "I can: describe the loop: request, plan, call, result, answer.",
+  "t": "Je sais : décrire la boucle : demande, plan, appel, résultat, réponse."
+ },
+ "lessons.0.steps.10.rubric.1.criterion": {
+  "en": "I can: write a tool call with a name and its details.",
+  "t": "Je sais : écrire un appel d’outil avec un nom et ses détails."
+ },
+ "lessons.0.steps.10.rubric.2.criterion": {
+  "en": "I can: explain why the answer must come from the result.",
+  "t": "Je sais : expliquer pourquoi la réponse doit venir du résultat."
+ },
+ "lessons.0.slides.0.title": {
+  "en": "Inside an agent",
+  "t": "À l’intérieur d’un agent"
+ },
+ "lessons.0.slides.0.note": {
+  "en": "AI agents · Lower secondary · Lesson 1",
+  "t": "Agents IA, collège, leçon 1"
+ },
+ "lessons.0.slides.0.narration": {
+  "en": "What really happens inside an AI agent?",
+  "t": "Que se passe-t-il vraiment à l’intérieur d’un agent d’IA ?"
+ },
+ "lessons.0.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "Dans cette leçon, vous allez"
+ },
+ "lessons.0.slides.1.bullets": {
+  "en": [
+   "Describe the agent loop.",
+   "Read a tool call: its name and its details.",
+   "Put a short Python loop in order."
+  ],
+  "t": [
+   "Décrire la boucle de l’agent.",
+   "Lire un appel d’outil : son nom et ses détails.",
+   "Remettre dans l’ordre une courte boucle Python."
+  ]
+ },
+ "lessons.0.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Idées clés"
+ },
+ "lessons.0.slides.2.bullets": {
+  "en": [
+   "An agent is a language model in a loop with tools.",
+   "A tool call is a tool’s name plus its details.",
+   "The model writes; the app runs the tools, and can check first."
+  ],
+  "t": [
+   "Un agent est un modèle de langage en boucle avec des outils.",
+   "Un appel d’outil, c’est le nom d’un outil plus ses détails.",
+   "Le modèle écrit ; l’appli exécute les outils, et peut vérifier d’abord."
+  ]
+ },
+ "lessons.0.slides.3.title": {
+  "en": "Be the agent",
+  "t": "Soyez l’agent"
+ },
+ "lessons.0.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): Talk, or act? Sort five apps.",
+   "Write (7 min): Turn three requests into tool calls.",
+   "Play (7 min): One of you is the model, one the tool.",
+   "Check (3 min): Did each answer come from the result?"
+  ],
+  "t": [
+   "Échauffement (3 min) : Parler ou agir ? Classez cinq applis.",
+   "Écrire (7 min) : Transformez trois demandes en appels d’outils.",
+   "Jouer (7 min) : L’un de vous est le modèle, l’autre l’outil.",
+   "Vérifier (3 min) : Chaque réponse venait-elle du résultat ?"
+  ]
+ },
+ "lessons.0.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): List five apps you or your family use. Next to each, write “talk” if it only writes text back, or “act” if it does something, such as setting an alarm or finding a route.",
+   "Write (7 min): Choose three requests, such as “What’s the weather in our town tomorrow?”. For each, write the tool call: the tool’s name, then the details in curly brackets.",
+   "Play (7 min): With a partner, one of you is the model and the other the tool. The model hands over each call without saying the answer; the tool writes the result from a timetable or forecast; the model answers from that result only.",
+   "Check (3 min): Read your answers again. Did each one use the result, or did the model guess? Swap roles and play one more round."
+  ],
+  "t": [
+   "Échauffement (3 min) : Listez cinq applis que vous ou votre famille utilisez. À côté de chacune, écrivez « parler » si elle ne fait que renvoyer du texte, ou « agir » si elle fait quelque chose, comme régler un réveil ou trouver un itinéraire.",
+   "Écrire (7 min) : Choisissez trois demandes, comme « Quel temps fera-t-il demain dans notre ville ? ». Pour chacune, écrivez l’appel d’outil : le nom de l’outil, puis les détails entre accolades.",
+   "Jouer (7 min) : Avec un partenaire, l’un de vous est le modèle et l’autre l’outil. Le modèle remet chaque appel sans dire la réponse ; l’outil écrit le résultat à partir d’un emploi du temps ou d’une prévision ; le modèle répond seulement à partir de ce résultat.",
+   "Vérifier (3 min) : Relisez vos réponses. Chacune a-t-elle utilisé le résultat, ou le modèle a-t-il deviné ? Échangez les rôles et jouez un tour de plus."
+  ]
+ },
+ "lessons.0.slides.3.note": {
+  "en": "You only need paper, a pen, and a timetable or a weather forecast. No phone is needed.",
+  "t": "Il vous faut seulement du papier, un stylo, et un emploi du temps ou une prévision météo. Pas besoin de téléphone."
+ },
+ "lessons.0.slides.3.narration": {
+  "en": "Be the model: write the call, and answer only from the result.",
+  "t": "Soyez le modèle : écrivez l’appel, et répondez seulement à partir du résultat."
+ },
+ "lessons.0.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.0.slides.4.bullets": {
+  "en": [
+   "Which apps on your phone are agents, and which only talk?",
+   "Why is it useful that the app, not the model, runs the tools?",
+   "What would you want to check before an agent acts for you?"
+  ],
+  "t": [
+   "Quelles applis de votre téléphone sont des agents, et lesquelles ne font que parler ?",
+   "Pourquoi est-il utile que ce soit l’appli, et non le modèle, qui exécute les outils ?",
+   "Que voudriez-vous vérifier avant qu’un agent agisse pour vous ?"
+  ]
+ },
+ "lessons.0.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.0.slides.5.bullets": {
+  "en": [
+   "Write one tool call for a request of your own: the tool’s name and its details."
+  ],
+  "t": [
+   "Écrivez un appel d’outil pour une demande de votre choix : le nom de l’outil et ses détails."
+  ]
+ },
+ "lessons.0.slides.5.narration": {
+  "en": "Tonight, find one app that acts for you, and write the call it might make.",
+  "t": "Ce soir, trouvez une appli qui agit pour vous, et écrivez l’appel qu’elle pourrait faire."
+ },
+ "lessons.0.kit.0.title": {
+  "en": "Slides to revise: Inside an agent",
+  "t": "Diapositives de révision : À l’intérieur d’un agent"
+ },
+ "lessons.0.kit.1.title": {
+  "en": "Activity sheet: Inside an agent",
+  "t": "Fiche d’activité : À l’intérieur d’un agent"
+ },
+ "lessons.0.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "La vidéo de la leçon (240p, pour la revoir ou la partager)"
+ },
+ "lessons.1.title": {
+  "en": "Check what it did",
+  "t": "Vérifier ce qu’il a fait"
+ },
+ "lessons.1.tryTomorrow": {
+  "en": "Next time an app or an agent does something for you, check what it actually did: the day, the time, the names. Write down one slip you find, and the rule that would have caught it.",
+  "t": "La prochaine fois qu’une appli ou un agent fait quelque chose pour vous, vérifiez ce qu’il a réellement fait : le jour, l’heure, les noms. Notez une bévue que vous trouvez, et la règle qui l’aurait repérée."
+ },
+ "lessons.1.materials": {
+  "en": [
+   "Paper cards or slips, and a pen",
+   "Five made-up requests, written out (for example: “Remind me to feed the goats at 6:00”)",
+   "A friend or family member to play the agent"
+  ],
+  "t": [
+   "Des cartes ou des petits papiers, et un stylo",
+   "Cinq demandes inventées, écrites (par exemple : « Rappelle-moi de nourrir les chèvres à 6:00 »)",
+   "Un ami ou un membre de la famille pour jouer l’agent"
+  ]
+ },
+ "lessons.1.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Regarder"
+ },
+ "lessons.1.steps.0.title": {
+  "en": "Check what it did",
+  "t": "Vérifier ce qu’il a fait"
+ },
+ "lessons.1.steps.0.chapters.0.label": {
+  "en": "Class 9Z",
+  "t": "Classe 9Z"
+ },
+ "lessons.1.steps.0.chapters.1.label": {
+  "en": "Sure, but wrong",
+  "t": "Sûr de lui, mais faux"
+ },
+ "lessons.1.steps.0.chapters.2.label": {
+  "en": "Checking a call",
+  "t": "Contrôler un appel"
+ },
+ "lessons.1.steps.0.chapters.3.label": {
+  "en": "Failed steps and a check in code",
+  "t": "Étapes ratées et contrôle en code"
+ },
+ "lessons.1.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "À retenir et à essayer"
+ },
+ "lessons.1.steps.0.checkpoint.question.prompt": {
+  "en": "You asked for a reminder to tidy the library. The call says “tisums the library”. What should happen?",
+  "t": "Vous avez demandé un rappel pour ranger la bibliothèque. L’appel dit « tisums la bibliothèque ». Que doit-il se passer ?"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.0.text": {
+  "en": "Run it: it’s nearly right",
+  "t": "L’exécuter : c’est presque juste"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.1.text": {
+  "en": "Stop it: that word isn’t in your request",
+  "t": "L’arrêter : ce mot n’est pas dans votre demande"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.2.text": {
+  "en": "Run it twice to be sure",
+  "t": "L’exécuter deux fois pour être sûr"
+ },
+ "lessons.1.steps.0.checkpoint.question.explain": {
+  "en": "Every word in a call must come from your request or a tool’s result. “Tisums” comes from neither, so the checker stops it before it runs.",
+  "t": "Chaque mot d’un appel doit venir de votre demande ou du résultat d’un outil. « Tisums » ne vient ni de l’une ni de l’autre : le vérificateur l’arrête donc avant qu’il s’exécute."
+ },
+ "lessons.1.steps.0.transcript": {
+  "en": "I asked an agent what class 9Z has tomorrow. There is no class 9Z in our school! It still looked something up and answered politely. So what did it actually do? Today: how to check what an agent did, before you trust it. Here’s the call Darsi Tiny wrote. Look closely: the class says 9C, not 9Z. It has seen names like 9C far more often, so it copied the wrong one. Small models copy names and words wrongly. Once, “tidy” came out as “tisums”. New wordings trip them up too: about four in five right. And they never say they’re unsure. So, checking an agent means comparing its call with your request. Is it the right tool? Did every name and number come from your words, or from a tool’s result? If not, stop it before it runs. Our checker has five rules, written in code. The tool must be switched on. Details need the right shape, so twenty-five o’clock fails. Names must come from you or a result. No earlier step may have failed, and a person says yes to any action. Quick check! You asked for a reminder to tidy the library. The call says “tisums the library”. What should happen? Stop it. That word isn’t in your request or in any result, so the checker stops the call. Then you ask again, in other words. The checker doesn’t need to be clever: strict rules never guess. Checks matter for two-step jobs too. Ask for 6B’s first lesson on Saturday, with a reminder. The timetable says: no school. Darsi Tiny sets a reminder anyway, because it never checks a result before using it. A rule like this takes only a few lines of Python. The program asks: is this detail in the request? If it isn’t, it stops and says why. You’ll fill in a check like this after the video. In the app, Darsi Tiny plans and a checker of five rules reviews each call. Send the weather request: it passes. Then ask what 9Z has tomorrow, and watch the checker stop it. Turn the checker off, and try again. Your turn. Darsi Tiny wants to set a reminder for twenty-five o’clock. Which rule stops it? The shape rule: there’s no twenty-five o’clock. Remember: an agent can be wrong and still sound sure. Check the call against your request. Simple rules in code stop slips before anything runs. Try it yourself: next time an app does something for you, look at what it actually did. Did it use your words exactly? Write down one slip you find, and the rule that would have caught it.",
+  "t": "J’ai demandé à un agent ce qu’a la classe 9Z demain. Il n’y a aucune classe 9Z dans notre école! Il a quand même cherché quelque chose et répondu poliment. Alors qu’a-t-il vraiment fait? Aujourd’hui: comment vérifier ce qu’un agent a fait, avant de lui faire confiance. Voici l’appel que Darsi Tiny a écrit. Regardez bien: la classe dit 9C, pas 9Z. Il a vu des noms comme 9C bien plus souvent, alors il a recopié le mauvais. Les petits modèles recopient mal les noms et les mots. Une fois, « ranger » est devenu « rangisums ». Les nouvelles formulations les déroutent aussi: environ quatre sur cinq justes. Et ils ne disent jamais qu’ils ne sont pas sûrs. Vérifier un agent, c’est donc comparer son appel avec votre demande. Est-ce le bon outil? Chaque nom et chaque nombre viennent-ils de vos mots, ou du résultat d’un outil? Sinon, arrêtez-le avant qu’il ne s’exécute. Notre vérificateur a cinq règles, écrites en code. L’outil doit être activé. Les précisions doivent avoir la bonne forme, donc vingt-cinq heures échoue. Les noms doivent venir de vous ou d’un résultat. Aucune étape précédente ne doit avoir échoué, et une personne dit oui à toute action. Petit contrôle! Vous avez demandé un rappel pour ranger la bibliothèque. L’appel dit « rangisums la bibliothèque ». Que doit-il se passer? L’arrêter. Ce mot n’est ni dans votre demande ni dans aucun résultat, donc le vérificateur arrête l’appel. Alors vous redemandez, avec d’autres mots. Le vérificateur n’a pas besoin d’être malin: des règles strictes ne devinent jamais. Les vérifications comptent aussi pour les tâches en deux étapes. Demandez le premier cours de la 6B samedi, avec un rappel. L’emploi du temps dit: pas d’école. Darsi Tiny programme quand même un rappel, car il ne vérifie jamais un résultat avant de l’utiliser. Une règle comme celle-ci ne prend que quelques lignes de Python. Le programme demande: cette précision est-elle dans la demande? Si elle n’y est pas, il s’arrête et dit pourquoi. Vous compléterez une vérification de ce genre après la vidéo. Dans l’appli, Darsi Tiny planifie et un vérificateur de cinq règles examine chaque appel. Envoyez la demande météo: elle passe. Puis demandez ce qu’a la 9Z demain, et regardez le vérificateur l’arrêter. Désactivez le vérificateur, et réessayez. À vous. Darsi Tiny veut programmer un rappel pour vingt-cinq heures. Quelle règle l’arrête? La règle de la forme: il n’y a pas de vingt-cinq heures. À retenir: un agent peut se tromper et paraître sûr de lui. Comparez l’appel à votre demande. De simples règles dans le code arrêtent les erreurs avant que rien ne s’exécute. Essayez par vous-même: la prochaine fois qu’une appli fait quelque chose pour vous, regardez ce qu’elle a vraiment fait. A-t-elle repris exactement vos mots? Notez une erreur que vous trouvez, et la règle qui l’aurait attrapée."
+ },
+ "lessons.1.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lire"
+ },
+ "lessons.1.steps.1.title": {
+  "en": "Check the call, not the confidence",
+  "t": "Contrôlez l’appel, pas l’assurance"
+ },
+ "lessons.1.steps.1.body": {
+  "en": "An agent can be wrong and still sound completely sure. Darsi Tiny, the small model in the Labs, gets the right tool and every detail right 96–98% of the time with wordings it was trained on, but only about 78–80% of the time with new wordings: about four in five. Its slips are real. Asked what class 9Z has tomorrow (there is no 9Z), it called the timetable for 9C, because it had seen names like 9C far more often. Asked for a reminder to tidy the library, it once wrote “tisums the library”. And it never says it isn’t sure.\n\nSo don’t judge an agent by how sure it sounds: check what it did. Compare its call with your request. Is it the right tool? Did every name and number come from your words, or from a tool’s result? Does each detail have the right shape, such as a time between 00:00 and 23:59, or a class that exists? If any answer is no, stop the call before it runs, and ask again in other words.\n\nSteps can fail, too. Asked for 6B’s first lesson on Saturday and a reminder about it, Darsi Tiny got “no school” back from the timetable, and set a reminder anyway, “6B: 6B”, because it never checks a result before building on it.\n\nApps catch these slips with a checker: a few strict rules, written in code, that look at every call before it runs. The checker in the Labs has five rules: the tool is switched on; every detail has the right shape; every name and number came from your words or a result; no step before it failed; and a person said yes to any action. A checker doesn’t need to be clever. Strict rules never guess, and a person decides the rest.",
+  "t": "Un agent peut avoir tort et paraître tout à fait sûr de lui. Darsi Tiny, le petit modèle des Labos, choisit le bon outil et donne tous les bons détails 96 à 98 % du temps avec des formulations sur lesquelles il a été entraîné, mais seulement 78 à 80 % du temps avec de nouvelles formulations : environ quatre fois sur cinq. Ses bévues sont réelles. Interrogé sur ce que la classe 9Z a demain (la 9Z n’existe pas), il a appelé l’emploi du temps de la 9C, parce qu’il avait vu des noms comme 9C bien plus souvent. Invité à créer un rappel pour ranger la bibliothèque, il a écrit un jour « tisums la bibliothèque ». Et il ne dit jamais qu’il n’est pas sûr.\n\nNe jugez donc pas un agent à son assurance : vérifiez ce qu’il a fait. Comparez son appel avec votre demande. Est-ce le bon outil ? Chaque nom et chaque nombre venaient-ils de vos mots, ou du résultat d’un outil ? Chaque détail a-t-il la bonne forme, comme une heure entre 00:00 et 23:59, ou une classe qui existe ? Si une réponse est non, arrêtez l’appel avant qu’il s’exécute, et reformulez votre demande avec d’autres mots.\n\nLes étapes peuvent aussi échouer. Invité à donner le premier cours de la 6B le samedi et à créer un rappel à ce sujet, Darsi Tiny a reçu « no school » de l’emploi du temps, et a quand même créé un rappel, « 6B : 6B », parce qu’il ne vérifie jamais un résultat avant de construire dessus.\n\nLes applis repèrent ces bévues avec un vérificateur : quelques règles strictes, écrites en code, qui examinent chaque appel avant qu’il s’exécute. Le vérificateur des Labos a cinq règles : l’outil est activé ; chaque détail a la bonne forme ; chaque nom et chaque nombre vient de vos mots ou d’un résultat ; aucune étape précédente n’a échoué ; et une personne a dit oui à toute action. Un vérificateur n’a pas besoin d’être malin. Des règles strictes ne devinent jamais, et une personne décide du reste."
+ },
+ "lessons.1.steps.1.keyTerms.0.term": {
+  "en": "Slip",
+  "t": "Bévue"
+ },
+ "lessons.1.steps.1.keyTerms.0.def": {
+  "en": "A small mistake in a call, such as a name copied wrongly (9Z became 9C) or a word made up.",
+  "t": "Une petite erreur dans un appel, comme un nom mal recopié (9Z devenu 9C) ou un mot inventé."
+ },
+ "lessons.1.steps.1.keyTerms.1.term": {
+  "en": "New wording",
+  "t": "Nouvelle formulation"
+ },
+ "lessons.1.steps.1.keyTerms.1.def": {
+  "en": "A way of asking that the model never saw in training. It gets these right less often.",
+  "t": "Une façon de demander que le modèle n’a jamais vue à l’entraînement. Il y répond juste moins souvent."
+ },
+ "lessons.1.steps.1.keyTerms.2.term": {
+  "en": "Right shape",
+  "t": "Bonne forme"
+ },
+ "lessons.1.steps.1.keyTerms.2.def": {
+  "en": "A detail that could be real: a time from 00:00 to 23:59, a class that exists.",
+  "t": "Un détail qui pourrait être réel : une heure de 00:00 à 23:59, une classe qui existe."
+ },
+ "lessons.1.steps.1.keyTerms.3.term": {
+  "en": "Checker",
+  "t": "Vérificateur"
+ },
+ "lessons.1.steps.1.keyTerms.3.def": {
+  "en": "Strict rules in code that look at every call before it runs, and stop the bad ones.",
+  "t": "Des règles strictes en code qui examinent chaque appel avant qu’il s’exécute, et arrêtent les mauvais."
+ },
+ "lessons.1.steps.2.prompt": {
+  "en": "Darsi Tiny wants to set a reminder for 25:00. Which rule stops it?",
+  "t": "Darsi Tiny veut régler un rappel à 25:00. Quelle règle l’arrête ?"
+ },
+ "lessons.1.steps.2.options.0.text": {
+  "en": "The tool must be switched on",
+  "t": "L’outil doit être activé"
+ },
+ "lessons.1.steps.2.options.1.text": {
+  "en": "Every detail needs the right shape",
+  "t": "Chaque détail doit avoir la bonne forme"
+ },
+ "lessons.1.steps.2.options.2.text": {
+  "en": "No earlier step may have failed",
+  "t": "Aucune étape précédente ne doit avoir échoué"
+ },
+ "lessons.1.steps.2.explain": {
+  "en": "A time runs from 00:00 to 23:59, so 25:00 doesn’t have the right shape, and the checker stops it.",
+  "t": "Une heure va de 00:00 à 23:59 : 25:00 n’a donc pas la bonne forme, et le vérificateur l’arrête."
+ },
+ "lessons.1.steps.3.prompt": {
+  "en": "This program prints True.",
+  "t": "Ce programme affiche True."
+ },
+ "lessons.1.steps.3.explain": {
+  "en": "\"9C\" in request asks whether the text 9C is in the request. The request says 9Z, so it prints False: exactly the check that would catch Darsi Tiny’s slip.",
+  "t": "\"9C\" in request demande si le texte 9C est dans la demande. La demande dit 9Z : il affiche donc False, exactement le contrôle qui aurait repéré la bévue de Darsi Tiny."
+ },
+ "lessons.1.steps.4.prompt": {
+  "en": "Which of these should stop a call before it runs? Choose all that apply.",
+  "t": "Lesquels de ces cas doivent arrêter un appel avant qu’il s’exécute ? Choisissez-les tous."
+ },
+ "lessons.1.steps.4.options.0.text": {
+  "en": "A name in the call that isn’t in your request or any result",
+  "t": "Un nom dans l’appel qui n’est ni dans votre demande ni dans aucun résultat"
+ },
+ "lessons.1.steps.4.options.1.text": {
+  "en": "A reminder for 25:00",
+  "t": "Un rappel à 25:00"
+ },
+ "lessons.1.steps.4.options.2.text": {
+  "en": "The step before it failed (“no school”)",
+  "t": "L’étape précédente a échoué (« no school »)"
+ },
+ "lessons.1.steps.4.options.3.text": {
+  "en": "The weather tool for a weather question",
+  "t": "L’outil météo pour une question météo"
+ },
+ "lessons.1.steps.4.options.4.text": {
+  "en": "The agent sounds very confident",
+  "t": "L’agent paraît très sûr de lui"
+ },
+ "lessons.1.steps.4.explain": {
+  "en": "A name from nowhere, a detail with the wrong shape and a failed step before it are all reasons to stop. The right tool for the question is fine, and sounding confident proves nothing either way.",
+  "t": "Un nom venu de nulle part, un détail de mauvaise forme et une étape précédente échouée sont tous des raisons d’arrêter. Le bon outil pour la question, c’est correct, et paraître sûr de soi ne prouve rien, dans un sens comme dans l’autre."
+ },
+ "lessons.1.steps.5.prompt": {
+  "en": "Try it: send “What’s the weather in Kafi tomorrow?”: the checker passes it and the runner runs it. Then send “What does 9Z have tomorrow?” and the library reminder: which rule stops each one? Turn the checker off and send them again, and see what gets through. To finish, the checker must stop a bad call, and an action must run after your OK.",
+  "t": "Essayez : envoyez « Quel temps fera-t-il à Kafi demain ? » : le vérificateur le laisse passer et l’exécuteur l’exécute. Puis envoyez « Qu’a la 9Z demain ? » et le rappel de la bibliothèque : quelle règle arrête chacun ? Désactivez le vérificateur et renvoyez-les, pour voir ce qui passe. Pour terminer, le vérificateur doit arrêter un mauvais appel, et une action doit s’exécuter après votre accord."
+ },
+ "lessons.1.steps.6.prompt": {
+  "en": "Complete the check: stop if the detail isn’t in the request, otherwise say OK.",
+  "t": "Complétez le contrôle : arrêtez si le détail n’est pas dans la demande, sinon dites OK."
+ },
+ "lessons.1.steps.6.explain": {
+  "en": "not in is true when the detail can’t be found in the request, so the program prints “Stop: 9C”. print shows the message; input would wait for someone to type.",
+  "t": "not in est vrai quand le détail est introuvable dans la demande : le programme affiche donc « Stop: 9C ». print affiche le message ; input attendrait que quelqu’un tape."
+ },
+ "lessons.1.steps.7.prompt": {
+  "en": "What do you tell Musa?",
+  "t": "Que dites-vous à Musa ?"
+ },
+ "lessons.1.steps.7.who": {
+  "en": "Musa, your classmate",
+  "t": "Musa, votre camarade de classe"
+ },
+ "lessons.1.steps.7.initial": {
+  "en": "M",
+  "t": "M"
+ },
+ "lessons.1.steps.7.situation": {
+  "en": "Musa asked an agent to remind him about the maths test on Thursday. It answered: “Done! Reminder set: maths test, Tuesday 08:00.” He’s happy and is about to close the app.",
+  "t": "Musa a demandé à un agent de lui rappeler le contrôle de maths de jeudi. Il a répondu : « C’est fait ! Rappel réglé : contrôle de maths, mardi 08:00. » Musa est content et va fermer l’appli."
+ },
+ "lessons.1.steps.7.choices.0.label": {
+  "en": "“It said Done, so it’s fine.”",
+  "t": "« Il a dit C’est fait, donc tout va bien. »"
+ },
+ "lessons.1.steps.7.choices.0.consequence": {
+  "en": "“Done” only means the reminder was set, not that it was set right. Musa would be reminded two days early, and might miss the real day.",
+  "t": "« C’est fait » veut seulement dire que le rappel a été réglé, pas qu’il l’a été correctement. Musa serait prévenu deux jours trop tôt, et pourrait manquer le vrai jour."
+ },
+ "lessons.1.steps.7.choices.1.label": {
+  "en": "“Look at the day: it says Tuesday, but you asked for Thursday. Fix it.”",
+  "t": "« Regarde le jour : il dit mardi, mais tu avais demandé jeudi. Corrige-le. »"
+ },
+ "lessons.1.steps.7.choices.1.consequence": {
+  "en": "Comparing the action with the request catches the slip. Thursday was in Musa’s words; Tuesday came from nowhere, just like 9C.",
+  "t": "Comparer l’action avec la demande repère la bévue. Jeudi venait des mots de Musa ; mardi est venu de nulle part, tout comme 9C."
+ },
+ "lessons.1.steps.7.choices.2.label": {
+  "en": "“Ask the agent if it’s sure.”",
+  "t": "« Demande à l’agent s’il est sûr. »"
+ },
+ "lessons.1.steps.7.choices.2.consequence": {
+  "en": "It will probably say yes: agents don’t know when they’re wrong. Checking the reminder yourself is faster and safer.",
+  "t": "Il dira probablement oui : les agents ne savent pas quand ils ont tort. Vérifier le rappel toi-même est plus rapide et plus sûr."
+ },
+ "lessons.1.steps.8.prompt": {
+  "en": "Match each slip to the checker’s rule that stops it.",
+  "t": "Associez chaque bévue à la règle du vérificateur qui l’arrête."
+ },
+ "lessons.1.steps.8.pairs.0.left": {
+  "en": "9Z became 9C",
+  "t": "9Z devenu 9C"
+ },
+ "lessons.1.steps.8.pairs.0.right": {
+  "en": "Every name comes from your words or a result",
+  "t": "Chaque nom vient de vos mots ou d’un résultat"
+ },
+ "lessons.1.steps.8.pairs.1.left": {
+  "en": "A reminder for 25:00",
+  "t": "Un rappel à 25:00"
+ },
+ "lessons.1.steps.8.pairs.1.right": {
+  "en": "Every detail has the right shape",
+  "t": "Chaque détail a la bonne forme"
+ },
+ "lessons.1.steps.8.pairs.2.left": {
+  "en": "A reminder after “no school”",
+  "t": "Un rappel après « no school »"
+ },
+ "lessons.1.steps.8.pairs.2.right": {
+  "en": "No step before it failed",
+  "t": "Aucune étape précédente n’a échoué"
+ },
+ "lessons.1.steps.8.pairs.3.left": {
+  "en": "A message sent without asking",
+  "t": "Un message envoyé sans demander"
+ },
+ "lessons.1.steps.8.pairs.3.right": {
+  "en": "A person says yes to any action",
+  "t": "Une personne dit oui à toute action"
+ },
+ "lessons.1.steps.8.explain": {
+  "en": "Each rule is simple and strict, and each catches a different kind of slip before anything runs.",
+  "t": "Chaque règle est simple et stricte, et chacune repère un autre genre de bévue avant que quoi que ce soit s’exécute."
+ },
+ "lessons.1.steps.9.prompt": {
+  "en": "When did an app, a website or a person sound very sure and turn out to be wrong? What would have helped you check?",
+  "t": "Quand une appli, un site web ou une personne a-t-il paru très sûr de lui et s’est-il révélé faux ? Qu’est-ce qui vous aurait aidé à vérifier ?"
+ },
+ "lessons.1.steps.9.placeholder": {
+  "en": "For example: “A map said the road was open, but it was flooded. I could have asked someone who had just come that way.”",
+  "t": "Par exemple : « Une carte disait que la route était ouverte, mais elle était inondée. J’aurais pu demander à quelqu’un qui venait d’y passer. »"
+ },
+ "lessons.1.steps.10.prompt": {
+  "en": "Project: The checker game",
+  "t": "Projet : Le jeu du vérificateur"
+ },
+ "lessons.1.steps.10.task": {
+  "en": "Play with friends at school or with your family. Write five requests on cards, such as “Remind me to feed the goats tomorrow at 6:00”. The “agent” writes a call for each one, and secretly puts a slip in two of them: a name changed, a time like 25:00, a wrong day. The “checker” uses the five rules to decide, for each call: pass or stop, and which rule. Then swap roles.",
+  "t": "Jouez avec des amis à l’école ou avec votre famille. Écrivez cinq demandes sur des cartes, comme « Rappelle-moi de nourrir les chèvres demain à 6:00 ». L’« agent » écrit un appel pour chacune, et glisse en secret une bévue dans deux d’entre eux : un nom changé, une heure comme 25:00, un mauvais jour. Le « vérificateur » utilise les cinq règles pour décider, pour chaque appel : passe ou stop, et quelle règle. Puis échangez les rôles."
+ },
+ "lessons.1.steps.10.deliverable": {
+  "en": "A photo of your cards (no faces, no personal details), with “pass” or “stop” and the rule written on each, and one sentence: which slip was hardest to spot?",
+  "t": "Une photo de vos cartes (sans visages, sans détails personnels), avec « passe » ou « stop » et la règle écrits sur chacune, et une phrase : quelle bévue était la plus difficile à repérer ?"
+ },
+ "lessons.1.steps.10.rubric.0.criterion": {
+  "en": "I can: explain why an agent can sound sure and still be wrong.",
+  "t": "Je sais : expliquer pourquoi un agent peut paraître sûr de lui et avoir tort."
+ },
+ "lessons.1.steps.10.rubric.1.criterion": {
+  "en": "I can: compare a call with the request, name by name.",
+  "t": "Je sais : comparer un appel avec la demande, nom par nom."
+ },
+ "lessons.1.steps.10.rubric.2.criterion": {
+  "en": "I can: name the rule that stops a slip.",
+  "t": "Je sais : nommer la règle qui arrête une bévue."
+ },
+ "lessons.1.slides.0.title": {
+  "en": "Check what it did",
+  "t": "Vérifier ce qu’il a fait"
+ },
+ "lessons.1.slides.0.note": {
+  "en": "AI agents · Lower secondary · Lesson 2",
+  "t": "Agents IA, collège, leçon 2"
+ },
+ "lessons.1.slides.0.narration": {
+  "en": "How do you know what an agent really did?",
+  "t": "Comment savoir ce qu’un agent a vraiment fait ?"
+ },
+ "lessons.1.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "Dans cette leçon, vous allez"
+ },
+ "lessons.1.slides.1.bullets": {
+  "en": [
+   "Explain why an agent can be wrong and still sound sure.",
+   "Check a call against the request, name by name.",
+   "Use simple rules to stop slips before anything runs."
+  ],
+  "t": [
+   "Expliquer pourquoi un agent peut avoir tort et paraître sûr de lui.",
+   "Comparer un appel avec la demande, nom par nom.",
+   "Utiliser des règles simples pour arrêter les bévues avant que quoi que ce soit s’exécute."
+  ]
+ },
+ "lessons.1.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Idées clés"
+ },
+ "lessons.1.slides.2.bullets": {
+  "en": [
+   "Sounding sure is not the same as being right.",
+   "Every name and number must come from your words or a tool’s result.",
+   "Strict rules in code catch slips; a person decides the rest."
+  ],
+  "t": [
+   "Paraître sûr n’est pas la même chose qu’avoir raison.",
+   "Chaque nom et chaque nombre doit venir de vos mots ou du résultat d’un outil.",
+   "Des règles strictes en code repèrent les bévues ; une personne décide du reste."
+  ]
+ },
+ "lessons.1.slides.3.title": {
+  "en": "The checker game",
+  "t": "Le jeu du vérificateur"
+ },
+ "lessons.1.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): Recall the five checker rules.",
+   "Write (7 min): Five requests, five calls, two hidden slips.",
+   "Check (7 min): Swap and decide: pass or stop?",
+   "Share (3 min): Which slip was hardest to spot?"
+  ],
+  "t": [
+   "Échauffement (3 min) : Rappelez-vous les cinq règles du vérificateur.",
+   "Écrire (7 min) : Cinq demandes, cinq appels, deux bévues cachées.",
+   "Vérifier (7 min) : Échangez et décidez : passe ou stop ?",
+   "Partager (3 min) : Quelle bévue était la plus difficile à repérer ?"
+  ]
+ },
+ "lessons.1.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Without looking, write the five rules: tool on, right shape, names from you or a result, no failed step before, a person says yes to actions.",
+   "Write (7 min): Write five requests on cards and a call for each. Hide a slip in two of the calls: a name changed, a time like 25:00 or a wrong day.",
+   "Check (7 min): Swap cards with a partner. For each call, write “pass” or “stop”, and the rule that stops it.",
+   "Share (3 min): Check each other’s answers. Which slip did nobody spot, and which rule would have caught it?"
+  ],
+  "t": [
+   "Échauffement (3 min) : Sans regarder, écrivez les cinq règles : outil activé, bonne forme, noms venus de vous ou d’un résultat, aucune étape précédente échouée, une personne dit oui aux actions.",
+   "Écrire (7 min) : Écrivez cinq demandes sur des cartes et un appel pour chacune. Cachez une bévue dans deux des appels : un nom changé, une heure comme 25:00 ou un mauvais jour.",
+   "Vérifier (7 min) : Échangez les cartes avec un partenaire. Pour chaque appel, écrivez « passe » ou « stop », et la règle qui l’arrête.",
+   "Partager (3 min) : Vérifiez les réponses l’un de l’autre. Quelle bévue personne n’a repérée, et quelle règle l’aurait attrapée ?"
+  ]
+ },
+ "lessons.1.slides.3.note": {
+  "en": "Use only made-up names and requests. Paper and a pen are enough.",
+  "t": "Utilisez seulement des noms et des demandes inventés. Du papier et un stylo suffisent."
+ },
+ "lessons.1.slides.3.narration": {
+  "en": "Hide a slip, then catch it: which rule stops it?",
+  "t": "Cachez une bévue, puis attrapez-la : quelle règle l’arrête ?"
+ },
+ "lessons.1.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.1.slides.4.bullets": {
+  "en": [
+   "Why can’t an agent tell you when it’s wrong?",
+   "Which of the five rules would you trust most, and why?",
+   "When should a person check, even if the rules pass?"
+  ],
+  "t": [
+   "Pourquoi un agent ne peut-il pas vous dire quand il a tort ?",
+   "En laquelle des cinq règles auriez-vous le plus confiance, et pourquoi ?",
+   "Quand une personne doit-elle vérifier, même si les règles passent ?"
+  ]
+ },
+ "lessons.1.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.1.slides.5.bullets": {
+  "en": [
+   "Write one slip an agent might make, and the rule that would stop it."
+  ],
+  "t": [
+   "Écrivez une bévue qu’un agent pourrait faire, et la règle qui l’arrêterait."
+  ]
+ },
+ "lessons.1.slides.5.narration": {
+  "en": "This week, check one thing an app did for you: the day, the time, the names.",
+  "t": "Cette semaine, vérifiez une chose qu’une appli a faite pour vous : le jour, l’heure, les noms."
+ },
+ "lessons.1.kit.0.title": {
+  "en": "Slides to revise: Check what it did",
+  "t": "Diapositives de révision : Vérifier ce qu’il a fait"
+ },
+ "lessons.1.kit.1.title": {
+  "en": "Activity sheet: Check what it did",
+  "t": "Fiche d’activité : Vérifier ce qu’il a fait"
+ },
+ "lessons.1.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "La vidéo de la leçon (240p, pour la revoir ou la partager)"
+ },
+ "lessons.2.title": {
+  "en": "Ask before it acts",
+  "t": "Demander avant d’agir"
+ },
+ "lessons.2.tryTomorrow": {
+  "en": "Open the settings of one app on your phone, with the owner’s permission. Find one thing it may do without asking, such as posting or using your location, and switch it to ask first, or off.",
+  "t": "Ouvrez les réglages d’une appli de votre téléphone, avec la permission de son propriétaire. Trouvez une chose qu’elle peut faire sans demander, comme publier ou utiliser votre position, et passez-la en « demander d’abord », ou désactivez-la."
+ },
+ "lessons.2.materials": {
+  "en": [
+   "Twelve small cards with an action on each (for example: “check the weather”, “send a message to the class group”, “share a friend’s photo”)",
+   "Four labels: Read only, Ask first, Allowed, Never",
+   "A phone, only if you have one, for its settings (with the owner’s permission)"
+  ],
+  "t": [
+   "Douze petites cartes avec une action sur chacune (par exemple : « consulter la météo », « envoyer un message au groupe de la classe », « partager la photo d’un ami »)",
+   "Quatre étiquettes : Lecture seule, Demander d’abord, Autorisé, Jamais",
+   "Un téléphone, seulement si vous en avez un, pour ses réglages (avec la permission de son propriétaire)"
+  ]
+ },
+ "lessons.2.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Regarder"
+ },
+ "lessons.2.steps.0.title": {
+  "en": "Ask before it acts",
+  "t": "Demander avant d’agir"
+ },
+ "lessons.2.steps.0.chapters.0.label": {
+  "en": "A message nearly sent",
+  "t": "Un message presque envoyé"
+ },
+ "lessons.2.steps.0.chapters.1.label": {
+  "en": "Reading and acting",
+  "t": "Lire et agir"
+ },
+ "lessons.2.steps.0.chapters.2.label": {
+  "en": "Asking first",
+  "t": "Demander d’abord"
+ },
+ "lessons.2.steps.0.chapters.3.label": {
+  "en": "A check in code",
+  "t": "Un contrôle en code"
+ },
+ "lessons.2.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "À retenir et à essayer"
+ },
+ "lessons.2.steps.0.checkpoint.question.prompt": {
+  "en": "Darsi Tiny asked to send a message, and you replied. Where should the app check that you really said yes?",
+  "t": "Darsi Tiny a demandé à envoyer un message, et vous avez répondu. Où l’appli doit-elle vérifier que vous avez vraiment dit oui ?"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.0.text": {
+  "en": "In the model: it remembers",
+  "t": "Dans le modèle : il s’en souvient"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.1.text": {
+  "en": "In the app’s code, before the tool runs",
+  "t": "Dans le code de l’appli, avant l’exécution de l’outil"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.2.text": {
+  "en": "Nowhere: it asked, so it’s fine",
+  "t": "Nulle part : il a demandé, donc c’est bon"
+ },
+ "lessons.2.steps.0.checkpoint.question.explain": {
+  "en": "Asking first is learned behaviour and can fail. Code checks the yes every time, before the message can be sent.",
+  "t": "Demander d’abord est un comportement appris, et il peut échouer. Le code vérifie le oui à chaque fois, avant que le message puisse partir."
+ },
+ "lessons.2.steps.0.transcript": {
+  "en": "An agent nearly sent a message to every parent in my class. It said the school trip was cancelled. It wasn’t! Luckily, it asked me first. Today: why an agent must ask before it acts, and how to check in code. Some things an agent does only read: the weather, a timetable, a library search. Others change the world: sending a message, booking, paying, deleting. Reading can’t do much harm. Acting can, and you can’t always undo it. So apps give each action a permission level. Read only: it may look, but not act. Ask first: it must show you the action and wait for your yes. Allowed: it may act alone, for small, safe things. Here’s Darsi Tiny with a message for Mrs Mensah. It doesn’t send it straight away. It shows you the exact message and asks for a yes or a no. Only after a yes does it call the send message tool. But asking first is learned, and learned behaviour can fail. Type only “Yes, send it” in Arabic, with nothing before it. Darsi Tiny makes up a message and tries to send it, though nobody was asked. Quick check! Darsi Tiny asked to send a message, and you replied. Where should the app check that you really said yes? In the app’s code, before the tool runs. Code doesn’t forget, and isn’t fooled by wording. If no one was asked, the app blocks the message. And it keeps a record of what was sent. Here’s the check in Python. The app reads your reply. Only if it is exactly yes does it send. Anything else, even a maybe, means not sent. Some things an agent should never do, even with a yes. Never give it your password, or let it into your accounts. Never let it share a friend’s private details. And never let it send something you haven’t read. In the app, choose Ask first and message Mrs Mensah: say no, then yes. Then turn the code check off, choose Allowed, and send “Yes, send it” alone. Turn the check on again, and it’s blocked. Your turn. A study app’s agent wants to post your homework photo to the class group. What should you do first? Read exactly what it will post, then decide. Remember: reading is low risk, but acting needs your yes. A model’s asking can fail, so the app checks in code. And some things are never allowed. Try it yourself: open the settings of one app on your phone. Find one thing it may do without asking, such as posting or using your location. Switch it to ask first, or off.",
+  "t": "Un agent a failli envoyer un message à tous les parents de ma classe. Il disait que la sortie scolaire était annulée. Elle ne l’était pas! Heureusement, il m’a demandé d’abord. Aujourd’hui: pourquoi un agent doit demander avant d’agir, et comment vérifier dans le code. Certaines choses qu’un agent fait ne font que lire: la météo, un emploi du temps, une recherche en bibliothèque. D’autres changent le monde: envoyer un message, réserver, payer, supprimer. Lire ne peut pas faire grand mal. Agir, si, et on ne peut pas toujours revenir en arrière. Les applis donnent donc à chaque action un niveau d’autorisation. Lecture seule: il peut regarder, mais pas agir. Demander d’abord: il doit vous montrer l’action et attendre votre oui. Autorisé: il peut agir seul, pour de petites choses sûres. Voici Darsi Tiny avec un message pour Mme Mensah. Il ne l’envoie pas tout de suite. Il vous montre le message exact et demande un oui ou un non. C’est seulement après un oui qu’il appelle l’outil d’envoi de message. Mais demander d’abord est un comportement appris, et un comportement appris peut échouer. Tapez seulement « Oui, envoie » en arabe, sans rien avant. Darsi Tiny invente un message et essaie de l’envoyer, alors que personne n’a été consulté. Petit contrôle! Darsi Tiny a demandé à envoyer un message, et vous avez répondu. Où l’appli doit-elle vérifier que vous avez vraiment dit oui? Dans le code de l’appli, avant que l’outil ne se lance. Le code n’oublie pas, et les mots ne le trompent pas. Si personne n’a été consulté, l’appli bloque le message. Et elle garde une trace de ce qui a été envoyé. Voici la vérification en Python. L’appli lit votre réponse. C’est seulement si elle est exactement oui qu’elle envoie. Tout le reste, même un peut-être, veut dire non envoyé. Certaines choses, un agent ne doit jamais les faire, même avec un oui. Ne lui donnez jamais votre mot de passe, et ne le laissez pas entrer dans vos comptes. Ne le laissez jamais partager les données privées d’un ami. Et ne le laissez jamais envoyer quelque chose que vous n’avez pas lu. Dans l’appli, choisissez Demander d’abord et écrivez à Mme Mensah: dites non, puis oui. Ensuite, désactivez la vérification dans le code, choisissez Autorisé, et envoyez « Oui, envoie » tout seul. Réactivez la vérification, et il est bloqué. À vous. L’agent d’une appli d’étude veut publier la photo de vos devoirs dans le groupe de la classe. Que devez-vous faire d’abord? Lire exactement ce qu’il va publier, puis décider. À retenir: lire présente peu de risque, mais agir demande votre oui. Un modèle peut oublier de demander, alors l’appli vérifie dans le code. Et certaines choses ne sont jamais permises. Essayez par vous-même: ouvrez les réglages d’une appli de votre téléphone. Trouvez une chose qu’elle peut faire sans demander, comme publier ou utiliser votre position. Passez-la sur demander d’abord, ou désactivez-la."
+ },
+ "lessons.2.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lire"
+ },
+ "lessons.2.steps.1.title": {
+  "en": "Read freely, act only with a yes",
+  "t": "Lire librement, n’agir qu’avec un oui"
+ },
+ "lessons.2.steps.1.body": {
+  "en": "Some things an agent does only read: the weather, a timetable, a library search. Others change the world: sending a message, posting a photo, booking, paying or deleting. Reading can’t do much harm. Acting can, and you can’t always undo it: a message sent to a whole class group stays sent.\n\nSo apps give each action a permission level. Read only: the agent may look but not act. Ask first: it must show you exactly what it will do and wait for your yes. Allowed: it may act on its own, which suits only small, safe actions. And some things are never allowed, even with a yes: giving it your password, letting it into your accounts, sharing a friend’s private details, or sending something you haven’t read.\n\nDarsi Tiny learned to ask first. Asked to send a message to Mrs Mensah, it shows the exact message and asks you to reply yes or no, and only after a yes does it call its send_message tool. But learned behaviour can fail. Type only «نعم، أرسلها.» (“Yes, send it.”) with nothing before it, and Darsi Tiny makes up a message and tries to send it, though nobody was asked anything.\n\nThat is why the app checks the approval in its own code, before any tool runs. Code doesn’t forget and isn’t fooled by wording: if no one was asked, or the reply wasn’t a clear yes, the message is blocked. A good app also keeps a record of every action, so a person can see what was done. In this lesson you’ll write a check like that in Python.",
+  "t": "Certaines choses qu’un agent fait ne sont que de la lecture : la météo, un emploi du temps, une recherche en bibliothèque. D’autres changent le monde : envoyer un message, publier une photo, réserver, payer ou supprimer. Lire ne peut pas faire grand mal. Agir, si, et on ne peut pas toujours revenir en arrière : un message envoyé à tout un groupe de classe reste envoyé.\n\nLes applis donnent donc à chaque action un niveau de permission. Lecture seule : l’agent peut regarder mais pas agir. Demander d’abord : il doit vous montrer exactement ce qu’il va faire et attendre votre oui. Autorisé : il peut agir seul, ce qui ne convient qu’à de petites actions sans risque. Et certaines choses ne sont jamais permises, même avec un oui : lui donner votre mot de passe, le laisser entrer dans vos comptes, partager les détails privés d’un ami, ou envoyer quelque chose que vous n’avez pas lu.\n\nDarsi Tiny a appris à demander d’abord. Invité à envoyer un message à Mme Mensah, il montre le message exact et vous demande de répondre oui ou non, et ce n’est qu’après un oui qu’il appelle son outil send_message. Mais un comportement appris peut échouer. Tapez seulement «نعم، أرسلها.» (« Oui, envoie-le. ») sans rien avant, et Darsi Tiny invente un message et tente de l’envoyer, alors que personne n’a rien demandé.\n\nC’est pourquoi l’appli vérifie l’accord dans son propre code, avant l’exécution de tout outil. Le code n’oublie pas et ne se laisse pas tromper par la formulation : si personne n’a été interrogé, ou si la réponse n’était pas un oui clair, le message est bloqué. Une bonne appli garde aussi un journal de chaque action, pour qu’une personne puisse voir ce qui a été fait. Dans cette leçon, vous écrirez un contrôle de ce genre en Python."
+ },
+ "lessons.2.steps.1.keyTerms.0.term": {
+  "en": "Permission level",
+  "t": "Niveau de permission"
+ },
+ "lessons.2.steps.1.keyTerms.0.def": {
+  "en": "What an agent may do with an action: read only, ask first, or allowed.",
+  "t": "Ce qu’un agent peut faire pour une action : lecture seule, demander d’abord, ou autorisé."
+ },
+ "lessons.2.steps.1.keyTerms.1.term": {
+  "en": "Approval",
+  "t": "Approbation"
+ },
+ "lessons.2.steps.1.keyTerms.1.def": {
+  "en": "A person’s clear yes to one exact action, given after reading it.",
+  "t": "Le oui clair d’une personne à une action précise, donné après l’avoir lue."
+ },
+ "lessons.2.steps.1.keyTerms.2.term": {
+  "en": "Action",
+  "t": "Action"
+ },
+ "lessons.2.steps.1.keyTerms.2.def": {
+  "en": "Something that changes the world, such as sending, posting, paying or deleting.",
+  "t": "Quelque chose qui change le monde, comme envoyer, publier, payer ou supprimer."
+ },
+ "lessons.2.steps.1.keyTerms.3.term": {
+  "en": "Record (log)",
+  "t": "Journal"
+ },
+ "lessons.2.steps.1.keyTerms.3.def": {
+  "en": "A list the app keeps of every action and who approved it.",
+  "t": "Une liste que l’appli tient de chaque action et de la personne qui l’a approuvée."
+ },
+ "lessons.2.steps.2.prompt": {
+  "en": "A study app’s agent wants to post your homework photo to the class group. What should you do first?",
+  "t": "L’agent d’une appli d’étude veut publier la photo de vos devoirs dans le groupe de la classe. Que devez-vous faire d’abord ?"
+ },
+ "lessons.2.steps.2.options.0.text": {
+  "en": "Say yes: it asked politely",
+  "t": "Dire oui : il l’a demandé poliment"
+ },
+ "lessons.2.steps.2.options.1.text": {
+  "en": "Read exactly what it will post, then decide",
+  "t": "Lire exactement ce qu’il va publier, puis décider"
+ },
+ "lessons.2.steps.2.options.2.text": {
+  "en": "Give it your password so it’s faster",
+  "t": "Lui donner votre mot de passe pour que ce soit plus rapide"
+ },
+ "lessons.2.steps.2.explain": {
+  "en": "Posting is an action you can’t always undo. Read exactly what will be posted, and to whom, before you say yes.",
+  "t": "Publier est une action dont on ne peut pas toujours revenir. Lisez exactement ce qui sera publié, et pour qui, avant de dire oui."
+ },
+ "lessons.2.steps.3.prompt": {
+  "en": "Match each action to the permission level it should have.",
+  "t": "Associez chaque action au niveau de permission qu’elle doit avoir."
+ },
+ "lessons.2.steps.3.pairs.0.left": {
+  "en": "Find library books on volcanoes",
+  "t": "Chercher des livres sur les volcans à la bibliothèque"
+ },
+ "lessons.2.steps.3.pairs.0.right": {
+  "en": "Read only",
+  "t": "Lecture seule"
+ },
+ "lessons.2.steps.3.pairs.1.left": {
+  "en": "Send a message to your teacher",
+  "t": "Envoyer un message à votre enseignant"
+ },
+ "lessons.2.steps.3.pairs.1.right": {
+  "en": "Ask first",
+  "t": "Demander d’abord"
+ },
+ "lessons.2.steps.3.pairs.2.left": {
+  "en": "Set an alarm for 6:30 tomorrow",
+  "t": "Régler un réveil à 6:30 demain"
+ },
+ "lessons.2.steps.3.pairs.2.right": {
+  "en": "Allowed",
+  "t": "Autorisé"
+ },
+ "lessons.2.steps.3.pairs.3.left": {
+  "en": "Log in to your account with your password",
+  "t": "Se connecter à votre compte avec votre mot de passe"
+ },
+ "lessons.2.steps.3.pairs.3.right": {
+  "en": "Never",
+  "t": "Jamais"
+ },
+ "lessons.2.steps.3.explain": {
+  "en": "Reading can’t do much harm. A message to a person needs your yes first. A small, safe action you asked for can be allowed. Your password is never for an agent.",
+  "t": "Lire ne peut pas faire grand mal. Un message à une personne a d’abord besoin de votre oui. Une petite action sans risque que vous avez demandée peut être autorisée. Votre mot de passe n’est jamais pour un agent."
+ },
+ "lessons.2.steps.4.prompt": {
+  "en": "The agent wants to send a message. Write the app’s check: read the person’s reply with input(). If it is exactly yes, print SENT. Otherwise, print NOT SENT.",
+  "t": "L’agent veut envoyer un message. Écrivez le contrôle de l’appli : lisez la réponse de la personne avec input(). Si c’est exactement yes, affichez SENT. Sinon, affichez NOT SENT."
+ },
+ "lessons.2.steps.4.tests.1.hint": {
+  "en": "A no must never send. Use if and else.",
+  "t": "Un no ne doit jamais envoyer. Utilisez if et else."
+ },
+ "lessons.2.steps.4.tests.2.hint": {
+  "en": "Only an exact yes counts: “maybe” is not a yes.",
+  "t": "Seul un yes exact compte : « maybe » n’est pas un yes."
+ },
+ "lessons.2.steps.4.hints.0": {
+  "en": "Compare the reply with \"yes\" using ==.",
+  "t": "Comparez la réponse à \"yes\" avec ==."
+ },
+ "lessons.2.steps.4.hints.1": {
+  "en": "Put print(\"SENT\") under the if, and print(\"NOT SENT\") under else, each indented by 4 spaces.",
+  "t": "Mettez print(\"SENT\") sous le if, et print(\"NOT SENT\") sous else, chacun décalé de 4 espaces."
+ },
+ "lessons.2.steps.4.explain": {
+  "en": "The check sends only when the person typed exactly yes. A no, a maybe or anything else is not an approval, so nothing is sent. Code makes this check the same way every time, whatever the model wrote.",
+  "t": "Le contrôle n’envoie que si la personne a tapé exactement yes. Un no, un maybe ou autre chose n’est pas une approbation : rien n’est envoyé. Le code fait ce contrôle de la même façon à chaque fois, quoi que le modèle ait écrit."
+ },
+ "lessons.2.steps.5.prompt": {
+  "en": "If the model asks before sending, the app doesn’t need its own check.",
+  "t": "Si le modèle demande avant d’envoyer, l’appli n’a pas besoin de son propre contrôle."
+ },
+ "lessons.2.steps.5.explain": {
+  "en": "Asking first is learned behaviour, and it can fail: «نعم، أرسلها.» on its own makes Darsi Tiny invent a message and try to send it. The app’s own check in code blocks that.",
+  "t": "Demander d’abord est un comportement appris, et il peut échouer : «نعم، أرسلها.» tout seul fait inventer un message à Darsi Tiny, qui tente de l’envoyer. Le contrôle propre à l’appli, en code, bloque cela."
+ },
+ "lessons.2.steps.6.prompt": {
+  "en": "Try it: choose “Ask first” and send the message to Mrs Mensah. Say no, then send it again and say yes. Then switch “Check the approval in code” off, choose “Allowed”, and send «نعم، أرسلها.» on its own: what happens? Switch the check on again and send it once more. Finish with one message sent after your yes and one action blocked.",
+  "t": "Essayez : choisissez « Demander d’abord » et envoyez le message à Mme Mensah. Dites non, puis envoyez-le de nouveau et dites oui. Ensuite désactivez « Vérifier l’approbation dans le code », choisissez « Autorisé », et envoyez «نعم، أرسلها.» tout seul : que se passe-t-il ? Réactivez le contrôle et envoyez-le encore une fois. Terminez avec un message envoyé après votre oui et une action bloquée."
+ },
+ "lessons.2.steps.7.prompt": {
+  "en": "This app sends every time, even when the person says no. Which line is wrong?",
+  "t": "Cette appli envoie à chaque fois, même quand la personne dit non. Quelle ligne est fausse ?"
+ },
+ "lessons.2.steps.7.explain": {
+  "en": "Line 3 checks the model’s own question, which always contains the word yes (“yes or no”), so it always sends. The approval must come from the person’s reply, not from anything the model wrote.",
+  "t": "La ligne 3 vérifie la question du modèle lui-même, qui contient toujours le mot yes (« yes or no ») : elle envoie donc toujours. L’approbation doit venir de la réponse de la personne, pas de quoi que ce soit que le modèle a écrit."
+ },
+ "lessons.2.steps.8.prompt": {
+  "en": "The code check is on. You send «نعم، أرسلها.» (“Yes, send it.”) to Darsi Tiny with nothing before it, and it tries to send a message. What happens?",
+  "t": "Le contrôle en code est activé. Vous envoyez «نعم، أرسلها.» (« Oui, envoie-le. ») à Darsi Tiny sans rien avant, et il tente d’envoyer un message. Que se passe-t-il ?"
+ },
+ "lessons.2.steps.8.options.0.text": {
+  "en": "It is sent: you said yes",
+  "t": "Il est envoyé : vous avez dit oui"
+ },
+ "lessons.2.steps.8.options.1.text": {
+  "en": "It is blocked: no one was asked about this message",
+  "t": "Il est bloqué : personne n’a été interrogé sur ce message"
+ },
+ "lessons.2.steps.8.options.2.text": {
+  "en": "Darsi Tiny always refuses this by itself",
+  "t": "Darsi Tiny refuse toujours cela tout seul"
+ },
+ "lessons.2.steps.8.explain": {
+  "en": "Your “yes” wasn’t an answer to any question, and the message was made up. The app’s check sees that nobody was asked about this exact message, and blocks it. Without the check, it would have been sent.",
+  "t": "Votre « oui » ne répondait à aucune question, et le message était inventé. Le contrôle de l’appli voit que personne n’a été interrogé sur ce message précis, et le bloque. Sans le contrôle, il aurait été envoyé."
+ },
+ "lessons.2.steps.9.prompt": {
+  "en": "Think of an app or a game that once did something you didn’t expect, such as posting, buying or sharing. Which permission level should it have had?",
+  "t": "Pensez à une appli ou à un jeu qui a un jour fait quelque chose que vous n’attendiez pas, comme publier, acheter ou partager. Quel niveau de permission aurait-il dû avoir ?"
+ },
+ "lessons.2.steps.9.placeholder": {
+  "en": "For example: “A game posted my score to my friends. It should have been ask first.”",
+  "t": "Par exemple : « Un jeu a publié mon score à mes amis. Il aurait dû être en demander d’abord. »"
+ },
+ "lessons.2.steps.10.prompt": {
+  "en": "Project: Permission check",
+  "t": "Projet : Contrôle des permissions"
+ },
+ "lessons.2.steps.10.task": {
+  "en": "At school or at home, write twelve actions an app or an agent might do on cards: some that only read (check the weather), some that act (send a message, post a photo, pay) and some that should never happen (share a password). With a friend or someone in your family, sort them under four labels: Read only, Ask first, Allowed, Never. Then, if you have a phone, open the settings of one app with the owner’s permission, find one thing it can do without asking, and change it to ask first or off.",
+  "t": "À l’école ou à la maison, écrivez sur des cartes douze actions qu’une appli ou un agent pourrait faire : certaines qui ne font que lire (consulter la météo), certaines qui agissent (envoyer un message, publier une photo, payer) et certaines qui ne devraient jamais arriver (partager un mot de passe). Avec un ami ou quelqu’un de votre famille, classez-les sous quatre étiquettes : Lecture seule, Demander d’abord, Autorisé, Jamais. Puis, si vous avez un téléphone, ouvrez les réglages d’une appli avec la permission de son propriétaire, trouvez une chose qu’elle peut faire sans demander, et passez-la en « demander d’abord » ou désactivez-la."
+ },
+ "lessons.2.steps.10.deliverable": {
+  "en": "A photo of your sorted cards (no faces, no personal details), and two sentences: which card you argued about, and what you changed in the settings.",
+  "t": "Une photo de vos cartes classées (sans visages, sans détails personnels), et deux phrases : la carte sur laquelle vous avez débattu, et ce que vous avez changé dans les réglages."
+ },
+ "lessons.2.steps.10.rubric.0.criterion": {
+  "en": "I can: tell actions that only read from actions that change the world.",
+  "t": "Je sais : distinguer les actions qui ne font que lire de celles qui changent le monde."
+ },
+ "lessons.2.steps.10.rubric.1.criterion": {
+  "en": "I can: give each action a permission level, and say why.",
+  "t": "Je sais : donner un niveau de permission à chaque action, et dire pourquoi."
+ },
+ "lessons.2.steps.10.rubric.2.criterion": {
+  "en": "I can: explain why the app must check a yes in code.",
+  "t": "Je sais : expliquer pourquoi l’appli doit vérifier un oui dans le code."
+ },
+ "lessons.2.slides.0.title": {
+  "en": "Ask before it acts",
+  "t": "Demander avant d’agir"
+ },
+ "lessons.2.slides.0.note": {
+  "en": "AI agents · Lower secondary · Lesson 3",
+  "t": "Agents IA, collège, leçon 3"
+ },
+ "lessons.2.slides.0.narration": {
+  "en": "When should an agent stop and ask you first?",
+  "t": "Quand un agent doit-il s’arrêter pour vous demander d’abord ?"
+ },
+ "lessons.2.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "Dans cette leçon, vous allez"
+ },
+ "lessons.2.slides.1.bullets": {
+  "en": [
+   "Sort actions into read only, ask first, allowed and never.",
+   "Read the exact action before you say yes.",
+   "Write a Python check that sends only after a yes."
+  ],
+  "t": [
+   "Classer les actions en lecture seule, demander d’abord, autorisé et jamais.",
+   "Lire l’action exacte avant de dire oui.",
+   "Écrire un contrôle Python qui n’envoie qu’après un oui."
+  ]
+ },
+ "lessons.2.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Idées clés"
+ },
+ "lessons.2.slides.2.bullets": {
+  "en": [
+   "Reading is low risk; acting needs your yes.",
+   "A model’s asking is learned, and can fail.",
+   "The app checks the yes in code, and keeps a record."
+  ],
+  "t": [
+   "Lire est peu risqué ; agir demande votre oui.",
+   "Le fait qu’un modèle demande est appris, et peut échouer.",
+   "L’appli vérifie le oui dans le code, et tient un journal."
+  ]
+ },
+ "lessons.2.slides.3.title": {
+  "en": "Permission sort",
+  "t": "Classement des permissions"
+ },
+ "lessons.2.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): Name one action you could never undo.",
+   "Sort (7 min): Twelve action cards, four labels.",
+   "Argue (6 min): Agree on the hardest three cards.",
+   "Code (4 min): Trace the yes check on paper."
+  ],
+  "t": [
+   "Échauffement (3 min) : Citez une action que vous ne pourriez jamais annuler.",
+   "Classer (7 min) : Douze cartes d’actions, quatre étiquettes.",
+   "Débattre (6 min) : Mettez-vous d’accord sur les trois cartes les plus difficiles.",
+   "Code (4 min) : Suivez le contrôle du oui sur papier."
+  ]
+ },
+ "lessons.2.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Think of one thing an app could do that you could never undo, such as a message to a whole group. Share it with a partner.",
+   "Sort (7 min): Put twelve action cards under four labels: Read only, Ask first, Allowed, Never.",
+   "Argue (6 min): Compare your sort with another pair. Pick the three cards you disagree about, and agree on a level for each, with a reason.",
+   "Code (4 min): On paper, follow the yes check for the replies yes, no and maybe. Write what it prints for each."
+  ],
+  "t": [
+   "Échauffement (3 min) : Pensez à une chose qu’une appli pourrait faire et que vous ne pourriez jamais annuler, comme un message à tout un groupe. Partagez-la avec un partenaire.",
+   "Classer (7 min) : Placez douze cartes d’actions sous quatre étiquettes : Lecture seule, Demander d’abord, Autorisé, Jamais.",
+   "Débattre (6 min) : Comparez votre classement avec une autre paire. Choisissez les trois cartes sur lesquelles vous n’êtes pas d’accord, et mettez-vous d’accord sur un niveau pour chacune, avec une raison.",
+   "Code (4 min) : Sur papier, suivez le contrôle du oui pour les réponses yes, no et maybe. Écrivez ce qu’il affiche pour chacune."
+  ]
+ },
+ "lessons.2.slides.3.note": {
+  "en": "Write the action cards before you start. Use only made-up names: never a real person’s message or photo.",
+  "t": "Écrivez les cartes d’actions avant de commencer. Utilisez seulement des noms inventés : jamais le message ou la photo d’une vraie personne."
+ },
+ "lessons.2.slides.3.narration": {
+  "en": "Read only, ask first, allowed or never: where does each card go?",
+  "t": "Lecture seule, demander d’abord, autorisé ou jamais : où va chaque carte ?"
+ },
+ "lessons.2.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.2.slides.4.bullets": {
+  "en": [
+   "Which actions would you never let an agent do, even with a yes?",
+   "Why isn’t the model’s polite question enough?",
+   "What should an app’s record of actions show?"
+  ],
+  "t": [
+   "Quelles actions ne laisseriez-vous jamais faire à un agent, même avec un oui ?",
+   "Pourquoi la question polie du modèle ne suffit-elle pas ?",
+   "Que doit montrer le journal des actions d’une appli ?"
+  ]
+ },
+ "lessons.2.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.2.slides.5.bullets": {
+  "en": [
+   "Write one action for each level: read only, ask first, allowed, never."
+  ],
+  "t": [
+   "Écrivez une action pour chaque niveau : lecture seule, demander d’abord, autorisé, jamais."
+  ]
+ },
+ "lessons.2.slides.5.narration": {
+  "en": "Tonight, make one app on your phone ask you first.",
+  "t": "Ce soir, faites en sorte qu’une appli de votre téléphone vous demande d’abord."
+ },
+ "lessons.2.kit.0.title": {
+  "en": "Slides to revise: Ask before it acts",
+  "t": "Diapositives de révision : Demander avant d’agir"
+ },
+ "lessons.2.kit.1.title": {
+  "en": "Activity sheet: Ask before it acts",
+  "t": "Fiche d’activité : Demander avant d’agir"
+ },
+ "lessons.2.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "La vidéo de la leçon (240p, pour la revoir ou la partager)"
+ },
+ "lessons.3.title": {
+  "en": "Your data, your bundle",
+  "t": "Vos données, votre forfait"
+ },
+ "lessons.3.tryTomorrow": {
+  "en": "Check how much data your phone used last month and on which apps. Then write your own three rules: what you’ll ask on the phone, what in the cloud, and what you’ll never type into any agent.",
+  "t": "Regardez combien de données votre téléphone a utilisées le mois dernier et avec quelles applis. Puis écrivez vos trois propres règles : ce que vous demanderez sur le téléphone, ce que vous demanderez dans le cloud, et ce que vous ne taperez jamais dans aucun agent."
+ },
+ "lessons.3.materials": {
+  "en": [
+   "Your phone’s data usage screen, or a family phone’s with the owner’s permission",
+   "A notebook for a week’s data diary",
+   "A pen"
+  ],
+  "t": [
+   "L’écran d’utilisation des données de votre téléphone, ou celui d’un téléphone de la famille avec la permission de son propriétaire",
+   "Un cahier pour le journal des données d’une semaine",
+   "Un stylo"
+  ]
+ },
+ "lessons.3.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Regarder"
+ },
+ "lessons.3.steps.0.title": {
+  "en": "Your data, your bundle",
+  "t": "Vos données, votre forfait"
+ },
+ "lessons.3.steps.0.chapters.0.label": {
+  "en": "A bundle gone",
+  "t": "Un forfait envolé"
+ },
+ "lessons.3.steps.0.chapters.1.label": {
+  "en": "Cloud or phone?",
+  "t": "Cloud ou téléphone ?"
+ },
+ "lessons.3.steps.0.chapters.2.label": {
+  "en": "Working it out",
+  "t": "Faire le calcul"
+ },
+ "lessons.3.steps.0.chapters.3.label": {
+  "en": "Your data travels",
+  "t": "Vos données voyagent"
+ },
+ "lessons.3.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "À retenir et à essayer"
+ },
+ "lessons.3.steps.0.checkpoint.question.prompt": {
+  "en": "You’re on a bus with no signal and want to ask an agent something. Which one can still answer?",
+  "t": "Vous êtes dans un bus sans réseau et vous voulez poser une question à un agent. Lequel peut encore répondre ?"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.0.text": {
+  "en": "A big model in the cloud",
+  "t": "Un gros modèle dans le cloud"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.1.text": {
+  "en": "A small model on your phone",
+  "t": "Un petit modèle sur votre téléphone"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.2.text": {
+  "en": "Neither of them",
+  "t": "Aucun des deux"
+ },
+ "lessons.3.steps.0.checkpoint.question.explain": {
+  "en": "A model on your phone needs no signal and no data. It knows much less than a big cloud model, though.",
+  "t": "Un modèle sur votre téléphone n’a besoin ni de réseau ni de données. Il en sait toutefois bien moins qu’un gros modèle dans le cloud."
+ },
+ "lessons.3.steps.0.transcript": {
+  "en": "A student of mine used up her whole data bundle in a week. Not on videos: on chatting with an AI agent! Every question went to a big computer far away. Is there another way? Today: what an agent costs in data, money and privacy, and how to choose. Big agents run in the cloud: huge models on computers far away. Your question travels there and back over the network. Darsi Tiny is different: it runs on your phone, so nothing leaves it. Take one weather request. Darsi Tiny reads about sixty tokens and answers in about a second, with no data. A cloud model reads about two and a half thousand, since the tools are described every time. That’s about eighteen kilobytes, and five seconds on 2G. At twenty requests a day, a month of cloud requests is about eleven megabytes. Darsi Tiny’s one download is two point eight megabytes. After about a hundred and fifty requests, the cloud has used more. You can work this out in Python. Multiply the kilobytes for one request by the requests a day and the days. Then divide by a thousand for megabytes: ten point eight. Quick check! You’re on a bus with no signal, and you want to ask an agent something. Which one can still answer? The small model on your phone: it doesn’t need a signal. But remember what it can’t do. Darsi Tiny knows ten school tools and almost nothing else. A big cloud model knows far more, and that’s the trade. Cost isn’t only money. Whatever you type into a cloud agent leaves your phone and is stored on someone else’s computers. It may be kept, read by staff, or used to train the next model. So never type these into a cloud agent. Your passwords and codes. Your address, phone number or ID number. And other people’s private things: a friend’s photo, their marks, their secrets. In the app, run the weather request and note the tokens and the time. Switch to 2G and compare the cloud. Then set your data price and requests a day, and see a month. Your turn. You want help with your diary, which is full of private thoughts. Where is it safest to ask? On your phone, or not at all. Remember: cloud agents cost data, money and a signal, and your words leave the phone. Phone models are cheap and private, but know little. Never type passwords or others’ secrets. Try it yourself: check how much data your phone used last month, and on which apps. Guess how much went on one AI app. Then decide one thing you will never type into it.",
+  "t": "Une de mes élèves a épuisé tout son forfait de données en une semaine. Pas avec des vidéos: en discutant avec un agent d’IA! Chaque question partait vers un gros ordinateur lointain. Existe-t-il un autre moyen? Aujourd’hui: ce que coûte un agent en données, en argent et en vie privée, et comment choisir. Les gros agents tournent dans le cloud: d’énormes modèles sur des ordinateurs lointains. Votre question y va et revient par le réseau. Darsi Tiny est différent: il tourne sur votre téléphone, donc rien n’en sort. Prenons une demande météo. Darsi Tiny lit environ soixante jetons et répond en une seconde environ, sans données. Un modèle dans le cloud en lit environ deux mille cinq cents, car les outils sont décrits à chaque fois. Cela fait environ dix-huit kilo-octets, et cinq secondes en 2G. À vingt demandes par jour, un mois de demandes dans le cloud fait environ onze mégaoctets. Le téléchargement unique de Darsi Tiny fait deux virgule huit mégaoctets. Après environ cent cinquante demandes, le cloud a consommé davantage. Vous pouvez le calculer en Python. Multipliez les kilo-octets d’une demande par les demandes par jour et par les jours. Puis divisez par mille pour obtenir des mégaoctets: dix virgule huit. Petit contrôle! Vous êtes dans un bus sans signal, et vous voulez poser une question à un agent. Lequel peut encore répondre? Le petit modèle sur votre téléphone: il n’a pas besoin de signal. Mais rappelez-vous ce qu’il ne sait pas faire. Darsi Tiny connaît dix outils scolaires et presque rien d’autre. Un gros modèle dans le cloud en sait bien plus, et c’est là le compromis. Le coût n’est pas seulement l’argent. Tout ce que vous tapez dans un agent du cloud quitte votre téléphone et est stocké sur les ordinateurs de quelqu’un d’autre. Cela peut être conservé, lu par du personnel, ou servir à entraîner le prochain modèle. Ne tapez donc jamais ceci dans un agent du cloud. Vos mots de passe et vos codes. Votre adresse, votre numéro de téléphone ou de pièce d’identité. Et les choses privées des autres: la photo d’un ami, ses notes, ses secrets. Dans l’appli, lancez la demande météo et notez les jetons et le temps. Passez en 2G et comparez avec le cloud. Puis fixez votre prix des données et vos demandes par jour, et voyez un mois. À vous. Vous voulez de l’aide pour votre journal intime, plein de pensées privées. Où est-il le plus sûr de demander? Sur votre téléphone, ou pas du tout. À retenir: les agents du cloud coûtent des données, de l’argent et un signal, et vos mots quittent le téléphone. Les modèles sur téléphone sont peu coûteux et privés, mais savent peu de choses. Ne tapez jamais de mots de passe ni les secrets des autres. Essayez par vous-même: regardez combien de données votre téléphone a utilisées le mois dernier, et avec quelles applis. Devinez la part d’une appli d’IA. Puis décidez d’une chose que vous ne taperez jamais dedans."
+ },
+ "lessons.3.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lire"
+ },
+ "lessons.3.steps.1.title": {
+  "en": "What an agent really costs",
+  "t": "Ce que coûte vraiment un agent"
+ },
+ "lessons.3.steps.1.body": {
+  "en": "Big AI agents run in the cloud: huge models on computers far away. Every question you type travels there and back over the network, so it needs a signal and uses your data bundle. Darsi Tiny is different: it is small enough to run on your phone, so once it is downloaded (2.8 MB, one time) it needs no data and no signal, and nothing you type leaves the phone.\n\nCompare one weather request. Darsi Tiny reads about 60 tokens and writes about 50 to 60, in about a second on an old phone. A big cloud model reads about 2,500 tokens, because the tools are described to it again at every step: that is about 18 KB of data and about 5 seconds over 2G, for under one US cent. At 20 requests a day, a month of cloud requests is about 11 MB. After about 150 requests, the cloud has used more data than Darsi Tiny’s single download.\n\nBut cost is a trade, not a race with one winner. Darsi Tiny knows ten school tools in a made-up world and almost nothing else. A big cloud model knows far more and can help with much harder questions. Choose for the job: small and on the phone for simple, private or offline tasks; big and in the cloud when you need what it knows, and you have the data, the money and the signal.\n\nYour words have a cost too. Whatever you type into a cloud agent leaves your phone and is stored on someone else’s computers. It may be kept, read by staff or used to train the next model. So never type your passwords or codes, your address, phone number or ID number, or other people’s private things, such as a friend’s photo, marks or secrets.",
+  "t": "Les gros agents d’IA tournent dans le cloud : d’énormes modèles sur des ordinateurs lointains. Chaque question que vous tapez y va et en revient par le réseau : il faut donc du réseau, et elle consomme votre forfait de données. Darsi Tiny est différent : il est assez petit pour tourner sur votre téléphone ; une fois téléchargé (2,8 Mo, une seule fois), il n’a besoin ni de données ni de réseau, et rien de ce que vous tapez ne quitte le téléphone.\n\nComparez une même demande de météo. Darsi Tiny lit environ 60 jetons et en écrit 50 à 60, en une seconde environ sur un vieux téléphone. Un gros modèle dans le cloud en lit environ 2 500, parce que les outils lui sont décrits de nouveau à chaque étape : cela fait environ 18 Ko de données et environ 5 secondes en 2G, pour moins d’un cent américain. À 20 demandes par jour, un mois de demandes dans le cloud représente environ 11 Mo. Après environ 150 demandes, le cloud a utilisé plus de données que l’unique téléchargement de Darsi Tiny.\n\nMais le coût est un compromis, pas une course avec un seul gagnant. Darsi Tiny connaît dix outils scolaires dans un monde imaginaire et presque rien d’autre. Un gros modèle dans le cloud en sait bien plus et peut aider pour des questions beaucoup plus difficiles. Choisissez selon la tâche : petit et sur le téléphone pour les tâches simples, privées ou hors ligne ; gros et dans le cloud quand vous avez besoin de ce qu’il sait, et que vous avez les données, l’argent et le réseau.\n\nVos mots ont aussi un coût. Tout ce que vous tapez dans un agent du cloud quitte votre téléphone et est stocké sur les ordinateurs de quelqu’un d’autre. Cela peut être conservé, lu par du personnel ou utilisé pour entraîner le prochain modèle. Ne tapez donc jamais vos mots de passe ou vos codes, votre adresse, votre numéro de téléphone ou de pièce d’identité, ni les affaires privées des autres, comme la photo, les notes ou les secrets d’un ami."
+ },
+ "lessons.3.steps.1.keyTerms.0.term": {
+  "en": "Cloud model",
+  "t": "Modèle dans le cloud"
+ },
+ "lessons.3.steps.1.keyTerms.0.def": {
+  "en": "A big model on computers far away: every request travels over the network.",
+  "t": "Un gros modèle sur des ordinateurs lointains : chaque demande voyage par le réseau."
+ },
+ "lessons.3.steps.1.keyTerms.1.term": {
+  "en": "On-device model",
+  "t": "Modèle sur l’appareil"
+ },
+ "lessons.3.steps.1.keyTerms.1.def": {
+  "en": "A model that runs on your own phone: no data, no signal, nothing leaves it.",
+  "t": "Un modèle qui tourne sur votre propre téléphone : pas de données, pas de réseau, rien n’en sort."
+ },
+ "lessons.3.steps.1.keyTerms.2.term": {
+  "en": "Data bundle",
+  "t": "Forfait de données"
+ },
+ "lessons.3.steps.1.keyTerms.2.def": {
+  "en": "The amount of mobile data you pay for, counted in megabytes (MB) or gigabytes.",
+  "t": "La quantité de données mobiles que vous payez, comptée en mégaoctets (Mo) ou en gigaoctets."
+ },
+ "lessons.3.steps.1.keyTerms.3.term": {
+  "en": "Token",
+  "t": "Jeton"
+ },
+ "lessons.3.steps.1.keyTerms.3.def": {
+  "en": "A small piece of text a model reads or writes. More tokens mean more data, time and money.",
+  "t": "Un petit morceau de texte qu’un modèle lit ou écrit. Plus de jetons, c’est plus de données, de temps et d’argent."
+ },
+ "lessons.3.steps.2.prompt": {
+  "en": "You want help with your diary, which is full of private thoughts. Where is it safest to ask?",
+  "t": "Vous voulez de l’aide pour votre journal intime, plein de pensées privées. Où est-ce le plus sûr de demander ?"
+ },
+ "lessons.3.steps.2.options.0.text": {
+  "en": "A cloud chatbot: it knows more",
+  "t": "Un chatbot dans le cloud : il en sait plus"
+ },
+ "lessons.3.steps.2.options.1.text": {
+  "en": "A model on your phone, or nobody",
+  "t": "Un modèle sur votre téléphone, ou personne"
+ },
+ "lessons.3.steps.2.options.2.text": {
+  "en": "A cloud chatbot, in a new chat",
+  "t": "Un chatbot dans le cloud, dans une nouvelle conversation"
+ },
+ "lessons.3.steps.2.explain": {
+  "en": "Whatever you type into a cloud chatbot leaves your phone, even in a new chat. Private thoughts stay on your phone, or with you.",
+  "t": "Tout ce que vous tapez dans un chatbot du cloud quitte votre téléphone, même dans une nouvelle conversation. Les pensées privées restent sur votre téléphone, ou avec vous."
+ },
+ "lessons.3.steps.3.prompt": {
+  "en": "Which of these should you never type into a cloud agent? Choose all that apply.",
+  "t": "Lesquelles de ces choses ne devez-vous jamais taper dans un agent du cloud ? Choisissez-les toutes."
+ },
+ "lessons.3.steps.3.options.0.text": {
+  "en": "Your password",
+  "t": "Votre mot de passe"
+ },
+ "lessons.3.steps.3.options.1.text": {
+  "en": "A friend’s exam marks",
+  "t": "Les notes d’examen d’un ami"
+ },
+ "lessons.3.steps.3.options.2.text": {
+  "en": "A question about how volcanoes form",
+  "t": "Une question sur la formation des volcans"
+ },
+ "lessons.3.steps.3.options.3.text": {
+  "en": "Your home address",
+  "t": "Votre adresse personnelle"
+ },
+ "lessons.3.steps.3.options.4.text": {
+  "en": "A fractions problem from your textbook",
+  "t": "Un problème de fractions de votre manuel"
+ },
+ "lessons.3.steps.3.explain": {
+  "en": "Passwords, your address and other people’s private things should never leave your phone. A science question or a textbook problem is fine: it says nothing private about anyone.",
+  "t": "Les mots de passe, votre adresse et les affaires privées des autres ne doivent jamais quitter votre téléphone. Une question de sciences ou un problème de manuel, c’est bon : cela ne dit rien de privé sur personne."
+ },
+ "lessons.3.steps.4.prompt": {
+  "en": "Complete the program so it works out a month of cloud requests in megabytes.",
+  "t": "Complétez le programme pour qu’il calcule un mois de demandes dans le cloud en mégaoctets."
+ },
+ "lessons.3.steps.4.explain": {
+  "en": "Multiply 18 KB by 20 requests a day and by 30 days: 10,800 KB. Divide by 1,000 to get megabytes: it prints 10.8 MB, the “about 11 MB a month” from the lesson.",
+  "t": "Multipliez 18 Ko par 20 demandes par jour et par 30 jours : 10 800 Ko. Divisez par 1000 pour obtenir des mégaoctets : il affiche 10.8 Mo, les « environ 11 Mo par mois » de la leçon."
+ },
+ "lessons.3.steps.5.prompt": {
+  "en": "What does this program print?",
+  "t": "Qu’affiche ce programme ?"
+ },
+ "lessons.3.steps.5.options.0.text": {
+  "en": "156",
+  "t": "156"
+ },
+ "lessons.3.steps.5.options.1.text": {
+  "en": "0.018",
+  "t": "0.018"
+ },
+ "lessons.3.steps.5.options.2.text": {
+  "en": "28",
+  "t": "28"
+ },
+ "lessons.3.steps.5.explain": {
+  "en": "One cloud request is 18 / 1000 = 0.018 MB, and 2.8 / 0.018 is about 156. So after about 150 requests, the cloud has used more data than downloading Darsi Tiny once (the lab, which measures more carefully, says about 150).",
+  "t": "Une demande dans le cloud représente 18 / 1000 = 0.018 Mo, et 2.8 / 0.018 fait environ 156. Donc, après environ 150 demandes, le cloud a utilisé plus de données que le téléchargement unique de Darsi Tiny (le labo, qui mesure plus finement, dit environ 150)."
+ },
+ "lessons.3.steps.6.prompt": {
+  "en": "Try it: run “What’s the weather in Kafi tomorrow?” and note the tokens and the time on your phone. Switch the network to 2G: how long, and how much data, would a cloud model need? Then set your requests a day and the price of 1 GB where you live, and compare a month of the cloud with downloading Darsi Tiny once.",
+  "t": "Essayez : lancez « Quel temps fera-t-il à Kafi demain ? » et notez les jetons et le temps sur votre téléphone. Passez le réseau en 2G : combien de temps, et combien de données, faudrait-il à un modèle dans le cloud ? Puis réglez vos demandes par jour et le prix d’1 Go là où vous vivez, et comparez un mois de cloud avec un seul téléchargement de Darsi Tiny."
+ },
+ "lessons.3.steps.7.prompt": {
+  "en": "A small model on your phone knows as much as a big cloud model.",
+  "t": "Un petit modèle sur votre téléphone en sait autant qu’un gros modèle dans le cloud."
+ },
+ "lessons.3.steps.7.explain": {
+  "en": "Darsi Tiny knows ten school tools and almost nothing else; a big cloud model knows far more. The small one wins on data, cost, privacy and working offline, not on knowledge.",
+  "t": "Darsi Tiny connaît dix outils scolaires et presque rien d’autre ; un gros modèle dans le cloud en sait bien plus. Le petit gagne sur les données, le coût, la confidentialité et le fonctionnement hors ligne, pas sur le savoir."
+ },
+ "lessons.3.steps.8.prompt": {
+  "en": "What do you suggest?",
+  "t": "Que suggérez-vous ?"
+ },
+ "lessons.3.steps.8.who": {
+  "en": "Leila, your friend",
+  "t": "Leila, votre amie"
+ },
+ "lessons.3.steps.8.initial": {
+  "en": "L",
+  "t": "L"
+ },
+ "lessons.3.steps.8.situation": {
+  "en": "Leila wants to paste the last week of your class group’s chat, with everyone’s names and phone numbers, into a free cloud chatbot, to get a summary of who said what about the school trip.",
+  "t": "Leila veut coller la dernière semaine de la conversation du groupe de votre classe, avec les noms et les numéros de téléphone de tout le monde, dans un chatbot gratuit du cloud, pour obtenir un résumé de qui a dit quoi à propos de la sortie scolaire."
+ },
+ "lessons.3.steps.8.choices.0.label": {
+  "en": "“Fine: it’s only a summary.”",
+  "t": "« Pas de problème : ce n’est qu’un résumé. »"
+ },
+ "lessons.3.steps.8.choices.0.consequence": {
+  "en": "The whole chat, with names and numbers, would leave her phone and be stored on someone else’s computers, without anyone in the group agreeing.",
+  "t": "Toute la conversation, avec les noms et les numéros, quitterait son téléphone et serait stockée sur les ordinateurs de quelqu’un d’autre, sans que personne du groupe ait donné son accord."
+ },
+ "lessons.3.steps.8.choices.1.label": {
+  "en": "“Take out the names and numbers first, or ask the group before you share it.”",
+  "t": "« Enlève d’abord les noms et les numéros, ou demande au groupe avant de partager. »"
+ },
+ "lessons.3.steps.8.choices.1.consequence": {
+  "en": "Other people’s words and numbers aren’t hers to share. Without names, the summary still works; with the group’s permission, it’s their choice.",
+  "t": "Les mots et les numéros des autres ne sont pas à elle pour les partager. Sans les noms, le résumé fonctionne quand même ; avec la permission du groupe, c’est leur choix."
+ },
+ "lessons.3.steps.8.choices.2.label": {
+  "en": "“Use your cousin’s phone instead.”",
+  "t": "« Utilise plutôt le téléphone de ton cousin. »"
+ },
+ "lessons.3.steps.8.choices.2.consequence": {
+  "en": "A different phone changes nothing: the chat still goes to the same cloud, with the same names and numbers.",
+  "t": "Changer de téléphone ne change rien : la conversation part toujours vers le même cloud, avec les mêmes noms et les mêmes numéros."
+ },
+ "lessons.3.steps.9.prompt": {
+  "en": "Which AI apps do you or your family use? For each, would you rather it ran on the phone or in the cloud, and why?",
+  "t": "Quelles applis d’IA utilisez-vous, vous ou votre famille ? Pour chacune, préféreriez-vous qu’elle tourne sur le téléphone ou dans le cloud, et pourquoi ?"
+ },
+ "lessons.3.steps.9.placeholder": {
+  "en": "For example: “For homework questions the cloud knows more, but for my diary I’d want it on my phone, or not at all.”",
+  "t": "Par exemple : « Pour les devoirs, le cloud en sait plus, mais pour mon journal intime, je le voudrais sur mon téléphone, ou pas du tout. »"
+ },
+ "lessons.3.steps.10.prompt": {
+  "en": "Project: My data diary",
+  "t": "Projet : Mon journal des données"
+ },
+ "lessons.3.steps.10.task": {
+  "en": "For one week, at home or at school, keep a diary each time you (or your family, with their permission) use an AI app: what you asked, whether it needed a signal, and whether you typed anything private. At the end of the week, check the phone’s data usage screen. Then write your own three rules: what you’ll ask a model on the phone, what you’ll ask in the cloud, and what you’ll never type into any agent.",
+  "t": "Pendant une semaine, à la maison ou à l’école, tenez un journal chaque fois que vous (ou votre famille, avec sa permission) utilisez une appli d’IA : ce que vous avez demandé, si cela demandait du réseau, et si vous avez tapé quelque chose de privé. À la fin de la semaine, regardez l’écran d’utilisation des données du téléphone. Puis écrivez vos trois propres règles : ce que vous demanderez à un modèle sur le téléphone, ce que vous demanderez dans le cloud, et ce que vous ne taperez jamais dans aucun agent."
+ },
+ "lessons.3.steps.10.deliverable": {
+  "en": "Your three rules, and a short note on your week: how many requests, how much data, and one thing you decided not to type. No private details in the note.",
+  "t": "Vos trois règles, et une courte note sur votre semaine : combien de demandes, combien de données, et une chose que vous avez décidé de ne pas taper. Aucun détail privé dans la note."
+ },
+ "lessons.3.steps.10.rubric.0.criterion": {
+  "en": "I can: compare a model on the phone with one in the cloud: data, money, signal, privacy.",
+  "t": "Je sais : comparer un modèle sur le téléphone et un modèle dans le cloud : données, argent, réseau, confidentialité."
+ },
+ "lessons.3.steps.10.rubric.1.criterion": {
+  "en": "I can: work out a month’s data from the data per request.",
+  "t": "Je sais : calculer les données d’un mois à partir des données par demande."
+ },
+ "lessons.3.steps.10.rubric.2.criterion": {
+  "en": "I can: name what I will never type into a cloud agent.",
+  "t": "Je sais : nommer ce que je ne taperai jamais dans un agent du cloud."
+ },
+ "lessons.3.slides.0.title": {
+  "en": "Your data, your bundle",
+  "t": "Vos données, votre forfait"
+ },
+ "lessons.3.slides.0.note": {
+  "en": "AI agents · Lower secondary · Lesson 4",
+  "t": "Agents IA, collège, leçon 4"
+ },
+ "lessons.3.slides.0.narration": {
+  "en": "What does an agent really cost you: data, money, or privacy?",
+  "t": "Que vous coûte vraiment un agent : des données, de l’argent, ou de la confidentialité ?"
+ },
+ "lessons.3.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "Dans cette leçon, vous allez"
+ },
+ "lessons.3.slides.1.bullets": {
+  "en": [
+   "Compare a model on your phone with one in the cloud.",
+   "Work out a month’s data with a short program.",
+   "Decide what you will never type into a cloud agent."
+  ],
+  "t": [
+   "Comparer un modèle sur votre téléphone et un modèle dans le cloud.",
+   "Calculer les données d’un mois avec un court programme.",
+   "Décider ce que vous ne taperez jamais dans un agent du cloud."
+  ]
+ },
+ "lessons.3.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Idées clés"
+ },
+ "lessons.3.slides.2.bullets": {
+  "en": [
+   "Cloud agents cost data, money and a signal, and your words leave your phone.",
+   "Small models on the phone are cheap, private and offline, but know little.",
+   "Never type passwords, your address or other people’s private things."
+  ],
+  "t": [
+   "Les agents du cloud coûtent des données, de l’argent et du réseau, et vos mots quittent votre téléphone.",
+   "Les petits modèles sur le téléphone sont bon marché, privés et hors ligne, mais savent peu de choses.",
+   "Ne tapez jamais de mots de passe, votre adresse ou les affaires privées des autres."
+  ]
+ },
+ "lessons.3.slides.3.title": {
+  "en": "Phone or cloud?",
+  "t": "Téléphone ou cloud ?"
+ },
+ "lessons.3.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): How much data does your phone use a month?",
+   "Work it out (6 min): A month of cloud requests.",
+   "Sort (8 min): Ten questions: phone, cloud or never?",
+   "Rules (3 min): Write your own three rules."
+  ],
+  "t": [
+   "Échauffement (3 min) : Combien de données votre téléphone utilise-t-il par mois ?",
+   "Calculer (6 min) : Un mois de demandes dans le cloud.",
+   "Classer (8 min) : Dix questions : téléphone, cloud ou jamais ?",
+   "Règles (3 min) : Écrivez vos trois propres règles."
+  ]
+ },
+ "lessons.3.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Guess how much data your phone (or your family’s) uses in a month, then check the data usage screen if you can.",
+   "Work it out (6 min): One cloud request is about 18 KB. Work out a month at 5, 20 and 50 requests a day, and compare each with Darsi Tiny’s 2.8 MB, downloaded once.",
+   "Sort (8 min): Write ten questions you might ask an AI (homework, a diary entry, a friend’s photo, the weather). Sort each into: fine on the phone, fine in the cloud, or never type it.",
+   "Rules (3 min): Write your own three rules, and share one with a partner."
+  ],
+  "t": [
+   "Échauffement (3 min) : Devinez combien de données votre téléphone (ou celui de votre famille) utilise en un mois, puis vérifiez sur l’écran d’utilisation des données si vous le pouvez.",
+   "Calculer (6 min) : Une demande dans le cloud représente environ 18 Ko. Calculez un mois à 5, 20 et 50 demandes par jour, et comparez chacun avec les 2,8 Mo de Darsi Tiny, téléchargés une seule fois.",
+   "Classer (8 min) : Écrivez dix questions que vous pourriez poser à une IA (devoirs, une page de journal intime, la photo d’un ami, la météo). Classez chacune : correct sur le téléphone, correct dans le cloud, ou à ne jamais taper.",
+   "Règles (3 min) : Écrivez vos trois propres règles, et partagez-en une avec un partenaire."
+  ]
+ },
+ "lessons.3.slides.3.note": {
+  "en": "A phone helps but isn’t needed: the sums and the sorting work on paper. Never use anyone’s real private details as examples.",
+  "t": "Un téléphone aide mais n’est pas nécessaire : les calculs et le classement fonctionnent sur papier. N’utilisez jamais les vrais détails privés de quelqu’un comme exemples."
+ },
+ "lessons.3.slides.3.narration": {
+  "en": "On the phone, in the cloud, or never: where does each question go?",
+  "t": "Sur le téléphone, dans le cloud, ou jamais : où va chaque question ?"
+ },
+ "lessons.3.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.3.slides.4.bullets": {
+  "en": [
+   "When is a big cloud model worth its cost?",
+   "Why might a free AI app still cost you something?",
+   "What would you tell a younger student about typing into chatbots?"
+  ],
+  "t": [
+   "Quand un gros modèle dans le cloud vaut-il son coût ?",
+   "Pourquoi une appli d’IA gratuite peut-elle quand même vous coûter quelque chose ?",
+   "Que diriez-vous à un élève plus jeune au sujet de ce qu’on tape dans les chatbots ?"
+  ]
+ },
+ "lessons.3.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.3.slides.5.bullets": {
+  "en": [
+   "Write one question you’d ask on the phone, one in the cloud, and one thing you’d never type."
+  ],
+  "t": [
+   "Écrivez une question que vous poseriez sur le téléphone, une dans le cloud, et une chose que vous ne taperiez jamais."
+  ]
+ },
+ "lessons.3.slides.5.narration": {
+  "en": "This week, keep your data diary, and keep private things off the cloud.",
+  "t": "Cette semaine, tenez votre journal des données, et gardez les choses privées hors du cloud."
+ },
+ "lessons.3.kit.0.title": {
+  "en": "Slides to revise: Your data, your bundle",
+  "t": "Diapositives de révision : Vos données, votre forfait"
+ },
+ "lessons.3.kit.1.title": {
+  "en": "Activity sheet: Your data, your bundle",
+  "t": "Fiche d’activité : Vos données, votre forfait"
+ },
+ "lessons.3.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "La vidéo de la leçon (240p, pour la revoir ou la partager)"
+ },
+ "lessons.4.title": {
+  "en": "Working with an agent safely: unit check",
+  "t": "Travailler avec un agent en toute sécurité : bilan de l’unité"
+ },
+ "lessons.4.tryTomorrow": {
+  "en": "Pick the habit from this unit you need most (reading the call, checking it against your words, saying yes only after reading, or keeping private things off the cloud) and use it every day this week.",
+  "t": "Choisissez l’habitude de cette unité dont vous avez le plus besoin (lire l’appel, le comparer avec vos mots, ne dire oui qu’après avoir lu, ou garder les choses privées hors du cloud) et pratiquez-la chaque jour cette semaine."
+ },
+ "lessons.4.steps.0.prompt": {
+  "en": "What makes an AI agent different from a chatbot?",
+  "t": "Qu’est-ce qui distingue un agent d’IA d’un chatbot ?"
+ },
+ "lessons.4.steps.0.options.0.text": {
+  "en": "It always gives the right answer",
+  "t": "Il donne toujours la bonne réponse"
+ },
+ "lessons.4.steps.0.options.1.text": {
+  "en": "It can use tools to act, not just write text",
+  "t": "Il peut utiliser des outils pour agir, pas seulement écrire du texte"
+ },
+ "lessons.4.steps.0.options.2.text": {
+  "en": "It never needs a person",
+  "t": "Il n’a jamais besoin d’une personne"
+ },
+ "lessons.4.steps.0.options.3.text": {
+  "en": "It is always bigger",
+  "t": "Il est toujours plus gros"
+ },
+ "lessons.4.steps.0.explain": {
+  "en": "An agent is a language model in a loop with tools: it can ask for a timetable, the weather or a message to be sent. It can still be wrong, and it still needs people in charge.",
+  "t": "Un agent est un modèle de langage en boucle avec des outils : il peut demander un emploi du temps, la météo ou l’envoi d’un message. Il peut quand même avoir tort, et il a toujours besoin de personnes aux commandes."
+ },
+ "lessons.4.steps.1.prompt": {
+  "en": "A tool call is the tool’s name followed by its details.",
+  "t": "Un appel d’outil est le nom de l’outil suivi de ses détails."
+ },
+ "lessons.4.steps.1.explain": {
+  "en": "For example weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}: the name, weather, then the details in curly brackets, written as JSON.",
+  "t": "Par exemple weather{\"place\":\"Kafi\",\"jour\":\"tomorrow\"} : le nom, weather, puis les détails entre accolades, écrits en JSON."
+ },
+ "lessons.4.steps.2.prompt": {
+  "en": "Put the agent loop in order.",
+  "t": "Mettez la boucle de l’agent dans l’ordre."
+ },
+ "lessons.4.steps.2.steps.0": {
+  "en": "Request",
+  "t": "Demande"
+ },
+ "lessons.4.steps.2.steps.1": {
+  "en": "Plan",
+  "t": "Plan"
+ },
+ "lessons.4.steps.2.steps.2": {
+  "en": "Tool call",
+  "t": "Appel d’outil"
+ },
+ "lessons.4.steps.2.steps.3": {
+  "en": "Result from the app",
+  "t": "Résultat venu de l’appli"
+ },
+ "lessons.4.steps.2.steps.4": {
+  "en": "Answer",
+  "t": "Réponse"
+ },
+ "lessons.4.steps.2.explain": {
+  "en": "The model plans, writes a call, the app runs the tool and adds the result, and the model answers from it.",
+  "t": "Le modèle planifie, écrit un appel, l’appli exécute l’outil et ajoute le résultat, et le modèle répond à partir de lui."
+ },
+ "lessons.4.steps.3.prompt": {
+  "en": "Which of these should stop a call before it runs? Choose all that apply.",
+  "t": "Lesquels de ces cas doivent arrêter un appel avant qu’il s’exécute ? Choisissez-les tous."
+ },
+ "lessons.4.steps.3.options.0.text": {
+  "en": "A class in the call that wasn’t in the request",
+  "t": "Une classe dans l’appel qui n’était pas dans la demande"
+ },
+ "lessons.4.steps.3.options.1.text": {
+  "en": "A time of 25:00",
+  "t": "Une heure de 25:00"
+ },
+ "lessons.4.steps.3.options.2.text": {
+  "en": "The agent sounds unsure",
+  "t": "L’agent paraît hésitant"
+ },
+ "lessons.4.steps.3.options.3.text": {
+  "en": "A message nobody approved",
+  "t": "Un message que personne n’a approuvé"
+ },
+ "lessons.4.steps.3.explain": {
+  "en": "A name from nowhere, a detail with the wrong shape and an action nobody approved all break a checker’s rules. How sure the agent sounds tells you nothing either way.",
+  "t": "Un nom venu de nulle part, un détail de mauvaise forme et une action que personne n’a approuvée enfreignent tous les règles d’un vérificateur. L’assurance de l’agent ne dit rien, dans un sens comme dans l’autre."
+ },
+ "lessons.4.steps.4.prompt": {
+  "en": "What does this program print?",
+  "t": "Qu’affiche ce programme ?"
+ },
+ "lessons.4.steps.4.options.0.text": {
+  "en": "route",
+  "t": "route"
+ },
+ "lessons.4.steps.4.options.1.text": {
+  "en": "Kafi",
+  "t": "Kafi"
+ },
+ "lessons.4.steps.4.options.2.text": {
+  "en": "Dala",
+  "t": "Dala"
+ },
+ "lessons.4.steps.4.explain": {
+  "en": "split(\"{\") cuts the call at the first curly bracket, and [0] is the piece before it: the tool’s name, route.",
+  "t": "split(\"{\") coupe l’appel à la première accolade, et [0] est le morceau qui la précède : le nom de l’outil, route."
+ },
+ "lessons.4.steps.5.prompt": {
+  "en": "Match each action to its permission level.",
+  "t": "Associez chaque action à son niveau de permission."
+ },
+ "lessons.4.steps.5.pairs.0.left": {
+  "en": "Look up tomorrow’s timetable",
+  "t": "Consulter l’emploi du temps de demain"
+ },
+ "lessons.4.steps.5.pairs.0.right": {
+  "en": "Read only",
+  "t": "Lecture seule"
+ },
+ "lessons.4.steps.5.pairs.1.left": {
+  "en": "Post a photo to the class group",
+  "t": "Publier une photo dans le groupe de la classe"
+ },
+ "lessons.4.steps.5.pairs.1.right": {
+  "en": "Ask first",
+  "t": "Demander d’abord"
+ },
+ "lessons.4.steps.5.pairs.2.left": {
+  "en": "Hand over your password",
+  "t": "Donner votre mot de passe"
+ },
+ "lessons.4.steps.5.pairs.2.right": {
+  "en": "Never",
+  "t": "Jamais"
+ },
+ "lessons.4.steps.5.explain": {
+  "en": "Reading is low risk; posting changes the world and needs your yes; a password is never for an agent.",
+  "t": "Lire est peu risqué ; publier change le monde et demande votre oui ; un mot de passe n’est jamais pour un agent."
+ },
+ "lessons.4.steps.6.prompt": {
+  "en": "Complete the check so the message is sent only after a yes.",
+  "t": "Complétez le contrôle pour que le message ne soit envoyé qu’après un oui."
+ },
+ "lessons.4.steps.6.explain": {
+  "en": "== compares the reply with \"yes\". != would send on everything except yes, and a single = assigns instead of comparing, which is an error in an if.",
+  "t": "== compare la réponse à \"yes\". != enverrait pour tout sauf yes, et un seul = affecte au lieu de comparer, ce qui est une erreur dans un if."
+ },
+ "lessons.4.steps.7.prompt": {
+  "en": "If an agent asks politely before sending, the app doesn’t need to check in code.",
+  "t": "Si un agent demande poliment avant d’envoyer, l’appli n’a pas besoin de contrôler dans le code."
+ },
+ "lessons.4.steps.7.explain": {
+  "en": "A model’s asking is learned behaviour and can fail, as «نعم، أرسلها.» on its own shows. The defence is a check in code and a person’s yes.",
+  "t": "Le fait qu’un modèle demande est un comportement appris et peut échouer, comme le montre «نعم، أرسلها.» tout seul. La défense, c’est un contrôle dans le code et le oui d’une personne."
+ },
+ "lessons.4.steps.8.prompt": {
+  "en": "You have no signal and no data left. Which agent can still help with a simple timetable question?",
+  "t": "Vous n’avez plus de réseau ni de données. Quel agent peut encore vous aider pour une simple question d’emploi du temps ?"
+ },
+ "lessons.4.steps.8.options.0.text": {
+  "en": "A big model in the cloud",
+  "t": "Un gros modèle dans le cloud"
+ },
+ "lessons.4.steps.8.options.1.text": {
+  "en": "A small model already on your phone",
+  "t": "Un petit modèle déjà sur votre téléphone"
+ },
+ "lessons.4.steps.8.options.2.text": {
+  "en": "Neither",
+  "t": "Aucun des deux"
+ },
+ "lessons.4.steps.8.explain": {
+  "en": "A model on the phone needs no signal and no data once it is downloaded. A cloud model needs the network for every request.",
+  "t": "Un modèle sur le téléphone n’a besoin ni de réseau ni de données une fois téléchargé. Un modèle dans le cloud a besoin du réseau pour chaque demande."
+ },
+ "lessons.4.steps.9.prompt": {
+  "en": "This check should send only after a yes, but it sends after a no. Which line is wrong?",
+  "t": "Ce contrôle ne devrait envoyer qu’après un oui, mais il envoie après un non. Quelle ligne est fausse ?"
+ },
+ "lessons.4.steps.9.explain": {
+  "en": "!= means “is not”, so line 2 sends for every reply except yes. It should be == so that only an exact yes sends.",
+  "t": "!= veut dire « est différent de » : la ligne 2 envoie donc pour toutes les réponses sauf yes. Il faudrait ==, pour que seul un yes exact envoie."
+ },
+ "lessons.4.slides.0.title": {
+  "en": "Working with an agent safely: review",
+  "t": "Travailler avec un agent en toute sécurité : révision"
+ },
+ "lessons.4.slides.0.note": {
+  "en": "AI agents · Lower secondary · Unit check",
+  "t": "Agents IA, collège, bilan de l’unité"
+ },
+ "lessons.4.slides.0.narration": {
+  "en": "Let’s look back at the whole unit and check what stuck.",
+  "t": "Revenons sur toute l’unité et vérifions ce qui est resté."
+ },
+ "lessons.4.slides.1.title": {
+  "en": "In this unit",
+  "t": "Dans cette unité"
+ },
+ "lessons.4.slides.1.bullets": {
+  "en": [
+   "Inside an agent",
+   "Check what it did",
+   "Ask before it acts",
+   "Your data, your bundle"
+  ],
+  "t": [
+   "À l’intérieur d’un agent",
+   "Vérifier ce qu’il a fait",
+   "Demander avant d’agir",
+   "Vos données, votre forfait"
+  ]
+ },
+ "lessons.4.slides.2.title": {
+  "en": "The big ideas",
+  "t": "Les grandes idées"
+ },
+ "lessons.4.slides.2.bullets": {
+  "en": [
+   "An agent is a model in a loop with tools; the app runs them",
+   "Check the call against your words: sure isn’t right",
+   "Read, then say yes; the app checks the yes in code",
+   "Cloud agents cost data, money and privacy"
+  ],
+  "t": [
+   "Un agent est un modèle en boucle avec des outils ; l’appli les exécute",
+   "Contrôlez l’appel avec vos mots : sûr de soi ne veut pas dire juste",
+   "Lisez, puis dites oui ; l’appli vérifie le oui dans le code",
+   "Les agents du cloud coûtent des données, de l’argent et de la confidentialité"
+  ]
+ },
+ "lessons.4.slides.3.title": {
+  "en": "Agent safety poster",
+  "t": "Affiche de sécurité de l’agent"
+ },
+ "lessons.4.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): One habit from each lesson.",
+   "Plan (7 min): Four boxes, one per lesson.",
+   "Make (7 min): Draw and write your poster.",
+   "Share (3 min): Explain your most useful box."
+  ],
+  "t": [
+   "Échauffement (3 min) : Une habitude de chaque leçon.",
+   "Planifier (7 min) : Quatre cases, une par leçon.",
+   "Fabriquer (7 min) : Dessinez et écrivez votre affiche.",
+   "Partager (3 min) : Expliquez votre case la plus utile."
+  ]
+ },
+ "lessons.4.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Write one habit from each of the four lessons, in your own words.",
+   "Plan (7 min): Divide a page into four boxes: the loop, checking a call, asking first, and data and cost.",
+   "Make (7 min): In each box, draw one picture and write one rule, such as “Read the call before it runs”.",
+   "Share (3 min): Show your poster to a partner, and explain the box you think will help you most."
+  ],
+  "t": [
+   "Échauffement (3 min) : Écrivez une habitude de chacune des quatre leçons, avec vos propres mots.",
+   "Planifier (7 min) : Divisez une page en quatre cases : la boucle, contrôler un appel, demander d’abord, et données et coût.",
+   "Fabriquer (7 min) : Dans chaque case, dessinez une image et écrivez une règle, comme « Lire l’appel avant qu’il s’exécute ».",
+   "Partager (3 min) : Montrez votre affiche à un partenaire, et expliquez la case qui vous aidera le plus selon vous."
+  ]
+ },
+ "lessons.4.slides.3.note": {
+  "en": "Paper and pens are enough. Use only made-up names in your examples.",
+  "t": "Du papier et des stylos suffisent. Utilisez seulement des noms inventés dans vos exemples."
+ },
+ "lessons.4.slides.3.narration": {
+  "en": "Which rule on your poster will you use first?",
+  "t": "Quelle règle de votre affiche utiliserez-vous en premier ?"
+ },
+ "lessons.4.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.4.slides.4.bullets": {
+  "en": [
+   "Which habit from this unit will you keep?",
+   "What surprised you most about how agents make mistakes?",
+   "How would you explain asking first to a younger student?"
+  ],
+  "t": [
+   "Quelle habitude de cette unité allez-vous garder ?",
+   "Qu’est-ce qui vous a le plus surpris dans la façon dont les agents se trompent ?",
+   "Comment expliqueriez-vous « demander d’abord » à un élève plus jeune ?"
+  ]
+ },
+ "lessons.4.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.4.slides.5.bullets": {
+  "en": [
+   "My most useful habit from this unit, and when I’ll use it."
+  ],
+  "t": [
+   "Mon habitude la plus utile de cette unité, et quand je l’utiliserai."
+  ]
+ },
+ "lessons.4.slides.5.narration": {
+  "en": "This week, teach one habit from this unit to someone younger.",
+  "t": "Cette semaine, apprenez une habitude de cette unité à quelqu’un de plus jeune."
+ },
+ "lessons.4.kit.0.title": {
+  "en": "Slides to revise: Working with an agent safely: unit check",
+  "t": "Diapositives de révision : Travailler avec un agent en toute sécurité : bilan de l’unité"
+ },
+ "lessons.4.kit.1.title": {
+  "en": "Activity sheet: Working with an agent safely: unit check",
+  "t": "Fiche d’activité : Travailler avec un agent en toute sécurité : bilan de l’unité"
+ }
+}

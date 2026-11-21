@@ -1,0 +1,1858 @@
+{
+ "title": {
+  "en": "Build an agent in Python",
+  "t": "Baue einen Agenten in Python"
+ },
+ "summary": {
+  "en": "Write the parts of an agent yourself: read the model’s tool call, run the right tool, loop until it answers, and guard every action in code. In your code a scripted model stands in for the real one; the labs show Darsi Tiny doing the same on your phone. Before this: “First Python” (Programming, lower secondary); functions and dictionaries are explained as you go.",
+  "t": "Schreibe die Teile eines Agenten selbst: den Werkzeugaufruf des Modells lesen, das richtige Werkzeug ausführen, schleifen, bis es antwortet, und jede Aktion im Code absichern. In deinem Code steht ein Skriptmodell für das echte ein; die Labs zeigen Darsi Tiny, wie es dasselbe auf deinem Handy tut. Vorher: „Erstes Python“ (Programmieren, Sekundarstufe I); Funktionen und Dictionaries werden unterwegs erklärt."
+ },
+ "lessons.0.title": {
+  "en": "Read a tool call",
+  "t": "Einen Werkzeugaufruf lesen"
+ },
+ "lessons.0.tryTomorrow": {
+  "en": "On paper, write five lines an agent might produce: some tool calls, some answers and one broken call. Swap with a friend: they mark each line as a call, an answer or broken, and name the tool in every call.",
+  "t": "Schreibe auf Papier fünf Zeilen auf, die ein Agent erzeugen könnte: einige Werkzeugaufrufe, einige Antworten und einen defekten Aufruf. Tausche mit einer Freundin oder einem Freund: Sie oder er markiert jede Zeile als Aufruf, Antwort oder defekt und nennt in jedem Aufruf das Werkzeug."
+ },
+ "lessons.0.materials": {
+  "en": [
+   "Your phone or a school computer, for the code steps",
+   "Paper and a pen"
+  ],
+  "t": [
+   "Dein Handy oder ein Schulcomputer für die Code-Schritte",
+   "Papier und ein Stift"
+  ]
+ },
+ "lessons.0.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.0.steps.0.title": {
+  "en": "Read a tool call",
+  "t": "Einen Werkzeugaufruf lesen"
+ },
+ "lessons.0.steps.0.chapters.0.label": {
+  "en": "A secret about agents",
+  "t": "Ein Geheimnis über Agenten"
+ },
+ "lessons.0.steps.0.chapters.1.label": {
+  "en": "What a model writes",
+  "t": "Was ein Modell schreibt"
+ },
+ "lessons.0.steps.0.chapters.2.label": {
+  "en": "Splitting a call in Python",
+  "t": "Einen Aufruf in Python zerlegen"
+ },
+ "lessons.0.steps.0.chapters.3.label": {
+  "en": "Broken calls, and the lab",
+  "t": "Defekte Aufrufe und das Lab"
+ },
+ "lessons.0.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.0.steps.0.checkpoint.question.prompt": {
+  "en": "You run json.loads on the details of a call. What do you get back?",
+  "t": "Du führst json.loads auf den Details eines Aufrufs aus. Was bekommst du zurück?"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.0.text": {
+  "en": "The same text, unchanged",
+  "t": "Denselben Text, unverändert"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.1.text": {
+  "en": "A Python dictionary of the details",
+  "t": "Ein Python-Dictionary mit den Details"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.2.text": {
+  "en": "The tool’s result",
+  "t": "Das Ergebnis des Werkzeugs"
+ },
+ "lessons.0.steps.0.checkpoint.question.explain": {
+  "en": "json.loads turns JSON text into a dictionary: keys like place and day, with their values. It runs nothing.",
+  "t": "json.loads macht aus JSON-Text ein Dictionary: Schlüssel wie place und day, mit ihren Werten. Es führt nichts aus."
+ },
+ "lessons.0.steps.0.transcript": {
+  "en": "Here’s a secret about AI agents. The model never touches a tool. It writes a line of text, and your code decides what that text makes happen. Today, you write the code that reads it. Today: reading a tool call, in Python. When an agent’s model takes a turn, it writes one of three things. A plan: one short sentence about what it will do. A tool call: a tool’s name, then its details. Or an answer for the person. Here’s a call that Darsi Tiny really wrote. First comes the tool’s name, weather. Straight after it, the details sit in curly brackets. That part is JSON, a way to write data as text. JSON writes data as names and values inside curly brackets. Python reads it with json dot loads, which turns the text into a dictionary. Then args, place, gives you Kafi. So how do you split a call? Find the first curly bracket. Everything before it is the tool’s name. Everything from it onwards is the JSON. But not every text is a call. An answer like Tomorrow in Kafi, sunny, has no curly bracket at all. Then find gives minus one, and your function should return None: there’s no tool to run. Quick check! You run json dot loads on the details of a call. What do you get back? A dictionary. json dot loads only turns text into data: the keys are the details’ names, like place and day. It doesn’t run anything, and it doesn’t check anything. Is Kafi a real village? That’s for your code to check next. Models make mistakes, so some calls are broken: a missing bracket, a quote in the wrong place. Then json dot loads raises a ValueError, and your agent crashes. Unless you catch it, with try and except. In the lab, Darsi Tiny runs for real, on your phone. Press One step, and watch it write the plan, then the call. Open What Darsi Tiny sees: the call is plain text, exactly what your function will split. Your turn. The model wrote: Tomorrow in Kafi, sunny, high thirty-five. What should your function return? None: there’s no curly bracket, so it’s an answer. Remember: the model writes a plan, a call or an answer. Split a call at its first curly bracket, and read the details with json dot loads. Catch broken calls instead of crashing. Try it yourself: on paper, write five lines an agent might produce: some calls, some answers, one broken. Swap with a friend. They mark each line as a call, an answer or broken, and name the tool in every call.",
+  "t": "Hier ist ein Geheimnis über KI-Agenten. Das Modell berührt nie ein Werkzeug. Es schreibt eine Textzeile, und dein Code entscheidet, was dieser Text auslöst. Heute schreibst du den Code, der sie liest. Heute: einen Werkzeugaufruf lesen, in Python. Wenn das Modell eines Agenten an der Reihe ist, schreibt es eines von drei Dingen. Einen Plan: ein kurzer Satz darüber, was es tun will. Einen Werkzeugaufruf: den Namen eines Werkzeugs, dann seine Details. Oder eine Antwort für die Person. Hier ist ein Aufruf, den Darsi Tiny wirklich geschrieben hat. Zuerst kommt der Name des Werkzeugs, weather. Direkt danach stehen die Details in geschweiften Klammern. Dieser Teil ist JSON, eine Art, Daten als Text zu schreiben. JSON schreibt Daten als Namen und Werte in geschweiften Klammern. Python liest es mit json punkt loads, und das macht aus dem Text ein Dictionary. Dann gibt args, place, dir Kafi. Wie teilst du also einen Aufruf? Such die erste geschweifte Klammer. Alles davor ist der Name des Werkzeugs. Alles ab ihr ist das JSON. Aber nicht jeder Text ist ein Aufruf. Eine Antwort wie Morgen in Kafi, sonnig, hat gar keine geschweifte Klammer. Dann gibt find minus eins zurück, und deine Funktion sollte None zurückgeben: Es gibt kein Werkzeug, das laufen soll. Kurzer Check! Du führst json punkt loads auf den Details eines Aufrufs aus. Was bekommst du zurück? Ein Dictionary. json punkt loads macht nur aus Text Daten: Die Schlüssel sind die Namen der Details, wie place und day. Es führt nichts aus, und es prüft nichts. Ist Kafi ein echtes Dorf? Das muss als Nächstes dein Code prüfen. Modelle machen Fehler, deshalb sind manche Aufrufe kaputt: eine fehlende Klammer, ein Anführungszeichen an der falschen Stelle. Dann löst json punkt loads einen ValueError aus, und dein Agent stürzt ab. Es sei denn, du fängst ihn ab, mit try und except. Im Lab läuft Darsi Tiny wirklich, auf deinem Handy. Drück Ein Schritt und sieh zu, wie es den Plan schreibt, dann den Aufruf. Öffne Was Darsi Tiny sieht: Der Aufruf ist einfacher Text, genau das, was deine Funktion teilen wird. Du bist dran. Das Modell hat geschrieben: Morgen in Kafi, sonnig, höchstens fünfunddreißig. Was soll deine Funktion zurückgeben? None: Es gibt keine geschweifte Klammer, also ist es eine Antwort. Merke dir: Das Modell schreibt einen Plan, einen Aufruf oder eine Antwort. Teile einen Aufruf an seiner ersten geschweiften Klammer und lies die Details mit json punkt loads. Fang kaputte Aufrufe ab, statt abzustürzen. Probier es selbst: Schreib auf Papier fünf Zeilen, die ein Agent erzeugen könnte: einige Aufrufe, einige Antworten, eine kaputte. Tausch sie mit einer Freundin oder einem Freund. Sie oder er markiert jede Zeile als Aufruf, Antwort oder kaputt und nennt in jedem Aufruf das Werkzeug."
+ },
+ "lessons.0.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.0.steps.1.title": {
+  "en": "The text a model writes, and the code that reads it",
+  "t": "Der Text, den ein Modell schreibt, und der Code, der ihn liest"
+ },
+ "lessons.0.steps.1.body": {
+  "en": "An agent’s model never touches a tool. On each turn it writes text, and that text is one of three things: a plan (a short sentence about what it will do), a tool call, or an answer for the person. Everything that happens next is decided by the code around the model, and in this course you write that code.\n\nA tool call is the tool’s name followed straight away by its details, written as JSON: weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}. JSON is a standard way to write data as text, with names and values inside curly brackets. To read a call, find the first curly bracket with text.find(\"{\"). Everything before it is the tool’s name; everything from it onwards is the JSON. Then json.loads turns that text into a Python dictionary, so args[\"place\"] gives \"Kafi\". If there is no curly bracket at all, find returns -1: the text is an answer to show the person, not a tool to run.\n\njson.loads only turns text into data. It runs nothing and checks nothing: whether Kafi is a real village, or whether this tool should run at all, is for your code to decide next. And models make mistakes, so some calls are broken: a missing bracket, a quote in the wrong place. Then json.loads raises a ValueError, and unless you catch it with try and except, one bad line from the model crashes the whole agent.\n\nAn honest note about this course: the Python sandbox on your phone has no language model inside it. So in the code steps, the model’s text is written for you, as a model would write it: a scripted model. The labs run Darsi Tiny, a real small model, on your phone, so you can watch it write the same kind of calls your code reads.",
+  "t": "Das Modell eines Agenten berührt nie ein Werkzeug. In jeder Runde schreibt es Text, und dieser Text ist eines von drei Dingen: ein Plan (ein kurzer Satz darüber, was es tun wird), ein Werkzeugaufruf oder eine Antwort für die Person. Alles, was danach geschieht, entscheidet der Code um das Modell herum, und in diesem Kurs schreibst du diesen Code.\n\nEin Werkzeugaufruf ist der Name des Werkzeugs, gleich gefolgt von seinen Details, als JSON geschrieben: weather{\"place\":\"Kafi\",\"Neues\":\"tomorrow\"}. JSON ist eine Standardform, Daten als Text zu schreiben, mit Namen und Werten in geschweiften Klammern. Um einen Aufruf zu lesen, finde die erste geschweifte Klammer mit text.find(\"{\"). Alles davor ist der Name des Werkzeugs; alles ab dort ist das JSON. Dann macht json.loads aus diesem Text ein Python-Dictionary, also liefert args[\"place\"] den Wert \"Kafi\". Gibt es gar keine geschweifte Klammer, liefert find -1: Der Text ist eine Antwort, die der Person gezeigt wird, kein Werkzeug, das ausgeführt wird.\n\njson.loads macht nur aus Text Daten. Es führt nichts aus und prüft nichts: Ob Kafi ein echtes Dorf ist oder ob dieses Werkzeug überhaupt laufen soll, muss dein Code als Nächstes entscheiden. Und Modelle machen Fehler, also sind manche Aufrufe defekt: eine fehlende Klammer, ein Anführungszeichen an der falschen Stelle. Dann löst json.loads einen ValueError aus, und wenn du ihn nicht mit try und except abfängst, bringt eine schlechte Zeile des Modells den ganzen Agenten zum Absturz.\n\nEine ehrliche Anmerkung zu diesem Kurs: In der Python-Sandbox auf deinem Handy steckt kein Sprachmodell. In den Code-Schritten ist der Text des Modells also für dich vorgeschrieben, so, wie ein Modell ihn schreiben würde: ein Skriptmodell. Die Labs lassen Darsi Tiny, ein echtes kleines Modell, auf deinem Handy laufen, damit du zusehen kannst, wie es dieselbe Art von Aufrufen schreibt, die dein Code liest."
+ },
+ "lessons.0.steps.1.keyTerms.0.term": {
+  "en": "Tool call",
+  "t": "Werkzeugaufruf"
+ },
+ "lessons.0.steps.1.keyTerms.0.def": {
+  "en": "The text a model writes to use a tool: the tool’s name, then its details as JSON.",
+  "t": "Der Text, den ein Modell schreibt, um ein Werkzeug zu benutzen: der Name des Werkzeugs, dann seine Details als JSON."
+ },
+ "lessons.0.steps.1.keyTerms.1.term": {
+  "en": "JSON",
+  "t": "JSON"
+ },
+ "lessons.0.steps.1.keyTerms.1.def": {
+  "en": "A standard way to write data as text: names and values inside curly brackets.",
+  "t": "Eine Standardform, Daten als Text zu schreiben: Namen und Werte in geschweiften Klammern."
+ },
+ "lessons.0.steps.1.keyTerms.2.term": {
+  "en": "Parsing",
+  "t": "Parsen"
+ },
+ "lessons.0.steps.1.keyTerms.2.def": {
+  "en": "Turning text into data a program can use, such as splitting a call into a name and a dictionary.",
+  "t": "Text in Daten verwandeln, die ein Programm nutzen kann, zum Beispiel einen Aufruf in einen Namen und ein Dictionary zerlegen."
+ },
+ "lessons.0.steps.1.keyTerms.3.term": {
+  "en": "Scripted model",
+  "t": "Skriptmodell"
+ },
+ "lessons.0.steps.1.keyTerms.3.def": {
+  "en": "A stand-in for a model in your code: it returns fixed text a model would write. It isn’t intelligent; it lets you test your code.",
+  "t": "Ein Ersatz für ein Modell in deinem Code: Es gibt festen Text zurück, den ein Modell schreiben würde. Es ist nicht intelligent; es lässt dich deinen Code testen."
+ },
+ "lessons.0.steps.2.prompt": {
+  "en": "The model wrote “Tomorrow in Kafi: sunny, high 35°C.” What should parse_call return?",
+  "t": "Das Modell schrieb „Tomorrow in Kafi: sunny, high 35°C.“ Was soll parse_call zurückgeben?"
+ },
+ "lessons.0.steps.2.options.0.text": {
+  "en": "None: it’s an answer, not a call",
+  "t": "None: Es ist eine Antwort, kein Aufruf"
+ },
+ "lessons.0.steps.2.options.1.text": {
+  "en": "A tool named “Tomorrow”",
+  "t": "Ein Werkzeug namens „Tomorrow“"
+ },
+ "lessons.0.steps.2.options.2.text": {
+  "en": "A ValueError that stops the agent",
+  "t": "Einen ValueError, der den Agenten stoppt"
+ },
+ "lessons.0.steps.2.explain": {
+  "en": "There’s no curly bracket, so find gives -1: it’s an answer to show the person, not a tool to run.",
+  "t": "Es gibt keine geschweifte Klammer, also liefert find -1: Es ist eine Antwort, die der Person gezeigt wird, kein Werkzeug, das ausgeführt wird."
+ },
+ "lessons.0.steps.3.prompt": {
+  "en": "Put the lines in order so parse_call splits a call into its name and its details.",
+  "t": "Bring die Zeilen in die richtige Reihenfolge, damit parse_call einen Aufruf in seinen Namen und seine Details zerlegt."
+ },
+ "lessons.0.steps.3.explain": {
+  "en": "Find the bracket first; with no bracket it’s an answer, so return early. Otherwise the name is everything before the bracket (text[:i]) and the JSON is everything from it (text[i:]).",
+  "t": "Finde zuerst die Klammer; ohne Klammer ist es eine Antwort, also kehre früh zurück. Sonst ist der Name alles vor der Klammer (text[:i]) und das JSON alles ab ihr (text[i:])."
+ },
+ "lessons.0.steps.4.prompt": {
+  "en": "Try it: open “What Darsi Tiny sees”, pick “What's the weather in Kafi tomorrow?” and press One step until the call appears. That line is exactly the kind of text your parse_call splits. Then run the trip from Kafi to Dala: two calls and two results. Answer three different requests to finish. The first run downloads Darsi Tiny once (2.8 MB).",
+  "t": "Probier es aus: Öffne „Was Darsi Tiny sieht“, wähle „Wie ist morgen das Wetter in Kafi?“ und drücke „Ein Schritt“, bis der Aufruf erscheint. Diese Zeile ist genau die Art von Text, die dein parse_call zerlegt. Führe dann die Reise von Kafi nach Dala aus: zwei Aufrufe und zwei Ergebnisse. Beantworte drei verschiedene Anfragen, um fertig zu werden. Beim ersten Lauf wird Darsi Tiny einmal heruntergeladen (2,8 MB)."
+ },
+ "lessons.0.steps.5.prompt": {
+  "en": "What does this program print?",
+  "t": "Was gibt dieses Programm aus?"
+ },
+ "lessons.0.steps.5.options.0.text": {
+  "en": "weather",
+  "t": "weather"
+ },
+ "lessons.0.steps.5.options.1.text": {
+  "en": "Kafi",
+  "t": "Kafi"
+ },
+ "lessons.0.steps.5.options.2.text": {
+  "en": "place",
+  "t": "place"
+ },
+ "lessons.0.steps.5.explain": {
+  "en": "find gives the position of the first curly bracket, and call[:i] is everything before it: the tool’s name.",
+  "t": "find liefert die Position der ersten geschweiften Klammer, und call[:i] ist alles davor: der Name des Werkzeugs."
+ },
+ "lessons.0.steps.6.prompt": {
+  "en": "Finish parse_call(text): return (name, args) for a tool call, and None for an answer (no curly bracket) or a broken call (json.loads raises a ValueError).",
+  "t": "Vervollständige parse_call(text): Gib (name, args) für einen Werkzeugaufruf zurück und None für eine Antwort (keine geschweifte Klammer) oder einen defekten Aufruf (json.loads löst einen ValueError aus)."
+ },
+ "lessons.0.steps.6.tests.0.hint": {
+  "en": "The name is text[:i]; the details are json.loads(text[i:]).",
+  "t": "Der Name ist text[:i]; die Details sind json.loads(text[i:])."
+ },
+ "lessons.0.steps.6.tests.1.hint": {
+  "en": "With no curly bracket, find gives -1: return None.",
+  "t": "Ohne geschweifte Klammer liefert find -1: Gib None zurück."
+ },
+ "lessons.0.steps.6.tests.2.hint": {
+  "en": "Put json.loads inside try, and return None in except ValueError.",
+  "t": "Setze json.loads in try und gib in except ValueError None zurück."
+ },
+ "lessons.0.steps.6.tests.3.hint": {
+  "en": "Don’t write “weather” into your code: take the name from the text.",
+  "t": "Schreibe nicht „weather“ in deinen Code: Nimm den Namen aus dem Text."
+ },
+ "lessons.0.steps.6.hints.0": {
+  "en": "text.find(\"{\") gives -1 when there is no bracket: return None then.",
+  "t": "text.find(\"{\") liefert -1, wenn es keine Klammer gibt: Gib dann None zurück."
+ },
+ "lessons.0.steps.6.hints.1": {
+  "en": "Put args = json.loads(text[i:]) inside try, with except ValueError: return None.",
+  "t": "Setze args = json.loads(text[i:]) in try, mit except ValueError: return None."
+ },
+ "lessons.0.steps.6.hints.2": {
+  "en": "At the end: return text[:i], args.",
+  "t": "Am Ende: return text[:i], args."
+ },
+ "lessons.0.steps.6.explain": {
+  "en": "find locates the bracket, and no bracket means an answer. json.loads reads the details, and try with except turns a broken call into None instead of a crash.",
+  "t": "find findet die Klammer, und keine Klammer bedeutet eine Antwort. json.loads liest die Details, und try mit except macht aus einem defekten Aufruf None statt eines Absturzes."
+ },
+ "lessons.0.steps.7.prompt": {
+  "en": "This parse_call gives the wrong tool name. Which line is the mistake?",
+  "t": "Dieses parse_call liefert den falschen Werkzeugnamen. Welche Zeile ist der Fehler?"
+ },
+ "lessons.0.steps.7.explain": {
+  "en": "text[:i + 1] keeps the bracket too, so the name becomes “weather{” and no tool matches it. text[:i] stops just before the bracket.",
+  "t": "text[:i + 1] behält die Klammer mit, also wird der Name zu „weather{“, und kein Werkzeug passt dazu. text[:i] endet direkt vor der Klammer."
+ },
+ "lessons.0.steps.8.prompt": {
+  "en": "json.loads checks that Kafi is a real village before your agent goes on.",
+  "t": "json.loads prüft, ob Kafi ein echtes Dorf ist, bevor dein Agent weitermacht."
+ },
+ "lessons.0.steps.8.explain": {
+  "en": "json.loads only turns JSON text into a dictionary. Whether Kafi exists, and whether the tool should run at all, is for your own code, and the tool, to check.",
+  "t": "json.loads macht nur aus JSON-Text ein Dictionary. Ob Kafi existiert und ob das Werkzeug überhaupt laufen soll, müssen dein eigener Code und das Werkzeug prüfen."
+ },
+ "lessons.0.steps.9.prompt": {
+  "en": "A model’s text decides nothing until your code reads it. Where else does a program have to read text it didn’t write, and what could go wrong?",
+  "t": "Der Text eines Modells entscheidet nichts, bis dein Code ihn liest. Wo muss ein Programm sonst Text lesen, den es nicht selbst geschrieben hat, und was könnte schiefgehen?"
+ },
+ "lessons.0.steps.9.placeholder": {
+  "en": "For example: “A form on a website: people type dates in many ways, so the program must check them.”",
+  "t": "Zum Beispiel: „Ein Formular auf einer Website: Leute tippen Daten auf viele Arten ein, also muss das Programm sie prüfen.“"
+ },
+ "lessons.0.steps.10.prompt": {
+  "en": "Project: A call reader for five lines",
+  "t": "Projekt: Ein Aufruf-Leser für fünf Zeilen"
+ },
+ "lessons.0.steps.10.task": {
+  "en": "In the code step, or in Python on a school computer, write five lines a model might produce: two calls, two answers and one broken call. Make one call’s details Arabic, such as the place كافي. Run your parse_call on each line and print what it returns. Then add one check of your own (for example, a call with an empty name should also return None) and explain it in a comment.",
+  "t": "Schreibe im Code-Schritt oder in Python auf einem Schulcomputer fünf Zeilen, die ein Modell erzeugen könnte: zwei Aufrufe, zwei Antworten und einen defekten Aufruf. Mach die Details eines Aufrufs arabisch, zum Beispiel den Ort كافي. Führe dein parse_call auf jeder Zeile aus und gib aus, was es zurückgibt. Füge dann eine eigene Prüfung hinzu (zum Beispiel sollte ein Aufruf mit leerem Namen ebenfalls None liefern) und erkläre sie in einem Kommentar."
+ },
+ "lessons.0.steps.10.deliverable": {
+  "en": "Your code and what it printed (a screenshot or copied text), and two sentences: which line was hardest to handle, and why.",
+  "t": "Dein Code und was er ausgegeben hat (ein Screenshot oder kopierter Text) und zwei Sätze: Welche Zeile war am schwersten zu behandeln, und warum?"
+ },
+ "lessons.0.steps.10.rubric.0.criterion": {
+  "en": "I can: split a tool call into its name and its details.",
+  "t": "Ich kann: einen Werkzeugaufruf in seinen Namen und seine Details zerlegen."
+ },
+ "lessons.0.steps.10.rubric.1.criterion": {
+  "en": "I can: tell a call from an answer, and handle a broken call without crashing.",
+  "t": "Ich kann: einen Aufruf von einer Antwort unterscheiden und einen defekten Aufruf ohne Absturz behandeln."
+ },
+ "lessons.0.steps.10.rubric.2.criterion": {
+  "en": "I can: add a check of my own and explain it.",
+  "t": "Ich kann: eine eigene Prüfung hinzufügen und erklären."
+ },
+ "lessons.0.slides.0.title": {
+  "en": "Read a tool call",
+  "t": "Einen Werkzeugaufruf lesen"
+ },
+ "lessons.0.slides.0.note": {
+  "en": "AI agents · Upper secondary · Lesson 1",
+  "t": "KI-Agenten · Sekundarstufe II · Lektion 1"
+ },
+ "lessons.0.slides.0.narration": {
+  "en": "What does a model actually write, and how does your code read it?",
+  "t": "Was schreibt ein Modell eigentlich, und wie liest dein Code es?"
+ },
+ "lessons.0.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "In dieser Lektion"
+ },
+ "lessons.0.slides.1.bullets": {
+  "en": [
+   "Tell a plan, a tool call and an answer apart.",
+   "Split a call into its name and details in Python.",
+   "Handle a broken call without crashing."
+  ],
+  "t": [
+   "Du unterscheidest einen Plan, einen Werkzeugaufruf und eine Antwort.",
+   "Du zerlegst einen Aufruf in Python in Namen und Details.",
+   "Du behandelst einen defekten Aufruf ohne Absturz."
+  ]
+ },
+ "lessons.0.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Wichtige Ideen"
+ },
+ "lessons.0.slides.2.bullets": {
+  "en": [
+   "The model only writes text: a plan, a call or an answer.",
+   "Split a call at its first curly bracket; json.loads reads the details.",
+   "Catch broken calls with try and except."
+  ],
+  "t": [
+   "Das Modell schreibt nur Text: einen Plan, einen Aufruf oder eine Antwort.",
+   "Zerlege einen Aufruf an seiner ersten geschweiften Klammer; json.loads liest die Details.",
+   "Fange defekte Aufrufe mit try und except ab."
+  ]
+ },
+ "lessons.0.slides.3.title": {
+  "en": "Activity: Call, answer or broken?",
+  "t": "Aktivität: Aufruf, Antwort oder defekt?"
+ },
+ "lessons.0.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): Read Darsi Tiny’s call for the weather in Kafi.",
+   "Write (7 min): Five model lines: calls, answers, one broken.",
+   "Swap (5 min): Mark each line and name each tool.",
+   "Code (5 min): Run parse_call on your lines."
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Lies den Aufruf von Darsi Tiny für das Wetter in Kafi.",
+   "Schreiben (7 Min.): Fünf Modellzeilen: Aufrufe, Antworten, eine defekte.",
+   "Tauschen (5 Min.): Markiere jede Zeile und nenne jedes Werkzeug.",
+   "Code (5 Min.): Führe parse_call auf deinen Zeilen aus."
+  ]
+ },
+ "lessons.0.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Look at weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}. Circle the tool’s name and underline the JSON.",
+   "Write (7 min): Write five lines a model might produce: two tool calls (using made-up places such as Kafi and Dala), two answers and one broken call with a bracket missing.",
+   "Swap (5 min): Swap with a friend. They write “call”, “answer” or “broken” beside each line, and the tool’s name beside each call.",
+   "Code (5 min): Type your lines into the code step and run parse_call on each. Did it agree with your friend?"
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Schau dir weather{\"place\":\"Kafi\",\"Neues\":\"tomorrow\"} an. Kreise den Namen des Werkzeugs ein und unterstreiche das JSON.",
+   "Schreiben (7 Min.): Schreibe fünf Zeilen, die ein Modell erzeugen könnte: zwei Werkzeugaufrufe (mit ausgedachten Orten wie Kafi und Dala), zwei Antworten und einen defekten Aufruf mit fehlender Klammer.",
+   "Tauschen (5 Min.): Tausche mit einer Freundin oder einem Freund. Sie oder er schreibt „Aufruf“, „Antwort“ oder „defekt“ neben jede Zeile und den Namen des Werkzeugs neben jeden Aufruf.",
+   "Code (5 Min.): Tippe deine Zeilen in den Code-Schritt ein und führe parse_call auf jeder aus. Hat es mit deiner Freundin oder deinem Freund übereingestimmt?"
+  ]
+ },
+ "lessons.0.slides.3.note": {
+  "en": "Use only made-up places and people, such as Kafi, Dala and class 6B. You can do the first three parts with paper only.",
+  "t": "Nimm nur ausgedachte Orte und Personen, zum Beispiel Kafi, Dala und die Klasse 6B. Die ersten drei Teile kannst du nur mit Papier machen."
+ },
+ "lessons.0.slides.3.narration": {
+  "en": "Is it a call, an answer, or broken?",
+  "t": "Ist es ein Aufruf, eine Antwort oder defekt?"
+ },
+ "lessons.0.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns darüber sprechen"
+ },
+ "lessons.0.slides.4.bullets": {
+  "en": [
+   "Why does the model never run a tool itself?",
+   "What should an agent do with a broken call?",
+   "Which details would you check after json.loads?"
+  ],
+  "t": [
+   "Warum führt das Modell nie selbst ein Werkzeug aus?",
+   "Was sollte ein Agent mit einem defekten Aufruf tun?",
+   "Welche Details würdest du nach json.loads prüfen?"
+  ]
+ },
+ "lessons.0.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.0.slides.5.bullets": {
+  "en": [
+   "Write one tool call, one answer and one broken call, and label each."
+  ],
+  "t": [
+   "Schreibe einen Werkzeugaufruf, eine Antwort und einen defekten Aufruf und beschrifte jeden."
+  ]
+ },
+ "lessons.0.slides.5.narration": {
+  "en": "The model writes text; your code decides what it means.",
+  "t": "Das Modell schreibt Text; dein Code entscheidet, was er bedeutet."
+ },
+ "lessons.0.kit.0.title": {
+  "en": "Slides to revise: Read a tool call",
+  "t": "Folien zum Wiederholen: Einen Werkzeugaufruf lesen"
+ },
+ "lessons.0.kit.1.title": {
+  "en": "Activity sheet: Read a tool call",
+  "t": "Arbeitsblatt: Einen Werkzeugaufruf lesen"
+ },
+ "lessons.0.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "Das Lektionsvideo (240p, zum Wiederansehen oder Teilen)"
+ },
+ "lessons.1.title": {
+  "en": "Tools are functions",
+  "t": "Werkzeuge sind Funktionen"
+ },
+ "lessons.1.tryTomorrow": {
+  "en": "Invent a third tool for your agent, such as a library search. Write its details, its result and two errors it should return, then add it to TOOLS in the code step and test it.",
+  "t": "Erfinde ein drittes Werkzeug für deinen Agenten, zum Beispiel eine Bibliothekssuche. Schreibe seine Details, sein Ergebnis und zwei Fehler auf, die es zurückgeben sollte, füge es dann im Code-Schritt zu TOOLS hinzu und teste es."
+ },
+ "lessons.1.materials": {
+  "en": [
+   "Your phone or a school computer, for the code steps",
+   "Paper, a pen and a few small cards"
+  ],
+  "t": [
+   "Dein Handy oder ein Schulcomputer für die Code-Schritte",
+   "Papier, ein Stift und ein paar kleine Karten"
+  ]
+ },
+ "lessons.1.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.1.steps.0.title": {
+  "en": "Tools are functions",
+  "t": "Werkzeuge sind Funktionen"
+ },
+ "lessons.1.steps.0.chapters.0.label": {
+  "en": "A tool nobody planned for",
+  "t": "Ein Werkzeug, mit dem niemand gerechnet hat"
+ },
+ "lessons.1.steps.0.chapters.1.label": {
+  "en": "Tools as functions",
+  "t": "Werkzeuge als Funktionen"
+ },
+ "lessons.1.steps.0.chapters.2.label": {
+  "en": "Sending a call to its tool",
+  "t": "Einen Aufruf an sein Werkzeug schicken"
+ },
+ "lessons.1.steps.0.chapters.3.label": {
+  "en": "Back to text, and the lab",
+  "t": "Zurück zu Text, und das Lab"
+ },
+ "lessons.1.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.1.steps.0.checkpoint.question.prompt": {
+  "en": "The model calls attendance, but TOOLS has only weather and timetable. What should run do?",
+  "t": "Das Modell ruft attendance auf, aber TOOLS enthält nur weather und timetable. Was soll run tun?"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.0.text": {
+  "en": "Crash with a KeyError",
+  "t": "Mit einem KeyError abstürzen"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.1.text": {
+  "en": "Return an error result",
+  "t": "Ein Fehlerergebnis zurückgeben"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.2.text": {
+  "en": "Run weather instead",
+  "t": "Stattdessen weather ausführen"
+ },
+ "lessons.1.steps.0.checkpoint.question.explain": {
+  "en": "An error result keeps the agent running, and the model can tell the person it can’t check attendance.",
+  "t": "Ein Fehlerergebnis hält den Agenten am Laufen, und das Modell kann der Person sagen, dass es die Anwesenheit nicht prüfen kann."
+ },
+ "lessons.1.steps.0.transcript": {
+  "en": "Our science club built a weather agent, and it crashed on day one. The model asked for a tool called bus. There was no bus tool, and nobody had planned for that! Today: tools as Python functions, and how to call the right one. In your agent, every tool is just a Python function. It takes the call’s details as a dictionary. It looks something up, or does something. And it returns a result, as a dictionary too. Our tools work over a tiny made-up world: two villages and their weather, one class and its timetable. Darsi Tiny’s ten tools work the same way, over a bigger made-up school. Nothing real is looked up, and nothing is sent. Dispatch means sending a call to the right function. Keep a dictionary from each tool’s name to its function. Then TOOLS, at the name, is the function, and you call it with the details. Models make mistakes, so tools get strange calls. A tool that isn’t there, like bus. A missing detail, like no place. A place that doesn’t exist, like Moonvale. Each one should come back as an error, not a crash. So your run function checks first. If the name isn’t in TOOLS, it returns an error dictionary. The model reads that error like any other result, and tells the person it can’t help. Quick check! The model calls the attendance tool, but your TOOLS has only weather and timetable. What should run do? Return an error result. A crash stops the whole agent. Guessing another tool is worse: it does something nobody asked for. An error lets the model say: sorry, I can’t check attendance. Last step: the result goes back to the model. But the model reads only text. So json dot dumps turns the dictionary back into JSON text, and the loop adds it to the history. In the lab, Darsi Tiny’s ten tools are switches. Turn the weather tool off, and ask for the weather. Ask for something no tool can do. Then ask about class nine Z, and read the check under the call. Your turn. The model calls the weather tool, but leaves out the place. What should the weather tool return? An error that says the place is missing. Remember: each tool is a function, from details to a result. A dictionary of tools sends each call to the right one. And every mistake comes back as an error, not a crash. Try it yourself: invent a third tool, maybe a library search. On paper, write its details, its result, and two errors it should return. Then add it to TOOLS, and test it.",
+  "t": "Unser Wissenschafts-Club hat einen Wetter-Agenten gebaut, und er ist am ersten Tag abgestürzt. Das Modell hat ein Werkzeug namens bus verlangt. Es gab kein bus-Werkzeug, und niemand hatte damit gerechnet! Heute: Werkzeuge als Python-Funktionen, und wie du das richtige aufrufst. In deinem Agenten ist jedes Werkzeug einfach eine Python-Funktion. Sie bekommt die Details des Aufrufs als Dictionary. Sie schlägt etwas nach oder tut etwas. Und sie gibt ein Ergebnis zurück, ebenfalls als Dictionary. Unsere Werkzeuge arbeiten in einer winzigen ausgedachten Welt: zwei Dörfer und ihr Wetter, eine Klasse und ihr Stundenplan. Die zehn Werkzeuge von Darsi Tiny funktionieren genauso, in einer größeren ausgedachten Schule. Es wird nichts Echtes nachgeschlagen, und es wird nichts gesendet. Dispatch heißt, einen Aufruf an die richtige Funktion zu schicken. Führe ein Dictionary vom Namen jedes Werkzeugs zu seiner Funktion. Dann ist TOOLS, beim Namen, die Funktion, und du rufst sie mit den Details auf. Modelle machen Fehler, deshalb bekommen Werkzeuge seltsame Aufrufe. Ein Werkzeug, das es nicht gibt, wie bus. Ein fehlendes Detail, wie kein place. Ein Ort, den es nicht gibt, wie Moonvale. Jeder davon sollte als Fehler zurückkommen, nicht als Absturz. Deine run-Funktion prüft also zuerst. Steht der Name nicht in TOOLS, gibt sie ein Fehler-Dictionary zurück. Das Modell liest diesen Fehler wie jedes andere Ergebnis und sagt der Person, dass es nicht helfen kann. Kurzer Check! Das Modell ruft das Anwesenheitswerkzeug auf, aber dein TOOLS enthält nur weather und timetable. Was soll run tun? Ein Fehlerergebnis zurückgeben. Ein Absturz stoppt den ganzen Agenten. Ein anderes Werkzeug zu raten ist schlimmer: Es tut etwas, das niemand verlangt hat. Ein Fehler lässt das Modell sagen: Tut mir leid, die Anwesenheit kann ich nicht prüfen. Letzter Schritt: Das Ergebnis geht zurück an das Modell. Aber das Modell liest nur Text. Also macht json punkt dumps das Dictionary wieder zu JSON-Text, und die Schleife hängt ihn an den Verlauf an. Im Lab sind die zehn Werkzeuge von Darsi Tiny Schalter. Schalte das Wetterwerkzeug aus und frag nach dem Wetter. Frag nach etwas, das kein Werkzeug kann. Dann frag nach der Klasse neun Z und lies den Check unter dem Aufruf. Du bist dran. Das Modell ruft das Wetterwerkzeug auf, lässt aber den place weg. Was soll das Wetterwerkzeug zurückgeben? Einen Fehler, der sagt, dass der Ort fehlt. Merke dir: Jedes Werkzeug ist eine Funktion, von Details zu einem Ergebnis. Ein Dictionary von Werkzeugen schickt jeden Aufruf an das richtige. Und jeder Fehler kommt als Fehler zurück, nicht als Absturz. Probier es selbst: Erfinde ein drittes Werkzeug, vielleicht eine Bibliothekssuche. Schreib auf Papier seine Details, sein Ergebnis und zwei Fehler, die es zurückgeben soll. Dann füg es zu TOOLS hinzu und teste es."
+ },
+ "lessons.1.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.1.steps.1.title": {
+  "en": "Tools as functions, and dispatch",
+  "t": "Werkzeuge als Funktionen, und Dispatch"
+ },
+ "lessons.1.steps.1.body": {
+  "en": "In your agent, each tool is an ordinary Python function. It takes the call’s details as a dictionary, looks something up or does something, and returns a result, also as a dictionary: weather({\"place\": \"Kafi\"}) might return {\"sky\": \"sunny\"}. Our tools work over a tiny made-up world: two villages and their weather, one class and its timetable. Darsi Tiny’s ten tools work the same way over a bigger made-up school; nothing real is looked up, and nothing is ever sent.\n\nDispatch means sending each call to the right function. Keep a dictionary from each tool’s name to its function, TOOLS = {\"weather\": weather, \"timetable\": timetable}. Then TOOLS[name] is the function, and TOOLS[name](args) runs it. Adding a tool is one new function and one new line in TOOLS.\n\nPlan for mistakes, because the model will make them. It may ask for a tool that doesn’t exist (bus), leave out a detail (no place), or name something that isn’t in your world (Moonvale). Each of these should come back as an error result, such as {\"error\": \"unknown tool\"}: never a crash, and never a guess. A crash stops the whole agent; a guess (running another tool, or picking a village) does something nobody asked for. An error is a result like any other: the model reads it, and can tell the person what went wrong or ask for what’s missing.\n\nLast, the result goes back to the model as text: json.dumps turns the dictionary into a line of JSON, and the loop adds it to the history the model reads next. In the lab you’ll see Darsi Tiny’s side of this: it reads the list of tools that are on, picks one and copies your words into the details, sometimes wrongly (class 9Z became 9C). That is why tools, and the code around them, check every detail.",
+  "t": "In deinem Agenten ist jedes Werkzeug eine gewöhnliche Python-Funktion. Sie nimmt die Details des Aufrufs als Dictionary, schlägt etwas nach oder tut etwas und gibt ein Ergebnis zurück, ebenfalls als Dictionary: weather({\"place\": \"Kafi\"}) könnte {\"sky\": \"sonnig\"} zurückgeben. Unsere Werkzeuge arbeiten in einer winzigen ausgedachten Welt: zwei Dörfer und ihr Wetter, eine Klasse und ihr Stundenplan. Die zehn Werkzeuge von Darsi Tiny funktionieren genauso in einer größeren ausgedachten Schule; nichts Echtes wird nachgeschlagen, und nichts wird je gesendet.\n\nDispatch bedeutet, jeden Aufruf an die richtige Funktion zu schicken. Halte ein Dictionary vom Namen jedes Werkzeugs zu seiner Funktion, TOOLS = {\"weather\": weather, \"timetable\": timetable}. Dann ist TOOLS[name] die Funktion, und TOOLS[name](args) führt sie aus. Ein Werkzeug hinzuzufügen ist eine neue Funktion und eine neue Zeile in TOOLS.\n\nPlane für Fehler, denn das Modell wird welche machen. Es kann ein Werkzeug verlangen, das es nicht gibt (bus), ein Detail weglassen (kein place) oder etwas nennen, das in deiner Welt nicht vorkommt (Moonvale). Jedes davon sollte als Fehlerergebnis zurückkommen, zum Beispiel {\"error\": \"unknown tool\"}: nie als Absturz und nie als Vermutung. Ein Absturz stoppt den ganzen Agenten; eine Vermutung (ein anderes Werkzeug ausführen oder ein Dorf aussuchen) tut etwas, worum niemand gebeten hat. Ein Fehler ist ein Ergebnis wie jedes andere: Das Modell liest ihn und kann der Person sagen, was schiefgegangen ist, oder nach dem Fehlenden fragen.\n\nZuletzt geht das Ergebnis als Text an das Modell zurück: json.dumps macht aus dem Dictionary eine JSON-Zeile, und die Schleife fügt sie dem Verlauf hinzu, den das Modell als Nächstes liest. Im Lab siehst du die Seite von Darsi Tiny dabei: Es liest die Liste der eingeschalteten Werkzeuge, wählt eines und kopiert deine Worte in die Details, manchmal falsch (aus Klasse 9Z wurde 9C). Deshalb prüfen Werkzeuge und der Code drumherum jedes Detail."
+ },
+ "lessons.1.steps.1.keyTerms.0.term": {
+  "en": "Function",
+  "t": "Funktion"
+ },
+ "lessons.1.steps.1.keyTerms.0.def": {
+  "en": "A named piece of code that takes inputs and returns a result.",
+  "t": "Ein benanntes Stück Code, das Eingaben nimmt und ein Ergebnis zurückgibt."
+ },
+ "lessons.1.steps.1.keyTerms.1.term": {
+  "en": "Dispatch",
+  "t": "Dispatch"
+ },
+ "lessons.1.steps.1.keyTerms.1.def": {
+  "en": "Sending each call to the function for its tool, here through a dictionary from names to functions.",
+  "t": "Jeden Aufruf an die Funktion seines Werkzeugs schicken, hier über ein Dictionary von Namen zu Funktionen."
+ },
+ "lessons.1.steps.1.keyTerms.2.term": {
+  "en": "Error result",
+  "t": "Fehlerergebnis"
+ },
+ "lessons.1.steps.1.keyTerms.2.def": {
+  "en": "A result that says what went wrong, such as an unknown tool or a missing detail, so the agent carries on instead of crashing.",
+  "t": "Ein Ergebnis, das sagt, was schiefgegangen ist, zum Beispiel ein unbekanntes Werkzeug oder ein fehlendes Detail, damit der Agent weitermacht, statt abzustürzen."
+ },
+ "lessons.1.steps.1.keyTerms.3.term": {
+  "en": "json.dumps",
+  "t": "json.dumps"
+ },
+ "lessons.1.steps.1.keyTerms.3.def": {
+  "en": "Turns a Python dictionary into JSON text, so a result can go back to the model.",
+  "t": "Macht aus einem Python-Dictionary JSON-Text, damit ein Ergebnis an das Modell zurückgehen kann."
+ },
+ "lessons.1.steps.2.prompt": {
+  "en": "The model calls weather but leaves out the place. What should the weather tool return?",
+  "t": "Das Modell ruft weather auf, lässt aber den Ort weg. Was soll das Wetterwerkzeug zurückgeben?"
+ },
+ "lessons.1.steps.2.options.0.text": {
+  "en": "Kafi’s weather, as a good guess",
+  "t": "Das Wetter von Kafi, als gute Vermutung"
+ },
+ "lessons.1.steps.2.options.1.text": {
+  "en": "An error: the place is missing",
+  "t": "Einen Fehler: Der Ort fehlt"
+ },
+ "lessons.1.steps.2.options.2.text": {
+  "en": "An empty result",
+  "t": "Ein leeres Ergebnis"
+ },
+ "lessons.1.steps.2.explain": {
+  "en": "A tool shouldn’t guess a detail nobody gave. An error says what’s missing, so the model can ask the person: which village?",
+  "t": "Ein Werkzeug sollte kein Detail raten, das niemand angegeben hat. Ein Fehler sagt, was fehlt, damit das Modell die Person fragen kann: Welches Dorf?"
+ },
+ "lessons.1.steps.3.prompt": {
+  "en": "Match each piece of your agent to its job.",
+  "t": "Ordne jedem Teil deines Agenten seine Aufgabe zu."
+ },
+ "lessons.1.steps.3.pairs.0.left": {
+  "en": "weather(args)",
+  "t": "weather(args)"
+ },
+ "lessons.1.steps.3.pairs.0.right": {
+  "en": "Looks up the sky for a place",
+  "t": "Schlägt den Himmel für einen Ort nach"
+ },
+ "lessons.1.steps.3.pairs.1.left": {
+  "en": "TOOLS",
+  "t": "TOOLS"
+ },
+ "lessons.1.steps.3.pairs.1.right": {
+  "en": "A dictionary from tool names to functions",
+  "t": "Ein Dictionary von Werkzeugnamen zu Funktionen"
+ },
+ "lessons.1.steps.3.pairs.2.left": {
+  "en": "run(name, args)",
+  "t": "run(name, args)"
+ },
+ "lessons.1.steps.3.pairs.2.right": {
+  "en": "Sends a call to its tool, or returns an error",
+  "t": "Schickt einen Aufruf an sein Werkzeug oder gibt einen Fehler zurück"
+ },
+ "lessons.1.steps.3.pairs.3.left": {
+  "en": "json.dumps(result)",
+  "t": "json.dumps(result)"
+ },
+ "lessons.1.steps.3.pairs.3.right": {
+  "en": "Turns the result into text for the model",
+  "t": "Macht das Ergebnis zu Text für das Modell"
+ },
+ "lessons.1.steps.3.explain": {
+  "en": "Each tool is a function; TOOLS maps names to those functions; run uses TOOLS, with a check, to reach the right one; json.dumps turns the result back into text the model can read.",
+  "t": "Jedes Werkzeug ist eine Funktion; TOOLS ordnet Namen diesen Funktionen zu; run nutzt TOOLS, mit einer Prüfung, um die richtige zu erreichen; json.dumps macht das Ergebnis wieder zu Text, den das Modell lesen kann."
+ },
+ "lessons.1.steps.4.prompt": {
+  "en": "Try it: switch the weather tool off and ask “What's the weather in Kafi tomorrow?”. Ask “Book a bus ticket to the city.” (no tool covers it) and “What's the weather tomorrow?” (a detail is missing: reply “Dala”). Then ask “What does 9Z have tomorrow?” and read the check under the call. See three of the four outcomes to finish.",
+  "t": "Probier es aus: Schalte das Wetterwerkzeug aus und frage „Wie ist morgen das Wetter in Kafi?“. Frage „Buche ein Busticket in die Stadt.“ (kein Werkzeug deckt das ab) und „Wie ist morgen das Wetter?“ (ein Detail fehlt: Antworte „Dala“). Frage dann „Was hat 9Z morgen?“ und lies die Prüfung unter dem Aufruf. Sieh dir drei der vier Ausgänge an, um fertig zu werden."
+ },
+ "lessons.1.steps.5.prompt": {
+  "en": "Finish run(name, args): if the tool isn’t in TOOLS, return {\"error\": \"unknown tool\"}; otherwise run the tool with its details and return its result.",
+  "t": "Vervollständige run(name, args): Ist das Werkzeug nicht in TOOLS, gib {\"error\": \"unknown tool\"} zurück; sonst führe das Werkzeug mit seinen Details aus und gib sein Ergebnis zurück."
+ },
+ "lessons.1.steps.5.tests.2.hint": {
+  "en": "A tool the model made up must give an error result, not a KeyError.",
+  "t": "Ein Werkzeug, das sich das Modell ausgedacht hat, muss ein Fehlerergebnis liefern, keinen KeyError."
+ },
+ "lessons.1.steps.5.hints.0": {
+  "en": "First check: if name not in TOOLS:",
+  "t": "Erst prüfen: if name not in TOOLS:"
+ },
+ "lessons.1.steps.5.hints.1": {
+  "en": "Inside it, return {\"error\": \"unknown tool\"}; after it, keep return TOOLS[name](args).",
+  "t": "Gib darin {\"error\": \"unknown tool\"} zurück; danach bleibt return TOOLS[name](args)."
+ },
+ "lessons.1.steps.5.explain": {
+  "en": "Checking the name first turns a made-up tool into an error the model can read; TOOLS[name](args) then runs a real one. The weather tool already turns an unknown place into an error of its own.",
+  "t": "Erst den Namen zu prüfen macht aus einem ausgedachten Werkzeug einen Fehler, den das Modell lesen kann; TOOLS[name](args) führt dann ein echtes aus. Das Wetterwerkzeug macht aus einem unbekannten Ort schon selbst einen Fehler."
+ },
+ "lessons.1.steps.6.prompt": {
+  "en": "Fill the gaps: run the call’s tool if it exists, and turn the result into text for the model.",
+  "t": "Fülle die Lücken: Führe das Werkzeug des Aufrufs aus, wenn es existiert, und mach das Ergebnis zu Text für das Modell."
+ },
+ "lessons.1.steps.6.explain": {
+  "en": "Run the tool only if its name is in TOOLS; TOOLS[name] is the function. json.dumps turns the result dictionary into JSON text, and json.loads goes the other way.",
+  "t": "Führe das Werkzeug nur aus, wenn sein Name in TOOLS steht; TOOLS[name] ist die Funktion. json.dumps macht aus dem Ergebnis-Dictionary JSON-Text, und json.loads geht den umgekehrten Weg."
+ },
+ "lessons.1.steps.7.prompt": {
+  "en": "If the model leaves out the place, the weather tool should guess the nearest village so the agent can still answer.",
+  "t": "Lässt das Modell den Ort weg, sollte das Wetterwerkzeug das nächste Dorf raten, damit der Agent trotzdem antworten kann."
+ },
+ "lessons.1.steps.7.explain": {
+  "en": "A tool shouldn’t guess a detail nobody gave: it would answer about the wrong village. It returns an error saying the place is missing, and the model can ask the person which village.",
+  "t": "Ein Werkzeug sollte kein Detail raten, das niemand angegeben hat: Es würde über das falsche Dorf antworten. Es gibt einen Fehler zurück, der sagt, dass der Ort fehlt, und das Modell kann die Person fragen, welches Dorf."
+ },
+ "lessons.1.steps.8.prompt": {
+  "en": "Think of a tool you would give an agent at your school. What details would it need, and which errors should it return?",
+  "t": "Denk an ein Werkzeug, das du einem Agenten an deiner Schule geben würdest. Welche Details bräuchte es, und welche Fehler sollte es zurückgeben?"
+ },
+ "lessons.1.steps.8.placeholder": {
+  "en": "For example: “A library search: it needs a topic. Errors: no topic given, or no books on that topic.”",
+  "t": "Zum Beispiel: „Eine Bibliothekssuche: Sie braucht ein Thema. Fehler: kein Thema angegeben oder keine Bücher zu diesem Thema.“"
+ },
+ "lessons.1.steps.9.prompt": {
+  "en": "Project: Add a library tool",
+  "t": "Projekt: Ein Bibliothekswerkzeug hinzufügen"
+ },
+ "lessons.1.steps.9.task": {
+  "en": "In the code step, or in Python on a school computer, add a third tool, library(args), over a small made-up list of book topics. It needs a topic: return the books for a topic you have, an error for a missing topic, and an error for a topic you don’t have. Add it to TOOLS and test four calls: a good one, a missing topic, an unknown topic and an unknown tool. Print each result with json.dumps.",
+  "t": "Füge im Code-Schritt oder in Python auf einem Schulcomputer ein drittes Werkzeug library(args) über einer kleinen ausgedachten Liste von Buchthemen hinzu. Es braucht ein Thema: Gib die Bücher zu einem Thema zurück, das du hast, einen Fehler für ein fehlendes Thema und einen Fehler für ein Thema, das du nicht hast. Füge es zu TOOLS hinzu und teste vier Aufrufe: einen guten, ein fehlendes Thema, ein unbekanntes Thema und ein unbekanntes Werkzeug. Gib jedes Ergebnis mit json.dumps aus."
+ },
+ "lessons.1.steps.9.deliverable": {
+  "en": "Your code and the four printed results, and one sentence: which error was easiest to forget?",
+  "t": "Dein Code und die vier ausgegebenen Ergebnisse und ein Satz: Welchen Fehler vergisst man am leichtesten?"
+ },
+ "lessons.1.steps.9.rubric.0.criterion": {
+  "en": "I can: write a tool as a function that returns a dictionary.",
+  "t": "Ich kann: ein Werkzeug als Funktion schreiben, die ein Dictionary zurückgibt."
+ },
+ "lessons.1.steps.9.rubric.1.criterion": {
+  "en": "I can: send each call to its tool through TOOLS.",
+  "t": "Ich kann: jeden Aufruf über TOOLS an sein Werkzeug schicken."
+ },
+ "lessons.1.steps.9.rubric.2.criterion": {
+  "en": "I can: return errors instead of crashing or guessing.",
+  "t": "Ich kann: Fehler zurückgeben, statt abzustürzen oder zu raten."
+ },
+ "lessons.1.slides.0.title": {
+  "en": "Tools are functions",
+  "t": "Werkzeuge sind Funktionen"
+ },
+ "lessons.1.slides.0.note": {
+  "en": "AI agents · Upper secondary · Lesson 2",
+  "t": "KI-Agenten · Sekundarstufe II · Lektion 2"
+ },
+ "lessons.1.slides.0.narration": {
+  "en": "What happens when the model asks for a tool that isn’t there?",
+  "t": "Was passiert, wenn das Modell ein Werkzeug verlangt, das es nicht gibt?"
+ },
+ "lessons.1.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "In dieser Lektion"
+ },
+ "lessons.1.slides.1.bullets": {
+  "en": [
+   "Write a tool as a Python function.",
+   "Send each call to the right tool with a dictionary.",
+   "Return errors instead of crashing or guessing."
+  ],
+  "t": [
+   "Du schreibst ein Werkzeug als Python-Funktion.",
+   "Du schickst jeden Aufruf mit einem Dictionary an das richtige Werkzeug.",
+   "Du gibst Fehler zurück, statt abzustürzen oder zu raten."
+  ]
+ },
+ "lessons.1.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Wichtige Ideen"
+ },
+ "lessons.1.slides.2.bullets": {
+  "en": [
+   "A tool takes details and returns a result, both as dictionaries.",
+   "TOOLS maps each tool’s name to its function.",
+   "An unknown tool, a missing detail, an unknown place: each gets an error result."
+  ],
+  "t": [
+   "Ein Werkzeug nimmt Details und gibt ein Ergebnis zurück, beides als Dictionaries.",
+   "TOOLS ordnet den Namen jedes Werkzeugs seiner Funktion zu.",
+   "Ein unbekanntes Werkzeug, ein fehlendes Detail, ein unbekannter Ort: Jedes bekommt ein Fehlerergebnis."
+  ]
+ },
+ "lessons.1.slides.3.title": {
+  "en": "Activity: Be the tools",
+  "t": "Aktivität: Sei die Werkzeuge"
+ },
+ "lessons.1.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): What should happen when the model asks for “bus”?",
+   "Cards (7 min): Each friend is one tool, with its details on a card.",
+   "Calls (6 min): A caller reads calls; the right tool answers, or says an error.",
+   "Code (4 min): Try the bus call on run() in the code step."
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Was soll passieren, wenn das Modell „bus“ verlangt?",
+   "Karten (7 Min.): Jede:r Freund:in ist ein Werkzeug, mit seinen Details auf einer Karte.",
+   "Aufrufe (6 Min.): Eine Person liest Aufrufe vor; das richtige Werkzeug antwortet oder nennt einen Fehler.",
+   "Code (4 Min.): Probiere den Aufruf „bus“ im Code-Schritt mit run() aus."
+  ]
+ },
+ "lessons.1.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Read Mr Okafor’s story: the model asked for a bus tool that didn’t exist. List three things that could happen next, and pick the best.",
+   "Cards (7 min): In a group of four, each person is one tool (weather, timetable, library, route). Write the details your tool needs on a card, and your results for two or three made-up cases.",
+   "Calls (6 min): One person reads calls aloud, some good, some with a missing detail, one for a tool nobody has. The right tool answers from its card; if something is wrong, it answers with an error instead.",
+   "Code (4 min): In the code step, call run with a tool that isn’t in TOOLS, before and after your fix."
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Lies die Geschichte von Herrn Okafor: Das Modell verlangte ein Busbuchungswerkzeug, das es nicht gab. Liste drei Dinge auf, die als Nächstes passieren könnten, und wähle das beste.",
+   "Karten (7 Min.): In einer Vierergruppe ist jede Person ein Werkzeug (weather, timetable, library, route). Schreibe die Details, die dein Werkzeug braucht, auf eine Karte und deine Ergebnisse für zwei oder drei ausgedachte Fälle.",
+   "Aufrufe (6 Min.): Eine Person liest Aufrufe laut vor, einige gut, einige mit fehlendem Detail, einen für ein Werkzeug, das niemand hat. Das richtige Werkzeug antwortet von seiner Karte; stimmt etwas nicht, antwortet es stattdessen mit einem Fehler.",
+   "Code (4 Min.): Rufe im Code-Schritt run mit einem Werkzeug auf, das nicht in TOOLS steht, vor und nach deiner Korrektur."
+  ]
+ },
+ "lessons.1.slides.3.note": {
+  "en": "Use made-up villages, classes and books only, such as Kafi, Dala and 6B. The card game needs no devices.",
+  "t": "Nimm nur ausgedachte Dörfer, Klassen und Bücher, zum Beispiel Kafi, Dala und 6B. Das Kartenspiel braucht keine Geräte."
+ },
+ "lessons.1.slides.3.narration": {
+  "en": "Which tool answers this call, or is it an error?",
+  "t": "Welches Werkzeug antwortet auf diesen Aufruf, oder ist es ein Fehler?"
+ },
+ "lessons.1.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns darüber sprechen"
+ },
+ "lessons.1.slides.4.bullets": {
+  "en": [
+   "Why is a guess worse than an error?",
+   "How would you add a new tool to TOOLS?",
+   "Which details would you check inside each tool?"
+  ],
+  "t": [
+   "Warum ist eine Vermutung schlimmer als ein Fehler?",
+   "Wie würdest du TOOLS ein neues Werkzeug hinzufügen?",
+   "Welche Details würdest du in jedem Werkzeug prüfen?"
+  ]
+ },
+ "lessons.1.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.1.slides.5.bullets": {
+  "en": [
+   "Write one call that should return an error, and the error it returns."
+  ],
+  "t": [
+   "Schreibe einen Aufruf, der einen Fehler zurückgeben sollte, und den Fehler, den er zurückgibt."
+  ]
+ },
+ "lessons.1.slides.5.narration": {
+  "en": "Every strange call gets an error the model can read, not a crash.",
+  "t": "Jeder merkwürdige Aufruf bekommt einen Fehler, den das Modell lesen kann, keinen Absturz."
+ },
+ "lessons.1.kit.0.title": {
+  "en": "Slides to revise: Tools are functions",
+  "t": "Folien zum Wiederholen: Werkzeuge sind Funktionen"
+ },
+ "lessons.1.kit.1.title": {
+  "en": "Activity sheet: Tools are functions",
+  "t": "Arbeitsblatt: Werkzeuge sind Funktionen"
+ },
+ "lessons.1.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "Das Lektionsvideo (240p, zum Wiederansehen oder Teilen)"
+ },
+ "lessons.2.title": {
+  "en": "The agent loop",
+  "t": "Die Agentenschleife"
+ },
+ "lessons.2.tryTomorrow": {
+  "en": "Play the loop with two friends: one is the model, reading from a script card; one is the tool; you are the loop. Count the steps and stop at four. Then try a script that never answers, and see who stops it.",
+  "t": "Spiele die Schleife mit zwei Freund:innen: Eine Person ist das Modell und liest von einer Skriptkarte; eine ist das Werkzeug; du bist die Schleife. Zähle die Schritte und stoppe bei vier. Probiert dann ein Skript, das nie antwortet, und seht, wer es stoppt."
+ },
+ "lessons.2.materials": {
+  "en": [
+   "Your phone or a school computer, for the code steps",
+   "Paper, a pen and three small cards"
+  ],
+  "t": [
+   "Dein Handy oder ein Schulcomputer für die Code-Schritte",
+   "Papier, ein Stift und drei kleine Karten"
+  ]
+ },
+ "lessons.2.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.2.steps.0.title": {
+  "en": "The agent loop",
+  "t": "Die Agentenschleife"
+ },
+ "lessons.2.steps.0.chapters.0.label": {
+  "en": "An agent that never stopped",
+  "t": "Ein Agent, der nie aufhörte"
+ },
+ "lessons.2.steps.0.chapters.1.label": {
+  "en": "The loop and a scripted model",
+  "t": "Die Schleife und ein Skriptmodell"
+ },
+ "lessons.2.steps.0.chapters.2.label": {
+  "en": "The loop in Python",
+  "t": "Die Schleife in Python"
+ },
+ "lessons.2.steps.0.chapters.3.label": {
+  "en": "When a step fails, and the lab",
+  "t": "Wenn ein Schritt scheitert, und das Lab"
+ },
+ "lessons.2.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.2.steps.0.checkpoint.question.prompt": {
+  "en": "The script only ever returns calls, and the limit is 4. What does agent() return?",
+  "t": "Das Skript gibt immer nur Aufrufe zurück, und das Limit ist 4. Was gibt agent() zurück?"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.0.text": {
+  "en": "Nothing: it runs for ever",
+  "t": "Nichts: Es läuft für immer"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.1.text": {
+  "en": "“Stopped”, after four steps",
+  "t": "„Gestoppt“, nach vier Schritten"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.2.text": {
+  "en": "The last call it made",
+  "t": "Den letzten Aufruf, den es gemacht hat"
+ },
+ "lessons.2.steps.0.checkpoint.question.explain": {
+  "en": "The for loop runs four steps at most, then reaches return “Stopped”. The model can’t keep it going.",
+  "t": "Die for-Schleife läuft höchstens vier Schritte und erreicht dann return „Gestoppt“. Das Modell kann sie nicht am Laufen halten."
+ },
+ "lessons.2.steps.0.transcript": {
+  "en": "I tested an agent that a student wrote, and it never stopped! Call, result, call, result. No answer, ever, until the battery died. Today: the agent loop in Python, and how to make it stop. An agent is a loop around a model. Ask the model for its next output. If it’s an answer, you’re done. If it’s a call, run the tool, add both to the history, and ask again. But the Python sandbox has no language model inside. So in your code, a scripted model stands in: a function that returns what a model would write, from a list. It’s not intelligent, and we say so. It lets you test your loop. The history is everything so far: the request, then each call and its result, in order. A real model reads it all on every turn: that’s its only memory. Your loop builds it, one turn at a time. Here’s the loop. For each step, ask the model. No curly bracket means an answer, so return it. Otherwise, run the tool, and add both to the history. Why for step in range, and not while true? Because a model can get stuck, calling tool after tool without answering. A step limit is a promise: after four steps, the loop stops, whatever the model writes. Quick check! The script only ever returns calls, never an answer, and the limit is four. What does the agent return? Stopped, after four steps. That’s the step limit doing its job. In a real app, you’d also tell the person: I couldn’t finish this. Never hide a stop. Some goals need two tools. The trip from Kafi to Dala calls route, then weather, using the first result. But a step can fail. Asked for six B’s first lesson on Saturday, Darsi Tiny got no school, and still set a reminder. In the lab, guess which tools a goal needs, then watch Darsi Tiny plan and call them. Run the Saturday goal, and see the failed step. Your loop could stop there, with a check in code. Your turn. Your loop passes every test with the scripted model. What have you shown? That your loop works, for the outputs you tested. Remember: the loop asks the model, runs its calls and builds the history. A step limit stops a stuck model. And a scripted model tests your code, not the model. Try it yourself: play the loop with two friends. One is the model, reading from a script card. One is the tool. You are the loop: count the steps, and stop at four. Then try a script that never answers.",
+  "t": "Ich habe einen Agenten getestet, den ein Schüler geschrieben hat, und er hat nie aufgehört! Aufruf, Ergebnis, Aufruf, Ergebnis. Nie eine Antwort, bis der Akku leer war. Heute: die Agentenschleife in Python, und wie du sie zum Stoppen bringst. Ein Agent ist eine Schleife um ein Modell. Frag das Modell nach seiner nächsten Ausgabe. Ist es eine Antwort, bist du fertig. Ist es ein Aufruf, führ das Werkzeug aus, häng beides an den Verlauf an und frag noch einmal. Aber in der Python-Sandbox steckt kein Sprachmodell. Also springt in deinem Code ein geskriptetes Modell ein: eine Funktion, die aus einer Liste zurückgibt, was ein Modell schreiben würde. Es ist nicht intelligent, und das sagen wir auch. Es lässt dich deine Schleife testen. Der Verlauf ist alles bisher: die Anfrage, dann jeder Aufruf und sein Ergebnis, der Reihe nach. Ein echtes Modell liest ihn bei jedem Zug ganz: Das ist sein einziges Gedächtnis. Deine Schleife baut ihn auf, einen Zug nach dem anderen. Hier ist die Schleife. Frag bei jedem Schritt das Modell. Keine geschweifte Klammer heißt Antwort, also gib sie zurück. Sonst führ das Werkzeug aus und häng beides an den Verlauf an. Warum for step in range und nicht while true? Weil ein Modell sich festfahren kann, Werkzeug um Werkzeug aufruft und nie antwortet. Ein Schrittlimit ist ein Versprechen: Nach vier Schritten stoppt die Schleife, egal was das Modell schreibt. Kurzer Check! Das Skript gibt immer nur Aufrufe zurück, nie eine Antwort, und das Limit ist vier. Was gibt der Agent zurück? Gestoppt, nach vier Schritten. Das Schrittlimit macht seine Arbeit. In einer echten App würdest du der Person auch sagen: Ich konnte das nicht abschließen. Verstecke nie einen Stopp. Manche Ziele brauchen zwei Werkzeuge. Die Reise von Kafi nach Dala ruft route auf, dann weather, mit dem ersten Ergebnis. Aber ein Schritt kann scheitern. Gefragt nach der ersten Stunde der Sechs B am Samstag, bekam Darsi Tiny keine Schule und stellte trotzdem eine Erinnerung. Rate im Lab, welche Werkzeuge ein Ziel braucht, und sieh dann zu, wie Darsi Tiny plant und sie aufruft. Führ das Samstagsziel aus und sieh dir den gescheiterten Schritt an. Deine Schleife könnte dort stoppen, mit einem Check im Code. Du bist dran. Deine Schleife besteht jeden Test mit dem geskripteten Modell. Was hast du damit gezeigt? Dass deine Schleife funktioniert, für die Ausgaben, die du getestet hast. Merke dir: Die Schleife fragt das Modell, führt seine Aufrufe aus und baut den Verlauf auf. Ein Schrittlimit stoppt ein festgefahrenes Modell. Und ein geskriptetes Modell testet deinen Code, nicht das Modell. Probier es selbst: Spiel die Schleife mit zwei Freunden. Einer ist das Modell und liest von einer Skriptkarte. Einer ist das Werkzeug. Du bist die Schleife: Zähl die Schritte und stopp bei vier. Dann probier ein Skript, das nie antwortet."
+ },
+ "lessons.2.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.2.steps.1.title": {
+  "en": "The loop, a scripted model and a step limit",
+  "t": "Die Schleife, ein Skriptmodell und ein Schrittlimit"
+ },
+ "lessons.2.steps.1.body": {
+  "en": "An agent is a loop around a model. Ask the model for its next output. If it is an answer, give it to the person: the job is done. If it is a tool call, run the tool, add the call and its result to the history, and ask the model again. The history is everything so far, in order: the request, each call and each result. A real model reads the whole history on every turn, because it has no other memory of the conversation.\n\nThe Python sandbox on your phone has no language model inside, so your code uses a scripted model: a function that returns what a model would write, taken from a list called SCRIPT. It isn’t intelligent, and we say so plainly. What it gives you is a fair test of your loop: you choose exactly what the “model” writes, awkward cases included. In the lab, Darsi Tiny, a real small model, drives the same kind of loop on your phone.\n\nA loop needs a way to stop that doesn’t depend on the model. With while True, a model that keeps calling tools and never answers keeps your agent running until the battery or the data runs out. With for step in range(limit), the loop runs at most limit steps and then returns “Stopped”, whatever the model writes; a real app should also tell the person it couldn’t finish.\n\nSome goals need two tools, the second using the first one’s result: the trip from Kafi to Dala calls route, then weather. Steps can fail, though. Asked for 6B’s first lesson on Saturday, Darsi Tiny got “no school” from the timetable and still set a reminder, “6B: 6B”. A good loop checks a result before building on it: when a result holds an error, it can stop, or hand the problem back to the person. And remember what your tests show: that your loop works for the outputs you scripted. A real model can write things no script did, so the loop must cope with those too.",
+  "t": "Ein Agent ist eine Schleife um ein Modell. Frage das Modell nach seiner nächsten Ausgabe. Ist es eine Antwort, gib sie der Person: Die Aufgabe ist erledigt. Ist es ein Werkzeugaufruf, führe das Werkzeug aus, füge den Aufruf und sein Ergebnis dem Verlauf hinzu und frage das Modell erneut. Der Verlauf ist alles bisher, der Reihe nach: die Anfrage, jeder Aufruf und jedes Ergebnis. Ein echtes Modell liest in jeder Runde den ganzen Verlauf, weil es keine andere Erinnerung an das Gespräch hat.\n\nIn der Python-Sandbox auf deinem Handy steckt kein Sprachmodell, also benutzt dein Code ein Skriptmodell: eine Funktion, die zurückgibt, was ein Modell schreiben würde, aus einer Liste namens SCRIPT. Es ist nicht intelligent, und das sagen wir klar. Es gibt dir einen fairen Test deiner Schleife: Du wählst genau, was das „Modell“ schreibt, auch knifflige Fälle. Im Lab treibt Darsi Tiny, ein echtes kleines Modell, auf deinem Handy dieselbe Art von Schleife an.\n\nEine Schleife braucht eine Möglichkeit zu enden, die nicht vom Modell abhängt. Mit while True hält ein Modell, das immer weiter Werkzeuge aufruft und nie antwortet, deinen Agenten am Laufen, bis der Akku oder die Daten leer sind. Mit for step in range(limit) läuft die Schleife höchstens limit Schritte und gibt dann „Gestoppt“ zurück, was auch immer das Modell schreibt; eine echte App sollte der Person außerdem sagen, dass sie nicht fertig werden konnte.\n\nManche Ziele brauchen zwei Werkzeuge, wobei das zweite das Ergebnis des ersten nutzt: Die Reise von Kafi nach Dala ruft route auf, dann weather. Schritte können aber scheitern. Gefragt nach der ersten Stunde der 6B am Samstag, bekam Darsi Tiny vom Stundenplan „no school“ und setzte trotzdem eine Erinnerung, „6B: 6B“. Eine gute Schleife prüft ein Ergebnis, bevor sie darauf aufbaut: Enthält ein Ergebnis einen Fehler, kann sie stoppen oder das Problem an die Person zurückgeben. Und denke daran, was deine Tests zeigen: dass deine Schleife für die Ausgaben funktioniert, die du vorgegeben hast. Ein echtes Modell kann Dinge schreiben, die kein Skript je vorgesehen hat, also muss die Schleife auch damit zurechtkommen."
+ },
+ "lessons.2.steps.1.keyTerms.0.term": {
+  "en": "Agent loop",
+  "t": "Agentenschleife"
+ },
+ "lessons.2.steps.1.keyTerms.0.def": {
+  "en": "Ask the model, run its tool call, add the result, and repeat until it answers or the step limit is reached.",
+  "t": "Das Modell fragen, seinen Werkzeugaufruf ausführen, das Ergebnis hinzufügen und wiederholen, bis es antwortet oder das Schrittlimit erreicht ist."
+ },
+ "lessons.2.steps.1.keyTerms.1.term": {
+  "en": "History",
+  "t": "Verlauf"
+ },
+ "lessons.2.steps.1.keyTerms.1.def": {
+  "en": "Everything so far, in order: the request, each call and each result. The model reads it on every turn.",
+  "t": "Alles bisher, der Reihe nach: die Anfrage, jeder Aufruf und jedes Ergebnis. Das Modell liest ihn in jeder Runde."
+ },
+ "lessons.2.steps.1.keyTerms.2.term": {
+  "en": "Step limit",
+  "t": "Schrittlimit"
+ },
+ "lessons.2.steps.1.keyTerms.2.def": {
+  "en": "The most turns a loop may take before it stops, whatever the model writes.",
+  "t": "Die meisten Runden, die eine Schleife machen darf, bevor sie stoppt, was auch immer das Modell schreibt."
+ },
+ "lessons.2.steps.1.keyTerms.3.term": {
+  "en": "Scripted model",
+  "t": "Skriptmodell"
+ },
+ "lessons.2.steps.1.keyTerms.3.def": {
+  "en": "A function that returns fixed outputs a model would write, used to test your code. Not a real model.",
+  "t": "Eine Funktion, die feste Ausgaben zurückgibt, die ein Modell schreiben würde, um deinen Code zu testen. Kein echtes Modell."
+ },
+ "lessons.2.steps.2.prompt": {
+  "en": "Your loop passes every test with a scripted model. What have you shown?",
+  "t": "Deine Schleife besteht jeden Test mit einem Skriptmodell. Was hast du gezeigt?"
+ },
+ "lessons.2.steps.2.options.0.text": {
+  "en": "That the real model will behave the same",
+  "t": "Dass sich das echte Modell genauso verhalten wird"
+ },
+ "lessons.2.steps.2.options.1.text": {
+  "en": "That your loop works for the outputs you tested",
+  "t": "Dass deine Schleife für die getesteten Ausgaben funktioniert"
+ },
+ "lessons.2.steps.2.options.2.text": {
+  "en": "That every tool gives the right result",
+  "t": "Dass jedes Werkzeug das richtige Ergebnis liefert"
+ },
+ "lessons.2.steps.2.explain": {
+  "en": "A script tests your code. A real model writes new things, wrong calls and stuck loops included, so your code must handle those too.",
+  "t": "Ein Skript testet deinen Code. Ein echtes Modell schreibt Neues, auch falsche Aufrufe und hängende Schleifen, also muss dein Code auch damit umgehen."
+ },
+ "lessons.2.steps.3.prompt": {
+  "en": "Put one turn of the agent loop in order.",
+  "t": "Bring eine Runde der Agentenschleife in die richtige Reihenfolge."
+ },
+ "lessons.2.steps.3.steps.0": {
+  "en": "Ask the model for its next output",
+  "t": "Das Modell nach seiner nächsten Ausgabe fragen"
+ },
+ "lessons.2.steps.3.steps.1": {
+  "en": "If it has no curly bracket, return it as the answer",
+  "t": "Hat sie keine geschweifte Klammer, gib sie als Antwort zurück"
+ },
+ "lessons.2.steps.3.steps.2": {
+  "en": "Otherwise, split the call into a name and details",
+  "t": "Sonst den Aufruf in Namen und Details zerlegen"
+ },
+ "lessons.2.steps.3.steps.3": {
+  "en": "Run the tool",
+  "t": "Das Werkzeug ausführen"
+ },
+ "lessons.2.steps.3.steps.4": {
+  "en": "Add the call and its result to the history",
+  "t": "Den Aufruf und sein Ergebnis dem Verlauf hinzufügen"
+ },
+ "lessons.2.steps.3.steps.5": {
+  "en": "Go round again, up to the step limit",
+  "t": "Noch eine Runde drehen, bis zum Schrittlimit"
+ },
+ "lessons.2.steps.3.explain": {
+  "en": "The model writes first; an answer ends the loop at once. A call is split, run and recorded, and only then does the model get another turn, never more turns than the limit.",
+  "t": "Das Modell schreibt zuerst; eine Antwort beendet die Schleife sofort. Ein Aufruf wird zerlegt, ausgeführt und festgehalten, und erst dann bekommt das Modell eine weitere Runde, nie mehr Runden als das Limit."
+ },
+ "lessons.2.steps.4.prompt": {
+  "en": "Try it: pick the trip from Kafi to Dala and guess the two tools in order, then run it and compare with Darsi Tiny’s plan. Then run the Saturday goal: the timetable says “no school”, but does Darsi Tiny stop before it sets the reminder? Run two different two-step goals to finish.",
+  "t": "Probier es aus: Wähle die Reise von Kafi nach Dala und rate die beiden Werkzeuge der Reihe nach, führe sie dann aus und vergleiche mit dem Plan von Darsi Tiny. Führe dann das Samstagsziel aus: Der Stundenplan sagt „no school“, aber hört Darsi Tiny auf, bevor es die Erinnerung setzt? Führe zwei verschiedene Ziele mit zwei Schritten aus, um fertig zu werden."
+ },
+ "lessons.2.steps.5.prompt": {
+  "en": "This agent stops after one output and has no limit. Fix agent(request, limit): loop up to limit steps; return the first answer (text with no curly bracket); add each call and its tool’s result to history; and return \"Stopped\" when the steps run out. The model here is scripted: SCRIPT is what it writes.",
+  "t": "Dieser Agent stoppt nach einer Ausgabe und hat kein Limit. Repariere agent(request, limit): Schleife bis zu limit Schritte; gib die erste Antwort zurück (Text ohne geschweifte Klammer); füge jeden Aufruf und das Ergebnis seines Werkzeugs zu history hinzu; und gib \"Gestoppt\" zurück, wenn die Schritte aufgebraucht sind. Das Modell ist hier ein Skript: SCRIPT ist das, was es schreibt."
+ },
+ "lessons.2.steps.5.tests.0.hint": {
+  "en": "After a call, add it and its result to history and ask the model again: its next output is the answer.",
+  "t": "Füge nach einem Aufruf ihn und sein Ergebnis zu history hinzu und frage das Modell erneut: Seine nächste Ausgabe ist die Antwort."
+ },
+ "lessons.2.steps.5.tests.1.hint": {
+  "en": "Keep looping while the model writes calls: two calls, then the answer.",
+  "t": "Schleife weiter, solange das Modell Aufrufe schreibt: zwei Aufrufe, dann die Antwort."
+ },
+ "lessons.2.steps.5.tests.2.hint": {
+  "en": "A model that never answers must still stop: after the loop, return \"Stopped\".",
+  "t": "Ein Modell, das nie antwortet, muss trotzdem stoppen: Gib nach der Schleife \"Gestoppt\" zurück."
+ },
+ "lessons.2.steps.5.hints.0": {
+  "en": "Use for step in range(limit):, not while True.",
+  "t": "Nimm for step in range(limit):, nicht while True."
+ },
+ "lessons.2.steps.5.hints.1": {
+  "en": "Inside the loop: out = model(history), and if \"{\" not in out: return out.",
+  "t": "In der Schleife: out = model(history), und wenn \"{\" not in out: return out."
+ },
+ "lessons.2.steps.5.hints.2": {
+  "en": "Otherwise: history += [out, tool(out)]. After the loop: return \"Stopped\".",
+  "t": "Sonst: history += [out, tool(out)]. Nach der Schleife: return \"Gestoppt\"."
+ },
+ "lessons.2.steps.5.explain": {
+  "en": "The for loop gives the model at most limit turns. Each call and its result join the history, so the scripted model moves on to its next line; an answer is returned at once, and a model that never answers is stopped.",
+  "t": "Die for-Schleife gibt dem Modell höchstens limit Runden. Jeder Aufruf und sein Ergebnis kommen in den Verlauf, also geht das Skriptmodell zu seiner nächsten Zeile weiter; eine Antwort wird sofort zurückgegeben, und ein Modell, das nie antwortet, wird gestoppt."
+ },
+ "lessons.2.steps.6.prompt": {
+  "en": "This agent can run for ever if the model never answers. Which line causes it?",
+  "t": "Dieser Agent kann für immer laufen, wenn das Modell nie antwortet. Welche Zeile verursacht das?"
+ },
+ "lessons.2.steps.6.explain": {
+  "en": "while True only ends when the model answers. A step limit ends the loop after four turns, whatever the model writes; after it, return “Stopped” and tell the person.",
+  "t": "while True endet nur, wenn das Modell antwortet. Ein Schrittlimit beendet die Schleife nach vier Runden, was auch immer das Modell schreibt; gib danach „Gestoppt“ zurück und sag es der Person."
+ },
+ "lessons.2.steps.7.prompt": {
+  "en": "What does this program print?",
+  "t": "Was gibt dieses Programm aus?"
+ },
+ "lessons.2.steps.7.options.0.text": {
+  "en": "a",
+  "t": "a"
+ },
+ "lessons.2.steps.7.options.1.text": {
+  "en": "b",
+  "t": "b"
+ },
+ "lessons.2.steps.7.options.2.text": {
+  "en": "c",
+  "t": "c"
+ },
+ "lessons.2.steps.7.explain": {
+  "en": "len(history) is 3 and 3 // 2 is 1, so the scripted model returns SCRIPT[1], its second line: one call and one result have been added since the request.",
+  "t": "len(history) ist 3 und 3 // 2 ist 1, also gibt das Skriptmodell SCRIPT[1] zurück, seine zweite Zeile: Seit der Anfrage wurden ein Aufruf und ein Ergebnis hinzugefügt."
+ },
+ "lessons.2.steps.8.prompt": {
+  "en": "In the Saturday example, Darsi Tiny noticed “no school” and didn’t set the reminder.",
+  "t": "Im Samstagsbeispiel bemerkte Darsi Tiny „no school“ und setzte die Erinnerung nicht."
+ },
+ "lessons.2.steps.8.explain": {
+  "en": "It set the reminder “6B: 6B” anyway: it doesn’t check a result before building on it. A check in your loop, or a person, has to catch a failed step.",
+  "t": "Es setzte die Erinnerung „6B: 6B“ trotzdem: Es prüft ein Ergebnis nicht, bevor es darauf aufbaut. Eine Prüfung in deiner Schleife oder eine Person muss einen gescheiterten Schritt auffangen."
+ },
+ "lessons.2.steps.9.prompt": {
+  "en": "The loop, not the model, decides when the agent stops. Where else do we set a limit instead of trusting something to stop by itself?",
+  "t": "Die Schleife, nicht das Modell, entscheidet, wann der Agent stoppt. Wo setzen wir sonst ein Limit, statt darauf zu vertrauen, dass etwas von allein aufhört?"
+ },
+ "lessons.2.steps.9.placeholder": {
+  "en": "For example: “A timer on the cooker, because I might forget it.”",
+  "t": "Zum Beispiel: „Ein Timer am Herd, weil ich ihn vergessen könnte.“"
+ },
+ "lessons.2.steps.10.prompt": {
+  "en": "Project: A loop that stops on a failed step",
+  "t": "Projekt: Eine Schleife, die bei einem gescheiterten Schritt stoppt"
+ },
+ "lessons.2.steps.10.task": {
+  "en": "In the code step, or in Python on a school computer, change agent so it also stops when a tool’s result holds an error: if the result contains \"error\", return \"Stopped: \" followed by the result. Make the pretend tool return an error for Saturday. Then write three scripts to test your loop: a call then an answer, two calls then an answer, and a call that fails. Finally, play the loop on paper with two friends using the same scripts.",
+  "t": "Ändere im Code-Schritt oder in Python auf einem Schulcomputer agent so, dass es auch stoppt, wenn das Ergebnis eines Werkzeugs einen Fehler enthält: Enthält das Ergebnis \"error\", gib \"Stopped: \" gefolgt vom Ergebnis zurück. Lass das Schein-Werkzeug für den Samstag einen Fehler zurückgeben. Schreibe dann drei Skripte, um deine Schleife zu testen: einen Aufruf, dann eine Antwort; zwei Aufrufe, dann eine Antwort; und einen Aufruf, der scheitert. Spiele die Schleife zum Schluss mit zwei Freund:innen auf Papier mit denselben Skripten."
+ },
+ "lessons.2.steps.10.deliverable": {
+  "en": "Your code, your three scripts and what the agent returned for each, and one sentence: why should the loop stop on an error?",
+  "t": "Dein Code, deine drei Skripte und was der Agent für jedes zurückgab, und ein Satz: Warum sollte die Schleife bei einem Fehler stoppen?"
+ },
+ "lessons.2.steps.10.rubric.0.criterion": {
+  "en": "I can: write the agent loop with a step limit.",
+  "t": "Ich kann: die Agentenschleife mit einem Schrittlimit schreiben."
+ },
+ "lessons.2.steps.10.rubric.1.criterion": {
+  "en": "I can: test the loop with a scripted model, and say honestly what that shows.",
+  "t": "Ich kann: die Schleife mit einem Skriptmodell testen und ehrlich sagen, was das zeigt."
+ },
+ "lessons.2.steps.10.rubric.2.criterion": {
+  "en": "I can: stop the loop when a step fails.",
+  "t": "Ich kann: die Schleife stoppen, wenn ein Schritt scheitert."
+ },
+ "lessons.2.slides.0.title": {
+  "en": "The agent loop",
+  "t": "Die Agentenschleife"
+ },
+ "lessons.2.slides.0.note": {
+  "en": "AI agents · Upper secondary · Lesson 3",
+  "t": "KI-Agenten · Sekundarstufe II · Lektion 3"
+ },
+ "lessons.2.slides.0.narration": {
+  "en": "Who decides when an agent stops: the model, or your loop?",
+  "t": "Wer entscheidet, wann ein Agent stoppt: das Modell oder deine Schleife?"
+ },
+ "lessons.2.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "In dieser Lektion"
+ },
+ "lessons.2.slides.1.bullets": {
+  "en": [
+   "Write the agent loop in Python.",
+   "Stop a stuck model with a step limit.",
+   "Test a loop honestly with a scripted model."
+  ],
+  "t": [
+   "Du schreibst die Agentenschleife in Python.",
+   "Du stoppst ein hängendes Modell mit einem Schrittlimit.",
+   "Du testest eine Schleife ehrlich mit einem Skriptmodell."
+  ]
+ },
+ "lessons.2.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Wichtige Ideen"
+ },
+ "lessons.2.slides.2.bullets": {
+  "en": [
+   "Ask the model; an answer? stop; a call? run it, add it, ask again.",
+   "A step limit stops the loop, whatever the model writes.",
+   "A scripted model tests your code, not the model."
+  ],
+  "t": [
+   "Das Modell fragen; eine Antwort? Stopp; ein Aufruf? Ausführen, hinzufügen, erneut fragen.",
+   "Ein Schrittlimit stoppt die Schleife, was auch immer das Modell schreibt.",
+   "Ein Skriptmodell testet deinen Code, nicht das Modell."
+  ]
+ },
+ "lessons.2.slides.3.title": {
+  "en": "Activity: Be the loop",
+  "t": "Aktivität: Sei die Schleife"
+ },
+ "lessons.2.slides.3.bullets": {
+  "en": [
+   "Set up (3 min): Model, tool, loop: one card each.",
+   "Play (7 min): The model reads its script; the loop counts.",
+   "Stuck (5 min): A script that never answers: stop at four.",
+   "Code (5 min): Fix the loop in the code step."
+  ],
+  "t": [
+   "Vorbereiten (3 Min.): Modell, Werkzeug, Schleife: je eine Karte.",
+   "Spielen (7 Min.): Das Modell liest sein Skript; die Schleife zählt.",
+   "Hängend (5 Min.): Ein Skript, das nie antwortet: Stopp bei vier.",
+   "Code (5 Min.): Repariere die Schleife im Code-Schritt."
+  ]
+ },
+ "lessons.2.slides.3.details": {
+  "en": [
+   "Set up (3 min): In threes, write one card per role: the model (with a script of lines to read), the tool (answers for weather and route in Kafi and Dala) and the loop (a step counter).",
+   "Play (7 min): The loop says “your turn” to the model, who reads the next line of the script. If it’s a call, the loop passes it to the tool, writes the call and the result on the history sheet, and asks the model again. If it’s an answer, stop.",
+   "Stuck (5 min): Write a script with only calls. The loop counts the steps aloud and stops at four, then says “Stopped: I couldn’t finish this.”",
+   "Code (5 min): In the code step, turn what the loop did on paper into a for loop with a limit, and run the tests."
+  ],
+  "t": [
+   "Vorbereiten (3 Min.): Schreibt zu dritt eine Karte pro Rolle: das Modell (mit einem Skript aus Zeilen zum Vorlesen), das Werkzeug (Antworten für weather und route in Kafi und Dala) und die Schleife (ein Schrittzähler).",
+   "Spielen (7 Min.): Die Schleife sagt dem Modell „du bist dran“, und es liest die nächste Zeile des Skripts. Ist es ein Aufruf, gibt die Schleife ihn an das Werkzeug weiter, schreibt Aufruf und Ergebnis auf das Verlaufsblatt und fragt das Modell erneut. Ist es eine Antwort, Stopp.",
+   "Hängend (5 Min.): Schreibt ein Skript mit nur Aufrufen. Die Schleife zählt die Schritte laut und stoppt bei vier, dann sagt sie „Stopped: Ich konnte das nicht abschließen.“",
+   "Code (5 Min.): Macht im Code-Schritt aus dem, was die Schleife auf Papier getan hat, eine for-Schleife mit Limit und führt die Tests aus."
+  ]
+ },
+ "lessons.2.slides.3.note": {
+  "en": "Write two script cards before you start: one that answers after a call, and one that never answers. No devices are needed until the last part.",
+  "t": "Schreibe vor dem Start zwei Skriptkarten: eine, die nach einem Aufruf antwortet, und eine, die nie antwortet. Bis zum letzten Teil braucht man keine Geräte."
+ },
+ "lessons.2.slides.3.narration": {
+  "en": "Count the steps. Who stops the model?",
+  "t": "Zähle die Schritte. Wer stoppt das Modell?"
+ },
+ "lessons.2.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns darüber sprechen"
+ },
+ "lessons.2.slides.4.bullets": {
+  "en": [
+   "Why is while True risky in an agent?",
+   "What should the person be told when the loop stops?",
+   "What could a real model do that your script never did?"
+  ],
+  "t": [
+   "Warum ist while True in einem Agenten riskant?",
+   "Was sollte man der Person sagen, wenn die Schleife stoppt?",
+   "Was könnte ein echtes Modell tun, das dein Skript nie getan hat?"
+  ]
+ },
+ "lessons.2.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.2.slides.5.bullets": {
+  "en": [
+   "Write the four steps of the loop from memory, and where the step limit goes."
+  ],
+  "t": [
+   "Schreibe die vier Schritte der Schleife aus dem Gedächtnis auf und wohin das Schrittlimit gehört."
+  ]
+ },
+ "lessons.2.slides.5.narration": {
+  "en": "Your loop decides when the agent stops, not the model.",
+  "t": "Deine Schleife entscheidet, wann der Agent stoppt, nicht das Modell."
+ },
+ "lessons.2.kit.0.title": {
+  "en": "Slides to revise: The agent loop",
+  "t": "Folien zum Wiederholen: Die Agentenschleife"
+ },
+ "lessons.2.kit.1.title": {
+  "en": "Activity sheet: The agent loop",
+  "t": "Arbeitsblatt: Die Agentenschleife"
+ },
+ "lessons.2.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "Das Lektionsvideo (240p, zum Wiederansehen oder Teilen)"
+ },
+ "lessons.3.title": {
+  "en": "Guardrails in code",
+  "t": "Schutzmechanismen im Code"
+ },
+ "lessons.3.tryTomorrow": {
+  "en": "Write the guardrails for a homework-reminder agent on paper: which tools it needs, which actions wait for a yes, and which details you check. Then test your rules on a friend’s sneakiest requests.",
+  "t": "Schreibe auf Papier die Schutzmechanismen für einen Agenten auf, der an Hausaufgaben erinnert: welche Werkzeuge er braucht, welche Aktionen auf ein Ja warten und welche Details du prüfst. Teste deine Regeln dann an den hinterhältigsten Anfragen einer Freundin oder eines Freundes."
+ },
+ "lessons.3.materials": {
+  "en": [
+   "Your phone or a school computer, for the code steps",
+   "Paper and a pen"
+  ],
+  "t": [
+   "Dein Handy oder ein Schulcomputer für die Code-Schritte",
+   "Papier und ein Stift"
+  ]
+ },
+ "lessons.3.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.3.steps.0.title": {
+  "en": "Guardrails in code",
+  "t": "Schutzmechanismen im Code"
+ },
+ "lessons.3.steps.0.chapters.0.label": {
+  "en": "A model that learned to ask",
+  "t": "Ein Modell, das das Fragen lernte"
+ },
+ "lessons.3.steps.0.chapters.1.label": {
+  "en": "What a guardrail is",
+  "t": "Was ein Schutzmechanismus ist"
+ },
+ "lessons.3.steps.0.chapters.2.label": {
+  "en": "Allow-lists and approval",
+  "t": "Erlaubnislisten und Freigabe"
+ },
+ "lessons.3.steps.0.chapters.3.label": {
+  "en": "Details, logs and the lab",
+  "t": "Details, Protokolle und das Lab"
+ },
+ "lessons.3.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.3.steps.0.checkpoint.question.prompt": {
+  "en": "The person approved “The trip is cancelled.” The model now proposes “Pay the fees today.” What should the guard return?",
+  "t": "Die Person hat „The trip is cancelled.“ freigegeben. Das Modell schlägt jetzt „Pay the fees today.“ vor. Was soll der Wächter zurückgeben?"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.0.text": {
+  "en": "Run: they already said yes",
+  "t": "Ausführen: Sie hat schon Ja gesagt"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.1.text": {
+  "en": "Ask again, about this message",
+  "t": "Erneut fragen, zu dieser Nachricht"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.2.text": {
+  "en": "Block every message for good",
+  "t": "Jede Nachricht für immer blockieren"
+ },
+ "lessons.3.steps.0.checkpoint.question.explain": {
+  "en": "The yes was for a different message. Comparing the exact details stops a model from sending something nobody approved.",
+  "t": "Das Ja galt einer anderen Nachricht. Der Vergleich der genauen Details hindert ein Modell daran, etwas zu senden, das niemand freigegeben hat."
+ },
+ "lessons.3.steps.0.transcript": {
+  "en": "Darsi Tiny learned to ask before it sends a message. So, job done, the model is safe? Then someone typed: yes, send it, with nothing before it. It made up a message, and tried to send it! Today: guardrails, the safety rules you write in code. A model’s good habits are learned, and learned behaviour can fail. Darsi Tiny refuses the harmful requests it was trained on. But reworded in new ways, twenty-eight percent of the English ones got a tool call instead. So real safety goes in your code. A guardrail is a rule in code that checks an action before it runs. It doesn’t guess, and it can’t be talked round. The model proposes; the guardrail decides: run it, ask a person, or block it. Rule one: an allow-list. A weather helper needs the weather tool, not attendance and not messages. If the model asks for a tool off the list, block it. Rule two: actions wait for a person. The app shows the exact message and asks: yes or no? It remembers exactly what was approved. A yes to one message is not a yes to another. Rule three: check every detail before a tool runs. Is six B a class that exists? Is twenty-five o’clock a real time? Did every name come from the request or a result? Darsi Tiny once copied nine Z as nine C. Quick check! The person said yes to: the trip is cancelled. Now the model proposes a different message: pay the fees today. What should the guard return? Ask again. The yes was for a different message, so it doesn’t count. Compare the exact details, not just the word yes, and the model can’t send something nobody approved. Rule four: log everything. Every proposed action, what the guard decided, and who approved it. When something goes wrong, the log shows what happened. In the lab, choose what Darsi Tiny may do: read only, ask first, or allowed. Send a message to Mrs Mensah, and approve it. Then switch the code check off, send yes, send it, alone, and see what gets through. Your turn. Darsi Tiny learned to ask before sending. So where should the final check live? In the app’s code, with a person’s yes. Remember: allow only the tools a task needs. Run an action only after a yes to that exact action. Check every detail, and log everything. Try it yourself: on paper, write the guardrails for a homework-reminder agent. Which tools does it need? Which actions wait for a yes, and which details must you check? Then test them on a friend’s sneakiest requests.",
+  "t": "Darsi Tiny hat gelernt, vor dem Senden einer Nachricht zu fragen. Also, Aufgabe erledigt, das Modell ist sicher? Dann hat jemand getippt: Ja, sende sie, und sonst nichts. Es hat eine Nachricht erfunden und versucht, sie zu senden! Heute: Schutzmechanismen, die Sicherheitsregeln, die du im Code schreibst. Die guten Gewohnheiten eines Modells sind gelernt, und Gelerntes kann versagen. Darsi Tiny lehnt die schädlichen Anfragen ab, mit denen es trainiert wurde. Aber in neuen Formulierungen bekamen achtundzwanzig Prozent der englischen stattdessen einen Werkzeugaufruf. Echte Sicherheit gehört also in deinen Code. Ein Schutzmechanismus ist eine Regel im Code, die eine Aktion prüft, bevor sie läuft. Er rät nicht, und man kann ihn nicht umstimmen. Das Modell schlägt vor; der Schutzmechanismus entscheidet: ausführen, eine Person fragen oder blockieren. Regel eins: eine Zulassungsliste. Ein Wetterhelfer braucht das Wetterwerkzeug, nicht die Anwesenheit und nicht die Nachrichten. Verlangt das Modell ein Werkzeug, das nicht auf der Liste steht, blockiere es. Regel zwei: Aktionen warten auf eine Person. Die App zeigt die genaue Nachricht und fragt: Ja oder nein? Sie merkt sich genau, was genehmigt wurde. Ein Ja zu einer Nachricht ist kein Ja zu einer anderen. Regel drei: Prüf jedes Detail, bevor ein Werkzeug läuft. Gibt es die Klasse sechs B? Ist fünfundzwanzig Uhr eine echte Uhrzeit? Kam jeder Name aus der Anfrage oder aus einem Ergebnis? Darsi Tiny hat einmal neun Z als neun C abgeschrieben. Kurzer Check! Die Person hat Ja gesagt zu: Der Ausflug ist abgesagt. Jetzt schlägt das Modell eine andere Nachricht vor: Zahlt heute die Gebühren. Was soll der Wächter zurückgeben? Noch einmal fragen. Das Ja galt für eine andere Nachricht, also zählt es nicht. Vergleich die genauen Details, nicht nur das Wort Ja, dann kann das Modell nichts senden, was niemand genehmigt hat. Regel vier: Protokolliere alles. Jede vorgeschlagene Aktion, was der Wächter entschieden hat und wer sie genehmigt hat. Wenn etwas schiefgeht, zeigt das Protokoll, was passiert ist. Wähle im Lab, was Darsi Tiny tun darf: nur lesen, erst fragen oder erlaubt. Sende eine Nachricht an Frau Mensah und genehmige sie. Dann schalte den Code-Check aus, sende Ja, sende sie, ganz allein, und sieh, was durchkommt. Du bist dran. Darsi Tiny hat gelernt, vor dem Senden zu fragen. Wo soll also der letzte Check sitzen? Im Code der App, mit dem Ja einer Person. Merke dir: Erlaube nur die Werkzeuge, die eine Aufgabe braucht. Führ eine Aktion erst nach einem Ja zu genau dieser Aktion aus. Prüf jedes Detail und protokolliere alles. Probier es selbst: Schreib auf Papier die Schutzmechanismen für einen Agenten, der an Hausaufgaben erinnert. Welche Werkzeuge braucht er? Welche Aktionen warten auf ein Ja, und welche Details musst du prüfen? Dann teste sie an den hinterhältigsten Anfragen einer Freundin oder eines Freundes."
+ },
+ "lessons.3.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.3.steps.1.title": {
+  "en": "Guardrails: safety rules in code",
+  "t": "Schutzmechanismen: Sicherheitsregeln im Code"
+ },
+ "lessons.3.steps.1.body": {
+  "en": "A model’s good habits are learned, and learned behaviour can fail. Darsi Tiny learned to refuse harmful requests and to ask before it sends a message. But when requests it should refuse were reworded in ways it hadn’t seen, 28% of the English ones and 12% of the Arabic ones got a tool call instead. And «نعم، أرسلها.» (“Yes, send it.”) typed on its own made it invent a message and try to send it. So the safety that matters isn’t left to the model: it goes in your code, as guardrails, and in a person’s approval.\n\nA guardrail is a rule in code that checks every proposed action before it runs, and decides: run it, ask a person, or block it. It doesn’t guess, and it can’t be talked round. Four rules cover most of what goes wrong.\n\nFirst, an allow-list: a task gets only the tools it needs. A weather helper needs weather, not attendance and not send_message; anything else is blocked, so even a confused or tricked model can’t reach it. Second, approval of the exact action: anything that acts (sending a message, setting a reminder) waits for a person who sees exactly what will be done. Store what was approved, and run only if the proposed details are the same, because a yes to one message is not a yes to another. Third, check the details: does class 6B exist? Is 25:00 a real time? Did every name come from the request or a tool’s result? Darsi Tiny once copied “9Z” as 9C. Fourth, log everything: every proposed action, what the guard decided and who approved it. When something goes wrong, the log shows what happened and which rule to fix.\n\nTest your guardrails as carefully as the rest of your code: a rule with a typo in a tool’s name never fires, and the action it should stop goes through. The model proposes; your code and a person decide. The same holds for the biggest agents in the cloud.",
+  "t": "Die guten Gewohnheiten eines Modells sind gelernt, und gelerntes Verhalten kann versagen. Darsi Tiny hat gelernt, schädliche Anfragen abzulehnen und vor dem Senden einer Nachricht zu fragen. Als aber Anfragen, die es ablehnen sollte, auf Weisen umformuliert wurden, die es nicht kannte, bekamen 28 % der englischen und 12 % der arabischen stattdessen einen Werkzeugaufruf. Und «نعم، أرسلها.» („Ja, sende sie.“), allein getippt, brachte es dazu, eine Nachricht zu erfinden und zu versuchen, sie zu senden. Die Sicherheit, auf die es ankommt, bleibt also nicht dem Modell überlassen: Sie steht in deinem Code, als Schutzmechanismen, und in der Freigabe durch eine Person.\n\nEin Schutzmechanismus ist eine Regel im Code, die jede vorgeschlagene Aktion prüft, bevor sie läuft, und entscheidet: ausführen, eine Person fragen oder blockieren. Er rät nicht und lässt sich nicht überreden. Vier Regeln decken das meiste ab, was schiefgeht.\n\nErstens eine Erlaubnisliste: Eine Aufgabe bekommt nur die Werkzeuge, die sie braucht. Ein Wetterhelfer braucht weather, nicht attendance und nicht send_message; alles andere wird blockiert, sodass auch ein verwirrtes oder getäuschtes Modell es nicht erreichen kann. Zweitens die Freigabe der genauen Aktion: Alles, was handelt (eine Nachricht senden, eine Erinnerung setzen), wartet auf eine Person, die genau sieht, was getan wird. Speichere, was freigegeben wurde, und führe nur aus, wenn die vorgeschlagenen Details gleich sind, denn ein Ja zu einer Nachricht ist kein Ja zu einer anderen. Drittens die Details prüfen: Gibt es die Klasse 6B? Ist 25:00 eine echte Uhrzeit? Stammte jeder Name aus der Anfrage oder aus dem Ergebnis eines Werkzeugs? Darsi Tiny hat einmal „9Z“ als 9C kopiert. Viertens alles protokollieren: jede vorgeschlagene Aktion, was der Wächter entschied und wer freigab. Wenn etwas schiefgeht, zeigt das Protokoll, was passiert ist und welche Regel zu korrigieren ist.\n\nTeste deine Schutzmechanismen so sorgfältig wie den Rest deines Codes: Eine Regel mit einem Tippfehler im Namen eines Werkzeugs greift nie, und die Aktion, die sie stoppen sollte, geht durch. Das Modell schlägt vor; dein Code und eine Person entscheiden. Dasselbe gilt für die größten Agenten in der Cloud."
+ },
+ "lessons.3.steps.1.keyTerms.0.term": {
+  "en": "Guardrail",
+  "t": "Schutzmechanismus"
+ },
+ "lessons.3.steps.1.keyTerms.0.def": {
+  "en": "A rule in code that checks an action before it runs: run it, ask a person, or block it.",
+  "t": "Eine Regel im Code, die eine Aktion prüft, bevor sie läuft: ausführen, eine Person fragen oder blockieren."
+ },
+ "lessons.3.steps.1.keyTerms.1.term": {
+  "en": "Allow-list",
+  "t": "Erlaubnisliste"
+ },
+ "lessons.3.steps.1.keyTerms.1.def": {
+  "en": "The only tools a task may use; everything else is blocked.",
+  "t": "Die einzigen Werkzeuge, die eine Aufgabe benutzen darf; alles andere wird blockiert."
+ },
+ "lessons.3.steps.1.keyTerms.2.term": {
+  "en": "Approval",
+  "t": "Freigabe"
+ },
+ "lessons.3.steps.1.keyTerms.2.def": {
+  "en": "A person’s yes to one exact action, stored and compared before the action runs.",
+  "t": "Das Ja einer Person zu einer genauen Aktion, gespeichert und verglichen, bevor die Aktion läuft."
+ },
+ "lessons.3.steps.1.keyTerms.3.term": {
+  "en": "Log",
+  "t": "Protokoll"
+ },
+ "lessons.3.steps.1.keyTerms.3.def": {
+  "en": "A record of every proposed action, the decision and who approved it.",
+  "t": "Eine Aufzeichnung jeder vorgeschlagenen Aktion, der Entscheidung und wer freigab."
+ },
+ "lessons.3.steps.2.prompt": {
+  "en": "Darsi Tiny learned to ask before sending. Where should the final check live?",
+  "t": "Darsi Tiny hat gelernt, vor dem Senden zu fragen. Wo sollte die letzte Prüfung liegen?"
+ },
+ "lessons.3.steps.2.options.0.text": {
+  "en": "In the model’s training",
+  "t": "Im Training des Modells"
+ },
+ "lessons.3.steps.2.options.1.text": {
+  "en": "In the app’s code, with a person’s yes",
+  "t": "Im Code der App, mit dem Ja einer Person"
+ },
+ "lessons.3.steps.2.options.2.text": {
+  "en": "In the tool’s result",
+  "t": "Im Ergebnis des Werkzeugs"
+ },
+ "lessons.3.steps.2.explain": {
+  "en": "Learned behaviour can fail, as “yes, send it” on its own showed. A rule in code, with a person’s yes, can’t be talked round.",
+  "t": "Gelerntes Verhalten kann versagen, wie das alleinstehende „Ja, sende sie“ gezeigt hat. Eine Regel im Code, mit dem Ja einer Person, lässt sich nicht überreden."
+ },
+ "lessons.3.steps.3.prompt": {
+  "en": "Which of these belong in code, outside the model? Choose all that apply.",
+  "t": "Was davon gehört in den Code, außerhalb des Modells? Wähle alle richtigen aus."
+ },
+ "lessons.3.steps.3.options.0.text": {
+  "en": "An allow-list of the tools this task may use",
+  "t": "Eine Erlaubnisliste der Werkzeuge, die diese Aufgabe benutzen darf"
+ },
+ "lessons.3.steps.3.options.1.text": {
+  "en": "Checking that a person approved this exact message",
+  "t": "Prüfen, dass eine Person genau diese Nachricht freigegeben hat"
+ },
+ "lessons.3.steps.3.options.2.text": {
+  "en": "Refusing a reminder set for 25:00",
+  "t": "Eine Erinnerung für 25:00 ablehnen"
+ },
+ "lessons.3.steps.3.options.3.text": {
+  "en": "Trusting the model’s “I’ll ask first”",
+  "t": "Dem „Ich frage zuerst“ des Modells vertrauen"
+ },
+ "lessons.3.steps.3.options.4.text": {
+  "en": "A log of every action and who approved it",
+  "t": "Ein Protokoll jeder Aktion und wer sie freigab"
+ },
+ "lessons.3.steps.3.explain": {
+  "en": "The allow-list, the exact approval, the detail check and the log are rules in code that can’t be talked round. The model’s promise to ask is learned behaviour, and it failed when «نعم، أرسلها.» was typed on its own.",
+  "t": "Die Erlaubnisliste, die genaue Freigabe, die Prüfung der Details und das Protokoll sind Regeln im Code, die sich nicht überreden lassen. Das Versprechen des Modells zu fragen ist gelerntes Verhalten, und es versagte, als «نعم، أرسلها.» allein getippt wurde."
+ },
+ "lessons.3.steps.4.prompt": {
+  "en": "Try it: at “Ask first”, send the message to Mrs Mensah, deny it, then send it again and approve it. Then turn the code check off, choose “Allowed” and send «نعم، أرسلها.» on its own: see what the model invents. Turn the check back on, choose “Ask first” and send it again. To finish, have one message sent after your yes and one action blocked.",
+  "t": "Probier es aus: Sende bei „Erst fragen“ die Nachricht an Frau Mensah, lehne sie ab, sende sie dann noch einmal und gib sie frei. Schalte dann die Code-Prüfung aus, wähle „Erlaubt“ und sende «نعم، أرسلها.» allein: Sieh, was das Modell erfindet. Schalte die Prüfung wieder ein, wähle „Erst fragen“ und sende es noch einmal. Lass zum Abschluss eine Nachricht nach deinem Ja senden und eine Aktion blockieren."
+ },
+ "lessons.3.steps.5.prompt": {
+  "en": "Write guard(name, args, approved): return \"block\" for a tool not in ALLOWED; for send_message, return \"ask\" unless approved holds exactly the same details as args; otherwise return \"run\".",
+  "t": "Schreibe guard(name, args, approved): Gib \"block\" für ein Werkzeug zurück, das nicht in ALLOWED steht; gib für send_message \"ask\" zurück, außer approved enthält genau dieselben Details wie args; sonst gib \"run\" zurück."
+ },
+ "lessons.3.steps.5.tests.1.hint": {
+  "en": "A tool that isn’t in ALLOWED is blocked, whatever else is true.",
+  "t": "Ein Werkzeug, das nicht in ALLOWED steht, wird blockiert, was auch sonst gilt."
+ },
+ "lessons.3.steps.5.tests.2.hint": {
+  "en": "No approval yet means \"ask\"; an approval of exactly these details means \"run\".",
+  "t": "Noch keine Freigabe bedeutet \"ask\"; eine Freigabe genau dieser Details bedeutet \"run\"."
+ },
+ "lessons.3.steps.5.tests.3.hint": {
+  "en": "Compare the details (approved != args), not just whether there was a yes.",
+  "t": "Vergleiche die Details (approved != args), nicht nur, ob es ein Ja gab."
+ },
+ "lessons.3.steps.5.hints.0": {
+  "en": "First: if name not in ALLOWED: return \"block\".",
+  "t": "Zuerst: if name not in ALLOWED: return \"block\"."
+ },
+ "lessons.3.steps.5.hints.1": {
+  "en": "Then, for send_message: if approved != args: return \"ask\".",
+  "t": "Dann, für send_message: if approved != args: return \"ask\"."
+ },
+ "lessons.3.steps.5.hints.2": {
+  "en": "Everything else: return \"run\".",
+  "t": "Alles andere: return \"run\"."
+ },
+ "lessons.3.steps.5.explain": {
+  "en": "The allow-list blocks tools this task doesn’t need, and comparing approved with args means only the exact message the person saw can run. Everything else (here, reading the weather) runs.",
+  "t": "Die Erlaubnisliste blockiert Werkzeuge, die diese Aufgabe nicht braucht, und der Vergleich von approved mit args sorgt dafür, dass nur die genaue Nachricht laufen kann, die die Person gesehen hat. Alles andere (hier das Wetter lesen) läuft."
+ },
+ "lessons.3.steps.6.prompt": {
+  "en": "With this guard, a message is sent without anyone being asked. Which line is the mistake?",
+  "t": "Mit diesem Wächter wird eine Nachricht gesendet, ohne dass jemand gefragt wird. Welche Zeile ist der Fehler?"
+ },
+ "lessons.3.steps.6.explain": {
+  "en": "The check compares the name with “send_messages”, a tool that doesn’t exist, so it never fires and a real send_message runs unapproved. One test with the real tool’s name would have caught it: test your guardrails.",
+  "t": "Die Prüfung vergleicht den Namen mit „send_messages“, einem Werkzeug, das es nicht gibt, also greift sie nie, und ein echtes send_message läuft ohne Freigabe. Ein Test mit dem Namen des echten Werkzeugs hätte es gefunden: Teste deine Schutzmechanismen."
+ },
+ "lessons.3.steps.7.prompt": {
+  "en": "Fill the gaps: log every proposed action with the guard’s decision, and run the tool only when the guard says so.",
+  "t": "Fülle die Lücken: Protokolliere jede vorgeschlagene Aktion mit der Entscheidung des Wächters und führe das Werkzeug nur aus, wenn der Wächter es sagt."
+ },
+ "lessons.3.steps.7.explain": {
+  "en": "Every proposed action goes in the log with its decision, whatever it is, so blocked and waiting actions are recorded too. Only a “run” verdict reaches the tool.",
+  "t": "Jede vorgeschlagene Aktion kommt mit ihrer Entscheidung ins Protokoll, egal welcher, also werden auch blockierte und wartende Aktionen festgehalten. Nur ein „run“-Urteil erreicht das Werkzeug."
+ },
+ "lessons.3.steps.8.prompt": {
+  "en": "Giving a weather helper the send_message tool too is harmless, as long as the model was trained to ask first.",
+  "t": "Einem Wetterhelfer auch das Werkzeug send_message zu geben ist harmlos, solange das Modell trainiert wurde, zuerst zu fragen."
+ },
+ "lessons.3.steps.8.explain": {
+  "en": "Learned asking can fail. A tool the task doesn’t need is only risk: leave it off the allow-list, and nothing the model writes can reach it.",
+  "t": "Gelerntes Fragen kann versagen. Ein Werkzeug, das die Aufgabe nicht braucht, ist nur Risiko: Lass es von der Erlaubnisliste weg, und nichts, was das Modell schreibt, kann es erreichen."
+ },
+ "lessons.3.steps.9.prompt": {
+  "en": "Think of an app that acts for you: it pays, posts or sends. Where should it ask you first, and what should it never be allowed to do?",
+  "t": "Denk an eine App, die für dich handelt: Sie bezahlt, postet oder sendet. Wo sollte sie dich zuerst fragen, und was sollte sie nie tun dürfen?"
+ },
+ "lessons.3.steps.9.placeholder": {
+  "en": "For example: “A family payment app: it should ask before every payment, and never share the PIN.”",
+  "t": "Zum Beispiel: „Eine Zahlungs-App für die Familie: Sie sollte vor jeder Zahlung fragen und nie die PIN weitergeben.“"
+ },
+ "lessons.3.steps.10.prompt": {
+  "en": "Project: Guardrails for a reminder agent",
+  "t": "Projekt: Schutzmechanismen für einen Erinnerungsagenten"
+ },
+ "lessons.3.steps.10.task": {
+  "en": "Design and test the guardrails for an agent that reminds students about homework. On paper, list the tools it may use (and why it needs no others), the actions that wait for a yes, and three details you check: a real time, a class that exists, text taken from the request. Then extend guard in the code step: add a reminder tool that waits for approval like send_message, and block any reminder whose time isn’t real (an hour of 24 or more). Ask a friend for five sneaky requests, and test your guard on each.",
+  "t": "Entwirf und teste die Schutzmechanismen für einen Agenten, der Schüler:innen an Hausaufgaben erinnert. Liste auf Papier die Werkzeuge auf, die er benutzen darf (und warum er keine anderen braucht), die Aktionen, die auf ein Ja warten, und drei Details, die du prüfst: eine echte Uhrzeit, eine Klasse, die existiert, Text aus der Anfrage. Erweitere dann guard im Code-Schritt: Füge ein Erinnerungswerkzeug hinzu, das wie send_message auf Freigabe wartet, und blockiere jede Erinnerung, deren Uhrzeit nicht echt ist (eine Stunde von 24 oder mehr). Bitte eine Freundin oder einen Freund um fünf hinterhältige Anfragen und teste deinen Wächter an jeder."
+ },
+ "lessons.3.steps.10.deliverable": {
+  "en": "Your list of rules, your code and what it returned for your friend’s five requests, with one rule you would add next.",
+  "t": "Deine Liste der Regeln, dein Code und was er für die fünf Anfragen deiner Freundin oder deines Freundes zurückgab, mit einer Regel, die du als Nächstes hinzufügen würdest."
+ },
+ "lessons.3.steps.10.rubric.0.criterion": {
+  "en": "I can: give an agent only the tools its task needs.",
+  "t": "Ich kann: einem Agenten nur die Werkzeuge geben, die seine Aufgabe braucht."
+ },
+ "lessons.3.steps.10.rubric.1.criterion": {
+  "en": "I can: allow an action only after a yes to that exact action.",
+  "t": "Ich kann: eine Aktion nur nach einem Ja zu genau dieser Aktion erlauben."
+ },
+ "lessons.3.steps.10.rubric.2.criterion": {
+  "en": "I can: check details, and log every action.",
+  "t": "Ich kann: Details prüfen und jede Aktion protokollieren."
+ },
+ "lessons.3.slides.0.title": {
+  "en": "Guardrails in code",
+  "t": "Schutzmechanismen im Code"
+ },
+ "lessons.3.slides.0.note": {
+  "en": "AI agents · Upper secondary · Lesson 4",
+  "t": "KI-Agenten · Sekundarstufe II · Lektion 4"
+ },
+ "lessons.3.slides.0.narration": {
+  "en": "If a model learned to ask first, why do we still need rules in code?",
+  "t": "Wenn ein Modell gelernt hat, zuerst zu fragen, warum brauchen wir dann noch Regeln im Code?"
+ },
+ "lessons.3.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "In dieser Lektion"
+ },
+ "lessons.3.slides.1.bullets": {
+  "en": [
+   "Allow only the tools a task needs.",
+   "Run an action only after a yes to that exact action.",
+   "Check the details, and log every action."
+  ],
+  "t": [
+   "Du erlaubst nur die Werkzeuge, die eine Aufgabe braucht.",
+   "Du führst eine Aktion nur nach einem Ja zu genau dieser Aktion aus.",
+   "Du prüfst die Details und protokollierst jede Aktion."
+  ]
+ },
+ "lessons.3.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Wichtige Ideen"
+ },
+ "lessons.3.slides.2.bullets": {
+  "en": [
+   "Learned safety can fail; the guardrail lives in code.",
+   "An allow-list, exact approval, detail checks and a log.",
+   "The model proposes; your code and a person decide."
+  ],
+  "t": [
+   "Gelernte Sicherheit kann versagen; der Schutzmechanismus steht im Code.",
+   "Eine Erlaubnisliste, genaue Freigabe, Prüfung der Details und ein Protokoll.",
+   "Das Modell schlägt vor; dein Code und eine Person entscheiden."
+  ]
+ },
+ "lessons.3.slides.3.title": {
+  "en": "Activity: Sneaky requests",
+  "t": "Aktivität: Hinterhältige Anfragen"
+ },
+ "lessons.3.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): Why did «نعم، أرسلها.» on its own get through?",
+   "Rules (6 min): Write four guardrails for a reminder agent.",
+   "Attack (6 min): A friend writes five sneaky requests.",
+   "Defend (5 min): Run, ask or block, for each one."
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Warum kam «نعم، أرسلها.» allein durch?",
+   "Regeln (6 Min.): Schreibe vier Schutzmechanismen für einen Erinnerungsagenten.",
+   "Angriff (6 Min.): Eine Freundin oder ein Freund schreibt fünf hinterhältige Anfragen.",
+   "Verteidigung (5 Min.): Ausführen, fragen oder blockieren, für jede."
+  ]
+ },
+ "lessons.3.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Read what happened in the lab when «نعم، أرسلها.» was typed with nothing before it. Which rule in code would have stopped it?",
+   "Rules (6 min): For an agent that reminds students about homework, write four rules: its allow-list, what waits for a yes, the details it checks, and what it logs.",
+   "Attack (6 min): Swap rules with a friend. They write five sneaky requests for a pretend agent, such as a reminder at 25:00, a message to all parents, or a tool the agent shouldn’t have.",
+   "Defend (5 min): For each request, decide with your rules: run, ask or block. If one gets through, add the rule that stops it."
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Lies, was im Lab passierte, als «نعم، أرسلها.» ohne etwas davor getippt wurde. Welche Regel im Code hätte es gestoppt?",
+   "Regeln (6 Min.): Schreibe für einen Agenten, der Schüler:innen an Hausaufgaben erinnert, vier Regeln: seine Erlaubnisliste, was auf ein Ja wartet, die Details, die er prüft, und was er protokolliert.",
+   "Angriff (6 Min.): Tausche Regeln mit einer Freundin oder einem Freund. Sie oder er schreibt fünf hinterhältige Anfragen für einen Schein-Agenten, zum Beispiel eine Erinnerung um 25:00, eine Nachricht an alle Eltern oder ein Werkzeug, das der Agent nicht haben sollte.",
+   "Verteidigung (5 Min.): Entscheide für jede Anfrage mit deinen Regeln: ausführen, fragen oder blockieren. Kommt eine durch, füge die Regel hinzu, die sie stoppt."
+  ]
+ },
+ "lessons.3.slides.3.note": {
+  "en": "Sneaky requests stay harmless: they test the rules of a pretend agent, never a real account or a real person.",
+  "t": "Hinterhältige Anfragen bleiben harmlos: Sie testen die Regeln eines Schein-Agenten, nie ein echtes Konto oder eine echte Person."
+ },
+ "lessons.3.slides.3.narration": {
+  "en": "Run, ask or block?",
+  "t": "Ausführen, fragen oder blockieren?"
+ },
+ "lessons.3.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns darüber sprechen"
+ },
+ "lessons.3.slides.4.bullets": {
+  "en": [
+   "Why isn’t the model’s own “I’ll ask first” enough?",
+   "What should the log record, and who should read it?",
+   "Which tool would you never give a homework agent?"
+  ],
+  "t": [
+   "Warum reicht das eigene „Ich frage zuerst“ des Modells nicht?",
+   "Was sollte das Protokoll festhalten, und wer sollte es lesen?",
+   "Welches Werkzeug würdest du einem Hausaufgaben-Agenten nie geben?"
+  ]
+ },
+ "lessons.3.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.3.slides.5.bullets": {
+  "en": [
+   "Write the four guardrail rules in your own words."
+  ],
+  "t": [
+   "Schreibe die vier Regeln für Schutzmechanismen in deinen eigenen Worten auf."
+  ]
+ },
+ "lessons.3.slides.5.narration": {
+  "en": "The model proposes; your code and a person decide.",
+  "t": "Das Modell schlägt vor; dein Code und eine Person entscheiden."
+ },
+ "lessons.3.kit.0.title": {
+  "en": "Slides to revise: Guardrails in code",
+  "t": "Folien zum Wiederholen: Schutzmechanismen im Code"
+ },
+ "lessons.3.kit.1.title": {
+  "en": "Activity sheet: Guardrails in code",
+  "t": "Arbeitsblatt: Schutzmechanismen im Code"
+ },
+ "lessons.3.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "Das Lektionsvideo (240p, zum Wiederansehen oder Teilen)"
+ },
+ "lessons.4.title": {
+  "en": "Build an agent in Python: unit check",
+  "t": "Baue einen Agenten in Python: Abschlusstest"
+ },
+ "lessons.4.tryTomorrow": {
+  "en": "Pick one part of your agent (the parser, the tools, the loop or the guard) and add one test that would have caught a real mistake from this unit, such as 9Z copied as 9C or a guard checking the wrong tool name.",
+  "t": "Wähle einen Teil deines Agenten (den Parser, die Werkzeuge, die Schleife oder den Wächter) und füge einen Test hinzu, der einen echten Fehler aus dieser Einheit gefunden hätte, zum Beispiel 9Z, das als 9C kopiert wurde, oder einen Wächter, der den falschen Werkzeugnamen prüft."
+ },
+ "lessons.4.steps.0.prompt": {
+  "en": "On each turn, what does an agent’s model actually produce?",
+  "t": "Was erzeugt das Modell eines Agenten in jeder Runde tatsächlich?"
+ },
+ "lessons.4.steps.0.options.0.text": {
+  "en": "Text: a plan, a tool call or an answer",
+  "t": "Text: einen Plan, einen Werkzeugaufruf oder eine Antwort"
+ },
+ "lessons.4.steps.0.options.1.text": {
+  "en": "The tool’s result",
+  "t": "Das Ergebnis des Werkzeugs"
+ },
+ "lessons.4.steps.0.options.2.text": {
+  "en": "A finished action, such as a sent message",
+  "t": "Eine fertige Aktion, zum Beispiel eine gesendete Nachricht"
+ },
+ "lessons.4.steps.0.explain": {
+  "en": "The model only ever writes text. The tool’s result comes from your code running the tool, and any action happens only if your code runs it.",
+  "t": "Das Modell schreibt immer nur Text. Das Ergebnis des Werkzeugs kommt davon, dass dein Code das Werkzeug ausführt, und jede Aktion geschieht nur, wenn dein Code sie ausführt."
+ },
+ "lessons.4.steps.1.prompt": {
+  "en": "json.loads turns the JSON text of a call’s details into a Python dictionary.",
+  "t": "json.loads macht aus dem JSON-Text der Details eines Aufrufs ein Python-Dictionary."
+ },
+ "lessons.4.steps.1.explain": {
+  "en": "That is its whole job: text in, a dictionary out. It doesn’t run the tool or check the values.",
+  "t": "Das ist seine ganze Aufgabe: Text hinein, ein Dictionary heraus. Es führt das Werkzeug nicht aus und prüft die Werte nicht."
+ },
+ "lessons.4.steps.2.prompt": {
+  "en": "Put the lines of run in order.",
+  "t": "Bring die Zeilen von run in die richtige Reihenfolge."
+ },
+ "lessons.4.steps.2.explain": {
+  "en": "Check the name first and return an error for an unknown tool; then TOOLS[name] is the function, called with the details.",
+  "t": "Prüfe zuerst den Namen und gib für ein unbekanntes Werkzeug einen Fehler zurück; dann ist TOOLS[name] die Funktion, aufgerufen mit den Details."
+ },
+ "lessons.4.steps.3.prompt": {
+  "en": "What does this program print?",
+  "t": "Was gibt dieses Programm aus?"
+ },
+ "lessons.4.steps.3.options.0.text": {
+  "en": "call",
+  "t": "call"
+ },
+ "lessons.4.steps.3.options.1.text": {
+  "en": "broken call",
+  "t": "broken call"
+ },
+ "lessons.4.steps.3.options.2.text": {
+  "en": "Nothing: an error stops the program",
+  "t": "Nichts: Ein Fehler stoppt das Programm"
+ },
+ "lessons.4.steps.3.explain": {
+  "en": "The JSON is missing its closing bracket, so json.loads raises a ValueError; except catches it and the program prints “broken call” instead of crashing.",
+  "t": "Dem JSON fehlt die schließende Klammer, also löst json.loads einen ValueError aus; except fängt ihn ab, und das Programm gibt „broken call“ aus, statt abzustürzen."
+ },
+ "lessons.4.steps.4.prompt": {
+  "en": "Match each part of your agent to what it protects against.",
+  "t": "Ordne jedem Teil deines Agenten zu, wovor er schützt."
+ },
+ "lessons.4.steps.4.pairs.0.left": {
+  "en": "try / except ValueError",
+  "t": "try / except ValueError"
+ },
+ "lessons.4.steps.4.pairs.0.right": {
+  "en": "A broken call crashing the agent",
+  "t": "Ein defekter Aufruf, der den Agenten zum Absturz bringt"
+ },
+ "lessons.4.steps.4.pairs.1.left": {
+  "en": "if name not in TOOLS",
+  "t": "if name not in TOOLS"
+ },
+ "lessons.4.steps.4.pairs.1.right": {
+  "en": "A made-up tool causing a KeyError",
+  "t": "Ein ausgedachtes Werkzeug, das einen KeyError verursacht"
+ },
+ "lessons.4.steps.4.pairs.2.left": {
+  "en": "for step in range(limit)",
+  "t": "for step in range(limit)"
+ },
+ "lessons.4.steps.4.pairs.2.right": {
+  "en": "A model that never answers",
+  "t": "Ein Modell, das nie antwortet"
+ },
+ "lessons.4.steps.4.pairs.3.left": {
+  "en": "approved != args",
+  "t": "approved != args"
+ },
+ "lessons.4.steps.4.pairs.3.right": {
+  "en": "A message nobody approved",
+  "t": "Eine Nachricht, die niemand freigegeben hat"
+ },
+ "lessons.4.steps.4.explain": {
+  "en": "Each piece of code guards against one way a model’s text can go wrong: broken JSON, a tool that doesn’t exist, a loop that never ends, and an action nobody approved.",
+  "t": "Jedes Stück Code schützt vor einer Art, wie der Text eines Modells schiefgehen kann: defektes JSON, ein Werkzeug, das es nicht gibt, eine Schleife, die nie endet, und eine Aktion, die niemand freigegeben hat."
+ },
+ "lessons.4.steps.5.prompt": {
+  "en": "This parse_call fails on every call. Which line is the mistake?",
+  "t": "Dieses parse_call scheitert bei jedem Aufruf. Welche Zeile ist der Fehler?"
+ },
+ "lessons.4.steps.5.explain": {
+  "en": "text[i + 1:] drops the opening bracket, so the JSON is broken and json.loads raises an error. The JSON starts at the bracket itself: text[i:].",
+  "t": "text[i + 1:] verwirft die öffnende Klammer, also ist das JSON defekt, und json.loads löst einen Fehler aus. Das JSON beginnt bei der Klammer selbst: text[i:]."
+ },
+ "lessons.4.steps.6.prompt": {
+  "en": "A guard allows weather and send_message. Which of these should it NOT simply run? Choose all that apply.",
+  "t": "Ein Wächter erlaubt weather und send_message. Was davon soll er NICHT einfach ausführen? Wähle alle richtigen aus."
+ },
+ "lessons.4.steps.6.options.0.text": {
+  "en": "A call to attendance",
+  "t": "Einen Aufruf von attendance"
+ },
+ "lessons.4.steps.6.options.1.text": {
+  "en": "weather for Kafi",
+  "t": "weather für Kafi"
+ },
+ "lessons.4.steps.6.options.2.text": {
+  "en": "send_message to Mrs Mensah, with no yes yet",
+  "t": "send_message an Frau Mensah, noch ohne Ja"
+ },
+ "lessons.4.steps.6.options.3.text": {
+  "en": "send_message, with a yes to a different message",
+  "t": "send_message, mit einem Ja zu einer anderen Nachricht"
+ },
+ "lessons.4.steps.6.options.4.text": {
+  "en": "send_message, with a yes to this exact message",
+  "t": "send_message, mit einem Ja zu genau dieser Nachricht"
+ },
+ "lessons.4.steps.6.explain": {
+  "en": "attendance isn’t on the allow-list, so it’s blocked. A message with no yes, or a yes to other details, waits for the person. Weather, and a message approved exactly, can run.",
+  "t": "attendance steht nicht auf der Erlaubnisliste, also wird es blockiert. Eine Nachricht ohne Ja oder mit einem Ja zu anderen Details wartet auf die Person. Das Wetter und eine genau freigegebene Nachricht dürfen laufen."
+ },
+ "lessons.4.steps.7.prompt": {
+  "en": "Put in order what your agent does with one tool call.",
+  "t": "Bring in die richtige Reihenfolge, was dein Agent mit einem Werkzeugaufruf tut."
+ },
+ "lessons.4.steps.7.steps.0": {
+  "en": "Split the call into a name and details",
+  "t": "Den Aufruf in Namen und Details zerlegen"
+ },
+ "lessons.4.steps.7.steps.1": {
+  "en": "Check it with the guard",
+  "t": "Ihn mit dem Wächter prüfen"
+ },
+ "lessons.4.steps.7.steps.2": {
+  "en": "Ask a person, if it acts",
+  "t": "Eine Person fragen, wenn er handelt"
+ },
+ "lessons.4.steps.7.steps.3": {
+  "en": "Log the decision",
+  "t": "Die Entscheidung protokollieren"
+ },
+ "lessons.4.steps.7.steps.4": {
+  "en": "Run the tool",
+  "t": "Das Werkzeug ausführen"
+ },
+ "lessons.4.steps.7.steps.5": {
+  "en": "Add the result to the history",
+  "t": "Das Ergebnis dem Verlauf hinzufügen"
+ },
+ "lessons.4.steps.7.explain": {
+  "en": "You can only check a call once it’s split; a person approves before anything acts; the decision is logged whatever it is; and only then does the tool run and its result join the history.",
+  "t": "Einen Aufruf kannst du erst prüfen, wenn er zerlegt ist; eine Person gibt frei, bevor irgendetwas handelt; die Entscheidung wird protokolliert, egal welche; und erst dann läuft das Werkzeug, und sein Ergebnis kommt in den Verlauf."
+ },
+ "lessons.4.steps.8.prompt": {
+  "en": "Fill the gaps so the loop can never run for ever.",
+  "t": "Fülle die Lücken, damit die Schleife nie für immer laufen kann."
+ },
+ "lessons.4.steps.8.explain": {
+  "en": "range(limit) caps the number of turns, an answer is returned at once, and after the last step the loop returns “Stopped”.",
+  "t": "range(limit) begrenzt die Zahl der Runden, eine Antwort wird sofort zurückgegeben, und nach dem letzten Schritt gibt die Schleife „Gestoppt“ zurück."
+ },
+ "lessons.4.steps.9.prompt": {
+  "en": "In this course’s code steps the model is scripted, so passing the tests shows that your code works, not that a real model will behave.",
+  "t": "In den Code-Schritten dieses Kurses ist das Modell ein Skript, also zeigt das Bestehen der Tests, dass dein Code funktioniert, nicht, dass sich ein echtes Modell richtig verhält."
+ },
+ "lessons.4.steps.9.explain": {
+  "en": "A script returns exactly what you wrote. A real model, like Darsi Tiny in the labs, can copy names wrongly, misread new wordings or never answer, so your code must handle those too.",
+  "t": "Ein Skript gibt genau das zurück, was du geschrieben hast. Ein echtes Modell, wie Darsi Tiny in den Labs, kann Namen falsch kopieren, neue Formulierungen missverstehen oder nie antworten, also muss dein Code auch damit umgehen."
+ },
+ "lessons.4.slides.0.title": {
+  "en": "Build an agent in Python: review",
+  "t": "Baue einen Agenten in Python: Rückblick"
+ },
+ "lessons.4.slides.0.note": {
+  "en": "AI agents · Upper secondary · Unit check",
+  "t": "KI-Agenten · Sekundarstufe II · Abschlusstest"
+ },
+ "lessons.4.slides.0.narration": {
+  "en": "Let’s look back at the agent you built, piece by piece.",
+  "t": "Schauen wir Stück für Stück auf den Agenten zurück, den du gebaut hast."
+ },
+ "lessons.4.slides.1.title": {
+  "en": "In this unit",
+  "t": "In dieser Einheit"
+ },
+ "lessons.4.slides.1.bullets": {
+  "en": [
+   "Read a tool call",
+   "Tools are functions",
+   "The agent loop",
+   "Guardrails in code"
+  ],
+  "t": [
+   "Einen Werkzeugaufruf lesen",
+   "Werkzeuge sind Funktionen",
+   "Die Agentenschleife",
+   "Schutzmechanismen im Code"
+  ]
+ },
+ "lessons.4.slides.2.title": {
+  "en": "The big ideas",
+  "t": "Die großen Ideen"
+ },
+ "lessons.4.slides.2.bullets": {
+  "en": [
+   "The model writes text; your code reads it",
+   "Tools are functions, reached through a dictionary",
+   "A loop with a step limit, tested honestly",
+   "Guardrails: allow-list, exact approval, checks, a log"
+  ],
+  "t": [
+   "Das Modell schreibt Text; dein Code liest ihn",
+   "Werkzeuge sind Funktionen, erreicht über ein Dictionary",
+   "Eine Schleife mit Schrittlimit, ehrlich getestet",
+   "Schutzmechanismen: Erlaubnisliste, genaue Freigabe, Prüfungen, ein Protokoll"
+  ]
+ },
+ "lessons.4.slides.3.title": {
+  "en": "Activity: Build the agent on paper",
+  "t": "Aktivität: Baue den Agenten auf Papier"
+ },
+ "lessons.4.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): Name the four parts of your agent.",
+   "Draw (7 min): The whole agent as boxes and arrows.",
+   "Break it (7 min): A partner finds a call that gets through.",
+   "Fix (3 min): Add the rule that stops it."
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Nenne die vier Teile deines Agenten.",
+   "Zeichnen (7 Min.): Der ganze Agent als Kästchen und Pfeile.",
+   "Kaputt machen (7 Min.): Eine Partnerin oder ein Partner findet einen Aufruf, der durchkommt.",
+   "Reparieren (3 Min.): Füge die Regel hinzu, die ihn stoppt."
+  ]
+ },
+ "lessons.4.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Without notes, write the four parts: the parser, the tools, the loop and the guard.",
+   "Draw (7 min): Draw the whole agent: the model’s text going in, the parser, the guard, a person, the tools and the history, with arrows.",
+   "Break it (7 min): Swap drawings. Your partner invents a model output that gets through, such as a broken call, a made-up tool, a model that never answers or a message nobody approved.",
+   "Fix (3 min): Add the rule, or the test, that would have stopped it."
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Schreibe ohne Notizen die vier Teile auf: den Parser, die Werkzeuge, die Schleife und den Wächter.",
+   "Zeichnen (7 Min.): Zeichne den ganzen Agenten: den eingehenden Text des Modells, den Parser, den Wächter, eine Person, die Werkzeuge und den Verlauf, mit Pfeilen.",
+   "Kaputt machen (7 Min.): Tauscht die Zeichnungen. Deine Partnerin oder dein Partner erfindet eine Modellausgabe, die durchkommt, zum Beispiel einen defekten Aufruf, ein ausgedachtes Werkzeug, ein Modell, das nie antwortet, oder eine Nachricht, die niemand freigegeben hat.",
+   "Reparieren (3 Min.): Füge die Regel oder den Test hinzu, die oder der es gestoppt hätte."
+  ]
+ },
+ "lessons.4.slides.3.note": {
+  "en": "Use made-up tools, places and people only.",
+  "t": "Nimm nur ausgedachte Werkzeuge, Orte und Personen."
+ },
+ "lessons.4.slides.3.narration": {
+  "en": "Which output gets through, and which rule stops it?",
+  "t": "Welche Ausgabe kommt durch, und welche Regel stoppt sie?"
+ },
+ "lessons.4.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns darüber sprechen"
+ },
+ "lessons.4.slides.4.bullets": {
+  "en": [
+   "Which part of your agent was hardest to get right?",
+   "What could a real model do that your scripted model never did?",
+   "Where would you put a person in the loop, and why?"
+  ],
+  "t": [
+   "Welcher Teil deines Agenten war am schwersten richtig hinzubekommen?",
+   "Was könnte ein echtes Modell tun, das dein Skriptmodell nie getan hat?",
+   "Wo würdest du eine Person in die Schleife setzen, und warum?"
+  ]
+ },
+ "lessons.4.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.4.slides.5.bullets": {
+  "en": [
+   "One guardrail I would add to every agent, and why."
+  ],
+  "t": [
+   "Ein Schutzmechanismus, den ich jedem Agenten hinzufügen würde, und warum."
+  ]
+ },
+ "lessons.4.slides.5.narration": {
+  "en": "The model proposes; your code and a person decide.",
+  "t": "Das Modell schlägt vor; dein Code und eine Person entscheiden."
+ },
+ "lessons.4.kit.0.title": {
+  "en": "Slides to revise: Build an agent in Python: unit check",
+  "t": "Folien zum Wiederholen: Baue einen Agenten in Python: Abschlusstest"
+ },
+ "lessons.4.kit.1.title": {
+  "en": "Activity sheet: Build an agent in Python: unit check",
+  "t": "Arbeitsblatt: Baue einen Agenten in Python: Abschlusstest"
+ }
+}

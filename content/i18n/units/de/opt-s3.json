@@ -1,0 +1,2012 @@
+{
+ "title": {
+  "en": "Let the computer search: knapsack, routes, timetables",
+  "t": "Lass den Computer suchen: Rucksackproblem, Routen, Zeitpläne"
+ },
+ "summary": {
+  "en": "Write and run Python that searches: try every load, then think ahead with dynamic programming; find shortest paths with Dijkstra; build a bus route and improve it; and model a timetable with Google’s OR-Tools. Then judge every answer: is it the best, and is it fair? Before this: “First Python” (Programming, lower secondary).",
+  "t": "Schreibe und starte Python-Programme, die suchen: Probiere jede Ladung aus, dann denke mit dynamischer Programmierung voraus; finde kürzeste Wege mit Dijkstra; baue eine Buslinie und verbessere sie; und modelliere einen Zeitplan mit Googles OR-Tools. Danach beurteilst du jede Antwort: Ist sie die beste, und ist sie fair? Vorher: „Erstes Python“ (Programmieren, Sekundarstufe I)."
+ },
+ "lessons.0.title": {
+  "en": "Try them all, or think ahead",
+  "t": "Alles ausprobieren oder vorausdenken"
+ },
+ "lessons.0.tryTomorrow": {
+  "en": "Pack your bag for a school trip as a knapsack problem: pick six things, weigh them (or estimate in hundreds of grams), give each points for how much you need it, and set a weight limit. Find the best load greedily, then with your brute-force program from this lesson. Did greedy get it right?",
+  "t": "Pack deine Tasche für einen Schulausflug als Rucksackproblem: Such sechs Dinge aus, wiege sie (oder schätze in Hundert-Gramm-Schritten), gib jedem Punkte dafür, wie sehr du es brauchst, und leg ein Gewichtslimit fest. Finde die beste Ladung erst mit dem Greedy-Verfahren, dann mit deinem Brute-Force-Programm aus dieser Lektion. Hat Greedy es richtig gemacht?"
+ },
+ "lessons.0.materials": {
+  "en": [
+   "Paper and a pen",
+   "Six things to pack and, if you can, a kitchen scale",
+   "Optional: a phone with Darsi to run your program"
+  ],
+  "t": [
+   "Papier und ein Stift",
+   "Sechs Dinge zum Einpacken und, wenn möglich, eine Küchenwaage",
+   "Optional: ein Handy mit Darsi, um dein Programm auszuführen"
+  ]
+ },
+ "lessons.0.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.0.steps.0.title": {
+  "en": "Try them all, or think ahead",
+  "t": "Alles ausprobieren oder vorausdenken"
+ },
+ "lessons.0.steps.0.chapters.0.label": {
+  "en": "Six loads, one truck",
+  "t": "Sechs Ladungen, ein Lkw"
+ },
+ "lessons.0.steps.0.chapters.1.label": {
+  "en": "Try them all",
+  "t": "Alles ausprobieren"
+ },
+ "lessons.0.steps.0.chapters.2.label": {
+  "en": "Greedy, and thinking ahead",
+  "t": "Greedy und Vorausdenken"
+ },
+ "lessons.0.steps.0.chapters.3.label": {
+  "en": "Whose points? And the lab",
+  "t": "Wessen Punkte? Und das Lab"
+ },
+ "lessons.0.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.0.steps.0.checkpoint.question.prompt": {
+  "en": "Greedy says 60 points; brute force says 65. Which is guaranteed to be the best?",
+  "t": "Greedy sagt 60 Punkte, Brute Force sagt 65. Welches Ergebnis ist garantiert das beste?"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.0.text": {
+  "en": "Greedy: it takes the best value first",
+  "t": "Greedy: Es nimmt zuerst den besten Wert"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.1.text": {
+  "en": "Brute force: it checked every load",
+  "t": "Brute Force: Es hat jede Ladung geprüft"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.2.text": {
+  "en": "Neither can be sure",
+  "t": "Keines von beiden ist sicher"
+ },
+ "lessons.0.steps.0.checkpoint.question.explain": {
+  "en": "Brute force compared all 2⁶ = 64 possible loads, so its 65 points is the best there is. Greedy follows one rule (most points per kilo first) and never compares alternatives, so it can miss, as it does here.",
+  "t": "Brute Force hat alle 2⁶ = 64 möglichen Ladungen verglichen, also sind seine 65 Punkte das Beste, was es gibt. Greedy folgt einer einzigen Regel (zuerst die meisten Punkte pro Kilo) und vergleicht nie Alternativen, deshalb kann es danebenliegen, wie hier."
+ },
+ "lessons.0.steps.0.transcript": {
+  "en": "A truck for a village school can carry a thousand kilos, and there are six loads to choose from. Can you write a program that finds the best load, and knows it’s the best? Today: let the computer search, by trying everything, or by thinking ahead. Each load has a weight and points for how much the school needs it. Solar panels: six hundred kilos, forty-two points. Desks and books: five hundred kilos each. A water filter, footballs and chalk are lighter. The goal: the most points within a thousand kilos. The simplest search tries every possible load. Each item is in or out, six times over. That’s two to the six, sixty-four loads: a phone checks them in a blink. In Python, count from zero to sixty-three, and read each number in binary: bit i says whether item i is in. Add up the weight and points, and keep the best that fits. But every extra item doubles the work. Thirty items: over a billion loads. Sixty items: more than a billion billion. Brute force is sure, but it doesn’t scale. A greedy rule is fast: take the most points per kilo first. Solar panels go in, then whatever still fits: sixty points. But desks and books give sixty-five. The panels took space that two other loads fill better. Quick check! Greedy says sixty points, and brute force says sixty-five. Which one is guaranteed to be the best? Brute force: it checked every load. But you can be sure without checking everything. Dynamic programming solves smaller trucks first: for each amount of room, either skip this item, or take it and fill the rest with an answer you already know. Fill a table: one row per item, one column per hundred kilos of room. Each cell needs just two lookups in the row above. A hundred items is about a thousand cells, where brute force would never finish. The points are someone’s opinion of what the school needs. Who decided solar panels are worth forty-two? If the truck served two schools, the best total might send everything to one. Ask who chose the points, and who is left out. In the app, open “Pack the truck”. Pack greedily, then show the best load. Open the table under the results, and follow the outlined cells back from the corner. Your turn. A friend adds a seventh load to the list. How many loads must brute force check now? A hundred and twenty-eight: every extra item doubles it. Remember: brute force is sure, but it explodes. Greedy is fast, but it can miss. And dynamic programming is sure and fast, because it reuses smaller answers. Try it yourself: pack your bag for a school trip. Give each thing a weight and points, set a limit, and find the best load three ways.",
+  "t": "Ein Lastwagen für eine Dorfschule kann tausend Kilo tragen, und es gibt sechs Ladungen zur Auswahl. Kannst du ein Programm schreiben, das die beste Ladung findet und weiß, dass sie die beste ist? Heute: den Computer suchen lassen, indem er alles ausprobiert oder vorausdenkt. Jede Ladung hat ein Gewicht und Punkte dafür, wie sehr die Schule sie braucht. Solarpaneele: sechshundert Kilo, zweiundvierzig Punkte. Schulbänke und Bücher: je fünfhundert Kilo. Ein Wasserfilter, Fußbälle und Kreide sind leichter. Das Ziel: die meisten Punkte innerhalb von tausend Kilo. Die einfachste Suche probiert jede mögliche Ladung aus. Jedes Stück ist drin oder draußen, sechsmal hintereinander. Das ist zwei hoch sechs, vierundsechzig Ladungen: Ein Handy prüft sie im Handumdrehen. Zähle in Python von null bis dreiundsechzig und lies jede Zahl binär: Bit i sagt, ob Stück i drin ist. Addiere Gewicht und Punkte und behalte die beste Ladung, die passt. Aber jedes zusätzliche Stück verdoppelt die Arbeit. Dreißig Stücke: über eine Milliarde Ladungen. Sechzig Stücke: mehr als eine Trillion. Brute Force ist sicher, aber sie wächst nicht mit. Eine Greedy-Regel ist schnell: Nimm zuerst das mit den meisten Punkten pro Kilo. Die Solarpaneele kommen rein, dann alles, was noch passt: sechzig Punkte. Aber Schulbänke und Bücher geben fünfundsechzig. Die Paneele haben Platz verbraucht, den zwei andere Ladungen besser füllen. Kurzer Check! Greedy sagt sechzig Punkte, und Brute Force sagt fünfundsechzig. Welche ist garantiert die beste? Brute Force: Sie hat jede Ladung geprüft. Aber du kannst auch sicher sein, ohne alles zu prüfen. Dynamische Programmierung löst zuerst kleinere Lastwagen: Für jede Menge Platz lässt du entweder dieses Stück weg oder nimmst es und füllst den Rest mit einer Antwort, die du schon kennst. Füll eine Tabelle: eine Zeile pro Stück, eine Spalte pro hundert Kilo Platz. Jede Zelle braucht nur zwei Zugriffe auf die Zeile darüber. Hundert Stücke sind etwa tausend Zellen, wo Brute Force nie fertig würde. Die Punkte sind jemandes Meinung darüber, was die Schule braucht. Wer hat entschieden, dass Solarpaneele zweiundvierzig wert sind? Würde der Lastwagen zwei Schulen versorgen, könnte die beste Gesamtsumme alles an eine schicken. Frag, wer die Punkte gewählt hat und wer außen vor bleibt. Öffne in der App „Den Lastwagen packen“. Pack Greedy und zeig dann die beste Ladung. Öffne die Tabelle unter den Ergebnissen und folge den umrandeten Zellen von der Ecke zurück. Du bist dran. Ein Freund fügt der Liste eine siebte Ladung hinzu. Wie viele Ladungen muss Brute Force jetzt prüfen? Einhundertachtundzwanzig: Jedes zusätzliche Stück verdoppelt es. Denk dran: Brute Force ist sicher, aber sie explodiert. Greedy ist schnell, aber sie kann danebenliegen. Und dynamische Programmierung ist sicher und schnell, weil sie kleinere Antworten wiederverwendet. Probier es selbst: Pack deine Tasche für einen Schulausflug. Gib jedem Ding ein Gewicht und Punkte, lege eine Grenze fest und finde die beste Ladung auf drei Arten."
+ },
+ "lessons.0.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.0.steps.1.title": {
+  "en": "Three ways to search",
+  "t": "Drei Arten zu suchen"
+ },
+ "lessons.0.steps.1.body": {
+  "en": "A truck can carry 1,000 kg to a village school, and there are six loads, each with a weight and points for how much the school needs it: solar panels 600 kg and 42 points, desks 500 kg and 33, books 500 kg and 32, a water filter 300 kg and 15, footballs 200 kg and 8, chalk and paper 100 kg and 3. Which loads give the most points without going over the limit? This is the knapsack problem, and there are three very different ways to search for the answer.\n\nBrute force tries everything. Each load is either on the truck or not, so six loads give 2⁶ = 64 possible loads. In Python, count mask from 0 to 63 and read it in binary: bit i of mask (mask >> i & 1) says whether item i is in. Add up the weight and points of each load and keep the best one that fits: 65 points, desks and books. Brute force is sure, but every extra item doubles the work: 30 items make over a billion loads, and 60 make more than a billion billion.\n\nA greedy rule is fast: take the most points per kilo first. Solar panels have 7 points per 100 kg, so they go first, then whatever still fits (the filter and the chalk): 60 points. The panels’ great value per kilo used space that two other loads fill better. On this truck, greedy is wrong only at exactly 1,000 kg; at 1,100 kg it finds the best (solar panels and desks, 75). It is often right, but it can never promise.\n\nDynamic programming is sure without trying everything. It solves smaller trucks first, in a table with one row per item and one column per 100 kg of room. Each cell is the better of two choices: skip this item (the cell above), or take it and add its points to the best answer for the room that is left (prev[c - w[k]] + v[k]). A hundred items need only about a thousand cells, where brute force would never finish. The same problem can also be written as a CP-SAT model (the “Truck load” example in the modeller lab) and solved by Google’s OR-Tools, on your phone or in Colab.\n\nFinally, remember where the points came from. They are someone’s opinion of what the school needs. If the truck served two schools, the best total could send everything to one of them. Before trusting the “best” load, ask who chose the points and who is left out.",
+  "t": "Ein Lkw kann 1.000 kg zu einer Dorfschule transportieren, und es gibt sechs Ladungen, jede mit einem Gewicht und Punkten dafür, wie dringend die Schule sie braucht: Solarpanels 600 kg und 42 Punkte, Schulbänke 500 kg und 33, Bücher 500 kg und 32, ein Wasserfilter 300 kg und 15, Fußbälle 200 kg und 8, Kreide und Papier 100 kg und 3. Welche Ladungen bringen die meisten Punkte, ohne das Limit zu überschreiten? Das ist das Rucksackproblem, und es gibt drei sehr verschiedene Wege, die Antwort zu suchen.\n\nBrute Force probiert alles aus. Jede Ladung ist entweder auf dem Lkw oder nicht, also ergeben sechs Ladungen 2⁶ = 64 mögliche Beladungen. In Python zählst du mask von 0 bis 63 und liest es binär: Bit i von mask (mask >> i & 1) sagt, ob Gegenstand i dabei ist. Addiere Gewicht und Punkte jeder Beladung und behalte die beste, die passt: 65 Punkte, Schulbänke und Bücher. Brute Force ist sicher, aber jeder zusätzliche Gegenstand verdoppelt den Aufwand: 30 Gegenstände ergeben über eine Milliarde Beladungen, 60 mehr als eine Trillion.\n\nEine Greedy-Regel ist schnell: Nimm zuerst die meisten Punkte pro Kilo. Die Solarpanels haben 7 Punkte pro 100 kg, also kommen sie zuerst, dann alles, was noch passt (der Filter und die Kreide): 60 Punkte. Der große Wert der Panels pro Kilo hat Platz belegt, den zwei andere Ladungen besser füllen. Bei diesem Lkw liegt Greedy nur bei genau 1.000 kg daneben; bei 1.100 kg findet es das Beste (Solarpanels und Schulbänke, 75). Es liegt oft richtig, kann aber nie etwas versprechen.\n\nDynamische Programmierung ist sicher, ohne alles auszuprobieren. Sie löst zuerst kleinere Lkw, in einer Tabelle mit einer Zeile pro Gegenstand und einer Spalte pro 100 kg Platz. Jede Zelle ist die bessere von zwei Entscheidungen: diesen Gegenstand auslassen (die Zelle darüber) oder ihn nehmen und seine Punkte zur besten Antwort für den verbleibenden Platz addieren (prev[c - w[k]] + v[k]). Hundert Gegenstände brauchen nur etwa tausend Zellen, wo Brute Force nie fertig würde. Dasselbe Problem lässt sich auch als CP-SAT-Modell schreiben (das Beispiel „Lkw-Ladung“ im Modellier-Lab) und von Googles OR-Tools lösen, auf deinem Handy oder in Colab.\n\nErinnere dich schließlich daran, woher die Punkte kamen. Sie sind die Meinung von jemandem darüber, was die Schule braucht. Würde der Lkw zwei Schulen beliefern, könnte die beste Gesamtsumme alles an eine von ihnen schicken. Bevor du der „besten“ Ladung traust, frag, wer die Punkte vergeben hat und wer dabei leer ausgeht."
+ },
+ "lessons.0.steps.1.keyTerms.0.term": {
+  "en": "Brute force",
+  "t": "Brute Force"
+ },
+ "lessons.0.steps.1.keyTerms.0.def": {
+  "en": "Trying every possible answer. Sure, but the work doubles with every extra item.",
+  "t": "Jede mögliche Antwort ausprobieren. Sicher, aber der Aufwand verdoppelt sich mit jedem zusätzlichen Gegenstand."
+ },
+ "lessons.0.steps.1.keyTerms.1.term": {
+  "en": "Bitmask",
+  "t": "Bitmaske"
+ },
+ "lessons.0.steps.1.keyTerms.1.def": {
+  "en": "A number whose binary bits say which items are in: bit i is 1 when item i is chosen.",
+  "t": "Eine Zahl, deren Binärziffern sagen, welche Gegenstände dabei sind: Bit i ist 1, wenn Gegenstand i gewählt ist."
+ },
+ "lessons.0.steps.1.keyTerms.2.term": {
+  "en": "Greedy rule",
+  "t": "Greedy-Regel"
+ },
+ "lessons.0.steps.1.keyTerms.2.def": {
+  "en": "Taking what looks best now (most points per kilo) without looking ahead. Fast, but can miss the best.",
+  "t": "Nehmen, was jetzt am besten aussieht (die meisten Punkte pro Kilo), ohne vorauszublicken. Schnell, kann aber das Beste verfehlen."
+ },
+ "lessons.0.steps.1.keyTerms.3.term": {
+  "en": "Dynamic programming",
+  "t": "Dynamische Programmierung"
+ },
+ "lessons.0.steps.1.keyTerms.3.def": {
+  "en": "Solving smaller versions first and reusing their answers, so the best is found without trying everything.",
+  "t": "Zuerst kleinere Versionen lösen und ihre Antworten wiederverwenden, sodass das Beste gefunden wird, ohne alles auszuprobieren."
+ },
+ "lessons.0.steps.2.prompt": {
+  "en": "Your brute-force program checks all 64 loads of six items. A friend adds a seventh load. How many loads must it check now?",
+  "t": "Dein Brute-Force-Programm prüft alle 64 Ladungen aus sechs Gegenständen. Ein Freund fügt eine siebte Ladung hinzu. Wie viele Ladungen muss es jetzt prüfen?"
+ },
+ "lessons.0.steps.2.options.0.text": {
+  "en": "65",
+  "t": "65"
+ },
+ "lessons.0.steps.2.options.1.text": {
+  "en": "128",
+  "t": "128"
+ },
+ "lessons.0.steps.2.options.2.text": {
+  "en": "70",
+  "t": "70"
+ },
+ "lessons.0.steps.2.explain": {
+  "en": "Every old load can now be with or without the new item, so the count doubles: 2⁷ = 128. Thirty items would be over a billion, which is why brute force doesn’t scale.",
+  "t": "Jede alte Ladung kann jetzt mit oder ohne den neuen Gegenstand sein, also verdoppelt sich die Anzahl: 2⁷ = 128. Bei dreißig Gegenständen wären es über eine Milliarde, deshalb skaliert Brute Force nicht."
+ },
+ "lessons.0.steps.3.prompt": {
+  "en": "Taking the most points per kilo first always gives the best load.",
+  "t": "Wer zuerst die meisten Punkte pro Kilo nimmt, bekommt immer die beste Ladung."
+ },
+ "lessons.0.steps.3.explain": {
+  "en": "On the 1,000 kg truck, greedy takes the solar panels first and ends with 60 points, but desks and books give 65. A choice that looks best now can block a better whole.",
+  "t": "Beim Lkw mit 1.000 kg nimmt Greedy zuerst die Solarpanels und landet bei 60 Punkten, aber Schulbänke und Bücher ergeben 65. Eine Wahl, die jetzt am besten aussieht, kann ein besseres Ganzes blockieren."
+ },
+ "lessons.0.steps.4.prompt": {
+  "en": "Match each way of searching to what it is like.",
+  "t": "Ordne jede Suchmethode dem zu, wie sie ist."
+ },
+ "lessons.0.steps.4.pairs.0.left": {
+  "en": "Brute force",
+  "t": "Brute Force"
+ },
+ "lessons.0.steps.4.pairs.0.right": {
+  "en": "Sure, but doubles with every item",
+  "t": "Sicher, aber verdoppelt sich mit jedem Gegenstand"
+ },
+ "lessons.0.steps.4.pairs.1.left": {
+  "en": "Greedy rule",
+  "t": "Greedy-Regel"
+ },
+ "lessons.0.steps.4.pairs.1.right": {
+  "en": "Fast, but can miss the best",
+  "t": "Schnell, kann aber das Beste verfehlen"
+ },
+ "lessons.0.steps.4.pairs.2.left": {
+  "en": "Dynamic programming",
+  "t": "Dynamische Programmierung"
+ },
+ "lessons.0.steps.4.pairs.2.right": {
+  "en": "Sure, by reusing smaller answers",
+  "t": "Sicher, weil sie kleinere Antworten wiederverwendet"
+ },
+ "lessons.0.steps.4.pairs.3.left": {
+  "en": "A CP-SAT model",
+  "t": "Ein CP-SAT-Modell"
+ },
+ "lessons.0.steps.4.pairs.3.right": {
+  "en": "You describe it; the solver searches",
+  "t": "Du beschreibst es, der Solver sucht"
+ },
+ "lessons.0.steps.4.explain": {
+  "en": "Brute force is honest but explodes; greedy is quick but makes no promise; dynamic programming is exact because it builds on smaller answers; and with a solver you write the rules and the goal, and it does the searching.",
+  "t": "Brute Force ist ehrlich, explodiert aber; Greedy ist schnell, verspricht aber nichts; dynamische Programmierung ist exakt, weil sie auf kleineren Antworten aufbaut; und bei einem Solver schreibst du die Regeln und das Ziel, und er übernimmt das Suchen."
+ },
+ "lessons.0.steps.5.prompt": {
+  "en": "Try it: in “Pack the truck”, press “Pack greedily”, then “Show the best load”. Open the table under the results and follow the outlined cells from the bottom-right corner: which loads does each step take or skip? Then move the truck’s limit to 1,100 kg and compare again.",
+  "t": "Probier es aus: Drücke in „Lkw beladen“ auf „Gierig packen“, dann auf „Beste Ladung zeigen“. Öffne die Tabelle unter den Ergebnissen und folge den umrandeten Zellen von der Ecke unten rechts: Welche Ladungen nimmt oder überspringt jeder Schritt? Setze dann das Limit des Lkw auf 1.100 kg und vergleiche noch einmal."
+ },
+ "lessons.0.steps.6.prompt": {
+  "en": "w and v are the weights (in 100 kg) and points of the six loads; the truck takes 10. Complete the brute-force search: for each mask, add up the weight and points of every item whose bit is 1. The program keeps the best load that fits and prints its points.",
+  "t": "w und v sind die Gewichte (in 100 kg) und die Punkte der sechs Ladungen; der Lkw nimmt 10. Vervollständige die Brute-Force-Suche: Addiere für jede mask Gewicht und Punkte aller Gegenstände, deren Bit 1 ist. Das Programm behält die beste Ladung, die passt, und gibt ihre Punkte aus."
+ },
+ "lessons.0.steps.6.tests.0.hint": {
+  "en": "Loop over the six items; when bit i of mask is 1 (mask >> i & 1), add w[i] and v[i].",
+  "t": "Geh die sechs Gegenstände in einer Schleife durch; wenn Bit i von mask 1 ist (mask >> i & 1), addiere w[i] und v[i]."
+ },
+ "lessons.0.steps.6.hints.0": {
+  "en": "Inside the mask loop: for i in range(6):",
+  "t": "In der mask-Schleife: for i in range(6):"
+ },
+ "lessons.0.steps.6.hints.1": {
+  "en": "if mask >> i & 1: then kg += w[i] and pts += v[i]",
+  "t": "if mask >> i & 1: dann kg += w[i] und pts += v[i]"
+ },
+ "lessons.0.steps.6.explain": {
+  "en": "The 64 masks are all the possible loads; the best one that fits is desks and books, 65 points, five more than greedy’s 60. Plain Python like this runs the same in Colab, but it doubles with every item, which is why the lab’s table (dynamic programming) matters.",
+  "t": "Die 64 Masken sind alle möglichen Ladungen; die beste, die passt, sind Schulbänke und Bücher mit 65 Punkten, fünf mehr als die 60 von Greedy. Schlichtes Python wie dieses läuft in Colab genauso, verdoppelt sich aber mit jedem Gegenstand, deshalb ist die Tabelle im Lab (dynamische Programmierung) wichtig."
+ },
+ "lessons.0.steps.7.prompt": {
+  "en": "Complete the dynamic-programming step. row[c] is the most points with room c; prev is the row before this item was considered.",
+  "t": "Vervollständige den Schritt der dynamischen Programmierung. row[c] ist die höchste Punktzahl bei Platz c; prev ist die Zeile von vor diesem Gegenstand."
+ },
+ "lessons.0.steps.7.explain": {
+  "en": "Each cell is the better (max) of skipping item k, prev[c], or taking it: its points v[k] plus the best answer for the room left after its weight, prev[c - w[k]].",
+  "t": "Jede Zelle ist die bessere (max) Möglichkeit: Gegenstand k auslassen, prev[c], oder ihn nehmen: seine Punkte v[k] plus die beste Antwort für den Platz, der nach seinem Gewicht übrig bleibt, prev[c - w[k]]."
+ },
+ "lessons.0.steps.8.prompt": {
+  "en": "What do you say?",
+  "t": "Was sagst du?"
+ },
+ "lessons.0.steps.8.who": {
+  "en": "Tunde, in your school’s charity club",
+  "t": "Tunde, in der Wohltätigkeits-AG deiner Schule"
+ },
+ "lessons.0.steps.8.initial": {
+  "en": "T",
+  "t": "T"
+ },
+ "lessons.0.steps.8.situation": {
+  "en": "Your club sends one truck to two village schools, Tala and Mina. Your program’s best load gives 65 points, but every load goes to Tala, because Tala’s teacher gave her school’s needs higher points. Tunde says: “The program found the best, so it’s fair.”",
+  "t": "Eure AG schickt einen Lkw zu zwei Dorfschulen, Tala und Mina. Die beste Ladung deines Programms bringt 65 Punkte, aber die ganze Ladung geht an Tala, weil Talas Lehrkraft den Bedürfnissen ihrer Schule höhere Punkte gegeben hat. Tunde sagt: „Das Programm hat das Beste gefunden, also ist es fair.“"
+ },
+ "lessons.0.steps.8.choices.0.label": {
+  "en": "“Let’s ask both schools to score their needs the same way, and give each school at least one load.”",
+  "t": "„Lass uns beide Schulen bitten, ihre Bedürfnisse auf dieselbe Weise zu bewerten, und jeder Schule mindestens eine Ladung geben.“"
+ },
+ "lessons.0.steps.8.choices.0.consequence": {
+  "en": "Now the points mean the same thing for both schools, and a rule protects Mina. The best load under those rules may score a little less, but it is fairer and you can explain it.",
+  "t": "Jetzt bedeuten die Punkte für beide Schulen dasselbe, und eine Regel schützt Mina. Die beste Ladung unter diesen Regeln hat vielleicht etwas weniger Punkte, ist aber fairer und du kannst sie erklären."
+ },
+ "lessons.0.steps.8.choices.1.label": {
+  "en": "“He’s right: the best total is the best.”",
+  "t": "„Er hat recht: Die beste Summe ist die beste.“"
+ },
+ "lessons.0.steps.8.choices.1.consequence": {
+  "en": "The program only maximised the points it was given, and those points came from one teacher. Best for the numbers isn’t the same as fair to both schools.",
+  "t": "Das Programm hat nur die Punkte maximiert, die es bekommen hat, und diese Punkte kamen von einer einzigen Lehrkraft. Am besten für die Zahlen ist nicht dasselbe wie fair für beide Schulen."
+ },
+ "lessons.0.steps.8.choices.2.label": {
+  "en": "“Toss a coin for each load.”",
+  "t": "„Wirf für jede Ladung eine Münze.“"
+ },
+ "lessons.0.steps.8.choices.2.consequence": {
+  "en": "A coin is fair to the schools but not to their needs: you might send footballs and leave the water filter. Better to fix the points and the rules.",
+  "t": "Eine Münze ist fair zu den Schulen, aber nicht zu ihren Bedürfnissen: Du schickst vielleicht Fußbälle und lässt den Wasserfilter da. Besser, du korrigierst die Punkte und die Regeln."
+ },
+ "lessons.0.steps.8.explain": {
+  "en": "Make the points mean the same for everyone, and add a rule that protects each school.",
+  "t": "Sorge dafür, dass die Punkte für alle dasselbe bedeuten, und füge eine Regel hinzu, die jede Schule schützt."
+ },
+ "lessons.0.steps.9.prompt": {
+  "en": "When have you used a quick rule, like biggest first or nearest first, that turned out not to be the best? What would checking every option have cost you?",
+  "t": "Wann hast du eine schnelle Regel benutzt, etwa das Größte zuerst oder das Nächste zuerst, die sich als nicht die beste herausgestellt hat? Was hätte es dich gekostet, jede Möglichkeit zu prüfen?"
+ },
+ "lessons.0.steps.9.placeholder": {
+  "en": "For example: “Revising the biggest topic first left no time for two short ones that were worth more marks.”",
+  "t": "Zum Beispiel: „Wenn ich das größte Thema zuerst gelernt habe, blieb keine Zeit für zwei kurze, die mehr Punkte brachten.“"
+ },
+ "lessons.0.steps.10.prompt": {
+  "en": "Project: The best bag",
+  "t": "Projekt: Die beste Tasche"
+ },
+ "lessons.0.steps.10.task": {
+  "en": "At home or at school, choose six things you might take on a school trip. Weigh each (or estimate in hundreds of grams), give each points from 1 to 10 for how much you need it, and set a weight limit your bag can carry. Find the best load three ways: greedy (most points per 100 g first), your brute-force program from this lesson (change w, v and the limit), and a small table by hand for the first three items. Compare the answers, and say whether any method missed the best.",
+  "t": "Such dir zu Hause oder in der Schule sechs Dinge aus, die du auf einen Schulausflug mitnehmen könntest. Wiege jedes (oder schätze in Hundert-Gramm-Schritten), gib jedem Punkte von 1 bis 10 dafür, wie sehr du es brauchst, und leg ein Gewichtslimit fest, das deine Tasche tragen kann. Finde die beste Ladung auf drei Arten: mit Greedy (zuerst die meisten Punkte pro 100 g), mit deinem Brute-Force-Programm aus dieser Lektion (ändere w, v und das Limit) und mit einer kleinen Tabelle von Hand für die ersten drei Gegenstände. Vergleiche die Antworten und sag, ob eine Methode das Beste verfehlt hat."
+ },
+ "lessons.0.steps.10.deliverable": {
+  "en": "Your table of things (weight and points), the load each method chose with its points, and one sentence on which method you would trust and why.",
+  "t": "Deine Tabelle der Dinge (Gewicht und Punkte), die Ladung, die jede Methode gewählt hat, mit ihren Punkten, und ein Satz dazu, welcher Methode du vertrauen würdest und warum."
+ },
+ "lessons.0.steps.10.rubric.0.criterion": {
+  "en": "I can: count how many loads brute force must check.",
+  "t": "Ich kann: zählen, wie viele Ladungen Brute Force prüfen muss."
+ },
+ "lessons.0.steps.10.rubric.1.criterion": {
+  "en": "I can: run a brute-force search in Python and read its answer.",
+  "t": "Ich kann: eine Brute-Force-Suche in Python ausführen und ihre Antwort lesen."
+ },
+ "lessons.0.steps.10.rubric.2.criterion": {
+  "en": "I can: explain when greedy fails and how dynamic programming avoids it.",
+  "t": "Ich kann: erklären, wann Greedy scheitert und wie dynamische Programmierung das vermeidet."
+ },
+ "lessons.0.slides.0.title": {
+  "en": "Try them all, or think ahead",
+  "t": "Alles ausprobieren oder vorausdenken"
+ },
+ "lessons.0.slides.0.narration": {
+  "en": "How can a program know it found the best load?",
+  "t": "Woher weiß ein Programm, dass es die beste Ladung gefunden hat?"
+ },
+ "lessons.0.slides.0.note": {
+  "en": "Optimization · Level 3 · Lesson 1",
+  "t": "Optimierung · Niveau 3 · Lektion 1"
+ },
+ "lessons.0.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "In dieser Lektion wirst du"
+ },
+ "lessons.0.slides.1.bullets": {
+  "en": [
+   "Count the loads a brute-force search must try.",
+   "Write a brute-force knapsack search in Python.",
+   "Explain how dynamic programming is sure without trying everything."
+  ],
+  "t": [
+   "Die Ladungen zählen, die eine Brute-Force-Suche prüfen muss.",
+   "Eine Brute-Force-Rucksacksuche in Python schreiben.",
+   "Erklären, wie dynamische Programmierung sicher ist, ohne alles auszuprobieren."
+  ]
+ },
+ "lessons.0.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Kernideen"
+ },
+ "lessons.0.slides.2.bullets": {
+  "en": [
+   "2⁶ = 64 loads; every item doubles it",
+   "Greedy: 60; the best: 65",
+   "Skip it, or take it and reuse the rest",
+   "Whose points?"
+  ],
+  "t": [
+   "2⁶ = 64 Ladungen; jeder Gegenstand verdoppelt sie",
+   "Greedy: 60; das Beste: 65",
+   "Auslassen, oder nehmen und den Rest wiederverwenden",
+   "Wessen Punkte?"
+  ]
+ },
+ "lessons.0.slides.3.title": {
+  "en": "Activity: The best bag",
+  "t": "Aktivität: Die beste Tasche"
+ },
+ "lessons.0.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): Six things, weights and points.",
+   "Greedy (5 min): Most points per 100 g first.",
+   "Brute force (7 min): Run your program on your bag.",
+   "Compare (5 min): Did greedy miss the best?"
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Sechs Dinge, Gewichte und Punkte.",
+   "Greedy (5 Min.): Zuerst die meisten Punkte pro 100 g.",
+   "Brute Force (7 Min.): Starte dein Programm mit deiner Tasche.",
+   "Vergleichen (5 Min.): Hat Greedy das Beste verfehlt?"
+  ]
+ },
+ "lessons.0.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): Choose six things for a school trip. Write each one’s weight (in hundreds of grams) and points from 1 to 10, and set your bag’s limit.",
+   "Greedy (5 min): Work out points per 100 g for each thing. Pack the highest first, then whatever still fits, and add up the points.",
+   "Brute force (7 min): Change w, v and the limit in your program from this lesson and run it, on a phone or on paper for a few masks. Write down the best load it finds.",
+   "Compare (5 min): Compare the greedy load with the best one. If they differ, find the item that took the space a better pair could have used."
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Such sechs Dinge für einen Schulausflug aus. Schreib für jedes sein Gewicht (in Hundert Gramm) und Punkte von 1 bis 10 auf und leg das Limit deiner Tasche fest.",
+   "Greedy (5 Min.): Berechne die Punkte pro 100 g für jedes Ding. Pack das mit dem höchsten Wert zuerst ein, dann alles, was noch passt, und addiere die Punkte.",
+   "Brute Force (7 Min.): Ändere w, v und das Limit in deinem Programm aus dieser Lektion und starte es, auf dem Handy oder auf Papier für ein paar Masken. Schreib die beste Ladung auf, die es findet.",
+   "Vergleichen (5 Min.): Vergleiche die Greedy-Ladung mit der besten. Wenn sie sich unterscheiden, finde den Gegenstand, der den Platz belegt hat, den ein besseres Paar hätte nutzen können."
+  ]
+ },
+ "lessons.0.slides.3.note": {
+  "en": "No scale? Estimate: a bottle of water is about 500 g, a book about 300 g, a phone about 200 g.",
+  "t": "Keine Waage? Schätze: Eine Wasserflasche wiegt etwa 500 g, ein Buch etwa 300 g, ein Handy etwa 200 g."
+ },
+ "lessons.0.slides.3.narration": {
+  "en": "Did the quick rule pack your bag as well as checking everything?",
+  "t": "Hat die schnelle Regel deine Tasche so gut gepackt wie das Prüfen von allem?"
+ },
+ "lessons.0.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lass uns diskutieren"
+ },
+ "lessons.0.slides.4.bullets": {
+  "en": [
+   "Why does every extra item double the work for brute force?",
+   "When is a greedy answer good enough?",
+   "Who should choose the points in a real decision?"
+  ],
+  "t": [
+   "Warum verdoppelt jeder zusätzliche Gegenstand den Aufwand bei Brute Force?",
+   "Wann ist eine Greedy-Antwort gut genug?",
+   "Wer sollte bei einer echten Entscheidung die Punkte vergeben?"
+  ]
+ },
+ "lessons.0.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.0.slides.5.bullets": {
+  "en": [
+   "How many loads for 10 items + one example where greedy fails."
+  ],
+  "t": [
+   "Wie viele Ladungen bei 10 Gegenständen + ein Beispiel, bei dem Greedy scheitert."
+  ]
+ },
+ "lessons.0.slides.5.narration": {
+  "en": "Don’t search harder; search smarter, and ask whose points they are.",
+  "t": "Such nicht härter, such klüger, und frag, wessen Punkte es sind."
+ },
+ "lessons.0.kit.0.title": {
+  "en": "Slides to revise: Try them all, or think ahead",
+  "t": "Folien zum Wiederholen: Alles ausprobieren oder vorausdenken"
+ },
+ "lessons.0.kit.1.title": {
+  "en": "Activity sheet: Try them all, or think ahead",
+  "t": "Arbeitsblatt: Alles ausprobieren oder vorausdenken"
+ },
+ "lessons.0.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "Das Lektionsvideo (240p, zum Wiederansehen oder Teilen)"
+ },
+ "lessons.1.title": {
+  "en": "Shortest paths",
+  "t": "Kürzeste Wege"
+ },
+ "lessons.1.tryTomorrow": {
+  "en": "Draw a map of the roads between your home, two friends’ homes and school, with rough distances in minutes or kilometres. Run Dijkstra’s method on paper, writing each place’s number as it changes, then put the map into your program and check that it agrees.",
+  "t": "Zeichne eine Karte der Straßen zwischen deinem Zuhause, den Wohnungen zweier Freunde und der Schule, mit groben Entfernungen in Minuten oder Kilometern. Führe Dijkstras Verfahren auf Papier aus und schreib die Zahl jedes Ortes auf, wenn sie sich ändert. Gib dann die Karte in dein Programm ein und prüfe, ob es übereinstimmt."
+ },
+ "lessons.1.materials": {
+  "en": [
+   "Paper and a pen",
+   "A rough map of roads near your home or school",
+   "Optional: a phone with Darsi to run your program"
+  ],
+  "t": [
+   "Papier und ein Stift",
+   "Eine grobe Karte der Straßen in der Nähe deines Zuhauses oder deiner Schule",
+   "Optional: ein Handy mit Darsi, um dein Programm auszuführen"
+  ]
+ },
+ "lessons.1.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.1.steps.0.title": {
+  "en": "Shortest paths",
+  "t": "Kürzeste Wege"
+ },
+ "lessons.1.steps.0.chapters.0.label": {
+  "en": "How does a map app know?",
+  "t": "Woher weiß eine Karten-App das?"
+ },
+ "lessons.1.steps.0.chapters.1.label": {
+  "en": "Settle the closest first",
+  "t": "Zuerst den nächsten festlegen"
+ },
+ "lessons.1.steps.0.chapters.2.label": {
+  "en": "In Python",
+  "t": "In Python"
+ },
+ "lessons.1.steps.0.chapters.3.label": {
+  "en": "The lab, and who gains",
+  "t": "Das Lab, und wer profitiert"
+ },
+ "lessons.1.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.1.steps.0.checkpoint.question.prompt": {
+  "en": "Tala is waiting at 7 and Rubi at 5. Which do you settle next?",
+  "t": "Tala wartet bei 7 und Rubi bei 5. Welchen Ort legst du als Nächstes fest?"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.0.text": {
+  "en": "Tala: it was found first",
+  "t": "Tala: Es wurde zuerst gefunden"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.1.text": {
+  "en": "Rubi: it has the smallest number",
+  "t": "Rubi: Es hat die kleinste Zahl"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.2.text": {
+  "en": "Both at once",
+  "t": "Beide gleichzeitig"
+ },
+ "lessons.1.steps.0.checkpoint.question.explain": {
+  "en": "Dijkstra settles the waiting place with the smallest number. Any other way to Rubi would pass through a place at 7 or more, and with no negative roads it can’t come back below 5.",
+  "t": "Dijkstra legt den wartenden Ort mit der kleinsten Zahl fest. Jeder andere Weg nach Rubi würde über einen Ort mit 7 oder mehr führen, und ohne negative Straßen kommt er nicht wieder unter 5."
+ },
+ "lessons.1.steps.0.transcript": {
+  "en": "A map app finds the fastest way across a whole country in a blink. It doesn’t try every route: there are far too many. So how does it know it found the shortest? Today: shortest paths, the way Dijkstra found them, in Python. Draw places as dots and roads as lines, each with its length. In Python, a dictionary holds the map: each place points to its neighbours and how far away they are. Dijkstra’s idea, from nineteen fifty-six: give every place a number, the shortest way found so far. Home is zero; the others start very large. Each turn, settle the waiting place with the smallest number. Then check its roads: can they make a neighbour’s number smaller? Why can you settle the smallest? Every other way to it would pass through a place that is already further away. With no negative road lengths, nothing can ever make it shorter. On our small map, home is zero. Kesi gets one and Tala four. Settle Kesi: through Kesi, Tala drops to three, and school gets eight. Settle Tala: school drops to six. The straight-looking way, home to Tala to school, is seven. Here it is in Python. While places are waiting, take the one with the smallest number, and remove it. Then relax its roads: keep whichever is smaller, the old number or the new way. Quick check! Two places are waiting: Tala at seven, and Rubi at five. Which one do you settle next? Rubi, the smallest. Nothing can make its number smaller now, because every other way passes through places at seven or more. Settling Tala first could freeze a number that is still too big. In the lab’s map, the shortest way to school is thirteen kilometres, through Tala, Kesi and Mina. The road that looks straightest, through Bora, is fifteen. Flood the bridge between Kesi and Mina, and it becomes fourteen, by Rubi and Sana. Shortest for whom? A new footbridge might save one village twenty minutes and another nothing. When a town chooses which road to fix, run the shortest paths from every home, and see who gains. In the app, open “The shortest way to school”. Tap Home, then always the waiting village with the smallest number. Then flood the bridge, and do it again. Your turn. A friend’s program settles places in list order, not smallest first. It says school is seven kilometres away, not six. Why? It settled Tala too early, before the shorter way through Kesi was known. Remember: store the map as a dictionary, settle the smallest number first, and relax its roads. And ask who a new road really helps. Try it yourself: draw the roads between your home, two friends’ homes and school, with rough distances. Run Dijkstra on paper, then check it with your code.",
+  "t": "Eine Karten-App findet im Handumdrehen den schnellsten Weg durch ein ganzes Land. Sie probiert nicht jede Route aus: Es gibt viel zu viele. Woher weiß sie also, dass sie den kürzesten gefunden hat? Heute: kürzeste Wege, so wie Dijkstra sie gefunden hat, in Python. Zeichne Orte als Punkte und Straßen als Linien, jede mit ihrer Länge. In Python hält ein Dictionary die Karte: Jeder Ort verweist auf seine Nachbarn und wie weit sie entfernt sind. Dijkstras Idee, von neunzehnhundertsechsundfünfzig: Gib jedem Ort eine Zahl, den kürzesten bisher gefundenen Weg. Zuhause ist null, die anderen fangen sehr groß an. Lege in jeder Runde den wartenden Ort mit der kleinsten Zahl fest. Prüfe dann seine Straßen: Können sie die Zahl eines Nachbarn verkleinern? Warum darfst du die kleinste festlegen? Jeder andere Weg dorthin würde über einen Ort führen, der schon weiter weg ist. Ohne negative Straßenlängen kann nichts sie je verkürzen. Auf unserer kleinen Karte ist Zuhause null. Kesi bekommt eins und Tala vier. Lege Kesi fest: Über Kesi sinkt Tala auf drei, und die Schule bekommt acht. Lege Tala fest: Die Schule sinkt auf sechs. Der gerade aussehende Weg, Zuhause zu Tala zur Schule, ist sieben. Hier ist es in Python. Solange Orte warten, nimm den mit der kleinsten Zahl und entferne ihn. Relaxiere dann seine Straßen: Behalte, was kleiner ist, die alte Zahl oder den neuen Weg. Kurzer Check! Zwei Orte warten: Tala mit sieben und Rubi mit fünf. Welchen legst du als Nächstes fest? Rubi, die kleinste. Nichts kann ihre Zahl jetzt noch verkleinern, denn jeder andere Weg führt über Orte mit sieben oder mehr. Würdest du Tala zuerst festlegen, könntest du eine Zahl einfrieren, die noch zu groß ist. Auf der Karte im Lab ist der kürzeste Weg zur Schule dreizehn Kilometer, über Tala, Kesi und Mina. Die Straße, die am geradesten aussieht, über Bora, hat fünfzehn. Überschwemme die Brücke zwischen Kesi und Mina, und es werden vierzehn, über Rubi und Sana. Kürzeste für wen? Ein neuer Fußgängersteg könnte einem Dorf zwanzig Minuten sparen und einem anderen nichts. Wenn eine Stadt entscheidet, welche Straße sie repariert, lass die kürzesten Wege von jedem Zuhause aus laufen und sieh, wer gewinnt. Öffne in der App „Der kürzeste Weg zur Schule“. Tippe auf Zuhause und dann immer auf das wartende Dorf mit der kleinsten Zahl. Überschwemme dann die Brücke und mach es noch einmal. Du bist dran. Das Programm eines Freundes legt Orte in Listenreihenfolge fest, nicht die kleinste zuerst. Es sagt, die Schule sei sieben Kilometer entfernt, nicht sechs. Warum? Es hat Tala zu früh festgelegt, bevor der kürzere Weg über Kesi bekannt war. Denk dran: Speichere die Karte als Dictionary, lege die kleinste Zahl zuerst fest und relaxiere ihre Straßen. Und frag, wem eine neue Straße wirklich hilft. Probier es selbst: Zeichne die Straßen zwischen deinem Zuhause, den Wohnorten zweier Freunde und der Schule, mit groben Entfernungen. Lass Dijkstra auf Papier laufen und prüfe es dann mit deinem Code."
+ },
+ "lessons.1.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.1.steps.1.title": {
+  "en": "Dijkstra’s method",
+  "t": "Dijkstras Verfahren"
+ },
+ "lessons.1.steps.1.body": {
+  "en": "A road map is a graph: places are dots (nodes) and roads are lines (edges), each with a length. In Python, a dictionary of dictionaries holds it neatly: roads[\"home\"] is {\"tala\": 4, \"kesi\": 1}, the neighbours of home and how far they are.\n\nEdsger Dijkstra found a way to get the shortest path without trying every route (1956). Give every place a number, the shortest way found so far: home is 0 and every other place starts very large. Each turn, settle the waiting place with the smallest number, because nothing can make it smaller: any other way to it passes through a place that is already further away. Then relax its roads: for each neighbour, keep the smaller of its old number and the settled place’s number plus the road. When the school is settled, its number is the shortest distance. This is only safe when no road has a negative length, which is true for real roads. In the code, p = min(todo, key=lambda q: dist[q]) picks the waiting place with the smallest number: key= tells min what to compare, and lambda q: dist[q] is a tiny function with no name that gives each place’s distance.\n\nOn the small map in this lesson, home is 0, Kesi gets 1 and Tala 4. Settling Kesi lowers Tala to 3 (1 + 2) and gives the school 8; settling Tala lowers the school to 6. The way that looks straight, home to Tala to school, is 7. In the lab’s bigger map, the shortest way is 13 km through Tala, Kesi and Mina; the straight-looking road through Bora is 15; and when the bridge between Kesi and Mina floods, the best way becomes 14 km by Rubi and Sana.\n\nThe simple version looks through every waiting place to find the smallest, so it takes about n × n steps for n places: fine for a school map. Map apps and internet routers use faster versions of the same idea (a priority queue, and clever shortcuts) to handle millions of roads every second. The program you write today is plain Python, and it runs the same in Colab.\n\nShortest paths also help decisions, and decisions raise the question of fairness. A new footbridge might save one village twenty minutes and another nothing. Before a school or a town chooses which road to fix, run the shortest paths from every home, and look at who gains, especially the families who are furthest away.",
+  "t": "Eine Straßenkarte ist ein Graph: Orte sind Punkte (Knoten) und Straßen sind Linien (Kanten), jede mit einer Länge. In Python hält ein Dictionary aus Dictionaries ihn übersichtlich: roads[\"home\"] ist {\"tala\": 4, \"kesi\": 1}, die Nachbarn von home und ihre Entfernungen.\n\nEdsger Dijkstra fand 1956 einen Weg, den kürzesten Pfad zu bekommen, ohne jede Route auszuprobieren. Gib jedem Ort eine Zahl, den kürzesten bisher gefundenen Weg: home ist 0 und jeder andere Ort beginnt mit einer sehr großen Zahl. In jeder Runde legst du den wartenden Ort mit der kleinsten Zahl fest, denn nichts kann sie noch verkleinern: Jeder andere Weg dorthin führt über einen Ort, der schon weiter weg ist. Dann relaxierst du seine Straßen: Behalte für jeden Nachbarn die kleinere von seiner alten Zahl und der Zahl des festgelegten Ortes plus der Straße. Wenn die Schule festgelegt ist, ist ihre Zahl die kürzeste Entfernung. Das ist nur sicher, wenn keine Straße eine negative Länge hat, und das stimmt für echte Straßen. Im Code wählt p = min(todo, key=lambda q: dist[q]) den wartenden Ort mit der kleinsten Zahl: key= sagt min, was verglichen werden soll, und lambda q: dist[q] ist eine winzige Funktion ohne Namen, die die Entfernung jedes Ortes liefert.\n\nAuf der kleinen Karte in dieser Lektion ist home 0, Kesi bekommt 1 und Tala 4. Wenn Kesi festgelegt wird, sinkt Tala auf 3 (1 + 2) und die Schule bekommt 8; wenn Tala festgelegt wird, sinkt die Schule auf 6. Der Weg, der gerade aussieht, von home über Tala zur Schule, ist 7. Auf der größeren Karte im Lab ist der kürzeste Weg 13 km über Tala, Kesi und Mina; die gerade aussehende Straße über Bora ist 15; und wenn die Brücke zwischen Kesi und Mina überflutet wird, wird der beste Weg 14 km über Rubi und Sana.\n\nDie einfache Version schaut durch alle wartenden Orte, um den kleinsten zu finden, also braucht sie bei n Orten etwa n × n Schritte: genug für eine Schulkarte. Karten-Apps und Internet-Router nutzen schnellere Versionen derselben Idee (eine Prioritätswarteschlange und clevere Abkürzungen), um jede Sekunde Millionen von Straßen zu bewältigen. Das Programm, das du heute schreibst, ist schlichtes Python und läuft in Colab genauso.\n\nKürzeste Wege helfen auch bei Entscheidungen, und Entscheidungen werfen die Frage nach Fairness auf. Ein neuer Fußgängersteg könnte einem Dorf zwanzig Minuten sparen und einem anderen nichts. Bevor eine Schule oder eine Stadt entscheidet, welche Straße repariert wird, lass die kürzesten Wege von jedem Zuhause aus laufen und schau, wer profitiert, besonders die Familien, die am weitesten weg wohnen."
+ },
+ "lessons.1.steps.1.keyTerms.0.term": {
+  "en": "Graph",
+  "t": "Graph"
+ },
+ "lessons.1.steps.1.keyTerms.0.def": {
+  "en": "Dots (places) joined by lines (roads), each line with a length.",
+  "t": "Punkte (Orte), verbunden durch Linien (Straßen), jede Linie mit einer Länge."
+ },
+ "lessons.1.steps.1.keyTerms.1.term": {
+  "en": "Dijkstra’s method",
+  "t": "Dijkstras Verfahren"
+ },
+ "lessons.1.steps.1.keyTerms.1.def": {
+  "en": "Finding shortest paths by always settling the waiting place with the smallest number first.",
+  "t": "Kürzeste Wege finden, indem man immer zuerst den wartenden Ort mit der kleinsten Zahl festlegt."
+ },
+ "lessons.1.steps.1.keyTerms.2.term": {
+  "en": "Settle",
+  "t": "Festlegen"
+ },
+ "lessons.1.steps.1.keyTerms.2.def": {
+  "en": "Marking a place’s number as final: no shorter way to it can exist.",
+  "t": "Die Zahl eines Ortes als endgültig markieren: Es kann keinen kürzeren Weg dorthin geben."
+ },
+ "lessons.1.steps.1.keyTerms.3.term": {
+  "en": "Relax a road",
+  "t": "Eine Straße relaxieren"
+ },
+ "lessons.1.steps.1.keyTerms.3.def": {
+  "en": "Checking whether going through a settled place gives a neighbour a smaller number, and keeping the smaller.",
+  "t": "Prüfen, ob der Weg über einen festgelegten Ort einem Nachbarn eine kleinere Zahl gibt, und die kleinere behalten."
+ },
+ "lessons.1.steps.2.prompt": {
+  "en": "A friend’s program settles places in list order (home, Tala, Kesi, school) instead of the smallest number first. It says school is 7 km away; your Dijkstra says 6. Why?",
+  "t": "Das Programm eines Freundes legt Orte in der Reihenfolge der Liste fest (home, Tala, Kesi, school) statt zuerst die kleinste Zahl. Es sagt, die Schule sei 7 km entfernt; dein Dijkstra sagt 6. Warum?"
+ },
+ "lessons.1.steps.2.options.0.text": {
+  "en": "Python added the numbers wrongly",
+  "t": "Python hat die Zahlen falsch addiert"
+ },
+ "lessons.1.steps.2.options.1.text": {
+  "en": "It settled Tala at 4 before the shorter way via Kesi was found",
+  "t": "Es hat Tala bei 4 festgelegt, bevor der kürzere Weg über Kesi gefunden wurde"
+ },
+ "lessons.1.steps.2.options.2.text": {
+  "en": "One of the roads is negative",
+  "t": "Eine der Straßen ist negativ"
+ },
+ "lessons.1.steps.2.explain": {
+  "en": "In list order, Tala is settled at 4 and gives school 4 + 3 = 7. Only afterwards does Kesi show that Tala could be 3, but Tala is already done, so school never gets 6. Settling the smallest number first prevents this.",
+  "t": "In der Reihenfolge der Liste wird Tala bei 4 festgelegt und gibt der Schule 4 + 3 = 7. Erst danach zeigt Kesi, dass Tala 3 sein könnte, aber Tala ist schon erledigt, also bekommt die Schule nie 6. Wer zuerst die kleinste Zahl festlegt, vermeidet das."
+ },
+ "lessons.1.steps.3.prompt": {
+  "en": "Put Dijkstra’s method in order.",
+  "t": "Bring Dijkstras Verfahren in die richtige Reihenfolge."
+ },
+ "lessons.1.steps.3.steps.0": {
+  "en": "Give home 0 and every other place a very large number",
+  "t": "Gib home die 0 und jedem anderen Ort eine sehr große Zahl"
+ },
+ "lessons.1.steps.3.steps.1": {
+  "en": "Pick the waiting place with the smallest number",
+  "t": "Wähle den wartenden Ort mit der kleinsten Zahl"
+ },
+ "lessons.1.steps.3.steps.2": {
+  "en": "Settle it: its number is final",
+  "t": "Lege ihn fest: Seine Zahl ist endgültig"
+ },
+ "lessons.1.steps.3.steps.3": {
+  "en": "Relax its roads: lower any neighbour’s number you can",
+  "t": "Relaxiere seine Straßen: Senke die Zahl jedes Nachbarn, wo es geht"
+ },
+ "lessons.1.steps.3.steps.4": {
+  "en": "Repeat until the school is settled",
+  "t": "Wiederhole, bis die Schule festgelegt ist"
+ },
+ "lessons.1.steps.3.explain": {
+  "en": "Start with what you know (home is 0), and each turn make the smallest number final before using its roads. Relaxing before settling, or settling a bigger number first, could freeze a distance that is still too long.",
+  "t": "Beginne mit dem, was du weißt (home ist 0), und mach in jeder Runde die kleinste Zahl endgültig, bevor du ihre Straßen nutzt. Wer relaxiert, bevor er festlegt, oder zuerst eine größere Zahl festlegt, kann eine Entfernung einfrieren, die noch zu lang ist."
+ },
+ "lessons.1.steps.4.prompt": {
+  "en": "Dijkstra’s method still gives the right answer if some roads have negative lengths.",
+  "t": "Dijkstras Verfahren liefert auch dann die richtige Antwort, wenn manche Straßen negative Längen haben."
+ },
+ "lessons.1.steps.4.explain": {
+  "en": "Settling the smallest number is safe only because every other way is at least as long. A negative road could make a settled place shorter later, after it was declared final. Real road lengths are never negative, so maps are fine.",
+  "t": "Die kleinste Zahl festzulegen ist nur sicher, weil jeder andere Weg mindestens so lang ist. Eine negative Straße könnte einen festgelegten Ort später kürzer machen, nachdem er für endgültig erklärt wurde. Echte Straßenlängen sind nie negativ, also sind Karten in Ordnung."
+ },
+ "lessons.1.steps.5.prompt": {
+  "en": "Try it: in “The shortest way to school”, first guess the shortest way by looking. Then tap Home, and always tap the waiting village with the smallest number, until the school is settled (13 km). Press “Flood the bridge” and find the way again: what changes, and why?",
+  "t": "Probier es aus: Rate in „Der kürzeste Weg zur Schule“ zuerst den kürzesten Weg per Blick. Tippe dann auf Home und tippe immer auf das wartende Dorf mit der kleinsten Zahl, bis die Schule festgelegt ist (13 km). Drücke „Brücke überfluten“ und finde den Weg noch einmal: Was ändert sich, und warum?"
+ },
+ "lessons.1.steps.6.prompt": {
+  "en": "Complete Dijkstra’s method: after taking the waiting place p with the smallest number, relax each of its roads, so that dist[q] keeps the smaller of its old value and dist[p] + km. The program prints the shortest distance to school.",
+  "t": "Vervollständige Dijkstras Verfahren: Nachdem du den wartenden Ort p mit der kleinsten Zahl genommen hast, relaxiere jede seiner Straßen, sodass dist[q] die kleinere von seinem alten Wert und dist[p] + km behält. Das Programm gibt die kürzeste Entfernung zur Schule aus."
+ },
+ "lessons.1.steps.6.tests.0.hint": {
+  "en": "Replace pass with one line: dist[q] = min(dist[q], dist[p] + km)",
+  "t": "Ersetze pass durch eine Zeile: dist[q] = min(dist[q], dist[p] + km)"
+ },
+ "lessons.1.steps.6.hints.0": {
+  "en": "Going through p, q is dist[p] + km away.",
+  "t": "Über p ist q genau dist[p] + km entfernt."
+ },
+ "lessons.1.steps.6.hints.1": {
+  "en": "Keep the smaller of that and dist[q], with min().",
+  "t": "Behalte mit min() die kleinere von dieser Zahl und dist[q]."
+ },
+ "lessons.1.steps.6.explain": {
+  "en": "Kesi is settled first (1) and lowers Tala to 3 and the school to 8; then Tala lowers the school to 6. The way that looks direct, through Tala, is 7. This plain Python runs the same in Colab.",
+  "t": "Kesi wird zuerst festgelegt (1) und senkt Tala auf 3 und die Schule auf 8; dann senkt Tala die Schule auf 6. Der Weg, der direkt aussieht, über Tala, ist 7. Dieses schlichte Python läuft in Colab genauso."
+ },
+ "lessons.1.steps.7.prompt": {
+  "en": "This program says the school is 7 km away, but the shortest way is 6. Which line is wrong?",
+  "t": "Dieses Programm sagt, die Schule sei 7 km entfernt, aber der kürzeste Weg ist 6. Welche Zeile ist falsch?"
+ },
+ "lessons.1.steps.7.explain": {
+  "en": "todo[0] settles places in list order, so Tala (4) is settled before Kesi (1) can lower it to 3, and the school is stuck at 4 + 3 = 7. Dijkstra must always take the smallest number first.",
+  "t": "todo[0] legt Orte in der Reihenfolge der Liste fest, also wird Tala (4) festgelegt, bevor Kesi (1) es auf 3 senken kann, und die Schule bleibt bei 4 + 3 = 7 hängen. Dijkstra muss immer zuerst die kleinste Zahl nehmen."
+ },
+ "lessons.1.steps.8.prompt": {
+  "en": "What do you advise?",
+  "t": "Was rätst du?"
+ },
+ "lessons.1.steps.8.who": {
+  "en": "The town council, asking your class",
+  "t": "Der Stadtrat, der eure Klasse fragt"
+ },
+ "lessons.1.steps.8.initial": {
+  "en": "C",
+  "t": "S"
+ },
+ "lessons.1.steps.8.situation": {
+  "en": "The council can repair one road before the rains: the bridge between Kesi and Mina, or the road past Rubi. Your class ran shortest paths to school from every village. The bridge saves the most minutes in total, mostly for the big villages; the Rubi road helps the two farthest villages most.",
+  "t": "Der Stadtrat kann vor der Regenzeit eine Straße reparieren: die Brücke zwischen Kesi und Mina oder die Straße an Rubi vorbei. Deine Klasse hat die kürzesten Wege zur Schule von jedem Dorf aus berechnet. Die Brücke spart insgesamt die meisten Minuten, vor allem für die großen Dörfer; die Rubi-Straße hilft den zwei am weitesten entfernten Dörfern am meisten."
+ },
+ "lessons.1.steps.8.choices.0.label": {
+  "en": "“Show the minutes saved for each village, the total and the worst-off, and let people discuss.”",
+  "t": "„Zeig die gesparten Minuten für jedes Dorf, die Summe und die am schlechtesten Gestellten, und lass die Leute diskutieren.“"
+ },
+ "lessons.1.steps.8.choices.0.consequence": {
+  "en": "Your numbers make the trade-off visible: more minutes overall, or help for the children who walk furthest. The council decides, but everyone can see why.",
+  "t": "Deine Zahlen machen den Zielkonflikt sichtbar: insgesamt mehr Minuten oder Hilfe für die Kinder mit dem weitesten Weg. Der Stadtrat entscheidet, aber alle können sehen, warum."
+ },
+ "lessons.1.steps.8.choices.1.label": {
+  "en": "“Fix the bridge: it saves the most minutes in total.”",
+  "t": "„Repariert die Brücke: Sie spart insgesamt die meisten Minuten.“"
+ },
+ "lessons.1.steps.8.choices.1.consequence": {
+  "en": "Efficient, but the farthest villages, who already walk longest, get nothing. A total hides who carries the cost.",
+  "t": "Effizient, aber die am weitesten entfernten Dörfer, die schon am längsten laufen, bekommen nichts. Eine Summe verbirgt, wer die Kosten trägt."
+ },
+ "lessons.1.steps.8.choices.2.label": {
+  "en": "“Fix whichever is cheaper.”",
+  "t": "„Repariert, was günstiger ist.“"
+ },
+ "lessons.1.steps.8.choices.2.consequence": {
+  "en": "Cost matters, but on its own it ignores everything your shortest paths showed. Put cost beside the minutes saved, not instead of them.",
+  "t": "Kosten zählen, aber allein ignorieren sie alles, was deine kürzesten Wege gezeigt haben. Stell die Kosten neben die gesparten Minuten, nicht an ihre Stelle."
+ },
+ "lessons.1.steps.8.explain": {
+  "en": "Show the total and the worst-off side by side, and let people decide openly.",
+  "t": "Zeig die Summe und die am schlechtesten Gestellten nebeneinander und lass die Leute offen entscheiden."
+ },
+ "lessons.1.steps.9.prompt": {
+  "en": "Which road or path near you would you fix first, and who would gain most? Would the shortest paths agree with you?",
+  "t": "Welche Straße oder welchen Weg in deiner Nähe würdest du zuerst reparieren, und wer würde am meisten profitieren? Würden die kürzesten Wege dir zustimmen?"
+ },
+ "lessons.1.steps.9.placeholder": {
+  "en": "For example: “The path across the stream. It floods every rainy season and the children from the hill walk an extra half hour.”",
+  "t": "Zum Beispiel: „Den Weg über den Bach. Er wird jede Regenzeit überflutet und die Kinder vom Hügel laufen eine halbe Stunde länger.“"
+ },
+ "lessons.1.steps.10.prompt": {
+  "en": "Project: Shortest ways to my school",
+  "t": "Projekt: Kürzeste Wege zu meiner Schule"
+ },
+ "lessons.1.steps.10.task": {
+  "en": "Draw a map of six to eight places around your school (homes, a market, a bridge, the school), with rough distances on each road. Run Dijkstra’s method on paper from one home, writing each place’s number as it changes. Then type the map into your program and check that it agrees. Finally, close one road (a flood or roadworks) and find who is affected most.",
+  "t": "Zeichne eine Karte mit sechs bis acht Orten rund um deine Schule (Wohnungen, ein Markt, eine Brücke, die Schule), mit groben Entfernungen an jeder Straße. Führe Dijkstras Verfahren auf Papier von einer Wohnung aus durch und schreib die Zahl jedes Ortes auf, wenn sie sich ändert. Gib dann die Karte in dein Programm ein und prüfe, ob es übereinstimmt. Sperre schließlich eine Straße (Überflutung oder Bauarbeiten) und finde heraus, wen es am meisten trifft."
+ },
+ "lessons.1.steps.10.deliverable": {
+  "en": "Your map with the numbers (no addresses or names of real people), your program’s answer, and one sentence on who a closed road hurts most.",
+  "t": "Deine Karte mit den Zahlen (keine Adressen oder Namen echter Personen), die Antwort deines Programms und ein Satz dazu, wen eine gesperrte Straße am meisten trifft."
+ },
+ "lessons.1.steps.10.rubric.0.criterion": {
+  "en": "I can: write a map as a Python dictionary.",
+  "t": "Ich kann: eine Karte als Python-Dictionary schreiben."
+ },
+ "lessons.1.steps.10.rubric.1.criterion": {
+  "en": "I can: run Dijkstra’s method on paper and in code, and get the same answer.",
+  "t": "Ich kann: Dijkstras Verfahren auf Papier und im Code ausführen und dieselbe Antwort bekommen."
+ },
+ "lessons.1.steps.10.rubric.2.criterion": {
+  "en": "I can: say who gains and who loses when a road opens or closes.",
+  "t": "Ich kann: sagen, wer gewinnt und wer verliert, wenn eine Straße öffnet oder schließt."
+ },
+ "lessons.1.slides.0.title": {
+  "en": "Shortest paths",
+  "t": "Kürzeste Wege"
+ },
+ "lessons.1.slides.0.narration": {
+  "en": "How does a map app find the shortest way without trying them all?",
+  "t": "Wie findet eine Karten-App den kürzesten Weg, ohne alle auszuprobieren?"
+ },
+ "lessons.1.slides.0.note": {
+  "en": "Optimization · Level 3 · Lesson 2",
+  "t": "Optimierung · Niveau 3 · Lektion 2"
+ },
+ "lessons.1.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "In dieser Lektion wirst du"
+ },
+ "lessons.1.slides.1.bullets": {
+  "en": [
+   "Store a road map as a Python dictionary.",
+   "Follow and complete Dijkstra’s method.",
+   "Explain why settling the closest place first is safe."
+  ],
+  "t": [
+   "Eine Straßenkarte als Python-Dictionary speichern.",
+   "Dijkstras Verfahren nachvollziehen und vervollständigen.",
+   "Erklären, warum es sicher ist, zuerst den nächsten Ort festzulegen."
+  ]
+ },
+ "lessons.1.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Kernideen"
+ },
+ "lessons.1.slides.2.bullets": {
+  "en": [
+   "A map is a graph",
+   "Settle the smallest number first",
+   "Relax: keep the smaller",
+   "No negative roads",
+   "Who gains from a road?"
+  ],
+  "t": [
+   "Eine Karte ist ein Graph",
+   "Zuerst die kleinste Zahl festlegen",
+   "Relaxieren: die kleinere behalten",
+   "Keine negativen Straßen",
+   "Wer profitiert von einer Straße?"
+  ]
+ },
+ "lessons.1.slides.3.title": {
+  "en": "Activity: My map, settled",
+  "t": "Aktivität: Meine Karte, festgelegt"
+ },
+ "lessons.1.slides.3.bullets": {
+  "en": [
+   "Draw (5 min): Six places and the roads between them.",
+   "Settle (8 min): Dijkstra on paper from your home.",
+   "Code (5 min): Type the map; does it agree?",
+   "Close a road (2 min): Who is hurt most?"
+  ],
+  "t": [
+   "Zeichnen (5 Min.): Sechs Orte und die Straßen dazwischen.",
+   "Festlegen (8 Min.): Dijkstra auf Papier von deinem Zuhause aus.",
+   "Code (5 Min.): Gib die Karte ein; stimmt es überein?",
+   "Straße sperren (2 Min.): Wen trifft es am meisten?"
+  ]
+ },
+ "lessons.1.slides.3.details": {
+  "en": [
+   "Draw (5 min): Draw six places near your school as dots, join the ones with a road, and write a rough distance on each road.",
+   "Settle (8 min): Write 0 by your home and a big number by every other place. Repeatedly circle the smallest uncircled number and update its neighbours, until the school is circled.",
+   "Code (5 min): Type your map as a dictionary into your program from this lesson and run it. Does it print the same distance to school?",
+   "Close a road (2 min): Cross out one road and run it again. Which place’s distance grows the most?"
+  ],
+  "t": [
+   "Zeichnen (5 Min.): Zeichne sechs Orte in der Nähe deiner Schule als Punkte, verbinde die mit einer Straße und schreib an jede Straße eine grobe Entfernung.",
+   "Festlegen (8 Min.): Schreib 0 neben dein Zuhause und eine große Zahl neben jeden anderen Ort. Kreise immer wieder die kleinste noch nicht umkreiste Zahl ein und aktualisiere ihre Nachbarn, bis die Schule umkreist ist.",
+   "Code (5 Min.): Gib deine Karte als Dictionary in dein Programm aus dieser Lektion ein und starte es. Gibt es dieselbe Entfernung zur Schule aus?",
+   "Straße sperren (2 Min.): Streich eine Straße durch und starte es noch einmal. Bei welchem Ort wächst die Entfernung am meisten?"
+  ]
+ },
+ "lessons.1.slides.3.note": {
+  "en": "Use made-up names for homes. Distances can be minutes of walking instead of kilometres.",
+  "t": "Nimm erfundene Namen für Wohnungen. Entfernungen können Gehminuten statt Kilometer sein."
+ },
+ "lessons.1.slides.3.narration": {
+  "en": "Circle the smallest number, update its neighbours, and repeat.",
+  "t": "Kreise die kleinste Zahl ein, aktualisiere ihre Nachbarn und wiederhole."
+ },
+ "lessons.1.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lass uns diskutieren"
+ },
+ "lessons.1.slides.4.bullets": {
+  "en": [
+   "Why is the straightest-looking road not always the shortest?",
+   "What would go wrong with a negative road length?",
+   "Who should decide which road gets repaired first?"
+  ],
+  "t": [
+   "Warum ist die am geradesten aussehende Straße nicht immer die kürzeste?",
+   "Was würde bei einer negativen Straßenlänge schiefgehen?",
+   "Wer sollte entscheiden, welche Straße zuerst repariert wird?"
+  ]
+ },
+ "lessons.1.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.1.slides.5.bullets": {
+  "en": [
+   "The one line that relaxes a road + why the smallest goes first."
+  ],
+  "t": [
+   "Die eine Zeile, die eine Straße relaxiert + warum die kleinste zuerst drankommt."
+  ]
+ },
+ "lessons.1.slides.5.narration": {
+  "en": "Smallest first is always safe, and ask who a road really helps.",
+  "t": "Die kleinste zuerst ist immer sicher, und frag, wem eine Straße wirklich hilft."
+ },
+ "lessons.1.kit.0.title": {
+  "en": "Slides to revise: Shortest paths",
+  "t": "Folien zum Wiederholen: Kürzeste Wege"
+ },
+ "lessons.1.kit.1.title": {
+  "en": "Activity sheet: Shortest paths",
+  "t": "Arbeitsblatt: Kürzeste Wege"
+ },
+ "lessons.1.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "Das Lektionsvideo (240p, zum Wiederansehen oder Teilen)"
+ },
+ "lessons.2.title": {
+  "en": "The bus route",
+  "t": "Die Buslinie"
+ },
+ "lessons.2.tryTomorrow": {
+  "en": "Map five places you visit in a week (home, school, the market, a friend’s house, the clinic) with rough distances. Plan a round trip from home by nearest neighbour, draw it, and look for a crossing: swap it and add up the distance again. Then ask: if a friend joined at your first stop, how long would they ride?",
+  "t": "Zeichne fünf Orte, die du in einer Woche besuchst (Zuhause, Schule, den Markt, das Haus eines Freundes, die Klinik), mit groben Entfernungen. Plane vom Zuhause aus eine Rundreise nach dem Nächster-Nachbar-Verfahren, zeichne sie und such eine Kreuzung: Tausche sie und addiere die Entfernung neu. Frag dich dann: Wenn ein Freund an deiner ersten Haltestelle zustiege, wie lange würde er fahren?"
+ },
+ "lessons.2.materials": {
+  "en": [
+   "Paper and a pen",
+   "Rough distances between five places you know",
+   "Optional: a phone with Darsi to run your program"
+  ],
+  "t": [
+   "Papier und ein Stift",
+   "Grobe Entfernungen zwischen fünf Orten, die du kennst",
+   "Optional: ein Handy mit Darsi, um dein Programm auszuführen"
+  ]
+ },
+ "lessons.2.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.2.steps.0.title": {
+  "en": "The bus route",
+  "t": "Die Buslinie"
+ },
+ "lessons.2.steps.0.chapters.0.label": {
+  "en": "Is this the shortest?",
+  "t": "Ist das die kürzeste?"
+ },
+ "lessons.2.steps.0.chapters.1.label": {
+  "en": "Build it fast",
+  "t": "Schnell bauen"
+ },
+ "lessons.2.steps.0.chapters.2.label": {
+  "en": "Improve it with 2-opt",
+  "t": "Mit 2-opt verbessern"
+ },
+ "lessons.2.steps.0.chapters.3.label": {
+  "en": "Who rides longest? And the lab",
+  "t": "Wer fährt am längsten? Und das Lab"
+ },
+ "lessons.2.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.2.steps.0.checkpoint.question.prompt": {
+  "en": "2-opt has stopped, but a shorter route exists. How can that be?",
+  "t": "2-opt hat angehalten, aber es gibt eine kürzere Route. Wie kann das sein?"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.0.text": {
+  "en": "It ran out of villages to visit",
+  "t": "Ihm gingen die Dörfer zum Besuchen aus"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.1.text": {
+  "en": "No single swap helps, though a bigger change would",
+  "t": "Kein einzelner Tausch hilft, aber eine größere Änderung würde helfen"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.2.text": {
+  "en": "2-opt only works on straight roads",
+  "t": "2-opt funktioniert nur bei geraden Straßen"
+ },
+ "lessons.2.steps.0.checkpoint.question.explain": {
+  "en": "2-opt only makes one two-road swap at a time and stops when none helps: a local best. Sometimes the best route needs a bigger change that no single swap can make, so 2-opt stops short, as on some of the lab’s new maps.",
+  "t": "2-opt macht immer nur einen Tausch von zwei Straßen und hält an, wenn keiner mehr hilft: ein lokales Optimum. Manchmal braucht die beste Route eine größere Änderung, die kein einzelner Tausch erreicht, also hält 2-opt zu früh an, wie bei manchen neuen Karten im Lab."
+ },
+ "lessons.2.steps.0.transcript": {
+  "en": "Our school bus visits nine villages every morning. Last week a student asked me two questions: is this really the shortest route, and why do I always get on first? Today: the bus route, built fast, improved, and judged fairly. Visiting every stop once and coming back by the shortest route is the travelling salesperson problem. One more village multiplies the routes: nine villages have a hundred and eighty-one thousand, and ten have one point eight million. Twenty have more than a billion billion. So start with a quick rule: always drive to the closest village you haven’t visited yet. It’s greedy: it never looks ahead, so the last legs home are often long. In Python, keep a list called route. While villages are left, append the one closest to your last stop. Then improve it with 2-opt. Pick two roads, reverse the stretch between them, and keep the change if the route got shorter. A crossing in a route always means a swap can shorten it. In code, a swap is a slice turned round. Try every pair of cut points, keep any change that helps, and stop when none does. Quick check! 2-opt has stopped, but the lab says a shorter route exists. How can that be? No single swap helps, but a bigger change would. 2-opt has found a local best, not the best of all. In the lab, three swaps take nearest neighbour’s thirty-four point six kilometres down to twenty-eight point six, the best route. On some new maps, it stops short. On the small map in your code, nearest neighbour drives nineteen kilometres. The best route is sixteen. Now look at the riders: the village picked up first rides almost the whole route. On the best route, driven one way, the longest ride is fifteen kilometres. Driven the other way, it’s fourteen. Same road, same length, a fairer ride, so check the direction too. In the app, open “The school bus route”. Press Run, and watch both steps. Then press New map until 2-opt stops short of the best. Your turn. Two routes have the same length. On one, a village rides for fifty minutes; on the other, nobody rides more than thirty. Which should the school choose? The one where nobody rides more than thirty: same cost, fairer ride. Remember: build a route fast with nearest neighbour, and improve it with 2-opt, which can stop at a local best. And judge a route by its length and its longest ride. Try it yourself: map five places you visit in a week, with rough distances. Plan a round trip by nearest neighbour, then look for a crossing and swap it.",
+  "t": "Unser Schulbus besucht jeden Morgen neun Dörfer. Letzte Woche hat mir jemand aus der Klasse zwei Fragen gestellt: Ist das wirklich die kürzeste Route, und warum steige ich immer zuerst ein? Heute: die Busroute, schnell gebaut, verbessert und fair beurteilt. Jede Haltestelle einmal zu besuchen und auf dem kürzesten Weg zurückzukommen ist das Problem des Handlungsreisenden. Ein Dorf mehr vervielfacht die Routen: Neun Dörfer haben einhunderteinundachtzigtausend, und zehn haben eins Komma acht Millionen. Zwanzig haben mehr als eine Trillion. Fang also mit einer schnellen Regel an: Fahr immer zum nächstgelegenen Dorf, das du noch nicht besucht hast. Sie ist greedy: Sie schaut nie voraus, deshalb sind die letzten Etappen nach Hause oft lang. Führe in Python eine Liste namens route. Solange noch Dörfer übrig sind, hänge das an, das deiner letzten Haltestelle am nächsten liegt. Verbessere sie dann mit 2-opt. Such zwei Straßen aus, kehre das Stück dazwischen um und behalte die Änderung, wenn die Route kürzer wurde. Eine Kreuzung in einer Route heißt immer, dass ein Tausch sie verkürzen kann. Im Code ist ein Tausch ein umgedrehter Slice. Probiere jedes Paar von Schnittpunkten, behalte jede Änderung, die hilft, und hör auf, wenn keine mehr hilft. Kurzer Check! 2-opt hat angehalten, aber das Lab sagt, es gibt eine kürzere Route. Wie kann das sein? Kein einzelner Tausch hilft, aber eine größere Änderung würde helfen. 2-opt hat ein lokales Optimum gefunden, nicht das beste von allen. Im Lab bringen drei Tausche die vierunddreißig Komma sechs Kilometer des nächsten Nachbarn auf achtundzwanzig Komma sechs herunter, die beste Route. Auf manchen neuen Karten bleibt es davor stehen. Auf der kleinen Karte in deinem Code fährt der nächste Nachbar neunzehn Kilometer. Die beste Route hat sechzehn. Sieh dir jetzt die Mitfahrenden an: Das Dorf, das zuerst abgeholt wird, fährt fast die ganze Route mit. Auf der besten Route, in eine Richtung gefahren, ist die längste Fahrt fünfzehn Kilometer. In die andere Richtung gefahren sind es vierzehn. Dieselbe Straße, dieselbe Länge, eine fairere Fahrt, also prüfe auch die Richtung. Öffne in der App „Die Schulbusroute“. Drück Start und sieh dir beide Schritte an. Drück dann Neue Karte, bis 2-opt vor der besten Route stehen bleibt. Du bist dran. Zwei Routen sind gleich lang. Auf der einen fährt ein Dorf fünfzig Minuten, auf der anderen fährt niemand länger als dreißig. Welche sollte die Schule wählen? Die, auf der niemand länger als dreißig fährt: gleiche Kosten, fairere Fahrt. Denk dran: Baue eine Route schnell mit dem nächsten Nachbarn und verbessere sie mit 2-opt, das bei einem lokalen Optimum stehen bleiben kann. Und beurteile eine Route nach ihrer Länge und ihrer längsten Fahrt. Probier es selbst: Zeichne fünf Orte, die du in einer Woche besuchst, mit groben Entfernungen. Plane eine Rundfahrt mit dem nächsten Nachbarn, such dann eine Kreuzung und tausche sie."
+ },
+ "lessons.2.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.2.steps.1.title": {
+  "en": "Build it fast, improve it, judge it",
+  "t": "Schnell bauen, verbessern, beurteilen"
+ },
+ "lessons.2.steps.1.body": {
+  "en": "A bus that leaves the school, visits every village once and comes back is solving the travelling salesperson problem. It is hard because routes multiply: with n villages there are n! ÷ 2 round trips. Nine villages give 181,440; ten give 1,814,400, ten times as many; twenty give about 1.2 × 10¹⁸, more than a billion billion. No computer checks them all for a real bus network.\n\nSo planners build a route quickly and then improve it. Nearest neighbour is a greedy rule: from wherever the bus is, go to the closest village not yet visited. In Python, keep a list route that starts at 0 (the school); while it is shorter than the number of places, look at the distances from the last stop, d[route[-1]], and append the closest place not yet in route. The places not yet in route are [v for v in range(5) if v not in route], a list comprehension: a list built from a loop in one line. The closest of them is min(left, key=lambda v: d[route[-1]][v]), as in Dijkstra’s method. The length is the sum of every leg, including the drive back to the school: zip(route, route[1:] + [0]) pairs each stop with the next.\n\n2-opt then improves the route. Pick two cut points i and j, reverse the stretch between them (list(reversed(route[i:j + 1]))), and keep the new route if it is shorter. When two roads in a route cross, such a swap always shortens it. Repeat until no swap helps. In the lab, three swaps take nearest neighbour’s 34.6 km down to 28.6 km, the best route; but 2-opt can stop at a local best, where no single swap helps although a shorter route exists. The plain Python in this lesson runs the same in Colab, and Google’s OR-Tools has a routing library for real fleets.\n\nOn the small map in your code, nearest neighbour drives 19 km and the best route is 16. Length is not the only thing to judge. The children picked up first ride almost the whole route back to school. On the best route driven one way, the first village rides 15 km; driven the other way, the first village rides 14. Same road, same fuel, a fairer longest ride. When two routes cost about the same, let the longest ride decide, and when they don’t, agree a limit on the longest ride with the families and find the shortest route that keeps it.",
+  "t": "Ein Bus, der die Schule verlässt, jedes Dorf einmal besucht und zurückkommt, löst das Problem der Handlungsreisenden. Es ist schwer, weil sich die Routen vervielfachen: Bei n Dörfern gibt es n! ÷ 2 Rundreisen. Neun Dörfer ergeben 181.440; zehn ergeben 1.814.400, zehnmal so viele; zwanzig ergeben etwa 1,2 × 10¹⁸, mehr als eine Trillion. Kein Computer prüft sie bei einem echten Busnetz alle.\n\nDeshalb bauen Planer schnell eine Route und verbessern sie dann. Das Nächster-Nachbar-Verfahren ist eine Greedy-Regel: Fahr von dort, wo der Bus gerade ist, zum nächstgelegenen noch nicht besuchten Dorf. In Python führst du eine Liste route, die bei 0 (der Schule) beginnt; solange sie kürzer ist als die Anzahl der Orte, schaust du auf die Entfernungen von der letzten Haltestelle, d[route[-1]], und hängst den nächstgelegenen Ort an, der noch nicht in route ist. Die Orte, die noch nicht in route sind, sind [v for v in range(5) if v not in route], eine List Comprehension: eine Liste, die in einer Zeile aus einer Schleife entsteht. Der nächstgelegene davon ist min(left, key=lambda v: d[route[-1]][v]), wie bei Dijkstras Verfahren. Die Länge ist die Summe aller Teilstrecken, einschließlich der Rückfahrt zur Schule: zip(route, route[1:] + [0]) paart jede Haltestelle mit der nächsten.\n\n2-opt verbessert dann die Route. Wähle zwei Schnittpunkte i und j, kehre das Stück dazwischen um (list(reversed(route[i:j + 1]))) und behalte die neue Route, wenn sie kürzer ist. Wenn sich zwei Straßen einer Route kreuzen, verkürzt ein solcher Tausch sie immer. Wiederhole, bis kein Tausch mehr hilft. Im Lab bringen drei Tausche die 34,6 km des Nächster-Nachbar-Verfahrens auf 28,6 km, die beste Route; aber 2-opt kann in einem lokalen Optimum anhalten, in dem kein einzelner Tausch hilft, obwohl es eine kürzere Route gibt. Das schlichte Python in dieser Lektion läuft in Colab genauso, und Googles OR-Tools hat eine Routing-Bibliothek für echte Flotten.\n\nAuf der kleinen Karte in deinem Code fährt das Nächster-Nachbar-Verfahren 19 km und die beste Route ist 16. Die Länge ist nicht das Einzige, was man beurteilt. Die Kinder, die zuerst abgeholt werden, fahren fast die ganze Strecke zurück zur Schule. Auf der besten Route in eine Richtung gefahren fährt das erste Dorf 15 km; in die andere Richtung gefahren fährt das erste Dorf 14. Dieselbe Straße, derselbe Treibstoff, eine fairere längste Fahrt. Wenn zwei Routen etwa gleich viel kosten, soll die längste Fahrt entscheiden, und wenn nicht, einigt euch mit den Familien auf ein Limit für die längste Fahrt und findet die kürzeste Route, die es einhält."
+ },
+ "lessons.2.steps.1.keyTerms.0.term": {
+  "en": "Travelling salesperson problem",
+  "t": "Problem der Handlungsreisenden"
+ },
+ "lessons.2.steps.1.keyTerms.0.def": {
+  "en": "The shortest round trip that visits every place once. The number of routes explodes as places are added.",
+  "t": "Die kürzeste Rundreise, die jeden Ort einmal besucht. Die Zahl der Routen explodiert, wenn Orte hinzukommen."
+ },
+ "lessons.2.steps.1.keyTerms.1.term": {
+  "en": "Nearest neighbour",
+  "t": "Nächster-Nachbar-Verfahren"
+ },
+ "lessons.2.steps.1.keyTerms.1.def": {
+  "en": "A greedy rule: always go to the closest place not yet visited.",
+  "t": "Eine Greedy-Regel: Fahr immer zum nächstgelegenen noch nicht besuchten Ort."
+ },
+ "lessons.2.steps.1.keyTerms.2.term": {
+  "en": "2-opt",
+  "t": "2-opt"
+ },
+ "lessons.2.steps.1.keyTerms.2.def": {
+  "en": "Reverse the stretch between two cut points and keep it if the route gets shorter; repeat until nothing helps.",
+  "t": "Das Stück zwischen zwei Schnittpunkten umkehren und behalten, wenn die Route kürzer wird; wiederholen, bis nichts mehr hilft."
+ },
+ "lessons.2.steps.1.keyTerms.3.term": {
+  "en": "Local best",
+  "t": "Lokales Optimum"
+ },
+ "lessons.2.steps.1.keyTerms.3.def": {
+  "en": "A plan no single small change can improve, even though a better plan may exist.",
+  "t": "Ein Plan, den keine einzelne kleine Änderung verbessern kann, auch wenn es einen besseren Plan geben mag."
+ },
+ "lessons.2.steps.1.keyTerms.4.term": {
+  "en": "List comprehension",
+  "t": "List Comprehension"
+ },
+ "lessons.2.steps.1.keyTerms.4.def": {
+  "en": "A list built from a loop in one line: [v for v in range(5) if v not in route].",
+  "t": "Eine Liste, die in einer Zeile aus einer Schleife entsteht: [v for v in range(5) if v not in route]."
+ },
+ "lessons.2.steps.2.prompt": {
+  "en": "Two routes have the same length. On one a village rides 50 minutes; on the other nobody rides more than 30. Which should the school choose?",
+  "t": "Zwei Routen sind gleich lang. Auf der einen fährt ein Dorf 50 Minuten; auf der anderen fährt niemand mehr als 30. Welche sollte die Schule wählen?"
+ },
+ "lessons.2.steps.2.options.0.text": {
+  "en": "Either: they cost the same",
+  "t": "Egal welche: Sie kosten dasselbe"
+ },
+ "lessons.2.steps.2.options.1.text": {
+  "en": "The one where nobody rides more than 30 minutes",
+  "t": "Die, auf der niemand länger als 30 Minuten fährt"
+ },
+ "lessons.2.steps.2.options.2.text": {
+  "en": "Whichever the driver prefers",
+  "t": "Die, die der Fahrer bevorzugt"
+ },
+ "lessons.2.steps.2.explain": {
+  "en": "When two plans cost the same, a second goal can decide between them. Here the longest ride is that goal: a route where nobody rides more than thirty minutes is fairer at no extra cost. Even the direction of the same loop can change the longest ride.",
+  "t": "Wenn zwei Pläne gleich viel kosten, kann ein zweites Ziel zwischen ihnen entscheiden. Hier ist die längste Fahrt dieses Ziel: Eine Route, auf der niemand mehr als dreißig Minuten fährt, ist ohne Mehrkosten fairer. Sogar die Richtung derselben Runde kann die längste Fahrt verändern."
+ },
+ "lessons.2.steps.3.prompt": {
+  "en": "When two roads in a bus route cross each other, a 2-opt swap can always make the route shorter.",
+  "t": "Wenn sich zwei Straßen einer Buslinie kreuzen, kann ein 2-opt-Tausch die Route immer kürzer machen."
+ },
+ "lessons.2.steps.3.explain": {
+  "en": "Replacing the two crossing roads by the two that don’t cross (reversing the stretch between them) is always shorter on a flat map, like the two diagonals of a shape against two of its sides. That’s why 2-opt untangles routes.",
+  "t": "Die zwei sich kreuzenden Straßen durch die zwei zu ersetzen, die sich nicht kreuzen (das Stück dazwischen umkehren), ist auf einer flachen Karte immer kürzer, wie die beiden Diagonalen einer Form gegenüber zwei ihrer Seiten. Deshalb entwirrt 2-opt Routen."
+ },
+ "lessons.2.steps.4.prompt": {
+  "en": "What does this program print?",
+  "t": "Was gibt dieses Programm aus?"
+ },
+ "lessons.2.steps.4.options.0.text": {
+  "en": "[0, 3, 2, 1, 4]",
+  "t": "[0, 3, 2, 1, 4]"
+ },
+ "lessons.2.steps.4.options.1.text": {
+  "en": "[4, 3, 2, 1, 0]",
+  "t": "[4, 3, 2, 1, 0]"
+ },
+ "lessons.2.steps.4.options.2.text": {
+  "en": "[0, 1, 3, 2, 4]",
+  "t": "[0, 1, 3, 2, 4]"
+ },
+ "lessons.2.steps.4.explain": {
+  "en": "route[1:4] is [1, 2, 3]; reversed it is [3, 2, 1]. The school (0) stays first and village 4 stays last: [0, 3, 2, 1, 4]. That is one 2-opt swap: the roads 0–1 and 3–4 become 0–3 and 1–4.",
+  "t": "route[1:4] ist [1, 2, 3]; umgekehrt ist es [3, 2, 1]. Die Schule (0) bleibt an erster und Dorf 4 an letzter Stelle: [0, 3, 2, 1, 4]. Das ist ein 2-opt-Tausch: Die Straßen 0–1 und 3–4 werden zu 0–3 und 1–4."
+ },
+ "lessons.2.steps.5.prompt": {
+  "en": "Try it: in “The school bus route”, press Run and watch nearest neighbour (34.6 km), then the 2-opt swaps. Press “Find the best route” to compare. Then press “New map” several times and run again: find a map where 2-opt stops before the best route, and describe the change it would need.",
+  "t": "Probier es aus: Drücke in „Die Schulbusroute“ auf „Start“ und sieh dir das Nächster-Nachbar-Verfahren (34,6 km) an, dann die 2-opt-Tausche. Drücke „Beste Route finden“, um zu vergleichen. Drücke dann mehrmals auf „Neue Karte“ und starte erneut: Finde eine Karte, auf der 2-opt vor der besten Route anhält, und beschreibe die Änderung, die dafür nötig wäre."
+ },
+ "lessons.2.steps.6.prompt": {
+  "en": "d[a][b] is the distance in km between places a and b; 0 is the school. Write nearest neighbour: keep adding the closest place not yet in route until all 5 are in. The program prints the route, its length (with the drive back) and how far the first village rides.",
+  "t": "d[a][b] ist die Entfernung in km zwischen den Orten a und b; 0 ist die Schule. Schreibe das Nächster-Nachbar-Verfahren: Füge immer den nächstgelegenen Ort hinzu, der noch nicht in route ist, bis alle 5 drin sind. Das Programm gibt die Route, ihre Länge (mit der Rückfahrt) und die Strecke des ersten Dorfes aus."
+ },
+ "lessons.2.steps.6.tests.0.hint": {
+  "en": "From the school the closest place is 2 (1 km); from 2 it is 4 (3 km). Always the closest one still left.",
+  "t": "Von der Schule aus ist der nächste Ort 2 (1 km); von 2 aus ist es 4 (3 km). Immer der nächstgelegene von den übrigen."
+ },
+ "lessons.2.steps.6.hints.0": {
+  "en": "while len(route) < 5:",
+  "t": "while len(route) < 5:"
+ },
+ "lessons.2.steps.6.hints.1": {
+  "en": "left = the places not yet in route",
+  "t": "left = die Orte, die noch nicht in route sind"
+ },
+ "lessons.2.steps.6.hints.2": {
+  "en": "route.append(min(left, key=lambda v: d[route[-1]][v]))",
+  "t": "route.append(min(left, key=lambda v: d[route[-1]][v]))"
+ },
+ "lessons.2.steps.6.explain": {
+  "en": "Nearest neighbour goes 0 → 2 → 4 → 3 → 1 and back: 19 km, and the first village (2) rides 18 of them because it is picked up after only 1 km. The best route is 16 km, and driven the right way its longest ride is 14. The quick rule is fast but long, and hard on the first stop. This plain Python runs the same in Colab.",
+  "t": "Das Nächster-Nachbar-Verfahren fährt 0 → 2 → 4 → 3 → 1 und zurück: 19 km, und das erste Dorf (2) fährt 18 davon, weil es nach nur 1 km abgeholt wird. Die beste Route ist 16 km, und in die richtige Richtung gefahren ist ihre längste Fahrt 14. Die schnelle Regel ist schnell, aber lang und hart für die erste Haltestelle. Dieses schlichte Python läuft in Colab genauso."
+ },
+ "lessons.2.steps.7.prompt": {
+  "en": "Put the lines in order: a function that returns a route’s length, including the drive back to the start.",
+  "t": "Bring die Zeilen in die richtige Reihenfolge: eine Funktion, die die Länge einer Route zurückgibt, einschließlich der Rückfahrt zum Start."
+ },
+ "lessons.2.steps.7.explain": {
+  "en": "The % len(route) makes the last stop’s next place the first one, so the drive back is counted. route[i + 1] would run off the end of the list on the last stop.",
+  "t": "Durch % len(route) ist der nächste Ort nach der letzten Haltestelle der erste, also wird die Rückfahrt mitgezählt. route[i + 1] würde bei der letzten Haltestelle über das Ende der Liste hinauslaufen."
+ },
+ "lessons.2.steps.8.prompt": {
+  "en": "What do you say?",
+  "t": "Was sagst du?"
+ },
+ "lessons.2.steps.8.who": {
+  "en": "Your student council",
+  "t": "Eure Schülervertretung"
+ },
+ "lessons.2.steps.8.initial": {
+  "en": "S",
+  "t": "S"
+ },
+ "lessons.2.steps.8.situation": {
+  "en": "To save fuel, a council member suggests the bus skips the smallest village, where only two students live. They would walk 3 km to the next stop, on a road with no pavement.",
+  "t": "Um Treibstoff zu sparen, schlägt ein Mitglied der Vertretung vor, dass der Bus das kleinste Dorf überspringt, in dem nur zwei Schüler:innen wohnen. Sie müssten 3 km bis zur nächsten Haltestelle laufen, auf einer Straße ohne Gehweg."
+ },
+ "lessons.2.steps.8.choices.0.label": {
+  "en": "“Let’s work out what the detour really costs, compare it with the walk, and ask the two families.”",
+  "t": "„Lass uns ausrechnen, was der Umweg wirklich kostet, ihn mit dem Fußweg vergleichen und die beiden Familien fragen.“"
+ },
+ "lessons.2.steps.8.choices.0.consequence": {
+  "en": "Your route program can give the extra kilometres in a minute. Seen next to a 3 km walk on a dangerous road, the choice is clearer, and the families have a say.",
+  "t": "Dein Routenprogramm kann dir die zusätzlichen Kilometer in einer Minute nennen. Neben einem 3 km langen Fußweg auf einer gefährlichen Straße wird die Wahl klarer, und die Familien haben ein Mitspracherecht."
+ },
+ "lessons.2.steps.8.choices.1.label": {
+  "en": "“Skip it: two students against fuel for everyone.”",
+  "t": "„Überspringt es: zwei Schüler:innen gegen den Treibstoff für alle.“"
+ },
+ "lessons.2.steps.8.choices.1.consequence": {
+  "en": "The total looks better, but two students now carry all the cost, and a risky walk. A shortest route that leaves people out isn’t the same problem any more.",
+  "t": "Die Summe sieht besser aus, aber zwei Schüler:innen tragen jetzt alle Kosten und einen riskanten Fußweg. Eine kürzeste Route, die Menschen ausschließt, ist nicht mehr dasselbe Problem."
+ },
+ "lessons.2.steps.8.choices.2.label": {
+  "en": "“Let the two students decide on their own.”",
+  "t": "„Lass die beiden Schüler:innen allein entscheiden.“"
+ },
+ "lessons.2.steps.8.choices.2.consequence": {
+  "en": "Their voice matters, but the bus serves everyone and safety is the school’s job too. Decide together, with the numbers on the table.",
+  "t": "Ihre Stimme zählt, aber der Bus dient allen, und Sicherheit ist auch Aufgabe der Schule. Entscheidet gemeinsam, mit den Zahlen auf dem Tisch."
+ },
+ "lessons.2.steps.8.explain": {
+  "en": "Put the real cost of the detour beside the risk of the walk, and ask the families.",
+  "t": "Stell die echten Kosten des Umwegs neben das Risiko des Fußwegs und frag die Familien."
+ },
+ "lessons.2.steps.9.prompt": {
+  "en": "Think of a route you take often. Is it the shortest, the safest or the one that suits others? What would you change, and who would that affect?",
+  "t": "Denk an eine Strecke, die du oft nimmst. Ist sie die kürzeste, die sicherste oder die, die anderen entgegenkommt? Was würdest du ändern, und wen würde das betreffen?"
+ },
+ "lessons.2.steps.9.placeholder": {
+  "en": "For example: “I go round by the market, not the river path. It’s longer, but there are people and lights.”",
+  "t": "Zum Beispiel: „Ich gehe außen herum am Markt vorbei, nicht über den Flussweg. Er ist länger, aber dort sind Leute und Lichter.“"
+ },
+ "lessons.2.steps.10.prompt": {
+  "en": "Project: A fairer round trip",
+  "t": "Projekt: Eine fairere Rundreise"
+ },
+ "lessons.2.steps.10.task": {
+  "en": "Choose five or six places around your home or school and estimate the distance between each pair (a table like d). Plan a round trip from one place by nearest neighbour, then improve it with 2-opt on paper or with your program. For the final route, work out how far someone picked up at each stop would ride, in both directions, and choose the direction where the longest ride is shortest.",
+  "t": "Such fünf oder sechs Orte rund um dein Zuhause oder deine Schule aus und schätze die Entfernung zwischen je zwei davon (eine Tabelle wie d). Plane von einem Ort aus eine Rundreise nach dem Nächster-Nachbar-Verfahren und verbessere sie dann mit 2-opt auf Papier oder mit deinem Programm. Berechne für die endgültige Route, wie weit jemand fahren würde, der an jeder Haltestelle abgeholt wird, in beide Richtungen, und wähle die Richtung, in der die längste Fahrt am kürzesten ist."
+ },
+ "lessons.2.steps.10.deliverable": {
+  "en": "Your distance table (made-up names are fine), the route before and after 2-opt with their lengths, and the longest ride in each direction.",
+  "t": "Deine Entfernungstabelle (erfundene Namen sind in Ordnung), die Route vor und nach 2-opt mit ihren Längen und die längste Fahrt in jeder Richtung."
+ },
+ "lessons.2.steps.10.rubric.0.criterion": {
+  "en": "I can: build a route with nearest neighbour and compute its length.",
+  "t": "Ich kann: eine Route mit dem Nächster-Nachbar-Verfahren bauen und ihre Länge berechnen."
+ },
+ "lessons.2.steps.10.rubric.1.criterion": {
+  "en": "I can: improve a route with a 2-opt swap and explain why it is shorter.",
+  "t": "Ich kann: eine Route mit einem 2-opt-Tausch verbessern und erklären, warum sie kürzer ist."
+ },
+ "lessons.2.steps.10.rubric.2.criterion": {
+  "en": "I can: judge a route by its longest ride as well as its length.",
+  "t": "Ich kann: eine Route außer nach ihrer Länge auch nach ihrer längsten Fahrt beurteilen."
+ },
+ "lessons.2.slides.0.title": {
+  "en": "The bus route",
+  "t": "Die Buslinie"
+ },
+ "lessons.2.slides.0.narration": {
+  "en": "Is this really the shortest route, and why does the same village always get on first?",
+  "t": "Ist das wirklich die kürzeste Route, und warum steigt immer dasselbe Dorf zuerst ein?"
+ },
+ "lessons.2.slides.0.note": {
+  "en": "Optimization · Level 3 · Lesson 3",
+  "t": "Optimierung · Niveau 3 · Lektion 3"
+ },
+ "lessons.2.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "In dieser Lektion wirst du"
+ },
+ "lessons.2.slides.1.bullets": {
+  "en": [
+   "Explain why the number of routes explodes.",
+   "Write nearest neighbour in Python and improve a route with 2-opt.",
+   "Judge a route by its length and its longest ride."
+  ],
+  "t": [
+   "Erklären, warum die Zahl der Routen explodiert.",
+   "Das Nächster-Nachbar-Verfahren in Python schreiben und eine Route mit 2-opt verbessern.",
+   "Eine Route nach ihrer Länge und ihrer längsten Fahrt beurteilen."
+  ]
+ },
+ "lessons.2.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Kernideen"
+ },
+ "lessons.2.slides.2.bullets": {
+  "en": [
+   "n! ÷ 2 routes",
+   "Nearest neighbour: fast, greedy",
+   "2-opt: reverse a stretch",
+   "A local best",
+   "Longest ride, both directions"
+  ],
+  "t": [
+   "n! ÷ 2 Routen",
+   "Nächster Nachbar: schnell, greedy",
+   "2-opt: ein Stück umkehren",
+   "Ein lokales Optimum",
+   "Längste Fahrt, in beide Richtungen"
+  ]
+ },
+ "lessons.2.slides.3.title": {
+  "en": "Activity: A fairer round trip",
+  "t": "Aktivität: Eine fairere Rundreise"
+ },
+ "lessons.2.slides.3.bullets": {
+  "en": [
+   "Map (5 min): Five places and their distances.",
+   "Build (5 min): Nearest neighbour; add it up.",
+   "Improve (5 min): Find a crossing; swap it.",
+   "Ride (5 min): Longest ride, both directions."
+  ],
+  "t": [
+   "Karte (5 Min.): Fünf Orte und ihre Entfernungen.",
+   "Bauen (5 Min.): Nächster Nachbar; addiere es.",
+   "Verbessern (5 Min.): Such eine Kreuzung; tausche sie.",
+   "Fahrt (5 Min.): Längste Fahrt, in beide Richtungen."
+  ]
+ },
+ "lessons.2.slides.3.details": {
+  "en": [
+   "Map (5 min): Draw five places as dots and write a rough distance between every pair, in a table like d.",
+   "Build (5 min): From your starting place, always go to the closest place not yet visited, then back. Draw the route and add up its length.",
+   "Improve (5 min): If two roads cross, reverse the stretch between them and add up again. Repeat while it helps.",
+   "Ride (5 min): For each stop, add the distance from there to the end. Do it for both directions and choose the one with the shorter longest ride."
+  ],
+  "t": [
+   "Karte (5 Min.): Zeichne fünf Orte als Punkte und schreib zwischen jedes Paar eine grobe Entfernung, in eine Tabelle wie d.",
+   "Bauen (5 Min.): Fahr von deinem Startort immer zum nächstgelegenen noch nicht besuchten Ort, dann zurück. Zeichne die Route und addiere ihre Länge.",
+   "Verbessern (5 Min.): Wenn sich zwei Straßen kreuzen, kehre das Stück dazwischen um und addiere neu. Wiederhole, solange es hilft.",
+   "Fahrt (5 Min.): Addiere für jede Haltestelle die Entfernung von dort bis zum Ende. Tu das für beide Richtungen und wähle die mit der kürzeren längsten Fahrt."
+  ]
+ },
+ "lessons.2.slides.3.note": {
+  "en": "Distances can be minutes of walking. Use made-up names if you prefer not to show real places.",
+  "t": "Entfernungen können Gehminuten sein. Nimm erfundene Namen, wenn du keine echten Orte zeigen möchtest."
+ },
+ "lessons.2.slides.3.narration": {
+  "en": "Shortest for the bus, and fair for the riders.",
+  "t": "Kürzeste Strecke für den Bus, und fair für die Fahrgäste."
+ },
+ "lessons.2.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lass uns diskutieren"
+ },
+ "lessons.2.slides.4.bullets": {
+  "en": [
+   "Why does nearest neighbour often end with a long leg?",
+   "How can 2-opt stop before the best route?",
+   "Should the bus ever skip a stop to save fuel?"
+  ],
+  "t": [
+   "Warum endet das Nächster-Nachbar-Verfahren oft mit einer langen Teilstrecke?",
+   "Wie kann 2-opt vor der besten Route anhalten?",
+   "Sollte der Bus je eine Haltestelle überspringen, um Treibstoff zu sparen?"
+  ]
+ },
+ "lessons.2.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.2.slides.5.bullets": {
+  "en": [
+   "Draw a route with a crossing + the route after one 2-opt swap."
+  ],
+  "t": [
+   "Zeichne eine Route mit einer Kreuzung + die Route nach einem 2-opt-Tausch."
+  ]
+ },
+ "lessons.2.slides.5.narration": {
+  "en": "Build it fast, improve it, and check who rides longest.",
+  "t": "Schnell bauen, verbessern, und prüfen, wer am längsten fährt."
+ },
+ "lessons.2.kit.0.title": {
+  "en": "Slides to revise: The bus route",
+  "t": "Folien zum Wiederholen: Die Buslinie"
+ },
+ "lessons.2.kit.1.title": {
+  "en": "Activity sheet: The bus route",
+  "t": "Arbeitsblatt: Die Buslinie"
+ },
+ "lessons.2.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "Das Lektionsvideo (240p, zum Wiederansehen oder Teilen)"
+ },
+ "lessons.3.title": {
+  "en": "Timetables with CP-SAT",
+  "t": "Zeitpläne mit CP-SAT"
+ },
+ "lessons.3.tryTomorrow": {
+  "en": "Model a week of your own (your study plan, or your family’s chores) with the same few lines: one variable per task for its day, a rule for anything that can’t share a day, and any fixed days. Run it, look at who gets the worst slot, then add a rule to share it out and run it again.",
+  "t": "Modelliere eine eigene Woche (deinen Lernplan oder die Hausarbeiten deiner Familie) mit denselben paar Zeilen: eine Variable pro Aufgabe für ihren Tag, eine Regel für alles, was sich keinen Tag teilen kann, und alle festen Tage. Starte es, sieh nach, wer den schlechtesten Platz bekommt, füge dann eine Regel hinzu, die ihn verteilt, und starte es noch einmal."
+ },
+ "lessons.3.materials": {
+  "en": [
+   "Paper and a pen",
+   "A list of clubs, tasks or subjects and who takes part in each",
+   "Optional: a phone with Darsi to run your model"
+  ],
+  "t": [
+   "Papier und ein Stift",
+   "Eine Liste von AGs, Aufgaben oder Fächern und wer an welcher teilnimmt",
+   "Optional: ein Handy mit Darsi, um dein Modell auszuführen"
+  ]
+ },
+ "lessons.3.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.3.steps.0.title": {
+  "en": "Timetables with CP-SAT",
+  "t": "Zeitpläne mit CP-SAT"
+ },
+ "lessons.3.steps.0.chapters.0.label": {
+  "en": "Four clubs, three afternoons",
+  "t": "Vier AGs, drei Nachmittage"
+ },
+ "lessons.3.steps.0.chapters.1.label": {
+  "en": "The model",
+  "t": "Das Modell"
+ },
+ "lessons.3.steps.0.chapters.2.label": {
+  "en": "How the solver searches",
+  "t": "Wie der Solver sucht"
+ },
+ "lessons.3.steps.0.chapters.3.label": {
+  "en": "Who gets the bad slot?",
+  "t": "Wer bekommt den schlechten Platz?"
+ },
+ "lessons.3.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.3.steps.0.checkpoint.question.prompt": {
+  "en": "The club model has no goal, and the solver says OPTIMAL. What does that mean?",
+  "t": "Das AG-Modell hat kein Ziel, und der Solver sagt OPTIMAL. Was heißt das?"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.0.text": {
+  "en": "It found the best timetable for everyone",
+  "t": "Er hat den besten Zeitplan für alle gefunden"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.1.text": {
+  "en": "It found a timetable that keeps every rule",
+  "t": "Er hat einen Zeitplan gefunden, der jede Regel einhält"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.2.text": {
+  "en": "It tried all 81 plans",
+  "t": "Er hat alle 81 Pläne ausprobiert"
+ },
+ "lessons.3.steps.0.checkpoint.question.explain": {
+  "en": "Without a goal there is nothing to make best, so OPTIMAL only says the solver found a timetable that keeps every rule you wrote. It didn’t try all 81 plans (it crossed most out), and it knows nothing about what students would like.",
+  "t": "Ohne Ziel gibt es nichts, was bestmöglich gemacht werden soll, also sagt OPTIMAL nur, dass der Solver einen Zeitplan gefunden hat, der jede Regel einhält, die du geschrieben hast. Er hat nicht alle 81 Pläne ausprobiert (er hat die meisten gestrichen), und er weiß nichts darüber, was Schüler:innen gefallen würde."
+ },
+ "lessons.3.steps.0.transcript": {
+  "en": "Four clubs, three afternoons, and one student who’s in three of them. Every term we argue about which club meets when. This term, let’s let a solver search. Today: timetables with CP-SAT, from Google’s OR-Tools. Each club gets a variable: its day, from one to three. Each student’s clubs must all be on different days. And the football field is busy on day three. That’s the whole model. In Python, that’s a dictionary of day variables, one all-different rule per student, and one line for the field. The solver doesn’t try all eighty-one plans. It crosses out days that can’t work, guesses only when it’s stuck, and undoes any guess that hits a dead end. That’s propagation and search. In the lab’s school timetable, propagation and search need eight guesses. Plain backtracking needs three hundred and eighty-nine. Add one rule, and the search needs only two. Sometimes the answer is INFEASIBLE, and that’s a proof, not a failure. Sara is in chess, drama and coding, so she needs three different days. Add a rule that no club meets on day three, and only two days are left. The solver proves no timetable exists. Quick check! Our club model has no goal, and the solver says OPTIMAL. What does OPTIMAL mean here? With no goal, OPTIMAL just means a timetable that keeps every rule. Not the fairest, and not the one students would pick. Only what you wrote down. So look at who carries the cost. If drama always gets the last afternoon before the holiday, the same students always miss it. Write fairness down, as a rule like rotating days each term, and solve again. In the app, open “Build the timetable”. Press One step to watch propagation, then Run. Tick the extra rules one at a time, and watch the guesses fall, then the proof. Your turn. Your club model says INFEASIBLE. What should you do first? Find the rules that clash, and ask the people involved which one can bend. Remember: a variable for each choice, a line for each rule, and the solver crosses out and searches. INFEASIBLE is a proof. And OPTIMAL only keeps the rules you wrote. Try it yourself: model your study week, or your family’s chores, with the same few lines. Who gets the worst slot? Add a rule to share it, and solve again.",
+  "t": "Vier Clubs, drei Nachmittage und eine Person, die in dreien davon ist. Jedes Halbjahr streiten wir, welcher Club wann trifft. Lassen wir diesmal einen Solver suchen. Heute: Stundenpläne mit CP-SAT, aus Googles OR-Tools. Jeder Club bekommt eine Variable: seinen Tag, von eins bis drei. Die Clubs jeder Person müssen alle an verschiedenen Tagen liegen. Und der Fußballplatz ist an Tag drei belegt. Das ist das ganze Modell. In Python ist das ein Dictionary von Tagesvariablen, eine Alle-verschieden-Regel pro Person und eine Zeile für den Platz. Der Solver probiert nicht alle einundachtzig Pläne aus. Er streicht Tage, die nicht gehen, rät nur, wenn er feststeckt, und nimmt jeden Tipp zurück, der in einer Sackgasse landet. Das ist Propagation und Suche. Beim Schulstundenplan im Lab braucht Propagation mit Suche acht Tipps. Reines Backtracking braucht dreihundertneunundachtzig. Füge eine Regel hinzu, und die Suche braucht nur noch zwei. Manchmal lautet die Antwort INFEASIBLE, und das ist ein Beweis, kein Scheitern. Sara ist in Schach, Theater und Coding, also braucht sie drei verschiedene Tage. Füge eine Regel hinzu, dass kein Club an Tag drei trifft, und es bleiben nur zwei Tage übrig. Der Solver beweist, dass es keinen Stundenplan gibt. Kurzer Check! Unser Club-Modell hat kein Ziel, und der Solver sagt OPTIMAL. Was bedeutet OPTIMAL hier? Ohne Ziel heißt OPTIMAL nur ein Stundenplan, der jede Regel einhält. Nicht der fairste und nicht der, den Schüler:innen wählen würden. Nur das, was du aufgeschrieben hast. Sieh also, wer die Kosten trägt. Wenn Theater immer den letzten Nachmittag vor den Ferien bekommt, verpassen immer dieselben Schüler:innen ihn. Schreib Fairness auf, als Regel wie Tage, die sich jedes Halbjahr abwechseln, und löse noch einmal. Öffne in der App „Den Stundenplan bauen“. Drück Ein Schritt, um die Propagation zu sehen, dann Start. Hake die zusätzlichen Regeln eine nach der anderen an und sieh zu, wie die Tipps sinken, dann der Beweis. Du bist dran. Dein Club-Modell sagt INFEASIBLE. Was solltest du zuerst tun? Finde die Regeln, die sich widersprechen, und frag die Beteiligten, welche nachgeben kann. Denk dran: eine Variable für jede Entscheidung, eine Zeile für jede Regel, und der Solver streicht und sucht. INFEASIBLE ist ein Beweis. Und OPTIMAL hält nur die Regeln ein, die du geschrieben hast. Probier es selbst: Modelliere deine Lernwoche oder die Aufgaben deiner Familie mit denselben wenigen Zeilen. Wer bekommt das schlechteste Zeitfenster? Füge eine Regel hinzu, um es zu teilen, und löse noch einmal."
+ },
+ "lessons.3.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.3.steps.1.title": {
+  "en": "Say the rules; let the solver search",
+  "t": "Sag die Regeln; lass den Solver suchen"
+ },
+ "lessons.3.steps.1.body": {
+  "en": "Four after-school clubs (chess, football, drama and coding) must each meet on one of three afternoons. Some students belong to several clubs, so those clubs can’t share a day, and the football field is busy on day 3. Instead of writing a search yourself, you can describe the problem as a model and let a solver find a timetable. Google’s OR-Tools includes CP-SAT, a constraint solver; Darsi runs a small copy of it on your phone, and the same program runs on the real one on a computer or in Colab.\n\nThe model has three parts. Each club gets a variable, its day, with a domain of 1 to 3: day = {c: m.new_int_var(1, 3, c) for c in clubs}. Each student’s clubs must all be on different days: one m.add_all_different([...]) per student. And the field gives one more line: m.add(day[\"football\"] <= 2), with the expression on the left of the comparison. Then solver.solve(m) returns a status, and solver.value(day[c]) gives each club’s day.\n\nThe solver does not try all 3 × 3 × 3 × 3 = 81 plans. It propagates: it crosses out days that can’t work (if Sara’s chess is on day 1, her drama and coding can’t be). When nothing more can be crossed out, it guesses a day for the club with the fewest choices left, propagates again, and undoes any guess that leads to a dead end. In the lab’s school timetable, that takes 8 guesses where plain backtracking needs 389; one more rule brings it down to 2.\n\nRead the status carefully. With no goal, OPTIMAL means only that every rule you wrote is kept: not the fairest timetable, and not the one students would choose. INFEASIBLE is a proof that no timetable keeps all the rules: Sara is in three clubs, so she needs three different days, and if you add “no club on day 3” only two are left. Running it again won’t change that; find the rules that clash and decide with the people involved which one can bend.\n\nFinally, ask who carries the cost. If drama always meets on the last afternoon before the holidays, the same students always miss it. Fairness can be written down too: as a rule (rotate the days each term), or as a goal (as few students as possible on their least wanted day), and then solved again.",
+  "t": "Vier Nachmittags-AGs (Schach, Fußball, Theater und Coding) sollen sich jeweils an einem von drei Nachmittagen treffen. Manche Schüler:innen gehören mehreren AGs an, also können diese AGs sich keinen Tag teilen, und der Fußballplatz ist an Tag 3 belegt. Statt selbst eine Suche zu schreiben, kannst du das Problem als Modell beschreiben und einen Solver einen Zeitplan finden lassen. Googles OR-Tools enthält CP-SAT, einen Constraint-Solver; Darsi führt eine kleine Kopie davon auf deinem Handy aus, und dasselbe Programm läuft mit dem echten auf einem Computer oder in Colab.\n\nDas Modell hat drei Teile. Jede AG bekommt eine Variable, ihren Tag, mit einem Wertebereich von 1 bis 3: day = {c: m.new_int_var(1, 3, c) for c in clubs}. Die AGs jeder Schülerin und jedes Schülers müssen alle an verschiedenen Tagen liegen: ein m.add_all_different([...]) pro Schüler:in. Und der Platz gibt eine weitere Zeile: m.add(day[\"football\"] <= 2), mit dem Ausdruck links vom Vergleich. Dann liefert solver.solve(m) einen Status, und solver.value(day[c]) gibt den Tag jeder AG.\n\nDer Solver probiert nicht alle 3 × 3 × 3 × 3 = 81 Pläne aus. Er propagiert: Er streicht Tage, die nicht gehen können (wenn Saras Schach an Tag 1 ist, können ihre Theater-AG und ihr Coding es nicht sein). Wenn sich nichts mehr streichen lässt, rät er einen Tag für die AG mit den wenigsten verbleibenden Möglichkeiten, propagiert erneut und nimmt jeden Tipp zurück, der in eine Sackgasse führt. Im Stundenplan-Lab braucht das 8 Tipps, wo einfaches Backtracking 389 braucht; mit einer weiteren Regel sind es nur noch 2.\n\nLies den Status sorgfältig. Ohne Ziel heißt OPTIMAL nur, dass jede Regel, die du geschrieben hast, eingehalten wird: nicht der fairste Zeitplan und nicht der, den die Schüler:innen wählen würden. INFEASIBLE ist ein Beweis, dass kein Zeitplan alle Regeln einhält: Sara ist in drei AGs, also braucht sie drei verschiedene Tage, und wenn du „keine AG an Tag 3“ hinzufügst, bleiben nur zwei übrig. Erneutes Starten ändert daran nichts; finde die Regeln, die sich widersprechen, und entscheide mit den Beteiligten, welche nachgeben kann.\n\nFrag schließlich, wer die Kosten trägt. Wenn die Theater-AG immer am letzten Nachmittag vor den Ferien stattfindet, verpassen immer dieselben Schüler:innen sie. Auch Fairness lässt sich aufschreiben: als Regel (die Tage jedes Halbjahr rotieren) oder als Ziel (so wenige Schüler:innen wie möglich an ihrem unbeliebtesten Tag) und dann erneut lösen."
+ },
+ "lessons.3.steps.1.keyTerms.0.term": {
+  "en": "Domain",
+  "t": "Wertebereich"
+ },
+ "lessons.3.steps.1.keyTerms.0.def": {
+  "en": "The values a variable may take, such as days 1 to 3 for a club.",
+  "t": "Die Werte, die eine Variable annehmen darf, etwa die Tage 1 bis 3 für eine AG."
+ },
+ "lessons.3.steps.1.keyTerms.1.term": {
+  "en": "All-different constraint",
+  "t": "All-different-Bedingung"
+ },
+ "lessons.3.steps.1.keyTerms.1.def": {
+  "en": "A rule that a group of variables must all take different values, such as a student’s clubs on different days.",
+  "t": "Eine Regel, nach der eine Gruppe von Variablen lauter verschiedene Werte annehmen muss, etwa die AGs einer Schülerin oder eines Schülers an verschiedenen Tagen."
+ },
+ "lessons.3.steps.1.keyTerms.2.term": {
+  "en": "Propagation and search",
+  "t": "Propagierung und Suche"
+ },
+ "lessons.3.steps.1.keyTerms.2.def": {
+  "en": "Crossing out values that can’t work, then guessing only when stuck and undoing dead ends.",
+  "t": "Werte streichen, die nicht gehen können, dann nur raten, wenn man feststeckt, und Sackgassen zurücknehmen."
+ },
+ "lessons.3.steps.1.keyTerms.3.term": {
+  "en": "INFEASIBLE",
+  "t": "INFEASIBLE"
+ },
+ "lessons.3.steps.1.keyTerms.3.def": {
+  "en": "A proof that no answer keeps all the rules.",
+  "t": "Ein Beweis, dass keine Antwort alle Regeln einhält."
+ },
+ "lessons.3.steps.2.prompt": {
+  "en": "Your club model says INFEASIBLE. What should you do first?",
+  "t": "Dein AG-Modell sagt INFEASIBLE. Was solltest du zuerst tun?"
+ },
+ "lessons.3.steps.2.options.0.text": {
+  "en": "Run it again: it might work next time",
+  "t": "Noch einmal starten: Vielleicht klappt es beim nächsten Mal"
+ },
+ "lessons.3.steps.2.options.1.text": {
+  "en": "Find which rules clash, and decide with people which can bend",
+  "t": "Finden, welche Regeln sich widersprechen, und mit den Leuten entscheiden, welche nachgeben kann"
+ },
+ "lessons.3.steps.2.options.2.text": {
+  "en": "Delete rules until it works",
+  "t": "Regeln löschen, bis es funktioniert"
+ },
+ "lessons.3.steps.2.explain": {
+  "en": "INFEASIBLE is the solver’s proof that no timetable keeps all the rules, so running it again gives the same answer. Find the rules that clash (here, Sara’s three clubs and only two free days), then decide with the people involved which rule to relax, instead of deleting rules at random.",
+  "t": "INFEASIBLE ist der Beweis des Solvers, dass kein Zeitplan alle Regeln einhält, also gibt erneutes Starten dieselbe Antwort. Finde die Regeln, die sich widersprechen (hier Saras drei AGs und nur zwei freie Tage), und entscheide dann mit den Beteiligten, welche Regel gelockert wird, statt Regeln wahllos zu löschen."
+ },
+ "lessons.3.steps.3.prompt": {
+  "en": "Which of these can you write as a rule (a constraint) in the club model? Choose all that apply.",
+  "t": "Was davon kannst du im AG-Modell als Regel (als Bedingung) schreiben? Wähle alles Zutreffende."
+ },
+ "lessons.3.steps.3.options.0.text": {
+  "en": "Sara’s clubs are on different days",
+  "t": "Saras AGs liegen an verschiedenen Tagen"
+ },
+ "lessons.3.steps.3.options.1.text": {
+  "en": "Football is not on day 3",
+  "t": "Fußball ist nicht an Tag 3"
+ },
+ "lessons.3.steps.3.options.2.text": {
+  "en": "Coding meets before drama",
+  "t": "Coding findet vor Theater statt"
+ },
+ "lessons.3.steps.3.options.3.text": {
+  "en": "The timetable everyone likes best",
+  "t": "Der Zeitplan, der allen am besten gefällt"
+ },
+ "lessons.3.steps.3.options.4.text": {
+  "en": "Chess and drama meet on the same day",
+  "t": "Schach und Theater finden am selben Tag statt"
+ },
+ "lessons.3.steps.3.explain": {
+  "en": "Each is one line: add_all_different for Sara, day[\"football\"] <= 2, day[\"coding\"] < day[\"drama\"], and day[\"chess\"] == day[\"drama\"]. “What everyone likes best” isn’t a rule: you would need people’s preferences as numbers and a goal.",
+  "t": "Jede davon ist eine Zeile: add_all_different für Sara, day[\"football\"] <= 2, day[\"coding\"] < day[\"drama\"] und day[\"chess\"] == day[\"drama\"]. „Was allen am besten gefällt“ ist keine Regel: Dafür bräuchtest du die Vorlieben der Leute als Zahlen und ein Ziel."
+ },
+ "lessons.3.steps.4.prompt": {
+  "en": "With four clubs and three afternoons there are 81 possible plans, so the solver checks all 81.",
+  "t": "Bei vier AGs und drei Nachmittagen gibt es 81 mögliche Pläne, also prüft der Solver alle 81."
+ },
+ "lessons.3.steps.4.explain": {
+  "en": "The solver crosses out impossible days first and guesses only when stuck, so it usually looks at a tiny part of the plans. In the lab, propagation and search need 8 guesses where plain backtracking needs 389.",
+  "t": "Der Solver streicht zuerst unmögliche Tage und rät nur, wenn er feststeckt, also schaut er meist nur einen winzigen Teil der Pläne an. Im Lab brauchen Propagierung und Suche 8 Tipps, wo einfaches Backtracking 389 braucht."
+ },
+ "lessons.3.steps.5.prompt": {
+  "en": "Try it: in “Build the timetable”, press One step a few times to watch propagation, then Run and count the guesses. Choose “Plain backtracking” and Run again. Then tick “The art room holds an exam in period 3”, and finally “The lab is busy in period 1” too: what does the search prove, and why?",
+  "t": "Probier es aus: Drücke in „Zeitplan bauen“ ein paar Mal auf „Ein Schritt“, um die Propagierung zu beobachten, dann auf „Start“ und zähle die Tipps. Wähle „Einfaches Backtracking“ und starte noch einmal. Kreuze dann „Im Kunstraum ist in der 3. Stunde eine Prüfung“ an und zuletzt auch „Das Labor ist in der 1. Stunde belegt“: Was beweist die Suche, und warum?"
+ },
+ "lessons.3.steps.6.prompt": {
+  "en": "Four clubs meet on days 1 to 3, and the football field is busy on day 3. Each list in pupils is one student’s clubs. Add the rule that each student’s clubs are all on different days, then run it.",
+  "t": "Vier AGs treffen sich an den Tagen 1 bis 3, und der Fußballplatz ist an Tag 3 belegt. Jede Liste in pupils sind die AGs einer Schülerin oder eines Schülers. Füge die Regel hinzu, dass die AGs jeder Schülerin und jedes Schülers alle an verschiedenen Tagen liegen, und starte es dann."
+ },
+ "lessons.3.steps.6.tests.0.hint": {
+  "en": "Without the rule, every club can sit on day 1. One all-different per student.",
+  "t": "Ohne die Regel kann jede AG an Tag 1 liegen. Ein all-different pro Schüler:in."
+ },
+ "lessons.3.steps.6.tests.1.hint": {
+  "en": "Keep the football line.",
+  "t": "Behalte die Fußballzeile."
+ },
+ "lessons.3.steps.6.hints.0": {
+  "en": "for p in pupils:",
+  "t": "for p in pupils:"
+ },
+ "lessons.3.steps.6.hints.1": {
+  "en": "m.add_all_different([day[c] for c in p])",
+  "t": "m.add_all_different([day[c] for c in p])"
+ },
+ "lessons.3.steps.6.explain": {
+  "en": "One all-different rule per student keeps their clubs apart. Sara’s three clubs take all three days, and football (not day 3) must share a day with coding, the only club with no other link. The status is OPTIMAL: every rule kept. The same program runs unchanged on the real OR-Tools in Colab.",
+  "t": "Eine all-different-Regel pro Schüler:in hält deren AGs auseinander. Saras drei AGs belegen alle drei Tage, und Fußball (nicht Tag 3) muss sich einen Tag mit Coding teilen, der einzigen AG ohne weitere Verbindung. Der Status ist OPTIMAL: Jede Regel ist eingehalten. Dasselbe Programm läuft unverändert mit den echten OR-Tools in Colab."
+ },
+ "lessons.3.steps.7.prompt": {
+  "en": "Complete the end of the program: solve the model, and if it found a timetable, print each club’s day.",
+  "t": "Vervollständige das Ende des Programms: Löse das Modell, und wenn es einen Zeitplan gefunden hat, gib den Tag jeder AG aus."
+ },
+ "lessons.3.steps.7.explain": {
+  "en": "solve runs the search and returns a status. Only OPTIMAL and FEASIBLE come with a timetable, and value reads each variable’s day. Otherwise, the status name says why there is none.",
+  "t": "solve führt die Suche aus und gibt einen Status zurück. Nur OPTIMAL und FEASIBLE kommen mit einem Zeitplan, und value liest den Tag jeder Variable. Andernfalls sagt der Statusname, warum es keinen gibt."
+ },
+ "lessons.3.steps.8.prompt": {
+  "en": "What do you suggest?",
+  "t": "Was schlägst du vor?"
+ },
+ "lessons.3.steps.8.who": {
+  "en": "Halima, the drama club captain",
+  "t": "Halima, die Sprecherin der Theater-AG"
+ },
+ "lessons.3.steps.8.initial": {
+  "en": "H",
+  "t": "H"
+ },
+ "lessons.3.steps.8.situation": {
+  "en": "Your model keeps every rule, and it has put drama on day 3 for the third term running. Day 3 is when many drama students help at the family market. Halima asks you to fix it.",
+  "t": "Dein Modell hält jede Regel ein, und es hat die Theater-AG zum dritten Halbjahr in Folge auf Tag 3 gelegt. An Tag 3 helfen viele Theater-Schüler:innen auf dem Familienmarkt. Halima bittet dich, das zu beheben."
+ },
+ "lessons.3.steps.8.choices.0.label": {
+  "en": "“Let’s ask the drama students which days work, add that as a rule, and solve again.”",
+  "t": "„Lass uns die Theater-Schüler:innen fragen, welche Tage passen, das als Regel hinzufügen und neu lösen.“"
+ },
+ "lessons.3.steps.8.choices.0.consequence": {
+  "en": "A rule such as day[\"drama\"] != 3 takes one line. If the model turns INFEASIBLE, you have learned which other rule clashes, and can discuss that openly.",
+  "t": "Eine Regel wie day[\"drama\"] != 3 braucht eine Zeile. Wenn das Modell INFEASIBLE wird, hast du erfahren, welche andere Regel im Widerspruch steht, und kannst offen darüber reden."
+ },
+ "lessons.3.steps.8.choices.1.label": {
+  "en": "“The solver said OPTIMAL, so it’s fair.”",
+  "t": "„Der Solver hat OPTIMAL gesagt, also ist es fair.“"
+ },
+ "lessons.3.steps.8.choices.1.consequence": {
+  "en": "With no goal, OPTIMAL only means your rules are kept, and none of them was about the market. The same students keep paying.",
+  "t": "Ohne Ziel heißt OPTIMAL nur, dass deine Regeln eingehalten sind, und keine davon betraf den Markt. Dieselben Schüler:innen zahlen weiter."
+ },
+ "lessons.3.steps.8.choices.2.label": {
+  "en": "“Move drama by hand this term.”",
+  "t": "„Verschieb die Theater-AG in diesem Halbjahr von Hand.“"
+ },
+ "lessons.3.steps.8.choices.2.consequence": {
+  "en": "It helps this term, but a hand move can break another rule, and next term the model will do it again. Put the reason into the model.",
+  "t": "Es hilft in diesem Halbjahr, aber eine Verschiebung von Hand kann eine andere Regel brechen, und im nächsten Halbjahr macht das Modell es wieder. Bring den Grund ins Modell."
+ },
+ "lessons.3.steps.8.explain": {
+  "en": "Ask the people affected, add their need as a rule, and solve again.",
+  "t": "Frag die Betroffenen, füge ihren Bedarf als Regel hinzu und löse neu."
+ },
+ "lessons.3.steps.9.prompt": {
+  "en": "Which timetable in your life (school, clubs, chores) puts the same people in the worst slot every time? How would you write a fairer rule?",
+  "t": "Welcher Zeitplan in deinem Leben (Schule, AGs, Hausarbeiten) legt immer dieselben Leute auf den schlechtesten Platz? Wie würdest du eine fairere Regel schreiben?"
+ },
+ "lessons.3.steps.9.placeholder": {
+  "en": "For example: “My younger brother always gets the dishes on Friday. Rule: Friday rotates between the three of us.”",
+  "t": "Zum Beispiel: „Mein jüngerer Bruder muss freitags immer spülen. Regel: Der Freitag wechselt zwischen uns dreien.“"
+ },
+ "lessons.3.steps.10.prompt": {
+  "en": "Project: Model a real week",
+  "t": "Projekt: Eine echte Woche modellieren"
+ },
+ "lessons.3.steps.10.task": {
+  "en": "Choose a real scheduling problem you know: your clubs, a study plan for exams, or your family’s chores. List the tasks, the days, who is involved in each, and the rules (what can’t share a day, fixed days). Write it as a CP-SAT model like the one in this lesson and run it in the code step or the “Model it with CP-SAT” lab. Then look at who gets the worst slot, add one fairness rule, and run it again.",
+  "t": "Such dir ein echtes Planungsproblem aus, das du kennst: deine AGs, einen Lernplan für Prüfungen oder die Hausarbeiten deiner Familie. Liste die Aufgaben, die Tage, wer an jeder beteiligt ist und die Regeln auf (was sich keinen Tag teilen kann, feste Tage). Schreib es als CP-SAT-Modell wie das in dieser Lektion und starte es im Code-Schritt oder im Lab „Mit CP-SAT modellieren“. Sieh dann nach, wer den schlechtesten Platz bekommt, füge eine Fairnessregel hinzu und starte es noch einmal."
+ },
+ "lessons.3.steps.10.deliverable": {
+  "en": "Your list of rules, your model (on paper or a screenshot), the timetable before and after the fairness rule, and one sentence on what the rule cost.",
+  "t": "Deine Liste der Regeln, dein Modell (auf Papier oder als Screenshot), der Zeitplan vor und nach der Fairnessregel und ein Satz dazu, was die Regel gekostet hat."
+ },
+ "lessons.3.steps.10.rubric.0.criterion": {
+  "en": "I can: turn a real schedule into variables, domains and rules.",
+  "t": "Ich kann: einen echten Zeitplan in Variablen, Wertebereiche und Regeln übersetzen."
+ },
+ "lessons.3.steps.10.rubric.1.criterion": {
+  "en": "I can: run a CP-SAT model and read its status.",
+  "t": "Ich kann: ein CP-SAT-Modell ausführen und seinen Status lesen."
+ },
+ "lessons.3.steps.10.rubric.2.criterion": {
+  "en": "I can: add a fairness rule and explain what it changes.",
+  "t": "Ich kann: eine Fairnessregel hinzufügen und erklären, was sie verändert."
+ },
+ "lessons.3.slides.0.title": {
+  "en": "Timetables with CP-SAT",
+  "t": "Zeitpläne mit CP-SAT"
+ },
+ "lessons.3.slides.0.narration": {
+  "en": "What if you just said the rules, and let a solver find the timetable?",
+  "t": "Was wäre, wenn du nur die Regeln sagst und einen Solver den Zeitplan finden lässt?"
+ },
+ "lessons.3.slides.0.note": {
+  "en": "Optimization · Level 3 · Lesson 4",
+  "t": "Optimierung · Niveau 3 · Lektion 4"
+ },
+ "lessons.3.slides.1.title": {
+  "en": "In this lesson you will",
+  "t": "In dieser Lektion wirst du"
+ },
+ "lessons.3.slides.1.bullets": {
+  "en": [
+   "Model a club timetable in CP-SAT with all-different rules.",
+   "Explain propagation and search, and what INFEASIBLE proves.",
+   "Add a fairness rule and judge the result."
+  ],
+  "t": [
+   "Einen AG-Zeitplan in CP-SAT mit all-different-Regeln modellieren.",
+   "Propagierung und Suche erklären und was INFEASIBLE beweist.",
+   "Eine Fairnessregel hinzufügen und das Ergebnis beurteilen."
+  ]
+ },
+ "lessons.3.slides.2.title": {
+  "en": "Key ideas",
+  "t": "Kernideen"
+ },
+ "lessons.3.slides.2.bullets": {
+  "en": [
+   "A variable per choice, a line per rule",
+   "Cross out, then guess",
+   "INFEASIBLE: a proof",
+   "OPTIMAL: only your rules",
+   "Who gets the bad slot?"
+  ],
+  "t": [
+   "Eine Variable pro Wahl, eine Zeile pro Regel",
+   "Erst streichen, dann raten",
+   "INFEASIBLE: ein Beweis",
+   "OPTIMAL: nur deine Regeln",
+   "Wer bekommt den schlechten Platz?"
+  ]
+ },
+ "lessons.3.slides.3.title": {
+  "en": "Activity: Model a real week",
+  "t": "Aktivität: Eine echte Woche modellieren"
+ },
+ "lessons.3.slides.3.bullets": {
+  "en": [
+   "List (5 min): Tasks, days, people and rules.",
+   "Model (8 min): Variables, all-different, fixed days.",
+   "Run (4 min): Read the status and the timetable.",
+   "Fairness (3 min): Who gets the worst slot? Add a rule."
+  ],
+  "t": [
+   "Auflisten (5 Min.): Aufgaben, Tage, Personen und Regeln.",
+   "Modellieren (8 Min.): Variablen, all-different, feste Tage.",
+   "Starten (4 Min.): Lies den Status und den Zeitplan.",
+   "Fairness (3 Min.): Wer bekommt den schlechtesten Platz? Füge eine Regel hinzu."
+  ]
+ },
+ "lessons.3.slides.3.details": {
+  "en": [
+   "List (5 min): Write four to six tasks (clubs, revision subjects or chores), the days available, who is involved in each, and every rule you know.",
+   "Model (8 min): Write one day variable per task, one all-different line for each person’s tasks, and one line for each fixed or forbidden day.",
+   "Run (4 min): Run the model in the code step or the modeller lab. Read the status first: OPTIMAL, or INFEASIBLE and why.",
+   "Fairness (3 min): Find who gets the worst slot. Add one rule that shares it and run again. Did anything else have to move?"
+  ],
+  "t": [
+   "Auflisten (5 Min.): Schreib vier bis sechs Aufgaben auf (AGs, Lernfächer oder Hausarbeiten), die verfügbaren Tage, wer an welcher beteiligt ist, und jede Regel, die du kennst.",
+   "Modellieren (8 Min.): Schreib eine Tagesvariable pro Aufgabe, eine all-different-Zeile für die Aufgaben jeder Person und eine Zeile für jeden festen oder verbotenen Tag.",
+   "Starten (4 Min.): Starte das Modell im Code-Schritt oder im Modellier-Lab. Lies zuerst den Status: OPTIMAL, oder INFEASIBLE und warum.",
+   "Fairness (3 Min.): Finde heraus, wer den schlechtesten Platz bekommt. Füge eine Regel hinzu, die ihn verteilt, und starte erneut. Musste sich noch etwas anderes verschieben?"
+  ]
+ },
+ "lessons.3.slides.3.note": {
+  "en": "No phone? Do it on paper: cross out impossible days for each task, then guess, as the solver does.",
+  "t": "Kein Handy? Mach es auf Papier: Streich für jede Aufgabe unmögliche Tage durch, dann rate, wie es der Solver tut."
+ },
+ "lessons.3.slides.3.narration": {
+  "en": "Say the rules, let the solver search, then judge who it’s hard on.",
+  "t": "Sag die Regeln, lass den Solver suchen, und beurteile dann, wen es hart trifft."
+ },
+ "lessons.3.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lass uns diskutieren"
+ },
+ "lessons.3.slides.4.bullets": {
+  "en": [
+   "Why doesn’t the solver need to try every plan?",
+   "What should you do when the answer is INFEASIBLE?",
+   "Is a timetable that keeps every rule always fair?"
+  ],
+  "t": [
+   "Warum muss der Solver nicht jeden Plan ausprobieren?",
+   "Was solltest du tun, wenn die Antwort INFEASIBLE ist?",
+   "Ist ein Zeitplan, der jede Regel einhält, immer fair?"
+  ]
+ },
+ "lessons.3.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.3.slides.5.bullets": {
+  "en": [
+   "One rule I would write as a line + one fairness rule for my week."
+  ],
+  "t": [
+   "Eine Regel, die ich als Zeile schreiben würde + eine Fairnessregel für meine Woche."
+  ]
+ },
+ "lessons.3.slides.5.narration": {
+  "en": "The solver keeps your rules; you decide which rules are fair.",
+  "t": "Der Solver hält deine Regeln ein; du entscheidest, welche Regeln fair sind."
+ },
+ "lessons.3.kit.0.title": {
+  "en": "Slides to revise: Timetables with CP-SAT",
+  "t": "Folien zum Wiederholen: Zeitpläne mit CP-SAT"
+ },
+ "lessons.3.kit.1.title": {
+  "en": "Activity sheet: Timetables with CP-SAT",
+  "t": "Arbeitsblatt: Zeitpläne mit CP-SAT"
+ },
+ "lessons.3.kit.2.title": {
+  "en": "The lesson video (240p, to watch again or share)",
+  "t": "Das Lektionsvideo (240p, zum Wiederansehen oder Teilen)"
+ },
+ "lessons.4.title": {
+  "en": "Let the computer search: unit check",
+  "t": "Lass den Computer suchen: Abschlusstest"
+ },
+ "lessons.4.tryTomorrow": {
+  "en": "Pick one search from your own life (packing a bag, a route you take, a week to plan). Solve it with code or on paper using a method from this unit, then check whether the answer is fair to everyone it affects.",
+  "t": "Such dir eine Suche aus deinem eigenen Leben aus (eine Tasche packen, eine Strecke, die du nimmst, eine Woche, die du planst). Löse sie mit Code oder auf Papier mit einer Methode aus dieser Einheit und prüfe dann, ob die Antwort für alle, die sie betrifft, fair ist."
+ },
+ "lessons.4.steps.0.prompt": {
+  "en": "A brute-force search over 10 items checks 1,024 possible loads.",
+  "t": "Eine Brute-Force-Suche über 10 Gegenstände prüft 1.024 mögliche Ladungen."
+ },
+ "lessons.4.steps.0.explain": {
+  "en": "Each item is in or out, so 10 items give 2¹⁰ = 1,024 loads. Twenty items would give over a million, and every extra item doubles it.",
+  "t": "Jeder Gegenstand ist dabei oder nicht, also ergeben 10 Gegenstände 2¹⁰ = 1.024 Ladungen. Zwanzig Gegenstände ergäben über eine Million, und jeder zusätzliche verdoppelt die Zahl."
+ },
+ "lessons.4.steps.1.prompt": {
+  "en": "What does this program print?",
+  "t": "Was gibt dieses Programm aus?"
+ },
+ "lessons.4.steps.1.options.0.text": {
+  "en": "6",
+  "t": "6"
+ },
+ "lessons.4.steps.1.options.1.text": {
+  "en": "5",
+  "t": "5"
+ },
+ "lessons.4.steps.1.options.2.text": {
+  "en": "11",
+  "t": "11"
+ },
+ "lessons.4.steps.1.explain": {
+  "en": "The two lighter items fit together (4 kg, 6 points); the heavy one alone gives only 5, and all three (11 points) are too heavy. A greedy rule, taking the best value per kilo first, would grab the heavy item and stop at 5.",
+  "t": "Die zwei leichteren Gegenstände passen zusammen (4 kg, 6 Punkte); der schwere allein bringt nur 5, und alle drei (11 Punkte) sind zu schwer. Eine Greedy-Regel, die zuerst den besten Wert pro Kilo nimmt, würde den schweren Gegenstand greifen und bei 5 stehen bleiben."
+ },
+ "lessons.4.steps.2.prompt": {
+  "en": "What does Dijkstra’s method need to give the right answer? Choose all that apply.",
+  "t": "Was braucht Dijkstras Verfahren, um die richtige Antwort zu geben? Wähle alles Zutreffende."
+ },
+ "lessons.4.steps.2.options.0.text": {
+  "en": "No road with a negative length",
+  "t": "Keine Straße mit negativer Länge"
+ },
+ "lessons.4.steps.2.options.1.text": {
+  "en": "Settling the smallest waiting number first",
+  "t": "Zuerst die kleinste wartende Zahl festlegen"
+ },
+ "lessons.4.steps.2.options.2.text": {
+  "en": "Places listed in alphabetical order",
+  "t": "Orte in alphabetischer Reihenfolge aufgelistet"
+ },
+ "lessons.4.steps.2.options.3.text": {
+  "en": "Every road the same length",
+  "t": "Alle Straßen gleich lang"
+ },
+ "lessons.4.steps.2.explain": {
+  "en": "Settling the smallest number is safe because every other way is at least as long, which needs road lengths that are never negative. The order of the list and equal lengths don’t matter.",
+  "t": "Die kleinste Zahl festzulegen ist sicher, weil jeder andere Weg mindestens so lang ist, und dafür müssen die Straßenlängen nie negativ sein. Die Reihenfolge der Liste und gleiche Längen spielen keine Rolle."
+ },
+ "lessons.4.steps.3.prompt": {
+  "en": "This Dijkstra program finds the longest way instead of the shortest. Which line is wrong?",
+  "t": "Dieses Dijkstra-Programm findet den längsten statt den kürzesten Weg. Welche Zeile ist falsch?"
+ },
+ "lessons.4.steps.3.explain": {
+  "en": "Relaxing a road must keep the smaller of the old number and the new way: min, not max. With max, numbers only grow, and the “shortest” way comes out wrong.",
+  "t": "Beim Relaxieren einer Straße muss die kleinere von der alten Zahl und dem neuen Weg bleiben: min, nicht max. Mit max wachsen die Zahlen nur, und der „kürzeste“ Weg kommt falsch heraus."
+ },
+ "lessons.4.steps.4.prompt": {
+  "en": "Put in order: solving a timetable with CP-SAT.",
+  "t": "Bring in die richtige Reihenfolge: einen Zeitplan mit CP-SAT lösen."
+ },
+ "lessons.4.steps.4.steps.0": {
+  "en": "Give each choice a variable with its domain",
+  "t": "Gib jeder Wahl eine Variable mit ihrem Wertebereich"
+ },
+ "lessons.4.steps.4.steps.1": {
+  "en": "Write each rule as a line",
+  "t": "Schreib jede Regel als Zeile"
+ },
+ "lessons.4.steps.4.steps.2": {
+  "en": "Run the solver",
+  "t": "Starte den Solver"
+ },
+ "lessons.4.steps.4.steps.3": {
+  "en": "Read the status",
+  "t": "Lies den Status"
+ },
+ "lessons.4.steps.4.steps.4": {
+  "en": "Check the result with the people involved",
+  "t": "Prüfe das Ergebnis mit den Beteiligten"
+ },
+ "lessons.4.steps.4.explain": {
+  "en": "First describe the problem (variables, then rules), then let the solver search, then read the status (OPTIMAL, FEASIBLE or INFEASIBLE) before you look at the timetable, and finally judge it with the people it affects.",
+  "t": "Beschreib zuerst das Problem (Variablen, dann Regeln), lass dann den Solver suchen, lies dann den Status (OPTIMAL, FEASIBLE oder INFEASIBLE), bevor du den Zeitplan ansiehst, und beurteile ihn schließlich mit den Menschen, die er betrifft."
+ },
+ "lessons.4.steps.5.prompt": {
+  "en": "Complete the sentence.",
+  "t": "Vervollständige den Satz."
+ },
+ "lessons.4.steps.5.sentence": {
+  "en": [
+   "A greedy rule is ",
+   {
+    "blank": 0
+   },
+   " but can ",
+   {
+    "blank": 1
+   },
+   " the best; dynamic programming is sure because it ",
+   {
+    "blank": 2
+   },
+   " smaller answers."
+  ],
+  "t": [
+   "Eine Greedy-Regel ist ",
+   {
+    "blank": 0
+   },
+   ", kann aber das Beste ",
+   {
+    "blank": 1
+   },
+   "; dynamische Programmierung ist sicher, weil sie kleinere Antworten ",
+   {
+    "blank": 2
+   },
+   "."
+  ]
+ },
+ "lessons.4.steps.5.bank": {
+  "en": [
+   "fast",
+   "miss",
+   "reuses",
+   "doubles",
+   "guesses"
+  ],
+  "t": [
+   "schnell",
+   "verfehlen",
+   "wiederverwendet",
+   "verdoppelt",
+   "rät"
+  ]
+ },
+ "lessons.4.steps.5.answers": {
+  "en": [
+   "fast",
+   "miss",
+   "reuses"
+  ],
+  "t": [
+   "schnell",
+   "verfehlen",
+   "wiederverwendet"
+  ]
+ },
+ "lessons.4.steps.5.explain": {
+  "en": "Greedy takes what looks best now and never compares, so it is quick but can miss (60 against 65 on the truck). Dynamic programming builds the best answer from the best answers to smaller trucks.",
+  "t": "Greedy nimmt, was jetzt am besten aussieht, und vergleicht nie, also ist es schnell, kann aber danebenliegen (60 gegen 65 beim Lkw). Dynamische Programmierung baut die beste Antwort aus den besten Antworten für kleinere Lkw auf."
+ },
+ "lessons.4.steps.6.prompt": {
+  "en": "Complete the club model: a day from 1 to 3 for each club, each student’s clubs on different days, and football not on day 3.",
+  "t": "Vervollständige das AG-Modell: ein Tag von 1 bis 3 für jede AG, die AGs jeder Schülerin und jedes Schülers an verschiedenen Tagen und Fußball nicht an Tag 3."
+ },
+ "lessons.4.steps.6.explain": {
+  "en": "A day is a whole number from 1 to 3 (new_int_var, not a yes/no variable); one all-different rule per student keeps their clubs apart; and football’s day must be at most 2, with the expression on the left.",
+  "t": "Ein Tag ist eine ganze Zahl von 1 bis 3 (new_int_var, keine Ja-Nein-Variable); eine all-different-Regel pro Schüler:in hält deren AGs auseinander; und der Tag von Fußball muss höchstens 2 sein, mit dem Ausdruck links."
+ },
+ "lessons.4.steps.7.prompt": {
+  "en": "Your nearest-neighbour program prints a 19 km route, and an exact search finds 16 km. What does that tell you?",
+  "t": "Dein Nächster-Nachbar-Programm gibt eine Route von 19 km aus, und eine exakte Suche findet 16 km. Was sagt dir das?"
+ },
+ "lessons.4.steps.7.options.0.text": {
+  "en": "Your program added the distances wrongly",
+  "t": "Dein Programm hat die Entfernungen falsch addiert"
+ },
+ "lessons.4.steps.7.options.1.text": {
+  "en": "A quick rule can miss the best route",
+  "t": "Eine schnelle Regel kann die beste Route verfehlen"
+ },
+ "lessons.4.steps.7.options.2.text": {
+  "en": "The 16 km route must skip a village",
+  "t": "Die Route mit 16 km muss ein Dorf überspringen"
+ },
+ "lessons.4.steps.7.explain": {
+  "en": "Nearest neighbour never looks ahead, so its last legs can be long; the 16 km route visits every village too. 2-opt swaps can close some or all of the gap.",
+  "t": "Das Nächster-Nachbar-Verfahren blickt nie voraus, also können seine letzten Teilstrecken lang sein; die Route mit 16 km besucht auch jedes Dorf. 2-opt-Tausche können die Lücke teilweise oder ganz schließen."
+ },
+ "lessons.4.steps.8.prompt": {
+  "en": "Put the lines in order: add up the weight and points of every load in a brute-force search.",
+  "t": "Bring die Zeilen in die richtige Reihenfolge: Addiere Gewicht und Punkte jeder Ladung in einer Brute-Force-Suche."
+ },
+ "lessons.4.steps.8.explain": {
+  "en": "Every mask from 0 to 63 is one load; for each, start from zero and add the items whose bit is 1. Without & 1, the test would also count bits further left.",
+  "t": "Jede Maske von 0 bis 63 ist eine Ladung; fang für jede bei null an und addiere die Gegenstände, deren Bit 1 ist. Ohne & 1 würde der Test auch Bits weiter links zählen."
+ },
+ "lessons.4.steps.9.prompt": {
+  "en": "If a timetable model with no goal says OPTIMAL, the timetable is the fairest one possible.",
+  "t": "Wenn ein Zeitplanmodell ohne Ziel OPTIMAL sagt, ist der Zeitplan der fairste mögliche."
+ },
+ "lessons.4.steps.9.explain": {
+  "en": "With no goal, OPTIMAL only means every rule you wrote is kept. Fairness counts only if you write it down, as a rule or a goal, and check the result with the people affected.",
+  "t": "Ohne Ziel heißt OPTIMAL nur, dass jede Regel eingehalten ist, die du geschrieben hast. Fairness zählt nur, wenn du sie aufschreibst, als Regel oder als Ziel, und das Ergebnis mit den Betroffenen prüfst."
+ },
+ "lessons.4.slides.0.title": {
+  "en": "Let the computer search: review",
+  "t": "Lass den Computer suchen: Wiederholung"
+ },
+ "lessons.4.slides.0.narration": {
+  "en": "Four searches, four ways to be smart about them. What stuck?",
+  "t": "Vier Suchen, vier Arten, dabei klug vorzugehen. Was ist hängen geblieben?"
+ },
+ "lessons.4.slides.0.note": {
+  "en": "Optimization · Level 3 · Unit check",
+  "t": "Optimierung · Niveau 3 · Abschlusstest"
+ },
+ "lessons.4.slides.1.title": {
+  "en": "In this unit",
+  "t": "In dieser Einheit"
+ },
+ "lessons.4.slides.1.bullets": {
+  "en": [
+   "Try them all, or think ahead",
+   "Shortest paths",
+   "The bus route",
+   "Timetables with CP-SAT"
+  ],
+  "t": [
+   "Alles ausprobieren oder vorausdenken",
+   "Kürzeste Wege",
+   "Die Buslinie",
+   "Zeitpläne mit CP-SAT"
+  ]
+ },
+ "lessons.4.slides.2.title": {
+  "en": "The big ideas",
+  "t": "Die großen Ideen"
+ },
+ "lessons.4.slides.2.bullets": {
+  "en": [
+   "Brute force is sure but explodes; dynamic programming reuses smaller answers",
+   "Dijkstra settles the smallest number first",
+   "Build a route fast, improve it with 2-opt, judge the longest ride",
+   "Say the rules; the solver searches; you judge fairness"
+  ],
+  "t": [
+   "Brute Force ist sicher, explodiert aber; dynamische Programmierung verwendet kleinere Antworten wieder",
+   "Dijkstra legt zuerst die kleinste Zahl fest",
+   "Eine Route schnell bauen, mit 2-opt verbessern, die längste Fahrt beurteilen",
+   "Sag die Regeln; der Solver sucht; du beurteilst die Fairness"
+  ]
+ },
+ "lessons.4.slides.3.title": {
+  "en": "Activity: Search race",
+  "t": "Aktivität: Suchwettlauf"
+ },
+ "lessons.4.slides.3.bullets": {
+  "en": [
+   "Warm-up (3 min): Name one search from each lesson.",
+   "Race (10 min): Solve a small problem two ways.",
+   "Compare (4 min): Fast or sure? Same answer?",
+   "Fair (3 min): Who would the answer be hard on?"
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Nenne eine Suche aus jeder Lektion.",
+   "Wettlauf (10 Min.): Löse ein kleines Problem auf zwei Arten.",
+   "Vergleichen (4 Min.): Schnell oder sicher? Dieselbe Antwort?",
+   "Fair (3 Min.): Wen würde die Antwort hart treffen?"
+  ]
+ },
+ "lessons.4.slides.3.details": {
+  "en": [
+   "Warm-up (3 min): For each lesson, write one search from your life that it could solve: packing, a way to school, a round trip, a timetable.",
+   "Race (10 min): With a partner, pick one small problem. One of you solves it with a quick rule (greedy or nearest neighbour), the other with a sure method (every option, Dijkstra, or a small model).",
+   "Compare (4 min): Compare your answers and how long each took. When did the quick rule miss?",
+   "Fair (3 min): Look at the best answer and ask who it would be hard on: the first stop, the last slot, the school that got nothing."
+  ],
+  "t": [
+   "Aufwärmen (3 Min.): Schreib zu jeder Lektion eine Suche aus deinem Leben auf, die sie lösen könnte: Packen, ein Schulweg, eine Rundreise, ein Zeitplan.",
+   "Wettlauf (10 Min.): Such dir mit einer Partnerin oder einem Partner ein kleines Problem aus. Eine:r löst es mit einer schnellen Regel (Greedy oder Nächster Nachbar), der oder die andere mit einer sicheren Methode (jede Möglichkeit, Dijkstra oder ein kleines Modell).",
+   "Vergleichen (4 Min.): Vergleicht eure Antworten und wie lange jede gedauert hat. Wann hat die schnelle Regel danebengelegen?",
+   "Fair (3 Min.): Sieh dir die beste Antwort an und frag, wen sie hart treffen würde: die erste Haltestelle, den letzten Platz, die Schule, die nichts bekommen hat."
+  ]
+ },
+ "lessons.4.slides.3.note": {
+  "en": "Keep the problems small (four or five items, places or tasks) so both methods finish in the time.",
+  "t": "Halte die Probleme klein (vier oder fünf Gegenstände, Orte oder Aufgaben), damit beide Methoden in der Zeit fertig werden."
+ },
+ "lessons.4.slides.3.narration": {
+  "en": "Fast or sure, and fair to whom?",
+  "t": "Schnell oder sicher, und fair für wen?"
+ },
+ "lessons.4.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lass uns diskutieren"
+ },
+ "lessons.4.slides.4.bullets": {
+  "en": [
+   "When is a quick rule good enough?",
+   "Which method surprised you most?",
+   "Who should decide what “fair” means in a search?"
+  ],
+  "t": [
+   "Wann ist eine schnelle Regel gut genug?",
+   "Welche Methode hat dich am meisten überrascht?",
+   "Wer sollte entscheiden, was „fair“ bei einer Suche bedeutet?"
+  ]
+ },
+ "lessons.4.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.4.slides.5.bullets": {
+  "en": [
+   "The method I would trust for my own search + one fairness question I would ask."
+  ],
+  "t": [
+   "Die Methode, der ich bei meiner eigenen Suche trauen würde + eine Fairnessfrage, die ich stellen würde."
+  ]
+ },
+ "lessons.4.slides.5.narration": {
+  "en": "Search smarter, and always ask who the answer is hard on.",
+  "t": "Such klüger, und frag immer, wen die Antwort hart trifft."
+ },
+ "lessons.4.kit.0.title": {
+  "en": "Slides to revise: Let the computer search: knapsack, routes, timetables: unit check",
+  "t": "Folien zum Wiederholen: Lass den Computer suchen: Rucksackproblem, Routen, Zeitpläne: Abschlusstest"
+ },
+ "lessons.4.kit.1.title": {
+  "en": "Activity sheet: Let the computer search: knapsack, routes, timetables: unit check",
+  "t": "Arbeitsblatt: Lass den Computer suchen: Rucksackproblem, Routen, Zeitpläne: Abschlusstest"
+ }
+}

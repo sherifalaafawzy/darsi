@@ -1,0 +1,2062 @@
+{
+ "title": {
+  "en": "Solving school problems in Python: timetables, routes, assignment",
+  "t": "Schulprobleme mit Python lösen: Stundenpläne, Routen, Zuordnung"
+ },
+ "summary": {
+  "en": "Model real school problems with Google’s OR-Tools in Python, run them on your phone, and judge the answers with colleagues: a timetable without clashes, exam slots, the school bus route, and which teacher takes which class. Every model is also fair game for questions: who gets the last period, the longest ride or the worst match? Before this: “Python for teachers” (Programming, level 2).",
+  "t": "Modelliere echte Schulprobleme mit Googles OR-Tools in Python, lass sie auf deinem Handy laufen und beurteile die Ergebnisse mit Kolleg:innen: ein Stundenplan ohne Überschneidungen, Prüfungstermine, die Schulbusroute und die Frage, welche Lehrkraft welche Klasse übernimmt. Jedes Modell wirft auch Fragen auf: Wer bekommt die letzte Stunde, die längste Fahrt oder die schlechteste Zuordnung? Vorher: „Python für Lehrkräfte“ (Programmieren, Niveau 2)."
+ },
+ "lessons.0.title": {
+  "en": "A timetable that works",
+  "t": "Ein Stundenplan, der funktioniert"
+ },
+ "lessons.0.tryTomorrow": {
+  "en": "Draw a timetable grid for three classes on the board, with sticky notes for the lessons. Pupils place them and call out every clash: a class with two lessons at once, or a teacher in two rooms. Then add one new rule, such as “the art room is busy in period 3”, and count how many notes have to move.",
+  "t": "Zeichne an der Tafel ein Stundenplan-Raster für drei Klassen, mit Haftnotizen für die Unterrichtsstunden. Die Schüler:innen legen sie auf und rufen jeden Konflikt aus: eine Klasse mit zwei Stunden gleichzeitig oder eine Lehrkraft in zwei Räumen. Füge dann eine neue Regel hinzu, zum Beispiel „Der Kunstraum ist in der 3. Stunde belegt“, und zähle, wie viele Notizen verschoben werden müssen."
+ },
+ "lessons.0.materials": {
+  "en": [
+   "Board and chalk",
+   "Sticky notes or paper squares in four colours, one colour per subject",
+   "Optional: a phone with Darsi to run the model in the lab"
+  ],
+  "t": [
+   "Tafel und Kreide",
+   "Haftnotizen oder Papierquadrate in vier Farben, eine Farbe pro Fach",
+   "Optional: ein Handy mit Darsi, um das Modell im Lab laufen zu lassen"
+  ]
+ },
+ "lessons.0.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.0.steps.0.title": {
+  "en": "A timetable that works",
+  "t": "Ein Stundenplan, der funktioniert"
+ },
+ "lessons.0.steps.0.chapters.0.label": {
+  "en": "A week with an eraser",
+  "t": "Eine Woche mit dem Radiergummi"
+ },
+ "lessons.0.steps.0.chapters.1.label": {
+  "en": "The timetable as a model",
+  "t": "Der Stundenplan als Modell"
+ },
+ "lessons.0.steps.0.chapters.2.label": {
+  "en": "Cross out, then guess",
+  "t": "Streichen, dann raten"
+ },
+ "lessons.0.steps.0.chapters.3.label": {
+  "en": "Fits isn’t fair, and the lab",
+  "t": "Passend ist nicht fair, und das Lab"
+ },
+ "lessons.0.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.0.steps.0.checkpoint.question.prompt": {
+  "en": "The solver says INFEASIBLE. What does that mean?",
+  "t": "Der Solver meldet INFEASIBLE. Was bedeutet das?"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.0.text": {
+  "en": "The phone is too slow to find one",
+  "t": "Das Handy ist zu langsam, um einen zu finden"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.1.text": {
+  "en": "No timetable keeps all these rules",
+  "t": "Kein Stundenplan hält alle diese Regeln ein"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.2.text": {
+  "en": "There is a timetable, but not the best one",
+  "t": "Es gibt einen Stundenplan, aber nicht den besten"
+ },
+ "lessons.0.steps.0.checkpoint.question.explain": {
+  "en": "INFEASIBLE is a proof, not a failure: the search showed that no timetable keeps every rule (in the lab, science needs three periods but only two are left). The next step is human: decide with colleagues which rule can bend.",
+  "t": "INFEASIBLE ist ein Beweis, kein Scheitern: Die Suche hat gezeigt, dass kein Stundenplan alle Regeln einhält (im Lab braucht Naturwissenschaft drei Stunden, aber nur zwei sind frei). Der nächste Schritt ist menschlich: Entscheidet mit den Kolleg:innen, welche Regel nachgeben kann."
+ },
+ "lessons.0.steps.0.transcript": {
+  "en": "Every September, our deputy head spends a week with a pencil and an eraser, building the timetable. Then one teacher changes her days, and it all falls apart. What if we just told a computer the rules? Today: a timetable that works, written as a model in Python. A timetable is a model like any other. The options: which period each lesson goes in. The limits: a class has one lesson at a time, and a teacher is in one class at a time. There’s no goal yet: any timetable that keeps every rule will do. In Google’s OR-Tools, each lesson gets a variable for its period, from one to four. One rule says a class’s lessons are all in different periods. Another says the same for each subject, because each subject here has one teacher. Real schools add rules. Ms Huda leaves after period three. Six A’s maths test is in period one. Each rule is one more line. How does the solver find a timetable? First it crosses out periods that can’t work: if six A’s maths is in period one, Mr Musa can’t teach anyone else then. That’s propagation. When nothing more can be crossed out, it guesses, and undoes any guess that leads to a dead end. In the lab’s small school, propagation and search need eight guesses. Plain backtracking, guessing without crossing out, needs three hundred and eighty-nine. Good rules save work. Quick check! I add one more rule, and the solver says INFEASIBLE. What does that tell me? No timetable keeps all these rules: the solver has proved it; it hasn’t just given up. In the lab, add “the science lab is busy in period one” too: science needs three periods, and only two are left. So talk to people: which rule can bend? A timetable that keeps the rules can still be unkind. Does one class get every hard subject after lunch? Does Ms Rana sit through a gap all morning? Who gets the last period of the week, every week? Check the result with the people who live with it. In the app, open “Build the timetable”. Press One step, and watch the rules cross periods out. Then press Run, switch to plain backtracking, and compare the guesses. Your turn. The solver found a timetable, but five B has maths in the last period every day. What do you do? Add a rule and solve again: the model makes that cheap. Remember: periods are variables, rules are lines, and the solver crosses out and searches. INFEASIBLE means the rules clash. And a timetable that fits still needs fair eyes. Try it in class tomorrow: draw a timetable grid on the board, with sticky notes for the lessons. Pupils place them, and call out every clash. Then add one new rule, and see how much has to move.",
+  "t": "Jeden September verbringt unsere stellvertretende Schulleiterin eine Woche mit Bleistift und Radiergummi, um den Stundenplan zu bauen. Dann ändert eine Lehrkraft ihre Tage, und alles fällt auseinander. Was, wenn wir einem Computer einfach die Regeln sagen? Heute: ein Stundenplan, der funktioniert, als Modell in Python geschrieben. Ein Stundenplan ist ein Modell wie jedes andere. Die Optionen: in welcher Stunde jede Unterrichtseinheit liegt. Die Grenzen: Eine Klasse hat jeweils nur eine Unterrichtseinheit, und eine Lehrkraft ist jeweils nur in einer Klasse. Es gibt noch kein Ziel: Jeder Stundenplan, der jede Regel einhält, reicht. In Googles OR-Tools bekommt jede Unterrichtseinheit eine Variable für ihre Stunde, von eins bis vier. Eine Regel sagt, dass die Einheiten einer Klasse alle in verschiedenen Stunden liegen. Eine andere sagt dasselbe für jedes Fach, weil jedes Fach hier eine Lehrkraft hat. Echte Schulen fügen Regeln hinzu. Frau Huda geht nach der dritten Stunde. Der Mathetest von 6A liegt in der ersten Stunde. Jede Regel ist eine Zeile mehr. Wie findet der Solver einen Stundenplan? Zuerst streicht er Stunden, die nicht gehen: Wenn der Mathetest von 6A in der ersten Stunde liegt, kann Herr Musa dann niemand anderen unterrichten. Das ist Propagation. Wenn sich nichts mehr streichen lässt, rät er und macht jede Vermutung rückgängig, die in eine Sackgasse führt. In der kleinen Schule des Labs brauchen Propagation und Suche acht Vermutungen. Einfaches Backtracking, raten ohne Streichen, braucht dreihundertneunundachtzig. Gute Regeln sparen Arbeit. Kurzer Check! Ich füge noch eine Regel hinzu, und der Solver sagt INFEASIBLE. Was sagt mir das? Kein Stundenplan hält alle diese Regeln ein: Der Solver hat es bewiesen; er hat nicht einfach aufgegeben. Füg im Lab auch „Der Naturwissenschaftsraum ist in der ersten Stunde belegt“ hinzu: Naturwissenschaft braucht drei Stunden, und nur zwei sind übrig. Sprich also mit den Leuten: Welche Regel kann nachgeben? Ein Stundenplan, der die Regeln einhält, kann trotzdem unfreundlich sein. Bekommt eine Klasse alle schweren Fächer nach dem Mittagessen? Sitzt Frau Rana den ganzen Vormittag in einer Lücke? Wer bekommt jede Woche die letzte Stunde der Woche? Prüf das Ergebnis mit den Menschen, die damit leben. Öffne in der App „Den Stundenplan bauen“. Drück auf Ein Schritt und schau zu, wie die Regeln Stunden streichen. Drück dann auf Start, wechsle zu einfachem Backtracking und vergleich die Vermutungen. Du bist dran. Der Solver hat einen Stundenplan gefunden, aber 5B hat jeden Tag Mathe in der letzten Stunde. Was machst du? Füg eine Regel hinzu und lös noch einmal: Das Modell macht das billig. Merke dir: Stunden sind Variablen, Regeln sind Zeilen, und der Solver streicht und sucht. INFEASIBLE heißt, die Regeln kollidieren. Und ein Stundenplan, der passt, braucht trotzdem faire Augen. Probier es morgen im Unterricht aus: Zeichne ein Stundenplan-Raster an die Tafel, mit Haftnotizen für die Unterrichtseinheiten. Die Schüler:innen legen sie auf und rufen jede Kollision aus. Füg dann eine neue Regel hinzu und sieh, wie viel sich verschieben muss."
+ },
+ "lessons.0.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.0.steps.1.title": {
+  "en": "A timetable as a model",
+  "t": "Ein Stundenplan als Modell"
+ },
+ "lessons.0.steps.1.body": {
+  "en": "A timetable is a decision problem like any other, and writing it as a model turns a week of pencil and eraser into a few minutes of thinking. The options are the period each lesson goes in: in Python, one integer variable per lesson, with a domain of the periods it could take (1 to 4, say). The limits are the rules every timetable must keep.\n\nTwo rules do most of the work. A class has one lesson at a time, so all of a class’s lessons must be in different periods; and a teacher is in one class at a time, so all of a teacher’s lessons must be in different periods. In Google’s OR-Tools, each is a single all-different constraint: m.add_all_different([...]). Every extra rule is one more line: Ms Huda leaves after period 3 becomes m.add(p[c, \"science\"] <= 3) for each class, and 6A’s maths test becomes m.add(p[\"6A\", \"maths\"] == 1). Write the expression on the left of the comparison: on the phone’s Python, 3 >= p doesn’t work.\n\nThe solver, CP-SAT, does not try every timetable. First it propagates: it crosses out periods that can’t work, such as Mr Musa’s other lessons in period 1 once 6A’s maths is fixed there. When nothing more can be crossed out, it guesses a period for the lesson with the fewest left, propagates again, and undoes the guess at a dead end. In the lab’s small school, that takes 8 guesses; plain backtracking, which guesses without crossing out, takes 389.\n\nThe solver reports a status. OPTIMAL means it found the best answer (with no goal, any answer that keeps every rule); FEASIBLE means an answer that keeps every rule but may not be the best; INFEASIBLE means it has proved that no timetable keeps all the rules, such as science needing three periods when only two are free; UNKNOWN means it stopped before it was sure. INFEASIBLE is a finding, not a failure: decide with colleagues which rule can bend. The same program runs unchanged on the real OR-Tools on a computer or in Colab (pip install ortools), where it handles schools with hundreds of teachers.\n\nFinally, judge the result. A timetable that keeps every rule can still be unkind: one class with every hard subject after lunch, a teacher with a gap all morning, the same class always in the last period of the week. The solver only keeps the rules it is given. Show the draft to the people who will live with it, then add what they need as a new rule or a goal (for example, as few last-period maths lessons as possible) and solve again.",
+  "t": "Ein Stundenplan ist ein Entscheidungsproblem wie jedes andere, und ihn als Modell aufzuschreiben macht aus einer Woche Bleistift und Radiergummi wenige Minuten Nachdenken. Die Optionen sind die Stunden, in die jede Unterrichtsstunde fällt: in Python eine ganzzahlige Variable pro Unterrichtsstunde, mit einem Wertebereich aus den Stunden, die sie belegen könnte (sagen wir 1 bis 4). Die Grenzen sind die Regeln, die jeder Stundenplan einhalten muss.\n\nZwei Regeln erledigen den größten Teil der Arbeit. Eine Klasse hat immer nur eine Unterrichtsstunde zur Zeit, also müssen alle Stunden einer Klasse in verschiedenen Zeitfenstern liegen; und eine Lehrkraft ist immer nur in einer Klasse, also müssen alle Stunden einer Lehrkraft in verschiedenen Zeitfenstern liegen. In Googles OR-Tools ist beides jeweils eine einzige All-different-Nebenbedingung: m.add_all_different([...]). Jede weitere Regel ist eine Zeile mehr: „Frau Huda geht nach der 3. Stunde“ wird zu m.add(p[c, \"Naturwissenschaften\"] <= 3) für jede Klasse, und die Mathearbeit von 6A wird zu m.add(p[\"6A\", \"Mathe\"] == 1). Schreibe den Ausdruck links vom Vergleich: Im Python des Handys funktioniert 3 >= p nicht.\n\nDer Solver, CP-SAT, probiert nicht jeden Stundenplan durch. Zuerst propagiert er: Er streicht Stunden, die nicht gehen können, zum Beispiel die anderen Stunden von Herrn Musa in der 1. Stunde, sobald die Mathestunde von 6A dort feststeht. Wenn sich nichts mehr streichen lässt, rät er für die Unterrichtsstunde mit den wenigsten Möglichkeiten eine Stunde, propagiert erneut und nimmt den Tipp an einer Sackgasse zurück. In der kleinen Schule des Labs braucht das 8 Tipps; einfaches Backtracking, das ohne Streichen rät, braucht 389.\n\nDer Solver meldet einen Status. OPTIMAL heißt, er hat die beste Antwort gefunden (ohne Ziel jede Antwort, die alle Regeln einhält); FEASIBLE heißt, eine Antwort, die alle Regeln einhält, aber vielleicht nicht die beste; INFEASIBLE heißt, er hat bewiesen, dass kein Stundenplan alle Regeln einhält, etwa weil Naturwissenschaft drei Stunden braucht, aber nur zwei frei sind; UNKNOWN heißt, er hat aufgehört, bevor er sicher war. INFEASIBLE ist ein Befund, kein Scheitern: Entscheidet mit den Kolleg:innen, welche Regel nachgeben kann. Dasselbe Programm läuft unverändert mit den echten OR-Tools auf einem Computer oder in Colab (pip install ortools) und bewältigt Schulen mit Hunderten von Lehrkräften.\n\nBeurteile zum Schluss das Ergebnis. Ein Stundenplan, der alle Regeln einhält, kann trotzdem unfreundlich sein: eine Klasse mit allen schweren Fächern nach der Mittagspause, eine Lehrkraft mit einer Lücke den ganzen Vormittag, dieselbe Klasse immer in der letzten Stunde der Woche. Der Solver hält nur die Regeln ein, die man ihm gibt. Zeige den Entwurf den Menschen, die damit leben müssen, füge dann hinzu, was sie brauchen, als neue Regel oder als Ziel (zum Beispiel so wenige Mathestunden in der letzten Stunde wie möglich), und löse erneut."
+ },
+ "lessons.0.steps.1.keyTerms.0.term": {
+  "en": "Variable and domain",
+  "t": "Variable und Wertebereich"
+ },
+ "lessons.0.steps.1.keyTerms.0.def": {
+  "en": "A choice the solver makes, such as a lesson’s period, and the values it may take (periods 1 to 4).",
+  "t": "Eine Entscheidung des Solvers, zum Beispiel die Stunde einer Unterrichtsstunde, und die Werte, die sie annehmen darf (Stunden 1 bis 4)."
+ },
+ "lessons.0.steps.1.keyTerms.1.term": {
+  "en": "All-different constraint",
+  "t": "All-different-Nebenbedingung"
+ },
+ "lessons.0.steps.1.keyTerms.1.def": {
+  "en": "A rule that a group of variables must all take different values: one lesson per period for a class or a teacher.",
+  "t": "Eine Regel, nach der eine Gruppe von Variablen lauter verschiedene Werte haben muss: eine Unterrichtsstunde pro Zeitfenster für eine Klasse oder eine Lehrkraft."
+ },
+ "lessons.0.steps.1.keyTerms.2.term": {
+  "en": "Propagation",
+  "t": "Propagation"
+ },
+ "lessons.0.steps.1.keyTerms.2.def": {
+  "en": "Crossing out values that can’t work, using the rules, before any guess.",
+  "t": "Werte, die nicht gehen können, mithilfe der Regeln streichen, noch vor jedem Raten."
+ },
+ "lessons.0.steps.1.keyTerms.3.term": {
+  "en": "Search (backtracking)",
+  "t": "Suche (Backtracking)"
+ },
+ "lessons.0.steps.1.keyTerms.3.def": {
+  "en": "Guessing a value when propagation is stuck, and undoing the guess at a dead end.",
+  "t": "Einen Wert raten, wenn die Propagation nicht weiterkommt, und den Tipp an einer Sackgasse zurücknehmen."
+ },
+ "lessons.0.steps.1.keyTerms.4.term": {
+  "en": "INFEASIBLE",
+  "t": "INFEASIBLE"
+ },
+ "lessons.0.steps.1.keyTerms.4.def": {
+  "en": "The solver’s proof that no answer keeps all the rules: time to decide which rule can bend.",
+  "t": "Der Beweis des Solvers, dass keine Antwort alle Regeln einhält: Zeit zu entscheiden, welche Regel nachgeben kann."
+ },
+ "lessons.0.steps.2.prompt": {
+  "en": "The solver found a timetable that keeps every rule, but 5B has maths in the last period every day, when pupils are tired. What do you do?",
+  "t": "Der Solver hat einen Stundenplan gefunden, der alle Regeln einhält, aber 5B hat jeden Tag Mathe in der letzten Stunde, wenn alle müde sind. Was tust du?"
+ },
+ "lessons.0.steps.2.options.0.text": {
+  "en": "Accept it: the solver says OPTIMAL",
+  "t": "Annehmen: Der Solver meldet OPTIMAL"
+ },
+ "lessons.0.steps.2.options.1.text": {
+  "en": "Add a rule or a goal against it, and solve again",
+  "t": "Eine Regel oder ein Ziel dagegen hinzufügen und erneut lösen"
+ },
+ "lessons.0.steps.2.options.2.text": {
+  "en": "Go back to pencil and eraser",
+  "t": "Zurück zu Bleistift und Radiergummi"
+ },
+ "lessons.0.steps.2.explain": {
+  "en": "The solver keeps exactly the rules it is given, nothing more. A model makes it cheap to add the missing rule (for example, maths last at most twice a week for any class) and solve again; accepting an unkind timetable or starting over by hand both waste that.",
+  "t": "Der Solver hält genau die Regeln ein, die man ihm gibt, nicht mehr. Ein Modell macht es leicht, die fehlende Regel hinzuzufügen (zum Beispiel Mathe in der letzten Stunde höchstens zweimal pro Woche für jede Klasse) und erneut zu lösen; einen unfreundlichen Stundenplan anzunehmen oder von Hand neu anzufangen verschenkt das."
+ },
+ "lessons.0.steps.3.prompt": {
+  "en": "Match each solver status to what it tells you.",
+  "t": "Ordne jedem Solver-Status zu, was er dir sagt."
+ },
+ "lessons.0.steps.3.pairs.0.left": {
+  "en": "OPTIMAL",
+  "t": "OPTIMAL"
+ },
+ "lessons.0.steps.3.pairs.0.right": {
+  "en": "The best answer (with no goal: an answer that keeps every rule)",
+  "t": "Die beste Antwort (ohne Ziel: eine Antwort, die alle Regeln einhält)"
+ },
+ "lessons.0.steps.3.pairs.1.left": {
+  "en": "FEASIBLE",
+  "t": "FEASIBLE"
+ },
+ "lessons.0.steps.3.pairs.1.right": {
+  "en": "An answer that keeps every rule, maybe not the best",
+  "t": "Eine Antwort, die alle Regeln einhält, vielleicht nicht die beste"
+ },
+ "lessons.0.steps.3.pairs.2.left": {
+  "en": "INFEASIBLE",
+  "t": "INFEASIBLE"
+ },
+ "lessons.0.steps.3.pairs.2.right": {
+  "en": "Proved: no answer keeps all the rules",
+  "t": "Bewiesen: Keine Antwort hält alle Regeln ein"
+ },
+ "lessons.0.steps.3.pairs.3.left": {
+  "en": "UNKNOWN",
+  "t": "UNKNOWN"
+ },
+ "lessons.0.steps.3.pairs.3.right": {
+  "en": "Stopped before it was sure either way",
+  "t": "Aufgehört, bevor er sich so oder so sicher war"
+ },
+ "lessons.0.steps.3.explain": {
+  "en": "The status is the first thing to read. Only OPTIMAL and FEASIBLE come with a timetable; INFEASIBLE is a proof that the rules clash; UNKNOWN means the search ran out of time or nodes, so try a smaller model or more time.",
+  "t": "Der Status ist das Erste, was du liest. Nur OPTIMAL und FEASIBLE kommen mit einem Stundenplan; INFEASIBLE ist ein Beweis, dass die Regeln sich widersprechen; UNKNOWN heißt, die Suche ist an Zeit oder Knoten gescheitert, also probiere ein kleineres Modell oder mehr Zeit."
+ },
+ "lessons.0.steps.4.prompt": {
+  "en": "Complete the timetable model: a class has one lesson at a time, each subject’s teacher is in one class at a time, and Ms Huda (science) leaves after period 3.",
+  "t": "Vervollständige das Stundenplan-Modell: Eine Klasse hat immer nur eine Unterrichtsstunde zur Zeit, die Lehrkraft jedes Fachs ist immer nur in einer Klasse, und Frau Huda (Naturwissenschaft) geht nach der 3. Stunde."
+ },
+ "lessons.0.steps.4.explain": {
+  "en": "add_all_different keeps a class’s lessons in different periods; for each subject, the same teacher’s lessons in every class must differ too; and <= 3 keeps science in periods 1 to 3, with the expression on the left.",
+  "t": "add_all_different hält die Stunden einer Klasse in verschiedenen Zeitfenstern; für jedes Fach müssen auch die Stunden derselben Lehrkraft in allen Klassen verschieden sein; und <= 3 hält Naturwissenschaft in den Stunden 1 bis 3, mit dem Ausdruck links."
+ },
+ "lessons.0.steps.5.prompt": {
+  "en": "Try it: in “Build the timetable”, press One step a few times and watch the rules cross periods out. Press Run and count the guesses, then choose “Plain backtracking” and Run again. Finally tick “The art room holds an exam in period 3” and “The lab is busy in period 1”: what does the search prove?",
+  "t": "Probier es aus: Drücke in „Stundenplan erstellen“ ein paar Mal „Ein Schritt“ und sieh zu, wie die Regeln Stunden streichen. Drücke „Start“ und zähle die Tipps, wähle dann „Einfaches Backtracking“ und drücke erneut „Start“. Hake zum Schluss „Im Kunstraum findet in der 3. Stunde eine Prüfung statt“ und „Das Labor ist in der 1. Stunde belegt“ an: Was beweist die Suche?"
+ },
+ "lessons.0.steps.6.prompt": {
+  "en": "5A (a) and 5B (b) both have maths, science and English in periods 1 to 3. Each subject has one teacher for both classes, and Ms Huda (science) leaves after period 2. Add the missing rule: a teacher can’t be in both classes in the same period. Then run it.",
+  "t": "5A (a) und 5B (b) haben beide Mathe, Naturwissenschaft und Englisch in den Stunden 1 bis 3. Jedes Fach hat für beide Klassen eine Lehrkraft, und Frau Huda (Naturwissenschaft) geht nach der 2. Stunde. Füge die fehlende Regel hinzu: Eine Lehrkraft kann nicht in derselben Stunde in beiden Klassen sein. Lass es dann laufen."
+ },
+ "lessons.0.steps.6.tests.0.hint": {
+  "en": "For every subject s, 5A’s period and 5B’s period must differ.",
+  "t": "Für jedes Fach s müssen die Stunde von 5A und die Stunde von 5B verschieden sein."
+ },
+ "lessons.0.steps.6.tests.1.hint": {
+  "en": "Keep Ms Huda’s rule: science in period 1 or 2.",
+  "t": "Behalte Frau Hudas Regel bei: Naturwissenschaft in der 1. oder 2. Stunde."
+ },
+ "lessons.0.steps.6.tests.2.hint": {
+  "en": "Add one != rule per subject: m.add(a[s] != b[s]).",
+  "t": "Füge pro Fach eine !=-Regel hinzu: m.add(a[s] != b[s])."
+ },
+ "lessons.0.steps.6.hints.0": {
+  "en": "Loop over the subjects: for s in S:",
+  "t": "Gehe die Fächer in einer Schleife durch: for s in S:"
+ },
+ "lessons.0.steps.6.hints.1": {
+  "en": "Inside the loop: m.add(a[s] != b[s])",
+  "t": "In der Schleife: m.add(a[s] != b[s])"
+ },
+ "lessons.0.steps.6.explain": {
+  "en": "Each subject has one teacher, so 5A’s and 5B’s periods for it must differ: one != rule per subject. Without it, the solver happily puts both classes’ science in period 1, because nobody told it about the teacher. The same program runs unchanged on the real OR-Tools in Colab.",
+  "t": "Jedes Fach hat eine Lehrkraft, also müssen die Stunden von 5A und 5B dafür verschieden sein: eine !=-Regel pro Fach. Ohne sie legt der Solver fröhlich die Naturwissenschaft beider Klassen in die 1. Stunde, weil ihm niemand etwas von der Lehrkraft gesagt hat. Dasselbe Programm läuft unverändert mit den echten OR-Tools in Colab."
+ },
+ "lessons.0.steps.7.prompt": {
+  "en": "If the solver says OPTIMAL for a timetable with no goal, the timetable is fair to every teacher and class.",
+  "t": "Wenn der Solver für einen Stundenplan ohne Ziel OPTIMAL meldet, ist der Stundenplan für jede Lehrkraft und jede Klasse fair."
+ },
+ "lessons.0.steps.7.explain": {
+  "en": "OPTIMAL only says every rule you wrote is kept. Fairness rules nobody wrote, such as not giving one class every last period, are invisible to the solver. Show the draft to the people affected and add what they need.",
+  "t": "OPTIMAL sagt nur, dass jede Regel, die du geschrieben hast, eingehalten wird. Fairnessregeln, die niemand geschrieben hat, etwa einer Klasse nicht jede letzte Stunde zu geben, sind für den Solver unsichtbar. Zeige den Entwurf den Betroffenen und füge hinzu, was sie brauchen."
+ },
+ "lessons.0.steps.8.prompt": {
+  "en": "What do you suggest?",
+  "t": "Was schlägst du vor?"
+ },
+ "lessons.0.steps.8.who": {
+  "en": "Mrs Adeyemi, deputy head",
+  "t": "Frau Adeyemi, stellvertretende Schulleiterin"
+ },
+ "lessons.0.steps.8.initial": {
+  "en": "A",
+  "t": "A"
+ },
+ "lessons.0.steps.8.situation": {
+  "en": "The solver’s timetable keeps every rule, but Ms Rana now teaches all her art lessons on two days, with a four-period gap on one of them. She has a child to collect at 2 pm. Mrs Adeyemi asks you what to do.",
+  "t": "Der Stundenplan des Solvers hält alle Regeln ein, aber Frau Rana unterrichtet jetzt alle ihre Kunststunden an zwei Tagen, mit einer vierstündigen Lücke an einem davon. Sie muss um 14 Uhr ein Kind abholen. Frau Adeyemi fragt dich, was zu tun ist."
+ },
+ "lessons.0.steps.8.choices.0.label": {
+  "en": "“Ask Ms Rana what she needs, add it as a rule, and solve again.”",
+  "t": "„Wir fragen Frau Rana, was sie braucht, fügen es als Regel hinzu und lösen erneut.“"
+ },
+ "lessons.0.steps.8.choices.0.consequence": {
+  "en": "Her pick-up time becomes a line such as “no art lessons after period 5”. The solver rearranges everything else, and the new timetable still keeps every old rule.",
+  "t": "Ihre Abholzeit wird zu einer Zeile wie „keine Kunststunden nach der 5. Stunde“. Der Solver ordnet alles andere neu, und der neue Stundenplan hält weiterhin jede alte Regel ein."
+ },
+ "lessons.0.steps.8.choices.1.label": {
+  "en": "“Swap a few of her lessons by hand.”",
+  "t": "„Wir tauschen ein paar ihrer Stunden von Hand.“"
+ },
+ "lessons.0.steps.8.choices.1.consequence": {
+  "en": "A hand swap can break a rule somewhere else, a clash for a class or another teacher. If you do swap, fix those lessons as rules in the model and let the solver check the rest.",
+  "t": "Ein Tausch von Hand kann anderswo eine Regel brechen, einen Konflikt für eine Klasse oder eine andere Lehrkraft. Wenn du tauschst, lege diese Stunden als Regeln im Modell fest und lass den Solver den Rest prüfen."
+ },
+ "lessons.0.steps.8.choices.2.label": {
+  "en": "“The computer decided, so it’s fair.”",
+  "t": "„Der Computer hat entschieden, also ist es fair.“"
+ },
+ "lessons.0.steps.8.choices.2.consequence": {
+  "en": "The computer only kept the rules it was given, and nobody gave it Ms Rana’s. A timetable people trust is one they could shape.",
+  "t": "Der Computer hat nur die Regeln eingehalten, die man ihm gab, und Frau Ranas Regel hat ihm niemand gegeben. Ein Stundenplan, dem Menschen vertrauen, ist einer, den sie mitgestalten konnten."
+ },
+ "lessons.0.steps.8.explain": {
+  "en": "Ask what the person needs, add it as a rule, and solve again, so every other rule still holds.",
+  "t": "Frage, was die Person braucht, füge es als Regel hinzu und löse erneut, damit jede andere Regel weiter gilt."
+ },
+ "lessons.0.steps.9.prompt": {
+  "en": "Which rule of your school’s timetable is written down nowhere, but everyone knows? How would you write it as one line of a model?",
+  "t": "Welche Regel im Stundenplan deiner Schule steht nirgends geschrieben, aber alle kennen sie? Wie würdest du sie als eine Zeile eines Modells schreiben?"
+ },
+ "lessons.0.steps.9.placeholder": {
+  "en": "For example: “No PE straight after lunch. That’s m.add(p[c, \"pe\"] != 5) for every class.”",
+  "t": "Zum Beispiel: „Kein Sport direkt nach der Mittagspause. Das ist m.add(p[c, \"pe\"] != 5) für jede Klasse.“"
+ },
+ "lessons.0.steps.10.prompt": {
+  "en": "Project: The sticky-note timetable",
+  "t": "Projekt: Der Haftnotizen-Stundenplan"
+ },
+ "lessons.0.steps.10.task": {
+  "en": "On the board, draw a grid for three classes and four periods. Give groups sticky notes for each class’s four lessons (one colour per subject and teacher). Groups place the notes so that no class has two lessons at once and no teacher is in two classes at once, then check each other’s grids for clashes. Add one new rule, such as “the art room holds an exam in period 3”, and count how many notes move. If you have a phone, run the timetable example in the “Model it with CP-SAT” lab and compare it with the class’s answer. End by asking: who got the last period, and is that fair?",
+  "t": "Zeichne an der Tafel ein Raster für drei Klassen und vier Stunden. Gib den Gruppen Haftnotizen für die vier Unterrichtsstunden jeder Klasse (eine Farbe pro Fach und Lehrkraft). Die Gruppen legen die Notizen so, dass keine Klasse zwei Stunden gleichzeitig hat und keine Lehrkraft in zwei Klassen gleichzeitig ist, und prüfen dann gegenseitig ihre Raster auf Konflikte. Füge eine neue Regel hinzu, zum Beispiel „Im Kunstraum findet in der 3. Stunde eine Prüfung statt“, und zähle, wie viele Notizen sich bewegen. Wenn du ein Handy hast, lass das Stundenplan-Beispiel im Lab „Mit CP-SAT modellieren“ laufen und vergleiche es mit der Antwort der Klasse. Frage zum Schluss: Wer hat die letzte Stunde bekommen, und ist das fair?"
+ },
+ "lessons.0.steps.10.deliverable": {
+  "en": "A photo of the finished grid (no faces needed), the number of notes that moved after the new rule, and one sentence on what pupils said about fairness.",
+  "t": "Ein Foto des fertigen Rasters (Gesichter müssen nicht zu sehen sein), die Zahl der Notizen, die sich nach der neuen Regel bewegt haben, und ein Satz dazu, was die Schüler:innen zur Fairness gesagt haben."
+ },
+ "lessons.0.steps.10.rubric.0.criterion": {
+  "en": "Pupils could: place lessons so that no class or teacher is in two places at once.",
+  "t": "Die Schüler:innen konnten: Unterrichtsstunden so legen, dass keine Klasse und keine Lehrkraft an zwei Orten gleichzeitig ist."
+ },
+ "lessons.0.steps.10.rubric.1.criterion": {
+  "en": "Pupils could: spot a clash in another group’s grid and explain which rule it breaks.",
+  "t": "Die Schüler:innen konnten: einen Konflikt im Raster einer anderen Gruppe erkennen und erklären, welche Regel er verletzt."
+ },
+ "lessons.0.steps.10.rubric.2.criterion": {
+  "en": "Pupils could: say whether a timetable that keeps every rule is also fair, and why.",
+  "t": "Die Schüler:innen konnten: sagen, ob ein Stundenplan, der jede Regel einhält, auch fair ist, und warum."
+ },
+ "lessons.0.slides.0.title": {
+  "en": "A timetable that works",
+  "t": "Ein Stundenplan, der funktioniert"
+ },
+ "lessons.0.slides.0.narration": {
+  "en": "What if we told a computer the rules, and let it search?",
+  "t": "Was, wenn wir einem Computer die Regeln sagen und ihn suchen lassen?"
+ },
+ "lessons.0.slides.0.note": {
+  "en": "Optimization · Level 3 · Lesson 1",
+  "t": "Optimierung · Niveau 3 · Lektion 1"
+ },
+ "lessons.0.slides.1.title": {
+  "en": "Today we will",
+  "t": "Heute werden wir"
+ },
+ "lessons.0.slides.1.bullets": {
+  "en": [
+   "Write a timetable as a model: a period per lesson, and rules.",
+   "See how a solver crosses out and searches, and what INFEASIBLE means.",
+   "Judge a timetable that keeps every rule: is it also fair?"
+  ],
+  "t": [
+   "einen Stundenplan als Modell schreiben: eine Stunde pro Unterrichtsstunde und Regeln.",
+   "sehen, wie ein Solver streicht und sucht und was INFEASIBLE bedeutet.",
+   "einen Stundenplan beurteilen, der jede Regel einhält: Ist er auch fair?"
+  ]
+ },
+ "lessons.0.slides.2.title": {
+  "en": "Remember",
+  "t": "Merke dir"
+ },
+ "lessons.0.slides.2.bullets": {
+  "en": [
+   "Periods are variables; each rule is one line, such as add_all_different for a class or a teacher.",
+   "The solver crosses out what can’t work, then guesses and undoes dead ends.",
+   "INFEASIBLE proves the rules clash; OPTIMAL doesn’t prove the timetable is fair."
+  ],
+  "t": [
+   "Stunden sind Variablen; jede Regel ist eine Zeile, zum Beispiel add_all_different für eine Klasse oder eine Lehrkraft.",
+   "Der Solver streicht, was nicht gehen kann, rät dann und nimmt Sackgassen zurück.",
+   "INFEASIBLE beweist, dass die Regeln sich widersprechen; OPTIMAL beweist nicht, dass der Stundenplan fair ist."
+  ]
+ },
+ "lessons.0.slides.3.title": {
+  "en": "The sticky-note timetable",
+  "t": "Der Haftnotizen-Stundenplan"
+ },
+ "lessons.0.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): Who has ever had two lessons at once?",
+   "Teach (8 min): The two rules and the extra rules.",
+   "Build it (15 min): Groups place sticky notes on the grid.",
+   "New rule (7 min): Add one rule and count what moves.",
+   "Wrap-up (5 min): Who got the last period? Is that fair?"
+  ],
+  "t": [
+   "Aufwärmen (5 Min.): Wer hatte schon mal zwei Stunden gleichzeitig?",
+   "Erklären (8 Min.): Die zwei Regeln und die zusätzlichen Regeln.",
+   "Bauen (15 Min.): Die Gruppen legen Haftnotizen auf das Raster.",
+   "Neue Regel (7 Min.): Eine Regel hinzufügen und zählen, was sich bewegt.",
+   "Abschluss (5 Min.): Wer bekam die letzte Stunde? Ist das fair?"
+  ]
+ },
+ "lessons.0.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Ask pupils what goes wrong when a timetable is badly made: two lessons at once, a teacher in two rooms, a free period nobody wanted. List their answers as rules.",
+   "Teach (8 min): Draw a grid for three classes and four periods. Explain the two main rules (a class has one lesson at a time; a teacher is in one class at a time) and two extra rules: Ms Huda leaves after period 3, and 6A’s maths test is in period 1.",
+   "Build it (15 min): Each group gets twelve sticky notes, four per class, coloured by subject. They place them on their own grid, then swap grids with another group to look for clashes.",
+   "New rule (7 min): Announce “the art room holds an exam in period 3”. Groups move notes to keep every rule and count how many moved.",
+   "Wrap-up (5 min): Ask which class got the last period most often, and whether a timetable that keeps every rule is always fair. Show the lab or the modeller if you have a phone."
+  ],
+  "t": [
+   "Aufwärmen (5 Min.): Frage die Schüler:innen, was schiefgeht, wenn ein Stundenplan schlecht gemacht ist: zwei Stunden gleichzeitig, eine Lehrkraft in zwei Räumen, eine Freistunde, die niemand wollte. Halte ihre Antworten als Regeln fest.",
+   "Erklären (8 Min.): Zeichne ein Raster für drei Klassen und vier Stunden. Erkläre die zwei Hauptregeln (eine Klasse hat immer nur eine Unterrichtsstunde zur Zeit; eine Lehrkraft ist immer nur in einer Klasse) und zwei zusätzliche Regeln: Frau Huda geht nach der 3. Stunde, und die Mathearbeit von 6A ist in der 1. Stunde.",
+   "Bauen (15 Min.): Jede Gruppe bekommt zwölf Haftnotizen, vier pro Klasse, nach Fach eingefärbt. Sie legen sie auf ihr eigenes Raster und tauschen es dann mit einer anderen Gruppe, um nach Konflikten zu suchen.",
+   "Neue Regel (7 Min.): Verkünde: „Im Kunstraum findet in der 3. Stunde eine Prüfung statt.“ Die Gruppen verschieben Notizen, damit jede Regel eingehalten wird, und zählen, wie viele sich bewegt haben.",
+   "Abschluss (5 Min.): Frage, welche Klasse am häufigsten die letzte Stunde bekam und ob ein Stundenplan, der jede Regel einhält, immer fair ist. Zeige das Lab oder den Modellierer, wenn du ein Handy hast."
+  ]
+ },
+ "lessons.0.slides.3.note": {
+  "en": "Prepare twelve notes per group: four lessons for each of 5A, 5B and 6A (maths, science, English, art), one colour per subject. No sticky notes? Squares of paper and a little tape work.",
+  "t": "Bereite zwölf Notizen pro Gruppe vor: vier Unterrichtsstunden für jede der Klassen 5A, 5B und 6A (Mathe, Naturwissenschaft, Englisch, Kunst), eine Farbe pro Fach. Keine Haftnotizen? Papierquadrate und etwas Klebeband gehen auch."
+ },
+ "lessons.0.slides.3.narration": {
+  "en": "Place every lesson so nobody is in two places at once.",
+  "t": "Lege jede Unterrichtsstunde so, dass niemand an zwei Orten gleichzeitig ist."
+ },
+ "lessons.0.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns diskutieren"
+ },
+ "lessons.0.slides.4.bullets": {
+  "en": [
+   "Which rule did we forget at first, and how did we notice?",
+   "What does it mean when no timetable can keep every rule?",
+   "Who got the last period, and is that fair?"
+  ],
+  "t": [
+   "Welche Regel haben wir anfangs vergessen, und wie haben wir es gemerkt?",
+   "Was bedeutet es, wenn kein Stundenplan alle Regeln einhalten kann?",
+   "Wer hat die letzte Stunde bekommen, und ist das fair?"
+  ]
+ },
+ "lessons.0.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.0.slides.5.bullets": {
+  "en": [
+   "Write one rule of our school’s timetable, and one change that would make it fairer."
+  ],
+  "t": [
+   "Schreibe eine Regel des Stundenplans unserer Schule und eine Änderung auf, die ihn fairer machen würde."
+  ]
+ },
+ "lessons.0.slides.5.narration": {
+  "en": "Say the rules, let the solver search, and judge the result together.",
+  "t": "Sagt die Regeln, lasst den Solver suchen und beurteilt das Ergebnis gemeinsam."
+ },
+ "lessons.0.kit.0.title": {
+  "en": "Slides: A timetable that works",
+  "t": "Folien: Ein Stundenplan, der funktioniert"
+ },
+ "lessons.0.kit.1.title": {
+  "en": "Lesson plan and worksheet: A timetable that works",
+  "t": "Unterrichtsplan und Arbeitsblatt: Ein Stundenplan, der funktioniert"
+ },
+ "lessons.0.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "Das Lektionsvideo (240p, für den Unterricht oder WhatsApp)"
+ },
+ "lessons.1.title": {
+  "en": "Exams without clashes",
+  "t": "Prüfungen ohne Überschneidungen"
+ },
+ "lessons.1.tryTomorrow": {
+  "en": "List next term’s exams and which classes or pupils take each. Let pupils draw the clash map with chalk dots and lines (or string between chairs), then colour it with as few slots as they can. Ask: who has two exams in a row, and is that fair?",
+  "t": "Liste die Prüfungen des nächsten Halbjahrs auf und welche Klassen oder Schüler:innen jede ablegen. Lass die Schüler:innen die Konfliktkarte mit Kreidepunkten und -linien zeichnen (oder mit Schnur zwischen Stühlen) und sie dann mit möglichst wenigen Zeitfenstern einfärben. Frage: Wer hat zwei Prüfungen hintereinander, und ist das fair?"
+ },
+ "lessons.1.materials": {
+  "en": [
+   "Chalk, or string and eight chairs",
+   "Coloured paper or caps for the slots",
+   "A list of exams and who takes each"
+  ],
+  "t": [
+   "Kreide, oder Schnur und acht Stühle",
+   "Buntes Papier oder Kappen für die Zeitfenster",
+   "Eine Liste der Prüfungen und wer jede ablegt"
+  ]
+ },
+ "lessons.1.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.1.steps.0.title": {
+  "en": "Exams without clashes",
+  "t": "Prüfungen ohne Überschneidungen"
+ },
+ "lessons.1.steps.0.chapters.0.label": {
+  "en": "Two exams at once",
+  "t": "Zwei Prüfungen gleichzeitig"
+ },
+ "lessons.1.steps.0.chapters.1.label": {
+  "en": "A clash map and quick rules",
+  "t": "Eine Konfliktkarte und schnelle Regeln"
+ },
+ "lessons.1.steps.0.chapters.2.label": {
+  "en": "The model and its proof",
+  "t": "Das Modell und sein Beweis"
+ },
+ "lessons.1.steps.0.chapters.3.label": {
+  "en": "Fewest isn’t kindest",
+  "t": "Am wenigsten ist nicht am freundlichsten"
+ },
+ "lessons.1.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.1.steps.0.checkpoint.question.prompt": {
+  "en": "A quick rule found 4 slots; the solver says OPTIMAL with 3. What does OPTIMAL add?",
+  "t": "Eine schnelle Regel hat 4 Zeitfenster gefunden; der Solver meldet OPTIMAL mit 3. Was fügt OPTIMAL hinzu?"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.0.text": {
+  "en": "That 3 is fewer than the quick rule found",
+  "t": "Dass 3 weniger ist, als die schnelle Regel gefunden hat"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.1.text": {
+  "en": "That no plan with fewer slots exists",
+  "t": "Dass es keinen Plan mit weniger Zeitfenstern gibt"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.2.text": {
+  "en": "That 3 slots are fair to every pupil",
+  "t": "Dass 3 Zeitfenster für alle Schüler:innen fair sind"
+ },
+ "lessons.1.steps.0.checkpoint.question.explain": {
+  "en": "A quick rule can only show that a plan works. OPTIMAL means the solver searched and proved no plan with fewer slots exists, and Omar’s three exams that all clash (a clique) show the same. It says nothing about fairness.",
+  "t": "Eine schnelle Regel kann nur zeigen, dass ein Plan funktioniert. OPTIMAL heißt, der Solver hat gesucht und bewiesen, dass es keinen Plan mit weniger Zeitfenstern gibt; Omars drei Prüfungen, die sich alle überschneiden (eine Clique), zeigen dasselbe. Über Fairness sagt es nichts."
+ },
+ "lessons.1.steps.0.transcript": {
+  "en": "Last year, a pupil found two of his exams in the same slot. He sat one of them in the staff room at lunchtime. This year I want no clashes, and as few slots as possible. Today: exams without clashes, as a picture and as a model. Draw each exam as a dot. Join two dots when some pupil takes both exams: those two can’t share a slot. Now giving exams slots is colouring the dots, so that joined dots get different colours. A quick rule: go down the list, and give each exam the first slot with no clash. In the lab, that needs four slots. A smarter rule, DSatur, always does next the exam that is hardest to place, and needs three. Can it be done in two? No. Omar’s three exams, maths, Arabic and French, all clash with each other, so they need three different slots. A group of exams that all clash is called a clique, and it proves that fewer is impossible. In CP-SAT, each exam’s slot is a variable. For every pupil, their exams must all be in different slots. A variable called last is at least every slot, and the goal is to make it as small as possible. The solver answers three, and says OPTIMAL. That word matters: the solver has proved that no plan with two slots exists, just as Omar’s clique said. A quick rule can only say “this works”; a solver can say “this is the best”. Quick check! A quick rule found four slots, and the solver says OPTIMAL with three. What does the word OPTIMAL add? A proof: no plan with fewer slots exists. But look at Omar and Tarek: with three slots, they sit three exams back to back. Add the rule “no pupil sits exams in two slots in a row”, and the fewest becomes five. Fewer slots, or rested pupils: that’s a trade-off. Who should decide that trade-off? Not the solver, and not one timetabler alone. Ask the pupils who sit the exams and the teachers who mark them, then write the agreed rule into the model. In the app, open “Exam slots without clashes”. Press Greedy, then DSatur, then “How few slots?”. Then untick Omar, and colour the map yourself. Your turn. Our model says three slots, OPTIMAL, but Tarek has three exams back to back. What should we do? Agree the rule with the people it affects, add it, solve again, and say openly what it costs. Remember: exams are dots, shared pupils are lines, and slots are colours. A clique proves the fewest. And OPTIMAL means best for the goal you wrote, not best for every pupil. Try it in class tomorrow: list next term’s exams, and let pupils draw the clash map with chalk or string. Colour it with as few slots as you can. Then ask: who has two exams in a row, and is that fair?",
+  "t": "Letztes Jahr hatte ein Schüler zwei Prüfungen im selben Zeitfenster. Eine davon schrieb er mittags im Lehrerzimmer. Dieses Jahr will ich keine Überschneidungen und möglichst wenige Zeitfenster. Heute: Prüfungen ohne Überschneidungen, als Bild und als Modell. Zeichne jede Prüfung als Punkt. Verbinde zwei Punkte, wenn jemand beide Prüfungen schreibt: Die beiden dürfen nicht im selben Zeitfenster liegen. Prüfungen auf Zeitfenster zu verteilen heißt jetzt, die Punkte zu färben, sodass verbundene Punkte verschiedene Farben bekommen. Eine schnelle Regel: Geh die Liste durch und gib jeder Prüfung das erste Zeitfenster ohne Überschneidung. Im Lab braucht das vier Zeitfenster. Eine klügere Regel, DSatur, nimmt immer die Prüfung als Nächste, die am schwersten unterzubringen ist, und kommt mit drei aus. Geht es auch mit zwei? Nein. Omars drei Prüfungen, Mathe, Arabisch und Französisch, überschneiden sich alle miteinander, also brauchen sie drei verschiedene Zeitfenster. Eine Gruppe von Prüfungen, die sich alle überschneiden, heißt Clique, und sie beweist, dass weniger nicht geht. In CP-SAT ist das Zeitfenster jeder Prüfung eine Variable. Für jede Person müssen ihre Prüfungen alle in verschiedenen Zeitfenstern liegen. Eine Variable namens last ist mindestens so groß wie jedes Zeitfenster, und das Ziel ist, sie so klein wie möglich zu machen. Der Solver antwortet drei und sagt OPTIMAL. Dieses Wort zählt: Der Solver hat bewiesen, dass es keinen Plan mit zwei Zeitfenstern gibt, genau wie Omars Clique es gesagt hat. Eine schnelle Regel kann nur sagen „Das funktioniert“, ein Solver kann sagen „Das ist das Beste“. Kurzer Check! Eine schnelle Regel hat vier Zeitfenster gefunden, und der Solver sagt OPTIMAL mit drei. Was fügt das Wort OPTIMAL hinzu? Ein Beweis: Es gibt keinen Plan mit weniger Zeitfenstern. Aber schau auf Omar und Tarek: Mit drei Zeitfenstern schreiben sie drei Prüfungen direkt hintereinander. Füg die Regel „Niemand schreibt Prüfungen in zwei Zeitfenstern hintereinander“ hinzu, und das Minimum steigt auf fünf. Weniger Zeitfenster oder ausgeruhte Schüler:innen: Das ist ein Zielkonflikt. Wer soll diesen Zielkonflikt entscheiden? Nicht der Solver und nicht eine einzelne Planungsperson allein. Frag die Schüler:innen, die die Prüfungen schreiben, und die Lehrkräfte, die sie korrigieren, und schreib dann die vereinbarte Regel ins Modell. Öffne in der App „Prüfungstermine ohne Überschneidungen“. Drück Greedy, dann DSatur, dann „Wie wenige Zeitfenster?“. Nimm dann das Häkchen bei Omar weg und färbe die Karte selbst. Du bist dran. Unser Modell sagt drei Zeitfenster, OPTIMAL, aber Tarek hat drei Prüfungen direkt hintereinander. Was sollen wir tun? Vereinbare die Regel mit den Menschen, die sie betrifft, füg sie hinzu, löse noch einmal und sag offen, was sie kostet. Denk dran: Prüfungen sind Punkte, gemeinsame Schüler:innen sind Linien, und Zeitfenster sind Farben. Eine Clique beweist das Minimum. Und OPTIMAL heißt am besten für das Ziel, das du aufgeschrieben hast, nicht am besten für alle Schüler:innen. Probier es morgen im Unterricht aus: Liste die Prüfungen des nächsten Halbjahrs auf, und lass die Schüler:innen die Überschneidungskarte mit Kreide oder Schnur zeichnen. Färbe sie mit so wenigen Zeitfenstern wie möglich. Frag dann: Wer hat zwei Prüfungen hintereinander, und ist das fair?"
+ },
+ "lessons.1.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.1.steps.1.title": {
+  "en": "Exam slots as colouring",
+  "t": "Prüfungszeitfenster als Färbung"
+ },
+ "lessons.1.steps.1.body": {
+  "en": "Exam week has one hard rule: a pupil can’t sit two exams at once. Draw each exam as a dot, and join two dots with a line when some pupil takes both. This clash map (a graph) turns the timetable into a colouring puzzle: give each dot a colour (a slot) so that no line joins two dots of the same colour. The fewer colours, the shorter the exam week.\n\nQuick rules colour the map fast. Greedy colouring goes down the list and gives each exam the first slot that has no clash; on the lab’s eight exams it needs four slots. DSatur always colours next the exam whose neighbours already use the most different slots, the hardest to place, and needs three. Neither rule can tell you whether fewer would do.\n\nA clique answers that. Omar takes maths, Arabic and French, and those three exams all clash with each other, so they need three different slots: no plan can use fewer than three. In CP-SAT, the model says the same thing directly. Each exam’s slot is an integer variable; for every pupil, m.add_all_different over their exams; a variable last with slot <= last for every exam; and m.minimize(last). The solver answers 3 with the status OPTIMAL, which is a proof that 2 slots can’t work, not just a good try. The same program runs unchanged on the real OR-Tools in Colab.\n\nFewest is not the same as kindest. With three slots in a row, Omar and Tarek sit three exams back to back. The rule “no pupil sits exams in two slots in a row” is fairer to them, and on the lab’s exams it raises the fewest from 3 slots to 5: a longer exam week. That is a trade-off between goals, and the solver can’t choose for you: it only reports what each choice costs.\n\nSo model both versions, show the two plans to pupils and the staff who invigilate and mark, agree the rule, and write it into the model. Then check the result for the people it affects: who has the hardest day, who has a late exam after a long journey, and whether the same class always gets the last slot.",
+  "t": "Die Prüfungswoche hat eine harte Regel: Eine Schülerin oder ein Schüler kann nicht zwei Prüfungen gleichzeitig schreiben. Zeichne jede Prüfung als Punkt und verbinde zwei Punkte mit einer Linie, wenn jemand beide ablegt. Diese Konfliktkarte (ein Graph) macht aus dem Prüfungsplan ein Färbungsrätsel: Gib jedem Punkt eine Farbe (ein Zeitfenster), sodass keine Linie zwei Punkte derselben Farbe verbindet. Je weniger Farben, desto kürzer die Prüfungswoche.\n\nSchnelle Regeln färben die Karte flink. Die Greedy-Färbung geht die Liste durch und gibt jeder Prüfung das erste Zeitfenster ohne Konflikt; bei den acht Prüfungen des Labs braucht sie vier Zeitfenster. DSatur färbt als Nächstes immer die Prüfung, deren Nachbarn schon die meisten verschiedenen Zeitfenster belegen, also die am schwersten unterzubringende, und braucht drei. Keine der beiden Regeln kann dir sagen, ob weniger genügen würde.\n\nDas kann eine Clique beantworten. Omar legt Mathe, Arabisch und Französisch ab, und diese drei Prüfungen überschneiden sich alle miteinander, also brauchen sie drei verschiedene Zeitfenster: Kein Plan kann mit weniger als drei auskommen. In CP-SAT sagt das Modell dasselbe direkt. Das Zeitfenster jeder Prüfung ist eine ganzzahlige Variable; für jede Schülerin und jeden Schüler gibt es m.add_all_different über deren Prüfungen; eine Variable last mit slot <= last für jede Prüfung; und m.minimize(last). Der Solver antwortet 3 mit dem Status OPTIMAL, und das ist ein Beweis, dass 2 Zeitfenster nicht gehen, nicht nur ein guter Versuch. Dasselbe Programm läuft unverändert mit den echten OR-Tools in Colab.\n\nAm wenigsten ist nicht dasselbe wie am freundlichsten. Mit drei Zeitfenstern hintereinander schreiben Omar und Tarek drei Prüfungen direkt nacheinander. Die Regel „Niemand schreibt Prüfungen in zwei aufeinanderfolgenden Zeitfenstern“ ist für sie fairer, und bei den Prüfungen des Labs steigt dadurch das Minimum von 3 auf 5 Zeitfenster: eine längere Prüfungswoche. Das ist ein Zielkonflikt, und der Solver kann nicht für dich wählen: Er meldet nur, was jede Wahl kostet.\n\nModelliere also beide Varianten, zeige die beiden Pläne den Schüler:innen und den Lehrkräften, die beaufsichtigen und korrigieren, einigt euch auf die Regel und schreibt sie ins Modell. Prüfe dann das Ergebnis für die Menschen, die es betrifft: Wer hat den härtesten Tag, wer hat nach langer Anreise eine späte Prüfung, und bekommt immer dieselbe Klasse das letzte Zeitfenster?"
+ },
+ "lessons.1.steps.1.keyTerms.0.term": {
+  "en": "Clash map (graph)",
+  "t": "Konfliktkarte (Graph)"
+ },
+ "lessons.1.steps.1.keyTerms.0.def": {
+  "en": "Dots for exams, lines between exams that share a pupil.",
+  "t": "Punkte für Prüfungen, Linien zwischen Prüfungen, die sich jemand teilt."
+ },
+ "lessons.1.steps.1.keyTerms.1.term": {
+  "en": "Graph colouring",
+  "t": "Graphfärbung"
+ },
+ "lessons.1.steps.1.keyTerms.1.def": {
+  "en": "Giving each dot a colour so that no line joins two dots of the same colour; here, colours are exam slots.",
+  "t": "Jedem Punkt eine Farbe geben, sodass keine Linie zwei Punkte derselben Farbe verbindet; hier sind die Farben Prüfungszeitfenster."
+ },
+ "lessons.1.steps.1.keyTerms.2.term": {
+  "en": "Clique",
+  "t": "Clique"
+ },
+ "lessons.1.steps.1.keyTerms.2.def": {
+  "en": "A group of exams that all clash with each other. Its size is a floor: no plan can use fewer slots.",
+  "t": "Eine Gruppe von Prüfungen, die sich alle miteinander überschneiden. Ihre Größe ist eine Untergrenze: Kein Plan kommt mit weniger Zeitfenstern aus."
+ },
+ "lessons.1.steps.1.keyTerms.3.term": {
+  "en": "Trade-off",
+  "t": "Zielkonflikt"
+ },
+ "lessons.1.steps.1.keyTerms.3.def": {
+  "en": "Getting more of one goal (rested pupils) by giving up some of another (a short exam week).",
+  "t": "Mehr von einem Ziel (ausgeruhte Schüler:innen) bekommen, indem man etwas von einem anderen aufgibt (eine kurze Prüfungswoche)."
+ },
+ "lessons.1.steps.2.prompt": {
+  "en": "The exam model says 3 slots, OPTIMAL. But Tarek (science, Arabic, French) now sits three exams back to back, and his parents complain. What should the school do?",
+  "t": "Das Prüfungsmodell meldet 3 Zeitfenster, OPTIMAL. Aber Tarek (Naturwissenschaft, Arabisch, Französisch) schreibt jetzt drei Prüfungen direkt hintereinander, und seine Eltern beschweren sich. Was sollte die Schule tun?"
+ },
+ "lessons.1.steps.2.options.0.text": {
+  "en": "Nothing: OPTIMAL can’t be improved",
+  "t": "Nichts: OPTIMAL lässt sich nicht verbessern"
+ },
+ "lessons.1.steps.2.options.1.text": {
+  "en": "Agree a fairness rule, add it, and solve again",
+  "t": "Eine Fairnessregel vereinbaren, sie hinzufügen und erneut lösen"
+ },
+ "lessons.1.steps.2.options.2.text": {
+  "en": "Leave Tarek out of the model",
+  "t": "Tarek aus dem Modell lassen"
+ },
+ "lessons.1.steps.2.explain": {
+  "en": "OPTIMAL is best only for the goal that was written: the fewest slots. Tarek’s day is a fairness question the goal ignored. Agree a rule such as “no pupil sits two slots in a row” with pupils and teachers, add it, and solve again: here it needs 5 slots instead of 3, a cost to decide openly. Leaving Tarek out hides the problem.",
+  "t": "OPTIMAL ist nur für das Ziel das Beste, das aufgeschrieben wurde: möglichst wenige Zeitfenster. Tareks Tag ist eine Fairnessfrage, die das Ziel ignoriert hat. Vereinbart mit Schüler:innen und Lehrkräften eine Regel wie „Niemand schreibt in zwei aufeinanderfolgenden Zeitfenstern“, fügt sie hinzu und löst erneut: Hier braucht es 5 statt 3 Zeitfenster, ein Preis, über den offen entschieden werden muss. Tarek aus dem Modell zu lassen versteckt das Problem."
+ },
+ "lessons.1.steps.3.prompt": {
+  "en": "Hala takes history, geography and art. Dina takes Arabic and art. Which pairs of exams must be in different slots? Choose all that apply.",
+  "t": "Hala legt Geschichte, Geografie und Kunst ab. Dina legt Arabisch und Kunst ab. Welche Paare von Prüfungen müssen in verschiedenen Zeitfenstern liegen? Wähle alle zutreffenden aus."
+ },
+ "lessons.1.steps.3.options.0.text": {
+  "en": "History and art",
+  "t": "Geschichte und Kunst"
+ },
+ "lessons.1.steps.3.options.1.text": {
+  "en": "Geography and art",
+  "t": "Geografie und Kunst"
+ },
+ "lessons.1.steps.3.options.2.text": {
+  "en": "Arabic and art",
+  "t": "Arabisch und Kunst"
+ },
+ "lessons.1.steps.3.options.3.text": {
+  "en": "History and Arabic",
+  "t": "Geschichte und Arabisch"
+ },
+ "lessons.1.steps.3.options.4.text": {
+  "en": "Geography and Arabic",
+  "t": "Geografie und Arabisch"
+ },
+ "lessons.1.steps.3.explain": {
+  "en": "Two exams clash only when the same pupil takes both. Hala links history, geography and art to each other; Dina links Arabic and art. Nobody here takes history or geography together with Arabic, so those pairs may share a slot.",
+  "t": "Zwei Prüfungen überschneiden sich nur, wenn dieselbe Person beide ablegt. Hala verbindet Geschichte, Geografie und Kunst miteinander; Dina verbindet Arabisch und Kunst. Niemand hier legt Geschichte oder Geografie zusammen mit Arabisch ab, also dürfen diese Paare ein Zeitfenster teilen."
+ },
+ "lessons.1.steps.4.prompt": {
+  "en": "Greedy colouring used 4 slots, so at least 4 slots are needed.",
+  "t": "Die Greedy-Färbung hat 4 Zeitfenster benutzt, also werden mindestens 4 Zeitfenster gebraucht."
+ },
+ "lessons.1.steps.4.explain": {
+  "en": "A quick rule only shows one plan that works. DSatur finds 3 on the same exams, and the solver proves 3 is the fewest. Only a proof, such as a clique of three exams or the solver’s OPTIMAL, tells you the fewest.",
+  "t": "Eine schnelle Regel zeigt nur einen Plan, der funktioniert. DSatur findet bei denselben Prüfungen 3, und der Solver beweist, dass 3 das Minimum ist. Nur ein Beweis, etwa eine Clique aus drei Prüfungen oder das OPTIMAL des Solvers, sagt dir, was das Minimum ist."
+ },
+ "lessons.1.steps.5.prompt": {
+  "en": "Try it: in “Exam slots without clashes”, press “Greedy (list order)”, then “DSatur”, then “How few slots?”. Which exams form the clique that proves 3 is the fewest? Then untick Omar and colour the map yourself: how many slots now?",
+  "t": "Probier es aus: Drücke in „Prüfungszeitfenster ohne Überschneidungen“ erst „Greedy (Listenreihenfolge)“, dann „DSatur“, dann „Wie wenige Zeitfenster?“. Welche Prüfungen bilden die Clique, die beweist, dass 3 das Minimum ist? Hake dann Omar ab und färbe die Karte selbst: Wie viele Zeitfenster sind es jetzt?"
+ },
+ "lessons.1.steps.6.prompt": {
+  "en": "Four exams, numbered 0 to 3 (maths, science, Arabic, art), and three pupils who take exams [0, 1, 2], [1, 3] and [2, 3]. The model already makes the last slot as early as possible. Add the rule that each pupil’s exams are all in different slots, then run it: how few slots are needed?",
+  "t": "Vier Prüfungen, nummeriert von 0 bis 3 (Mathe, Naturwissenschaft, Arabisch, Kunst), und drei Schüler:innen, die die Prüfungen [0, 1, 2], [1, 3] und [2, 3] ablegen. Das Modell macht das letzte Zeitfenster schon so früh wie möglich. Füge die Regel hinzu, dass alle Prüfungen jeder Person in verschiedenen Zeitfenstern liegen, und lass es dann laufen: Wie wenige Zeitfenster werden gebraucht?"
+ },
+ "lessons.1.steps.6.tests.0.hint": {
+  "en": "Without the rule, every exam goes in slot 1. Each pupil’s exams must all differ.",
+  "t": "Ohne die Regel kommt jede Prüfung in Zeitfenster 1. Alle Prüfungen einer Person müssen verschieden sein."
+ },
+ "lessons.1.steps.6.tests.1.hint": {
+  "en": "Keep the lines that tie last to every slot.",
+  "t": "Behalte die Zeilen bei, die last an jedes Zeitfenster binden."
+ },
+ "lessons.1.steps.6.hints.0": {
+  "en": "Loop over the pupils: for p in [[0, 1, 2], [1, 3], [2, 3]]:",
+  "t": "Gehe die Schüler:innen in einer Schleife durch: for p in [[0, 1, 2], [1, 3], [2, 3]]:"
+ },
+ "lessons.1.steps.6.hints.1": {
+  "en": "m.add_all_different([slot[i] for i in p])",
+  "t": "m.add_all_different([slot[i] for i in p])"
+ },
+ "lessons.1.steps.6.explain": {
+  "en": "One all-different rule per pupil keeps their exams apart. Maths, science and Arabic all clash (pupil [0, 1, 2]), so 3 slots is the fewest, and art can share a slot with maths. The solver proves it: OPTIMAL. The same program runs on the real OR-Tools in Colab.",
+  "t": "Eine All-different-Regel pro Person hält deren Prüfungen auseinander. Mathe, Naturwissenschaft und Arabisch überschneiden sich alle (Person [0, 1, 2]), also sind 3 Zeitfenster das Minimum, und Kunst kann sich mit Mathe ein Zeitfenster teilen. Der Solver beweist es: OPTIMAL. Dasselbe Programm läuft mit den echten OR-Tools in Colab."
+ },
+ "lessons.1.steps.7.prompt": {
+  "en": "This exam model prints “slots used: 1”, but the exams clearly need more. Which line is wrong?",
+  "t": "Dieses Prüfungsmodell gibt „slots used: 1“ aus, aber die Prüfungen brauchen offensichtlich mehr. Welche Zeile ist falsch?"
+ },
+ "lessons.1.steps.7.explain": {
+  "en": "last must be at least every exam’s slot (slot <= last), so that minimising it makes the whole week short. With >=, every slot is above last, so the solver simply sets last to 1 and reports a goal that means nothing.",
+  "t": "last muss mindestens so groß sein wie das Zeitfenster jeder Prüfung (slot <= last), damit das Minimieren die ganze Woche kurz macht. Mit >= liegt jedes Zeitfenster über last, also setzt der Solver last einfach auf 1 und meldet ein Ziel, das nichts bedeutet."
+ },
+ "lessons.1.steps.8.prompt": {
+  "en": "What do you advise?",
+  "t": "Was rätst du?"
+ },
+ "lessons.1.steps.8.who": {
+  "en": "Mr Okafor Eze, head of year",
+  "t": "Herr Okafor Eze, Jahrgangsleiter"
+ },
+ "lessons.1.steps.8.initial": {
+  "en": "O",
+  "t": "O"
+ },
+ "lessons.1.steps.8.situation": {
+  "en": "Mr Okafor wants exam week done in two days: four slots. The model with “no pupil sits two slots in a row” needs five. Without that rule, three pupils sit three exams back to back.",
+  "t": "Herr Okafor will die Prüfungswoche in zwei Tagen erledigt haben: vier Zeitfenster. Das Modell mit „Niemand schreibt in zwei aufeinanderfolgenden Zeitfenstern“ braucht fünf. Ohne diese Regel schreiben drei Schüler:innen drei Prüfungen direkt hintereinander."
+ },
+ "lessons.1.steps.8.choices.0.label": {
+  "en": "“Show both plans and their costs to staff and pupils, and decide together.”",
+  "t": "„Wir zeigen beide Pläne und ihre Kosten den Lehrkräften und Schüler:innen und entscheiden gemeinsam.“"
+ },
+ "lessons.1.steps.8.choices.0.consequence": {
+  "en": "Everyone sees the trade-off: one more slot, or three tired pupils. Whatever they choose, the rule is agreed and written into the model, and the decision can be explained.",
+  "t": "Alle sehen den Zielkonflikt: ein Zeitfenster mehr oder drei müde Schüler:innen. Was sie auch wählen, die Regel ist vereinbart und im Modell festgehalten, und die Entscheidung lässt sich erklären."
+ },
+ "lessons.1.steps.8.choices.1.label": {
+  "en": "“Drop the fairness rule quietly: four slots it is.”",
+  "t": "„Wir lassen die Fairnessregel stillschweigend fallen: Es bleibt bei vier Zeitfenstern.“"
+ },
+ "lessons.1.steps.8.choices.1.consequence": {
+  "en": "The week is short, but three pupils carry the cost and nobody chose that openly. Next year the same complaint comes back, with less trust.",
+  "t": "Die Woche ist kurz, aber drei Schüler:innen tragen die Kosten, und niemand hat das offen entschieden. Nächstes Jahr kommt dieselbe Beschwerde wieder, mit weniger Vertrauen."
+ },
+ "lessons.1.steps.8.choices.2.label": {
+  "en": "“Add a fifth slot without telling anyone why.”",
+  "t": "„Wir fügen ein fünftes Zeitfenster hinzu, ohne jemandem zu sagen, warum.“"
+ },
+ "lessons.1.steps.8.choices.2.consequence": {
+  "en": "Fairer for the pupils, but staff lose a day they planned for and don’t know why. Fair rules work best when people can see their reason.",
+  "t": "Fairer für die Schüler:innen, aber die Lehrkräfte verlieren einen Tag, den sie eingeplant hatten, und wissen nicht, warum. Faire Regeln funktionieren am besten, wenn die Menschen ihren Grund sehen können."
+ },
+ "lessons.1.steps.8.explain": {
+  "en": "Show the trade-off and its cost, and decide the rule together.",
+  "t": "Zeige den Zielkonflikt und seinen Preis und entscheidet die Regel gemeinsam."
+ },
+ "lessons.1.steps.9.prompt": {
+  "en": "In your school’s last exam week, who had the hardest timetable? Would a written fairness rule have helped, and what would it have cost?",
+  "t": "Wer hatte in der letzten Prüfungswoche an deiner Schule den härtesten Plan? Hätte eine aufgeschriebene Fairnessregel geholfen, und was hätte sie gekostet?"
+ },
+ "lessons.1.steps.9.placeholder": {
+  "en": "For example: “Science pupils had three papers in one morning. One more afternoon slot would have fixed it.”",
+  "t": "Zum Beispiel: „Die Naturwissenschafts-Schüler:innen hatten drei Arbeiten an einem Vormittag. Ein weiteres Zeitfenster am Nachmittag hätte es gelöst.“"
+ },
+ "lessons.1.steps.10.prompt": {
+  "en": "Project: The chalk clash map",
+  "t": "Projekt: Die Kreide-Konfliktkarte"
+ },
+ "lessons.1.steps.10.task": {
+  "en": "With your class, list six to eight exams (real or from the lab) and which pupils take each. Pupils draw the clash map: a chalk dot per exam on the playground (or a chair), and a line (or string) between exams that share a pupil. In groups, they colour the map with as few slots as they can, using coloured paper on the dots, and look for a group of exams that all clash to prove nobody can do better. Then add the rule “no pupil sits two slots in a row” and count the slots again.",
+  "t": "Listet mit deiner Klasse sechs bis acht Prüfungen auf (echte oder aus dem Lab) und welche Schüler:innen jede ablegen. Die Schüler:innen zeichnen die Konfliktkarte: ein Kreidepunkt pro Prüfung auf dem Schulhof (oder ein Stuhl) und eine Linie (oder Schnur) zwischen Prüfungen, die sich jemand teilt. In Gruppen färben sie die Karte mit möglichst wenigen Zeitfenstern ein, mit buntem Papier auf den Punkten, und suchen eine Gruppe von Prüfungen, die sich alle überschneiden, um zu beweisen, dass niemand es besser kann. Füge dann die Regel „Niemand schreibt in zwei aufeinanderfolgenden Zeitfenstern“ hinzu und zähle die Zeitfenster erneut."
+ },
+ "lessons.1.steps.10.deliverable": {
+  "en": "A photo of the clash map (no faces needed), the fewest slots with and without the fairness rule, and one sentence on which your class would choose and why.",
+  "t": "Ein Foto der Konfliktkarte (Gesichter müssen nicht zu sehen sein), die geringste Zahl von Zeitfenstern mit und ohne Fairnessregel und ein Satz dazu, wofür sich deine Klasse entscheiden würde und warum."
+ },
+ "lessons.1.steps.10.rubric.0.criterion": {
+  "en": "Pupils could: draw a clash map from a list of who takes which exam.",
+  "t": "Die Schüler:innen konnten: aus einer Liste, wer welche Prüfung ablegt, eine Konfliktkarte zeichnen."
+ },
+ "lessons.1.steps.10.rubric.1.criterion": {
+  "en": "Pupils could: colour it with few slots and find a clique that proves the fewest.",
+  "t": "Die Schüler:innen konnten: sie mit wenigen Zeitfenstern einfärben und eine Clique finden, die das Minimum beweist."
+ },
+ "lessons.1.steps.10.rubric.2.criterion": {
+  "en": "Pupils could: explain what the fairness rule costs, and choose.",
+  "t": "Die Schüler:innen konnten: erklären, was die Fairnessregel kostet, und eine Wahl treffen."
+ },
+ "lessons.1.slides.0.title": {
+  "en": "Exams without clashes",
+  "t": "Prüfungen ohne Überschneidungen"
+ },
+ "lessons.1.slides.0.narration": {
+  "en": "How few exam slots do we really need, and what does fairness cost?",
+  "t": "Wie wenige Prüfungszeitfenster brauchen wir wirklich, und was kostet Fairness?"
+ },
+ "lessons.1.slides.0.note": {
+  "en": "Optimization · Level 3 · Lesson 2",
+  "t": "Optimierung · Niveau 3 · Lektion 2"
+ },
+ "lessons.1.slides.1.title": {
+  "en": "Today we will",
+  "t": "Heute werden wir"
+ },
+ "lessons.1.slides.1.bullets": {
+  "en": [
+   "Draw exam clashes as a map and colour it with few slots.",
+   "Prove the fewest slots with a clique, or a solver’s OPTIMAL.",
+   "Weigh a fairness rule against a short exam week."
+  ],
+  "t": [
+   "Prüfungskonflikte als Karte zeichnen und mit wenigen Zeitfenstern einfärben.",
+   "Das Minimum an Zeitfenstern mit einer Clique oder dem OPTIMAL eines Solvers beweisen.",
+   "Eine Fairnessregel gegen eine kurze Prüfungswoche abwägen."
+  ]
+ },
+ "lessons.1.slides.2.title": {
+  "en": "Remember",
+  "t": "Merke dir"
+ },
+ "lessons.1.slides.2.bullets": {
+  "en": [
+   "Exams are dots, shared pupils are lines, and slots are colours.",
+   "Quick rules find a plan; a clique or the solver proves the fewest.",
+   "The fewest slots isn’t always the kindest: decide the trade-off together."
+  ],
+  "t": [
+   "Prüfungen sind Punkte, gemeinsame Schüler:innen sind Linien und Zeitfenster sind Farben.",
+   "Schnelle Regeln finden einen Plan; eine Clique oder der Solver beweist das Minimum.",
+   "Die wenigsten Zeitfenster sind nicht immer die freundlichsten: Entscheidet den Zielkonflikt gemeinsam."
+  ]
+ },
+ "lessons.1.slides.3.title": {
+  "en": "The chalk clash map",
+  "t": "Die Kreide-Konfliktkarte"
+ },
+ "lessons.1.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): Who has ever had two exams at once?",
+   "Teach (8 min): Dots, lines and colours.",
+   "Draw and colour (15 min): Groups colour the clash map.",
+   "Prove it (7 min): Find a group that all clash.",
+   "Wrap-up (5 min): Add “no two in a row” and count again."
+  ],
+  "t": [
+   "Aufwärmen (5 Min.): Wer hatte schon mal zwei Prüfungen gleichzeitig?",
+   "Erklären (8 Min.): Punkte, Linien und Farben.",
+   "Zeichnen und färben (15 Min.): Die Gruppen färben die Konfliktkarte ein.",
+   "Beweisen (7 Min.): Eine Gruppe finden, die sich ganz überschneidet.",
+   "Abschluss (5 Min.): „Keine zwei hintereinander“ hinzufügen und neu zählen."
+  ]
+ },
+ "lessons.1.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Ask whether anyone ever had two exams at the same time or three in one morning. List what made exam weeks hard.",
+   "Teach (8 min): Write six to eight exams on the board with who takes each. Draw a dot per exam and a line between two exams that share a pupil. Explain: same colour = same slot, so joined dots need different colours.",
+   "Draw and colour (15 min): Groups copy the map (on paper or in chalk outside) and colour it with as few colours as they can. Each group writes its number of slots on the board.",
+   "Prove it (7 min): Ask: can anyone do it with fewer? Find a group of exams that all clash with each other. No plan can use fewer slots than its size, whatever anyone tries.",
+   "Wrap-up (5 min): Add the rule “no pupil sits two slots in a row” and recount. Ask which plan the class prefers, the shorter week or the rested pupils, and why."
+  ],
+  "t": [
+   "Aufwärmen (5 Min.): Frage, ob jemand schon mal zwei Prüfungen zur selben Zeit oder drei an einem Vormittag hatte. Halte fest, was Prüfungswochen schwer gemacht hat.",
+   "Erklären (8 Min.): Schreibe sechs bis acht Prüfungen an die Tafel, mit den Personen, die jede ablegen. Zeichne einen Punkt pro Prüfung und eine Linie zwischen zwei Prüfungen, die sich jemand teilt. Erkläre: gleiche Farbe = gleiches Zeitfenster, also brauchen verbundene Punkte verschiedene Farben.",
+   "Zeichnen und färben (15 Min.): Die Gruppen übertragen die Karte (auf Papier oder mit Kreide draußen) und färben sie mit möglichst wenigen Farben ein. Jede Gruppe schreibt ihre Zahl der Zeitfenster an die Tafel.",
+   "Beweisen (7 Min.): Frage: Schafft es jemand mit weniger? Findet eine Gruppe von Prüfungen, die sich alle miteinander überschneiden. Kein Plan kann mit weniger Zeitfenstern auskommen, als sie groß ist, was auch immer jemand versucht.",
+   "Abschluss (5 Min.): Füge die Regel „Niemand schreibt in zwei aufeinanderfolgenden Zeitfenstern“ hinzu und zähle neu. Frage, welchen Plan die Klasse bevorzugt, die kürzere Woche oder die ausgeruhten Schüler:innen, und warum."
+  ]
+ },
+ "lessons.1.slides.3.note": {
+  "en": "Use the lab’s eight exams if you have no real list: maths, English, science, Arabic, history, geography, art and French, with the six pupils in the “Exam slots without clashes” lab.",
+  "t": "Nimm die acht Prüfungen des Labs, wenn du keine echte Liste hast: Mathe, Englisch, Naturwissenschaft, Arabisch, Geschichte, Geografie, Kunst und Französisch, mit den sechs Schüler:innen aus dem Lab „Prüfungszeitfenster ohne Überschneidungen“."
+ },
+ "lessons.1.slides.3.narration": {
+  "en": "Joined dots need different colours. How few colours can you use?",
+  "t": "Verbundene Punkte brauchen verschiedene Farben. Wie wenige Farben kannst du verwenden?"
+ },
+ "lessons.1.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns diskutieren"
+ },
+ "lessons.1.slides.4.bullets": {
+  "en": [
+   "How do we know nobody can use fewer slots?",
+   "Who had the hardest exam days in our plan?",
+   "Is a shorter exam week worth three tired pupils?"
+  ],
+  "t": [
+   "Woher wissen wir, dass niemand mit weniger Zeitfenstern auskommt?",
+   "Wer hatte in unserem Plan die härtesten Prüfungstage?",
+   "Ist eine kürzere Prüfungswoche drei müde Schüler:innen wert?"
+  ]
+ },
+ "lessons.1.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.1.slides.5.bullets": {
+  "en": [
+   "Draw a clash map of four exams that needs exactly three slots, and say why."
+  ],
+  "t": [
+   "Zeichne eine Konfliktkarte mit vier Prüfungen, die genau drei Zeitfenster braucht, und sage, warum."
+  ]
+ },
+ "lessons.1.slides.5.narration": {
+  "en": "Count the cost of fairness, then decide it together.",
+  "t": "Zählt die Kosten der Fairness und entscheidet sie dann gemeinsam."
+ },
+ "lessons.1.kit.0.title": {
+  "en": "Slides: Exams without clashes",
+  "t": "Folien: Prüfungen ohne Überschneidungen"
+ },
+ "lessons.1.kit.1.title": {
+  "en": "Lesson plan and worksheet: Exams without clashes",
+  "t": "Unterrichtsplan und Arbeitsblatt: Prüfungen ohne Überschneidungen"
+ },
+ "lessons.1.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "Das Lektionsvideo (240p, für den Unterricht oder WhatsApp)"
+ },
+ "lessons.2.title": {
+  "en": "The school bus route",
+  "t": "Die Schulbusroute"
+ },
+ "lessons.2.tryTomorrow": {
+  "en": "On the playground, pupils stand as villages and one pupil is the bus, starting at the school door. Drive nearest neighbour, counting steps. Then find two paths that cross, swap them, and count again. Finish by asking who rode the longest, and how you would make that fairer.",
+  "t": "Auf dem Schulhof stehen Schüler:innen als Dörfer, und ein:e Schüler:in ist der Bus und startet an der Schultür. Fahrt nach dem Nächster-Nachbar-Verfahren und zählt die Schritte. Findet dann zwei Wege, die sich kreuzen, tauscht sie und zählt erneut. Frage zum Schluss, wer am längsten gefahren ist und wie ihr das fairer machen könntet."
+ },
+ "lessons.2.materials": {
+  "en": [
+   "The playground or a large room",
+   "Chalk to draw the paths",
+   "A card with each village’s name"
+  ],
+  "t": [
+   "Der Schulhof oder ein großer Raum",
+   "Kreide, um die Wege zu zeichnen",
+   "Eine Karte mit dem Namen jedes Dorfs"
+  ]
+ },
+ "lessons.2.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.2.steps.0.title": {
+  "en": "The school bus route",
+  "t": "Die Schulbusroute"
+ },
+ "lessons.2.steps.0.chapters.0.label": {
+  "en": "An hour on the bus",
+  "t": "Eine Stunde im Bus"
+ },
+ "lessons.2.steps.0.chapters.1.label": {
+  "en": "Too many routes, a quick rule",
+  "t": "Zu viele Routen, eine schnelle Regel"
+ },
+ "lessons.2.steps.0.chapters.2.label": {
+  "en": "Untangle it with 2-opt",
+  "t": "Entwirren mit 2-opt"
+ },
+ "lessons.2.steps.0.chapters.3.label": {
+  "en": "The longest ride, and the lab",
+  "t": "Die längste Fahrt und das Lab"
+ },
+ "lessons.2.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.2.steps.0.checkpoint.question.prompt": {
+  "en": "2-opt has stopped: no swap makes the route shorter. Is it the best route of all?",
+  "t": "2-opt hat angehalten: Kein Tausch macht die Route kürzer. Ist es die beste Route überhaupt?"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.0.text": {
+  "en": "Yes, always: 2-opt is exact",
+  "t": "Ja, immer: 2-opt ist exakt"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.1.text": {
+  "en": "Not always: on some maps it stops short of the best",
+  "t": "Nicht immer: Auf manchen Karten bleibt es vor der besten Route stehen"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.2.text": {
+  "en": "No: 2-opt makes routes longer",
+  "t": "Nein: 2-opt macht Routen länger"
+ },
+ "lessons.2.steps.0.checkpoint.question.explain": {
+  "en": "2-opt keeps a swap only if it shortens the route, and stops when no single swap helps. That is a local best: often the true best (28.6 km in the lab), but on some maps the best route needs a change no single swap can make.",
+  "t": "2-opt behält einen Tausch nur, wenn er die Route verkürzt, und hört auf, wenn kein einzelner Tausch mehr hilft. Das ist ein lokales Optimum: oft das wahre Optimum (28,6 km im Lab), aber auf manchen Karten braucht die beste Route eine Änderung, die kein einzelner Tausch schafft."
+ },
+ "lessons.2.steps.0.transcript": {
+  "en": "Our school bus leaves at six every morning and visits nine villages. The children from the first village ride for over an hour. Is there a shorter route, and a fairer one? Today: the school bus route, built fast and then improved. Visit every village once and come back, by the shortest route: that’s the travelling salesperson problem. It sounds easy, but the routes multiply fast. Nine villages have a hundred and eighty-one thousand routes. Twenty have more than a billion billion. A quick rule: from wherever the bus is, drive to the closest village it hasn’t visited yet. It’s fast, and usually decent. But it never looks ahead, so its last legs home are often long. In Python, it’s a few lines. Keep a list for the route. While villages are left, add the one closest to the last stop. Then improve it. 2-opt takes out two roads, and puts the stretch between them back the other way round. If the route got shorter, keep it, and try again, until no swap helps. In the lab, nearest neighbour drives thirty-four point six kilometres. Three 2-opt swaps bring it down to twenty-eight point six, the best route there is. That’s six kilometres saved, every single morning. Quick check! 2-opt has stopped: no swap of two roads makes the route shorter. Is it now the best route of all? Not always. On some maps, 2-opt gets stuck: no single swap helps, but the best route is still shorter. For a few villages, a computer can check every route and be sure. For many, real route planners build a quick route and improve it, just like this. Length isn’t the only measure: the children picked up first ride all the way to school. On the small map in today’s code, nearest neighbour drives twenty-three kilometres, and the first village rides twenty-one of them. The best route is nineteen, with a longest ride of sixteen. Judge a route twice: the total, and the longest ride. In the app, open “The school bus route”. Press Run, and watch nearest neighbour, then the 2-opt swaps. Press “Find the best route” to compare. Then try a new map: does 2-opt always reach the best? Your turn. Route A is two kilometres shorter, but one village’s children ride for fifty minutes. On route B, nobody rides more than thirty-five. How should we choose? Agree a longest-ride limit with the families, then find the shortest route that keeps it. Remember: routes multiply too fast to try them all. Nearest neighbour builds a route, and 2-opt improves it. And judge a route twice: the total, and the longest ride. Try it in class tomorrow: pupils stand as villages around the playground, and one pupil is the bus. Drive nearest neighbour, counting steps. Then find two paths that cross, swap them, and count again.",
+  "t": "Unser Schulbus fährt jeden Morgen um sechs los und besucht neun Dörfer. Die Kinder aus dem ersten Dorf sitzen über eine Stunde im Bus. Gibt es eine kürzere Route, und eine gerechtere? Heute: die Schulbusroute, erst schnell gebaut und dann verbessert. Besuche jedes Dorf einmal und komm zurück, auf dem kürzesten Weg: Das ist das Problem des Handlungsreisenden. Es klingt einfach, aber die Routen vermehren sich rasant. Neun Dörfer haben einhunderteinundachtzigtausend Routen. Zwanzig haben mehr als eine Trillion. Eine schnelle Regel: Fahr von dort, wo der Bus gerade ist, zum nächstgelegenen Dorf, das er noch nicht besucht hat. Sie ist schnell und meist ordentlich. Aber sie schaut nie voraus, deshalb sind ihre letzten Etappen nach Hause oft lang. In Python sind das ein paar Zeilen. Halte eine Liste für die Route bereit. Solange noch Dörfer übrig sind, füg das hinzu, das der letzten Haltestelle am nächsten liegt. Dann verbessere sie. 2-opt nimmt zwei Straßen heraus und setzt das Stück dazwischen andersherum wieder ein. Wurde die Route kürzer, behalte sie und versuch es noch einmal, bis kein Tausch mehr hilft. Im Lab fährt die Nächster-Nachbar-Regel vierunddreißig Komma sechs Kilometer. Drei 2-opt-Tausche bringen es auf achtundzwanzig Komma sechs herunter, die beste Route, die es gibt. Das sind sechs Kilometer gespart, jeden einzelnen Morgen. Kurzer Check! 2-opt hat angehalten: Kein Tausch von zwei Straßen macht die Route noch kürzer. Ist sie jetzt die beste Route überhaupt? Nicht immer. Auf manchen Karten bleibt 2-opt stecken: Kein einzelner Tausch hilft, aber die beste Route ist trotzdem kürzer. Bei wenigen Dörfern kann ein Computer jede Route prüfen und sicher sein. Bei vielen bauen echte Routenplaner eine schnelle Route und verbessern sie, genau wie hier. Die Länge ist nicht das einzige Maß: Die Kinder, die zuerst abgeholt werden, fahren den ganzen Weg bis zur Schule. Auf der kleinen Karte im heutigen Code fährt die Nächster-Nachbar-Regel dreiundzwanzig Kilometer, und das erste Dorf fährt einundzwanzig davon mit. Die beste Route hat neunzehn, mit einer längsten Fahrt von sechzehn. Beurteile eine Route zweimal: die Gesamtlänge und die längste Fahrt. Öffne in der App „Die Schulbusroute“. Drück Start und sieh zu, wie die Nächster-Nachbar-Regel fährt und dann die 2-opt-Tausche. Drück „Beste Route finden“, um zu vergleichen. Probier dann eine neue Karte: Erreicht 2-opt immer die beste? Du bist dran. Route A ist zwei Kilometer kürzer, aber die Kinder eines Dorfes fahren fünfzig Minuten. Auf Route B fährt niemand länger als fünfunddreißig. Wie sollen wir wählen? Vereinbare mit den Familien eine Grenze für die längste Fahrt und such dann die kürzeste Route, die sie einhält. Denk dran: Routen vermehren sich zu schnell, um alle auszuprobieren. Der nächste Nachbar baut eine Route, und 2-opt verbessert sie. Und beurteile eine Route zweimal: die Gesamtlänge und die längste Fahrt. Probier es morgen im Unterricht aus: Schüler:innen stehen als Dörfer rund um den Schulhof, und eine Person ist der Bus. Fahr die Nächster-Nachbar-Regel und zähl die Schritte. Such dann zwei Wege, die sich kreuzen, tausch sie und zähl noch einmal."
+ },
+ "lessons.2.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.2.steps.1.title": {
+  "en": "Build a route fast, then improve it",
+  "t": "Schnell eine Route bauen, dann verbessern"
+ },
+ "lessons.2.steps.1.body": {
+  "en": "The school bus leaves the school, visits every village once and comes back. Finding the shortest such round trip is the travelling salesperson problem, and it is famous because the number of routes explodes. A round trip through n villages has n! ÷ 2 orders: 9 villages give 181,440 routes, 10 give 1,814,400, and 20 give about 1.2 × 10¹⁸, more than a billion billion. Checking a billion routes a second, that would take about 38 years.\n\nSo route planners build a route quickly and then improve it. Nearest neighbour is the quick rule: from wherever the bus is, drive to the closest village not yet visited, and at the end drive back. In Python, keep a list called route that starts at the school (0); while villages are left, add the one whose distance from the last stop, d[last][v], is smallest. It is fast and usually decent, but it never looks ahead, so its last legs home are often long. In the lab, nearest neighbour drives 34.6 km. Two Python shortcuts from Programming level 2 keep the code short. [v for v in range(5) if v not in route] is a list comprehension: in one line, the list of places not yet visited. min(left, key=lambda v: last[v]) gives the place whose distance is smallest, because key= tells min what to compare, and lambda v: last[v] is a tiny function with no name. A plain loop that keeps the nearest place so far in a variable works just as well.\n\n2-opt then untangles the route: take out two roads, put the stretch between them back the other way round, and keep the change if the route got shorter. Repeat until no swap helps. In the lab, three swaps bring the route to 28.6 km, the best route there is. But 2-opt can stop at a local best: on some maps, no single swap helps although a shorter route exists. For a handful of villages a computer can check every route cleverly and be sure; for many villages, quick rules plus improvements are what real planners use. Google’s OR-Tools has a routing library built on these ideas, and the plain Python you write today runs the same on a computer or in Colab.\n\nJudge a route twice. The total distance is fuel and time. But the children picked up first ride the whole way to school: on today’s small map, nearest neighbour drives 23 km and the first village’s children ride 21 of them, while the best route drives 19 km and its longest ride is 16. Here the shorter route is also the fairer one, but not always. When they pull apart, agree a limit on the longest ride with the families (a constraint), then find the shortest route that keeps it (the goal), and look at earliest pick-up times too: a short route that leaves children at a dark roadside at 5:40 is not a good route.",
+  "t": "Der Schulbus fährt von der Schule los, besucht jedes Dorf einmal und kommt zurück. Die kürzeste solche Rundreise zu finden ist das Problem des Handlungsreisenden, und es ist berühmt, weil die Zahl der Routen explodiert. Eine Rundreise durch n Dörfer hat n! ÷ 2 Reihenfolgen: 9 Dörfer ergeben 181.440 Routen, 10 ergeben 1.814.400, und 20 ergeben etwa 1,2 × 10¹⁸, mehr als eine Milliarde Milliarden. Bei einer Milliarde geprüfter Routen pro Sekunde würde das etwa 38 Jahre dauern.\n\nDarum bauen Routenplaner schnell eine Route und verbessern sie dann. Das Nächster-Nachbar-Verfahren ist die schnelle Regel: Fahre von dort, wo der Bus gerade ist, zum nächstgelegenen noch nicht besuchten Dorf, und am Ende fahre zurück. In Python führst du eine Liste namens route, die an der Schule (0) beginnt; solange Dörfer übrig sind, hängst du das an, dessen Entfernung vom letzten Halt, d[last][v], am kleinsten ist. Es ist schnell und meist ordentlich, schaut aber nie voraus, darum sind die letzten Etappen nach Hause oft lang. Im Lab fährt das Nächster-Nachbar-Verfahren 34,6 km. Zwei Python-Abkürzungen aus Programmieren, Niveau 2, halten den Code kurz. [v for v in range(5) if v not in route] ist eine List Comprehension: in einer Zeile die Liste der noch nicht besuchten Orte. min(left, key=lambda v: last[v]) liefert den Ort mit der kleinsten Entfernung, denn key= sagt min, was verglichen werden soll, und lambda v: last[v] ist eine winzige Funktion ohne Namen. Eine einfache Schleife, die den bisher nächsten Ort in einer Variablen merkt, geht genauso gut.\n\n2-opt entwirrt dann die Route: Nimm zwei Straßen heraus, setze das Stück dazwischen in umgekehrter Richtung wieder ein und behalte die Änderung, wenn die Route kürzer wurde. Wiederhole das, bis kein Tausch mehr hilft. Im Lab bringen drei Tauschvorgänge die Route auf 28,6 km, die beste Route, die es dort gibt. Aber 2-opt kann bei einem lokalen Optimum stehen bleiben: Auf manchen Karten hilft kein einzelner Tausch, obwohl eine kürzere Route existiert. Bei einer Handvoll Dörfer kann ein Computer jede Route geschickt prüfen und sicher sein; bei vielen Dörfern sind schnelle Regeln plus Verbesserungen das, was echte Planer verwenden. Googles OR-Tools haben eine Routing-Bibliothek, die auf diesen Ideen beruht, und das einfache Python, das du heute schreibst, läuft genauso auf einem Computer oder in Colab.\n\nBeurteile eine Route zweifach. Die Gesamtstrecke ist Sprit und Zeit. Aber die Kinder, die zuerst abgeholt werden, fahren den ganzen Weg bis zur Schule mit: Auf der kleinen Karte von heute fährt das Nächster-Nachbar-Verfahren 23 km, und die Kinder des ersten Dorfs sitzen 21 davon im Bus, während die beste Route 19 km fährt und ihre längste Fahrt 16 beträgt. Hier ist die kürzere Route auch die fairere, aber nicht immer. Wenn beides auseinandergeht, vereinbart mit den Familien eine Obergrenze für die längste Fahrt (eine Nebenbedingung), sucht dann die kürzeste Route, die sie einhält (das Ziel), und schaut euch auch die frühesten Abholzeiten an: Eine kurze Route, die Kinder um 5:40 Uhr an einem dunklen Straßenrand zurücklässt, ist keine gute Route."
+ },
+ "lessons.2.steps.1.keyTerms.0.term": {
+  "en": "Travelling salesperson problem",
+  "t": "Problem des Handlungsreisenden"
+ },
+ "lessons.2.steps.1.keyTerms.0.def": {
+  "en": "Finding the shortest round trip that visits every place once.",
+  "t": "Die kürzeste Rundreise finden, die jeden Ort einmal besucht."
+ },
+ "lessons.2.steps.1.keyTerms.1.term": {
+  "en": "Nearest neighbour",
+  "t": "Nächster Nachbar"
+ },
+ "lessons.2.steps.1.keyTerms.1.def": {
+  "en": "A quick rule: always drive to the closest place not yet visited.",
+  "t": "Eine schnelle Regel: Fahre immer zum nächstgelegenen noch nicht besuchten Ort."
+ },
+ "lessons.2.steps.1.keyTerms.2.term": {
+  "en": "2-opt",
+  "t": "2-opt"
+ },
+ "lessons.2.steps.1.keyTerms.2.def": {
+  "en": "An improvement: remove two roads, reverse the stretch between them, keep the change if the route is shorter.",
+  "t": "Eine Verbesserung: zwei Straßen herausnehmen, das Stück dazwischen umkehren und die Änderung behalten, wenn die Route kürzer ist."
+ },
+ "lessons.2.steps.1.keyTerms.3.term": {
+  "en": "Local best",
+  "t": "Lokales Optimum"
+ },
+ "lessons.2.steps.1.keyTerms.3.def": {
+  "en": "A plan no single small change improves, though a better plan may still exist.",
+  "t": "Ein Plan, den keine einzelne kleine Änderung verbessert, obwohl es vielleicht noch einen besseren Plan gibt."
+ },
+ "lessons.2.steps.1.keyTerms.4.term": {
+  "en": "List comprehension, min(key=…)",
+  "t": "List Comprehension, min(key=…)"
+ },
+ "lessons.2.steps.1.keyTerms.4.def": {
+  "en": "[v for v in places if …] builds a list in one line; min(xs, key=f) gives the item whose f(x) is smallest.",
+  "t": "[v for v in places if …] baut eine Liste in einer Zeile; min(xs, key=f) liefert das Element, dessen f(x) am kleinsten ist."
+ },
+ "lessons.2.steps.2.prompt": {
+  "en": "Route A is 2 km shorter, but one village rides 50 minutes; on B nobody rides over 35. How should we choose?",
+  "t": "Route A ist 2 km kürzer, aber ein Dorf fährt 50 Minuten; bei B fährt niemand länger als 35. Wie sollen wir wählen?"
+ },
+ "lessons.2.steps.2.options.0.text": {
+  "en": "Always the shortest: fuel comes first",
+  "t": "Immer die kürzeste: Der Sprit kommt zuerst"
+ },
+ "lessons.2.steps.2.options.1.text": {
+  "en": "Agree a longest-ride limit with families, then the shortest route that keeps it",
+  "t": "Mit den Familien eine Obergrenze für die längste Fahrt vereinbaren, dann die kürzeste Route, die sie einhält"
+ },
+ "lessons.2.steps.2.options.2.text": {
+  "en": "Let the driver decide each day",
+  "t": "Die Fahrerin oder den Fahrer jeden Tag entscheiden lassen"
+ },
+ "lessons.2.steps.2.explain": {
+  "en": "The total length and the longest ride are two goals. A fair way to choose is to agree a limit on the longest ride with the families (a constraint), then find the shortest route that keeps it (the goal). Always taking the shortest ignores the children who ride longest, and leaving it to the driver gives no rule anyone can check.",
+  "t": "Die Gesamtlänge und die längste Fahrt sind zwei Ziele. Ein faires Vorgehen ist, mit den Familien eine Obergrenze für die längste Fahrt zu vereinbaren (eine Nebenbedingung) und dann die kürzeste Route zu finden, die sie einhält (das Ziel). Immer die kürzeste zu nehmen ignoriert die Kinder, die am längsten fahren, und es der Fahrerin oder dem Fahrer zu überlassen ergibt keine Regel, die jemand prüfen kann."
+ },
+ "lessons.2.steps.3.prompt": {
+  "en": "Put the nearest-neighbour rule in order.",
+  "t": "Bringe das Nächster-Nachbar-Verfahren in die richtige Reihenfolge."
+ },
+ "lessons.2.steps.3.steps.0": {
+  "en": "Start at the school",
+  "t": "An der Schule starten"
+ },
+ "lessons.2.steps.3.steps.1": {
+  "en": "Find the closest village not yet visited",
+  "t": "Das nächstgelegene noch nicht besuchte Dorf finden"
+ },
+ "lessons.2.steps.3.steps.2": {
+  "en": "Drive there and add it to the route",
+  "t": "Dorthin fahren und es zur Route hinzufügen"
+ },
+ "lessons.2.steps.3.steps.3": {
+  "en": "Repeat until every village is in the route",
+  "t": "Wiederholen, bis jedes Dorf in der Route ist"
+ },
+ "lessons.2.steps.3.steps.4": {
+  "en": "Drive back to the school",
+  "t": "Zurück zur Schule fahren"
+ },
+ "lessons.2.steps.3.explain": {
+  "en": "Nearest neighbour only ever looks one step ahead: the closest unvisited village from where the bus is now. That’s why it’s fast, and why the drive home at the end can be long.",
+  "t": "Das Nächster-Nachbar-Verfahren schaut immer nur einen Schritt voraus: das nächstgelegene unbesuchte Dorf von dort, wo der Bus gerade ist. Darum ist es schnell, und darum kann die Heimfahrt am Ende lang sein."
+ },
+ "lessons.2.steps.4.prompt": {
+  "en": "One more village roughly doubles the number of possible bus routes.",
+  "t": "Ein Dorf mehr verdoppelt ungefähr die Zahl der möglichen Busrouten."
+ },
+ "lessons.2.steps.4.explain": {
+  "en": "It multiplies them by the new number of villages: 9 villages have 181,440 routes, 10 have 1,814,400, ten times as many. That growth is why nobody checks every route for a real bus network.",
+  "t": "Es multipliziert sie mit der neuen Zahl der Dörfer: 9 Dörfer haben 181.440 Routen, 10 haben 1.814.400, zehnmal so viele. Dieses Wachstum ist der Grund, warum niemand für ein echtes Busnetz jede Route prüft."
+ },
+ "lessons.2.steps.5.prompt": {
+  "en": "Try it: in “The school bus route”, press Run and watch nearest neighbour (34.6 km), then the 2-opt swaps. Press “Find the best route” to compare. Then press “New map” a few times and run again: find a map where 2-opt stops before the best route.",
+  "t": "Probier es aus: Drücke in „Die Schulbusroute“ auf „Start“ und sieh dir das Nächster-Nachbar-Verfahren (34,6 km) an, dann die 2-opt-Tauschvorgänge. Drücke „Beste Route finden“ zum Vergleichen. Drücke dann ein paar Mal „Neue Karte“ und lass es wieder laufen: Finde eine Karte, auf der 2-opt vor der besten Route stehen bleibt."
+ },
+ "lessons.2.steps.6.prompt": {
+  "en": "d[a][b] is the distance in km between places a and b; place 0 is the school. Write nearest neighbour: starting at the school, keep adding the closest place not yet in route until all 5 places are in. The program then prints the route and its length, including the drive back.",
+  "t": "d[a][b] ist die Entfernung in km zwischen den Orten a und b; Ort 0 ist die Schule. Schreibe das Nächster-Nachbar-Verfahren: Beginne an der Schule und hänge immer den nächstgelegenen Ort an route, der noch nicht darin ist, bis alle 5 Orte drin sind. Das Programm gibt dann die Route und ihre Länge aus, einschließlich der Rückfahrt."
+ },
+ "lessons.2.steps.6.tests.0.hint": {
+  "en": "From the school, the closest place is 3 (2 km). Then always the closest one still left.",
+  "t": "Von der Schule aus ist der nächstgelegene Ort 3 (2 km). Danach immer der nächstgelegene, der noch übrig ist."
+ },
+ "lessons.2.steps.6.hints.0": {
+  "en": "Loop while the route is short: while len(route) < 5:",
+  "t": "Schleife, solange die Route kurz ist: while len(route) < 5:"
+ },
+ "lessons.2.steps.6.hints.1": {
+  "en": "The places left: [v for v in range(5) if v not in route]",
+  "t": "Die übrigen Orte: [v for v in range(5) if v not in route]"
+ },
+ "lessons.2.steps.6.hints.2": {
+  "en": "The closest: min(left, key=lambda v: last[v]), where last = d[route[-1]]",
+  "t": "Der nächstgelegene: min(left, key=lambda v: last[v]), wobei last = d[route[-1]]"
+ },
+ "lessons.2.steps.6.explain": {
+  "en": "Nearest neighbour gives 0 → 3 → 2 → 1 → 4 → 0, 23 km, and the first village (3) rides 21 of them. The best route on this map is 19 km (0 → 1 → 4 → 3 → 2 → 0), with a longest ride of 16: the quick rule is fast, but its last legs are long. This plain Python runs the same in Colab.",
+  "t": "Das Nächster-Nachbar-Verfahren ergibt 0 → 3 → 2 → 1 → 4 → 0, 23 km, und das erste Dorf (3) sitzt 21 davon im Bus. Die beste Route auf dieser Karte ist 19 km lang (0 → 1 → 4 → 3 → 2 → 0), mit einer längsten Fahrt von 16: Die schnelle Regel ist schnell, aber ihre letzten Etappen sind lang. Dieses einfache Python läuft genauso in Colab."
+ },
+ "lessons.2.steps.7.prompt": {
+  "en": "Put the lines in order: one pass of 2-opt that tries every pair of cut points and keeps a reversed stretch when it makes the route shorter.",
+  "t": "Bringe die Zeilen in die richtige Reihenfolge: ein Durchgang von 2-opt, der jedes Paar von Schnittpunkten ausprobiert und ein umgekehrtes Stück behält, wenn es die Route kürzer macht."
+ },
+ "lessons.2.steps.7.explain": {
+  "en": "Two loops choose where to cut; the stretch between the cuts is reversed and glued back; the new route is kept only if it is shorter. Keeping longer routes would undo the improvement.",
+  "t": "Zwei Schleifen wählen, wo geschnitten wird; das Stück zwischen den Schnitten wird umgekehrt und wieder eingesetzt; die neue Route wird nur behalten, wenn sie kürzer ist. Längere Routen zu behalten würde die Verbesserung zunichtemachen."
+ },
+ "lessons.2.steps.8.prompt": {
+  "en": "What do you do?",
+  "t": "Was tust du?"
+ },
+ "lessons.2.steps.8.who": {
+  "en": "Mrs Banda, a parent from Kesi",
+  "t": "Frau Banda, eine Mutter aus Kesi"
+ },
+ "lessons.2.steps.8.initial": {
+  "en": "B",
+  "t": "B"
+ },
+ "lessons.2.steps.8.situation": {
+  "en": "The new route saves 6 km a day, but it now picks up Kesi first, at 5:40, while it is still dark. Mrs Banda says her daughter waits alone at the roadside.",
+  "t": "Die neue Route spart 6 km am Tag, holt aber jetzt zuerst Kesi ab, um 5:40 Uhr, wenn es noch dunkel ist. Frau Banda sagt, ihre Tochter warte allein am Straßenrand."
+ },
+ "lessons.2.steps.8.choices.0.label": {
+  "en": "“Add the rule ‘no pick-up before 6:00’, and find the shortest route that keeps it.”",
+  "t": "„Wir fügen die Regel ‚keine Abholung vor 6:00 Uhr‘ hinzu und suchen die kürzeste Route, die sie einhält.“"
+ },
+ "lessons.2.steps.8.choices.0.consequence": {
+  "en": "Safety becomes a written rule, not a favour. The new route may be a little longer; tell the families what it costs and why.",
+  "t": "Sicherheit wird zu einer geschriebenen Regel, nicht zu einem Gefallen. Die neue Route ist vielleicht etwas länger; sagt den Familien, was es kostet und warum."
+ },
+ "lessons.2.steps.8.choices.1.label": {
+  "en": "“The route is the shortest: we keep it.”",
+  "t": "„Die Route ist die kürzeste: Wir behalten sie.“"
+ },
+ "lessons.2.steps.8.choices.1.consequence": {
+  "en": "Shortest for the goal you wrote, but the goal never mentioned a child alone in the dark. A model is only as good as the rules it was given.",
+  "t": "Die kürzeste für das Ziel, das du geschrieben hast, aber im Ziel kam kein Kind allein im Dunkeln vor. Ein Modell ist nur so gut wie die Regeln, die man ihm gegeben hat."
+ },
+ "lessons.2.steps.8.choices.2.label": {
+  "en": "“Go back to last year’s route.”",
+  "t": "„Wir gehen zurück zur Route vom letzten Jahr.“"
+ },
+ "lessons.2.steps.8.choices.2.consequence": {
+  "en": "It solves Kesi’s problem but throws away the savings, and last year’s route had its own long rides. Better to keep the model and add the missing rule.",
+  "t": "Das löst Kesis Problem, wirft aber die Ersparnis weg, und die Route vom letzten Jahr hatte ihre eigenen langen Fahrten. Besser, das Modell zu behalten und die fehlende Regel hinzuzufügen."
+ },
+ "lessons.2.steps.8.explain": {
+  "en": "Make safety a written rule in the model, and tell families what it costs.",
+  "t": "Mache Sicherheit zu einer geschriebenen Regel im Modell und sage den Familien, was sie kostet."
+ },
+ "lessons.2.steps.9.prompt": {
+  "en": "Think of a route at your school: the bus, a delivery, a walk between buildings. What does it make short, and who pays for that?",
+  "t": "Denke an eine Route an deiner Schule: den Bus, eine Lieferung, einen Weg zwischen Gebäuden. Was macht sie kurz, und wer zahlt dafür?"
+ },
+ "lessons.2.steps.9.placeholder": {
+  "en": "For example: “The lunch delivery visits the main building first, so the farthest classroom always eats cold food.”",
+  "t": "Zum Beispiel: „Die Mittagslieferung besucht zuerst das Hauptgebäude, darum isst das am weitesten entfernte Klassenzimmer immer kaltes Essen.“"
+ },
+ "lessons.2.steps.10.prompt": {
+  "en": "Project: The human bus route",
+  "t": "Projekt: Die menschliche Busroute"
+ },
+ "lessons.2.steps.10.task": {
+  "en": "On the playground, place six pupils as villages, holding name cards, and mark the school door. One pupil is the bus. First the class guesses a good route by looking. Then the bus drives nearest neighbour while the class counts steps on each leg; write the legs on the board. Find two paths that cross, swap them (2-opt) and count again. Finally, for each village, count how many steps its children ride before reaching school, and discuss: is the shortest route the fairest one?",
+  "t": "Stelle auf dem Schulhof sechs Schüler:innen als Dörfer auf, mit Namenskarten in der Hand, und markiere die Schultür. Ein:e Schüler:in ist der Bus. Zuerst rät die Klasse nach Augenmaß eine gute Route. Dann fährt der Bus nach dem Nächster-Nachbar-Verfahren, während die Klasse die Schritte jeder Etappe zählt; schreibt die Etappen an die Tafel. Findet zwei Wege, die sich kreuzen, tauscht sie (2-opt) und zählt erneut. Zählt schließlich für jedes Dorf, wie viele Schritte seine Kinder bis zur Schule mitfahren, und diskutiert: Ist die kürzeste Route die fairste?"
+ },
+ "lessons.2.steps.10.deliverable": {
+  "en": "A photo of the board with the step counts (no faces needed): the guess, nearest neighbour, after the swap, and the longest ride.",
+  "t": "Ein Foto der Tafel mit den Schrittzahlen (Gesichter müssen nicht zu sehen sein): die Schätzung, das Nächster-Nachbar-Verfahren, nach dem Tausch und die längste Fahrt."
+ },
+ "lessons.2.steps.10.rubric.0.criterion": {
+  "en": "Pupils could: build a route with nearest neighbour and add up its length.",
+  "t": "Die Schüler:innen konnten: mit dem Nächster-Nachbar-Verfahren eine Route bauen und ihre Länge zusammenzählen."
+ },
+ "lessons.2.steps.10.rubric.1.criterion": {
+  "en": "Pupils could: shorten a route by swapping two crossing paths.",
+  "t": "Die Schüler:innen konnten: eine Route verkürzen, indem sie zwei sich kreuzende Wege tauschen."
+ },
+ "lessons.2.steps.10.rubric.2.criterion": {
+  "en": "Pupils could: compare routes by total length and by the longest ride.",
+  "t": "Die Schüler:innen konnten: Routen nach Gesamtlänge und nach der längsten Fahrt vergleichen."
+ },
+ "lessons.2.slides.0.title": {
+  "en": "The school bus route",
+  "t": "Die Schulbusroute"
+ },
+ "lessons.2.slides.0.narration": {
+  "en": "Is there a shorter route, and a fairer one?",
+  "t": "Gibt es eine kürzere Route, und eine fairere?"
+ },
+ "lessons.2.slides.0.note": {
+  "en": "Optimization · Level 3 · Lesson 3",
+  "t": "Optimierung · Niveau 3 · Lektion 3"
+ },
+ "lessons.2.slides.1.title": {
+  "en": "Today we will",
+  "t": "Heute werden wir"
+ },
+ "lessons.2.slides.1.bullets": {
+  "en": [
+   "See why trying every bus route is impossible.",
+   "Build a route with nearest neighbour and improve it with 2-opt.",
+   "Judge a route by its length and by the longest ride."
+  ],
+  "t": [
+   "sehen, warum es unmöglich ist, jede Busroute auszuprobieren.",
+   "mit dem Nächster-Nachbar-Verfahren eine Route bauen und mit 2-opt verbessern.",
+   "eine Route nach ihrer Länge und nach der längsten Fahrt beurteilen."
+  ]
+ },
+ "lessons.2.slides.2.title": {
+  "en": "Remember",
+  "t": "Merke dir"
+ },
+ "lessons.2.slides.2.bullets": {
+  "en": [
+   "Routes multiply: 9 villages have 181,440, and 20 more than a billion billion.",
+   "Nearest neighbour builds a route fast; 2-opt untangles it, but can stop short of the best.",
+   "The children picked up first ride longest: agree a limit with the families."
+  ],
+  "t": [
+   "Routen vervielfachen sich: 9 Dörfer haben 181.440, und 20 mehr als eine Milliarde Milliarden.",
+   "Das Nächster-Nachbar-Verfahren baut schnell eine Route; 2-opt entwirrt sie, kann aber vor der besten stehen bleiben.",
+   "Die Kinder, die zuerst abgeholt werden, fahren am längsten: Vereinbart eine Obergrenze mit den Familien."
+  ]
+ },
+ "lessons.2.slides.3.title": {
+  "en": "The human bus route",
+  "t": "Die menschliche Busroute"
+ },
+ "lessons.2.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): Guess the shortest route by looking.",
+   "Nearest neighbour (10 min): The bus drives; count steps.",
+   "Untangle (10 min): Swap two crossing paths; count again.",
+   "Longest ride (10 min): Count each village’s ride.",
+   "Wrap-up (5 min): Shortest or fairest?"
+  ],
+  "t": [
+   "Aufwärmen (5 Min.): Die kürzeste Route nach Augenmaß raten.",
+   "Nächster Nachbar (10 Min.): Der Bus fährt; Schritte zählen.",
+   "Entwirren (10 Min.): Zwei sich kreuzende Wege tauschen; neu zählen.",
+   "Längste Fahrt (10 Min.): Die Fahrt jedes Dorfs zählen.",
+   "Abschluss (5 Min.): Die kürzeste oder die fairste?"
+  ]
+ },
+ "lessons.2.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Place six pupils as villages with name cards and mark the school door. Each pupil guesses the shortest round trip by looking and writes it down.",
+   "Nearest neighbour (10 min): One pupil is the bus. From the school door, it always walks to the nearest village not yet visited, then back. The class counts the steps of each leg; write them on the board and add them up.",
+   "Untangle (10 min): Draw the route in chalk. Find two paths that cross, reverse the stretch between them and walk it again. Is it shorter? Keep going until no swap helps.",
+   "Longest ride (10 min): For each village, add the steps from its pick-up to the school. Which village rides longest on each route?",
+   "Wrap-up (5 min): Compare the routes by total steps and by the longest ride. Ask which the class would choose, and what rule would make it fair."
+  ],
+  "t": [
+   "Aufwärmen (5 Min.): Stelle sechs Schüler:innen mit Namenskarten als Dörfer auf und markiere die Schultür. Jede:r rät nach Augenmaß die kürzeste Rundreise und schreibt sie auf.",
+   "Nächster Nachbar (10 Min.): Ein:e Schüler:in ist der Bus. Von der Schultür aus geht er immer zum nächstgelegenen noch nicht besuchten Dorf und dann zurück. Die Klasse zählt die Schritte jeder Etappe; schreibt sie an die Tafel und addiert sie.",
+   "Entwirren (10 Min.): Zeichnet die Route mit Kreide. Findet zwei Wege, die sich kreuzen, kehrt das Stück dazwischen um und geht es noch einmal. Ist es kürzer? Macht weiter, bis kein Tausch mehr hilft.",
+   "Längste Fahrt (10 Min.): Zählt für jedes Dorf die Schritte von seiner Abholung bis zur Schule. Welches Dorf fährt auf jeder Route am längsten?",
+   "Abschluss (5 Min.): Vergleicht die Routen nach der Gesamtzahl der Schritte und nach der längsten Fahrt. Frage, welche die Klasse wählen würde und welche Regel sie fair machen würde."
+  ]
+ },
+ "lessons.2.slides.3.note": {
+  "en": "Spread the villages unevenly, with one far corner, so nearest neighbour leaves a long walk home. No playground? Use desks and a floor plan drawn on the board.",
+  "t": "Verteile die Dörfer ungleichmäßig, mit einer weit entfernten Ecke, damit das Nächster-Nachbar-Verfahren einen langen Heimweg hinterlässt. Kein Schulhof? Nimm Tische und einen an die Tafel gezeichneten Grundriss."
+ },
+ "lessons.2.slides.3.narration": {
+  "en": "Always the nearest village next. Is that the shortest way round?",
+  "t": "Immer das nächste Dorf als Nächstes. Ist das der kürzeste Weg rundherum?"
+ },
+ "lessons.2.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns diskutieren"
+ },
+ "lessons.2.slides.4.bullets": {
+  "en": [
+   "Why was the walk home so long with nearest neighbour?",
+   "Did swapping two crossing paths always help?",
+   "Which village rode longest, and is that fair?"
+  ],
+  "t": [
+   "Warum war der Heimweg mit dem Nächster-Nachbar-Verfahren so lang?",
+   "Hat das Tauschen zweier sich kreuzender Wege immer geholfen?",
+   "Welches Dorf ist am längsten gefahren, und ist das fair?"
+  ]
+ },
+ "lessons.2.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.2.slides.5.bullets": {
+  "en": [
+   "Draw a route with a crossing, and the shorter route after one 2-opt swap."
+  ],
+  "t": [
+   "Zeichne eine Route mit einer Kreuzung und die kürzere Route nach einem 2-opt-Tausch."
+  ]
+ },
+ "lessons.2.slides.5.narration": {
+  "en": "Build it fast, improve it, and check who rides longest.",
+  "t": "Baut sie schnell, verbessert sie und prüft, wer am längsten fährt."
+ },
+ "lessons.2.kit.0.title": {
+  "en": "Slides: The school bus route",
+  "t": "Folien: Die Schulbusroute"
+ },
+ "lessons.2.kit.1.title": {
+  "en": "Lesson plan and worksheet: The school bus route",
+  "t": "Unterrichtsplan und Arbeitsblatt: Die Schulbusroute"
+ },
+ "lessons.2.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "Das Lektionsvideo (240p, für den Unterricht oder WhatsApp)"
+ },
+ "lessons.3.title": {
+  "en": "Matching teachers and classes",
+  "t": "Lehrkräfte und Klassen zuordnen"
+ },
+ "lessons.3.tryTomorrow": {
+  "en": "Share out five class jobs (board, plants, books, water, bell). Each pupil scores every job from 1 to 5. First let them choose in turn, then look together for the plan with the best total, and for the plan where nobody gets a job they scored 1. Which would the class choose, and why?",
+  "t": "Verteile fünf Klassendienste (Tafel, Pflanzen, Bücher, Wasser, Klingel). Jede:r Schüler:in bewertet jeden Dienst von 1 bis 5. Lass sie zuerst der Reihe nach wählen, sucht dann gemeinsam nach dem Plan mit der besten Summe und nach dem Plan, in dem niemand einen Dienst bekommt, den er mit 1 bewertet hat. Welchen würde die Klasse wählen, und warum?"
+ },
+ "lessons.3.materials": {
+  "en": [
+   "Board and chalk",
+   "A score table on the board: pupils by jobs",
+   "Small cards for the jobs"
+  ],
+  "t": [
+   "Tafel und Kreide",
+   "Eine Bewertungstabelle an der Tafel: Schüler:innen nach Diensten",
+   "Kleine Karten für die Dienste"
+  ]
+ },
+ "lessons.3.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Ansehen"
+ },
+ "lessons.3.steps.0.title": {
+  "en": "Matching teachers and classes",
+  "t": "Lehrkräfte und Klassen zuordnen"
+ },
+ "lessons.3.steps.0.chapters.0.label": {
+  "en": "Choosing in turn",
+  "t": "Der Reihe nach wählen"
+ },
+ "lessons.3.steps.0.chapters.1.label": {
+  "en": "The best total",
+  "t": "Die beste Summe"
+ },
+ "lessons.3.steps.0.chapters.2.label": {
+  "en": "The worst match",
+  "t": "Die schlechteste Zuordnung"
+ },
+ "lessons.3.steps.0.chapters.3.label": {
+  "en": "Whose scores? And the lab",
+  "t": "Wessen Bewertungen? Und das Lab"
+ },
+ "lessons.3.steps.0.chapters.4.label": {
+  "en": "Remember and try it",
+  "t": "Merken und ausprobieren"
+ },
+ "lessons.3.steps.0.checkpoint.question.prompt": {
+  "en": "No teacher should be stuck with a class they can hardly teach. What should the model maximise?",
+  "t": "Keine Lehrkraft sollte mit einer Klasse festsitzen, die sie kaum unterrichten kann. Was sollte das Modell maximieren?"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.0.text": {
+  "en": "The total score",
+  "t": "Die Gesamtbewertung"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.1.text": {
+  "en": "The lowest score among the chosen pairs",
+  "t": "Die niedrigste Bewertung unter den gewählten Paaren"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.2.text": {
+  "en": "The number of teachers",
+  "t": "Die Zahl der Lehrkräfte"
+ },
+ "lessons.3.steps.0.checkpoint.question.explain": {
+  "en": "To protect the worst-off, maximise the lowest score: add a variable w, require every chosen pair’s score to be at least w, and maximise w. A high total can hide one very bad match; the number of teachers is fixed.",
+  "t": "Um die am schlechtesten Gestellten zu schützen, maximiere die niedrigste Bewertung: Füge eine Variable w hinzu, verlange, dass die Bewertung jedes gewählten Paars mindestens w beträgt, und maximiere w. Eine hohe Summe kann eine sehr schlechte Zuordnung verbergen; die Zahl der Lehrkräfte steht fest."
+ },
+ "lessons.3.steps.0.transcript": {
+  "en": "At the start of term, five teachers choose their classes in order of seniority. It feels fair. Then Karim, who teaches maths well and little else, ends up with a science class. Today: matching teachers and classes, for the best total and for the worst-off. This is the assignment problem: each class gets exactly one teacher, and each teacher takes exactly one class. A table scores how well each teacher suits each class, from zero to nine. The goal is the best total score. First come, first served: Amina chooses first and takes maths, her favourite. Karim, good only at maths, gets science, with a score of two. The total is twenty-nine. The best total is thirty-nine. Karim takes maths, Leila science, Yusuf English, Zainab art, and Amina history. The Hungarian method, from nineteen fifty-five, finds it step by step, and a solver finds it too. In CP-SAT, each teacher and class pair gets a yes-or-no variable. Exactly one yes in each row, and exactly one in each column. Then maximise the scores of the pairs you choose. But the total is only one way to judge. You can also ask: how good is the worst match? A plan with a high total can still give one teacher a class they can hardly teach. Quick check! I want no teacher stuck with a class they can hardly teach. What should the model make as large as possible? The lowest score. Add a variable for the worst match, keep every chosen pair at or above it, and maximise it. Here the best-total plan already does well: its worst match is six. On other tables, raising the worst costs a little of the total. Scores are opinions written as numbers. Who wrote them, and did the teachers see them? Show both plans, the best total and the kindest worst match, and decide together. Explain the rule you used before anyone sees their class. In the app, open “Teachers to classes”. Press “Let them choose in turn”, then Run to watch the Hungarian method. Then change Karim’s maths score from nine to five, and run both again. Your turn. The best-total plan gives Zainab, a new teacher, the class nobody wanted. Nobody asked her about her scores. What is the fair next step? Check the scores with the people they describe, then solve again. Remember: one yes-or-no variable per pair, and exactly one per row and per column. First come can lose a lot. And judge two ways: the total, and the worst match. Try it in class tomorrow: share out five class jobs. Pupils score each job from one to five, and first they choose in turn. Then the class looks for the best total, and for the plan where nobody gets a job they hate.",
+  "t": "Zu Beginn des Halbjahrs wählen fünf Lehrkräfte ihre Klassen, nach Dienstalter geordnet. Das fühlt sich fair an. Dann landet Karim, der gut Mathe unterrichtet und sonst wenig, bei einer Naturkunde-Klasse. Heute: Lehrkräfte und Klassen zuordnen, für die beste Summe und für die Schlechtestgestellten. Das ist das Zuordnungsproblem: Jede Klasse bekommt genau eine Lehrkraft, und jede Lehrkraft übernimmt genau eine Klasse. Eine Tabelle bewertet von null bis neun, wie gut jede Lehrkraft zu jeder Klasse passt. Das Ziel ist die beste Gesamtpunktzahl. Wer zuerst kommt, mahlt zuerst: Amina wählt als Erste und nimmt Mathe, ihr Lieblingsfach. Karim, der nur in Mathe gut ist, bekommt Naturkunde, mit einem Wert von zwei. Die Summe ist neunundzwanzig. Die beste Summe ist neununddreißig. Karim nimmt Mathe, Leila Naturkunde, Yusuf Englisch, Zainab Kunst und Amina Geschichte. Die Ungarische Methode von neunzehnhundertfünfundfünfzig findet sie Schritt für Schritt, und ein Solver findet sie auch. In CP-SAT bekommt jedes Paar aus Lehrkraft und Klasse eine Ja-oder-Nein-Variable. Genau ein Ja in jeder Zeile und genau eines in jeder Spalte. Dann maximierst du die Werte der Paare, die du wählst. Aber die Summe ist nur eine Art zu urteilen. Du kannst auch fragen: Wie gut ist die schlechteste Zuordnung? Ein Plan mit hoher Summe kann trotzdem einer Lehrkraft eine Klasse geben, die sie kaum unterrichten kann. Kurzer Check! Ich will, dass keine Lehrkraft eine Klasse bekommt, die sie kaum unterrichten kann. Was soll das Modell so groß wie möglich machen? Den niedrigsten Wert. Füge eine Variable für die schlechteste Zuordnung hinzu, halte jedes gewählte Paar auf oder über ihr und maximiere sie. Hier schneidet der Plan mit der besten Summe schon gut ab: Seine schlechteste Zuordnung ist sechs. Bei anderen Tabellen kostet es ein wenig von der Summe, die schlechteste anzuheben. Werte sind Meinungen, in Zahlen geschrieben. Wer hat sie geschrieben, und haben die Lehrkräfte sie gesehen? Zeig beide Pläne, die beste Summe und die gnädigste schlechteste Zuordnung, und entscheidet gemeinsam. Erkläre die Regel, die du benutzt hast, bevor irgendjemand seine Klasse sieht. Öffne in der App „Lehrkräfte zu Klassen“. Drück „Reihum wählen lassen“, dann Start, um die Ungarische Methode zu beobachten. Ändere dann Karims Mathe-Wert von neun auf fünf und lass beide noch einmal laufen. Du bist dran. Der Plan mit der besten Summe gibt Zainab, einer neuen Lehrkraft, die Klasse, die niemand wollte. Niemand hat sie nach ihren Werten gefragt. Was ist der faire nächste Schritt? Prüfe die Werte mit den Menschen, die sie beschreiben, und löse dann noch einmal. Denk dran: eine Ja-oder-Nein-Variable pro Paar und genau eine pro Zeile und pro Spalte. Wer zuerst kommt, kann viel verlieren. Und beurteile auf zwei Arten: die Summe und die schlechteste Zuordnung. Probier es morgen im Unterricht aus: Verteile fünf Klassenämter. Die Schüler:innen bewerten jedes Amt von eins bis fünf, und zuerst wählen sie reihum. Dann sucht die Klasse die beste Summe und den Plan, in dem niemand ein Amt bekommt, das er hasst."
+ },
+ "lessons.3.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lesen"
+ },
+ "lessons.3.steps.1.title": {
+  "en": "The assignment problem",
+  "t": "Das Zuordnungsproblem"
+ },
+ "lessons.3.steps.1.body": {
+  "en": "Matching teachers to classes, pupils to projects or buses to routes is the assignment problem: each class gets exactly one teacher, and each teacher takes exactly one class. A table gives a score for every pair, for example how well each teacher suits each class from 0 to 9, and the usual goal is the best total score.\n\nChoosing in turn feels fair but can waste a lot. In the lab, Amina chooses first and takes maths, so Karim, who is good only at maths, gets science with a score of 2: a total of 29. The best total is 39 (Karim maths, Leila science, Yusuf English, Zainab art, Amina history). The Hungarian method (1955) finds it by working on shortfalls from 9, step by step; a solver finds it too.\n\nIn CP-SAT, give each teacher-and-class pair a yes-or-no variable x[t][c] (1 means teacher t takes class c). Require exactly one yes in each row, m.add_exactly_one(x[t]), and exactly one in each column, then maximise the sum of score[t][c] * x[t][c]. The same program runs unchanged on the real OR-Tools in Colab.\n\nThe total is only one way to judge. You can also ask how good the worst match is, and make that as good as possible: add a variable w, require every chosen pair’s score to be at least w, and maximise w. In the lab’s table, the best-total plan already has a worst match of 6; on other tables, raising the worst match costs a little of the total. Which to choose is a decision about fairness, not arithmetic.\n\nFinally, remember that the scores are opinions written as numbers. Who wrote them, and did the people they describe see them? A plan built on scores nobody checked is not fair, however optimal. Show the table to colleagues, show both plans (best total, best worst match), agree the rule before anyone sees their class, and solve again when a score turns out wrong.",
+  "t": "Lehrkräfte Klassen zuzuordnen, Schüler:innen Projekten oder Busse Routen ist das Zuordnungsproblem: Jede Klasse bekommt genau eine Lehrkraft, und jede Lehrkraft übernimmt genau eine Klasse. Eine Tabelle gibt für jedes Paar eine Bewertung an, zum Beispiel wie gut jede Lehrkraft zu jeder Klasse passt, von 0 bis 9, und das übliche Ziel ist die beste Gesamtbewertung.\n\nDer Reihe nach zu wählen fühlt sich fair an, kann aber viel verschenken. Im Lab wählt Amina als Erste und nimmt Mathe, also bekommt Karim, der nur in Mathe gut ist, Naturwissenschaft mit einer Bewertung von 2: insgesamt 29. Die beste Summe ist 39 (Karim Mathe, Leila Naturwissenschaft, Yusuf Englisch, Zainab Kunst, Amina Geschichte). Die Ungarische Methode (1955) findet sie, indem sie Schritt für Schritt mit den Abständen zu 9 arbeitet; ein Solver findet sie auch.\n\nGib in CP-SAT jedem Paar aus Lehrkraft und Klasse eine Ja-oder-Nein-Variable x[t][c] (1 heißt, Lehrkraft t übernimmt Klasse c). Verlange genau ein Ja in jeder Zeile, m.add_exactly_one(x[t]), und genau eins in jeder Spalte, und maximiere dann die Summe von score[t][c] * x[t][c]. Dasselbe Programm läuft unverändert mit den echten OR-Tools in Colab.\n\nDie Summe ist nur eine Art zu beurteilen. Du kannst auch fragen, wie gut die schlechteste Zuordnung ist, und sie so gut wie möglich machen: Füge eine Variable w hinzu, verlange, dass die Bewertung jedes gewählten Paars mindestens w beträgt, und maximiere w. In der Tabelle des Labs hat der Plan mit der besten Summe schon eine schlechteste Zuordnung von 6; bei anderen Tabellen kostet es etwas von der Summe, die schlechteste Zuordnung zu heben. Was man wählt, ist eine Entscheidung über Fairness, nicht über Rechnen.\n\nDenke schließlich daran, dass die Bewertungen Meinungen sind, die als Zahlen geschrieben wurden. Wer hat sie geschrieben, und haben die Menschen, die sie beschreiben, sie gesehen? Ein Plan, der auf ungeprüften Bewertungen beruht, ist nicht fair, so optimal er auch sein mag. Zeige die Tabelle den Kolleg:innen, zeige beide Pläne (beste Summe, beste schlechteste Zuordnung), einigt euch auf die Regel, bevor jemand seine Klasse sieht, und löse erneut, wenn sich eine Bewertung als falsch herausstellt."
+ },
+ "lessons.3.steps.1.keyTerms.0.term": {
+  "en": "Assignment problem",
+  "t": "Zuordnungsproblem"
+ },
+ "lessons.3.steps.1.keyTerms.0.def": {
+  "en": "Pairing people with jobs, exactly one each way, for the best total score.",
+  "t": "Menschen Aufgaben zuordnen, in beide Richtungen genau eine, für die beste Gesamtbewertung."
+ },
+ "lessons.3.steps.1.keyTerms.1.term": {
+  "en": "Yes-or-no variable",
+  "t": "Ja-oder-Nein-Variable"
+ },
+ "lessons.3.steps.1.keyTerms.1.def": {
+  "en": "A variable that is 0 or 1: here, whether teacher t takes class c.",
+  "t": "Eine Variable, die 0 oder 1 ist: hier, ob Lehrkraft t Klasse c übernimmt."
+ },
+ "lessons.3.steps.1.keyTerms.2.term": {
+  "en": "Hungarian method",
+  "t": "Ungarische Methode"
+ },
+ "lessons.3.steps.1.keyTerms.2.def": {
+  "en": "A step-by-step method (1955) that always finds the best total for an assignment.",
+  "t": "Ein Schritt-für-Schritt-Verfahren (1955), das für eine Zuordnung immer die beste Summe findet."
+ },
+ "lessons.3.steps.1.keyTerms.3.term": {
+  "en": "Worst match (max-min)",
+  "t": "Schlechteste Zuordnung (Max-Min)"
+ },
+ "lessons.3.steps.1.keyTerms.3.def": {
+  "en": "Judging a plan by its lowest score, and making that as high as possible.",
+  "t": "Einen Plan nach seiner niedrigsten Bewertung beurteilen und diese so hoch wie möglich machen."
+ },
+ "lessons.3.steps.2.prompt": {
+  "en": "The best-total plan gives Zainab, a new teacher, the class nobody wanted. Her scores were written by the deputy head, and nobody asked her. What is the fair next step?",
+  "t": "Der Plan mit der besten Summe gibt Zainab, einer neuen Lehrkraft, die Klasse, die niemand wollte. Ihre Bewertungen hat die stellvertretende Schulleiterin geschrieben, und niemand hat sie gefragt. Was ist der faire nächste Schritt?"
+ },
+ "lessons.3.steps.2.options.0.text": {
+  "en": "Keep it: the solver maximised the total",
+  "t": "Ihn behalten: Der Solver hat die Summe maximiert"
+ },
+ "lessons.3.steps.2.options.1.text": {
+  "en": "Ask her, check her scores, and solve again with the agreed rule",
+  "t": "Sie fragen, ihre Bewertungen prüfen und mit der vereinbarten Regel erneut lösen"
+ },
+ "lessons.3.steps.2.options.2.text": {
+  "en": "Swap her with the most senior teacher",
+  "t": "Sie mit der dienstältesten Lehrkraft tauschen"
+ },
+ "lessons.3.steps.2.explain": {
+  "en": "A model is only as fair as its data. Zainab’s scores are someone else’s opinion of her, so check them with her, agree the rule (the best total, or a floor for the worst match), and solve again. Keeping the plan trusts unchecked numbers; swapping by seniority brings back first come, first served.",
+  "t": "Ein Modell ist nur so fair wie seine Daten. Zainabs Bewertungen sind die Meinung eines anderen über sie, also prüft sie mit ihr, einigt euch auf die Regel (die beste Summe oder eine Untergrenze für die schlechteste Zuordnung) und löst erneut. Den Plan zu behalten vertraut auf ungeprüfte Zahlen; nach Dienstalter zu tauschen bringt „Wer zuerst kommt, mahlt zuerst“ zurück."
+ },
+ "lessons.3.steps.3.prompt": {
+  "en": "Letting teachers choose classes in turn always gives the best total score.",
+  "t": "Wenn Lehrkräfte der Reihe nach Klassen wählen, ergibt das immer die beste Gesamtbewertung."
+ },
+ "lessons.3.steps.3.explain": {
+  "en": "An early choice can take someone else’s only good option: in the lab, choosing in turn gives 29 against the best total of 39, because Amina takes the maths class Karim needed.",
+  "t": "Eine frühe Wahl kann einer anderen Person die einzige gute Option wegnehmen: Im Lab ergibt das Wählen der Reihe nach 29 gegenüber der besten Summe von 39, weil Amina die Mathe-Klasse nimmt, die Karim brauchte."
+ },
+ "lessons.3.steps.4.prompt": {
+  "en": "What does this program print?",
+  "t": "Was gibt dieses Programm aus?"
+ },
+ "lessons.3.steps.4.options.0.text": {
+  "en": "16",
+  "t": "16"
+ },
+ "lessons.3.steps.4.options.1.text": {
+  "en": "24",
+  "t": "24"
+ },
+ "lessons.3.steps.4.options.2.text": {
+  "en": "6",
+  "t": "6"
+ },
+ "lessons.3.steps.4.explain": {
+  "en": "Teacher 0 takes class 0 (9), teacher 1 class 1 (2) and teacher 2 class 2 (5): 9 + 2 + 5 = 16. Swapping so that teacher 1 takes class 0 gives 9 + 9 + 6 = 24, the best total for this table.",
+  "t": "Lehrkraft 0 übernimmt Klasse 0 (9), Lehrkraft 1 Klasse 1 (2) und Lehrkraft 2 Klasse 2 (5): 9 + 2 + 5 = 16. Tauscht man so, dass Lehrkraft 1 Klasse 0 übernimmt, ergibt das 9 + 9 + 6 = 24, die beste Summe für diese Tabelle."
+ },
+ "lessons.3.steps.5.prompt": {
+  "en": "Try it: in “Teachers to classes”, press “Let them choose in turn” (29), then Run to watch the Hungarian method reach 39. Then change Karim’s maths score from 9 to 5 and run both again: does choosing in turn still lose? Note the lowest score in each plan.",
+  "t": "Probier es aus: Drücke in „Lehrkräfte den Klassen zuordnen“ auf „Der Reihe nach wählen lassen“ (29), dann auf „Start“, um zu sehen, wie die Ungarische Methode 39 erreicht. Ändere dann Karims Mathe-Bewertung von 9 auf 5 und lass beides wieder laufen: Verliert das Wählen der Reihe nach immer noch? Notiere die niedrigste Bewertung in jedem Plan."
+ },
+ "lessons.3.steps.6.prompt": {
+  "en": "Three teachers, three classes, and a score for each pair. The model already says each teacher takes one class and each class gets one teacher. Write the goal: the biggest total score of the chosen pairs. The program prints the total.",
+  "t": "Drei Lehrkräfte, drei Klassen und eine Bewertung für jedes Paar. Das Modell sagt schon, dass jede Lehrkraft eine Klasse übernimmt und jede Klasse eine Lehrkraft bekommt. Schreibe das Ziel: die größte Gesamtbewertung der gewählten Paare. Das Programm gibt die Summe aus."
+ },
+ "lessons.3.steps.6.tests.0.hint": {
+  "en": "Add up score[t][c] * x[t][c] over every pair, and maximise it.",
+  "t": "Addiere score[t][c] * x[t][c] über jedes Paar und maximiere es."
+ },
+ "lessons.3.steps.6.hints.0": {
+  "en": "m.maximize(sum(...)) with one term per pair",
+  "t": "m.maximize(sum(...)) mit einem Term pro Paar"
+ },
+ "lessons.3.steps.6.hints.1": {
+  "en": "for t in n for c in n inside the sum (n is range(3))",
+  "t": "for t in n for c in n innerhalb der Summe (n ist range(3))"
+ },
+ "lessons.3.steps.6.explain": {
+  "en": "The best total is 24: teacher 1 takes class 0 (9), teacher 2 class 1 (9) and teacher 0 class 2 (6). Its worst match is 6; giving teacher 0 their favourite class 0 would leave teacher 1 with a 2 or a 1. The same model runs unchanged on the real OR-Tools in Colab.",
+  "t": "Die beste Summe ist 24: Lehrkraft 1 übernimmt Klasse 0 (9), Lehrkraft 2 Klasse 1 (9) und Lehrkraft 0 Klasse 2 (6). Ihre schlechteste Zuordnung ist 6; würde man Lehrkraft 0 ihre Lieblingsklasse 0 geben, bliebe für Lehrkraft 1 eine 2 oder eine 1. Dasselbe Modell läuft unverändert mit den echten OR-Tools in Colab."
+ },
+ "lessons.3.steps.7.prompt": {
+  "en": "The model already gives each class exactly one teacher. Complete it so that the worst match is as good as possible: each teacher takes exactly one class, and every teacher’s chosen score is at least w.",
+  "t": "Das Modell gibt jeder Klasse schon genau eine Lehrkraft. Vervollständige es so, dass die schlechteste Zuordnung so gut wie möglich ist: Jede Lehrkraft übernimmt genau eine Klasse, und die gewählte Bewertung jeder Lehrkraft beträgt mindestens w."
+ },
+ "lessons.3.steps.7.explain": {
+  "en": "Exactly one class per teacher, each chosen score at least w (expression on the left, then >=), and w as large as possible: the worst match rises as far as the table allows.",
+  "t": "Genau eine Klasse pro Lehrkraft, jede gewählte Bewertung mindestens w (Ausdruck links, dann >=) und w so groß wie möglich: Die schlechteste Zuordnung steigt so weit, wie die Tabelle es zulässt."
+ },
+ "lessons.3.steps.8.prompt": {
+  "en": "What do you suggest?",
+  "t": "Was schlägst du vor?"
+ },
+ "lessons.3.steps.8.who": {
+  "en": "Ms Leila Nasser, science",
+  "t": "Frau Leila Nasser, Naturwissenschaft"
+ },
+ "lessons.3.steps.8.initial": {
+  "en": "L",
+  "t": "L"
+ },
+ "lessons.3.steps.8.situation": {
+  "en": "Leila wants to use the assignment model to put 30 pupils into science-fair projects. She plans to score how well each pupil suits each project herself, from their marks.",
+  "t": "Leila will das Zuordnungsmodell nutzen, um 30 Schüler:innen auf Projekte für die Wissenschaftsmesse zu verteilen. Sie plant, selbst anhand der Noten zu bewerten, wie gut jede:r Schüler:in zu jedem Projekt passt."
+ },
+ "lessons.3.steps.8.choices.0.label": {
+  "en": "“Let pupils score the projects too, and check the worst match as well as the total.”",
+  "t": "„Lass die Schüler:innen die Projekte auch bewerten und prüfe neben der Summe auch die schlechteste Zuordnung.“"
+ },
+ "lessons.3.steps.8.choices.0.consequence": {
+  "en": "Pupils’ own interests count, and nobody is left with a project they hate just to lift the total. They can also see the rule that placed them.",
+  "t": "Die eigenen Interessen der Schüler:innen zählen, und niemand bleibt mit einem Projekt, das er hasst, nur um die Summe zu heben. Sie können auch die Regel sehen, nach der sie zugeteilt wurden."
+ },
+ "lessons.3.steps.8.choices.1.label": {
+  "en": "“Use marks only: they’re objective.”",
+  "t": "„Nimm nur Noten: Die sind objektiv.“"
+ },
+ "lessons.3.steps.8.choices.1.consequence": {
+  "en": "Marks measure past tests, not interest. Pupils with low marks may always get the least wanted projects, which is the opposite of what a science fair is for.",
+  "t": "Noten messen vergangene Tests, nicht Interesse. Schüler:innen mit schlechten Noten bekommen vielleicht immer die unbeliebtesten Projekte, das Gegenteil dessen, wofür eine Wissenschaftsmesse da ist."
+ },
+ "lessons.3.steps.8.choices.2.label": {
+  "en": "“Let them pick in turn, by class rank.”",
+  "t": "„Lass sie der Reihe nach wählen, nach Klassenrang.“"
+ },
+ "lessons.3.steps.8.choices.2.consequence": {
+  "en": "Choosing in turn by rank gives the top pupils everything and can waste a lot of the total, as Karim found. The model can do better for everyone.",
+  "t": "Der Reihe nach nach Rang zu wählen gibt den Besten alles und kann viel von der Summe verschenken, wie Karim erfahren hat. Das Modell kann es für alle besser machen."
+ },
+ "lessons.3.steps.8.explain": {
+  "en": "Let pupils’ own scores count, and check the worst match as well as the total.",
+  "t": "Lass die eigenen Bewertungen der Schüler:innen zählen und prüfe neben der Summe auch die schlechteste Zuordnung."
+ },
+ "lessons.3.steps.9.prompt": {
+  "en": "How are classes, duties or rooms shared out at your school now? Who would score better, and who worse, under a best-total rule?",
+  "t": "Wie werden an deiner Schule heute Klassen, Aufgaben oder Räume verteilt? Wer würde bei einer Regel der besten Summe besser abschneiden, und wer schlechter?"
+ },
+ "lessons.3.steps.9.placeholder": {
+  "en": "For example: “Senior teachers choose first. Newer teachers always get the exam classes.”",
+  "t": "Zum Beispiel: „Die dienstälteren Lehrkräfte wählen zuerst. Neuere Lehrkräfte bekommen immer die Prüfungsklassen.“"
+ },
+ "lessons.3.steps.10.prompt": {
+  "en": "Project: Fair class jobs",
+  "t": "Projekt: Faire Klassendienste"
+ },
+ "lessons.3.steps.10.task": {
+  "en": "List five class jobs (board, plants, books, water, bell) and pick five volunteers. Each volunteer scores every job from 1 to 5, and you write the table on the board. First let them choose in turn and add up the total. Then the class looks for the plan with the best total, and for the plan whose lowest score is as high as possible. Compare the plans, vote on which rule to use this term, and explain it to the volunteers before announcing the jobs.",
+  "t": "Liste fünf Klassendienste auf (Tafel, Pflanzen, Bücher, Wasser, Klingel) und such fünf Freiwillige aus. Jede:r Freiwillige bewertet jeden Dienst von 1 bis 5, und ihr schreibt die Tabelle an die Tafel. Lass sie zuerst der Reihe nach wählen und addiere die Summe. Dann sucht die Klasse nach dem Plan mit der besten Summe und nach dem Plan, dessen niedrigste Bewertung so hoch wie möglich ist. Vergleicht die Pläne, stimmt ab, welche Regel ihr in diesem Halbjahr nutzt, und erklärt sie den Freiwilligen, bevor ihr die Dienste bekannt gebt."
+ },
+ "lessons.3.steps.10.deliverable": {
+  "en": "A photo of the score table and the three plans (no faces needed), with each plan’s total and lowest score, and the rule your class chose.",
+  "t": "Ein Foto der Bewertungstabelle und der drei Pläne (Gesichter müssen nicht zu sehen sein), mit Summe und niedrigster Bewertung jedes Plans und der Regel, die deine Klasse gewählt hat."
+ },
+ "lessons.3.steps.10.rubric.0.criterion": {
+  "en": "Pupils could: find a plan with one job per pupil and add up its total.",
+  "t": "Die Schüler:innen konnten: einen Plan mit einem Dienst pro Person finden und seine Summe addieren."
+ },
+ "lessons.3.steps.10.rubric.1.criterion": {
+  "en": "Pupils could: compare plans by their total and by their lowest score.",
+  "t": "Die Schüler:innen konnten: Pläne nach ihrer Summe und nach ihrer niedrigsten Bewertung vergleichen."
+ },
+ "lessons.3.steps.10.rubric.2.criterion": {
+  "en": "Pupils could: choose a rule and explain why it is fair.",
+  "t": "Die Schüler:innen konnten: eine Regel wählen und erklären, warum sie fair ist."
+ },
+ "lessons.3.slides.0.title": {
+  "en": "Matching teachers and classes",
+  "t": "Lehrkräfte und Klassen zuordnen"
+ },
+ "lessons.3.slides.0.narration": {
+  "en": "Who should teach which class, and how do we decide fairly?",
+  "t": "Wer sollte welche Klasse unterrichten, und wie entscheiden wir fair?"
+ },
+ "lessons.3.slides.0.note": {
+  "en": "Optimization · Level 3 · Lesson 4",
+  "t": "Optimierung · Niveau 3 · Lektion 4"
+ },
+ "lessons.3.slides.1.title": {
+  "en": "Today we will",
+  "t": "Heute werden wir"
+ },
+ "lessons.3.slides.1.bullets": {
+  "en": [
+   "Write an assignment as yes-or-no choices, one per row and column.",
+   "Find the best total, and the plan with the best worst match.",
+   "Ask who wrote the scores, and decide the rule together."
+  ],
+  "t": [
+   "eine Zuordnung als Ja-oder-Nein-Entscheidungen schreiben, eine pro Zeile und Spalte.",
+   "die beste Summe finden und den Plan mit der besten schlechtesten Zuordnung.",
+   "fragen, wer die Bewertungen geschrieben hat, und die Regel gemeinsam entscheiden."
+  ]
+ },
+ "lessons.3.slides.2.title": {
+  "en": "Remember",
+  "t": "Merke dir"
+ },
+ "lessons.3.slides.2.bullets": {
+  "en": [
+   "Choosing in turn can lose a lot: 29 against 39 in the lab.",
+   "One yes-or-no variable per pair; exactly one per row and per column.",
+   "Judge twice: the total and the worst match, and check the scores with the people."
+  ],
+  "t": [
+   "Der Reihe nach zu wählen kann viel verlieren: 29 gegenüber 39 im Lab.",
+   "Eine Ja-oder-Nein-Variable pro Paar; genau eine pro Zeile und pro Spalte.",
+   "Zweifach beurteilen: die Summe und die schlechteste Zuordnung, und die Bewertungen mit den Menschen prüfen."
+  ]
+ },
+ "lessons.3.slides.3.title": {
+  "en": "Fair class jobs",
+  "t": "Faire Klassendienste"
+ },
+ "lessons.3.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): How are class jobs shared now?",
+   "Score (8 min): Five volunteers score five jobs.",
+   "In turn (7 min): Choose in turn; add the total.",
+   "Better plans (15 min): Best total, then best worst match.",
+   "Wrap-up (5 min): Vote on the rule and explain it."
+  ],
+  "t": [
+   "Aufwärmen (5 Min.): Wie werden Klassendienste heute verteilt?",
+   "Bewerten (8 Min.): Fünf Freiwillige bewerten fünf Dienste.",
+   "Der Reihe nach (7 Min.): Der Reihe nach wählen; die Summe addieren.",
+   "Bessere Pläne (15 Min.): Beste Summe, dann beste schlechteste Zuordnung.",
+   "Abschluss (5 Min.): Über die Regel abstimmen und sie erklären."
+  ]
+ },
+ "lessons.3.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Ask how class jobs are given out now and whether pupils think it is fair. Write their ideas of “fair” on the board.",
+   "Score (8 min): Write five jobs across the top of a table and five volunteers down the side. Each volunteer scores every job from 1 (hate it) to 5 (love it).",
+   "In turn (7 min): Volunteers choose one job each, in order of the register. Add up the total score and circle the lowest score.",
+   "Better plans (15 min): In groups, pupils look for the plan with the highest total, then for the plan whose lowest score is as high as possible. Each group writes its two plans with their total and lowest score.",
+   "Wrap-up (5 min): Compare the plans and vote on the rule for this term. Explain it to the volunteers before announcing the jobs."
+  ],
+  "t": [
+   "Aufwärmen (5 Min.): Frage, wie Klassendienste heute vergeben werden und ob die Schüler:innen das fair finden. Schreibe ihre Vorstellungen von „fair“ an die Tafel.",
+   "Bewerten (8 Min.): Schreibe fünf Dienste oben in eine Tabelle und fünf Freiwillige an die Seite. Jede:r Freiwillige bewertet jeden Dienst von 1 (hasse ich) bis 5 (liebe ich).",
+   "Der Reihe nach (7 Min.): Die Freiwilligen wählen in der Reihenfolge des Klassenbuchs je einen Dienst. Addiere die Gesamtbewertung und kreise die niedrigste Bewertung ein.",
+   "Bessere Pläne (15 Min.): In Gruppen suchen die Schüler:innen den Plan mit der höchsten Summe und dann den Plan, dessen niedrigste Bewertung so hoch wie möglich ist. Jede Gruppe schreibt ihre zwei Pläne mit Summe und niedrigster Bewertung auf.",
+   "Abschluss (5 Min.): Vergleicht die Pläne und stimmt über die Regel für dieses Halbjahr ab. Erkläre sie den Freiwilligen, bevor ihr die Dienste bekannt gebt."
+  ]
+ },
+ "lessons.3.slides.3.note": {
+  "en": "Keep it to five volunteers and five jobs so the table fits the board. Scores of 1 to 5 keep the sums easy.",
+  "t": "Bleib bei fünf Freiwilligen und fünf Diensten, damit die Tabelle an die Tafel passt. Bewertungen von 1 bis 5 halten die Rechnungen einfach."
+ },
+ "lessons.3.slides.3.narration": {
+  "en": "Choosing in turn, the best total, or nobody stuck with a job they hate?",
+  "t": "Der Reihe nach wählen, die beste Summe, oder niemand bleibt bei einem Dienst, den er hasst?"
+ },
+ "lessons.3.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns diskutieren"
+ },
+ "lessons.3.slides.4.bullets": {
+  "en": [
+   "Why did choosing in turn give a lower total?",
+   "Which plan was best for the person with the lowest score?",
+   "Who should write the scores, and who should see them?"
+  ],
+  "t": [
+   "Warum ergab das Wählen der Reihe nach eine niedrigere Summe?",
+   "Welcher Plan war am besten für die Person mit der niedrigsten Bewertung?",
+   "Wer sollte die Bewertungen schreiben, und wer sollte sie sehen?"
+  ]
+ },
+ "lessons.3.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.3.slides.5.bullets": {
+  "en": [
+   "Write one rule for sharing class jobs fairly, and what it might cost."
+  ],
+  "t": [
+   "Schreibe eine Regel auf, wie Klassendienste fair verteilt werden, und was sie kosten könnte."
+  ]
+ },
+ "lessons.3.slides.5.narration": {
+  "en": "Best for the school, and bearable for each person.",
+  "t": "Gut für die Schule und erträglich für jeden Einzelnen."
+ },
+ "lessons.3.kit.0.title": {
+  "en": "Slides: Matching teachers and classes",
+  "t": "Folien: Lehrkräfte und Klassen zuordnen"
+ },
+ "lessons.3.kit.1.title": {
+  "en": "Lesson plan and worksheet: Matching teachers and classes",
+  "t": "Unterrichtsplan und Arbeitsblatt: Lehrkräfte und Klassen zuordnen"
+ },
+ "lessons.3.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "Das Lektionsvideo (240p, für den Unterricht oder WhatsApp)"
+ },
+ "lessons.4.title": {
+  "en": "Solving school problems in Python: unit check",
+  "t": "Schulprobleme mit Python lösen: Abschlusstest"
+ },
+ "lessons.4.tryTomorrow": {
+  "en": "Pick one decision at your school this term (duties, exam slots, the bus, who teaches what). With two colleagues, write its options, rules and goal, model the smallest version in the “Model it with CP-SAT” lab, and show the result to the people it affects.",
+  "t": "Such dir eine Entscheidung an deiner Schule in diesem Halbjahr aus (Aufsichten, Prüfungstermine, der Bus, wer was unterrichtet). Schreibe mit zwei Kolleg:innen ihre Optionen, Regeln und ihr Ziel auf, modelliere die kleinste Version im Lab „Mit CP-SAT modellieren“ und zeige das Ergebnis den Menschen, die es betrifft."
+ },
+ "lessons.4.steps.0.prompt": {
+  "en": "In a CP-SAT timetable model, what is each lesson’s variable?",
+  "t": "Was ist in einem CP-SAT-Stundenplanmodell die Variable jeder Unterrichtsstunde?"
+ },
+ "lessons.4.steps.0.options.0.text": {
+  "en": "The period it goes in",
+  "t": "Die Stunde, in die sie fällt"
+ },
+ "lessons.4.steps.0.options.1.text": {
+  "en": "Its teacher’s name",
+  "t": "Der Name ihrer Lehrkraft"
+ },
+ "lessons.4.steps.0.options.2.text": {
+  "en": "The number of pupils in the class",
+  "t": "Die Zahl der Schüler:innen in der Klasse"
+ },
+ "lessons.4.steps.0.explain": {
+  "en": "The solver decides when each lesson happens, so the period is the variable. The teacher and the class size are facts the rules use.",
+  "t": "Der Solver entscheidet, wann jede Unterrichtsstunde stattfindet, also ist die Stunde die Variable. Die Lehrkraft und die Klassengröße sind Fakten, die die Regeln verwenden."
+ },
+ "lessons.4.steps.1.prompt": {
+  "en": "INFEASIBLE means the solver ran out of time before finding a timetable.",
+  "t": "INFEASIBLE heißt, der Solver ist die Zeit ausgegangen, bevor er einen Stundenplan gefunden hat."
+ },
+ "lessons.4.steps.1.explain": {
+  "en": "INFEASIBLE is a proof that no timetable keeps all the rules. Running out of time is UNKNOWN. With INFEASIBLE, decide which rule can bend.",
+  "t": "INFEASIBLE ist ein Beweis, dass kein Stundenplan alle Regeln einhält. Wenn die Zeit ausgeht, heißt es UNKNOWN. Bei INFEASIBLE entscheidet, welche Regel nachgeben kann."
+ },
+ "lessons.4.steps.2.prompt": {
+  "en": "The second rule should stop a teacher (one per subject) being in two classes at once, but timetables still clash. Which line is wrong?",
+  "t": "Die zweite Regel soll verhindern, dass eine Lehrkraft (eine pro Fach) in zwei Klassen gleichzeitig ist, aber Stundenpläne überschneiden sich trotzdem. Welche Zeile ist falsch?"
+ },
+ "lessons.4.steps.2.explain": {
+  "en": "For each subject, the rule must cover that subject’s lessons in every class: loop over the classes. Line 4 copies the class rule instead, so it never compares two classes.",
+  "t": "Für jedes Fach muss die Regel die Stunden dieses Fachs in jeder Klasse abdecken: Gehe die Klassen in einer Schleife durch. Zeile 4 kopiert stattdessen die Klassenregel, also vergleicht sie nie zwei Klassen."
+ },
+ "lessons.4.steps.3.prompt": {
+  "en": "Match each school problem to the kind of problem it is.",
+  "t": "Ordne jedes Schulproblem der Art von Problem zu, die es ist."
+ },
+ "lessons.4.steps.3.pairs.0.left": {
+  "en": "Exam slots without clashes",
+  "t": "Prüfungszeitfenster ohne Überschneidungen"
+ },
+ "lessons.4.steps.3.pairs.0.right": {
+  "en": "Graph colouring",
+  "t": "Graphfärbung"
+ },
+ "lessons.4.steps.3.pairs.1.left": {
+  "en": "The bus visiting every village",
+  "t": "Der Bus, der jedes Dorf besucht"
+ },
+ "lessons.4.steps.3.pairs.1.right": {
+  "en": "Travelling salesperson",
+  "t": "Handlungsreisender"
+ },
+ "lessons.4.steps.3.pairs.2.left": {
+  "en": "One teacher for each class",
+  "t": "Eine Lehrkraft für jede Klasse"
+ },
+ "lessons.4.steps.3.pairs.2.right": {
+  "en": "Assignment",
+  "t": "Zuordnung"
+ },
+ "lessons.4.steps.3.pairs.3.left": {
+  "en": "No class with two lessons at once",
+  "t": "Keine Klasse mit zwei Stunden gleichzeitig"
+ },
+ "lessons.4.steps.3.pairs.3.right": {
+  "en": "An all-different rule",
+  "t": "Eine All-different-Regel"
+ },
+ "lessons.4.steps.3.explain": {
+  "en": "Naming the kind of problem tells you which methods and labs help: colouring for clashes, routes for the bus, assignment for pairing, and all-different rules for timetables.",
+  "t": "Die Art des Problems zu benennen sagt dir, welche Methoden und Labs helfen: Färbung für Überschneidungen, Routen für den Bus, Zuordnung fürs Paarbilden und All-different-Regeln für Stundenpläne."
+ },
+ "lessons.4.steps.4.prompt": {
+  "en": "Which of these prove that 3 exam slots is the fewest possible? Choose all that apply.",
+  "t": "Was davon beweist, dass 3 Prüfungszeitfenster das Minimum sind? Wähle alle zutreffenden aus."
+ },
+ "lessons.4.steps.4.options.0.text": {
+  "en": "Three exams that all clash with each other",
+  "t": "Drei Prüfungen, die sich alle miteinander überschneiden"
+ },
+ "lessons.4.steps.4.options.1.text": {
+  "en": "The solver says OPTIMAL when minimising the slots",
+  "t": "Der Solver meldet OPTIMAL beim Minimieren der Zeitfenster"
+ },
+ "lessons.4.steps.4.options.2.text": {
+  "en": "Greedy colouring used 4 slots",
+  "t": "Die Greedy-Färbung hat 4 Zeitfenster benutzt"
+ },
+ "lessons.4.steps.4.options.3.text": {
+  "en": "DSatur found a plan with 3 slots",
+  "t": "DSatur hat einen Plan mit 3 Zeitfenstern gefunden"
+ },
+ "lessons.4.steps.4.explain": {
+  "en": "A clique of three needs three slots in any plan, and OPTIMAL means the solver proved nothing smaller works. Greedy and DSatur only show plans that work; neither proves fewer is impossible.",
+  "t": "Eine Clique aus drei Prüfungen braucht in jedem Plan drei Zeitfenster, und OPTIMAL heißt, der Solver hat bewiesen, dass nichts Kleineres geht. Greedy und DSatur zeigen nur Pläne, die funktionieren; keiner beweist, dass weniger unmöglich ist."
+ },
+ "lessons.4.steps.5.prompt": {
+  "en": "Put in order: building and improving a bus route.",
+  "t": "Bringe in die richtige Reihenfolge: eine Busroute bauen und verbessern."
+ },
+ "lessons.4.steps.5.steps.0": {
+  "en": "Build a route with nearest neighbour",
+  "t": "Mit dem Nächster-Nachbar-Verfahren eine Route bauen"
+ },
+ "lessons.4.steps.5.steps.1": {
+  "en": "Take out two roads",
+  "t": "Zwei Straßen herausnehmen"
+ },
+ "lessons.4.steps.5.steps.2": {
+  "en": "Reverse the stretch between them",
+  "t": "Das Stück dazwischen umkehren"
+ },
+ "lessons.4.steps.5.steps.3": {
+  "en": "Keep the change if the route is shorter",
+  "t": "Die Änderung behalten, wenn die Route kürzer ist"
+ },
+ "lessons.4.steps.5.steps.4": {
+  "en": "Repeat until no swap helps",
+  "t": "Wiederholen, bis kein Tausch mehr hilft"
+ },
+ "lessons.4.steps.5.explain": {
+  "en": "A quick rule builds a whole route first; 2-opt then improves it one swap at a time and stops when no single swap helps, which may still be short of the best.",
+  "t": "Eine schnelle Regel baut zuerst eine ganze Route; 2-opt verbessert sie dann Tausch für Tausch und hört auf, wenn kein einzelner Tausch mehr hilft, was immer noch vor dem Besten liegen kann."
+ },
+ "lessons.4.steps.6.prompt": {
+  "en": "What does this program print?",
+  "t": "Was gibt dieses Programm aus?"
+ },
+ "lessons.4.steps.6.options.0.text": {
+  "en": "9",
+  "t": "9"
+ },
+ "lessons.4.steps.6.options.1.text": {
+  "en": "5",
+  "t": "5"
+ },
+ "lessons.4.steps.6.options.2.text": {
+  "en": "6",
+  "t": "6"
+ },
+ "lessons.4.steps.6.explain": {
+  "en": "zip pairs each stop with the next, and back ends with the school: 0→1 (2) + 1→2 (3) + 2→0 (4) = 9. Forgetting the drive back would give 5.",
+  "t": "zip paart jeden Halt mit dem nächsten, und back endet mit der Schule: 0→1 (2) + 1→2 (3) + 2→0 (4) = 9. Wer die Rückfahrt vergisst, bekäme 5."
+ },
+ "lessons.4.steps.7.prompt": {
+  "en": "Complete the habit.",
+  "t": "Vervollständige die Gewohnheit."
+ },
+ "lessons.4.steps.7.sentence": {
+  "en": [
+   "Judge a plan twice: by its ",
+   {
+    "blank": 0
+   },
+   " and by its ",
+   {
+    "blank": 1
+   },
+   " case, and agree the ",
+   {
+    "blank": 2
+   },
+   " with the people it affects."
+  ],
+  "t": [
+   "Beurteile einen Plan zweifach: nach seiner ",
+   {
+    "blank": 0
+   },
+   " und nach seinem ",
+   {
+    "blank": 1
+   },
+   " Fall, und vereinbare die ",
+   {
+    "blank": 2
+   },
+   " mit den Menschen, die er betrifft."
+  ]
+ },
+ "lessons.4.steps.7.bank": {
+  "en": [
+   "total",
+   "worst",
+   "rule",
+   "colour",
+   "period"
+  ],
+  "t": [
+   "Summe",
+   "schlechtesten",
+   "Regel",
+   "Farbe",
+   "Stunde"
+  ]
+ },
+ "lessons.4.steps.7.answers": {
+  "en": [
+   "total",
+   "worst",
+   "rule"
+  ],
+  "t": [
+   "Summe",
+   "schlechtesten",
+   "Regel"
+  ]
+ },
+ "lessons.4.steps.7.explain": {
+  "en": "A plan with the best total can still be hard on one person: the longest bus ride, three exams in a row, the worst match. Agreeing the rule with them makes the decision fair and explainable.",
+  "t": "Ein Plan mit der besten Summe kann für eine Person trotzdem hart sein: die längste Busfahrt, drei Prüfungen hintereinander, die schlechteste Zuordnung. Die Regel mit ihnen zu vereinbaren macht die Entscheidung fair und erklärbar."
+ },
+ "lessons.4.steps.8.prompt": {
+  "en": "Complete the assignment model: exactly one class per teacher, and the best total score.",
+  "t": "Vervollständige das Zuordnungsmodell: genau eine Klasse pro Lehrkraft und die beste Gesamtbewertung."
+ },
+ "lessons.4.steps.8.explain": {
+  "en": "Each row of yes-or-no variables needs exactly one yes, like each column, and the goal is the largest total score, so maximise.",
+  "t": "Jede Zeile von Ja-oder-Nein-Variablen braucht genau ein Ja, ebenso jede Spalte, und das Ziel ist die größte Gesamtbewertung, also maximiere."
+ },
+ "lessons.4.steps.9.prompt": {
+  "en": "Put the lines of nearest neighbour in order.",
+  "t": "Bringe die Zeilen des Nächster-Nachbar-Verfahrens in die richtige Reihenfolge."
+ },
+ "lessons.4.steps.9.explain": {
+  "en": "Start at the school, then, while places are left, look at the distances from the last stop and add the closest place not yet visited: min, not max.",
+  "t": "Beginne an der Schule, schaue dann, solange Orte übrig sind, auf die Entfernungen vom letzten Halt und hänge den nächstgelegenen noch nicht besuchten Ort an: min, nicht max."
+ },
+ "lessons.4.slides.0.title": {
+  "en": "Solving school problems in Python: review",
+  "t": "Schulprobleme mit Python lösen: Wiederholung"
+ },
+ "lessons.4.slides.0.narration": {
+  "en": "Four school problems, four models. What stuck?",
+  "t": "Vier Schulprobleme, vier Modelle. Was ist hängen geblieben?"
+ },
+ "lessons.4.slides.0.note": {
+  "en": "Optimization · Level 3 · Unit check",
+  "t": "Optimierung · Niveau 3 · Abschlusstest"
+ },
+ "lessons.4.slides.1.title": {
+  "en": "In this unit",
+  "t": "In dieser Einheit"
+ },
+ "lessons.4.slides.1.bullets": {
+  "en": [
+   "A timetable that works",
+   "Exams without clashes",
+   "The school bus route",
+   "Matching teachers and classes"
+  ],
+  "t": [
+   "Ein Stundenplan, der funktioniert",
+   "Prüfungen ohne Überschneidungen",
+   "Die Schulbusroute",
+   "Lehrkräfte und Klassen zuordnen"
+  ]
+ },
+ "lessons.4.slides.2.title": {
+  "en": "The big ideas",
+  "t": "Die großen Ideen"
+ },
+ "lessons.4.slides.2.bullets": {
+  "en": [
+   "Say the rules as lines of a model; the solver crosses out and searches",
+   "INFEASIBLE proves the rules clash; OPTIMAL proves the best for the goal you wrote",
+   "Quick rules build plans fast; improvements and solvers make them better",
+   "Judge every plan twice, total and worst case, with the people it affects"
+  ],
+  "t": [
+   "Sage die Regeln als Zeilen eines Modells; der Solver streicht und sucht",
+   "INFEASIBLE beweist, dass die Regeln sich widersprechen; OPTIMAL beweist das Beste für das Ziel, das du geschrieben hast",
+   "Schnelle Regeln bauen Pläne schnell; Verbesserungen und Solver machen sie besser",
+   "Beurteile jeden Plan zweifach, nach Summe und nach schlechtestem Fall, mit den Menschen, die er betrifft"
+  ]
+ },
+ "lessons.4.slides.3.title": {
+  "en": "Model it in teams",
+  "t": "In Teams modellieren"
+ },
+ "lessons.4.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): Name one school decision for each lesson.",
+   "Model (15 min): Teams write options, rules and a goal.",
+   "Swap (10 min): Another team finds a missing rule.",
+   "Wrap-up (5 min): Who would each plan be hardest on?"
+  ],
+  "t": [
+   "Aufwärmen (5 Min.): Nenne eine Schulentscheidung zu jeder Lektion.",
+   "Modellieren (15 Min.): Die Teams schreiben Optionen, Regeln und ein Ziel.",
+   "Tauschen (10 Min.): Ein anderes Team findet eine fehlende Regel.",
+   "Abschluss (5 Min.): Für wen wäre jeder Plan am härtesten?"
+  ]
+ },
+ "lessons.4.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): For each of the four lessons, the class names one real decision at their school: a timetable, exam week, a route, sharing out jobs.",
+   "Model (15 min): Each team takes one decision and writes, on paper, its options (variables), its rules (constraints) and its goal, as plainly as they can, with a line of Python where they can.",
+   "Swap (10 min): Teams swap papers. Each team looks for one missing rule, the kind a solver would never guess, and writes it down.",
+   "Wrap-up (5 min): For each model, ask who the best plan might be hardest on, and what rule or second goal would protect them."
+  ],
+  "t": [
+   "Aufwärmen (5 Min.): Zu jeder der vier Lektionen nennt die Klasse eine echte Entscheidung an ihrer Schule: einen Stundenplan, eine Prüfungswoche, eine Route, die Verteilung von Diensten.",
+   "Modellieren (15 Min.): Jedes Team nimmt eine Entscheidung und schreibt auf Papier ihre Optionen (Variablen), ihre Regeln (Nebenbedingungen) und ihr Ziel auf, so schlicht wie möglich, und wo es geht mit einer Zeile Python.",
+   "Tauschen (10 Min.): Die Teams tauschen die Papiere. Jedes Team sucht eine fehlende Regel, die ein Solver nie erraten würde, und schreibt sie auf.",
+   "Abschluss (5 Min.): Frage bei jedem Modell, für wen der beste Plan am härtesten sein könnte und welche Regel oder welches zweite Ziel diese Menschen schützen würde."
+  ]
+ },
+ "lessons.4.slides.3.note": {
+  "en": "No devices needed. If you have a phone, run one team’s model in the “Model it with CP-SAT” lab at the end.",
+  "t": "Es werden keine Geräte gebraucht. Wenn du ein Handy hast, lass am Ende das Modell eines Teams im Lab „Mit CP-SAT modellieren“ laufen."
+ },
+ "lessons.4.slides.3.narration": {
+  "en": "Which rule would a solver never guess?",
+  "t": "Welche Regel würde ein Solver nie erraten?"
+ },
+ "lessons.4.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Lasst uns diskutieren"
+ },
+ "lessons.4.slides.4.bullets": {
+  "en": [
+   "Which school decision would you model first, and why?",
+   "When is a quick rule good enough?",
+   "Who should see a model’s rules before it decides?"
+  ],
+  "t": [
+   "Welche Schulentscheidung würdest du zuerst modellieren, und warum?",
+   "Wann ist eine schnelle Regel gut genug?",
+   "Wer sollte die Regeln eines Modells sehen, bevor es entscheidet?"
+  ]
+ },
+ "lessons.4.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Exit-Ticket"
+ },
+ "lessons.4.slides.5.bullets": {
+  "en": [
+   "One school decision I will model, its goal, and one fairness rule."
+  ],
+  "t": [
+   "Eine Schulentscheidung, die ich modellieren werde, ihr Ziel und eine Fairnessregel."
+  ]
+ },
+ "lessons.4.slides.5.narration": {
+  "en": "Model one real decision this term, and show it to the people it affects.",
+  "t": "Modelliert in diesem Halbjahr eine echte Entscheidung und zeigt sie den Menschen, die sie betrifft."
+ },
+ "lessons.4.kit.0.title": {
+  "en": "Slides: Solving school problems in Python: timetables, routes, assignment, review",
+  "t": "Folien: Schulprobleme mit Python lösen: Stundenpläne, Routen, Zuordnung, Wiederholung"
+ },
+ "lessons.4.kit.1.title": {
+  "en": "Review plan and quiz sheet: Solving school problems in Python: timetables, routes, assignment",
+  "t": "Wiederholungsplan und Quizblatt: Schulprobleme mit Python lösen: Stundenpläne, Routen, Zuordnung"
+ }
+}

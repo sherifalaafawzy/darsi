@@ -1,0 +1,2032 @@
+{
+ "title": {
+  "en": "Databases and SQL for school records",
+  "t": "Bases de données et SQL pour les dossiers scolaires"
+ },
+ "summary": {
+  "en": "Move school records from scattered sheets into a database: design tables with keys, ask questions in SQL, summarise with GROUP BY, and join tables for reports that show only what each reader needs. Every SQL step runs in real SQLite on the phone.",
+  "t": "Faites passer les dossiers de l’école de feuilles éparpillées à une base de données : concevez des tables avec des clés, posez des questions en SQL, résumez avec GROUP BY et joignez des tables pour obtenir des rapports qui ne montrent à chaque lecteur que ce dont il a besoin. Chaque pas SQL s’exécute dans un vrai SQLite sur le téléphone."
+ },
+ "lessons.0.title": {
+  "en": "From sheets to a database",
+  "t": "Des feuilles à la base de données"
+ },
+ "lessons.0.tryTomorrow": {
+  "en": "Draw one wide table on the board, with pupils, their class, the class teacher and her phone. Pupils split it into two tables with a key. Then change the phone number: how many places did each design need?",
+  "t": "Dessinez au tableau une seule table large, avec les élèves, leur classe, l’enseignante de la classe et son téléphone. Les élèves la découpent en deux tables reliées par une clé. Changez ensuite le numéro de téléphone : combien d’endroits fallait-il modifier dans chaque conception ?"
+ },
+ "lessons.0.materials": {
+  "en": [
+   "Board and chalk",
+   "A wide made-up school table, drawn or printed",
+   "Optional: a phone or computer for the SQL steps"
+  ],
+  "t": [
+   "Tableau et craie",
+   "Une table d’école large et inventée, dessinée ou imprimée",
+   "Facultatif : un téléphone ou un ordinateur pour les pas SQL"
+  ]
+ },
+ "lessons.0.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Regarder"
+ },
+ "lessons.0.steps.0.title": {
+  "en": "From sheets to a database",
+  "t": "Des feuilles à la base de données"
+ },
+ "lessons.0.steps.0.chapters.0.label": {
+  "en": "Eight copies of one number",
+  "t": "Huit copies d’un même numéro"
+ },
+ "lessons.0.steps.0.chapters.1.label": {
+  "en": "What a database adds",
+  "t": "Ce qu’apporte une base de données"
+ },
+ "lessons.0.steps.0.chapters.2.label": {
+  "en": "One fact, one place",
+  "t": "Un fait, un seul endroit"
+ },
+ "lessons.0.steps.0.chapters.3.label": {
+  "en": "Speaking SQL",
+  "t": "Parler SQL"
+ },
+ "lessons.0.steps.0.chapters.4.label": {
+  "en": "The lab",
+  "t": "Le labo"
+ },
+ "lessons.0.steps.0.chapters.5.label": {
+  "en": "Remember and try it",
+  "t": "À retenir et à essayer"
+ },
+ "lessons.0.steps.0.checkpoint.question.prompt": {
+  "en": "In a well-designed school database, where is a class teacher’s phone number stored?",
+  "t": "Dans une base de données d’école bien conçue, où est stocké le numéro de téléphone de l’enseignant d’une classe ?"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.0.text": {
+  "en": "In every pupil’s row",
+  "t": "Dans la ligne de chaque élève"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.1.text": {
+  "en": "Once, in the classes table",
+  "t": "Une seule fois, dans la table des classes"
+ },
+ "lessons.0.steps.0.checkpoint.question.options.2.text": {
+  "en": "In the marks table",
+  "t": "Dans la table des notes"
+ },
+ "lessons.0.steps.0.checkpoint.question.explain": {
+  "en": "The phone belongs to the class, so it’s stored once, in the classes table. Each pupil’s row only says which class they’re in. Change the number once and every report is right.",
+  "t": "Le téléphone appartient à la classe, donc il est stocké une seule fois, dans la table des classes. La ligne de chaque élève indique seulement dans quelle classe il est. Changez le numéro une fois, et tous les rapports sont justes."
+ },
+ "lessons.0.steps.0.transcript": {
+  "en": "Our school keeps the class teachers' phone numbers in eight different sheets. One teacher got a new number last month. Guess how many sheets still have the old one? Today: from scattered sheets to a database, where every fact lives in one place. A database is a set of tables kept by one program, a database system. Everyone works on the same copy. Each column has a type, like whole numbers or text. And rules stop bad data getting in. The big idea: store each fact once. The teacher's phone belongs with the class, not in every pupil's row. Then a change happens in one place, and every report sees it. Each table has a primary key: a column that picks out one row, like the pupil's number. Another table points to it with a foreign key: each mark row holds the pupil's number. Keys are how tables link up. You talk to a database in SQL. CREATE TABLE describes a table: its columns, their types and its key. Then SELECT asks for rows back. Think of a school office with one filing cabinet, instead of every teacher keeping a copy. One drawer for pupils, one for classes, one for marks. Each file has a number, and other files refer to it. Quick check! In a well-designed school database, where should a class teacher's phone number be stored? Once, in the classes table. Each pupil's row just says which class they're in, and the class row holds the teacher and the phone. Change it once, and every pupil's report is right. What goes wrong without it? Update the phone in one row, miss the others, and the data gives two numbers. Delete the last pupils of a class, and the teacher's phone disappears with them. In the app, split one wide school table into two tables, then three. Watch the repeated facts fall from thirty-two to eight to zero, and try a hurried change on each design. Your turn. Each mark row stores the pupil's number, which points to a row in the pupils table. What is that column called? A foreign key: it points to a row in another table. Remember: a database keeps one shared copy, with types and rules. Store each fact once, in its own table. And keys, primary and foreign, link the tables together. Try it in class tomorrow: draw one wide table on the board, with pupils, their class, the class teacher and her phone. Pupils split it into two tables, with a key. Then change the phone number: how many places did each design need?",
+  "t": "Notre école garde les numéros de téléphone des enseignants principaux dans huit feuilles différentes. Un enseignant a changé de numéro le mois dernier. Devinez combien de feuilles ont encore l’ancien? Aujourd’hui: des feuilles éparpillées à une base de données, où chaque fait vit à une seule place. Une base de données est un ensemble de tables gérées par un seul programme, un système de gestion de base de données. Tout le monde travaille sur la même copie. Chaque colonne a un type, comme des nombres entiers ou du texte. Et des règles empêchent les mauvaises données d’entrer. L’idée essentielle: rangez chaque fait une seule fois. Le téléphone de l’enseignant appartient à la classe, pas à la ligne de chaque élève. Alors un changement se fait à un seul endroit, et chaque rapport le voit. Chaque table a une clé primaire: une colonne qui désigne une ligne, comme le numéro de l’élève. Une autre table y renvoie avec une clé étrangère: chaque ligne de note contient le numéro de l’élève. Les clés sont ce qui relie les tables. On parle à une base de données en SQL. CREATE TABLE décrit une table: ses colonnes, leurs types et sa clé. Ensuite SELECT demande de récupérer des lignes. Pensez à un bureau d’école avec un seul classeur, au lieu de chaque enseignant qui garde une copie. Un tiroir pour les élèves, un pour les classes, un pour les notes. Chaque fiche a un numéro, et les autres fiches y renvoient. Petit contrôle! Dans une base de données d’école bien conçue, où faut-il ranger le numéro de téléphone d’un enseignant principal? Une seule fois, dans la table des classes. La ligne de chaque élève indique juste dans quelle classe il est, et la ligne de la classe contient l’enseignant et le téléphone. Changez-le une fois, et le rapport de chaque élève est juste. Qu’est-ce qui se passe mal sans cela? Vous changez le téléphone dans une ligne, vous oubliez les autres, et les données donnent deux numéros. Vous supprimez les derniers élèves d’une classe, et le téléphone de l’enseignant disparaît avec eux. Dans l’appli, découpez une grande table d’école en deux tables, puis en trois. Regardez les faits répétés passer de trente-deux à huit puis à zéro, et essayez un changement fait à la hâte sur chaque conception. À vous. Chaque ligne de note contient le numéro de l’élève, qui renvoie à une ligne de la table des élèves. Comment s’appelle cette colonne? Une clé étrangère: elle renvoie à une ligne d’une autre table. Retenez: une base de données garde une copie partagée, avec des types et des règles. Rangez chaque fait une seule fois, dans sa propre table. Et les clés, primaires et étrangères, relient les tables entre elles. Essayez-le en classe demain: dessinez au tableau une grande table avec les élèves, leur classe, l’enseignant principal et son téléphone. Les élèves la découpent en deux tables, avec une clé. Puis changez le numéro de téléphone: combien d’endroits chaque conception a-t-elle demandés?"
+ },
+ "lessons.0.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lire"
+ },
+ "lessons.0.steps.1.title": {
+  "en": "Tables, keys and SQL",
+  "t": "Tables, clés et SQL"
+ },
+ "lessons.0.steps.1.body": {
+  "en": "A spreadsheet is a good notebook, but schools rarely keep just one. The office has a class list, each teacher has a mark sheet, the library has its loans, and the same facts get typed into all of them. When a teacher’s phone number changes, someone must find every copy; miss one, and the school now holds two numbers for her.\n\nA database is a set of tables kept by one program, a database system such as SQLite. Everyone works on the same copy. Each column has a type (whole numbers, text, dates), and rules stop bad data getting in: a mark must be a number, every pupil needs an ID. The big idea is to store each fact once. The teacher’s phone belongs with the class, so it lives in the classes table, and each pupil’s row only says which class they’re in.\n\nKeys link the tables. A primary key is a column that picks out one row, such as the pupil’s ID or the class name. A foreign key is a column that points to a row in another table: each mark row holds a pupil ID that points to the pupils table. With keys, a change happens in one place, and a question can still bring the pieces back together.\n\nYou talk to a database in SQL. CREATE TABLE describes a table: its columns, their types and its key. SELECT asks for rows back: SELECT name, class FROM pupils returns two columns for every pupil. In the lesson’s SQL steps, the database runs on your phone, so you can try anything; every run starts from a fresh copy.",
+  "t": "Un tableur est un bon cahier, mais une école en tient rarement un seul. Le secrétariat a une liste de classe, chaque enseignant a une feuille de notes, la bibliothèque a ses prêts, et les mêmes faits sont saisis dans tous. Quand le numéro de téléphone d’une enseignante change, quelqu’un doit retrouver chaque copie ; si l’on en oublie une, l’école détient désormais deux numéros pour elle.\n\nUne base de données est un ensemble de tables tenu par un seul programme, un système de base de données comme SQLite. Tout le monde travaille sur la même copie. Chaque colonne a un type (nombres entiers, texte, dates), et des règles empêchent les mauvaises données d’entrer : une note doit être un nombre, chaque élève doit avoir un identifiant. L’idée essentielle est de stocker chaque fait une seule fois. Le téléphone de l’enseignante va avec la classe, donc il vit dans la table des classes, et la ligne de chaque élève indique seulement dans quelle classe il est.\n\nLes clés relient les tables. Une clé primaire est une colonne qui désigne une ligne unique, comme l’identifiant de l’élève ou le nom de la classe. Une clé étrangère est une colonne qui pointe vers une ligne d’une autre table : chaque ligne de note contient un identifiant d’élève qui pointe vers la table des élèves. Avec les clés, un changement se fait en un seul endroit, et une question peut quand même rassembler les morceaux.\n\nOn parle à une base de données en SQL. CREATE TABLE décrit une table : ses colonnes, leurs types et sa clé. SELECT demande des lignes en retour : SELECT name, class FROM pupils renvoie deux colonnes pour chaque élève. Dans les pas SQL de la leçon, la base de données tourne sur votre téléphone, donc vous pouvez tout essayer ; chaque exécution repart d’une copie neuve."
+ },
+ "lessons.0.steps.1.keyTerms.0.term": {
+  "en": "Database",
+  "t": "Base de données"
+ },
+ "lessons.0.steps.1.keyTerms.0.def": {
+  "en": "A set of tables kept by one program, with types and rules, so everyone works on the same copy.",
+  "t": "Un ensemble de tables tenu par un seul programme, avec des types et des règles, pour que tout le monde travaille sur la même copie."
+ },
+ "lessons.0.steps.1.keyTerms.1.term": {
+  "en": "Primary key",
+  "t": "Clé primaire"
+ },
+ "lessons.0.steps.1.keyTerms.1.def": {
+  "en": "A column that picks out exactly one row of its table, such as a pupil ID.",
+  "t": "Une colonne qui désigne exactement une ligne de sa table, comme un identifiant d’élève."
+ },
+ "lessons.0.steps.1.keyTerms.2.term": {
+  "en": "Foreign key",
+  "t": "Clé étrangère"
+ },
+ "lessons.0.steps.1.keyTerms.2.def": {
+  "en": "A column that points to a row in another table, such as the pupil ID in each mark row.",
+  "t": "Une colonne qui pointe vers une ligne d’une autre table, comme l’identifiant d’élève dans chaque ligne de note."
+ },
+ "lessons.0.steps.1.keyTerms.3.term": {
+  "en": "SQL",
+  "t": "SQL"
+ },
+ "lessons.0.steps.1.keyTerms.3.def": {
+  "en": "The language for describing tables (CREATE TABLE) and asking them questions (SELECT).",
+  "t": "Le langage pour décrire les tables (CREATE TABLE) et leur poser des questions (SELECT)."
+ },
+ "lessons.0.steps.2.prompt": {
+  "en": "Each mark row stores the pupil’s number, pointing to a row in the pupils table. What is that column?",
+  "t": "Chaque ligne de note stocke le numéro de l’élève, qui pointe vers une ligne de la table des élèves. Qu’est-ce que cette colonne ?"
+ },
+ "lessons.0.steps.2.options.0.text": {
+  "en": "A primary key",
+  "t": "Une clé primaire"
+ },
+ "lessons.0.steps.2.options.1.text": {
+  "en": "A foreign key",
+  "t": "Une clé étrangère"
+ },
+ "lessons.0.steps.2.options.2.text": {
+  "en": "A formula",
+  "t": "Une formule"
+ },
+ "lessons.0.steps.2.explain": {
+  "en": "A foreign key is a column that points to a row in another table, where that value is the primary key. It’s how the marks table knows whose mark each one is.",
+  "t": "Une clé étrangère est une colonne qui pointe vers une ligne d’une autre table, où cette valeur est la clé primaire. C’est ainsi que la table des notes sait à qui appartient chaque note."
+ },
+ "lessons.0.steps.3.prompt": {
+  "en": "Match each word to what it means in a school database.",
+  "t": "Associez chaque mot à ce qu’il signifie dans une base de données d’école."
+ },
+ "lessons.0.steps.3.pairs.0.left": {
+  "en": "Table",
+  "t": "Table"
+ },
+ "lessons.0.steps.3.pairs.0.right": {
+  "en": "Rows of one kind of thing, such as pupils or classes",
+  "t": "Des lignes d’une seule sorte de chose, comme les élèves ou les classes"
+ },
+ "lessons.0.steps.3.pairs.1.left": {
+  "en": "Primary key",
+  "t": "Clé primaire"
+ },
+ "lessons.0.steps.3.pairs.1.right": {
+  "en": "The pupil ID that picks out one pupil’s row",
+  "t": "L’identifiant d’élève qui désigne la ligne d’un élève"
+ },
+ "lessons.0.steps.3.pairs.2.left": {
+  "en": "Foreign key",
+  "t": "Clé étrangère"
+ },
+ "lessons.0.steps.3.pairs.2.right": {
+  "en": "The pupil ID inside a mark row",
+  "t": "L’identifiant d’élève à l’intérieur d’une ligne de note"
+ },
+ "lessons.0.steps.3.pairs.3.left": {
+  "en": "Type",
+  "t": "Type"
+ },
+ "lessons.0.steps.3.pairs.3.right": {
+  "en": "Whole number for a mark, text for a name",
+  "t": "Nombre entier pour une note, texte pour un nom"
+ },
+ "lessons.0.steps.3.explain": {
+  "en": "Tables hold one kind of thing each. The primary key identifies a row in its own table; a foreign key points to that row from another table; and types stop a name landing in a mark column.",
+  "t": "Chaque table contient une seule sorte de chose. La clé primaire identifie une ligne dans sa propre table ; une clé étrangère pointe vers cette ligne depuis une autre table ; et les types empêchent un nom d’atterrir dans une colonne de notes."
+ },
+ "lessons.0.steps.4.prompt": {
+  "en": "Put the lines in order to create the classes table, with its columns in this order: class (the key), teacher, phone.",
+  "t": "Mettez les lignes dans l’ordre pour créer la table des classes, avec ses colonnes dans cet ordre : class (la clé), teacher, phone."
+ },
+ "lessons.0.steps.4.explain": {
+  "en": "CREATE TABLE names the table, then each column with its type, separated by commas, with no comma after the last. The class name is the primary key. A phone number is text, not a number: it starts with 0, has spaces, and nobody adds phone numbers up.",
+  "t": "CREATE TABLE nomme la table, puis chaque colonne avec son type, séparées par des virgules, sans virgule après la dernière. Le nom de la classe est la clé primaire. Un numéro de téléphone est du texte, pas un nombre : il commence par 0, comporte des espaces, et personne n’additionne des numéros de téléphone."
+ },
+ "lessons.0.steps.5.prompt": {
+  "en": "Try it: start with “Everything” in one wide table and make the hurried phone change. Then split it into two tables, then three, and try the same change and “6B’s pupils leave” on each design. Which design loses nothing and keeps one number per teacher?",
+  "t": "Essayez : commencez par « Tout » dans une seule table large et faites le changement de téléphone à la hâte. Découpez-la ensuite en deux tables, puis en trois, et essayez le même changement et « Les élèves de 6B partent » sur chaque conception. Quelle conception ne perd rien et garde un seul numéro par enseignant ?"
+ },
+ "lessons.0.steps.6.prompt": {
+  "en": "To make reports quicker, each pupil’s name should also be stored in this marks table.",
+  "t": "Pour accélérer les rapports, le nom de chaque élève devrait aussi être stocké dans cette table des notes."
+ },
+ "lessons.0.steps.6.explain": {
+  "en": "Store each fact once. The name already lives in the pupils table; pupil_id points to it, and a query can bring the name in when it’s needed. A second copy of the name would sooner or later disagree with the first.",
+  "t": "Stockez chaque fait une seule fois. Le nom vit déjà dans la table des élèves ; pupil_id pointe vers lui, et une requête peut aller le chercher quand il le faut. Une seconde copie du nom finirait tôt ou tard par ne plus concorder avec la première."
+ },
+ "lessons.0.steps.7.prompt": {
+  "en": "Your first query. Change it so it returns only two columns for every pupil: their name and their class. Press Run to see the tables first.",
+  "t": "Votre première requête. Modifiez-la pour qu’elle ne renvoie que deux colonnes pour chaque élève : son nom et sa classe. Appuyez sur Run pour voir d’abord les tables."
+ },
+ "lessons.0.steps.7.hints.0": {
+  "en": "SELECT lists the columns you want, separated by commas.",
+  "t": "SELECT énumère les colonnes voulues, séparées par des virgules."
+ },
+ "lessons.0.steps.7.hints.1": {
+  "en": "SELECT name, class FROM pupils;",
+  "t": "SELECT name, class FROM pupils;"
+ },
+ "lessons.0.steps.7.explain": {
+  "en": "SELECT * means every column; listing name, class asks for just those two. FROM says which table. The result has 8 rows, one per pupil, and 2 columns.",
+  "t": "SELECT * veut dire toutes les colonnes ; énumérer name, class demande seulement ces deux-là. FROM indique quelle table. Le résultat compte 8 lignes, une par élève, et 2 colonnes."
+ },
+ "lessons.0.steps.8.prompt": {
+  "en": "Complete the sentences about SQL.",
+  "t": "Complétez les phrases sur SQL."
+ },
+ "lessons.0.steps.8.sentence": {
+  "en": [
+   {
+    "blank": 0
+   },
+   " describes a table and its columns. ",
+   {
+    "blank": 1
+   },
+   " asks for rows back. A ",
+   {
+    "blank": 2
+   },
+   " key picks out exactly one row of a table."
+  ],
+  "t": [
+   {
+    "blank": 0
+   },
+   " décrit une table et ses colonnes. ",
+   {
+    "blank": 1
+   },
+   " demande des lignes en retour. Une clé ",
+   {
+    "blank": 2
+   },
+   " désigne exactement une ligne d’une table."
+  ]
+ },
+ "lessons.0.steps.8.bank": {
+  "en": [
+   "CREATE TABLE",
+   "DELETE",
+   "foreign",
+   "SELECT",
+   "primary"
+  ],
+  "t": [
+   "CREATE TABLE",
+   "DELETE",
+   "étrangère",
+   "SELECT",
+   "primaire"
+  ]
+ },
+ "lessons.0.steps.8.answers": {
+  "en": [
+   "CREATE TABLE",
+   "SELECT",
+   "primary"
+  ],
+  "t": [
+   "CREATE TABLE",
+   "SELECT",
+   "primaire"
+  ]
+ },
+ "lessons.0.steps.8.explain": {
+  "en": "CREATE TABLE sets up a table; SELECT reads from it. The primary key identifies a row in its own table; a foreign key points to a row in another.",
+  "t": "CREATE TABLE met en place une table ; SELECT la lit. La clé primaire identifie une ligne dans sa propre table ; une clé étrangère pointe vers une ligne d’une autre."
+ },
+ "lessons.0.steps.9.prompt": {
+  "en": "Which fact does your school type in more than one place? Which table should it live in, once?",
+  "t": "Quel fait votre école saisit-elle à plusieurs endroits ? Dans quelle table devrait-il vivre, une seule fois ?"
+ },
+ "lessons.0.steps.9.placeholder": {
+  "en": "For example: “Parents’ phone numbers are on the enrolment form, the class list and the trip sheet. They belong in one pupils table.”",
+  "t": "Par exemple : « Les numéros de téléphone des parents sont sur la fiche d’inscription, la liste de classe et la fiche de sortie. Ils ont leur place dans une seule table des élèves. »"
+ },
+ "lessons.0.steps.10.prompt": {
+  "en": "Project: One fact, one place",
+  "t": "Projet : un fait, un seul endroit"
+ },
+ "lessons.0.steps.10.task": {
+  "en": "Draw one wide made-up table on the board: pupils, their class, the class teacher and the teacher’s phone. With your class, count how many times each teacher’s phone appears. Then split the table into two (pupils and classes) with the class as the key, and redraw them. Change one teacher’s phone in both designs and compare how many cells you had to change. If you have a device, write the CREATE TABLE for each new table.",
+  "t": "Dessinez au tableau une seule table large inventée : les élèves, leur classe, l’enseignant de la classe et le téléphone de l’enseignant. Avec votre classe, comptez combien de fois le téléphone de chaque enseignant apparaît. Découpez ensuite la table en deux (élèves et classes) avec la classe comme clé, et redessinez-les. Changez le téléphone d’un enseignant dans les deux conceptions et comparez le nombre de cellules que vous avez dû modifier. Si vous avez un appareil, écrivez le CREATE TABLE de chaque nouvelle table."
+ },
+ "lessons.0.steps.10.deliverable": {
+  "en": "A photo of the wide table and the two new tables (made-up data), and two sentences: how many cells the phone change needed in each design, and which other fact in your school is stored in too many places.",
+  "t": "Une photo de la table large et des deux nouvelles tables (données inventées), et deux phrases : combien de cellules le changement de téléphone a exigé dans chaque conception, et quel autre fait de votre école est stocké à trop d’endroits."
+ },
+ "lessons.0.steps.10.rubric.0.criterion": {
+  "en": "Pupils could: find facts that a wide table repeats.",
+  "t": "Les élèves savent : repérer les faits qu’une table large répète."
+ },
+ "lessons.0.steps.10.rubric.1.criterion": {
+  "en": "Pupils could: split a table into two, linked by a key.",
+  "t": "Les élèves savent : découper une table en deux, reliées par une clé."
+ },
+ "lessons.0.steps.10.rubric.2.criterion": {
+  "en": "Pupils could: explain why a change in one place is safer.",
+  "t": "Les élèves savent : expliquer pourquoi un changement en un seul endroit est plus sûr."
+ },
+ "lessons.0.slides.0.title": {
+  "en": "From sheets to a database",
+  "t": "Des feuilles à la base de données"
+ },
+ "lessons.0.slides.0.note": {
+  "en": "Data engineering · Level 3 · Lesson 1",
+  "t": "Ingénierie des données, niveau 3, leçon 1"
+ },
+ "lessons.0.slides.0.narration": {
+  "en": "Eight sheets hold one teacher’s phone. How many are still wrong?",
+  "t": "Huit feuilles contiennent le téléphone d’une enseignante. Combien sont encore fausses ?"
+ },
+ "lessons.0.slides.1.title": {
+  "en": "Today we will",
+  "t": "Aujourd’hui, nous allons"
+ },
+ "lessons.0.slides.1.bullets": {
+  "en": [
+   "Say what a database adds to a spreadsheet.",
+   "Store each fact once, in tables linked by keys.",
+   "Read a CREATE TABLE and run a first SELECT."
+  ],
+  "t": [
+   "Dire ce qu’une base de données apporte à un tableur.",
+   "Stocker chaque fait une seule fois, dans des tables reliées par des clés.",
+   "Lire un CREATE TABLE et exécuter un premier SELECT."
+  ]
+ },
+ "lessons.0.slides.2.title": {
+  "en": "Remember",
+  "t": "À retenir"
+ },
+ "lessons.0.slides.2.bullets": {
+  "en": [
+   "One shared copy, with types and rules.",
+   "Store each fact once.",
+   "Primary keys pick out rows; foreign keys point to them."
+  ],
+  "t": [
+   "Une copie partagée, avec des types et des règles.",
+   "Stocker chaque fait une seule fois.",
+   "Les clés primaires désignent des lignes ; les clés étrangères pointent vers elles."
+  ]
+ },
+ "lessons.0.slides.3.title": {
+  "en": "One fact, one place",
+  "t": "Un fait, un seul endroit"
+ },
+ "lessons.0.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): How many copies of one phone number?",
+   "Teach (8 min): Tables and keys.",
+   "Split (15 min): Two tables, one key.",
+   "Change (7 min): A new phone number.",
+   "Wrap-up (5 min): The same tables in SQL."
+  ],
+  "t": [
+   "Échauffement (5 min) : combien de copies d’un seul numéro de téléphone ?",
+   "Apprendre (8 min) : tables et clés.",
+   "Découper (15 min) : deux tables, une clé.",
+   "Changer (7 min) : un nouveau numéro de téléphone.",
+   "Conclusion (5 min) : les mêmes tables en SQL."
+  ]
+ },
+ "lessons.0.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Draw the wide table on the board and ask pupils to count how many times each teacher’s phone number appears.",
+   "Teach (8 min): Explain one fact in one place, a primary key and a foreign key, using the pupils and classes as the example.",
+   "Split (15 min): Groups redraw the wide table as a pupils table and a classes table, and mark the primary key and the foreign key in each.",
+   "Change (7 min): Change one teacher’s phone in both designs and count the cells each one needed. Then remove the last pupils of one class: what disappears?",
+   "Wrap-up (5 min): Show the CREATE TABLE for the classes table and a first SELECT. Then give the exit ticket."
+  ],
+  "t": [
+   "Échauffement (5 min) : dessinez la table large au tableau et demandez aux élèves de compter combien de fois le numéro de téléphone de chaque enseignant apparaît.",
+   "Apprendre (8 min) : expliquez un fait en un seul endroit, une clé primaire et une clé étrangère, en prenant les élèves et les classes comme exemple.",
+   "Découper (15 min) : les groupes redessinent la table large sous forme d’une table des élèves et d’une table des classes, et marquent la clé primaire et la clé étrangère dans chacune.",
+   "Changer (7 min) : changez le téléphone d’un enseignant dans les deux conceptions et comptez les cellules que chacune a exigées. Retirez ensuite les derniers élèves d’une classe : qu’est-ce qui disparaît ?",
+   "Conclusion (5 min) : montrez le CREATE TABLE de la table des classes et un premier SELECT. Donnez ensuite le ticket de sortie."
+  ]
+ },
+ "lessons.0.slides.3.note": {
+  "en": "Use made-up names and phone numbers in the wide table. Make at least one class have several pupils, so the repeats are easy to see.",
+  "t": "Utilisez des noms et des numéros de téléphone inventés dans la table large. Faites en sorte qu’au moins une classe compte plusieurs élèves, pour que les répétitions se voient facilement."
+ },
+ "lessons.0.slides.3.narration": {
+  "en": "Split the wide table: one fact, in one place.",
+  "t": "Découpez la table large : un fait, un seul endroit."
+ },
+ "lessons.0.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.0.slides.4.bullets": {
+  "en": [
+   "What went wrong when we changed the phone in the wide table?",
+   "Which column links the pupils table to the classes table?",
+   "Why is a phone number stored as text?"
+  ],
+  "t": [
+   "Qu’est-ce qui a mal tourné quand nous avons changé le téléphone dans la table large ?",
+   "Quelle colonne relie la table des élèves à la table des classes ?",
+   "Pourquoi un numéro de téléphone est-il stocké sous forme de texte ?"
+  ]
+ },
+ "lessons.0.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.0.slides.5.bullets": {
+  "en": [
+   "Name a primary key and a foreign key in our two tables, and say what each one does."
+  ],
+  "t": [
+   "Nommez une clé primaire et une clé étrangère dans nos deux tables, et dites à quoi sert chacune."
+  ]
+ },
+ "lessons.0.slides.5.narration": {
+  "en": "Store each fact once; keys link the tables.",
+  "t": "Stockez chaque fait une seule fois ; les clés relient les tables."
+ },
+ "lessons.0.kit.0.title": {
+  "en": "Slides: From sheets to a database",
+  "t": "Diapositives : Des feuilles à la base de données"
+ },
+ "lessons.0.kit.1.title": {
+  "en": "Lesson plan and worksheet: From sheets to a database",
+  "t": "Plan de leçon et fiche de travail : Des feuilles à la base de données"
+ },
+ "lessons.0.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "La vidéo de la leçon (240p, pour la classe ou WhatsApp)"
+ },
+ "lessons.1.title": {
+  "en": "Asking questions: SELECT, WHERE, ORDER BY",
+  "t": "Poser des questions : SELECT, WHERE, ORDER BY"
+ },
+ "lessons.1.tryTomorrow": {
+  "en": "Play “Human database”: each pupil holds a card with a class, a birth month and how they travel. Read out a query, such as pupils where travel is walking, ordered by birth month. Those who match step forward and line up in order.",
+  "t": "Jouez à « La base de données humaine » : chaque élève tient une carte avec une classe, un mois de naissance et son mode de transport. Lisez une requête à voix haute, par exemple les élèves dont le transport est la marche, classés par mois de naissance. Ceux qui correspondent avancent et se mettent en rang dans l’ordre."
+ },
+ "lessons.1.materials": {
+  "en": [
+   "A card per pupil: class, birth month and how they travel (made up or chosen by the pupil)",
+   "Board and chalk",
+   "Optional: a phone or computer for the SQL steps"
+  ],
+  "t": [
+   "Une carte par élève : classe, mois de naissance et mode de transport (inventés ou choisis par l’élève)",
+   "Tableau et craie",
+   "Facultatif : un téléphone ou un ordinateur pour les pas SQL"
+  ]
+ },
+ "lessons.1.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Regarder"
+ },
+ "lessons.1.steps.0.title": {
+  "en": "Asking questions: SELECT, WHERE, ORDER BY",
+  "t": "Poser des questions : SELECT, WHERE, ORDER BY"
+ },
+ "lessons.1.steps.0.chapters.0.label": {
+  "en": "Under ten in Six A",
+  "t": "Moins de dix en Sixième A"
+ },
+ "lessons.1.steps.0.chapters.1.label": {
+  "en": "SELECT and FROM",
+  "t": "SELECT et FROM"
+ },
+ "lessons.1.steps.0.chapters.2.label": {
+  "en": "WHERE picks rows",
+  "t": "WHERE choisit les lignes"
+ },
+ "lessons.1.steps.0.chapters.3.label": {
+  "en": "Sorting",
+  "t": "Trier"
+ },
+ "lessons.1.steps.0.chapters.4.label": {
+  "en": "Check the answer",
+  "t": "Vérifier la réponse"
+ },
+ "lessons.1.steps.0.chapters.5.label": {
+  "en": "The lab",
+  "t": "Le labo"
+ },
+ "lessons.1.steps.0.chapters.6.label": {
+  "en": "Remember and try it",
+  "t": "À retenir et à essayer"
+ },
+ "lessons.1.steps.0.checkpoint.question.prompt": {
+  "en": "Which part of a query picks which rows come back?",
+  "t": "Quelle partie d’une requête choisit les lignes qui reviennent ?"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.0.text": {
+  "en": "SELECT",
+  "t": "SELECT"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.1.text": {
+  "en": "FROM",
+  "t": "FROM"
+ },
+ "lessons.1.steps.0.checkpoint.question.options.2.text": {
+  "en": "WHERE",
+  "t": "WHERE"
+ },
+ "lessons.1.steps.0.checkpoint.question.explain": {
+  "en": "WHERE keeps only the rows that match its condition. SELECT picks the columns, and FROM names the table.",
+  "t": "WHERE ne garde que les lignes qui satisfont sa condition. SELECT choisit les colonnes, et FROM nomme la table."
+ },
+ "lessons.1.steps.0.transcript": {
+  "en": "Before the parents' evening, I need every pupil in Six A with a maths mark under ten. Our school has four hundred pupils in one big sheet. Scrolling? No thanks. Today: asking the database questions with SELECT, WHERE and ORDER BY. Every question starts the same way. SELECT says which columns you want back. FROM says which table to look in. And a star means every column. WHERE picks the rows. Equals, greater than, less than: class equals six A, mark less than ten. Text goes in single quotes, and it must match exactly. AND needs both to be true; OR needs either one. ORDER BY sorts the answer. Add DESC for the biggest first. And LIMIT keeps only the first few rows: the top three, say. That's a query: a question in SQL. It describes the rows you want, not how to find them. The same query works on twelve rows or twelve million. Quick check! Which part of a query picks which rows come back? WHERE picks the rows; SELECT picks the columns. Keep them apart in your head: columns across, rows down. Always check an answer against what you know. If WHERE class equals six A returns nobody, look at the data: maybe it says six small a. If a query returns half the school, a condition is missing. In the app, real SQL runs on your phone, on a school's pupils and marks. Pick a question, change it, and run it. Try changing five B to six A, or AVG to MAX. Your turn. I want the three highest maths marks, biggest first. Which lines do that? ORDER BY mark DESC, then LIMIT three. Remember: SELECT picks columns, FROM the table, WHERE the rows. Text goes in single quotes, matched exactly. And check every answer against what you already know. Try it in class tomorrow: play “Human database”. Each pupil holds a card with their class, birth month and how they travel. Read out a query: select pupils where travel is walking, order by birth month. The pupils who match step forward and line up in order.",
+  "t": "Avant la réunion avec les parents, il me faut tous les élèves de six A qui ont moins de dix en maths. Notre école compte quatre cents élèves dans une seule grande feuille. Faire défiler? Non merci. Aujourd’hui: poser des questions à la base de données avec SELECT, WHERE et ORDER BY. Toute question commence de la même façon. SELECT dit quelles colonnes vous voulez récupérer. FROM dit dans quelle table chercher. Et une étoile signifie toutes les colonnes. WHERE choisit les lignes. Égal, plus grand que, plus petit que: classe égale six A, note inférieure à dix. Le texte se met entre apostrophes, et il doit correspondre exactement. AND exige que les deux soient vrais; OR en demande un seul. ORDER BY trie la réponse. Ajoutez DESC pour avoir les plus grands d’abord. Et LIMIT ne garde que les premières lignes: les trois premières, par exemple. Voilà une requête: une question en SQL. Elle décrit les lignes que vous voulez, pas comment les trouver. La même requête marche sur douze lignes ou sur douze millions. Petit contrôle! Quelle partie d’une requête choisit les lignes qui reviennent? WHERE choisit les lignes; SELECT choisit les colonnes. Gardez-les bien séparées dans votre tête: les colonnes en travers, les lignes en descendant. Vérifiez toujours une réponse par rapport à ce que vous savez. Si WHERE classe égale six A ne renvoie personne, regardez les données: peut-être qu’elles disent six petit a. Si une requête renvoie la moitié de l’école, il manque une condition. Dans l’appli, du vrai SQL tourne sur votre téléphone, sur les élèves et les notes d’une école. Choisissez une question, modifiez-la, et lancez-la. Essayez de changer cinq B en six A, ou AVG en MAX. À vous. Je veux les trois meilleures notes de maths, la plus grande d’abord. Quelles lignes font cela? ORDER BY mark DESC, puis LIMIT trois. Retenez: SELECT choisit les colonnes, FROM la table, WHERE les lignes. Le texte se met entre apostrophes, avec une correspondance exacte. Et vérifiez chaque réponse par rapport à ce que vous savez déjà. Essayez-le en classe demain: jouez à « Base de données humaine ». Chaque élève tient une carte avec sa classe, son mois de naissance et son mode de transport. Lisez une requête à voix haute: sélectionner les élèves dont le transport est la marche, ordonnés par mois de naissance. Les élèves qui correspondent avancent d’un pas et se mettent en rang dans l’ordre."
+ },
+ "lessons.1.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lire"
+ },
+ "lessons.1.steps.1.title": {
+  "en": "Asking the database",
+  "t": "Interroger la base de données"
+ },
+ "lessons.1.steps.1.body": {
+  "en": "Every question to a database starts the same way. SELECT says which columns you want back; FROM says which table to look in. SELECT name, maths FROM results returns two columns for every row, and SELECT * returns every column. A question written in SQL is called a query.\n\nWHERE picks the rows. Compare with = (equals), <> (not equal), < and >, <= and >=: WHERE class = '6A', WHERE maths < 10. Text goes in single quotes and must match exactly, so '6a' is not '6A', and 'Amina ' with a space is not 'Amina'. AND needs both conditions to be true; OR needs either one. WHERE class = '6A' AND maths < 10 finds the pupils in 6A who need help in maths.\n\nORDER BY sorts the answer: ORDER BY maths puts the lowest first, and ORDER BY maths DESC the highest first. LIMIT keeps only the first few rows, so ORDER BY science DESC LIMIT 3 gives the top three. A query describes the rows you want, not how to find them, so the same query works on twelve rows or on twelve million.\n\nAlways check an answer against what you know. If a query for 6A returns nobody, look at the data: maybe it says 6a. If it returns half the school, a condition is probably missing. If a mark of 25 out of 20 appears, the data needs cleaning before anyone sees the report. A query that runs without an error isn’t always a query that’s right.",
+  "t": "Toute question posée à une base de données commence de la même façon. SELECT dit quelles colonnes vous voulez récupérer ; FROM dit dans quelle table chercher. SELECT name, maths FROM results renvoie deux colonnes pour chaque ligne, et SELECT * renvoie toutes les colonnes. Une question écrite en SQL s’appelle une requête.\n\nWHERE choisit les lignes. Comparez avec = (égal), <> (différent), < et >, <= et >= : WHERE class = '6A', WHERE maths < 10. Le texte va entre apostrophes simples et doit correspondre exactement, donc '6a' n’est pas '6A', et 'Amina ' avec une espace n’est pas 'Amina'. AND exige que les deux conditions soient vraies ; OR en exige une seule. WHERE class = '6A' AND maths < 10 trouve les élèves de 6A qui ont besoin d’aide en maths.\n\nORDER BY trie la réponse : ORDER BY maths met la plus basse en premier, et ORDER BY maths DESC la plus haute en premier. LIMIT ne garde que les premières lignes, donc ORDER BY science DESC LIMIT 3 donne les trois meilleures. Une requête décrit les lignes que vous voulez, pas la façon de les trouver, donc la même requête fonctionne sur douze lignes ou sur douze millions.\n\nVérifiez toujours une réponse par rapport à ce que vous savez. Si une requête sur 6A ne renvoie personne, regardez les données : elles disent peut-être 6a. Si elle renvoie la moitié de l’école, il manque probablement une condition. Si une note de 25 sur 20 apparaît, les données doivent être nettoyées avant que quiconque voie le rapport. Une requête qui s’exécute sans erreur n’est pas toujours une requête juste."
+ },
+ "lessons.1.steps.1.keyTerms.0.term": {
+  "en": "Query",
+  "t": "Requête"
+ },
+ "lessons.1.steps.1.keyTerms.0.def": {
+  "en": "A question written in SQL, such as SELECT name FROM pupils WHERE class = '6A'.",
+  "t": "Une question écrite en SQL, comme SELECT name FROM pupils WHERE class = '6A'."
+ },
+ "lessons.1.steps.1.keyTerms.1.term": {
+  "en": "WHERE",
+  "t": "WHERE"
+ },
+ "lessons.1.steps.1.keyTerms.1.def": {
+  "en": "Keeps only the rows that match a condition; AND needs both conditions, OR either.",
+  "t": "Ne garde que les lignes qui satisfont une condition ; AND exige les deux conditions, OR l’une ou l’autre."
+ },
+ "lessons.1.steps.1.keyTerms.2.term": {
+  "en": "ORDER BY … DESC",
+  "t": "ORDER BY … DESC"
+ },
+ "lessons.1.steps.1.keyTerms.2.def": {
+  "en": "Sorts the rows; DESC puts the biggest first.",
+  "t": "Trie les lignes ; DESC met la plus grande en premier."
+ },
+ "lessons.1.steps.1.keyTerms.3.term": {
+  "en": "LIMIT",
+  "t": "LIMIT"
+ },
+ "lessons.1.steps.1.keyTerms.3.def": {
+  "en": "Keeps only the first few rows of the answer.",
+  "t": "Ne garde que les premières lignes de la réponse."
+ },
+ "lessons.1.steps.2.prompt": {
+  "en": "You want the three highest maths marks, biggest first. Which lines do that?",
+  "t": "Vous voulez les trois meilleures notes de maths, la plus grande en premier. Quelles lignes le font ?"
+ },
+ "lessons.1.steps.2.options.0.text": {
+  "en": "ORDER BY mark DESC LIMIT 3",
+  "t": "ORDER BY mark DESC LIMIT 3"
+ },
+ "lessons.1.steps.2.options.1.text": {
+  "en": "WHERE mark = 3",
+  "t": "WHERE mark = 3"
+ },
+ "lessons.1.steps.2.options.2.text": {
+  "en": "ORDER BY mark LIMIT 3",
+  "t": "ORDER BY mark LIMIT 3"
+ },
+ "lessons.1.steps.2.explain": {
+  "en": "DESC sorts the biggest first, and LIMIT 3 keeps the first three rows. Without DESC you’d get the three lowest; WHERE mark = 3 finds marks of exactly 3.",
+  "t": "DESC trie la plus grande en premier, et LIMIT 3 garde les trois premières lignes. Sans DESC, vous obtiendriez les trois plus basses ; WHERE mark = 3 trouve les notes exactement égales à 3."
+ },
+ "lessons.1.steps.3.prompt": {
+  "en": "Before the parents’ evening: find every pupil in class 6A with a maths mark under 10. Show their name and maths mark.",
+  "t": "Avant la réunion de parents : trouvez tous les élèves de la classe 6A dont la note de maths est inférieure à 10. Affichez leur nom et leur note de maths."
+ },
+ "lessons.1.steps.3.hints.0": {
+  "en": "The starter finds all of 6A. Add a second condition with AND.",
+  "t": "Le point de départ trouve toute la 6A. Ajoutez une seconde condition avec AND."
+ },
+ "lessons.1.steps.3.hints.1": {
+  "en": "WHERE class = '6A' AND maths < 10",
+  "t": "WHERE class = '6A' AND maths < 10"
+ },
+ "lessons.1.steps.3.explain": {
+  "en": "AND keeps only the rows where both conditions are true: Tunde (9) and Kofi (7). Amina and Zara are in 6A too, but their marks are 10 or more.",
+  "t": "AND ne garde que les lignes où les deux conditions sont vraies : Tunde (9) et Kofi (7). Amina et Zara sont aussi en 6A, mais leurs notes sont de 10 ou plus."
+ },
+ "lessons.1.steps.4.prompt": {
+  "en": "Fill the gaps: the names of the pupils in 6B, best science mark first.",
+  "t": "Complétez les trous : les noms des élèves de 6B, la meilleure note de sciences en premier."
+ },
+ "lessons.1.steps.4.explain": {
+  "en": "Text in SQL goes in single quotes, '6B'; without them SQLite can’t read 6B at all and stops with an error (a word like Grace without quotes would be taken as a column name). DESC sorts the biggest first; ASC (the default) would put the lowest first.",
+  "t": "Le texte en SQL va entre apostrophes simples, '6B' ; sans elles, SQLite ne peut pas lire 6B du tout et s’arrête avec une erreur (un mot comme Grace sans apostrophes serait pris pour un nom de colonne). DESC trie la plus grande en premier ; ASC (la valeur par défaut) mettrait la plus basse en premier."
+ },
+ "lessons.1.steps.5.prompt": {
+  "en": "Try it: run “Who is in class 5B?”, then change '5B' to '6A' and to '6a'. Why does one return nobody? Then write your own query: the pupils who live in Hilltop, youngest first.",
+  "t": "Essayez : exécutez « Qui est dans la classe 5B ? », puis remplacez '5B' par '6A' et par '6a'. Pourquoi l’une ne renvoie-t-elle personne ? Écrivez ensuite votre propre requête : les élèves qui habitent à Hilltop, le plus jeune en premier."
+ },
+ "lessons.1.steps.6.prompt": {
+  "en": "The science prize: show the name and science mark of the three highest science marks, highest first.",
+  "t": "Le prix de sciences : affichez le nom et la note de sciences des trois meilleures notes de sciences, la plus haute en premier."
+ },
+ "lessons.1.steps.6.hints.0": {
+  "en": "Run it: these are the three lowest.",
+  "t": "Exécutez-la : ce sont les trois plus basses."
+ },
+ "lessons.1.steps.6.hints.1": {
+  "en": "Add DESC after ORDER BY science.",
+  "t": "Ajoutez DESC après ORDER BY science."
+ },
+ "lessons.1.steps.6.explain": {
+  "en": "ORDER BY on its own sorts from the lowest. DESC flips it, so LIMIT 3 keeps the top three: Zara (18), Yusuf (17) and Grace (16).",
+  "t": "ORDER BY seul trie à partir de la plus basse. DESC l’inverse, donc LIMIT 3 garde les trois meilleures : Zara (18), Yusuf (17) et Grace (16)."
+ },
+ "lessons.1.steps.7.prompt": {
+  "en": "Class 6A has four pupils, but this query returns no rows. Which line is wrong?",
+  "t": "La classe 6A compte quatre élèves, mais cette requête ne renvoie aucune ligne. Quelle ligne est fausse ?"
+ },
+ "lessons.1.steps.7.explain": {
+  "en": "= on text is exact: '6a' with a small a is not '6A'. The query ran without an error and was still wrong, which is why you check answers against what you know.",
+  "t": "= sur du texte est exact : '6a' avec un a minuscule n’est pas '6A'. La requête s’est exécutée sans erreur et était pourtant fausse, c’est pourquoi on vérifie les réponses par rapport à ce que l’on sait."
+ },
+ "lessons.1.steps.8.prompt": {
+  "en": "Which of these are signs that a query or its data needs checking? Choose all that apply.",
+  "t": "Lesquels de ces signes montrent qu’une requête ou ses données doivent être vérifiées ? Choisissez toutes les bonnes réponses."
+ },
+ "lessons.1.steps.8.options.0.text": {
+  "en": "It returns nobody, but you know 6A has pupils",
+  "t": "Elle ne renvoie personne, mais vous savez que la 6A a des élèves"
+ },
+ "lessons.1.steps.8.options.1.text": {
+  "en": "It returns more pupils than the class has",
+  "t": "Elle renvoie plus d’élèves que la classe n’en compte"
+ },
+ "lessons.1.steps.8.options.2.text": {
+  "en": "A mark of 25 out of 20 appears",
+  "t": "Une note de 25 sur 20 apparaît"
+ },
+ "lessons.1.steps.8.options.3.text": {
+  "en": "It returns the four pupils you expected",
+  "t": "Elle renvoie les quatre élèves que vous attendiez"
+ },
+ "lessons.1.steps.8.explain": {
+  "en": "No rows, too many rows and impossible values all mean something is off: a condition, the spelling in the data, or the data itself. An answer that matches what you know is the one to trust.",
+  "t": "Aucune ligne, trop de lignes et des valeurs impossibles signifient tous que quelque chose cloche : une condition, l’orthographe dans les données, ou les données elles-mêmes. Une réponse qui concorde avec ce que vous savez est celle à laquelle se fier."
+ },
+ "lessons.1.steps.9.prompt": {
+  "en": "Which question about your pupils would you ask a database first? Write it in words, then try it in SQL.",
+  "t": "Quelle question sur vos élèves poseriez-vous d’abord à une base de données ? Écrivez-la avec des mots, puis essayez-la en SQL."
+ },
+ "lessons.1.steps.9.placeholder": {
+  "en": "For example: “Who in 6B scored under 10 in maths and science?” – SELECT name FROM results WHERE class = '6B' AND maths < 10 AND science < 10.",
+  "t": "Par exemple : « Qui, en 6B, a obtenu moins de 10 en maths et en sciences ? » – SELECT name FROM results WHERE class = '6B' AND maths < 10 AND science < 10."
+ },
+ "lessons.1.steps.10.prompt": {
+  "en": "Project: Human database",
+  "t": "Projet : la base de données humaine"
+ },
+ "lessons.1.steps.10.task": {
+  "en": "Give each pupil a card with a class, a birth month and how they travel to school (made up, or chosen by the pupil). Read out queries one at a time, such as “SELECT name WHERE travel = walking ORDER BY birth month” or “WHERE class = 6A AND month > June”. The pupils who match step forward and line up in order. Then pupils write their own query on the board, and the class runs it. If you have a device, run the same queries in SQL.",
+  "t": "Donnez à chaque élève une carte avec une classe, un mois de naissance et son mode de transport pour aller à l’école (inventés, ou choisis par l’élève). Lisez les requêtes une par une, comme « SELECT name WHERE travel = walking ORDER BY birth month » ou « WHERE class = 6A AND month > June ». Les élèves qui correspondent avancent et se mettent en rang dans l’ordre. Les élèves écrivent ensuite leur propre requête au tableau, et la classe l’exécute. Si vous avez un appareil, exécutez les mêmes requêtes en SQL."
+ },
+ "lessons.1.steps.10.deliverable": {
+  "en": "A photo of two queries your pupils wrote on the board, and two sentences: which part of a query they found hardest, and one wrong answer the class caught by checking.",
+  "t": "Une photo de deux requêtes que vos élèves ont écrites au tableau, et deux phrases : quelle partie d’une requête ils ont trouvée la plus difficile, et une mauvaise réponse que la classe a repérée en vérifiant."
+ },
+ "lessons.1.steps.10.rubric.0.criterion": {
+  "en": "Pupils could: say which part of a query picks columns, rows and the order.",
+  "t": "Les élèves savent : dire quelle partie d’une requête choisit les colonnes, les lignes et l’ordre."
+ },
+ "lessons.1.steps.10.rubric.1.criterion": {
+  "en": "Pupils could: combine two conditions with AND or OR.",
+  "t": "Les élèves savent : combiner deux conditions avec AND ou OR."
+ },
+ "lessons.1.steps.10.rubric.2.criterion": {
+  "en": "Pupils could: check a query’s answer against what they know.",
+  "t": "Les élèves savent : vérifier la réponse d’une requête par rapport à ce qu’ils savent."
+ },
+ "lessons.1.slides.0.title": {
+  "en": "Asking questions: SELECT, WHERE, ORDER BY",
+  "t": "Poser des questions : SELECT, WHERE, ORDER BY"
+ },
+ "lessons.1.slides.0.note": {
+  "en": "Data engineering · Level 3 · Lesson 2",
+  "t": "Ingénierie des données, niveau 3, leçon 2"
+ },
+ "lessons.1.slides.0.narration": {
+  "en": "Four hundred pupils, one question. Do we scroll, or do we ask?",
+  "t": "Quatre cents élèves, une seule question. Fait-on défiler, ou demande-t-on ?"
+ },
+ "lessons.1.slides.1.title": {
+  "en": "Today we will",
+  "t": "Aujourd’hui, nous allons"
+ },
+ "lessons.1.slides.1.bullets": {
+  "en": [
+   "Pick columns with SELECT and rows with WHERE.",
+   "Sort with ORDER BY, and keep the top rows with LIMIT.",
+   "Check every answer against what we know."
+  ],
+  "t": [
+   "Choisir des colonnes avec SELECT et des lignes avec WHERE.",
+   "Trier avec ORDER BY, et garder les premières lignes avec LIMIT.",
+   "Vérifier chaque réponse par rapport à ce que nous savons."
+  ]
+ },
+ "lessons.1.slides.2.title": {
+  "en": "Remember",
+  "t": "À retenir"
+ },
+ "lessons.1.slides.2.bullets": {
+  "en": [
+   "SELECT columns, FROM a table, WHERE rows.",
+   "Text in single quotes, matched exactly.",
+   "No error doesn’t mean right."
+  ],
+  "t": [
+   "SELECT des colonnes, FROM une table, WHERE des lignes.",
+   "Le texte entre apostrophes simples, comparé exactement.",
+   "Pas d’erreur ne veut pas dire juste."
+  ]
+ },
+ "lessons.1.slides.3.title": {
+  "en": "Human database",
+  "t": "La base de données humaine"
+ },
+ "lessons.1.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): Find them without a list.",
+   "Teach (8 min): SELECT, FROM, WHERE, ORDER BY.",
+   "Play (15 min): The human database.",
+   "Write (7 min): Pupils’ own queries.",
+   "Wrap-up (5 min): Was any answer wrong?"
+  ],
+  "t": [
+   "Échauffement (5 min) : les trouver sans liste.",
+   "Apprendre (8 min) : SELECT, FROM, WHERE, ORDER BY.",
+   "Jouer (15 min) : la base de données humaine.",
+   "Écrire (7 min) : les requêtes des élèves.",
+   "Conclusion (5 min) : une réponse était-elle fausse ?"
+  ]
+ },
+ "lessons.1.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Ask: how would you find every pupil in the school who walks more than 30 minutes, from a sheet of 400 rows? Collect ideas.",
+   "Teach (8 min): Write a query on the board and label each part: the columns, the table, the condition and the order. Show AND, OR and DESC.",
+   "Play (15 min): Hand out the cards. Read queries aloud; the matching pupils step forward and line up in order. Include one query that should return nobody.",
+   "Write (7 min): Pairs write a query on the board; the class runs it and checks that the answer makes sense.",
+   "Wrap-up (5 min): Ask how the class knew an answer was wrong. Then give the exit ticket."
+  ],
+  "t": [
+   "Échauffement (5 min) : demandez : comment trouveriez-vous tous les élèves de l’école qui marchent plus de 30 minutes, à partir d’une feuille de 400 lignes ? Recueillez les idées.",
+   "Apprendre (8 min) : écrivez une requête au tableau et nommez chaque partie : les colonnes, la table, la condition et l’ordre. Montrez AND, OR et DESC.",
+   "Jouer (15 min) : distribuez les cartes. Lisez des requêtes à voix haute ; les élèves qui correspondent avancent et se mettent en rang dans l’ordre. Incluez une requête qui ne doit renvoyer personne.",
+   "Écrire (7 min) : les binômes écrivent une requête au tableau ; la classe l’exécute et vérifie que la réponse a du sens.",
+   "Conclusion (5 min) : demandez comment la classe a su qu’une réponse était fausse. Donnez ensuite le ticket de sortie."
+  ]
+ },
+ "lessons.1.slides.3.note": {
+  "en": "Let pupils choose or make up their birth month and travel, so nobody has to share real details. Keep the queries short at first, then add AND and ORDER BY.",
+  "t": "Laissez les élèves choisir ou inventer leur mois de naissance et leur transport, pour que personne n’ait à partager de vraies informations. Gardez les requêtes courtes au début, puis ajoutez AND et ORDER BY."
+ },
+ "lessons.1.slides.3.narration": {
+  "en": "If the query matches you, step forward, in order.",
+  "t": "Si la requête vous concerne, avancez, dans l’ordre."
+ },
+ "lessons.1.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.1.slides.4.bullets": {
+  "en": [
+   "Which part of a query picks the rows?",
+   "Why did '6a' find nobody?",
+   "How do you get the top three, not the bottom three?"
+  ],
+  "t": [
+   "Quelle partie d’une requête choisit les lignes ?",
+   "Pourquoi '6a' n’a-t-il trouvé personne ?",
+   "Comment obtient-on les trois meilleures, et non les trois dernières ?"
+  ]
+ },
+ "lessons.1.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.1.slides.5.bullets": {
+  "en": [
+   "Write a query for the pupils in 6B with a science mark over 15, highest first."
+  ],
+  "t": [
+   "Écrivez une requête pour les élèves de 6B ayant une note de sciences supérieure à 15, la plus haute en premier."
+  ]
+ },
+ "lessons.1.slides.5.narration": {
+  "en": "SELECT columns, WHERE rows, then check the answer.",
+  "t": "SELECT des colonnes, WHERE des lignes, puis vérifiez la réponse."
+ },
+ "lessons.1.kit.0.title": {
+  "en": "Slides: Asking questions: SELECT, WHERE, ORDER BY",
+  "t": "Diapositives : Poser des questions : SELECT, WHERE, ORDER BY"
+ },
+ "lessons.1.kit.1.title": {
+  "en": "Lesson plan and worksheet: Asking questions: SELECT, WHERE, ORDER BY",
+  "t": "Plan de leçon et fiche de travail : Poser des questions : SELECT, WHERE, ORDER BY"
+ },
+ "lessons.1.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "La vidéo de la leçon (240p, pour la classe ou WhatsApp)"
+ },
+ "lessons.2.title": {
+  "en": "Counts and averages: GROUP BY",
+  "t": "Compter et faire des moyennes : GROUP BY"
+ },
+ "lessons.2.tryTomorrow": {
+  "en": "Pupils group themselves by birth month. Each group counts itself, and the class writes one row per month on the board: that’s GROUP BY, done with people.",
+  "t": "Les élèves se regroupent par mois de naissance. Chaque groupe se compte lui-même, et la classe écrit une ligne par mois au tableau : c’est GROUP BY, fait avec des personnes."
+ },
+ "lessons.2.materials": {
+  "en": [
+   "Board and chalk",
+   "Space for pupils to stand in groups",
+   "Optional: a phone or computer for the SQL steps"
+  ],
+  "t": [
+   "Tableau et craie",
+   "De la place pour que les élèves se mettent en groupes",
+   "Facultatif : un téléphone ou un ordinateur pour les pas SQL"
+  ]
+ },
+ "lessons.2.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Regarder"
+ },
+ "lessons.2.steps.0.title": {
+  "en": "Counts and averages: GROUP BY",
+  "t": "Compter et faire des moyennes : GROUP BY"
+ },
+ "lessons.2.steps.0.chapters.0.label": {
+  "en": "A Saturday with a calculator",
+  "t": "Un samedi avec une calculatrice"
+ },
+ "lessons.2.steps.0.chapters.1.label": {
+  "en": "Summary functions",
+  "t": "Les fonctions de résumé"
+ },
+ "lessons.2.steps.0.chapters.2.label": {
+  "en": "GROUP BY",
+  "t": "GROUP BY"
+ },
+ "lessons.2.steps.0.chapters.3.label": {
+  "en": "HAVING",
+  "t": "HAVING"
+ },
+ "lessons.2.steps.0.chapters.4.label": {
+  "en": "NULL",
+  "t": "NULL"
+ },
+ "lessons.2.steps.0.chapters.5.label": {
+  "en": "Check before you trust",
+  "t": "Vérifier avant de se fier"
+ },
+ "lessons.2.steps.0.chapters.6.label": {
+  "en": "The lab",
+  "t": "Le labo"
+ },
+ "lessons.2.steps.0.chapters.7.label": {
+  "en": "Remember and try it",
+  "t": "À retenir et à essayer"
+ },
+ "lessons.2.steps.0.checkpoint.question.prompt": {
+  "en": "Musa missed the test, so his mark is NULL. What does AVG(mark) do with it?",
+  "t": "Musa a manqué le contrôle, donc sa note est NULL. Que fait AVG(mark) de cette valeur ?"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.0.text": {
+  "en": "Counts it as zero",
+  "t": "La compte comme zéro"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.1.text": {
+  "en": "Skips it",
+  "t": "L’ignore"
+ },
+ "lessons.2.steps.0.checkpoint.question.options.2.text": {
+  "en": "Stops with an error",
+  "t": "S’arrête avec une erreur"
+ },
+ "lessons.2.steps.0.checkpoint.question.explain": {
+  "en": "AVG and COUNT(mark) skip NULL, so Musa’s empty mark is left out, not counted as zero. COUNT(*) still counts his row, so when the two counts differ, something is missing.",
+  "t": "AVG et COUNT(mark) ignorent NULL, donc la note vide de Musa est laissée de côté, pas comptée comme zéro. COUNT(*) compte quand même sa ligne, donc quand les deux comptes diffèrent, il manque quelque chose."
+ },
+ "lessons.2.steps.0.transcript": {
+  "en": "The district wants the average science mark for every class, every term. That used to be my whole Saturday, with a calculator. Now it's one query. Today: counts and averages for every group, with GROUP BY. SQL can summarise as well as list. COUNT counts rows. AVG gives the average, and MIN and MAX the lowest and highest. And ROUND tidies the decimals. On their own, they summarise the whole table into one row. GROUP BY splits the rows into groups, one per class, and summarises each group. So you get one row for every class. A group is all the rows that share a value, like every row for Six B. Every column you select must be grouped, or summarised. WHERE filters rows before they're grouped. HAVING filters the groups after: HAVING a count above thirty keeps only the big classes. Quick check! Musa missed the science test, so his mark is empty: NULL. When I average the marks, what does AVG do with his? AVG skips it: Musa's empty mark is left out, not counted as zero. Counting the mark column skips it too, but COUNT star counts every row. So when the two counts differ, something is missing. Summaries hide glitches. Before you trust an average, ask for the lowest and highest in each group. A science mark of ninety-nine out of twenty jumps out at once. In the app, a week of hourly soil readings becomes one average per day: that's a GROUP BY day. Leave out the glitches, and watch days four and five rise by about three while the median doesn't move. Your turn. After grouping by class, I want only the classes with more than thirty pupils. Which line does that? HAVING, because it filters groups after they're counted. Remember: COUNT, AVG, MIN and MAX summarise. GROUP BY makes one row per group. And NULLs are skipped, so check the lowest and highest before you trust an average. Try it in class tomorrow: pupils group themselves by birth month. Each group counts itself, and the class writes one row per month on the board. That's GROUP BY, done with people.",
+  "t": "L’inspection veut la note moyenne de sciences de chaque classe, pour chaque trimestre. Cela me prenait tout mon samedi, avec une calculatrice. Maintenant, c’est une seule requête. Aujourd’hui: des comptages et des moyennes pour chaque groupe, avec GROUP BY. SQL sait résumer aussi bien que lister. COUNT compte les lignes. AVG donne la moyenne, et MIN et MAX la plus basse et la plus haute. Et ROUND réduit les décimales. Seules, ces fonctions résument toute la table en une seule ligne. GROUP BY répartit les lignes en groupes, un par classe, et résume chaque groupe. Vous obtenez donc une ligne pour chaque classe. Un groupe, c’est toutes les lignes qui partagent une valeur, comme toutes les lignes de six B. Chaque colonne que vous sélectionnez doit être groupée, ou résumée. WHERE filtre les lignes avant qu’elles soient groupées. HAVING filtre les groupes ensuite: HAVING un nombre supérieur à trente ne garde que les grandes classes. Petit contrôle! Musa a manqué le contrôle de sciences, donc sa note est vide: NULL. Quand je fais la moyenne des notes, que fait AVG de la sienne? AVG l’ignore: la note vide de Musa est laissée de côté, pas comptée comme zéro. Compter la colonne des notes l’ignore aussi, mais COUNT étoile compte toutes les lignes. Donc quand les deux comptages diffèrent, il manque quelque chose. Les résumés cachent les anomalies. Avant de faire confiance à une moyenne, demandez la plus basse et la plus haute de chaque groupe. Une note de sciences de quatre-vingt-dix-neuf sur vingt saute aux yeux tout de suite. Dans l’appli, une semaine de mesures horaires d’humidité du sol devient une moyenne par jour: c’est un GROUP BY jour. Écartez les anomalies, et regardez les jours quatre et cinq monter d’environ trois pendant que la médiane ne bouge pas. À vous. Après avoir groupé par classe, je veux seulement les classes de plus de trente élèves. Quelle ligne fait cela? HAVING, parce qu’il filtre les groupes une fois comptés. Retenez: COUNT, AVG, MIN et MAX résument. GROUP BY fait une ligne par groupe. Et les NULL sont ignorés, donc vérifiez la plus basse et la plus haute avant de faire confiance à une moyenne. Essayez-le en classe demain: les élèves se regroupent par mois de naissance. Chaque groupe se compte, et la classe écrit une ligne par mois au tableau. C’est GROUP BY, fait avec des personnes."
+ },
+ "lessons.2.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lire"
+ },
+ "lessons.2.steps.1.title": {
+  "en": "Summaries for every group",
+  "t": "Des résumés pour chaque groupe"
+ },
+ "lessons.2.steps.1.body": {
+  "en": "SQL can summarise as well as list. COUNT(*) counts rows; AVG(mark) gives the average; MIN and MAX the lowest and the highest; SUM the total. ROUND(AVG(mark), 1) tidies the average to one decimal place. On their own, these summarise the whole table into a single row: SELECT ROUND(AVG(mark), 1) FROM marks WHERE subject = 'maths' gives the school’s maths average.\n\nGROUP BY splits the rows into groups and summarises each one. SELECT class, ROUND(AVG(mark), 1) FROM marks WHERE subject = 'maths' GROUP BY class gives one row for every class: the work of a Saturday with a calculator, in one query. A group is all the rows that share a value, and every column you select must be either grouped or summarised; selecting name as well would make no sense, because a class has many names.\n\nWHERE and HAVING both filter, at different times. WHERE filters rows before they’re grouped: WHERE subject = 'maths'. HAVING filters the groups afterwards, using their summaries: HAVING COUNT(*) > 3 keeps only the classes with more than three rows (in the lab’s small table; the video uses a bigger threshold). So WHERE COUNT(*) > 3 is an error, because rows haven’t been counted yet.\n\nNULL means empty: nothing was recorded. AVG, SUM and COUNT(mark) skip NULLs, while COUNT(*) still counts the row. When COUNT(*) and COUNT(mark) differ, marks are missing, so say so in the report. And summaries hide glitches: before you trust an average, ask for the MIN and MAX of each group. A science mark of 99 out of 20 jumps out at once.",
+  "t": "SQL peut résumer aussi bien qu’énumérer. COUNT(*) compte les lignes ; AVG(mark) donne la moyenne ; MIN et MAX la plus basse et la plus haute ; SUM le total. ROUND(AVG(mark), 1) arrondit la moyenne à une décimale. Seules, ces fonctions résument toute la table en une seule ligne : SELECT ROUND(AVG(mark), 1) FROM marks WHERE subject = 'maths' donne la moyenne de maths de l’école.\n\nGROUP BY répartit les lignes en groupes et résume chacun. SELECT class, ROUND(AVG(mark), 1) FROM marks WHERE subject = 'maths' GROUP BY class donne une ligne pour chaque classe : le travail d’un samedi avec une calculatrice, en une seule requête. Un groupe, ce sont toutes les lignes qui partagent une valeur, et chaque colonne que vous sélectionnez doit être soit groupée, soit résumée ; sélectionner aussi name n’aurait aucun sens, car une classe a beaucoup de noms.\n\nWHERE et HAVING filtrent tous les deux, mais à des moments différents. WHERE filtre les lignes avant qu’elles soient groupées : WHERE subject = 'maths'. HAVING filtre ensuite les groupes, d’après leurs résumés : HAVING COUNT(*) > 3 ne garde que les classes de plus de trois lignes (dans la petite table du labo ; la vidéo utilise un seuil plus grand). Donc WHERE COUNT(*) > 3 est une erreur, car les lignes n’ont pas encore été comptées.\n\nNULL veut dire vide : rien n’a été enregistré. AVG, SUM et COUNT(mark) ignorent les NULL, alors que COUNT(*) compte quand même la ligne. Quand COUNT(*) et COUNT(mark) diffèrent, des notes manquent, alors dites-le dans le rapport. Et les résumés cachent les anomalies : avant de vous fier à une moyenne, demandez le MIN et le MAX de chaque groupe. Une note de sciences de 99 sur 20 saute aussitôt aux yeux."
+ },
+ "lessons.2.steps.1.keyTerms.0.term": {
+  "en": "COUNT, AVG, MIN, MAX",
+  "t": "COUNT, AVG, MIN, MAX"
+ },
+ "lessons.2.steps.1.keyTerms.0.def": {
+  "en": "Summary functions: how many, the average, the lowest and the highest.",
+  "t": "Des fonctions de résumé : combien, la moyenne, la plus basse et la plus haute."
+ },
+ "lessons.2.steps.1.keyTerms.1.term": {
+  "en": "GROUP BY",
+  "t": "GROUP BY"
+ },
+ "lessons.2.steps.1.keyTerms.1.def": {
+  "en": "Splits the rows into groups that share a value and summarises each group: one row per group.",
+  "t": "Répartit les lignes en groupes qui partagent une valeur et résume chaque groupe : une ligne par groupe."
+ },
+ "lessons.2.steps.1.keyTerms.2.term": {
+  "en": "HAVING",
+  "t": "HAVING"
+ },
+ "lessons.2.steps.1.keyTerms.2.def": {
+  "en": "Filters groups after they are summarised; WHERE filters rows before.",
+  "t": "Filtre les groupes après leur résumé ; WHERE filtre les lignes avant."
+ },
+ "lessons.2.steps.1.keyTerms.3.term": {
+  "en": "NULL",
+  "t": "NULL"
+ },
+ "lessons.2.steps.1.keyTerms.3.def": {
+  "en": "An empty value: nothing was recorded. AVG and COUNT(mark) skip it; COUNT(*) counts the row.",
+  "t": "Une valeur vide : rien n’a été enregistré. AVG et COUNT(mark) l’ignorent ; COUNT(*) compte la ligne."
+ },
+ "lessons.2.steps.2.prompt": {
+  "en": "After GROUP BY class, which line keeps only classes with more than 30 pupils?",
+  "t": "Après GROUP BY class, quelle ligne ne garde que les classes de plus de 30 élèves ?"
+ },
+ "lessons.2.steps.2.options.0.text": {
+  "en": "WHERE COUNT(*) > 30",
+  "t": "WHERE COUNT(*) > 30"
+ },
+ "lessons.2.steps.2.options.1.text": {
+  "en": "HAVING COUNT(*) > 30",
+  "t": "HAVING COUNT(*) > 30"
+ },
+ "lessons.2.steps.2.options.2.text": {
+  "en": "ORDER BY 30",
+  "t": "ORDER BY 30"
+ },
+ "lessons.2.steps.2.explain": {
+  "en": "HAVING filters groups after they’re counted. WHERE works on single rows before grouping, so it can’t use COUNT.",
+  "t": "HAVING filtre les groupes après leur comptage. WHERE agit sur des lignes isolées avant le groupement, donc il ne peut pas utiliser COUNT."
+ },
+ "lessons.2.steps.3.prompt": {
+  "en": "The district wants each class’s average maths mark. Show the class and the average rounded to 1 decimal place, one row per class.",
+  "t": "Le district veut la moyenne de maths de chaque classe. Affichez la classe et la moyenne arrondie à 1 décimale, une ligne par classe."
+ },
+ "lessons.2.steps.3.hints.0": {
+  "en": "Keep only the maths rows with WHERE, then make one row per class with GROUP BY class.",
+  "t": "Ne gardez que les lignes de maths avec WHERE, puis faites une ligne par classe avec GROUP BY class."
+ },
+ "lessons.2.steps.3.hints.1": {
+  "en": "ROUND(AVG(mark), 1) gives one decimal place.",
+  "t": "ROUND(AVG(mark), 1) donne une décimale."
+ },
+ "lessons.2.steps.3.explain": {
+  "en": "WHERE keeps the maths rows, GROUP BY class makes one group per class, and ROUND(AVG(mark), 1) summarises each: 5A 11.0, 6A 10.0, 6B 12.0. Without GROUP BY, the starter squashed every subject and class into one row.",
+  "t": "WHERE garde les lignes de maths, GROUP BY class fait un groupe par classe, et ROUND(AVG(mark), 1) résume chacun : 5A 11.0, 6A 10.0, 6B 12.0. Sans GROUP BY, le point de départ écrasait toutes les matières et toutes les classes en une seule ligne."
+ },
+ "lessons.2.steps.4.prompt": {
+  "en": "The school has 9 science rows; Musa’s mark is NULL, and the other 8 add up to 106. What does this query return?",
+  "t": "L’école a 9 lignes de sciences ; la note de Musa est NULL, et les 8 autres totalisent 106. Que renvoie cette requête ?"
+ },
+ "lessons.2.steps.4.options.0.text": {
+  "en": "9, 9, 11.78",
+  "t": "9, 9, 11.78"
+ },
+ "lessons.2.steps.4.options.1.text": {
+  "en": "9, 8, 13.25",
+  "t": "9, 8, 13.25"
+ },
+ "lessons.2.steps.4.options.2.text": {
+  "en": "8, 8, 13.25",
+  "t": "8, 8, 13.25"
+ },
+ "lessons.2.steps.4.explain": {
+  "en": "COUNT(*) counts all 9 rows; COUNT(mark) skips the NULL, so 8; and AVG(mark) divides 106 by the 8 real marks: 13.25. Treating Musa’s blank as zero would have given 11.78.",
+  "t": "COUNT(*) compte les 9 lignes ; COUNT(mark) ignore le NULL, donc 8 ; et AVG(mark) divise 106 par les 8 vraies notes : 13.25. Traiter le blanc de Musa comme un zéro aurait donné 11.78."
+ },
+ "lessons.2.steps.5.prompt": {
+  "en": "Try it: the daily bars are a GROUP BY day: one average for each day. Before you trust them, look at the Lowest and the Highest. Leave the glitches out: which days change, by how much, and why doesn’t the median move?",
+  "t": "Essayez : les barres quotidiennes sont un GROUP BY day : une moyenne pour chaque jour. Avant de vous y fier, regardez la plus basse et la plus haute. Laissez de côté les anomalies : quels jours changent, de combien, et pourquoi la médiane ne bouge-t-elle pas ?"
+ },
+ "lessons.2.steps.6.prompt": {
+  "en": "The absences table has one row for every absence this week. Which classes had more than 3 absences? Show the class and its number of absences.",
+  "t": "La table des absences a une ligne pour chaque absence de cette semaine. Quelles classes ont eu plus de 3 absences ? Affichez la classe et son nombre d’absences."
+ },
+ "lessons.2.steps.6.hints.0": {
+  "en": "Run it: all three classes come back. Keep only the big groups.",
+  "t": "Exécutez-la : les trois classes reviennent. Ne gardez que les gros groupes."
+ },
+ "lessons.2.steps.6.hints.1": {
+  "en": "Add HAVING COUNT(*) > 3 after GROUP BY.",
+  "t": "Ajoutez HAVING COUNT(*) > 3 après GROUP BY."
+ },
+ "lessons.2.steps.6.explain": {
+  "en": "GROUP BY class counts each class’s absences: 6A 5, 6B 2 and 5A 4. HAVING COUNT(*) > 3 keeps the groups above 3, so 6A and 5A. WHERE couldn’t do it: it runs before anything is counted.",
+  "t": "GROUP BY class compte les absences de chaque classe : 6A 5, 6B 2 et 5A 4. HAVING COUNT(*) > 3 garde les groupes au-dessus de 3, donc 6A et 5A. WHERE ne pouvait pas le faire : il s’exécute avant que quoi que ce soit soit compté."
+ },
+ "lessons.2.steps.7.prompt": {
+  "en": "Match each summary to what it tells you.",
+  "t": "Associez chaque résumé à ce qu’il vous apprend."
+ },
+ "lessons.2.steps.7.pairs.0.left": {
+  "en": "COUNT(*)",
+  "t": "COUNT(*)"
+ },
+ "lessons.2.steps.7.pairs.0.right": {
+  "en": "How many rows, empty marks included",
+  "t": "Combien de lignes, notes vides comprises"
+ },
+ "lessons.2.steps.7.pairs.1.left": {
+  "en": "COUNT(mark)",
+  "t": "COUNT(mark)"
+ },
+ "lessons.2.steps.7.pairs.1.right": {
+  "en": "How many rows have a mark",
+  "t": "Combien de lignes ont une note"
+ },
+ "lessons.2.steps.7.pairs.2.left": {
+  "en": "AVG(mark)",
+  "t": "AVG(mark)"
+ },
+ "lessons.2.steps.7.pairs.2.right": {
+  "en": "The average of the marks that are there",
+  "t": "La moyenne des notes qui sont là"
+ },
+ "lessons.2.steps.7.pairs.3.left": {
+  "en": "MIN and MAX",
+  "t": "MIN et MAX"
+ },
+ "lessons.2.steps.7.pairs.3.right": {
+  "en": "The lowest and highest: look here for glitches",
+  "t": "La plus basse et la plus haute : cherchez ici les anomalies"
+ },
+ "lessons.2.steps.7.explain": {
+  "en": "COUNT(*) and COUNT(mark) differ exactly when marks are missing, and AVG skips those. MIN and MAX are the quickest way to spot a 99 out of 20 before it spoils an average.",
+  "t": "COUNT(*) et COUNT(mark) diffèrent exactement quand des notes manquent, et AVG les ignore. MIN et MAX sont le moyen le plus rapide de repérer un 99 sur 20 avant qu’il gâte une moyenne."
+ },
+ "lessons.2.steps.8.prompt": {
+  "en": "WHERE filters groups after they have been counted.",
+  "t": "WHERE filtre les groupes après leur comptage."
+ },
+ "lessons.2.steps.8.explain": {
+  "en": "WHERE filters single rows before grouping; HAVING filters the groups after they’re counted. To keep classes with more than 30 pupils, you need HAVING COUNT(*) > 30.",
+  "t": "WHERE filtre des lignes isolées avant le groupement ; HAVING filtre les groupes après leur comptage. Pour garder les classes de plus de 30 élèves, il vous faut HAVING COUNT(*) > 30."
+ },
+ "lessons.2.steps.9.prompt": {
+  "en": "Which summary does your school work out by hand every term? Write the GROUP BY query that would do it.",
+  "t": "Quel résumé votre école calcule-t-elle à la main chaque trimestre ? Écrivez la requête GROUP BY qui le ferait."
+ },
+ "lessons.2.steps.9.placeholder": {
+  "en": "For example: “Attendance per class per month: SELECT class, month, COUNT(*) FROM absences GROUP BY class, month.”",
+  "t": "Par exemple : « Les présences par classe et par mois : SELECT class, month, COUNT(*) FROM absences GROUP BY class, month. »"
+ },
+ "lessons.2.steps.10.prompt": {
+  "en": "Project: Grouping by hand",
+  "t": "Projet : grouper à la main"
+ },
+ "lessons.2.steps.10.task": {
+  "en": "Ask pupils to group themselves by birth month (or a month they choose). Each group counts itself and works out one summary, such as the average number of minutes its members take to get to school. The class writes one row per group on the board: that’s GROUP BY. Then filter the groups: which months have more than three pupils? That’s HAVING. If you have a device, run the same idea in SQL on the lesson’s tables.",
+  "t": "Demandez aux élèves de se regrouper par mois de naissance (ou par un mois de leur choix). Chaque groupe se compte et calcule un résumé, comme le nombre moyen de minutes que ses membres mettent pour venir à l’école. La classe écrit une ligne par groupe au tableau : c’est GROUP BY. Filtrez ensuite les groupes : quels mois comptent plus de trois élèves ? C’est HAVING. Si vous avez un appareil, appliquez la même idée en SQL sur les tables de la leçon."
+ },
+ "lessons.2.steps.10.deliverable": {
+  "en": "A photo of the board’s one-row-per-group table (no names), and two sentences: what HAVING kept, and one summary that would have hidden a glitch without MIN and MAX.",
+  "t": "Une photo du tableau à une ligne par groupe (sans noms), et deux phrases : ce que HAVING a gardé, et un résumé qui aurait caché une anomalie sans MIN et MAX."
+ },
+ "lessons.2.steps.10.rubric.0.criterion": {
+  "en": "Pupils could: explain that GROUP BY gives one row per group.",
+  "t": "Les élèves savent : expliquer que GROUP BY donne une ligne par groupe."
+ },
+ "lessons.2.steps.10.rubric.1.criterion": {
+  "en": "Pupils could: tell WHERE (rows) from HAVING (groups).",
+  "t": "Les élèves savent : distinguer WHERE (lignes) de HAVING (groupes)."
+ },
+ "lessons.2.steps.10.rubric.2.criterion": {
+  "en": "Pupils could: say why an empty value is skipped, not counted as zero.",
+  "t": "Les élèves savent : dire pourquoi une valeur vide est ignorée et non comptée comme zéro."
+ },
+ "lessons.2.slides.0.title": {
+  "en": "Counts and averages: GROUP BY",
+  "t": "Compter et faire des moyennes : GROUP BY"
+ },
+ "lessons.2.slides.0.note": {
+  "en": "Data engineering · Level 3 · Lesson 3",
+  "t": "Ingénierie des données, niveau 3, leçon 3"
+ },
+ "lessons.2.slides.0.narration": {
+  "en": "A whole Saturday with a calculator, or one query?",
+  "t": "Tout un samedi avec une calculatrice, ou une seule requête ?"
+ },
+ "lessons.2.slides.1.title": {
+  "en": "Today we will",
+  "t": "Aujourd’hui, nous allons"
+ },
+ "lessons.2.slides.1.bullets": {
+  "en": [
+   "Summarise with COUNT, AVG, MIN and MAX.",
+   "Make one row per group with GROUP BY, and filter groups with HAVING.",
+   "Handle NULL, and check summaries for glitches."
+  ],
+  "t": [
+   "Résumer avec COUNT, AVG, MIN et MAX.",
+   "Faire une ligne par groupe avec GROUP BY, et filtrer les groupes avec HAVING.",
+   "Gérer NULL, et vérifier que les résumés ne cachent pas d’anomalies."
+  ]
+ },
+ "lessons.2.slides.2.title": {
+  "en": "Remember",
+  "t": "À retenir"
+ },
+ "lessons.2.slides.2.bullets": {
+  "en": [
+   "GROUP BY: one row per group.",
+   "WHERE before grouping, HAVING after.",
+   "Check MIN and MAX before trusting AVG."
+  ],
+  "t": [
+   "GROUP BY : une ligne par groupe.",
+   "WHERE avant le groupement, HAVING après.",
+   "Vérifiez MIN et MAX avant de vous fier à AVG."
+  ]
+ },
+ "lessons.2.slides.3.title": {
+  "en": "Grouping by hand",
+  "t": "Grouper à la main"
+ },
+ "lessons.2.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): How long would this take by hand?",
+   "Teach (8 min): Summaries, GROUP BY and HAVING.",
+   "Group (12 min): By birth month.",
+   "Filter (10 min): HAVING on the board.",
+   "Wrap-up (5 min): The same in SQL."
+  ],
+  "t": [
+   "Échauffement (5 min) : combien de temps cela prendrait-il à la main ?",
+   "Apprendre (8 min) : résumés, GROUP BY et HAVING.",
+   "Grouper (12 min) : par mois de naissance.",
+   "Filtrer (10 min) : HAVING au tableau.",
+   "Conclusion (5 min) : la même chose en SQL."
+  ]
+ },
+ "lessons.2.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): Ask how long it takes to work out every class’s average by hand, and how often the school does it.",
+   "Teach (8 min): Show COUNT, AVG, MIN and MAX on a small table, then the same with GROUP BY class. Explain WHERE before and HAVING after, and what NULL does.",
+   "Group (12 min): Pupils stand in groups by birth month. Each group counts itself and works out its average travel time; the class writes one row per group.",
+   "Filter (10 min): Cross out the groups with three pupils or fewer: that’s HAVING COUNT(*) > 3. Then ask for each group’s lowest and highest: any glitches?",
+   "Wrap-up (5 min): Write the query for what the class just did. Then give the exit ticket."
+  ],
+  "t": [
+   "Échauffement (5 min) : demandez combien de temps il faut pour calculer à la main la moyenne de chaque classe, et à quelle fréquence l’école le fait.",
+   "Apprendre (8 min) : montrez COUNT, AVG, MIN et MAX sur une petite table, puis la même chose avec GROUP BY class. Expliquez WHERE avant et HAVING après, et ce que fait NULL.",
+   "Grouper (12 min) : les élèves se tiennent en groupes par mois de naissance. Chaque groupe se compte et calcule son temps de trajet moyen ; la classe écrit une ligne par groupe.",
+   "Filtrer (10 min) : rayez les groupes de trois élèves ou moins : c’est HAVING COUNT(*) > 3. Demandez ensuite le plus bas et le plus haut de chaque groupe : y a-t-il des anomalies ?",
+   "Conclusion (5 min) : écrivez la requête de ce que la classe vient de faire. Donnez ensuite le ticket de sortie."
+  ]
+ },
+ "lessons.2.slides.3.note": {
+  "en": "Pupils may choose a month instead of giving their real birth month. Keep groups small enough to count quickly, and have one pupil whose travel time is “not sure” to show what NULL does.",
+  "t": "Les élèves peuvent choisir un mois au lieu de donner leur vrai mois de naissance. Gardez des groupes assez petits pour être comptés vite, et prévoyez un élève dont le temps de trajet est « pas sûr » pour montrer ce que fait NULL."
+ },
+ "lessons.2.slides.3.narration": {
+  "en": "One group per month: count yourselves, then summarise.",
+  "t": "Un groupe par mois : comptez-vous, puis résumez."
+ },
+ "lessons.2.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.2.slides.4.bullets": {
+  "en": [
+   "Why can’t we select each pupil’s name in a GROUP BY class query?",
+   "What’s the difference between COUNT(*) and COUNT(mark)?",
+   "Why look at MIN and MAX before an average?"
+  ],
+  "t": [
+   "Pourquoi ne peut-on pas sélectionner le nom de chaque élève dans une requête GROUP BY class ?",
+   "Quelle est la différence entre COUNT(*) et COUNT(mark) ?",
+   "Pourquoi regarder MIN et MAX avant une moyenne ?"
+  ]
+ },
+ "lessons.2.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.2.slides.5.bullets": {
+  "en": [
+   "Write a query for the number of pupils in each class, keeping only classes with more than 30."
+  ],
+  "t": [
+   "Écrivez une requête donnant le nombre d’élèves de chaque classe, en ne gardant que les classes de plus de 30."
+  ]
+ },
+ "lessons.2.slides.5.narration": {
+  "en": "Group, summarise, and check the lowest and highest.",
+  "t": "Groupez, résumez, et vérifiez le plus bas et le plus haut."
+ },
+ "lessons.2.kit.0.title": {
+  "en": "Slides: Counts and averages: GROUP BY",
+  "t": "Diapositives : Compter et faire des moyennes : GROUP BY"
+ },
+ "lessons.2.kit.1.title": {
+  "en": "Lesson plan and worksheet: Counts and averages: GROUP BY",
+  "t": "Plan de leçon et fiche de travail : Compter et faire des moyennes : GROUP BY"
+ },
+ "lessons.2.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "La vidéo de la leçon (240p, pour la classe ou WhatsApp)"
+ },
+ "lessons.3.title": {
+  "en": "Joining tables for reports",
+  "t": "Joindre des tables pour des rapports"
+ },
+ "lessons.3.tryTomorrow": {
+  "en": "Ask your pupils what a parent, the school nurse and the head teacher each need from the school records. They sort column cards into three piles. Which columns does nobody need at all?",
+  "t": "Demandez à vos élèves ce dont un parent, l’infirmière de l’école et le chef d’établissement ont chacun besoin dans les dossiers de l’école. Ils trient des cartes de colonnes en trois piles. Quelles colonnes ne sont utiles à personne ?"
+ },
+ "lessons.3.materials": {
+  "en": [
+   "Column cards: name, class, marks, attendance, phone, address, health notes, date of birth",
+   "Board and chalk",
+   "Optional: a phone or computer for the SQL steps"
+  ],
+  "t": [
+   "Des cartes de colonnes : nom, classe, notes, présences, téléphone, adresse, notes de santé, date de naissance",
+   "Tableau et craie",
+   "Facultatif : un téléphone ou un ordinateur pour les pas SQL"
+  ]
+ },
+ "lessons.3.steps.0.prompt": {
+  "en": "Watch",
+  "t": "Regarder"
+ },
+ "lessons.3.steps.0.title": {
+  "en": "Joining tables for reports",
+  "t": "Joindre des tables pour des rapports"
+ },
+ "lessons.3.steps.0.chapters.0.label": {
+  "en": "Two pupils vanished",
+  "t": "Deux élèves ont disparu"
+ },
+ "lessons.3.steps.0.chapters.1.label": {
+  "en": "JOIN and ON",
+  "t": "JOIN et ON"
+ },
+ "lessons.3.steps.0.chapters.2.label": {
+  "en": "Inner and left",
+  "t": "Interne et gauche"
+ },
+ "lessons.3.steps.0.chapters.3.label": {
+  "en": "Who’s missing?",
+  "t": "Qui manque ?"
+ },
+ "lessons.3.steps.0.chapters.4.label": {
+  "en": "Reports for readers",
+  "t": "Des rapports pour des lecteurs"
+ },
+ "lessons.3.steps.0.chapters.5.label": {
+  "en": "The lab",
+  "t": "Le labo"
+ },
+ "lessons.3.steps.0.chapters.6.label": {
+  "en": "Remember and try it",
+  "t": "À retenir et à essayer"
+ },
+ "lessons.3.steps.0.checkpoint.question.prompt": {
+  "en": "An inner join of pupils and marks: what happens to a pupil with no mark?",
+  "t": "Une jointure interne entre élèves et notes : que devient un élève sans note ?"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.0.text": {
+  "en": "They appear with a zero",
+  "t": "Il apparaît avec un zéro"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.1.text": {
+  "en": "They’re left out of the result",
+  "t": "Il est absent du résultat"
+ },
+ "lessons.3.steps.0.checkpoint.question.options.2.text": {
+  "en": "The query stops with an error",
+  "t": "La requête s’arrête avec une erreur"
+ },
+ "lessons.3.steps.0.checkpoint.question.explain": {
+  "en": "An inner join keeps only matching pairs, so a pupil with no mark is silently left out. When every pupil must appear, use a left join.",
+  "t": "Une jointure interne ne garde que les paires qui correspondent, donc un élève sans note est écarté en silence. Quand chaque élève doit apparaître, utilisez une jointure gauche."
+ },
+ "lessons.3.steps.0.transcript": {
+  "en": "I joined our pupils table to the marks, and sent the report to the head. Two pupils had vanished from it. Nobody noticed for a whole term. Today: joining tables, and reports that show only what's needed. A join puts rows from two tables side by side. JOIN names the second table, and ON says how rows match: the mark's pupil number equals the pupil's id. A plain JOIN is an inner join: it keeps only rows that match. A pupil with no mark simply vanishes, without a word. LEFT JOIN keeps every row of the first table, and fills the gaps with NULL. So, to find the pupils with no mark, use a left join and keep the rows where the mark is NULL. That's the list of who missed the test. Joins can multiply rows too. A pupil who sat the test and a resit appears twice, once per mark. So count before and after: are rows missing, or counted twice? Quick check! I do an inner join of pupils and marks. What happens to a pupil who has no mark? They're left out, silently. That's how my two pupils vanished. When every pupil must appear, use a left join. Now think about who reads the report. A parent needs their own child's marks. The head needs averages per class. Nobody needs phone numbers and health notes in a marks report. So select only the columns each reader needs, and only their rows. A join can bring in everything; a good report query leaves most of it out. In the app, try each join of pupils and marks. Watch who disappears, who appears twice, and how the count of rows and the count of marks drift apart. Your turn. A report for parents' evening goes to each family. Which columns should it show? Just the child's name and their own marks, for that family only. Remember: a join matches rows on a key. Inner joins drop what doesn't match; left joins keep it as NULL. And a report shows only what its reader needs. Try it in class tomorrow: ask your pupils what a parent, the school nurse and the head teacher each need from the school records. They sort column cards into three piles. Which columns does nobody need at all?",
+  "t": "J’ai relié notre table des élèves à celle des notes, et j’ai envoyé le rapport au chef d’établissement. Deux élèves en avaient disparu. Personne ne l’a remarqué pendant tout un trimestre. Aujourd’hui: relier des tables, et des rapports qui ne montrent que l’utile. Une jointure met côte à côte les lignes de deux tables. JOIN nomme la seconde table, et ON dit comment les lignes correspondent: le numéro d’élève de la note égale l’identifiant de l’élève. Un JOIN simple est une jointure interne: il ne garde que les lignes qui correspondent. Un élève sans note disparaît tout simplement, sans un mot. LEFT JOIN garde chaque ligne de la première table, et comble les trous avec NULL. Donc, pour trouver les élèves sans note, utilisez une jointure gauche et gardez les lignes où la note est NULL. C’est la liste de ceux qui ont manqué le contrôle. Les jointures peuvent aussi multiplier les lignes. Un élève qui a passé le contrôle et le rattrapage apparaît deux fois, une par note. Alors comptez avant et après: des lignes manquent-elles, ou sont-elles comptées deux fois? Petit contrôle! Je fais une jointure interne des élèves et des notes. Que devient un élève qui n’a pas de note? Il est écarté, en silence. C’est ainsi que mes deux élèves ont disparu. Quand chaque élève doit apparaître, utilisez une jointure gauche. Pensez maintenant à celui qui lit le rapport. Un parent a besoin des notes de son propre enfant. Le chef d’établissement a besoin des moyennes par classe. Personne n’a besoin des numéros de téléphone ni des notes de santé dans un rapport de notes. Alors ne sélectionnez que les colonnes dont chaque lecteur a besoin, et seulement ses lignes. Une jointure peut tout ramener; une bonne requête de rapport en laisse de côté la plus grande partie. Dans l’appli, essayez chaque jointure entre élèves et notes. Regardez qui disparaît, qui apparaît deux fois, et comment le nombre de lignes et le nombre de notes s’écartent. À vous. Un rapport pour la réunion avec les parents va à chaque famille. Quelles colonnes doit-il montrer? Juste le nom de l’enfant et ses propres notes, pour cette famille seulement. Retenez: une jointure rapproche des lignes sur une clé. Les jointures internes écartent ce qui ne correspond pas; les jointures gauches le gardent avec NULL. Et un rapport ne montre que ce dont son lecteur a besoin. Essayez-le en classe demain: demandez à vos élèves de quoi un parent, l’infirmière de l’école et le chef d’établissement ont chacun besoin dans les dossiers de l’école. Ils trient des cartes de colonnes en trois piles. Quelles colonnes ne sont nécessaires à personne?"
+ },
+ "lessons.3.steps.1.prompt": {
+  "en": "Read",
+  "t": "Lire"
+ },
+ "lessons.3.steps.1.title": {
+  "en": "Joins and readers",
+  "t": "Jointures et lecteurs"
+ },
+ "lessons.3.steps.1.body": {
+  "en": "A join puts rows from two tables side by side. JOIN names the second table, and ON says how rows match: SELECT pupils.name, marks.mark FROM pupils JOIN marks ON marks.pupil_id = pupils.id pairs every mark with its pupil’s name. The name is stored once, in pupils; the join brings it in when a report needs it.\n\nA plain JOIN is an inner join: it keeps only rows that match. A pupil with no mark simply vanishes from the result, without an error or a warning, and that’s how two pupils can disappear from a report for a whole term. LEFT JOIN keeps every row of the first table and fills the gaps with NULL. To find the pupils with no mark, use a left join and keep the rows where the mark IS NULL: that’s the list of who missed the test. (Write IS NULL, not = NULL: nothing equals an empty value.)\n\nJoins can multiply rows too. A pupil who sat a test and a resit has two marks, so they appear twice, once per mark, and a class average that counts rows will count them twice. So count before and after a join: are rows missing, or counted twice? Check the counts against what you know about the class.\n\nThen think about who reads the report. A parent needs their own child’s marks. The head teacher needs averages per class. A class teacher needs the list of pupils who missed the test. Nobody needs phone numbers and health notes in a marks report. A join can bring in every column of every table; a good report query selects only the columns its reader needs, and only their rows.",
+  "t": "Une jointure place côte à côte les lignes de deux tables. JOIN nomme la seconde table, et ON dit comment les lignes se correspondent : SELECT pupils.name, marks.mark FROM pupils JOIN marks ON marks.pupil_id = pupils.id associe chaque note au nom de son élève. Le nom est stocké une seule fois, dans pupils ; la jointure l’apporte quand un rapport en a besoin.\n\nUn simple JOIN est une jointure interne : elle ne garde que les lignes qui correspondent. Un élève sans note disparaît tout simplement du résultat, sans erreur ni avertissement, et c’est ainsi que deux élèves peuvent disparaître d’un rapport pendant tout un trimestre. LEFT JOIN garde toutes les lignes de la première table et comble les vides avec NULL. Pour trouver les élèves sans note, utilisez une jointure gauche et gardez les lignes où mark IS NULL : c’est la liste de ceux qui ont manqué le contrôle. (Écrivez IS NULL, pas = NULL : rien n’est égal à une valeur vide.)\n\nLes jointures peuvent aussi multiplier les lignes. Un élève qui a passé un contrôle et son rattrapage a deux notes, donc il apparaît deux fois, une par note, et une moyenne de classe qui compte des lignes le comptera deux fois. Comptez donc avant et après une jointure : des lignes manquent-elles, ou sont-elles comptées deux fois ? Vérifiez les comptes par rapport à ce que vous savez de la classe.\n\nPensez ensuite à qui lit le rapport. Un parent a besoin des notes de son propre enfant. Le chef d’établissement a besoin des moyennes par classe. Un enseignant de classe a besoin de la liste des élèves qui ont manqué le contrôle. Personne n’a besoin des numéros de téléphone ni des notes de santé dans un rapport de notes. Une jointure peut apporter toutes les colonnes de toutes les tables ; une bonne requête de rapport ne sélectionne que les colonnes dont son lecteur a besoin, et seulement ses lignes."
+ },
+ "lessons.3.steps.1.keyTerms.0.term": {
+  "en": "JOIN … ON",
+  "t": "JOIN … ON"
+ },
+ "lessons.3.steps.1.keyTerms.0.def": {
+  "en": "Puts rows of two tables side by side where the keys match, such as marks.pupil_id = pupils.id.",
+  "t": "Place côte à côte les lignes de deux tables là où les clés correspondent, comme marks.pupil_id = pupils.id."
+ },
+ "lessons.3.steps.1.keyTerms.1.term": {
+  "en": "Inner join",
+  "t": "Jointure interne"
+ },
+ "lessons.3.steps.1.keyTerms.1.def": {
+  "en": "Keeps only the rows that match; rows with no partner vanish silently.",
+  "t": "Ne garde que les lignes qui correspondent ; les lignes sans partenaire disparaissent en silence."
+ },
+ "lessons.3.steps.1.keyTerms.2.term": {
+  "en": "LEFT JOIN",
+  "t": "LEFT JOIN"
+ },
+ "lessons.3.steps.1.keyTerms.2.def": {
+  "en": "Keeps every row of the first table and fills the gaps with NULL.",
+  "t": "Garde toutes les lignes de la première table et comble les vides avec NULL."
+ },
+ "lessons.3.steps.1.keyTerms.3.term": {
+  "en": "IS NULL",
+  "t": "IS NULL"
+ },
+ "lessons.3.steps.1.keyTerms.3.def": {
+  "en": "The test for an empty value; = NULL never matches.",
+  "t": "Le test d’une valeur vide ; = NULL ne correspond jamais."
+ },
+ "lessons.3.steps.2.prompt": {
+  "en": "A report for parents’ evening goes to each family. What should it show?",
+  "t": "Un rapport pour la réunion de parents va à chaque famille. Que doit-il montrer ?"
+ },
+ "lessons.3.steps.2.options.0.text": {
+  "en": "Name, class, every mark, phone and health notes",
+  "t": "Nom, classe, toutes les notes, téléphone et notes de santé"
+ },
+ "lessons.3.steps.2.options.1.text": {
+  "en": "Their child’s name and their child’s marks",
+  "t": "Le nom de leur enfant et les notes de leur enfant"
+ },
+ "lessons.3.steps.2.options.2.text": {
+  "en": "Every pupil’s name and marks",
+  "t": "Le nom et les notes de tous les élèves"
+ },
+ "lessons.3.steps.2.explain": {
+  "en": "Each family needs its own child’s name and marks, and nothing about other children. Phone numbers and health notes don’t belong in a marks report at all.",
+  "t": "Chaque famille a besoin du nom et des notes de son propre enfant, et de rien sur les autres enfants. Les numéros de téléphone et les notes de santé n’ont pas leur place dans un rapport de notes."
+ },
+ "lessons.3.steps.3.prompt": {
+  "en": "Show each pupil’s name next to their maths mark from yesterday’s test, by joining pupils to marks on the pupil’s ID.",
+  "t": "Affichez le nom de chaque élève à côté de sa note de maths du contrôle d’hier, en joignant les élèves aux notes sur l’identifiant de l’élève."
+ },
+ "lessons.3.steps.3.hints.0": {
+  "en": "Run it: 56 rows for 7 marks. Without ON, every pupil is paired with every mark.",
+  "t": "Exécutez-la : 56 lignes pour 7 notes. Sans ON, chaque élève est associé à chaque note."
+ },
+ "lessons.3.steps.3.hints.1": {
+  "en": "Add ON marks.pupil_id = pupils.id.",
+  "t": "Ajoutez ON marks.pupil_id = pupils.id."
+ },
+ "lessons.3.steps.3.explain": {
+  "en": "ON says how rows match: a mark belongs to the pupil whose id equals its pupil_id. Without it, SQLite pairs all 8 pupils with all 7 marks: 56 rows of nonsense. With it, 7 rows; Zara, who has no mark, isn’t there, because this is an inner join.",
+  "t": "ON dit comment les lignes se correspondent : une note appartient à l’élève dont l’id est égal à son pupil_id. Sans lui, SQLite associe les 8 élèves aux 7 notes : 56 lignes absurdes. Avec lui, 7 lignes ; Zara, qui n’a pas de note, n’y est pas, car c’est une jointure interne."
+ },
+ "lessons.3.steps.4.prompt": {
+  "en": "A LEFT JOIN keeps every row of the first table, with NULL where there is no match.",
+  "t": "Un LEFT JOIN garde toutes les lignes de la première table, avec NULL là où il n’y a pas de correspondance."
+ },
+ "lessons.3.steps.4.explain": {
+  "en": "That’s the difference from an inner join: no pupil vanishes. Their missing mark shows as NULL, which you can then look for with IS NULL.",
+  "t": "C’est la différence avec une jointure interne : aucun élève ne disparaît. Sa note manquante s’affiche comme NULL, que vous pouvez ensuite chercher avec IS NULL."
+ },
+ "lessons.3.steps.5.prompt": {
+  "en": "Try it: for each join, compare COUNT(*), COUNT(mark) and AVG(mark). Which join keeps every pupil? Why does the average stay the same when rows are added? And which pupil would be counted twice in a class average?",
+  "t": "Essayez : pour chaque jointure, comparez COUNT(*), COUNT(mark) et AVG(mark). Quelle jointure garde chaque élève ? Pourquoi la moyenne reste-t-elle la même quand des lignes sont ajoutées ? Et quel élève serait compté deux fois dans une moyenne de classe ?"
+ },
+ "lessons.3.steps.6.prompt": {
+  "en": "Who missed yesterday’s maths test? Show the names of the pupils who have no mark.",
+  "t": "Qui a manqué le contrôle de maths d’hier ? Affichez les noms des élèves qui n’ont pas de note."
+ },
+ "lessons.3.steps.6.hints.0": {
+  "en": "Run it: no rows. An inner join has already dropped the pupils with no mark.",
+  "t": "Exécutez-la : aucune ligne. Une jointure interne a déjà écarté les élèves sans note."
+ },
+ "lessons.3.steps.6.hints.1": {
+  "en": "Change JOIN to LEFT JOIN.",
+  "t": "Remplacez JOIN par LEFT JOIN."
+ },
+ "lessons.3.steps.6.explain": {
+  "en": "The inner join keeps only pupils with a mark, so none of them has a NULL mark: no rows. LEFT JOIN keeps every pupil, gives Zara a NULL mark, and WHERE mark IS NULL picks her out.",
+  "t": "La jointure interne ne garde que les élèves qui ont une note, donc aucun n’a une note NULL : aucune ligne. LEFT JOIN garde chaque élève, donne à Zara une note NULL, et WHERE mark IS NULL la sélectionne."
+ },
+ "lessons.3.steps.7.prompt": {
+  "en": "A report for the head teacher: each class’s average mark, rounded to 1 decimal place, in class order. Put the lines in order, leaving out the one the head doesn’t need.",
+  "t": "Un rapport pour le chef d’établissement : la moyenne de chaque classe, arrondie à 1 décimale, dans l’ordre des classes. Mettez les lignes dans l’ordre, en écartant celle dont le chef n’a pas besoin."
+ },
+ "lessons.3.steps.7.explain": {
+  "en": "SQL needs its clauses in this order: SELECT, FROM, JOIN … ON, GROUP BY, ORDER BY. The head needs one average per class, not every pupil’s name and mark, so the report selects only the class and its average.",
+  "t": "SQL exige ses clauses dans cet ordre : SELECT, FROM, JOIN … ON, GROUP BY, ORDER BY. Le chef a besoin d’une moyenne par classe, pas du nom et de la note de chaque élève, donc le rapport ne sélectionne que la classe et sa moyenne."
+ },
+ "lessons.3.steps.8.prompt": {
+  "en": "What do you do?",
+  "t": "Que faites-vous ?"
+ },
+ "lessons.3.steps.8.who": {
+  "en": "Mr Joseph, computer studies",
+  "t": "M. Joseph, informatique"
+ },
+ "lessons.3.steps.8.initial": {
+  "en": "J",
+  "t": "J"
+ },
+ "lessons.3.steps.8.situation": {
+  "en": "The head teacher asks Mr Joseph to join every table (pupils, marks, attendance, health notes and parents’ phones) into one big spreadsheet and share it with all the staff, “so everyone has everything”.",
+  "t": "Le chef d’établissement demande à M. Joseph de joindre toutes les tables (élèves, notes, présences, notes de santé et téléphones des parents) en un seul grand tableur et de le partager avec tout le personnel, « pour que tout le monde ait tout »."
+ },
+ "lessons.3.steps.8.choices.0.label": {
+  "en": "Build it and share it, as asked.",
+  "t": "Le construire et le partager, comme demandé."
+ },
+ "lessons.3.steps.8.choices.0.consequence": {
+  "en": "Every member of staff, and anyone they forward it to, would see every child’s health notes and family phones. One lost laptop or forwarded file would expose the whole school.",
+  "t": "Chaque membre du personnel, et toute personne à qui il le transmet, verrait les notes de santé et les téléphones des familles de chaque enfant. Un ordinateur portable perdu ou un fichier transmis exposerait toute l’école."
+ },
+ "lessons.3.steps.8.choices.1.label": {
+  "en": "Offer one report per reader: averages for the head, class lists for teachers, health notes only for the nurse.",
+  "t": "Proposer un rapport par lecteur : des moyennes pour le chef, des listes de classe pour les enseignants, des notes de santé seulement pour l’infirmière."
+ },
+ "lessons.3.steps.8.choices.1.consequence": {
+  "en": "Each person gets what their job needs from the same database, and nothing more. The data stays in one place, and a report is just a query away.",
+  "t": "Chacun reçoit de la même base de données ce dont son travail a besoin, et rien de plus. Les données restent à un seul endroit, et un rapport n’est qu’à une requête de distance."
+ },
+ "lessons.3.steps.8.choices.2.label": {
+  "en": "Refuse to share any reports at all.",
+  "t": "Refuser de partager le moindre rapport."
+ },
+ "lessons.3.steps.8.choices.2.consequence": {
+  "en": "Staff do need data to teach and to care for pupils. The answer isn’t no data, but the right data for each reader.",
+  "t": "Le personnel a bel et bien besoin de données pour enseigner et pour prendre soin des élèves. La réponse n’est pas « aucune donnée », mais les bonnes données pour chaque lecteur."
+ },
+ "lessons.3.steps.8.explain": {
+  "en": "Give each reader the report their role needs from one database, and nothing more.",
+  "t": "Donnez à chaque lecteur, à partir d’une seule base de données, le rapport dont son rôle a besoin, et rien de plus."
+ },
+ "lessons.3.steps.9.prompt": {
+  "en": "Pick one report your school makes. Who reads it, and which columns could it leave out?",
+  "t": "Choisissez un rapport que fait votre école. Qui le lit, et quelles colonnes pourrait-il laisser de côté ?"
+ },
+ "lessons.3.steps.9.placeholder": {
+  "en": "For example: “The class list on the notice board shows dates of birth. Nobody reading it needs them.”",
+  "t": "Par exemple : « La liste de classe sur le panneau d’affichage montre les dates de naissance. Personne qui la lit n’en a besoin. »"
+ },
+ "lessons.3.steps.10.prompt": {
+  "en": "Project: A report for one reader",
+  "t": "Projet : un rapport pour un lecteur"
+ },
+ "lessons.3.steps.10.task": {
+  "en": "Make column cards: name, class, marks, attendance, phone, address, health notes, date of birth. In groups, pupils sort the cards into what a parent, the school nurse and the head teacher each need. Discuss the columns that nobody needs, and the ones only one reader should see. Then, with your class or on your own, write (on paper or in SQL) the report query for one reader, selecting only their columns.",
+  "t": "Fabriquez des cartes de colonnes : nom, classe, notes, présences, téléphone, adresse, notes de santé, date de naissance. En groupes, les élèves trient les cartes selon ce dont un parent, l’infirmière de l’école et le chef d’établissement ont chacun besoin. Discutez des colonnes dont personne n’a besoin, et de celles que seul un lecteur devrait voir. Puis, avec votre classe ou seul, écrivez (sur papier ou en SQL) la requête de rapport pour un lecteur, en ne sélectionnant que ses colonnes."
+ },
+ "lessons.3.steps.10.deliverable": {
+  "en": "A photo of the three piles of cards, and two sentences: which column nobody needed, and the SELECT line of your report for one reader.",
+  "t": "Une photo des trois piles de cartes, et deux phrases : quelle colonne personne n’a demandée, et la ligne SELECT de votre rapport pour un lecteur."
+ },
+ "lessons.3.steps.10.rubric.0.criterion": {
+  "en": "Pupils could: say what each reader of a report needs, and why.",
+  "t": "Les élèves savent : dire ce dont chaque lecteur d’un rapport a besoin, et pourquoi."
+ },
+ "lessons.3.steps.10.rubric.1.criterion": {
+  "en": "Pupils could: find columns that no report needs to show.",
+  "t": "Les élèves savent : trouver des colonnes qu’aucun rapport n’a besoin de montrer."
+ },
+ "lessons.3.steps.10.rubric.2.criterion": {
+  "en": "Pupils could: explain how an inner join can make pupils vanish.",
+  "t": "Les élèves savent : expliquer comment une jointure interne peut faire disparaître des élèves."
+ },
+ "lessons.3.slides.0.title": {
+  "en": "Joining tables for reports",
+  "t": "Joindre des tables pour des rapports"
+ },
+ "lessons.3.slides.0.note": {
+  "en": "Data engineering · Level 3 · Lesson 4",
+  "t": "Ingénierie des données, niveau 3, leçon 4"
+ },
+ "lessons.3.slides.0.narration": {
+  "en": "Two pupils vanished from a report, and nobody noticed for a term.",
+  "t": "Deux élèves ont disparu d’un rapport, et personne ne l’a remarqué pendant un trimestre."
+ },
+ "lessons.3.slides.1.title": {
+  "en": "Today we will",
+  "t": "Aujourd’hui, nous allons"
+ },
+ "lessons.3.slides.1.bullets": {
+  "en": [
+   "Join tables with JOIN … ON.",
+   "Choose an inner or a left join, and find who’s missing.",
+   "Write reports that show only what each reader needs."
+  ],
+  "t": [
+   "Joindre des tables avec JOIN … ON.",
+   "Choisir une jointure interne ou gauche, et trouver qui manque.",
+   "Écrire des rapports qui ne montrent que ce dont chaque lecteur a besoin."
+  ]
+ },
+ "lessons.3.slides.2.title": {
+  "en": "Remember",
+  "t": "À retenir"
+ },
+ "lessons.3.slides.2.bullets": {
+  "en": [
+   "Inner joins drop rows with no match.",
+   "LEFT JOIN … IS NULL finds who’s missing.",
+   "A report shows only what its reader needs."
+  ],
+  "t": [
+   "Les jointures internes écartent les lignes sans correspondance.",
+   "LEFT JOIN … IS NULL trouve qui manque.",
+   "Un rapport ne montre que ce dont son lecteur a besoin."
+  ]
+ },
+ "lessons.3.slides.3.title": {
+  "en": "A report for one reader",
+  "t": "Un rapport pour un lecteur"
+ },
+ "lessons.3.slides.3.bullets": {
+  "en": [
+   "Warm-up (5 min): Who reads our reports?",
+   "Teach (8 min): Inner and left joins.",
+   "Sort (12 min): Column cards for three readers.",
+   "Write (10 min): One reader’s query.",
+   "Wrap-up (5 min): What did nobody need?"
+  ],
+  "t": [
+   "Échauffement (5 min) : qui lit nos rapports ?",
+   "Apprendre (8 min) : jointures interne et gauche.",
+   "Trier (12 min) : des cartes de colonnes pour trois lecteurs.",
+   "Écrire (10 min) : la requête d’un lecteur.",
+   "Conclusion (5 min) : de quoi personne n’avait-il besoin ?"
+  ]
+ },
+ "lessons.3.slides.3.details": {
+  "en": [
+   "Warm-up (5 min): List on the board the reports the school makes and who reads each one.",
+   "Teach (8 min): With two small tables on the board, show an inner join (Zara vanishes) and a left join (Zara with an empty mark).",
+   "Sort (12 min): Groups sort the column cards into what a parent, the nurse and the head need, and put aside the cards nobody needs.",
+   "Write (10 min): Each group writes the SELECT for one reader’s report, with only that reader’s columns and rows.",
+   "Wrap-up (5 min): Ask which columns nobody needed, and whether the school should keep collecting them. Then give the exit ticket."
+  ],
+  "t": [
+   "Échauffement (5 min) : listez au tableau les rapports que fait l’école et qui lit chacun.",
+   "Apprendre (8 min) : avec deux petites tables au tableau, montrez une jointure interne (Zara disparaît) et une jointure gauche (Zara avec une note vide).",
+   "Trier (12 min) : les groupes trient les cartes de colonnes selon ce dont un parent, l’infirmière et le chef ont besoin, et mettent de côté les cartes dont personne n’a besoin.",
+   "Écrire (10 min) : chaque groupe écrit le SELECT du rapport d’un lecteur, avec seulement les colonnes et les lignes de ce lecteur.",
+   "Conclusion (5 min) : demandez quelles colonnes personne n’a demandées, et si l’école devrait continuer à les recueillir. Donnez ensuite le ticket de sortie."
+  ]
+ },
+ "lessons.3.slides.3.note": {
+  "en": "Use made-up tables on the board. The discussion of health notes can be sensitive: keep it general, about kinds of data, not about any real pupil.",
+  "t": "Utilisez des tables inventées au tableau. La discussion sur les notes de santé peut être sensible : restez général, parlez de types de données, pas d’un vrai élève."
+ },
+ "lessons.3.slides.3.narration": {
+  "en": "Who reads it, and what do they really need?",
+  "t": "Qui le lit, et de quoi a-t-il vraiment besoin ?"
+ },
+ "lessons.3.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.3.slides.4.bullets": {
+  "en": [
+   "Why did Zara vanish from the inner join?",
+   "How would you find every pupil who missed a test?",
+   "Which columns should never be in a marks report?"
+  ],
+  "t": [
+   "Pourquoi Zara a-t-elle disparu de la jointure interne ?",
+   "Comment trouveriez-vous tous les élèves qui ont manqué un contrôle ?",
+   "Quelles colonnes ne devraient jamais figurer dans un rapport de notes ?"
+  ]
+ },
+ "lessons.3.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.3.slides.5.bullets": {
+  "en": [
+   "Write the SELECT and FROM lines of a report for parents, and say which join you’d use and why."
+  ],
+  "t": [
+   "Écrivez les lignes SELECT et FROM d’un rapport pour les parents, et dites quelle jointure vous utiliseriez et pourquoi."
+  ]
+ },
+ "lessons.3.slides.5.narration": {
+  "en": "Join on a key, and show each reader only what they need.",
+  "t": "Joignez sur une clé, et ne montrez à chaque lecteur que ce dont il a besoin."
+ },
+ "lessons.3.kit.0.title": {
+  "en": "Slides: Joining tables for reports",
+  "t": "Diapositives : Joindre des tables pour des rapports"
+ },
+ "lessons.3.kit.1.title": {
+  "en": "Lesson plan and worksheet: Joining tables for reports",
+  "t": "Plan de leçon et fiche de travail : Joindre des tables pour des rapports"
+ },
+ "lessons.3.kit.2.title": {
+  "en": "The lesson video (240p, for class or WhatsApp)",
+  "t": "La vidéo de la leçon (240p, pour la classe ou WhatsApp)"
+ },
+ "lessons.4.title": {
+  "en": "Databases and SQL for school records: unit check",
+  "t": "Bases de données et SQL pour les dossiers scolaires : bilan de l’unité"
+ },
+ "lessons.4.tryTomorrow": {
+  "en": "Write one real question about your school as a SQL query (on paper is fine), and say who would read its answer and which columns they need.",
+  "t": "Écrivez une vraie question sur votre école sous forme de requête SQL (sur papier, c’est très bien), et dites qui lirait sa réponse et de quelles colonnes cette personne a besoin."
+ },
+ "lessons.4.steps.0.prompt": {
+  "en": "In a school database, where should each class teacher’s phone number be stored?",
+  "t": "Dans une base de données d’école, où faut-il stocker le numéro de téléphone de l’enseignant de chaque classe ?"
+ },
+ "lessons.4.steps.0.options.0.text": {
+  "en": "Once, in the classes table",
+  "t": "Une seule fois, dans la table des classes"
+ },
+ "lessons.4.steps.0.options.1.text": {
+  "en": "In every pupil’s row",
+  "t": "Dans la ligne de chaque élève"
+ },
+ "lessons.4.steps.0.options.2.text": {
+  "en": "In every mark row",
+  "t": "Dans chaque ligne de note"
+ },
+ "lessons.4.steps.0.explain": {
+  "en": "Store each fact once: the phone belongs to the class. Pupils point to their class, and a change happens in one place.",
+  "t": "Stockez chaque fait une seule fois : le téléphone appartient à la classe. Les élèves pointent vers leur classe, et un changement se fait en un seul endroit."
+ },
+ "lessons.4.steps.1.prompt": {
+  "en": "Match each part of SQL to its job.",
+  "t": "Associez chaque partie de SQL à son rôle."
+ },
+ "lessons.4.steps.1.pairs.0.left": {
+  "en": "SELECT",
+  "t": "SELECT"
+ },
+ "lessons.4.steps.1.pairs.0.right": {
+  "en": "Which columns come back",
+  "t": "Quelles colonnes reviennent"
+ },
+ "lessons.4.steps.1.pairs.1.left": {
+  "en": "WHERE",
+  "t": "WHERE"
+ },
+ "lessons.4.steps.1.pairs.1.right": {
+  "en": "Which rows come back",
+  "t": "Quelles lignes reviennent"
+ },
+ "lessons.4.steps.1.pairs.2.left": {
+  "en": "GROUP BY",
+  "t": "GROUP BY"
+ },
+ "lessons.4.steps.1.pairs.2.right": {
+  "en": "One row per group",
+  "t": "Une ligne par groupe"
+ },
+ "lessons.4.steps.1.pairs.3.left": {
+  "en": "HAVING",
+  "t": "HAVING"
+ },
+ "lessons.4.steps.1.pairs.3.right": {
+  "en": "Which groups come back",
+  "t": "Quels groupes reviennent"
+ },
+ "lessons.4.steps.1.explain": {
+  "en": "SELECT picks columns, WHERE picks rows before grouping, GROUP BY makes the groups, and HAVING picks groups by their summaries.",
+  "t": "SELECT choisit les colonnes, WHERE choisit les lignes avant le groupement, GROUP BY fabrique les groupes, et HAVING choisit les groupes d’après leurs résumés."
+ },
+ "lessons.4.steps.2.prompt": {
+  "en": "Put the parts of a query in the order SQL needs them.",
+  "t": "Mettez les parties d’une requête dans l’ordre qu’exige SQL."
+ },
+ "lessons.4.steps.2.steps.0": {
+  "en": "SELECT",
+  "t": "SELECT"
+ },
+ "lessons.4.steps.2.steps.1": {
+  "en": "FROM",
+  "t": "FROM"
+ },
+ "lessons.4.steps.2.steps.2": {
+  "en": "WHERE",
+  "t": "WHERE"
+ },
+ "lessons.4.steps.2.steps.3": {
+  "en": "GROUP BY",
+  "t": "GROUP BY"
+ },
+ "lessons.4.steps.2.steps.4": {
+  "en": "ORDER BY",
+  "t": "ORDER BY"
+ },
+ "lessons.4.steps.2.steps.5": {
+  "en": "LIMIT",
+  "t": "LIMIT"
+ },
+ "lessons.4.steps.2.explain": {
+  "en": "A query always reads: SELECT columns FROM a table WHERE rows match, GROUP BY a column, ORDER BY a column, LIMIT a number of rows.",
+  "t": "Une requête se lit toujours ainsi : SELECT des colonnes FROM une table WHERE des lignes correspondent, GROUP BY une colonne, ORDER BY une colonne, LIMIT un nombre de lignes."
+ },
+ "lessons.4.steps.3.prompt": {
+  "en": "This should list 6B’s pupils, but returns nothing. Which line is wrong?",
+  "t": "Cette requête devrait énumérer les élèves de 6B, mais ne renvoie rien. Quelle ligne est fausse ?"
+ },
+ "lessons.4.steps.3.explain": {
+  "en": "= on text is exact, so '6b' doesn’t match '6B'. The query ran without an error, so check answers against what you know.",
+  "t": "= sur du texte est exact, donc '6b' ne correspond pas à '6B'. La requête s’est exécutée sans erreur, donc vérifiez les réponses par rapport à ce que vous savez."
+ },
+ "lessons.4.steps.4.prompt": {
+  "en": "A class has 30 pupils; 2 missed the test, so their marks are NULL. What do COUNT(*) and COUNT(mark) return for the class?",
+  "t": "Une classe compte 30 élèves ; 2 ont manqué le contrôle, donc leurs notes sont NULL. Que renvoient COUNT(*) et COUNT(mark) pour la classe ?"
+ },
+ "lessons.4.steps.4.options.0.text": {
+  "en": "30 and 28",
+  "t": "30 et 28"
+ },
+ "lessons.4.steps.4.options.1.text": {
+  "en": "28 and 28",
+  "t": "28 et 28"
+ },
+ "lessons.4.steps.4.options.2.text": {
+  "en": "30 and 30",
+  "t": "30 et 30"
+ },
+ "lessons.4.steps.4.explain": {
+  "en": "COUNT(*) counts every row; COUNT(mark) skips NULLs. The difference, 2, is exactly the missing marks.",
+  "t": "COUNT(*) compte chaque ligne ; COUNT(mark) ignore les NULL. La différence, 2, correspond exactement aux notes manquantes."
+ },
+ "lessons.4.steps.5.prompt": {
+  "en": "WHERE COUNT(*) > 30 keeps only the classes with more than 30 pupils.",
+  "t": "WHERE COUNT(*) > 30 ne garde que les classes de plus de 30 élèves."
+ },
+ "lessons.4.steps.5.explain": {
+  "en": "WHERE works on rows before they’re counted, so it can’t use COUNT. Filtering groups needs HAVING COUNT(*) > 30.",
+  "t": "WHERE agit sur les lignes avant qu’elles soient comptées, donc il ne peut pas utiliser COUNT. Filtrer des groupes exige HAVING COUNT(*) > 30."
+ },
+ "lessons.4.steps.6.prompt": {
+  "en": "After an inner join of pupils and marks, which of these can happen? Choose all that apply.",
+  "t": "Après une jointure interne entre élèves et notes, lesquelles de ces choses peuvent arriver ? Choisissez toutes les bonnes réponses."
+ },
+ "lessons.4.steps.6.options.0.text": {
+  "en": "A pupil with no mark disappears",
+  "t": "Un élève sans note disparaît"
+ },
+ "lessons.4.steps.6.options.1.text": {
+  "en": "A pupil with two marks appears twice",
+  "t": "Un élève avec deux notes apparaît deux fois"
+ },
+ "lessons.4.steps.6.options.2.text": {
+  "en": "A pupil with no mark appears with a zero",
+  "t": "Un élève sans note apparaît avec un zéro"
+ },
+ "lessons.4.steps.6.options.3.text": {
+  "en": "The query shows a warning about missing pupils",
+  "t": "La requête affiche un avertissement sur les élèves manquants"
+ },
+ "lessons.4.steps.6.explain": {
+  "en": "An inner join keeps only matches, so unmatched pupils vanish silently, with no zero and no warning, and each match makes a row, so two marks make two rows.",
+  "t": "Une jointure interne ne garde que les correspondances, donc les élèves sans correspondance disparaissent en silence, sans zéro ni avertissement, et chaque correspondance fait une ligne, donc deux notes font deux lignes."
+ },
+ "lessons.4.steps.7.prompt": {
+  "en": "Fill the gaps: the names of the pupils who have no mark.",
+  "t": "Complétez les trous : les noms des élèves qui n’ont pas de note."
+ },
+ "lessons.4.steps.7.explain": {
+  "en": "LEFT JOIN keeps every pupil, with NULL where there’s no mark, and IS NULL picks those rows. An inner JOIN would already have dropped them, and = NULL never matches anything.",
+  "t": "LEFT JOIN garde chaque élève, avec NULL là où il n’y a pas de note, et IS NULL sélectionne ces lignes. Un JOIN interne les aurait déjà écartés, et = NULL ne correspond jamais à rien."
+ },
+ "lessons.4.steps.8.prompt": {
+  "en": "Complete the sentences.",
+  "t": "Complétez les phrases."
+ },
+ "lessons.4.steps.8.sentence": {
+  "en": [
+   "A ",
+   {
+    "blank": 0
+   },
+   " key picks out one row of its table. A ",
+   {
+    "blank": 1
+   },
+   " key points to a row in another table. ",
+   {
+    "blank": 2
+   },
+   " means empty: nothing was recorded."
+  ],
+  "t": [
+   "Une clé ",
+   {
+    "blank": 0
+   },
+   " désigne une ligne de sa table. Une clé ",
+   {
+    "blank": 1
+   },
+   " pointe vers une ligne d’une autre table. ",
+   {
+    "blank": 2
+   },
+   " veut dire vide : rien n’a été enregistré."
+  ]
+ },
+ "lessons.4.steps.8.bank": {
+  "en": [
+   "primary",
+   "zero",
+   "total",
+   "foreign",
+   "NULL"
+  ],
+  "t": [
+   "primaire",
+   "zéro",
+   "totale",
+   "étrangère",
+   "NULL"
+  ]
+ },
+ "lessons.4.steps.8.answers": {
+  "en": [
+   "primary",
+   "foreign",
+   "NULL"
+  ],
+  "t": [
+   "primaire",
+   "étrangère",
+   "NULL"
+  ]
+ },
+ "lessons.4.steps.8.explain": {
+  "en": "Primary keys identify rows, foreign keys link tables, and NULL marks a missing value, which is not the same as zero.",
+  "t": "Les clés primaires identifient des lignes, les clés étrangères relient des tables, et NULL marque une valeur manquante, ce qui n’est pas la même chose que zéro."
+ },
+ "lessons.4.steps.9.prompt": {
+  "en": "What should a marks report for the head teacher show?",
+  "t": "Que doit montrer un rapport de notes pour le chef d’établissement ?"
+ },
+ "lessons.4.steps.9.options.0.text": {
+  "en": "Each class’s average mark",
+  "t": "La note moyenne de chaque classe"
+ },
+ "lessons.4.steps.9.options.1.text": {
+  "en": "Every pupil’s marks, phone and health notes",
+  "t": "Les notes, le téléphone et les notes de santé de chaque élève"
+ },
+ "lessons.4.steps.9.options.2.text": {
+  "en": "Nothing: marks are private",
+  "t": "Rien : les notes sont privées"
+ },
+ "lessons.4.steps.9.explain": {
+  "en": "The head needs to compare classes, so averages per class answer the question. Phones and health notes don’t belong in a marks report, and the right summary isn’t private.",
+  "t": "Le chef a besoin de comparer les classes, donc les moyennes par classe répondent à la question. Les téléphones et les notes de santé n’ont pas leur place dans un rapport de notes, et le bon résumé n’est pas privé."
+ },
+ "lessons.4.slides.0.title": {
+  "en": "Databases and SQL for school records: review",
+  "t": "Bases de données et SQL pour les dossiers scolaires : révision"
+ },
+ "lessons.4.slides.0.note": {
+  "en": "Data engineering · Level 3 · Unit check",
+  "t": "Ingénierie des données, niveau 3, bilan de l’unité"
+ },
+ "lessons.4.slides.0.narration": {
+  "en": "Let’s look back at the whole unit and see what stuck.",
+  "t": "Revenons sur toute l’unité et voyons ce qui est resté."
+ },
+ "lessons.4.slides.1.title": {
+  "en": "In this unit",
+  "t": "Dans cette unité"
+ },
+ "lessons.4.slides.1.bullets": {
+  "en": [
+   "From sheets to a database",
+   "Asking questions: SELECT, WHERE, ORDER BY",
+   "Counts and averages: GROUP BY",
+   "Joining tables for reports"
+  ],
+  "t": [
+   "Des feuilles à la base de données",
+   "Poser des questions : SELECT, WHERE, ORDER BY",
+   "Compter et faire des moyennes : GROUP BY",
+   "Joindre des tables pour des rapports"
+  ]
+ },
+ "lessons.4.slides.2.title": {
+  "en": "The big ideas",
+  "t": "Les grandes idées"
+ },
+ "lessons.4.slides.2.bullets": {
+  "en": [
+   "Store each fact once; keys link tables",
+   "SELECT columns, WHERE rows; check the answer",
+   "GROUP BY one row per group; NULL is skipped",
+   "Left joins keep everyone; reports show only what’s needed"
+  ],
+  "t": [
+   "Stocker chaque fait une seule fois ; les clés relient les tables",
+   "SELECT des colonnes, WHERE des lignes ; vérifier la réponse",
+   "GROUP BY une ligne par groupe ; NULL est ignoré",
+   "Les jointures gauches gardent tout le monde ; les rapports ne montrent que le nécessaire"
+  ]
+ },
+ "lessons.4.slides.3.title": {
+  "en": "Team quiz",
+  "t": "Quiz par équipes"
+ },
+ "lessons.4.slides.3.bullets": {
+  "en": [
+   "Teams (2 min): Make teams of four.",
+   "Quiz (20 min): Read each question; teams agree on one answer.",
+   "Explain (10 min): One team explains each answer.",
+   "Wrap-up (8 min): The hardest question goes on the board."
+  ],
+  "t": [
+   "Équipes (2 min) : formez des équipes de quatre.",
+   "Quiz (20 min) : lisez chaque question ; les équipes s’accordent sur une réponse.",
+   "Explications (10 min) : une équipe explique chaque réponse.",
+   "Conclusion (8 min) : la question la plus difficile va au tableau."
+  ]
+ },
+ "lessons.4.slides.3.details": {
+  "en": [
+   "Teams (2 min): Make teams of four and give each team a sheet of paper for its answers.",
+   "Quiz (20 min): Read each question aloud from the quiz sheet; each team agrees on one answer and writes it down.",
+   "Explain (10 min): Reveal each answer and ask one team to explain why it’s right, using an example from the unit.",
+   "Wrap-up (8 min): Write the question most teams got wrong on the board, and work through it together."
+  ],
+  "t": [
+   "Équipes (2 min) : formez des équipes de quatre et donnez à chaque équipe une feuille de papier pour ses réponses.",
+   "Quiz (20 min) : lisez chaque question à voix haute à partir de la feuille de quiz ; chaque équipe s’accorde sur une réponse et l’écrit.",
+   "Explications (10 min) : révélez chaque réponse et demandez à une équipe d’expliquer pourquoi elle est juste, à l’aide d’un exemple de l’unité.",
+   "Conclusion (8 min) : écrivez au tableau la question que la plupart des équipes ont ratée, et travaillez-la ensemble."
+  ]
+ },
+ "lessons.4.slides.4.title": {
+  "en": "Let’s discuss",
+  "t": "Discutons"
+ },
+ "lessons.4.slides.4.bullets": {
+  "en": [
+   "Which school record would you move into a database first?",
+   "Which query would save you the most time?",
+   "Who reads your reports, and what do they need?"
+  ],
+  "t": [
+   "Quel dossier de l’école transféreriez-vous d’abord dans une base de données ?",
+   "Quelle requête vous ferait gagner le plus de temps ?",
+   "Qui lit vos rapports, et de quoi a-t-il besoin ?"
+  ]
+ },
+ "lessons.4.slides.5.title": {
+  "en": "Exit ticket",
+  "t": "Ticket de sortie"
+ },
+ "lessons.4.slides.5.bullets": {
+  "en": [
+   "One query I will write this week, and who will read its answer."
+  ],
+  "t": [
+   "Une requête que j’écrirai cette semaine, et qui lira sa réponse."
+  ]
+ },
+ "lessons.4.kit.0.title": {
+  "en": "Slides: Databases and SQL for school records: unit check",
+  "t": "Diapositives : Bases de données et SQL pour les dossiers scolaires : bilan de l’unité"
+ },
+ "lessons.4.kit.1.title": {
+  "en": "Review plan and quiz sheet: Databases and SQL for school records: unit check",
+  "t": "Plan de révision et fiche de quiz : Bases de données et SQL pour les dossiers scolaires : bilan de l’unité"
+ }
+}
