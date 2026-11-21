@@ -1,0 +1,43 @@
+/* The homepage builder (admin/PageBuilder.tsx): loads with its lazy chunk. Blocks on the inline start, the preview beside
+   them from 900 px; below that, Edit and Preview are two tabs. Handles are 48 px targets that take touch drags
+   (touch-action: none) and the arrow keys. */
+.pb > p { margin: 0; }
+.pb-chips, .pb-tabs, .pb-views { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.pb-row-label { flex-basis: 100%; margin: 0; }
+.pb-chip, .pb-tab { min-block-size: var(--tap-min); padding-inline: var(--space-3); border: 2px solid var(--line-strong); border-radius: var(--radius-pill); background: var(--paper); color: var(--ink); font: inherit; cursor: pointer; }
+.pb-chip[aria-pressed="true"], .pb-tab[aria-selected="true"] { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.pb-chip:disabled { cursor: default; }
+.pb-chip:focus-visible, .pb-tab:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.pb-main { font-weight: 400; }
+.pb-split { display: grid; gap: var(--space-4); }
+.pb-split.is-edit > .pb-preview, .pb-split.is-preview > .pb-editor { display: none; }
+.pb-add { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.pb-said { margin: 0; min-block-size: 0; }
+.pb-said:empty { display: none; }
+.pb-list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.pb-block { display: grid; gap: var(--space-2); padding: var(--space-2); border: 2px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
+.pb-block.is-dragging { border-color: var(--ink); box-shadow: var(--shadow-card); }
+.pb-block.is-bad { border-color: var(--wrong); }
+.pb-block-head { display: flex; align-items: center; gap: var(--space-1); min-inline-size: 0; }
+.pb-handle { display: grid; place-items: center; flex: none; inline-size: var(--tap-min); block-size: var(--tap-min); padding: 0; border: 0; border-radius: var(--radius-sm); background: none; color: var(--ink-muted); cursor: grab; touch-action: none; }
+.pb-handle:active { cursor: grabbing; }
+.pb-handle:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.pb-block-title { display: flex; flex: 1; align-items: center; gap: var(--space-2); min-inline-size: 0; min-block-size: var(--tap-min); padding: 0 var(--space-2); border: 0; background: none; color: var(--ink); font: inherit; text-align: start; cursor: pointer; }
+.pb-block-title > span { min-inline-size: 0; padding-block: var(--space-1); overflow-wrap: anywhere; }
+.pb-block-title:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.pb-block-tools { display: flex; flex: none; }
+.pb-problems { margin: 0; padding-inline-start: var(--space-6); }
+.pb-fields { padding: var(--space-2); }
+.pb-item { display: grid; gap: var(--space-2); margin: 0; padding: var(--space-3); border: 2px solid var(--line); border-radius: var(--radius-md); }
+.pb-item > legend { padding-inline: var(--space-1); font-weight: 700; }
+.pb-long { min-block-size: 112px; resize: vertical; font: inherit; }
+.pb-thumb { display: block; max-inline-size: 100%; max-block-size: 180px; border: 2px solid var(--line); border-radius: var(--radius-md); }
+.pb-preview { min-inline-size: 0; border: 2px dashed var(--line-strong); border-radius: var(--radius-lg); background: var(--paper); }
+.pb-preview > .muted { margin: 0; padding: var(--space-4); }
+.pb-actions { position: sticky; inset-block-end: 0; padding-block: var(--space-2); background: var(--paper); }
+@media (min-width: 900px) {
+  .pb-views { display: none; }
+  .pb-split, .pb-split.is-edit, .pb-split.is-preview { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .pb-split.is-edit > .pb-preview, .pb-split.is-preview > .pb-editor { display: block; }
+  .pb-preview { position: sticky; inset-block-start: var(--space-4); max-block-size: calc(100vh - 2 * var(--space-4)); overflow-y: auto; }
+}

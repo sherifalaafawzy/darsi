@@ -17,6 +17,8 @@ const m = vi.hoisted(() => ({
   getToken: vi.fn(async () => "tok-1"), deleteToken: vi.fn(async () => true),
   orgs: { pending: [] as Org[], active: [] as Org[] },
   broadcasts: [] as unknown[] | undefined,
+  /** Called each time the screen asks for the recent announcements (the read behind the Announcements tab). */
+  readBroadcasts: vi.fn(),
   reload: vi.fn(),
 }));
 vi.mock("../src/firebase", () => ({ db: {}, auth: {}, firebaseReady: true, call: () => vi.fn() }));
@@ -37,7 +39,7 @@ vi.mock("../src/admin/data", async (orig) => ({
   ...(await orig<typeof import("../src/admin/data")>()),
   useOrgsByStatus: (status: "pending" | "active") => ({ data: m.orgs[status] }),
   usePerson: () => ({ data: null }),
-  useBroadcasts: () => ({ data: m.broadcasts, reload: m.reload }),
+  useBroadcasts: (enabled: boolean) => { m.readBroadcasts(enabled); return { data: m.broadcasts, reload: m.reload }; },
 }));
 
 const real = await vi.importActual<typeof import("../src/notify/push")>("../src/notify/push");
@@ -46,7 +48,7 @@ const { NotificationsPanel } = await import("../src/notify/NotificationsPanel");
 const { usePushRefresh } = await import("../src/notify/usePushRefresh");
 const { SuperAdmin } = await import("../src/admin/SuperAdmin");
 
-const wrap = (ui: ReactNode, lang = "en") => render(<I18nProvider lang={lang}><MemoryRouter>{ui}</MemoryRouter></I18nProvider>);
+const wrap = (ui: ReactNode, lang = "en", url = "/") => render(<I18nProvider lang={lang}><MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter></I18nProvider>);
 const CATS = { reminders: true, reviews: true, staff: true, news: true };
 const org = (o: Partial<Org>): Org => ({ id: "o1", name: "Al-Noor School", type: "school", status: "active", createdBy: "u9", city: "Cairo", country: "Egypt", createdAt: { seconds: 1792800000 }, ...o });
 
@@ -293,8 +295,10 @@ describe("SuperAdmin announcements", () => {
   beforeEach(() => {
     m.auth.role = "superadmin";
     m.orgs.active = [org({ id: "o2", name: "Sunrise University", type: "university" })];
+    // The question before sending is asked on the page (staff/InlineConfirm): the browser's confirm() is never used.
     vi.spyOn(window, "confirm").mockReturnValue(true);
   });
+  afterEach(() => expect(window.confirm).not.toHaveBeenCalled());
   const type = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
   const fill = () => {
     type("Title (English)", "  Exam week tips ");
@@ -303,17 +307,45 @@ describe("SuperAdmin announcements", () => {
     type("Message (Arabic)", "خمسة دروس قصيرة تساعد صفّك على المراجعة.");
   };
   const send = () => fireEvent.click(screen.getByRole("button", { name: "Send announcement" }));
+  /** The question the Send button asks, on the page. */
+  const question = () => screen.queryByRole("alertdialog");
+  const sendNow = () => fireEvent.click(screen.getByRole("button", { name: "Send now" }));
+  /** The composer and the recent list are under the Announcements tab of /super. */
+  const ANNOUNCE = "/super?tab=announce";
+
+  it("reads the recent announcements only once the Announcements tab is opened", () => {
+    wrap(<SuperAdmin />, "en", "/super");
+    expect(screen.getByRole("tab", { name: "Requests" }).getAttribute("aria-selected")).toBe("true");
+    expect(m.readBroadcasts).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Send announcement" })).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Organizations" }));
+    expect(m.readBroadcasts).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("tab", { name: "Announcements" }));
+    expect(m.readBroadcasts).toHaveBeenCalledWith(true);
+    expect(screen.getByRole("tabpanel", { name: "Announcements" })).toBeTruthy();
+    send(); // the composer is there
+    expect(screen.getAllByText("Required")).toHaveLength(4);
+  });
+
+  it("keeps a half-written announcement while another tab shows", () => {
+    wrap(<SuperAdmin />, "en", ANNOUNCE);
+    type("Title (English)", "Exam week tips");
+    fireEvent.click(screen.getByRole("tab", { name: "Organizations" }));
+    expect(screen.queryByRole("button", { name: "Send announcement" })).toBeNull(); // hidden, not gone
+    fireEvent.click(screen.getByRole("tab", { name: "Announcements" }));
+    expect((screen.getByLabelText("Title (English)") as HTMLInputElement).value).toBe("Exam week tips");
+  });
 
   it("requires both languages and sends nothing until they are filled in", () => {
-    wrap(<SuperAdmin />);
+    wrap(<SuperAdmin />, "en", ANNOUNCE);
     send();
     expect(screen.getAllByText("Required")).toHaveLength(4);
-    expect(window.confirm).not.toHaveBeenCalled();
+    expect(question()).toBeNull();
     expect(m.api.sendBroadcast).not.toHaveBeenCalled();
   });
 
   it("counts characters and writes the Arabic fields right to left", () => {
-    wrap(<SuperAdmin />);
+    wrap(<SuperAdmin />, "en", ANNOUNCE);
     type("Title (English)", "Hello");
     expect(screen.getByText("5/60")).toBeTruthy();
     expect(screen.getByLabelText("Title (Arabic)").getAttribute("dir")).toBe("rtl");
@@ -322,13 +354,20 @@ describe("SuperAdmin announcements", () => {
 
   it("confirms, then sends the trimmed text to one role with the chosen link", async () => {
     m.api.sendBroadcast.mockResolvedValue({ id: "b1", results: { en: "m1", ar: "m2" } });
-    wrap(<SuperAdmin />);
+    wrap(<SuperAdmin />, "en", ANNOUNCE);
     fill();
     type("Who gets it", "role");
     type("Role", "student");
     type("Opens when tapped", "/labs");
     send();
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("Students"));
+    // Asked on the page, naming who gets it; nothing is sent before the answer.
+    expect(question()!.textContent).toContain("Send this announcement to \u2068Students\u2069?");
+    expect(question()!.textContent).toContain("can't be taken back");
+    // Pressing Send again while the question is up only asks again: it never sends.
+    send();
+    expect(screen.getAllByRole("alertdialog")).toHaveLength(1);
+    expect(m.api.sendBroadcast).not.toHaveBeenCalled();
+    sendNow();
     await waitFor(() => expect(m.api.sendBroadcast).toHaveBeenCalledWith({
       title: { en: "Exam week tips", ar: "نصائح أسبوع الامتحانات" },
       body: { en: "Five short lessons to help your class revise.", ar: "خمسة دروس قصيرة تساعد صفّك على المراجعة." },
@@ -338,11 +377,13 @@ describe("SuperAdmin announcements", () => {
     expect(await screen.findByRole("status")).toHaveProperty("textContent", "Announcement sent.");
     expect(m.reload).toHaveBeenCalled();
     expect((screen.getByLabelText("Title (English)") as HTMLInputElement).value).toBe("");
+    expect(question()).toBeNull();
+    expect(screen.getByRole("button", { name: "Send announcement" })).toBeTruthy();
   });
 
   it("needs an organization for an organization audience", async () => {
     m.api.sendBroadcast.mockResolvedValue({ id: "b2", results: { en: "m1", ar: null } });
-    wrap(<SuperAdmin />);
+    wrap(<SuperAdmin />, "en", ANNOUNCE);
     fill();
     type("Who gets it", "org");
     send();
@@ -350,16 +391,56 @@ describe("SuperAdmin announcements", () => {
     expect(m.api.sendBroadcast).not.toHaveBeenCalled();
     type("Organization", "o2");
     send();
+    expect(question()!.textContent).toContain("Sunrise University");
+    sendNow();
     await waitFor(() => expect(m.api.sendBroadcast).toHaveBeenCalledWith(expect.objectContaining({ link: "/learn", audience: { type: "org", orgId: "o2" } })));
     expect(await screen.findByRole("alert")).toHaveProperty("textContent", expect.stringContaining("Arabic version failed"));
   });
 
-  it("sends nothing when the confirm dialog is cancelled", () => {
-    vi.mocked(window.confirm).mockReturnValue(false);
-    wrap(<SuperAdmin />);
+  it("sends nothing when the question is cancelled, and keeps what was written", () => {
+    wrap(<SuperAdmin />, "en", ANNOUNCE);
+    fill();
+    const button = screen.getByRole("button", { name: "Send announcement" });
+    button.focus(); // as a keyboard or a tap leaves it
+    send();
+    // Cancel has the focus, so Enter on a question that just appeared sends nothing; Escape cancels too.
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(question()).toBeNull();
+    // The Send button stayed on the page, so the keyboard focus goes back to it instead of dropping to the page.
+    expect(document.activeElement).toBe(button);
+    expect(m.api.sendBroadcast).not.toHaveBeenCalled();
+    expect((screen.getByLabelText("Title (English)") as HTMLInputElement).value).toBe("  Exam week tips ");
+    send();
+    fireEvent.keyDown(question()!, { key: "Escape" });
+    expect(question()).toBeNull();
+    expect(m.api.sendBroadcast).not.toHaveBeenCalled();
+  });
+
+  it("asks in Arabic, with the audience's name kept in one piece", () => {
+    wrap(<SuperAdmin />, "ar", ANNOUNCE);
+    type("العنوان (بالإنجليزية)", "Exam week tips");
+    type("الرسالة (بالإنجليزية)", "Five short lessons.");
+    type("العنوان (بالعربية)", "نصائح");
+    type("الرسالة (بالعربية)", "خمسة دروس قصيرة.");
+    fireEvent.click(screen.getByRole("button", { name: "أرسل الإعلان" }));
+    expect(question()!.textContent).toContain("هل تريد إرسال هذا الإعلان إلى: \u2068الجميع\u2069؟");
+    expect(question()!.textContent).not.toContain("\u00b7");
+    expect(screen.getByRole("button", { name: "أرسل الآن" })).toBeTruthy();
+  });
+
+  it("says a send that failed in the admin's language, never the server's raw words", async () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    m.api.sendBroadcast.mockRejectedValue(Object.assign(new Error("FirebaseError: Platform admins only. [403]"), { code: "functions/permission-denied" }));
+    wrap(<SuperAdmin />, "en", ANNOUNCE);
     fill();
     send();
-    expect(m.api.sendBroadcast).not.toHaveBeenCalled();
+    sendNow();
+    expect((await screen.findByRole("alert")).textContent).toMatch(/^Your account isn't allowed to do this/);
+    expect(screen.queryByText(/Platform admins only/)).toBeNull();
+    // What was written is still there to send again.
+    expect((screen.getByLabelText("Title (Arabic)") as HTMLInputElement).value).toBe("نصائح أسبوع الامتحانات");
+    logged.mockRestore();
   });
 
   it("lists recent announcements with their audience", () => {
@@ -367,15 +448,17 @@ describe("SuperAdmin announcements", () => {
       { id: "b1", title: { en: "Exam week tips", ar: "نصائح أسبوع الامتحانات" }, audience: { type: "org", orgId: "o2" }, sentAt: { seconds: 1792800000 } },
       { id: "b2", title: { en: "New IoT unit", ar: "وحدة جديدة" }, audience: { type: "role", role: "teacher" }, sentAt: { seconds: 1792700000 } },
     ];
-    wrap(<SuperAdmin />);
+    wrap(<SuperAdmin />, "en", ANNOUNCE);
     expect(screen.getByText("Exam week tips")).toBeTruthy();
-    expect(screen.getAllByText("Sunrise University").length).toBe(2); // the recent list and the active organizations
     expect(screen.getByText("Teachers")).toBeTruthy();
+    expect(screen.getAllByText("Sunrise University").length).toBe(1); // the recent list
+    fireEvent.click(screen.getByRole("tab", { name: "Organizations" }));
+    expect(screen.getAllByText("Sunrise University").length).toBe(2); // the recent list and the active organizations
   });
 
   it("shows Arabic titles and numerals on the Arabic screen", () => {
     m.broadcasts = [{ id: "b1", title: { en: "Exam week tips", ar: "نصائح أسبوع الامتحانات" }, audience: { type: "all" }, sentAt: { seconds: 1792800000 } }];
-    const { container } = wrap(<SuperAdmin />, "ar");
+    const { container } = wrap(<SuperAdmin />, "ar", ANNOUNCE);
     expect(screen.getByText("نصائح أسبوع الامتحانات")).toBeTruthy();
     expect(screen.getAllByText("٠ من ٦٠")).toHaveLength(2);
     expect(container.textContent).not.toContain("·");

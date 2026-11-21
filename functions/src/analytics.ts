@@ -3,18 +3,20 @@
  * - `collect`: phones send their queued events here in one small batch (darsiai.org/api/collect, a Hosting rewrite,
  *   so no second connection). It counts them per day in analytics/{yyyy-mm-dd}, counts active phones through
  *   analyticsDevices/{id}, and forwards the events to Google Analytics (the Firebase web stream) when a platform
- *   admin has connected it on /super/analytics.
+ *   admin has connected it on /super/analytics (`setGaConfig`). A batch sent again is counted once, the batches of one
+ *   moment share one write, and Google Analytics being slow or down never fails or holds a phone's request.
  * - `statsJob` (daily) and `refreshStats` (a platform admin, on demand): accounts and organizations from users'
- *   summaries, into stats/overview.
+ *   summaries, read in pages, into stats/overview. statsJob leaves its heartbeat in stats/jobs.
  */
 import { gunzipSync } from "node:zlib";
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { FieldPath, FieldValue, Timestamp, type DocumentSnapshot, type QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { db, freshCaller } from "./admin.js";
-import { superStats } from "./billingCore.js";
-import { dailyCounts, dayOf, measurementPayloads, overview, parseBatch, sanitize, type Batch, type Counts, type Known, type OrgRow, type UserRow } from "./analyticsCore.js";
+import { audit, db, freshCaller } from "./admin.js";
+import { superStats, type Subscription } from "./billingCore.js";
+import { addCounts, capBuilds, dailyCounts, dayOf, measurementPayloads, overviewAcc, parseBatch, sanitize, OTHER, type Batch, type Counts, type Known, type OrgRow } from "./analyticsCore.js";
+import { clientIp } from "./clientIp.js";
 import { catalogOf } from "./courses.js";
 import { loadLanguages, loadTracks } from "./settings.js";
 import { LAB_IDS } from "./shared/labs.js";
@@ -33,31 +35,128 @@ export async function gaConfig() {
   return ga;
 }
 
-async function forward(batch: Batch, nowSec: number) {
-  const { mid, secret } = await gaConfig();
-  if (!mid || !secret) return;
-  const url = `https://www.google-analytics.com/mp/collect?measurement_id=${encodeURIComponent(mid)}&api_secret=${encodeURIComponent(secret)}`;
-  for (const body of measurementPayloads(batch, nowSec)) {
-    const r = await fetch(url, { method: "POST", body: JSON.stringify(body), signal: AbortSignal.timeout(5000) }).catch((e: Error) => e);
-    if (r instanceof Error || !r.ok) logger.warn("analytics: Google Analytics refused a batch", { status: r instanceof Error ? r.message : r.status });
-  }
-}
-
-/** A phone seen today for the first time today (or ever) adds to the day's active (and new) phones. */
-async function countDevice(batch: Batch, day: string) {
-  const ref = db.doc(`analyticsDevices/${batch.ctx.d}`);
-  const snap = await ref.get();
-  const last = snap.get("last") as string | undefined;
-  if (last && last >= day) return null;
-  const { role, lang, org, aud, inst } = batch.ctx;
-  await ref.set({ last: day, ...(snap.exists ? {} : { first: day }), role, lang, inst, ...(org ? { org } : {}), ...(aud ? { aud } : {}) }, { merge: true });
-  return { dev: 1, ...(snap.exists ? {} : { devNew: 1 }), devRole: { [role]: 1 } };
+/**
+ * The batch, on to Google Analytics. It never fails and never holds the phone's request: Darsi's own counts are in by
+ * now, and an error here used to answer 500, so the phone sent the whole batch again and it was counted twice. One
+ * attempt per payload (3 s each, side by side), a failed read of the settings is only logged, and the whole of it
+ * gives up after 4 s. It still runs before the answer: Cloud Functions may stop an instance's work once it has answered.
+ */
+const FORWARD_MS = 4000, PAYLOAD_MS = 3000;
+async function forward(batch: Batch, nowSec: number): Promise<void> {
+  const send = async () => {
+    const { mid, secret } = await gaConfig();
+    if (!mid || !secret) return;
+    const url = `https://www.google-analytics.com/mp/collect?measurement_id=${encodeURIComponent(mid)}&api_secret=${encodeURIComponent(secret)}`;
+    await Promise.all(measurementPayloads(batch, nowSec).map(async (body) => {
+      const r = await fetch(url, { method: "POST", body: JSON.stringify(body), signal: AbortSignal.timeout(PAYLOAD_MS) }).catch((e: Error) => e);
+      if (r instanceof Error || !r.ok) logger.warn("analytics: Google Analytics refused a batch", { status: r instanceof Error ? r.message : r.status });
+    }));
+  };
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    send().catch((e) => logger.warn("analytics: Google Analytics not reached", { error: String(e) })),
+    new Promise<void>((late) => { timer = setTimeout(() => { logger.warn("analytics: Google Analytics too slow, batch not forwarded"); late(); }, FORWARD_MS); }),
+  ]);
+  clearTimeout(timer); // no timer outlives the request
 }
 
 /**
- * Requests per minute, per instance: per address and device (L6: the client's address is Hosting's fastly-client-ip,
- * or the first x-forwarded-for hop), per address alone (a school's phones share one), and for the whole instance:
- * the brake that holds even when someone makes up addresses and device ids.
+ * A phone seen for the first time today (or ever) adds to the day's active (and new) phones: `counts` for the day, and
+ * `fields` for its own record, which is written after the counts (countBatch), so a failed count is retried in full.
+ */
+function deviceSeen(snap: DocumentSnapshot, batch: Batch, day: string) {
+  const last = snap.get("last") as string | undefined;
+  if (last && last >= day) return null;
+  const { role, lang, org, aud, inst } = batch.ctx;
+  return {
+    counts: { dev: 1, ...(snap.exists ? {} : { devNew: 1 }), devRole: { [role]: 1 } } as Counts,
+    fields: { last: day, ...(snap.exists ? {} : { first: day }), role, lang, inst, ...(org ? { org } : {}), ...(aud ? { aud } : {}) },
+  };
+}
+
+/**
+ * The builds each day's errBuild already names (capBuilds keeps a day to 20), per instance: read from the day's
+ * document the first time a batch brings errors for that day, and again after 10 minutes (what other instances added).
+ * Instances don't see each other's additions in between, so a day can end with a few more than 20 names (at most 20 per
+ * instance): the point is that made-up builds can't fill the document.
+ */
+const builds = new Map<string, { at: number; names: Promise<Set<string>> }>();
+function buildsOf(day: string): Promise<Set<string>> {
+  const hit = builds.get(day);
+  if (hit && Date.now() - hit.at < 10 * 60e3) return hit.names;
+  const names = (async () => {
+    const mine = hit ? await hit.names.catch(() => new Set<string>()) : new Set<string>();
+    const stored = (await db.doc(`analytics/${day}`).get()).get("errBuild") as unknown;
+    return new Set([...mine, ...Object.keys(stored && typeof stored === "object" ? stored : {})].filter((b) => b !== OTHER));
+  })();
+  if (builds.size > 40) builds.clear(); // a batch reaches back 30 days at most
+  builds.set(day, { at: Date.now(), names });
+  names.catch(() => { if (builds.get(day)?.names === names) builds.delete(day); });
+  return names;
+}
+
+/**
+ * One write for the batches of one moment. Every batch used to be its own write to analytics/{day}, a document
+ * Firestore takes about one write a second on; now the counts of the requests that arrive within 250 ms (on this
+ * instance) are added up and written once, each day's to its own document, all days in one commit (so a batch that
+ * spans two days is in both or in neither). Every request of the window waits for that commit and answers by it. The
+ * 250 ms timer belongs to the window's first request, which is still waiting when it fires.
+ */
+const COALESCE_MS = 250;
+interface Window { days: Record<string, Counts>; done: Promise<void> }
+let pending: Window | null = null;
+function countSoon(days: Record<string, Counts>): Promise<void> {
+  if (!pending) {
+    const mine: Window = { days: {}, done: Promise.resolve() };
+    mine.done = new Promise<void>((go) => setTimeout(go, COALESCE_MS)).then(async () => {
+      if (pending === mine) pending = null; // batches from now on start the next window
+      const write = db.batch();
+      for (const [day, c] of Object.entries(mine.days)) write.set(db.doc(`analytics/${day}`), { ...increments(c), day }, { merge: true });
+      await write.commit();
+    });
+    // Every request of the window awaits `done` and answers by it; this only keeps a failed write from being an
+    // unhandled rejection (which ends the instance, and every request on it) should a window ever be left with no one waiting.
+    mine.done.catch(() => {});
+    pending = mine;
+  }
+  for (const [day, c] of Object.entries(days)) addCounts((pending.days[day] ??= {}), c);
+  return pending.done;
+}
+
+/** One phone's batches are counted one at a time (on this instance), so the second of two sees what the first left on the phone's record. */
+const busy = new Map<string, Promise<unknown>>();
+async function inTurn<T>(device: string, work: () => Promise<T>): Promise<T> {
+  const mine = (busy.get(device) ?? Promise.resolve()).catch(() => {}).then(work);
+  busy.set(device, mine);
+  try { return await mine; } finally { if (busy.get(device) === mine) busy.delete(device); }
+}
+
+/**
+ * Counts one batch, once. A phone sends a batch again whenever it got no 2xx answer (a lost connection, a 500), with
+ * the same batch id (`b`); the id of the last batch counted is kept on the phone's record (lastBatch), written after
+ * the counts. So an answer lost after the counts were written is caught when the batch comes again, and a batch whose
+ * counts failed is counted in full the next time. Batches without an id (older apps) are counted every time, as before.
+ */
+async function countBatch(raw: Batch): Promise<Batch | null> {
+  const ref = db.doc(`analyticsDevices/${raw.ctx.d}`);
+  const [batch, snap] = await Promise.all([clean(raw), ref.get()]);
+  if (raw.b && snap.get("lastBatch") === raw.b) return null;
+  const days = dailyCounts(batch);
+  for (const [day, c] of Object.entries(days)) if (c.errBuild) days[day] = capBuilds(c, await buildsOf(day));
+  const latest = dayOf(Math.max(...batch.events.map((e) => e.t)));
+  const device = deviceSeen(snap, batch, latest);
+  if (device) days[latest] = { ...(days[latest] ?? {}), ...device.counts };
+  await countSoon(days);
+  // From here the batch is counted, so nothing may fail the request any more (the phone would send it all again).
+  const record = { ...(device?.fields ?? {}), ...(raw.b ? { lastBatch: raw.b } : {}) };
+  if (Object.keys(record).length) await ref.set(record, { merge: true }).catch((e) => logger.warn("analytics: device record not written", { error: String(e) }));
+  return batch;
+}
+
+/**
+ * Requests per minute, per instance: per address and device (L6: the client's address as clientIp.ts finds it behind
+ * Hosting and Cloudflare), per address alone (a school's phones share one), and for the whole instance: the brake that
+ * holds even when someone makes up addresses and device ids.
  */
 const seen = new Map<string, { at: number; n: number }>();
 function over(key: string, max: number, now: number) {
@@ -72,8 +171,7 @@ export function tooMany(ip: string, device: string, now = Date.now()) {
   if (++instance.n > LIMITS.instance) return true;
   return over(`a:${ip}`, LIMITS.address, now) || over(`d:${ip}:${device}`, LIMITS.device, now);
 }
-export const clientIp = (h: Record<string, string | string[] | undefined>, fallback = "?") =>
-  String(h["fastly-client-ip"] ?? "").trim() || String(h["x-forwarded-for"] ?? "").split(",")[0].trim() || fallback;
+export { clientIp };
 
 /** The ids counts may be kept under (sanitize), re-read at most every 10 minutes per instance. */
 let knownIds: { at: number; v: Promise<Known> } | null = null;
@@ -123,15 +221,10 @@ export const collect = onRequest({ maxInstances: 3, memory: "256MiB", timeoutSec
   if (tooMany(clientIp(req.headers, String(req.ip ?? "?")), batch.ctx.d)) { res.status(429).end(); return; }
   if (!batch.events.length) { res.status(204).end(); return; }
   try {
-    batch = await clean(batch);
-    const days = dailyCounts(batch);
-    const latest = dayOf(Math.max(...batch.events.map((e) => e.t)));
-    const device = await countDevice(batch, latest);
-    if (device) days[latest] = { ...(days[latest] ?? {}), ...device };
-    await Promise.all([
-      ...Object.entries(days).map(([day, c]) => db.doc(`analytics/${day}`).set({ ...increments(c), day }, { merge: true })),
-      forward(batch, nowSec),
-    ]);
+    const sent = batch;
+    const counted = await inTurn(sent.ctx.d, () => countBatch(sent));
+    // A batch counted before (null) went to Google Analytics then, or was given up on: never twice.
+    if (counted) await forward(counted, nowSec);
     res.status(204).end();
   } catch (e) {
     logger.error("analytics: collect failed", e);
@@ -139,36 +232,118 @@ export const collect = onRequest({ maxInstances: 3, memory: "256MiB", timeoutSec
   }
 });
 
-/** Every account's role, organization, dates and summary (only those fields), and every organization. */
-async function buildOverview() {
-  const [users, orgs, subs] = await Promise.all([
-    db.collection("users").select("role", "orgId", "createdAt", "lastActive", "superSeat", "summary.lessonsDone", "summary.xp", "summary.avgAccuracy", "summary.lastActive", "summary.weeks").get(),
-    db.collection("orgs").select("name", "status", "country", "memberCount", "licence").get(),
-    db.collection("subscriptions").get(),
-  ]);
-  const rows: UserRow[] = users.docs.map((d) => {
-    const u = d.data(), s = (u.summary ?? {}) as Record<string, unknown>;
-    const last = [u.lastActive, s.lastActive].filter((x): x is string => typeof x === "string").sort().pop() ?? null;
-    return {
-      role: u.role, orgId: u.orgId ?? null, createdAt: u.createdAt instanceof Timestamp ? u.createdAt.toMillis() : null, lastActive: last,
-      lessonsDone: Number(s.lessonsDone) || 0, xp: Number(s.xp) || 0, avgAccuracy: Number(s.avgAccuracy) || 0, weeks: (s.weeks as Record<string, number>) ?? {},
-    };
-  });
-  const orgRows: OrgRow[] = orgs.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<OrgRow, "id">) }));
-  const seatHolders: Record<string, number> = {};
-  for (const d of users.docs) if (d.get("superSeat") === true && d.get("orgId")) seatHolders[d.get("orgId")] = (seatHolders[d.get("orgId")] ?? 0) + 1;
-  const o = { ...overview(rows, orgRows), super: superStats(subs.docs.map((d) => d.data()), orgs.docs.map((d) => ({ id: d.id, licence: d.get("licence") })), seatHolders) };
-  await db.doc("stats/overview").set(o);
-  return o;
+/**
+ * Every document of a collection, 2,000 at a time in document-id order, with only `fields` leaving Firestore. One
+ * query for all accounts held every one of them in memory at once (and again as rows); a page is let go once folded in.
+ */
+const STATS_PAGE = 2000;
+async function eachPage(col: string, fields: string[], each: (docs: QueryDocumentSnapshot[]) => void): Promise<number> {
+  let last: string | undefined, n = 0;
+  for (;;) {
+    let q = db.collection(col).orderBy(FieldPath.documentId()).select(...fields).limit(STATS_PAGE);
+    if (last !== undefined) q = q.startAfter(last);
+    const page = await q.get();
+    each(page.docs);
+    n += page.size;
+    if (page.size < STATS_PAGE) return n;
+    last = page.docs[page.docs.length - 1].id;
+  }
 }
 
-export const statsJob = onSchedule({ schedule: "30 2 * * *", timeZone: "UTC", timeoutSeconds: 540, memory: "512MiB", retryCount: 1 }, async () => {
-  const o = await buildOverview();
-  logger.info("analytics: overview", { users: o.users.total, orgs: Object.keys(o.orgs).length });
+/**
+ * orgs.memberCount is kept by increments beside each change of membership, and a failed or repeated one leaves it off
+ * for good. After the accounts were counted, an organization whose stored number differs gets the counted one: that one
+ * field, at most 400 organizations a run (the rest the next day). Someone who joins while the job runs can be missed
+ * for a day; the next run puts it right. A failed update is only logged.
+ */
+const MEND_MAX = 400;
+async function mendMemberCounts(orgs: QueryDocumentSnapshot[], counted: Map<string, number>): Promise<number> {
+  const wrong = orgs.filter((d) => d.get("memberCount") !== (counted.get(d.id) ?? 0)).slice(0, MEND_MAX);
+  for (let i = 0; i < wrong.length; i += 50) {
+    await Promise.all(wrong.slice(i, i + 50).map((d) => d.ref.update({ memberCount: counted.get(d.id) ?? 0 })
+      .catch((e) => logger.warn("analytics: memberCount not mended", { orgId: d.id, error: String(e) }))));
+  }
+  if (wrong.length) logger.info("analytics: memberCount mended", { orgs: wrong.length });
+  return wrong.length;
+}
+
+/**
+ * Every account's role, organization, dates and summary (only those fields), folded in page by page (overviewAcc);
+ * subscriptions the same way, with the four fields superStats reads; then every organization. The organizations are
+ * read last, so their memberCount is compared with a count that is seconds old.
+ */
+async function buildOverview() {
+  const acc = overviewAcc();
+  const seatHolders: Record<string, number> = {};
+  const subs: Array<Partial<Subscription>> = [];
+  const [users] = await Promise.all([
+    eachPage("users", ["role", "orgId", "createdAt", "lastActive", "superSeat", "summary.lessonsDone", "summary.graded", "summary.xp", "summary.avgAccuracy", "summary.lastActive", "summary.weeks"], (docs) => {
+      for (const d of docs) {
+        const u = d.data(), s = (u.summary ?? {}) as Record<string, unknown>;
+        const last = [u.lastActive, s.lastActive].filter((x): x is string => typeof x === "string").sort().pop() ?? null;
+        acc.add({
+          role: u.role, orgId: u.orgId ?? null, createdAt: u.createdAt instanceof Timestamp ? u.createdAt.toMillis() : null, lastActive: last,
+          lessonsDone: Number(s.lessonsDone) || 0, ...(typeof s.graded === "number" ? { graded: s.graded } : {}), xp: Number(s.xp) || 0, avgAccuracy: Number(s.avgAccuracy) || 0, weeks: (s.weeks as Record<string, number>) ?? {},
+        });
+        if (u.superSeat === true && u.orgId) seatHolders[u.orgId] = (seatHolders[u.orgId] ?? 0) + 1;
+      }
+    }),
+    eachPage("subscriptions", ["plan", "status", "currentPeriodEnd", "source"], (docs) => { for (const d of docs) subs.push(d.data()); }),
+  ]);
+  const orgs = await db.collection("orgs").select("name", "status", "country", "memberCount", "licence").get();
+  const orgRows: OrgRow[] = orgs.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<OrgRow, "id">) }));
+  const o = { ...acc.finish(orgRows), super: superStats(subs, orgs.docs.map((d) => ({ id: d.id, licence: d.get("licence") })), seatHolders) };
+  await db.doc("stats/overview").set(o);
+  const mended = await mendMemberCounts(orgs.docs, acc.members());
+  return { overview: o, users, mended };
+}
+
+/**
+ * The daily run, and its heartbeat in stats/jobs (the shape every scheduled job leaves: {at, ok, …}; a failure adds
+ * the error's first 200 characters). A run that fails is rethrown, so Cloud Scheduler's one retry still happens; a
+ * heartbeat older than a day, or ok: false, is what an alert or /super should look at.
+ */
+export const statsJob = onSchedule({ schedule: "30 2 * * *", timeZone: "UTC", timeoutSeconds: 540, memory: "1GiB", retryCount: 1 }, async () => {
+  const beat = (fields: Record<string, unknown>) => db.doc("stats/jobs").set({ statsJob: { at: Date.now(), ...fields } }, { merge: true });
+  let r: Awaited<ReturnType<typeof buildOverview>>;
+  try { r = await buildOverview(); } catch (e) {
+    await beat({ ok: false, error: String((e as Error)?.message ?? e).slice(0, 200) }).catch((x) => logger.error("analytics: statsJob heartbeat not written", { error: String(x) }));
+    throw e;
+  }
+  logger.info("analytics: overview", { users: r.users, orgs: Object.keys(r.overview.orgs).length, mended: r.mended });
+  await beat({ ok: true, users: r.users, error: FieldValue.delete() }); // a run that worked clears the last failure's words
 });
 
 export const refreshStats = onCall({ timeoutSeconds: 300, memory: "512MiB" }, async (req) => {
   if ((await freshCaller(req)).role !== "superadmin") throw new HttpsError("permission-denied", "Platform admins only.");
-  const o = await buildOverview();
-  return { at: o.at };
+  return { at: (await buildOverview()).overview.at };
+});
+
+/**
+ * Connects (or, with both fields empty, disconnects) the Google Analytics stream `collect` forwards to. Platform
+ * admins only, checked against Auth now; the same checks as the rule on config/analytics, which this replaces as the
+ * way to write it, so the change is audited. The audit entry says whether a secret is set, never the secret.
+ * `collect` forwards with the new settings within 10 minutes (gaConfig): it runs on instances of its own, so forgetting
+ * the cached settings here only counts where the functions share a process (the tests).
+ */
+const GA_ID = /^(G-[A-Z0-9]{4,16})?$/;
+const GA_SECRET_MAX = 100;
+export const setGaConfig = onCall(async (req) => {
+  const c = await freshCaller(req);
+  if (c.role !== "superadmin") throw new HttpsError("permission-denied", "Platform admins only.", { reason: "not-super" });
+  const d = (req.data ?? {}) as Record<string, unknown>;
+  const measurementId = typeof d.measurementId === "string" ? d.measurementId.trim() : null;
+  const apiSecret = typeof d.apiSecret === "string" ? d.apiSecret.trim() : null;
+  // Two reasons, so the page can point at the right field: "bad-ga" for the ID (or a field that isn't text), and
+  // "bad-ga-secret" for an API secret that is too long. A bad ID is said first.
+  if (measurementId === null || apiSecret === null || !GA_ID.test(measurementId)) {
+    throw new HttpsError("invalid-argument", "A measurement ID looks like G-ABC123XYZ.", { reason: "bad-ga" });
+  }
+  if (apiSecret.length > GA_SECRET_MAX) {
+    throw new HttpsError("invalid-argument", `The API secret has at most ${GA_SECRET_MAX} characters.`, { reason: "bad-ga-secret" });
+  }
+  await db.doc("config/analytics").set({ measurementId, apiSecret, updatedAt: FieldValue.serverTimestamp(), updatedBy: c.uid });
+  ga = null;
+  await audit("setGaConfig", c.uid, { measurementId, hasSecret: apiSecret !== "" });
+  return { ok: true };
 });

@@ -24,6 +24,11 @@ const same = (a: string, b: string) => {
   const x = Buffer.from(a, "utf8"), y = Buffer.from(b, "utf8");
   return x.length === y.length && timingSafeEqual(x, y);
 };
+/**
+ * A secret that was really set: the deploy creates every payment secret as the placeholder "unset" (payments closed),
+ * and a webhook signed with that public word must not pass as signed (sec-live-3).
+ */
+export const realSecret = (s: string | undefined) => !!s && s.trim() !== "" && s.trim() !== "unset";
 
 /* ---------- Paymob ---------- */
 
@@ -35,7 +40,7 @@ export function paymobHmac(obj: unknown, secret: string) {
   const text = PAYMOB_FIELDS.map((f) => { const v = at(obj, f); return v === undefined || v === null ? "" : String(v); }).join("");
   return createHmac("sha512", secret).update(text).digest("hex");
 }
-export const verifyPaymob = (obj: unknown, hmac: string | undefined, secret: string) => !!hmac && !!secret && same(paymobHmac(obj, secret), hmac.toLowerCase());
+export const verifyPaymob = (obj: unknown, hmac: string | undefined, secret: string) => !!hmac && realSecret(secret) && same(paymobHmac(obj, secret), hmac.toLowerCase());
 
 /**
  * What a Paymob transaction callback means, from its signed fields only (PAYMOB_FIELDS; M3 in the security review).
@@ -75,13 +80,42 @@ export function fullyRefunded(t: Record<string, unknown> | null | undefined) {
 
 /** Checks a Stripe-Signature header (t=…,v1=…) against the raw body, within `tolerance` seconds. */
 export function verifyStripe(raw: Buffer | string, header: string | undefined, secret: string, nowSec = Math.floor(Date.now() / 1000), tolerance = 300) {
-  if (!header || !secret) return false;
+  if (!header || !realSecret(secret)) return false;
   const parts = header.split(",").map((p) => p.trim().split("="));
   const t = Number(parts.find(([k]) => k === "t")?.[1]);
   const sigs = parts.filter(([k]) => k === "v1").map(([, v]) => v);
   if (!Number.isFinite(t) || !sigs.length || Math.abs(nowSec - t) > tolerance) return false;
   const expected = createHmac("sha256", secret).update(`${t}.${typeof raw === "string" ? raw : raw.toString("utf8")}`).digest("hex");
   return sigs.some((s) => same(expected, s));
+}
+
+/** An invoice as Darsi reads it back (API version 2024-06-20): its lines carry the period each one pays for. */
+export interface StripeInvoice {
+  id: string; subscription: string | null; payment_intent: string | null; billing_reason: string; amount_paid: number; currency: string;
+  lines?: { data?: { period?: { start?: number; end?: number } }[] };
+}
+/**
+ * The end (ms) of the service period a subscription invoice paid for: its lines' period, not the invoice's own
+ * period_end (for a renewal, that is when the period before it ended). Undefined when the invoice doesn't say.
+ */
+export function invoicePeriodEnd(inv: Pick<StripeInvoice, "lines">): number | undefined {
+  return invoicePeriod(inv).until;
+}
+/**
+ * The service period a subscription invoice paid for, from the line that ends last: its end (ms) and its length (ms;
+ * 28 to 31 days for a calendar month), so a period paid ahead of time is added in full (billingCore.paymentEffects).
+ */
+export function invoicePeriod(inv: Pick<StripeInvoice, "lines">): { until?: number; periodMs?: number } {
+  const lines = (inv.lines?.data ?? []).map((l) => ({ start: Number(l.period?.start) || 0, end: Number(l.period?.end) || 0 })).filter((l) => l.end > 0);
+  if (!lines.length) return {};
+  const last = lines.reduce((a, b) => (b.end > a.end ? b : a));
+  const ms = last.start > 0 && last.end > last.start ? (last.end - last.start) * 1000 : undefined;
+  return { until: last.end * 1000, ...(ms ? { periodMs: ms } : {}) };
+}
+/** A Stripe subscription's state in Darsi's terms: a renewal cancelled (or the subscription ended) is "canceled". */
+export function stripeSubStatus(s: { status?: string; cancel_at_period_end?: boolean }): "active" | "canceled" | "past_due" {
+  if (s.cancel_at_period_end === true || s.status === "canceled" || s.status === "incomplete_expired") return "canceled";
+  return s.status === "past_due" || s.status === "unpaid" ? "past_due" : "active";
 }
 
 /** Stripe's form encoding, with nested keys (metadata[checkout]=…, line_items[0][price_data][currency]=…). */

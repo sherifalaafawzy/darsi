@@ -106,7 +106,7 @@ export default function Colouring({ meta, onDone }: LabProps) {
     <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
       <div className="lb-two">
         <div className="stack">
-          <Plot x={[0, 10]} y={[0, 10]} ticks={0} height={300} label={s.map} onPick={pick}>
+          <Plot x={[0, 10]} y={[0, 10]} ticks={0} height={300} label={s.map} onPick={pick} picker={false /* every exam has its own button */}>
             {({ px, py }) => <>
               {es.map(([a, b]) => <line key={`${a}-${b}`} x1={px(SPOTS[a][0])} y1={py(SPOTS[a][1])} x2={px(SPOTS[b][0])} y2={py(SPOTS[b][1])} className={slots[a] && slots[a] === slots[b] ? "lb-clash-line is-clash" : inClique.has(a) && inClique.has(b) ? "lb-clash-line is-strong" : "lb-clash-line"} />)}
               {SPOTS.map(([x, y], i) => {

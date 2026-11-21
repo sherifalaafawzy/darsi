@@ -3,6 +3,7 @@ import { Icon } from "@darsi/design-system";
 import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
 import { Segmented, Slider, Stats } from "../../kit/controls";
+import { signed } from "../../kit/Formula";
 import { Plot } from "../../kit/Plot";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
@@ -70,7 +71,8 @@ export default function Neuron({ meta, onDone }: LabProps) {
           <NeuronDiagram x={x} w={w} y={y} fmt={n2} />
           {/* Each number is its own isolate: Arabic-Indic digits would otherwise turn the whole formula right-to-left. */}
           <p className="lb-mono" dir="ltr" aria-label={s.sum}>
-            {[...x.flatMap((xi, i) => [...(i ? [" + "] : []), n2(xi), " × ", n2(w[i])]), b < 0 ? " − " : " + ", n2(Math.abs(b)), " = ", n2(z)].map((part, i) => <bdi key={i}>{part}</bdi>)}
+            {/* Negatives through signed(): Intl's Arabic minus carries a letter mark that turns its isolate right to left. */}
+            {[...x.flatMap((xi, i) => [...(i ? [" + "] : []), n2(xi), " × ", signed(num, w[i])]), b < 0 ? " − " : " + ", n2(Math.abs(b)), " = ", signed(num, z)].map((part, i) => <bdi key={i} dir="ltr">{part}</bdi>)}
           </p>
           <div className={yes ? "notice ok" : "notice"} role="status">
             <strong>{s.today}: {yes ? s.yes : s.no}</strong>{f === "sigmoid" && <span> ({s.sure}: {num(y, { style: "percent" })})</span>}

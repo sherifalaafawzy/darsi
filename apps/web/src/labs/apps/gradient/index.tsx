@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { useI18n } from "../../../i18n";
 import { LabShell } from "../../kit/LabShell";
 import { RunBar, Segmented, Stats } from "../../kit/controls";
+import { Formula, signed } from "../../kit/Formula";
 import { Plot } from "../../kit/Plot";
 import { useKit, useS } from "../../kit/strings";
 import { useLoop } from "../../kit/useLoop";
@@ -16,7 +17,7 @@ const S = {
     valley: "The error valley: the ball is the current slope", slope: "Line slope", error: "Error",
     history: "Error after each step", steps: "Steps", gradient: "Downhill direction",
     converged: "Found the bottom of the valley: this is the best straight line.", diverged: "The steps are too big: the ball jumps across the valley and climbs higher each time. Try a smaller step.",
-    slow: "Still crawling. A bigger step would get there faster.", line: "Score ≈",
+    slow: "Still crawling. A bigger step would get there faster.", line: "Score",
     try1: "Leave the step size on Good and press Run: the ball rolls down into the valley, and the line settles on the dashed best line in under 100 steps.",
     try2: "Pick Too big and press Run: the ball leaps from one side of the valley to the other, higher each time, and the error climbs instead of falling.",
     try3: "Pick Tiny and press Run: the error falls, but after 200 steps the line still hasn't reached the dashed one.",
@@ -29,7 +30,7 @@ const S = {
     valley: "وادي الخطأ: الكرة هي الميل الحالي", slope: "ميل الخط", error: "الخطأ",
     history: "الخطأ بعد كل خطوة", steps: "الخطوات", gradient: "اتجاه النزول",
     converged: "وصلنا إلى قاع الوادي: هذا أفضل خط مستقيم.", diverged: "الخطوات كبيرة جدًا: تقفز الكرة فوق الوادي وتصعد أعلى كل مرة. جرّب خطوة أصغر.",
-    slow: "ما زالت تزحف. الخطوة الأكبر ستصل أسرع.", line: "الدرجة ≈",
+    slow: "ما زالت تزحف. الخطوة الأكبر ستصل أسرع.", line: "الدرجة",
     try1: "اترك حجم الخطوة على «مناسبة» واضغط «شغّل»: تتدحرج الكرة إلى قاع الوادي، ويستقر الخط على الخط المتقطع الأفضل في أقل من ١٠٠ خطوة.",
     try2: "اختر «كبيرة جدًا» واضغط «شغّل»: تقفز الكرة من جانب الوادي إلى جانبه الآخر، أعلى في كل مرة، ويرتفع الخطأ بدل أن ينخفض.",
     try3: "اختر «صغيرة جدًا» واضغط «شغّل»: ينخفض الخطأ، لكن الخط بعد ٢٠٠ خطوة لم يصل بعد إلى الخط المتقطع.",
@@ -62,7 +63,8 @@ export default function Gradient({ meta, onDone }: LabProps) {
   const loop = useLoop(() => { const now = performance.now(); if (now - lastAt.current < STEP_MS[rate]) return true; lastAt.current = now; return one(); }, { maxPerFrame: 1 });
   const e = hist.current.at(-1) ?? 0;
   const g = grad(l, pts);
-  const n2 = (v: number) => num(Math.round(v * 100) / 100);
+  const n2 = (v: number) => signed(num, v);
+  const c100 = Math.round(l.c * 10000) / 100; // the line's constant, rounded before its sign becomes the operator
   // The valley: error as the slope m varies, with c held where it is now.
   const valley = Array.from({ length: 61 }, (_, i) => { const m = -0.5 + i * 0.025; return [m, loss({ m, c: l.c }, pts)] as const; });
   const vMax = Math.max(...valley.map(([, v]) => v));
@@ -76,7 +78,8 @@ export default function Gradient({ meta, onDone }: LabProps) {
           <Plot x={[0, 1]} y={[0, 1]} height={240} label={s.fit} fmt={(v) => num(Math.round(v * 10))} xLabel={s.hours} yLabel={`${s.score} (×10)`}
             dots={pts.map((p) => ({ x: p.x, y: p.y, tone: "a", r: 5 }))}
             lines={[{ points: [[0, l.c], [1, l.m + l.c]], tone: "b", width: 3 }, { points: [[0, target.c], [1, target.m + target.c]], tone: "muted", dashed: true, width: 1.5 }]} />
-          <p className="lb-mono" dir="ltr">{[s.line, " ", n2(l.m * 10), " × h + ", n2(l.c * 100)].map((p, i) => <bdi key={i}>{p}</bdi>)}</p>
+          {/* The constant's sign is the operator ("− 20.37", not "+ -20.37"), and "≈" is its own part, so Arabic keeps the textbook order. */}
+          <Formula parts={[s.line, "≈", n2(l.m * 10), "× h", c100 < 0 ? "−" : "+", num(Math.abs(c100))]} />
           <RunBar running={loop.running} onToggle={() => { if (status) reset(); loop.toggle(); }} onStep={() => { if (status) reset(); one(); }} onReset={() => { loop.stop(); reset(); }} />
           <Stats items={[{ label: s.steps, value: num(h.length - 1) }, { label: s.error, value: Number.isFinite(e) ? n2(e * 100) : "∞" }, { label: s.gradient, value: g.dm > 0 ? "←" : "→" }]} />
           {status && <p className={status === "converged" ? "notice ok" : "notice"} role="status">{s[status]}</p>}

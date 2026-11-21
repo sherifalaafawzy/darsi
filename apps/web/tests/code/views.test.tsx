@@ -49,10 +49,45 @@ describe("write and run", () => {
     expect(await screen.findByText("Error on line 1")).toBeTruthy();
     m.run.mockResolvedValueOnce({ runs: [], ms: 3000, timeout: true });
     fireEvent.click(screen.getByRole("button", { name: "Run" }));
-    expect(await screen.findByText("Stopped after 3 seconds. Does a loop never end?")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Show a hint" }));
+    // A program too slow for its data stops at the limit too: the message names both.
+    expect(await screen.findByText("Stopped after 3 seconds. Does a loop never end? Or is the program too slow for this much data, with a loop inside a loop?")).toBeTruthy();
+    const more = screen.getByRole("button", { name: "Show a hint" });
+    more.focus();
+    fireEvent.click(more);
     expect(screen.getByText("Use +.")).toBeTruthy();
     expect((screen.getByRole("button", { name: "Show a hint" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(document.activeElement).toBe(screen.getByText("Use +.")); // the last hint: its button is done, the focus moves to it
+  });
+
+  it("SQL: says what stops a query, and counts every row though a run sends back 200", async () => {
+    const sqlStep: CodeStep = { type: "code", id: "s1", prompt: T("List them."), lang: "sql", starter: "SELECT * FROM rain a, rain b", solution: "SELECT 1", setup: "" };
+    m.run.mockResolvedValueOnce({ runs: [{ out: "", passed: false, table: { columns: ["x"], values: Array.from({ length: 200 }, (_, i) => [i]), rowCount: 371293 } }], ms: 900 });
+    show(sqlStep);
+    fireEvent.click(await screen.findByRole("button", { name: "Run" }));
+    expect(await screen.findByText("Rows: 371,293 (and 371,243 more)")).toBeTruthy();
+    expect(document.querySelectorAll(".cd-table tbody tr")).toHaveLength(50);
+    m.run.mockResolvedValueOnce({ runs: [], ms: 3000, timeout: true });
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+    expect(await screen.findByText("Stopped after 3 seconds. Does WITH RECURSIVE repeat without end, or does a join make far too many rows?")).toBeTruthy();
+  });
+
+  it("keeps the focus on Run while the runtime loads and the program runs, and moves it from Start again to Run", async () => {
+    // A disabled button loses the focus in a browser (jsdom keeps it): the stand-in for loading takes it away.
+    m.prepare.mockImplementation(async () => { (document.activeElement as HTMLElement | null)?.blur(); });
+    m.run.mockResolvedValue({ runs: [{ out: "5\n", passed: true }], ms: 3 });
+    show({ ...step, id: "c-focus" });
+    const runBtn = await screen.findByRole("button", { name: "Run" });
+    runBtn.focus();
+    fireEvent.click(runBtn);
+    await waitFor(() => expect(screen.getByText("5")).toBeTruthy());
+    expect(document.activeElement).toBe(runBtn);
+    const editor = screen.getByRole("textbox", { name: "Your code" });
+    fireEvent.change(editor, { target: { value: "print(5)" } });
+    const again = screen.getByRole("button", { name: "Start again" });
+    again.focus();
+    fireEvent.click(again);
+    expect((again as HTMLButtonElement).disabled).toBe(true);
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Run" }));
   });
 
   it("says what Python needs to download, once, when it can't", async () => {
@@ -70,6 +105,46 @@ describe("write and run", () => {
     expect(editor.value).toBe("for i in range(3):\n    ");
     fireEvent.click(screen.getByRole("button", { name: "(" }));
     expect(editor.value).toBe("for i in range(3):\n    (");
+  });
+
+  it("indents with Tab, leaves with Esc then Tab or Shift+Tab, and says so (WCAG 2.1.2)", async () => {
+    const tabStep = { ...step, id: "c-tab" }; // its own draft
+    const { view } = show(tabStep);
+    const editor = (await screen.findByRole("textbox", { name: "Your code" })) as HTMLTextAreaElement;
+    const hint = document.getElementById(editor.getAttribute("aria-describedby")!)!;
+    expect(hint.textContent).toBe("Tab indents. To leave the editor, press Esc, then Tab or Shift+Tab.");
+    expect(hint.classList.contains("is-shown")).toBe(false); // touch screens show it once a key is used (code.css)
+    editor.setSelectionRange(0, 0);
+    expect(fireEvent.keyDown(editor, { key: "Tab" })).toBe(false); // handled here: four spaces, and focus stays
+    expect(editor.value).toBe("    print(2 + 2)");
+    expect(hint.classList.contains("is-shown")).toBe(true);
+    // Esc, then Shift (a keydown of its own) and Shift+Tab: left to the browser, which moves focus back.
+    fireEvent.keyDown(editor, { key: "Escape" });
+    fireEvent.keyDown(editor, { key: "Shift", shiftKey: true });
+    expect(fireEvent.keyDown(editor, { key: "Tab", shiftKey: true })).toBe(true);
+    expect(editor.value).toBe("    print(2 + 2)");
+    // Any other key closes that way out: Shift+Tab outdents again.
+    fireEvent.keyDown(editor, { key: "a" });
+    editor.setSelectionRange(4, 4);
+    expect(fireEvent.keyDown(editor, { key: "Tab", shiftKey: true })).toBe(false);
+    expect(editor.value).toBe("print(2 + 2)");
+    view.unmount();
+    // After Check the editor is locked: no hint.
+    const again = show(tabStep, "en", true).view.container;
+    await waitFor(() => expect(again.querySelector("textarea")).not.toBeNull());
+    expect(again.querySelector("textarea")!.getAttribute("aria-describedby")).toBeNull();
+    expect(again.querySelector(".cd-tab-hint")).toBeNull();
+  });
+
+  it("mends what an Arabic keyboard typed when Run is pressed, in the editor too", async () => {
+    m.run.mockResolvedValue({ runs: [{ out: "5\n", passed: true }], ms: 3 });
+    show({ ...step, id: "c-ar" }, "ar");
+    const editor = (await screen.findByRole("textbox", { name: "الكود الذي تكتبه" })) as HTMLTextAreaElement;
+    expect(screen.getByText("مفتاح Tab يُزيح السطر إلى الداخل. للخروج من محرّر الكود اضغط Esc ثم Tab أو Shift+Tab.")).toBeTruthy();
+    fireEvent.change(editor, { target: { value: 'print(٢ + ٣، "٢ + ٣")' } });
+    fireEvent.click(screen.getByRole("button", { name: "شغّل" }));
+    await waitFor(() => expect(m.run).toHaveBeenCalledWith(expect.objectContaining({ code: 'print(2 + 3, "٢ + ٣")' })));
+    expect(editor.value).toBe('print(2 + 3, "٢ + ٣")');
   });
 });
 
@@ -105,6 +180,42 @@ describe("put the lines in order", () => {
   it("shows the right order after a wrong answer", async () => {
     show(step, "en", false);
     expect(await screen.findByText("The right order:")).toBeTruthy();
+  });
+  it("keeps the keyboard's place: a picked line hands the focus on in the pool, a row taken out to the next row", async () => {
+    const order: ParsonsStep = { ...step, id: "p-focus", distractors: undefined, lines: ["a = 1", "b = 2", "print(a + b)"] };
+    show(order);
+    const press = (el: HTMLElement) => { el.focus(); fireEvent.click(el); };
+    const pool = () => [...document.querySelectorAll<HTMLButtonElement>(".cd-pool > button")];
+    await screen.findByRole("button", { name: "a = 1" });
+    // The first line in the pool goes: the line now first has the focus; the last one: the one before it.
+    let first = pool()[0];
+    press(first);
+    expect(document.activeElement).toBe(pool()[0]);
+    first = pool()[1];
+    press(first);
+    expect(document.activeElement).toBe(pool()[0]);
+    press(pool()[0]); // the pool is empty: its heading
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Lines to use" }));
+    // An indent button that can go no further hands the focus to the other one.
+    press(screen.getAllByRole("button", { name: "Indent" })[1]);
+    expect(document.activeElement).toBe(screen.getAllByRole("button", { name: "Indent" })[1]);
+    press(screen.getAllByRole("button", { name: "Indent less" })[1]);
+    expect(document.activeElement).toBe(screen.getAllByRole("button", { name: "Indent" })[1]);
+    // Take out the last row, then the rest: the row before it, then the program's heading.
+    const outs = () => screen.getAllByRole("button", { name: "Take out" });
+    press(outs()[2]);
+    expect(document.activeElement).toBe(outs()[1]);
+    press(outs()[0]);
+    expect(document.activeElement).toBe(outs()[0]);
+    press(outs()[0]);
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Your program" }));
+  });
+  it("leaves the focus alone when the pressed line didn't have it (a tap on a phone)", async () => {
+    show({ ...step, id: "p-tap" });
+    const btn = await screen.findByRole("button", { name: "print i" });
+    (document.activeElement as HTMLElement | null)?.blur();
+    fireEvent.click(btn);
+    expect(document.activeElement).toBe(document.body);
   });
 });
 
@@ -143,6 +254,45 @@ describe("the robot", () => {
     fireEvent.click(screen.getByRole("button", { name: "Run the robot" }));
     expect(await screen.findByText("The robot reached the goal!")).toBeTruthy();
     vi.unstubAllGlobals();
+  });
+  it("keeps the keyboard's place: Run gets the focus back after the walk, the card that fills the program hands it to Run", async () => {
+    show({ ...step, id: "k-focus" });
+    const press = (el: HTMLElement) => { el.focus(); fireEvent.click(el); };
+    press(await screen.findByRole("button", { name: "Forward" }));
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Forward" })); // still there: stays
+    press(screen.getByRole("button", { name: "Turn left" })); // two cards: the commands are disabled
+    const run = screen.getByRole("button", { name: "Run the robot" });
+    expect(document.activeElement).toBe(run);
+    vi.stubGlobal("matchMedia", () => ({ matches: false })); // the walk takes its time
+    fireEvent.click(run);
+    expect((run as HTMLButtonElement).disabled).toBe(true);
+    run.blur(); // what a browser does with a focused button that gets disabled (jsdom keeps the focus)
+    await waitFor(() => expect(document.querySelector(".cd-outcome")).not.toBeNull(), { timeout: 3000 });
+    expect(document.activeElement).toBe(run);
+    vi.unstubAllGlobals();
+    // Clear disables itself: the first command.
+    press(screen.getByRole("button", { name: "Clear" }));
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Forward" }));
+  });
+});
+
+describe("on a phone", () => {
+  // A long Parsons line once widened the whole lesson page at 375 px: every code step's root carries cd-step, which
+  // keeps it and its parts to the lesson's column (code.css), and pool lines wrap. jsdom has no layout, so this guards
+  // the class; the width itself was measured in Chromium at 320 and 375 px, in English and Arabic.
+  it("keeps every kind of code step to the lesson's column", async () => {
+    const steps: Step[] = [
+      { type: "code", id: "w1", prompt: T("Write it."), lang: "sql", starter: "SELECT 1", solution: "SELECT 2" },
+      { type: "parsons", id: "p9", prompt: T("Order it."), lang: "python", lines: ['new = [r for r in rows if r["time"] > watermark]', "load(new)"] },
+      { type: "codefill", id: "f9", prompt: T("Fill it."), lang: "python", code: [{ blank: 0 }, "(1)"], answers: ["print"] },
+      { type: "bug", id: "b9", prompt: T("Find it."), lang: "python", code: "x = 1\nprint(x", line: 2, fix: "print(x)" },
+      { type: "blocks", id: "k9", prompt: T("Walk it."), world: { cols: 2, rows: 2, start: { x: 0, y: 1, dir: "N" }, goal: { x: 0, y: 0 } }, commands: ["forward"], maxBlocks: 2 },
+    ];
+    for (const step of steps) {
+      const { view } = show(step);
+      await waitFor(() => expect(view.container.querySelector(".stack.cd-step")).not.toBeNull());
+      view.unmount();
+    }
   });
 });
 

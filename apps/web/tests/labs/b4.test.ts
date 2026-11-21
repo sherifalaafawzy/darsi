@@ -160,7 +160,9 @@ describe("app permissions", () => {
   it("denying an optional extra is never wrong; allowing a risky request the app doesn't need is", () => {
     expect(isRight("quiz", "notifications", false)).toBe(true);
     expect(isRight("quiz", "notifications", true)).toBe(true);
-    expect(isRight("torch", "camera", false)).toBe(false);
+    // A torch switches the flash on without camera access: denying it the camera is right (the privacy-safe choice).
+    expect(isRight("torch", "camera", false)).toBe(true);
+    expect(isRight("timetable", "notifications", false)).toBe(false);
     expect(isRight("photo", "sms", true)).toBe(false);
     const careful = Object.fromEntries(Object.entries(APPS).map(([a, { needs }]) => [a, Object.fromEntries(needs.map((p) => [p, true]))]));
     expect(mark(careful).right).toBe(mark(careful).total);

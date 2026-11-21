@@ -8,8 +8,8 @@
     "ar": "ابنِ وكيلًا بلغة Python"
   },
   "summary": {
-    "en": "Write the parts of an agent yourself: read the model’s tool call, run the right tool, loop until it answers, and guard every action in code. In your code a scripted model stands in for the real one; the labs show Darsi Tiny doing the same on your phone. Before this: “First Python” (Programming, lower secondary); functions and dictionaries are explained as you go.",
-    "ar": "اكتب أجزاء الوكيل بنفسك: اقرأ استدعاء الأداة الذي يكتبه النموذج، وشغّل الأداة الصحيحة، وكرّر الحلقة حتى يجيب، واحمِ كل إجراء بالكود. في كودك يحلّ نموذج مبرمَج بسكريبت محلّ النموذج الحقيقي، وتُريك المختبرات «درسي الصغير» يفعل الشيء نفسه على هاتفك. قبل هذا: «أولى خطواتك في Python» (البرمجة، المرحلة الإعدادية)، وتُشرح الدوال والقواميس في أثناء الدورة."
+    "en": "Write the parts of an agent yourself: read the model’s tool call, run the right tool, loop until it answers, and guard every action in code. In your code a scripted model stands in for the real one; the labs show Darsi Tiny doing the same on your phone. Before this: “Functions, lists and algorithms” (Programming, upper secondary); dictionaries, slicing and try/except are explained as you go.",
+    "ar": "اكتب أجزاء الوكيل بنفسك: اقرأ استدعاء الأداة الذي يكتبه النموذج، وشغّل الأداة الصحيحة، وكرّر الحلقة حتى يجيب، واحمِ كل إجراء بالكود. في كودك يحلّ نموذج مبرمَج بسكريبت محلّ النموذج الحقيقي، وتُريك المختبرات «درسي الصغير» يفعل الشيء نفسه على هاتفك. قبل هذا: «الدوال والقوائم والخوارزميات» (البرمجة، المرحلة الثانوية)، وتُشرح القواميس واقتطاع أجزاء النص وtry وexcept في أثناء الدورة."
   },
   "lessons": [
     {
@@ -117,15 +117,15 @@
                 {
                   "id": "a",
                   "text": {
-                    "en": "The same text, unchanged",
-                    "ar": "النص نفسه دون تغيير"
+                    "en": "A Python dictionary of the details",
+                    "ar": "قاموس Python فيه التفاصيل"
                   }
                 },
                 {
                   "id": "b",
                   "text": {
-                    "en": "A Python dictionary of the details",
-                    "ar": "قاموس Python فيه التفاصيل"
+                    "en": "The same text, unchanged",
+                    "ar": "النص نفسه دون تغيير"
                   }
                 },
                 {
@@ -136,7 +136,7 @@
                   }
                 }
               ],
-              "answer": "b",
+              "answer": "a",
               "explain": {
                 "en": "json.loads turns JSON text into a dictionary: keys like place and day, with their values. It runs nothing.",
                 "ar": "تحوّل json.loads نص JSON إلى قاموس: مفاتيح مثل place وday مع قيمها. ولا تشغّل أي شيء، فنتيجة الأداة لا تأتي إلا حين يشغّلها كودك."
@@ -193,8 +193,8 @@
             "ar": "النص الذي يكتبه النموذج، والكود الذي يقرؤه"
           },
           "body": {
-            "en": "An agent’s model never touches a tool. On each turn it writes text, and that text is one of three things: a plan (a short sentence about what it will do), a tool call, or an answer for the person. Everything that happens next is decided by the code around the model, and in this course you write that code.\n\nA tool call is the tool’s name followed straight away by its details, written as JSON: weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}. JSON is a standard way to write data as text, with names and values inside curly brackets. To read a call, find the first curly bracket with text.find(\"{\"). Everything before it is the tool’s name; everything from it onwards is the JSON. Then json.loads turns that text into a Python dictionary, so args[\"place\"] gives \"Kafi\". If there is no curly bracket at all, find returns -1: the text is an answer to show the person, not a tool to run.\n\njson.loads only turns text into data. It runs nothing and checks nothing: whether Kafi is a real village, or whether this tool should run at all, is for your code to decide next. And models make mistakes, so some calls are broken: a missing bracket, a quote in the wrong place. Then json.loads raises a ValueError, and unless you catch it with try and except, one bad line from the model crashes the whole agent.\n\nAn honest note about this course: the Python sandbox on your phone has no language model inside it. So in the code steps, the model’s text is written for you, as a model would write it: a scripted model. The labs run Darsi Tiny, a real small model, on your phone, so you can watch it write the same kind of calls your code reads.",
-            "ar": "لا يلمس نموذجُ الوكيل أيَّ أداة. ففي كل دور يكتب نصًّا، وهذا النص واحد من ثلاثة: خطة (جملة قصيرة عمّا سيفعله)، أو استدعاء أداة، أو جواب للشخص. وكل ما يحدث بعد ذلك يقرّره الكود المحيط بالنموذج، وفي هذه الدورة تكتب أنت هذا الكود.\n\nواستدعاء الأداة هو اسم الأداة تتبعه مباشرةً تفاصيلها مكتوبةً بصيغة JSON، كاستدعاء أداة الطقس weather ومعه المكان Kafi واليوم tomorrow. وJSON طريقة شائعة لكتابة البيانات نصًّا، بأسماء وقيم بين قوسين معقوفين. ولتقرأ الاستدعاء، ابحث عن أول قوس معقوف باستعمال text.find، فكل ما قبله اسم الأداة، وكل ما يبدأ منه هو نص JSON. ثم تحوّل json.loads هذا النص إلى قاموس في Python، فيعطيك المفتاح place القيمة Kafi. وإن لم يوجد قوس معقوف أصلًا أعادت find العدد سالب واحد، فالنص جواب يُعرض على الشخص، لا أداة تُشغَّل.\n\nولا تفعل json.loads إلا تحويل النص إلى بيانات: فهي لا تشغّل شيئًا ولا تتحقّق من شيء. أمّا هل كافي قرية حقيقية، وهل يجب أن تعمل هذه الأداة أصلًا، فذلك ما يقرّره كودك بعد ذلك. والنماذج تخطئ، فبعض الاستدعاءات معطوب: قوس ناقص، أو علامة تنصيص في غير مكانها. عندها تُطلق json.loads خطأ ValueError، وما لم تلتقطه باستعمال try وexcept، فإن سطرًا واحدًا خاطئًا من النموذج يوقف الوكيل كله.\n\nوملاحظة صريحة عن هذه الدورة: بيئة Python على هاتفك لا يوجد فيها نموذج لغوي. لذلك يُكتب لك نص النموذج في خطوات الكود كما كان النموذج سيكتبه، أي نموذج مبرمَج بسكريبت. أما المختبرات فتشغّل «درسي الصغير»، وهو نموذج صغير حقيقي يعمل على هاتفك، لترى كيف يكتب النوع نفسه من الاستدعاءات التي يقرؤها كودك."
+            "en": "An agent’s model never touches a tool. On each turn it writes text, and that text is one of three things: a plan (a short sentence about what it will do), a tool call, or an answer for the person. Everything that happens next is decided by the code around the model, and in this course you write that code.\n\nA tool call is the tool’s name followed straight away by its details, written as JSON: weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}. JSON is a standard way to write data as text, with names and values inside curly brackets. To read a call, find the first curly bracket with text.find(\"{\"). Everything before it is the tool’s name; everything from it onwards is the JSON. Then json.loads turns that text into a Python dictionary, so args[\"place\"] gives \"Kafi\". If there is no curly bracket at all, find returns -1: the text is an answer to show the person, not a tool to run. (A plan has no bracket either, so real agents mark each part: Darsi Tiny’s text has markers such as <|plan|>, <|call|> and <|answer|>, which you can see in the lab. The model’s text in your code steps holds only calls and answers, so there no bracket means an answer.)\n\njson.loads only turns text into data. It runs nothing and checks nothing: whether Kafi is a real village, or whether this tool should run at all, is for your code to decide next. And models make mistakes, so some calls are broken: a missing bracket, a quote in the wrong place. Then json.loads raises a ValueError, and unless you catch it with try and except, one bad line from the model crashes the whole agent.\n\nThree pieces of Python you need here. text[:i] is the text before position i, and text[i:] is the text from i to the end. A dictionary keeps values under names (keys), so args[\"place\"] is the value kept under \"place\". And when code inside try raises the error that except names (here ValueError), Python runs the except part instead of stopping the program.\n\nAn honest note about this course: the Python sandbox on your phone has no language model inside it. So in the code steps, the model’s text is written for you, as a model would write it: a scripted model. The labs run Darsi Tiny, a real small model, on your phone, so you can watch it write the same kind of calls your code reads.",
+            "ar": "لا يلمس نموذجُ الوكيل أيَّ أداة. ففي كل دور يكتب نصًّا، وهذا النص واحد من ثلاثة: خطة (جملة قصيرة عمّا سيفعله)، أو استدعاء أداة، أو جواب للشخص. وكل ما يحدث بعد ذلك يقرّره الكود المحيط بالنموذج، وفي هذه الدورة تكتب أنت هذا الكود.\n\nواستدعاء الأداة هو اسم الأداة تتبعه مباشرةً تفاصيلها مكتوبةً بصيغة JSON، مثل ⁦weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}⁩. وJSON طريقة شائعة لكتابة البيانات نصًّا، بأسماء وقيم بين قوسين معقوفين. ولتقرأ الاستدعاء، ابحث عن أول قوس معقوف باستعمال ⁦text.find(\"{\")⁩، فكل ما قبله اسم الأداة، وكل ما يبدأ منه هو نص JSON. ثم تحوّل json.loads هذا النص إلى قاموس في Python، فيعطيك ⁦args[\"place\"]⁩ القيمة ⁦\"Kafi\"⁩. وإن لم يوجد قوس معقوف أصلًا أعادت find العدد ⁦-1⁩، فالنص جواب يُعرض على الشخص، لا أداة تُشغَّل. (والخطة أيضًا بلا قوس، لذلك يضع الوكلاء الحقيقيون علامة على كل جزء: ففي نص «درسي الصغير» علامات مثل ⁦<|plan|>⁩ و⁦<|call|>⁩ و⁦<|answer|>⁩ تراها في المختبر. أما نص النموذج في خطوات الكود فليس فيه إلا استدعاءات وأجوبة، فغياب القوس هناك يعني جوابًا.)\n\nولا تفعل json.loads إلا تحويل النص إلى بيانات: فهي لا تشغّل شيئًا ولا تتحقّق من شيء. أمّا هل كافي قرية حقيقية، وهل يجب أن تعمل هذه الأداة أصلًا، فذلك ما يقرّره كودك بعد ذلك. والنماذج تخطئ، فبعض الاستدعاءات معطوب: قوس ناقص، أو علامة تنصيص في غير مكانها. عندها تُطلق json.loads خطأ ValueError، وما لم تلتقطه باستعمال try وexcept، فإن سطرًا واحدًا خاطئًا من النموذج يوقف الوكيل كله.\n\nوهذه ثلاثة أمور من Python تحتاجها هنا. ⁦text[:i]⁩ هو النص الذي قبل الموضع i، و⁦text[i:]⁩ هو النص من الموضع i إلى آخره. والقاموس يحفظ القيم تحت أسماء (مفاتيح)، فـ ⁦args[\"place\"]⁩ هي القيمة المحفوظة تحت ⁦\"place\"⁩. وحين يُطلق كودٌ داخل try الخطأَ الذي تسمّيه except (هنا ValueError)، ينفّذ Python جزء except بدل أن يتوقف البرنامج.\n\nوملاحظة صريحة عن هذه الدورة: بيئة Python على هاتفك لا يوجد فيها نموذج لغوي. لذلك يُكتب لك نص النموذج في خطوات الكود كما كان النموذج سيكتبه، أي نموذج مبرمَج بسكريبت. أما المختبرات فتشغّل «درسي الصغير»، وهو نموذج صغير حقيقي يعمل على هاتفك، لترى كيف يكتب النوع نفسه من الاستدعاءات التي يقرؤها كودك."
           },
           "keyTerms": [
             {
@@ -215,6 +215,16 @@
               "def": {
                 "en": "A standard way to write data as text: names and values inside curly brackets.",
                 "ar": "طريقة شائعة لكتابة البيانات نصًّا: أسماء وقيم بين قوسين معقوفين."
+              }
+            },
+            {
+              "term": {
+                "en": "Dictionary",
+                "ar": "القاموس"
+              },
+              "def": {
+                "en": "Values kept under names (keys): args[\"place\"] is the value under \"place\".",
+                "ar": "قيم محفوظة تحت أسماء (مفاتيح): ⁦args[\"place\"]⁩ هي القيمة المحفوظة تحت ⁦\"place\"⁩."
               }
             },
             {
@@ -258,7 +268,7 @@
               "id": "b",
               "text": {
                 "en": "A tool named “Tomorrow”",
-                "ar": "أداة اسمها «Tomorrow»"
+                "ar": "أداة اسمها «غدًا»"
               }
             },
             {
@@ -272,7 +282,7 @@
           "answer": "a",
           "explain": {
             "en": "There’s no curly bracket, so find gives -1: it’s an answer to show the person, not a tool to run.",
-            "ar": "لا يوجد قوس معقوف، فتُرجع find العدد ‎-1، وهذا جواب يُعرض على الشخص، لا أداة تُشغَّل."
+            "ar": "لا يوجد قوس معقوف، فتُرجع find العدد ⁦-1⁩، وهذا جواب يُعرض على الشخص، لا أداة تُشغَّل."
           }
         },
         {
@@ -289,25 +299,24 @@
             "    i = text.find(\"{\")",
             "    if i == -1:",
             "        return None",
-            "    name = text[:i]",
             "    args = json.loads(text[i:])",
-            "    return name, args"
+            "    return text[:i], args"
           ],
           "distractors": [
-            "    name = text[i:]",
-            "    args = json.loads(text[:i])"
+            "    args = json.loads(text[:i])",
+            "    return text[i:], args"
           ],
           "explain": {
-            "en": "Find the bracket first; with no bracket it’s an answer, so return early. Otherwise the name is everything before the bracket (text[:i]) and the JSON is everything from it (text[i:]).",
-            "ar": "ابحث عن القوس أولًا، فإن لم يوجد فالنص جواب، فأرجِع None مبكرًا. وإلا فالاسم هو كل ما قبل القوس ⁦(text[:i])⁩، ونص JSON هو كل ما يبدأ منه ⁦(text[i:])⁩."
+            "en": "Find the bracket first; with no bracket it’s an answer, so return early. Otherwise json.loads reads the JSON from the bracket on (text[i:]), and the name is everything before it (text[:i]).",
+            "ar": "ابحث عن القوس أولًا، فإن لم يوجد فالنص جواب، فأرجِع None مبكرًا. وإلا فتقرأ json.loads نص JSON من القوس فما بعده ⁦(text[i:])⁩، والاسم هو كل ما قبله ⁦(text[:i])⁩."
           }
         },
         {
           "type": "lab",
           "id": "lab",
           "prompt": {
-            "en": "Try it: open “What Darsi Tiny sees”, pick “What's the weather in Kafi tomorrow?” and press One step until the call appears. That line is exactly the kind of text your parse_call splits. Then run the trip from Kafi to Dala: two calls and two results. Answer three different requests to finish. The first run downloads Darsi Tiny once (2.8 MB).",
-            "ar": "جرّب: افتح «ما يراه درسي الصغير»، واختر «ما حالة الطقس في كافي غدًا؟»، ثم اضغط «خطوة واحدة» حتى يظهر الاستدعاء. هذا السطر هو بالضبط نوع النص الذي تقسمه الدالة parse_call. ثم شغّل الرحلة من كافي إلى دالا: استدعاءان ونتيجتان. أنهِ المختبر بثلاثة طلبات مختلفة. يُنزَّل «درسي الصغير» مرة واحدة في أول تشغيل (٢٫٨ ميغابايت)."
+            "en": "Try it: pick “What's the weather in Kafi tomorrow?”, press One step until the call appears, then open “What Darsi Tiny sees”. That line is exactly the kind of text your parse_call splits. Then run the trip from Kafi to Dala: two calls and two results. Answer three different requests to finish. The first run downloads Darsi Tiny once (2.8 MB).",
+            "ar": "جرّب: اختر «ما حالة الطقس في كافي غدًا؟»، واضغط «خطوة واحدة» حتى يظهر الاستدعاء، ثم افتح «ما يراه درسي الصغير». هذا السطر هو بالضبط نوع النص الذي تقسمه الدالة parse_call. ثم شغّل الرحلة من كافي إلى دالا: استدعاءان ونتيجتان. أنهِ المختبر بثلاثة طلبات مختلفة. يُنزَّل «درسي الصغير» مرة واحدة في أول تشغيل (٢٫٨ ميغابايت)."
           },
           "tool": "agentloop"
         },
@@ -373,7 +382,7 @@
               "check": "assert parse_call(\"Tomorrow in Kafi: sunny.\") is None, \"An answer has no { and is not a call: return None\"",
               "hint": {
                 "en": "With no curly bracket, find gives -1: return None.",
-                "ar": "حين لا يوجد قوس معقوف تُعيد find العدد -1: أرجِع None."
+                "ar": "حين لا يوجد قوس معقوف تُعيد find العدد ⁦-1⁩: أرجِع None."
               }
             },
             {
@@ -394,7 +403,7 @@
           "hints": [
             {
               "en": "text.find(\"{\") gives -1 when there is no bracket: return None then.",
-              "ar": "تُعيد text.find العدد -1 حين لا يوجد قوس: أرجِع None عندها."
+              "ar": "تُعيد ⁦text.find(\"{\")⁩ العدد ⁦-1⁩ حين لا يوجد قوس: أرجِع None عندها."
             },
             {
               "en": "Put args = json.loads(text[i:]) inside try, with except ValueError: return None.",
@@ -423,7 +432,7 @@
           "fix": "    name = text[:i]",
           "explain": {
             "en": "text[:i + 1] keeps the bracket too, so the name becomes “weather{” and no tool matches it. text[:i] stops just before the bracket.",
-            "ar": "تُبقي ⁦text[:i + 1]⁩ القوس المعقوف مع الاسم، فيصبح الاسم weather ومعه القوس، ولا تطابقه أي أداة. أما ⁦text[:i]⁩ فتتوقف قبل القوس مباشرةً."
+            "ar": "تُبقي ⁦text[:i + 1]⁩ القوس المعقوف مع الاسم، فيصبح الاسم ⁦\"weather{\"⁩، ولا تطابقه أي أداة. أما ⁦text[:i]⁩ فتتوقف قبل القوس مباشرةً."
           }
         },
         {
@@ -570,7 +579,7 @@
               "Code (5 min): Type your lines into the code step and run parse_call on each. Did it agree with your friend?"
             ],
             "ar": [
-              "التمهيد (٣ دقائق): انظر إلى استدعاء أداة الطقس لكافي غدًا. ضع دائرة حول اسم الأداة وخطًّا تحت نص JSON.",
+              "التمهيد (٣ دقائق): انظر إلى ⁦weather{\"place\":\"Kafi\",\"day\":\"tomorrow\"}⁩. ضع دائرة حول اسم الأداة وخطًّا تحت نص JSON.",
               "الكتابة (٧ دقائق): اكتب خمسة أسطر قد يكتبها نموذج: استدعاءين لأدوات (بأماكن خيالية مثل كافي ودالا)، وجوابين، واستدعاءً معطوبًا ينقصه قوس.",
               "التبادل (٥ دقائق): تبادل الأسطر مع صديقك. يكتب بجانب كل سطر: «استدعاء» أو «جواب» أو «معطوب»، واسم الأداة بجانب كل استدعاء.",
               "الكود (٥ دقائق): اكتب أسطرك في خطوة الكود وشغّل parse_call على كلٍّ منها. هل اتفقت مع صديقك؟"
@@ -644,7 +653,7 @@
             "en": "Activity sheet: Read a tool call",
             "ar": "ورقة النشاط: اقرأ استدعاء الأداة"
           },
-          "pages": 3,
+          "pages": 4,
           "base": "agents-s3-1/lesson-plan",
           "formats": [
             "pdf"
@@ -677,8 +686,8 @@
       },
       "minutes": 18,
       "tryTomorrow": {
-        "en": "Invent a third tool for your agent, such as a library search. Write its details, its result and two errors it should return, then add it to TOOLS in the code step and test it.",
-        "ar": "اخترع أداة ثالثة لوكيلك، كالبحث في المكتبة. اكتب تفاصيلها ونتيجتها وخطأين يجب أن تُرجعهما، ثم أضفها إلى TOOLS في خطوة الكود وجرّبها."
+        "en": "Invent another tool for your agent, such as a library search. Write its details, its result and two errors it should return, then add it to TOOLS in the code step and test it.",
+        "ar": "اخترع أداة أخرى لوكيلك، كالبحث في المكتبة. اكتب تفاصيلها ونتيجتها وخطأين يجب أن تُرجعهما، ثم أضفها إلى TOOLS في خطوة الكود وجرّبها."
       },
       "materials": {
         "en": [
@@ -781,19 +790,19 @@
                 {
                   "id": "b",
                   "text": {
-                    "en": "Return an error result",
-                    "ar": "تُرجع نتيجة فيها خطأ"
+                    "en": "Run weather instead",
+                    "ar": "تشغّل weather بدلًا منها"
                   }
                 },
                 {
                   "id": "c",
                   "text": {
-                    "en": "Run weather instead",
-                    "ar": "تشغّل weather بدلًا منها"
+                    "en": "Return an error result",
+                    "ar": "تُرجع نتيجة فيها خطأ"
                   }
                 }
               ],
-              "answer": "b",
+              "answer": "c",
               "explain": {
                 "en": "An error result keeps the agent running, and the model can tell the person it can’t check attendance.",
                 "ar": "النتيجة التي فيها خطأ تُبقي الوكيل يعمل، ويستطيع النموذج أن يخبر الشخص بأنه لا يستطيع الاطلاع على الحضور. أما التوقف فيوقف الوكيل كله، وتشغيل أداة أخرى يفعل ما لم يطلبه أحد."
@@ -851,7 +860,7 @@
           },
           "body": {
             "en": "In your agent, each tool is an ordinary Python function. It takes the call’s details as a dictionary, looks something up or does something, and returns a result, also as a dictionary: weather({\"place\": \"Kafi\"}) might return {\"sky\": \"sunny\"}. Our tools work over a tiny made-up world: two villages and their weather, one class and its timetable. Darsi Tiny’s ten tools work the same way over a bigger made-up school; nothing real is looked up, and nothing is ever sent.\n\nDispatch means sending each call to the right function. Keep a dictionary from each tool’s name to its function, TOOLS = {\"weather\": weather, \"timetable\": timetable}. Then TOOLS[name] is the function, and TOOLS[name](args) runs it. Adding a tool is one new function and one new line in TOOLS.\n\nPlan for mistakes, because the model will make them. It may ask for a tool that doesn’t exist (bus), leave out a detail (no place), or name something that isn’t in your world (Moonvale). Each of these should come back as an error result, such as {\"error\": \"unknown tool\"}: never a crash, and never a guess. A crash stops the whole agent; a guess (running another tool, or picking a village) does something nobody asked for. An error is a result like any other: the model reads it, and can tell the person what went wrong or ask for what’s missing.\n\nLast, the result goes back to the model as text: json.dumps turns the dictionary into a line of JSON, and the loop adds it to the history the model reads next. In the lab you’ll see Darsi Tiny’s side of this: it reads the list of tools that are on, picks one and copies your words into the details, sometimes wrongly (class 9Z became 9C). That is why tools, and the code around them, check every detail.",
-            "ar": "في وكيلك، كل أداة دالة عادية في Python. تأخذ تفاصيل الاستدعاء في قاموس، وتبحث عن شيء أو تفعل شيئًا، وتُرجع نتيجة في قاموس أيضًا: فأداة الطقس weather قد تُرجع لكافي أن السماء صافية (sunny). وتعمل أدواتنا على عالم خيالي صغير: قريتان وطقسهما، وفصل واحد وجدوله. وأدوات «درسي الصغير» العشر تعمل بالطريقة نفسها على مدرسة خيالية أكبر، فلا يُبحث عن شيء حقيقي، ولا يُرسَل أي شيء.\n\nوالتوجيه (dispatch) يعني إرسال كل استدعاء إلى الدالة الصحيحة. احتفظ بقاموس من اسم كل أداة إلى دالتها، هو TOOLS. فيكون ⁦TOOLS[name]⁩ هو الدالة، و⁦TOOLS[name](args)⁩ يشغّلها. وإضافة أداة جديدة دالةٌ جديدة وسطر جديد في TOOLS.\n\nواحسب حساب الأخطاء، لأن النموذج سيقع فيها. فقد يطلب أداة لا وجود لها (bus)، أو يُغفل تفصيلًا (بلا مكان)، أو يذكر شيئًا ليس في عالمك (وادي القمر). ويجب أن يعود كلٌّ منها نتيجةَ خطأ، مثل unknown tool: لا توقّفًا ولا تخمينًا. فالتوقّف يوقف الوكيل كله، والتخمين (كتشغيل أداة أخرى أو اختيار قرية) يفعل ما لم يطلبه أحد. أما الخطأ فنتيجة كغيرها: يقرؤها النموذج، فيخبر الشخص بما حدث أو يسأله عن الناقص.\n\nوأخيرًا تعود النتيجة إلى النموذج نصًّا: تحوّل json.dumps القاموس إلى سطر JSON، وتضيفه الحلقة إلى سجلّ المحادثة الذي يقرؤه النموذج بعد ذلك. وسترى في المختبر الجانب الآخر عند «درسي الصغير»: يقرأ قائمة الأدوات المفعّلة، ويختار واحدة، وينسخ كلماتك في التفاصيل، وأحيانًا ينسخها خطأً (فصار الفصل 9Z عنده 9C). ولهذا تتحقّق الأدوات، والكود المحيط بها، من كل تفصيل."
+            "ar": "في وكيلك، كل أداة دالة عادية في Python. تأخذ تفاصيل الاستدعاء في قاموس، وتبحث عن شيء أو تفعل شيئًا، وتُرجع نتيجة في قاموس أيضًا: فقد تُرجع ⁦weather({\"place\": \"Kafi\"})⁩ القاموس ⁦{\"sky\": \"sunny\"}⁩. وتعمل أدواتنا على عالم خيالي صغير: قريتان وطقسهما، وفصل واحد وجدوله. وأدوات «درسي الصغير» العشر تعمل بالطريقة نفسها على مدرسة خيالية أكبر، فلا يُبحث عن شيء حقيقي، ولا يُرسَل أي شيء.\n\nوالتوجيه (dispatch) يعني إرسال كل استدعاء إلى الدالة الصحيحة. احتفظ بقاموس من اسم كل أداة إلى دالتها: ⁦TOOLS = {\"weather\": weather, \"timetable\": timetable}⁩. فيكون ⁦TOOLS[name]⁩ هو الدالة، و⁦TOOLS[name](args)⁩ يشغّلها. وإضافة أداة جديدة دالةٌ جديدة وسطر جديد في TOOLS.\n\nواحسب حساب الأخطاء، لأن النموذج سيقع فيها. فقد يطلب أداة لا وجود لها (bus)، أو يُغفل تفصيلًا (بلا مكان)، أو يذكر شيئًا ليس في عالمك (وادي القمر). ويجب أن يعود كلٌّ منها نتيجةَ خطأ، مثل ⁦{\"error\": \"unknown tool\"}⁩: لا توقّفًا ولا تخمينًا. فالتوقّف يوقف الوكيل كله، والتخمين (كتشغيل أداة أخرى أو اختيار قرية) يفعل ما لم يطلبه أحد. أما الخطأ فنتيجة كغيرها: يقرؤها النموذج، فيخبر الشخص بما حدث أو يسأله عن الناقص.\n\nوأخيرًا تعود النتيجة إلى النموذج نصًّا: تحوّل json.dumps القاموس إلى سطر JSON، وتضيفه الحلقة إلى سجلّ المحادثة الذي يقرؤه النموذج بعد ذلك. وسترى في المختبر الجانب الآخر عند «درسي الصغير»: يقرأ قائمة الأدوات المفعّلة، ويختار واحدة، وينسخ كلماتك في التفاصيل، وأحيانًا ينسخها خطأً (فصار الفصل 9Z عنده 9C). ولهذا تتحقّق الأدوات، والكود المحيط بها، من كل تفصيل."
           },
           "keyTerms": [
             {
@@ -990,8 +999,8 @@
           "type": "lab",
           "id": "lab",
           "prompt": {
-            "en": "Try it: switch the weather tool off and ask “What's the weather in Kafi tomorrow?”. Ask “Book a bus ticket to the city.” (no tool covers it) and “What's the weather tomorrow?” (a detail is missing: reply “Dala”). Then ask “What does 9Z have tomorrow?” and read the check under the call. See three of the four outcomes to finish.",
-            "ar": "جرّب: أوقف أداة الطقس واسأل «ما حالة الطقس في كافي غدًا؟». واطلب «احجز تذكرة حافلة إلى المدينة.» (لا تغطّيه أي أداة)، واسأل «كيف الطقس غدًا؟» (ينقصه تفصيل: أجب «دالا»). ثم اسأل «ماذا لدى 9Z غدًا؟» واقرأ التحقّق تحت الاستدعاء. أنهِ المختبر حين ترى ثلاثًا من النتائج الأربع."
+            "en": "Try it: switch the weather tool off and ask “What's the weather in Kafi tomorrow?”. Ask “Book a bus ticket to the city.” (no tool covers it) and “What's the weather tomorrow?” (a detail is missing: reply “Dala”). Then tap “Switch all on”, ask “What does 9Z have tomorrow?” and read the check under the call. See three of the four outcomes to finish.",
+            "ar": "جرّب: أوقف أداة الطقس واسأل «ما حالة الطقس في كافي غدًا؟». واطلب «احجز تذكرة حافلة إلى المدينة.» (لا تغطّيه أي أداة)، واسأل «كيف الطقس غدًا؟» (ينقصه تفصيل: أجب «دالا»). ثم اضغط «شغّل الكل» واسأل «ماذا لدى 9Z غدًا؟» واقرأ التحقّق تحت الاستدعاء. أنهِ المختبر حين ترى ثلاثًا من النتائج الأربع."
           },
           "tool": "tools"
         },
@@ -1003,14 +1012,22 @@
             "en": "Finish run(name, args): if the tool isn’t in TOOLS, return {\"error\": \"unknown tool\"}; otherwise run the tool with its details and return its result.",
             "ar": "أكمل الدالة run: إن لم تكن الأداة في TOOLS فأرجِع ⁦{\"error\": \"unknown tool\"}⁩، وإلا فشغّل الأداة بتفاصيلها وأرجِع نتيجتها."
           },
-          "starter": "SKY = {\"Kafi\": \"sunny\", \"Dala\": \"rain\"}\n\ndef weather(args):\n    place = args.get(\"place\")\n    if place not in SKY:\n        return {\"error\": \"unknown place\"}\n    return {\"sky\": SKY[place]}\n\nTOOLS = {\"weather\": weather}\n\ndef run(name, args):\n    return TOOLS[name](args)\n",
-          "solution": "SKY = {\"Kafi\": \"sunny\", \"Dala\": \"rain\"}\n\ndef weather(args):\n    place = args.get(\"place\")\n    if place not in SKY:\n        return {\"error\": \"unknown place\"}\n    return {\"sky\": SKY[place]}\n\nTOOLS = {\"weather\": weather}\n\ndef run(name, args):\n    if name not in TOOLS:\n        return {\"error\": \"unknown tool\"}\n    return TOOLS[name](args)\n",
+          "starter": "SKY = {\"Kafi\": \"sunny\", \"Dala\": \"rain\"}\n\ndef weather(args):\n    place = args.get(\"place\")\n    if place is None:\n        return {\"error\": \"missing place\"}\n    if place not in SKY:\n        return {\"error\": \"unknown place\"}\n    return {\"sky\": SKY[place]}\n\nTOOLS = {\"weather\": weather}\n\ndef run(name, args):\n    return TOOLS[name](args)\n",
+          "solution": "SKY = {\"Kafi\": \"sunny\", \"Dala\": \"rain\"}\n\ndef weather(args):\n    place = args.get(\"place\")\n    if place is None:\n        return {\"error\": \"missing place\"}\n    if place not in SKY:\n        return {\"error\": \"unknown place\"}\n    return {\"sky\": SKY[place]}\n\nTOOLS = {\"weather\": weather}\n\ndef run(name, args):\n    if name not in TOOLS:\n        return {\"error\": \"unknown tool\"}\n    return TOOLS[name](args)\n",
           "tests": [
             {
-              "check": "assert run(\"weather\", {\"place\": \"Kafi\"}) == {\"sky\": \"sunny\"}, \"weather in Kafi should be sunny\""
+              "check": "assert run(\"weather\", {\"place\": \"Kafi\"}) == {\"sky\": \"sunny\"}, \"weather in Kafi should be sunny\"",
+              "hint": {
+                "en": "Keep the weather tool as it is: a known place gives its sky.",
+                "ar": "أبقِ أداة الطقس كما هي: المكان المعروف يُرجع حالة سمائه."
+              }
             },
             {
-              "check": "assert run(\"weather\", {\"place\": \"Moonvale\"}) == {\"error\": \"unknown place\"}, \"An unknown place is an error result\""
+              "check": "assert run(\"weather\", {\"place\": \"Moonvale\"}) == {\"error\": \"unknown place\"}, \"An unknown place is an error result\"",
+              "hint": {
+                "en": "An unknown place comes back as the weather tool’s own error: don’t change weather.",
+                "ar": "المكان غير المعروف يعود بخطأ أداة الطقس نفسها: لا تغيّر الدالة weather."
+              }
             },
             {
               "check": "assert run(\"bus\", {\"from\": \"Kafi\"}) == {\"error\": \"unknown tool\"}, \"A tool that isn't in TOOLS should return an error, not crash\"",
@@ -1023,7 +1040,7 @@
           "hints": [
             {
               "en": "First check: if name not in TOOLS:",
-              "ar": "تحقّق أولًا: if name not in TOOLS:"
+              "ar": "تحقّق أولًا: ⁦if name not in TOOLS:⁩"
             },
             {
               "en": "Inside it, return {\"error\": \"unknown tool\"}; after it, keep return TOOLS[name](args).",
@@ -1031,8 +1048,8 @@
             }
           ],
           "explain": {
-            "en": "Checking the name first turns a made-up tool into an error the model can read; TOOLS[name](args) then runs a real one. The weather tool already turns an unknown place into an error of its own.",
-            "ar": "التحقّق من الاسم أولًا يحوّل الأداة المختلقة إلى خطأ يقرؤه النموذج، ثم يشغّل ⁦TOOLS[name](args)⁩ الأداة الحقيقية. وأداة الطقس نفسها تحوّل المكان غير المعروف إلى خطأ."
+            "en": "Checking the name first turns a made-up tool into an error the model can read; TOOLS[name](args) then runs a real one. The weather tool already turns a missing or unknown place into an error of its own.",
+            "ar": "التحقّق من الاسم أولًا يحوّل الأداة المختلقة إلى خطأ يقرؤه النموذج، ثم يشغّل ⁦TOOLS[name](args)⁩ الأداة الحقيقية. وأداة الطقس نفسها تحوّل المكان الناقص أو غير المعروف إلى خطأ."
           }
         },
         {
@@ -1077,10 +1094,10 @@
           "type": "truefalse",
           "id": "p5",
           "prompt": {
-            "en": "If the model leaves out the place, the weather tool should guess the nearest village so the agent can still answer.",
-            "ar": "إن أغفل النموذج المكان، فعلى أداة الطقس أن تخمّن أقرب قرية ليستطيع الوكيل أن يجيب."
+            "en": "If the model leaves out the place, the weather tool should return an error rather than guess the nearest village.",
+            "ar": "إن أغفل النموذج المكان، فعلى أداة الطقس أن تُرجع خطأً بدل أن تخمّن أقرب قرية."
           },
-          "answer": false,
+          "answer": true,
           "explain": {
             "en": "A tool shouldn’t guess a detail nobody gave: it would answer about the wrong village. It returns an error saying the place is missing, and the model can ask the person which village.",
             "ar": "لا ينبغي للأداة أن تخمّن تفصيلًا لم يذكره أحد، وإلا أجابت عن قرية خاطئة. بل تُرجع خطأً يقول إن المكان ناقص، فيسأل النموذج الشخص: أيّ قرية؟"
@@ -1106,8 +1123,8 @@
             "ar": "مشروع: أضف أداة للمكتبة"
           },
           "task": {
-            "en": "In the code step, or in Python on a school computer, add a third tool, library(args), over a small made-up list of book topics. It needs a topic: return the books for a topic you have, an error for a missing topic, and an error for a topic you don’t have. Add it to TOOLS and test four calls: a good one, a missing topic, an unknown topic and an unknown tool. Print each result with json.dumps.",
-            "ar": "في خطوة الكود، أو في Python على حاسوب المدرسة، أضف أداة ثالثة اسمها library، تعمل على قائمة خيالية صغيرة من موضوعات الكتب. تحتاج الأداة إلى موضوع: فأرجِع الكتب لموضوع موجود عندك، وخطأً حين يغيب الموضوع، وخطأً لموضوع ليس عندك. أضفها إلى TOOLS وجرّب أربعة استدعاءات: استدعاءً سليمًا، وآخر بلا موضوع، وثالثًا بموضوع غير معروف، ورابعًا لأداة غير موجودة. واطبع كل نتيجة باستعمال json.dumps."
+            "en": "In the code step, or in Python on a school computer, add a library tool, library(args), over a small made-up list of book topics. It needs a topic: return the books for a topic you have, an error for a missing topic, and an error for a topic you don’t have. Add it to TOOLS and test four calls: a good one, a missing topic, an unknown topic and an unknown tool. Print each result with json.dumps.",
+            "ar": "في خطوة الكود، أو في Python على حاسوب المدرسة، أضف أداة للمكتبة اسمها library، تعمل على قائمة خيالية صغيرة من موضوعات الكتب. تحتاج الأداة إلى موضوع: فأرجِع الكتب لموضوع موجود عندك، وخطأً حين يغيب الموضوع، وخطأً لموضوع ليس عندك. أضفها إلى TOOLS وجرّب أربعة استدعاءات: استدعاءً سليمًا، وآخر بلا موضوع، وثالثًا بموضوع غير معروف، ورابعًا لأداة غير موجودة. واطبع كل نتيجة باستعمال json.dumps."
           },
           "deliverable": {
             "en": "Your code and the four printed results, and one sentence: which error was easiest to forget?",
@@ -1481,7 +1498,7 @@
             },
             "sizeKB": {
               "en": 453,
-              "ar": 444
+              "ar": 443
             }
           }
         },
@@ -1498,7 +1515,7 @@
           },
           "body": {
             "en": "An agent is a loop around a model. Ask the model for its next output. If it is an answer, give it to the person: the job is done. If it is a tool call, run the tool, add the call and its result to the history, and ask the model again. The history is everything so far, in order: the request, each call and each result. A real model reads the whole history on every turn, because it has no other memory of the conversation.\n\nThe Python sandbox on your phone has no language model inside, so your code uses a scripted model: a function that returns what a model would write, taken from a list called SCRIPT. It isn’t intelligent, and we say so plainly. What it gives you is a fair test of your loop: you choose exactly what the “model” writes, awkward cases included. In the lab, Darsi Tiny, a real small model, drives the same kind of loop on your phone.\n\nA loop needs a way to stop that doesn’t depend on the model. With while True, a model that keeps calling tools and never answers keeps your agent running until the battery or the data runs out. With for step in range(limit), the loop runs at most limit steps and then returns “Stopped”, whatever the model writes; a real app should also tell the person it couldn’t finish.\n\nSome goals need two tools, the second using the first one’s result: the trip from Kafi to Dala calls route, then weather. Steps can fail, though. Asked for 6B’s first lesson on Saturday, Darsi Tiny got “no school” from the timetable and still set a reminder, “6B: 6B”. A good loop checks a result before building on it: when a result holds an error, it can stop, or hand the problem back to the person. And remember what your tests show: that your loop works for the outputs you scripted. A real model can write things no script did, so the loop must cope with those too.",
-            "ar": "الوكيل حلقة حول نموذج. اطلب من النموذج مُخرَجه التالي: فإن كان جوابًا فأعطِه للشخص، وقد انتهت المهمة. وإن كان استدعاء أداة فشغّل الأداة، وأضف الاستدعاء ونتيجته إلى سجلّ المحادثة، ثم اسأل النموذج من جديد. وسجلّ المحادثة هو كل ما مضى بالترتيب: الطلب، ثم كل استدعاء، ثم كل نتيجة. ويقرأ النموذج الحقيقي السجلّ كله في كل دور، لأنه لا يملك ذاكرة أخرى للمحادثة.\n\nولا يوجد نموذج لغوي في بيئة Python على هاتفك، لذلك يستعمل كودك نموذجًا مبرمَجًا: دالة تُرجع ما كان النموذج سيكتبه، مأخوذًا من قائمة اسمها SCRIPT. وهو ليس ذكيًا، ونقول ذلك بصراحة. لكنه يمنحك اختبارًا عادلًا لحلقتك، لأنك تختار بالضبط ما يكتبه «النموذج»، بما في ذلك الحالات الصعبة. وفي المختبر يقود «درسي الصغير»، وهو نموذج صغير حقيقي، النوعَ نفسه من الحلقات على هاتفك.\n\nوتحتاج الحلقة إلى طريقة للتوقّف لا تعتمد على النموذج. فمع while True، إن ظلّ النموذج يستدعي الأدوات ولا يجيب، ظلّ وكيلك يعمل حتى تنفد البطارية أو الباقة. أما مع حلقة for و⁦range(limit)⁩، فلا تدور الحلقة أكثر من limit خطوة، ثم تُرجع «Stopped» مهما كتب النموذج، وعلى التطبيق الحقيقي أن يخبر الشخص أيضًا بأنه لم يُكمل المهمة.\n\nوبعض الأهداف يحتاج إلى أداتين، تستعمل الثانية نتيجة الأولى: فالرحلة من كافي إلى دالا تستدعي أداة الطريق، ثم أداة الطقس. لكن الخطوات قد تفشل. فحين سُئل «درسي الصغير» عن الحصة الأولى للفصل 6B يوم السبت، أجابه الجدول «لا دراسة»، ومع ذلك ضبط تذكيرًا. والحلقة الجيدة تتحقّق من النتيجة قبل أن تبني عليها: فإن حملت النتيجة خطأً، توقّفت أو أعادت المشكلة إلى الشخص. وتذكّر ما تثبته اختباراتك: أن حلقتك تعمل مع المُخرَجات التي كتبتها في السكريبت. أما النموذج الحقيقي فقد يكتب ما لم يكتبه أي سكريبت، فيجب أن تتعامل الحلقة مع ذلك أيضًا."
+            "ar": "الوكيل حلقة حول نموذج. اطلب من النموذج مُخرَجه التالي: فإن كان جوابًا فأعطِه للشخص، وقد انتهت المهمة. وإن كان استدعاء أداة فشغّل الأداة، وأضف الاستدعاء ونتيجته إلى سجلّ المحادثة، ثم اسأل النموذج من جديد. وسجلّ المحادثة هو كل ما مضى بالترتيب: الطلب، ثم كل استدعاء، ثم كل نتيجة. ويقرأ النموذج الحقيقي السجلّ كله في كل دور، لأنه لا يملك ذاكرة أخرى للمحادثة.\n\nولا يوجد نموذج لغوي في بيئة Python على هاتفك، لذلك يستعمل كودك نموذجًا مبرمَجًا: دالة تُرجع ما كان النموذج سيكتبه، مأخوذًا من قائمة اسمها SCRIPT. وهو ليس ذكيًا، ونقول ذلك بصراحة. لكنه يمنحك اختبارًا عادلًا لحلقتك، لأنك تختار بالضبط ما يكتبه «النموذج»، بما في ذلك الحالات الصعبة. وفي المختبر يقود «درسي الصغير»، وهو نموذج صغير حقيقي، النوعَ نفسه من الحلقات على هاتفك.\n\nوتحتاج الحلقة إلى طريقة للتوقّف لا تعتمد على النموذج. فمع while True، إن ظلّ النموذج يستدعي الأدوات ولا يجيب، ظلّ وكيلك يعمل حتى تنفد البطارية أو الباقة. أما مع حلقة for و⁦range(limit)⁩، فلا تدور الحلقة أكثر من limit خطوة، ثم تُرجع «Stopped» مهما كتب النموذج، وعلى التطبيق الحقيقي أن يخبر الشخص أيضًا بأنه لم يُكمل المهمة.\n\nوبعض الأهداف يحتاج إلى أداتين، تستعمل الثانية نتيجة الأولى: فالرحلة من كافي إلى دالا تستدعي أداة الطريق، ثم أداة الطقس. لكن الخطوات قد تفشل. فحين سُئل «درسي الصغير» عن الحصة الأولى للفصل 6B يوم السبت، أجابه الجدول «no school» (لا دراسة)، ومع ذلك ضبط تذكيرًا ليوم السبت. والحلقة الجيدة تتحقّق من النتيجة قبل أن تبني عليها: فإن حملت النتيجة خطأً، توقّفت أو أعادت المشكلة إلى الشخص. وتذكّر ما تثبته اختباراتك: أن حلقتك تعمل مع المُخرَجات التي كتبتها في السكريبت. أما النموذج الحقيقي فقد يكتب ما لم يكتبه أي سكريبت، فيجب أن تتعامل الحلقة مع ذلك أيضًا."
           },
           "keyTerms": [
             {
@@ -1621,8 +1638,8 @@
           "type": "lab",
           "id": "lab",
           "prompt": {
-            "en": "Try it: pick the trip from Kafi to Dala and guess the two tools in order, then run it and compare with Darsi Tiny’s plan. Then run the Saturday goal: the timetable says “no school”, but does Darsi Tiny stop before it sets the reminder? Run two different two-step goals to finish.",
-            "ar": "جرّب: اختر الرحلة من كافي إلى دالا وخمّن الأداتين بالترتيب، ثم شغّلها وقارن تخمينك بخطة «درسي الصغير». ثم شغّل هدف يوم السبت: يقول الجدول «لا دراسة»، فهل يتوقف «درسي الصغير» قبل أن يضبط التذكير؟ أنهِ المختبر بهدفين مختلفين من خطوتين."
+            "en": "Try it: pick the trip from Kafi to Dala and guess the two tools in order, then run it and compare with Darsi Tiny’s plan. Then run the Saturday goal: the timetable says “no school”, but does Darsi Tiny stop before it sets the reminder? To finish, run two different two-step goals that reach an answer (the Saturday goal fails, so it doesn’t count).",
+            "ar": "جرّب: اختر الرحلة من كافي إلى دالا وخمّن الأداتين بالترتيب، ثم شغّلها وقارن تخمينك بخطة «درسي الصغير». ثم شغّل هدف يوم السبت: يقول الجدول «no school» (لا دراسة)، فهل يتوقف «درسي الصغير» قبل أن يضبط التذكير؟ ولتُنهي المختبر، شغّل هدفين مختلفين من خطوتين يصلان إلى جواب (هدف يوم السبت يفشل، فلا يُحسب)."
           },
           "tool": "planner"
         },
@@ -1657,12 +1674,19 @@
                 "en": "A model that never answers must still stop: after the loop, return \"Stopped\".",
                 "ar": "حتى النموذج الذي لا يجيب أبدًا يجب أن يتوقف: بعد الحلقة أرجِع ⁦\"Stopped\"⁩."
               }
+            },
+            {
+              "check": "seen = []\ndef model(history):\n    seen.append(list(history))\n    return SCRIPT[len(history) // 2]\nagent(\"Weather in Kafi?\")\nassert seen[-1] == [\"Weather in Kafi?\", 'weather{\"place\":\"Kafi\"}', '{\"sky\":\"sunny\"}'], \"Add the call and its tool's result to history\"",
+              "hint": {
+                "en": "Add both the call and the tool’s result: history += [out, tool(out)].",
+                "ar": "أضف الاستدعاء ونتيجة الأداة كليهما: ⁦history += [out, tool(out)]⁩."
+              }
             }
           ],
           "hints": [
             {
               "en": "Use for step in range(limit):, not while True.",
-              "ar": "استعمل ⁦for step in range(limit)⁩: لا while True."
+              "ar": "استعمل ⁦for step in range(limit):⁩ لا while True."
             },
             {
               "en": "Inside the loop: out = model(history), and if \"{\" not in out: return out.",
@@ -1952,7 +1976,7 @@
             "en": "Activity sheet: The agent loop",
             "ar": "ورقة النشاط: حلقة الوكيل"
           },
-          "pages": 3,
+          "pages": 4,
           "base": "agents-s3-3/lesson-plan",
           "formats": [
             "pdf"
@@ -2082,15 +2106,15 @@
                 {
                   "id": "a",
                   "text": {
-                    "en": "Run: they already said yes",
-                    "ar": "التشغيل: فقد وافق الشخص من قبل"
+                    "en": "Ask again, about this message",
+                    "ar": "السؤال من جديد عن هذه الرسالة"
                   }
                 },
                 {
                   "id": "b",
                   "text": {
-                    "en": "Ask again, about this message",
-                    "ar": "السؤال من جديد عن هذه الرسالة"
+                    "en": "Run: they already said yes",
+                    "ar": "التشغيل: فقد وافق الشخص من قبل"
                   }
                 },
                 {
@@ -2101,7 +2125,7 @@
                   }
                 }
               ],
-              "answer": "b",
+              "answer": "a",
               "explain": {
                 "en": "The yes was for a different message. Comparing the exact details stops a model from sending something nobody approved.",
                 "ar": "كانت الموافقة على رسالة أخرى. ومقارنة التفاصيل بدقة تمنع النموذج من إرسال شيء لم يوافق عليه أحد، دون أن تمنع الرسائل التي يوافق عليها الشخص."
@@ -2299,8 +2323,8 @@
           "type": "lab",
           "id": "lab",
           "prompt": {
-            "en": "Try it: at “Ask first”, send the message to Mrs Mensah, deny it, then send it again and approve it. Then turn the code check off, choose “Allowed” and send «نعم، أرسلها.» on its own: see what the model invents. Turn the check back on, choose “Ask first” and send it again. To finish, have one message sent after your yes and one action blocked.",
-            "ar": "جرّب: عند «اسأل أولًا» أرسل الرسالة إلى الأستاذة مينسا، وارفضها، ثم أرسلها من جديد ووافق عليها. ثم أوقف «تحقّق من الموافقة في الكود»، واختر «مسموح»، وأرسل «نعم، أرسلها.» وحدها: انظر ماذا يختلق النموذج. ثم أعِد التحقّق، واختر «اسأل أولًا»، وأرسلها من جديد. ولتُنهي المختبر، أرسل رسالة واحدة بعد موافقتك، ودَع إجراءً واحدًا يُمنَع."
+            "en": "Try it: at “Ask first”, send the message to Mrs Mensah, deny it, then send it again and approve it. Then turn the code check off, choose “Allowed” and send «نعم، أرسلها.» on its own: see what the model invents. Choose “Ask first”, turn the check back on and send it again. To finish, have one message sent after your yes and one action blocked.",
+            "ar": "جرّب: عند «اسأل أولًا» أرسل الرسالة إلى الأستاذة مينسا، وارفضها، ثم أرسلها من جديد ووافق عليها. ثم أوقف «تحقّق من الموافقة في الكود»، واختر «مسموح»، وأرسل «نعم، أرسلها.» وحدها: انظر ماذا يختلق النموذج. ثم اختر «اسأل أولًا» وأعِد التحقّق، وأرسلها من جديد. ولتُنهي المختبر، أرسل رسالة واحدة بعد موافقتك، ودَع إجراءً واحدًا يُمنَع."
           },
           "tool": "approve"
         },
@@ -2316,7 +2340,11 @@
           "solution": "ALLOWED = [\"weather\", \"send_message\"]\n\ndef guard(name, args, approved):\n    if name not in ALLOWED:\n        return \"block\"\n    if name == \"send_message\":\n        if approved != args:\n            return \"ask\"\n    return \"run\"\n",
           "tests": [
             {
-              "check": "assert guard(\"weather\", {\"place\": \"Kafi\"}, None) == \"run\", \"Reading the weather can run\""
+              "check": "assert guard(\"weather\", {\"place\": \"Kafi\"}, None) == \"run\", \"Reading the weather can run\"",
+              "hint": {
+                "en": "weather is on the allow-list and doesn’t act, so guard returns \"run\".",
+                "ar": "أداة weather في قائمة السماح ولا تفعل شيئًا، فتُرجع guard القيمة ⁦\"run\"⁩."
+              }
             },
             {
               "check": "assert guard(\"attendance\", {\"student\": \"Ada Obi\"}, None) == \"block\", \"attendance isn't on the allow-list: block it\"",
@@ -2347,7 +2375,7 @@
             },
             {
               "en": "Then, for send_message: if approved != args: return \"ask\".",
-              "ar": "ثم لأداة ⁦send_message: if approved != args: return \"ask\"⁩."
+              "ar": "ثم لأداة send_message: ⁦if approved != args: return \"ask\"⁩."
             },
             {
               "en": "Everything else: return \"run\".",
@@ -2915,12 +2943,12 @@
               "ar": "افحصه بالحاجز"
             },
             {
-              "en": "Ask a person, if it acts",
-              "ar": "اسأل إنسانًا، إن كان يفعل شيئًا"
+              "en": "If the guard says “ask”, ask the person about this exact action",
+              "ar": "إن قال الحاجز «ask»، فاسأل الإنسان عن هذا الإجراء بعينه"
             },
             {
-              "en": "Log the decision",
-              "ar": "سجّل القرار"
+              "en": "Log the decision and who approved it, before running it",
+              "ar": "سجّل القرار ومَن وافق عليه قبل التشغيل"
             },
             {
               "en": "Run the tool",
@@ -2928,12 +2956,12 @@
             },
             {
               "en": "Add the result to the history",
-              "ar": "أضف النتيجة إلى السجلّ"
+              "ar": "أضف النتيجة إلى سجلّ المحادثة"
             }
           ],
           "explain": {
-            "en": "You can only check a call once it’s split; a person approves before anything acts; the decision is logged whatever it is; and only then does the tool run and its result join the history.",
-            "ar": "لا يمكن فحص الاستدعاء إلا بعد تقسيمه، والإنسان يوافق قبل أن يحدث أي فعل، ويُسجَّل القرار أيًّا كان، وبعد ذلك فقط تعمل الأداة وتدخل نتيجتها السجلّ."
+            "en": "You can only check a call once it’s split; the guard decides whether a person must approve this exact action; the decision and who approved it are logged before anything runs; and only then does the tool run and its result join the history.",
+            "ar": "لا يمكن فحص الاستدعاء إلا بعد تقسيمه، والحاجز يقرّر هل يجب أن يوافق إنسان على هذا الإجراء بعينه، ويُسجَّل القرار ومَن وافق عليه قبل أي تشغيل، وبعد ذلك فقط تعمل الأداة وتدخل نتيجتها سجلّ المحادثة."
           }
         },
         {
@@ -3143,7 +3171,7 @@
             "en": "Activity sheet: Build an agent in Python: unit check",
             "ar": "ورقة النشاط: ابنِ وكيلًا بلغة Python: اختبار الوحدة"
           },
-          "pages": 2,
+          "pages": 4,
           "base": "agents-s3-check/lesson-plan",
           "formats": [
             "pdf"

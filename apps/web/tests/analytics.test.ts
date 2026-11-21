@@ -13,12 +13,12 @@ const { configureAnalytics, flush, resetAnalytics, track } = await import("../sr
 const online = (on: boolean) => Object.defineProperty(navigator, "onLine", { configurable: true, get: () => on });
 const ctx = { r: "teacher", l: "ar", i: 0 as const };
 let fetchMock: ReturnType<typeof vi.fn>;
-/** The batch in the last request, ungzipped. */
-async function lastBatch() {
-  const [url, init] = fetchMock.mock.calls.at(-1)!;
+/** The batch in a request (the last one unless `at` says which), ungzipped. */
+async function lastBatch(at = -1) {
+  const [url, init] = fetchMock.mock.calls.at(at)!;
   const body = init.body as Blob | string;
   const text = typeof body === "string" ? body : await new Response(new Response(await (body as Blob).arrayBuffer()).body!.pipeThrough(new DecompressionStream("gzip"))).text();
-  return { url: url as string, batch: JSON.parse(text) as { d: string; c: unknown; e: Array<{ n: string; o?: 1; p?: Record<string, unknown> }> } };
+  return { url: url as string, batch: JSON.parse(text) as { d: string; b: string; c: unknown; e: Array<{ n: string; o?: 1; p?: Record<string, unknown> }> } };
 }
 
 beforeEach(() => {
@@ -41,8 +41,10 @@ describe("analytics queue", () => {
     const { url, batch } = await lastBatch();
     // Gzipped where the browser has CompressionStream (jsdom has not): same address, ?z=1.
     expect(url).toBe(typeof CompressionStream === "function" ? "/api/collect?z=1" : "/api/collect");
-    expect(batch.c).toEqual(ctx);
+    // Who sent it, and which build (build.ts: "dev" wherever vite.config.ts doesn't name one, as in tests).
+    expect(batch.c).toEqual({ ...ctx, v: "dev" });
     expect(batch.d).toMatch(/^[a-z0-9]{20}$/);
+    expect(batch.b).toMatch(/^[0-9a-f]{16}$/);
     expect(batch.e).toHaveLength(30);
     expect(batch.e[0].o).toBe(1); // made offline
     expect(batch.e[29]).toMatchObject({ n: "lesson_complete", p: { u: "ai-1-1", acc: 80 } });
@@ -72,6 +74,76 @@ describe("analytics queue", () => {
     expect((await lastBatch()).batch.e).toHaveLength(1);
     await flush(true);
     expect(fetchMock).toHaveBeenCalledTimes(2); // refused as malformed: gone
+  });
+
+  it("sends a batch that got no answer again under the same id, and the next batch under a new one", async () => {
+    configureAnalytics({ enabled: true, dataSaver: false, context: ctx });
+    track("session_start");
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 503 }));
+    await flush(true);
+    const first = (await lastBatch()).batch;
+    // The batch on its way is kept with the stored queue at once (the app may be closing), not after the usual delay.
+    expect(h.store.get("darsi:events")).toEqual({ e: [expect.objectContaining({ n: "session_start" })], b: { id: first.b, count: 1 } });
+    fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch")); // no answer at all this time
+    await flush(true);
+    expect((await lastBatch()).batch.b).toBe(first.b);
+    // Events made since then never join the batch that is being sent again: the server would skip them with it.
+    track("screen_view", { s: "me" });
+    track("lab_open", { lab: "neuron" });
+    await flush(true);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    const again = (await lastBatch(2)).batch, rest = (await lastBatch(3)).batch;
+    expect(again.b).toBe(first.b);
+    expect(again.e).toEqual(first.e);
+    expect(rest.b).toMatch(/^[0-9a-f]{16}$/);
+    expect(rest.b).not.toBe(first.b);
+    expect(rest.e.map((e) => e.n)).toEqual(["screen_view", "lab_open"]);
+    await flush(true);
+    expect(fetchMock).toHaveBeenCalledTimes(4); // everything was taken
+  });
+
+  it("after a restart, sends the batch that was on its way under the id it had", async () => {
+    const t = Math.floor(Date.now() / 1000);
+    // What the last session left: three events, the first two already sent once with no answer seen.
+    h.store.set("darsi:events", { e: [{ n: "session_start", t }, { n: "screen_view", t, p: { s: "learn" } }, { n: "screen_view", t, p: { s: "me" } }], b: { id: "0123456789abcdef", count: 2 } });
+    configureAnalytics({ enabled: true, dataSaver: false, context: ctx });
+    await flush(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const again = (await lastBatch(0)).batch, rest = (await lastBatch(1)).batch;
+    expect(again.b).toBe("0123456789abcdef");
+    expect(again.e.map((e) => e.p?.s ?? e.n)).toEqual(["session_start", "learn"]);
+    expect(rest.b).not.toBe(again.b);
+    expect(rest.e.map((e) => e.p?.s)).toEqual(["me"]);
+  });
+
+  it("reads the queue an older build stored (a plain list), and stores a plain list again when nothing is pending", async () => {
+    vi.useFakeTimers();
+    try {
+      h.store.set("darsi:events", [{ n: "session_start", t: Math.floor(Date.now() / 1000) }]);
+      configureAnalytics({ enabled: true, dataSaver: false, context: ctx });
+      track("screen_view", { s: "learn" });
+      await flush(true);
+      expect((await lastBatch()).batch.e.map((e) => e.n)).toEqual(["session_start", "screen_view"]);
+      track("screen_view", { s: "me" });
+      await vi.advanceTimersByTimeAsync(2000); // the queue is saved a moment after it changes
+      expect(h.store.get("darsi:events")).toEqual([expect.objectContaining({ n: "screen_view", p: { s: "me" } })]);
+    } finally { vi.useRealTimers(); }
+  });
+
+  it("forgets the id of a waiting batch once the queue's cap has cut into it", async () => {
+    configureAnalytics({ enabled: true, dataSaver: false, context: ctx });
+    track("session_start");
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 503 }));
+    await flush(true);
+    const first = (await lastBatch()).batch.b;
+    online(false); // nothing goes out while 300 more events push the old ones off the queue
+    for (let i = 0; i < 300; i++) track("screen_view", { s: "learn" });
+    online(true);
+    await flush(true);
+    const { batch } = await lastBatch();
+    expect(batch.b).not.toBe(first);
+    expect(batch.e).toHaveLength(100);
+    expect(batch.e.some((e) => e.n === "session_start")).toBe(false);
   });
 
   it("with Data saver, waits for 100 events or a day", async () => {
@@ -124,7 +196,7 @@ describe("signing in or out", () => {
     configureAnalytics({ enabled: true, dataSaver: false, context: { r: "teacher", l: "en", i: 0, o: "o1" } });
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const { batch } = await lastBatch();
-    expect(batch.c).toEqual({ r: "guest", l: "en", i: 0 });
+    expect(batch.c).toEqual({ r: "guest", l: "en", i: 0, v: "dev" });
     expect(batch.e.map((e) => e.n)).toEqual(["lesson_complete"]);
     // A language change is not a new account: nothing extra is sent.
     track("screen_view", { s: "me" });

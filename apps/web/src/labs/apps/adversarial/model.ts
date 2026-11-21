@@ -57,7 +57,8 @@ export function inputGrad(net: Net, img: Img, label: number): Float64Array {
 
 /**
  * One fast-gradient-sign step, but only on the `pixels` pixels whose gradient is largest. Each chosen pixel is pushed
- * by `eps` in the direction that raises the error, clamped to [0, 1]. Returns the new image and which pixels changed.
+ * by `eps` in the direction that raises the error, clamped to [0, 1]. Returns the new image and the pixels that really
+ * changed: a chosen pixel already at 0 (or 1) that the attack pushes further stays as it was, so it is not counted.
  */
 export function attack(net: Net, img: Img, label: number, eps: number, pixels: number): { img: Img; changed: number[] } {
   const g = inputGrad(net, img, label);
@@ -65,7 +66,7 @@ export function attack(net: Net, img: Img, label: number, eps: number, pixels: n
   const chosen = order.slice(0, Math.max(0, Math.min(pixels, N * N))).filter((i) => Math.abs(g[i]) > 1e-6);
   const out = Float32Array.from(img);
   for (const i of chosen) out[i] = Math.min(1, Math.max(0, out[i] + eps * Math.sign(g[i])));
-  return { img: out, changed: chosen };
+  return { img: out, changed: chosen.filter((i) => out[i] !== img[i]) };
 }
 
 /** The fewest top-gradient pixels (at strength `eps`) that change the model's answer, or 0 if `max` isn't enough. */

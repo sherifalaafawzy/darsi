@@ -5,9 +5,10 @@
  * Without a connection the report waits on the device and goes when the phone is back online (flushReports).
  * Kept out of the precache (vite.config.ts), like the staff screens; the service worker caches it the first time.
  */
-import { useEffect, useId, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { domToCanvas } from "modern-screenshot";
 import { Button, Icon, Switch } from "@darsi/design-system";
+import { BUILD } from "../build";
 import { firebaseConfig, functionsRegion, useEmulators } from "../firebase-config";
 import { isolate, useI18n } from "../i18n";
 import { storage } from "../platform";
@@ -17,7 +18,10 @@ import "../styles/bug.css";
 import "./strings";
 
 export interface Shot { url: string; w: number; h: number }
-/** What App knows about the person and their settings. The server takes who sent it only from the ID token. */
+/**
+ * What App knows about the person and their settings. `who` is only shown to them in the sheet; `account` is at most
+ * their uid: the server takes who sent a report from the ID token alone (functions/src/bugsCore.ts ownDetails).
+ */
 export interface About { who: string | null; account: Record<string, unknown> | null; learner: Record<string, unknown> }
 interface Body { text: string; url: string; details: Record<string, unknown>; shot: string | null; shotW?: number; shotH?: number }
 interface Queued { uid: string | null; at: number; body: Body }
@@ -61,8 +65,14 @@ async function fontCss(): Promise<string> {
 }
 
 /**
+ * What goes into the picture: not the Report button and its note, and not index.html's <noscript> (with scripts on, the
+ * browser keeps its contents as raw text, which the picture would otherwise draw at the foot of the page, markup and all).
+ */
+export const inShot = (n: Node) => !(n instanceof Element && (n.nodeName === "NOSCRIPT" || n.classList.contains("bug-fab") || n.classList.contains("bug-note") || n.classList.contains("fab-menu")));
+
+/**
  * A picture of what is on the screen now, as a JPEG data: URL; null if the browser can't make one. The button itself
- * is left out. At most 1600 px on the long side (sharper than the phone's CSS pixels, still small to send).
+ * is left out (inShot). At most 1600 px on the long side (sharper than the phone's CSS pixels, still small to send).
  */
 export async function capture(): Promise<Shot | null> {
   try {
@@ -73,7 +83,7 @@ export async function capture(): Promise<Shot | null> {
     const canvas = await within(domToCanvas(body, {
       width: w, height: h, scale,
       backgroundColor: getComputedStyle(body).backgroundColor || getComputedStyle(document.documentElement).backgroundColor || null,
-      filter: (n) => !(n instanceof Element && (n.classList.contains("bug-fab") || n.classList.contains("bug-note"))),
+      filter: inShot,
       // The page scrolls the window; the picture shows the part on screen.
       style: y ? { marginTop: `${-y}px` } : null,
       features: { restoreScrollPosition: true },
@@ -126,11 +136,13 @@ export async function gather(about: About): Promise<Record<string, unknown>> {
   const n = navigator as Nav;
   const est = await within(navigator.storage?.estimate?.() ?? Promise.resolve(undefined), 1500).catch(() => undefined);
   const media = (q: string) => (typeof matchMedia === "function" ? matchMedia(q).matches : false);
-  const build = Array.from(document.scripts).map((s) => /\/assets\/(index-[\w-]+\.js)/.exec(s.src)?.[1]).find(Boolean) ?? import.meta.env.MODE;
+  // The build by its own name (build.ts: the same one usage batches carry), and the entry file this page really runs,
+  // which is an older one when the phone hasn't taken an update yet.
+  const entry = Array.from(document.scripts).map((s) => /\/assets\/(index-[\w-]+\.js)/.exec(s.src)?.[1]).find(Boolean) ?? import.meta.env.MODE;
   return {
     page: { title: document.title.slice(0, 200), referrer: redact(document.referrer), scrollY: Math.round(window.scrollY), lang: document.documentElement.lang, dir: document.documentElement.dir },
     app: {
-      build, sw: navigator.serviceWorker?.controller ? "controlled" : "none",
+      build: BUILD, entry, sw: navigator.serviceWorker?.controller ? "controlled" : "none",
       installed: media("(display-mode: standalone)") || n.standalone === true,
       storageMb: est?.usage != null ? Math.round(est.usage / 1e5) / 10 : null, quotaMb: est?.quota != null ? Math.round(est.quota / 1e6) : null,
     },
@@ -208,14 +220,32 @@ export function ReportSheet({ shot: taken, about, uid, getToken, onClose }: {
   const [id, setId] = useState("");
   const url = useMemo(() => redact(location.href), []);
   const box = useRef<HTMLTextAreaElement>(null);
-  const sheet = useRef<HTMLDivElement>(null);
+  const sheet = useRef<HTMLDialogElement>(null);
 
   useEffect(() => { void gather(about).then(setDetails); }, [about]);
-  useEffect(() => {
+  // A real modal (<dialog> opened with showModal, Chrome 37+): the page behind is inert, Tab stays in the sheet and
+  // Escape closes it. Before the first paint, so the sheet never shows as a plain box for a frame.
+  useLayoutEffect(() => {
+    const d = sheet.current;
+    if (!d) return;
+    if (typeof d.showModal === "function") { if (!d.open) d.showModal(); } else d.setAttribute("open", "");
     box.current?.focus();
-    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", esc);
-    return () => document.removeEventListener("keydown", esc);
+  }, []);
+  // Browsers without <dialog> (Safari before 15.4): Escape closes, and Tab and Shift+Tab go round inside the sheet.
+  useEffect(() => {
+    const d = sheet.current;
+    if (!d || typeof d.showModal === "function") return;
+    const keys = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { onClose(); return; }
+      if (e.key !== "Tab") return;
+      const all = Array.from(d.querySelectorAll<HTMLElement>("button, [href], input, textarea, select, summary, [tabindex]:not([tabindex='-1'])"))
+        .filter((el) => !(el as HTMLButtonElement).disabled && el.getClientRects().length > 0);
+      if (!all.length) return;
+      const first = all[0], last = all[all.length - 1], at = document.activeElement;
+      if (!d.contains(at) || (e.shiftKey && at === first) || (!e.shiftKey && at === last)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+    };
+    document.addEventListener("keydown", keys);
+    return () => document.removeEventListener("keydown", keys);
   }, [onClose]);
 
   const pick = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -245,7 +275,8 @@ export function ReportSheet({ shot: taken, about, uid, getToken, onClose }: {
 
   const done = state === "sent" || state === "queued";
   return (
-    <div className="bug-sheet" role="dialog" aria-modal="true" aria-labelledby={ids.title} ref={sheet}>
+    <dialog className="bug-sheet" aria-modal="true" aria-labelledby={ids.title} ref={sheet}
+      onCancel={(e) => { e.preventDefault(); onClose(); }} onClose={onClose}>
       <div className="bug-head">
         <h2 className="bug-title" id={ids.title}>{t("bug.title")}</h2>
         <Button variant="ghost" iconOnly icon="close" onClick={onClose}>{t("bug.close")}</Button>
@@ -296,6 +327,6 @@ export function ReportSheet({ shot: taken, about, uid, getToken, onClose }: {
           </>
         )}
       </div>
-    </div>
+    </dialog>
   );
 }

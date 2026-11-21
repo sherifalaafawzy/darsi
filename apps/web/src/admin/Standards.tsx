@@ -2,6 +2,7 @@ import type { Profile } from "../auth/types";
 import { useI18n } from "../i18n";
 import { FRAMEWORKS, framework, type Framework } from "../content/standards";
 import { itemEvidence, standardsReport } from "./orgStats";
+import { emptyCell } from "./PeopleTable";
 import "./strings";
 import "../styles/analytics.css";
 
@@ -42,14 +43,18 @@ export function StandardsTable({ people, fw }: { people: Profile[]; fw: Framewor
         <thead><tr><th>{t("or.item")}</th><th className="num">{t("or.reached")}</th><th>{t("or.levels")}</th><th className="num">{t("col.accuracy")}</th></tr></thead>
         <tbody>{rows.map(({ item, levels, reached, avgAccuracy }) => (
           <tr key={item.id}>
-            <td data-label={t("or.item")}><span className="cap-code" dir="ltr">{item.id}</span> <strong>{L(item.label)}</strong>{item.level && <small> — {L(item.level)}</small>}{item.group && item.group !== item.label && <small className="or-sub">{L(item.group)}</small>}</td>
+            {/* On phones a row is a card (base.css .data-table): the item across its top, the two figures under their
+                labels, then the bar across it. One wrapper in the item's cell: the cell is a flex row, and the code,
+                name and level must wrap together instead of being squeezed side by side. */}
+            <td data-cell="main" data-label={t("or.item")}><div><span className="cap-code" dir="ltr">{item.id}</span> <strong>{L(item.label)}</strong>{item.level && <small> — {L(item.level)}</small>}{item.group && item.group !== item.label && <small className="or-sub">{L(item.group)}</small>}</div></td>
             <td data-label={t("or.reached")} className="num">{people.length ? num(reached / people.length, { style: "percent" }) : "—"}<small className="or-sub">{t("or.ofPeople", { n: reached, of: people.length })}</small></td>
-            <td data-label={t("or.levels")} className="or-levels">
+            <td data-cell="row" data-label={t("or.levels")} className="or-levels">
               <span className="or-stack" role="img" aria-label={LEVELS.map((k, i) => `${t(k)}: ${num(levels[i])}`).join(t("common.sep"))}>
                 {levels.map((n, i) => n ? <i key={i} className={`or-lv or-lv${i}`} style={{ inlineSize: `${(n / Math.max(1, people.length)) * 100}%` }} /> : null)}
               </span>
             </td>
-            <td data-label={t("col.accuracy")} className="num">{avgAccuracy === null ? "—" : num(avgAccuracy, { style: "percent" })}</td>
+            {/* No score yet (nobody has a graded lesson for it): the card says nothing rather than a dash on a line of its own. */}
+            <td data-label={t("col.accuracy")} className="num" {...emptyCell(avgAccuracy === null)}>{avgAccuracy === null ? "—" : num(avgAccuracy, { style: "percent" })}</td>
           </tr>
         ))}</tbody>
       </table></div>
@@ -77,7 +82,8 @@ export function PersonStandards({ person, fw }: { person: Profile; fw: Framework
             <span className="cap-code" dir="ltr">{item.id}</span>
             <span className="or-name">{L(item.label)}{item.level ? ` — ${L(item.level)}` : ""}</span>
             <span className={`or-chip or-lv${e.level}`}>{t(LEVELS[e.level])}</span>
-            <span className="num small">{e.n ? t("or.evidence", { n: e.n, score: e.acc === null ? "—" : num(e.acc, { style: "percent" }) }) : "—"}</span>
+            {/* Only with lessons to count: an item with none has its "Not yet" chip and no second line. */}
+            {e.n > 0 && <span className="num small">{t("or.evidence", { n: e.n, score: e.acc === null ? "—" : num(e.acc, { style: "percent" }) })}</span>}
           </li>
         );
       })}</ul>

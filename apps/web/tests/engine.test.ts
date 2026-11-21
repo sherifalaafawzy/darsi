@@ -1,4 +1,4 @@
-import { grade, LessonRun, shuffled } from "../src/lesson/engine";
+import { grade, LessonRun, norm, shuffled } from "../src/lesson/engine";
 import unit from "../../../content/retired/ai-1.json";
 import type { Unit, GradedStep } from "../src/content/types";
 import { isoWeek, streakWeeks, initialState } from "../src/state/store";
@@ -17,6 +17,19 @@ describe("grading", () => {
     const s = u.lessons[1].steps.find((x) => x.id === "q4") as GradedStep;
     expect(grade(s, { kind: "type", text: " Token " }, "en")).toBe(true);
     expect(grade(s, { kind: "type", text: "رُمُوز" }, "ar")).toBe(true);
+  });
+  it("type answers take Arabic-Indic digits and the Arabic decimal point, in any UI language", () => {
+    const s = (accept: string[]) => ({ id: "q", type: "type", prompt: { en: "How many?" }, accept: { en: accept } }) as unknown as GradedStep;
+    expect(grade(s(["8"]), { kind: "type", text: "٨" }, "en")).toBe(true);
+    expect(grade(s(["8"]), { kind: "type", text: "۸" }, "en")).toBe(true); // Persian keyboards
+    expect(grade(s(["128"]), { kind: "type", text: " ١٢٨ " }, "ar")).toBe(true);
+    expect(grade(s(["0.75"]), { kind: "type", text: "٠٫٧٥" }, "en")).toBe(true);
+    expect(grade(s(["50%"]), { kind: "type", text: "٥٠٪" }, "en")).toBe(true);
+    expect(grade(s(["1,000"]), { kind: "type", text: "١٬٠٠٠" }, "en")).toBe(true);
+    expect(grade(s(["8"]), { kind: "type", text: "٩" }, "en")).toBe(false);
+    // An answer written with Arabic-Indic digits takes ASCII ones too.
+    expect(grade(s(["٨"]), { kind: "type", text: "8" }, "en")).toBe(true);
+    expect(norm("⁦٣⁩ + ٤")).toBe("3 + 4");
   });
   it("fill uses the teacher's language", () => {
     const s = u.lessons[1].steps.find((x) => x.id === "q2") as GradedStep;

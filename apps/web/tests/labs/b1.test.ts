@@ -2,7 +2,7 @@ import { apply, curve, FNS, RANGE } from "../../src/labs/apps/activation/model";
 import { MAX_PASSES, mistakes, preset as points, RATE as P_RATE, START as P_START, trainAll } from "../../src/labs/apps/perceptron/model";
 import { best, data, grad, loss, MAX_STEPS, RATES, step } from "../../src/labs/apps/gradient/model";
 import { backward, error, forward, START, train as trainNet, type W } from "../../src/labs/apps/backprop/model";
-import { fit, mse, sample, verdict } from "../../src/labs/apps/overfit/model";
+import { fit, mse, newExamples, sample, trainingExamples, verdict } from "../../src/labs/apps/overfit/model";
 import { brighten, invert, level, N as PN, preset, shift } from "../../src/labs/apps/pixels/model";
 import { at, convolve, CUSTOM, display, KERNELS, N as CN, picture, pool } from "../../src/labs/apps/convolution/model";
 import { DAYS, decide, score } from "../../src/labs/apps/neuron/model";
@@ -173,7 +173,7 @@ describe("what Try this promises", () => {
 
   it("overfitting: the verdict follows the errors (the lab's own data)", () => {
     const say = (deg: number, many: boolean, noise = 0.15) => {
-      const train = sample(many ? 40 : 10, noise, 21), test = sample(30, noise, 99), f = fit(train, deg);
+      const train = trainingExamples(many, noise), test = newExamples(noise), f = fit(train, deg);
       return verdict(mse(f, train), mse(f, test), noise, deg, many);
     };
     expect(say(3, false)).toBe("good"); // the lab's start

@@ -90,4 +90,15 @@ describe("SQL", () => {
     const [r] = await sql("SELEC name FROM pupils", "SELECT name FROM pupils");
     expect(r).toMatchObject({ error: expect.stringContaining("syntax error"), passed: false });
   });
+  it("grades on every row, but sends back only the first 200 and how many there were", async () => {
+    // A runaway join's hundreds of thousands of rows were copied to the page after the time limit, and kept there.
+    const upTo = (n: number) => `WITH RECURSIVE k(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM k WHERE x < ${n}) SELECT x FROM k`;
+    const [r] = await sql(upTo(500), upTo(500));
+    expect(r.passed).toBe(true);
+    expect(r.table).toMatchObject({ columns: ["x"], rowCount: 500 });
+    expect(r.table!.values).toHaveLength(200);
+    expect(r.table!.values[199]).toEqual([200]);
+    expect((await sql(upTo(500), upTo(501)))[0].passed).toBe(false); // the rows past 200 still count
+    expect((await sql(upTo(200)))[0].table).toEqual({ columns: ["x"], values: Array.from({ length: 200 }, (_, i) => [i + 1]) });
+  });
 });

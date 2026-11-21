@@ -11,5 +11,7 @@ export function reisolate(text: string): string;
 export function stripIsolates(text: string): string;
 /** True when every isolate opener has its PDI and no PDI is left over. */
 export function isolatesPair(text: string): boolean;
-/** Every string in a unit's Arabic fields, with its path: [path, text, set(newText)]. */
-export function arabicStrings(unit: unknown): [string, string, (text: string) => void][];
+/** The isolates that hold a line break (none should: a line break ends every isolate on screen), as their text. */
+export function isolatesOverLines(text: string): string[];
+/** Every string in a unit's (or a course pack's: pass `root`) Arabic fields, with its path: [path, text, set(newText)]. */
+export function arabicStrings(unit: unknown, root?: string): [string, string, (text: string) => void][];

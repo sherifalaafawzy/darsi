@@ -16,13 +16,13 @@ const S = {
     publisher: "You trust the publisher's key", scenario: "The file you received",
     scn: { genuine: "Genuine", tampered: "A byte was changed", impostor: "From an impostor" } as Record<Scenario, string>,
     pkg: "The model package", fp: "Its fingerprint now", published: "The publisher's published fingerprint",
-    signedBy: "Signature made with key", checkHash: "Fingerprint matches the published one", checkSig: "Signature is from the publisher's key",
+    signedBy: "Signature made with key", checkHash: "Fingerprint matches the published one", checkPosted: "Fingerprint matches the one posted next to it", checkSig: "Signature is from the publisher's key",
     trusted: "Trusted: same bytes, and really from the publisher.", badHash: "The file was changed — its fingerprint no longer matches.", badSig: "Signed by a key you don't trust — not the real publisher.",
     bits: (n: string) => `${n} of 256 bits differ from the published fingerprint.`,
     real: "A real model's files (Darsi Tiny)", cName: "File", cSize: "Size", cFp: "Fingerprint", kb: (n: string) => `${n} KB`, mb: (n: string) => `${n} MB`,
     try1: "Leave it on “Genuine”: the fingerprint matches and the signature checks out, so both lights are green — trusted.",
     try2: "Switch to “A byte was changed”: about half of the fingerprint's 256 bits flip, so almost every character of it changes; the match fails, and so does the signature. One changed byte is enough to catch.",
-    try3: "Switch to “From an impostor”: the bytes are fine, but the signature was made with a different key, so the publisher check fails. The fingerprint alone wouldn't have caught this.",
+    try3: "Switch to “From an impostor”: a different file, posted with its own fingerprint. The file matches that fingerprint, but the signature wasn't made with the publisher's key, so the publisher check fails. A fingerprint from whoever uploaded the file proves nothing.",
     takeaway: "Downloading a model is trusting whoever made it. A fingerprint proves the bytes didn't change on the way; a signature proves who made them. Check both before you run a model — the same habit protects every file you install.",
   },
   ar: {
@@ -30,13 +30,13 @@ const S = {
     publisher: "أنت تثق بمفتاح الناشر", scenario: "الملف الذي تلقّيته",
     scn: { genuine: "أصليّ", tampered: "تغيّر بايت", impostor: "من منتحِل" } as Record<Scenario, string>,
     pkg: "حزمة النموذج", fp: "بصمتها الآن", published: "البصمة التي نشرها الناشر",
-    signedBy: "وُقِّع بمفتاح", checkHash: "البصمة تطابق المنشورة", checkSig: "التوقيع من مفتاح الناشر",
+    signedBy: "وُقِّع بمفتاح", checkHash: "البصمة تطابق المنشورة", checkPosted: "البصمة تطابق المنشورة بجانبه", checkSig: "التوقيع من مفتاح الناشر",
     trusted: "موثوق: البايتات نفسها، ومن الناشر فعلًا.", badHash: "تغيّر الملف — لم تعد بصمته تطابق.", badSig: "وُقِّع بمفتاح لا تثق به — ليس الناشر الحقيقي.",
     bits: (n: string) => `${n} من ٢٥٦ بتًا تختلف عن البصمة المنشورة.`,
     real: "ملفات نموذج حقيقي («درسي الصغير»)", cName: "الملف", cSize: "الحجم", cFp: "البصمة", kb: (n: string) => `${n} كيلوبايت`, mb: (n: string) => `${n} ميغابايت`,
     try1: "اتركه على «أصليّ»: البصمة تطابق والتوقيع صحيح، فالضوءان أخضران — موثوق.",
     try2: "اختر «تغيّر بايت»: ينقلب نحو نصف بتات البصمة الـ٢٥٦، فيتغيّر كل حرف فيها تقريبًا، ويفشل التطابق ويفشل التوقيع. بايت واحد يكفي لكشفه.",
-    try3: "اختر «من منتحِل»: البايتات سليمة، لكن التوقيع صُنع بمفتاح آخر، ففشل فحص الناشر. البصمة وحدها ما كانت لتمسك هذا.",
+    try3: "اختر «من منتحِل»: ملف آخر نُشرت بصمته الخاصة بجانبه. يطابق الملف تلك البصمة، لكن التوقيع لم يُصنع بمفتاح الناشر، ففشل فحص الناشر. البصمة التي ينشرها من رفع الملف لا تثبت شيئًا.",
     takeaway: "تنزيل نموذج ثقةٌ بمن صنعه. البصمة تثبت أن البايتات لم تتغيّر في الطريق، والتوقيع يثبت من صنعها. تحقّق من الاثنين قبل تشغيل نموذج — العادة نفسها تحمي كل ملف تثبّته.",
   },
 };
@@ -50,8 +50,12 @@ export default function SupplyChain({ meta, onDone }: LabProps) {
   const [pubFp, setPubFp] = useState(""), [impFp, setImpFp] = useState("");
   const [published, setPublished] = useState("");
   const base = useMemo(() => basePkg(), []);
-  const delivered = useMemo(() => (scn === "tampered" ? { ...base, note: base.note + "." } : base), [base, scn]);
+  // An impostor posts a different file next to its own fingerprint (identical bytes would be harmless, and no other
+  // file can match the publisher's fingerprint), so only the signature can catch it.
+  const delivered = useMemo(() => (scn === "tampered" ? { ...base, note: base.note + "." } : scn === "impostor" ? { ...base, note: base.note + " (free pro version)" } : base), [base, scn]);
   const [now, setNow] = useState(""); // fingerprint of the delivered bytes
+  const [posted, setPosted] = useState(""); // the fingerprint it is checked against
+  const [shown, setShown] = useState<Scenario>("genuine"); // the scenario these results are for
   const [hashOk, setHashOk] = useState<boolean | null>(null);
   const [sigOk, setSigOk] = useState<boolean | null>(null);
   const [sigFp, setSigFp] = useState("");
@@ -74,13 +78,15 @@ export default function SupplyChain({ meta, onDone }: LabProps) {
     (async () => {
       const bytes = pkgBytes(delivered);
       const fp = await sha256(bytes);
-      // genuine & impostor keep the real bytes; tampered keeps the publisher's OLD signature over the genuine bytes.
+      // Genuine: the publisher signs its own bytes. Tampered: the publisher's OLD signature over the genuine bytes. Impostor:
+      // its own file, its own key, and its own fingerprint posted next to it (which is what the file is checked against).
       const signer = scn === "impostor" ? imp : pub;
       const signedBytes = scn === "tampered" ? pkgBytes(base) : bytes;
       const sig = await sign(signer.privateKey, signedBytes);
       const ok = await verify(pub.publicKey, sig, bytes);
       if (!live) return;
-      setNow(fp); setHashOk(fp === published); setSigOk(ok);
+      const against = scn === "impostor" ? fp : published;
+      setNow(fp); setPosted(against); setShown(scn); setHashOk(fp === against); setSigOk(ok);
       setSigFp(scn === "impostor" ? impFp : pubFp);
       onDone?.();
     })();
@@ -100,13 +106,13 @@ export default function SupplyChain({ meta, onDone }: LabProps) {
           <span className="dr-field-label">{s.pkg}</span>
           <pre className="lb-pre" dir="ltr">{JSON.stringify(delivered, null, 1)}</pre>
           <span className="lb-note">{s.fp}</span>
-          <code className="lb-hash" dir="ltr">{[...now].map((c, i) => <span key={i} className={published && published[i] !== c ? "is-diff" : undefined}>{c}</span>)}</code>
-          {hashOk === false && <p className="lb-note">{s.bits(num(bitsDiffer(now, published)))}</p>}
+          <code className="lb-hash" dir="ltr">{[...now].map((c, i) => <span key={i} className={posted && posted[i] !== c ? "is-diff" : undefined}>{c}</span>)}</code>
+          {hashOk === false && <p className="lb-note">{s.bits(num(bitsDiffer(now, posted)))}</p>}
           <span className="lb-note">{s.signedBy}: <code className="lb-sc-key" dir="ltr">{sigFp || "…"}</code></span>
         </div>
 
         <ul className="lb-checks">
-          <li className={hashOk ? "is-ok" : "is-no"}><Icon name={hashOk ? "check" : "close"} size={18} /><span>{s.checkHash}</span></li>
+          <li className={hashOk ? "is-ok" : "is-no"}><Icon name={hashOk ? "check" : "close"} size={18} /><span>{shown === "impostor" ? s.checkPosted : s.checkHash}</span></li>
           <li className={sigOk ? "is-ok" : "is-no"}><Icon name={sigOk ? "check" : "close"} size={18} /><span>{s.checkSig}</span></li>
         </ul>
         <p className={`lb-verdict ${trusted ? "" : "is-warn"}`} aria-live="polite">

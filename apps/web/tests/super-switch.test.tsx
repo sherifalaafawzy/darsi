@@ -41,6 +41,11 @@ describe("Darsi Super on or off for everyone", () => {
     expect(screen.getByText(/Darsi Super isn't available right now/)).toBeTruthy();
     expect(screen.queryByRole("group")).toBeNull();
     expect(screen.queryByRole("button", { name: /Paymob|Stripe/ })).toBeNull();
+    // Only the notice: no pitch above it, and the plans aren't even read.
+    expect(screen.queryByText(/Super adds a live tutor/)).toBeNull();
+    expect(screen.queryByRole("list")).toBeNull();
+    expect(screen.getByRole("main").children).toHaveLength(1);
+    expect(JSON.stringify(fetchSpy.mock.calls)).not.toContain("plans.json");
     vi.unstubAllGlobals();
   });
 });

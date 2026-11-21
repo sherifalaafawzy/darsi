@@ -35,6 +35,19 @@ const S = {
   },
 };
 
+/**
+ * A sender as people read it: the name, then the address left to right and kept whole. In Arabic a bare phone number
+ * showed its groups reversed ("900123 7700 44+"), and an address inside the name's right-to-left isolate split at its
+ * hyphen and scrambled ("<-security@portal"). As an inline block the address moves to a line of its own rather than
+ * break; only one longer than the whole line wraps, still left to right.
+ */
+const ADDRESS = { display: "inline-block", maxInlineSize: "100%", overflowWrap: "anywhere" } as const;
+function From({ v }: { v: string }) {
+  const m = /^(.*?)\s*<([^<>]+)>$/.exec(v);
+  if (!m) return <bdi dir={/^[ -~]*$/.test(v) ? "ltr" : "auto"}>{v}</bdi>;
+  return <><bdi>{m[1]}</bdi> <bdi dir="ltr" style={ADDRESS}>&lt;{m[2]}&gt;</bdi></>;
+}
+
 export default function Phishing({ meta, onDone }: LabProps) {
   const s = useS(S);
   const { lang, num } = useI18n();
@@ -50,7 +63,7 @@ export default function Phishing({ meta, onDone }: LabProps) {
       {finished ? (
         <>
           <p className="lb-verdict" aria-live="polite">{s.done(num(score(answers)), num(MESSAGES.length))}</p>
-          <ul className="lb-flags is-review">{MESSAGES.map((x) => <li key={x.id} className={answers[x.id] === x.scam ? "is-ok" : undefined}><Icon name={answers[x.id] === x.scam ? "check" : "close"} size={16} /> {x[L].from}: {x.scam ? s.scam : s.safe}</li>)}</ul>
+          <ul className="lb-flags is-review">{MESSAGES.map((x) => <li key={x.id} className={answers[x.id] === x.scam ? "is-ok" : undefined}><Icon name={answers[x.id] === x.scam ? "check" : "close"} size={16} /> <From v={x[L].from} />: {x.scam ? s.scam : s.safe}</li>)}</ul>
           <p className="lb-flags-one">{s.rule}</p>
           <div className="lb-row"><Button size="sm" variant="secondary" icon="sync" onClick={() => { setI(0); setAnswers({}); }}>{s.again}</Button></div>
         </>
@@ -58,7 +71,7 @@ export default function Phishing({ meta, onDone }: LabProps) {
         <>
           <span className="lb-note">{s.of(num(i + 1), num(MESSAGES.length))}</span>
           <article className={`lb-msg is-${m.channel}`} aria-label={s.channel[m.channel]}>
-            <header><span className="lb-kicker">{s.channel[m.channel]}</span><span>{s.from}: <bdi dir={/^[ -~]*$/.test(t.from) ? "ltr" : "auto"}>{t.from}</bdi></span></header>
+            <header><span className="lb-kicker">{s.channel[m.channel]}</span><span>{s.from}: <From v={t.from} /></span></header>
             <p>{t.text}</p>
             {t.link && <p className="lb-msg-link"><Icon name="link" size={16} /> <bdi dir="ltr">{t.link}</bdi></p>}
             {t.file && <p className="lb-msg-link"><Icon name="file" size={16} /> <bdi dir="ltr">{t.file}</bdi></p>}

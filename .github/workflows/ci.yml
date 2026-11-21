@@ -1,0 +1,185 @@
+# The gates every change passes before it can be released. Nothing here deploys, and nothing here has a secret:
+# releases go out from a maintainer's machine with `npm run deploy` (docs/OPERATIONS.md), which runs the same
+# `npm run verify` first.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch or pull request replaces the run in progress.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # npm 10, which Node 22 ships, crashes on this lockfile ("edgesOut"); the project uses npm 11 (CLAUDE.md).
+  NPM_VERSION: 11.13.0
+
+jobs:
+  # Types, the functions build, every unit test, the CSS rules and contrast: scripts/verify.mjs.
+  # No apps/web/.env.local here and no Java, as on a new machine.
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - run: npm install -g npm@${{ env.NPM_VERSION }}
+      # The root install also builds the design system (postinstall), which the web app's tests read.
+      - run: npm ci
+      - run: npm ci --prefix functions
+      - run: npm run verify
+
+  # The startup rules on a real build: how many files and KB the app loads before it shows anything, no Firebase SDK
+  # among them, nothing lazy in the precache (scripts/check-bundle.mjs, scripts/bundle-budget.json).
+  # DARSI_LOCAL_BUILD=1: a build with no project settings, which vite.config.ts otherwise refuses; it is only measured.
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm install -g npm@${{ env.NPM_VERSION }}
+      - run: npm ci
+      - name: Build into a scratch folder
+        working-directory: apps/web
+        env:
+          DARSI_LOCAL_BUILD: "1"
+        run: npx vite build --outDir "${{ runner.temp }}/darsi-dist" --emptyOutDir
+      - run: node scripts/check-bundle.mjs "${{ runner.temp }}/darsi-dist"
+
+  # Firestore and Storage security rules, against the emulators (JDK 21 or newer).
+  rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('package-lock.json') }}
+      - run: npm install -g npm@${{ env.NPM_VERSION }}
+      - run: npm ci
+      - run: npm run test:rules -w @darsi/web
+
+  # Known vulnerabilities in what ships (no dev tools). It reports and never blocks: a new advisory is not a broken
+  # change. Dependabot opens the pull request for a fix (.github/dependabot.yml).
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+      - run: npm install -g npm@${{ env.NPM_VERSION }}
+      - name: The web app and the tools
+        run: npm audit --omit=dev --audit-level=high
+      - name: The functions
+        if: ${{ !cancelled() }}
+        run: npm audit --omit=dev --audit-level=high --prefix functions
+
+  # The browser suite, desktop and phone. It builds the app in mode "e2e" (apps/web/playwright.config.ts), which reads
+  # the committed apps/web/.env.e2e (public demo values, no secrets); without that file every step here is skipped.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        if: ${{ hashFiles('apps/web/.env.e2e') != '' }}
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - if: ${{ hashFiles('apps/web/.env.e2e') != '' }}
+        run: npm install -g npm@${{ env.NPM_VERSION }}
+      - if: ${{ hashFiles('apps/web/.env.e2e') != '' }}
+        run: npm ci
+      # Chromium for the suite, and WebKit for the iPhone smoke tests (e2e/smoke.spec.ts never skips them in CI).
+      - name: Install the browsers
+        if: ${{ hashFiles('apps/web/.env.e2e') != '' }}
+        run: npx playwright install --with-deps chromium webkit
+      - if: ${{ hashFiles('apps/web/.env.e2e') != '' }}
+        run: npm run e2e
+      - name: Keep the traces of failed tests
+        if: ${{ failure() && hashFiles('apps/web/.env.e2e') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-traces
+          path: |
+            apps/web/test-results/
+            apps/web/playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # The signed-in browser suite (scripts/e2e-signed.mjs; `npm run verify -- --signed` runs the same): the real
+  # functions on the Emulator Suite (JDK 21 or newer), two seeded organizations, a stand-in school provider, and a
+  # build of the app pointed at them. Everything stays on the runner: project demo-darsi-e2e, no secrets, no network
+  # beyond the installs.
+  e2e-signed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # Allowed to fail for now: the suite is new and has only run on a maintainer's machine, never on a runner (the
+    # emulators' first start, the browser's download and the ports are untried here). Its result shows on the run
+    # without blocking a change. Take this line out once it has passed here a few times in a row.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('package-lock.json') }}
+      - run: npm install -g npm@${{ env.NPM_VERSION }}
+      - run: npm ci
+      - run: npm ci --prefix functions
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+      - run: node scripts/e2e-signed.mjs
+      - name: Keep the traces of failed tests
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-signed-traces
+          path: |
+            apps/web/test-results/
+            apps/web/playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore

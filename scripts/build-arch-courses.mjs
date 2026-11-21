@@ -1,6 +1,8 @@
 // Builds the six university architecture courses in content/units from docs/curriculum/ai-architecture.md,
 // and a dev catalog so the local app can show them before they are published.
 //   node scripts/build-arch-courses.mjs
+// Retired (2026-11-07): the unit files are now the source, edited by hand and filled by import-media. Running this
+// again overwrites ai-d1…ai-d3 and ai-u2…ai-u4 with its stale text (the content fixes, media and kit fields are lost).
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -418,7 +420,7 @@ const catalog = {
     ...(u.teach ? { teach: u.teach } : {}),
   })),
 };
-const pub = join(ROOT, "apps/web/public/content");
-mkdirSync(pub, { recursive: true });
-writeFileSync(join(pub, "dev-catalog.json"), JSON.stringify(catalog, null, 2) + "\n");
+// Read only by the Vite dev server (vite.config.ts devUnits), never shipped: it sits beside the units, not in public/.
+mkdirSync(join(ROOT, "content"), { recursive: true });
+writeFileSync(join(ROOT, "content/dev-catalog.json"), JSON.stringify(catalog, null, 2) + "\n");
 console.log(units.map((u) => u.id).join(" "));

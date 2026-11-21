@@ -12,7 +12,7 @@ const S = {
   en: {
     intro: "A thermometer in the classroom turns the fan on when it passes the threshold. The dashed line is the real temperature; dots are what the sensor reads. Make it cheaper, more careful or quicker, and watch the mistakes.",
     chart: "Temperature through the school day: real (dashed), readings (dots), smoothed (line), threshold (flat line)", time: "time of day", temp: "°C",
-    every: "Read every", min: (n: string) => `${n} min`, noise: "Sensor quality", good: "Good", cheap: "Cheap", awful: "Very noisy",
+    every: "Read every", min: { other: "{n} min" } as Forms, noise: "Sensor quality", good: "Good", cheap: "Cheap", awful: "Very noisy",
     smooth: "Average the last", readingsN: (n: string, c: number) => `${n} ${c === 1 ? "reading" : "readings"}`, threshold: "Fan on above",
     perDay: "Readings a day", falseAlerts: "False alarms", missed: "Minutes too hot, fan off", fanOn: (times: string, t: string) => `The fan switched on ${times}: at ${t}`, never: "The fan never switched on.",
     times: { one: "once", other: "{n} times" } as Forms, sep: ", ",
@@ -22,9 +22,9 @@ const S = {
     takeaway: "Every sensor reading is a little wrong. Reading more often costs battery and data; averaging hides noise but reacts later. Good IoT design balances the three for the job: a fan can wait a few minutes, a gas alarm cannot.",
   },
   ar: {
-    intro: "ميزان حرارة في الصف يشغّل المروحة حين تتجاوز الحرارة الحد. الخط المتقطع هو الحرارة الحقيقية، والنقاط ما يقرؤه المستشعر. اجعله أرخص أو أكثر دقة أو أسرع، وراقب الأخطاء.",
+    intro: "ميزان حرارة في الفصل يشغّل المروحة حين تتجاوز الحرارة الحد. الخط المتقطع هو الحرارة الحقيقية، والنقاط ما يقرؤه المستشعر. اجعله أرخص أو أكثر دقة أو أسرع، وراقب الأخطاء.",
     chart: "الحرارة خلال اليوم الدراسي: الحقيقية (متقطع)، والقراءات (نقاط)، والمنعّمة (خط)، والحد (خط أفقي)", time: "الوقت", temp: "°س",
-    every: "اقرأ كل", min: (n: string) => `${n} دقيقة`, noise: "جودة المستشعر", good: "جيد", cheap: "رخيص", awful: "كثير التشويش",
+    every: "اقرأ كل", min: { one: "دقيقة", two: "دقيقتين", few: "{n} دقائق", many: "{n} دقيقة", other: "{n} دقيقة" } as Forms, noise: "جودة المستشعر", good: "جيد", cheap: "رخيص", awful: "كثير التشويش",
     smooth: "خذ متوسط آخر", readingsN: (n: string, c: number) => (c === 1 ? "قراءة واحدة" : c === 2 ? "قراءتين" : c <= 10 ? `${n} قراءات` : `${n} قراءة`), threshold: "شغّل المروحة فوق",
     perDay: "القراءات في اليوم", falseAlerts: "إنذارات كاذبة", missed: "دقائق حر والمروحة متوقفة", fanOn: (times: string, t: string) => `اشتغلت المروحة ${times}: الساعة ${t}`, never: "لم تشتغل المروحة أبدًا.",
     times: { one: "مرة واحدة", two: "مرتين", few: "{n} مرات", many: "{n} مرة", other: "{n} مرة" } as Forms, sep: "، ",
@@ -60,7 +60,7 @@ export default function Sensor({ meta, onDone }: LabProps) {
       <p className="lb-note">{s.chart}</p>
       <div className="lb-two">
         <div className="stack">
-          <Segmented label={s.every} value={every} options={[1, 5, 15, 60].map((n) => [n, s.min(num(n))] as const)} onChange={(v) => { setEvery(v); touch(); }} />
+          <Segmented label={s.every} value={every} options={[1, 5, 15, 60].map((n) => [n, count(n, s.min)] as const)} onChange={(v) => { setEvery(v); touch(); }} />
           <Segmented label={s.noise} value={noise} options={[[0.3, s.good], [0.8, s.cheap], [1.6, s.awful]]} onChange={(v) => { setNoise(v); touch(); }} />
           <Segmented label={s.smooth} value={win} options={[1, 3, 6, 12].map((n) => [n, s.readingsN(num(n), n)] as const)} onChange={(v) => { setWin(v); touch(); }} />
           <Slider label={s.threshold} value={th} min={26} max={34} step={0.5} onChange={(v) => { setTh(v); touch(); }} format={(v) => `${num(v)}${s.temp}`} />

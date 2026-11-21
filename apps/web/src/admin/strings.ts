@@ -1,5 +1,6 @@
 /** The platform analytics and organization branding strings, registered when an admin chunk loads (not in the app's main dictionaries). */
-import { addMessages, addStaffArea } from "../i18n";
+import { addMessages } from "../i18n";
+import { addStaffArea } from "../staff/i18n";
 import en from "./strings/en.json";
 import ar from "./strings/ar.json";
 

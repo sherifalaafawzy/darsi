@@ -5,7 +5,7 @@ import { Segmented, Slider } from "../../kit/controls";
 import { Plot } from "../../kit/Plot";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
-import { fit, mse, sample, verdict } from "./model";
+import { fit, mse, newExamples, trainingExamples, verdict } from "./model";
 
 const S = {
   en: {
@@ -24,12 +24,12 @@ const S = {
     intro: "الدوائر هي الأمثلة التي يتعلّم منها النموذج، والمربعات أمثلة جديدة لم يرها من قبل: إنها الاختبار الحقيقي. امنح النموذج حرية أكبر (منحنى أكثر انثناءً) وقارن بين الخطأين.",
     freedom: "الحرية (مدى انثناء المنحنى)", noise: "التشويش في البيانات", data: "أمثلة التدريب", few: "قليلة (١٠)", many: "كثيرة (٤٠)",
     train: "الخطأ في أمثلة التدريب", test: "الخطأ في الأمثلة الجديدة", chart: "أمثلة التدريب (دوائر)، والأمثلة الجديدة (مربعات)، ومنحنى النموذج",
-    under: "متصلّب جدًا: يفوته النمط في الحالتين. هذا هو نقص المطابقة.", good: "مناسب تقريبًا: يتبع النمط ويُحسن في الأمثلة الجديدة.",
-    over: "يلتصق بأمثلة التدريب لكنه يتخبّط بينها، فيخطئ في الأمثلة الجديدة. هذا هو الإفراط في المطابقة.",
+    under: "متصلّب جدًا: يفوته النمط في الحالتين. هذا هو نقص التوفيق.", good: "مناسب تقريبًا: يتبع النمط ويُحسن في الأمثلة الجديدة.",
+    over: "يلتصق بأمثلة التدريب لكنه يتخبّط بينها، فيخطئ في الأمثلة الجديدة. هذا هو الإفراط في التوفيق.",
     calm: "مع أمثلة أكثر، لا تستطيع الحرية نفسها أن تحفظ ببساطة: يهدأ المنحنى.",
     try1: "اسحب «الحرية» إلى ٩: يمرّ المنحنى الآن بكل الدوائر، لكنه يتأرجح بعنف بينها، ويقفز الخطأ في الأمثلة الجديدة.",
     try2: "أبقِ «الحرية» على ٩ واختر «كثيرة (٤٠)»: مع أمثلة أكثر يتبعها، يهدأ المنحنى ويصبح الخطآن صغيرين.",
-    try3: "اجعل «الحرية» ١: لا يستطيع الخط المستقيم أن يتبع الموجة، فيكون الخطآن كبيرين. هذا هو نقص المطابقة.",
+    try3: "اجعل «الحرية» ١: لا يستطيع الخط المستقيم أن يتبع الموجة، فيكون الخطآن كبيرين. هذا هو نقص التوفيق.",
     takeaway: "النموذج المثالي على بيانات تدريبه قد يفشل مع بيانات جديدة. لهذا يُختبر الذكاء الاصطناعي دائمًا على أمثلة لم يرها، ولهذا تساعد البيانات الأكثر والأكثر تنوعًا.",
   },
 };
@@ -41,8 +41,8 @@ export default function Overfit({ meta, onDone }: LabProps) {
   const [noise, setNoise] = useState(0.15);
   const [many, setMany] = useState(false);
   const [sawOverfit, setSawOverfit] = useState(false);
-  const train = useMemo(() => sample(many ? 40 : 10, noise, 21), [many, noise]);
-  const test = useMemo(() => sample(30, noise, 99), [noise]);
+  const train = useMemo(() => trainingExamples(many, noise), [many, noise]);
+  const test = useMemo(() => newExamples(noise), [noise]);
   const f = useMemo(() => fit(train, deg), [train, deg]);
   const eTrain = mse(f, train), eTest = mse(f, test);
   const v = verdict(eTrain, eTest, noise, deg, many), overfit = v === "over";

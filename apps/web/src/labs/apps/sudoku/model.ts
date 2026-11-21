@@ -126,9 +126,10 @@ export function smart(n: number, grid: readonly number[], guess = true, maxFrame
 
 /**
  * Plain backtracking: cells in order, digits 1 to n, keep a digit if no peer has it. Returns the moves as numbers
- * (cell × 16 + digit, digit 0 = rubbed out) so even a long search replays cheaply.
+ * (cell × 16 + digit, digit 0 = rubbed out) so even a long search replays cheaply. It gives up after exactly
+ * `maxGuesses` guesses (the number the lab and opt-s4-3 quote); the moves cap is only a safety net.
  */
-export function plain(n: number, grid: readonly number[], maxMoves = 200_000) {
+export function plain(n: number, grid: readonly number[], maxMoves = 200_000, maxGuesses = 100_000) {
   const P = peers(n), v = grid.slice(), empty = v.flatMap((x, i) => (x ? [] : [i])), moves: number[] = [];
   let guesses = 0, capped = false;
   const go = (k: number): boolean => {
@@ -136,7 +137,7 @@ export function plain(n: number, grid: readonly number[], maxMoves = 200_000) {
     const i = empty[k];
     for (let d = 1; d <= n; d++) {
       if (P[i].some((j) => v[j] === d)) continue;
-      if (moves.length >= maxMoves) { capped = true; return false; }
+      if (guesses >= maxGuesses || moves.length >= maxMoves) { capped = true; return false; }
       v[i] = d; guesses++; moves.push(i * 16 + d);
       if (go(k + 1)) return true;
       if (capped) return false;

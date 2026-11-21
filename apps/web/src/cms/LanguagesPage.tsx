@@ -1,15 +1,19 @@
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppBar, Button, EmptyState, ProgressBar, dirFor } from "@darsi/design-system";
 import { useAuth } from "../auth/AuthProvider";
 import { downloadBlob } from "../admin/importer";
+import { TabPanel, Tabs, useTab, type TabDef } from "../admin/Tabs";
 import { BUILTIN_CODES, BUILTIN_LANGUAGES, checkTranslation, cleanMessages, placeholdersOf, validateLanguage, type LanguageProblem } from "../content/languages";
 import type { LanguageDef } from "../content/types";
 import { setLanguages, useI18n, type MessageKey } from "../i18n";
+import { ErrorNote } from "../staff/LoadState";
 import { PACK_AR, PACK_EN } from "../i18n/translatable";
 import { cmsApi } from "./api";
+import { useAutosave } from "./autosave";
 import { createTranslation, deleteTranslation, getTranslation, listTranslations, saveTranslation, statusOf, type TranslationDraft } from "./data";
-import { LangName, Sel, Text } from "./fields";
+import { failText, k } from "./entStrings";
+import { LangName, Sel, StatusPill, Text } from "./fields";
 import { readTranslations, sheetCsv, sheetRows, sheetXlsx } from "./sheets";
 import "../styles/editor.css";
 import "./strings";
@@ -58,9 +62,16 @@ export function LanguagesPage() {
   const nav = useNavigate();
   const { user } = useAuth();
   const [list, setList] = useState<TranslationDraft[] | undefined>();
-  const [err, setErr] = useState("");
+  // Why the drafts could not be read (the raw error: ErrorNote words it), and how many times Retry was pressed.
+  const [loadErr, setLoadErr] = useState<unknown>();
+  const [tries, setTries] = useState(0);
   const [adding, setAdding] = useState(false);
-  useEffect(() => { listTranslations().then(setList).catch((e: Error) => setErr(e.message)); }, []);
+  useEffect(() => {
+    let live = true;
+    setLoadErr(undefined);
+    listTranslations().then((l) => { if (live) setList(l); }, (e: unknown) => { if (live) setLoadErr(e ?? new Error("failed")); });
+    return () => { live = false; };
+  }, [tries]);
   if (!user) return <main className="screen"><EmptyState title={t("err.notFound")} /></main>;
 
   const create = async (def: LanguageDef) => { await createTranslation(def, user.uid); nav(`/super/languages/${def.code}`); };
@@ -70,7 +81,6 @@ export function LanguagesPage() {
         actions={<Button size="sm" icon="edit" onClick={() => setAdding(!adding)}>{t("cms.lang.add")}</Button>} />
       <main className="screen wide stack-lg ed">
         <p className="muted">{t("cms.lang.intro")}</p>
-        {err && <p className="notice err" role="alert">{err}</p>}
         {adding && <AddLanguage taken={[...BUILTIN_CODES, ...(list ?? []).map((d) => d.code)]} onCreate={create} onCancel={() => setAdding(false)} />}
         <ol className="ed-units">
           {BUILTIN_LANGUAGES.map((l) => (
@@ -79,7 +89,9 @@ export function LanguagesPage() {
               <p className="muted small">{[l.english, t("cms.lang.builtInBody")].join(t("common.sep"))}</p>
             </li>
           ))}
-          {!list ? <li><div className="loading" aria-busy="true" /></li> : list.map((d) => {
+          {/* A read that failed says why, with Retry, in place of the spinner (which would turn for ever). */}
+          {loadErr !== undefined ? <li><ErrorNote error={loadErr} reload={() => setTries((n) => n + 1)} /></li>
+            : !list ? <li><div className="loading" aria-busy="true" /></li> : list.map((d) => {
             const c = checkTranslation(d.messages ?? {}, EN), st = statusOf(d);
             return (
               <li key={d.code} className="ed-unit">
@@ -143,7 +155,7 @@ function AddLanguage({ taken, onCreate, onCancel }: { taken: string[]; onCreate:
   const isTaken = taken.includes(def.code);
   const go = async () => {
     setBusy(true); setErr("");
-    try { await onCreate(def); } catch (e) { setErr((e as Error).message); setBusy(false); }
+    try { await onCreate(def); } catch (e) { setErr(failText(e, t)); setBusy(false); }
   };
   return (
     <section className="panel stack" aria-labelledby="ed-addlang-h">
@@ -167,26 +179,42 @@ const fieldsOf = (d: TranslationDraft) => ({ native: d.native, english: d.englis
 
 /**
  * /super/languages/:code: translate the app's UI strings into one language. Saved as a draft (translations/{code},
- * with a rev check); "Publish" saves, then asks publishLanguage to put it in front of learners.
+ * with a rev check) by itself, as the course editor saves: a few seconds after the last change, when the tab is
+ * hidden, and as the page closes (the app's own navigation included); Back saves first and asks only if that fails.
+ * "Publish" saves, then asks publishLanguage to put it in front of learners.
+ *
+ * Three tabs (`?tab=`): Translate (the strings), Spreadsheet (export and import) and Details (names, direction,
+ * numbers). The draft and everything the bar at the foot uses live here, not in a panel, so one read serves every tab,
+ * an edit made under one tab is still there under another, and the bar saves and publishes whichever tab is open.
  */
 export function TranslatePage() {
   const { code = "" } = useParams();
-  const { t, num } = useI18n();
+  const { t, num, locale } = useI18n();
   const nav = useNavigate();
   const { user } = useAuth();
+  const TABS: TabDef[] = [{ id: "translate", label: t("tabs.translate") }, { id: "sheet", label: t("tabs.sheet") }, { id: "details", label: t("tabs.details") }];
+  const tab = useTab(TABS);
   const [draft, setDraft] = useState<TranslationDraft | null>(null);
   const [loadErr, setLoadErr] = useState("");
   const [saved, setSaved] = useState("");
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [shown, setShown] = useState(PAGE);
-  const [busy, setBusy] = useState<"" | "save" | "publish" | "unpublish" | "delete" | "import">("");
+  const [busy, setBusy] = useState<"" | "save" | "publish" | "unpublish" | "delete" | "import" | "xlsx">("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [ask, setAsk] = useState<"" | "delete" | "unpublish">("");
+  const [ask, setAsk] = useState<"" | "delete" | "unpublish" | "leave">("");
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [saveErr, setSaveErr] = useState<"" | "conflict" | "failed">("");
+  // What saves read when they run (a save queued behind another, or the one as the page closes).
+  const revRef = useRef(0);
+  const savedRef = useRef("");
 
   useEffect(() => {
-    getTranslation(code).then((d) => { if (!d) setLoadErr(t("err.notFound")); else { const x = { ...d, messages: d.messages ?? {} }; setDraft(x); setSaved(JSON.stringify(fieldsOf(x))); } })
-      .catch((e: Error) => setLoadErr(e.message));
+    getTranslation(code).then((d) => {
+      if (!d) { setLoadErr(t("err.notFound")); return; }
+      const x = { ...d, messages: d.messages ?? {} };
+      setDraft(x); setSaved(JSON.stringify(fieldsOf(x))); revRef.current = x.rev; savedRef.current = JSON.stringify(fieldsOf(x));
+    }).catch((e: unknown) => setLoadErr(failText(e, t)));
   }, [code]); // eslint-disable-line react-hooks/exhaustive-deps
   const dirty = useMemo(() => !!draft && JSON.stringify(fieldsOf(draft)) !== saved, [draft, saved]);
   useEffect(() => {
@@ -196,7 +224,27 @@ export function TranslatePage() {
     return () => removeEventListener("beforeunload", warn);
   }, [dirty]);
   const check = useMemo(() => checkTranslation(draft?.messages ?? {}, EN), [draft?.messages]);
-  const setMessage = useCallback((k: string, v: string) => { setDraft((d) => (d ? { ...d, messages: { ...d.messages, [k]: v } } : d)); setMsg(null); }, []);
+  const setMessage = useCallback((k: string, v: string) => { setDraft((d) => (d ? { ...d, messages: { ...d.messages, [k]: v } } : d)); setMsg((m) => (m && !m.ok ? m : null)); }, []);
+
+  /** Saves the draft (`d`: what to save, else what is on screen). `quiet` (autosave) shows no message unless it fails. */
+  const save = useCallback(async (quiet = false, d: TranslationDraft | null = draft): Promise<boolean> => {
+    if (!d || !user) return false;
+    const json = JSON.stringify(fieldsOf(d));
+    // Already saved (by a save this one queued behind): nothing to write.
+    if (json === savedRef.current) { if (!quiet) setMsg({ ok: true, text: t("cms.saved") }); return true; }
+    setBusy("save"); if (!quiet) setMsg(null);
+    try {
+      const r = await saveTranslation(d, revRef.current, user.uid);
+      if ("conflict" in r) { setSaveErr("conflict"); setMsg({ ok: false, text: t("cms.lang.conflict") }); return false; }
+      revRef.current = r.rev; savedRef.current = json;
+      // Typing goes on while a save is out: keep it, and move only the revision and what counts as saved.
+      setDraft((cur) => (cur ? { ...(cur === draft ? d : cur), rev: r.rev } : cur)); setSaved(json); setSavedAt(new Date()); setSaveErr("");
+      if (!quiet) setMsg({ ok: true, text: t("cms.saved") });
+      return true;
+    } catch (e) { setSaveErr("failed"); setMsg({ ok: false, text: failText(e, t) }); return false; }
+    finally { setBusy(""); }
+  }, [draft, user, t]);
+  const auto = useAutosave({ dirty, paused: !!busy, blocked: saveErr === "conflict", change: draft, save });
 
   if (loadErr) return <main className="screen"><EmptyState tone="error" title={t("err.title")} body={loadErr} action={<Button size="sm" onClick={() => nav("/super/languages")}>{t("common.back")}</Button>} /></main>;
   if (!draft || !user) return <div className="loading" aria-busy="true" />;
@@ -207,43 +255,52 @@ export function TranslatePage() {
     && (!needle || [k, EN[k], AR[k] ?? "", draft.messages[k] ?? ""].some((s) => s.toLowerCase().includes(needle))));
   const st = statusOf(draft);
   const problems = validateLanguage(draft, cleanMessages(draft.messages, EN));
+  const time = savedAt ? new Intl.DateTimeFormat(locale, { timeStyle: "short" }).format(savedAt) : "";
+  const saveState = busy === "save" ? t("cms.saving") : saveErr ? t("cms.notSaved") : dirty ? t("cms.unsaved") : time ? t("cms.savedAt", { time }) : t("cms.allSaved");
 
-  const save = async (d = draft): Promise<boolean> => {
-    setBusy("save"); setMsg(null);
-    try {
-      const r = await saveTranslation(d, d.rev, user.uid);
-      if ("conflict" in r) { setMsg({ ok: false, text: t("cms.lang.conflict") }); return false; }
-      const next = { ...d, rev: r.rev };
-      setDraft(next); setSaved(JSON.stringify(fieldsOf(next))); setMsg({ ok: true, text: t("cms.saved") });
-      return true;
-    } catch (e) { setMsg({ ok: false, text: (e as Error).message }); return false; }
-    finally { setBusy(""); }
+  /** Back saves first; only a save that fails asks (inline, as the course editor does). */
+  const leave = async () => {
+    if (!dirty) return nav("/super/languages");
+    if (saveErr !== "conflict" && await auto.run(() => save(true))) return nav("/super/languages");
+    setAsk("leave");
   };
   const publish = async () => {
-    if (check.placeholders.length) { setFilter("fix"); setMsg({ ok: false, text: t("cms.lang.publishBlocked", { n: check.placeholders.length }) }); return; }
+    // The rows to fix are under Translate: open it, or the message would point at nothing on the other tabs.
+    if (check.placeholders.length) { setFilter("fix"); tab.show("translate"); setMsg({ ok: false, text: t("cms.lang.publishBlocked", { n: check.placeholders.length }) }); return; }
     if (problems.length) { setMsg({ ok: false, text: problems.map((p) => t(PROBLEM[p])).join(" ") }); return; }
     // Publish what the app can use: keys it has, trimmed. Strings for keys it no longer has are dropped here.
     const clean = { ...draft, messages: cleanMessages(draft.messages, EN) };
-    if ((dirty || JSON.stringify(clean.messages) !== JSON.stringify(draft.messages)) && !(await save(clean))) return;
+    if (!(await auto.run(() => save(true, clean)))) return;
     setBusy("publish"); setMsg(null);
     try {
       const r = await cmsApi.publishLanguage({ code });
       setLanguages(r.languages);
       setDraft((d) => (d ? { ...d, published: { version: r.version, rev: d.rev } } : d));
       setMsg({ ok: true, text: t("cms.lang.published", { n: r.version }) });
-    } catch (e) { setMsg({ ok: false, text: (e as Error).message }); } finally { setBusy(""); }
+    } catch (e) { setMsg({ ok: false, text: failText(e, t) }); } finally { setBusy(""); }
   };
   const unpublish = async () => {
     setAsk(""); setBusy("unpublish"); setMsg(null);
     try { const r = await cmsApi.unpublishLanguage({ code }); setLanguages(r.languages); setDraft((d) => (d ? { ...d, published: null } : d)); setMsg({ ok: true, text: t("cms.lang.unpublished") }); }
-    catch (e) { setMsg({ ok: false, text: (e as Error).message }); } finally { setBusy(""); }
+    catch (e) { setMsg({ ok: false, text: failText(e, t) }); } finally { setBusy(""); }
   };
   const remove = async () => {
     setAsk(""); setBusy("delete");
-    try { await deleteTranslation(code); setSaved(JSON.stringify(fieldsOf(draft))); nav("/super/languages"); }
-    catch (e) { setMsg({ ok: false, text: (e as Error).message }); setBusy(""); }
+    try { await deleteTranslation(code); auto.skip(); nav("/super/languages"); }
+    catch (e) { setMsg({ ok: false, text: failText(e, t) }); setBusy(""); }
   };
   const rows = () => sheetRows(code, EN, AR, draft.messages);
+  /**
+   * The Excel file is written by a chunk of its own (exceljs, not precached): offline, or on a phone that still holds
+   * an older build, it may not load. Said under the buttons, with the CSV download beside it, which needs no chunk.
+   */
+  const downloadXlsx = async () => {
+    if (busy) return;
+    setBusy("xlsx"); setMsg(null);
+    try { downloadBlob(await sheetXlsx(rows()), `darsi-${code}.xlsx`); }
+    catch (e) { console.error("[cms] xlsx", e); setMsg({ ok: false, text: t(k("ent.lang.xlsxFailed")) }); }
+    finally { setBusy(""); }
+  };
   const importFile = async (file?: File) => {
     if (!file) return;
     setBusy("import"); setMsg(null);
@@ -256,65 +313,86 @@ export function TranslatePage() {
         setDraft((d) => (d ? { ...d, messages: { ...d.messages, ...Object.fromEntries(known) } } : d));
         setMsg({ ok: true, text: [t("cms.lang.imported", { n: known.length }), skipped ? t("cms.lang.importSkipped", { n: skipped }) : ""].filter(Boolean).join(" ") });
       }
-    } catch (e) { setMsg({ ok: false, text: (e as Error).message }); } finally { setBusy(""); }
+    } catch (e) { setMsg({ ok: false, text: failText(e, t) }); } finally { setBusy(""); }
   };
 
   return (
     <>
-      <AppBar title={draft.native || code} onBack={() => { if (!dirty || confirm(t("cms.leaveConfirm"))) nav("/super/languages"); }} backLabel={t("common.back")}
-        actions={<span className={`ed-status is-${st}`}>{t(`cms.status.${st}` as MessageKey, { n: draft.published?.version ?? 0 })}</span>} />
+      <AppBar title={draft.native || code} onBack={() => { void leave(); }} backLabel={t("common.back")}
+        actions={<StatusPill status={st} version={draft.published?.version ?? 0} />} />
       <main className="screen wide stack-lg ed">
-        <details className="panel ed-more">
-          <summary>{t("cms.lang.details")}</summary>
-          <LanguageFields def={draft} codeLocked onChange={(d) => setDraft({ ...draft, ...d, code })} />
-        </details>
+        {/* A panel shows only while its tab is open; one that was opened stays mounted (search, paging and the place
+            in a text box are kept) and catches up with the draft when it is opened again. */}
+        <Tabs label={t("tabs.sections")} tabs={TABS}>
+          <TabPanel id="translate">
+            <section className="panel stack" aria-labelledby="ed-strings-h">
+              <h3 id="ed-strings-h" className="ed-h4">{t("cms.lang.strings")}</h3>
+              <ProgressBar value={pct(check.done, check.total)} label={t("cms.lang.progress", { done: check.done, total: check.total })} valueText={num(pct(check.done, check.total) / 100, { style: "percent" })} />
+              <div className="ed-filters">
+                <div className="dr-field">
+                  <label htmlFor="ed-lq" className="dr-field-label">{t("cms.lang.search")}</label>
+                  <input id="ed-lq" type="search" className="dr-field-input" value={q} onChange={(e) => { setQ(e.target.value); setShown(PAGE); }} />
+                </div>
+                <div className="ed-filter" role="group" aria-label={t("cms.lang.show")}>
+                  {([["all", "cms.lang.filter.all", check.total], ["missing", "cms.lang.filter.missing", check.missing.length], ["fix", "cms.lang.filter.fix", check.placeholders.length]] as const).map(([f, key, n]) => (
+                    <button key={f} type="button" className={`ed-chip${filter === f ? " is-on" : ""}`} aria-pressed={filter === f} onClick={() => { setFilter(f); setShown(PAGE); }}>{`${t(key)} (${num(n)})`}</button>
+                  ))}
+                </div>
+              </div>
+              {keys.length === 0 ? <p className="muted">{t("cms.lang.noMatch")}</p> : (
+                <ol className="ed-strings">
+                  {keys.slice(0, shown).map((k) => <StringRow key={k} k={k} value={draft.messages[k] ?? ""} code={code} dir={draft.dir} name={draft.english} onChange={setMessage} />)}
+                </ol>
+              )}
+              {keys.length > shown && <Button variant="secondary" onClick={() => setShown(shown + PAGE)}>{t("cms.lang.more", { n: keys.length - shown })}</Button>}
+            </section>
+          </TabPanel>
 
-        <section className="panel stack" aria-labelledby="ed-strings-h">
-          <h3 id="ed-strings-h" className="ed-h4">{t("cms.lang.strings")}</h3>
-          <ProgressBar value={pct(check.done, check.total)} label={t("cms.lang.progress", { done: check.done, total: check.total })} valueText={num(pct(check.done, check.total) / 100, { style: "percent" })} />
-          <div className="ed-filters">
-            <div className="dr-field">
-              <label htmlFor="ed-lq" className="dr-field-label">{t("cms.lang.search")}</label>
-              <input id="ed-lq" type="search" className="dr-field-input" value={q} onChange={(e) => { setQ(e.target.value); setShown(PAGE); }} />
-            </div>
-            <div className="ed-filter" role="group" aria-label={t("cms.lang.show")}>
-              {([["all", "cms.lang.filter.all", check.total], ["missing", "cms.lang.filter.missing", check.missing.length], ["fix", "cms.lang.filter.fix", check.placeholders.length]] as const).map(([f, key, n]) => (
-                <button key={f} type="button" className={`ed-chip${filter === f ? " is-on" : ""}`} aria-pressed={filter === f} onClick={() => { setFilter(f); setShown(PAGE); }}>{`${t(key)} (${num(n)})`}</button>
-              ))}
-            </div>
-          </div>
-          {keys.length === 0 ? <p className="muted">{t("cms.lang.noMatch")}</p> : (
-            <ol className="ed-strings">
-              {keys.slice(0, shown).map((k) => <StringRow key={k} k={k} value={draft.messages[k] ?? ""} code={code} dir={draft.dir} name={draft.english} onChange={setMessage} />)}
-            </ol>
-          )}
-          {keys.length > shown && <Button variant="secondary" onClick={() => setShown(shown + PAGE)}>{t("cms.lang.more", { n: keys.length - shown })}</Button>}
-        </section>
+          <TabPanel id="sheet">
+            <section className="panel stack" aria-labelledby="ed-sheet-h">
+              <h3 id="ed-sheet-h" className="ed-h4">{t("cms.lang.sheet")}</h3>
+              <p className="muted small">{t("cms.lang.sheetHint")}</p>
+              <div className="ed-toolbar">
+                <Button size="sm" variant="secondary" icon="file" loading={busy === "xlsx"} disabled={!!busy && busy !== "xlsx"} onClick={() => { void downloadXlsx(); }}>{t("cms.lang.xlsx")}</Button>
+                <Button size="sm" variant="ghost" icon="file" onClick={() => downloadBlob(sheetCsv(rows()), `darsi-${code}.csv`)}>{t("cms.lang.csv")}</Button>
+                <label className="file-pick"><span>{t("cms.lang.import")}</span>
+                  <input type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" disabled={!!busy}
+                    onChange={(e) => { void importFile(e.target.files?.[0]); e.target.value = ""; }} /></label>
+              </div>
+            </section>
+          </TabPanel>
 
-        <section className="panel stack" aria-labelledby="ed-sheet-h">
-          <h3 id="ed-sheet-h" className="ed-h4">{t("cms.lang.sheet")}</h3>
-          <p className="muted small">{t("cms.lang.sheetHint")}</p>
-          <div className="ed-toolbar">
-            <Button size="sm" variant="secondary" icon="file" onClick={async () => downloadBlob(await sheetXlsx(rows()), `darsi-${code}.xlsx`)}>{t("cms.lang.xlsx")}</Button>
-            <Button size="sm" variant="ghost" icon="file" onClick={() => downloadBlob(sheetCsv(rows()), `darsi-${code}.csv`)}>{t("cms.lang.csv")}</Button>
-            <label className="file-pick"><span>{t("cms.lang.import")}</span>
-              <input type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" disabled={!!busy}
-                onChange={(e) => { void importFile(e.target.files?.[0]); e.target.value = ""; }} /></label>
-          </div>
-        </section>
+          <TabPanel id="details">
+            <section className="panel stack" aria-labelledby="ed-details-h">
+              <h3 id="ed-details-h" className="ed-h4">{t("cms.lang.details")}</h3>
+              <LanguageFields def={draft} codeLocked onChange={(d) => setDraft({ ...draft, ...d, code })} />
+            </section>
+          </TabPanel>
+        </Tabs>
       </main>
 
       <div className="ed-bar">
-        <Button loading={busy === "save"} disabled={!!busy && busy !== "save"} variant={dirty ? "primary" : "secondary"} icon="check" onClick={() => { void save(); }}>{dirty ? t("cms.save") : t("cms.savedShort")}</Button>
-        <Button loading={busy === "publish"} disabled={!!busy} variant={dirty ? "secondary" : "primary"} icon="share" onClick={() => { void publish(); }}>{t("cms.publish")}</Button>
-        {draft.published ? <Button variant="ghost" disabled={!!busy} onClick={() => setAsk("unpublish")}>{t("cms.unpublish")}</Button>
-          : <Button variant="ghost" icon="close" disabled={!!busy} onClick={() => setAsk("delete")}>{t("cms.lang.delete")}</Button>}
+        <span className={`ed-save${saveErr ? " is-error" : ""}`} title={t("cms.autosaveHint")}>{saveState}</span>
+        <span className="ed-bar-end">
+          {dirty && <Button size="sm" loading={busy === "save"} disabled={!!busy && busy !== "save"} variant="secondary" icon="check" title="Ctrl+S" onClick={() => { void auto.run(() => save()); }}>{t("cms.save")}</Button>}
+          <Button loading={busy === "publish"} disabled={!!busy} icon="share" onClick={() => { void publish(); }}>{t("cms.publish")}</Button>
+          {draft.published ? <Button variant="ghost" disabled={!!busy} onClick={() => setAsk("unpublish")}>{t("cms.unpublish")}</Button>
+            : <Button variant="ghost" icon="close" disabled={!!busy} onClick={() => setAsk("delete")}>{t("cms.lang.delete")}</Button>}
+        </span>
         {msg && <p className={msg.ok ? "notice ok ed-confirm" : "notice err ed-confirm"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}
-        {ask && (
+        {(ask === "delete" || ask === "unpublish") && (
           <div className="notice ed-confirm" role="alert">
             <span>{t(ask === "delete" ? "cms.lang.deleteConfirm" : "cms.lang.unpublishConfirm")}</span>
             <Button size="sm" autoFocus onClick={() => { void (ask === "delete" ? remove() : unpublish()); }}>{ask === "delete" ? t("cms.confirmDelete") : t("cms.unpublish")}</Button>
             <Button size="sm" variant="ghost" onClick={() => setAsk("")}>{t("common.cancel")}</Button>
+          </div>
+        )}
+        {ask === "leave" && (
+          <div className="notice ed-confirm" role="alert">
+            <span>{t("cms.leaveConfirm")}</span>
+            <Button size="sm" autoFocus loading={busy === "save"} onClick={async () => { if (await auto.run(() => save())) nav("/super/languages"); }}>{t("cms.saveLeave")}</Button>
+            <Button size="sm" variant="secondary" onClick={() => { auto.skip(); nav("/super/languages"); }}>{t("cms.leaveAnyway")}</Button>
+            <Button size="sm" variant="ghost" onClick={() => setAsk("")}>{t("cms.stay")}</Button>
           </div>
         )}
       </div>

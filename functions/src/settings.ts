@@ -25,6 +25,8 @@ export async function writeSettingsFile() {
     tracks: mergeTracks(s.exists ? (s.get("tracks") as TrackDef[]) : null).map(({ builtIn: _b, ...t }) => t),
     languages: (s.get("languages") as LanguageDef[] | undefined) ?? [],
     super: s.get("superOn") !== false,
+    // School sign-in for the whole platform (manageSso setSwitch): off hides every school button and refuses every start.
+    sso: s.get("ssoOn") !== false,
   });
 }
 

@@ -106,6 +106,16 @@ describe("validateUnit", () => {
     for (const [code, field] of [["required", "accept.en"], ["minItems", "pairs"], ["minItems", "steps"], ["minItems", "choices"], ["minItems", "rubric"], ["badValue", "tool"]] as const) expect(has(e, code, field)).toBe(true);
   });
 
+  it("match: two cards on one side never read the same, in any language (pairs are graded by position)", () => {
+    const u = base(); const s = stepOf(u, "match");
+    expect(has(errs(u), "duplicateText")).toBe(false);
+    s.pairs[1].right = { en: ` ${s.pairs[0].right.en.toUpperCase()} `, ar: s.pairs[1].right.ar };
+    s.pairs[1].left.ar = s.pairs[0].left.ar;
+    const e = errs(u).filter((i) => i.code === "duplicateText");
+    expect(e.map((i) => i.at.field).sort()).toEqual(["pairs.1.left.ar", "pairs.1.right.en"]);
+    expect(e.find((i) => i.at.field === "pairs.1.left.ar")?.params).toEqual({ value: s.pairs[0].left.ar });
+  });
+
   it("video: positive duration, safe URLs, a checkpoint inside the video", () => {
     const u = base(); const s = stepOf(u, "video");
     s.src = "javascript:alert(1)"; s.sources = { en: "http://insecure.example/v.mp4" }; s.captions = { ar: "data:text/vtt,x" };
@@ -127,6 +137,23 @@ describe("validateUnit", () => {
     expect(has(errs(w), "checkpoint", "checkpoint")).toBe(true);
   });
 
+  it("video: warns, without blocking, when a chapter isn't after the one above it, in any language", () => {
+    const u = base(); const s = stepOf(u, "video"); s.duration = 130;
+    const ch = (at: number, ar: number) => ({ at, atBy: { en: at, ar }, label: { en: "C", ar: "ف" } });
+    s.chapters = [ch(0, 0), ch(17.7, 15), ch(44.3, 40), ch(92.1, 81.9)];
+    expect(validateUnit(u, { competencies: codes })).toEqual([]);
+    // What a chapter time that starts no scene used to give (scripts/import-media.mjs): "Remember" at 0:00 after the rest.
+    s.chapters[3] = ch(0, 0);
+    s.chapters[1].atBy.ar = 0;
+    const issues = validateUnit(u, { competencies: codes });
+    expect(errorsOf(issues)).toEqual([]);
+    expect(issues.filter((i) => i.code === "range").map((i) => [i.at.field, i.level, i.params])).toEqual([
+      ["chapters.1.atBy.ar", "warning", { min: 0, max: 3600 }],
+      ["chapters.3.at", "warning", { min: 44.3, max: 129 }],
+      ["chapters.3.atBy.ar", "warning", { min: 40, max: 3600 }],
+    ]);
+  });
+
   it("accepts uploaded media and kit URLs, and needs every listed format", () => {
     const u = base(); const s = stepOf(u, "video");
     s.sources = { en: "https://firebasestorage.googleapis.com/v0/b/b/o/x.mp4?alt=media&token=t" };
@@ -142,6 +169,15 @@ describe("validateUnit", () => {
     expect(errorsOf(all)).toEqual([]);
     expect(all.map((i) => i.code).sort()).toEqual(["missingLang", "noSlides", "unknownCompetency"]);
     expect(all.find((i) => i.code === "missingLang")).toMatchObject({ at: { lesson: 0, field: "title.ar" }, params: { lang: "ar" } });
+  });
+
+  it("refuses more than 30 competency codes, or a code over 40 characters: the rules would refuse its lesson results", () => {
+    const many = base(); many.lessons[0].competencies = Array.from({ length: 31 }, (_, i) => `C.${i}`);
+    expect(errs(many).some((i) => i.code === "badValue" && i.at.field === "competencies")).toBe(true);
+    const long = base(); long.lessons[0].competencies = ["X".repeat(41)];
+    expect(errs(long).some((i) => i.code === "badValue" && i.at.field === "competencies")).toBe(true);
+    const fine = base(); fine.lessons[0].competencies = Array.from({ length: 30 }, (_, i) => `C.${i}`);
+    expect(errs(fine).filter((i) => i.at.field === "competencies")).toEqual([]);
   });
 
   it("checks a lesson's optional materials list like any other list", () => {

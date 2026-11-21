@@ -1,5 +1,18 @@
-import { describe, expect, it } from "vitest";
-import { BUG_LIMITS, clean, limiter, MAX_SHOT, parseReport, redactUrl, sniff } from "../src/bugsCore";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { FakeDb } from "./fakeFirestore";
+import { BUG_LIMITS, clean, limiter, MAX_SHOT, ownDetails, parseReport, redactUrl, sniff } from "../src/bugsCore";
+
+// reportBug itself (bugs.ts), for what it stores: Firestore is the in-memory fake, the bucket a map, and a token
+// verifies when it is one of `tokens`.
+const tokens = vi.hoisted(() => new Map<string, Record<string, unknown>>());
+const saved = vi.hoisted(() => new Map<string, number>());
+vi.mock("../src/admin.js", async () => {
+  const { FakeDb } = await import("./fakeFirestore");
+  return { db: new FakeDb(), auth: { verifyIdToken: async (t: string) => { const who = tokens.get(t); if (!who) throw new Error("auth/argument-error"); return who; } } };
+});
+vi.mock("../src/storage.js", () => ({ bucket: () => ({ file: (p: string) => ({ save: async (b: Buffer) => { saved.set(p, b.length); } }) }) }));
+const { db } = (await import("../src/admin.js")) as unknown as { db: FakeDb };
+const { reportBug } = await import("../src/bugs");
 
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4]);
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
@@ -97,5 +110,69 @@ describe("limiter", () => {
     const over = limiter(), t = 1_000_000;
     for (let i = 0; i < BUG_LIMITS.instance.n; i++) over(`10.1.${i >> 8}.${i & 255}`, null, t);
     expect(over("10.9.9.9", null, t)).toBe(true);
+  });
+  it("never lets one address use up the instance's reports for everyone else", () => {
+    const over = limiter(), t = 1_000_000;
+    let refused = 0;
+    for (let i = 0; i < BUG_LIMITS.instance.n + 5; i++) if (over("6.6.6.6", null, t)) refused++;
+    expect(refused).toBe(BUG_LIMITS.instance.n + 5 - BUG_LIMITS.address.n);
+    expect(over("5.6.7.8", null, t)).toBe(false); // an honest address right after
+    expect(over("5.6.7.9", "uid2", t)).toBe(false); // and a signed-in person
+  });
+});
+
+// Who a report is from is the verified token and nothing else (be-account-privacy): the phone also says who is signed
+// in (details.account: uid, email, role, plan), which anyone can type, and which a report sent without a token would
+// keep where no account deletion or export could tie it to its person.
+describe("the account a phone names in its details", () => {
+  const phone = { device: { dpr: 2 }, account: { uid: "u1", email: "mona@example.com", role: "teacher", orgId: "org1", plan: "super" }, log: { errors: [] } };
+  it("is dropped without a verified token, and is only the token's uid with one", () => {
+    expect(ownDetails(phone, null)).toEqual({ device: { dpr: 2 }, log: { errors: [] } });
+    expect(ownDetails(phone, "u1")).toEqual({ device: { dpr: 2 }, account: { uid: "u1" }, log: { errors: [] } });
+    expect(ownDetails({ ...phone, account: { uid: "someone-else", email: "victim@example.com" } }, "u1").account).toEqual({ uid: "u1" });
+    expect(ownDetails({ device: {} }, null)).toEqual({ device: {} });
+    expect(phone.account.email).toBe("mona@example.com"); // the parsed report itself is left as it was
+  });
+
+  describe("in what reportBug stores", () => {
+    let n = 0;
+    /** One POST to the function, from an address of its own (so the per-address limit never plays a part). */
+    async function send(body: unknown, token?: string) {
+      const out = { status: 0, json: null as unknown };
+      const res = { set: () => res, status: (c: number) => { out.status = c; return res; }, json: (j: unknown) => { out.json = j; return res; }, end: () => res, on: () => res };
+      const req = { method: "POST", rawBody: Buffer.from(JSON.stringify(body)), ip: `10.20.${n >> 8}.${n++ & 255}`, headers: { "user-agent": "vitest", ...(token ? { authorization: `Bearer ${token}` } : {}) } };
+      await (reportBug as unknown as (req: unknown, res: unknown) => Promise<void>)(req, res);
+      const id = (out.json as { id?: string } | null)?.id;
+      return { status: out.status, report: id ? (db.docs.get(`bugReports/${id}`) as { user: Record<string, unknown> | null; details: Record<string, unknown>; text: string }) : null };
+    }
+    beforeEach(() => { db.docs.clear(); tokens.clear(); saved.clear(); });
+
+    it("a report without a token keeps the rest of its details, and no account", async () => {
+      const { status, report } = await send({ text: "The Continue button does nothing", url: "https://darsiai.org/learn", details: phone });
+      expect(status).toBe(201);
+      expect(report).toMatchObject({ text: "The Continue button does nothing", user: null, details: { device: { dpr: 2 }, log: { errors: [] } } });
+      expect(report!.details).not.toHaveProperty("account");
+      expect(JSON.stringify(report)).not.toContain("mona@example.com");
+    });
+
+    it("a report with a verified token names that account only, whatever the phone said", async () => {
+      tokens.set("good", { uid: "u1", email: "mona@example.com", role: "teacher", orgId: "org1", firebase: { sign_in_provider: "password" } });
+      db.docs.set("users/u1", { name: "Mona" });
+      const { status, report } = await send({ text: "The Continue button does nothing", details: { ...phone, account: { uid: "someone-else", email: "victim@example.com", role: "superadmin" } } }, "good");
+      expect(status).toBe(201);
+      expect(report!.user).toMatchObject({ uid: "u1", email: "mona@example.com", name: "Mona", role: "teacher", orgId: "org1" });
+      expect(report!.details).toEqual({ device: { dpr: 2 }, account: { uid: "u1" }, log: { errors: [] } });
+      expect(JSON.stringify(report)).not.toContain("victim@example.com");
+    });
+
+    it("still refuses a token that does not verify, a body that is not a report, and anything but POST", async () => {
+      expect((await send({ text: "The Continue button does nothing", details: phone }, "forged")).status).toBe(401);
+      expect((await send({ text: "a" })).status).toBe(400);
+      expect(db.docs.size).toBe(0);
+      const out = { status: 0 };
+      const res = { set: () => res, status: (c: number) => { out.status = c; return res; }, end: () => res, json: () => res, on: () => res };
+      await (reportBug as unknown as (req: unknown, res: unknown) => Promise<void>)({ method: "GET", headers: {} }, res);
+      expect(out.status).toBe(405);
+    });
   });
 });

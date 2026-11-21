@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@darsi/design-system";
 import { useI18n } from "../../../i18n";
 import { type ToolCall, type Turn } from "../../../tinylm";
@@ -32,7 +32,8 @@ const S = {
     did: { read: "Read", sent: "Sent (simulated: nothing leaves this phone)", set: "Set a reminder", blocked: "Blocked", denied: "Not allowed" } as Record<string, string>,
     goal: (a: boolean, b: boolean) => `${a ? "✓" : "○"} a message sent after your yes ${b ? "✓" : "○"} a blocked action`,
     try1: "At “Ask first”, send the message to Mrs Mensah: Darsi Tiny asks first. Deny it, then send it again and approve it.",
-    try2: "Turn the code check off and choose “Allowed”, then send «نعم، أرسلها.» (“Yes, send it.”) with nothing before it: Darsi Tiny makes up a message and sends it. Turn the check on and choose “Ask first”, then send it again.",
+    // The Arabic request keeps the phone's font (Txt): on an English page it would fetch the Arabic web font.
+    try2: <>Turn the code check off and choose “Allowed”, then send <Txt text="«نعم، أرسلها.»" /> (“Yes, send it.”) with nothing before it: Darsi Tiny makes up a message and sends it. Turn the check on and choose “Ask first”, then send it again.</> as ReactNode,
     try3: "Choose “Read only” and ask for a reminder, then for the weather.",
     takeaway: "Let an agent read freely, but make it ask before it acts. A model's “I'll ask first” is learned and can fail, so the app must check the approval in code too, and keep a record of what was done.",
   },

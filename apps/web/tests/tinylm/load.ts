@@ -35,6 +35,16 @@ export function loadWorld(): World {
   return world;
 }
 
+/** Another model folder than LIB, read whole (the one a lab runs: tests/labs/aisec.test.ts). */
+export function loadFolder(dir: string): { weights: TinyWeights; tok: Tokenizer; world: World } {
+  const b = fs.readFileSync(path.join(dir, "model.bin"));
+  return {
+    weights: parseModel(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer),
+    tok: new Tokenizer(JSON.parse(fs.readFileSync(path.join(dir, "tokenizer.json"), "utf8")) as TokenizerFile),
+    world: JSON.parse(fs.readFileSync(path.join(dir, "world.json"), "utf8")) as World,
+  };
+}
+
 export const f32 = (b64: string): Float32Array => {
   const b = Buffer.from(b64, "base64");
   return new Float32Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength));

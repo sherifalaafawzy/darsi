@@ -5,7 +5,7 @@ import { Slider, Stats } from "../../kit/controls";
 import { Plot } from "../../kit/Plot";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
-import { mean, median, modes, quartiles, range, withLast } from "./model";
+import { MARKS, mean, median, modes, quartiles, range, withLast } from "./model";
 
 const S = {
   en: {
@@ -13,10 +13,10 @@ const S = {
     last: "The ninth pupil's mark", chart: "Marks on a number line, with the mean (solid line) and the median (dashed line)",
     mean: "Mean", median: "Median", mode: "Mode", none: "none", range: "Range", iqr: "Middle half (IQR)",
     pulled: "One extreme mark pulls the mean, but the median hardly moves. When a set has extremes, the median describes a typical pupil better.",
-    close: "The mean and the median are close: no extreme mark is pulling the mean.",
+    close: "The mean and the median are close: this mark doesn't pull the mean away from the median.",
     try1: "Drag the ninth mark down to 0: the mean drops by more than a whole mark, but the median moves by only one mark.",
     try2: "Set the ninth mark to 12: now 12 appears three times, so it becomes the mode.",
-    try3: "Watch the range when you drag to 20 or 0: one pupil changes it a lot, while the middle half (IQR) barely changes.",
+    try3: "Watch the range when you drag to 20 or 0: one pupil changes it a lot, while the middle half (IQR) changes much less.",
     takeaway: "Always report a centre and a spread together, and choose the median when a few extreme values would mislead.",
   },
   ar: {
@@ -24,10 +24,10 @@ const S = {
     last: "درجة التلميذ التاسع", chart: "الدرجات على خط الأعداد، مع المتوسط (خط متصل) والوسيط (خط متقطع)",
     mean: "المتوسط", median: "الوسيط", mode: "المنوال", none: "لا يوجد", range: "المدى", iqr: "النصف الأوسط (المدى الربيعي)",
     pulled: "درجة واحدة متطرفة تسحب المتوسط، أما الوسيط فبالكاد يتحرك. حين توجد قيم متطرفة، يصف الوسيط التلميذ المعتاد أفضل.",
-    close: "المتوسط والوسيط متقاربان: لا توجد درجة متطرفة تسحب المتوسط.",
+    close: "المتوسط والوسيط متقاربان: هذه الدرجة لا تسحب المتوسط بعيدًا عن الوسيط.",
     try1: "اسحب الدرجة التاسعة إلى صفر: ينخفض المتوسط أكثر من درجة كاملة، بينما يتحرك الوسيط درجة واحدة فقط.",
     try2: "اجعل الدرجة التاسعة ١٢: تتكرر ١٢ الآن ثلاث مرات، فتصبح هي المنوال.",
-    try3: "راقب المدى حين تسحب إلى ٢٠ أو إلى صفر: تلميذ واحد يغيّره كثيرًا، بينما بالكاد يتغير النصف الأوسط.",
+    try3: "راقب المدى حين تسحب إلى ٢٠ أو إلى صفر: تلميذ واحد يغيّره كثيرًا، بينما يتغير النصف الأوسط أقل بكثير.",
     takeaway: "اذكر دائمًا مقياسًا للوسط ومقياسًا للتشتت معًا، واختر الوسيط حين تضلّل بعض القيم المتطرفة.",
   },
 };
@@ -37,7 +37,9 @@ export default function Spread({ meta, onDone }: LabProps) {
   const { num } = useI18n();
   const [last, setLast] = useState(14);
   const xs = withLast(last), m = mean(xs), md = median(xs), mo = modes(xs), { q1, q3 } = quartiles(xs);
-  const pulled = Math.abs(m - md) >= 1;
+  // How far the ninth mark alone moves the mean from the other eight's: a whole mark or more for marks 0 to 3.
+  // (|mean − median| stays under 1 for every mark here, so it can't tell an extreme mark.)
+  const pulled = Math.abs(m - mean(MARKS)) >= 1;
   useEffect(() => { if (last <= 2 || last >= 19) onDone?.(); }, [last]); // eslint-disable-line react-hooks/exhaustive-deps
   const r1 = (v: number) => num(Math.round(v * 10) / 10);
   const seen = new Map<number, number>();

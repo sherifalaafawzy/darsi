@@ -9,8 +9,9 @@
  * - Your account: "Sign in with Google" opens the emulator's account picker; pick the address you gave. It is a
  *   platform admin with a year of Darsi Super and its credits.
  * - The starting courses (npm run seed -- --emulator) on the first run, sample plans (/super/plans), the tutor's voice
- *   relay (ws://localhost:8091), and a stand-in for Paymob and Stripe (scripts/local/payments.mjs), so a purchase runs
- *   end to end with no money.
+ *   relay (ws://localhost:8091), a stand-in for Paymob and Stripe (scripts/local/payments.mjs), so a purchase runs
+ *   end to end with no money, and one for Google's web address APIs (scripts/local/domains.mjs), so approving an
+ *   organization's address connects it here and never at Google.
  * - The tutor answers for real through Vertex AI in darsi-f0685 (config/tutor in the emulator), with your gcloud
  *   application-default login; Google bills those few cents to that project's billing account.
  *
@@ -23,11 +24,13 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
-import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { connect } from "node:net";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { startPayments } from "./local/payments.mjs";
+import { startOidc } from "./local/oidc.mjs";
+import { startDomains } from "./local/domains.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const args = process.argv.slice(2);
@@ -38,7 +41,7 @@ const FN = `http://127.0.0.1:5001/${P}/${REGION}`;
 const DATA = join(ROOT, ".emulator-data"), FUNCTIONS = join(ROOT, "functions");
 const win = process.platform === "win32";
 const children = [];
-let payments = null, stopping = false;
+let payments = null, domains = null, oidc = null, stopping = false;
 /** The emulators' last lines, shown if they stop on their own. */
 const emuLog = [];
 const step = (s) => console.log(`\n▸ ${s}`);
@@ -52,6 +55,9 @@ function java() {
   const env = { ...process.env };
   // Java's loopback pipe fails in a temp folder whose path has spaces (docs/FIREBASE.md, emulators).
   if (win && !env.JAVA_TOOL_OPTIONS) env.JAVA_TOOL_OPTIONS = "-Djdk.net.unixdomain.tmpdir=C:\\Users\\Public";
+  // A private temp folder: the Storage emulator keeps its files in <temp>/firebase/storage, which any other emulator
+  // started on this machine (another checkout's, or `npm run test:rules`) wipes.
+  env.TEMP = env.TMP = env.TMPDIR = join(ROOT, ".emulator-tmp"); mkdirSync(env.TEMP, { recursive: true });
   if (major("java") >= 21) return env;
   const roots = win ? ["C:/Program Files/Java", "C:/Program Files/Eclipse Adoptium", "C:/Program Files/Microsoft", "C:/Program Files/Zulu"] : ["/usr/lib/jvm", "/Library/Java/JavaVirtualMachines"];
   for (const r of roots.filter(existsSync)) for (const d of readdirSync(r).filter((x) => /jdk|jre/i.test(x)).sort().reverse()) {
@@ -70,8 +76,25 @@ function localSettings() {
   if (!existsSync(env)) writeFileSync(env, `# The Emulator Suite (npm run local): the payment stand-in on 4799, and the local app after paying.
 PAYMOB_PUBLIC_KEY=pk_test_local\nPAYMOB_INTEGRATIONS=1\nPAYMOB_BASE=http://127.0.0.1:4799\nSTRIPE_BASE=http://127.0.0.1:4799\nSITE_URL=${WEB}\n`);
   if (!existsSync(secrets)) writeFileSync(secrets, `PAYMOB_SECRET_KEY=sk_test_local\nPAYMOB_HMAC_SECRET=${randomBytes(16).toString("hex")}
-STRIPE_SECRET_KEY=sk_test_local\nSTRIPE_WEBHOOK_SECRET=whsec_${randomBytes(16).toString("hex")}\nGEMINI_API_KEY=unset\n`);
+STRIPE_SECRET_KEY=sk_test_local\nSTRIPE_WEBHOOK_SECRET=whsec_${randomBytes(16).toString("hex")}\nGEMINI_API_KEY=unset\nGITHUB_TOKEN=unset\n`);
+  // checkCapstone's GitHub token (added 2026-11): without a line the emulator asks Secret Manager for it on every start.
+  else if (!/^GITHUB_TOKEN=/m.test(readFileSync(secrets, "utf8"))) writeFileSync(secrets, `${readFileSync(secrets, "utf8").replace(/\n?$/, "\n")}GITHUB_TOKEN=unset\n`);
+  ssoSettings(env, secrets);
   return secrets;
+}
+
+/**
+ * School sign-in on the emulators (TECHNICAL.md "School sign-in"): a key ring made once for this computer (SSO_KEYS in
+ * functions/.secret.local, gitignored; never printed), and the callback at the functions emulator's own address. The
+ * stand-in school provider (scripts/local/oidc.mjs) runs beside the emulators on 4797.
+ */
+function ssoSettings(env, secrets) {
+  const has = (file, key) => new RegExp(`^${key}=`, "m").test(readFileSync(file, "utf8"));
+  const add = (file, line) => writeFileSync(file, `${readFileSync(file, "utf8").replace(/\n?$/, "\n")}${line}\n`);
+  if (!has(secrets, "SSO_KEYS")) add(secrets, `SSO_KEYS='${JSON.stringify({ current: "k1", keys: { k1: randomBytes(32).toString("base64") } })}'`);
+  if (!has(env, "SSO_CALLBACK")) add(env, `SSO_CALLBACK=${FN}/ssoCallback/callback`);
+  if (!has(env, "SSO_SERVICE_ACCOUNT")) add(env, "SSO_SERVICE_ACCOUNT=");
+  if (!has(env, "SSO_CALLBACK_MIN_INSTANCES")) add(env, "SSO_CALLBACK_MIN_INSTANCES=0");
 }
 
 function run(cmd, list, opts = {}) {
@@ -101,7 +124,7 @@ async function emulatorConfig() {
   let pick = 8080;
   if (!(await free(8080))) { pick = 0; for (const p of [8085, 8086, 8087, 8088]) if (await free(p)) { pick = p; break; } }
   if (!pick) { console.error("Ports 8080 and 8085–8088 are all taken; free one for the Firestore emulator."); process.exit(1); }
-  for (const [what, p] of [["Auth", 9099], ["Functions", 5001], ["Storage", 9199], ["the emulator UI", 4000], ["the app", 4173], ["the voice relay", 8091], ["the payment stand-in", 4799]]) {
+  for (const [what, p] of [["Auth", 9099], ["Functions", 5001], ["Storage", 9199], ["the emulator UI", 4000], ["the app", 4173], ["the voice relay", 8091], ["the payment stand-in", 4799], ["the web address stand-in", 4798], ["the school sign-in stand-in", 4797]]) {
     if (!(await free(p))) { console.error(`Port ${p} (${what}) is taken. Stop whatever uses it (an earlier \`npm run local\`?) and try again.`); process.exit(1); }
   }
   const cfg = JSON.parse(readFileSync(join(ROOT, "firebase.json"), "utf8"));
@@ -191,9 +214,13 @@ if (!seeded) {
   await done(run("node", ["scripts/seed-content.mjs", "--emulator"]));
 }
 
-step("Starting the payment stand-in and the tutor's voice relay");
+step("Starting the payment and web address stand-ins and the tutor's voice relay");
 const { paymobHmac } = await import(pathToFileURL(join(FUNCTIONS, "lib/paymentsCore.js")).href);
 payments = await startPayments({ secrets, functionsUrl: FN, paymobHmac });
+// Organization web addresses: the functions emulator connects them here, never at Google (scripts/local/domains.mjs).
+domains = await startDomains();
+// School sign-in: a stand-in school provider the wizard can connect to (issuer http://127.0.0.1:4797, client darsi-local).
+oidc = await startOidc();
 children.push(run("node", ["functions/lib/relay.js"], {
   quiet: true, log: (t) => process.stdout.write(t.replace(/^/gm, "  relay: ")),
   env: { ...process.env, PORT: "8091", GCLOUD_PROJECT: P, FUNCTIONS_EMULATOR: "true", TUTOR_ORIGINS: WEB, GEMINI_API_KEY: "unset",
@@ -203,7 +230,9 @@ children.push(run("node", ["functions/lib/relay.js"], {
 // Every VITE_ setting is given here, so apps/web/.env.local (the live project) never reaches this build.
 const viteEnv = { ...process.env, VITE_FIREBASE_API_KEY: "demo-local", VITE_FIREBASE_AUTH_DOMAIN: `${P}.firebaseapp.com`, VITE_FIREBASE_PROJECT_ID: P, VITE_FIREBASE_STORAGE_BUCKET: BUCKET,
   VITE_FIREBASE_MESSAGING_SENDER_ID: "000000000000", VITE_FIREBASE_APP_ID: "1:000000000000:web:local", VITE_FIREBASE_MEASUREMENT_ID: "", VITE_FUNCTIONS_REGION: REGION,
-  VITE_USE_EMULATORS: "true", VITE_FIRESTORE_EMULATOR_PORT: String(FS), VITE_FIREBASE_VAPID_KEY: "", VITE_TUTOR_RELAY: "ws://localhost:8091/live" };
+  VITE_USE_EMULATORS: "true", VITE_FIRESTORE_EMULATOR_PORT: String(FS), VITE_FIREBASE_VAPID_KEY: "", VITE_TUTOR_RELAY: "ws://localhost:8091/live",
+  // This build is meant to talk to the emulators: it tells vite.config.ts's production-settings check to let it through.
+  DARSI_LOCAL_BUILD: "1" };
 const web = join(ROOT, "apps/web");
 // The build knows the Firestore port, so --no-build reuses it only when the port is the same.
 const built = join(web, "dist-local/local-port.txt");
@@ -221,9 +250,11 @@ Darsi is running on this computer:
 
   App            ${WEB}
                  Sign in with Google, then pick ${email} in the emulator's window.
-                 Platform admin pages: ${WEB}/super  (Darsi Super's switch is on ${WEB}/super/plans)
+                 Platform admin pages: ${WEB}/super  (Darsi Super's switch is on ${WEB}/super/plans?tab=switches)
   Emulator UI    http://127.0.0.1:4000  (data, accounts, logs)
   Payments       pay with the stand-in's Pay button; no money moves
+  School sign-in "Other (OpenID Connect)": issuer http://127.0.0.1:4797, client darsi-local, secret local-secret,
+                 email domain school.test (stand-in people; Tarek is a teacher by the claim "groups" = "teachers")
   Offline        once a page has loaded, DevTools → Network → Offline (or stop this) and keep using the app
 
 Ctrl+C stops everything and keeps the data in .emulator-data/.`);
@@ -232,6 +263,8 @@ function shutdown() {
   if (stopping) return;
   stopping = true;
   payments?.close();
+  domains?.close();
+  oidc?.close();
   // Ctrl+C reaches the children too; the emulators save their data, then exit.
   for (const c of children) if (c !== emu && c.exitCode === null) c.kill();
   if (emu.exitCode !== null) process.exit(0);

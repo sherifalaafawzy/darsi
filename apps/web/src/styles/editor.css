@@ -8,10 +8,15 @@
 .ed .stack > *, .ed .stack-sm > *, .ed .stack-lg > * { min-inline-size: 0; }
 
 /* An English/Arabic pair of fields: side by side when there is room for both (the form column, not the screen, decides:
-   the outline takes part of wide screens), stacked otherwise. */
-.ed-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-3); min-inline-size: 0; }
+   the outline takes part of wide screens), stacked otherwise. Each keeps its own height: only the first has the hint,
+   and stretched to match it, the others' labels and boxes grew and sat lower. */
+.ed-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); align-items: start; gap: var(--space-3); min-inline-size: 0; }
 .ed-pair > .dr-field, .ed-pair > .stack, .ed-pair > .ed-upload { min-inline-size: 0; }
 .ed-lang { margin-inline-start: var(--space-2); padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--surface-sunk); color: var(--ink-muted); font: var(--text-caption); }
+/* Every language's text boxes share Arabic's line height, so side by side the same number of rows is the same height;
+   a language's name in its own script keeps the tag's line height, so no label is taller than the others. */
+.ed-pair textarea.dr-field-input { line-height: 1.7; }
+.ed-lang > [lang] { line-height: inherit; }
 .ed-json { font: 14px/20px ui-monospace, Menlo, Consolas, monospace; }
 .ed-grid4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
 
@@ -42,6 +47,11 @@
 .ed-status.is-live { background: var(--correct-soft); border-color: var(--correct); }
 .ed-status.is-changed { background: var(--sunbird-soft); border-color: var(--sunbird-ink); }
 .ed-status.is-draft { background: var(--surface-sunk); }
+/* Its short words (StatusPill) only in an app bar on a phone, where the title needs the room; the full words stay
+   there for screen readers. */
+.ed-status > [aria-hidden] { display: none; }
+.dr-appbar .ed-status > :first-child { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.dr-appbar .ed-status > [aria-hidden] { display: inline; }
 
 /* An uploaded file: label, current file, pick/replace, progress. */
 .ed-upload { display: grid; gap: var(--space-2); min-inline-size: 0; padding: var(--space-3); border: 2px dashed var(--line); border-radius: var(--radius-md); }
@@ -58,10 +68,12 @@
 .ed-where { color: var(--ink-muted); font: var(--text-label); overflow-wrap: anywhere; }
 .ed-where code { font: 13px/18px ui-monospace, Menlo, Consolas, monospace; }
 
-/* Save / publish, always in reach: above the floating bottom nav on phones, at the bottom of the screen on wide ones. */
+/* Save / publish, always in reach: above the floating bottom nav on phones, at the bottom of the screen on wide ones.
+   On phones its inline start is left to the floating "Report a problem" button (bug-fab.css), which would cover Undo. */
 .ed-bar { position: sticky; inset-block-end: calc(var(--bottomnav-h) + env(safe-area-inset-bottom)); z-index: var(--z-banner);
   display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); box-sizing: border-box; max-inline-size: 1200px; margin-inline: auto;
-  padding: var(--space-2) var(--space-3); background: var(--surface); border-block-start: 2px solid var(--line-strong); }
+  padding: var(--space-2) var(--space-3); padding-inline-start: calc(var(--space-3) + var(--tap-min) + var(--space-2));
+  background: var(--surface); border-block-start: 2px solid var(--line-strong); }
 .ed-save { flex: 1 1 0; min-inline-size: 0; color: var(--ink-muted); font: var(--text-label); }
 .ed-save.is-error { color: var(--wrong); }
 .ed-bar-end { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); margin-inline-start: auto; }
@@ -70,7 +82,7 @@
 .ed-filters { display: grid; gap: var(--space-3); }
 .ed-filter { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .ed-filter > .dr-field-label { flex-basis: 100%; }
-.ed-chip { min-block-size: 40px; padding: var(--space-1) var(--space-3); background: var(--surface); border: 2px solid var(--line-strong); border-radius: var(--radius-pill); color: var(--ink); font: var(--text-label); cursor: pointer; }
+.ed-chip { min-block-size: 44px; padding: var(--space-1) var(--space-3); background: var(--surface); border: 2px solid var(--line-strong); border-radius: var(--radius-pill); color: var(--ink); font: var(--text-label); cursor: pointer; }
 .ed-chip.is-on { background: var(--ink); border-color: var(--ink); color: var(--ink-inverse); }
 .ed-group { display: grid; gap: var(--space-3); }
 .ed-group-h { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0; font: var(--text-heading); }
@@ -131,8 +143,8 @@
 .ed-num { display: inline-grid; place-items: center; min-inline-size: 24px; block-size: 24px; padding: 0 var(--space-1); border-radius: var(--radius-pill); background: var(--surface-sunk);
   color: var(--ink); font: var(--text-label); }
 .ed-langs { margin-block-start: var(--space-2); }
-/* "+" between items: a thin row with a quiet plus (always there: touch screens have no hover). */
-.ed-insert { display: flex; align-items: center; justify-content: center; inline-size: 100%; block-size: 32px; padding: 0; background: none; border: 0; border-radius: var(--radius-sm);
+/* "+" between items: a quiet plus (always there: touch screens have no hover), on a row tall enough to tap. */
+.ed-insert { display: flex; align-items: center; justify-content: center; inline-size: 100%; block-size: 44px; padding: 0; background: none; border: 0; border-radius: var(--radius-sm);
   color: var(--line-strong); font: var(--text-label); cursor: pointer; }
 .ed-insert:hover, .ed-insert:focus-visible { background: var(--kola-soft); color: var(--ink); }
 .ed-node:focus-visible, .ed-insert:focus-visible, .ed-type:focus-visible, .ed-seg-btn:focus-visible, .ed-chip:focus-visible, .ed-link:focus-visible,
@@ -141,7 +153,7 @@
 .ed-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-inline-size: 0; }
 .ed-crumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); min-inline-size: 0; margin: 0; padding: 0; list-style: none; }
 .ed-crumbs li { display: flex; align-items: center; gap: var(--space-1); min-inline-size: 0; color: var(--ink-muted); font: var(--text-label); }
-.ed-crumbs li > button { padding: var(--space-1); background: none; border: 0; border-radius: var(--radius-sm); color: var(--ink); font: var(--text-label); text-align: start; text-decoration: underline; overflow-wrap: anywhere; cursor: pointer; }
+.ed-crumbs li > button { min-block-size: 44px; padding: var(--space-1); background: none; border: 0; border-radius: var(--radius-sm); color: var(--ink); font: var(--text-label); text-align: start; text-decoration: underline; overflow-wrap: anywhere; cursor: pointer; }
 .ed-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .ed-pane-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); min-inline-size: 0; }
 .ed-pane-title { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-inline-size: 0; }
@@ -195,12 +207,14 @@
 .ed-strip > .ed-ico { inline-size: 22px; block-size: 22px; }
 
 /* A lesson's steps as a storyboard. */
-.ed-board { display: grid; margin: 0; padding: 0; list-style: none; }
+.ed-board { display: grid; grid-template-columns: minmax(0, 1fr); margin: 0; padding: 0; list-style: none; }
 .ed-board > li:last-child { padding-block-start: var(--space-2); }
 .ed-scard { display: flex; align-items: center; gap: var(--space-1); min-inline-size: 0; padding-inline-end: var(--space-1); background: var(--surface); border: 2px solid var(--line-strong);
   border-inline-start-width: 4px; border-radius: var(--radius-md); }
 .ed-scard.is-error { border-inline-start-color: var(--wrong); }
-.ed-scard-main { display: flex; flex: 1 1 auto; align-items: center; gap: var(--space-3); min-inline-size: 0; min-block-size: 56px; padding: var(--space-2) var(--space-3); background: none; border: 0;
+/* Four tools side by side, tight, so a card with its error count still fits a 360px phone. */
+.ed-scard > .ed-tools { gap: 0; }
+.ed-scard-main { display: flex; flex: 1 1 auto; align-items: center; gap: var(--space-2); min-inline-size: 0; min-block-size: 56px; padding: var(--space-2) var(--space-3); background: none; border: 0;
   border-radius: var(--radius-md); color: var(--ink); font: var(--text-body); text-align: start; cursor: pointer; }
 .ed-scard-main:hover { background: var(--surface-sunk); }
 .ed-scard-text { display: grid; flex: 1 1 auto; min-inline-size: 0; }
@@ -219,7 +233,7 @@
 /* Forms: the English under a field being translated; "mark as right" on an option. */
 .ed-ref { margin: var(--space-1) 0 0; padding: var(--space-1) var(--space-2); background: var(--surface-sunk); border-radius: var(--radius-sm); color: var(--ink); font: var(--text-caption); overflow-wrap: anywhere; }
 .ed-ref > span { color: var(--ink-muted); font-weight: 700; }
-.ed-right { display: inline-flex; align-items: center; gap: var(--space-1); min-block-size: 40px; margin-inline-start: auto; padding: var(--space-1) var(--space-3); background: var(--surface);
+.ed-right { display: inline-flex; align-items: center; gap: var(--space-1); min-block-size: 44px; margin-inline-start: auto; padding: var(--space-1) var(--space-3); background: var(--surface);
   border: 2px solid var(--line-strong); border-radius: var(--radius-pill); color: var(--ink-muted); font: var(--text-label); white-space: nowrap; cursor: pointer; }
 .ed-right.is-on { background: var(--correct-soft); border-color: var(--correct); color: var(--ink); }
 .ed-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
@@ -255,7 +269,7 @@
 .ed-stepper { display: flex; align-items: center; gap: var(--space-3); }
 .ed-stepper-n { min-inline-size: 3ch; font: var(--text-heading); text-align: center; }
 .ed-more { display: grid; gap: var(--space-3); }
-.ed-more > summary { padding-block: var(--space-2); color: var(--ink); font: var(--text-label); cursor: pointer; }
+.ed-more > summary { padding-block: var(--space-3); color: var(--ink); font: var(--text-label); cursor: pointer; }
 .ed-bar > .notice { flex-basis: 100%; margin: 0; }
 .ed-bar > .notice ul { margin: var(--space-1) 0 0; padding-inline-start: var(--space-4); }
 
@@ -264,8 +278,12 @@
 .ed-preview-bar { position: sticky; inset-block-start: 0; z-index: var(--z-appbar); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2);
   padding: var(--space-2) var(--space-4); background: var(--surface); border-block-end: 2px solid var(--line-strong); }
 .ed-preview-body { min-block-size: 100%; }
+/* The lesson's last screen: room at its foot for the floating "Report a problem" button (app.css --fab-clear). */
+.ed-preview-body > .screen { padding-block-end: var(--fab-clear); }
 
 @media (min-width: 600px) {
+  .dr-appbar .ed-status > :first-child { position: static; inline-size: auto; block-size: auto; overflow: visible; clip: auto; }
+  .dr-appbar .ed-status > [aria-hidden] { display: none; }
   .ed-grid4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .ed-glance-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .ed-gos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -273,7 +291,8 @@
 }
 
 @media (min-width: 900px) {
-  .ed-bar { inset-block-end: 0; }
+  /* The rail has "Report a problem" from here (the floating button is hidden). */
+  .ed-bar { inset-block-end: 0; padding-inline-start: var(--space-3); }
   .ed-split { grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); }
   .ed-split.is-detail .ed-outline, .ed-split.is-outline .ed-detail { display: grid; }
   .ed-outline { position: sticky; inset-block-start: var(--space-3); max-block-size: calc(100vh - 120px); overflow-y: auto; }

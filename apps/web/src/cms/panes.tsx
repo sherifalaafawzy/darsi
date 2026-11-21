@@ -12,6 +12,8 @@ import type { KitFile, KitFormat, Lesson, Slide, Step, Unit } from "../content/t
 import { errorsOf, SLIDE_LAYOUTS, type Issue } from "../content/validate";
 import { isolate, languageOf, useI18n, type MessageKey } from "../i18n";
 import { copyLessonTo, listUnits, type UnitMeta } from "./data";
+import { failText } from "./entStrings";
+import { fieldText, useFieldName, type FieldName } from "./fieldNames";
 import { Items, LangName, LList, LText, Num, Sel, Upload } from "./fields";
 import { useEditLangs, useLangView } from "./langs";
 import { Insert, StepIcon, useStepSummary } from "./outline";
@@ -41,13 +43,24 @@ function useIssueText() {
   return (i: Issue) => t(`cms.issue.${i.code}` as MessageKey, { ...i.params, ...(i.params?.lang ? { lang: langName(i.params.lang) } : {}) });
 }
 
+/** A field's name as the form labels it, with its language beside it (marked, so another script uses the phone's font). */
+function FieldWords({ f }: { f: FieldName }) {
+  return <>{fieldText(f)}{f.lang && <> (<LangName name={languageOf(f.lang).native} code={f.lang} />)</>}</>;
+}
+/** The field an issue is about: its name in the author's words, or the raw path for one the editor has no form for. */
+function IssueField({ issue, name, lead }: { issue: Issue; name: FieldName | null; lead?: boolean }) {
+  if (name) return lead ? <><strong><FieldWords f={name} /></strong>{": "}</> : <>{" › "}<FieldWords f={name} /></>;
+  return issue.at.field && !lead ? <> <code dir="ltr">{issue.at.field}</code></> : null;
+}
+
 /**
  * The problems of the open pane, at its top: errors and warnings in words (with the field they are about), and missing
  * translations as one line per language with a button to translate there.
  */
-export function HereIssues({ issues, onTranslate }: { issues: Issue[]; onTranslate: (lang: string) => void }) {
+export function HereIssues({ issues, unit, onTranslate }: { issues: Issue[]; unit: Unit; onTranslate: (lang: string) => void }) {
   const { t, num } = useI18n();
   const text = useIssueText();
+  const nameOf = useFieldName(unit);
   const { view } = useLangView();
   const rest = issues.filter((i) => i.code !== "missingLang");
   const missing = new Map<string, number>();
@@ -58,7 +71,7 @@ export function HereIssues({ issues, onTranslate }: { issues: Issue[]; onTransla
     <div className={`ed-here${nErr ? " is-error" : ""}`} role="status">
       {rest.length > 0 && <>
         <strong className="ed-here-h"><Icon name="warning" size={18} />{nErr ? t("cms.hereErrors", { n: num(nErr) }) : t("cms.hereWarnings", { n: num(rest.length) })}</strong>
-        <ul>{rest.slice(0, 8).map((i, k) => <li key={k} className={`is-${i.level}`}>{text(i)}{i.at.field && <> <code dir="ltr">{i.at.field}</code></>}</li>)}</ul>
+        <ul>{rest.slice(0, 8).map((i, k) => { const f = nameOf(i); return <li key={k} className={`is-${i.level}`}><IssueField issue={i} name={f} lead />{text(i)}{!f && <IssueField issue={i} name={null} />}</li>; })}</ul>
       </>}
       {[...missing].map(([code, n]) => (
         <p key={code} className="ed-here-lang">
@@ -75,6 +88,7 @@ export function IssuesPanel({ issues, unit, onJump }: { issues: Issue[]; unit: U
   const { t } = useI18n();
   const where = useWhere(unit);
   const text = useIssueText();
+  const nameOf = useFieldName(unit);
   const sorted = [...issues].sort((a, b) => (a.level === b.level ? 0 : a.level === "error" ? -1 : 1));
   const nErr = errorsOf(issues).length, nWarn = issues.length - nErr;
   // Missing translations can run to hundreds: one folded group per language, after everything else.
@@ -83,7 +97,7 @@ export function IssuesPanel({ issues, unit, onJump }: { issues: Issue[]; unit: U
   const item = (i: Issue, k: number) => (
     <li key={k}>
       <button type="button" className={`ed-issue is-${i.level}`} onClick={() => onJump(i)}>
-        <span className="ed-where">{where(i)}{i.at.field && <> <code dir="ltr">{i.at.field}</code></>}</span>
+        <span className="ed-where">{where(i)}<IssueField issue={i} name={nameOf(i)} /></span>
         <span>{text(i)}</span>
       </button>
     </li>
@@ -251,7 +265,7 @@ export function CopyTo({ owner, unitId, lesson, onDone }: { owner: string; unitI
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   useEffect(() => {
-    listUnits(owner).then((u) => { const others = u.filter((x) => x.id !== unitId); setUnits(others); setTarget(others[0]?.id ?? ""); }).catch((e: Error) => setErr(e.message));
+    listUnits(owner).then((u) => { const others = u.filter((x) => x.id !== unitId); setUnits(others); setTarget(others[0]?.id ?? ""); }).catch((e) => setErr(failText(e, t))); // the SDK's raw English goes through errorText, in the author's language
   }, [owner, unitId]);
   const copy = async () => {
     if (!user || !target) return;
@@ -261,7 +275,7 @@ export function CopyTo({ owner, unitId, lesson, onDone }: { owner: string; unitI
       if (!r) setErr(t("err.notFound"));
       else if ("conflict" in r) setErr(t("cms.copyConflict"));
       else onDone(t("cms.copied", { title: L(r.title) || t("cms.untitled") }));
-    } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+    } catch (e) { setErr(failText(e, t)); } finally { setBusy(false); }
   };
   return (
     <div className="ed-item stack">

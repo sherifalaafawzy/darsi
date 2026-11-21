@@ -4,6 +4,7 @@ import { useI18n } from "../../../i18n";
 import { TOOLS, type Lang, type Turn } from "../../../tinylm";
 import { Segmented, Slider } from "../../kit/controls";
 import { LabShell } from "../../kit/LabShell";
+import { usePlural, type Forms } from "../../kit/plural";
 import { useS } from "../../kit/strings";
 import type { LabProps } from "../../types";
 import { runTurn } from "../agentloop/agent";
@@ -30,11 +31,11 @@ const S = {
     noData: (mb: string) => `none (after one ${mb} MB download)`, free: "free", batt: (p: string) => `${p}% of a full battery`,
     works: "works", fails: "doesn't work",
     tags: { measured: "measured", estimated: "estimated", typical: "typical" } as Record<string, string>,
-    month: (n: string) => `In a month, at ${n} requests a day`,
+    month: (n: string) => `In a month, at ${n} a day`, req: { one: "{n} request", other: "{n} requests" } as Forms,
     monthData: (t: string, c: string) => `Data: Darsi Tiny ${t}; the cloud model ${c}.`,
     monthMoney: (c: string, d: string) => `Money: Darsi Tiny nothing; the cloud model ${c} (${d} of it for data).`,
     monthBattery: (t: string, c: string) => `Battery: Darsi Tiny ${t}%; the cloud model ${c}%.`,
-    even: (n: string) => `After about ${n} requests, the cloud model has used more data than downloading Darsi Tiny once.`,
+    even: (n: string) => `After about ${n}, the cloud model has used more data than downloading Darsi Tiny once.`,
     typicalNote: "Darsi Tiny's tokens and time are measured on this device, and its download size comes from its files. Everything about the cloud model is a typical figure (network speeds, prices, power), not a measurement: real ones vary by country, phone and provider.",
     honest: "But the big model knows far more: it can answer questions Darsi Tiny would get wrong.",
     try1: "Run “What's the weather in Kafi tomorrow?” and note the tokens and the time on this phone.",
@@ -56,11 +57,11 @@ const S = {
     noData: (mb: string) => `لا شيء (بعد تنزيل واحد حجمه ${mb} ميغابايت)`, free: "مجانًا", batt: (p: string) => `${p}٪ من بطارية كاملة`,
     works: "يعمل", fails: "لا يعمل",
     tags: { measured: "مقيس", estimated: "تقدير", typical: "رقم معتاد" },
-    month: (n: string) => `في شهر، بمعدل ${n} طلبًا في اليوم`,
+    month: (n: string) => `في شهر، بمعدل ${n} في اليوم`, req: { one: "طلب واحد", two: "طلبين", few: "{n} طلبات", many: "{n} طلبًا", other: "{n} طلب" } as Forms,
     monthData: (t: string, c: string) => `البيانات: «درسي الصغير» ${t}؛ والنموذج السحابي ${c}.`,
     monthMoney: (c: string, d: string) => `المال: «درسي الصغير» لا شيء؛ والنموذج السحابي ${c} (منها ${d} للبيانات).`,
     monthBattery: (t: string, c: string) => `البطارية: «درسي الصغير» ${t}٪؛ والنموذج السحابي ${c}٪.`,
-    even: (n: string) => `بعد نحو ${n} طلبًا، يكون النموذج السحابي قد استهلك بيانات أكثر من تنزيل «درسي الصغير» مرة واحدة.`,
+    even: (n: string) => `بعد نحو ${n}، يكون النموذج السحابي قد استهلك بيانات أكثر من تنزيل «درسي الصغير» مرة واحدة.`,
     typicalNote: "توكنز «درسي الصغير» ووقته مقيسة على هذا الجهاز، وحجم تنزيله من ملفاته. أما كل ما يخص النموذج السحابي فأرقام معتادة (سرعات الشبكات والأسعار والطاقة) لا قياسات: والأرقام الحقيقية تختلف باختلاف البلد والهاتف والمزوّد.",
     honest: "لكن النموذج الكبير يعرف أكثر بكثير: يستطيع أن يجيب عن أسئلة يخطئ فيها «درسي الصغير».",
     try1: "شغّل «ما حالة الطقس في كافي غدًا؟» ولاحظ التوكنز والوقت على هذا الهاتف.",
@@ -73,6 +74,7 @@ const S = {
 export default function Costs({ meta, onDone }: LabProps) {
   const s = useS(S);
   const { lang: ui, num } = useI18n();
+  const count = usePlural();
   const lang: Lang = ui === "ar" ? "ar" : "en";
   const tiny = useTiny();
   const [ask, setAsk] = useState(ASKS[lang][0]);
@@ -161,11 +163,11 @@ export default function Costs({ meta, onDone }: LabProps) {
             </section>
           </div>
           <div className="lb-panel">
-            <strong>{s.month(num(perDay))}</strong>
+            <strong>{s.month(count(perDay, s.req))}</strong>
             <p className="lb-note">{s.monthData(s.mb(num(mb)), s.mb(one((c.bytes * month) / 1e6)))}</p>
             <p className="lb-note">{s.monthMoney(money(c.dollars * month), money(c.dataDollars * month))}</p>
             <p className="lb-note">{s.monthBattery(pctB(t.joules * month), pctB(c.joules * month))}</p>
-            <p className="lb-verdict">{s.even(num(breakEven(tiny.bytes, c.bytes)))}</p>
+            <p className="lb-verdict">{s.even(count(breakEven(tiny.bytes, c.bytes), s.req))}</p>
           </div>
           <p className="lb-note">{s.typicalNote} {s.honest}</p>
         </div>

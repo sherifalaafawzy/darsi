@@ -57,9 +57,11 @@ export const SCRIPT: Record<Lang, string[]> = {
     "ما حصص الصف السادس ب غدًا؟",
     "ما حالة الطقس في كافي غدًا؟",
     "كم المسافة من كافي إلى دالا؟",
-    "أرسل رسالة إلى الأستاذ أوكافور: اجتماع المعلمين غدًا الساعة 3:00.",
+    // A little longer than a plain translation, so the Arabic run shows what the English one does
+    // (the fourth answer is cut off; with 128 tokens "غدًا" falls out before the call).
+    "أرسل رسالة إلى الأستاذ أوكافور: اجتماع المعلمين غدًا الساعة 3:00 في المكتبة.",
     "نعم",
-    "كيف الطقس غدًا؟",
+    "من فضلك، ما حالة الطقس غدًا؟",
     "دالا",
   ],
 };

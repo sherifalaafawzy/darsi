@@ -39,8 +39,12 @@ export function fibCalls(n: number): number {
   for (let k = 2; k <= n; k++) [a, b] = [b, a + b + 1];
   return n === 0 ? a : b;
 }
-/** The same, remembering each answer the first time: n + 1 different calls. */
-export const fibCallsRemembered = (n: number) => n + 1;
+/**
+ * The same, remembering each answer the first time, counting every call (the ones answered from the dictionary too):
+ * fib(n) works out fib(n − 1) in full, then finds fib(n − 2) already remembered, so each step adds two calls: 2n − 1.
+ * That is what the course's memo code counts (59 for fib(30)); the n + 1 different values were half of it.
+ */
+export const fibCallsRemembered = (n: number) => (n < 2 ? 1 : 2 * n - 1);
 
 /** Positions for drawing a call tree: leaves side by side, each call above the middle of its own calls. */
 export function layout(all: Call[]) {

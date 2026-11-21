@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { NextWordLab } from "@darsi/design-system";
 import { useI18n } from "../../../i18n";
 import { TryThis } from "../../kit/LabShell";
@@ -23,15 +24,25 @@ const S = {
   },
 };
 
+/** Done once words were picked at both ends of the slider (Try 1 and Try 2): a low and a high temperature. */
+const LOW = 0.5, HIGH = 1.5;
+
 /** Next-word probabilities and temperature. */
-export default function NextWord(_: LabProps) {
+export default function NextWord({ onDone }: LabProps) {
   const { lang, num } = useI18n();
   const s = useS(S);
+  const tried = useRef({ low: false, high: false, done: false });
+  const picked = (_word: string, temperature: number) => {
+    const t = tried.current;
+    if (temperature <= LOW) t.low = true;
+    if (temperature >= HIGH) t.high = true;
+    if (t.low && t.high && !t.done) { t.done = true; onDone?.(); }
+  };
   return (
     <>
       <TryThis items={[s.try1, s.try2]} />
       <NextWordLab key={lang} num={num} kicker={s.kicker} title={s.title} tempLabel={s.temp} lowLabel={s.low} highLabel={s.high} generateLabel={s.pick}
-        context={s.context} candidates={s.candidates} takeaway={s.takeaway} />
+        context={s.context} candidates={s.candidates} takeaway={s.takeaway} onGenerate={picked} />
     </>
   );
 }

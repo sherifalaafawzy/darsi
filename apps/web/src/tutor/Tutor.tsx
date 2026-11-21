@@ -75,7 +75,7 @@ export function TutorPanel({ unitId, lessonId, onClose, ...props }: TutorProps &
 function TutorBody({ relayUrl, ask, status, Player, unitId, lessonId, onLeave }: TutorProps & { unitId: string; lessonId: string | null; onLeave?: () => void }) {
   const { t, lang, num } = useI18n();
   const nav = useNavigate();
-  const { user, plan } = useAuth();
+  const { user, plan, profile } = useAuth();
   const active = !!plan && plan.until > Date.now();
   const [info, setInfo] = useState<Awaited<ReturnType<Status>> | null>(null);
   const [left, setLeft] = useState<number | null>(null);
@@ -113,7 +113,9 @@ function TutorBody({ relayUrl, ask, status, Player, unitId, lessonId, onLeave }:
 
   const fail = (e: unknown) => {
     const m = String((e as Error)?.message ?? e);
-    setErr(/no-credits|resource-exhausted/.test(m) ? "no-credits" : /tutor-closed|not priced/.test(m) ? "closed" : /no-super|permission/.test(m) ? "no-super" : "error");
+    // "busy" first: the server refuses a typed question with it while this account's others are under way
+    // (functions/src/tutor.ts), under the same code as "no credits", and only the message tells them apart.
+    setErr(/\bbusy\b/.test(m) ? "busy" : /no-credits|resource-exhausted/.test(m) ? "no-credits" : /tutor-closed|not priced/.test(m) ? "closed" : /no-super|permission/.test(m) ? "no-super" : "error");
   };
   // Adds to the tutor's (or the learner's) current message while it is being spoken, else starts a new one.
   const append = (who: Msg["who"], text: string, fresh = false) => setMsgs((m) => {
@@ -190,7 +192,8 @@ function TutorBody({ relayUrl, ask, status, Player, unitId, lessonId, onLeave }:
       else if (m.type === "turn") { turnOpen = true; setTimeout(() => !speaker.speaking && session.current && setTalk("listening"), 300); }
       else if (m.type === "credits") setLeft(m.left ?? null);
       else if (m.type === "out") setErr("no-credits");
-      else if (m.type === "error") setErr(m.code === "no-credits" ? "no-credits" : m.code === "tutor-closed" ? "closed" : m.code === "time" ? "time" : m.code === "no-super" ? "no-super" : "error");
+      // "busy": the relay has no room for another call just now (functions/src/relay.ts), or this account already has one.
+      else if (m.type === "error") setErr(m.code === "no-credits" ? "no-credits" : m.code === "tutor-closed" ? "closed" : m.code === "time" ? "time" : m.code === "no-super" ? "no-super" : m.code === "busy" ? "busy" : "error");
     };
     ws.onclose = () => stopTalk();
     ws.onerror = () => { setErr("error"); stopTalk(); };
@@ -206,7 +209,8 @@ function TutorBody({ relayUrl, ask, status, Player, unitId, lessonId, onLeave }:
   };
 
   const minutes = info?.minute && left !== null ? Math.floor(left / info.minute) : null;
-  const errText: Record<string, string> = { "no-credits": t("tu.noCredits"), closed: t("tu.closed"), "no-super": t("tu.needSuper"), mic: t("tu.mic"), time: t("tu.time"), offline: t("tu.offline"), error: t("tu.error") };
+  // Super from an organization's seat comes without credits for now: "you've used them" would be untrue on the first question.
+  const errText: Record<string, string> = { "no-credits": t(profile?.planSource === "org" ? "tu.noCreditsSeat" : "tu.noCredits"), closed: t("tu.closed"), "no-super": t("tu.needSuper"), mic: t("tu.mic"), time: t("tu.time"), offline: t("tu.offline"), busy: t("tu.busy"), error: t("tu.error") };
   const face = busy ? "thinking" : talk;
   const stateText = t(talk === "off" ? "tu.ready" : talk === "connecting" ? "tu.connecting" : talk === "speaking" ? "tu.speaking" : talk === "thinking" ? "tu.thinking" : "tu.listening");
 

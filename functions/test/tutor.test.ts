@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LIVE_PRICES, TEXT_PRICES, audioCost, buildIndex, down3, instructions, lessonMaterial, outside, pcmToUlaw, search, sections, tokens, ulawToPcm, usageCost, type TutorUnit } from "../src/tutorCore";
+import { LIVE_PRICES, TEXT_PRICES, audioCost, buildIndex, down3, finiteNumbers, instructions, isUnitCheck, lessonMaterial, outside, pcmToUlaw, search, sections, tokens, ulawToPcm, usageCost, type TutorUnit } from "../src/tutorCore";
 
 const unit: TutorUnit = {
   id: "ai-1-1", track: "ai", level: 1, title: { en: "AI basics", ar: "أساسيات الذكاء الاصطناعي" },
@@ -83,6 +83,44 @@ describe("cost", () => {
   it("has a floor from the audio's minutes", () => {
     expect(audioCost(60, 60, LIVE_PRICES)).toBeCloseTo(0.023, 10);
     expect(audioCost(30, 0, LIVE_PRICES)).toBeCloseTo(0.0025, 10);
+  });
+});
+
+describe("graded questions (X-TUTOR-ANSWERS)", () => {
+  const checked: TutorUnit = { ...unit, lessons: [...unit.lessons, { id: "ai-1-1-check", title: { en: "Unit check", ar: "اختبار الوحدة" }, steps: [
+    { id: "c1", type: "choice", prompt: { en: "Which data trains a model?", ar: "أي بيانات تدرّب النموذج؟" }, explain: { en: "The answer is B: examples with labels.", ar: "الإجابة ب: أمثلة مصنّفة." } },
+    { id: "c2", type: "order", prompt: { en: "Put the steps in order.", ar: "رتّب الخطوات." }, explain: { en: "Collect, then train, then test.", ar: "اجمع ثم درّب ثم اختبر." } },
+  ] }] };
+  it("never puts a unit check's questions and answers in what the tutor reads or searches", () => {
+    expect(isUnitCheck({ id: "ai-1-1-check" })).toBe(true);
+    expect(isUnitCheck({ id: "ai-1-1-2" })).toBe(false);
+    for (const lang of ["en", "ar"]) {
+      const all = sections(checked, lang);
+      expect(all.some((s) => s.lessonId === "ai-1-1-check")).toBe(false);
+      expect(all.map((s) => s.text).join("\n")).not.toMatch(/answer is B|الإجابة ب|Collect, then train/);
+    }
+  });
+  it("gives the tutor the course's readings in a unit check, so it can still explain the ideas", () => {
+    const m = lessonMaterial(checked, "ai-1-1-check", "en");
+    expect(m).toContain("[ai-1-1-1/r]");
+    expect(m).toContain("[ai-1-1-2/r]");
+    expect(m).not.toContain("answer is B");
+  });
+  it("tells the tutor, typing or speaking, never to give or confirm a graded answer", () => {
+    for (const voice of [false, true]) {
+      const rules = instructions({ lang: "ar", course: "c", lesson: "l", material: "", voice });
+      expect(rules).toContain("GRADED QUESTIONS");
+      expect(rules).toMatch(/Never give the answer/);
+      expect(rules).toMatch(/hint/);
+    }
+  });
+});
+
+describe("prices typed into config/tutor (sfm-04)", () => {
+  it("keep only numbers ≥ 0 and name the rest", () => {
+    expect(finiteNumbers({ textIn: 0.75, textOut: "3,75", audioIn: NaN, audioOut: -1, perMinIn: 0 })).toEqual({ ok: { textIn: 0.75, perMinIn: 0 }, bad: ["textOut", "audioIn", "audioOut"] });
+    expect(finiteNumbers(undefined)).toEqual({ ok: {}, bad: [] });
+    expect(finiteNumbers("0.75").bad).toHaveLength(1);
   });
 });
 

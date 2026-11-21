@@ -39,6 +39,10 @@ const S = {
   },
 };
 const TARGETS = [5, 12, 65, 100, 200, 255];
+/** Arabic letters on a page in another language keep the phone's font (lang="ar" and .dr-other-script), so the default
+ *  "Darsi درسي" doesn't fetch the Arabic web font on an English page. On an Arabic page the class changes nothing. */
+const ARABIC = /[؀-ۿ]/;
+const script = (t: string) => (ARABIC.test(t) ? { lang: "ar", className: "dr-other-script" } : {});
 
 export default function Binary({ meta, onDone }: LabProps) {
   const s = useS(S);
@@ -70,10 +74,10 @@ export default function Binary({ meta, onDone }: LabProps) {
       <div className="lb-two">
         <div className="stack">
           <label className="dr-field-label" htmlFor="lb-bin-text">{s.text}</label>
-          <input id="lb-bin-text" className="dr-field-input" dir="auto" value={text} maxLength={40} onChange={(e) => setText(e.target.value)} />
+          <input id="lb-bin-text" dir="auto" lang={ARABIC.test(text) ? "ar" : undefined} className={ARABIC.test(text) ? "dr-field-input dr-other-script" : "dr-field-input"} value={text} maxLength={40} onChange={(e) => setText(e.target.value)} />
           <div className="lb-chips is-compact">
             {chars.map((c, i) => (
-              <span key={i} className="lb-tok"><span dir="auto">{c.ch === " " ? "␣" : c.ch}</span><small dir="ltr">{c.bytes.map(hex).join(" ")}</small></span>
+              <span key={i} className="lb-tok"><span dir="auto" {...script(c.ch)}>{c.ch === " " ? "␣" : c.ch}</span><small dir="ltr">{c.bytes.map(hex).join(" ")}</small></span>
             ))}
           </div>
           <p className="lb-note">{s.bytesOf(count(chars.length, s.charsTake), count(byteCount(text), s.bytesN))}</p>

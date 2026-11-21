@@ -19,12 +19,12 @@ const S = {
     takeaway: "Automation is rules plus sensors. Good rules use the right sensor, a sensible threshold and conditions like “only when someone is there”. Every rule trades comfort, energy and cost, and someone has to choose that balance.",
   },
   ar: {
-    intro: "كل خمس دقائق يفحص متحكّم الصف مستشعراته وينفّذ قواعدك. غيّر القواعد فيُعاد اليوم الدراسي كله: هل الصف مريح، وكم يستهلك من الكهرباء؟",
-    fanRule: "إذا تجاوزت الحرارة", fanThen: "فشغّل المروحة", lightRule: "إذا قلّ ضوء النهار عن", lightThen: "فشغّل الأضواء", onlyIn: "فقط حين يكون في الصف تلاميذ",
+    intro: "كل خمس دقائق يفحص متحكّم الفصل مستشعراته وينفّذ قواعدك. غيّر القواعد فيُعاد اليوم الدراسي كله: هل الفصل مريح، وكم يستهلك من الكهرباء؟",
+    fanRule: "إذا تجاوزت الحرارة", fanThen: "فشغّل المروحة", lightRule: "إذا قلّ ضوء النهار عن", lightThen: "فشغّل الأضواء", onlyIn: "فقط حين يكون في الفصل تلاميذ",
     winRule: "إذا تجاوز ثاني أكسيد الكربون (الهواء الفاسد)", winThen: "فافتح النافذة", use: "فعّل هذه القاعدة", unitC: "°س", unitLux: "لكس", unitPpm: "جزء في المليون",
-    timeline: "اليوم الدراسي: متى يكون في الصف تلاميذ ومتى يعمل كل جهاز", rows: { occupied: "الصف مشغول", fan: "المروحة", lights: "الأضواء", window: "النافذة مفتوحة" },
-    energy: "الكهرباء المستهلكة", kwh: (n: string) => `${n} كيلوواط ساعة`, hot: "دقائق حرّ", dark: "دقائق إضاءة ضعيفة", stuffy: "دقائق هواء فاسد", during: "(تُحسب فقط حين يكون في الصف تلاميذ)",
-    try1: "ألغِ اختيار «فقط حين يكون في الصف تلاميذ»: تبقى الأضواء مضاءة في الاستراحات أيضًا، فيزيد استهلاك الكهرباء دون أي مكسب في الراحة.",
+    timeline: "اليوم الدراسي: متى يكون في الفصل تلاميذ ومتى يعمل كل جهاز", rows: { occupied: "الفصل مشغول", fan: "المروحة", lights: "الأضواء", window: "النافذة مفتوحة" },
+    energy: "الكهرباء المستهلكة", kwh: (n: string) => `${n} كيلوواط ساعة`, hot: "دقائق حرّ", dark: "دقائق إضاءة ضعيفة", stuffy: "دقائق هواء فاسد", during: "(تُحسب فقط حين يكون في الفصل تلاميذ)",
+    try1: "ألغِ اختيار «فقط حين يكون في الفصل تلاميذ»: تبقى الأضواء مضاءة في الاستراحات أيضًا، فيزيد استهلاك الكهرباء دون أي مكسب في الراحة.",
     try2: "ارفع قاعدة المروحة إلى ٣١ °س: لا تعمل المروحة أبدًا فتقل الكهرباء، لكن تظهر أكثر من ساعتين من الحر حول الظهيرة.",
     try3: "اجعل قاعدة النافذة عند ١٥٠٠ جزء في المليون: تُفتح النافذة متأخرة، ويملأ الهواء الفاسد أكثر من ٣ ساعات من الحصص.",
     takeaway: "الأتمتة قواعد ومستشعرات. والقواعد الجيدة تستعمل المستشعر المناسب وحدًّا معقولًا وشروطًا مثل «فقط حين يوجد أحد». وكل قاعدة توازن بين الراحة والطاقة والكلفة، ولا بد أن يختار أحدٌ هذا التوازن.",
@@ -41,7 +41,8 @@ export default function RulesLab({ meta, onDone }: LabProps) {
   const sim = useMemo(() => simulate(r), [r]);
   const set = (next: Rules) => { setR(next); setMoves((m) => m + 1); };
   useEffect(() => { if (moves >= 3) onDone?.(); }, [moves >= 3]); // eslint-disable-line react-hooks/exhaustive-deps
-  const W = 320, LABEL = 84, x = (t: number) => LABEL + ((t - START) / (END - START)) * (W - LABEL - 4);
+  // LABEL leaves room for the longest row name at 13 px bold ("Window open" ran under the bar at 84).
+  const W = 320, LABEL = 100, x = (t: number) => LABEL + ((t - START) / (END - START)) * (W - LABEL - 4);
 
   return (
     <LabShell meta={meta} intro={s.intro} tries={[s.try1, s.try2, s.try3]} takeaway={s.takeaway}>
@@ -72,7 +73,7 @@ export default function RulesLab({ meta, onDone }: LabProps) {
               {sim.steps.filter((m) => m[row]).map((m) => <rect key={m.t} x={x(m.t)} y={i * 26 + 4} width={x(m.t + STEP) - x(m.t) + 0.5} height={18} className={`lb-tl lb-tl-${row}`} />)}
             </g>
           ))}
-          {[7, 9, 11, 13, 15].map((h) => <text key={h} x={x(h * 60)} y={ROWS.length * 26 + 18} textAnchor="middle" className="lb-plot-tick">{`${num(h)}:${num(0, { minimumIntegerDigits: 2 })}`}</text>)}
+          {[7, 9, 11, 13, 15].map((h) => <text key={h} x={x(h * 60)} y={ROWS.length * 26 + 18} textAnchor={h === 15 ? "end" : "middle"} className="lb-plot-tick">{`${num(h)}:${num(0, { minimumIntegerDigits: 2 })}`}</text>)}
         </svg>
       </figure>
       <p className="lb-note">{s.timeline}</p>
